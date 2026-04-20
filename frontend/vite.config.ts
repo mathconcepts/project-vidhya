@@ -34,16 +34,12 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           // Animation
           'motion': ['framer-motion'],
-          // Charts (heavy — isolated)
-          'charts': ['recharts'],
-          // Math rendering (KaTeX — isolated, only loaded for chat)
-          'math': ['katex', 'remark-math', 'rehype-katex'],
-          // Markdown
-          'markdown': ['react-markdown', 'react-syntax-highlighter'],
+          // Heavy client-side ML / parsing — lazy-loaded on demand
+          'transformers': ['@xenova/transformers'],
+          'pdf': ['pdfjs-dist', 'mammoth'],
         },
       },
     },
-    // Raise warning threshold a bit since recharts + katex are legitimately large
     chunkSizeWarningLimit: 600,
   },
 });

@@ -1,7 +1,7 @@
 /**
  * Client-side pure GBrain core.
  *
- * Mirror of src/gbrain/gbrain-core.ts but uses the concept-loader (lazy-loaded
+ * Mirror of the GBrain Core pure functions but uses the concept-loader (lazy-loaded
  * JSON bundle) instead of direct imports from server-side constants.
  * All functions are pure and synchronous where possible.
  */

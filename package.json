@@ -1,7 +1,7 @@
 {
   "name": "project-vidhya",
   "version": "2.2.3",
-  "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
+  "description": "Project Vidhya \u2014 Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -54,19 +54,16 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
     "@google/generative-ai": "^0.12.0",
-    "@types/pg": "^8.18.0",
-    "express": "^5.2.1",
     "katex": "^0.16.44",
     "pg": "^8.20.0",
     "resend": "^6.10.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0",
-    "web-push": "^3.6.7",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@types/node": "^20.19.33",
-    "vitest": "^1.6.1"
+    "vitest": "^1.6.1",
+    "@types/pg": "^8.18.0"
   }
 }

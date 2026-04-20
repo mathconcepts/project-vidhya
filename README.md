@@ -11,6 +11,8 @@ practice at a marginal cost approaching zero.
 Built initially for GATE Engineering Mathematics but the architecture is
 domain-agnostic — swap the concept graph and seed problems for any subject.
 
+> **Read the 18-slide pitch deck:** [**FEATURES.md**](./FEATURES.md) — every moat in the codebase with metrics.
+
 ---
 
 ## Why Vidhya
@@ -129,6 +131,7 @@ for the tiered breakdown.
 
 | Document                    | Scope                                       |
 |----------------------------|---------------------------------------------|
+| [FEATURES.md](./FEATURES.md) | 18-slide pitch deck: every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
 | [PLAN-content-engine.md](./PLAN-content-engine.md) | Four-tier cascade, cost analysis, Wolfram integration rationale |
 | [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md) | Local-first architecture, client-side embeddings, opt-in aggregation |

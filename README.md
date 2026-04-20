@@ -131,8 +131,12 @@ for the tiered breakdown.
 
 | Document                    | Scope                                       |
 |----------------------------|---------------------------------------------|
+| [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
 | [FEATURES.md](./FEATURES.md) | 18-slide pitch deck: every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
+| [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute — scrapers, concepts, code, PRs |
+| [SECURITY.md](./SECURITY.md) | Vulnerability disclosure policy + response timeline |
 | [PLAN-content-engine.md](./PLAN-content-engine.md) | Four-tier cascade, cost analysis, Wolfram integration rationale |
 | [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md) | Local-first architecture, client-side embeddings, opt-in aggregation |
 | [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md) | Cognitive model: student attributes, error taxonomy, concept graph |
@@ -199,10 +203,14 @@ See each record's `license` and `attribution` fields in
 
 ## Contributing
 
-Pull requests welcome. The content pipeline is the highest-leverage area:
-- New scrapers for CC-licensed sources
-- Improvements to the Wolfram answer matcher (see `src/services/wolfram-service.ts`)
-- New subject domains: swap `concept-graph.ts` and re-run the pipeline
+Pull requests welcome. See [**CONTRIBUTING.md**](./CONTRIBUTING.md) for the
+full guide. Highest-leverage areas:
+
+- **New content sources** — CC-licensed scrapers in `scripts/` following the existing JSONL schema
+- **Wolfram matcher improvements** — handle algebraically-equivalent restructured answers
+- **New subject domains** — swap `concept-graph.ts` and seed problems
+
+Security issues → [SECURITY.md](./SECURITY.md) (private disclosure).
 
 ---
 

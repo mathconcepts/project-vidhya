@@ -1,0 +1,261 @@
+{
+  "topic": "differential-equations",
+  "exam_id": "gate-engineering-maths",
+  "questions": [
+    {
+      "id": "de-001",
+      "year": 2023,
+      "question": "The general solution of the differential equation dy/dx + (2/x)y = x² is:",
+      "options": {
+        "A": "y = x³/5 + C/x²",
+        "B": "y = x³/5 + C·x²",
+        "C": "y = x⁵/5 + C/x²",
+        "D": "y = x²/5 + C/x"
+      },
+      "correct_answer": "A",
+      "explanation": "Standard form: y' + P(x)y = Q(x)\nHere P(x) = 2/x, Q(x) = x²\n\nIntegrating Factor: μ = e^∫(2/x)dx = e^(2ln x) = x²\n\nMultiply both sides by x²:\nd/dx[x²·y] = x²·x² = x⁴\n\nIntegrate:\nx²y = ∫x⁴ dx = x⁵/5 + C\n\ny = x³/5 + C/x²",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["first-order-ode", "integrating-factor", "linear-ode"]
+    },
+    {
+      "id": "de-002",
+      "year": 2022,
+      "question": "The characteristic roots of y'' - 6y' + 9y = 0 are:",
+      "options": {
+        "A": "3 and -3",
+        "B": "3 and 3 (repeated)",
+        "C": "6 and 1",
+        "D": "3 ± 3i"
+      },
+      "correct_answer": "B",
+      "explanation": "Characteristic equation: r² - 6r + 9 = 0\nFactor: (r - 3)² = 0\nRoots: r = 3 (repeated root)\n\nSince we have a repeated root r = 3, the general solution is:\ny = (c₁ + c₂x)e^(3x)\n\nNote: The discriminant b²-4ac = 36-36 = 0 confirms a repeated root.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["second-order-ode", "characteristic-equation", "repeated-roots"]
+    },
+    {
+      "id": "de-003",
+      "year": 2024,
+      "question": "The PDE u_xx + 4u_xy + 4u_yy = 0 is:",
+      "options": {
+        "A": "Elliptic",
+        "B": "Parabolic",
+        "C": "Hyperbolic",
+        "D": "Cannot be classified"
+      },
+      "correct_answer": "B",
+      "explanation": "Compare with Au_xx + Bu_xy + Cu_yy = 0\nHere A = 1, B = 4, C = 4\n\nDiscriminant Δ = B² - 4AC = 16 - 16 = 0\n\nΔ = 0 → PARABOLIC\n\nMnemonic:\nΔ < 0: Elliptic (like Laplace equation ∇²u = 0)\nΔ = 0: Parabolic (like heat equation u_t = u_xx)\nΔ > 0: Hyperbolic (like wave equation u_tt = u_xx)",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["pde", "classification", "parabolic", "differential-equations"]
+    },
+    {
+      "id": "de-004",
+      "year": 2023,
+      "question": "The particular solution of y'' + y = sin x is:",
+      "options": {
+        "A": "-(x/2)cos x",
+        "B": "(x/2)sin x",
+        "C": "-cos x",
+        "D": "sin x / 2"
+      },
+      "correct_answer": "A",
+      "explanation": "Homogeneous solution: r² + 1 = 0 → r = ±i\ny_h = c₁cos x + c₂sin x\n\nSince sin x is in y_h, RESONANCE occurs.\nModify trial solution: y_p = x(A cos x + B sin x)\n\ny_p'' + y_p = -2A sin x + 2B cos x\n\nSet equal to sin x:\n-2A = 1 → A = -1/2\n2B = 0 → B = 0\n\ny_p = -(x/2)cos x",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["non-homogeneous-ode", "resonance", "undetermined-coefficients"]
+    },
+    {
+      "id": "de-005",
+      "year": 2022,
+      "question": "The equation dy/dx = y/(x + y²) is best solved by:",
+      "options": {
+        "A": "Separation of variables",
+        "B": "Treating x as a function of y (linear in x)",
+        "C": "Exact equation method",
+        "D": "Bernoulli substitution"
+      },
+      "correct_answer": "B",
+      "explanation": "Rewrite as: dx/dy = (x + y²)/y = x/y + y\n\nThis gives: dx/dy - (1/y)x = y — a LINEAR ODE in x as a function of y!\n\nIntegrating factor: μ = e^(-∫1/y dy) = 1/y\n\nSolving: x/y = y + C → x = y² + Cy\n\nClassic GATE trick: when dy/dx form is complicated, try dx/dy form.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["first-order-ode", "linear-ode", "trick-question", "differential-equations"]
+    },
+    {
+      "id": "de-006",
+      "year": null,
+      "question": "The order and degree of the differential equation (y'')³ + 2(y')⁴ + 5y = 0 are respectively:",
+      "options": {
+        "A": "Order 2, Degree 3",
+        "B": "Order 3, Degree 2",
+        "C": "Order 2, Degree 4",
+        "D": "Order 1, Degree 3"
+      },
+      "correct_answer": "A",
+      "explanation": "Order = the order of the highest derivative in the equation.\nHighest derivative is y'' (second derivative) → Order = 2\n\nDegree = the power of the highest-order derivative, after the equation is made polynomial in derivatives.\nThe equation is already polynomial in derivatives.\nHighest-order derivative y'' appears as (y'')³ → Degree = 3\n\nSo Order = 2, Degree = 3.\n\nNote: Degree is defined only when the equation is polynomial in its derivatives. If y'' appears inside a transcendental function like sin(y''), degree is undefined.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["order-degree", "ode-basics", "differential-equations"]
+    },
+    {
+      "id": "de-007",
+      "year": null,
+      "question": "The general solution of the separable ODE dy/dx = xy is:",
+      "options": {
+        "A": "y = Ce^(x²)",
+        "B": "y = Ce^(x²/2)",
+        "C": "y = x² + C",
+        "D": "y = Ce^x"
+      },
+      "correct_answer": "B",
+      "explanation": "Separate variables:\ndy/y = x dx\n\nIntegrate both sides:\n∫(1/y)dy = ∫x dx\nln|y| = x²/2 + K\n\n|y| = e^(x²/2 + K) = e^K · e^(x²/2)\n\ny = C·e^(x²/2)  where C = ±e^K\n\nThis is a Gaussian-type solution, which arises in statistics (normal distribution). C is the arbitrary constant of integration.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["first-order-ode", "separable-ode", "differential-equations"]
+    },
+    {
+      "id": "de-008",
+      "year": null,
+      "question": "The general solution of y'' + 4y = 0 is:",
+      "options": {
+        "A": "y = c₁e^(2x) + c₂e^(-2x)",
+        "B": "y = c₁cos(2x) + c₂sin(2x)",
+        "C": "y = (c₁ + c₂x)e^(2x)",
+        "D": "y = c₁cos(x) + c₂sin(x)"
+      },
+      "correct_answer": "B",
+      "explanation": "Characteristic equation: r² + 4 = 0\nr² = -4\nr = ±2i (complex roots: α = 0, β = 2)\n\nFor complex roots r = α ± βi, the general solution is:\ny = e^(αx)[c₁cos(βx) + c₂sin(βx)]\n\nHere α = 0, β = 2:\ny = e⁰[c₁cos(2x) + c₂sin(2x)]\ny = c₁cos(2x) + c₂sin(2x)\n\nThis represents undamped oscillation with angular frequency ω = 2 (like a lossless LC circuit or undamped spring).",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["second-order-ode", "complex-roots", "oscillatory-solution", "differential-equations"]
+    },
+    {
+      "id": "de-009",
+      "year": null,
+      "question": "For the ODE y'' - 5y' + 6y = 0 with y(0) = 1, y'(0) = 0, the solution is:",
+      "options": {
+        "A": "y = 3e^(2x) - 2e^(3x)",
+        "B": "y = 2e^(2x) - e^(3x)",
+        "C": "y = e^(2x) + e^(3x)",
+        "D": "y = 3e^(3x) - 2e^(2x)"
+      },
+      "correct_answer": "A",
+      "explanation": "Characteristic equation: r² - 5r + 6 = 0\n(r-2)(r-3) = 0 → r = 2, r = 3\n\nGeneral solution: y = c₁e^(2x) + c₂e^(3x)\n\nApply initial conditions:\ny(0) = c₁ + c₂ = 1  ... (i)\ny'(x) = 2c₁e^(2x) + 3c₂e^(3x)\ny'(0) = 2c₁ + 3c₂ = 0  ... (ii)\n\nFrom (ii): c₁ = -3c₂/2\nSubstitute in (i): -3c₂/2 + c₂ = 1 → -c₂/2 = 1 → c₂ = -2\nc₁ = -3(-2)/2 = 3\n\ny = 3e^(2x) - 2e^(3x)",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["second-order-ode", "initial-value-problem", "differential-equations"]
+    },
+    {
+      "id": "de-010",
+      "year": null,
+      "question": "The Bernoulli equation dy/dx + y = xy³ can be reduced to a linear ODE by the substitution:",
+      "options": {
+        "A": "v = y²",
+        "B": "v = y⁻²",
+        "C": "v = 1/y",
+        "D": "v = ln y"
+      },
+      "correct_answer": "B",
+      "explanation": "The Bernoulli equation has the form: dy/dx + P(x)y = Q(x)yⁿ\nHere n = 3, P(x) = 1, Q(x) = x\n\nStandard substitution for Bernoulli: v = y^(1-n) = y^(1-3) = y^(-2)\n\nv = y⁻² → dv/dx = -2y⁻³ dy/dx\n\nDivide original equation by y³:\ny⁻³ dy/dx + y⁻² = x\n\nSubstitute v = y⁻², dv/dx = -2y⁻³ dy/dx:\n(-1/2) dv/dx + v = x\ndv/dx - 2v = -2x\n\nThis is now a linear ODE in v! Solve using integrating factor.\n\nKey rule: Bernoulli y' + Py = Qyⁿ → substitute v = y^(1-n)",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["bernoulli-equation", "first-order-ode", "substitution", "differential-equations"]
+    },
+    {
+      "id": "de-011",
+      "year": null,
+      "question": "The wave equation u_tt = c²u_xx is classified as:",
+      "options": {
+        "A": "Elliptic",
+        "B": "Parabolic",
+        "C": "Hyperbolic",
+        "D": "Mixed type"
+      },
+      "correct_answer": "C",
+      "explanation": "The wave equation: u_tt - c²u_xx = 0\nRewrite in standard form: Au_tt + Bu_tx + Cu_xx = 0\nHere A = 1, B = 0, C = -c²\n\nDiscriminant Δ = B² - 4AC = 0 - 4(1)(-c²) = 4c² > 0 (since c > 0)\n\nΔ > 0 → HYPERBOLIC\n\nPhysical interpretation: Hyperbolic PDEs model wave propagation. The wave equation describes sound waves, electromagnetic waves, and vibrating strings.\n\nKey PDE classification summary:\n- Laplace (u_xx + u_yy = 0): Elliptic\n- Heat (u_t = u_xx): Parabolic  \n- Wave (u_tt = c²u_xx): Hyperbolic",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["pde", "wave-equation", "hyperbolic", "differential-equations"]
+    },
+    {
+      "id": "de-012",
+      "year": null,
+      "question": "The particular integral of y'' - 3y' + 2y = e^(2x) using the operator method is:",
+      "options": {
+        "A": "e^(2x)",
+        "B": "x·e^(2x)",
+        "C": "e^(2x)/2",
+        "D": "e^(2x)/6"
+      },
+      "correct_answer": "B",
+      "explanation": "Operator form: (D² - 3D + 2)y = e^(2x) where D = d/dx\nPI = e^(2x) / (D² - 3D + 2) evaluated at D = 2:\n= e^(2x) / (4 - 6 + 2) = e^(2x) / 0\n\nThis is the FAILURE CASE (denominator = 0)!\nReason: e^(2x) is part of the homogeneous solution (r=2 is a root of r²-3r+2=0).\n\nResonance rule: Multiply by x and differentiate the denominator:\nPI = x·e^(2x) / (d/dD)(D² - 3D + 2)|_{D=2}\n= x·e^(2x) / (2D - 3)|_{D=2}\n= x·e^(2x) / (4 - 3)\n= x·e^(2x)\n\nVerification: (D-1)(D-2)[xe^(2x)] = e^(2x) ✓",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["non-homogeneous-ode", "operator-method", "particular-integral", "differential-equations"]
+    },
+    {
+      "id": "de-013",
+      "year": null,
+      "question": "The differential equation dy/dx = (x + y)/(x - y) is:",
+      "options": {
+        "A": "Linear in y",
+        "B": "Separable",
+        "C": "Homogeneous",
+        "D": "Exact"
+      },
+      "correct_answer": "C",
+      "explanation": "Check for homogeneous: replace x → tx, y → ty:\nf(tx, ty) = (tx + ty)/(tx - ty) = t(x+y)/[t(x-y)] = (x+y)/(x-y) = f(x,y)\n\nSince f(tx, ty) = t⁰ f(x,y), the equation is HOMOGENEOUS of degree 0.\n\nSolution method: Substitute y = vx (where v = y/x)\ndy/dx = v + x dv/dx\n\nThe equation becomes:\nv + x dv/dx = (x + vx)/(x - vx) = (1+v)/(1-v)\n\nx dv/dx = (1+v)/(1-v) - v = (1+v - v+v²)/(1-v) = (1+v²)/(1-v)\n\nThis is now separable in v and x.",
+      "difficulty": "medium",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["homogeneous-ode", "first-order-ode", "classification", "differential-equations"]
+    },
+    {
+      "id": "de-014",
+      "year": null,
+      "question": "The general solution of d²y/dx² + 2(dy/dx) + 5y = 0 is:",
+      "options": {
+        "A": "y = e^(-x)(c₁cos 2x + c₂sin 2x)",
+        "B": "y = e^x(c₁cos 2x + c₂sin 2x)",
+        "C": "y = (c₁ + c₂x)e^(-x)",
+        "D": "y = c₁e^(-x) + c₂e^(x)"
+      },
+      "correct_answer": "A",
+      "explanation": "Characteristic equation: r² + 2r + 5 = 0\nUsing quadratic formula:\nr = [-2 ± √(4-20)] / 2 = [-2 ± √(-16)] / 2 = [-2 ± 4i] / 2 = -1 ± 2i\n\nComplex roots: α = -1, β = 2\n\nGeneral solution for complex roots r = α ± βi:\ny = e^(αx)(c₁cos βx + c₂sin βx)\ny = e^(-x)(c₁cos 2x + c₂sin 2x)\n\nPhysical meaning: This represents damped oscillations (negative α = -1 causes exponential decay, β = 2 is the oscillation frequency). Analogous to an underdamped spring-mass-damper system.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["second-order-ode", "complex-roots", "damped-oscillation", "differential-equations"]
+    },
+    {
+      "id": "de-015",
+      "year": null,
+      "question": "The solution of the exact ODE (2xy + y²)dx + (x² + 2xy)dy = 0 is:",
+      "options": {
+        "A": "x²y + xy² = C",
+        "B": "x²y² + C = 0",
+        "C": "x² + y² = C",
+        "D": "xy² + x²y = C"
+      },
+      "correct_answer": "A",
+      "explanation": "Check exactness: M = 2xy + y², N = x² + 2xy\n∂M/∂y = 2x + 2y\n∂N/∂x = 2x + 2y\nSince ∂M/∂y = ∂N/∂x, the equation is EXACT.\n\nFind F(x,y) such that ∂F/∂x = M and ∂F/∂y = N:\n\nF = ∫M dx = ∫(2xy + y²)dx = x²y + xy² + g(y)\n\nDifferentiate w.r.t. y:\n∂F/∂y = x² + 2xy + g'(y) = N = x² + 2xy\ng'(y) = 0 → g(y) = constant\n\nSolution: F(x,y) = x²y + xy² = C\n\nNote: F can also be written as xy(x + y) = C.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["exact-ode", "first-order-ode", "potential-function", "differential-equations"]
+    }
+  ]
+}

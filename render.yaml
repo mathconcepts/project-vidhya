@@ -1,0 +1,53 @@
+services:
+  # ── Backend API (serves API + SEO pages + Telegram bot) ──────
+  - type: web
+    name: gate-math-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && cd frontend && npm install --include=dev && VITE_SUPABASE_URL=$SUPABASE_URL VITE_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY npx vite build
+    startCommand: npx tsx src/gate-server.ts
+    healthCheckPath: /health
+    envVars:
+      # NODE_ENV is set by Render automatically at runtime.
+      # Do NOT set it here — it breaks the build by skipping devDependencies.
+      - key: PORT
+        value: "3000"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: WOLFRAM_APP_ID
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_GROUP_IDS
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+      - key: TELEGRAM_WEBHOOK_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://gate-math.onrender.com
+      - key: APP_URL
+        value: https://gate-math-api.onrender.com
+      - key: ADMIN_EMAILS
+        sync: false
+
+# External cron jobs (Render cron requires paid plan).
+# Use cron-job.org or GitHub Actions:
+#
+# Daily Telegram problem:
+#   curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
+#     https://gate-math-api.onrender.com/telegram/daily-problem
+#
+# Content flywheel (daily, generates 5 problems):
+#   curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
+#     https://gate-math-api.onrender.com/api/flywheel/generate

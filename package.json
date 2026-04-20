@@ -1,0 +1,72 @@
+{
+  "name": "project-vidhya",
+  "version": "2.2.3",
+  "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mathconcepts/project-vidhya.git"
+  },
+  "homepage": "https://github.com/mathconcepts/project-vidhya",
+  "bugs": {
+    "url": "https://github.com/mathconcepts/project-vidhya/issues"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:frontend": "cd frontend && npm run build",
+    "build:all": "npm run build:frontend",
+    "start": "tsx src/gate-server.ts",
+    "dev": "tsx watch src/gate-server.ts",
+    "dev:server": "tsx watch src/gate-server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "content:scrape": "tsx scripts/scrape-corpus.ts --source gate && tsx scripts/scrape-textbooks.ts --source openstax && tsx scripts/scrape-textbooks.ts --source ocw",
+    "content:explainers": "tsx scripts/build-explainers.ts",
+    "content:verify": "tsx scripts/verify-wolfram-batch.ts",
+    "content:bundle": "tsx scripts/build-bundle.ts",
+    "content:refresh": "npm run content:scrape && npm run content:explainers && npm run content:verify && npm run content:bundle",
+    "setup": "npm ci && cd frontend && npm ci && npm run build && cd .. && echo 'Run: npm run dev:server'",
+    "postinstall": "node scripts/postinstall-check.cjs || true"
+  },
+  "keywords": [
+    "adaptive-learning",
+    "edtech",
+    "content-engine",
+    "rag",
+    "local-first",
+    "offline",
+    "education",
+    "gate",
+    "wolfram",
+    "gemini"
+  ],
+  "author": "Project Vidhya Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "@google/generative-ai": "^0.12.0",
+    "@types/pg": "^8.18.0",
+    "express": "^5.2.1",
+    "katex": "^0.16.44",
+    "pg": "^8.20.0",
+    "resend": "^6.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "web-push": "^3.6.7",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.19.33",
+    "vitest": "^1.6.1"
+  }
+}

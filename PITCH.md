@@ -5,28 +5,28 @@ and respects your privacy.*
 
 ---
 
-## From pain to bliss
+## The journey — before Vidhya, after Vidhya
 
-Every exam-prep cycle produces the same pains. Here's the bliss that names your takeaway — what you actually walk away with. One pain per row, one takeaway per row.
+Every line in the left column is something a student would say before finding the product. Every line in the right column is what the same student says after. The "After" is the takeaway, in their own voice.
 
-| The pain | The bliss *(your takeaway)* |
-|----------|------------------------------|
-| *"I don't know if I'm actually ready."* | You see "12 mastered · 15 in progress · 3 struggling" — per concept, always visible. A real answer when parents ask how prep is going. |
-| *"The syllabus is overwhelming — where do I start today?"* | Three concepts for today, ranked by exam weight × your mastery. An hour of focused work, not a hundred-item list. |
-| *"My exam is in 3 days and every app says 'take a break'."* | Advice that reads urgency. Six months out: break. Three days out: quick review instead. No tone-deaf suggestions when you're stressed. |
-| *"I watch 45-minute lectures and still don't get the concept."* | Each concept in eight small pieces. Skip what you know. Linger on what you don't. Two focused minutes beat forty unfocused ones. |
-| *"It's 2 a.m. I'm stuck. I have nowhere to turn."* | Snap a photo. Walkthrough in seconds with common traps flagged. Web, Telegram, WhatsApp — same quality on slow connections or fast. |
-| *"I paid for a plan but don't know what I'm getting."* | Sign in, see every exam your plan covers with a live "you're already X% there" per bonus. Coverage updates as you study. |
-| *"I keep forgetting things I studied weeks ago."* | Concepts resurface at intervals backed by memory research. Exam week, your day-one learning is still intact. |
-| *"AI chatbots sometimes confidently give wrong answers."* | Wolfram-verified where possible. Past papers pre-checked. Uncertainty is named, not hidden. |
-| *"Apps use streaks and guilt-trip notifications."* | Zero streaks. Zero badges. Zero manipulation. You study when you want. |
-| *"I don't want my weak areas in a corporate database."* | No server-side database of your progress exists. On your device, architecturally — not just as policy. |
-| *"I don't have top-tier teaching where I live."* | Same lesson structure, rigor, and trap-flagging regardless of pin code. Your location stops deciding prep quality. |
-| *"My foundations are shaky, so advanced topics feel impossible."* | Wrong answers with a foundational gap route you upstream first. Fix the foundation, advanced unlocks naturally. |
-| *"Coaching moves at the average pace — I'm bored or lost."* | Mastery per concept, not per class schedule. Move quickly where it clicks. Spend extra time where it doesn't. |
-| *"I'm embarrassed to ask 'basic' questions in class."* | Ask anything, any way, any number of times. No classmate sees. No teacher judges. |
-| *"My teacher explains but I don't see why it matters."* | Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. Motivation before mechanics. |
-| *"Textbook too abstract, YouTube too hand-wavy — neither helps."* | Every lesson has both — visualised intuition AND formal statement in your exam's terminology. Neither compromised. |
+| Before Vidhya | After Vidhya |
+|---------------|--------------|
+| *"I don't know if I'm actually ready."* | *"I know exactly where I stand. 12 mastered, 15 in progress, 3 to work on. I stopped guessing."* |
+| *"The syllabus is so big I don't know where to start."* | *"Three concepts today. Finished them by evening. I can see what's next."* |
+| *"My exam is in 3 days and the app keeps telling me to take a break."* | *"It switched to a quick review instead of suggesting rest. The advice matches my reality."* |
+| *"I watch 45-minute lectures and still don't get it."* | *"It clicked in ten minutes. I skipped what I knew and focused on the one thing I didn't."* |
+| *"It's 2 a.m. I'm stuck. I have nowhere to turn."* | *"I took a photo and had the walkthrough in seconds. The trap was flagged before I hit it."* |
+| *"I paid for a plan and don't really know what I'm getting."* | *"I can see every exam my plan covers and how far along I am in each. No more mystery."* |
+| *"I keep forgetting what I studied weeks ago."* | *"Month-one material is still with me in exam week. It kept coming back at the right moments."* |
+| *"I can't tell when the AI is making things up."* | *"When it's unsure, it says so. When it's sure, the math has been checked. I finally trust what I read."* |
+| *"Streaks and notifications are making me resent studying."* | *"No streaks. No guilt. I study when I want to. The app doesn't interrupt me."* |
+| *"I'm nervous about my weak areas ending up in some database."* | *"Everything stays on my device. Nothing lives on a server that could leak."* |
+| *"I don't have access to top-tier teaching where I live."* | *"Same structure, same rigor, same trap-flagging — no matter where I log in from. Geography stopped being the limit."* |
+| *"My foundations are shaky and advanced topics feel impossible."* | *"It noticed the gap three topics behind the one I was stuck on, sent me there first, and the advanced stuff started making sense."* |
+| *"Coaching moves at the average pace — I'm bored or lost."* | *"I move at my pace per concept. Quick where it clicks, slow where it doesn't. No batch to keep up with."* |
+| *"I'm embarrassed to ask basic questions in class."* | *"I asked a 'basic' question at midnight with no one watching. I got an answer. I moved on."* |
+| *"My teacher explains but I don't see why any of it matters."* | *"Every lesson opens with what real problem the concept was invented to solve. Now the derivation actually sticks."* |
+| *"Textbooks too abstract, videos too hand-wavy — neither works."* | *"Visual intuition and rigorous statement in the same place. I pick whichever layer I need today."* |
 
 ---
 ---

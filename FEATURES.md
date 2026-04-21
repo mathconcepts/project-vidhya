@@ -42,111 +42,141 @@ at their rates. There is no Vidhya subscription.
 
 ---
 
-## Slide 2 — From exam-prep pain to exam-prep bliss
+## Slide 2 — The journey, from exam-prep pain to exam-prep bliss
 
-Every exam-prep cycle produces a specific set of pains. This slide names each pain, then names the **bliss** — your concrete takeaway, what you actually walk away with. Every takeaway is tied to code that ships today.
+Every student preparing for a serious exam goes through the same arc. First the confusion — too much syllabus, not enough clarity, a constant low-grade worry about whether any of this is working. Then the friction — a question stuck at 2 a.m. with no one to ask, a lecture that doesn't land, a coaching batch moving at a pace that isn't yours. Then, with the right tools, something shifts. The confusion quiets. You know where you stand. You know what to do today. The derivation that used to feel arbitrary suddenly matters.
 
-### *"I don't know if I'm actually ready for my exam."*
+Below is what that shift sounds like. Each card is the same student, speaking twice — once before Vidhya, once after. Every "After" is a real takeaway grounded in code that ships today. These aren't aspirations; they're descriptions of what changes once the system is part of your prep.
 
-Open any study app and you see a vague progress bar. Sixty percent of what, exactly?
+### Knowing where you stand
 
-**Bliss** *(your takeaway):* The moment you open Vidhya you see *"12 concepts mastered · 15 in progress · 3 struggling."* Per concept. Real numbers. When a parent or a relative asks how preparation is going, you have an actual answer — not a nervous guess.
+**Before:** *"I don't know if I'm actually ready for my exam. I can't tell my parents anything concrete. I'm just... hoping."*
 
-### *"The syllabus feels overwhelming — I don't know where to start today."*
+**After:** *"I know exactly where I stand. Twelve concepts mastered. Fifteen in progress. Three I need to work on. When someone asks, I have a real answer. I stopped guessing."*
 
-Staring at a hundred-plus topics across eight subjects, not knowing which matter most, which to do first, or what your weak spots really are.
+The bliss: the app surfaces per-concept mastery counts every time you open it. No vague progress bars. Real numbers. You walk into any conversation about your prep with an accurate picture.
 
-**Bliss** *(your takeaway):* Three priority concepts for today, ranked by your exam's topic weight × your current mastery. An hour of focused work. Not a hundred-item to-do list. A to-*done* list you can actually finish.
+### Finding a starting point each day
 
-### *"My exam is three days away and every app tells me to take a break."*
+**Before:** *"The syllabus is so big, I don't know where to start today. I open my notes, feel overwhelmed, and end up scrolling."*
 
-You're stressed. You're getting answers wrong. The app pops up a chirpy *"time to recharge!"* suggestion. Two days before your exam. It feels tone-deaf because it is.
+**After:** *"Three concepts today. Ranked by what my exam weighs and what I haven't mastered yet. I finished them by evening and I can see exactly what's next."*
 
-**Bliss** *(your takeaway):* Advice that reads your urgency. Six months out and five wrong in a row → break suggested (mental fatigue is real). Three days out and five wrong in a row → switched to a quick lesson review instead. The advice shifts as your situation shifts. No one tells you to step away 48 hours before your exam.
+The bliss: priority actions computed from the intersection of exam topic weights and your current mastery. An hour of focused work instead of a blank, panic-inducing syllabus.
 
-### *"I watch 45-minute lectures and still don't get the concept."*
+### Advice that matches your situation
 
-The lecturer explains in the wrong order. You can't rewind without scrubbing. You don't know which 45 minutes contained the 90 seconds you actually needed.
+**Before:** *"My exam is in three days and the app keeps telling me to take a break. It feels tone-deaf — two days before the exam is not the time to 'recharge.'"*
 
-**Bliss** *(your takeaway):* Every concept is eight small pieces — hook, definition, intuition, worked example, mini exercise, common traps, formal statement, connections. You skip what you already know. You linger on what you don't. You exit after two minutes if that's all you needed. Two focused minutes beat forty unfocused ones, every time.
+**After:** *"It switched to a quick lesson review instead of suggesting rest. The advice finally matches where I am. When I was six months out, it did suggest breaks — that felt right too."*
 
-### *"It's 2 a.m. I'm stuck on a problem. I have nowhere to turn."*
+The bliss: urgency-aware insight substitution. `take_break` recommendations automatically swap for `review_prereq` when the exam is ≤7 days out. The system reads the clock and adjusts every piece of advice it gives.
 
-Your teacher is asleep. Your study group is asleep. Online forums don't have your specific problem. You're alone with your confusion.
+### Short focused learning that lands
 
-**Bliss** *(your takeaway):* Snap a photo. Vidhya reads your handwriting, identifies the concept being tested, walks you through the solution, flags where students usually go wrong. 2 a.m. on a Tuesday gets the same quality as 2 p.m. on a Saturday. Telegram, WhatsApp, or the web app — all three work equally well on a slow mobile connection or a fast one.
+**Before:** *"I watch 45-minute lectures and still don't get the concept. I can't tell where the ten important minutes are."*
 
-### *"I paid for a plan but don't know what I'm actually getting."*
+**After:** *"It clicked in ten minutes. I skipped the parts I already knew, lingered on the one component that was new, and moved on."*
 
-Your institute bundled multiple exam prep plans. The benefits are in a PDF somewhere. You never read the PDF. You're preparing for one exam while unknowingly having access to three more.
+The bliss: every concept is an 8-component lesson (hook → definition → intuition → worked example → mini exercise → common traps → formal statement → connections). You skip, linger, exit. Two focused minutes beat forty unfocused ones, every time.
 
-**Bliss** *(your takeaway):* The first thing you see on sign-in is a **🎁 Giveaway · included in your plan** banner listing every bonus exam in your bundle. Each bonus shows exactly how much you've already covered through your primary prep: *"JEE Advanced · 42% covered — you're already well on your way."* The bundle is celebrated, not buried. And the coverage percentage updates live as you study.
+### A way out when you're stuck
 
-### *"I keep forgetting things I studied weeks ago."*
+**Before:** *"It's 2 a.m., I'm stuck on this problem, and I have nowhere to turn. My teacher is asleep. My study group is asleep. I'm alone with my confusion."*
 
-By exam week, everything from month one is a blur. You can't tell if you've genuinely forgotten something or if you never learned it properly in the first place.
+**After:** *"I took a photo and had the full walkthrough in seconds. The trap I was about to fall into was flagged before I hit it. I fell asleep clear-headed for once."*
 
-**Bliss** *(your takeaway):* Concepts surface at spaced intervals based on actual memory research, not streak tricks. The week of your exam, stuff you learned three months ago is still there — because the system resurfaced it at the mathematically-right moments across those three months.
+The bliss: multimodal intake reads handwritten or printed problems. Full step-by-step solution, common traps called out explicitly, same quality on web, Telegram, or WhatsApp. 2 a.m. Tuesday works as well as 2 p.m. Saturday.
 
-### *"AI chatbots sometimes confidently give wrong answers."*
+### Understanding what's in your plan
 
-An AI chatbot tells you the eigenvalues of a 3×3 matrix. You carefully copy them into your notebook. They're wrong. You don't discover this until the mock test.
+**Before:** *"I paid for a plan and I don't really know what I'm getting. The benefits are in a PDF somewhere. I never read it."*
 
-**Bliss** *(your takeaway):* Where possible, every answer runs through Wolfram Alpha. Past papers are pre-checked. The AI doesn't get to invent numbers. When it's uncertain, it says *"I'm not sure"* instead of hallucinating a clean-looking wrong answer. When it's wrong, you can see exactly why.
+**After:** *"I can see every exam my plan covers, with a live 'you're already X% of the way there' chip per bonus exam. No more mystery. No more buried PDFs."*
 
-### *"Apps use streaks and guilt-trip notifications to manipulate me."*
+The bliss: the Giveaway banner on sign-in lists every bonus exam in your subscription bundle. Each one shows live per-exam coverage from your primary prep. The bundle is celebrated; the value is visible.
 
-You miss one day. The app tells you you've *"lost your 47-day streak."* Now studying feels like a chore instead of a choice. The designers are optimising for your daily-active-user count, not your exam score.
+### Holding on to what you learn
 
-**Bliss** *(your takeaway):* Zero streaks. Zero badges. Zero "you lost your streak" notifications. Zero gamification. We considered these things and deliberately left them out. You study when you want. The app doesn't try to trick you into opening it.
+**Before:** *"I keep forgetting what I studied weeks ago. By exam week, month-one material is a blur and I can't tell if I've forgotten it or never really learned it."*
 
-### *"I don't want my weak areas in some corporate database."*
+**After:** *"Month-one material is still with me in exam week. It kept coming back at the right moments across the prep cycle — without me having to track anything."*
 
-You don't want your *"struggled with eigenvalues for three weeks"* data living in a startup's cloud bucket that gets acquired by a recruiter five years from now.
+The bliss: spaced repetition at intervals backed by memory research, not streak mechanics. Concepts resurface automatically at the mathematically-right moments across weeks and months.
 
-**Bliss** *(your takeaway):* Materials you upload stay in your browser. Progress lives on your device. Your AI key (if you use one) never touches our servers. This isn't a marketing claim — it's how the app is architected. There's no server-side database of student progress to leak, subpoena, or sell.
+### Trusting the answer you get
 
-### *"I don't have access to top-tier teaching where I live."*
+**Before:** *"I can't tell when the AI is making things up. It stated the eigenvalues of a 3×3 matrix so confidently — and they were wrong. I didn't find out until the mock test."*
 
-Students in major metros have access to the best coaching institutes. Students in smaller cities often don't. Teaching quality has historically been geography-bound — which is a problem when your exam isn't.
+**After:** *"When the system isn't sure it tells me. When it's sure, the math has been checked against Wolfram Alpha. I finally trust what I read."*
 
-**Bliss** *(your takeaway):* The lesson content doesn't change based on where you are. Every concept is written with the same structure, the same depth, the same explicit trap-flagging that you'd find in well-regarded prep material. Your pin code doesn't filter your lesson quality. What changes isn't the teaching — it's your access to it. That access is now uniform.
+The bliss: Wolfram verification on math results where possible, pre-checked past papers, explicit uncertainty markers. The AI doesn't get to invent numbers that look clean but aren't.
 
-*To be precise: we don't claim top-tier faculty personally wrote every lesson. We claim the structural rigor of the content — the 8-component lesson format, the concept graph with prerequisite links, the Wolfram verification — meets the bar well-regarded prep material sets. Readers who click through to the framework docs can audit every design decision.*
+### Studying without guilt
 
-### *"My foundations are shaky, and advanced topics feel impossible."*
+**Before:** *"Streaks and notifications are making me resent studying. I miss one day and the app guilt-trips me. I'm beginning to dread opening it."*
 
-You're trying to learn Fourier series, but you never fully got trigonometric identities earlier. The advanced topic keeps tripping you up — not because of the new material, but because of a gap four prerequisites upstream. Most apps just re-show you the solution to the surface-level problem.
+**After:** *"No streaks. No badges. No guilt pings. I study when I want to study, and the app doesn't interrupt me otherwise."*
 
-**Bliss** *(your takeaway):* When your wrong answer has a signature that suggests a prerequisite issue, the system walks the concept graph for that topic, finds the specific upstream concept your mastery model shows as weakest, and explicitly routes you there first. *"Review trigonometric identities before trying another Fourier series problem."* The misconception gets repaired where it actually lives — not where it happens to be visible. Once the foundation stops slipping, advanced topics unlock.
+The bliss: zero gamification. We considered streaks and badges and deliberately left them out. Engagement metrics aren't the goal; your exam score is.
 
-*This is the `findWeakestPrereq` + `review_prereq` flow shipped in v2.9.0's GBrain Integration Bridge. The concept graph has real prerequisite edges; the mastery model tracks real per-concept scores; the routing logic is deterministic.*
+### Keeping your data private
 
-### *"Coaching lectures move at the average pace — I'm either bored or lost."*
+**Before:** *"I'm nervous about my weak areas ending up in some corporate database that might leak, or get sold, or get subpoenaed years from now."*
 
-A coaching institute has to move at a pace that works for the average student in the batch. If you're above that pace, you're bored and lose momentum. If you're below, you're lost and lose confidence. The class schedule optimises for the batch, not for you.
+**After:** *"My materials, my progress, my struggles — all on my device. Nothing lives on a server that could leak."*
 
-**Bliss** *(your takeaway):* You move per concept, not per class. Move quickly through topics that click. Spend extra time on topics that don't. The app tracks mastery per concept, not per calendar slot, so nothing is gated by a classroom schedule. The system's recommendations adapt to your actual state, not to where the average student would be on a Tuesday in March.
+The bliss: architectural privacy. No server-side database of student progress exists; this isn't a policy statement that could be rewritten. It's how the system is built.
 
-### *"I'm embarrassed to ask 'basic' questions in class."*
+### Geography not deciding your prep quality
 
-By the third month of a coaching program, the students who didn't get the basics solidly in the first month are usually too embarrassed to ask. The questions stay unasked. The foundations stay shaky. The gap widens.
+**Before:** *"I don't have access to top-tier teaching where I live. The best coaching institutes are in the major metros; I'm not."*
 
-**Bliss** *(your takeaway):* Ask anything, in any way, any number of times. No classmate sees. No teacher makes a face. You can type *"wait, what's a derivative again?"* after you've done 200 derivative problems, and the app just answers. The only thing that matters is that you actually understand — not what anyone would think about what you don't.
+**After:** *"I'm getting the same structured lessons, the same explicit trap-flagging, the same depth, no matter where I log in from. My pin code stopped deciding my prep quality."*
 
-### *"My teacher explains but I don't see why any of it actually matters."*
+The bliss: lesson content is uniform across locations. Same 8-component structure, same concept graph, same Wolfram verification, for every student.
 
-You sit through a derivation. The teacher writes equations. You copy the equations. You pass the exam. Five years later, you couldn't explain to anyone why the derivation mattered or what problem it solved — because you never got that part.
+*To be precise: we don't claim top-tier faculty personally wrote every lesson. We claim the structural rigor meets the bar that well-regarded prep material sets. Readers can audit the framework docs for every design decision.*
 
-**Bliss** *(your takeaway):* Every lesson opens with a **hook** — a single sentence on why this concept exists and what real problem it was invented to answer. Not *"it's in the syllabus."* A genuine motivation. You see the point before the proof. The proof sticks afterward because now you have a reason to care about it.
+### Fixing foundations upstream
 
-*The hook is the first of eight components in every lesson. See docs/LESSON-FRAMEWORK.md for the full structure.*
+**Before:** *"My foundations are shaky and advanced topics feel impossible. I keep getting stuck on Fourier series but the real problem is I never solidly got trigonometric identities."*
 
-### *"Rigorous material is too abstract; intuitive explanations are too hand-wavy."*
+**After:** *"It noticed the gap three topics behind the one I was stuck on, routed me there first, and the advanced material started making sense again. The misconception got fixed where it actually lived."*
 
-Textbooks give you the formal statement of a theorem with zero motivation. Video explainers give you an analogy that kind-of works but misses the precision your exam actually tests. You're stuck picking between rigor and understanding, and neither one alone is enough.
+The bliss: `findWeakestPrereq` + `review_prereq` flow. When a wrong answer shows a prerequisite signature, the system walks the concept graph, finds your weakest upstream concept, and routes you there before the advanced topic.
 
-**Bliss** *(your takeaway):* Each lesson carries both layers, deliberately. The **intuition** is a visualised mental picture — not dumbed-down, just made concrete. The **formal statement** is rigorous, in your exam's exact terminology — not hidden in academic prose. You linger on whichever layer you need today. The claim we make is that neither layer compromises on correctness. The intuition is true; the formalism is approachable.
+### Your pace, not the batch's pace
+
+**Before:** *"Coaching lectures move at the average pace. If I'm above it I'm bored; if I'm below I'm lost. The class schedule optimises for the batch, not for me."*
+
+**After:** *"I move at my pace per concept. Quick through linear algebra because it clicked. Slower through measure theory because I needed it. No batch to keep up with."*
+
+The bliss: mastery is tracked per concept, not per class slot. Fast learners don't wait. Slow learners don't feel pushed. Recommendations adapt to your actual state, not to where the average student would be today.
+
+### Asking anything without judgment
+
+**Before:** *"I'm embarrassed to ask basic questions in class. By the third month of coaching, the foundational questions feel impossible to ask — everyone else seems to have moved on."*
+
+**After:** *"I asked a 'basic' question at midnight with no one watching. The system didn't care that I'd already done 200 derivative problems. It answered. I moved on."*
+
+The bliss: no social pressure, no peer judgment, no teacher making a face. You ask, you get an answer, you continue. The only thing that matters is that you understand.
+
+### Understanding why it matters
+
+**Before:** *"My teacher explains the derivation but I don't see why any of it actually matters. I write the equations, pass the exam, and five years later I couldn't explain the point."*
+
+**After:** *"Every lesson opens with the real problem this concept was invented to solve. Motivation before mechanics. The derivation sticks because I finally have a reason to care about it."*
+
+The bliss: the **hook** is the first of eight components in every lesson — a single sentence on what real problem this concept answers. Not "it's in the syllabus." A genuine motivation.
+
+### Rigor and intuition in the same place
+
+**Before:** *"Textbooks are too abstract, videos are too hand-wavy. Neither works alone. I'm stuck picking between rigor and understanding, and one without the other isn't enough."*
+
+**After:** *"I get the visual intuition AND the rigorous formal statement — in the same place, for the same concept. I linger on whichever layer I need today. Neither one is dumbed-down."*
+
+The bliss: every lesson carries both the intuition (visualised, concrete) and the formal statement (rigorous, in your exam's exact terminology). The claim is that neither layer compromises on correctness.
 
 ---
 

@@ -16,28 +16,29 @@ domain-agnostic — any exam with a defined syllabus works.
 
 ---
 
-## From exam-prep pain to exam-prep bliss
+## The journey — from exam-prep pain to exam-prep bliss
 
-Every exam-prep cycle produces a specific set of pains. Below is the pain you recognise, and the concrete **bliss** that names your takeaway — what you actually walk away with. Each bliss is a real feature shipped in the codebase; deeper versions are in [FEATURES.md](./FEATURES.md) Slide 2.
+Below, the same student speaks twice. Once before Vidhya. Once after. Every "After" line is a real takeaway — what you'll actually find yourself saying, in your own voice, once you're using the product. Each bliss is tied to a feature shipped in the codebase; longer treatment is in [FEATURES.md](./FEATURES.md) Slide 2.
 
-- **Pain:** *"I don't know if I'm actually ready for my exam."*    **Bliss** *(your takeaway):* You see "12 mastered · 15 in progress · 3 struggling" — per concept, always visible. When your parents ask how preparation is going, you have a real answer instead of a guess.
-- **Pain:** *"The syllabus feels overwhelming — I don't know where to start today."*    **Bliss** *(your takeaway):* Three priority concepts for today, ranked by your exam's topic weight × your current mastery. An hour of focused work. Not a hundred-item to-do list.
-- **Pain:** *"My exam is three days away and every app tells me to 'take a break.'"*    **Bliss** *(your takeaway):* Advice that reads your urgency. Six months out and five wrong in a row: break suggested. Three days out and five wrong in a row: switched to a quick review instead. No tone-deaf suggestions when you're already stressed.
-- **Pain:** *"I watch 45-minute lectures and still don't get the concept."*    **Bliss** *(your takeaway):* Every concept in eight small pieces. You skip what you already know, linger on what you don't. Two focused minutes beat forty unfocused ones.
-- **Pain:** *"It's 2 a.m. I'm stuck on a problem. I have nowhere to turn."*    **Bliss** *(your takeaway):* Snap a photo. Full walkthrough in seconds, with the common traps flagged. Works on web, Telegram, and WhatsApp — same quality on a slow mobile connection or a laptop on campus wifi.
-- **Pain:** *"I paid for a plan but don't know what I'm actually getting."*    **Bliss** *(your takeaway):* Sign in once and see every exam your plan covers, with a live "you're already X% of the way there" chip per bonus exam. Coverage updates as you study. Nothing buried in a settings PDF.
-- **Pain:** *"I keep forgetting things I studied weeks ago."*    **Bliss** *(your takeaway):* Concepts resurface at intervals backed by memory research, not streak tricks. Exam week, your day-one learning is still intact because the system brought it back at the right moments.
-- **Pain:** *"AI chatbots sometimes confidently give wrong answers."*    **Bliss** *(your takeaway):* Answers run through Wolfram Alpha where possible. Past papers are pre-checked. When the system isn't sure, it says so instead of inventing a clean-looking wrong answer.
-- **Pain:** *"Apps use streaks and guilt-trip notifications to manipulate me."*    **Bliss** *(your takeaway):* Zero streaks. Zero badges. Zero "you lost your streak" notifications. You study when you want. The app doesn't try to trick you into opening it.
-- **Pain:** *"I don't want my weak areas in some corporate database."*    **Bliss** *(your takeaway):* No server-side database of your progress exists. Your materials stay in your browser; your progress lives on your device. Architecturally, not as a policy statement that can be rewritten later.
-- **Pain:** *"I don't have access to top-tier teaching where I live."*    **Bliss** *(your takeaway):* Lesson content doesn't change based on your location. Same structure, depth, and explicit trap-flagging for every student. Your pin code stops deciding the quality of your preparation.
-- **Pain:** *"My foundations are shaky, so advanced topics feel impossible."*    **Bliss** *(your takeaway):* When a wrong answer has a foundational-gap signature, the system routes you upstream first. Fix the foundation, and the advanced topic unlocks naturally.
-- **Pain:** *"Coaching lectures move at the average pace — I'm either bored or lost."*    **Bliss** *(your takeaway):* Mastery tracked per concept, not per class schedule. Move quickly through topics that click. Spend extra time on topics that don't. No batch pace to keep up with.
-- **Pain:** *"I'm embarrassed to ask 'basic' questions in class."*    **Bliss** *(your takeaway):* Ask anything, in any way, any number of times. No classmate sees. No teacher makes a face. The question you were holding in gets an actual answer.
-- **Pain:** *"My teacher explains but I don't see why any of it actually matters."*    **Bliss** *(your takeaway):* Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. Motivation before mechanics, so the mechanics actually stick.
-- **Pain:** *"Rigorous material is too abstract; intuitive explanations are too hand-wavy."*    **Bliss** *(your takeaway):* Every lesson carries both layers. A visualised mental picture that isn't dumbed-down, and the formal statement in your exam's exact terminology that isn't hidden in academic prose. Linger on whichever you need today.
+- **Before:** *"I don't know if I'm actually ready for my exam."*    **After:** *"I know exactly where I stand. Twelve concepts mastered, fifteen in progress, three I need to work on. I stopped guessing."*
+- **Before:** *"The syllabus is so big I don't know where to start today."*    **After:** *"Three concepts today. Finished them by evening. I can see what's next."*
+- **Before:** *"My exam is in three days and every app is telling me to take a break."*    **After:** *"It switched me to a quick review instead of suggesting rest. The advice finally matches my reality."*
+- **Before:** *"I watch 45-minute lectures and still don't get the concept."*    **After:** *"It clicked in ten minutes. I skipped the parts I already knew and spent time on the one thing I didn't."*
+- **Before:** *"It's 2 a.m., I'm stuck on this problem, and I have nowhere to turn."*    **After:** *"I took a photo and had the full walkthrough in seconds. The trap I'd have fallen into was flagged before I hit it."*
+- **Before:** *"I paid for a plan and I don't really know what I'm getting."*    **After:** *"I can see every exam my plan covers, and how much of each one I've already prepared for. It's no longer a mystery."*
+- **Before:** *"I keep forgetting things I studied weeks ago."*    **After:** *"What I learned in the first month is still with me in exam week. It kept coming back at the right moments."*
+- **Before:** *"I can't tell when the AI is making things up."*    **After:** *"When the system isn't sure it tells me. When it's sure, the math has been checked. I finally trust what I read."*
+- **Before:** *"Streaks and notifications are making me resent studying."*    **After:** *"No streaks. No guilt. I study when I want to study, and the app doesn't interrupt me otherwise."*
+- **Before:** *"I'm nervous about my weak areas ending up in some corporate database."*    **After:** *"My materials, my progress, my struggles — all on my device. Nothing lives on a server that could leak."*
+- **Before:** *"I don't have access to top-tier teaching where I live."*    **After:** *"I'm getting the same structured lessons, the same trap-flagging, the same depth, no matter where I log in from. Geography stopped being the limit."*
+- **Before:** *"My foundations are shaky, which is making everything advanced feel impossible."*    **After:** *"It noticed the gap three topics behind the one I was stuck on, sent me there first, and the advanced stuff started making sense again."*
+- **Before:** *"Coaching moves at the average pace — I'm either bored or lost."*    **After:** *"I'm moving at my pace per concept. Quick where it clicks, slow where it doesn't. There's no batch to keep up with anymore."*
+- **Before:** *"I'm embarrassed to ask basic questions in class."*    **After:** *"I asked a 'basic' question at midnight with no one watching. I got an answer. I moved on."*
+- **Before:** *"My teacher explains the derivation but I don't see why any of it matters."*    **After:** *"Every lesson starts with what problem the concept was invented to solve. I finally understand why I'm learning this — so the derivation actually sticks."*
+- **Before:** *"Textbooks are too abstract, videos are too hand-wavy, neither works for me."*    **After:** *"I get the visual intuition and the rigorous statement — in the same place, for the same concept. I pick whichever layer I need today."*
 
 ---
+
 
 
 

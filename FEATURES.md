@@ -1,6 +1,6 @@
 # Project Vidhya — Features & Moats
 
-*A pitch deck. 19 slides. Every claim grounded in shipped code.*
+*A pitch deck. 20 slides. Every claim grounded in shipped code.*
 
 ---
 
@@ -354,7 +354,83 @@ Vidhya's chips are scarce. When one appears, it's because the system has actuall
 
 ---
 
-## Slide 13 — Technical Differentiators (Head-to-Head)
+## Slide 13 — The Pedagogical Moat (Research-Grounded Atomic Content)
+
+Every Vidhya lesson is built from an **8-component pedagogical template**
+where every slot maps to a research-backed learning-science principle.
+
+```
+1. Hook            ←  elaborative interrogation (Chi et al.)
+2. Definition      ←  schema activation
+3. Intuition       ←  dual coding (Paivio)
+4. Worked Example  ←  worked-examples effect (Sweller)
+5. Micro-Exercise  ←  testing effect (Roediger & Karpicke)
+6. Common Traps    ←  preemptive error correction
+7. Formal Statement←  concrete → abstract progression
+8. Connections     ←  schema weaving (prerequisite DAG)
+```
+
+**Source aggregation with explicit priority** (highest to lowest):
+
+```
+USER-MATERIALS  >  BUNDLE-CANON  >  WOLFRAM  >  CONCEPT-GRAPH
+```
+
+If a student uploaded their professor's eigenvalue notes, the hook quotes
+those notes — not OpenStax. That's the **resonance** layer: their context,
+their notation, their words. Attribution is preserved per-component, so a
+single lesson might cite (user notes) + (OpenStax definition) + (OCW
+Strang intuition) + (Wolfram example) + (graph connections) — and the UI
+shows every source with its license.
+
+**Personalization as opt-in layering, not substitution.**
+
+The base Lesson works for anyone. Zero student state = coherent experience
+for first-time visitors. Student state is applied as a *separate pass*
+with 6 independent, composable rules:
+
+| Rule | Trigger | Effect |
+|------|---------|--------|
+| Spot-check | Mastery > 0.85 on concept | 7 components → 2 (exercise + connections) |
+| Skip hook | Topic mastery > 0.75 | No motivational preamble needed |
+| Collapse formal | Scope = mcq-fast | Save the math depth for a different session |
+| Reorder | Visit count ≥ 2 | Micro-exercise leads (retrieval practice) |
+| Expand traps | Matching error history | Traps reorder to match student's error types |
+| Annotate user material | User material surfaced | UI shows "personalized from your notes" |
+
+All rules are pure functions, idempotent, cacheable. The base lesson is
+deterministic — 1,000 students get the same bytes; only the layer changes.
+
+**Spaced retrieval without nagging.**
+
+After each lesson, the SM-2 scheduler (SuperMemo-2 simplified) computes
+the next review interval — 1d → 3d → 6d → 15d → ... — based on the
+student's micro-exercise performance. The scheduler *surfaces* due
+concepts via `GET /api/lesson/review-today`. The student is never forced
+or guilted into reviewing. Consistent with Slide 12's UX contract.
+
+**Why this compounds:**
+
+1. **The bundle grows** → explainers get richer → component quality
+   improves for all students, no personalization required.
+2. **Student uploads materials** → user-material resonance increases →
+   lessons feel progressively more personal over time.
+3. **Engagement data flows back** → poorly-engaged components surface in
+   admin dashboard → curator improvements → better base for everyone.
+
+**Where it's shipped:**
+- `src/lessons/types.ts` — 8-component schema
+- `src/lessons/source-resolver.ts` — 4-source aggregation
+- `src/lessons/composer.ts` — base lesson assembly (pure function)
+- `src/lessons/personalizer.ts` — 6-rule layering (pure function)
+- `src/lessons/spaced-scheduler.ts` — SM-2 with engagement-inferred quality
+- `src/api/lesson-routes.ts` — 5 HTTP endpoints
+- `frontend/src/pages/gate/LessonPage.tsx` — card-based adaptive reader
+- `docs/LESSON-FRAMEWORK.md` — full pedagogical rationale + bibliography
+
+---
+
+## Slide 14 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -374,10 +450,13 @@ Vidhya's chips are scarce. When one appears, it's because the system has actuall
 | Test diagnostic | Either none or batch (wait 30s+) | SSE stream — per-problem verdicts live |
 | Follow-up suggestions | 3 after every turn, always | Max 1, null on failure, session-deduped |
 | Learning plan delivery | Pushed at student unsolicited | Gated behind explicit "Show the plan" consent |
+| Content delivery unit | Generate-on-demand OR static prose | Structured 8-component template, attributed multi-source aggregation |
+| Personalization model | Entangled with generation | Layered on deterministic base — cacheable, auditable, testable |
+| Spaced retrieval | Unsupported OR forced streaks | Offered via SM-2 with engagement-inferred quality; never pushed |
 
 ---
 
-## Slide 14 — Tech Stack
+## Slide 15 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -397,7 +476,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 15 — What's Shipped (at v2.4.0)
+## Slide 16 — What's Shipped (at v2.5.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -409,8 +488,9 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.2.3 | `a5c88f2` | Wolfram verification pipeline complete, 6 problems verified |
 | v2.3.0 | `f5879da` | Scope-aware syllabus + multimodal intent analyzer (Snap) |
 | v2.4.0 | `0e71cf9` | Chat image support + SSE diagnostic + polite next-step chips |
+| v2.5.0 | `5147cff` | Lesson framework — 8-component template, 4-source aggregation, 6-rule personalizer, SM-2 retrieval |
 
-**Production numbers at v2.4.0:**
+**Production numbers at v2.5.0:**
 - 34 curated + attributed problems across 10 topics
 - 82-concept knowledge graph with placeholder explainers
 - 6 problems Wolfram-verified end-to-end
@@ -430,7 +510,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 16 — Cost Projections at Scale
+## Slide 17 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -450,7 +530,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 17 — Why Now
+## Slide 18 — Why Now
 
 **Three trends converge:**
 
@@ -472,7 +552,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 18 — Roadmap (Near-Term)
+## Slide 19 — Roadmap (Near-Term)
 
 **Content expansion** — 34 → 2000 problems over 90 days
 - Nightly CI already wired (needs workflow YAML upload)
@@ -498,7 +578,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 19 — Invitation
+## Slide 20 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -569,6 +649,7 @@ Where to engage:
 | **Quality (Wolfram verify)** | 🔵🔵🔵🔵 | Grows with bundle size |
 | **Personalization (materials)** | 🔵🔵🔵🔵 | Switching cost rises with upload volume |
 | **Cognitive model (GBrain)** | 🔵🔵🔵 | 6 pillars, explicit design, auditable |
+| **Pedagogical (Lesson framework)** | 🔵🔵🔵🔵🔵 | Research-grounded template + attributed aggregation + layered personalization; compounds with bundle + user materials growth |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

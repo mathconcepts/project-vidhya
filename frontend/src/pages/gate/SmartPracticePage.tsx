@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
 import { useSession } from '@/hooks/useSession';
@@ -23,7 +24,7 @@ import { resolve, warmContentBundle, getBundleStats, type ResolvedContent, type 
 import { recordAttempt } from '@/lib/gbrain/client';
 import {
   Sparkles, Zap, Database, Server, CheckCircle2, XCircle, Loader2, ArrowRight,
-  BookOpen, Target, DollarSign, Clock,
+  BookOpen, Target, DollarSign, Clock, GraduationCap,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -52,6 +53,7 @@ const SOURCE_META: Record<ContentSource, { label: string; icon: typeof Sparkles;
 
 export default function SmartPracticePage() {
   const sessionId = useSession();
+  const navigate = useNavigate();
   const [topic, setTopic] = useState<string>('linear-algebra');
   const [difficulty, setDifficulty] = useState<number>(0.5);
   const [requireWolfram, setRequireWolfram] = useState(false);
@@ -248,13 +250,24 @@ export default function SmartPracticePage() {
 
             {resolved.problem && (
               <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
-                <div className="flex items-center gap-1.5 text-[10px] text-surface-500 uppercase tracking-wide">
-                  <Target size={10} />
-                  {resolved.problem.topic?.replace(/-/g, ' ')}
-                  <span>·</span>
-                  <span>{resolved.problem.year || 'generated'}</span>
-                  <span>·</span>
-                  <span>{resolved.problem.marks || 2} marks</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-[10px] text-surface-500 uppercase tracking-wide">
+                    <Target size={10} />
+                    {resolved.problem.topic?.replace(/-/g, ' ')}
+                    <span>·</span>
+                    <span>{resolved.problem.year || 'generated'}</span>
+                    <span>·</span>
+                    <span>{resolved.problem.marks || 2} marks</span>
+                  </div>
+                  {(resolved.problem.concept_id || topic) && (
+                    <button
+                      onClick={() => navigate(`/lesson/${resolved.problem.concept_id || topic}`)}
+                      className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-colors"
+                    >
+                      <GraduationCap size={11} />
+                      Study this concept
+                    </button>
+                  )}
                 </div>
                 <p className="text-sm text-surface-100 leading-relaxed whitespace-pre-wrap">
                   {resolved.problem.question_text}

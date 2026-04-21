@@ -295,19 +295,23 @@ Extending the 6 principles from `docs/USER-JOURNEY.md` Part 5, with
 
 ---
 
-## 6. What v2.9.3 DOES NOT do
+## 6. Explicit non-goals
 
-- **No in-app messaging/DMs** — deliberate. Teachers use their existing
-  comms channels.
-- **No grade book or assignment tracking** — Vidhya is a learning
+These are not "deferred" — they're deliberate out-of-scope decisions
+that define what Vidhya is and isn't as a product.
+
+- **No in-app messaging/DMs.** Teachers use their existing comms
+  channels (WhatsApp, SMS, email). We give pre-filled templates.
+- **No gradebook or assignment tracking.** Vidhya is a learning
   platform, not a classroom management system.
-- **No teacher-created content** — teachers use the existing bundle
-  + curriculum. Teacher-authored concepts is a v3 feature.
-- **No multi-teacher-per-student** — a student has at most one human
-  teacher. Supporting teams of teachers per student is a v3 feature.
-- **No LLM-generated teaching briefs** — briefs are composed from
+- **No teacher-authored content.** Teachers use the existing bundle
+  + curriculum. The curriculum YAML format (see
+  `docs/CURRICULUM-FRAMEWORK.md`) is the extension point.
+- **No multi-teacher-per-student.** A student has at most one human
+  teacher. Simplification, not a limitation to revisit.
+- **No LLM-generated teaching briefs.** Briefs are composed from the
   existing content bundle + cohort mastery data. No additional LLM
-  cost at render time.
+  cost at render time. This is a feature, not a limitation.
 
 ---
 

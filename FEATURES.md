@@ -1361,29 +1361,36 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 31 — Roadmap (Near-Term)
+## Slide 31 — Extension points (for contributors)
 
-**Content expansion** — 34 → 2000 problems over 90 days
-- Nightly CI already wired (needs workflow YAML upload)
-- Each scrape script is idempotent + polite
-- Per-record attribution means new sources ship safely
+Vidhya is open source. These are places where a contributor can add
+real value without rewriting the foundation:
 
-**Full explainer library** — 82 placeholders → 82 real 200-word pieces
-- One-time ~$0.08 via Gemini Flash-Lite
-- Unlocks tier-0 explain-intent resolves in 100% of concepts
+**Content expansion.** The current bundle ships 34 pre-verified
+problems across 82 concepts. Every scraper under `scripts/` is
+idempotent and attribution-preserving — add a new source, run the
+pipeline, the bundle grows. No architectural lift.
 
-**Mobile wrapper**
-- Architecture already local-first — Capacitor or Tauri wrap is trivial
-- IndexedDB + WASM embeddings work natively
-- Ship to iOS/Android TestFlight in <1 week
+**Explainer content.** 82 concept placeholders live in
+`frontend/public/data/explainers.json`. 6 have been filled with
+complete 200-word pieces; 76 are awaiting content. Each completed
+explainer immediately improves Tier-0 hit rate.
 
-**Domain expansion**
-- Swap `concept-graph.ts` and seed problems to ship JEE, CAT, UPSC variants
-- Infrastructure unchanged
+**Domain expansion.** Swap `src/constants/concept-graph.ts` and add
+a new curriculum YAML under `data/curriculum/`. Ship for JEE, CAT,
+UPSC, or any exam with a defined syllabus. Infrastructure unchanged.
 
-**SymPy verification layer**
-- Catches the 2/34 problems where Wolfram refactored algebraically
-- Python micro-service, stateless, optional
+**Mobile wrapper.** Architecture is already local-first. A Capacitor
+or Tauri wrap would ship to iOS/Android without restructuring the
+backend. Nothing in the codebase assumes a browser.
+
+**Verification layer.** A SymPy micro-service (stateless, optional)
+would catch the ~6% of problems where Wolfram refactored algebraically
+and the equivalence check fails. Clean interface point exists at
+`src/services/wolfram-service.ts`.
+
+These aren't promises of what we'll ship — they're openings in the
+architecture where someone else can.
 
 ---
 

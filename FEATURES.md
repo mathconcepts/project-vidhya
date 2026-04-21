@@ -6,7 +6,7 @@ the technical deep-dive for developers, evaluators, and decision-makers
 who need to understand what's under the hood.*
 
 - **Part 1 — For students, teachers, and institutional buyers** (Slides 1–8): what Vidhya *does for you*, in plain language
-- **Part 2 — For developers and technical evaluators** (Slides 9–32): every architectural decision, moat, file reference, and cost metric
+- **Part 2 — For developers and technical evaluators** (Slides 9–33): every architectural decision, moat, file reference, and cost metric
 
 ---
 
@@ -1221,7 +1221,186 @@ Rules (enforced at code review):
 
 ---
 
-## Slide 26 — Technical Differentiators (Head-to-Head)
+## Slide 26 — The Compounding Mastery + Smart Notebook Moat (Every Attempt Makes You Better)
+
+Most AI tutors are transactional. Ask → answer → end. Open the app
+tomorrow, nothing carried over except chat history.
+
+Vidhya closes the loop. **Every interaction now produces a visible,
+student-facing signal of what they got better at** — and every
+interaction is logged to a notebook that becomes their personal,
+downloadable source of truth.
+
+### Part 1 — The "every attempt makes you better" engine
+
+After every problem attempted, micro-exercise answered, or concept
+engaged, the student sees:
+
+```
+┌─────────────────────────────────────────────────┐
+│ Verdict        ✗ Wrong — sign error             │
+│                                                 │
+│ Mastery        63% → 66%  (+3)                  │
+│                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                24 attempts · 8 from mastery     │
+│                                                 │
+│ Insight        "This wrong answer just made     │
+│                 you sharper."                   │
+│                The approach was correct; the    │
+│                arithmetic slipped. Slow down on │
+│                the next one.                    │
+│                                                 │
+│ Next step      ▸ One more attempt              │
+│                Errors teach fastest when        │
+│                the correction is immediate.     │
+│                                                 │
+│ Reinforcement  ★ You're connecting ideas       │
+│                across 4 concepts — that's how   │
+│                deep learning happens.           │
+└─────────────────────────────────────────────────┘
+```
+
+Every box has a specific design rationale:
+
+- **Mastery delta** — the tangible progress signal. Mastery is not
+  binary "solved or not"; it's a moving number that advances with
+  every engagement.
+- **Insight tone** — four options: `celebration` (first-try, milestone,
+  hard-problem-solved), `encouragement` (wrong answer, framed as
+  learning), `reinforcement` (correct but not yet mastered),
+  `correction` (prerequisite gap). **Never "try again" in a failure
+  framing.** Always "this wrong answer uncovered exactly what we can
+  fix."
+- **Error-type-aware explanations** — when GBrain's 7-category error
+  taxonomy classifies the attempt, the insight is specific:
+  - conceptual → "specific gap in how you're thinking about X"
+  - procedural → "method is right; a step was off"
+  - computational → "approach was correct; arithmetic slipped"
+  - notation → "you understand the idea; notation tripped you up"
+  - application → "you know the rule; identifying when to apply it is
+    the hard part"
+- **Single next step, permission-based** — never a menu. The
+  recommender cascade chooses one: `move_on` (for mastered concepts),
+  `try_harder`, `practice_same`, `review_prereq` (weakest prerequisite,
+  when conceptual error detected), `take_break` (after 5+ consecutive
+  failures — "memory consolidates during breaks").
+- **Reinforcements fire on patterns, not streaks** — 3+ consecutive
+  correct same-concept, mastery milestone crossed, or cross-concept
+  success ("connecting ideas across 4 concepts — that's how deep
+  learning happens"). **Specific wins, not generic gamification.**
+
+**Files:**
+- `src/gbrain/after-each-attempt.ts` — insight engine (~430 LOC, pure
+  functions, no I/O)
+- `POST /api/gbrain/attempt-insight` — compute + return
+
+### Part 2 — Smart Notebook: single source of truth, downloadable
+
+Every user input becomes a notebook entry. Auto-clustered by concept.
+Gap-analyzed against the full syllabus. Exportable as Markdown.
+
+**7 entry kinds**, all captured automatically:
+`chat_question` · `snap` · `lesson_viewed` · `problem_attempted` ·
+`material_uploaded` · `diagnostic_taken` · `note`
+
+**Auto-clustering** — lightweight keyword match against concept labels,
+aliases, keywords. Score ≥ 1.5 wins. No LLM call, no embedding call,
+no round-trip. Every log is ~1ms. Designed for write-heavy use.
+
+**Gap analysis** — per topic, shows covered vs uncovered concepts in
+the official syllabus. Worst-coverage-first ordering. Students see
+**exactly what they haven't touched yet** — higher leverage than a
+to-do list because it's grounded in what they've actually done vs
+what's required.
+
+**Markdown export** — the download button triggers
+`GET /api/notebook/download` which streams GitHub-flavored Markdown
+with `Content-Disposition: attachment`. Structure:
+
+```markdown
+# Study Notebook — Maya K.
+*Exported from Project Vidhya on 2026-04-21*
+
+Total entries: 342
+Syllabus coverage: 58% (48 of 82 concepts touched)
+
+## Table of contents
+1. Syllabus coverage
+2. Concepts by topic
+3. Chronological log
+
+## Syllabus coverage
+| Topic | Coverage | Concepts touched | Gaps |
+|-------|:--------:|:----------------:|------|
+| linear-algebra | 🟢 85% | 17/20 | null space, +1 more |
+| calculus | 🟡 62% | 13/21 | partial derivatives, directional... |
+| complex-variables | 🔴 18% | 2/11 | contour integrals, residues... |
+
+### Concepts to study next
+**calculus** — 8 uncovered:
+- Partial derivatives
+- Directional derivatives
+- ...
+
+## Concepts by topic
+### Eigenvalues (linear-algebra)
+*23 entries · last touched 2026-04-19*
+- [chat_question] Asked: how to find eigenvalues of 2x2 matrix?
+  > I'm stuck on the characteristic polynomial step...
+  *2026-03-18*
+...
+```
+
+A student going into an exam can download their entire study history
+in 2 seconds, reference it offline, print it, share it with a
+teacher. **It's theirs.**
+
+**Frontend at `/smart-notebook`** — three tabbed views:
+
+- **Gaps** (default) — syllabus coverage table, worst-first
+- **By concept** — clusters view with expandable entry lists
+- **Timeline** — chronological log grouped by date
+
+Plus the Download `.md` button in the header.
+
+**Files:**
+- `src/notebook/notebook-store.ts` — notebook module (~380 LOC)
+- `src/api/notebook-insight-routes.ts` — 8 HTTP endpoints
+- `frontend/src/pages/gate/SmartNotebookPage.tsx` — UI
+
+**Storage:** `.data/notebooks/{user_id}.json` via shared
+`createFlatFileStore` generic. Append-only. Bounded at 5000 entries
+(student should be downloading periodically anyway).
+
+### Why this is a moat
+
+Traditional AI tutors optimize the *answer*. Vidhya optimizes the *arc*.
+
+1. **Every attempt produces visible progress.** Students see mastery %
+   move, not just correctness. The compounding is felt, not hidden.
+2. **Every wrong answer is reframed as learning.** Error taxonomy lets
+   us explain *why* an answer was wrong in a way that builds
+   understanding rather than shame.
+3. **Every session creates one actionable next step.** Student never
+   decides what to do next alone.
+4. **Patterns are celebrated specifically.** "Three in a row on
+   eigenvalues" beats a generic streak counter.
+5. **Notebook accumulates over weeks.** A student with 6 months of
+   practice has a 1000-entry notebook grouped by concept — their study
+   companion, their review reference, their proof of growth.
+6. **Gap analysis against real syllabus.** No other tutor tells you
+   which of your 82 syllabus concepts you haven't touched yet.
+7. **Exportable in universal format.** Markdown works everywhere.
+   Privacy bonus: the student owns their data.
+
+**Zero new npm dependencies. Zero LLM cost at log or insight time.**
+The insight engine is pure functions over existing GBrain state; the
+notebook is flat-file storage; the clustering is keyword matching.
+Architecturally clean.
+
+---
+
+## Slide 27 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -1256,7 +1435,7 @@ Rules (enforced at code review):
 
 ---
 
-## Slide 27 — Tech Stack
+## Slide 28 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -1276,7 +1455,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 28 — What's Shipped (at v2.9.0)
+## Slide 29 — What's Shipped (at v2.9.4)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -1293,7 +1472,11 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.6.0 | `888dbd7` | Curriculum framework — admin-owned YAML exams, shared-concept strategy, three-layer guardrails, compounding quality loop |
 | v2.7.0 | `8a03c27` | LLM config framework — BYO-key in-browser, 8 providers as data, cascading role defaults, 4 API-shape universal adapter |
 | v2.8.0 | `b4f0dd1` | Roles & multi-channel — owner/admin/teacher/student hierarchy, Google OAuth identity, flat-file user store, web/Telegram/WhatsApp adapters, zero new deps |
-| v2.9.0 | *this* | GBrain Integration Bridge — pure-function translation layer connecting cognitive core to Lesson/Curriculum/Multimodal/Roles frameworks; teacher roster + admin cohort dashboard |
+| v2.9.0 | `ee3da63` | GBrain Integration Bridge — pure-function translation layer connecting cognitive core to Lesson/Curriculum/Multimodal/Roles frameworks; teacher roster + admin cohort dashboard |
+| v2.9.1 | `13ce67c` | Refactor — extract shared route + flat-file primitives, −210 LOC |
+| v2.9.2 | `fc0445f` | User journey mapped, admin dashboard + student welcome card shipped |
+| v2.9.3 | `de75e8a` | Teacher as end-user — /teaching dashboard, student-teacher relationship model with transparency |
+| v2.9.4 | *this* | Compounding Mastery + Smart Notebook — after-each-attempt insight engine + auto-clustered notebook with gap analysis + Markdown export |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -1319,7 +1502,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 29 — Cost Projections at Scale
+## Slide 30 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -1339,7 +1522,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 30 — Why Now
+## Slide 31 — Why Now
 
 **Three trends converge:**
 
@@ -1361,7 +1544,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 31 — Extension points (for contributors)
+## Slide 32 — Extension points (for contributors)
 
 Vidhya is open source. These are places where a contributor can add
 real value without rewriting the foundation:
@@ -1394,7 +1577,7 @@ architecture where someone else can.
 
 ---
 
-## Slide 32 — Invitation
+## Slide 33 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -1470,6 +1653,8 @@ Where to engage:
 | **LLM-agnostic (BYO-key)** | 🔵🔵🔵🔵 | Provider-as-data — 8 providers, 4 API shapes; users pick + pay their own provider, no lock-in, rotate in 30s |
 | **Roles & multi-channel** | 🔵🔵🔵🔵 | Flat-file identity, zero-setup bootstrap (first signup = owner), 3 channels one account, zero new deps |
 | **GBrain Integration Bridge** | 🔵🔵🔵🔵🔵 | One cognitive source of truth for every consumer; privacy filters centralized; refactor-friendly; unlocks teacher/admin UX that was always in the data |
+| **Compounding mastery** | 🔵🔵🔵🔵🔵 | Every attempt produces visible mastery delta + insight + single next step + pattern reinforcement; error-taxonomy-aware explanations reframe wrong answers as learning |
+| **Smart Notebook** | 🔵🔵🔵🔵🔵 | Every user input auto-logged, concept-clustered, syllabus gap-analyzed, exportable as Markdown — single source of truth, universal format, privacy-preserving |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

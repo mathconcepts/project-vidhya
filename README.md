@@ -16,6 +16,88 @@ domain-agnostic — any exam with a defined syllabus works.
 
 ---
 
+## From exam-prep pain to exam-prep bliss
+
+Most students don't need another app. They need relief from a specific
+set of pains that every prep cycle produces. Here's the before/after
+Vidhya is built for.
+
+### "I don't know if I'm actually ready for my exam."
+
+**Bliss:** Every time you open Vidhya, you see exactly where you stand —
+12 concepts mastered, 15 in progress, 3 struggling. Not a vague progress
+bar. Not a percentage bar that means nothing. Real, per-concept, honest.
+When someone asks "how's prep going?" you have an answer.
+
+### "The syllabus feels overwhelming — I don't know where to start."
+
+**Bliss:** When your exam is set, Vidhya filters everything through its
+topic weightings. Open the app and see "Priority actions: three concepts
+ranked by exam weight and your current mastery." Not 100 things to do.
+Three. Today.
+
+### "My exam is three days away. Every app tells me to 'take a break' and it feels tone-deaf."
+
+**Bliss:** Vidhya reads the urgency. Six months out and five wrong in a
+row → it suggests a break. Three days out and five wrong in a row → it
+switches to a quick lesson review instead. The advice shifts as your
+situation shifts. No app telling you to step away 48 hours before your
+exam.
+
+### "I watch 45-minute video lectures and still don't get it."
+
+**Bliss:** Every concept is eight small components — hook, definition,
+intuition, worked example, mini exercise, common traps, formal statement,
+connections. You can skip what you already know and linger on what you
+don't. Built on how human memory actually works, not how YouTube
+monetizes attention.
+
+### "It's 2am. I'm stuck on a problem. I have nowhere to turn."
+
+**Bliss:** Snap a photo. Vidhya reads your handwriting, identifies which
+concept is being tested, walks you through the solution, flags where
+students usually go wrong. Same quality at 2am on a Tuesday as 2pm on a
+Saturday. Telegram, WhatsApp, or the web app — your pick.
+
+### "I paid for a subscription but I don't know what I'm actually getting."
+
+**Bliss:** If your plan bundles multiple exams, the first thing you see
+after sign-in is a "🎁 Giveaway · included in your plan" banner:
+*"You're preparing for GATE CS, and your plan also covers JEE Advanced
+(42% covered), IES Electronics (18% covered), BARC CSE (8% covered)."*
+Every bonus exam, explicit, with live coverage from your current prep.
+The bundle is celebrated, not buried in a settings page.
+
+### "I keep forgetting things I studied weeks ago."
+
+**Bliss:** Concepts come back at spaced intervals based on actual memory
+research. The week of your exam, stuff you learned three months ago is
+still there — not because you crammed, but because the system surfaced
+it at the right moments along the way.
+
+### "AI chatbots hallucinate. I don't trust the numbers."
+
+**Bliss:** Where possible, every answer is verified by Wolfram Alpha.
+Past papers are pre-checked. The AI doesn't get to invent numbers. When
+it's uncertain, it says so. When it's wrong, you can see exactly why.
+
+### "Study apps use streaks, badges, and guilt-trip notifications to manipulate me."
+
+**Bliss:** No streaks. No badges. No "you've lost your streak!"
+notifications. No gamification. You study when you want to. The app
+doesn't manipulate you — and the design decisions that would have
+juiced engagement metrics weren't made.
+
+### "I worry every app wants my data. I don't want my weak areas in some corporate database."
+
+**Bliss:** Materials you upload stay in your browser. Progress you make
+lives on your device. Your AI key (if you use one) never touches our
+servers. Your weak areas are yours. This isn't a marketing claim — it's
+how the app is architected. There's no server-side database of student
+progress to leak.
+
+---
+
 ## What you actually get (as a student)
 
 We built Vidhya around six promises to the student. Each one is a
@@ -219,7 +301,7 @@ for the tiered breakdown.
 | Document                    | Scope                                       |
 |----------------------------|---------------------------------------------|
 | [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
-| [FEATURES.md](./FEATURES.md) | 35-slide deck (8 for students, 27 technical): every moat, metrics, cost model |
+| [FEATURES.md](./FEATURES.md) | 36-slide deck (9 for students, 27 technical): every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
 | [docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) | BYO-key setup: 8 providers, cascading role defaults, privacy model |
 | [docs/USER-JOURNEY.md](./docs/USER-JOURNEY.md) | Student + admin journey maps with pain points and fixes |

@@ -5,6 +5,27 @@ and respects your privacy.*
 
 ---
 
+## From pain to bliss
+
+Most students don't need another app. They need relief from a set of
+specific pains that every exam-prep cycle produces. Here's the
+before/after Vidhya is built for.
+
+| The pain | The bliss |
+|----------|-----------|
+| "I don't know if I'm actually ready." | You see 12 mastered, 15 in progress, 3 struggling — per concept, always visible. When someone asks how prep is going, you have an answer. |
+| "The syllabus feels overwhelming." | "Priority actions: three concepts ranked by exam weight and your current mastery." Three things to do today. Not a hundred. |
+| "My exam is in 3 days. Every app tells me to take a break." | Vidhya reads the urgency. Six months out: it suggests breaks. Three days out: it shifts to quick lesson reviews. No tone-deaf advice. |
+| "I watch 45-minute videos and still don't get the concept." | Every concept is 8 small pieces — hook, intuition, example, traps, connections. Skip what you know. Linger on what you don't. |
+| "It's 2am. I'm stuck. Nowhere to turn." | Snap a photo. You get a walkthrough, common traps flagged, in seconds. Web, Telegram, or WhatsApp — your pick. |
+| "I paid for a coaching plan, don't know what I'm getting." | Sign in: "🎁 Giveaway · your plan also covers JEE Adv (42%), IES (18%), BARC (8%) — live coverage." The bundle is celebrated, not buried. |
+| "I forget what I studied weeks ago." | Concepts resurface at spaced intervals. Exam week, your month-old learning is still there — because the system brought it back at the right moments. |
+| "AI chatbots hallucinate. I don't trust the numbers." | Wolfram-verified where possible. Past papers pre-checked. The AI doesn't get to invent. Uncertainty is named, not hidden. |
+| "Apps use streaks and guilt-trip notifications to manipulate me." | No streaks. No badges. No "you lost your streak" pings. You study when you want. |
+| "I don't want my weak areas in some corporate database." | Your materials stay in your browser. Progress on your device. AI keys never touch our servers. Architecturally, not just as a policy. |
+
+---
+
 ## The 30-second version
 
 Imagine a tutor who:

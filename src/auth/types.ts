@@ -52,6 +52,16 @@ export interface User {
    *   "whatsapp:<phone_e164>"  — WhatsApp sender number
    */
   channels: string[];
+  /**
+   * Concepts a human teacher has pushed to this student's review queue.
+   * Populated when taught_by teacher uses the push-to-review action.
+   * Pruned on dismiss or completion.
+   */
+  pushed_reviews?: Array<{
+    concept_id: string;
+    pushed_by_teacher_id: string;
+    pushed_at: string;
+  }>;
 }
 
 /**

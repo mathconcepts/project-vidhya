@@ -19,6 +19,8 @@ import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { MasteryRing } from '@/components/gate/MasteryRing';
 import { Confetti } from '@/components/gate/Confetti';
 import { StudentWelcomeCard, hasSeenWelcome } from '@/components/gate/StudentWelcomeCard';
+import { YourTeacherCard } from '@/components/gate/YourTeacherCard';
+import { AnnouncementBanner } from '@/components/gate/AnnouncementBanner';
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart,
   Hash, Repeat, Layers, Share2, Navigation,
@@ -333,6 +335,12 @@ export function GateHome() {
             className="w-full max-w-md flex flex-col items-center gap-5 text-center"
             initial="hidden" animate="visible" variants={staggerContainer}
           >
+            {/* Teacher-assigned students get announcement banner + teacher card */}
+            <motion.div variants={fadeInUp} className="w-full space-y-3">
+              <AnnouncementBanner />
+              <YourTeacherCard />
+            </motion.div>
+
             <motion.div variants={fadeInUp}>
               <MasteryRing value={avgMastery} size={64} strokeWidth={3}>
                 <span className="text-xs font-bold text-surface-300">{avgMastery}%</span>
@@ -404,6 +412,13 @@ export function GateHome() {
       className="pt-2"
       initial="hidden" animate="visible" variants={staggerContainer}
     >
+      {/* Teacher-assigned students see announcement banner + teacher card;
+          self-study students (taught_by null) see neither — both components self-gate. */}
+      <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto mb-3 space-y-2">
+        <AnnouncementBanner />
+        <YourTeacherCard />
+      </motion.div>
+
       <AnimatePresence mode="wait">
         <motion.div
           key={currentTaskIdx}

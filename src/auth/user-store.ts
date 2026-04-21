@@ -292,3 +292,57 @@ export function touchUser(user_id: string): void {
   u.last_seen_at = new Date().toISOString();
   writeStore(store);
 }
+
+/**
+ * Push a concept to a student's review queue. Idempotent — if already
+ * pushed by same teacher, updates pushed_at. Used by
+ * POST /api/teaching/push-to-review.
+ */
+export function pushReviewToStudent(params: {
+  student_id: string;
+  concept_id: string;
+  teacher_id: string;
+}): { ok: boolean; reason?: string } {
+  const store = readStore();
+  const student = store.users[params.student_id];
+  if (!student) return { ok: false, reason: 'student not found' };
+  if (student.taught_by !== params.teacher_id) {
+    return { ok: false, reason: 'not your student' };
+  }
+  if (!student.pushed_reviews) student.pushed_reviews = [];
+  const existing = student.pushed_reviews.find(
+    p => p.concept_id === params.concept_id && p.pushed_by_teacher_id === params.teacher_id
+  );
+  if (existing) {
+    existing.pushed_at = new Date().toISOString();
+  } else {
+    student.pushed_reviews.push({
+      concept_id: params.concept_id,
+      pushed_by_teacher_id: params.teacher_id,
+      pushed_at: new Date().toISOString(),
+    });
+  }
+  writeStore(store);
+  return { ok: true };
+}
+
+/**
+ * Remove a pushed review from a student's queue (on dismiss or complete).
+ */
+export function dismissPushedReview(params: {
+  student_id: string;
+  concept_id: string;
+}): { ok: boolean } {
+  const store = readStore();
+  const student = store.users[params.student_id];
+  if (!student || !student.pushed_reviews) return { ok: false };
+  student.pushed_reviews = student.pushed_reviews.filter(p => p.concept_id !== params.concept_id);
+  writeStore(store);
+  return { ok: true };
+}
+
+/** Get the list of pushed reviews for a student. */
+export function listPushedReviews(student_id: string) {
+  const u = readStore().users[student_id];
+  return u?.pushed_reviews || [];
+}

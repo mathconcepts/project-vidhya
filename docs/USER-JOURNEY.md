@@ -6,6 +6,13 @@
 It's not a feature list, not a spec. It's "what does a real person
 experience, minute-by-minute, and where do they hit friction?"
 
+**Companion doc:** `docs/TEACHER-JOURNEY.md` covers teachers as a
+distinct end-user persona (they're users too, not just admins), and
+explains how students' teachers can be either the AI or an assigned
+human — both coexisting simultaneously for human-taught students.
+
+---
+
 **The primary goal this document is optimizing for:**
 
 > **Increase the student's competency with minimal effort from their side,

@@ -40,6 +40,7 @@ import { llmConfigRoutes } from './api/llm-config-routes';
 import { authRoutes } from './api/auth-routes';
 import { userAdminRoutes } from './api/user-admin-routes';
 import { adminDashboardRoutes } from './api/admin-dashboard-routes';
+import { teachingRoutes } from './api/teaching-routes';
 import { telegramRoutes as botTelegramRoutes } from './channels/telegram-adapter';
 import { whatsappRoutes } from './channels/whatsapp-adapter';
 import { getAuth, migrateSession } from './api/auth-middleware';
@@ -183,6 +184,9 @@ for (const route of userAdminRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminDashboardRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of teachingRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of botTelegramRoutes) {

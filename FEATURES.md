@@ -1,6 +1,6 @@
 # Project Vidhya — Features & Moats
 
-*A pitch deck. 21 slides. Every claim grounded in shipped code.*
+*A pitch deck. 22 slides. Every claim grounded in shipped code.*
 
 ---
 
@@ -549,7 +549,116 @@ Same commands for any exam. Everything is data-driven.
 
 ---
 
-## Slide 15 — Technical Differentiators (Head-to-Head)
+## Slide 15 — The LLM-Agnostic Moat (BYO-Key, Provider-as-Data)
+
+Most LLM products either (a) lock you into one provider ("Powered by
+OpenAI") or (b) let you pick at deploy-time via a complex YAML config
+only the sysadmin touches. Vidhya is **fully LLM-agnostic at runtime**:
+the student picks their provider in the browser, and the system adapts.
+
+**The registry-as-data pattern:**
+
+```
+src/llm/provider-registry.ts  ←  8 providers declared as data
+                                  (Gemini, Anthropic, OpenAI, OpenRouter,
+                                   Groq, DeepSeek, Mistral, Ollama)
+        ↓
+    4 API shapes      ←  google-gemini | anthropic | openai-compatible | ollama
+        ↓
+  universal callChat()  ←  one function, dispatches on api_shape
+```
+
+Adding a new provider is a **data change, not a code change**. Append to
+the `PROVIDERS` array with metadata (name, endpoint, auth header shape,
+model list, capabilities, key format) — the frontend picker auto-includes
+it, the resolver routes to it, `callChat` handles it via the shape
+dispatch. Same pattern as the curriculum YAMLs (Slide 14).
+
+**Cascading role resolution with independent overrides:**
+
+```
+User picks Gemini as primary           → Chat=Gemini-Flash
+                                       → Vision=Gemini-Flash
+                                       → JSON=Gemini-Flash-Lite
+
+User picks Groq as primary             → Chat=Llama-3.3-70B
+                                       → Vision=(Groq has none; falls through)
+                                       → JSON=Llama-3.1-8B
+
+User wants cheap chat + smart reasoning:
+  primary = Groq (chat)
+  override vision = Gemini (needs separate key)
+  override json = Gemini-Flash-Lite
+                                       → Three providers, three keys,
+                                         all configured in one form
+```
+
+Each role resolves independently. The same resolver file
+(`src/llm/config-resolver.ts`) contains the full rules — no special
+cases scattered through the codebase.
+
+**Privacy-first transport:**
+
+```
+browser (localStorage)
+  └─ X-Vidhya-Llm-Config header (base64 JSON)
+     └─ server handler (reads header, uses once, discards)
+        └─ LLM provider (receives key as auth header)
+```
+
+Keys **never** persist server-side. The server reads the header, makes
+the request, and forgets. This is the same privacy model as the rest of
+Vidhya (Slide 5): keys belong to the user, so they live in the user's
+browser.
+
+**Corner cases handled in the UI (`/llm-config`):**
+
+| Edge | How it's handled |
+|------|------------------|
+| Key masking | `••••••••` display + show/hide eye toggle |
+| Format validation | Client-side regex per provider (sk-ant-, AIza, gsk_) before network |
+| Live validation | `Test & save` makes a minimal round-trip; `reason` + `latency_ms` shown |
+| Key rotation | Paste new value over old; re-validate |
+| Local models | Ollama picker hides the key field entirely |
+| Custom endpoints | Shown only for `endpoint_overridable: true` providers |
+| Provider without vision | Role preview shows 'not supported by X — will fall back' |
+| Cross-tab sync | `StorageEvent` listener updates all open tabs live |
+| Mobile | Stacked grid, 14-20 px tap targets, show-key button for paste UX |
+| Shared deployments | Env-var fallback (`GEMINI_API_KEY` etc.) auto-detected |
+
+**Backward compatibility:**
+
+Existing deployments using `GEMINI_API_KEY` in `.env` keep working
+unchanged. `loadConfigFromEnv()` auto-detects legacy provider-specific
+env vars and synthesizes an equivalent `LLMConfig`. Users who opt-in via
+the browser simply override the server default for their session.
+
+**Why this is a moat:**
+
+1. **No lock-in** — switching providers is a 30-second UI change, not a
+   migration. Competition between LLM vendors directly benefits users.
+2. **Team-friendly** — shared Vidhya deployments can use env-var defaults
+   while individual users opt-in to their own keys.
+3. **Privacy-friendly** — users who want their data to go through
+   specific jurisdictions (Mistral for EU, Ollama for local) can do so
+   without admin involvement.
+4. **Cost-friendly** — a user with free Gemini quota uses Gemini; a user
+   who wants Groq's speed pays Groq directly. No markup.
+5. **Future-proof** — new providers arrive monthly; Vidhya's registry
+   grows as a data PR, not a refactor.
+
+**Where it's shipped:**
+- `src/llm/provider-registry.ts` — 8 providers, 32 model entries
+- `src/llm/config-resolver.ts` — cascading resolution, header transport, env fallback
+- `src/api/llm-config-routes.ts` — 4 HTTP endpoints + universal `callChat` adapter
+- `frontend/src/pages/gate/LLMConfigPage.tsx` — full setup UI
+- `frontend/src/lib/llm/config-store.ts` — localStorage + masking + `fetchWithConfig`
+- `frontend/src/hooks/useLLMConfig.ts` — React hook with cross-tab sync
+- `docs/LLM-CONFIGURATION.md` — user + admin guide, add-a-provider walkthrough
+
+---
+
+## Slide 16 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -575,10 +684,13 @@ Same commands for any exam. Everything is data-driven.
 | New-exam onboarding | Code PR with new tables, migrations, admin UI | Write one YAML file, run three scripts — no code changes |
 | Off-syllabus drift | LLM-generated content can wander | Three-layer guardrails on every chunk (concept-scope, depth, restrictions) |
 | Content quality measurement | Qualitative review OR vanity metrics | Per-(concept × component) quality scores, iteration snapshots, compounding deltas |
+| LLM provider | Single, baked into backend | 8 providers user-selectable in-browser, 30s to switch |
+| API key storage | Server-side database or env-var | User's localStorage; server never persists |
+| Adding a new LLM provider | Code PR with new client wrapper | Append to registry array (data change) |
 
 ---
 
-## Slide 16 — Tech Stack
+## Slide 17 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -598,7 +710,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 17 — What's Shipped (at v2.6.0)
+## Slide 18 — What's Shipped (at v2.7.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -613,6 +725,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.5.0 | `5147cff` | Lesson framework — 8-component template, 4-source aggregation, 6-rule personalizer, SM-2 retrieval |
 | v2.5.1 | `0b577a0` | Curated misconceptions for 22 concepts, syllabus→lesson navigation, CI workflow staged |
 | v2.6.0 | `888dbd7` | Curriculum framework — admin-owned YAML exams, shared-concept strategy, three-layer guardrails, compounding quality loop |
+| v2.7.0 | `8a03c27` | LLM config framework — BYO-key in-browser, 8 providers as data, cascading role defaults, 4 API-shape universal adapter |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -622,6 +735,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 - **1 admin-owned exam definition** (GATE MA, 27 concept links) with per-exam depth/weight/emphasis/restrictions
 - 5 personalized-syllabus exam presets (distinct from admin curricula)
 - Multimodal analysis with 6 intents (explain / solve / practice / check / stuck / transcribe)
+- **LLM-agnostic runtime** — 8 providers configurable in-browser at `/llm-config`
 - SSE-streaming test-paper diagnostic with auto-generated study plan
 - Admin dashboard live at `/admin/content`
 - Auth wall verified (HTTP 401 on unauth)
@@ -635,7 +749,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 18 — Cost Projections at Scale
+## Slide 19 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -655,7 +769,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 19 — Why Now
+## Slide 20 — Why Now
 
 **Three trends converge:**
 
@@ -677,7 +791,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 20 — Roadmap (Near-Term)
+## Slide 21 — Roadmap (Near-Term)
 
 **Content expansion** — 34 → 2000 problems over 90 days
 - Nightly CI already wired (needs workflow YAML upload)
@@ -703,7 +817,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 21 — Invitation
+## Slide 22 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -776,6 +890,7 @@ Where to engage:
 | **Cognitive model (GBrain)** | 🔵🔵🔵 | 6 pillars, explicit design, auditable |
 | **Pedagogical (Lesson framework)** | 🔵🔵🔵🔵🔵 | Research-grounded template + attributed aggregation + layered personalization; compounds with bundle + user materials growth |
 | **Curriculum (admin-owned, compounding)** | 🔵🔵🔵🔵🔵 | Shared-concept strategy pays √N across exams; quality iterations measurably compound via engagement→quality→iteration loop |
+| **LLM-agnostic (BYO-key)** | 🔵🔵🔵🔵 | Provider-as-data — 8 providers, 4 API shapes; users pick + pay their own provider, no lock-in, rotate in 30s |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

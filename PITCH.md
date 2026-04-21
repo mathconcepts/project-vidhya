@@ -30,7 +30,7 @@ naive LLM-per-request edtech apps cost $2.
 
 ---
 
-## The twelve moats
+## The thirteen moats
 
 1. **Four-tier cascade** — every content request routes to the cheapest source
 2. **Client-side embeddings** — transformers.js WASM, zero API cost for RAG
@@ -44,14 +44,15 @@ naive LLM-per-request edtech apps cost $2.
 10. **Domain-agnostic architecture** — swap the concept graph for any subject
 11. **No-nagging UX** — at most one dismissible next-step chip per response, never blocks
 12. **Admin-owned curriculum** — per-exam YAML definitions, shared concepts across exams, three-layer guardrails, compounding quality loop
+13. **LLM-agnostic (BYO-key)** — 8 providers as data, in-browser setup at `/llm-config`, keys stay in localStorage, 30-second provider switch
 
-## What's new in v2.6
+## What's new in v2.7
 
-- **Curriculum framework** — exam definitions as YAML, shared concept graph across exams (one concept → many exams, each with its own depth/emphasis/restrictions)
-- **Three-layer guardrails** — user materials and LLM outputs are filtered against the active exam's scope before flowing into lessons
-- **Compounding quality loop** — every engagement signal feeds a per-component quality score; iteration snapshots show whether content is improving
+- **LLM config framework** — users configure their AI provider in-browser at `/llm-config`; keys live in localStorage, travel only as request headers, never persisted server-side
+- **8 providers as data** — Gemini, Anthropic, OpenAI, OpenRouter, Groq, DeepSeek, Mistral, Ollama; adding a new provider is a data change, not code
+- **Cascading role defaults** — pick a primary, chat/vision/JSON auto-fill with sensible defaults, each independently overridable
+- **Curriculum framework (v2.6)** — per-exam YAML definitions, shared concept strategy, three-layer guardrails, compounding quality loop
 - **Lesson framework (v2.5)** — 8-component pedagogically-grounded atomic unit with layered personalization
-- **Chat image support + SSE diagnostic (v2.4)** — multimodal input with per-problem verdict streaming
 
 ---
 
@@ -81,7 +82,7 @@ Three trends converge:
 ## Deep dives
 
 - [README.md](./README.md) — architecture + quick start
-- [FEATURES.md](./FEATURES.md) — 21-slide pitch deck, every moat detailed
+- [FEATURES.md](./FEATURES.md) — 22-slide pitch deck, every moat detailed
 - [INSTALL.md](./INSTALL.md) — cross-platform installation (Linux, macOS, Windows, Docker)
 - [DEPENDENCIES.md](./DEPENDENCIES.md) — canonical dep inventory, tagged Required/Recommended/Optional
 - [PLAN-content-engine.md](./PLAN-content-engine.md) — cost math, Wolfram integration rationale

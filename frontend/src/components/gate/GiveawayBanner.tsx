@@ -37,7 +37,19 @@ interface GiveawayInfo {
     name: string;
     source: 'dynamic' | 'static';
     completeness?: number;
+    // GBrain coverage enrichment (v2.10.0)
+    coverage_percent?: number;
+    mastery_percent?: number;
+    covered_count?: number;
+    total_count?: number;
+    coverage_label?: string;
+    coverage_tier?: 'unstarted' | 'warming' | 'progressing' | 'strong' | 'ready';
   }>;
+  primary_coverage?: {
+    coverage_percent: number;
+    mastered_count: number;
+    total_count: number;
+  };
 }
 
 const DISMISS_KEY = 'vidhya.giveaway.dismissed.v1';
@@ -127,14 +139,28 @@ export function GiveawayBanner() {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5 pl-13">
-            {info.bonus_exams.slice(0, expanded ? undefined : 5).map(exam => (
-              <span
-                key={exam.id}
-                className="text-[11px] px-2 py-1 rounded-lg bg-violet-500/10 border border-violet-500/25 text-violet-100 font-medium"
-              >
-                {exam.name}
-              </span>
-            ))}
+            {info.bonus_exams.slice(0, expanded ? undefined : 5).map((exam, idx) => {
+              const pct = typeof exam.coverage_percent === 'number' ? Math.round(exam.coverage_percent * 100) : null;
+              const isClosest = idx === 0 && typeof pct === 'number' && pct >= 20;
+              const tierTone =
+                exam.coverage_tier === 'ready' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-100'
+                : exam.coverage_tier === 'strong' ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-100'
+                : exam.coverage_tier === 'progressing' ? 'bg-amber-500/15 border-amber-500/30 text-amber-100'
+                : 'bg-violet-500/10 border-violet-500/25 text-violet-100';
+              return (
+                <div
+                  key={exam.id}
+                  className={`text-[11px] px-2 py-1 rounded-lg border font-medium inline-flex items-center gap-1.5 ${tierTone}`}
+                  title={exam.coverage_label || ''}
+                >
+                  {isClosest && <Sparkles size={9} className="text-amber-300" />}
+                  <span>{exam.name}</span>
+                  {pct !== null && pct > 0 && (
+                    <span className="text-[9px] opacity-80 font-semibold">{pct}% covered</span>
+                  )}
+                </div>
+              );
+            })}
             {!expanded && bonusCount > 5 && (
               <button
                 onClick={() => setExpanded(true)}
@@ -145,6 +171,14 @@ export function GiveawayBanner() {
               </button>
             )}
           </div>
+
+          {/* GBrain-derived "closest ready" hint (v2.10.0) */}
+          {info.bonus_exams[0]?.coverage_percent && info.bonus_exams[0].coverage_percent >= 0.2 && (
+            <p className="text-[11px] text-violet-200 mt-2 pl-13">
+              <Sparkles size={9} className="inline mr-1 text-amber-300" />
+              You're already {Math.round(info.bonus_exams[0].coverage_percent * 100)}% of the way through <span className="font-medium">{info.bonus_exams[0].name}</span> through your current prep.
+            </p>
+          )}
 
           {info.benefits && info.benefits.length > 0 && expanded && (
             <div className="mt-3 space-y-1">

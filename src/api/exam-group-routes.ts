@@ -42,6 +42,15 @@ import {
   resolveGiveaway,
   findGroupsContaining,
 } from '../exams/exam-group-store';
+import { getOrCreateStudentModel } from '../gbrain/student-model';
+import { getExam } from '../exams/exam-store';
+import { EXAMS as STATIC_EXAMS } from '../syllabus/exam-catalog';
+import {
+  computeCoverage,
+  coverageLabel,
+  coverageTier,
+  type CoverageReport,
+} from '../gbrain/cross-exam-coverage';
 
 // ============================================================================
 // Admin handlers
@@ -215,7 +224,70 @@ async function handleMyGiveaway(req: ParsedRequest, res: ServerResponse): Promis
     return sendJSON(res, { giveaway: null, reason: 'no exam assigned' });
   }
   const giveaway = resolveGiveaway(user.exam_id);
-  sendJSON(res, { giveaway });
+  if (!giveaway) return sendJSON(res, { giveaway: null });
+
+  // GBrain integration — compute per-exam coverage from student model
+  // so the UI can show "you've already covered X% of this bonus exam"
+  // and reorder bonus exams by readiness (student is closest first).
+  let studentModel;
+  try {
+    studentModel = await getOrCreateStudentModel(auth.user.id);
+  } catch {
+    studentModel = null;
+  }
+
+  // Resolve topics for each bonus exam (dynamic → syllabus topic_ids;
+  // static → exam-catalog topics array)
+  const enrichedBonus = giveaway.bonus_exams.map(bonus => {
+    let topics: string[] = [];
+    if (bonus.source === 'dynamic') {
+      const e = getExam(bonus.id);
+      if (e?.syllabus) topics = e.syllabus.map(t => t.topic_id).filter(Boolean);
+      else if (e?.topic_weights) topics = Object.keys(e.topic_weights);
+    } else {
+      const s = (STATIC_EXAMS as any)[bonus.id];
+      if (s?.topics) topics = s.topics;
+    }
+    const coverage: CoverageReport = computeCoverage(studentModel, topics);
+    return {
+      ...bonus,
+      coverage_percent: coverage.coverage_percent,
+      mastery_percent: coverage.mastery_percent,
+      covered_count: coverage.covered_count,
+      total_count: coverage.total_count,
+      coverage_label: coverageLabel(coverage),
+      coverage_tier: coverageTier(coverage),
+    };
+  });
+
+  // Reorder bonus exams by coverage_percent DESCENDING — students see the
+  // bonus exam they're closest to completing first. This is a direct
+  // GBrain-driven personalization of the giveaway experience.
+  enrichedBonus.sort((a, b) => b.coverage_percent - a.coverage_percent);
+
+  // Also compute primary exam coverage (for context in the banner)
+  let primaryTopics: string[] = [];
+  if (giveaway.primary_exam.source === 'dynamic') {
+    const e = getExam(giveaway.primary_exam.id);
+    if (e?.syllabus) primaryTopics = e.syllabus.map(t => t.topic_id).filter(Boolean);
+    else if (e?.topic_weights) primaryTopics = Object.keys(e.topic_weights);
+  } else {
+    const s = (STATIC_EXAMS as any)[giveaway.primary_exam.id];
+    if (s?.topics) primaryTopics = s.topics;
+  }
+  const primaryCoverage = computeCoverage(studentModel, primaryTopics);
+
+  sendJSON(res, {
+    giveaway: {
+      ...giveaway,
+      bonus_exams: enrichedBonus,
+      primary_coverage: {
+        coverage_percent: primaryCoverage.coverage_percent,
+        mastered_count: primaryCoverage.mastered_count,
+        total_count: primaryCoverage.total_count,
+      },
+    },
+  });
 }
 
 /**

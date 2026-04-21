@@ -1774,7 +1774,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 31 — What's Shipped (at v2.9.9)
+## Slide 31 — What's Shipped (at v2.10.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -1800,7 +1800,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.9.6 | `23ff72b` | Notebook watermark + legally-binding-yet-friendly disclaimer — every export carries provenance + scope clarification |
 | v2.9.7 | `33447f7` | Dynamic Exam Framework — admin-managed exam registry with LLM-optional progressive enrichment + conversational assistant + unique multi-student IDs |
 | v2.9.8 | `3ec9f95` | Exam comparison + personalization — pairwise structured diff, nearest-match ranking across dynamic+static catalogs, GBrain exam-context bridge for student-facing content, urgency-aware insights, countdown chip |
-| v2.9.9 | *this* | Exam groups + giveaway — admin-managed master list of approved exam bundles, approval gate for student-facing activation, explicit "one subscription, many exams" banner at sign-in, zero-LLM pure-data mechanic |
+| v2.9.9 | `ddea07d` | Exam groups + giveaway — admin-managed master list of approved exam bundles, approval gate for student-facing activation, explicit "one subscription, many exams" banner at sign-in, zero-LLM pure-data mechanic |
+| v2.10.0 | *this* | GBrain sweep — per-exam coverage engine; giveaway banner personalized with per-bonus-exam readiness; unified /api/me/gbrain-summary endpoint; systematic integration audit doc proving GBrain is applied across all student-facing surfaces |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -1981,6 +1982,7 @@ Where to engage:
 | **Smart Notebook** | 🔵🔵🔵🔵🔵 | Every user input auto-logged, concept-clustered, syllabus gap-analyzed, exportable as Markdown — single source of truth, universal format, privacy-preserving |
 | **Dynamic exam framework** | 🔵🔵🔵🔵🔵 | Admin-managed exam registry with 3-field minimal seed, LLM-optional progressive enrichment, conversational assistant, admin-edit-preserving provenance, unique IDs reusable across any number of students |
 | **Giveaway layer** | 🔵🔵🔵🔵🔵 | Admin-curated exam bundles with explicit approval gate; student-facing "one subscription, many exams" banner; per-group dismissal; zero-LLM pure-data lookup |
+| **GBrain uniformity** | 🔵🔵🔵🔵🔵 | Single /api/me/gbrain-summary endpoint exposes mastery stats + exam context + giveaway coverage + focus signal; cross-exam coverage engine; integration audit proves systematic GBrain application |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

@@ -137,6 +137,8 @@ dependencies — read:
   — after-each-attempt insight engine + Smart Notebook with gap analysis
 - [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md) — dynamic exam registry
   with LLM-optional enrichment, conversational assistant, unique multi-student IDs
+- [docs/GBRAIN-INTEGRATION-AUDIT.md](./docs/GBRAIN-INTEGRATION-AUDIT.md) — systematic
+  audit of GBrain integration across all features; unified me/gbrain-summary endpoint
 - [INSTALL.md](./INSTALL.md) — 5-path install guide
 
 ---

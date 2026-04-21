@@ -172,6 +172,7 @@ for the tiered breakdown.
 | [docs/TEACHER-JOURNEY.md](./docs/TEACHER-JOURNEY.md) | Teacher as end-user — what to teach + how to teach; human teacher ↔ AI teacher model |
 | [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md) | After-each-attempt insight engine + Smart Notebook (auto-logged, concept-clustered, gap-analyzed, exportable) |
 | [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md) | Dynamic exam registry — admin-managed with LLM-optional enrichment, conversational assistant, unique multi-student IDs, progressive fill |
+| [docs/GBRAIN-INTEGRATION-AUDIT.md](./docs/GBRAIN-INTEGRATION-AUDIT.md) | Systematic per-feature audit proving GBrain is applied across all student-facing surfaces; unified /api/me/gbrain-summary endpoint; cross-exam coverage engine |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute — scrapers, concepts, code, PRs |
 | [SECURITY.md](./SECURITY.md) | Vulnerability disclosure policy + response timeline |

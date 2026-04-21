@@ -162,53 +162,81 @@ The UI shows topics sorted worst-coverage-first, with the uncovered concepts exp
 
 ### 4.4 Markdown export — the downloadable source of truth
 
-`GET /api/notebook/download` returns a Markdown file with `Content-Disposition: attachment`. Structure:
+`GET /api/notebook/download` returns a Markdown file with `Content-Disposition: attachment`. The export is **syllabus-driven**: every concept in the official syllabus appears, practiced or not, with clear status markers and precise timestamps.
 
 ```
-# Study Notebook — {Student Name}
-*Exported from Project Vidhya on {date}*
+# Study Notebook — Maya K.
+*Exported from Project Vidhya on 2026-04-21 (2026-04-21T14:22:00Z)*
 
 Total entries: 342
-Syllabus coverage: 58% (48 of 82 concepts touched)
-First entry: 2026-03-15
-Latest entry: 2026-04-21
+Syllabus coverage: 58% — 48 of 82 concepts practiced
+First activity: 2026-03-15 09:30 UTC
+Latest activity: 2026-04-21 14:22 UTC
 
-## Table of contents
-  1. Syllabus coverage
-  2. Concepts by topic
-  3. Chronological log
+Legend: 🟢 Practiced · ⚪ Not yet practiced · 🟡 Touched once · 🔵 Multiple attempts
 
-## Syllabus coverage
-  | Topic | Coverage | Concepts touched | Gaps |
-  |-------|----------|------------------|------|
-  | linear-algebra | 🟢 85% | 17/20 | vector spaces, null space, +1 more |
-  | calculus | 🟡 62% | 13/21 | partial derivatives, directional... |
-  ...
+## Coverage summary
+| Topic | Coverage | Practiced | Not yet |
+|-------|:--------:|:---------:|:-------:|
+| Linear Algebra | 🟢 85% | 17 / 20 | 3 |
+| Calculus | 🟡 62% | 13 / 21 | 8 |
+| Complex Variables | 🔴 18% | 2 / 11 | 9 |
 
-### Concepts to study next
-  **calculus** — 8 uncovered:
-  - Partial derivatives
-  - Directional derivatives
-  ...
+## Full syllabus dump
 
-## Concepts by topic
-  ### Eigenvalues (linear-algebra)
-  *23 entries · last touched 2026-04-19*
-  - [chat_question] Asked: how to find eigenvalues of 2x2 matrix?
-    > I'm stuck on the characteristic polynomial step...
-    *2026-03-18*
-  - [problem_attempted] Problem: Find eigenvalues of [[2,1],[1,2]]
-    *2026-03-18*
-  ...
+### 🟢 Linear Algebra — 17/20 practiced (85%)
+
+#### 🔵 Eigenvalues & Eigenvectors
+**23 entries** · 16/19 correct
+- **First practiced:** 2026-03-18 14:22 UTC
+- **Last practiced:** 2026-04-19 09:40 UTC
+- **Active span:** 32 days
+
+**Entries:**
+- `2026-04-19 09:40 UTC` **[problem_attempted]** Problem: Find eigenvalues of [[2,1],[1,2]]
+  · Result: ✓ correct
+  · Difficulty: medium
+- `2026-04-18 16:12 UTC` **[chat_question]** Asked: when are eigenvalues complex?
+  > I'm confused about when a matrix has complex eigenvalues...
+
+#### ⚪ Orthogonality
+> **Not yet practiced.** No entries recorded for this concept.
+
+### 🔴 Calculus — 1/19 practiced (5%)
+
+#### 🟡 Limits
+**1 entry**
+- **First practiced:** 2026-04-21 11:06 UTC
+- **Last practiced:** 2026-04-21 11:06 UTC
+...
 
 ## Chronological log
-  ### 2026-04-21
-  - **14:22** [snap] Snapped: multivariable calculus problem · _gradient_
-  - **14:18** [chat_question] Asked: when to use polar coordinates? · _integration_
-  ...
+### 2026-04-21
+- `14:22:15` **[snap]** ✓ Snapped: multivariable calculus problem · _gradient_
+- `14:18:43` **[chat_question]** Asked: when to use polar coordinates? · _integration_
+...
 ```
 
-**GitHub-flavored Markdown, fully readable offline, fully searchable.** A student can open this in any Markdown viewer, share it with a teacher, print it, or use it as a study reference for an exam.
+**Key design choices:**
+
+- **Every syllabus concept appears** — practiced or not. A student seeing only the "studied" list is missing the critical half of the picture.
+- **Four activity markers:** ⚪ (not yet practiced) · 🟡 (single touch) · 🟢 (multiple activities) · 🔵 (5+ entries)
+- **Per-concept metadata:** first-practiced timestamp, last-practiced timestamp, active span in days, attempts count, correct/incorrect ratio
+- **Per-entry timestamps:** full `YYYY-MM-DD HH:MM UTC` in the syllabus dump, full `HH:MM:SS` in the chronological log
+- **Verdict markers inline:** ✓ / ✗ next to problem-attempted entries
+- **Difficulty displayed** per entry when present
+- **Short content snippets** inline under each entry (truncated at 200 chars) so the export is self-contained
+
+### 4.5 Why syllabus-driven?
+
+We deliberately structured the export around the **official syllabus** rather than around the student's activity. This reverses the default framing of note apps:
+
+- A typical notes export shows *what the student wrote*. The unwritten parts are invisible.
+- The Vidhya syllabus dump shows *the syllabus*, with the student's activity annotated against it. The unwritten parts — concepts the student hasn't touched yet — are **just as visible as the ones they have**.
+
+This matches Vidhya's primary goal: *maximum competency with minimum effort*. A student's biggest lever is usually what they haven't studied yet, not what they have. The export puts that signal in the foreground.
+
+A student going into an exam can download their entire study history in 2 seconds, reference it offline, print it, share it with a teacher. **It's theirs.** The universal format (GitHub-flavored Markdown) means it renders in VS Code, GitHub gists, Obsidian, Typora, or any Markdown viewer.
 
 ---
 

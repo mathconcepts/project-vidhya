@@ -115,8 +115,8 @@ export function autoTagConcept(params: {
   text: string;
   hint_concept_id?: string | null;
 }): { concept_id: string | null; topic: string | null; confidence: number } {
-  if (params.hint_concept_id && CONCEPT_MAP[params.hint_concept_id]) {
-    const meta = CONCEPT_MAP[params.hint_concept_id];
+  if (params.hint_concept_id && CONCEPT_MAP.get(params.hint_concept_id)) {
+    const meta = CONCEPT_MAP.get(params.hint_concept_id);
     return {
       concept_id: params.hint_concept_id,
       topic: meta?.topic || null,
@@ -131,7 +131,7 @@ export function autoTagConcept(params: {
   let bestConcept: string | null = null;
   let bestScore = 0;
 
-  for (const [concept_id, meta] of Object.entries(CONCEPT_MAP)) {
+  for (const [concept_id, meta] of Array.from(CONCEPT_MAP.entries())) {
     let score = 0;
     const label = (meta as any).label?.toLowerCase();
     const aliases = ((meta as any).aliases || []).map((a: string) => a.toLowerCase());
@@ -159,7 +159,7 @@ export function autoTagConcept(params: {
   if (bestConcept && bestScore >= 1.5) {
     return {
       concept_id: bestConcept,
-      topic: (CONCEPT_MAP[bestConcept] as any)?.topic || null,
+      topic: (CONCEPT_MAP.get(bestConcept) as any)?.topic || null,
       confidence: Math.min(1, bestScore / 4),
     };
   }
@@ -230,7 +230,7 @@ export function overrideConceptTag(params: {
     const entry = state.entries.find(e => e.id === params.entry_id);
     if (!entry) return;
     entry.content.concept_id = params.concept_id;
-    entry.content.topic = (CONCEPT_MAP[params.concept_id] as any)?.topic;
+    entry.content.topic = (CONCEPT_MAP.get(params.concept_id) as any)?.topic;
     state.manual_tags[params.entry_id] = params.concept_id;
   });
   return { ok: true };
@@ -269,7 +269,7 @@ export function clusterByConcept(notebook: Notebook): {
       byKey[key] = {
         concept_id: entry.content.concept_id || null,
         concept_label: entry.content.concept_id
-          ? (CONCEPT_MAP[entry.content.concept_id] as any)?.label || entry.content.concept_id
+          ? (CONCEPT_MAP.get(entry.content.concept_id) as any)?.label || entry.content.concept_id
           : 'Uncategorized',
         topic: entry.content.topic || null,
         entry_count: 0,
@@ -318,11 +318,11 @@ export function analyzeGaps(notebook: Notebook): {
   }
 
   const byTopic: Record<string, { all: string[]; covered: string[] }> = {};
-  for (const concept_id of ALL_CONCEPTS) {
-    const topic = (CONCEPT_MAP[concept_id] as any)?.topic || 'other';
+  for (const node of ALL_CONCEPTS) {
+    const topic = node.topic || 'other';
     if (!byTopic[topic]) byTopic[topic] = { all: [], covered: [] };
-    byTopic[topic].all.push(concept_id);
-    if (covered.has(concept_id)) byTopic[topic].covered.push(concept_id);
+    byTopic[topic].all.push(node.id);
+    if (covered.has(node.id)) byTopic[topic].covered.push(node.id);
   }
 
   const topics: SyllabusGap[] = Object.entries(byTopic).map(([topic, data]) => ({
@@ -353,101 +353,211 @@ export function analyzeGaps(notebook: Notebook): {
 
 export function exportAsMarkdown(user_id: string, userName?: string): string {
   const notebook = getNotebook(user_id);
-  const { clusters, total_entries } = clusterByConcept(notebook);
   const gaps = analyzeGaps(notebook);
 
-  const now = new Date().toISOString().slice(0, 10);
+  // Build a fast lookup: concept_id → entries, sorted chronologically
+  const entriesByConcept: Record<string, NotebookEntry[]> = {};
+  for (const entry of notebook.entries) {
+    const cid = entry.content.concept_id;
+    if (!cid) continue;
+    if (!entriesByConcept[cid]) entriesByConcept[cid] = [];
+    entriesByConcept[cid].push(entry);
+  }
+  for (const cid of Object.keys(entriesByConcept)) {
+    entriesByConcept[cid].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  }
+
+  // Build topic → concepts map from ALL_CONCEPTS, preserving syllabus order
+  const topicOrder: string[] = [];
+  const conceptsByTopic: Record<string, string[]> = {};
+  for (const node of ALL_CONCEPTS) {
+    const topic = node.topic || 'other';
+    if (!conceptsByTopic[topic]) {
+      conceptsByTopic[topic] = [];
+      topicOrder.push(topic);
+    }
+    conceptsByTopic[topic].push(node.id);
+  }
+
+  const exportedAt = new Date();
+  const exportedAtIso = exportedAt.toISOString();
+  const now = exportedAtIso.slice(0, 10);
+
+  const firstEntry = notebook.entries[0];
+  const lastEntry = notebook.entries[notebook.entries.length - 1];
+
   const lines: string[] = [];
 
+  // ───────────────────────────────────────────────────────────────────────
   // Header
+  // ───────────────────────────────────────────────────────────────────────
   lines.push(`# Study Notebook — ${userName || 'Student'}`);
   lines.push('');
-  lines.push(`*Exported from Project Vidhya on ${now}*`);
+  lines.push(`*Exported from Project Vidhya on ${now} (${exportedAtIso})*`);
   lines.push('');
-  lines.push(`**Total entries:** ${total_entries}  `);
-  lines.push(`**Syllabus coverage:** ${gaps.overall_coverage_pct}% (${gaps.total_covered} of ${gaps.total_syllabus_concepts} concepts touched)  `);
-  lines.push(`**First entry:** ${notebook.entries[0]?.created_at.slice(0, 10) || 'none'}  `);
-  lines.push(`**Latest entry:** ${notebook.entries[notebook.entries.length - 1]?.created_at.slice(0, 10) || 'none'}`);
+  lines.push(`**Total entries:** ${notebook.entries.length}  `);
+  lines.push(`**Syllabus coverage:** ${gaps.overall_coverage_pct}% — ${gaps.total_covered} of ${gaps.total_syllabus_concepts} concepts practiced  `);
+  if (firstEntry) lines.push(`**First activity:** ${formatTimestamp(firstEntry.created_at)}  `);
+  if (lastEntry) lines.push(`**Latest activity:** ${formatTimestamp(lastEntry.created_at)}`);
+  lines.push('');
+
+  // Legend
+  lines.push('**Legend:**  🟢 Practiced · ⚪ Not yet practiced · 🟡 Touched once · 🔵 Multiple attempts');
   lines.push('');
   lines.push('---');
   lines.push('');
 
+  // ───────────────────────────────────────────────────────────────────────
   // Table of contents
+  // ───────────────────────────────────────────────────────────────────────
   lines.push('## Table of contents');
   lines.push('');
-  lines.push('1. [Syllabus coverage](#syllabus-coverage) — what\'s covered and what\'s not yet');
-  lines.push('2. [Concepts by topic](#concepts-by-topic) — clustered view of what you\'ve studied');
+  lines.push('1. [Coverage summary](#coverage-summary) — at-a-glance topic breakdown');
+  lines.push('2. [Full syllabus dump](#full-syllabus-dump) — every concept, practiced or not, with timestamps');
   lines.push('3. [Chronological log](#chronological-log) — every entry, most recent first');
   lines.push('');
+  lines.push('---');
+  lines.push('');
 
-  // Syllabus gaps — MOST VALUABLE section, put first
-  lines.push('## Syllabus coverage');
+  // ───────────────────────────────────────────────────────────────────────
+  // Coverage summary (at-a-glance)
+  // ───────────────────────────────────────────────────────────────────────
+  lines.push('## Coverage summary');
   lines.push('');
-  lines.push(`You've touched **${gaps.total_covered}** of **${gaps.total_syllabus_concepts}** concepts in the syllabus (**${gaps.overall_coverage_pct}%**).`);
+  lines.push(`You've practiced **${gaps.total_covered}** of **${gaps.total_syllabus_concepts}** concepts in the syllabus (**${gaps.overall_coverage_pct}%**).`);
   lines.push('');
-  lines.push('| Topic | Coverage | Concepts touched | Gaps |');
-  lines.push('|-------|:--------:|:----------------:|------|');
+  lines.push('| Topic | Coverage | Practiced | Not yet |');
+  lines.push('|-------|:--------:|:---------:|:-------:|');
   for (const topic of gaps.topics) {
     const emoji = topic.coverage_pct >= 80 ? '🟢' : topic.coverage_pct >= 50 ? '🟡' : '🔴';
-    const gapsShort = topic.uncovered_concepts.slice(0, 3).map(c => (CONCEPT_MAP[c] as any)?.label || c).join(', ');
-    const moreGaps = topic.uncovered_concepts.length > 3 ? ` *(+${topic.uncovered_concepts.length - 3} more)*` : '';
-    lines.push(`| ${topic.topic} | ${emoji} ${topic.coverage_pct}% | ${topic.covered_concepts}/${topic.total_concepts} | ${gapsShort || '_none_'}${moreGaps} |`);
+    const topicLabel = prettyTopic(topic.topic);
+    lines.push(`| ${topicLabel} | ${emoji} ${topic.coverage_pct}% | ${topic.covered_concepts} / ${topic.total_concepts} | ${topic.uncovered_concepts.length} |`);
   }
   lines.push('');
+  lines.push('---');
+  lines.push('');
 
-  // Detailed gaps (top 3 uncovered topics)
-  const worstTopics = gaps.topics.filter(t => t.coverage_pct < 100).slice(0, 5);
-  if (worstTopics.length > 0) {
-    lines.push('### Concepts to study next');
+  // ───────────────────────────────────────────────────────────────────────
+  // Full syllabus dump — THE main section
+  // Every concept, whether practiced or not, with clear markers + timestamps
+  // ───────────────────────────────────────────────────────────────────────
+  lines.push('## Full syllabus dump');
+  lines.push('');
+  lines.push('Every concept in the official syllabus is listed below, organized by topic. Concepts you have practiced show their first/last activity and attempt count. Concepts you have not yet practiced are explicitly marked.');
+  lines.push('');
+
+  for (const topic of topicOrder) {
+    const concepts = conceptsByTopic[topic];
+    const topicLabel = prettyTopic(topic);
+    const topicTouched = concepts.filter(c => entriesByConcept[c]?.length).length;
+    const topicTotal = concepts.length;
+    const topicPct = topicTotal > 0 ? Math.round((topicTouched / topicTotal) * 100) : 0;
+    const topicEmoji = topicPct >= 80 ? '🟢' : topicPct >= 50 ? '🟡' : '🔴';
+
+    lines.push(`### ${topicEmoji} ${topicLabel} — ${topicTouched}/${topicTotal} practiced (${topicPct}%)`);
     lines.push('');
-    for (const t of worstTopics) {
-      lines.push(`**${t.topic}** — ${t.uncovered_concepts.length} uncovered:`);
-      for (const c of t.uncovered_concepts.slice(0, 8)) {
-        const label = (CONCEPT_MAP[c] as any)?.label || c;
-        lines.push(`- ${label}`);
+
+    for (const cid of concepts) {
+      const meta = CONCEPT_MAP.get(cid) as any;
+      const label = meta?.label || cid.replace(/-/g, ' ');
+      const entries = entriesByConcept[cid] || [];
+      const practiced = entries.length > 0;
+
+      // Status header — crystal clear practiced vs not
+      if (!practiced) {
+        // Not yet practiced — explicit, unmistakable
+        lines.push(`#### ⚪ ${label}`);
+        lines.push('');
+        lines.push('> **Not yet practiced.** No entries recorded for this concept.');
+        lines.push('');
+        if (meta?.canonical_definition) {
+          lines.push(`*${meta.canonical_definition}*`);
+          lines.push('');
+        }
+      } else {
+        // Practiced — show timestamps + activity marker
+        const firstAt = entries[0].created_at;
+        const lastAt = entries[entries.length - 1].created_at;
+        const attempts = entries.filter(e => e.kind === 'problem_attempted').length;
+        const correct = entries.filter(e => e.kind === 'problem_attempted' && e.content.correct === true).length;
+        const marker = entries.length >= 5 ? '🔵' : entries.length >= 2 ? '🟢' : '🟡';
+
+        lines.push(`#### ${marker} ${label}`);
+        lines.push('');
+
+        // Metadata line — the timestamped summary
+        const metaParts: string[] = [];
+        metaParts.push(`**${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}**`);
+        if (attempts > 0) {
+          metaParts.push(`${correct}/${attempts} correct`);
+        }
+        lines.push(metaParts.join(' · '));
+        lines.push('');
+        lines.push(`- **First practiced:** ${formatTimestamp(firstAt)}`);
+        lines.push(`- **Last practiced:** ${formatTimestamp(lastAt)}`);
+        if (entries.length >= 2) {
+          const spanDays = daysBetween(firstAt, lastAt);
+          lines.push(`- **Active span:** ${spanDays} day${spanDays !== 1 ? 's' : ''}`);
+        }
+        lines.push('');
+
+        // Entry list with per-entry timestamps
+        lines.push('**Entries:**');
+        lines.push('');
+        const show = entries.slice(-20).reverse(); // most recent 20, newest first
+        for (const entry of show) {
+          const line = `- \`${formatTimestamp(entry.created_at)}\` **[${entry.kind}]** ${entry.title}`;
+          lines.push(line);
+          if (entry.content.correct !== undefined) {
+            lines.push(`  · Result: ${entry.content.correct ? '✓ correct' : '✗ incorrect'}`);
+          }
+          if (entry.content.difficulty) {
+            lines.push(`  · Difficulty: ${entry.content.difficulty}`);
+          }
+          if (entry.content.text && entry.content.text.length > 0 && entry.content.text.length < 400) {
+            const snippet = entry.content.text.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+            if (snippet.length > 0 && snippet !== entry.title.replace(/^[^:]+:\s*/, '').trim()) {
+              lines.push(`  > ${snippet}${entry.content.text.length > 200 ? '...' : ''}`);
+            }
+          }
+        }
+        if (entries.length > 20) {
+          lines.push(`- *(${entries.length - 20} earlier entries not shown)*`);
+        }
+        lines.push('');
       }
-      if (t.uncovered_concepts.length > 8) {
-        lines.push(`- *(${t.uncovered_concepts.length - 8} more...)*`);
-      }
-      lines.push('');
     }
+  }
+
+  // Uncategorized section — entries that didn't match any concept
+  const uncategorized = notebook.entries.filter(e => !e.content.concept_id);
+  if (uncategorized.length > 0) {
+    lines.push(`### ⚪ Uncategorized — ${uncategorized.length} entries`);
+    lines.push('');
+    lines.push('*These entries could not be auto-matched to a syllabus concept. You can retag them from the Smart Notebook page.*');
+    lines.push('');
+    for (const entry of uncategorized.slice(-30).reverse()) {
+      lines.push(`- \`${formatTimestamp(entry.created_at)}\` **[${entry.kind}]** ${entry.title}`);
+    }
+    if (uncategorized.length > 30) {
+      lines.push(`- *(${uncategorized.length - 30} earlier uncategorized entries not shown)*`);
+    }
+    lines.push('');
   }
 
   lines.push('---');
   lines.push('');
 
-  // Concepts by topic — clustered view
-  lines.push('## Concepts by topic');
-  lines.push('');
-  for (const cluster of clusters) {
-    if (cluster.entry_count === 0) continue;
-    lines.push(`### ${cluster.concept_label}${cluster.topic ? ` *(${cluster.topic})*` : ''}`);
-    lines.push('');
-    lines.push(`*${cluster.entry_count} entries · last touched ${cluster.last_touched?.slice(0, 10)}*`);
-    lines.push('');
-    for (const entry of cluster.entries.slice(0, 20)) {
-      lines.push(`- **[${entry.kind}]** ${entry.title}`);
-      if (entry.content.text && entry.content.text.length < 500) {
-        const snippet = entry.content.text.replace(/\n/g, ' ').slice(0, 300);
-        lines.push(`  > ${snippet}${entry.content.text.length > 300 ? '...' : ''}`);
-      }
-      lines.push(`  *${entry.created_at.slice(0, 10)}*`);
-    }
-    if (cluster.entries.length > 20) {
-      lines.push(`- *(${cluster.entries.length - 20} more entries in this concept)*`);
-    }
-    lines.push('');
-  }
-
-  lines.push('---');
-  lines.push('');
-
+  // ───────────────────────────────────────────────────────────────────────
   // Chronological log
+  // ───────────────────────────────────────────────────────────────────────
   lines.push('## Chronological log');
+  lines.push('');
+  lines.push('*Every entry in reverse chronological order, with full timestamps.*');
   lines.push('');
   const reverseChron = [...notebook.entries].reverse();
   let currentDate = '';
-  for (const entry of reverseChron.slice(0, 200)) {
+  for (const entry of reverseChron.slice(0, 500)) {
     const entryDate = entry.created_at.slice(0, 10);
     if (entryDate !== currentDate) {
       lines.push(`### ${entryDate}`);
@@ -455,20 +565,58 @@ export function exportAsMarkdown(user_id: string, userName?: string): string {
       currentDate = entryDate;
     }
     const conceptLabel = entry.content.concept_id
-      ? (CONCEPT_MAP[entry.content.concept_id] as any)?.label || entry.content.concept_id
+      ? (CONCEPT_MAP.get(entry.content.concept_id) as any)?.label || entry.content.concept_id
       : 'uncategorized';
-    lines.push(`- **${entry.created_at.slice(11, 16)}** [${entry.kind}] ${entry.title} · _${conceptLabel}_`);
+    const verdictMarker = entry.content.correct === true ? ' ✓'
+      : entry.content.correct === false ? ' ✗' : '';
+    lines.push(`- \`${entry.created_at.slice(11, 19)}\` **[${entry.kind}]**${verdictMarker} ${entry.title} · _${conceptLabel}_`);
   }
-  if (reverseChron.length > 200) {
+  if (reverseChron.length > 500) {
     lines.push('');
-    lines.push(`*Log truncated — showing most recent 200 of ${reverseChron.length} entries.*`);
+    lines.push(`*Log truncated — showing most recent 500 of ${reverseChron.length} entries.*`);
   }
   lines.push('');
   lines.push('---');
   lines.push('');
-  lines.push('*Generated by Project Vidhya Smart Notebook.*');
+  lines.push(`*Generated by Project Vidhya Smart Notebook on ${exportedAtIso}.*  `);
+  lines.push(`*Syllabus: ${gaps.total_syllabus_concepts} concepts across ${topicOrder.length} topics.*`);
 
   return lines.join('\n');
+}
+
+// ============================================================================
+// Formatting helpers — for the syllabus-driven export
+// ============================================================================
+
+function formatTimestamp(iso: string): string {
+  // Human-readable with date + time, preserves ISO precision
+  // Example: "2026-04-21 14:22 UTC"
+  try {
+    const d = new Date(iso);
+    const date = d.toISOString().slice(0, 10);
+    const time = d.toISOString().slice(11, 16);
+    return `${date} ${time} UTC`;
+  } catch {
+    return iso.slice(0, 16);
+  }
+}
+
+function daysBetween(fromIso: string, toIso: string): number {
+  try {
+    const from = new Date(fromIso).getTime();
+    const to = new Date(toIso).getTime();
+    const ms = Math.max(0, to - from);
+    return Math.round(ms / (24 * 60 * 60 * 1000));
+  } catch {
+    return 0;
+  }
+}
+
+function prettyTopic(topic: string): string {
+  // Turn 'linear-algebra' into 'Linear Algebra'
+  return topic
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, ch => ch.toUpperCase());
 }
 
 // ============================================================================

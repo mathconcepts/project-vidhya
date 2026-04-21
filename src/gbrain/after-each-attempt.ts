@@ -119,7 +119,7 @@ export interface AttemptContext {
 }
 
 export function computeInsight(ctx: AttemptContext): AttemptInsight {
-  const conceptMeta = CONCEPT_MAP[ctx.concept_id];
+  const conceptMeta = CONCEPT_MAP.get(ctx.concept_id);
   const conceptLabel = conceptMeta?.label || ctx.concept_id.replace(/-/g, ' ');
 
   const before = ctx.model_before?.mastery_vector[ctx.concept_id];
@@ -347,7 +347,7 @@ function suggestNextStep(p: {
   error_type?: string;
   model: StudentModel | null;
 }): AttemptInsight['next_step'] {
-  const conceptLabel = CONCEPT_MAP[p.concept_id]?.label || p.concept_id;
+  const conceptLabel = CONCEPT_MAP.get(p.concept_id)?.label || p.concept_id;
 
   // Mastered — push to related
   if (p.after_score >= 0.8 && p.correct) {
@@ -355,7 +355,7 @@ function suggestNextStep(p: {
     if (related) {
       return {
         kind: 'move_on',
-        label: `Try ${CONCEPT_MAP[related]?.label || related}`,
+        label: `Try ${CONCEPT_MAP.get(related)?.label || related}`,
         reason: `You've got ${conceptLabel}. This is the natural next step.`,
         concept_id: related,
         href: `/lesson/${related}`,
@@ -380,7 +380,7 @@ function suggestNextStep(p: {
     if (prereq) {
       return {
         kind: 'review_prereq',
-        label: `Review ${CONCEPT_MAP[prereq]?.label || prereq} first`,
+        label: `Review ${CONCEPT_MAP.get(prereq)?.label || prereq} first`,
         reason: 'This concept is often a prerequisite issue — strengthening it usually fixes the misconception upstream.',
         concept_id: prereq,
         href: `/lesson/${prereq}`,
@@ -423,7 +423,7 @@ function suggestNextStep(p: {
 // ============================================================================
 
 function findRelatedConcept(concept_id: string, model: StudentModel | null): string | null {
-  const meta = CONCEPT_MAP[concept_id];
+  const meta = CONCEPT_MAP.get(concept_id);
   if (!meta) return null;
 
   // Look at successors (what this unlocks)
@@ -436,7 +436,7 @@ function findRelatedConcept(concept_id: string, model: StudentModel | null): str
 }
 
 function findWeakestPrereq(concept_id: string, model: StudentModel | null): string | null {
-  const meta = CONCEPT_MAP[concept_id];
+  const meta = CONCEPT_MAP.get(concept_id);
   if (!meta || !model) return null;
   const prereqs = (meta as any).prerequisites || [];
   let weakest: string | null = null;

@@ -6,7 +6,7 @@ the technical deep-dive for developers, evaluators, and decision-makers
 who need to understand what's under the hood.*
 
 - **Part 1 — For students, teachers, and institutional buyers** (Slides 1–8): what Vidhya *does for you*, in plain language
-- **Part 2 — For developers and technical evaluators** (Slides 9–31): every architectural decision, moat, file reference, and cost metric
+- **Part 2 — For developers and technical evaluators** (Slides 9–32): every architectural decision, moat, file reference, and cost metric
 
 ---
 
@@ -1091,7 +1091,137 @@ The alternative (google-auth-library, grammY, jsonwebtoken) would add
 
 ---
 
-## Slide 25 — Technical Differentiators (Head-to-Head)
+## Slide 25 — The GBrain Integration Moat (One Cognitive Truth, Every Consumer)
+
+Vidhya's cognitive core (GBrain) has been shipping since v2.2 with a
+15-attribute Bayesian mastery vector, a 7-category error taxonomy, a
+concept dependency graph, and a task-reasoner for pre-generation
+thinking. But through v2.5-v2.8, the newer frameworks (Lesson,
+Curriculum, Multimodal, Roles) were built on top of this **without
+consuming it**.
+
+Before v2.9:
+
+- `Lesson.personalize()` accepted a `StudentSnapshot` parameter but
+  nothing populated it from GBrain. Students using `/lesson/*` got
+  generic lessons even though their cognitive profile was rich.
+- `Curriculum quality-aggregator` only saw engagement signals (viewed /
+  revealed / skipped), not error-taxonomy classifications.
+- `Multimodal diagnostic` streamed per-problem verdicts but never fed
+  them back into the student model.
+- Teachers had a `/admin/users` roster showing enrollment data but no
+  cognitive health.
+
+**v2.9 adds the bridge.** One pure-function module translates GBrain's
+rich cognitive data into the shapes each consumer needs, with privacy
+filters at the translation layer.
+
+**Architectural rules:**
+
+```
+  ┌─────────────────────┐
+  │  GBrain (6 pillars) │  ← rich cognitive data
+  └──────────┬──────────┘
+             │  READ ONLY
+             ▼
+  ┌─────────────────────┐
+  │ integration.ts      │  ← 8 pure translation fns
+  │  (bridge module)    │     with privacy filters
+  └──────────┬──────────┘
+             │
+     ┌───────┼────────┬────────┬────────┐
+     ▼       ▼        ▼        ▼        ▼
+   Lesson  Curriculum Multimodal Teacher  Admin
+                                 Roster   Cohort
+```
+
+Rules (enforced at code review):
+
+1. The bridge reads from GBrain — it never writes. Writes stay in
+   GBrain's own API.
+2. Translation functions are pure — no I/O, no side effects.
+3. Graceful degradation — if GBrain is unavailable, consumers get
+   empty snapshots and behave identically to pre-bridge v2.5/v2.6.
+4. Doesn't break any existing API — every integration is opt-in.
+
+**Seven translation functions:**
+
+| Function | Direction | Consumer |
+|----------|-----------|----------|
+| `modelToLessonSnapshot()` | model → Lesson StudentSnapshot | Lesson personalizer |
+| `errorToQualitySignal()` | error → Curriculum signal | Quality aggregator |
+| `prioritizeConceptsByMastery()` | model → sorted concepts | Syllabus generator |
+| `findNearMasteryConcepts()` | model → quick-win picks | Syllabus generator |
+| `deriveConceptHints()` | model × concept → presentation hints | Lesson composer |
+| `modelToTeacherRosterEntry()` | model → teacher summary | Teacher roster |
+| `summarizeCohort()` | N models → admin view | Admin cohort dashboard |
+| `diagnosticToAttempts()` | verdicts → attempt stream | Multimodal feedback (future) |
+
+**What students get:**
+
+- Lessons at `/lesson/*` now auto-adapt to their mastery history when
+  signed in — concepts they struggle with get more worked examples,
+  common_traps get emphasized; concepts they're near mastering surface
+  as confidence-building quick wins.
+
+**What teachers get:**
+
+- A new page `/teacher/roster` shows every student they teach with a
+  cognitive-health summary: overall mastery bar, concept counts
+  (mastered/in-progress/struggling), attention flags for students who
+  hit 5+ consecutive failures or land in frustrated/anxious state.
+- Aggregate-only — teachers don't see raw answers or emotional-state
+  details.
+
+**What admins get:**
+
+- `/api/admin/cohort-summary` endpoint returns class-wide aggregates:
+  total students, avg mastery, top 20 struggling concepts (students
+  affected × avg mastery), count of students in each emotional state,
+  count needing teacher attention.
+
+**Privacy architecture:**
+
+- Student snapshots passed to Lesson: mastery + errors only. Emotional
+  state opt-in via `include_emotional` flag.
+- Teacher roster entries: aggregate counts only. No raw error logs, no
+  emotional state details.
+- Admin cohort summary: class-wide aggregates only. Individual students
+  not named.
+
+**Zero new dependencies, zero breaking changes.**
+
+- Bridge module is ~300 LOC of pure functions.
+- Existing `/api/gbrain/*` routes work unchanged.
+- Anonymous users (no `session_id`) continue getting v2.5-v2.8 behavior.
+- Signed-in users get upgraded lessons automatically.
+
+**Why this is a moat:**
+
+1. **One cognitive source of truth** — instead of every feature inventing
+   its own student model, all five consumer frameworks read from GBrain
+   through one translation layer
+2. **Privacy is centralized** — the bridge IS the privacy boundary;
+   reasoning about what data leaves GBrain happens in one file
+3. **Refactor-friendly** — when GBrain's internal shape changes, only
+   the bridge needs updating; consumers keep working
+4. **Testability** — pure functions, no I/O, trivially unit-tested
+5. **Unlocks teacher & admin UX** — teachers and admins finally get
+   cognitive-health visibility that was always in the data but never
+   surfaced
+
+**Where it's shipped:**
+
+- `src/gbrain/integration.ts` — the bridge (~300 LOC, 8 translation functions)
+- `src/api/lesson-routes.ts` — opt-in enrichment when `session_id` passed
+- `src/api/user-admin-routes.ts` — 2 new endpoints (teacher roster, cohort summary)
+- `frontend/src/pages/gate/TeacherRosterPage.tsx` — teacher-facing UI at `/teacher/roster`
+- `frontend/src/App.tsx` — `/teacher/roster` route
+- `docs/GBRAIN-INTEGRATION.md` — complete architectural rationale + consumer rules
+
+---
+
+## Slide 26 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -1126,7 +1256,7 @@ The alternative (google-auth-library, grammY, jsonwebtoken) would add
 
 ---
 
-## Slide 26 — Tech Stack
+## Slide 27 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -1146,7 +1276,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 27 — What's Shipped (at v2.8.0)
+## Slide 28 — What's Shipped (at v2.9.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -1163,6 +1293,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.6.0 | `888dbd7` | Curriculum framework — admin-owned YAML exams, shared-concept strategy, three-layer guardrails, compounding quality loop |
 | v2.7.0 | `8a03c27` | LLM config framework — BYO-key in-browser, 8 providers as data, cascading role defaults, 4 API-shape universal adapter |
 | v2.8.0 | `b4f0dd1` | Roles & multi-channel — owner/admin/teacher/student hierarchy, Google OAuth identity, flat-file user store, web/Telegram/WhatsApp adapters, zero new deps |
+| v2.9.0 | *this* | GBrain Integration Bridge — pure-function translation layer connecting cognitive core to Lesson/Curriculum/Multimodal/Roles frameworks; teacher roster + admin cohort dashboard |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -1174,6 +1305,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 - Multimodal analysis with 6 intents (explain / solve / practice / check / stuck / transcribe)
 - **LLM-agnostic runtime** — 8 providers configurable in-browser at `/llm-config`
 - **Role-based access** — owner/admin/teacher/student with multi-channel identity (web/Telegram/WhatsApp)
+- **GBrain Integration Bridge** — 8 pure translation functions wiring cognitive data to every consumer framework, with centralized privacy filters
 - SSE-streaming test-paper diagnostic with auto-generated study plan
 - Admin dashboard live at `/admin/content`
 - Auth wall verified (HTTP 401 on unauth)
@@ -1187,7 +1319,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 28 — Cost Projections at Scale
+## Slide 29 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -1207,7 +1339,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 29 — Why Now
+## Slide 30 — Why Now
 
 **Three trends converge:**
 
@@ -1229,7 +1361,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 30 — Roadmap (Near-Term)
+## Slide 31 — Roadmap (Near-Term)
 
 **Content expansion** — 34 → 2000 problems over 90 days
 - Nightly CI already wired (needs workflow YAML upload)
@@ -1255,7 +1387,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 31 — Invitation
+## Slide 32 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -1330,6 +1462,7 @@ Where to engage:
 | **Curriculum (admin-owned, compounding)** | 🔵🔵🔵🔵🔵 | Shared-concept strategy pays √N across exams; quality iterations measurably compound via engagement→quality→iteration loop |
 | **LLM-agnostic (BYO-key)** | 🔵🔵🔵🔵 | Provider-as-data — 8 providers, 4 API shapes; users pick + pay their own provider, no lock-in, rotate in 30s |
 | **Roles & multi-channel** | 🔵🔵🔵🔵 | Flat-file identity, zero-setup bootstrap (first signup = owner), 3 channels one account, zero new deps |
+| **GBrain Integration Bridge** | 🔵🔵🔵🔵🔵 | One cognitive source of truth for every consumer; privacy filters centralized; refactor-friendly; unlocks teacher/admin UX that was always in the data |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

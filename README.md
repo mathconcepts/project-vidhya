@@ -165,7 +165,7 @@ for the tiered breakdown.
 | Document                    | Scope                                       |
 |----------------------------|---------------------------------------------|
 | [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
-| [FEATURES.md](./FEATURES.md) | 31-slide deck (8 for students, 23 technical): every moat, metrics, cost model |
+| [FEATURES.md](./FEATURES.md) | 32-slide deck (8 for students, 24 technical): every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
 | [docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) | BYO-key setup: 8 providers, cascading role defaults, privacy model |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |

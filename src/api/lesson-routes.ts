@@ -26,6 +26,8 @@ import {
 import { resolveContent } from '../content/resolver';
 import { recordTelemetry } from '../content/telemetry';
 import { recordSignal } from '../curriculum/quality-aggregator';
+import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
+import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import type { LessonRequest, Lesson } from '../lessons/types';
 
@@ -163,6 +165,19 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
     force_full: body.force_full === true,
     user_material_chunks: Array.isArray(body.user_material_chunks) ? body.user_material_chunks : [],
   };
+
+  // GBrain enrichment: if session_id is provided and no explicit student
+  // snapshot is passed, fetch the cognitive model and translate it to a
+  // StudentSnapshot. Preserves the v2.5 behavior when session_id is
+  // omitted or GBrain is unavailable.
+  if (lessonReq.session_id && !lessonReq.student) {
+    try {
+      const model = await getOrCreateStudentModel(lessonReq.session_id, null);
+      lessonReq.student = modelToLessonSnapshot(model);
+    } catch {
+      // Graceful degradation — lesson works without enrichment
+    }
+  }
 
   try {
     const sources = await resolveSources(lessonReq);

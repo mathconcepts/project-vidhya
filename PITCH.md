@@ -131,6 +131,8 @@ dependencies — read:
   and authorization model
 - [docs/MULTI-CHANNEL-SETUP.md](./docs/MULTI-CHANNEL-SETUP.md) — web +
   Telegram + WhatsApp integration walkthroughs
+- [docs/GBRAIN-INTEGRATION.md](./docs/GBRAIN-INTEGRATION.md) — bridge module
+  connecting the cognitive core to every consumer framework
 - [INSTALL.md](./INSTALL.md) — 5-path install guide
 
 ---
@@ -143,7 +145,9 @@ RAG → LLM → Wolfram verification), a research-grounded 8-component lesson
 framework, an admin-owned YAML curriculum with three-layer guardrails and a
 compounding quality loop, BYO-key LLM configuration across 8 providers, and
 a four-role access system (owner/admin/teacher/student) with multi-channel
-identity (web/Telegram/WhatsApp) — all shipped with zero enterprise
+identity (web/Telegram/WhatsApp), and a GBrain Integration Bridge
+connecting the cognitive model to every feature — all shipped with zero
+enterprise
 dependencies. Cost per daily active user: **$0.01–$0.30** where typical
 edtech spends **$1.50–$2.50**.
 

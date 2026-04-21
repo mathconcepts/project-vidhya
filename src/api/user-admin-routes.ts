@@ -23,6 +23,11 @@ import {
   transferOwnership,
 } from '../auth/user-store';
 import { requireRole } from '../auth/middleware';
+import {
+  modelToTeacherRosterEntry,
+  summarizeCohort,
+} from '../gbrain/integration';
+import { getOrCreateStudentModel } from '../gbrain/student-model';
 import type { Role } from '../auth/types';
 
 interface ParsedRequest {
@@ -133,6 +138,90 @@ async function handleTransferOwnership(req: ParsedRequest, res: ServerResponse):
 }
 
 // ============================================================================
+// GBrain-powered endpoints (NEW in v2.9)
+// ============================================================================
+
+/**
+ * Teacher roster — shows cognitive-model summaries for students assigned
+ * to the requesting teacher. Admin can request any teacher's roster.
+ */
+async function handleTeacherRoster(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'teacher');
+  if (!auth) return;
+
+  // Target teacher: self (teacher role) or specified teacher_id (admin+)
+  const target_teacher_id = req.params.teacher_id || auth.user.id;
+  if (target_teacher_id !== auth.user.id && auth.user.role === 'teacher') {
+    return sendJSON(res, { error: 'teachers can only see their own roster' }, 403);
+  }
+  const teacher = getUserById(target_teacher_id);
+  if (!teacher) return sendJSON(res, { error: 'teacher not found' }, 404);
+  if (teacher.role !== 'teacher' && teacher.role !== 'admin' && teacher.role !== 'owner') {
+    return sendJSON(res, { error: 'target is not a teacher' }, 400);
+  }
+
+  // For each student assigned to this teacher, fetch their cognitive model
+  // and compose a roster entry. Falls back to zero-mastery entries if
+  // GBrain is unavailable.
+  const entries: any[] = [];
+  for (const student_id of teacher.teacher_of) {
+    const student = getUserById(student_id);
+    if (!student) continue;
+    let entry;
+    try {
+      // Note: session_id is the GBrain key, but in the Roles v2.8 system
+      // each signed-in user has their own student_id which we treat as
+      // the session_id for model lookup
+      const model = await getOrCreateStudentModel(student.id, student.id);
+      entry = modelToTeacherRosterEntry(student.id, model);
+    } catch {
+      entry = modelToTeacherRosterEntry(student.id, null);
+    }
+    entries.push({
+      ...entry,
+      name: student.name,
+      email: student.email,
+      picture: student.picture,
+    });
+  }
+
+  // Sort: students needing attention first, then by lowest mastery
+  entries.sort((a, b) => {
+    if (a.needs_attention !== b.needs_attention) return a.needs_attention ? -1 : 1;
+    return a.overall_mastery - b.overall_mastery;
+  });
+
+  sendJSON(res, {
+    teacher: { id: teacher.id, name: teacher.name, email: teacher.email },
+    student_count: entries.length,
+    attention_count: entries.filter(e => e.needs_attention).length,
+    students: entries,
+  });
+}
+
+/**
+ * Cohort summary — admin-only aggregate view. Pulls all student models
+ * and summarizes mastery, frustration rate, struggling concepts.
+ */
+async function handleCohortSummary(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+
+  const students = listUsers().filter(u => u.role === 'student');
+  const models: any[] = [];
+  for (const s of students) {
+    try {
+      const m = await getOrCreateStudentModel(s.id, s.id);
+      models.push(m);
+    } catch {
+      models.push(null);
+    }
+  }
+
+  sendJSON(res, summarizeCohort(models));
+}
+
+// ============================================================================
 // Export
 // ============================================================================
 
@@ -143,4 +232,8 @@ export const userAdminRoutes: Array<{ method: string; path: string; handler: Rou
   { method: 'POST', path: '/api/admin/users/:id/teacher',  handler: handleAssignTeacher },
   { method: 'POST', path: '/api/admin/users/:id/unlink',   handler: handleUnlinkChannel },
   { method: 'POST', path: '/api/owner/transfer-ownership', handler: handleTransferOwnership },
+  // GBrain-bridged endpoints
+  { method: 'GET',  path: '/api/teacher/roster',               handler: handleTeacherRoster },
+  { method: 'GET',  path: '/api/teacher/roster/:teacher_id',   handler: handleTeacherRoster },
+  { method: 'GET',  path: '/api/admin/cohort-summary',         handler: handleCohortSummary },
 ];

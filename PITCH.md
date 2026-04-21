@@ -23,6 +23,12 @@ before/after Vidhya is built for.
 | "AI chatbots hallucinate. I don't trust the numbers." | Wolfram-verified where possible. Past papers pre-checked. The AI doesn't get to invent. Uncertainty is named, not hidden. |
 | "Apps use streaks and guilt-trip notifications to manipulate me." | No streaks. No badges. No "you lost your streak" pings. You study when you want. |
 | "I don't want my weak areas in some corporate database." | Your materials stay in your browser. Progress on your device. AI keys never touch our servers. Architecturally, not just as a policy. |
+| "I don't have access to top-tier teaching where I live." | Lesson content doesn't change by location. Same structure, depth, and trap-flagging as well-regarded prep material — whether you're in a small town or a coaching hub. |
+| "My foundations are shaky, and advanced topics feel impossible." | When a wrong answer looks like a prerequisite issue, Vidhya walks the concept graph, finds the upstream concept you're weakest on, and points you there first. Misconceptions get repaired where they actually live. |
+| "Coaching moves at the average pace — I'm either bored or lost." | You move per concept, not per class. Crush linear algebra in a day. Spend two weeks on measure theory. Mastery is tracked per concept, not per schedule. |
+| "I'm embarrassed to ask 'basic' questions in class." | Ask anything, any way, any number of times. No one sees. No one judges. Ten variations of the same question are equally welcome. |
+| "My teacher explains, but I don't see why any of it matters." | Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. The point before the proof, so the proof sticks. |
+| "Rigorous material is too abstract; intuitive material is too hand-wavy." | Each lesson has both layers. Intuition that's visualized, not dumbed-down. Formal statement in your exam's terminology, not obscured in prose. Linger on whichever you need. |
 
 ---
 

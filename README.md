@@ -96,6 +96,55 @@ servers. Your weak areas are yours. This isn't a marketing claim — it's
 how the app is architected. There's no server-side database of student
 progress to leak.
 
+### "I don't have access to top-tier teaching where I live."
+
+**Bliss:** The lesson content doesn't change based on where you are.
+Every concept is written with the same structure, depth, and trap-flagging
+you'd find in well-regarded prep material — a student in a small town
+gets the same lesson quality as a student in Kota or Bangalore. The
+variable isn't access to the teaching; it's your willingness to engage
+with it.
+
+### "My foundations are shaky, which is making advanced topics impossible."
+
+**Bliss:** When you get a wrong answer and it looks like a prerequisite
+issue, Vidhya doesn't just show the solution. It walks the concept graph,
+finds the specific upstream concept you're weakest on, and suggests
+reviewing that first. The misconception gets repaired where it actually
+lives, not where it's visible. Advanced topics unlock naturally once the
+foundation stops slipping.
+
+### "Coaching lectures move at the average pace. I'm either bored or lost."
+
+**Bliss:** You move at your own pace, per concept. Crush linear algebra
+in a day. Spend two weeks on measure theory. The app tracks mastery
+per concept, not per class, so nothing is gated by a classroom schedule.
+Fast learners don't wait. Slow learners don't feel pushed.
+
+### "I'm embarrassed to ask 'basic' questions in front of classmates."
+
+**Bliss:** Ask the same question ten different ways. No one sees. No one
+judges. You can type "wait, what's a derivative again?" after you've
+done 200 derivative problems, and the app just answers. The only thing
+that matters is that you understand — not what your classmates would
+think about what you don't.
+
+### "My teacher explains, but I don't see why any of it actually matters."
+
+**Bliss:** Every lesson opens with a hook — one sentence on why this
+concept exists and what real problem it solves. Not "it's in the
+syllabus." A genuine motivation — the question this concept was
+invented to answer. You see the point before the proof, which makes
+the proof stick.
+
+### "Rigorous material is too abstract; intuitive explanations are too hand-wavy."
+
+**Bliss:** Each lesson carries both layers. The intuition is a mental
+picture anyone can hold onto — not dumbed-down, just visualized. The
+formal statement is rigorous, in your exam's exact terminology — not
+obscured in academic prose. You linger on whichever you need today.
+Neither layer compromises on correctness.
+
 ---
 
 ## What you actually get (as a student)

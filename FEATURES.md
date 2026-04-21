@@ -163,6 +163,108 @@ our servers. This isn't a marketing claim — it's how the app is
 architected. There's no server-side database of student progress to
 leak, subpoena, or sell.
 
+### "I don't have access to top-tier teaching where I live."
+
+Students in major metros have access to Kota, Bangalore, Chennai,
+and Mumbai's best coaching institutes. Students in smaller cities
+often don't. The quality of the teaching has historically been
+geography-bound — which is a problem when your exam isn't.
+
+**In Vidhya:** the lesson content doesn't change based on where
+you are. Every concept is written with the same structure, the same
+depth, the same explicit trap-flagging that you'd find in
+well-regarded prep material. Your pin code doesn't filter your
+lesson quality. What changes isn't the teaching — it's your access
+to it. That access is now uniform.
+
+*To be precise: we don't claim IIT faculty personally wrote every
+lesson. We claim the structural rigor of the content — the 8-component
+lesson format, the concept graph with prerequisite links, the
+Wolfram verification — meets the bar that well-regarded prep
+material sets. Readers who click through to the framework docs
+can audit every design decision.*
+
+### "My foundations are shaky, and it's making advanced topics feel impossible."
+
+You're trying to learn Fourier series, but you never fully got
+trigonometric identities. The advanced topic keeps tripping you up,
+not because of the new material, but because of a gap four
+prerequisites upstream. Most study apps just show you the solution
+to the surface-level problem again.
+
+**In Vidhya:** when your wrong answer has a signature that suggests
+a prerequisite issue, the system walks the concept graph for that
+topic, finds the specific upstream concept your mastery model shows
+as weakest, and explicitly routes you there first. *"Review
+trigonometric identities before trying another Fourier series
+problem."* The misconception gets repaired where it actually lives —
+not where it happens to be visible. Once the foundation stops
+slipping, advanced topics unlock.
+
+*This is the `findWeakestPrereq` + `review_prereq` flow shipped
+in v2.9.0's GBrain Integration Bridge. The concept graph has real
+prerequisite edges; the mastery model tracks real per-concept
+scores; the routing logic is deterministic.*
+
+### "Coaching lectures move at the average pace — I'm either bored or lost."
+
+A coaching institute has to move at a pace that works for the
+average student in the batch. If you're above that pace, you're
+bored and lose momentum. If you're below, you're lost and lose
+confidence. The class schedule optimizes for the batch, not for you.
+
+**In Vidhya:** you move per concept, not per class. Crush linear
+algebra in a day if it clicks. Spend two weeks on measure theory
+if you need it. The app tracks mastery per concept, not per
+calendar slot, so nothing is gated by a classroom schedule. The
+system's recommendations adapt to your actual state, not to where
+the average student would be on a Tuesday in March.
+
+### "I'm embarrassed to ask 'basic' questions in class."
+
+By the third month of a coaching program, the students who didn't
+get the basics solidly in the first month are usually too
+embarrassed to ask. The questions stay unasked. The foundations
+stay shaky. The gap widens.
+
+**In Vidhya:** ask anything, in any way, any number of times. No
+one sees. No classmates. No teacher making a face. You can type
+*"wait, what's a derivative again?"* after you've done 200
+derivative problems, and the app just answers. The only thing
+that matters is that you actually understand — not what anyone
+would think about what you don't.
+
+### "My teacher explains, but I don't see why any of it actually matters."
+
+You sit through a derivation. The teacher writes equations. You
+copy the equations. You pass the exam. Five years later, you
+couldn't explain to anyone why the derivation mattered or what
+problem it solved — because you never got that part.
+
+**In Vidhya:** every lesson opens with a **hook** — a single
+sentence on why this concept exists and what real problem it was
+invented to answer. Not *"it's in the syllabus."* A genuine
+motivation. You see the point before the proof. The proof sticks
+afterward because now you have a reason to care about it.
+
+*The hook is the first of eight components in every lesson. See
+docs/LESSON-FRAMEWORK.md for the full structure.*
+
+### "Rigorous material is too abstract; intuitive explanations are too hand-wavy."
+
+Textbooks give you the formal statement of a theorem with zero
+motivation. YouTube gives you an analogy that kind of works but
+misses the precision your exam actually tests. You're stuck picking
+between rigor and understanding, and neither one alone is enough.
+
+**In Vidhya:** each lesson carries both layers, deliberately. The
+**intuition** is a visualized mental picture — not dumbed-down,
+just made concrete. The **formal statement** is rigorous, in your
+exam's exact terminology — not hidden in academic prose. You can
+linger on whichever layer you need today. The claim we make is
+that neither layer compromises on correctness. The intuition is
+true; the formalism is approachable.
+
 ---
 
 ## Slide 3 — What you get as a student

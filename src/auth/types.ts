@@ -62,6 +62,16 @@ export interface User {
     pushed_by_teacher_id: string;
     pushed_at: string;
   }>;
+  /**
+   * The exam this student is preparing for — references Exam.id in the
+   * dynamic exam registry (src/exams/exam-store.ts). Admin or teacher
+   * assigns it. Drives syllabus, priority-engine weights, countdown
+   * prompts, and mock-exam configuration.
+   *
+   * Multiple students can share the same exam_id — one exam definition
+   * serves an entire cohort.
+   */
+  exam_id?: string;
 }
 
 /**

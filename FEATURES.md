@@ -6,7 +6,7 @@ the technical deep-dive for developers, evaluators, and decision-makers
 who need to understand what's under the hood.*
 
 - **Part 1 — For students, teachers, and institutional buyers** (Slides 1–8): what Vidhya *does for you*, in plain language
-- **Part 2 — For developers and technical evaluators** (Slides 9–33): every architectural decision, moat, file reference, and cost metric
+- **Part 2 — For developers and technical evaluators** (Slides 9–34): every architectural decision, moat, file reference, and cost metric
 
 ---
 
@@ -1400,7 +1400,153 @@ Architecturally clean.
 
 ---
 
-## Slide 27 — Technical Differentiators (Head-to-Head)
+## Slide 27 — The Dynamic Exam Framework Moat (One Exam, Many Students, Progressive Fill)
+
+Every LMS claims to "support multiple exams." In practice, most ship
+a static list defined by the vendor, and you wait months for new ones.
+
+Vidhya ships with **a dynamic exam framework** that lets admins add
+a new exam in 30 seconds with just three fields — then progressively
+enrich it over days or weeks as details become available.
+
+### The shape of the problem
+
+An admin at a coaching institute decides to support GATE CS 2027. They
+know the name. They know it's an Indian PG exam. They know it's run
+by IIT Madras. But they don't have:
+
+- The exact number of sections
+- The marking scheme (is negative marking 1/3 or 1/4 this year?)
+- The syllabus document (the official release is 3 weeks away)
+- The exam date (not announced yet)
+
+Traditional LMS: "come back when you have complete info."
+
+**Vidhya: create it now. Fill as you go.**
+
+### The admin flow
+
+**Create (30 seconds):** Three required fields — short code, full name,
+level. Optionally: country, issuing body, any seed text the admin has
+lying around. System generates a unique ID `EXM-<CODE>-<BASE36-TS>`
+that will be stable across all future edits and assignable to
+unlimited students.
+
+**Enrich (progressive):** Admin has four non-exclusive options:
+
+1. **Auto-enrich from web** — one click. An LLM researches the exam
+   (grounded in any local data the admin uploaded) and proposes a
+   complete profile. Admin reviews in a preview, applies.
+2. **Upload local data** — paste official syllabus text, prep-guide
+   excerpts, past-paper content. This becomes authoritative context
+   for enrichment, overriding general web knowledge.
+3. **Edit manually** — open the Fields tab, fill anything directly.
+4. **Talk to the assistant** — a conversational helper that greets,
+   reports completeness, recommends highest-leverage next action.
+   Stateless, regex-classified intents (auto-enrich, upload, ready,
+   what's next). Never hallucinates exam content.
+
+**Mark ready:** When ≥ 40% complete, the exam becomes assignable to
+students. Remains in draft below that threshold.
+
+**Adapt later:** Re-enrichment is idempotent. Admin can run it again
+next week when the official syllabus is released. Nothing the admin
+manually typed gets overwritten — enrichment only fills gaps or
+refreshes previously-web-researched fields.
+
+### Provenance — who filled what
+
+Every filled field carries metadata. Source ranks trust:
+
+    admin_manual     🟢 admin typed it directly
+    user_upload      🔵 extracted from admin-uploaded local data
+    web_research     🟡 filled by LLM, with confidence score
+    default          ⚪ inferred placeholder
+    none             ⚪ not yet filled
+
+**Critical invariant:** enrichment NEVER overwrites admin_manual or
+user_upload fields. Admin's explicit entries are sacred.
+
+When admin edits a web-researched field, its source flips to
+admin_manual automatically. Re-running enrichment is always safe.
+
+### LLM-optional
+
+Enrichment detects which provider has an API key at runtime —
+`GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. If none
+configured, returns a graceful "enrichment disabled" response and
+admin can still fill everything manually. The framework does not
+require an LLM to be useful.
+
+Default provider: **Gemini 2.0 Flash Lite** — cheapest, fastest,
+JSON-mode structured output. Roughly $0.0002 per enrichment call.
+
+### One exam, many students
+
+The unique Exam ID is the join key. A single exam profile serves
+unlimited students:
+
+    Exam: EXM-GATECS2027-MO8JEJYV
+      ↓ assigned to
+      ├── student_123 (user.exam_id = "EXM-...")
+      ├── student_456 (user.exam_id = "EXM-...")
+      ├── student_789 (user.exam_id = "EXM-...")
+      └── ...
+
+Admin edits the syllabus → every assigned student sees the update on
+next page load. No per-student duplication, no stale copies.
+
+A coaching institute admin sets up `GATE-CS-2027` once, bulk-assigns
+50 students via `/admin/users`, and one edit later updates all 50.
+
+### Completeness — a gradient, not pass/fail
+
+Computed from 14 weighted fields across 5 categories (Basics /
+Structure / Content / Schedule / Eligibility). A 25% exam is usable
+— just less tailored. A 90% exam drives rich per-student experience
+(topic-weighted priorities, countdown prompts, mock-exam fidelity,
+pacing-aware micro-exercises).
+
+The admin UI shows a per-category breakdown: "4/7 structural fields
+filled." This makes progress visible without being a to-do list.
+
+### HTTP surface (13 endpoints)
+
+    POST   /api/exams                        Create
+    GET    /api/exams                        List (admin)
+    GET    /api/exams/assignable             List ready (teacher+)
+    GET    /api/exams/:id                    Full + breakdown + suggestions
+    PATCH  /api/exams/:id                    Update (admin_manual source)
+    POST   /api/exams/:id/enrich             Preview proposal
+    POST   /api/exams/:id/enrich/apply       Apply proposal
+    POST   /api/exams/:id/local-data         Add local data
+    DELETE /api/exams/:id/local-data/:ldid   Remove local data
+    POST   /api/exams/:id/mark-ready         Draft → ready
+    POST   /api/exams/:id/archive            Archive (reversible)
+    DELETE /api/exams/:id                    Permanent delete (owner)
+    POST   /api/exams/:id/assistant          Assistant turn
+
+### Why this is a moat
+
+1. **Zero wait-for-vendor.** Admin adds any exam, any time, zero code.
+2. **Accepts incomplete info.** Partial data is the expected state,
+   not a pending TODO.
+3. **Provenance protects admin edits.** Re-enrichment never
+   overwrites admin manual entries.
+4. **LLM-optional.** Framework works fully without any LLM; enrichment
+   is a nice-to-have layer.
+5. **One profile, many students.** Coaching institutes scale cleanly.
+6. **Local data takes priority.** Admins with official source documents
+   get authoritative enrichment, not just web guesses.
+7. **Architectural cleanliness.** Flat-file storage via shared
+   createFlatFileStore; zero new npm deps; 13 endpoints; 1700 LOC.
+
+Storage: `.data/exams.json` via the shared flat-file-store generic
+from v2.9.1.
+
+---
+
+## Slide 28 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -1435,7 +1581,7 @@ Architecturally clean.
 
 ---
 
-## Slide 28 — Tech Stack
+## Slide 29 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -1455,7 +1601,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 29 — What's Shipped (at v2.9.4)
+## Slide 30 — What's Shipped (at v2.9.7)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -1476,7 +1622,10 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.9.1 | `13ce67c` | Refactor — extract shared route + flat-file primitives, −210 LOC |
 | v2.9.2 | `fc0445f` | User journey mapped, admin dashboard + student welcome card shipped |
 | v2.9.3 | `de75e8a` | Teacher as end-user — /teaching dashboard, student-teacher relationship model with transparency |
-| v2.9.4 | *this* | Compounding Mastery + Smart Notebook — after-each-attempt insight engine + auto-clustered notebook with gap analysis + Markdown export |
+| v2.9.4 | `e3fde92` | Compounding Mastery + Smart Notebook — after-each-attempt insight engine + auto-clustered notebook with gap analysis + Markdown export |
+| v2.9.5 | `97b45d1` | Syllabus-driven notebook export with per-concept timestamps — every concept listed with clear practiced/not-practiced markers + fixes hidden Map/Array bugs |
+| v2.9.6 | `23ff72b` | Notebook watermark + legally-binding-yet-friendly disclaimer — every export carries provenance + scope clarification |
+| v2.9.7 | *this* | Dynamic Exam Framework — admin-managed exam registry with LLM-optional progressive enrichment + conversational assistant + unique multi-student IDs |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -1502,7 +1651,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 30 — Cost Projections at Scale
+## Slide 31 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -1522,7 +1671,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 31 — Why Now
+## Slide 32 — Why Now
 
 **Three trends converge:**
 
@@ -1544,7 +1693,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 32 — Extension points (for contributors)
+## Slide 33 — Extension points (for contributors)
 
 Vidhya is open source. These are places where a contributor can add
 real value without rewriting the foundation:
@@ -1577,7 +1726,7 @@ architecture where someone else can.
 
 ---
 
-## Slide 33 — Invitation
+## Slide 34 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -1655,6 +1804,7 @@ Where to engage:
 | **GBrain Integration Bridge** | 🔵🔵🔵🔵🔵 | One cognitive source of truth for every consumer; privacy filters centralized; refactor-friendly; unlocks teacher/admin UX that was always in the data |
 | **Compounding mastery** | 🔵🔵🔵🔵🔵 | Every attempt produces visible mastery delta + insight + single next step + pattern reinforcement; error-taxonomy-aware explanations reframe wrong answers as learning |
 | **Smart Notebook** | 🔵🔵🔵🔵🔵 | Every user input auto-logged, concept-clustered, syllabus gap-analyzed, exportable as Markdown — single source of truth, universal format, privacy-preserving |
+| **Dynamic exam framework** | 🔵🔵🔵🔵🔵 | Admin-managed exam registry with 3-field minimal seed, LLM-optional progressive enrichment, conversational assistant, admin-edit-preserving provenance, unique IDs reusable across any number of students |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

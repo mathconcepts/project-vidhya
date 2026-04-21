@@ -52,6 +52,7 @@ const TeacherRosterPage = lazy(() => import('@/pages/gate/TeacherRosterPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/gate/AdminDashboardPage'));
 const TeachingDashboardPage = lazy(() => import('@/pages/gate/TeachingDashboardPage'));
 const SmartNotebookPage = lazy(() => import('@/pages/gate/SmartNotebookPage'));
+const ExamSetupPage = lazy(() => import('@/pages/gate/ExamSetupPage'));
 const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
 
 const PageLoader = () => (
@@ -105,6 +106,7 @@ export default function App() {
           <Route path="admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="teaching" element={<TeachingDashboardPage />} />
           <Route path="smart-notebook" element={<SmartNotebookPage />} />
+          <Route path="exams" element={<ExamSetupPage />} />
           <Route path="admin/content" element={<ContentAdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>

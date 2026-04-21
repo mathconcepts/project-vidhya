@@ -135,6 +135,8 @@ dependencies — read:
   connecting the cognitive core to every consumer framework
 - [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md)
   — after-each-attempt insight engine + Smart Notebook with gap analysis
+- [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md) — dynamic exam registry
+  with LLM-optional enrichment, conversational assistant, unique multi-student IDs
 - [INSTALL.md](./INSTALL.md) — 5-path install guide
 
 ---

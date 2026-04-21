@@ -177,3 +177,65 @@ frontend/src/components/lesson/
 ```
 
 Zero new npm dependencies. Reuses Framer Motion (already present in the frontend from v2.4.1).
+
+---
+
+## v2.12.0 — Learning-objective + GBrain-aware enrichment
+
+The v2.11.0 enrichment was deterministic: same `Lesson` always produced the same `EnrichedLesson`. v2.12.0 adds an optional `EnrichmentContext` that threads GBrain signals through the decision layer so the interactive treatment matches the student's actual learning objective.
+
+### What changes based on context
+
+**Learning objective** (from `ExamContext.question_types`):
+
+| Dominant type | Effect on enrichment |
+|---------------|----------------------|
+| `mcq` (MCQ / MSQ dominant, e.g. NEET, AIIMS) | Confident students get compressed worked examples (key step only) + synthesized pattern-recognition quick checks. Struggling students keep full step-by-step reveal regardless. |
+| `descriptive` (e.g. UPSC Mains, GATE descriptive) | Full reveal always preserved — derivation is the point. |
+| `numerical` | Pacing-aware: imminent exam + negative marking → pacing hint in quick-check prompt ("⏱️ aim for under 72s"). |
+| `mixed` | v2.11.0 baseline behavior — no compression, no synthesis. |
+
+**Mastery signal** (from `StudentModel.mastery_vector`):
+
+| Mastery signal | Effect on enrichment |
+|----------------|----------------------|
+| `concept_score >= 0.7` + MCQ exam | Compress worked examples to key step only |
+| `concept_score < 0.3` | Never compress — struggling students need every step |
+| `last_error_type === 'conceptual'` | Trap cards with `is_conceptual: true` sort to the top |
+
+**Exam proximity** (from `ExamContext.exam_is_imminent`):
+
+| Signal | Effect |
+|--------|--------|
+| `is_imminent === true` + `negative_marks_per_wrong > 0` | QuickCheck prompts gain a pacing banner: *⏱️ Exam pacing: aim for under Ns.* |
+
+### Synthesized quick-checks (the one content-creation exception)
+
+When a lesson has a worked example but no explicit `micro-exercise`, and the student's exam is MCQ-dominant, the enricher synthesizes a quick-check from the worked example's key step + optional `distractors`. This is the single exception to the "enrichment never creates new content" rule — but the synthesis is strictly derived from content already in the lesson (key step = correct answer; distractors = authored, optional). If no distractors are authored, synthesis is skipped.
+
+The rationale: an MCQ-preparing student should always have at least one tap-to-answer drill per concept, even if the content author only wrote a worked example. Synthesis bridges the gap without the author having to write two versions.
+
+### GBrain integration (opt-in via `/api/lesson/:id/rendered`)
+
+The rendering route now hydrates `EnrichmentContext` automatically from the signed-in student:
+
+1. Calls `getExamContextForStudent(user_id)` → populates `learning_objective`
+2. Calls `getOrCreateStudentModel(user_id)` → populates `mastery` for the concept
+3. Passes both to `enrichLesson(lesson, channels, ctx)`
+
+The response includes a `gbrain_context` field that names which signals influenced the enrichment decisions — useful for debugging and for admin dashboards that want to audit why a particular student saw a particular treatment.
+
+Both lookups are best-effort. Failure in either produces `null` context → falls back to the v2.11.0 deterministic baseline. No breaking change.
+
+### Purity preserved
+
+Same `(lesson, channel_hints, ctx)` still produces the same `EnrichedLesson`. Caching is safe — the cache key just needs to include a hash of the context (or the context itself, which is small: 5-7 fields).
+
+### What this enables
+
+A student preparing for NEET (MCQ-heavy) and a student preparing for UPSC Mains (descriptive-heavy) now see fundamentally different interactive experiences from the **same canonical lesson**:
+
+- NEET student sees: hook callout → compressed worked example (1 key step) → auto-synthesized pattern-recognition quick-check → trap flip-cards (reordered to put conceptual traps first if they've been making conceptual errors)
+- UPSC student sees: hook callout → full 4-step worked example reveal → trap flip-cards → connections drag-match
+
+Both students see the same pedagogical content — just the interactive treatment is tuned to what their exam actually rewards.

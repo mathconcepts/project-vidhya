@@ -2084,6 +2084,62 @@ concurrently in different chats.
 Zero new npm dependencies. Reuses Framer Motion (already present
 since v2.4).
 
+### v2.12.0 — Learning-objective + GBrain-aware enrichment
+
+The v2.11.0 enrichment was deterministic (same Lesson → same
+blocks). v2.12.0 threads GBrain signals through the decision layer
+so the interactive treatment matches the student's actual
+learning objective.
+
+**Same canonical lesson, different interactive treatment per student.**
+
+A NEET student (MCQ-heavy exam) preparing eigenvalues sees:
+  - Compressed 1-step worked example (key insight only)
+  - Synthesized pattern-recognition quick-check
+  - Common-traps flip cards (conceptual traps surfaced first if
+    they've been making conceptual errors)
+
+A UPSC Mains student (descriptive-heavy) preparing eigenvalues sees:
+  - Full 4-step worked example reveal
+  - Trap flip-cards
+  - Connections drag-match
+
+Same canonical pedagogical content. The rendering layer adapts.
+
+**The GBrain signals that drive adaptation:**
+
+    learning_objective.dominant_type     mcq | msq | numerical | descriptive | mixed
+    learning_objective.is_imminent       exam ≤ 7 days
+    learning_objective.negative_marks    cost of wrong answer
+    learning_objective.avg_seconds       per-question time budget
+
+    mastery.concept_score                0..1 for the concept being rendered
+    mastery.last_error_type              conceptual / careless / computational
+
+**The decisions:**
+
+- MCQ + confident (≥0.7 score) → compress worked example to key step only
+- MCQ + struggling (<0.3 score OR conceptual error) → full reveal preserved
+- Descriptive exam → always full reveal (derivation IS the point)
+- Imminent + negative marking → pacing hint in quick-check prompts
+- Conceptual error → trap cards with is_conceptual: true sort to top
+- MCQ exam + no explicit micro-exercise → synthesize a quick-check
+  from the worked example's key step + authored distractors
+
+**Purity preserved:** same (lesson, channel, ctx) → same
+EnrichedLesson. Caching safe. Cache key just needs to include
+context hash.
+
+**GBrain integration is automatic.** The /api/lesson/:id/rendered
+endpoint hydrates EnrichmentContext from the signed-in user via
+getExamContextForStudent() + getOrCreateStudentModel(). Both
+lookups are best-effort; failure falls back to the v2.11.0
+deterministic baseline.
+
+**Response transparency:** rendered response includes a
+gbrain_context field naming which signals influenced rendering —
+useful for debugging and admin audit trails.
+
 ---
 
 ## Slide 31 — Technical Differentiators (Head-to-Head)
@@ -2141,7 +2197,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.11.0)
+## Slide 33 — What's Shipped (at v2.12.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2172,7 +2228,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.10.1 | `0c00b88` | Customer-centric messaging pass across README, PITCH, FEATURES |
 | v2.10.2 | `752aad1` | Pain → bliss framing — 10 pain/bliss pairs across all three customer-facing surfaces |
 | v2.10.3 | `56e2b11` | Six more pain/bliss pairs covering world-class access, foundations, pacing, social pressure, motivation, rigor+intuition |
-| v2.11.0 | *this* | Multi-channel interactive rendering framework — enrichment decision logic + channel renderer for web/Telegram/WhatsApp/voice; Framer Motion web components; progressive-reveal state machine for Telegram |
+| v2.11.0 | `1a41f15` | Multi-channel interactive rendering framework — enrichment decision logic + channel renderer for web/Telegram/WhatsApp/voice; Framer Motion web components; progressive-reveal state machine for Telegram |
+| v2.12.0 | *this* | Objective + GBrain-aware enrichment — same canonical lesson produces different interactive treatment per student based on exam question-type mix, mastery, and exam proximity; README pain/bliss condensed to soundbites |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -2354,7 +2411,7 @@ Where to engage:
 | **Dynamic exam framework** | 🔵🔵🔵🔵🔵 | Admin-managed exam registry with 3-field minimal seed, LLM-optional progressive enrichment, conversational assistant, admin-edit-preserving provenance, unique IDs reusable across any number of students |
 | **Giveaway layer** | 🔵🔵🔵🔵🔵 | Admin-curated exam bundles with explicit approval gate; student-facing "one subscription, many exams" banner; per-group dismissal; zero-LLM pure-data lookup |
 | **GBrain uniformity** | 🔵🔵🔵🔵🔵 | Single /api/me/gbrain-summary endpoint exposes mastery stats + exam context + giveaway coverage + focus signal; cross-exam coverage engine; integration audit proves systematic GBrain application |
-| **Multi-channel rendering** | 🔵🔵🔵🔵🔵 | Canonical lessons enriched with interactive blocks; each block has first-class renderers for web (Framer Motion), Telegram (progressive-reveal keyboards), WhatsApp (numbered), voice (narration). Same pedagogical content, channel-appropriate interaction. |
+| **Multi-channel rendering** | 🔵🔵🔵🔵🔵 | Canonical lessons enriched with interactive blocks; each block has first-class renderers for web (Framer Motion), Telegram (progressive-reveal keyboards), WhatsApp (numbered), voice (narration). v2.12.0: objective + GBrain-aware — MCQ exams get compressed + drilled treatment, descriptive exams get full derivations, struggling students keep full scaffolding. |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

@@ -18,134 +18,27 @@ domain-agnostic — any exam with a defined syllabus works.
 
 ## From exam-prep pain to exam-prep bliss
 
-Most students don't need another app. They need relief from a specific
-set of pains that every prep cycle produces. Here's the before/after
-Vidhya is built for.
+Every line below is one concrete bliss shipped in the codebase. Soundbites — the details are in [FEATURES.md](./FEATURES.md) Slide 2.
 
-### "I don't know if I'm actually ready for my exam."
-
-**Bliss:** Every time you open Vidhya, you see exactly where you stand —
-12 concepts mastered, 15 in progress, 3 struggling. Not a vague progress
-bar. Not a percentage bar that means nothing. Real, per-concept, honest.
-When someone asks "how's prep going?" you have an answer.
-
-### "The syllabus feels overwhelming — I don't know where to start."
-
-**Bliss:** When your exam is set, Vidhya filters everything through its
-topic weightings. Open the app and see "Priority actions: three concepts
-ranked by exam weight and your current mastery." Not 100 things to do.
-Three. Today.
-
-### "My exam is three days away. Every app tells me to 'take a break' and it feels tone-deaf."
-
-**Bliss:** Vidhya reads the urgency. Six months out and five wrong in a
-row → it suggests a break. Three days out and five wrong in a row → it
-switches to a quick lesson review instead. The advice shifts as your
-situation shifts. No app telling you to step away 48 hours before your
-exam.
-
-### "I watch 45-minute video lectures and still don't get it."
-
-**Bliss:** Every concept is eight small components — hook, definition,
-intuition, worked example, mini exercise, common traps, formal statement,
-connections. You can skip what you already know and linger on what you
-don't. Built on how human memory actually works, not how YouTube
-monetizes attention.
-
-### "It's 2am. I'm stuck on a problem. I have nowhere to turn."
-
-**Bliss:** Snap a photo. Vidhya reads your handwriting, identifies which
-concept is being tested, walks you through the solution, flags where
-students usually go wrong. Same quality at 2am on a Tuesday as 2pm on a
-Saturday. Telegram, WhatsApp, or the web app — your pick.
-
-### "I paid for a subscription but I don't know what I'm actually getting."
-
-**Bliss:** If your plan bundles multiple exams, the first thing you see
-after sign-in is a "🎁 Giveaway · included in your plan" banner:
-*"You're preparing for GATE CS, and your plan also covers JEE Advanced
-(42% covered), IES Electronics (18% covered), BARC CSE (8% covered)."*
-Every bonus exam, explicit, with live coverage from your current prep.
-The bundle is celebrated, not buried in a settings page.
-
-### "I keep forgetting things I studied weeks ago."
-
-**Bliss:** Concepts come back at spaced intervals based on actual memory
-research. The week of your exam, stuff you learned three months ago is
-still there — not because you crammed, but because the system surfaced
-it at the right moments along the way.
-
-### "AI chatbots hallucinate. I don't trust the numbers."
-
-**Bliss:** Where possible, every answer is verified by Wolfram Alpha.
-Past papers are pre-checked. The AI doesn't get to invent numbers. When
-it's uncertain, it says so. When it's wrong, you can see exactly why.
-
-### "Study apps use streaks, badges, and guilt-trip notifications to manipulate me."
-
-**Bliss:** No streaks. No badges. No "you've lost your streak!"
-notifications. No gamification. You study when you want to. The app
-doesn't manipulate you — and the design decisions that would have
-juiced engagement metrics weren't made.
-
-### "I worry every app wants my data. I don't want my weak areas in some corporate database."
-
-**Bliss:** Materials you upload stay in your browser. Progress you make
-lives on your device. Your AI key (if you use one) never touches our
-servers. Your weak areas are yours. This isn't a marketing claim — it's
-how the app is architected. There's no server-side database of student
-progress to leak.
-
-### "I don't have access to top-tier teaching where I live."
-
-**Bliss:** The lesson content doesn't change based on where you are.
-Every concept is written with the same structure, depth, and trap-flagging
-you'd find in well-regarded prep material — a student in a small town
-gets the same lesson quality as a student in Kota or Bangalore. The
-variable isn't access to the teaching; it's your willingness to engage
-with it.
-
-### "My foundations are shaky, which is making advanced topics impossible."
-
-**Bliss:** When you get a wrong answer and it looks like a prerequisite
-issue, Vidhya doesn't just show the solution. It walks the concept graph,
-finds the specific upstream concept you're weakest on, and suggests
-reviewing that first. The misconception gets repaired where it actually
-lives, not where it's visible. Advanced topics unlock naturally once the
-foundation stops slipping.
-
-### "Coaching lectures move at the average pace. I'm either bored or lost."
-
-**Bliss:** You move at your own pace, per concept. Crush linear algebra
-in a day. Spend two weeks on measure theory. The app tracks mastery
-per concept, not per class, so nothing is gated by a classroom schedule.
-Fast learners don't wait. Slow learners don't feel pushed.
-
-### "I'm embarrassed to ask 'basic' questions in front of classmates."
-
-**Bliss:** Ask the same question ten different ways. No one sees. No one
-judges. You can type "wait, what's a derivative again?" after you've
-done 200 derivative problems, and the app just answers. The only thing
-that matters is that you understand — not what your classmates would
-think about what you don't.
-
-### "My teacher explains, but I don't see why any of it actually matters."
-
-**Bliss:** Every lesson opens with a hook — one sentence on why this
-concept exists and what real problem it solves. Not "it's in the
-syllabus." A genuine motivation — the question this concept was
-invented to answer. You see the point before the proof, which makes
-the proof stick.
-
-### "Rigorous material is too abstract; intuitive explanations are too hand-wavy."
-
-**Bliss:** Each lesson carries both layers. The intuition is a mental
-picture anyone can hold onto — not dumbed-down, just visualized. The
-formal statement is rigorous, in your exam's exact terminology — not
-obscured in academic prose. You linger on whichever you need today.
-Neither layer compromises on correctness.
+- **Pain:** *I don't know if I'm actually ready.*    **Bliss:** 12 mastered, 15 in progress, 3 struggling — per concept, always visible.
+- **Pain:** *The syllabus feels overwhelming.*    **Bliss:** Three priority concepts for today, ranked by exam weight × your mastery. Not a hundred.
+- **Pain:** *My exam is in 3 days. Every app says "take a break."*    **Bliss:** The advice shifts with urgency. Six months out: break. Three days out: quick review instead.
+- **Pain:** *I watch 45-minute lectures and still don't get it.*    **Bliss:** Each concept is 8 small pieces. Skip what you know. Linger on what you don't.
+- **Pain:** *It's 2am, I'm stuck, nowhere to turn.*    **Bliss:** Snap a photo. Walkthrough, common traps flagged, in seconds. Web, Telegram, or WhatsApp.
+- **Pain:** *I paid for a plan but don't know what I'm getting.*    **Bliss:** Sign in, see the giveaway banner: other exams your plan covers, with live coverage % for each.
+- **Pain:** *I forget what I studied weeks ago.*    **Bliss:** Spaced repetition at memory-research intervals. Month-old learning is still there exam week.
+- **Pain:** *AI chatbots hallucinate.*    **Bliss:** Wolfram-verified where possible. Past papers pre-checked. Uncertainty is named, not hidden.
+- **Pain:** *Apps use streaks and guilt-trip pings to manipulate me.*    **Bliss:** Zero streaks. Zero badges. Zero manipulation. Deliberately.
+- **Pain:** *I don't want my weak areas in a corporate database.*    **Bliss:** No server-side database of student progress exists. Architecturally.
+- **Pain:** *I don't have top-tier teaching where I live.*    **Bliss:** Lesson content doesn't change by location. Same structure, depth, trap-flagging for every student.
+- **Pain:** *My foundations are shaky, so advanced topics feel impossible.*    **Bliss:** Wrong answers with a prerequisite signature route you upstream first — misconceptions get repaired where they live.
+- **Pain:** *Coaching moves at the average pace — I'm bored or lost.*    **Bliss:** Mastery per concept, not per class. Crush linear algebra in a day. Spend two weeks on measure theory.
+- **Pain:** *I'm embarrassed to ask "basic" questions in class.*    **Bliss:** Ask anything, any way, any number of times. No one sees. No one judges.
+- **Pain:** *My teacher explains, but I don't see why any of it matters.*    **Bliss:** Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve.
+- **Pain:** *Rigorous material is too abstract; intuitive material is too hand-wavy.*    **Bliss:** Each lesson has both layers, neither compromised. Linger on whichever you need.
 
 ---
+
 
 ## What you actually get (as a student)
 

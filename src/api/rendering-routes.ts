@@ -20,9 +20,16 @@
 import type { ServerResponse } from 'http';
 import { sendJSON, sendError, type ParsedRequest, type RouteHandler } from '../lib/route-helpers';
 import { requireAuth } from '../auth/middleware';
-import { enrichLesson, auditEnrichment } from '../rendering/lesson-enrichment';
+import {
+  enrichLesson,
+  auditEnrichment,
+  inferDominantType,
+  type EnrichmentContext,
+} from '../rendering/lesson-enrichment';
 import { renderLesson, renderTelegramCallback } from '../rendering/channel-renderer';
 import type { DeliveryChannel } from '../rendering/types';
+import { getExamContextForStudent } from '../gbrain/exam-context';
+import { getOrCreateStudentModel } from '../gbrain/student-model';
 
 // ============================================================================
 // Stub lesson fetcher — replace with real composer integration
@@ -130,8 +137,39 @@ async function handleRendered(req: ParsedRequest, res: ServerResponse): Promise<
     return sendError(res, 400, `invalid channel: ${channelParam}`);
   }
 
+  // Hydrate EnrichmentContext from GBrain for learning-objective-aware rendering
+  // Both lookups are best-effort: any failure produces null context, which
+  // falls back to the deterministic v2.11.0 baseline enrichment.
+  const enrichmentCtx: EnrichmentContext = {};
+  try {
+    const examCtx = await getExamContextForStudent(auth.user.id);
+    if (examCtx) {
+      enrichmentCtx.learning_objective = {
+        dominant_type: inferDominantType(examCtx.question_types),
+        avg_seconds_per_question:
+          examCtx.duration_minutes && examCtx.total_marks
+            ? Math.round((examCtx.duration_minutes * 60) / examCtx.total_marks)
+            : undefined,
+        negative_marks_per_wrong:
+          examCtx.marking_scheme?.negative_marks_per_wrong,
+        is_imminent: examCtx.exam_is_imminent,
+      };
+    }
+  } catch {}
+  try {
+    const model = await getOrCreateStudentModel(auth.user.id);
+    const conceptEntry = model?.mastery_vector?.[concept_id];
+    if (conceptEntry) {
+      enrichmentCtx.mastery = {
+        concept_score: conceptEntry.score,
+        attempts: conceptEntry.attempts,
+        last_error_type: (conceptEntry as any).last_error_type,
+      };
+    }
+  } catch {}
+
   const lesson = getDemoLesson(concept_id);
-  const enriched = enrichLesson(lesson, [channelParam]);
+  const enriched = enrichLesson(lesson, [channelParam], enrichmentCtx);
   const rendered = renderLesson(enriched, channelParam as DeliveryChannel);
 
   sendJSON(res, {
@@ -140,6 +178,12 @@ async function handleRendered(req: ParsedRequest, res: ServerResponse): Promise<
     channel: channelParam,
     rendered,
     enrichment_summary: auditEnrichment(lesson),
+    // Transparency: surface which GBrain signals influenced rendering
+    gbrain_context: {
+      dominant_type: enrichmentCtx.learning_objective?.dominant_type,
+      exam_imminent: enrichmentCtx.learning_objective?.is_imminent,
+      concept_score: enrichmentCtx.mastery?.concept_score,
+    },
   });
 }
 

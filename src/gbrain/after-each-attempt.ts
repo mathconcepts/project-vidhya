@@ -116,6 +116,13 @@ export interface AttemptContext {
     at: string;
     difficulty?: string;
   }>;
+  /**
+   * Optional exam context. When the student has an assigned exam, this
+   * object carries topic weights, days-to-exam, marking scheme — which
+   * shape insight tone, next-step recommendations, and urgency framing.
+   * See src/gbrain/exam-context.ts for hydration.
+   */
+  exam_context?: import('./exam-context').ExamContext | null;
 }
 
 export function computeInsight(ctx: AttemptContext): AttemptInsight {
@@ -153,6 +160,7 @@ export function computeInsight(ctx: AttemptContext): AttemptInsight {
     error_type: ctx.error_type,
     difficulty: ctx.difficulty,
     recent_attempts: ctx.recent_attempts || [],
+    exam_context: ctx.exam_context,
   });
 
   // Reinforcement — only when pattern detected
@@ -172,6 +180,7 @@ export function computeInsight(ctx: AttemptContext): AttemptInsight {
     difficulty: ctx.difficulty,
     error_type: ctx.error_type,
     model: ctx.model_after,
+    exam_context: ctx.exam_context,
   });
 
   return {
@@ -206,7 +215,14 @@ function buildInsight(p: {
   error_type?: string;
   difficulty?: string;
   recent_attempts: Array<{ concept_id: string; correct: boolean }>;
+  exam_context?: import('./exam-context').ExamContext | null;
 }): AttemptInsight['insight'] {
+  // When the exam is imminent (<7 days), insights carry a hint of urgency
+  // without being alarmist. When exam is not set, framing is timeless.
+  const examUrgent = p.exam_context?.exam_is_imminent === true;
+  const examClose = p.exam_context?.exam_is_close === true && !examUrgent;
+  const examName = p.exam_context?.exam_name;
+
   // Correct answer paths
   if (p.correct) {
     // First time ever on this concept
@@ -230,9 +246,10 @@ function buildInsight(p: {
 
     // Milestone: crossing mastery threshold
     if (p.before_score < 0.8 && p.after_score >= 0.8) {
+      const examSuffix = examName ? ` — one more locked in for ${examName}.` : '';
       return {
-        headline: `You've mastered ${p.concept_label}.`,
-        explanation: 'This concept is now firmly yours. Time to build on it with related topics.',
+        headline: `You've mastered ${p.concept_label}.${examSuffix ? '' : ''}`,
+        explanation: `This concept is now firmly yours. Time to build on it with related topics.${examSuffix}`,
         tone: 'celebration',
       };
     }
@@ -346,17 +363,24 @@ function suggestNextStep(p: {
   difficulty?: string;
   error_type?: string;
   model: StudentModel | null;
+  exam_context?: import('./exam-context').ExamContext | null;
 }): AttemptInsight['next_step'] {
   const conceptLabel = CONCEPT_MAP.get(p.concept_id)?.label || p.concept_id;
+  const examUrgent = p.exam_context?.exam_is_imminent === true;
+  const examClose = p.exam_context?.exam_is_close === true && !examUrgent;
 
-  // Mastered — push to related
+  // Mastered — push to related, prefer exam-priority concepts if exam context exists
   if (p.after_score >= 0.8 && p.correct) {
-    const related = findRelatedConcept(p.concept_id, p.model);
+    const related = findRelatedConcept(p.concept_id, p.model, p.exam_context);
     if (related) {
+      const examTopicName = p.exam_context?.topic_weights?.[(CONCEPT_MAP.get(related) as any)?.topic];
+      const reason = examTopicName
+        ? `You've got ${conceptLabel}. Moving on to a concept that carries weight in your exam.`
+        : `You've got ${conceptLabel}. This is the natural next step.`;
       return {
         kind: 'move_on',
         label: `Try ${CONCEPT_MAP.get(related)?.label || related}`,
-        reason: `You've got ${conceptLabel}. This is the natural next step.`,
+        reason,
         concept_id: related,
         href: `/lesson/${related}`,
       };
@@ -399,8 +423,18 @@ function suggestNextStep(p: {
     };
   }
 
-  // Too many attempts in a row — suggest break
+  // Too many attempts in a row — suggest break, UNLESS exam is imminent
+  // (if exam is in 3 days, don't tell the student to go watch TV)
   if (p.attempts >= 5 && !p.correct) {
+    if (examUrgent) {
+      return {
+        kind: 'review_prereq',
+        label: 'Switch to a lesson review',
+        reason: `With your exam close, keep momentum — a focused lesson on a prerequisite will feel less frustrating than more failed attempts right now.`,
+        concept_id: p.concept_id,
+        href: `/lesson/${p.concept_id}`,
+      };
+    }
     return {
       kind: 'take_break',
       label: 'Step away for 10 minutes',
@@ -422,17 +456,37 @@ function suggestNextStep(p: {
 // Helpers — concept navigation
 // ============================================================================
 
-function findRelatedConcept(concept_id: string, model: StudentModel | null): string | null {
+function findRelatedConcept(
+  concept_id: string,
+  model: StudentModel | null,
+  examCtx?: import('./exam-context').ExamContext | null,
+): string | null {
   const meta = CONCEPT_MAP.get(concept_id);
   if (!meta) return null;
 
   // Look at successors (what this unlocks)
   const successors = (meta as any).successors || [];
-  for (const s of successors) {
-    const score = model?.mastery_vector[s]?.score ?? 0;
-    if (score < 0.5) return s; // pick one not yet mastered
-  }
-  return null;
+  const candidates = successors
+    .map((s: string) => {
+      const node = CONCEPT_MAP.get(s);
+      const score = model?.mastery_vector[s]?.score ?? 0;
+      const inScope = !examCtx || !examCtx.has_full_syllabus
+        ? true
+        : examCtx.syllabus_topic_ids.includes((node as any)?.topic);
+      const examWeight = examCtx?.topic_weights?.[(node as any)?.topic] ?? 0;
+      return { id: s, score, inScope, examWeight };
+    })
+    .filter((c: any) => c.score < 0.5);  // unmastered successors
+
+  if (candidates.length === 0) return null;
+
+  // Prefer in-scope successors; among those, prefer higher exam weight
+  candidates.sort((a: any, b: any) => {
+    if (a.inScope !== b.inScope) return a.inScope ? -1 : 1;
+    return b.examWeight - a.examWeight;
+  });
+
+  return candidates[0].id;
 }
 
 function findWeakestPrereq(concept_id: string, model: StudentModel | null): string | null {

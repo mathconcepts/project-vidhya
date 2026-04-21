@@ -4,6 +4,7 @@ import {
   GraduationCap, Plus, Sparkles, Upload, MessageCircle, Edit3,
   CheckCircle, Archive, Loader2, RefreshCw, ChevronRight, Search,
   AlertCircle, FileText, Send, X, Lightbulb, Globe, Hash,
+  GitCompare, Link2,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
@@ -409,6 +410,9 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
           ))}
         </div>
       )}
+
+      {/* Similar exams */}
+      <SimilarExamsPanel examId={exam.id} examName={exam.name} />
 
       {/* Actions */}
       <div className="flex flex-wrap gap-2">
@@ -869,6 +873,31 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [seedText, setSeedText] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [similar, setSimilar] = useState<any[]>([]);
+
+  // Debounced similarity check as the admin types the name
+  useEffect(() => {
+    if (!name.trim() || name.trim().length < 4) { setSimilar([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const r = await authFetch('/api/exams/suggest-similar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name.trim(),
+            level,
+            country: country.trim() || undefined,
+            issuing_body: issuingBody.trim() || undefined,
+          }),
+        });
+        if (r.ok) {
+          const data = await r.json();
+          setSimilar(data.matches || []);
+        }
+      } catch {}
+    }, 400);
+    return () => clearTimeout(t);
+  }, [name, level, country, issuingBody]);
 
   const submit = async () => {
     if (!code.trim() || !name.trim()) return;
@@ -939,6 +968,25 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
 
+          {similar.length > 0 && (
+            <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 space-y-1.5">
+              <p className="text-[10px] text-amber-300 uppercase font-medium flex items-center gap-1">
+                <AlertCircle size={10} />
+                Possibly related — did you mean one of these?
+              </p>
+              {similar.map((s: any) => (
+                <div key={s.exam_id} className="text-[11px] text-surface-300 flex items-center gap-2">
+                  <span className="text-amber-400">{Math.round(s.similarity * 100)}%</span>
+                  <span className="flex-1 truncate">{s.exam_name}</span>
+                  <span className="text-[9px] text-surface-500 uppercase">{s.source}</span>
+                </div>
+              ))}
+              <p className="text-[10px] text-amber-200/60">
+                You can still create a new exam — this is just a duplicate-check.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="text-[11px] text-surface-400">Level *</label>
             <select
@@ -1003,6 +1051,268 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Similar exams panel — shown in OverviewTab
+// ============================================================================
+
+function SimilarExamsPanel({ examId, examName }: { examId: string; examName: string }) {
+  const [matches, setMatches] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [compareId, setCompareId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await authFetch(`/api/exams/${examId}/similar?k=5`);
+        if (r.ok) {
+          const data = await r.json();
+          setMatches(data.matches || []);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [examId]);
+
+  if (loading) {
+    return (
+      <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-xs text-surface-500 flex items-center gap-2">
+        <Loader2 size={12} className="animate-spin" />
+        Looking for similar exams...
+      </div>
+    );
+  }
+
+  if (!matches || matches.length === 0) {
+    return (
+      <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-xs text-surface-500">
+        <p className="text-[10px] text-surface-500 uppercase tracking-wide font-medium mb-1 flex items-center gap-1.5">
+          <Link2 size={10} />
+          Similar exams
+        </p>
+        No similar exams found in your registry yet. Similarity improves as you add more exams or fill in more details.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+        <p className="text-[10px] text-surface-500 uppercase tracking-wide font-medium flex items-center gap-1.5">
+          <Link2 size={10} />
+          Similar exams
+        </p>
+        <div className="space-y-1.5">
+          {matches.map((m: any) => (
+            <div key={m.exam_id} className="p-2.5 rounded-lg bg-surface-950/60 border border-surface-800 space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-surface-200 truncate">{m.exam_name}</p>
+                    <span className={clsx(
+                      'text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
+                      m.source === 'static' ? 'bg-sky-500/15 text-sky-300' : 'bg-emerald-500/15 text-emerald-300',
+                    )}>
+                      {m.source}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-surface-500 font-mono mt-0.5">{m.exam_code}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={clsx(
+                    'text-sm font-bold',
+                    m.similarity >= 0.7 ? 'text-emerald-400'
+                      : m.similarity >= 0.4 ? 'text-amber-400'
+                      : 'text-surface-500',
+                  )}>
+                    {Math.round(m.similarity * 100)}%
+                  </p>
+                  <p className="text-[9px] text-surface-600 uppercase">match</p>
+                </div>
+              </div>
+              {m.notable_matches.length > 0 && (
+                <p className="text-[10px] text-emerald-300/80">✓ {m.notable_matches.join(' · ')}</p>
+              )}
+              {m.notable_differences.length > 0 && (
+                <p className="text-[10px] text-amber-300/60">Δ {m.notable_differences.join(' · ')}</p>
+              )}
+              <button
+                onClick={() => setCompareId(m.exam_id)}
+                className="text-[10px] text-sky-400 hover:text-sky-300 inline-flex items-center gap-1"
+              >
+                <GitCompare size={9} />
+                Compare side by side
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+      <AnimatePresence>
+        {compareId && (
+          <CompareDrawer
+            aId={examId}
+            aName={examName}
+            bId={compareId}
+            onClose={() => setCompareId(null)}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// ============================================================================
+// Compare drawer — side-by-side view of two exams
+// ============================================================================
+
+function CompareDrawer({ aId, aName, bId, onClose }: {
+  aId: string; aName: string; bId: string; onClose: () => void;
+}) {
+  const [comparison, setComparison] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await authFetch(`/api/exams/compare?a=${encodeURIComponent(aId)}&b=${encodeURIComponent(bId)}`);
+        if (r.ok) setComparison((await r.json()).comparison);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [aId, bId]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        onClick={e => e.stopPropagation()}
+        className="absolute bottom-0 left-0 right-0 max-h-[88vh] bg-surface-950 border-t border-surface-800 rounded-t-2xl overflow-y-auto"
+      >
+        <div className="sticky top-0 bg-surface-950/95 backdrop-blur-sm border-b border-surface-800 px-4 py-3 flex items-center justify-between z-10">
+          <p className="text-sm font-medium text-surface-100 flex items-center gap-2">
+            <GitCompare size={14} className="text-sky-400" />
+            Compare
+          </p>
+          <button onClick={onClose} className="p-1 rounded text-surface-500 hover:text-surface-200">
+            <X size={14} />
+          </button>
+        </div>
+        <div className="p-4 space-y-4 max-w-3xl mx-auto">
+          {loading ? (
+            <div className="text-center py-12 text-surface-500 text-sm">
+              <Loader2 size={14} className="inline animate-spin mr-2" />
+              Comparing...
+            </div>
+          ) : !comparison ? (
+            <p className="text-sm text-surface-500 text-center py-8">Comparison unavailable.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20">
+                  <p className="text-[10px] text-sky-400 uppercase font-medium">A</p>
+                  <p className="text-sm font-medium text-surface-200 mt-1">{comparison.a.name}</p>
+                  <p className="text-[10px] font-mono text-surface-500 mt-0.5">{comparison.a.code}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                  <p className="text-[10px] text-emerald-400 uppercase font-medium">B</p>
+                  <p className="text-sm font-medium text-surface-200 mt-1">{comparison.b.name}</p>
+                  <p className="text-[10px] font-mono text-surface-500 mt-0.5">{comparison.b.code}</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-center">
+                <p className={clsx(
+                  'text-3xl font-bold',
+                  comparison.overall_similarity >= 0.7 ? 'text-emerald-400'
+                    : comparison.overall_similarity >= 0.4 ? 'text-amber-400'
+                    : 'text-rose-400',
+                )}>
+                  {Math.round(comparison.overall_similarity * 100)}%
+                </p>
+                <p className="text-[10px] text-surface-500 uppercase tracking-wide">overall similarity</p>
+                <p className="text-xs text-surface-300 leading-relaxed mt-3 max-w-md mx-auto"
+                   dangerouslySetInnerHTML={{ __html: comparison.recommendation.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }} />
+              </div>
+
+              <CategoryBlock title="Identity" cat={comparison.categories.identity} />
+              <CategoryBlock title="Structure" cat={comparison.categories.structure} />
+              <ContentBlock cat={comparison.categories.content} />
+              <CategoryBlock title="Schedule" cat={comparison.categories.schedule} />
+            </>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function CategoryBlock({ title, cat }: { title: string; cat: any }) {
+  return (
+    <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-surface-300 uppercase tracking-wide font-medium">{title}</p>
+        <span className="text-xs text-surface-400">{Math.round(cat.score * 100)}% match</span>
+      </div>
+      {cat.matches.length > 0 && (
+        <p className="text-[11px] text-emerald-300/80">✓ {cat.matches.join(' · ')}</p>
+      )}
+      {cat.differences.length > 0 && (
+        <div className="space-y-0.5">
+          {cat.differences.map((d: any, i: number) => (
+            <p key={i} className="text-[10px] text-amber-300/80">
+              <span className="text-surface-500">{d.field}:</span> {String(d.a)} vs {String(d.b)}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContentBlock({ cat }: { cat: any }) {
+  return (
+    <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-surface-300 uppercase tracking-wide font-medium">Content</p>
+        <span className="text-xs text-surface-400">
+          Jaccard: {Math.round(cat.jaccard * 100)}%
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <p className="text-lg font-bold text-emerald-400">{cat.shared_topics.length}</p>
+          <p className="text-[9px] text-surface-500 uppercase">shared</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-sky-400">{cat.only_in_a.length}</p>
+          <p className="text-[9px] text-surface-500 uppercase">A only</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-amber-400">{cat.only_in_b.length}</p>
+          <p className="text-[9px] text-surface-500 uppercase">B only</p>
+        </div>
+      </div>
+      {cat.shared_topics.length > 0 && (
+        <p className="text-[10px] text-surface-400">
+          <span className="text-emerald-300/60 font-medium">Shared:</span>{' '}
+          {cat.shared_topics.slice(0, 8).map((t: string) => t.replace(/-/g, ' ')).join(', ')}
+          {cat.shared_topics.length > 8 && ` (+${cat.shared_topics.length - 8} more)`}
+        </p>
+      )}
     </div>
   );
 }

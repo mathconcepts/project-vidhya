@@ -24,7 +24,7 @@
 
 import type { ServerResponse } from 'http';
 import { sendJSON, sendError, type ParsedRequest, type RouteHandler } from '../lib/route-helpers';
-import { requireRole } from '../auth/middleware';
+import { requireRole, requireAuth } from '../auth/middleware';
 import {
   createExam,
   getExam,
@@ -45,6 +45,17 @@ import {
   suggestNextFields,
 } from '../exams/exam-enrichment';
 import { getAssistantResponse } from '../exams/exam-assistant';
+import {
+  compareExams,
+  toCanonical,
+  staticToCanonical,
+} from '../exams/exam-comparison';
+import {
+  findNearestMatches,
+  findSimilarByIdentity,
+} from '../exams/exam-similarity';
+import { getExamContextForStudent } from '../gbrain/exam-context';
+import { EXAMS as STATIC_EXAMS } from '../syllabus/exam-catalog';
 
 // ============================================================================
 // Create
@@ -309,13 +320,107 @@ async function handleAssistant(req: ParsedRequest, res: ServerResponse): Promise
 }
 
 // ============================================================================
+// Similarity + comparison (v2.9.8)
+// ============================================================================
+
+/** GET /api/exams/:id/similar — nearest matches for an exam */
+async function handleSimilar(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'teacher');
+  if (!auth) return;
+  const id = req.params.id;
+
+  // Resolve from dynamic registry OR static catalog
+  const dynamic = getExam(id);
+  let canonical;
+  if (dynamic) {
+    canonical = toCanonical(dynamic);
+  } else if ((STATIC_EXAMS as any)[id]) {
+    canonical = staticToCanonical((STATIC_EXAMS as any)[id]);
+  } else {
+    return sendError(res, 404, 'exam not found');
+  }
+
+  const k = Math.min(parseInt(req.query.get('k') || '5') || 5, 20);
+  const matches = findNearestMatches(canonical, k, { include_comparison: false });
+
+  sendJSON(res, {
+    target: { id: canonical.id, code: canonical.code, name: canonical.name, source: canonical.source },
+    matches,
+  });
+}
+
+/** GET /api/exams/compare?a=<id>&b=<id> — full pairwise comparison */
+async function handleCompare(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'teacher');
+  if (!auth) return;
+
+  const idA = req.query.get('a');
+  const idB = req.query.get('b');
+  if (!idA || !idB) return sendError(res, 400, 'query params a and b required');
+
+  const resolve = (id: string) => {
+    const d = getExam(id);
+    if (d) return toCanonical(d);
+    const s = (STATIC_EXAMS as any)[id];
+    if (s) return staticToCanonical(s);
+    return null;
+  };
+  const a = resolve(idA);
+  const b = resolve(idB);
+  if (!a) return sendError(res, 404, `exam ${idA} not found`);
+  if (!b) return sendError(res, 404, `exam ${idB} not found`);
+
+  const comparison = compareExams(a, b);
+  sendJSON(res, { comparison });
+}
+
+/**
+ * POST /api/exams/suggest-similar — before creating, check for near-duplicates.
+ * Takes a seed (name/level/country/issuing_body) and returns up to 3 existing
+ * exams that could be reused or are close matches. Used by the create modal
+ * to nudge "did you mean one of these?"
+ */
+async function handleSuggestSimilar(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+  const body = (req.body as any) || {};
+  if (!body.name) return sendError(res, 400, 'name required');
+
+  const matches = findSimilarByIdentity({
+    name: body.name,
+    level: body.level,
+    country: body.country,
+    issuing_body: body.issuing_body,
+  }, 3);
+
+  sendJSON(res, { matches });
+}
+
+/**
+ * GET /api/exam-context/mine — returns the current user's exam context
+ * if they have exam_id assigned. Any signed-in user can call this (students
+ * read their own context; teachers reading their students' assignments use
+ * the admin list endpoints instead).
+ */
+async function handleMyExamContext(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const ctx = await getExamContextForStudent(auth.user.id);
+  sendJSON(res, { context: ctx });
+}
+
+// ============================================================================
 
 export const examRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   { method: 'POST',   path: '/api/exams',                             handler: handleCreate },
   { method: 'GET',    path: '/api/exams',                             handler: handleList },
   { method: 'GET',    path: '/api/exams/assignable',                  handler: handleListAssignable },
+  { method: 'GET',    path: '/api/exams/compare',                     handler: handleCompare },
+  { method: 'POST',   path: '/api/exams/suggest-similar',             handler: handleSuggestSimilar },
+  { method: 'GET',    path: '/api/exam-context/mine',                 handler: handleMyExamContext },
   { method: 'GET',    path: '/api/exams/:id',                         handler: handleGet },
   { method: 'PATCH',  path: '/api/exams/:id',                         handler: handlePatch },
+  { method: 'GET',    path: '/api/exams/:id/similar',                 handler: handleSimilar },
   { method: 'POST',   path: '/api/exams/:id/enrich',                  handler: handleEnrich },
   { method: 'POST',   path: '/api/exams/:id/enrich/apply',            handler: handleEnrichApply },
   { method: 'POST',   path: '/api/exams/:id/local-data',              handler: handleAddLocalData },

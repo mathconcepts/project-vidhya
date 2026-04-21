@@ -1544,6 +1544,76 @@ filled." This makes progress visible without being a to-do list.
 Storage: `.data/exams.json` via the shared flat-file-store generic
 from v2.9.1.
 
+### v2.9.8 — Comparison + personalization
+
+Exams never live in isolation. v2.9.8 adds three layers on top:
+
+**Compare any two exams** — structured diff across 4 weighted
+categories (Identity 20% · Structure 25% · Content 40% · Schedule
+15%). Jaccard similarity on syllabus topics drives the Content
+category. Categories with no data in either exam are excluded from
+the weighted average rather than dragging the score to zero. A
+unified `CanonicalExam` shape lets dynamic exams and static-catalog
+entries compare against each other uniformly.
+
+Side-by-side view in the admin UI shows shared topics, topics unique
+to each exam, per-category scores, and a human-readable
+recommendation.
+
+**Find nearest matches** — every exam's detail page shows the top 5
+most-similar exams ranked by overall similarity. Works across the
+dynamic registry AND the static catalog. When creating a new exam,
+the modal debounces against `/api/exams/suggest-similar` to surface
+possible duplicates ("did you mean one of these?") before the admin
+commits — a nudge, not a block.
+
+**Personalize content delivery** — the real moat. When a student has
+an `exam_id` assigned, every GBrain decision now factors in the exam:
+
+    Mastery milestone insight → mentions the exam by name
+      "You've mastered eigenvalues — one more locked in for GATE-CS."
+
+    move_on next-step → prefers successors in the exam's syllabus,
+                        ranked by exam topic weight
+
+    take_break after 5+ failures → REPLACED with review_prereq when
+                                   exam is ≤7 days ("with your exam
+                                   close, keep momentum")
+
+    Problem generation → uses exam.question_types mix
+
+    Countdown chip on home → 4 urgency tiers (critical ≤7d /
+                             high ≤30d / medium ≤90d / low / none)
+
+**Fallback hydration** — if a student's target exam has <50%
+structural completeness, the bridge automatically looks up the
+nearest complete match (≥40% similar, more complete) and fills
+missing structural fields from it. The student gets exam-aware
+personalization immediately, even while the admin is still
+completing the exam profile. Context carries `is_fallback: true` +
+`fallback_source_name` so the UI can disclose this transparently.
+
+**Opt-in consumption** — every GBrain consumer function accepts
+`ExamContext | null` and degrades gracefully. Exam-less students
+see zero behavioral change.
+
+**4 new endpoints:**
+
+    GET    /api/exams/:id/similar        Nearest-match ranking
+    GET    /api/exams/compare?a=&b=      Full pairwise comparison
+    POST   /api/exams/suggest-similar    Pre-create duplicate check
+    GET    /api/exam-context/mine        Student's own exam context
+
+**3 new frontend surfaces:**
+
+    SimilarExamsPanel       in OverviewTab, shows top 5 matches
+                            with similarity % and notable features
+
+    CompareDrawer           side-by-side 4-category view with
+                            shared topics and deltas
+
+    ExamCountdownChip       student home, auto-fetched, self-gating
+
 ---
 
 ## Slide 28 — Technical Differentiators (Head-to-Head)
@@ -1601,7 +1671,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 30 — What's Shipped (at v2.9.7)
+## Slide 30 — What's Shipped (at v2.9.8)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -1625,7 +1695,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.9.4 | `e3fde92` | Compounding Mastery + Smart Notebook — after-each-attempt insight engine + auto-clustered notebook with gap analysis + Markdown export |
 | v2.9.5 | `97b45d1` | Syllabus-driven notebook export with per-concept timestamps — every concept listed with clear practiced/not-practiced markers + fixes hidden Map/Array bugs |
 | v2.9.6 | `23ff72b` | Notebook watermark + legally-binding-yet-friendly disclaimer — every export carries provenance + scope clarification |
-| v2.9.7 | *this* | Dynamic Exam Framework — admin-managed exam registry with LLM-optional progressive enrichment + conversational assistant + unique multi-student IDs |
+| v2.9.7 | `33447f7` | Dynamic Exam Framework — admin-managed exam registry with LLM-optional progressive enrichment + conversational assistant + unique multi-student IDs |
+| v2.9.8 | *this* | Exam comparison + personalization — pairwise structured diff, nearest-match ranking across dynamic+static catalogs, GBrain exam-context bridge for student-facing content, urgency-aware insights, countdown chip |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

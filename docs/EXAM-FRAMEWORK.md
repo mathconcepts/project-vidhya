@@ -225,11 +225,92 @@ The exam framework currently exposes read-only endpoints. Integration points for
 - **Priority engine** should consult `exam.topic_weights` to calibrate concept prioritization per student
 - **Mock-exam generator** should use `exam.duration_minutes`, `exam.marking_scheme`, `exam.question_types` to produce realistic mocks
 - **Smart Notebook** should use `exam.syllabus` instead of the static concept graph when a student has `exam_id` assigned
-- **Compounding mastery** insights should include per-exam context ("X days to GATE-CS")
+- **Compounding mastery** insights include per-exam context ("X days to GATE-CS") — **shipped in v2.9.8**
 - **Teaching brief** should surface `exam.next_attempt_date` for cohorts prepping together
-- **Countdown prompts** on student home when `exam.next_attempt_date` is set
+- **Countdown prompts** on student home when `exam.next_attempt_date` is set — **shipped in v2.9.8**
 
 These are one-line integration points — the framework exposes all necessary data; consumers opt in when they need it. Following the GBrain Integration Bridge pattern from v2.9.0.
+
+---
+
+## 11b. Exam comparison (v2.9.8)
+
+**File:** `src/exams/exam-comparison.ts`
+
+Two exams can be compared pairwise to produce a structured diff across four categories:
+
+| Category | Weight | What it measures |
+|----------|:------:|------------------|
+| Identity | 20% | level, country, issuing_body |
+| Structure | 25% | duration, total marks, marking scheme, question-type mix |
+| Content | 40% | Jaccard similarity on syllabus topics + weight deltas on shared topics |
+| Schedule | 15% | frequency, typical prep weeks |
+
+Categories with no data in either exam are excluded from the weighted average (rather than dragging the score down). The overall similarity is a 0..1 score; a human-readable `recommendation` string summarizes.
+
+Comparison operates on a `CanonicalExam` shape that adapts both the dynamic `Exam` and the static `ExamDefinition` — so cross-comparison between a dynamically-created exam and a built-in one works uniformly.
+
+---
+
+## 11c. Nearest-match finder (v2.9.8)
+
+**File:** `src/exams/exam-similarity.ts`
+
+Three functions:
+
+- `findNearestMatches(target, k=5)` — ranks all other exams (dynamic + static) by similarity to the target. Used by the admin UI "Similar exams" panel on each exam's detail page.
+- `findSimilarByIdentity(seed, k=3)` — lightweight pre-create check. Before the admin commits a new exam, this checks name similarity + identity overlap against existing exams and surfaces potential duplicates in the creation modal. The admin can still proceed — it's a nudge, not a block.
+- `findMoreCompleteMatch(target, minSimilarity=0.4)` — given a target that's ≥40% similar but more complete, returns it as a fallback source. Used by the personalization bridge to fill sparse exams.
+
+---
+
+## 11d. GBrain personalization bridge (v2.9.8)
+
+**File:** `src/gbrain/exam-context.ts`
+
+When a student has `exam_id` assigned, this bridge hydrates an `ExamContext` that carries:
+
+- `topic_weights` — used to boost concept priority
+- `syllabus_topic_ids` — the scoped universe of relevant topics
+- `marking_scheme` + `question_types` + `duration_minutes` — structural knobs for problem generation and mock exams
+- `days_to_exam` + `exam_is_close` (≤30) + `exam_is_imminent` (≤7) — drive countdown UIs + urgency-aware insights
+- `priority_concepts` — top-weighted topics for ordering
+- `is_fallback` + `fallback_source_name` — transparency flag when the context was augmented from a nearest match
+
+**Fallback hydration:** if the target exam has <50% structural completeness, the bridge automatically looks up the nearest complete match via `findMoreCompleteMatch` and fills missing structural fields from it. This means students get exam-aware personalization even while the admin is still finishing the exam profile — with a transparency flag so the UI can disclose the source.
+
+**Opt-in consumer helpers:**
+
+- `examPriorityBoost(concept_topic, ctx)` → multiplier in [0.5, 2.0] based on the concept's weight in the exam
+- `isConceptInExamScope(concept_topic, ctx)` → true if the concept is in the exam's syllabus
+- `examCountdownLabel(ctx)` → human-readable countdown string
+- `examUrgencyTier(ctx)` → critical / high / medium / low
+
+All consumer helpers accept `ExamContext | null` and degrade gracefully when the student has no exam assigned. **The original behavior for exam-less students is preserved exactly.**
+
+### Where personalization is already wired (v2.9.8)
+
+**`src/gbrain/after-each-attempt.ts`** — the insight engine now:
+
+1. Mentions the exam name on mastery milestones ("one more locked in for GATE-CS")
+2. Prefers exam-scope successors for `move_on` suggestions, ranked by exam topic weight
+3. **Replaces `take_break` with `review_prereq` when exam is ≤7 days.** This is critical: telling a stressed student whose exam is in 3 days to "step away for 10 minutes" reads as tone-deaf. Instead, the system suggests a prereq lesson — same cognitive benefit (breaks the failure loop), much better framing for the urgent context.
+
+**`src/api/notebook-insight-routes.ts`** — `POST /api/gbrain/attempt-insight` auto-hydrates `exam_context` from the signed-in user and returns it alongside the insight. The client can use the returned context for countdown UIs, urgency chips, etc.
+
+**`frontend/src/components/gate/ExamCountdownChip.tsx`** — student-home UI chip with 4 urgency tiers. Self-gating: renders nothing for students without `exam_id`.
+
+### Future personalization hooks
+
+The `ExamContext` is the clean integration point for every other consumer:
+
+- **Priority engine** — call `examPriorityBoost` when ordering due reviews
+- **Problem generator** — sample question types from `exam_context.question_types`
+- **Mock exam generator** — use `exam_context.duration_minutes` and `marking_scheme`
+- **Smart Notebook** — filter syllabus view to `exam_context.syllabus_topic_ids` when student has exam assigned
+- **Teaching brief** — show cohort countdown based on `exam_context.days_to_exam`
+
+All of these are one-liner integrations against the already-exposed bridge. Following the v2.9.0 bridge pattern: pure read, opt-in consumption, no side effects.
 
 ---
 

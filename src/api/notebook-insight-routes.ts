@@ -39,6 +39,7 @@ import {
   computeInsight,
   type AttemptContext,
 } from '../gbrain/after-each-attempt';
+import { getExamContextForStudent } from '../gbrain/exam-context';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { getUserById } from '../auth/user-store';
 
@@ -176,6 +177,19 @@ async function handleAttemptInsight(req: ParsedRequest, res: ServerResponse): Pr
     const model_after = await getOrCreateStudentModel(session_id, null);
     const recentAttempts = (model_after as any)?.recent_attempts || [];
 
+    // Hydrate optional exam context if session_id maps to a signed-in user
+    // with exam_id assigned. Missing / anon sessions → null, which the
+    // insight engine treats as "no exam data" (timeless framing).
+    let examCtx = null;
+    try {
+      const user = getUserById(session_id);
+      if (user && user.exam_id) {
+        examCtx = await getExamContextForStudent(session_id);
+      }
+    } catch {
+      examCtx = null;
+    }
+
     // For the "before" model, we reconstruct it by subtracting this
     // attempt from the after state. Since this is the INSIGHT call
     // (not the RECORDING call), we approximate.
@@ -204,9 +218,13 @@ async function handleAttemptInsight(req: ParsedRequest, res: ServerResponse): Pr
       model_before: model_before as any,
       model_after,
       recent_attempts: recentAttempts,
+      exam_context: examCtx,
     });
 
-    sendJSON(res, { insight });
+    sendJSON(res, {
+      insight,
+      exam_context: examCtx,  // exposed to client for countdown UI etc.
+    });
   } catch (err) {
     console.error('[attempt-insight] error:', (err as Error).message);
     sendError(res, 500, 'insight computation failed');

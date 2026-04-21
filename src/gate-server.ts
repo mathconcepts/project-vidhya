@@ -36,6 +36,7 @@ import { syllabusRoutes } from './api/syllabus-routes';
 import { multimodalRoutes } from './api/multimodal-routes';
 import { lessonRoutes } from './api/lesson-routes';
 import { curriculumRoutes } from './api/curriculum-routes';
+import { llmConfigRoutes } from './api/llm-config-routes';
 import { getAuth, migrateSession } from './api/auth-middleware';
 import { TieredVerificationOrchestrator } from './verification/tiered-orchestrator';
 import { InMemoryVectorStore, PgVectorStore } from './data/vector-store';
@@ -165,6 +166,9 @@ for (const route of lessonRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of curriculumRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of llmConfigRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 

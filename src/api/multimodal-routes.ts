@@ -31,6 +31,7 @@ import { logMultimodalEvent } from '../multimodal/gbrain-logger';
 import { suggestNextStep } from '../multimodal/next-step-suggester';
 import { runDiagnosticStream } from '../multimodal/diagnostic-analyzer';
 import { openSSE, errorSSE } from '../multimodal/sse-stream';
+import { getConfigFromRequest } from '../llm/config-resolver';
 import type { MultimodalRequest, MultimodalResponse } from '../multimodal/types';
 
 interface ParsedRequest {
@@ -94,8 +95,11 @@ async function handleAnalyze(req: ParsedRequest, res: ServerResponse): Promise<v
   };
 
   try {
+    // Pull LLM config from the user's browser via the header (or env fallback)
+    const llm_config = getConfigFromRequest(req.headers);
+
     // Step 1: Vision analysis (single LLM call)
-    const analysis = await analyzeIntent(multimodalReq);
+    const analysis = await analyzeIntent(multimodalReq, llm_config);
 
     // Step 2: Dispatch to the right handler based on detected intent
     const dispatchResult = await dispatchByIntent(analysis, multimodalReq);

@@ -127,32 +127,58 @@ shows tier hit rates.
 
 ---
 
-## Path 2: Recommended install (10 minutes, with Gemini)
+## Path 2: Recommended install (10 minutes, BYO AI provider)
 
-Unlocks the four-tier content engine end-to-end.
+Unlocks chat, image understanding, and on-demand content generation.
 
-**Extra step: get a Gemini API key**
+**Vidhya is LLM-agnostic** — it works with Google Gemini, Anthropic Claude, OpenAI, OpenRouter, Groq, DeepSeek, Mistral, or a local Ollama server. Configuration happens in the browser, not in a `.env` file.
 
-1. Visit https://aistudio.google.com/
-2. Click "Get API key" → "Create API key in new project"
-3. Copy the key — it starts with `AIzaSy...`
+### Option A — Configure through the UI (recommended for most users)
+
+1. Start the server (Path 1 above)
+2. Open the app in your browser
+3. Navigate to `/llm-config`
+4. Pick a provider and paste your API key
+5. Click **Test & save** — you're done
+
+Your key stays in your browser's localStorage and is sent only as an authentication header on outbound API calls. The server never persists it.
+
+**Getting a key** — fastest path is Google Gemini (generous free tier):
+1. Visit https://aistudio.google.com/app/apikey
+2. Click "Create API key"
+3. Copy the key (starts with `AIzaSy...`)
+4. Paste it into `/llm-config`
+
+See `docs/LLM-CONFIGURATION.md` for the full list of providers and per-provider setup details.
+
+### Option B — Server-side env var (for shared/team deploys)
+
+If you're running Vidhya for multiple users and want a shared default provider (users can still override in their browser):
 
 ```bash
-# Additions to your .env
-GEMINI_API_KEY=AIzaSy...your_key_here
-
-# Generate the full 82-concept explainer library (one-time, ~$0.08)
-npx tsx scripts/build-explainers.ts
-
-# Rebuild the content bundle to pick up real explainers
-npx tsx scripts/build-bundle.ts
-
-# Restart server
-npm run dev:server
+# Any ONE of these works (auto-detected in priority order):
+echo "GEMINI_API_KEY=AIzaSy..." >> .env
+# or
+echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env
+# or explicit:
+echo "VIDHYA_LLM_PRIMARY_PROVIDER=google-gemini" >> .env
+echo "VIDHYA_LLM_PRIMARY_KEY=AIzaSy..." >> .env
 ```
 
-Now Tier 2 works: when a student asks for a concept that isn't bundled,
-Gemini 2.5 Flash-Lite generates a verified problem on demand at ~$0.0005.
+Client-provided configs (browser) always win over env vars. Use env vars only as a floor.
+
+### Optional one-time content generation
+
+Once an LLM is configured, you can generate the full 82-concept explainer library offline:
+
+```bash
+# One-time, ~$0.08 on Gemini Flash-Lite
+GEMINI_API_KEY=AIzaSy... npx tsx scripts/build-explainers.ts
+
+# Rebuild bundle to pick up the fresh explainers
+npx tsx scripts/build-bundle.ts
+npx tsx scripts/restore-wolfram-flags.ts   # preserve verification flags
+```
 
 ---
 

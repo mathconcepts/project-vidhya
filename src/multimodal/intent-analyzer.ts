@@ -21,6 +21,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { MultimodalRequest, IntentAnalysis, ImageCategory, MultimodalIntent } from './types';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
+import { resolveConfig, loadConfigFromEnv, type LLMConfig } from '../llm/config-resolver';
+import { callChat } from '../api/llm-config-routes';
 
 // ============================================================================
 // Concept ID whitelist — used to sanity-check Gemini's detected_concepts field
@@ -165,37 +167,54 @@ function sanitize(raw: any, req: MultimodalRequest): IntentAnalysis {
  * image_category='unclear'. Downstream handlers still work, they just can't
  * personalize as well.
  */
-export async function analyzeIntent(req: MultimodalRequest): Promise<IntentAnalysis> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return sanitize(null, req);
-  }
+export async function analyzeIntent(
+  req: MultimodalRequest,
+  llm_config?: LLMConfig | null,
+): Promise<IntentAnalysis> {
+  // Resolve which provider handles vision for this request
+  const config = llm_config || loadConfigFromEnv();
+  if (!config) return sanitize(null, req);
+  const resolved = resolveConfig(config).vision;
+  if (!resolved) return sanitize(null, req);
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-      },
-    });
-
-    const prompt = buildPrompt(req);
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          mimeType: req.image_mime_type || 'image/jpeg',
-          data: req.image,
+    // Gemini gets the SDK path (keeps existing streaming + inlineData semantics)
+    if (resolved.provider_id === 'google-gemini') {
+      const genAI = new GoogleGenerativeAI(resolved.key || '');
+      const model = genAI.getGenerativeModel({
+        model: resolved.model_id,
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
         },
-      },
-    ]);
-    const text = result.response.text();
+      });
+      const prompt = buildPrompt(req);
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { mimeType: req.image_mime_type || 'image/jpeg', data: req.image } },
+      ]);
+      const text = result.response.text();
+      const parsed = JSON.parse(text);
+      return sanitize(parsed, req);
+    }
+
+    // Other providers — use the universal adapter with a text-shaped prompt.
+    // (MVP: image-input shape varies by provider; full multimodal for
+    // non-Gemini providers is a follow-up. We still get hinted-intent
+    // + caption-based classification.)
+    const textOnlyPrompt = buildPrompt(req) +
+      '\n\nNOTE: Classify based on user caption only (image analysis for this provider is a follow-up).';
+    const text = await callChat({
+      provider_id: resolved.provider_id,
+      endpoint: resolved.endpoint,
+      key: resolved.key,
+      model_id: resolved.model_id,
+      prompt: textOnlyPrompt,
+      max_tokens: 512,
+    });
     const parsed = JSON.parse(text);
     return sanitize(parsed, req);
-  } catch (err) {
-    // Log would go here via telemetry; returning fallback keeps UX alive
+  } catch {
     return sanitize(null, req);
   }
 }

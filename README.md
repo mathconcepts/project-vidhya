@@ -120,10 +120,9 @@ for the tiered breakdown.
 - Frontend: 21 runtime + 9 dev dependencies
 
 **External services** (all optional):
-- Gemini API — tier-2 generation (recommended)
+- **Any LLM provider** — Gemini / Anthropic / OpenAI / OpenRouter / Groq / DeepSeek / Mistral / Ollama (local). **Users configure in-browser at `/llm-config`**; keys never touch the server.
 - Wolfram Alpha — tier-3 verification (unlocks emerald verified badges)
 - Supabase / PostgreSQL — persistent auth (runtime works without either)
-- Anthropic Claude, OpenAI, Groq, DeepSeek, Mistral, Together, OpenRouter — LLM fallbacks
 
 ---
 
@@ -134,6 +133,7 @@ for the tiered breakdown.
 | [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
 | [FEATURES.md](./FEATURES.md) | 21-slide pitch deck: every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
+| [docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) | BYO-key setup: 8 providers, cascading role defaults, privacy model |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute — scrapers, concepts, code, PRs |
 | [SECURITY.md](./SECURITY.md) | Vulnerability disclosure policy + response timeline |

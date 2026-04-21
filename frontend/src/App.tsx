@@ -44,6 +44,7 @@ const MaterialsPage = lazy(() => import('@/pages/gate/MaterialsPage'));
 const SmartPracticePage = lazy(() => import('@/pages/gate/SmartPracticePage'));
 const SnapPage = lazy(() => import('@/pages/gate/SnapPage'));
 const LessonPage = lazy(() => import('@/pages/gate/LessonPage'));
+const LLMConfigPage = lazy(() => import('@/pages/gate/LLMConfigPage'));
 const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
 
 const PageLoader = () => (
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="smart-practice" element={<SmartPracticePage />} />
           <Route path="snap" element={<SnapPage />} />
           <Route path="lesson/:concept_id" element={<LessonPage />} />
+          <Route path="llm-config" element={<LLMConfigPage />} />
           <Route path="admin/content" element={<ContentAdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>

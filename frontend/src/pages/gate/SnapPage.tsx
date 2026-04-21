@@ -72,6 +72,7 @@ interface SyllabusPreview {
   };
   intro: string;
   nodes: Array<{
+    concept_id: string;
     concept_label: string;
     topic: string;
     inclusion_reason: string;
@@ -693,17 +694,26 @@ export default function SnapPage() {
               </p>
               <div className="space-y-1.5 pt-1">
                 {diagSyllabus.nodes.slice(0, 8).map((n, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-surface-800 text-surface-400 text-[10px] flex items-center justify-center">
+                  <button
+                    key={i}
+                    onClick={() => navigate(`/lesson/${n.concept_id}`)}
+                    className="w-full flex items-start gap-2 text-xs text-left p-1.5 -mx-1.5 rounded-lg hover:bg-surface-800/60 transition-colors group"
+                  >
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-surface-800 text-surface-400 text-[10px] flex items-center justify-center group-hover:bg-sky-500/20 group-hover:text-sky-300">
                       {n.scheduled_day}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-surface-200">{n.concept_label}</p>
+                      <p className="text-surface-200 group-hover:text-sky-200 flex items-center gap-1">
+                        {n.concept_label}
+                        <span className="text-[10px] text-surface-600 group-hover:text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          → study
+                        </span>
+                      </p>
                       <p className="text-[10px] text-surface-500">
                         {n.topic.replace(/-/g, ' ')} · {n.estimated_study_minutes}min · {n.inclusion_reason.replace(/-/g, ' ')}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 ))}
                 {diagSyllabus.nodes.length > 8 && (
                   <p className="text-[10px] text-surface-500 pl-7">

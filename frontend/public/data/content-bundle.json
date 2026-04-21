@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generated_at": "2026-04-20T05:04:13.583Z",
+  "generated_at": "2026-04-21T02:24:05.925Z",
   "problems": [
     {
       "id": "gate-la-2023-1",
@@ -20,6 +20,7 @@
       "source": "GATE",
       "concept_id": "linear-algebra",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "d60ae7e8fb3c98f0"
     },
     {
@@ -40,6 +41,7 @@
       "source": "GATE",
       "concept_id": "linear-algebra",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "d1c47a156eb8f5b4"
     },
     {
@@ -60,6 +62,7 @@
       "source": "GATE",
       "concept_id": "linear-algebra",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "3f0b33362230bf04"
     },
     {
@@ -80,6 +83,7 @@
       "source": "GATE",
       "concept_id": "calculus",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "115e6409c7573eea"
     },
     {
@@ -100,6 +104,7 @@
       "source": "GATE",
       "concept_id": "calculus",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "390d08bc1abe1077"
     },
     {
@@ -120,6 +125,7 @@
       "source": "GATE",
       "concept_id": "calculus",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "522b854d0049e2ce"
     },
     {
@@ -140,6 +146,7 @@
       "source": "GATE",
       "concept_id": "probability-statistics",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "9fbf2f15ead9b2b0"
     },
     {
@@ -160,6 +167,7 @@
       "source": "GATE",
       "concept_id": "probability-statistics",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "631df0ed9febc174"
     },
     {
@@ -180,6 +188,7 @@
       "source": "GATE",
       "concept_id": "differential-equations",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "156f4888cfc9eca6"
     },
     {
@@ -200,6 +209,7 @@
       "source": "GATE",
       "concept_id": "differential-equations",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "5d2bbccb86245725"
     },
     {
@@ -220,6 +230,7 @@
       "source": "GATE",
       "concept_id": "complex-variables",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "e92fb4210f2a4cf4"
     },
     {
@@ -240,6 +251,7 @@
       "source": "GATE",
       "concept_id": "numerical-methods",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "bf083c6b52848032"
     },
     {
@@ -262,9 +274,8 @@
       "source_url": "https://gate.iitk.ac.in/papers/2024/math/",
       "license": "public-domain",
       "verified": true,
-      "fingerprint": "05363096095137c1",
       "wolfram_verified": true,
-      "wolfram_verified_at": "2026-04-20T05:47:07.231Z"
+      "fingerprint": "05363096095137c1"
     },
     {
       "id": "gate-2024-partial-derivatives-1",
@@ -286,6 +297,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2024/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "344a2eef41c29970"
     },
     {
@@ -308,6 +320,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2024/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "1ff54365eacdb529"
     },
     {
@@ -330,9 +343,8 @@
       "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
       "license": "public-domain",
       "verified": true,
-      "fingerprint": "30d60846c11265f3",
       "wolfram_verified": true,
-      "wolfram_verified_at": "2026-04-20T05:47:22.227Z"
+      "fingerprint": "30d60846c11265f3"
     },
     {
       "id": "gate-2023-bayes-theorem-4",
@@ -354,6 +366,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "8f1d9526113ae35c"
     },
     {
@@ -376,6 +389,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "f75f61dc5b87a3fd"
     },
     {
@@ -398,6 +412,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "feee045ad170ec7a"
     },
     {
@@ -420,6 +435,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "2da566382e9f8ce6"
     },
     {
@@ -442,6 +458,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2022/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "258f117bb67182c8"
     },
     {
@@ -464,9 +481,8 @@
       "source_url": "https://gate.iitk.ac.in/papers/2022/math/",
       "license": "public-domain",
       "verified": true,
-      "fingerprint": "d4d03e10189ce2df",
       "wolfram_verified": true,
-      "wolfram_verified_at": "2026-04-20T05:47:51.985Z"
+      "fingerprint": "d4d03e10189ce2df"
     },
     {
       "id": "gate-2022-gradient-10",
@@ -488,6 +504,7 @@
       "source_url": "https://gate.iitk.ac.in/papers/2022/math/",
       "license": "public-domain",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "a21f2e84d812f67e"
     },
     {
@@ -510,9 +527,8 @@
       "source_url": "https://gate.iitk.ac.in/papers/2022/math/",
       "license": "public-domain",
       "verified": true,
-      "fingerprint": "02a3d21e980aa137",
       "wolfram_verified": true,
-      "wolfram_verified_at": "2026-04-20T05:48:02.155Z"
+      "fingerprint": "02a3d21e980aa137"
     },
     {
       "id": "openstax-derivatives-basic-0",
@@ -528,6 +544,7 @@
       "source_url": "https://openstax.org/books/calculus-volume-1/pages/3-4-derivatives-as-rates-of-change",
       "license": "CC-BY-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "e2863a27807feee9"
     },
     {
@@ -544,9 +561,8 @@
       "source_url": "https://openstax.org/books/calculus-volume-1/pages/5-4-integration-formulas-and-the-net-change-theorem",
       "license": "CC-BY-4.0",
       "verified": true,
-      "fingerprint": "594ff4220b52600b",
       "wolfram_verified": true,
-      "wolfram_verified_at": "2026-04-20T05:48:11.337Z"
+      "fingerprint": "594ff4220b52600b"
     },
     {
       "id": "openstax-taylor-series-2",
@@ -568,6 +584,7 @@
       "source_url": "https://openstax.org/books/calculus-volume-2/pages/6-3-taylor-and-maclaurin-series",
       "license": "CC-BY-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "2fc0e2844db145c7"
     },
     {
@@ -584,6 +601,7 @@
       "source_url": "https://openstax.org/books/calculus-volume-3/pages/4-3-partial-derivatives",
       "license": "CC-BY-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "dca079e4ab543f88"
     },
     {
@@ -606,6 +624,7 @@
       "source_url": "https://openstax.org/books/calculus-volume-2/pages/5-2-the-divergence-and-integral-tests",
       "license": "CC-BY-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "595eb1ae0b6d0aa2"
     },
     {
@@ -622,6 +641,7 @@
       "source_url": "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010",
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "57f91bc1e4d67e8a"
     },
     {
@@ -644,6 +664,7 @@
       "source_url": "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010",
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "792742f86b3185af"
     },
     {
@@ -666,9 +687,8 @@
       "source_url": "https://ocw.mit.edu/courses/18-03-differential-equations-spring-2010",
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
-      "fingerprint": "8336b342cd5427d5",
       "wolfram_verified": true,
-      "wolfram_verified_at": "2026-04-20T05:48:39.561Z"
+      "fingerprint": "8336b342cd5427d5"
     },
     {
       "id": "ocw-counting-principles-3",
@@ -684,6 +704,7 @@
       "source_url": "https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-fall-2010",
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "6c844a5ac6299995"
     },
     {
@@ -706,6 +727,7 @@
       "source_url": "https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-fall-2010",
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
+      "wolfram_verified": false,
       "fingerprint": "84eebaedde1389b0"
     }
   ],
@@ -748,7 +770,13 @@
       "canonical_definition": "Limit evaluation, L'Hôpital's rule, indeterminate forms",
       "deep_explanation": "Limits is a foundational topic in calculus. Limit evaluation, L'Hôpital's rule, indeterminate forms",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students substitute x = a directly when the result is 0/0 because they don't recognize indeterminate forms",
+        "Students apply L'Hôpital's rule to limits that aren't 0/0 or ∞/∞ because they overuse the tool",
+        "Students conflate limit at infinity with limit at a point because both use the same notation lim",
+        "Students take one-sided limits as equal without checking because two-sided limits are the usual case",
+        "Students forget that limits can exist where the function value doesn't because they expect f(a) and lim(x→a) f(x) to always agree"
+      ],
       "prerequisite_reminders": [
         "Review sequences first."
       ],
@@ -764,7 +792,13 @@
       "canonical_definition": "Types of discontinuity, intermediate value theorem",
       "deep_explanation": "Continuity is a foundational topic in calculus. Types of discontinuity, intermediate value theorem",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students check only lim(x→a) f(x) = f(a) but forget f(a) must exist because they focus on the limit side",
+        "Students confuse removable discontinuities with jump discontinuities because both break 'smooth' graphs",
+        "Students think piecewise functions are automatically discontinuous at the join because they don't check the match",
+        "Students assert continuity from a graph that looks smooth because visual estimation isn't rigorous",
+        "Students apply the IVT to discontinuous functions because they don't check the hypothesis"
+      ],
       "prerequisite_reminders": [
         "Review limits first."
       ],
@@ -780,7 +814,13 @@
       "canonical_definition": "Differentiability vs continuity, piecewise functions",
       "deep_explanation": "Differentiability is a foundational topic in calculus. Differentiability vs continuity, piecewise functions",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students assume continuity implies differentiability because the converse (differentiable ⇒ continuous) is easy to remember backward",
+        "Students differentiate across corner points like |x| at x=0 because the function is continuous there",
+        "Students use the derivative formula inside an absolute value without checking sign because they don't split cases",
+        "Students forget that vertical tangents are a form of non-differentiability because the function is still 'smooth'",
+        "Students conflate f'(a) existing with f being differentiable on an interval because they mix pointwise with global"
+      ],
       "prerequisite_reminders": [
         "Review continuity first."
       ],
@@ -796,7 +836,13 @@
       "canonical_definition": "Power rule, sum/difference, basic functions",
       "deep_explanation": "Basic Derivatives is a foundational topic in calculus. Power rule, sum/difference, basic functions",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students forget the '+C' when writing antiderivatives because the constant feels optional",
+        "Students apply the power rule to constants as '0·x⁻¹' instead of 0 because they don't track the special case",
+        "Students differentiate constants using the power rule and get 0·x⁻¹ (undefined) because they don't apply d/dx(c) = 0 first",
+        "Students mix up d/dx(eˣ) = eˣ with d/dx(xᵉ) = e·xᵉ⁻¹ because the forms look similar",
+        "Students forget that d/dx(sin(x)) is cos(x) not -cos(x) because both sine and cosine have alternating-sign derivatives"
+      ],
       "prerequisite_reminders": [
         "Review differentiability first."
       ],
@@ -812,7 +858,13 @@
       "canonical_definition": "Composite function differentiation",
       "deep_explanation": "Chain Rule is a foundational topic in calculus. Composite function differentiation",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students differentiate f(g(x)) as f'(x)·g'(x) because they forget the inner function's argument",
+        "Students apply the chain rule to non-composite functions because they over-apply the pattern",
+        "Students stop after one level of chain in f(g(h(x))) because they only see two functions",
+        "Students forget to differentiate the inner function because visually it looks 'done' after step one",
+        "Students apply d/dx to both sides of an equation without the chain rule (implicit differentiation) because they treat y as a constant"
+      ],
       "prerequisite_reminders": [
         "Review derivatives basic first."
       ],
@@ -894,7 +946,13 @@
       "canonical_definition": "Antiderivatives, basic integration formulas",
       "deep_explanation": "Integration Basics is a foundational topic in calculus. Antiderivatives, basic integration formulas",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students integrate ∫(f·g) dx as (∫f)·(∫g) because they pattern-match on addition-distributes rules",
+        "Students forget to add the constant of integration because definite integrals don't need it",
+        "Students split ∫dx/(x² + 1) as tan⁻¹(x²+1) because they mis-identify the antiderivative pattern",
+        "Students apply u-substitution but forget to change the limits of integration because they keep original bounds",
+        "Students integrate cos²(x) by writing (cos(x))²/2 because they treat it like the power rule"
+      ],
       "prerequisite_reminders": [
         "Review derivatives basic first."
       ],
@@ -927,7 +985,13 @@
       "canonical_definition": "LIATE rule, repeated integration by parts",
       "deep_explanation": "Integration by Parts is a foundational topic in calculus. LIATE rule, repeated integration by parts",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students pick u and dv at random because they don't follow the LIATE heuristic",
+        "Students forget to apply integration by parts recursively when the new integral is still complex because one pass feels sufficient",
+        "Students drop the boundary term uv evaluated at limits because they focus on the integral piece",
+        "Students swap the sign and write ∫u dv = uv + ∫v du because they miscopy the formula",
+        "Students use integration by parts on integrals that need substitution because they over-apply the technique"
+      ],
       "prerequisite_reminders": [
         "Review integration basics first.",
         "Review product quotient rule first."
@@ -960,7 +1024,13 @@
       "canonical_definition": "FTC, properties, area computation",
       "deep_explanation": "Definite Integrals is a foundational topic in calculus. FTC, properties, area computation",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students compute F(a) - F(b) instead of F(b) - F(a) because they reverse the bounds",
+        "Students ignore the sign of the integrand and report area as always positive because they expect area to be non-negative",
+        "Students change variable but keep the original limits because they forget to transform the bounds",
+        "Students split an integral at a point of discontinuity but compute it as if continuous because they don't notice the discontinuity",
+        "Students apply the fundamental theorem of calculus when F is not continuous on [a,b] because they don't verify the hypothesis"
+      ],
       "prerequisite_reminders": [
         "Review integration substitution first.",
         "Review integration by parts first.",
@@ -995,7 +1065,13 @@
       "canonical_definition": "Partial derivatives, total derivative, Jacobian",
       "deep_explanation": "Multivariable Calculus is a foundational topic in calculus. Partial derivatives, total derivative, Jacobian",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students treat all variables as functions of x when computing ∂/∂x because they confuse total with partial derivatives",
+        "Students forget to hold other variables constant because they're used to single-variable calculus",
+        "Students compute ∂²f/∂x∂y and ∂²f/∂y∂x and get different answers because they make algebra errors, not because Clairaut fails",
+        "Students apply the chain rule in partials without accounting for all paths because they miss intermediate variables",
+        "Students confuse ∂z/∂x with dz/dx because the notation looks similar"
+      ],
       "prerequisite_reminders": [
         "Review chain rule first.",
         "Review definite integrals first."
@@ -1029,7 +1105,13 @@
       "canonical_definition": "Addition, multiplication, transpose, properties",
       "deep_explanation": "Matrix Operations is a foundational topic in linear algebra. Addition, multiplication, transpose, properties",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students multiply matrices element-wise because they confuse matrix multiplication with Hadamard product",
+        "Students assume AB = BA because real-number multiplication commutes",
+        "Students compute A⁻¹ by inverting each entry because inversion feels like 'the reverse of' multiplication",
+        "Students check if a product is defined by counting entries because they don't track rows × columns dimensions",
+        "Students apply transpose distribution as (AB)ᵀ = AᵀBᵀ because they expect the order to stay the same"
+      ],
       "prerequisite_reminders": [],
       "exam_tip": "Practice Matrix Operations problems at high frequency matching GATE exam distribution.",
       "generated_at": "2026-04-20T04:25:14.060Z",
@@ -1043,7 +1125,13 @@
       "canonical_definition": "Computation, properties, cofactor expansion",
       "deep_explanation": "Determinants is a foundational topic in linear algebra. Computation, properties, cofactor expansion",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students compute determinants by expanding along the wrong row/column because they don't pick the row or column with the most zeros",
+        "Students apply the det(AB) = det(A)·det(B) rule to non-square matrices because they memorize without checking preconditions",
+        "Students think det(A + B) = det(A) + det(B) because sums usually distribute over operations",
+        "Students compute det(kA) as k·det(A) because scalar multiplication usually commutes with linear operations",
+        "Students forget that swapping two rows negates the determinant because they only remember the magnitude"
+      ],
       "prerequisite_reminders": [
         "Review matrix operations first."
       ],
@@ -1075,7 +1163,13 @@
       "canonical_definition": "Gaussian elimination, consistency, solution types",
       "deep_explanation": "Systems of Linear Equations is a foundational topic in linear algebra. Gaussian elimination, consistency, solution types",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students use Cramer's rule when det = 0 because they don't check the coefficient matrix first",
+        "Students treat any system with more equations than unknowns as inconsistent because they expect 'too many' equations to conflict",
+        "Students back-substitute before reaching row-echelon form because they try to solve partway through elimination",
+        "Students confuse 'no solution' with 'infinite solutions' because both produce rows of zeros in reduction",
+        "Students forget to multiply through by the pivot before adding rows because they memorize the procedure by rote"
+      ],
       "prerequisite_reminders": [
         "Review matrix inverse first."
       ],
@@ -1091,7 +1185,13 @@
       "canonical_definition": "Row echelon, rank, nullity, rank-nullity theorem",
       "deep_explanation": "Rank & Nullity is a foundational topic in linear algebra. Row echelon, rank, nullity, rank-nullity theorem",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students count nonzero rows in the original matrix instead of the row-echelon form because they skip the reduction step",
+        "Students confuse rank with determinant because both 'describe' the matrix as a whole",
+        "Students think rank + nullity equals the number of rows because they misremember which dimension is being summed",
+        "Students apply row reduction inconsistently and miscount pivots because they treat each row independently",
+        "Students forget that rank(AB) ≤ min(rank(A), rank(B)) because they expect ranks to add or multiply"
+      ],
       "prerequisite_reminders": [
         "Review systems of equations first."
       ],
@@ -1139,7 +1239,13 @@
       "canonical_definition": "Characteristic polynomial, computation, properties",
       "deep_explanation": "Eigenvalues & Eigenvectors is a foundational topic in linear algebra. Characteristic polynomial, computation, properties",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students compute det(A - λI) but forget to solve for λ because they stop once they see a polynomial",
+        "Students conflate algebraic multiplicity with geometric multiplicity because both are called 'multiplicity'",
+        "Students assume every matrix has distinct eigenvalues because their early examples always did",
+        "Students treat eigenvectors as unique vectors because they don't recognize scalar multiples of an eigenvector are also eigenvectors",
+        "Students forget that complex eigenvalues come in conjugate pairs for real matrices because they only practiced with symmetric matrices"
+      ],
       "prerequisite_reminders": [
         "Review determinants first.",
         "Review systems of equations first."
@@ -1156,7 +1262,13 @@
       "canonical_definition": "Diagonalizability, similar matrices, powers",
       "deep_explanation": "Diagonalization is a foundational topic in linear algebra. Diagonalizability, similar matrices, powers",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students try to diagonalize a non-diagonalizable matrix because they don't check algebraic vs geometric multiplicity",
+        "Students compute PDP⁻¹ but forget to order eigenvalues and eigenvectors consistently because the pairing is easy to mix up",
+        "Students think all symmetric matrices need Gram-Schmidt because they conflate symmetric with orthogonal diagonalization",
+        "Students write P as rows of eigenvectors instead of columns because they confuse the convention",
+        "Students compute A^n by raising entries to the n-th power because they forget diagonalization transforms the problem"
+      ],
       "prerequisite_reminders": [
         "Review eigenvalues first.",
         "Review vector spaces first."
@@ -1205,7 +1317,13 @@
       "canonical_definition": "Separable, exact, linear first-order",
       "deep_explanation": "First Order ODEs is a foundational topic in differential equations. Separable, exact, linear first-order",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students forget to multiply BOTH sides by the integrating factor because they treat the equation as an identity",
+        "Students compute the integrating factor as e^P(x) instead of e^∫P(x)dx because they skip the integral",
+        "Students drop the constant of integration on the integrating factor because it simplifies to 1 anyway",
+        "Students apply the first-order-linear method to nonlinear equations because they pattern-match on the form y' + P(x)y = Q(x)",
+        "Students forget that the solution must be continuous on the interval of interest because they solve piece-by-piece"
+      ],
       "prerequisite_reminders": [
         "Review integration basics first.",
         "Review derivatives basic first."
@@ -1255,7 +1373,13 @@
       "canonical_definition": "Characteristic equation, complementary solution",
       "deep_explanation": "Second Order Homogeneous is a foundational topic in differential equations. Characteristic equation, complementary solution",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students write only one solution for repeated roots because they forget the te^(rt) term",
+        "Students use the wrong form for complex roots because they don't convert to e^(αx)(cos(βx) + sin(βx))",
+        "Students mix up the characteristic equation form because they confuse ay'' + by' + cy = 0 with y'' + by' + cy = 0",
+        "Students assert that the general solution has only two constants because they forget higher-order equations need more",
+        "Students apply constant-coefficient methods to variable-coefficient equations because the surface structure looks the same"
+      ],
       "prerequisite_reminders": [
         "Review ode first order first.",
         "Review eigenvalues first."
@@ -1272,7 +1396,13 @@
       "canonical_definition": "Particular solution, undetermined coefficients, variation of parameters",
       "deep_explanation": "Second Order Non-Homogeneous is a foundational topic in differential equations. Particular solution, undetermined coefficients, variation of parameters",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students try undetermined coefficients with a forcing term that duplicates a homogeneous solution because they don't multiply by x",
+        "Students forget that the general solution is the sum of complementary and particular solutions because they produce only one",
+        "Students assume variation of parameters always works better than undetermined coefficients because more general sounds better",
+        "Students pick the wrong form for the particular solution because they don't match the forcing function structure",
+        "Students apply superposition to nonlinear equations because linear-combination habit is strong"
+      ],
       "prerequisite_reminders": [
         "Review ode second order homo first.",
         "Review integration by parts first."
@@ -1336,7 +1466,13 @@
       "canonical_definition": "Axioms, conditional, Bayes theorem",
       "deep_explanation": "Probability Basics is a foundational topic in probability statistics. Axioms, conditional, Bayes theorem",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students compute P(A|B) as P(B|A) because they swap the conditional direction",
+        "Students forget to normalize by the total probability in Bayes' theorem because they skip the denominator",
+        "Students assume P(A|B) + P(A|B^c) = 1 because they confuse it with P(A) + P(A^c) = 1",
+        "Students treat independent events as mutually exclusive because both 'decouple' events intuitively",
+        "Students add probabilities of overlapping events without subtracting the intersection because inclusion-exclusion feels unnecessary"
+      ],
       "prerequisite_reminders": [
         "Review counting principles first."
       ],
@@ -1385,7 +1521,13 @@
       "canonical_definition": "Normal, exponential, uniform, gamma",
       "deep_explanation": "Continuous Distributions is a foundational topic in probability statistics. Normal, exponential, uniform, gamma",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students compute P(X = a) as nonzero for continuous distributions because they're used to discrete PMFs",
+        "Students integrate the CDF instead of the PDF to get probability because they confuse the roles",
+        "Students forget that total area under the PDF must equal 1 because they don't normalize",
+        "Students treat the PDF value f(x) as a probability because the name 'density function' misleads them",
+        "Students use the wrong bounds when computing P(a < X < b) for mixed-discrete-continuous because they don't separate cases"
+      ],
       "prerequisite_reminders": [
         "Review random variables first.",
         "Review definite integrals first."
@@ -1482,7 +1624,13 @@
       "canonical_definition": "Contour integrals, Cauchy integral theorem/formula",
       "deep_explanation": "Complex Integration is a foundational topic in complex variables. Contour integrals, Cauchy integral theorem/formula",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students verify only the first of the two Cauchy-Riemann equations before calling a function holomorphic because they stop at the first check",
+        "Students apply Cauchy's theorem when the contour encloses a singularity because they forget to check analyticity inside the contour",
+        "Students compute residues at essential singularities using the pole formula because they treat all singularities the same",
+        "Students forget to pick the correct branch when integrating around multi-valued functions because they use the principal branch automatically",
+        "Students apply the residue theorem to non-closed contours because they overgeneralize the scope"
+      ],
       "prerequisite_reminders": [
         "Review analytic functions first.",
         "Review definite integrals first."
@@ -1499,7 +1647,13 @@
       "canonical_definition": "Series expansions, singularities classification",
       "deep_explanation": "Taylor & Laurent Series is a foundational topic in complex variables. Series expansions, singularities classification",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students drop the remainder term when computing approximations because they think the series is exact",
+        "Students compute Taylor series about x = 0 when the problem asks about x = a because they default to Maclaurin",
+        "Students forget to evaluate the n-th derivative at the expansion point because they leave f⁽ⁿ⁾(x) in the coefficient",
+        "Students assume the Taylor series converges everywhere because the formula looks universal",
+        "Students confuse the Taylor series of f with its Taylor polynomial because both share the same formula for finite n"
+      ],
       "prerequisite_reminders": [
         "Review complex integration first.",
         "Review series first."
@@ -1632,7 +1786,13 @@
       "canonical_definition": "Definition, properties, standard transforms",
       "deep_explanation": "Laplace Transform is a foundational topic in transform theory. Definition, properties, standard transforms",
       "worked_examples": [],
-      "common_misconceptions": [],
+      "common_misconceptions": [
+        "Students forget the shift property L{e^(at) f(t)} = F(s - a) and apply L{f(t)} directly because they ignore the exponential",
+        "Students use the initial value from the problem instead of 0 in the derivative property because they confuse the formula",
+        "Students apply the inverse Laplace transform term-by-term without partial-fraction decomposition because they hope the transform is additive",
+        "Students compute L{f(t)g(t)} as F(s)·G(s) because convolution-in-time (not product-in-time) corresponds to multiplication-in-frequency",
+        "Students try to invert F(s) = 1/(s² + 2s + 5) directly because they don't complete the square first"
+      ],
       "prerequisite_reminders": [
         "Review improper integrals first.",
         "Review ode second order nonhomo first."
@@ -2069,5 +2229,5 @@
       "hard": 2
     }
   },
-  "verified_at": "2026-04-20T05:48:45.982Z"
+  "verified_at": "2026-04-21T02:24:41.218Z"
 }

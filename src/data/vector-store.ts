@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * EduGenius Data Layer - Vector Store
+ * Project Vidhya Data Layer - Vector Store
  * For semantic search and embeddings storage
  */
 

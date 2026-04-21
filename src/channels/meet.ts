@@ -82,7 +82,7 @@ export async function createMeeting(config: MeetingConfig): Promise<MeetingDetai
     attendees: config.attendees?.map(email => ({ email })),
     conferenceData: {
       createRequest: {
-        requestId: `edugenius-${Date.now()}`,
+        requestId: `vidhya-${Date.now()}`,
         conferenceSolutionKey: { type: 'hangoutsMeet' }
       }
     }
@@ -238,7 +238,7 @@ export async function scheduleTutoringSession(options: {
   const endTime = new Date(options.startTime.getTime() + duration * 60000);
   
   return createMeeting({
-    title: `EduGenius Tutoring: ${options.subject}${options.topic ? ` - ${options.topic}` : ''}`,
+    title: `Project Vidhya Tutoring: ${options.subject}${options.topic ? ` - ${options.topic}` : ''}`,
     description: `Tutoring session with ${options.studentName}\nSubject: ${options.subject}\n${options.topic ? `Topic: ${options.topic}` : ''}`,
     startTime: options.startTime,
     endTime,

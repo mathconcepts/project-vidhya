@@ -1,5 +1,5 @@
 /**
- * Unit Tests for EduGenius Model Router
+ * Unit Tests for Project Vidhya Model Router
  * Tests intelligent routing, fallback, and budget tracking
  */
 

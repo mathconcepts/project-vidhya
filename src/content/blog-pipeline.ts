@@ -86,11 +86,11 @@ export class BlogPipeline {
       content: content.body,
       category,
       tags: content.tags,
-      author: 'EduGenius',
+      author: 'Project Vidhya',
       examTypes: [exam],
       targetAudience,
       seo: {
-        metaTitle: `${content.title} | EduGenius`,
+        metaTitle: `${content.title} | Project Vidhya`,
         metaDescription: content.excerpt,
         keywords: content.tags,
       },
@@ -256,7 +256,7 @@ export class BlogPipeline {
     return {
       platform: 'self-hosted',
       success: true,
-      url: `https://edugenius.ai/blog/${post.slug}`,
+      url: `https://vidhya.ai/blog/${post.slug}`,
       platformId: post.id,
     };
   }
@@ -266,7 +266,7 @@ export class BlogPipeline {
     return {
       platform: 'medium',
       success: true,
-      url: `https://medium.com/@edugenius/${post.slug}`,
+      url: `https://medium.com/@vidhya/${post.slug}`,
       platformId: `medium-${Date.now()}`,
     };
   }
@@ -276,7 +276,7 @@ export class BlogPipeline {
     return {
       platform: 'wordpress',
       success: true,
-      url: `https://blog.edugenius.ai/${post.slug}`,
+      url: `https://blog.vidhya.ai/${post.slug}`,
       platformId: `wp-${Date.now()}`,
     };
   }
@@ -286,7 +286,7 @@ export class BlogPipeline {
     return {
       platform: 'substack',
       success: true,
-      url: `https://edugenius.substack.com/p/${post.slug}`,
+      url: `https://vidhya.substack.com/p/${post.slug}`,
       platformId: `substack-${Date.now()}`,
     };
   }
@@ -546,7 +546,7 @@ export class VlogPipeline {
     return {
       platform: 'tiktok',
       success: true,
-      url: `https://tiktok.com/@edugenius/video/123`,
+      url: `https://tiktok.com/@vidhya/video/123`,
       platformId: 'tiktok123',
     };
   }
@@ -556,7 +556,7 @@ export class VlogPipeline {
     return {
       platform: 'linkedin-video',
       success: true,
-      url: `https://linkedin.com/posts/edugenius_video123`,
+      url: `https://linkedin.com/posts/vidhya_video123`,
       platformId: 'li123',
     };
   }

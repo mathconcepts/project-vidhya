@@ -339,7 +339,7 @@ for await (const chunk of stream) {
 ### Basic Generation
 
 ```typescript
-import { LLMClient } from 'edugenius';
+import { LLMClient } from 'vidhya';
 
 const client = new LLMClient();
 

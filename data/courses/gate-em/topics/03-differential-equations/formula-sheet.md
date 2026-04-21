@@ -82,4 +82,4 @@ Order = highest derivative; Degree = power of highest derivative (when polynomia
 
 ---
 
-*EduGenius GATE EM | Differential Equations Formula Sheet*
+*Project Vidhya GATE EM | Differential Equations Formula Sheet*

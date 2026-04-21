@@ -1,6 +1,6 @@
 # 20 — Content Generation & Delivery System Architecture
 
-> **EduGenius v2.0 — Content System Upgrade**
+> **Project Vidhya v2.0 — Content System Upgrade**
 > Implemented: 2026-03-10
 > Status: Production-ready (0 TS errors, build ✓)
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-The content system upgrade delivers a complete multi-channel content machine for EduGenius, enabling Giri to generate, repurpose, orchestrate, and deploy content across 9 channels for 6 exams with a single interface.
+The content system upgrade delivers a complete multi-channel content machine for Project Vidhya, enabling Giri to generate, repurpose, orchestrate, and deploy content across 9 channels for 6 exams with a single interface.
 
 ---
 
@@ -70,7 +70,7 @@ The content system upgrade delivers a complete multi-channel content machine for
 ### Output Directory
 
 ```
-/home/sprite/clawd/edugenius/pages-output/
+/home/sprite/clawd/vidhya/pages-output/
 ```
 Generated HTML files land here for Netlify deploy.
 
@@ -162,7 +162,7 @@ orchestrateContentCampaign(exam, topic, targetDate, {audience, channels})
 | Scout → Topics | scoutIntelligenceService | contentGenerationHub | `content:scout:insights` |
 | Atlas → RAG | contentGenerationHub | ragIndexer | `content:atlas:content_ready` |
 | Herald → Oracle | Herald delivery | Oracle analytics | `content:herald:distribute_request` |
-| RAG → Sage | ragIndexer | Sage tutor | `edugenius_rag_indexer_job` |
+| RAG → Sage | ragIndexer | Sage tutor | `vidhya_rag_indexer_job` |
 | Strategy → Atlas | contentStrategyService | contentGenerationHub | `content:strategy:selected` |
 | Oracle → Feedback | Oracle analytics | Strategy/Quality | `content:oracle:track_campaign` |
 | Page Builder → Oracle | localPageBuilderService | Oracle | built pages key |
@@ -184,7 +184,7 @@ orchestrateContentCampaign(exam, topic, targetDate, {audience, channels})
 - Twitter card meta
 - Schema.org JSON-LD (EducationalOrganization)
 - Google Analytics placeholder
-- Lead capture form → redirects to edugenius.app/signup
+- Lead capture form → redirects to vidhya.app/signup
 - Responsive mobile-first design
 
 ### Deploy Flow
@@ -197,20 +197,20 @@ orchestrateContentCampaign(exam, topic, targetDate, {audience, channels})
 
 ## localStorage Keys
 
-All keys prefixed `edugenius_content_`:
+All keys prefixed `vidhya_content_`:
 
 | Key | Purpose |
 |-----|---------|
-| `edugenius_content_campaigns` | All campaign records |
-| `edugenius_content_active_campaign` | Current campaign ID |
-| `edugenius_content_batch_queue` | Scheduled campaigns |
-| `edugenius_content_built_pages` | All built HTML pages |
-| `edugenius_content_generation_cache` | 24h content cache |
-| `edugenius_content_bulk_repurpose_last` | Last bulk repurpose |
-| `edugenius_content_rag_queue` | Atlas → RAG queue |
-| `edugenius_content_oracle_registry` | Oracle tracking registry |
-| `edugenius_content_scout_insights_latest` | Latest Scout intel |
-| `edugenius_content_user_intent_latest` | Latest user intent |
+| `vidhya_content_campaigns` | All campaign records |
+| `vidhya_content_active_campaign` | Current campaign ID |
+| `vidhya_content_batch_queue` | Scheduled campaigns |
+| `vidhya_content_built_pages` | All built HTML pages |
+| `vidhya_content_generation_cache` | 24h content cache |
+| `vidhya_content_bulk_repurpose_last` | Last bulk repurpose |
+| `vidhya_content_rag_queue` | Atlas → RAG queue |
+| `vidhya_content_oracle_registry` | Oracle tracking registry |
+| `vidhya_content_scout_insights_latest` | Latest Scout intel |
+| `vidhya_content_user_intent_latest` | Latest user intent |
 | `content_sync_health` | Sync health report |
 
 ### Agent signal keys (prefixed `content:`)
@@ -250,7 +250,7 @@ Two new items added to `ceoNavItems`:
 
 > **Commits:** `e81f548` · `e6a5f6d` · `88b5adb` · `cd99890` · `6af8d66` · `e1bb7cb`
 
-The content system now operates on a **mandatory + personalized two-layer model**. Every content request first fulfills a guaranteed mandatory baseline, then adds persona-adapted personalized content on top. This makes EduGenius's content both pedagogically sound (mandatory) and individually engaging (personalized).
+The content system now operates on a **mandatory + personalized two-layer model**. Every content request first fulfills a guaranteed mandatory baseline, then adds persona-adapted personalized content on top. This makes Project Vidhya's content both pedagogically sound (mandatory) and individually engaging (personalized).
 
 ### The Two-Layer Model
 

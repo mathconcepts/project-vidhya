@@ -277,7 +277,7 @@ export const BUILTIN_PROVIDERS: ProviderDefinition[] = [
     configSchema: [
       { key: 'apiKey', label: 'API Key', type: 'password', required: true, placeholder: 'sk-or-...' },
       { key: 'siteUrl', label: 'Site URL', type: 'url', required: false, placeholder: 'https://your-app.com' },
-      { key: 'siteName', label: 'Site Name', type: 'string', required: false, placeholder: 'EduGenius' },
+      { key: 'siteName', label: 'Site Name', type: 'string', required: false, placeholder: 'Project Vidhya' },
     ],
   },
 

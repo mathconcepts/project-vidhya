@@ -10,7 +10,7 @@ Comprehensive documentation of all 8 agents (7 domain + Prism) and their 45+ sub
 ## Agent Hierarchy
 
 ```
-EduGenius Orchestrator
+Project Vidhya Orchestrator
 ├── Scout (Market Intelligence)
 │   ├── TrendSpotter
 │   ├── CompetitorTracker

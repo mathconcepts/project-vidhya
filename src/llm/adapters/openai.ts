@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * OpenAI Adapter for EduGenius LLM Layer
+ * OpenAI Adapter for Project Vidhya LLM Layer
  * Supports GPT-4, GPT-4-turbo, GPT-3.5-turbo, and embedding models
  */
 

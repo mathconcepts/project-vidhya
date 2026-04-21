@@ -1,6 +1,6 @@
-# CAT & MBA Entrance — EduGenius Course Material
+# CAT & MBA Entrance — Project Vidhya Course Material
 
-This directory contains the complete course material for the CAT (Common Admission Test) and other MBA entrance exams, structured for use with EduGenius's AI tutoring platform.
+This directory contains the complete course material for the CAT (Common Admission Test) and other MBA entrance exams, structured for use with Project Vidhya's AI tutoring platform.
 
 ## Structure
 
@@ -55,7 +55,7 @@ data/courses/cat/
 | TITA Marking | +3 / 0 |
 | Sectional Time Limit | 40 minutes per section |
 
-## Usage in EduGenius
+## Usage in Project Vidhya
 
 - **Sage (AI Tutor)**: Uses `catPyqContext.ts` for RAG-style grounding — 30 static PYQs (2019–2024) injected into Gemini context window
 - **Practice Mode**: MCQs served from these JSON files

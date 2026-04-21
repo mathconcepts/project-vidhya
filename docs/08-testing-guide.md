@@ -1,6 +1,6 @@
 # Testing Guide
 
-Comprehensive guide to testing the EduGenius platform.
+Comprehensive guide to testing the Project Vidhya platform.
 
 ---
 
@@ -240,7 +240,7 @@ describe('CircuitBreaker', () => {
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { getOrchestrator, resetOrchestrator } from '../../orchestrator';
 
-describe('EduGenius Orchestrator', () => {
+describe('Project Vidhya Orchestrator', () => {
   let orchestrator;
 
   beforeAll(async () => {

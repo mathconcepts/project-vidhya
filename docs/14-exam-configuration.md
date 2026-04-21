@@ -2,7 +2,7 @@
 
 ## Overview
 
-Each exam in EduGenius has a comprehensive configuration that defines its nature, format, content cadence, language support, and marketing budget. The system comes with pre-configured defaults for major Indian competitive exams.
+Each exam in Project Vidhya has a comprehensive configuration that defines its nature, format, content cadence, language support, and marketing budget. The system comes with pre-configured defaults for major Indian competitive exams.
 
 ## Default Exam Configs
 
@@ -59,7 +59,7 @@ interface SectionFormat {
 ## Creating Exam Configs
 
 ```typescript
-import { examConfigManager } from 'edugenius';
+import { examConfigManager } from 'vidhya';
 
 const config = await examConfigManager.createConfig({
   name: 'JEE Advanced 2026',

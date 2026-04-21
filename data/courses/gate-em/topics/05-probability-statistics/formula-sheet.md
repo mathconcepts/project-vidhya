@@ -88,4 +88,4 @@ $$\bar{X}\sim N\!\left(\mu,\frac{\sigma^2}{n}\right) \quad \text{(large } n\text
 
 ---
 
-*EduGenius GATE EM | Probability & Statistics Formula Sheet*
+*Project Vidhya GATE EM | Probability & Statistics Formula Sheet*

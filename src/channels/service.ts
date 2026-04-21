@@ -80,9 +80,9 @@ export function createConversation(
     channel,
     user,
     bot: {
-      id: 'edugenius-bot',
+      id: 'vidhya-bot',
       type: 'bot',
-      name: 'EduGenius'
+      name: 'Project Vidhya'
     },
     context: {
       ...context

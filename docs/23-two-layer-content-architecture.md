@@ -1,6 +1,6 @@
 # 23 — Two-Layer Content Architecture
 
-> **EduGenius v2.0 — Mandatory + Personalized Content System**
+> **Project Vidhya v2.0 — Mandatory + Personalized Content System**
 > Implemented: 2026-03-13  
 > Commits: `e81f548` (Content Slot System) · `e6a5f6d` (Two-Layer Architecture) · `88b5adb` (Pipeline Sync)  
 > Status: Production-ready (0 TS errors, build ✓)
@@ -9,7 +9,7 @@
 
 ## Overview
 
-Every piece of content in EduGenius is now delivered through a two-layer model:
+Every piece of content in Project Vidhya is now delivered through a two-layer model:
 
 - **Layer 1 (Mandatory):** A guaranteed, high-accuracy baseline that every student on every topic must receive — correct concept core, formulas, a worked example, PYQs, common mistakes, and exam tips. Non-negotiable. Never skipped.
 - **Layer 2 (Personalized):** Style, mood, cognitive-load, and exam-proximity adaptations placed on top of the baseline. Budget-limited; gracefully degrades to Layer 1 if exhausted.
@@ -391,4 +391,4 @@ type GenerationLayer = 'mandatory' | 'personalized';
 
 ---
 
-*EduGenius v2.0 — mathconcepts1 · Implemented 2026-03-13*
+*Project Vidhya v2.0 — mathconcepts1 · Implemented 2026-03-13*

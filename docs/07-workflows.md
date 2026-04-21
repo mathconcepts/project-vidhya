@@ -82,7 +82,7 @@ curl -X POST http://localhost:3000/workflows/exam-launch/start \
 ### Programmatic Launch
 
 ```typescript
-import { launchExam, examTemplates } from 'edugenius/workflows';
+import { launchExam, examTemplates } from 'vidhya/workflows';
 
 // Using template
 const result = await launchExam(examTemplates.cbse10('Mathematics'));
@@ -180,7 +180,7 @@ student-session
 ### Programmatic Usage
 
 ```typescript
-import { runStudentJourney } from 'edugenius/workflows';
+import { runStudentJourney } from 'vidhya/workflows';
 
 const result = await runStudentJourney({
   studentId: 'student-001',

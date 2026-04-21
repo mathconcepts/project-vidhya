@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Complete configuration options for EduGenius.
+Complete configuration options for Project Vidhya.
 
 ---
 
@@ -256,7 +256,7 @@ cache:
     
   redis:
     url: ${REDIS_URL}
-    prefix: edugenius:
+    prefix: vidhya:
     ttlMs: 3600000
     
   strategies:
@@ -277,7 +277,7 @@ cache:
 ### Orchestrator
 
 ```typescript
-import { getOrchestrator } from 'edugenius';
+import { getOrchestrator } from 'vidhya';
 
 const orchestrator = getOrchestrator({
   // Select specific agents
@@ -304,14 +304,14 @@ const orchestrator = getOrchestrator({
 ### API Server
 
 ```typescript
-import { createAPIServer } from 'edugenius';
+import { createAPIServer } from 'vidhya';
 
 const server = createAPIServer({
   port: 3000,
   host: '0.0.0.0',
   
   // CORS
-  corsOrigins: ['https://app.edugenius.ai'],
+  corsOrigins: ['https://app.vidhya.ai'],
   
   // Rate limiting
   rateLimit: {
@@ -330,7 +330,7 @@ const server = createAPIServer({
 ### Agent Configuration
 
 ```typescript
-import { SageAgent } from 'edugenius';
+import { SageAgent } from 'vidhya';
 
 const sage = new SageAgent({
   // Override default config
@@ -460,7 +460,7 @@ logging:
   destinations:
     - type: console
     - type: file
-      path: /var/log/edugenius/app.log
+      path: /var/log/vidhya/app.log
       maxSize: 10mb
       maxFiles: 5
     - type: sentry

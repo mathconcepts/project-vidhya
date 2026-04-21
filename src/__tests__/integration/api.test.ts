@@ -1,12 +1,12 @@
 /**
- * Integration Tests for EduGenius API
+ * Integration Tests for Project Vidhya API
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { APIServer, createAPIServer } from '../../api';
 import { getOrchestrator, resetOrchestrator } from '../../orchestrator';
 
-describe('EduGenius API Server', () => {
+describe('Project Vidhya API Server', () => {
   let server: APIServer;
   const port = 3099; // Use non-standard port for tests
   const baseUrl = `http://localhost:${port}`;

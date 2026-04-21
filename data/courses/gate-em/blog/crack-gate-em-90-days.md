@@ -152,9 +152,9 @@ With -0.67 for wrong answers, a random guess costs you. If you're more than 60% 
 
 | Resource | Use For |
 |----------|---------|
-| EduGenius GATE EM course | Concept building, formula sheets, MCQs |
+| Project Vidhya GATE EM course | Concept building, formula sheets, MCQs |
 | GATE PYQ PDFs (2018–2024) | Pattern recognition |
-| EduGenius Practice Mode | Timed MCQ practice with AI explanations |
+| Project Vidhya Practice Mode | Timed MCQ practice with AI explanations |
 | Sage AI Tutor | Instant doubt resolution, concept gaps |
 
 ---
@@ -185,4 +185,4 @@ You have 90 days. Start today.
 
 ---
 
-*Ready to start? Access the full GATE EM course on EduGenius — 10 topics, 50+ MCQs, formula sheets, and Sage AI tutor available 24/7.*
+*Ready to start? Access the full GATE EM course on Project Vidhya — 10 topics, 50+ MCQs, formula sheets, and Sage AI tutor available 24/7.*

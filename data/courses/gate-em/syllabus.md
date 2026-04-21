@@ -351,4 +351,4 @@ Engineering Mathematics is a **common section** across most GATE papers. It test
 
 ---
 
-*EduGenius GATE EM | Updated February 2026*
+*Project Vidhya GATE EM | Updated February 2026*

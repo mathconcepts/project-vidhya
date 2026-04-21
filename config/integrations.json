@@ -42,7 +42,7 @@
     "supabase": {
       "status": "active",
       "displayName": "Supabase",
-      "description": "Database, auth, and realtime for EduGenius",
+      "description": "Database, auth, and realtime for Project Vidhya",
       "scopes": ["database", "auth", "storage", "realtime"],
       "apiKeyEnvVar": "VITE_SUPABASE_ANON_KEY",
       "docs": "https://supabase.com/docs"

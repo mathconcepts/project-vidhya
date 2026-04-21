@@ -1,5 +1,5 @@
 /**
- * EduGenius Data Layer - Public API
+ * Project Vidhya Data Layer - Public API
  * Re-exports all data layer components
  */
 

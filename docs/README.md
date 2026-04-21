@@ -1,4 +1,4 @@
-# EduGenius Documentation
+# Project Vidhya Documentation
 
 **Version:** 2.0.0  
 **Last Updated:** 2026-02-17
@@ -106,4 +106,4 @@
 
 ---
 
-*EduGenius — Autonomous AI Agent Platform for Education*
+*Project Vidhya — Autonomous AI Agent Platform for Education*

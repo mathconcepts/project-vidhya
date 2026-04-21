@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get EduGenius v2.0 running in under 10 minutes.
+Get Project Vidhya v2.0 running in under 10 minutes.
 
 ---
 
@@ -19,8 +19,8 @@ Everything else (Node.js, Docker, Python, etc.) can be installed automatically b
 ## Step 1 — Clone the Repo
 
 ```bash
-git clone https://github.com/mathconcepts/edugenius-v2.git
-cd edugenius-v2
+git clone https://github.com/mathconcepts/vidhya-v2.git
+cd vidhya-v2
 ```
 
 ---
@@ -155,7 +155,7 @@ cp deploy/hybrid.env.example .env.hybrid
 ./scripts/deploy-hybrid.sh
 ```
 
-Frontend stays on Netlify: https://edugenius-ui.netlify.app
+Frontend stays on Netlify: https://vidhya-ui.netlify.app
 
 ---
 
@@ -295,12 +295,12 @@ Agent pipelines run on schedule. Trigger manually:
 
 **Add to system cron** (`crontab -e`):
 ```bash
-0 2 * * *   /path/to/edugenius/scripts/batch-run.sh atlas:content-gen
-0 */6 * * * /path/to/edugenius/scripts/batch-run.sh oracle:analytics
-0 8 * * *   /path/to/edugenius/scripts/batch-run.sh herald:campaign
-0 9 * * *   /path/to/edugenius/scripts/batch-run.sh mentor:engagement
-0 6 * * 1   /path/to/edugenius/scripts/batch-run.sh scout:market-scan
-*/30 * * * * /path/to/edugenius/scripts/batch-run.sh forge:health
+0 2 * * *   /path/to/vidhya/scripts/batch-run.sh atlas:content-gen
+0 */6 * * * /path/to/vidhya/scripts/batch-run.sh oracle:analytics
+0 8 * * *   /path/to/vidhya/scripts/batch-run.sh herald:campaign
+0 9 * * *   /path/to/vidhya/scripts/batch-run.sh mentor:engagement
+0 6 * * 1   /path/to/vidhya/scripts/batch-run.sh scout:market-scan
+*/30 * * * * /path/to/vidhya/scripts/batch-run.sh forge:health
 ```
 
 ---

@@ -87,4 +87,4 @@ where $u=(x-x_0)/h$
 
 ---
 
-*EduGenius GATE EM | Numerical Methods Formula Sheet*
+*Project Vidhya GATE EM | Numerical Methods Formula Sheet*

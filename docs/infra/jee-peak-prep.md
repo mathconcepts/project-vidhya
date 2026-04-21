@@ -61,7 +61,7 @@ TOP_POSTS=(
 )
 
 for slug in "${TOP_POSTS[@]}"; do
-  curl -s -o /dev/null "https://edugenius.app/website/blog/$slug" &
+  curl -s -o /dev/null "https://vidhya.app/website/blog/$slug" &
 done
 wait
 echo "CDN pre-warm complete"
@@ -81,7 +81,7 @@ Fallback: If LLM API p95 > 2.5s, route to cached frequent answers.
 
 ## Trace Storage (localStorage)
 
-- Key: `edugenius_traces`
+- Key: `vidhya_traces`
 - Max entries: 100 (LRU eviction active)
 - Quota warning: 80% of 5MB (~4MB)
 - **Action on quota warn**: `evictOldTraces()` called automatically (drops 25% oldest)
@@ -90,7 +90,7 @@ Monitor: `getTraceStorageUsage()` logs to console on every write.
 
 ## Prism State Persistence
 
-- Key: `edugenius_prism_state`
+- Key: `vidhya_prism_state`
 - Ensure server-side Prism heartbeat state is written to a durable store before restart
 - On cold start: Prism re-initializes from persisted state in < 30s
 

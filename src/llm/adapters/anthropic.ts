@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * EduGenius LLM Abstraction Layer - Anthropic Adapter
+ * Project Vidhya LLM Abstraction Layer - Anthropic Adapter
  * Supports Claude Sonnet, Haiku models
  */
 

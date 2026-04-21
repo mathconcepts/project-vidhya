@@ -1,10 +1,10 @@
-# EduGenius v2.0 — Complete Help Manual
+# Project Vidhya v2.0 — Complete Help Manual
 
-> **Audience:** Anyone setting up, operating, or using EduGenius — from first clone to first student session.  
+> **Audience:** Anyone setting up, operating, or using Project Vidhya — from first clone to first student session.  
 > **Structure:** Part 1 deploys the system → Part 2 walks every agent and sub-agent → Part 3 walks connections → Part 4 walks the full student journey to course content.  
 > **Last updated:** 2026-03-13  
-> **Live demo:** https://edugenius-ui.netlify.app  
-> **GitHub:** https://github.com/mathconcepts/edugenius-v2
+> **Live demo:** https://vidhya-ui.netlify.app  
+> **GitHub:** https://github.com/mathconcepts/vidhya-v2
 
 ---
 
@@ -35,7 +35,7 @@
 
 ## 1. System Overview
 
-EduGenius v2.0 is an **AI-driven education SaaS** for competitive exam preparation in India (GATE EM, JEE, NEET, CAT, CBSE 12, UPSC). It operates as a network of 8 autonomous AI agents that generate content, tutor students, run marketing, monitor performance, and maintain infrastructure — all without manual intervention.
+Project Vidhya v2.0 is an **AI-driven education SaaS** for competitive exam preparation in India (GATE EM, JEE, NEET, CAT, CBSE 12, UPSC). It operates as a network of 8 autonomous AI agents that generate content, tutor students, run marketing, monitor performance, and maintain infrastructure — all without manual intervention.
 
 ### Architecture in one diagram
 
@@ -109,8 +109,8 @@ EduGenius v2.0 is an **AI-driven education SaaS** for competitive exam preparati
 ### Step 0 — Clone and audit
 
 ```bash
-git clone https://github.com/mathconcepts/edugenius-v2.git
-cd edugenius-v2
+git clone https://github.com/mathconcepts/vidhya-v2.git
+cd vidhya-v2
 
 # Run dependency check (reads your system, tells you what's missing)
 ./scripts/check-deps.sh
@@ -477,7 +477,7 @@ After any deployment, complete these steps before going live.
 
 ### Step 1 — Access the CEO Dashboard
 
-Navigate to your deployed URL (e.g., http://localhost, https://edugenius-ui.netlify.app, or your custom domain).
+Navigate to your deployed URL (e.g., http://localhost, https://vidhya-ui.netlify.app, or your custom domain).
 
 The default role is **CEO**. You'll see the full sidebar with all management features.
 
@@ -1152,18 +1152,18 @@ Students/teachers/parents log in at `/login`. Supported methods:
 
 ## 10. The Full Student Journey — Signup to Course Content
 
-This section walks the complete path from a new user hearing about EduGenius to receiving personalised course content.
+This section walks the complete path from a new user hearing about Project Vidhya to receiving personalised course content.
 
 ### Stage 1 — Awareness (Herald + Scout)
 
 **What happens:**
 - Scout identifies a student question on Reddit or Quora: *"Best way to study Electromagnetism for GATE?"*
 - IntentScout classifies it as `exam_prep_question` intent
-- AnswerCrafter generates a helpful, humanised answer with an EduGenius CTA
+- AnswerCrafter generates a helpful, humanised answer with an Project Vidhya CTA
 - ApprovalGate reviews (CEO-configured: auto-approve if confidence > 0.85)
 - PostScheduler posts the answer at optimal IST time (e.g., 9pm–11pm for GATE students)
 - Herald simultaneously runs a Google Ads campaign on the keyword "GATE EM study plan"
-- Student sees the answer or ad and clicks through to the EduGenius landing page
+- Student sees the answer or ad and clicks through to the Project Vidhya landing page
 
 **What the student sees:**
 - `/website` — marketing home page with exam selector
@@ -1192,7 +1192,7 @@ This section walks the complete path from a new user hearing about EduGenius to 
 
 **What Mentor does immediately:**
 1. Sends welcome message on preferred channel:
-   - WhatsApp: *"Welcome to EduGenius! 🎓 Your GATE EM journey starts now. Your first session is ready: Linear Algebra basics. Tap to begin 👉"*
+   - WhatsApp: *"Welcome to Project Vidhya! 🎓 Your GATE EM journey starts now. Your first session is ready: Linear Algebra basics. Tap to begin 👉"*
    - In-app notification: similar message with direct link
 2. Sends 5-message onboarding sequence over the next 3 days:
    - T+0: Welcome + first topic prompt
@@ -1587,7 +1587,7 @@ npm run build       # production build
 ### Agent signals not flowing
 
 1. Open `/events` in the CEO dashboard — live signal bus view
-2. Check browser localStorage: `localStorage.getItem('edugenius_signals')` in DevTools console
+2. Check browser localStorage: `localStorage.getItem('vidhya_signals')` in DevTools console
 3. If IndexedDB is full: DevTools → Application → Storage → Clear IndexedDB
 
 ### Wolfram answers not working
@@ -1780,4 +1780,4 @@ Multiple keywords are combined. The last matching rule for each variable wins.
 
 ---
 
-*EduGenius v2.0 — mathconcepts1 · https://github.com/mathconcepts/edugenius-v2*
+*Project Vidhya v2.0 — mathconcepts1 · https://github.com/mathconcepts/vidhya-v2*

@@ -1,4 +1,4 @@
-# EduGenius v2.0 — Deployment Options Guide
+# Project Vidhya v2.0 — Deployment Options Guide
 
 > **Decision guide for Giri (CEO):** Which deployment option to pick, at which stage, and what it costs.
 
@@ -73,10 +73,10 @@ Batch jobs run via system cron or `./scripts/batch-run.sh all`. Since everything
 
 ```bash
 # Add to crontab for Atlas nightly content generation:
-0 2 * * * cd /path/to/edugenius && ./scripts/batch-run.sh atlas:content-generation
+0 2 * * * cd /path/to/vidhya && ./scripts/batch-run.sh atlas:content-generation
 
 # Or run all due jobs every minute:
-* * * * * cd /path/to/edugenius && ./scripts/batch-run.sh all
+* * * * * cd /path/to/vidhya && ./scripts/batch-run.sh all
 ```
 
 ---
@@ -217,8 +217,8 @@ nano .env.aws  # Set AWS_ACCOUNT_ID, AWS_REGION, etc.
 # 4. Create RDS + ElastiCache in AWS Console (or via CDK)
 # Store connection strings in SSM:
 aws ssm put-parameter \
-  --name /edugenius/DATABASE_URL \
-  --value "postgresql://user:pass@rds-endpoint:5432/edugenius" \
+  --name /vidhya/DATABASE_URL \
+  --value "postgresql://user:pass@rds-endpoint:5432/vidhya" \
   --type SecureString
 
 # 5. Deploy
@@ -299,7 +299,7 @@ nano .env.gcp  # Set GCP_PROJECT_ID, GCP_REGION
 ./scripts/deploy-gcp.sh --infra-only
 
 # 5. Create Cloud SQL instance in GCP Console:
-#    Name: edugenius-db, Type: Postgres 15, Tier: db-f1-micro
+#    Name: vidhya-db, Type: Postgres 15, Tier: db-f1-micro
 
 # 6. Deploy
 ./scripts/deploy-gcp.sh

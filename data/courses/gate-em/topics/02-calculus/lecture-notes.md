@@ -260,4 +260,4 @@ For most functions, f_{xy} = f_{yx} (Clairaut's theorem). But verify continuity 
 
 ---
 
-*EduGenius GATE EM | Calculus Notes | Difficulty: Medium*
+*Project Vidhya GATE EM | Calculus Notes | Difficulty: Medium*

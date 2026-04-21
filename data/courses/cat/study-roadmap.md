@@ -23,7 +23,7 @@
 ### Week 1 — Quant: Arithmetic Fundamentals
 | Day | Topic | Resource |
 |-----|-------|---------|
-| Mon | Percentages — all types, reverse % | EduGenius QA lecture notes |
+| Mon | Percentages — all types, reverse % | Project Vidhya QA lecture notes |
 | Tue | Ratio & Proportion, Alligation | Formula sheet + 20 practice Qs |
 | Wed | Profit & Loss, Discounts | 25 problems (easy–medium) |
 | Thu | SI & CI — all formula variants | 20 problems |

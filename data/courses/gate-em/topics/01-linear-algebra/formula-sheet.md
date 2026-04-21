@@ -89,4 +89,4 @@ $Q = \mathbf{x}^T A \mathbf{x}$ is:
 
 ---
 
-*EduGenius GATE EM | Linear Algebra Formula Sheet*
+*Project Vidhya GATE EM | Linear Algebra Formula Sheet*

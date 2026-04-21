@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Production deployment reference for EduGenius v2.0.
+Production deployment reference for Project Vidhya v2.0.
 
 > **TL;DR:** Run `./scripts/check-deps.sh --install` first, then pick your deploy script.
 > Full decision guide with costs: [19-deployment-options.md](./19-deployment-options.md)
@@ -9,7 +9,7 @@ Production deployment reference for EduGenius v2.0.
 
 ## Overview
 
-EduGenius ships with **5 deployment modes** and a **batch job runner**, each implemented as a self-contained shell script:
+Project Vidhya ships with **5 deployment modes** and a **batch job runner**, each implemented as a self-contained shell script:
 
 | Script | Mode | Cost/month |
 |--------|------|-----------|
@@ -131,7 +131,7 @@ Your machine:
 Cloud:
 ├── PostgreSQL       → Supabase (tjcrhdavxkjjasfnrxtw.supabase.co)
 ├── Vector DB        → Supabase pgvector
-└── Frontend CDN     → Netlify (edugenius-ui.netlify.app)
+└── Frontend CDN     → Netlify (vidhya-ui.netlify.app)
 ```
 
 ### Setup
@@ -369,7 +369,7 @@ nano .env.aws
 ./scripts/deploy-aws.sh --status
 
 # View logs
-aws logs tail /ecs/edugenius --follow --region $AWS_REGION
+aws logs tail /ecs/vidhya --follow --region $AWS_REGION
 
 # Destroy (ECS service only — RDS/ElastiCache require manual deletion)
 ./scripts/deploy-aws.sh --destroy
@@ -424,12 +424,12 @@ ENV_FILE=.env.production ./scripts/batch-run.sh oracle:analytics
 crontab -e
 
 # Add these lines (adjust path):
-0 2 * * *    /path/to/edugenius/scripts/batch-run.sh atlas:content-gen
-0 */6 * * *  /path/to/edugenius/scripts/batch-run.sh oracle:analytics
-0 8 * * *    /path/to/edugenius/scripts/batch-run.sh herald:campaign
-0 9 * * *    /path/to/edugenius/scripts/batch-run.sh mentor:engagement
-0 6 * * 1    /path/to/edugenius/scripts/batch-run.sh scout:market-scan
-*/30 * * * * /path/to/edugenius/scripts/batch-run.sh forge:health
+0 2 * * *    /path/to/vidhya/scripts/batch-run.sh atlas:content-gen
+0 */6 * * *  /path/to/vidhya/scripts/batch-run.sh oracle:analytics
+0 8 * * *    /path/to/vidhya/scripts/batch-run.sh herald:campaign
+0 9 * * *    /path/to/vidhya/scripts/batch-run.sh mentor:engagement
+0 6 * * 1    /path/to/vidhya/scripts/batch-run.sh scout:market-scan
+*/30 * * * * /path/to/vidhya/scripts/batch-run.sh forge:health
 ```
 
 ---
@@ -509,11 +509,11 @@ docker compose down && docker compose up -d
 # Railway: rollback in dashboard → Deployments → previous deployment → Redeploy
 
 # GCP: redeploy previous image
-gcloud run deploy edugenius --image REGION-docker.pkg.dev/PROJECT/edugenius/edugenius:PREV_TAG
+gcloud run deploy vidhya --image REGION-docker.pkg.dev/PROJECT/vidhya/vidhya:PREV_TAG
 
 # AWS: update ECS service to previous task definition revision
-aws ecs update-service --cluster edugenius-cluster --service edugenius-service \
-  --task-definition edugenius:PREV_REVISION
+aws ecs update-service --cluster vidhya-cluster --service vidhya-service \
+  --task-definition vidhya:PREV_REVISION
 ```
 
 ---

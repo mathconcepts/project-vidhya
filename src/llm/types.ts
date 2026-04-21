@@ -1,5 +1,5 @@
 /**
- * EduGenius LLM Abstraction Layer - Type Definitions
+ * Project Vidhya LLM Abstraction Layer - Type Definitions
  * Provider-agnostic types for LLM interactions
  */
 

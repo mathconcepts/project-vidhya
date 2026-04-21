@@ -77,7 +77,7 @@ const DEFAULT_TEMPLATES: Record<LandingPageTemplate, LandingSection[]> = {
       type: 'hero',
       order: 0,
       content: {
-        headline: 'EduGenius vs {{competitor}}',
+        headline: 'Project Vidhya vs {{competitor}}',
         subheadline: 'See why students choose us',
       },
       visible: true,
@@ -89,7 +89,7 @@ const DEFAULT_TEMPLATES: Record<LandingPageTemplate, LandingSection[]> = {
       content: {
         title: 'Feature Comparison',
         comparisonTable: {
-          competitors: ['EduGenius', '{{competitor}}'],
+          competitors: ['Project Vidhya', '{{competitor}}'],
           features: [],
         },
       },
@@ -749,7 +749,7 @@ export class LandingPageManager {
 
     return {
       success: true,
-      url: `https://edugenius.ai/${page.slug}`,
+      url: `https://vidhya.ai/${page.slug}`,
     };
   }
 

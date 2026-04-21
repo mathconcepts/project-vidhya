@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * EduGenius LLM Abstraction Layer - Adapter Factory
+ * Project Vidhya LLM Abstraction Layer - Adapter Factory
  * Creates and manages provider adapters
  */
 

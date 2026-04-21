@@ -1,5 +1,5 @@
 /**
- * EduGenius LLM Abstraction Layer - Base Adapter
+ * Project Vidhya LLM Abstraction Layer - Base Adapter
  * Abstract base class with shared functionality for all providers
  */
 

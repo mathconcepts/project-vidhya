@@ -7,7 +7,7 @@ import './styles/globals.css';
 // Apply saved theme immediately to prevent flash of wrong theme
 (function applyInitialTheme() {
   try {
-    const stored = localStorage.getItem('edugenius-storage');
+    const stored = localStorage.getItem('vidhya-storage');
     const parsed = stored ? JSON.parse(stored) : null;
     const theme = parsed?.state?.theme ?? 'dark';
     if (theme === 'dark') {

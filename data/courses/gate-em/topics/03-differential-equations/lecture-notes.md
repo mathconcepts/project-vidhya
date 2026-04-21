@@ -254,4 +254,4 @@ If f(x) = $kx^n$, the particular solution is a polynomial of degree n (not n+1, 
 
 ---
 
-*EduGenius GATE EM | Differential Equations Notes | Difficulty: Medium-Hard*
+*Project Vidhya GATE EM | Differential Equations Notes | Difficulty: Medium-Hard*

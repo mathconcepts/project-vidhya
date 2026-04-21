@@ -1,10 +1,10 @@
-# EduGenius Multi-Agent Setup
+# Project Vidhya Multi-Agent Setup
 
-This document describes the multi-agent architecture for EduGenius v2.0 integrated with OpenClaw and MissionControlHQ.
+This document describes the multi-agent architecture for Project Vidhya v2.0 integrated with OpenClaw and MissionControlHQ.
 
 ## Overview
 
-EduGenius uses a squad of 8 AI agents, each with specific responsibilities:
+Project Vidhya uses a squad of 8 AI agents, each with specific responsibilities:
 
 | Agent | Role | Heartbeat | Model |
 |-------|------|-----------|-------|
@@ -71,7 +71,7 @@ EduGenius uses a squad of 8 AI agents, each with specific responsibilities:
 │   ├── CONTACTS.md        # Key people
 │   ├── GLOSSARY.md        # Company terms
 │   └── SQUAD.md           # Team roster
-└── edugenius/             # EduGenius codebase
+└── vidhya/             # Project Vidhya codebase
     └── ...
 ```
 
@@ -192,5 +192,5 @@ openclaw system event --text "Check for work" --mode now
 ## Related Documentation
 
 - [Agent Architecture](./02-agent-architecture.md)
-- [EduGenius Overview](./00-overview.md)
+- [Project Vidhya Overview](./00-overview.md)
 - [OpenClaw Multi-Agent Docs](https://docs.openclaw.ai/concepts/multi-agent)

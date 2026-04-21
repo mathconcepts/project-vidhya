@@ -1,4 +1,4 @@
-# EduGenius — Go-Live Checklist
+# Project Vidhya — Go-Live Checklist
 
 *The single document Giri needs to flip from "demo" to "live". All pre-work is done. These are the ~30 minutes of configuration needed.*
 
@@ -31,7 +31,7 @@ The frontend is already configured with `netlify.toml` — just connect and depl
 
 1. Go to → https://app.netlify.com
 2. Click **Add new site → Import an existing project**
-3. Connect GitHub → Select `mathconcepts/edugenius-v2`
+3. Connect GitHub → Select `mathconcepts/vidhya-v2`
 4. Set **Base directory**: `frontend`
 5. Build command: `npm run build` (auto-filled from netlify.toml)
 6. Publish directory: `dist` (auto-filled)
@@ -61,7 +61,7 @@ npm run build
 
 | Variable | Value | Notes |
 |----------|-------|-------|
-| `VITE_APP_NAME` | `EduGenius` | Shows in browser tab |
+| `VITE_APP_NAME` | `Project Vidhya` | Shows in browser tab |
 | `VITE_GA4_MEASUREMENT_ID` | `G-XXXXXXXXXX` | Google Analytics (optional) |
 
 ### Payments (when ready)
@@ -78,7 +78,7 @@ After adding env vars → **Trigger a new deploy** (Deploys tab → Trigger depl
 ## Step 4: Custom Domain (5 min, optional)
 
 1. Netlify → Your Site → Domain Management → Add Custom Domain
-2. Add: `app.edugenius.in` (or your chosen domain)
+2. Add: `app.vidhya.in` (or your chosen domain)
 3. Update your DNS: Add CNAME pointing to `your-site.netlify.app`
 4. SSL is auto-provisioned (free, via Let's Encrypt)
 
@@ -146,7 +146,7 @@ Math:      KaTeX (renders LaTeX beautifully)
 Charts:    Recharts
 Auth:      Custom (WebAuthn/OAuth/OTP/Password)
 Deploy:    Netlify (configured)
-Repo:      github.com/mathconcepts/edugenius-v2
+Repo:      github.com/mathconcepts/vidhya-v2
 ```
 
 ---

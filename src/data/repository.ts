@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * EduGenius Data Layer - Repository Pattern
+ * Project Vidhya Data Layer - Repository Pattern
  * Generic repository interface with implementations
  */
 

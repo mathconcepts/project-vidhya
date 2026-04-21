@@ -1,5 +1,5 @@
 /**
- * Unit Tests for EduGenius Repository
+ * Unit Tests for Project Vidhya Repository
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

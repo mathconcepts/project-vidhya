@@ -121,7 +121,7 @@ export const CHATBOT_ADD_ONS: ChatbotAddOn[] = [
     priceMonthly: 149,
     priceYearly: 1199,
     eligiblePlans: ['pro'],
-    description: 'Access EduGenius on both WhatsApp and Telegram. Best value for mobile-first learners.',
+    description: 'Access Project Vidhya on both WhatsApp and Telegram. Best value for mobile-first learners.',
   },
 ];
 

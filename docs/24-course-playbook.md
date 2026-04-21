@@ -1,6 +1,6 @@
 # 24 — Course Playbook
 
-> **EduGenius v2.0 — Universal Knowledge Graph for Every Subtopic**  
+> **Project Vidhya v2.0 — Universal Knowledge Graph for Every Subtopic**  
 > Implemented: 2026-03-13  
 > Commits: `cd99890` (initial) · `6af8d66` (rename SubTopic Bible → Course Playbook)  
 > File: `frontend/src/services/coursePlaybookService.ts` (1,235 lines)  
@@ -10,7 +10,7 @@
 
 ## What it is and why
 
-The **Course Playbook** is the single source of truth for every course subtopic in EduGenius. It is a rich knowledge graph — one document per `(examId, topicId, subtopicId)` triplet — that stores:
+The **Course Playbook** is the single source of truth for every course subtopic in Project Vidhya. It is a rich knowledge graph — one document per `(examId, topicId, subtopicId)` triplet — that stores:
 
 - Academic foundation (definition, prerequisites, Bloom's level, mastery hours)
 - Teaching intelligence (Socratic questions, analogies, misconceptions, scaffolding strategies)
@@ -159,7 +159,7 @@ Written by Scout; used by Atlas for content gap analysis.
 | `topSearchQueries` | `string[]` | What students search for about this subtopic |
 | `relatedSearchTerms` | `string[]` | Adjacent terms and synonyms |
 | `externalSearchTrends` | `{ keyword, trend: 'rising'\|'stable'\|'falling', volume: 'high'\|'medium'\|'low' }[]` | External search signal data |
-| `contentGaps` | `string[]` | Questions being searched with no good EduGenius content |
+| `contentGaps` | `string[]` | Questions being searched with no good Project Vidhya content |
 | `discoveryPath` | `string[]` | How students typically find this subtopic |
 | `lastSearchUpdate` | `string` | ISO timestamp |
 
@@ -453,4 +453,4 @@ schedulePlaybookGeneration(examId, topicId, subtopicId): void
 
 ---
 
-*EduGenius v2.0 — mathconcepts1 · Implemented 2026-03-13*
+*Project Vidhya v2.0 — mathconcepts1 · Implemented 2026-03-13*

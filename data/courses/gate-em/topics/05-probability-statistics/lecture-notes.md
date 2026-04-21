@@ -218,4 +218,4 @@ Population variance uses n; sample variance uses (n−1) as denominator (unbiase
 
 ---
 
-*EduGenius GATE EM | Probability & Statistics Notes | Difficulty: Easy-Medium*
+*Project Vidhya GATE EM | Probability & Statistics Notes | Difficulty: Easy-Medium*

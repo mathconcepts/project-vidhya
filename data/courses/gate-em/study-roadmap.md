@@ -10,8 +10,8 @@ Before Week 1, complete:
 - [ ] Read the full [syllabus](./syllabus.md)
 - [ ] Identify your weakest 3 topics
 - [ ] Set up a study log/journal
-- [ ] Download EduGenius mobile app (practice MCQs on the go)
-- [ ] Join the EduGenius GATE EM cohort for weekly live sessions
+- [ ] Download Project Vidhya mobile app (practice MCQs on the go)
+- [ ] Join the Project Vidhya GATE EM cohort for weekly live sessions
 
 ---
 
@@ -311,4 +311,4 @@ Total: **3 hours/day** on weekdays, **4 hours** on weekends.
 
 ---
 
-*EduGenius GATE EM | Study Roadmap | February 2026*
+*Project Vidhya GATE EM | Study Roadmap | February 2026*

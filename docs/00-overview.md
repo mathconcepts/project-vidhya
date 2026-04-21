@@ -1,8 +1,8 @@
-# EduGenius v2.0 — Complete Platform Documentation
+# Project Vidhya v2.0 — Complete Platform Documentation
 
 ## Executive Summary
 
-EduGenius is an **autonomous AI agent platform** designed for educational technology. It combines 7 specialized AI agents with 45 sub-agents to automate the entire educational content lifecycle — from market research to content creation, tutoring, engagement, marketing, deployment, and analytics.
+Project Vidhya is an **autonomous AI agent platform** designed for educational technology. It combines 7 specialized AI agents with 45 sub-agents to automate the entire educational content lifecycle — from market research to content creation, tutoring, engagement, marketing, deployment, and analytics.
 
 ### Key Metrics
 

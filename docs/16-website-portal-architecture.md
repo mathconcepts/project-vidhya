@@ -2,7 +2,7 @@
 
 ## Overview
 
-EduGenius has two user-facing applications:
+Project Vidhya has two user-facing applications:
 
 1. **Website** (`/website/*`) — Public marketing site for visitors
 2. **Portal** (`/`) — Logged-in user experience (student, teacher, admin, CEO)
@@ -13,7 +13,7 @@ Both share the same React codebase but serve different purposes.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      EduGenius Frontend                          │
+│                      Project Vidhya Frontend                          │
 ├─────────────────────────────┬───────────────────────────────────┤
 │       PUBLIC WEBSITE        │           PORTAL (APP)            │
 │       /website/*            │           /*                       │
@@ -245,8 +245,8 @@ POST /api/notebook/solve
 
 ```env
 # Frontend
-VITE_API_URL=https://api.edugenius.ai
-VITE_WS_URL=wss://api.edugenius.ai
+VITE_API_URL=https://api.vidhya.ai
+VITE_WS_URL=wss://api.vidhya.ai
 VITE_GA_ID=G-XXXXXXXXXX
 
 # Backend
@@ -260,7 +260,7 @@ STRIPE_SECRET_KEY=xxx
 
 ```bash
 # Run website + portal
-cd edugenius/frontend
+cd vidhya/frontend
 npm install
 npm run dev
 

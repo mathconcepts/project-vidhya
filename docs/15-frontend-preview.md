@@ -2,7 +2,7 @@
 
 ## Overview
 
-The EduGenius frontend is a React application that provides role-based views of the platform. It includes a live preview feature that allows switching between different user perspectives (CEO, Admin, Teacher, Student) without authentication.
+The Project Vidhya frontend is a React application that provides role-based views of the platform. It includes a live preview feature that allows switching between different user perspectives (CEO, Admin, Teacher, Student) without authentication.
 
 ## Technology Stack
 

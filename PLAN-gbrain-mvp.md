@@ -1,4 +1,4 @@
-# PLAN: EduGenius → GBrain MVP Evolution
+# PLAN: Project Vidhya → GBrain MVP Evolution
 
 **Mode:** SCOPE EXPANSION — find the 10-star product
 **Branch:** main
@@ -10,7 +10,7 @@
 ## The Gap: Where You Are vs. Where You Could Be
 
 ### Current Product (v0.3)
-EduGenius today is a **practice app with smart ordering**. It serves static PYQ problems, verifies answers (well — 3-tier cascade is strong), and tells you which topic to study next via a 5-factor priority formula. The AI tutor answers questions with basic context modifiers (difficulty, exam proximity, weakness, time-of-day).
+Project Vidhya today is a **practice app with smart ordering**. It serves static PYQ problems, verifies answers (well — 3-tier cascade is strong), and tells you which topic to study next via a 5-factor priority formula. The AI tutor answers questions with basic context modifiers (difficulty, exam proximity, weakness, time-of-day).
 
 What it does NOT do:
 - Diagnose **why** you got a problem wrong (just says right/wrong)
@@ -22,7 +22,7 @@ What it does NOT do:
 - Separate **pedagogical reasoning** from **content generation** (one prompt does both)
 
 ### The 10-Star Product
-> "EduGenius doesn't give you problems. It understands how you think, diagnoses why you fail, auto-repairs your foundations, generates infinite practice for your exact gaps, and hands you a personalized exam playbook that maximizes your score. Your only job is to show up."
+> "Project Vidhya doesn't give you problems. It understands how you think, diagnoses why you fail, auto-repairs your foundations, generates infinite practice for your exact gaps, and hands you a personalized exam playbook that maximizes your score. Your only job is to show up."
 
 This is what GBrain enables. Not a chatbot with a question bank — a **cognitive learning system** that compounds.
 

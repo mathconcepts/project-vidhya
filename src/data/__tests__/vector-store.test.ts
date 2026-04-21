@@ -1,5 +1,5 @@
 /**
- * Unit Tests for EduGenius Vector Store
+ * Unit Tests for Project Vidhya Vector Store
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

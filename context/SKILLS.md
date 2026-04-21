@@ -6,7 +6,7 @@
 
 ## Overview
 
-The EduGenius system operates as a **3-level hierarchy**:
+The Project Vidhya system operates as a **3-level hierarchy**:
 
 ```
 LEVEL 1: Lead (Jarvis)

@@ -110,9 +110,9 @@ With CAT's shift to more TITA questions (Type In The Answer, no negative marking
 
 If you've done 2 out of 4 questions in a DILR set and the last question is TITA, attempt it. Your partial logic is already applied — even a 40% confidence guess returns +3 expected value (0.4 × 3 + 0.6 × 0 = 1.2 marks), which beats skipping (0 marks).
 
-## What EduGenius Does Differently
+## What Project Vidhya Does Differently
 
-Most CAT prep is lecture-first — watch a video, practice. EduGenius flips it: **ask first, explain exactly where you're stuck**.
+Most CAT prep is lecture-first — watch a video, practice. Project Vidhya flips it: **ask first, explain exactly where you're stuck**.
 
 Sage (our AI tutor) references actual CAT PYQs when you ask questions. "This is exactly the type of question CAT 2022 tested in DILR — let me show you the pattern." This grounding in real exam questions is what most students miss in generic prep.
 

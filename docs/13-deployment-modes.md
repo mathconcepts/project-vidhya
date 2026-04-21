@@ -2,7 +2,7 @@
 
 ## Overview
 
-EduGenius uses a pilot-first deployment strategy. Every new exam or feature goes through a controlled pilot phase before full launch. This ensures quality, catches issues early, and allows data-driven promotion decisions.
+Project Vidhya uses a pilot-first deployment strategy. Every new exam or feature goes through a controlled pilot phase before full launch. This ensures quality, catches issues early, and allows data-driven promotion decisions.
 
 ## Deployment Lifecycle
 
@@ -20,7 +20,7 @@ EduGenius uses a pilot-first deployment strategy. Every new exam or feature goes
 ## Creating a Deployment
 
 ```typescript
-import { deploymentManager } from 'edugenius';
+import { deploymentManager } from 'vidhya';
 
 const deployment = await deploymentManager.createDeployment({
   examId: 'jee-2026',
@@ -292,7 +292,7 @@ await deploymentManager.updateMetrics('neet-2026', {
 ### Deployment Pipeline
 
 ```typescript
-import { forgeDeploymentIntegration } from 'edugenius';
+import { forgeDeploymentIntegration } from 'vidhya';
 
 // Start full deployment pipeline
 const pipeline = await forgeDeploymentIntegration.startDeploymentPipeline('JEE');

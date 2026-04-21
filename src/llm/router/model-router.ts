@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * EduGenius LLM Abstraction Layer - Model Router
+ * Project Vidhya LLM Abstraction Layer - Model Router
  * Intelligent routing based on task type, budget, and provider health
  */
 

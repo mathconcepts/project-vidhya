@@ -3,7 +3,7 @@
 ## Project: GATE Math
 
 GATE Math is a focused, mobile-first exam prep app for GATE Engineering Mathematics.
-This is the active project — the legacy 7-agent EduGenius system (src/index.ts, agents/) is NOT in use.
+This is the active project — the legacy 7-agent Project Vidhya system (src/index.ts, agents/) is NOT in use.
 
 ### Key Entry Points
 - **Server:** `src/gate-server.ts` (NOT `src/index.ts`) — standalone GATE API on port 8080

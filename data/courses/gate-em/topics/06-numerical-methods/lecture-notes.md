@@ -249,4 +249,4 @@ Trapezoidal: O(h²); Simpson's: O(h⁴). Simpson's is much more accurate for smo
 
 ---
 
-*EduGenius GATE EM | Numerical Methods Notes | Difficulty: Medium*
+*Project Vidhya GATE EM | Numerical Methods Notes | Difficulty: Medium*

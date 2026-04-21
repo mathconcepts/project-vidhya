@@ -1,12 +1,12 @@
 /**
- * Integration Tests for EduGenius Orchestrator
+ * Integration Tests for Project Vidhya Orchestrator
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { EduGeniusOrchestrator, getOrchestrator, resetOrchestrator } from '../../orchestrator';
+import { VidhyaOrchestrator, getOrchestrator, resetOrchestrator } from '../../orchestrator';
 
-describe('EduGenius Orchestrator', () => {
-  let orchestrator: EduGeniusOrchestrator;
+describe('Project Vidhya Orchestrator', () => {
+  let orchestrator: VidhyaOrchestrator;
 
   beforeAll(async () => {
     orchestrator = getOrchestrator({
@@ -181,7 +181,7 @@ describe('EduGenius Orchestrator', () => {
 });
 
 describe('Cross-Agent Communication', () => {
-  let orchestrator: EduGeniusOrchestrator;
+  let orchestrator: VidhyaOrchestrator;
 
   beforeAll(async () => {
     orchestrator = getOrchestrator();

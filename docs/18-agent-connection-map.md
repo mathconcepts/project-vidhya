@@ -13,7 +13,7 @@
 |-------|------|-----|
 | `sagePersonaPrompts.ts` used `require()` (CJS) to load `gateEmPyqContext`, `catPyqContext`, `topperIntelligence` | `services/sagePersonaPrompts.ts` | Converted to static ESM imports |
 | Duplicate module load: `buildStaticRagContext`/`buildStaticCatRagContext` imported twice | `services/sagePersonaPrompts.ts` | Removed duplicate bottom-of-file imports |
-| `Layout.tsx` read `edugenius_persona` key but `studentPersonaEngine` writes `edugenius_student_persona` | `components/layout/Layout.tsx` | Fixed key to `edugenius_student_persona` |
+| `Layout.tsx` read `vidhya_persona` key but `studentPersonaEngine` writes `vidhya_student_persona` | `components/layout/Layout.tsx` | Fixed key to `vidhya_student_persona` |
 
 ## Refactor & Wiring Improvements (2026-03-11 — commit `d5968b0`)
 
@@ -32,7 +32,7 @@
 
 ## Overview
 
-EduGenius uses a **typed signal bus** (IndexedDB-backed) to connect all 8 agents (7 domain + Prism journey intelligence) bidirectionally. Every signal is:
+Project Vidhya uses a **typed signal bus** (IndexedDB-backed) to connect all 8 agents (7 domain + Prism journey intelligence) bidirectionally. Every signal is:
 
 - **Typed** — strongly typed union in `AgentSignal.type` (persistenceDB.ts)
 - **Persisted** — survives page reload, delivered on next agent tick

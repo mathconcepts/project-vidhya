@@ -1,5 +1,5 @@
 /**
- * EduGenius Data Layer - Core Types
+ * Project Vidhya Data Layer - Core Types
  * Entity definitions for the EdTech platform
  */
 

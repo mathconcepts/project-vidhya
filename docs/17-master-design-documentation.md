@@ -1,4 +1,4 @@
-# EduGenius v2.0 — Exhaustive Master Design Documentation
+# Project Vidhya v2.0 — Exhaustive Master Design Documentation
 
 **Version:** 2.0  
 **Date:** March 2026  
@@ -28,9 +28,9 @@
 
 ## 1. Executive Summary & Product Vision
 
-### What EduGenius Is
+### What Project Vidhya Is
 
-EduGenius v2.0 is an **AI-driven education SaaS** for Indian competitive exam students. It provides hyper-personalized, Socratic AI tutoring via an 8-agent autonomous system — all running on a fully frontend-only architecture (Vite + React + TypeScript on Netlify) with localStorage-first data persistence and progressive Supabase readiness.
+Project Vidhya v2.0 is an **AI-driven education SaaS** for Indian competitive exam students. It provides hyper-personalized, Socratic AI tutoring via an 8-agent autonomous system — all running on a fully frontend-only architecture (Vite + React + TypeScript on Netlify) with localStorage-first data persistence and progressive Supabase readiness.
 
 **Target Users:**
 - **Students**: JEE Main/Advanced, NEET, CAT, GATE, CBSE 12, UPSC aspirants
@@ -39,7 +39,7 @@ EduGenius v2.0 is an **AI-driven education SaaS** for Indian competitive exam st
 
 **Core AI Differentiation:**
 1. **Zero-generic tutoring**: Every Sage response is personalized to the student's emotional state, performance tier, exam proximity, and learning style via the 5-layer Student Intelligence Pipeline
-2. **Wolfram Foundation Tool**: EduGenius will be the **only EdTech platform with mathematically provable MCQ answers** — showing Wolfram Language code and deterministic computation behind every math/physics answer
+2. **Wolfram Foundation Tool**: Project Vidhya will be the **only EdTech platform with mathematically provable MCQ answers** — showing Wolfram Language code and deterministic computation behind every math/physics answer
 3. **8-agent autonomous system**: Sage (tutor), Atlas (content), Herald (marketing), Scout (market intel), Mentor (engagement), Oracle (analytics), Forge (DevOps), Prism (journey intelligence) — all operating semi-autonomously with CEO threshold gates
 4. **Network effects built-in**: 7 network effect loops — leaderboard, study groups, contributed problems, referrals, share cards, teacher viral, data network — baked into the product from day 1
 5. **Exam RAG with context window strategy**: PYQ bundles for GATE EM and CAT embedded as static TypeScript bundles, injected into Gemini's 1M-token context window — no Supabase required for RAG
@@ -48,7 +48,7 @@ EduGenius v2.0 is an **AI-driven education SaaS** for Indian competitive exam st
 
 ```
 Standard EdTech: AI generates answer → AI generates explanation → 20% wrong answers
-EduGenius:       Wolfram computes answer → AI explains verified math → 0% computational errors
+Project Vidhya:       Wolfram computes answer → AI explains verified math → 0% computational errors
 ```
 
 - **verifyMathAnswer()**: Before displaying any MCQ answer, checks correctness via Wolfram Alpha
@@ -168,7 +168,7 @@ Additionally, `StorageEvent` (browser's native) is used for threshold changes:
 ```typescript
 // CEOThresholdConfig writes → StorageEvent fired → listeners update
 window.addEventListener('storage', e => {
-  if (e.key === 'edugenius_ceo_thresholds') refreshThresholds();
+  if (e.key === 'vidhya_ceo_thresholds') refreshThresholds();
 });
 ```
 
@@ -288,7 +288,7 @@ window.addEventListener('storage', e => {
 ### Agent 3: Herald 📢
 
 **Role:** Marketing & Growth Engine  
-**Mission:** Tell the world about EduGenius; every blog post, email, and campaign drives acquisition
+**Mission:** Tell the world about Project Vidhya; every blog post, email, and campaign drives acquisition
 
 **Key Capabilities:**
 - SEO-optimized blog creation
@@ -1094,7 +1094,7 @@ function buildStrategyPrompt(strategy: TeachingStrategy): string {
 ```typescript
 // After LLM generation, for Wolfram-grounded content:
 const groundingPrompt = `
-You are verifying mathematical content for EduGenius.
+You are verifying mathematical content for Project Vidhya.
 Wolfram Alpha result for "${query}": ${wolframResult.answer}
 
 Original LLM answer: ${llmAnswer}
@@ -1116,22 +1116,22 @@ If they agree: Add "Mathematically verified ✓" badge.
 
 | Key | Owner Service | What It Stores | Size Estimate |
 |-----|---------------|----------------|---------------|
-| `edugenius_student_persona` | studentPersonaEngine | Full StudentPersona JSON | ~2KB |
-| `edugenius_traces` | traceabilityEngine | TraceTree[] (last 100 traces) | ~500KB |
-| `edugenius_prism_state` | prismBridge | PrismState with packets + funnel | ~100KB |
-| `edugenius_cohort_insights` | personaContentBridge | CohortInsight aggregate | ~50KB |
-| `edugenius_notebook` | notebookEngine | NotebookState (coverage, problems, notes) | ~200KB |
-| `edugenius_ceo_thresholds` | thresholdService | CEOThresholds config object | ~5KB |
-| `edugenius_connections` | ConnectionRegistry | Record<string, string> API keys | ~10KB |
-| `edugenius_ab_baselines` | prismBridge | ABTestBaseline[] locked baselines | ~20KB |
-| `edugenius_ab_splits` | prismBridge | ABTestSplit[] accumulated results | ~30KB |
-| `edugenius_streak` | StudentDashboard | number (current streak days) | <1KB |
-| `edugenius_llm_heuristics` | llmHeuristics | cost estimates, token counts | ~5KB |
-| `edugenius_opportunity_manifest` | opportunityConnections | ConnectionManifest for exam | ~20KB |
-| `edugenius_last_supabase_sync` | persistenceDB | ISO timestamp of last sync | <1KB |
-| `edugenius_network_consent` | NetworkEffects | consent flags per loop | ~2KB |
-| `edugenius_whatsapp_optin` | whatsappOptIn | opt-in status + phone | ~1KB |
-| `edugenius_whatsapp_skip_until` | whatsappOptIn | ISO timestamp skip expiry | <1KB |
+| `vidhya_student_persona` | studentPersonaEngine | Full StudentPersona JSON | ~2KB |
+| `vidhya_traces` | traceabilityEngine | TraceTree[] (last 100 traces) | ~500KB |
+| `vidhya_prism_state` | prismBridge | PrismState with packets + funnel | ~100KB |
+| `vidhya_cohort_insights` | personaContentBridge | CohortInsight aggregate | ~50KB |
+| `vidhya_notebook` | notebookEngine | NotebookState (coverage, problems, notes) | ~200KB |
+| `vidhya_ceo_thresholds` | thresholdService | CEOThresholds config object | ~5KB |
+| `vidhya_connections` | ConnectionRegistry | Record<string, string> API keys | ~10KB |
+| `vidhya_ab_baselines` | prismBridge | ABTestBaseline[] locked baselines | ~20KB |
+| `vidhya_ab_splits` | prismBridge | ABTestSplit[] accumulated results | ~30KB |
+| `vidhya_streak` | StudentDashboard | number (current streak days) | <1KB |
+| `vidhya_llm_heuristics` | llmHeuristics | cost estimates, token counts | ~5KB |
+| `vidhya_opportunity_manifest` | opportunityConnections | ConnectionManifest for exam | ~20KB |
+| `vidhya_last_supabase_sync` | persistenceDB | ISO timestamp of last sync | <1KB |
+| `vidhya_network_consent` | NetworkEffects | consent flags per loop | ~2KB |
+| `vidhya_whatsapp_optin` | whatsappOptIn | opt-in status + phone | ~1KB |
+| `vidhya_whatsapp_skip_until` | whatsappOptIn | ISO timestamp skip expiry | <1KB |
 
 **Total estimated localStorage usage:** ~1MB (well within 5MB browser limit)  
 **LRU eviction:** traceabilityEngine auto-evicts oldest traces when >80% quota
@@ -1173,7 +1173,7 @@ If they agree: Add "Mathematically verified ✓" badge.
 
 ### IndexedDB Usage (`persistenceDB.ts`)
 
-**Database:** `edugenius-db` (v1)
+**Database:** `vidhya-db` (v1)
 
 | Store | Key | What It Holds |
 |-------|-----|---------------|
@@ -1524,6 +1524,6 @@ GET  /api/network/groups         → active study groups
 
 ---
 
-*This document is the canonical reference for EduGenius v2.0 architecture. All implementation decisions should trace back to sections in this document. Update it when architectural decisions change.*
+*This document is the canonical reference for Project Vidhya v2.0 architecture. All implementation decisions should trace back to sections in this document. Update it when architectural decisions change.*
 
 *Last updated: March 2026 by AI subagent (bidirectional wiring session)*

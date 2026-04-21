@@ -1,5 +1,5 @@
 /**
- * EduGenius Data Layer - Caching
+ * Project Vidhya Data Layer - Caching
  * In-memory and Redis-compatible cache implementations
  */
 

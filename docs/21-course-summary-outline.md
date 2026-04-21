@@ -181,7 +181,7 @@ The change log is visible via the **Change Log** button in the UI and is include
 
 ## Persistence
 
-The outline is auto-saved to `localStorage` under `edugenius_course_outline` after every toggle or edit. On page reload, `loadOutlineFromStorage()` restores the last outline — no re-generation needed.
+The outline is auto-saved to `localStorage` under `vidhya_course_outline` after every toggle or edit. On page reload, `loadOutlineFromStorage()` restores the last outline — no re-generation needed.
 
 ---
 

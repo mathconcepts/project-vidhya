@@ -83,4 +83,4 @@ $$f(z) = \sum_{n=-\infty}^{\infty}a_n(z-z_0)^n, \quad a_{-1}=\text{Res}(f,z_0)$$
 
 ---
 
-*EduGenius GATE EM | Complex Variables Formula Sheet*
+*Project Vidhya GATE EM | Complex Variables Formula Sheet*

@@ -14,4 +14,4 @@ Disallow: /user-attributes
 Disallow: /create-exam
 Disallow: /status
 Disallow: /opportunity-discovery
-Sitemap: https://edugenius.in/sitemap.xml
+Sitemap: https://vidhya.in/sitemap.xml

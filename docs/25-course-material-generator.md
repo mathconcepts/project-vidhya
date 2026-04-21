@@ -1,6 +1,6 @@
 # 25 — Course Material Generator
 
-> **EduGenius v2.0 — Playbook-Driven Course Material Generation**  
+> **Project Vidhya v2.0 — Playbook-Driven Course Material Generation**  
 > Implemented: 2026-03-13  
 > Commit: `e1bb7cb`  
 > File: `frontend/src/services/courseMaterialGenerator.ts` (1,228 lines)  
@@ -368,4 +368,4 @@ interface CourseSection {
 
 ---
 
-*EduGenius v2.0 — mathconcepts1 · Implemented 2026-03-13*
+*Project Vidhya v2.0 — mathconcepts1 · Implemented 2026-03-13*

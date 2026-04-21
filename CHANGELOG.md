@@ -232,7 +232,7 @@ any Postgres dependency.
 
 ### 🧠 GBrain Cognitive Architecture — Major Release
 
-Transforms EduGenius from a practice app into a cognitive learning platform. GBrain is a 6-pillar architecture that models how a student thinks, not just what they answer.
+Transforms Project Vidhya from a practice app into a cognitive learning platform. GBrain is a 6-pillar architecture that models how a student thinks, not just what they answer.
 
 ### Added — Backend Cognitive Architecture (~2,878 LOC)
 - **Pillar 1: Student Model v2** — 15-attribute live profile (mastery vector, speed profile, cognitive style, abstraction comfort, working memory, motivation state, confidence calibration, frustration threshold, exam strategy). Bayesian updates on every attempt.

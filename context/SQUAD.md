@@ -1,6 +1,6 @@
-# SQUAD.md — EduGenius Agent Roster
+# SQUAD.md — Project Vidhya Agent Roster
 
-*The autonomous team running EduGenius 24/7.*
+*The autonomous team running Project Vidhya 24/7.*
 
 ---
 

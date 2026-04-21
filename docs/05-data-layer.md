@@ -392,7 +392,7 @@ import {
   validateEmail, 
   validateId,
   ValidationError 
-} from 'edugenius/utils';
+} from 'vidhya/utils';
 
 // Validate student creation
 function validateStudent(input: unknown): Student {

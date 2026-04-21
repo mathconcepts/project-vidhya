@@ -1,5 +1,5 @@
 /**
- * Unit Tests for EduGenius LLM Client
+ * Unit Tests for Project Vidhya LLM Client
  * Tests the main client interface, fallback handling, and event system
  */
 

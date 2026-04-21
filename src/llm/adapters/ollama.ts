@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Ollama Adapter for EduGenius LLM Layer
+ * Ollama Adapter for Project Vidhya LLM Layer
  * Supports local LLM inference via Ollama server
  * Models: Llama, Mistral, CodeLlama, Phi, etc.
  */

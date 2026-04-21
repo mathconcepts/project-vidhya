@@ -1,4 +1,4 @@
-# EDUGENIUS_AGENTS.md — Complete Agent & Sub-Agent Roster
+# VIDHYA_AGENTS.md — Complete Agent & Sub-Agent Roster
 
 *Full technical specification of the 8-agent system with 28 sub-agents.*
 
@@ -352,7 +352,7 @@ Supportive, insightful, empowering. Understands teachers are partners, not just 
 - **Daily Token Budget:** 100K
 
 ### Personality
-Creative, strategic, conversion-focused. The voice of EduGenius to the world. Understands great content is the best marketing. Balances viral appeal with educational integrity. Data-driven, experiment-happy.
+Creative, strategic, conversion-focused. The voice of Project Vidhya to the world. Understands great content is the best marketing. Balances viral appeal with educational integrity. Data-driven, experiment-happy.
 
 ### Sub-Agents
 
@@ -635,4 +635,4 @@ Critical path:
 
 ---
 
-*The EduGenius Squad: 8 minds, one mission — democratize education.*
+*The Project Vidhya Squad: 8 minds, one mission — democratize education.*

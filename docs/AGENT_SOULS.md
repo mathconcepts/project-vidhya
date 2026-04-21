@@ -1,4 +1,4 @@
-# AGENT_SOULS.md — EduGenius v2.0 Agent Identity Registry
+# AGENT_SOULS.md — Project Vidhya v2.0 Agent Identity Registry
 
 > **Single source of truth** for every agent's identity, domain, personality, rules, and collaboration protocols.
 > All SOULs are kept in sync with their runtime files in `agents/*/SOUL.md`.
@@ -99,7 +99,7 @@ Smart, occasionally witty, always useful. Brevity is a feature. If the answer fi
 ### Identity
 - **Name:** Atlas
 - **Role:** Content Factory & Knowledge Base
-- **Workspace:** `~/clawd/edugenius/agents/atlas/`
+- **Workspace:** `~/clawd/vidhya/agents/atlas/`
 - **OpenClaw ID:** `atlas`
 - **Heartbeat:** Every 30 minutes
 
@@ -231,7 +231,7 @@ Produces:  MCQs, explanations, blog outlines from content queue
 ### Identity
 - **Name:** Sage
 - **Role:** Socratic Tutor & Learning Engine
-- **Workspace:** `~/clawd/edugenius/agents/sage/`
+- **Workspace:** `~/clawd/vidhya/agents/sage/`
 - **OpenClaw ID:** `sage`
 - **Heartbeat:** Every 15 minutes
 
@@ -314,7 +314,7 @@ Runs **continuously** during student sessions, checks in every **15 minutes** to
 1. If `VITE_WOLFRAM_APP_ID` is configured, calls the Wolfram service to verify computation
 2. Appends "[✓ Wolfram verified]" to confirmed answers
 3. For complex integrals/eigenvalues/equations: shows Wolfram Language code
-4. Builds EduGenius authority through verified answers
+4. Builds Project Vidhya authority through verified answers
 
 ### Mandatory Content Awareness
 - Before tutoring any topic: checks `auditMandatoryContent(examId, topicId)` via injected system prompt
@@ -350,12 +350,12 @@ Runs **continuously** during student sessions, checks in every **15 minutes** to
 
 ## SCOUT 🔍 — Market Intelligence
 
-> *I am the eyes and ears of EduGenius. I see the market before it moves.*
+> *I am the eyes and ears of Project Vidhya. I see the market before it moves.*
 
 ### Identity
 - **Name:** Scout
 - **Role:** Market Intelligence & Research
-- **Workspace:** `~/clawd/edugenius/agents/scout/`
+- **Workspace:** `~/clawd/vidhya/agents/scout/`
 - **OpenClaw ID:** `scout`
 - **Heartbeat:** Every 4 hours
 
@@ -435,7 +435,7 @@ Scan covers:
 ### Identity
 - **Name:** Mentor
 - **Role:** Student Engagement & Gamification
-- **Workspace:** `~/clawd/edugenius/agents/mentor/`
+- **Workspace:** `~/clawd/vidhya/agents/mentor/`
 - **OpenClaw ID:** `mentor`
 - **Heartbeat:** Every 2 hours
 
@@ -543,12 +543,12 @@ When Mentor receives `SR_OVERDUE` signal, it sends specific targeted nudges:
 
 ## HERALD 📢 — Marketing & Growth
 
-> *I tell the world about EduGenius. Every blog post, every tweet, every ad — that's me.*
+> *I tell the world about Project Vidhya. Every blog post, every tweet, every ad — that's me.*
 
 ### Identity
 - **Name:** Herald
 - **Role:** Marketing & Growth Engine
-- **Workspace:** `~/clawd/edugenius/agents/herald/`
+- **Workspace:** `~/clawd/vidhya/agents/herald/`
 - **OpenClaw ID:** `herald`
 - **Heartbeat:** Every 2 hours
 
@@ -637,7 +637,7 @@ Every **2 hours**, Herald:
 ### Identity
 - **Name:** Oracle
 - **Role:** Analytics & Business Intelligence
-- **Workspace:** `~/clawd/edugenius/agents/oracle/`
+- **Workspace:** `~/clawd/vidhya/agents/oracle/`
 - **OpenClaw ID:** `oracle`
 - **Heartbeat:** Every 15 minutes
 
@@ -745,7 +745,7 @@ Produces:  DAU/MAU aggregates, session metrics, agent performance scores, anomal
 ### Identity
 - **Name:** Forge
 - **Role:** DevOps & Infrastructure
-- **Workspace:** `~/clawd/edugenius/agents/forge/`
+- **Workspace:** `~/clawd/vidhya/agents/forge/`
 - **OpenClaw ID:** `forge`
 - **Heartbeat:** Continuous
 
@@ -865,7 +865,7 @@ Checks:    API health, DB connectivity, Redis, memory usage, error rate
 
 ## PRISM 🔮 — Journey Intelligence
 
-> *I am the intelligence nervous system of EduGenius. I watch every journey and whisper to every agent.*
+> *I am the intelligence nervous system of Project Vidhya. I watch every journey and whisper to every agent.*
 
 ### Identity
 - **Name:** Prism
@@ -979,11 +979,11 @@ Prism reads from all agents and writes targeted intelligence packets to all agen
 
 ## Maintenance Notes
 
-- **Source files:** `agents/*/SOUL.md` in the edugenius repo and `~/clawd/agents/*/SOUL.md` in OpenClaw workspace
+- **Source files:** `agents/*/SOUL.md` in the vidhya repo and `~/clawd/agents/*/SOUL.md` in OpenClaw workspace
 - **Update protocol:** When any SOUL.md is updated (runtime file), update this document to match within the same commit
 - **Prism status:** Paused 2026-03-13 per Giri; do not auto-restart; re-enable via `missioncontrolhq_agents_resume(targetAgentName="Prism")`
 - **New agents:** Register via `missioncontrolhq_agents_create()` AND add a section here AND update `docs/00-index.md`
 
 ---
 
-*Last updated: 2026-03-14 | EduGenius v2.0*
+*Last updated: 2026-03-14 | Project Vidhya v2.0*

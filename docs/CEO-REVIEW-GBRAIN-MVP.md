@@ -1,9 +1,9 @@
-# CEO Review: EduGenius v2 → GBrain-Powered 10-Star Product
+# CEO Review: Project Vidhya v2 → GBrain-Powered 10-Star Product
 
 **Mode:** SCOPE EXPANSION — Dream big, find the 10-star product
 **Date:** 2026-04-18
 **Reviewer:** Claude (gstack /plan-ceo-review)
-**Repo:** mathconcepts/edugenius-v2 (v0.3.0.0)
+**Repo:** mathconcepts/vidhya-v2 (v0.3.0.0)
 **Input:** GBrain + GStack Feature Specification (April 2026 PDF)
 
 ---
@@ -62,7 +62,7 @@
 ### One-Sentence Thesis
 **"The app that knows you better than your best tutor — and is available 24/7 for ₹0."**
 
-Every Indian coaching class charges ₹50K-2L/year. The best tutors are inaccessible. The 10-star version of EduGenius replaces the *intelligence* of a great tutor — not the content, the judgment: knowing what to teach, when, how, and why you're stuck.
+Every Indian coaching class charges ₹50K-2L/year. The best tutors are inaccessible. The 10-star version of Project Vidhya replaces the *intelligence* of a great tutor — not the content, the judgment: knowing what to teach, when, how, and why you're stuck.
 
 ### The Closed Learning Loop
 ```
@@ -135,7 +135,7 @@ The current tutor is: `student_message + system_prompt → Gemini → response`.
 
 ## The Student Model: Heart of Personalization
 
-This is where EduGenius becomes something no competitor has. Not a feature — a **compound advantage** that gets better with every session.
+This is where Project Vidhya becomes something no competitor has. Not a feature — a **compound advantage** that gets better with every session.
 
 ### Current State vs. 10-Star State
 | Attribute Domain | Current (v0.3) | 10-Star (GBrain) |
@@ -377,7 +377,7 @@ Still under $1/user/month. The intelligence layer costs almost nothing — it's 
 
 ## What Competitors Cannot Copy
 
-1. **The student model compounds.** Every session makes the app smarter about this specific student. Testbook and Unacademy serve the same content to everyone. After 30 sessions, EduGenius knows your error patterns, cognitive style, and optimal exam strategy. That's a switching cost.
+1. **The student model compounds.** Every session makes the app smarter about this specific student. Testbook and Unacademy serve the same content to everyone. After 30 sessions, Project Vidhya knows your error patterns, cognitive style, and optimal exam strategy. That's a switching cost.
 
 2. **Error taxonomy is proprietary data.** After 1000 students, you have the richest dataset of GATE math misconceptions ever assembled. This trains better classifiers, which diagnose better, which generates better practice, which attracts more students. Flywheel.
 

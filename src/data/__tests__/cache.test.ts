@@ -1,5 +1,5 @@
 /**
- * Unit Tests for EduGenius Cache
+ * Unit Tests for Project Vidhya Cache
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';

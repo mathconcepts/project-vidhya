@@ -1,5 +1,5 @@
 /**
- * EduGenius Utilities - Public API
+ * Project Vidhya Utilities - Public API
  */
 
 export * from './validation';

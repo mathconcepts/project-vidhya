@@ -1,8 +1,8 @@
-# EduGenius v2.0 — Full Dual-Direction Audit Report
+# Project Vidhya v2.0 — Full Dual-Direction Audit Report
 
 > **Audit Date:** 2026-03-10  
-> **Auditor:** AI Agent (subagent `full-audit-edugenius`)  
-> **Codebase:** `/home/sprite/clawd/edugenius/frontend/src`  
+> **Auditor:** AI Agent (subagent `full-audit-vidhya`)  
+> **Codebase:** `/home/sprite/clawd/vidhya/frontend/src`  
 > **TypeScript exit:** 0 ✅  
 > **Build exit:** 0 ✅  
 
@@ -131,7 +131,7 @@ Header is clean. No dead links. `routeTitles` map covers all primary routes. No 
 - `dynamicPromptsSkill.ts`, `guardRailsSkill.ts`, `liveEvalsSkill.ts`
 - `mediaContentSkill.ts`, `thinkingToolSkill.ts`, `userResearchSkill.ts`, `voiceSkill.ts`
 
-All are intentionally dormant pending agent wiring. Verified by localStorage key convention `edugenius_skill_*_enabled`.
+All are intentionally dormant pending agent wiring. Verified by localStorage key convention `vidhya_skill_*_enabled`.
 
 ### Components — Dead Import Check
 
@@ -159,9 +159,9 @@ All other components verified as actively imported.
 
 | File | Key Used | Correct Key | Fix |
 |------|----------|-------------|-----|
-| `Layout.tsx:108` | `'edugenius_persona'` | `'edugenius_student_persona'` | **FIXED** |
-| `studentPersonaEngine.ts` | `'edugenius_student_persona'` | — | canonical |
-| `website/Blog.tsx:761` | `'edugenius_student_persona'` | — | already correct |
+| `Layout.tsx:108` | `'vidhya_persona'` | `'vidhya_student_persona'` | **FIXED** |
+| `studentPersonaEngine.ts` | `'vidhya_student_persona'` | — | canonical |
+| `website/Blog.tsx:761` | `'vidhya_student_persona'` | — | already correct |
 
 **Impact:** The exam chip in the Layout header (`JEE · 45d`) was silently failing to load because it read the wrong key. All student persona data is now correctly visible.
 
@@ -185,9 +185,9 @@ const { getTopperPromptAddendum } = require('./topperIntelligence');  // line 55
 
 | Key | Bridge reads | Registry writes | Status |
 |-----|-------------|----------------|--------|
-| `edugenius_connections` | `getPlatformConnections()` via `PLATFORM_KEY` | `saveStoredValues()` via `STORAGE_KEY` | ✅ Same key |
-| `edugenius_user_connections_{userId}` | `getUserConnections()` | `saveUserStoredValues()` via `userStorageKey()` | ✅ Same key |
-| `edugenius_agent_connections_{agentId}` | `getAgentConnections()` | `updateAgentConnectionMap()` | ✅ Same key |
+| `vidhya_connections` | `getPlatformConnections()` via `PLATFORM_KEY` | `saveStoredValues()` via `STORAGE_KEY` | ✅ Same key |
+| `vidhya_user_connections_{userId}` | `getUserConnections()` | `saveUserStoredValues()` via `userStorageKey()` | ✅ Same key |
+| `vidhya_agent_connections_{agentId}` | `getAgentConnections()` | `updateAgentConnectionMap()` | ✅ Same key |
 
 ### knowledgeRouter.ts — Service Call Verification
 
@@ -231,7 +231,7 @@ All static imports verified to exist and export expected symbols:
 | # | File | Issue | Fix |
 |---|------|-------|-----|
 | 1 | `App.tsx` | `/settings` route used inline stub, not real `Settings.tsx` | Wired real page |
-| 2 | `Layout.tsx` | Read `edugenius_persona` (wrong key) | Changed to `edugenius_student_persona` |
+| 2 | `Layout.tsx` | Read `vidhya_persona` (wrong key) | Changed to `vidhya_student_persona` |
 | 3 | `sagePersonaPrompts.ts` | `require()` calls (CommonJS in ESM) + duplicate imports | Converted to static ESM imports |
 | 4 | `sagePersonaPrompts.ts` | `topperIntelligence` had no static import | Added static import |
 
@@ -269,7 +269,7 @@ No new TypeScript errors introduced. All existing functionality preserved.
 5. `frontend/src/services/contentSyncService.ts` — Cross-agent sync layer + health audit
 6. `frontend/src/pages/ContentHub.tsx` — 5-tab CEO content hub at `/content-hub`
 7. `frontend/src/pages/LocalPageBuilder.tsx` — Page builder UI at `/page-builder`
-8. `/home/sprite/clawd/edugenius/pages-output/.gitkeep` — HTML output directory
+8. `/home/sprite/clawd/vidhya/pages-output/.gitkeep` — HTML output directory
 
 ### Files Updated
 - `frontend/src/services/contentStrategyService.ts` — Added channel/audience/calendar strategy engine

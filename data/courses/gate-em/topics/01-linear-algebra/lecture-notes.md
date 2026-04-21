@@ -272,4 +272,4 @@ Don't confuse orthogonal matrices (AᵀA = I) with symmetric matrices (A = Aᵀ)
 
 ---
 
-*EduGenius GATE EM | Linear Algebra Notes | Difficulty: Medium*
+*Project Vidhya GATE EM | Linear Algebra Notes | Difficulty: Medium*

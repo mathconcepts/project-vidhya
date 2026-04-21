@@ -269,7 +269,7 @@ interface AnalyticsReportPayload {
 ### Basic Publishing
 
 ```typescript
-import { EventBus } from 'edugenius';
+import { EventBus } from 'vidhya';
 
 const eventBus = new EventBus();
 
@@ -354,7 +354,7 @@ eventBus.once('forge.deploy.completed', async (event) => {
 Each agent has a dedicated channel for communication:
 
 ```typescript
-import { AgentChannel } from 'edugenius';
+import { AgentChannel } from 'vidhya';
 
 const scoutChannel = new AgentChannel('Scout', eventBus);
 

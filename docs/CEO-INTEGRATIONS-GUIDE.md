@@ -1,4 +1,4 @@
-# EduGenius CEO Integrations Master Guide
+# Project Vidhya CEO Integrations Master Guide
 
 > **All external connections configured in one place**
 
@@ -205,7 +205,7 @@
 | Key | Environment Variable | Purpose |
 |-----|---------------------|---------|
 | JWT Secret | `JWT_SECRET` | Sign auth tokens (generate: 64 random chars) |
-| Site URL | `SITE_URL` | Your domain (e.g., https://edugenius.in) |
+| Site URL | `SITE_URL` | Your domain (e.g., https://vidhya.in) |
 
 **Generate JWT Secret:**
 ```bash
@@ -408,7 +408,7 @@ openssl rand -hex 32
 
 ## 🎯 MINIMUM VIABLE SETUP
 
-To run EduGenius at minimum, you need:
+To run Project Vidhya at minimum, you need:
 
 ```env
 # === ABSOLUTELY REQUIRED ===
@@ -438,15 +438,15 @@ GEMINI_API_KEY=...
 ANTHROPIC_API_KEY=...
 
 # === Database ===
-DATABASE_URL=postgres://user:pass@host:5432/edugenius?ssl=require
+DATABASE_URL=postgres://user:pass@host:5432/vidhya?ssl=require
 REDIS_URL=redis://...
 
 # === Auth ===
 JWT_SECRET=<64-char-random>
-SITE_URL=https://edugenius.in
+SITE_URL=https://vidhya.in
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=https://edugenius.in/auth/google/callback
+GOOGLE_REDIRECT_URI=https://vidhya.in/auth/google/callback
 
 # === Payments ===
 STRIPE_PUBLISHABLE_KEY=pk_live_...
@@ -467,7 +467,7 @@ WHATSAPP_ACCESS_TOKEN=...
 # === Vector Store ===
 PINECONE_API_KEY=...
 PINECONE_ENVIRONMENT=us-east1-gcp
-PINECONE_INDEX=edugenius
+PINECONE_INDEX=vidhya
 ```
 
 ---

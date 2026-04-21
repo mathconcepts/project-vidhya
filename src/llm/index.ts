@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * EduGenius LLM Abstraction Layer - Main Entry Point
+ * Project Vidhya LLM Abstraction Layer - Main Entry Point
  * Provider-agnostic LLM client with intelligent routing and fallbacks
  */
 

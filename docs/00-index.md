@@ -1,4 +1,4 @@
-# EduGenius v2.0 — Documentation Index
+# Project Vidhya v2.0 — Documentation Index
 
 > **Last updated:** 2026-03-13  
 > **Total docs:** 26 files + 1 guide + infra/  

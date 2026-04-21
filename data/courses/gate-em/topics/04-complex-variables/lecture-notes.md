@@ -217,4 +217,4 @@ $|z| = 2$ is a circle of radius 2 (contour), while $|z| < 2$ is its interior. Th
 
 ---
 
-*EduGenius GATE EM | Complex Variables Notes | Difficulty: Hard*
+*Project Vidhya GATE EM | Complex Variables Notes | Difficulty: Hard*

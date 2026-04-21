@@ -1,5 +1,5 @@
 /**
- * Unit Tests for EduGenius LLM Adapters
+ * Unit Tests for Project Vidhya LLM Adapters
  * Tests adapter initialization, request formatting, and response parsing
  */
 

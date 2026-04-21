@@ -96,4 +96,4 @@ $D = f_{xx}f_{yy} - f_{xy}^2$
 
 ---
 
-*EduGenius GATE EM | Calculus Formula Sheet*
+*Project Vidhya GATE EM | Calculus Formula Sheet*

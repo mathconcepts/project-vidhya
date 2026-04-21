@@ -1,5 +1,5 @@
 /**
- * Deployment Options — EduGenius v2.0
+ * Deployment Options — Project Vidhya v2.0
  *
  * Registry of all supported deployment configurations:
  * 1. Local      — Docker Compose on laptop / home server / Raspberry Pi

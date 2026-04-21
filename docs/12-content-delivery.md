@@ -2,7 +2,7 @@
 
 ## Overview
 
-The EduGenius Content Delivery System provides a comprehensive pipeline for creating, managing, and publishing educational content across multiple platforms. It includes:
+The Project Vidhya Content Delivery System provides a comprehensive pipeline for creating, managing, and publishing educational content across multiple platforms. It includes:
 
 - **Prompt Repository** — Wolfram-style prompt management with modifiers and A/B testing
 - **Blog Pipeline** — Multi-platform blog publishing
@@ -30,7 +30,7 @@ The EduGenius Content Delivery System provides a comprehensive pipeline for crea
 ### Creating Prompts
 
 ```typescript
-import { promptRepository } from 'edugenius';
+import { promptRepository } from 'vidhya';
 
 const prompt = await promptRepository.createPrompt({
   id: 'blog-post',
@@ -99,7 +99,7 @@ console.log(result.variantId); // 'variant-a' or 'variant-b'
 ### Creating Posts
 
 ```typescript
-import { blogPipeline } from 'edugenius';
+import { blogPipeline } from 'vidhya';
 
 const post = await blogPipeline.createPost({
   title: 'Mastering Integration by Parts',
@@ -139,7 +139,7 @@ await blogPipeline.schedulePublish(post.id, 'medium', {
 ### Creating Videos
 
 ```typescript
-import { vlogPipeline } from 'edugenius';
+import { vlogPipeline } from 'vidhya';
 
 const vlog = await vlogPipeline.createVlog({
   title: 'Newton\'s Laws Explained',
@@ -193,7 +193,7 @@ await vlogPipeline.schedulePublish(vlog.id, 'instagram-reels', {
 ### Creating Pages
 
 ```typescript
-import { landingPageManager } from 'edugenius';
+import { landingPageManager } from 'vidhya';
 
 const page = await landingPageManager.createPage({
   title: 'JEE Main 2026 Preparation',
@@ -245,7 +245,7 @@ console.log(results.winner); // 'urgency-cta' if it wins
 ### Scheduling
 
 ```typescript
-import { contentCalendarManager } from 'edugenius';
+import { contentCalendarManager } from 'vidhya';
 
 await contentCalendarManager.scheduleContent({
   title: 'Organic Chemistry Basics',
@@ -277,7 +277,7 @@ await contentCalendarManager.autoFillCalendar({
 ### Atlas (Content Engine)
 
 ```typescript
-import { atlasContentIntegration } from 'edugenius';
+import { atlasContentIntegration } from 'vidhya';
 
 // Create content with exam-aware prompts
 const result = await atlasContentIntegration.createContent({
@@ -295,7 +295,7 @@ const dailyContent = await atlasContentIntegration.createDailyContent('JEE');
 ### Herald (Marketing)
 
 ```typescript
-import { heraldMarketingIntegration } from 'edugenius';
+import { heraldMarketingIntegration } from 'vidhya';
 
 // Create campaign with assets
 const campaignId = await heraldMarketingIntegration.createCampaign({

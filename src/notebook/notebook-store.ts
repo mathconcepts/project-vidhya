@@ -386,14 +386,34 @@ export function exportAsMarkdown(user_id: string, userName?: string): string {
   const firstEntry = notebook.entries[0];
   const lastEntry = notebook.entries[notebook.entries.length - 1];
 
+  // A short unique export identifier for reference + watermarking.
+  // Not a cryptographic signature — just helps identify a particular
+  // export if the student prints multiple copies over time.
+  const exportId = 'VDH-' + exportedAt.getTime().toString(36).toUpperCase() + '-' +
+    Math.random().toString(36).slice(2, 6).toUpperCase();
+
   const lines: string[] = [];
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Watermark banner — visible on every page if printed, always at top
+  // ───────────────────────────────────────────────────────────────────────
+  lines.push('```');
+  lines.push('┌──────────────────────────────────────────────────────────────────┐');
+  lines.push('│  PROJECT VIDHYA · SMART NOTEBOOK EXPORT                          │');
+  lines.push('│  This document is a LOG OF ATTEMPTED ACTIVITY — not a progress,  │');
+  lines.push('│  proficiency, or academic assessment. See disclaimer on page 1.  │');
+  lines.push(`│  Export ID: ${exportId.padEnd(54)}│`);
+  lines.push('└──────────────────────────────────────────────────────────────────┘');
+  lines.push('```');
+  lines.push('');
 
   // ───────────────────────────────────────────────────────────────────────
   // Header
   // ───────────────────────────────────────────────────────────────────────
   lines.push(`# Study Notebook — ${userName || 'Student'}`);
   lines.push('');
-  lines.push(`*Exported from Project Vidhya on ${now} (${exportedAtIso})*`);
+  lines.push(`*Exported from Project Vidhya on ${now} (${exportedAtIso})*  `);
+  lines.push(`*Export ID: \`${exportId}\`*`);
   lines.push('');
   lines.push(`**Total entries:** ${notebook.entries.length}  `);
   lines.push(`**Syllabus coverage:** ${gaps.overall_coverage_pct}% — ${gaps.total_covered} of ${gaps.total_syllabus_concepts} concepts practiced  `);
@@ -408,13 +428,65 @@ export function exportAsMarkdown(user_id: string, userName?: string): string {
   lines.push('');
 
   // ───────────────────────────────────────────────────────────────────────
+  // Disclaimer — friendly but legally clear
+  // ───────────────────────────────────────────────────────────────────────
+  lines.push('## About this document');
+  lines.push('');
+  lines.push('> **Please read before sharing or citing this notebook.**');
+  lines.push('>');
+  lines.push('> This notebook is a **log of your activity in Project Vidhya** — the');
+  lines.push('> questions you asked, the problems you attempted, the lessons you');
+  lines.push('> opened. It is a **study journal**, not an assessment.');
+  lines.push('>');
+  lines.push('> **What this notebook IS:**');
+  lines.push('> - A timestamped record of what you engaged with, in your own words');
+  lines.push('> - A personal study reference, organized against your syllabus');
+  lines.push('> - A gap map showing what you have and have not yet touched');
+  lines.push('> - Your property — exported from your device, on your request');
+  lines.push('>');
+  lines.push('> **What this notebook is NOT:**');
+  lines.push('> - It is **not a certificate, qualification, transcript, or credential**.');
+  lines.push('> - It is **not an indication of mastery, proficiency, or competency**.');
+  lines.push('>   Opening a lesson is not the same as learning it. Attempting a problem');
+  lines.push('>   is not the same as solving it. Being listed here means you engaged —');
+  lines.push('>   not that you excelled.');
+  lines.push('> - It is **not an evaluation** issued by any examining authority, board,');
+  lines.push('>   coaching institute, or educational institution. Project Vidhya does');
+  lines.push('>   not accredit, grade, or certify learning outcomes.');
+  lines.push('> - It **cannot be used** as evidence of skill, preparation, or');
+  lines.push('>   readiness for any exam, role, or program — nor as a substitute');
+  lines.push('>   for any formal qualification, academic record, or examination result.');
+  lines.push('>');
+  lines.push('> **About the timestamps.** Every entry is timestamped based on your');
+  lines.push('> device clock at the moment of the interaction. This document is not');
+  lines.push('> cryptographically signed; its authenticity cannot be independently');
+  lines.push('> verified after export. Treat it as a good-faith personal log, not as');
+  lines.push('> a forensically audited record.');
+  lines.push('>');
+  lines.push('> **A friendly note.** The progress you are actually making lives inside');
+  lines.push('> you, in the problems you can now solve, the intuitions you have built,');
+  lines.push('> the patterns you have begun to recognize. This document is just a');
+  lines.push('> scaffolding to help you study — your real growth is measured by how');
+  lines.push('> confidently you can walk into your exam, not by how many rows are');
+  lines.push('> listed below.');
+  lines.push('>');
+  lines.push('> *Project Vidhya is an open-source learning companion distributed under');
+  lines.push('> the MIT License. No warranty, express or implied, is made regarding');
+  lines.push('> the accuracy, completeness, or fitness of this document for any');
+  lines.push('> particular purpose.*');
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  // ───────────────────────────────────────────────────────────────────────
   // Table of contents
   // ───────────────────────────────────────────────────────────────────────
   lines.push('## Table of contents');
   lines.push('');
-  lines.push('1. [Coverage summary](#coverage-summary) — at-a-glance topic breakdown');
-  lines.push('2. [Full syllabus dump](#full-syllabus-dump) — every concept, practiced or not, with timestamps');
-  lines.push('3. [Chronological log](#chronological-log) — every entry, most recent first');
+  lines.push('1. [About this document](#about-this-document) — what this notebook is and is not');
+  lines.push('2. [Coverage summary](#coverage-summary) — at-a-glance topic breakdown');
+  lines.push('3. [Full syllabus dump](#full-syllabus-dump) — every concept, practiced or not, with timestamps');
+  lines.push('4. [Chronological log](#chronological-log) — every entry, most recent first');
   lines.push('');
   lines.push('---');
   lines.push('');
@@ -578,8 +650,26 @@ export function exportAsMarkdown(user_id: string, userName?: string): string {
   lines.push('');
   lines.push('---');
   lines.push('');
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Footer watermark — mirrors the top banner so every printed page and
+  // every pasted excerpt carries the same provenance + disclaimer reminder
+  // ───────────────────────────────────────────────────────────────────────
+  lines.push('```');
+  lines.push('┌──────────────────────────────────────────────────────────────────┐');
+  lines.push('│  PROJECT VIDHYA · SMART NOTEBOOK EXPORT                          │');
+  lines.push('│  LOG OF ATTEMPTED ACTIVITY — not a progress, proficiency, or    │');
+  lines.push('│  academic assessment. Not a certificate. Not a credential.       │');
+  lines.push('│  Cannot be used as evidence of skill or qualification.           │');
+  lines.push(`│  Export ID: ${exportId.padEnd(54)}│`);
+  lines.push(`│  Generated: ${exportedAtIso.padEnd(54)}│`);
+  lines.push('└──────────────────────────────────────────────────────────────────┘');
+  lines.push('```');
+  lines.push('');
   lines.push(`*Generated by Project Vidhya Smart Notebook on ${exportedAtIso}.*  `);
-  lines.push(`*Syllabus: ${gaps.total_syllabus_concepts} concepts across ${topicOrder.length} topics.*`);
+  lines.push(`*Syllabus: ${gaps.total_syllabus_concepts} concepts across ${topicOrder.length} topics.*  `);
+  lines.push(`*Export ID: \`${exportId}\` — quote this if referencing a specific export.*  `);
+  lines.push('*Distributed under the MIT License. No warranty of accuracy or fitness for any particular purpose.*');
 
   return lines.join('\n');
 }

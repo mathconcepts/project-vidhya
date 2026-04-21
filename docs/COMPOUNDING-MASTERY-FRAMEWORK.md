@@ -162,11 +162,33 @@ The UI shows topics sorted worst-coverage-first, with the uncovered concepts exp
 
 ### 4.4 Markdown export — the downloadable source of truth
 
-`GET /api/notebook/download` returns a Markdown file with `Content-Disposition: attachment`. The export is **syllabus-driven**: every concept in the official syllabus appears, practiced or not, with clear status markers and precise timestamps.
+`GET /api/notebook/download` returns a Markdown file with `Content-Disposition: attachment`. The export is **syllabus-driven, watermarked, and carries a clear disclaimer** that it logs attempted activity rather than certifying competency.
+
+The structure (top to bottom):
+
+1. **Top watermark banner** — ASCII box with export ID, visible if the document is printed, excerpted, or pasted
+2. **Header** — student name, export timestamp (human + ISO), export ID, totals, first/last activity
+3. **Legend** — the four status markers (⚪ 🟡 🟢 🔵)
+4. **About this document** — the disclaimer (see 4.5)
+5. **Table of contents**
+6. **Coverage summary** — at-a-glance topic breakdown
+7. **Full syllabus dump** — every concept, practiced or not, with timestamps
+8. **Chronological log** — every entry, most recent first, with HH:MM:SS precision
+9. **Footer watermark banner** — mirrors the top with full disclaimer reminder + generation timestamp + export ID
+
+Example:
 
 ```
+┌──────────────────────────────────────────────────────────────────┐
+│  PROJECT VIDHYA · SMART NOTEBOOK EXPORT                          │
+│  This document is a LOG OF ATTEMPTED ACTIVITY — not a progress,  │
+│  proficiency, or academic assessment. See disclaimer on page 1.  │
+│  Export ID: VDH-MO8JEJYV-O9DC                                    │
+└──────────────────────────────────────────────────────────────────┘
+
 # Study Notebook — Maya K.
 *Exported from Project Vidhya on 2026-04-21 (2026-04-21T14:22:00Z)*
+*Export ID: VDH-MO8JEJYV-O9DC*
 
 Total entries: 342
 Syllabus coverage: 58% — 48 of 82 concepts practiced
@@ -175,12 +197,16 @@ Latest activity: 2026-04-21 14:22 UTC
 
 Legend: 🟢 Practiced · ⚪ Not yet practiced · 🟡 Touched once · 🔵 Multiple attempts
 
-## Coverage summary
-| Topic | Coverage | Practiced | Not yet |
-|-------|:--------:|:---------:|:-------:|
-| Linear Algebra | 🟢 85% | 17 / 20 | 3 |
-| Calculus | 🟡 62% | 13 / 21 | 8 |
-| Complex Variables | 🔴 18% | 2 / 11 | 9 |
+---
+
+## About this document
+
+> **Please read before sharing or citing this notebook.**
+>
+> This notebook is a log of your activity in Project Vidhya...
+> (full disclaimer — see section 4.5 below)
+
+---
 
 ## Full syllabus dump
 
@@ -188,33 +214,26 @@ Legend: 🟢 Practiced · ⚪ Not yet practiced · 🟡 Touched once · 🔵 Mul
 
 #### 🔵 Eigenvalues & Eigenvectors
 **23 entries** · 16/19 correct
-- **First practiced:** 2026-03-18 14:22 UTC
-- **Last practiced:** 2026-04-19 09:40 UTC
-- **Active span:** 32 days
-
-**Entries:**
-- `2026-04-19 09:40 UTC` **[problem_attempted]** Problem: Find eigenvalues of [[2,1],[1,2]]
-  · Result: ✓ correct
-  · Difficulty: medium
-- `2026-04-18 16:12 UTC` **[chat_question]** Asked: when are eigenvalues complex?
-  > I'm confused about when a matrix has complex eigenvalues...
+- First practiced: 2026-03-18 14:22 UTC
+- Last practiced: 2026-04-19 09:40 UTC
+- Active span: 32 days
+...
 
 #### ⚪ Orthogonality
-> **Not yet practiced.** No entries recorded for this concept.
+> Not yet practiced. No entries recorded for this concept.
 
-### 🔴 Calculus — 1/19 practiced (5%)
-
-#### 🟡 Limits
-**1 entry**
-- **First practiced:** 2026-04-21 11:06 UTC
-- **Last practiced:** 2026-04-21 11:06 UTC
 ...
 
-## Chronological log
-### 2026-04-21
-- `14:22:15` **[snap]** ✓ Snapped: multivariable calculus problem · _gradient_
-- `14:18:43` **[chat_question]** Asked: when to use polar coordinates? · _integration_
-...
+---
+
+┌──────────────────────────────────────────────────────────────────┐
+│  PROJECT VIDHYA · SMART NOTEBOOK EXPORT                          │
+│  LOG OF ATTEMPTED ACTIVITY — not a progress, proficiency, or    │
+│  academic assessment. Not a certificate. Not a credential.       │
+│  Cannot be used as evidence of skill or qualification.           │
+│  Export ID: VDH-MO8JEJYV-O9DC                                    │
+│  Generated: 2026-04-21T14:22:00Z                                 │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 **Key design choices:**
@@ -225,9 +244,49 @@ Legend: 🟢 Practiced · ⚪ Not yet practiced · 🟡 Touched once · 🔵 Mul
 - **Per-entry timestamps:** full `YYYY-MM-DD HH:MM UTC` in the syllabus dump, full `HH:MM:SS` in the chronological log
 - **Verdict markers inline:** ✓ / ✗ next to problem-attempted entries
 - **Difficulty displayed** per entry when present
-- **Short content snippets** inline under each entry (truncated at 200 chars) so the export is self-contained
+- **Watermark on every printed page** — the top and bottom banners are designed to survive printing, PDF export, or partial excerpting
+- **Export ID** — a short unique reference (e.g., `VDH-MO8JEJYV-O9DC`) appears in the top banner, header metadata, and footer. A student referencing a specific export can quote this ID. It's not a cryptographic signature — just provenance.
 
-### 4.5 Why syllabus-driven?
+### 4.5 The disclaimer — friendly but legally clear
+
+Every export contains an `## About this document` section immediately after the header. The disclaimer is written in warm, human language but makes **legally unambiguous** statements about what this notebook is and is not.
+
+The structure:
+
+**Opening:**
+> Please read before sharing or citing this notebook.
+> This notebook is a log of your activity in Project Vidhya... It is a study journal, not an assessment.
+
+**What this notebook IS** (4 positive statements):
+- A timestamped record of what you engaged with
+- A personal study reference organized against your syllabus
+- A gap map of what you have and have not yet touched
+- Your property — exported from your device, on your request
+
+**What this notebook is NOT** (4 unambiguous negations):
+- Not a certificate, qualification, transcript, or credential
+- Not an indication of mastery, proficiency, or competency
+- Not an evaluation issued by any examining authority
+- Cannot be used as evidence of skill, preparation, or readiness for any exam, role, or program — nor as a substitute for any formal qualification
+
+**About the timestamps:**
+> Every entry is timestamped based on your device clock at the moment of the interaction. This document is not cryptographically signed; its authenticity cannot be independently verified after export. Treat it as a good-faith personal log, not as a forensically audited record.
+
+**A friendly note:**
+> The progress you are actually making lives inside you, in the problems you can now solve, the intuitions you have built, the patterns you have begun to recognize. This document is just a scaffolding to help you study — your real growth is measured by how confidently you can walk into your exam, not by how many rows are listed below.
+
+**License clause:**
+> Project Vidhya is an open-source learning companion distributed under the MIT License. No warranty, express or implied, is made regarding the accuracy, completeness, or fitness of this document for any particular purpose.
+
+**Why this framing:**
+
+- The "IS / is NOT" parallel structure makes the scope precise without sounding cold
+- The "friendly note" paragraph softens the legal tone with authentic acknowledgment that real learning lives in the student, not the document
+- The timestamp clause is honest about what the document can and cannot prove
+- The license clause ties into the open-source distribution (MIT) without adding new legal commitments
+- No section is optional — all legal clauses appear verbatim in every export, ensuring every downloaded document carries the same protections
+
+### 4.6 Why syllabus-driven?
 
 We deliberately structured the export around the **official syllabus** rather than around the student's activity. This reverses the default framing of note apps:
 

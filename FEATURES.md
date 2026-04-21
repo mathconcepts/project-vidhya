@@ -1,6 +1,6 @@
 # Project Vidhya — Features & Moats
 
-*A pitch deck. 18 slides. Every claim grounded in shipped code.*
+*A pitch deck. 19 slides. Every claim grounded in shipped code.*
 
 ---
 
@@ -308,7 +308,53 @@ dependency.
 
 ---
 
-## Slide 12 — Technical Differentiators (Head-to-Head)
+## Slide 12 — The UX Moat (No-Nagging, Permission-First)
+
+Most LLM edtech products act on the student. Vidhya acts **with** them.
+
+After every response, the system considers whether there's a natural next
+step the student might want — then either suggests it *once*, subtly, or
+stays silent.
+
+**The rules (encoded as guards in `suggestNextStep`, not just prose):**
+
+```
+Rule                              | Guard                          |
+----------------------------------|--------------------------------|
+Max 1 suggestion per response     | return NextStep | null         |
+Never offered on failure          | responseWasHandledWell() check |
+Never offered on low confidence   | intent_confidence < 0.4 → null |
+One-tap to dismiss                | "Not now" button               |
+Dismissal persists for session    | sessionStorage by dedupe_key   |
+Permission language               | "Want me to...?"               |
+Non-blocking in chat              | parallel fetch, background    |
+Syllabus gated behind consent     | computed, not shown            |
+No attention-grabbing animation   | 0.25s fade-in only             |
+```
+
+**Where it changes the UX:**
+
+- **Chat with an image** — the assistant response streams normally. Multimodal analysis runs silently in parallel for GBrain logging. *If* a natural next step exists ("Try 3 practice problems on eigenvalues?"), a small chip appears below the answer. User can accept, dismiss, or ignore. If ignored, it quietly stays in the chat scroll — no modal, no popup.
+
+- **Test diagnostic (new in v2.4)** — student uploads a photo of their completed test. Server streams per-problem verdicts via SSE (correct / off / skipped / needs-review). A personalized syllabus is computed during the stream but **not shown**. After verification completes, a "Show the plan" chip appears. Only if the student taps does the syllabus appear. Otherwise, the student walks away with their grade and no unsolicited lecture.
+
+- **Solution check** — if the answer is correct, suggest a harder problem. If wrong, offer to review the misconception. Never both.
+
+**Why this is a moat:**
+
+Most LLM products over-offer. They suggest three follow-ups after every turn, popup modals asking for feedback, dress up outputs with forced "next steps" that feel like ads. The cognitive burden is real — the student stops trusting the suggestions because they're always there.
+
+Vidhya's chips are scarce. When one appears, it's because the system has actually thought about what might help *this student right now*. Students learn to trust them, and the acceptance rate (measured in admin dashboard) stays high.
+
+**Where it's shipped:**
+- `src/multimodal/next-step-suggester.ts` — the pure rule engine
+- `frontend/src/components/gate/NextStepChip.tsx` — the subtle chip with sessionStorage dedupe
+- `src/multimodal/diagnostic-analyzer.ts` — syllabus computed but not revealed
+- `src/api/multimodal-routes.ts` — chip attached to `/analyze` response
+
+---
+
+## Slide 13 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -324,20 +370,23 @@ dependency.
 | Cost observability | Per-LLM-call logs | Admin dashboard with hit rates |
 | Model routing | Single provider lock-in | 7+ providers, fallback router |
 | Graceful without keys | Soft-bricked | Full bundle mode |
+| Image input in chat | Sync-blocking upload | Background pre-analysis, zero added latency |
+| Test diagnostic | Either none or batch (wait 30s+) | SSE stream — per-problem verdicts live |
+| Follow-up suggestions | 3 after every turn, always | Max 1, null on failure, session-deduped |
+| Learning plan delivery | Pushed at student unsolicited | Gated behind explicit "Show the plan" consent |
 
 ---
 
-## Slide 13 — Tech Stack
+## Slide 14 — Tech Stack
 
-**Backend** (11 runtime deps, 3 dev):
-Express · Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
-resend · web-push · yaml · vitest
+**Backend** (8 runtime deps, 3 dev):
+Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
+resend · yaml · vitest
 
-**Frontend** (21 runtime deps, 9 dev):
+**Frontend** (12 runtime deps, 8 dev):
 React 18 · Vite · Tailwind · framer-motion · react-router-dom 6 ·
 `@xenova/transformers` (WASM embeddings) · idb · pdfjs-dist · mammoth ·
-react-markdown · remark-math · rehype-katex · recharts · lucide-react ·
-zustand · `@tanstack/react-query`
+lucide-react · clsx · `@tanstack/react-query` · `@supabase/supabase-js`
 
 **External APIs (all optional):**
 Google Gemini · Anthropic Claude · Wolfram Alpha · Supabase · Resend ·
@@ -348,7 +397,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 14 — What's Shipped (at v2.2.3)
+## Slide 15 — What's Shipped (at v2.4.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -358,16 +407,21 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.2.1 | `7ca5a98` | Content telemetry + admin dashboard + OpenStax/OCW sources |
 | v2.2.2 | `46c27db` | Resolver tier-0 fixes, concept_id auto-fill, client telemetry |
 | v2.2.3 | `a5c88f2` | Wolfram verification pipeline complete, 6 problems verified |
+| v2.3.0 | `f5879da` | Scope-aware syllabus + multimodal intent analyzer (Snap) |
+| v2.4.0 | `0e71cf9` | Chat image support + SSE diagnostic + polite next-step chips |
 
-**Production numbers at v2.2.3:**
+**Production numbers at v2.4.0:**
 - 34 curated + attributed problems across 10 topics
 - 82-concept knowledge graph with placeholder explainers
 - 6 problems Wolfram-verified end-to-end
 - 4-tier resolver live at `/api/content/resolve`
+- 5 supported exams with scope-aware syllabus generation
+- Multimodal analysis with 6 intents (explain / solve / practice / check / stuck / transcribe)
+- SSE-streaming test-paper diagnostic with auto-generated study plan
 - Admin dashboard live at `/admin/content`
 - Auth wall verified (HTTP 401 on unauth)
 - 83% free-hit rate on smoke-test traffic
-- Frontend builds in ~34s, 495 KB minified
+- Frontend builds in ~29s, SnapPage chunk 22 KB
 
 **Total code volume:**
 - ~11,000 LOC backend + frontend (production)
@@ -376,7 +430,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 15 — Cost Projections at Scale
+## Slide 16 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -396,7 +450,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 16 — Why Now
+## Slide 17 — Why Now
 
 **Three trends converge:**
 
@@ -418,7 +472,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 17 — Roadmap (Near-Term)
+## Slide 18 — Roadmap (Near-Term)
 
 **Content expansion** — 34 → 2000 problems over 90 days
 - Nightly CI already wired (needs workflow YAML upload)
@@ -444,7 +498,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 18 — Invitation
+## Slide 19 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -518,6 +572,7 @@ Where to engage:
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |
+| **UX (no-nagging, permission-first)** | 🔵🔵🔵🔵 | Scarcity → trust → high chip acceptance; compounds via learned trust |
 | **Multi-LLM routing** | 🔵🔵 | No single-provider lock-in |
 | **Licensing (MIT + attributions)** | 🔵🔵🔵 | Republish-safe at any scale |
 | **Domain-agnostic architecture** | 🔵🔵🔵 | One codebase, many subjects |

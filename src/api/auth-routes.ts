@@ -18,20 +18,8 @@ import { issueToken } from '../auth/jwt';
 import { upsertFromGoogle, linkChannel, getUserById } from '../auth/user-store';
 import { getCurrentUser, requireAuth } from '../auth/middleware';
 import type { ChannelLinkToken } from '../auth/types';
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
-
-function sendJSON(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  res.end(JSON.stringify(data));
-}
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 // ============================================================================
 // Pending channel link tokens (in-memory, 15-min TTL)

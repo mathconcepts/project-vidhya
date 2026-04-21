@@ -33,23 +33,8 @@ import { runDiagnosticStream } from '../multimodal/diagnostic-analyzer';
 import { openSSE, errorSSE } from '../multimodal/sse-stream';
 import { getConfigFromRequest } from '../llm/config-resolver';
 import type { MultimodalRequest, MultimodalResponse } from '../multimodal/types';
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
-
-function sendJSON(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  res.end(JSON.stringify(data));
-}
-function sendError(res: ServerResponse, status: number, msg: string) {
-  sendJSON(res, { error: msg }, status);
-}
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 // ============================================================================
 // Constants

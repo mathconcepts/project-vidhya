@@ -10,23 +10,11 @@ import { ServerResponse } from 'http';
 import { verifyToken } from './jwt';
 import { getUserById, touchUser } from './user-store';
 import { roleGte, type Role, type User } from './types';
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
+import { sendJSON, type ParsedRequest } from '../lib/route-helpers';
 
 export interface AuthResult {
   user: User;
   token_exp: number;
-}
-
-function sendJSON(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  res.end(JSON.stringify(data));
 }
 
 /**

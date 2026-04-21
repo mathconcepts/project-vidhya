@@ -15,15 +15,14 @@
  * Pure functions where possible. The only side effect is file I/O.
  */
 
-import fs from 'fs';
-import path from 'path';
 import type {
   QualitySignal,
   ComponentQuality,
   QualityIterationSnapshot,
 } from './types';
+import { createFlatFileStore } from '../lib/flat-file-store';
 
-const STORE_PATH = path.resolve(process.cwd(), '.data/curriculum-quality.json');
+const STORE_PATH = '.data/curriculum-quality.json';
 
 // ============================================================================
 // Store — DB-less, flat JSON
@@ -50,29 +49,20 @@ interface Store {
   };
 }
 
-function readStore(): Store {
-  try {
-    if (fs.existsSync(STORE_PATH)) {
-      return JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'));
-    }
-  } catch {
-    // fallthrough to fresh
-  }
-  return {
+const store = createFlatFileStore<Store>({
+  path: STORE_PATH,
+  defaultShape: () => ({
     iterations: [],
     running: {
       iteration: 1,
       started_at: new Date().toISOString(),
       counts: {},
     },
-  };
-}
+  }),
+});
 
-function writeStore(s: Store): void {
-  const dir = path.dirname(STORE_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(STORE_PATH, JSON.stringify(s, null, 2));
-}
+function readStore(): Store { return store.read(); }
+function writeStore(s: Store): void { store.write(s); }
 
 // ============================================================================
 // Ingestion — add a signal to the running iteration

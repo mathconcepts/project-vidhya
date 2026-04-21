@@ -29,20 +29,8 @@ import {
 } from '../gbrain/integration';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import type { Role } from '../auth/types';
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
-
-function sendJSON(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  res.end(JSON.stringify(data));
-}
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 // Hide sensitive internals in list responses
 function safeUser(u: any) {

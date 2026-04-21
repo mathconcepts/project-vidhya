@@ -12,21 +12,13 @@
 import { ServerResponse } from 'http';
 import pg from 'pg';
 import { GATE_TOPICS, TOPIC_LABELS } from '../constants/topics';
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 const { Pool } = pg;
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
 
 interface RouteDefinition {
   method: string;

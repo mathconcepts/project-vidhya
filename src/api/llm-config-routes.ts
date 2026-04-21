@@ -15,6 +15,8 @@
  */
 
 import { ServerResponse } from 'http';
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 import {
   listProviders,
   getProvider,
@@ -27,23 +29,6 @@ import {
   getConfigFromRequest,
   type LLMConfig,
 } from '../llm/config-resolver';
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
-
-function sendJSON(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  res.end(JSON.stringify(data));
-}
-function sendError(res: ServerResponse, status: number, msg: string, extras?: any) {
-  sendJSON(res, { error: msg, ...extras }, status);
-}
 
 // ============================================================================
 // 1. List providers — full registry, no secrets

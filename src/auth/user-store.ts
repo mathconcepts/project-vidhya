@@ -12,12 +12,11 @@
  * so the rest of the system doesn't change.
  */
 
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 import { roleGte, type User, type Role } from './types';
+import { createFlatFileStore } from '../lib/flat-file-store';
 
-const STORE_PATH = path.resolve(process.cwd(), '.data/users.json');
+const STORE_PATH = '.data/users.json';
 const ORG_ID = 'default';
 
 // ============================================================================
@@ -35,26 +34,14 @@ function emptyStore(): Store {
   return { version: 1, org_id: ORG_ID, owner_id: null, users: {} };
 }
 
-function readStore(): Store {
-  try {
-    if (fs.existsSync(STORE_PATH)) {
-      const parsed = JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8'));
-      if (parsed && typeof parsed === 'object' && parsed.users) return parsed as Store;
-    }
-  } catch {
-    // Corruption fallback — don't blow away; log and return empty
-    console.error('[user-store] .data/users.json unreadable — starting from empty (existing file preserved)');
-  }
-  return emptyStore();
-}
+const _store = createFlatFileStore<Store>({
+  path: STORE_PATH,
+  defaultShape: emptyStore,
+  isValid: (parsed: any) => parsed && typeof parsed === 'object' && parsed.users,
+});
 
-function writeStore(s: Store): void {
-  const dir = path.dirname(STORE_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  const tmp = `${STORE_PATH}.tmp.${process.pid}`;
-  fs.writeFileSync(tmp, JSON.stringify(s, null, 2));
-  fs.renameSync(tmp, STORE_PATH); // atomic on POSIX / NTFS
-}
+function readStore(): Store { return _store.read(); }
+function writeStore(s: Store): void { _store.write(s); }
 
 // ============================================================================
 // Lookups

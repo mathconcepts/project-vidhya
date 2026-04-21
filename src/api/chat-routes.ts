@@ -16,18 +16,10 @@ import type { UserContext } from '../content-pipeline/prompt-modifiers';
 import type { VectorStore, VectorSearchResult } from '../data/vector-store';
 import { getOrCreateStudentModel, saveStudentModel } from '../gbrain/student-model';
 import { runTaskReasoner, buildContentGeneratorPrompt } from '../gbrain/task-reasoner';
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 const { Pool } = pg;
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
 
 interface RouteDefinition {
   method: string;

@@ -19,25 +19,8 @@ import { generateSyllabus } from '../syllabus/generator';
 import { getSourcesForConcept } from '../syllabus/source-catalog';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import type { ExamScope } from '../syllabus/types';
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
-
-function sendJSON(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  res.end(JSON.stringify(data));
-}
-
-function sendError(res: ServerResponse, status: number, msg: string) {
-  sendJSON(res, { error: msg }, status);
-}
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 async function handleListExams(_req: ParsedRequest, res: ServerResponse): Promise<void> {
   sendJSON(res, { exams: listExams() });

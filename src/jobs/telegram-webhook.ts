@@ -18,20 +18,12 @@ import {
   parseWebhook,
 } from '../channels/telegram';
 import { formatSolution } from './daily-problem';
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
 
 interface RouteDefinition {
   method: string;

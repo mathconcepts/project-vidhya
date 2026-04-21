@@ -19,20 +19,12 @@ import { ServerResponse } from 'http';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GATE_TOPICS } from '../constants/topics';
 import { BLOG_CONTENT_TYPES } from '../constants/content-types';
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
 
 interface RouteDefinition {
   method: string;

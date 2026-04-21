@@ -14,8 +14,8 @@
  *   GET  /api/content/telemetry/summary — admin-only summary
  */
 
-import fs from 'fs';
 import path from 'path';
+import { createFlatFileStore } from '../lib/flat-file-store';
 
 const DATA_DIR = process.env.AGGREGATE_DATA_DIR || path.resolve(process.cwd(), '.data');
 const TELEMETRY_FILE = path.join(DATA_DIR, 'content-telemetry.json');
@@ -59,22 +59,13 @@ function emptyState(): TelemetryState {
   };
 }
 
-function loadState(): TelemetryState {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (fs.existsSync(TELEMETRY_FILE)) {
-      return JSON.parse(fs.readFileSync(TELEMETRY_FILE, 'utf-8'));
-    }
-  } catch {}
-  return emptyState();
-}
+const _telemetryStore = createFlatFileStore<TelemetryState>({
+  path: TELEMETRY_FILE,
+  defaultShape: emptyState,
+});
 
-function saveState(state: TelemetryState) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const tmp = TELEMETRY_FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(state, null, 2));
-  fs.renameSync(tmp, TELEMETRY_FILE);
-}
+function loadState(): TelemetryState { return _telemetryStore.read(); }
+function saveState(state: TelemetryState) { _telemetryStore.write(state); }
 
 const VALID_SOURCES = new Set([
   'tier-0-bundle-exact', 'tier-0-explainer', 'tier-0-client-cache',

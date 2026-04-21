@@ -22,16 +22,8 @@ import { ServerResponse } from 'http';
 import fs from 'fs';
 import path from 'path';
 import { requireRole } from './auth-middleware';
-
-interface ParsedRequest {
-  pathname: string;
-  query: URLSearchParams;
-  params: Record<string, string>;
-  body: unknown;
-  headers: Record<string, string | string[] | undefined>;
-}
-
-type RouteHandler = (req: ParsedRequest, res: ServerResponse) => Promise<void>;
+import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { sendJSON, sendError } from '../lib/route-helpers';
 
 const DATA_DIR = process.env.AGGREGATE_DATA_DIR || path.resolve(process.cwd(), '.data');
 const AGGREGATE_FILE = process.env.AGGREGATE_STORE_PATH || path.join(DATA_DIR, 'aggregate.json');
@@ -49,15 +41,6 @@ interface AggregateState {
   by_motivation: Record<string, number>;
   misconceptions: Record<string, { count: number; concept_id?: string; topic?: string; description?: string }>;
   daily_active: Record<string, number>;
-}
-
-function sendJSON(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-  res.end(JSON.stringify(data));
-}
-
-function sendError(res: ServerResponse, status: number, msg: string) {
-  sendJSON(res, { error: msg }, status);
 }
 
 function emptyState(): AggregateState {

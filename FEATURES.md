@@ -1,6 +1,6 @@
 # Project Vidhya — Features & Moats
 
-*A pitch deck. 20 slides. Every claim grounded in shipped code.*
+*A pitch deck. 21 slides. Every claim grounded in shipped code.*
 
 ---
 
@@ -430,7 +430,126 @@ or guilted into reviewing. Consistent with Slide 12's UX contract.
 
 ---
 
-## Slide 14 — Technical Differentiators (Head-to-Head)
+## Slide 14 — The Curriculum Moat (Admin-Owned, Shared-Concept, Compounding Quality)
+
+The Lesson framework (Slide 13) decides *how* to teach. The Curriculum
+framework decides *what* to teach, *per exam*, and measures whether the
+content is improving across iterations.
+
+**The two-layer data model:**
+
+```
+Concept Graph (shared, static)
+           ↑
+           │ many-to-many
+           │ (depth, weight, emphasis per link)
+           ↓
+Exam Definitions (admin-owned, YAML)
+  data/curriculum/*.yml
+```
+
+A concept like `eigenvalues` exists **once** in the graph and is linked
+from many exams. Each exam's YAML specifies *how* that concept appears:
+
+```yaml
+# data/curriculum/gate-ma.yml
+- concept_id: eigenvalues
+  depth: standard
+  weight: 0.03
+  emphasis: [characteristic-polynomial, 2x2-and-3x3, sum-and-product]
+  restrictions: [infinite-dimensional, operator-theory, spectral-theorem]
+```
+
+```yaml
+# hypothetical csir-net-math.yml
+- concept_id: eigenvalues
+  depth: advanced
+  weight: 0.12
+  emphasis: [spectral-theorem, jordan-canonical-form, operator-theory]
+  restrictions: []
+```
+
+Same concept. Different treatment per exam. One content bundle, many
+curricula filtering which slice to serve. This is scope-as-data, not
+scope-as-if-branches in code.
+
+**Three-layer guardrails** keep all interactions within syllabus scope:
+
+| Check | How | On fail |
+|-------|-----|---------|
+| Concept-scope match | Detected concept ∈ exam's concept_links | Chunk excluded from lesson |
+| Depth compatibility | Content depth ≤ exam allowed depth + 1 tier | Chunk excluded |
+| Restriction compliance | Content doesn't hit a restriction tag | Chunk excluded |
+
+User materials that fail are filtered **out of lesson rendering** but
+**never deleted** — they stay accessible in `/materials`. The guardrail
+is a scope filter, not a content gate. For LLM-generated content
+(future), the validator is strict and rejects on any failure since LLM
+output can be regenerated.
+
+**The compounding quality loop:**
+
+```
+student interacts
+  → engagement signal
+  → quality-aggregator computes per-(concept × component) score
+  → components below 0.6 flagged with reason
+    ("high skip rate 65%", "low completion 28%", etc.)
+  → admin runs scripts/admin/quality-report.ts --flagged
+  → targeted content updates → bundle rebuild
+  → students see better content (next iteration)
+  → admin runs --close: freezes iteration, shows delta
+  → trend shows compounding in numbers
+```
+
+Each cycle is one measurable iteration. The dashboard shows deltas so
+curators see their work compounding.
+
+**Cross-exam gap rollup** boosts shared-concept gaps:
+
+```
+priority_combined = Σ(per_exam_priority) × √(exams_affected)
+```
+
+Fixing one concept that affects GATE + JEE + CSIR-NET pays three times,
+so the admin sees it at the top of the list.
+
+**Credible per-exam admin workflow:**
+
+1. Write `data/curriculum/{exam-id}.yml` from the `gate-ma.yml` template
+2. `npx tsx scripts/admin/analyze-gaps.ts --exam new-exam-id` → prioritized gaps
+3. Fill high-priority gaps with existing content scripts (scrape, explainers, Wolfram)
+4. `npx tsx scripts/build-bundle.ts && scripts/restore-wolfram-flags.ts`
+5. `npx tsx scripts/admin/quality-report.ts --flagged` after students engage
+6. Iterate
+
+Same commands for any exam. Everything is data-driven.
+
+**Modular, portable, scalable:**
+
+- *Modular* — three independent subsystems (graph, YAMLs, runtime). No
+  subsystem changes to add a new exam. Only data.
+- *Portable* — every persistent artifact is a file. Pack repo, drop on
+  any Linux host, it runs. No DB migration, no admin-panel bootstrap.
+- *Scalable* — adding an exam is one YAML + three scripts. Stateless
+  server, no per-user storage. Same code path serves 10 or 10,000
+  students.
+
+**Where it's shipped:**
+- `src/curriculum/types.ts` — complete schema
+- `src/curriculum/exam-loader.ts` — YAML→ExamDefinition validation
+- `src/curriculum/concept-exam-map.ts` — bidirectional lookups
+- `src/curriculum/guardrails.ts` — three-layer safety
+- `src/curriculum/gap-analyzer.ts` — gap detection + cross-exam rollup
+- `src/curriculum/quality-aggregator.ts` — engagement→quality→iterations
+- `src/api/curriculum-routes.ts` — 12 HTTP endpoints
+- `data/curriculum/gate-ma.yml` — exemplar exam (27 concept links)
+- `scripts/admin/analyze-gaps.ts`, `quality-report.ts` — admin CLIs
+- `docs/CURRICULUM-FRAMEWORK.md` — complete design doc
+
+---
+
+## Slide 15 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -453,10 +572,13 @@ or guilted into reviewing. Consistent with Slide 12's UX contract.
 | Content delivery unit | Generate-on-demand OR static prose | Structured 8-component template, attributed multi-source aggregation |
 | Personalization model | Entangled with generation | Layered on deterministic base — cacheable, auditable, testable |
 | Spaced retrieval | Unsupported OR forced streaks | Offered via SM-2 with engagement-inferred quality; never pushed |
+| New-exam onboarding | Code PR with new tables, migrations, admin UI | Write one YAML file, run three scripts — no code changes |
+| Off-syllabus drift | LLM-generated content can wander | Three-layer guardrails on every chunk (concept-scope, depth, restrictions) |
+| Content quality measurement | Qualitative review OR vanity metrics | Per-(concept × component) quality scores, iteration snapshots, compounding deltas |
 
 ---
 
-## Slide 15 — Tech Stack
+## Slide 16 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -476,7 +598,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 16 — What's Shipped (at v2.5.0)
+## Slide 17 — What's Shipped (at v2.6.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -489,13 +611,16 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.3.0 | `f5879da` | Scope-aware syllabus + multimodal intent analyzer (Snap) |
 | v2.4.0 | `0e71cf9` | Chat image support + SSE diagnostic + polite next-step chips |
 | v2.5.0 | `5147cff` | Lesson framework — 8-component template, 4-source aggregation, 6-rule personalizer, SM-2 retrieval |
+| v2.5.1 | `0b577a0` | Curated misconceptions for 22 concepts, syllabus→lesson navigation, CI workflow staged |
+| v2.6.0 | `888dbd7` | Curriculum framework — admin-owned YAML exams, shared-concept strategy, three-layer guardrails, compounding quality loop |
 
-**Production numbers at v2.5.0:**
+**Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
-- 82-concept knowledge graph with placeholder explainers
+- 82-concept knowledge graph with 22 fully-curated explainers (100% quality)
 - 6 problems Wolfram-verified end-to-end
 - 4-tier resolver live at `/api/content/resolve`
-- 5 supported exams with scope-aware syllabus generation
+- **1 admin-owned exam definition** (GATE MA, 27 concept links) with per-exam depth/weight/emphasis/restrictions
+- 5 personalized-syllabus exam presets (distinct from admin curricula)
 - Multimodal analysis with 6 intents (explain / solve / practice / check / stuck / transcribe)
 - SSE-streaming test-paper diagnostic with auto-generated study plan
 - Admin dashboard live at `/admin/content`
@@ -510,7 +635,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 17 — Cost Projections at Scale
+## Slide 18 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -530,7 +655,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 18 — Why Now
+## Slide 19 — Why Now
 
 **Three trends converge:**
 
@@ -552,7 +677,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 19 — Roadmap (Near-Term)
+## Slide 20 — Roadmap (Near-Term)
 
 **Content expansion** — 34 → 2000 problems over 90 days
 - Nightly CI already wired (needs workflow YAML upload)
@@ -578,7 +703,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 20 — Invitation
+## Slide 21 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -650,6 +775,7 @@ Where to engage:
 | **Personalization (materials)** | 🔵🔵🔵🔵 | Switching cost rises with upload volume |
 | **Cognitive model (GBrain)** | 🔵🔵🔵 | 6 pillars, explicit design, auditable |
 | **Pedagogical (Lesson framework)** | 🔵🔵🔵🔵🔵 | Research-grounded template + attributed aggregation + layered personalization; compounds with bundle + user materials growth |
+| **Curriculum (admin-owned, compounding)** | 🔵🔵🔵🔵🔵 | Shared-concept strategy pays √N across exams; quality iterations measurably compound via engagement→quality→iteration loop |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

@@ -11,7 +11,7 @@ practice at a marginal cost approaching zero.
 Built initially for GATE Engineering Mathematics but the architecture is
 domain-agnostic — swap the concept graph and seed problems for any subject.
 
-> **Read the 19-slide pitch deck:** [**FEATURES.md**](./FEATURES.md) — every moat in the codebase with metrics.
+> **Read the 21-slide pitch deck:** [**FEATURES.md**](./FEATURES.md) — every moat in the codebase with metrics.
 
 ---
 
@@ -132,7 +132,7 @@ for the tiered breakdown.
 | Document                    | Scope                                       |
 |----------------------------|---------------------------------------------|
 | [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
-| [FEATURES.md](./FEATURES.md) | 19-slide pitch deck: every moat, metrics, cost model |
+| [FEATURES.md](./FEATURES.md) | 21-slide pitch deck: every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute — scrapers, concepts, code, PRs |

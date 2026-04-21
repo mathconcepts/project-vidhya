@@ -4,12 +4,13 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Loader2, Sparkles, Trash2, BookOpen } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useStorageMode } from '@/hooks/useStorageMode';
 import { CameraInput } from '@/components/gate/CameraInput';
+import NextStepChip, { type NextStepData } from '@/components/gate/NextStepChip';
 import { streamGroundedChat } from '@/lib/gbrain/client';
 
 interface ChatMessage {
@@ -29,6 +30,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 export default function ChatPage() {
   const sessionId = useSession();
+  const navigate = useNavigate();
   const { effectiveMode, groundingCount } = useStorageMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -36,6 +38,8 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [attachedImage, setAttachedImage] = useState<{ base64: string; mimeType: string } | null>(null);
+  // next_step offered after an image-inclusive message, keyed by assistant msg id.
+  const [nextSteps, setNextSteps] = useState<Record<string, NextStepData>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -93,6 +97,31 @@ export default function ChatPage() {
     setInput('');
     setAttachedImage(null);
     setIsStreaming(true);
+
+    // If the user attached an image, run multimodal analysis in the background.
+    // This does NOT block the chat response — it's purely for GBrain logging
+    // and to decide whether to offer a polite next-step chip after the answer.
+    if (currentImage) {
+      const assistantId = assistantMsg.id;
+      fetch(`${API_BASE}/api/multimodal/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: currentImage.base64,
+          image_mime_type: currentImage.mimeType,
+          text: text.trim() || undefined,
+          session_id: sessionId,
+          scope: 'mcq-rigorous',
+        }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.next_step) {
+            setNextSteps(prev => ({ ...prev, [assistantId]: data.next_step }));
+          }
+        })
+        .catch(() => { /* silent — never disrupts the chat UX */ });
+    }
 
     try {
       // IndexedDB mode: use client-side GBrain with material grounding.
@@ -252,7 +281,7 @@ export default function ChatPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
                 >
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
@@ -268,6 +297,28 @@ export default function ChatPage() {
                       </span>
                     )}
                   </div>
+                  {msg.role === 'assistant' && nextSteps[msg.id] && !isStreaming && (
+                    <div className="max-w-[85%] w-full">
+                      <NextStepChip
+                        step={nextSteps[msg.id]}
+                        onAccept={(step) => {
+                          if (step.action === 'practice_problems' && step.target.concept_id) {
+                            navigate(`/smart-practice?concept=${step.target.concept_id}`);
+                          } else if (step.action === 'explain_concept' && step.target.concept_id) {
+                            setInput(`Explain ${step.target.concept_id.replace(/-/g, ' ')} with a worked example`);
+                            inputRef.current?.focus();
+                          } else if (step.action === 'build_syllabus') {
+                            navigate('/snap?mode=diagnostic');
+                          } else if (step.action === 'review_misconception' && step.target.concept_id) {
+                            setInput(`Help me understand where I went wrong on ${step.target.concept_id.replace(/-/g, ' ')}`);
+                            inputRef.current?.focus();
+                          } else if (step.action === 'save_to_notes') {
+                            navigate('/materials');
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>

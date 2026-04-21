@@ -142,6 +142,20 @@ export interface MultimodalResponse {
   /** Cost + latency for observability */
   latency_ms: number;
   cost_estimate_usd: number;
+
+  /** Optional single follow-up suggestion. The student dismisses or acts with one tap. */
+  next_step?: {
+    action: 'practice_problems' | 'explain_concept' | 'check_your_work' | 'review_misconception' | 'build_syllabus' | 'save_to_notes';
+    label: string;
+    description: string;
+    dedupe_key: string;
+    target: {
+      concept_id?: string;
+      topic?: string;
+      scope?: string;
+      difficulty?: number;
+    };
+  };
 }
 
 /**

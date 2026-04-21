@@ -28,6 +28,9 @@ import crypto from 'crypto';
 import { analyzeIntent } from '../multimodal/intent-analyzer';
 import { dispatchByIntent } from '../multimodal/intent-handlers';
 import { logMultimodalEvent } from '../multimodal/gbrain-logger';
+import { suggestNextStep } from '../multimodal/next-step-suggester';
+import { runDiagnosticStream } from '../multimodal/diagnostic-analyzer';
+import { openSSE, errorSSE } from '../multimodal/sse-stream';
 import type { MultimodalRequest, MultimodalResponse } from '../multimodal/types';
 
 interface ParsedRequest {
@@ -110,6 +113,10 @@ async function handleAnalyze(req: ParsedRequest, res: ServerResponse): Promise<v
       cost_estimate_usd: INTENT_ANALYSIS_COST,
     };
 
+    // Compute the single (optional) next step to offer — may be null
+    const nextStep = suggestNextStep(analysis, dispatchResult);
+    if (nextStep) response.next_step = nextStep;
+
     // Step 4: Determine if the handling was successful
     const handled = !!(
       response.explanation?.summary ||
@@ -134,6 +141,40 @@ async function handleAnalyze(req: ParsedRequest, res: ServerResponse): Promise<v
   }
 }
 
+// ============================================================================
+// Diagnostic handler — SSE stream for test-paper analysis
+// ============================================================================
+
+async function handleDiagnostic(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const body = (req.body as any) || {};
+
+  // Validate
+  if (!body.image || typeof body.image !== 'string') {
+    return sendError(res, 400, 'image (base64-encoded) required');
+  }
+  if (body.image.length > MAX_IMAGE_BYTES) {
+    return sendError(res, 413, `image too large (max ${MAX_IMAGE_BYTES} bytes base64)`);
+  }
+  if (!body.image_mime_type || !ALLOWED_MIME.has(body.image_mime_type)) {
+    return sendError(res, 400, `image_mime_type must be one of: ${[...ALLOWED_MIME].join(', ')}`);
+  }
+
+  openSSE(res);
+  try {
+    await runDiagnosticStream({
+      image: body.image,
+      image_mime_type: body.image_mime_type,
+      exam_id: body.exam_id,
+      scope: body.scope,
+      session_id: body.session_id,
+      student: body.student,
+    }, res);
+  } catch (err) {
+    errorSSE(res, (err as Error).message);
+  }
+}
+
 export const multimodalRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   { method: 'POST', path: '/api/multimodal/analyze', handler: handleAnalyze },
+  { method: 'POST', path: '/api/multimodal/diagnostic', handler: handleDiagnostic },
 ];

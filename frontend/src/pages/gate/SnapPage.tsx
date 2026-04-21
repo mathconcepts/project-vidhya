@@ -13,16 +13,18 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera, Image as ImageIcon, Upload, Loader2, Sparkles, BookOpen,
   CheckCircle2, XCircle, Brain, Target, HelpCircle, FileText, X,
-  Clock, DollarSign, ArrowRight,
+  Clock, DollarSign, ArrowRight, ClipboardCheck, MinusCircle,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
+import NextStepChip, { type NextStepData } from '@/components/gate/NextStepChip';
 
 // ============================================================================
 // Types mirroring server
@@ -35,6 +37,48 @@ type Intent =
   | 'solution_check'
   | 'expressing_confusion'
   | 'extract_text';
+
+type Mode = 'analyze' | 'diagnostic';
+
+interface DiagnosticProblem {
+  index: number;
+  problem_text: string;
+  student_answer: string | null;
+  correct_answer: string | null;
+  concept_id: string | null;
+  topic: string | null;
+  verdict: 'correct' | 'incorrect' | 'unverifiable' | 'skipped';
+  verification_method: 'wolfram' | 'bundle-match' | 'none';
+  estimated_difficulty: number;
+}
+
+interface DiagnosticSummary {
+  total_attempts: number;
+  correct_count: number;
+  incorrect_count: number;
+  skipped_count: number;
+  unverifiable_count: number;
+  weak_concepts: string[];
+  elapsed_ms: number;
+  next_step: NextStepData | null;
+}
+
+interface SyllabusPreview {
+  scope: string;
+  stats: {
+    total_concepts: number;
+    estimated_days: number;
+    total_study_minutes: number;
+  };
+  intro: string;
+  nodes: Array<{
+    concept_label: string;
+    topic: string;
+    inclusion_reason: string;
+    scheduled_day: number;
+    estimated_study_minutes: number;
+  }>;
+}
 
 interface AnalysisResponse {
   request_id: string;
@@ -72,6 +116,7 @@ interface AnalysisResponse {
   };
   ocr?: { text: string; latex: string };
   strategy_hints?: string[];
+  next_step?: NextStepData;
   latency_ms: number;
   cost_estimate_usd: number;
 }
@@ -166,6 +211,9 @@ async function fileToResizedBase64(file: File, maxDim = 1200): Promise<{ data: s
 
 export default function SnapPage() {
   const sessionId = useSession();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [mode, setMode] = useState<Mode>(searchParams.get('mode') === 'diagnostic' ? 'diagnostic' : 'analyze');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
@@ -173,14 +221,39 @@ export default function SnapPage() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Diagnostic-mode state — populated progressively via SSE
+  const [diagStatus, setDiagStatus] = useState<string | null>(null);
+  const [diagProblems, setDiagProblems] = useState<DiagnosticProblem[]>([]);
+  const [diagSummary, setDiagSummary] = useState<DiagnosticSummary | null>(null);
+  const [diagSyllabus, setDiagSyllabus] = useState<SyllabusPreview | null>(null);
+  const [diagSyllabusRevealed, setDiagSyllabusRevealed] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { trackEvent('page_view', { page: 'snap' }); }, []);
+  useEffect(() => {
+    trackEvent('page_view', { page: 'snap', mode });
+  }, [mode]);
+
+  // Keep URL in sync when user toggles mode
+  useEffect(() => {
+    const current = searchParams.get('mode');
+    if (mode === 'diagnostic' && current !== 'diagnostic') {
+      setSearchParams({ mode: 'diagnostic' }, { replace: true });
+    } else if (mode === 'analyze' && current === 'diagnostic') {
+      setSearchParams({}, { replace: true });
+    }
+  }, [mode, searchParams, setSearchParams]);
 
   const onFileSelected = useCallback((file: File | null | undefined) => {
     setError(null);
     setResponse(null);
+    setDiagProblems([]);
+    setDiagSummary(null);
+    setDiagSyllabus(null);
+    setDiagStatus(null);
+    setDiagSyllabusRevealed(false);
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setError('Please choose an image file (JPEG or PNG).');
@@ -199,10 +272,16 @@ export default function SnapPage() {
     setResponse(null);
     setSelectedIntent(null);
     setError(null);
+    setDiagProblems([]);
+    setDiagSummary(null);
+    setDiagSyllabus(null);
+    setDiagStatus(null);
+    setDiagSyllabusRevealed(false);
   };
 
   const submit = useCallback(async () => {
     if (!imageFile) return;
+    if (mode === 'diagnostic') return submitDiagnostic();
     setLoading(true);
     setError(null);
     setResponse(null);
@@ -237,7 +316,110 @@ export default function SnapPage() {
     } finally {
       setLoading(false);
     }
-  }, [imageFile, caption, selectedIntent, sessionId]);
+  }, [imageFile, caption, selectedIntent, sessionId, mode]);
+
+  // SSE consumer for diagnostic mode — reads the server's server-sent event
+  // stream and progressively builds up state as problems are verified.
+  const submitDiagnostic = useCallback(async () => {
+    if (!imageFile) return;
+    setLoading(true);
+    setError(null);
+    setDiagProblems([]);
+    setDiagSummary(null);
+    setDiagSyllabus(null);
+    setDiagStatus('Preparing…');
+    setDiagSyllabusRevealed(false);
+
+    try {
+      const { data, mimeType } = await fileToResizedBase64(imageFile);
+      const res = await fetch('/api/multimodal/diagnostic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: data,
+          image_mime_type: mimeType,
+          scope: 'mcq-rigorous',
+          exam_id: 'gate-ma',
+          session_id: sessionId,
+        }),
+      });
+      if (!res.ok || !res.body) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      // Standard SSE parser: lines starting with "data: " carry JSON payloads.
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // Split on SSE event delimiter (double newline)
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const evt of events) {
+          const line = evt.split('\n').find(l => l.startsWith('data: '));
+          if (!line) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+          let payload: any;
+          try { payload = JSON.parse(jsonStr); } catch { continue; }
+
+          switch (payload.type) {
+            case 'parsing':
+            case 'start':
+              if (payload.message) setDiagStatus(payload.message);
+              break;
+            case 'problem':
+              setDiagProblems(prev => [...prev, payload as DiagnosticProblem]);
+              break;
+            case 'syllabus':
+              if (payload.syllabus) setDiagSyllabus(payload.syllabus as SyllabusPreview);
+              break;
+            case 'done':
+              setDiagSummary(payload as DiagnosticSummary);
+              setDiagStatus(null);
+              trackEvent('diagnostic_done', {
+                attempts: payload.total_attempts,
+                correct: payload.correct_count,
+              });
+              break;
+            case 'syllabus_error':
+              // Non-fatal — just means we couldn't build a plan, but per-problem
+              // results are still shown.
+              break;
+            case 'error':
+              setError(payload.error || 'Diagnostic failed');
+              setDiagStatus(null);
+              break;
+          }
+        }
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [imageFile, sessionId]);
+
+  // Next-step handler — called when user taps the chip's accept button
+  const handleNextStep = useCallback((step: NextStepData) => {
+    if (step.action === 'practice_problems' && step.target.concept_id) {
+      navigate(`/smart-practice?concept=${step.target.concept_id}`);
+    } else if (step.action === 'explain_concept' && step.target.concept_id) {
+      navigate(`/chat?prompt=Explain+${encodeURIComponent(step.target.concept_id.replace(/-/g, ' '))}+with+a+worked+example`);
+    } else if (step.action === 'build_syllabus') {
+      setDiagSyllabusRevealed(true);
+    } else if (step.action === 'review_misconception' && step.target.concept_id) {
+      navigate(`/chat?prompt=Help+me+understand+where+I+went+wrong+on+${encodeURIComponent(step.target.concept_id.replace(/-/g, ' '))}`);
+    } else if (step.action === 'save_to_notes') {
+      navigate('/materials');
+    }
+  }, [navigate]);
 
   const intentMeta = INTENTS.find(i => i.id === response?.analysis.intent);
 
@@ -249,8 +431,34 @@ export default function SnapPage() {
           Snap
         </h1>
         <p className="text-xs text-surface-500 mt-1">
-          Photograph a problem, your notes, or a textbook page. I'll figure out what to do with it.
+          {mode === 'analyze'
+            ? "Photograph a problem, your notes, or a textbook page. I'll figure out what to do with it."
+            : "Upload a photo of your completed test. I'll grade it and build a study plan for your weak spots."}
         </p>
+      </motion.div>
+
+      {/* Mode toggle — segmented control */}
+      <motion.div variants={fadeInUp} className="inline-flex rounded-lg bg-surface-900 border border-surface-800 p-0.5">
+        <button
+          onClick={() => { setMode('analyze'); clearImage(); }}
+          className={clsx(
+            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
+            mode === 'analyze' ? 'bg-sky-500/15 text-sky-300' : 'text-surface-500 hover:text-surface-300'
+          )}
+        >
+          <Sparkles size={12} />
+          Single problem
+        </button>
+        <button
+          onClick={() => { setMode('diagnostic'); clearImage(); }}
+          className={clsx(
+            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
+            mode === 'diagnostic' ? 'bg-emerald-500/15 text-emerald-300' : 'text-surface-500 hover:text-surface-300'
+          )}
+        >
+          <ClipboardCheck size={12} />
+          Grade full test
+        </button>
       </motion.div>
 
       {/* Image input */}
@@ -300,8 +508,8 @@ export default function SnapPage() {
         </motion.div>
       )}
 
-      {/* Intent picker */}
-      {imageFile && !response && (
+      {/* Intent picker — only in Single Problem (analyze) mode */}
+      {imageFile && mode === 'analyze' && !response && (
         <motion.div variants={fadeInUp} className="space-y-2">
           <p className="text-[10px] text-surface-500 uppercase tracking-wide">
             What should I do? <span className="text-surface-600">(or tap "Auto-detect")</span>
@@ -336,6 +544,175 @@ export default function SnapPage() {
             {loading ? <Loader2 className="animate-spin" size={16} /> : <ArrowRight size={16} />}
             {loading ? 'Analyzing...' : selectedIntent ? 'Analyze' : 'Auto-detect & analyze'}
           </button>
+        </motion.div>
+      )}
+
+      {/* Diagnostic-mode CTA — single, unambiguous call to action */}
+      {imageFile && mode === 'diagnostic' && !diagSummary && (
+        <motion.div variants={fadeInUp} className="space-y-2">
+          <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs text-emerald-200/90 leading-relaxed">
+            I'll read every problem on the page, compare your answers with Wolfram, and suggest a plan for the spots that need work. No pressure — we'll go at your pace.
+          </div>
+          <button
+            onClick={submit}
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="animate-spin" size={16} /> : <ClipboardCheck size={16} />}
+            {loading ? (diagStatus || 'Grading…') : 'Grade my test'}
+          </button>
+        </motion.div>
+      )}
+
+      {/* Diagnostic streaming results */}
+      {mode === 'diagnostic' && (diagStatus || diagProblems.length > 0 || diagSummary) && (
+        <motion.div variants={fadeInUp} className="space-y-3">
+          {diagStatus && (
+            <div className="flex items-center gap-2 text-xs text-surface-400">
+              <Loader2 size={12} className="animate-spin" />
+              <span>{diagStatus}</span>
+            </div>
+          )}
+
+          {diagProblems.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-wide text-surface-500">
+                  Problem-by-problem
+                </p>
+                {diagSummary && (
+                  <p className="text-[10px] text-surface-500">
+                    {diagSummary.correct_count}/{diagSummary.total_attempts} verified correct
+                  </p>
+                )}
+              </div>
+              {diagProblems.map(p => {
+                const verdictMeta = {
+                  correct: { icon: CheckCircle2, label: 'Correct', tone: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25' },
+                  incorrect: { icon: XCircle, label: 'Off', tone: 'text-rose-400 bg-rose-500/10 border-rose-500/25' },
+                  skipped: { icon: MinusCircle, label: 'Skipped', tone: 'text-surface-500 bg-surface-800/40 border-surface-700' },
+                  unverifiable: { icon: HelpCircle, label: 'Needs review', tone: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+                }[p.verdict];
+                const VIcon = verdictMeta.icon;
+                return (
+                  <div key={p.index} className={clsx('p-3 rounded-xl border', verdictMeta.tone)}>
+                    <div className="flex items-start gap-2">
+                      <VIcon size={14} className="shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <p className="text-[10px] uppercase tracking-wide font-semibold">
+                            {p.index + 1}. {verdictMeta.label}
+                          </p>
+                          {p.concept_id && (
+                            <span className="text-[10px] opacity-70">{p.concept_id.replace(/-/g, ' ')}</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-surface-300 line-clamp-2">{p.problem_text}</p>
+                        {(p.student_answer || p.correct_answer) && (
+                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono">
+                            {p.student_answer && (
+                              <span className="text-surface-400">You: {p.student_answer}</span>
+                            )}
+                            {p.correct_answer && p.correct_answer !== p.student_answer && (
+                              <span className="text-emerald-300">Answer: {p.correct_answer}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Summary + offer to reveal syllabus */}
+          {diagSummary && (
+            <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+              <div className="flex items-center gap-2">
+                <Brain size={13} className="text-sky-400" />
+                <h3 className="text-sm font-semibold text-surface-200">How you did</h3>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <p className="text-lg font-bold text-emerald-400">{diagSummary.correct_count}</p>
+                  <p className="text-[10px] text-surface-500">correct</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-rose-400">{diagSummary.incorrect_count}</p>
+                  <p className="text-[10px] text-surface-500">off</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-surface-400">{diagSummary.skipped_count}</p>
+                  <p className="text-[10px] text-surface-500">skipped</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-amber-400">{diagSummary.unverifiable_count}</p>
+                  <p className="text-[10px] text-surface-500">need review</p>
+                </div>
+              </div>
+              {diagSummary.weak_concepts.length > 0 && (
+                <div className="pt-2 border-t border-surface-800">
+                  <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1">Focus areas</p>
+                  <div className="flex flex-wrap gap-1">
+                    {diagSummary.weak_concepts.map(c => (
+                      <span key={c} className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/25">
+                        {c.replace(/-/g, ' ')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* The permission-seeking chip — only if a next step was suggested AND syllabus is ready */}
+          {diagSummary?.next_step && diagSyllabus && !diagSyllabusRevealed && (
+            <NextStepChip
+              step={diagSummary.next_step}
+              onAccept={handleNextStep}
+              acceptLabel="Show the plan"
+            />
+          )}
+
+          {/* Expanded syllabus — only shown after explicit consent via the chip */}
+          {diagSyllabus && diagSyllabusRevealed && (
+            <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
+              <div className="flex items-center gap-2">
+                <BookOpen size={13} className="text-sky-400" />
+                <h3 className="text-sm font-semibold text-surface-200">Your focused plan</h3>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-surface-400">
+                <span>{diagSyllabus.stats.total_concepts} concepts</span>
+                <span>~{diagSyllabus.stats.estimated_days} days</span>
+                <span>~{Math.round(diagSyllabus.stats.total_study_minutes / 60)} study hours</span>
+                <span>scope: {diagSyllabus.scope}</span>
+              </div>
+              <p className="text-xs text-surface-300 leading-relaxed">
+                {diagSyllabus.intro}
+              </p>
+              <div className="space-y-1.5 pt-1">
+                {diagSyllabus.nodes.slice(0, 8).map((n, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-surface-800 text-surface-400 text-[10px] flex items-center justify-center">
+                      {n.scheduled_day}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-surface-200">{n.concept_label}</p>
+                      <p className="text-[10px] text-surface-500">
+                        {n.topic.replace(/-/g, ' ')} · {n.estimated_study_minutes}min · {n.inclusion_reason.replace(/-/g, ' ')}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {diagSyllabus.nodes.length > 8 && (
+                  <p className="text-[10px] text-surface-500 pl-7">
+                    …and {diagSyllabus.nodes.length - 8} more concept{diagSyllabus.nodes.length - 8 === 1 ? '' : 's'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -477,6 +854,14 @@ export default function SnapPage() {
                   ))}
                 </ul>
               </div>
+            )}
+
+            {/* The permission-seeking chip — at most one suggestion, dismissible */}
+            {response.next_step && (
+              <NextStepChip
+                step={response.next_step}
+                onAccept={handleNextStep}
+              />
             )}
 
             <button

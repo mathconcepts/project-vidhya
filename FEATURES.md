@@ -1,10 +1,288 @@
 # Project Vidhya — Features & Moats
 
-*A pitch deck. 23 slides. Every claim grounded in shipped code.*
+*Two audiences, one deck. The first eight slides are for students and the
+people who'll use Vidhya every day. Everything from Slide 9 onward is
+the technical deep-dive for developers, evaluators, and decision-makers
+who need to understand what's under the hood.*
+
+- **Part 1 — For students, teachers, and institutional buyers** (Slides 1–8): what Vidhya *does for you*, in plain language
+- **Part 2 — For developers and technical evaluators** (Slides 9–31): every architectural decision, moat, file reference, and cost metric
 
 ---
 
-## Slide 1 — What Vidhya Is
+# Part 1 — For the people who'll use it
+
+---
+
+## Slide 1 — Meet Vidhya
+
+A tutor that knows your exam, reads your notes, answers whenever you're
+stuck, and respects your privacy.
+
+**What it does, in one breath:** ask a question or snap a photo of a
+problem → get a walkthrough that teaches (not just tells), based on
+your actual syllabus, with the answer double-checked where possible,
+and your notes woven in.
+
+**Where it works:** the web, Telegram, or WhatsApp — same account, same
+progress, across all three.
+
+**What it costs:** free to try (uses Gemini's free tier out of the box).
+If you bring your own AI provider's key, you pay that provider directly
+at their rates. There is no Vidhya subscription.
+
+**What's unusual about it:**
+
+- Your study materials don't leave your device
+- The AI provider is your choice (and swappable in 30 seconds)
+- Lessons are eight bite-sized pieces designed around how memory actually
+  works, not 45-minute video blocks
+- There's no streak counter, no "you've lost your streak!" notification,
+  no gamification — you study when you want
+
+---
+
+## Slide 2 — What you get as a student
+
+**Snap, understand, move on.** Take a photo of any problem — from a
+textbook, a past paper, your own handwritten notebook. Vidhya reads the
+image, identifies which concept is being tested, and walks you through
+the solution. Not "here's the answer" — here's the method, here's the
+intuition, here's where students typically go wrong.
+
+**Lessons that actually teach.** Each concept appears as eight small
+components:
+
+| Component | What it does for you |
+|-----------|---------------------|
+| Hook | Why this matters, in one sentence |
+| Definition | The precise statement, in your exam's terminology |
+| Intuition | A mental picture you can hold onto |
+| Worked example | A real problem, solved step by step |
+| Mini exercise | A quick check that you got it |
+| Common traps | The five ways students usually mess this up |
+| Formal statement | For when you want the rigorous version |
+| Connections | What this connects to, upstream and downstream |
+
+You can skip, linger, or come back to any component. Your time, your pace.
+
+**Your notes, your lessons.** Upload a PDF of your class notes. The app
+turns them into searchable chunks and weaves them into relevant lessons.
+When you're studying eigenvalues, your professor's notes about eigenvalues
+appear alongside the pre-curated content — your voice, your context, your
+examples.
+
+**A study plan that matches reality.** Upload a photo of your last mock
+test. Vidhya grades it problem-by-problem, maps your weak spots to the
+syllabus, and builds you a focused plan. "The next 14 days, these 12
+concepts, in this order." Shown only when you ask for it — no unsolicited
+plans.
+
+**Review at the right moment.** Concepts you've seen before come back at
+spaced intervals (based on real memory research), so things you learned
+three weeks ago don't slip away the week of the exam.
+
+---
+
+## Slide 3 — A day in the life
+
+**8:30 AM, bus ride to college.** You open Telegram, tap the Vidhya bot,
+paste a problem you saw in last night's reading. A walkthrough comes
+back. You read it on the way in.
+
+**2:15 PM, library.** You're stuck on a multivariable calculus problem.
+You snap a photo with your phone. The app reads your handwriting,
+identifies it as a Lagrange multiplier question, and walks you through
+setting up the equations. It flags the common trap: "students forget
+to check all the stationary points."
+
+**7:00 PM, home.** You finished a mock test this afternoon. You upload
+a photo of your answer sheet. Vidhya grades it, shows you the three
+concepts you fumbled, and offers a focused 20-minute review plan.
+You accept.
+
+**11:45 PM, before bed.** You can't fall asleep. You open the app and
+tap on a concept you've been meaning to review. A 90-second intuition
+explainer. A single worked example. Done. You close the app and
+actually fall asleep.
+
+**3:20 AM, insomniac study session.** You have a specific question
+about whether the Cauchy-Riemann equations are necessary or sufficient.
+You ask in chat. You get a correct, careful answer that explicitly
+calls out what your exam covers and what's out of scope.
+
+No streaks were counted. No notifications were sent. The app didn't
+manipulate you.
+
+---
+
+## Slide 4 — How this isn't just another AI chatbot
+
+**It teaches. It doesn't just answer.** Type "find the eigenvalues of
+[[2,1],[1,2]]" into ChatGPT and you get a number. Ask the same in
+Vidhya and you get a lesson: what eigenvalues *are*, why this 2×2
+matrix has shortcuts, the sum-and-product check, the common sign error.
+If all you wanted was the number, you can skip to it in one tap. But
+the teaching is there if you want it.
+
+**It sticks to your syllabus.** LLMs will happily explain infinite-
+dimensional operator theory when you asked about simple matrix
+eigenvalues. Vidhya knows your exam's scope, and filters out material
+that won't be tested. Your study time doesn't leak into topics you
+don't need.
+
+**Answers are verified, not invented.** For computational problems,
+Vidhya runs the answer through Wolfram Alpha — a computer algebra
+system that doesn't hallucinate. You see an emerald "verified" badge
+when this has happened. For past-paper problems, the answers were
+already pre-checked before you ever saw them.
+
+**Your materials shape the lessons.** Most AI tutors treat your notes
+as context to be politely ignored. Vidhya gives user-uploaded materials
+the highest priority in composing lessons — because what YOU wrote is
+the most resonant.
+
+**It doesn't game you.** No streaks, no XP, no "you've been away for 3
+days!" emails. It's a tool. You pick it up when you need it. The app
+has no incentive to increase your session time.
+
+---
+
+## Slide 5 — Your privacy, in plain language
+
+**Your study materials never leave your device.** When you upload a PDF
+of your notes, it's parsed entirely in your browser. The text is
+embedded (turned into numbers for similarity search) entirely in your
+browser, using a 22 MB model that runs client-side. The chunks and
+embeddings are stored in your browser's IndexedDB storage. Nothing
+is uploaded to our servers.
+
+**Your progress lives locally by default.** Which problems you've tried,
+which lessons you've finished, where your weak spots are — all in your
+browser's storage. If you sign in (optional), this can sync across your
+own devices via a small user record on your deployment's server. Even
+then, the detailed progress data is still yours.
+
+**Your AI key stays in your browser.** When you configure your own AI
+provider (Gemini, Claude, OpenAI, Ollama, and more), the key is stored
+in your browser's localStorage. It's attached to outbound API calls
+only — the server reads it once per request and forgets it. Nothing
+about your key is persisted on our side.
+
+**We don't track you.** No analytics, no heatmaps, no behavioral
+profiling, no ad pixels. The only telemetry is anonymized aggregate
+counts of which content tier handled which request (to tune
+performance) — no personal information attached.
+
+**You can delete everything.** Clear your browser's site data for the
+Vidhya domain, and your local state is gone. Sign out from your account
+(if you signed in) and your user record can be deleted by your admin.
+
+---
+
+## Slide 6 — What it costs you (spoiler: not much)
+
+**To use Vidhya as a student:**
+
+- **Free tier (default):** $0. Vidhya ships with a bundled content
+  library — 82 concepts, verified problems, pedagogical explainers.
+  This handles 80% of what students actually ask without ever touching
+  an LLM.
+- **Your own AI (optional):** You plug in your own key (Google Gemini,
+  Claude, OpenAI, etc.) and you pay your AI provider directly. Google
+  Gemini's free tier is very generous — most students never exceed it.
+- **Local models (optional):** Run everything offline via Ollama on
+  your laptop. No keys, no cost, just the price of electricity.
+
+**To run Vidhya for a class or institution:**
+
+- **Infrastructure:** $5/month VPS (DigitalOcean, Hetzner, Linode) is
+  plenty for up to ~50 concurrent students. Render's free tier also
+  works for small deployments.
+- **Licensing:** $0. Vidhya is MIT-licensed.
+- **LLM costs:** $0 if you rely on the bundled content only. A few
+  cents per student per month if you enable LLM generation for
+  novel questions. Zero if each student brings their own key.
+
+**Comparison to other adaptive-learning products:**
+
+| Product category | Typical cost per student per month |
+|------------------|-----------------------------------|
+| Coaching institute (in person) | ₹1,000–₹5,000 ($12–$60) |
+| Premium adaptive-learning app | $15–$30 |
+| AI tutor apps (LLM-per-response) | $5–$20 |
+| **Vidhya** | **$0 (free AI tier) to $0.30 (your own key)** |
+
+---
+
+## Slide 7 — Who can do what
+
+Vidhya has four roles. Most students will never notice this — they use
+the app and it just works. The roles matter for classrooms and
+institutional deployments.
+
+| Role | Who they are | What they can do |
+|------|-------------|-----------------|
+| **Anonymous** | Casual visitor | Use the app fully. No account. State lives in their browser. |
+| **Student** | Signed-in user | Plus: cross-device sync, chat-app access (Telegram/WhatsApp) |
+| **Teacher** | Promoted by admin | Plus: see their roster of students, view their progress |
+| **Admin** | Promoted by owner | Plus: manage users, assign teachers, edit curriculum, view quality dashboards |
+| **Owner** | First person to sign in | Plus: transfer ownership, configure deployment-wide settings |
+
+**The first person who signs in to a fresh deployment automatically
+becomes the owner.** No admin panel to configure beforehand, no database
+to provision. The deployment is "ownerless" until someone uses it, at
+which point they claim it.
+
+If the wrong person claimed ownership first, anyone with shell access
+to the server can reset it via `npx tsx scripts/admin/assign-owner.ts
+--email you@example.com`. Filesystem control IS the ultimate ownership
+proof.
+
+---
+
+## Slide 8 — Getting started
+
+**As a student:**
+
+1. Open the app
+2. (Optional) Sign in with Google for cross-device sync and chat-app access
+3. (Optional) Upload your class notes as PDFs
+4. Ask a question, or tap the camera to snap a problem
+
+That's it. Three of those four steps are optional.
+
+**As a teacher:**
+
+1. Sign in to the deployment your institution set up
+2. Ask your admin to promote you (they visit `/admin/users` and change
+   your role from student to teacher)
+3. Visit `/admin/users` to see your student roster
+4. As admin assigns students to you, they appear under your roster
+
+**As an admin or institutional owner:**
+
+1. Install on your infrastructure — follow `INSTALL.md` Path 4 (5-step
+   install with Google OAuth setup)
+2. You sign in first; you become the owner automatically
+3. Visit `/owner/settings` to configure Telegram/WhatsApp channels if
+   desired
+4. Visit `/admin/users` as users sign in; promote them to admin or
+   teacher as appropriate
+5. (Optional) Define your exam's curriculum as a YAML file in
+   `data/curriculum/` — see the shipped `gate-ma.yml` as a template
+
+---
+
+# Part 2 — For developers and technical evaluators
+
+*The rest of this deck covers every architectural decision, each moat
+in the codebase, and the metrics behind them. For a shorter technical
+summary, see the bottom of PITCH.md.*
+
+---
+
+## Slide 9 — What Vidhya Is
 
 > **Adaptive learning at near-zero marginal cost.**
 
@@ -20,7 +298,7 @@ modeled with a 15-attribute Bayesian cognitive framework.
 
 ---
 
-## Slide 2 — The Problem
+## Slide 10 — The Problem
 
 Edtech AI products burn money on LLM calls they don't need.
 
@@ -39,7 +317,7 @@ pre-computed once and cached forever.**
 
 ---
 
-## Slide 3 — The Solution in One Diagram
+## Slide 11 — The Solution in One Diagram
 
 ```
      Every content request flows through FOUR TIERS.
@@ -70,7 +348,7 @@ pre-computed once and cached forever.**
 
 ---
 
-## Slide 4 — The Cost Moat (Core Defensibility)
+## Slide 12 — The Cost Moat (Core Defensibility)
 
 Four compounding cost-reduction mechanisms in the shipped code:
 
@@ -95,7 +373,7 @@ All three scenarios are achievable today — last one is the default.
 
 ---
 
-## Slide 5 — The Privacy Moat (Local-First)
+## Slide 13 — The Privacy Moat (Local-First)
 
 The runtime is **DB-less**. Student state lives on-device.
 
@@ -131,7 +409,7 @@ The runtime is **DB-less**. Student state lives on-device.
 
 ---
 
-## Slide 6 — The Quality Moat (Computationally Verified)
+## Slide 14 — The Quality Moat (Computationally Verified)
 
 Every mathematical answer in the bundle can be independently verified
 against Wolfram Alpha.
@@ -171,7 +449,7 @@ numerical tolerance (0.1%).
 
 ---
 
-## Slide 7 — The Personalization Moat (Cognitive Model)
+## Slide 15 — The Personalization Moat (Cognitive Model)
 
 Not a chatbot. A **cognitive architecture** with six explicit pillars.
 
@@ -190,7 +468,7 @@ browser — no server round-trip.
 
 ---
 
-## Slide 8 — The Materials Moat (Your Notes, Your Model)
+## Slide 16 — The Materials Moat (Your Notes, Your Model)
 
 Students can upload PDFs and DOCXs. Vidhya parses them **entirely in the
 browser**, embeds chunks with transformers.js, stores them in IndexedDB,
@@ -214,7 +492,7 @@ chunk → embed → index).
 
 ---
 
-## Slide 9 — The Content Moat (Curated + Attributed + Compounding)
+## Slide 17 — The Content Moat (Curated + Attributed + Compounding)
 
 The bundle grows every night via CI. Each source is license-compliant.
 
@@ -247,7 +525,7 @@ The bundle grows every night via CI. Each source is license-compliant.
 
 ---
 
-## Slide 10 — The Observability Moat
+## Slide 18 — The Observability Moat
 
 **What gets measured gets kept cheap.**
 
@@ -279,7 +557,7 @@ Shipped: `src/content/telemetry.ts`, `src/api/content-routes.ts`,
 
 ---
 
-## Slide 11 — The Operational Moat (Graceful Degradation)
+## Slide 19 — The Operational Moat (Graceful Degradation)
 
 **Vidhya runs with zero external services.**
 
@@ -308,7 +586,7 @@ dependency.
 
 ---
 
-## Slide 12 — The UX Moat (No-Nagging, Permission-First)
+## Slide 20 — The UX Moat (No-Nagging, Permission-First)
 
 Most LLM edtech products act on the student. Vidhya acts **with** them.
 
@@ -354,7 +632,7 @@ Vidhya's chips are scarce. When one appears, it's because the system has actuall
 
 ---
 
-## Slide 13 — The Pedagogical Moat (Research-Grounded Atomic Content)
+## Slide 21 — The Pedagogical Moat (Research-Grounded Atomic Content)
 
 Every Vidhya lesson is built from an **8-component pedagogical template**
 where every slot maps to a research-backed learning-science principle.
@@ -430,7 +708,7 @@ or guilted into reviewing. Consistent with Slide 12's UX contract.
 
 ---
 
-## Slide 14 — The Curriculum Moat (Admin-Owned, Shared-Concept, Compounding Quality)
+## Slide 22 — The Curriculum Moat (Admin-Owned, Shared-Concept, Compounding Quality)
 
 The Lesson framework (Slide 13) decides *how* to teach. The Curriculum
 framework decides *what* to teach, *per exam*, and measures whether the
@@ -549,7 +827,7 @@ Same commands for any exam. Everything is data-driven.
 
 ---
 
-## Slide 15 — The LLM-Agnostic Moat (BYO-Key, Provider-as-Data)
+## Slide 23 — The LLM-Agnostic Moat (BYO-Key, Provider-as-Data)
 
 Most LLM products either (a) lock you into one provider ("Powered by
 OpenAI") or (b) let you pick at deploy-time via a complex YAML config
@@ -658,7 +936,7 @@ the browser simply override the server default for their session.
 
 ---
 
-## Slide 16 — The Roles & Multi-Channel Moat (Flat-File Identity, Three Access Surfaces)
+## Slide 24 — The Roles & Multi-Channel Moat (Flat-File Identity, Three Access Surfaces)
 
 Most adaptive-learning products are either (a) single-user self-study
 tools with no identity layer, or (b) enterprise systems with heavy
@@ -813,7 +1091,7 @@ The alternative (google-auth-library, grammY, jsonwebtoken) would add
 
 ---
 
-## Slide 18 — Technical Differentiators (Head-to-Head)
+## Slide 25 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -848,7 +1126,7 @@ The alternative (google-auth-library, grammY, jsonwebtoken) would add
 
 ---
 
-## Slide 18 — Tech Stack
+## Slide 26 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -868,7 +1146,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 19 — What's Shipped (at v2.8.0)
+## Slide 27 — What's Shipped (at v2.8.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -909,7 +1187,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 20 — Cost Projections at Scale
+## Slide 28 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -929,7 +1207,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 21 — Why Now
+## Slide 29 — Why Now
 
 **Three trends converge:**
 
@@ -951,7 +1229,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 22 — Roadmap (Near-Term)
+## Slide 30 — Roadmap (Near-Term)
 
 **Content expansion** — 34 → 2000 problems over 90 days
 - Nightly CI already wired (needs workflow YAML upload)
@@ -977,7 +1255,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 23 — Invitation
+## Slide 31 — Invitation
 
 **Project Vidhya is open source under MIT.**
 

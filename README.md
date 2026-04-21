@@ -1,25 +1,59 @@
 # Project Vidhya
 
-**Cost-minimal, local-first adaptive learning engine with a four-tier content cascade.**
+**Your AI study partner — knows your exam, reads your notes, verifies every answer, and respects your privacy.**
 
-Vidhya is a learning platform built on the premise that *the right content at
-the right moment costs nothing when delivered well*. It combines a DB-less
-runtime architecture, client-side embeddings, pre-verified content bundles,
-and computational verification via Wolfram Alpha to deliver personalized
-practice at a marginal cost approaching zero.
+Vidhya is a learning app that actually teaches. Upload your class notes,
+snap a photo of any problem, and get a step-by-step explanation — with
+the common traps flagged, the common misconceptions called out, and the
+answer double-checked by Wolfram Alpha where possible. Your materials
+and progress stay on your device. The AI provider is your choice.
 
-Built initially for GATE Engineering Mathematics but the architecture is
-domain-agnostic — swap the concept graph and seed problems for any subject.
+Built initially for GATE Engineering Mathematics; the architecture is
+domain-agnostic — any exam with a defined syllabus works.
 
-> **Read the 23-slide pitch deck:** [**FEATURES.md**](./FEATURES.md) — every moat in the codebase with metrics.
+> **New to Vidhya?** Read the [**30-second pitch (PITCH.md)**](./PITCH.md) for what it does for you as a student. \
+> **Technical evaluator?** The [**full technical deck (FEATURES.md)**](./FEATURES.md) covers every architectural decision.
 
 ---
 
-## Why Vidhya
+## What Vidhya does for you
 
-Most adaptive learning products spend ~$2 per active daily user on LLM
-calls. Vidhya spends ~$0.01 by routing every content request through a
-four-tier cascade:
+**Study anything from your syllabus, instantly.** Ask a question in chat, or
+upload a photo of a problem. You'll get a walkthrough — not just the
+answer, but the method, the intuition, and the common mistakes to avoid.
+
+**Lessons that actually stick.** Every concept is taught in 8 bite-sized
+components (hook → definition → intuition → worked example → mini
+exercise → common traps → formal statement → connections). Designed around
+how human memory actually works, not around video lecture formats.
+
+**Works on a slow internet.** The app pre-loads the 80% of questions most
+students actually ask. You can keep studying when your wifi drops.
+
+**Reach it from anywhere.** Web, Telegram, or WhatsApp — the same Vidhya
+account, the same progress, across all three.
+
+**Your data stays yours.** Materials you upload, questions you ask, progress
+you make — all stay in your browser or on your local server. Nothing leaves
+unless you explicitly sync it.
+
+**Free to try, your AI your choice.** Use the free Gemini tier, or plug in
+your own key from any of 8 providers (Claude, OpenAI, Groq, Ollama local,
+and more). Your keys stay in your browser; we never see them.
+
+---
+
+## Why institutions deploy it
+
+- **Free to install and run** — no per-seat licensing, $5/month VPS covers a class of 50
+- **You own your users and data** — flat-file user directory on your server; nothing leaves
+- **Three access channels** — students use web, Telegram, or WhatsApp depending on what they prefer
+- **Customizable curriculum** — define any exam as a YAML file; works for GATE, JEE, CSIR-NET, custom in-house exams, anything with a syllabus
+- **Role-based admin** — owner/admin/teacher/student hierarchy with the first sign-in auto-becoming owner
+
+---
+
+## How it works under the hood (the short version)
 
 | Tier | Source                                    | Cost per request | Typical hit rate |
 |------|-------------------------------------------|------------------|------------------|
@@ -131,7 +165,7 @@ for the tiered breakdown.
 | Document                    | Scope                                       |
 |----------------------------|---------------------------------------------|
 | [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
-| [FEATURES.md](./FEATURES.md) | 23-slide pitch deck: every moat, metrics, cost model |
+| [FEATURES.md](./FEATURES.md) | 31-slide deck (8 for students, 23 technical): every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
 | [docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) | BYO-key setup: 8 providers, cascading role defaults, privacy model |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |

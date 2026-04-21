@@ -18,6 +18,7 @@ import { setAnalyticsSession, trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { MasteryRing } from '@/components/gate/MasteryRing';
 import { Confetti } from '@/components/gate/Confetti';
+import { StudentWelcomeCard, hasSeenWelcome } from '@/components/gate/StudentWelcomeCard';
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart,
   Hash, Repeat, Layers, Share2, Navigation,
@@ -236,6 +237,13 @@ export function GateHome() {
           className="w-full max-w-md flex flex-col items-center gap-5 text-center"
           initial="hidden" animate="visible" variants={staggerContainer}
         >
+          {/* Welcome card on first visit — discovery over setup */}
+          {!hasSeenWelcome() && (
+            <motion.div variants={fadeInUp} className="w-full text-left">
+              <StudentWelcomeCard />
+            </motion.div>
+          )}
+
           <motion.div variants={fadeInUp}>
             <motion.div
               animate={prefersReducedMotion ? {} : { opacity: [0.6, 1, 0.6] }}
@@ -247,10 +255,10 @@ export function GateHome() {
 
           <motion.div variants={fadeInUp} className="space-y-2">
             <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-              Set up your study plan
+              Want a structured study plan?
             </h2>
             <p className="text-[15px] text-surface-500 leading-relaxed">
-              Takes 2 minutes. We'll tell you exactly what to study.
+              Takes 2 minutes. I'll figure out exactly what you should study first.
             </p>
           </motion.div>
 
@@ -260,7 +268,7 @@ export function GateHome() {
               className="w-full h-11 rounded-[10px] bg-emerald-500 text-white text-[15px] font-semibold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
               whileTap={{ scale: 0.97 }}
             >
-              Get started
+              Build my plan
             </motion.button>
           </motion.div>
         </motion.div>

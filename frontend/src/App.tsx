@@ -49,6 +49,7 @@ const SignInPage = lazy(() => import('@/pages/gate/SignInPage'));
 const UserAdminPage = lazy(() => import('@/pages/gate/UserAdminPage'));
 const OwnerSettingsPage = lazy(() => import('@/pages/gate/OwnerSettingsPage'));
 const TeacherRosterPage = lazy(() => import('@/pages/gate/TeacherRosterPage'));
+const AdminDashboardPage = lazy(() => import('@/pages/gate/AdminDashboardPage'));
 const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
 
 const PageLoader = () => (
@@ -98,6 +99,8 @@ export default function App() {
           <Route path="admin/users" element={<UserAdminPage />} />
           <Route path="owner/settings" element={<OwnerSettingsPage />} />
           <Route path="teacher/roster" element={<TeacherRosterPage />} />
+          <Route path="owner/dashboard" element={<AdminDashboardPage />} />
+          <Route path="admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="admin/content" element={<ContentAdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>

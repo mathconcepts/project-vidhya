@@ -42,228 +42,111 @@ at their rates. There is no Vidhya subscription.
 
 ---
 
-## Slide 2 — From exam-prep pain to exam-prep bliss
+## Slide 2 — From exam-prep pain to exam-day takeaway
 
-Most students don't need another app. They need relief from a specific
-set of pains that every prep cycle produces. This is the before/after
-Vidhya is built around.
+Every Indian exam-prep cycle produces a specific set of pains. This slide is the before/after the system is built around — the pain you recognise, and the concrete **takeaway** Vidhya delivers to your pocket. Every takeaway is tied to code that ships today.
 
-### "I don't know if I'm actually ready for my exam."
+### *"Pata nahi exam mein kya aayega — I don't know if I'm really ready."*
 
 Open any study app and you see a vague progress bar. 60% of what, exactly?
 
-**In Vidhya:** the moment you open the app, you see it in plain
-numbers. *12 concepts mastered. 15 in progress. 3 struggling.* Per
-concept, real, honest. When your aunt asks how prep is going, you
-have an actual answer.
+**Takeaway:** The moment you open Vidhya, you see *"12 concepts mastered · 15 in progress · 3 struggling."* Per concept. Real numbers. When your aunt at a wedding asks *"Beta, preparation kaisi chal rahi hai?"*, you have an actual answer — not a nervous guess.
 
-### "The syllabus feels overwhelming — I don't know where to start."
+### *"Syllabus itna bada hai — where do I even start today?"*
 
-Staring at 100+ topics across 8 subjects, not knowing which matter
-most, which to do first, or what your weak spots are.
+Staring at 100+ topics across 8 subjects, not knowing which matter most, which to do first, or what your weak spots really are.
 
-**In Vidhya:** when your target exam is set, the system filters
-everything through that exam's topic weightings and your current
-mastery. You see **three** priority concepts for today. Not a hundred.
-Three. Ranked by what matters most for your exam, weighted by what
-you haven't mastered yet.
+**Takeaway:** Three priority concepts for today, ranked by your exam's topic weight × your current mastery. An hour of focused work. Not a hundred-item to-do list. A to-*done* list you can actually finish.
 
-### "My exam is in three days. Every app tells me to take a break."
+### *"Exam 3 din door hai, aur app keh raha hai 'take a break'."*
 
-You're stressed. You're getting answers wrong. The app pops up a
-chirpy "time to recharge!" suggestion. Two days before your exam.
-It feels tone-deaf because it is.
+You're stressed. You're getting answers wrong. The app pops up a chirpy *"time to recharge!"* Two days before your exam. It feels tone-deaf because it is.
 
-**In Vidhya:** the system reads the urgency. Six months out and five
-wrong in a row → suggest a break (mental fatigue is real). Three days
-out and five wrong in a row → switch to a quick lesson review. The
-advice shifts as your situation shifts. No one tells you to step away
-48 hours before your exam.
+**Takeaway:** Advice that reads your urgency. Six months out and five wrong in a row → break suggested (mental fatigue is real). Three days out and five wrong in a row → switched to a quick lesson review instead. The advice shifts as your situation shifts. No one tells you to step away 48 hours before your exam.
 
-### "I watch 45-minute video lectures and still don't get the concept."
+### *"45-minute lectures dekh liye, phir bhi nahi samjha."*
 
-The lecturer explains in the wrong order. You can't rewind without
-scrubbing. You don't know which 45 minutes contained the 90 seconds
-you actually needed.
+The lecturer explains in the wrong order. You can't rewind without scrubbing. You don't know which 45 minutes contained the 90 seconds you actually needed.
 
-**In Vidhya:** every concept is eight small pieces — hook, definition,
-intuition, worked example, mini exercise, common traps, formal
-statement, connections. You skip what you already know. You linger
-on what you don't. You can exit after two minutes if that's all you
-needed. Designed around how memory actually works, not how video
-platforms monetize watch time.
+**Takeaway:** Every concept is eight small pieces — hook, definition, intuition, worked example, mini exercise, common traps, formal statement, connections. You skip what you already know. You linger on what you don't. You exit after two minutes if that's all you needed. Two focused minutes beat forty unfocused ones every time.
 
-### "It's 2am. I'm stuck on a problem. I have nowhere to turn."
+### *"2 baje raat, atka hua hoon, puchhun toh kisko?"*
 
-Your teacher is asleep. Your classmates are asleep. Stack Overflow
-doesn't do your specific problem. You're alone with your confusion.
+Your teacher is asleep. Your WhatsApp study group is asleep. Quora doesn't have your specific problem. You're alone with your confusion.
 
-**In Vidhya:** snap a photo. Vidhya reads your handwriting, identifies
-which concept is being tested, walks you through the solution, flags
-where students usually go wrong. 2am on a Tuesday gets the same
-quality as 2pm on a Saturday. Use Telegram, WhatsApp, or the web app
-— all three work equally well.
+**Takeaway:** Snap a photo. Vidhya reads your handwriting, identifies the concept being tested, walks you through the solution, flags where students usually go wrong. 2am on a Tuesday gets the same quality as 2pm on a Saturday. Telegram, WhatsApp, or the web app — all three work equally well on Jio 4G or your college wifi.
 
-### "I paid for a subscription but I don't know what I'm actually getting."
+### *"Plan le liya hai — exactly kya milta hai, pata nahi."*
 
-Your institute bundled multiple exam prep plans. The benefits are in
-a PDF somewhere. You never read the PDF. You're preparing for one
-exam while unknowingly having access to three more.
+Your institute bundled multiple exam prep plans. The benefits are in a PDF somewhere. You never read the PDF. You're preparing for one exam while unknowingly having access to three more.
 
-**In Vidhya:** the first thing you see on sign-in is a
-**"🎁 Giveaway · included in your plan"** banner listing every bonus
-exam in your bundle. Each bonus shows exactly how much you've already
-covered through your primary prep: *"JEE Advanced · 42% covered —
-you're already well on your way."* The bundle is celebrated, not
-buried. And the coverage percentage updates live as you study.
+**Takeaway:** The first thing you see on sign-in is a **🎁 Giveaway · included in your plan** banner listing every bonus exam in your bundle. Each bonus shows exactly how much you've already covered through your primary prep: *"JEE Advanced · 42% covered — you're already well on your way."* The bundle is celebrated, not buried. And the coverage percentage updates live as you study.
 
-### "I keep forgetting things I studied weeks ago."
+### *"Pichhle mahine jo padha, ab yaad hi nahi."*
 
-By exam week, everything from month one is a blur. You can't tell if
-you've genuinely forgotten something or if you never learned it
-properly in the first place.
+By exam week, everything from month one is a blur. You can't tell if you've genuinely forgotten something or if you never learned it properly in the first place.
 
-**In Vidhya:** concepts surface at spaced intervals based on actual
-memory research (not "streaks"). The week of your exam, stuff you
-learned three months ago is still there — because the system
-resurfaced it at the mathematically-right moments across those
-three months.
+**Takeaway:** Concepts surface at spaced intervals based on actual memory research (not "streaks"). The week of your exam, stuff you learned three months ago is still there — because the system resurfaced it at the mathematically-right moments across those three months.
 
-### "AI chatbots hallucinate. I don't trust the numbers."
+### *"ChatGPT confidently bolta hai galat number."*
 
-ChatGPT confidently tells you the eigenvalues of a 3×3 matrix. You
-carefully copy them to your notebook. They're wrong. You don't
-discover this until the mock test.
+An AI chatbot tells you the eigenvalues of a 3×3 matrix. You carefully copy them into your notebook. They're wrong. You don't discover this until the mock test.
 
-**In Vidhya:** where possible, every answer runs through Wolfram
-Alpha. Past papers are pre-checked. The AI doesn't get to invent
-numbers. When it's uncertain, it says "I'm not sure" instead of
-hallucinating. When it's wrong, you can see exactly why.
+**Takeaway:** Where possible, every answer runs through Wolfram Alpha. Past papers are pre-checked. The AI doesn't get to invent numbers. When it's uncertain, it says *"I'm not sure"* instead of hallucinating a clean-looking wrong answer. When it's wrong, you can see exactly why.
 
-### "Study apps use streaks, badges, and guilt-trip notifications to manipulate me."
+### *"Apps streaks aur notifications se guilt-trip karte hain."*
 
-You miss one day. The app tells you you've "lost your 47-day streak."
-Now studying feels like a chore instead of a choice. The designers
-are optimizing for your DAU count, not your exam score.
+You miss one day. The app tells you you've *"lost your 47-day streak."* Now studying feels like a chore instead of a choice. The designers are optimising for your DAU count, not your exam score.
 
-**In Vidhya:** zero streaks. Zero badges. Zero "you lost your streak"
-notifications. Zero gamification. We considered these things and
-deliberately left them out. You study when you want. The app doesn't
-try to trick you into opening it.
+**Takeaway:** Zero streaks. Zero badges. Zero "you lost your streak" notifications. Zero gamification. We considered these things and deliberately left them out. You study when you want. The app doesn't try to trick you into opening it.
 
-### "I worry every app wants my data. I don't want my weak areas in some corporate database."
+### *"Mera data kisi corporate database mein chala jaayega."*
 
-You don't want your "struggled with eigenvalues for three weeks" data
-to live in a startup's S3 bucket that gets acquired by a recruiter
-five years from now.
+You don't want your *"struggled with eigenvalues for three weeks"* data living in a startup's S3 bucket that gets acquired by a recruiter five years from now.
 
-**In Vidhya:** materials you upload stay in your browser. Progress
-lives on your device. Your AI key (if you use one) never touches
-our servers. This isn't a marketing claim — it's how the app is
-architected. There's no server-side database of student progress to
-leak, subpoena, or sell.
+**Takeaway:** Materials you upload stay in your browser. Progress lives on your device. Your AI key (if you use one) never touches our servers. This isn't a marketing claim — it's how the app is architected. There's no server-side database of student progress to leak, subpoena, or sell.
 
-### "I don't have access to top-tier teaching where I live."
+### *"Kota-level teaching mere shehar mein nahi hai."*
 
-Students in major metros have access to Kota, Bangalore, Chennai,
-and Mumbai's best coaching institutes. Students in smaller cities
-often don't. The quality of the teaching has historically been
-geography-bound — which is a problem when your exam isn't.
+Students in tier-1 cities have access to the best coaching institutes — Allen, FIITJEE, Bansal, Aakash. Students in tier-2 and tier-3 cities often don't. Teaching quality has historically been geography-bound — which is a problem when your exam isn't.
 
-**In Vidhya:** the lesson content doesn't change based on where
-you are. Every concept is written with the same structure, the same
-depth, the same explicit trap-flagging that you'd find in
-well-regarded prep material. Your pin code doesn't filter your
-lesson quality. What changes isn't the teaching — it's your access
-to it. That access is now uniform.
+**Takeaway:** The lesson content doesn't change based on where you are. Every concept is written with the same structure, the same depth, the same explicit trap-flagging that you'd find in well-regarded prep material. Your pin code doesn't filter your lesson quality. What changes isn't the teaching — it's your access to it. That access is now uniform.
 
-*To be precise: we don't claim IIT faculty personally wrote every
-lesson. We claim the structural rigor of the content — the 8-component
-lesson format, the concept graph with prerequisite links, the
-Wolfram verification — meets the bar that well-regarded prep
-material sets. Readers who click through to the framework docs
-can audit every design decision.*
+*To be precise: we don't claim IIT faculty personally wrote every lesson. We claim the structural rigor of the content — the 8-component lesson format, the concept graph with prerequisite links, the Wolfram verification — meets the bar well-regarded prep material sets. Readers who click through to the framework docs can audit every design decision.*
 
-### "My foundations are shaky, and it's making advanced topics feel impossible."
+### *"11th ki basics kachi reh gayi, ab advanced topics pahad lag rahe hain."*
 
-You're trying to learn Fourier series, but you never fully got
-trigonometric identities. The advanced topic keeps tripping you up,
-not because of the new material, but because of a gap four
-prerequisites upstream. Most study apps just show you the solution
-to the surface-level problem again.
+You're trying to learn Fourier series, but you never fully got trigonometric identities in 11th. The advanced topic keeps tripping you up — not because of the new material, but because of a gap four prerequisites upstream. Most apps just re-show you the solution to the surface problem.
 
-**In Vidhya:** when your wrong answer has a signature that suggests
-a prerequisite issue, the system walks the concept graph for that
-topic, finds the specific upstream concept your mastery model shows
-as weakest, and explicitly routes you there first. *"Review
-trigonometric identities before trying another Fourier series
-problem."* The misconception gets repaired where it actually lives —
-not where it happens to be visible. Once the foundation stops
-slipping, advanced topics unlock.
+**Takeaway:** When your wrong answer has a signature that suggests a prerequisite issue, the system walks the concept graph for that topic, finds the specific upstream concept your mastery model shows as weakest, and explicitly routes you there first. *"Review trigonometric identities before trying another Fourier series problem."* The misconception gets repaired where it actually lives — not where it happens to be visible. Once the foundation stops slipping, advanced topics unlock.
 
-*This is the `findWeakestPrereq` + `review_prereq` flow shipped
-in v2.9.0's GBrain Integration Bridge. The concept graph has real
-prerequisite edges; the mastery model tracks real per-concept
-scores; the routing logic is deterministic.*
+*This is the `findWeakestPrereq` + `review_prereq` flow shipped in v2.9.0's GBrain Integration Bridge. The concept graph has real prerequisite edges; the mastery model tracks real per-concept scores; the routing logic is deterministic.*
 
-### "Coaching lectures move at the average pace — I'm either bored or lost."
+### *"Coaching class average pace pe chalti hai — main kabhi bore, kabhi peeche."*
 
-A coaching institute has to move at a pace that works for the
-average student in the batch. If you're above that pace, you're
-bored and lose momentum. If you're below, you're lost and lose
-confidence. The class schedule optimizes for the batch, not for you.
+A coaching institute has to move at a pace that works for the average student in the batch. If you're above that pace, you're bored and lose momentum. If you're below, you're lost and lose confidence. The class schedule optimises for the batch, not for you.
 
-**In Vidhya:** you move per concept, not per class. Crush linear
-algebra in a day if it clicks. Spend two weeks on measure theory
-if you need it. The app tracks mastery per concept, not per
-calendar slot, so nothing is gated by a classroom schedule. The
-system's recommendations adapt to your actual state, not to where
-the average student would be on a Tuesday in March.
+**Takeaway:** You move per concept, not per class. Crush linear algebra in a day if it clicks. Spend two weeks on measure theory if you need it. The app tracks mastery per concept, not per calendar slot, so nothing is gated by a classroom schedule. The system's recommendations adapt to your actual state, not to where the average student would be on a Tuesday in March.
 
-### "I'm embarrassed to ask 'basic' questions in class."
+### *"Basic question poochhne mein sharmindagi hoti hai — sab haste hain."*
 
-By the third month of a coaching program, the students who didn't
-get the basics solidly in the first month are usually too
-embarrassed to ask. The questions stay unasked. The foundations
-stay shaky. The gap widens.
+By the third month of a coaching program, the students who didn't get the basics solidly in the first month are usually too embarrassed to ask. The questions stay unasked. The foundations stay shaky. The gap widens.
 
-**In Vidhya:** ask anything, in any way, any number of times. No
-one sees. No classmates. No teacher making a face. You can type
-*"wait, what's a derivative again?"* after you've done 200
-derivative problems, and the app just answers. The only thing
-that matters is that you actually understand — not what anyone
-would think about what you don't.
+**Takeaway:** Ask anything, in any way, any number of times. No classmate sees. No teacher makes a face. You can type *"wait, what's a derivative again?"* after you've done 200 derivative problems, and the app just answers. The only thing that matters is that you actually understand — not what anyone would think about what you don't.
 
-### "My teacher explains, but I don't see why any of it actually matters."
+### *"Teacher samjhaate hain, lekin yeh matter kyun karta hai — woh kabhi nahi batate."*
 
-You sit through a derivation. The teacher writes equations. You
-copy the equations. You pass the exam. Five years later, you
-couldn't explain to anyone why the derivation mattered or what
-problem it solved — because you never got that part.
+You sit through a derivation. The teacher writes equations. You copy the equations. You pass the exam. Five years later, you couldn't explain to anyone why the derivation mattered or what problem it solved — because you never got that part.
 
-**In Vidhya:** every lesson opens with a **hook** — a single
-sentence on why this concept exists and what real problem it was
-invented to answer. Not *"it's in the syllabus."* A genuine
-motivation. You see the point before the proof. The proof sticks
-afterward because now you have a reason to care about it.
+**Takeaway:** Every lesson opens with a **hook** — a single sentence on why this concept exists and what real problem it was invented to answer. Not *"it's in the syllabus."* A genuine motivation. You see the point before the proof. The proof sticks afterward because now you have a reason to care about it.
 
-*The hook is the first of eight components in every lesson. See
-docs/LESSON-FRAMEWORK.md for the full structure.*
+*The hook is the first of eight components in every lesson. See docs/LESSON-FRAMEWORK.md for the full structure.*
 
-### "Rigorous material is too abstract; intuitive explanations are too hand-wavy."
+### *"Textbook too abstract, YouTube too hand-wavy — dono se kuch nahi milta."*
 
-Textbooks give you the formal statement of a theorem with zero
-motivation. YouTube gives you an analogy that kind of works but
-misses the precision your exam actually tests. You're stuck picking
-between rigor and understanding, and neither one alone is enough.
+Textbooks give you the formal statement of a theorem with zero motivation. YouTube gives you an analogy that kind-of works but misses the precision your exam actually tests. You're stuck picking between rigor and understanding, and neither one alone is enough.
 
-**In Vidhya:** each lesson carries both layers, deliberately. The
-**intuition** is a visualized mental picture — not dumbed-down,
-just made concrete. The **formal statement** is rigorous, in your
-exam's exact terminology — not hidden in academic prose. You can
-linger on whichever layer you need today. The claim we make is
-that neither layer compromises on correctness. The intuition is
-true; the formalism is approachable.
+**Takeaway:** Each lesson carries both layers, deliberately. The **intuition** is a visualised mental picture — not dumbed-down, just made concrete. The **formal statement** is rigorous, in your exam's exact terminology — not hidden in academic prose. You linger on whichever layer you need today. The claim we make is that neither layer compromises on correctness. The intuition is true; the formalism is approachable.
 
 ---
 

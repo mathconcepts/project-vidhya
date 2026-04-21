@@ -16,28 +16,29 @@ domain-agnostic — any exam with a defined syllabus works.
 
 ---
 
-## From exam-prep pain to exam-prep bliss
+## From exam-prep pain to exam-day takeaway
 
-Every line below is one concrete bliss shipped in the codebase. Soundbites — the details are in [FEATURES.md](./FEATURES.md) Slide 2.
+Every Indian exam-prep cycle produces a specific set of pains. Below is the pain you recognise, and the concrete **takeaway** Vidhya puts in your pocket. Each takeaway is a real feature shipped in the codebase — the deeper version lives in [FEATURES.md](./FEATURES.md) Slide 2.
 
-- **Pain:** *I don't know if I'm actually ready.*    **Bliss:** 12 mastered, 15 in progress, 3 struggling — per concept, always visible.
-- **Pain:** *The syllabus feels overwhelming.*    **Bliss:** Three priority concepts for today, ranked by exam weight × your mastery. Not a hundred.
-- **Pain:** *My exam is in 3 days. Every app says "take a break."*    **Bliss:** The advice shifts with urgency. Six months out: break. Three days out: quick review instead.
-- **Pain:** *I watch 45-minute lectures and still don't get it.*    **Bliss:** Each concept is 8 small pieces. Skip what you know. Linger on what you don't.
-- **Pain:** *It's 2am, I'm stuck, nowhere to turn.*    **Bliss:** Snap a photo. Walkthrough, common traps flagged, in seconds. Web, Telegram, or WhatsApp.
-- **Pain:** *I paid for a plan but don't know what I'm getting.*    **Bliss:** Sign in, see the giveaway banner: other exams your plan covers, with live coverage % for each.
-- **Pain:** *I forget what I studied weeks ago.*    **Bliss:** Spaced repetition at memory-research intervals. Month-old learning is still there exam week.
-- **Pain:** *AI chatbots hallucinate.*    **Bliss:** Wolfram-verified where possible. Past papers pre-checked. Uncertainty is named, not hidden.
-- **Pain:** *Apps use streaks and guilt-trip pings to manipulate me.*    **Bliss:** Zero streaks. Zero badges. Zero manipulation. Deliberately.
-- **Pain:** *I don't want my weak areas in a corporate database.*    **Bliss:** No server-side database of student progress exists. Architecturally.
-- **Pain:** *I don't have top-tier teaching where I live.*    **Bliss:** Lesson content doesn't change by location. Same structure, depth, trap-flagging for every student.
-- **Pain:** *My foundations are shaky, so advanced topics feel impossible.*    **Bliss:** Wrong answers with a prerequisite signature route you upstream first — misconceptions get repaired where they live.
-- **Pain:** *Coaching moves at the average pace — I'm bored or lost.*    **Bliss:** Mastery per concept, not per class. Crush linear algebra in a day. Spend two weeks on measure theory.
-- **Pain:** *I'm embarrassed to ask "basic" questions in class.*    **Bliss:** Ask anything, any way, any number of times. No one sees. No one judges.
-- **Pain:** *My teacher explains, but I don't see why any of it matters.*    **Bliss:** Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve.
-- **Pain:** *Rigorous material is too abstract; intuitive material is too hand-wavy.*    **Bliss:** Each lesson has both layers, neither compromised. Linger on whichever you need.
+- **Pain:** *"Pata nahi exam mein kya aayega — I don't know if I'm really ready."*    **Takeaway:** You see "12 mastered · 15 in progress · 3 struggling" — per concept. When your parents ask *"Beta, preparation kaisi chal rahi hai?"*, you have a real answer.
+- **Pain:** *"Syllabus itna bada hai — where do I even start today?"*    **Takeaway:** Three concepts for today, ranked by your exam weight × your current mastery. An hour of work. Not a hundred-item to-do list.
+- **Pain:** *"Exam 3 din door hai, aur app keh raha hai 'take a break'."*    **Takeaway:** Advice that reads your urgency. Six months out: break suggested. Three days out: switched to a quick review instead. No tone-deaf pings before your exam.
+- **Pain:** *"45-minute lectures dekh liye, phir bhi nahi samjha."*    **Takeaway:** Each concept in 8 bite-sized pieces. You skip what you know, linger on what you don't. Two focused minutes beat forty unfocused ones.
+- **Pain:** *"2 baje raat, problem pe atka hoon, puchhun toh kisko?"*    **Takeaway:** Snap a photo. Full walkthrough in seconds with common traps flagged. Works on web, Telegram, WhatsApp — same quality on Jio 4G or college wifi.
+- **Pain:** *"Plan le liya hai — actually kya milta hai, pata nahi."*    **Takeaway:** Sign in, see every exam your plan covers with a live *"you're already X% of the way there"* chip per bonus. Coverage updates as you study. Nothing buried in a settings PDF.
+- **Pain:** *"Pichhle mahine jo padha, ab yaad hi nahi."*    **Takeaway:** Concepts resurface at memory-research intervals across weeks. Exam week, your day-one learning is still intact — because the system brought it back at the right moments.
+- **Pain:** *"ChatGPT confidently bolta hai galat number."*    **Takeaway:** Answers run through Wolfram where possible. Past papers pre-checked. When the system isn't sure, it says so — instead of inventing a clean-looking wrong answer.
+- **Pain:** *"Apps streaks aur guilt-trip notifications se khelte hain."*    **Takeaway:** Zero streaks. Zero badges. Zero "you lost your streak" pings. You study when you want. The app doesn't try to trick you into opening it.
+- **Pain:** *"Mera data kisi corporate database mein chala jaayega."*    **Takeaway:** No server-side database of your progress exists. It lives on your device, architecturally — not as a policy statement that can be changed later.
+- **Pain:** *"Kota-level teaching mere shehar mein nahi hai."*    **Takeaway:** The lesson you see in a tier-2 town is structurally identical to what a Kota student sees. Same rigor, same trap-flagging, same depth. Your pin code stops deciding your prep quality.
+- **Pain:** *"11th ki basics kachi reh gayi, ab 12th pahad lag raha hai."*    **Takeaway:** When a wrong answer points to a missing fundamental, the system routes you upstream first. Fix the foundation, and the advanced topic unlocks naturally.
+- **Pain:** *"Coaching class average pace pe chalti hai — main kabhi bore, kabhi peeche."*    **Takeaway:** Mastery tracked per concept, not per class schedule. Crush linear algebra in a day if it clicks. Spend two weeks on measure theory if you need. No batch to keep up with.
+- **Pain:** *"Basic question poochhne mein sharmindagi hoti hai, sab haste hain."*    **Takeaway:** Ask anything, any way, any number of times. No classmate sees. No teacher makes a face. The question you're holding in gets an actual answer.
+- **Pain:** *"Teacher samjhaate hain, lekin yeh matter kyun karta hai, woh kabhi nahi batate."*    **Takeaway:** Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. Motivation before mechanics — so the mechanics actually stick.
+- **Pain:** *"Textbook too abstract, YouTube too hand-wavy — dono mein se kuch nahi milta."*    **Takeaway:** Every lesson carries both — a visualised mental picture (not dumbed-down) AND the formal statement in your exam's exact terminology (not hidden in academic prose). Linger on whichever you need today.
 
 ---
+
 
 
 ## What you actually get (as a student)

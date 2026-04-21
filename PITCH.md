@@ -5,31 +5,30 @@ and respects your privacy.*
 
 ---
 
-## From pain to bliss
+## From pain to takeaway
 
-Most students don't need another app. They need relief from a set of
-specific pains that every exam-prep cycle produces. Here's the
-before/after Vidhya is built for.
+Every Indian exam-prep cycle produces the same pains. Here's what Vidhya puts in your pocket — one row per pain, one takeaway per row.
 
-| The pain | The bliss |
-|----------|-----------|
-| "I don't know if I'm actually ready." | You see 12 mastered, 15 in progress, 3 struggling — per concept, always visible. When someone asks how prep is going, you have an answer. |
-| "The syllabus feels overwhelming." | "Priority actions: three concepts ranked by exam weight and your current mastery." Three things to do today. Not a hundred. |
-| "My exam is in 3 days. Every app tells me to take a break." | Vidhya reads the urgency. Six months out: it suggests breaks. Three days out: it shifts to quick lesson reviews. No tone-deaf advice. |
-| "I watch 45-minute videos and still don't get the concept." | Every concept is 8 small pieces — hook, intuition, example, traps, connections. Skip what you know. Linger on what you don't. |
-| "It's 2am. I'm stuck. Nowhere to turn." | Snap a photo. You get a walkthrough, common traps flagged, in seconds. Web, Telegram, or WhatsApp — your pick. |
-| "I paid for a coaching plan, don't know what I'm getting." | Sign in: "🎁 Giveaway · your plan also covers JEE Adv (42%), IES (18%), BARC (8%) — live coverage." The bundle is celebrated, not buried. |
-| "I forget what I studied weeks ago." | Concepts resurface at spaced intervals. Exam week, your month-old learning is still there — because the system brought it back at the right moments. |
-| "AI chatbots hallucinate. I don't trust the numbers." | Wolfram-verified where possible. Past papers pre-checked. The AI doesn't get to invent. Uncertainty is named, not hidden. |
-| "Apps use streaks and guilt-trip notifications to manipulate me." | No streaks. No badges. No "you lost your streak" pings. You study when you want. |
-| "I don't want my weak areas in some corporate database." | Your materials stay in your browser. Progress on your device. AI keys never touch our servers. Architecturally, not just as a policy. |
-| "I don't have access to top-tier teaching where I live." | Lesson content doesn't change by location. Same structure, depth, and trap-flagging as well-regarded prep material — whether you're in a small town or a coaching hub. |
-| "My foundations are shaky, and advanced topics feel impossible." | When a wrong answer looks like a prerequisite issue, Vidhya walks the concept graph, finds the upstream concept you're weakest on, and points you there first. Misconceptions get repaired where they actually live. |
-| "Coaching moves at the average pace — I'm either bored or lost." | You move per concept, not per class. Crush linear algebra in a day. Spend two weeks on measure theory. Mastery is tracked per concept, not per schedule. |
-| "I'm embarrassed to ask 'basic' questions in class." | Ask anything, any way, any number of times. No one sees. No one judges. Ten variations of the same question are equally welcome. |
-| "My teacher explains, but I don't see why any of it matters." | Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. The point before the proof, so the proof sticks. |
-| "Rigorous material is too abstract; intuitive material is too hand-wavy." | Each lesson has both layers. Intuition that's visualized, not dumbed-down. Formal statement in your exam's terminology, not obscured in prose. Linger on whichever you need. |
+| The pain | The takeaway you walk away with |
+|----------|----------------------------------|
+| *"Pata nahi exam mein kya aayega — am I really ready?"* | You see "12 mastered · 15 in progress · 3 struggling" — per concept, always visible. Real answer when parents ask how prep is going. |
+| *"Syllabus itna bada hai — where do I start today?"* | Three concepts for today, ranked by exam weight × your mastery. An hour of focused work. Not a hundred-item list. |
+| *"Exam 3 din door hai, aur app keh raha hai 'take a break'."* | Advice that reads urgency. Six months out: break. Three days out: quick review instead. No tone-deaf pings. |
+| *"45-minute lectures dekh liye, phir bhi samajh nahi aaya."* | Each concept in 8 bite-sized pieces. Skip what you know, linger on what you don't. Two focused minutes beat forty unfocused ones. |
+| *"2 baje raat, atka hua hoon, puchhun kisko?"* | Snap a photo. Full walkthrough in seconds with common traps flagged. Web, Telegram, or WhatsApp — same quality on Jio 4G or college wifi. |
+| *"Plan liya hai lekin kya milta hai, pata nahi."* | Sign in, see every exam your plan covers with live "you're already X% there" per bonus. Coverage updates as you study. |
+| *"Pichhle mahine jo padha, ab yaad nahi."* | Concepts resurface at memory-research intervals. Exam week, your day-one learning is still intact — because the system brought it back at the right moments. |
+| *"ChatGPT confidently bolta hai galat number."* | Answers go through Wolfram where possible. Past papers pre-checked. Uncertainty is named, not hidden. |
+| *"Apps streaks aur notifications se khelte hain."* | Zero streaks. Zero badges. Zero manipulation. You study when you want. |
+| *"Mera data corporate database mein chala jaayega."* | No server-side database of your progress exists. On your device. Architecturally. |
+| *"Kota-level teaching mere shehar mein nahi hai."* | Same lesson structure, rigor, and trap-flagging regardless of pin code. Your location stops deciding your prep quality. |
+| *"11th ki basics kachi reh gayi, 12th pahad lag raha hai."* | Wrong answers with a foundational gap route you upstream first. Fix the foundation, advanced unlocks naturally. |
+| *"Coaching class average pace pe chalti hai."* | Mastery per concept, not per class. Crush linear algebra in a day. Spend two weeks on measure theory. No batch to keep up with. |
+| *"Basic question poochhne mein sharmindagi hoti hai."* | Ask anything, any way, any number of times. No classmate sees. No teacher judges. |
+| *"Teacher samjhaate hain, kyun matter karta hai kabhi nahi batate."* | Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. Motivation before mechanics. |
+| *"Textbook abstract, YouTube hand-wavy — dono se kuch nahi milta."* | Every lesson has both — visualised intuition AND formal statement in your exam's terminology. Neither compromised. |
 
+---
 ---
 
 ## The 30-second version

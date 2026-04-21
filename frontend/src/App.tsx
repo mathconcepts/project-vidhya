@@ -45,6 +45,9 @@ const SmartPracticePage = lazy(() => import('@/pages/gate/SmartPracticePage'));
 const SnapPage = lazy(() => import('@/pages/gate/SnapPage'));
 const LessonPage = lazy(() => import('@/pages/gate/LessonPage'));
 const LLMConfigPage = lazy(() => import('@/pages/gate/LLMConfigPage'));
+const SignInPage = lazy(() => import('@/pages/gate/SignInPage'));
+const UserAdminPage = lazy(() => import('@/pages/gate/UserAdminPage'));
+const OwnerSettingsPage = lazy(() => import('@/pages/gate/OwnerSettingsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
 
 const PageLoader = () => (
@@ -90,6 +93,9 @@ export default function App() {
           <Route path="snap" element={<SnapPage />} />
           <Route path="lesson/:concept_id" element={<LessonPage />} />
           <Route path="llm-config" element={<LLMConfigPage />} />
+          <Route path="sign-in" element={<SignInPage />} />
+          <Route path="admin/users" element={<UserAdminPage />} />
+          <Route path="owner/settings" element={<OwnerSettingsPage />} />
           <Route path="admin/content" element={<ContentAdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>

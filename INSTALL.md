@@ -210,7 +210,102 @@ problems over unverified ones for the same concept.
 
 ---
 
-## Path 4: Docker install (zero host setup)
+## Path 4: Multi-user install (role-based access + owner bootstrap)
+
+For deploys where you want identity, role-based permissions, and/or
+multi-channel access (web + Telegram + WhatsApp).
+
+### Step 1 — Create a Google OAuth client
+
+Full walkthrough in `docs/MULTI-CHANNEL-SETUP.md` section 1. Summary:
+
+1. https://console.cloud.google.com → APIs & Services → Credentials
+2. Create OAuth client ID, **Web application** type
+3. Add your deployment URL(s) to **Authorized JavaScript origins**
+4. Copy the Client ID
+
+### Step 2 — Configure the server
+
+```bash
+# Add to .env
+GOOGLE_OAUTH_CLIENT_ID=1234567890-abc...apps.googleusercontent.com
+JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")
+PUBLIC_URL=https://your-deploy-domain.com   # or http://localhost:5173 for dev
+```
+
+Restart the server. `/sign-in` will now show the Google button.
+
+### Step 3 — Claim ownership (the bootstrap rule)
+
+**The first user to sign in becomes the owner automatically.** Make sure
+that first user is you:
+
+1. Open the app
+2. Visit `/sign-in`
+3. Sign in with Google
+4. Check `.data/users.json` — your record should have `"role": "owner"`
+
+If the wrong person signed in first, reset via shell:
+
+```bash
+npx tsx scripts/admin/assign-owner.ts --email you@example.com
+```
+
+This requires shell access — intentional, since filesystem control IS
+the ultimate ownership proof.
+
+### Step 4 — Manage users from the UI
+
+Signed in as owner or admin, visit:
+
+- `/admin/users` — roster, role changes, teacher assignment
+- `/owner/settings` — transfer ownership, see channel integration status
+
+Role matrix (see `docs/ROLES-AND-ACCESS.md` for full details):
+
+| Role | Can do |
+|------|--------|
+| Owner | Everything, including transfer ownership |
+| Admin | Manage users + teachers, edit curriculum |
+| Teacher | Review assigned students, read-only content |
+| Student | Normal app usage |
+
+### Step 5 (optional) — Enable Telegram and WhatsApp channels
+
+See `docs/MULTI-CHANNEL-SETUP.md` for step-by-step setup. Summary env vars:
+
+```bash
+# Telegram
+TELEGRAM_BOT_TOKEN=123456789:ABC...
+TELEGRAM_WEBHOOK_SECRET=<random-string>
+
+# WhatsApp Business
+WHATSAPP_ACCESS_TOKEN=<permanent-token>
+WHATSAPP_PHONE_NUMBER_ID=<numeric-id>
+WHATSAPP_VERIFY_TOKEN=<random-string>
+```
+
+Once set, users see your bot in `/owner/settings → Channel integrations`
+as **enabled**.
+
+### What users see
+
+- **Anonymous visitor** — app works as before, no account required,
+  state stays in IndexedDB
+- **Signed-in student** — same experience plus cross-device sync via
+  account ID, can access via Telegram/WhatsApp once linked
+- **Teacher** — plus `/admin/users` showing their roster (students
+  assigned to them)
+- **Admin** — plus full user management UI
+- **Owner** — plus `/owner/settings`
+
+The app **does not force sign-in**. Existing anonymous flows continue
+working. Sign-in is additive for users who want cross-device sync or
+cross-channel access.
+
+---
+
+## Path 5: Docker install (zero host setup)
 
 If you don't want to install Node + npm on your host, use the container.
 

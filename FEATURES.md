@@ -2197,7 +2197,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.12.0)
+## Slide 33 — What's Shipped (at v2.13.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2229,7 +2229,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.10.2 | `752aad1` | Pain → bliss framing — 10 pain/bliss pairs across all three customer-facing surfaces |
 | v2.10.3 | `56e2b11` | Six more pain/bliss pairs covering world-class access, foundations, pacing, social pressure, motivation, rigor+intuition |
 | v2.11.0 | `1a41f15` | Multi-channel interactive rendering framework — enrichment decision logic + channel renderer for web/Telegram/WhatsApp/voice; Framer Motion web components; progressive-reveal state machine for Telegram |
-| v2.12.0 | *this* | Objective + GBrain-aware enrichment — same canonical lesson produces different interactive treatment per student based on exam question-type mix, mastery, and exam proximity; README pain/bliss condensed to soundbites |
+| v2.12.0 | `24beb67` | Objective + GBrain-aware enrichment — same canonical lesson produces different interactive treatment per student based on exam question-type mix, mastery, and exam proximity; README pain/bliss condensed to soundbites |
+| v2.13.0 | *this* | GBrain sweep to every touchpoint — speed of answering threaded through enrichment; content-routes tier bias by mastery; /api/syllabus/me mastery overlay; /api/admin/gbrain-audit live registry; every student-facing feature confirmed integrated |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

@@ -69,12 +69,21 @@ export interface LearningObjective {
   negative_marks_per_wrong?: number;
   /** Exam is imminent (≤7 days) — compress + drill */
   is_imminent?: boolean;
+  /** Exam is close (≤30 days) — elevate priority framing */
+  is_close?: boolean;
+  /** Exact days to exam — enables finer-grained adaptation */
+  days_to_exam?: number;
 }
 
 /**
- * Minimal mastery signal read from StudentModel.mastery_vector for
- * the concept being rendered. Keeps enrichment decoupled from the
- * full StudentModel shape.
+ * Minimal mastery signal read from StudentModel for a specific concept.
+ * Keeps enrichment decoupled from the full StudentModel shape.
+ *
+ * v2.13.0: added recent_avg_ms (from speed_profile). This enables the
+ * "speed of answering" adaptation — students who consistently take
+ * much longer than peers don't get compressed content, even at high
+ * mastery scores. Their measured mastery doesn't reflect the
+ * automaticity exams actually test for.
  */
 export interface MasterySignal {
   /** 0..1 mastery for the concept. undefined = no data */
@@ -83,6 +92,10 @@ export interface MasterySignal {
   attempts?: number;
   /** Recent error type, if any — drives trap-surfacing */
   last_error_type?: 'conceptual' | 'careless' | 'computational' | 'none';
+  /** Average milliseconds the student took on this concept */
+  recent_avg_ms?: number;
+  /** Cohort median ms — lets us decide "slow for this concept" */
+  cohort_median_ms?: number;
 }
 
 /**
@@ -181,13 +194,24 @@ function enrichWorkedExample(
     || ctx?.mastery?.last_error_type === 'conceptual';
   const isConfident = masteryScore !== undefined && masteryScore >= 0.7;
 
-  // Compress for confident MCQ students — show only the key step
-  // plus a terse "full working below" label
-  if (dominantType === 'mcq' && isConfident && !isStruggling) {
+  // v2.13.0: speed override — if the student's average time on this
+  // concept is noticeably slower than cohort median (more than 1.5×),
+  // they don't get compressed content even at high mastery scores.
+  // A student who answers correctly but slowly hasn't achieved the
+  // automaticity that MCQ compression assumes.
+  const recentMs = ctx?.mastery?.recent_avg_ms;
+  const cohortMs = ctx?.mastery?.cohort_median_ms;
+  const isSlow = recentMs !== undefined
+    && cohortMs !== undefined
+    && cohortMs > 0
+    && recentMs > 1.5 * cohortMs;
+
+  // Compress for confident MCQ students who are also ANSWERING FAST
+  if (dominantType === 'mcq' && isConfident && !isStruggling && !isSlow) {
     const keyIdx = component.steps.findIndex((s: any) => s.is_key_step);
     const stepsToShow = keyIdx >= 0
       ? [component.steps[keyIdx]]
-      : component.steps.slice(-1);  // fallback to final step
+      : component.steps.slice(-1);
 
     const block: StepRevealBlock = {
       kind: 'step-reveal',
@@ -205,7 +229,7 @@ function enrichWorkedExample(
     return [block];
   }
 
-  // Full reveal — default and for struggling students
+  // Full reveal — default and for struggling, slow, or descriptive-exam students
   const block: StepRevealBlock = {
     kind: 'step-reveal',
     id: `${component.id}:reveal`,

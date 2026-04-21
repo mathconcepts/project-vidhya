@@ -209,3 +209,82 @@ Modified:
 - `frontend/src/components/gate/GiveawayBanner.tsx` — renders per-exam coverage chips + "you're closest to this one" hint
 
 Zero new npm dependencies. Zero breaking changes. Additive only.
+
+---
+
+## v2.13.0 — Every touchpoint, every attribute
+
+The v2.13.0 sweep closes the remaining gaps identified in this audit and adds the machine-readable audit endpoint.
+
+### New integrations
+
+**1. Content four-tier cascade — now GBrain-biased.**
+`/api/content/resolve` reads the student's mastery score for the requested concept. Struggling students (score < 0.3) get `max_tier` capped to 3 (tier-0 bundle + Wolfram verification only — no tier-2 LLM generation). Confident students get the full cascade. The bias is opt-in and additive: explicit `body.max_tier` still wins.
+
+Response includes `gbrain_influence: { reason, score, cap }` so callers can audit why they got the tier they got — or `null` when GBrain didn't influence the decision.
+
+**2. Syllabus view with mastery overlay.**
+`GET /api/syllabus/me` returns the student's assigned exam's syllabus with per-concept mastery tier stamped on each concept:
+- `mastered` (score ≥ 0.8 with ≥ 2 attempts)
+- `in_progress` (score 0.3–0.8, or < 2 attempts)
+- `struggling` (score < 0.3 with ≥ 2 attempts)
+- `untouched` (zero attempts)
+
+Sort order prioritizes attention: struggling → in-progress by exam weight → untouched by exam weight → mastered. Clients get a ready-to-render "where you stand across the syllabus" view without doing per-concept mastery lookups themselves.
+
+**3. Speed of answering — threaded through enrichment.**
+`MasterySignal` extended with `recent_avg_ms` + `cohort_median_ms`. The rendering route hydrates speed from `StudentModel.speed_profile[concept_id].avg_ms` and computes cohort median from the student's other concept speeds (median of samples when ≥ 3).
+
+The enrichment rule: if a confident student (mastery ≥ 0.7) is *slow* (recent_avg_ms > 1.5 × cohort_median_ms), MCQ compression is suppressed. Their measured mastery doesn't reflect the automaticity MCQ exams actually test for — they need the full derivation to internalize the pattern.
+
+**4. Explicit `days_to_exam` in LearningObjective.**
+Previously rendering only saw `exam_is_imminent` (≤7d) and `exam_is_close` (≤30d) as booleans. Now the exact number of days is exposed too, enabling finer-grained adaptations in future enrichment rules without another signal-surfacing pass.
+
+**5. Live audit endpoint.**
+`GET /api/admin/gbrain-audit` returns the complete integration registry as JSON:
+- Total feature count + integrated count + N/A count + gap count
+- Student-facing coverage percentage
+- Full GBrain signal surface grouped by category (mastery, exam_identity, exam_content, exam_structure, exam_schedule, speed, giveaway, derived)
+- Per-feature rows with integration points, status, signals consumed, and shipped-in version
+
+Requires admin role. The registry is a deliberate table, not auto-detected from imports — each row is an explicit claim about integration status.
+
+### The complete GBrain signal surface (v2.13.0)
+
+Every attribute now consumed by at least one integrated feature:
+
+**Mastery:**
+- `mastery_vector[concept_id].score` (0..1)
+- `mastery_vector[concept_id].attempts`
+- `mastery_vector[concept_id].last_error_type` (conceptual / careless / computational)
+- `recent_attempts` (full history, newest last)
+- Derived tiers: mastered / in_progress / struggling / untouched
+
+**Exam identity:** exam_id, exam_code, exam_name, exam_level
+
+**Exam content:** syllabus_topic_ids, topic_weights, priority_concepts
+
+**Exam structure:** question_types mix, marking_scheme.negative_marks_per_wrong, duration_minutes + total_marks (derives avg_seconds_per_question)
+
+**Exam schedule:** days_to_exam, exam_is_close, exam_is_imminent, typical_prep_weeks
+
+**Speed:** speed_profile[concept_id].avg_ms, speed_profile[concept_id].by_difficulty, cohort_median_ms (derived)
+
+**Giveaway:** group_id, primary_exam + bonus_exams, per-bonus coverage_percent, coverage_tier
+
+**Derived:** focus_signal, is_slow_for_cohort, is_fallback, dominant_type
+
+### Coverage summary at v2.13.0
+
+| Surface | Integrated | Not applicable | Gap |
+|---------|-----------:|---------------:|----:|
+| Student | 13 | 1 | 0 |
+| Teacher | 2 | 0 | 0 |
+| Admin | 3 | 3 | 0 |
+| Content | 1 | 3 | 0 |
+| Infra | 0 | 9 | 0 |
+| **Total** | **19** | **16** | **0** |
+
+Student-facing coverage: **100% of applicable features**. The one student-facing "not applicable" is the daily streak counter, which is activity-tracked by design (mastery would conflate two distinct concepts).
+
+The live `/api/admin/gbrain-audit` endpoint returns this same table at any time — use it to confirm no new gaps have crept in.

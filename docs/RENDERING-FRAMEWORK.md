@@ -239,3 +239,17 @@ A student preparing for NEET (MCQ-heavy) and a student preparing for UPSC Mains 
 - UPSC student sees: hook callout → full 4-step worked example reveal → trap flip-cards → connections drag-match
 
 Both students see the same pedagogical content — just the interactive treatment is tuned to what their exam actually rewards.
+
+---
+
+## v2.13.0 — Speed signal + explicit days_to_exam
+
+Two extensions to `EnrichmentContext`:
+
+**`MasterySignal.recent_avg_ms` and `MasterySignal.cohort_median_ms`.** The rendering route hydrates `recent_avg_ms` from `StudentModel.speed_profile[concept_id].avg_ms`. `cohort_median_ms` is derived from the student's other concept speeds (median when ≥ 3 samples exist).
+
+**New enrichment rule:** if a confident student (mastery ≥ 0.7) is *slow* (recent_avg_ms > 1.5 × cohort_median_ms), MCQ compression is suppressed. The student sees the full worked example even though their score alone would qualify them for compression. Rationale: MCQ exams test automaticity, not just correctness. A student answering correctly but slowly hasn't internalized the pattern — they need the derivation.
+
+**`LearningObjective.days_to_exam`.** Previously rendering only saw `exam_is_imminent` (boolean, ≤7d) and `exam_is_close` (boolean, ≤30d). Now the exact days number is exposed too. This doesn't change any existing enrichment rules; it prepares the surface for finer-grained adaptations in future releases without another signal-surfacing pass.
+
+**`gbrain_context` response field** now includes `recent_avg_ms`, `cohort_median_ms`, `days_to_exam`, and a derived `is_slow_for_cohort` boolean. Any UI that wants to show "we noticed you're taking longer on this concept" has the data.

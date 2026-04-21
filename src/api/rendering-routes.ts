@@ -153,17 +153,33 @@ async function handleRendered(req: ParsedRequest, res: ServerResponse): Promise<
         negative_marks_per_wrong:
           examCtx.marking_scheme?.negative_marks_per_wrong,
         is_imminent: examCtx.exam_is_imminent,
+        is_close: examCtx.exam_is_close,
+        days_to_exam: examCtx.days_to_exam ?? undefined,
       };
     }
   } catch {}
   try {
     const model = await getOrCreateStudentModel(auth.user.id);
     const conceptEntry = model?.mastery_vector?.[concept_id];
-    if (conceptEntry) {
+    const speedEntry = (model as any)?.speed_profile?.[concept_id];
+    if (conceptEntry || speedEntry) {
+      // Compute cohort median ms from other concepts — rough but serviceable
+      // baseline for "slow for this student's usual pace"
+      let cohortMs: number | undefined;
+      const allSpeeds = Object.values((model as any)?.speed_profile || {})
+        .map((s: any) => s?.avg_ms)
+        .filter((n: any) => typeof n === 'number' && n > 0)
+        .sort((a: number, b: number) => a - b);
+      if (allSpeeds.length >= 3) {
+        cohortMs = allSpeeds[Math.floor(allSpeeds.length / 2)];
+      }
+
       enrichmentCtx.mastery = {
-        concept_score: conceptEntry.score,
-        attempts: conceptEntry.attempts,
-        last_error_type: (conceptEntry as any).last_error_type,
+        concept_score: conceptEntry?.score,
+        attempts: conceptEntry?.attempts,
+        last_error_type: (conceptEntry as any)?.last_error_type,
+        recent_avg_ms: speedEntry?.avg_ms,
+        cohort_median_ms: cohortMs,
       };
     }
   } catch {}
@@ -182,7 +198,15 @@ async function handleRendered(req: ParsedRequest, res: ServerResponse): Promise<
     gbrain_context: {
       dominant_type: enrichmentCtx.learning_objective?.dominant_type,
       exam_imminent: enrichmentCtx.learning_objective?.is_imminent,
+      days_to_exam: enrichmentCtx.learning_objective?.days_to_exam,
       concept_score: enrichmentCtx.mastery?.concept_score,
+      recent_avg_ms: enrichmentCtx.mastery?.recent_avg_ms,
+      cohort_median_ms: enrichmentCtx.mastery?.cohort_median_ms,
+      is_slow_for_cohort:
+        enrichmentCtx.mastery?.recent_avg_ms !== undefined
+          && enrichmentCtx.mastery?.cohort_median_ms !== undefined
+          && enrichmentCtx.mastery.cohort_median_ms > 0
+          && enrichmentCtx.mastery.recent_avg_ms > 1.5 * enrichmentCtx.mastery.cohort_median_ms,
     },
   });
 }

@@ -30,7 +30,7 @@ naive LLM-per-request edtech apps cost $2.
 
 ---
 
-## The thirteen moats
+## The fourteen moats
 
 1. **Four-tier cascade** — every content request routes to the cheapest source
 2. **Client-side embeddings** — transformers.js WASM, zero API cost for RAG
@@ -45,14 +45,16 @@ naive LLM-per-request edtech apps cost $2.
 11. **No-nagging UX** — at most one dismissible next-step chip per response, never blocks
 12. **Admin-owned curriculum** — per-exam YAML definitions, shared concepts across exams, three-layer guardrails, compounding quality loop
 13. **LLM-agnostic (BYO-key)** — 8 providers as data, in-browser setup at `/llm-config`, keys stay in localStorage, 30-second provider switch
+14. **Roles & multi-channel** — owner/admin/teacher/student hierarchy, flat-file identity, web + Telegram + WhatsApp under one account, zero new deps
 
-## What's new in v2.7
+## What's new in v2.8
 
-- **LLM config framework** — users configure their AI provider in-browser at `/llm-config`; keys live in localStorage, travel only as request headers, never persisted server-side
-- **8 providers as data** — Gemini, Anthropic, OpenAI, OpenRouter, Groq, DeepSeek, Mistral, Ollama; adding a new provider is a data change, not code
-- **Cascading role defaults** — pick a primary, chat/vision/JSON auto-fill with sensible defaults, each independently overridable
+- **Roles & multi-channel framework** — 4-role hierarchy (owner/admin/teacher/student) with Google OAuth identity, flat-file user directory, JWT sessions — all DB-less
+- **First signup = owner bootstrap** — no DB migration, no admin-panel setup; deployment claims itself
+- **Three access channels** — web (primary), Telegram bot, WhatsApp Business Cloud API; same identity across all
+- **Anonymous flow preserved** — app works without sign-in; auth is additive, not mandatory
+- **LLM config framework (v2.7)** — 8 providers as data, BYO-key in-browser at `/llm-config`, cascading role defaults
 - **Curriculum framework (v2.6)** — per-exam YAML definitions, shared concept strategy, three-layer guardrails, compounding quality loop
-- **Lesson framework (v2.5)** — 8-component pedagogically-grounded atomic unit with layered personalization
 
 ---
 
@@ -82,7 +84,7 @@ Three trends converge:
 ## Deep dives
 
 - [README.md](./README.md) — architecture + quick start
-- [FEATURES.md](./FEATURES.md) — 22-slide pitch deck, every moat detailed
+- [FEATURES.md](./FEATURES.md) — 23-slide pitch deck, every moat detailed
 - [INSTALL.md](./INSTALL.md) — cross-platform installation (Linux, macOS, Windows, Docker)
 - [DEPENDENCIES.md](./DEPENDENCIES.md) — canonical dep inventory, tagged Required/Recommended/Optional
 - [PLAN-content-engine.md](./PLAN-content-engine.md) — cost math, Wolfram integration rationale

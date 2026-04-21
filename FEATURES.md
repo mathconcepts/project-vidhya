@@ -1,6 +1,6 @@
 # Project Vidhya — Features & Moats
 
-*A pitch deck. 22 slides. Every claim grounded in shipped code.*
+*A pitch deck. 23 slides. Every claim grounded in shipped code.*
 
 ---
 
@@ -658,7 +658,162 @@ the browser simply override the server default for their session.
 
 ---
 
-## Slide 16 — Technical Differentiators (Head-to-Head)
+## Slide 16 — The Roles & Multi-Channel Moat (Flat-File Identity, Three Access Surfaces)
+
+Most adaptive-learning products are either (a) single-user self-study
+tools with no identity layer, or (b) enterprise systems with heavy
+database-backed user directories, classroom management, and locked-in
+admin panels. Vidhya ships **role-based access** with **multi-channel
+identity** while keeping the DB-less architectural philosophy intact.
+
+**The four roles (linear hierarchy):**
+
+```
+owner  →  admin  →  teacher  →  student  →  anonymous
+  │         │         │          │            │
+  │         │         │          │            └── no account, client-side state
+  │         │         │          └── default on signup, normal app usage
+  │         │         └── manages assigned students, read-only content
+  │         └── manages users + teachers, edits curriculum
+  └── installs + controls everything, can transfer ownership
+```
+
+Role capabilities inherit downward: `requireRole('teacher')` allows
+owner/admin/teacher, rejects student/anonymous.
+
+**DB-less identity — the flat-file pattern continues:**
+
+```
+.data/users.json
+{
+  "version": 1,
+  "org_id": "default",
+  "owner_id": "user_xyz",
+  "users": {
+    "user_xyz": {
+      "google_sub": "110000...",
+      "email": "owner@example.com",
+      "role": "owner",
+      "teacher_of": [],
+      "taught_by": null,
+      "channels": ["web", "telegram:987654321", "whatsapp:+14155551234"]
+    }
+  }
+}
+```
+
+Atomic writes (tmp + rename, POSIX + NTFS safe). Scales comfortably to
+~10,000 users. Beyond that, swap `src/auth/user-store.ts` for a Postgres
+implementation — the exported API is stable so nothing else changes.
+
+**Bootstrap rule:** first user to sign in becomes the owner
+automatically. No admin panel to configure beforehand, no DB schema to
+provision. The deployment is ownerless until the first person uses it;
+then it's claimed.
+
+If the wrong person claims first:
+
+```bash
+npx tsx scripts/admin/assign-owner.ts --email you@example.com
+```
+
+Requires shell access — deliberate, since filesystem control IS the
+ultimate ownership proof in a DB-less system.
+
+**Identity via Google OAuth only. Deliberately.**
+
+- Covers 95%+ of the student population worldwide
+- Email is Google-verified — we don't manage password reset flows
+- No password management = no password-breach surface
+- `sub` claim is the identity anchor — stable across email changes
+
+Non-goals (intentional): Apple Sign-In, email magic links, local
+username/password, SAML/SSO. These are enterprise features; Vidhya
+targets the 95% case cleanly.
+
+**Three channels, one identity:**
+
+```
+user_abc123  (same Vidhya account)
+  ├── web      (Google Sign-In, localStorage JWT)
+  ├── telegram:987654321   (linked via /start → one-time URL)
+  └── whatsapp:+14155551234  (linked via "start" → one-time URL)
+```
+
+Linking flow (identical pattern for Telegram and WhatsApp):
+
+1. User initiates contact on the chat platform
+2. Bot creates a pending link token (in-memory, 15-min TTL)
+3. Bot replies with `<PUBLIC_URL>/sign-in?link_token=<token>`
+4. User opens the URL, signs in with Google
+5. Server binds chat_id to user, subsequent messages route as that user
+
+No per-channel accounts, no per-channel passwords. The chat platform's
+native auth (Telegram account, WhatsApp phone) proves *persistent*
+identity; Google proves *canonical* identity; we link them.
+
+**What users see by role:**
+
+| Role | Sees |
+|------|------|
+| Anonymous | Full app, state in IndexedDB, no cross-device sync |
+| Student | All of the above + cross-device sync + chat-app access if linked |
+| Teacher | Plus: their student roster |
+| Admin | Plus: `/admin/users` with role management, curriculum editing, quality dashboards |
+| Owner | Plus: `/owner/settings` with ownership transfer + channel integration status |
+
+**Anonymous flow preserved:** users who don't sign in continue working
+exactly as before (v2.7 behavior). Sign-in is additive — for
+cross-device sync and multi-channel access — not mandatory.
+
+**Zero new npm dependencies:**
+
+- Google ID token verification via manual JWK RS256 (Node `crypto` only)
+- HS256 JWTs reuse existing `JWT_SECRET` pattern from Supabase middleware
+- Telegram webhook handler uses `fetch` against Telegram Bot API
+- WhatsApp uses `fetch` against graph.facebook.com
+
+The alternative (google-auth-library, grammY, jsonwebtoken) would add
+~3 MB of transitive deps for ~400 LOC of behavior we can write directly.
+
+**Where it's shipped:**
+
+- `src/auth/types.ts` — Role hierarchy, User shape, ChannelLinkToken
+- `src/auth/user-store.ts` — flat-file directory with atomic writes,
+  role-change hierarchy enforcement, channel linking
+- `src/auth/google-verify.ts` — JWK-based Google ID token verifier
+- `src/auth/jwt.ts` — HS256 issue/verify with timing-safe compare
+- `src/auth/middleware.ts` — requireRole, requireAuth, getCurrentUser
+- `src/api/auth-routes.ts` — 5 endpoints (config, google-callback, me,
+  sign-out, link-status)
+- `src/api/user-admin-routes.ts` — 6 endpoints (list, detail, role,
+  teacher, unlink channel, transfer ownership)
+- `src/channels/telegram-adapter.ts` — webhook + /start/me/help commands
+- `src/channels/whatsapp-adapter.ts` — Meta Cloud API webhook
+- `frontend/src/contexts/AuthContext.tsx` — useAuth hook with cross-tab
+- `frontend/src/pages/gate/SignInPage.tsx` — Google button + link binding
+- `frontend/src/pages/gate/UserAdminPage.tsx` — roster + role management
+- `frontend/src/pages/gate/OwnerSettingsPage.tsx` — ownership transfer
+- `scripts/admin/assign-owner.ts` — CLI escape hatch
+- `docs/ROLES-AND-ACCESS.md` — architecture + capability matrix
+- `docs/MULTI-CHANNEL-SETUP.md` — per-channel setup walkthrough
+
+**Why this is a moat:**
+
+1. **Zero-setup identity** — first signup becomes owner; no DB provisioning,
+   no admin-panel bootstrap
+2. **Channel-agnostic** — same account, web + Telegram + WhatsApp, one
+   progress stream
+3. **Shell control = ownership** — escape hatch via CLI matches the
+   DB-less philosophy; no custodial risk
+4. **Anonymous-safe** — doesn't force sign-in, preserves the "works
+   without accounts" promise for casual visitors
+5. **Deps-light** — no new npm packages for identity/sessions/bot
+   framework; adds 0 bytes to the dependency graph
+
+---
+
+## Slide 18 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -687,10 +842,13 @@ the browser simply override the server default for their session.
 | LLM provider | Single, baked into backend | 8 providers user-selectable in-browser, 30s to switch |
 | API key storage | Server-side database or env-var | User's localStorage; server never persists |
 | Adding a new LLM provider | Code PR with new client wrapper | Append to registry array (data change) |
+| Identity bootstrap | DB migration + admin UI setup | First sign-in auto-claims ownership |
+| Channel integration | Separate user account per channel | One account spans web + Telegram + WhatsApp |
+| Role management deps | Auth library + session store + DB | Zero new deps (manual JWK + flat file + fetch) |
 
 ---
 
-## Slide 17 — Tech Stack
+## Slide 18 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -710,7 +868,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 18 — What's Shipped (at v2.7.0)
+## Slide 19 — What's Shipped (at v2.8.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -726,6 +884,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.5.1 | `0b577a0` | Curated misconceptions for 22 concepts, syllabus→lesson navigation, CI workflow staged |
 | v2.6.0 | `888dbd7` | Curriculum framework — admin-owned YAML exams, shared-concept strategy, three-layer guardrails, compounding quality loop |
 | v2.7.0 | `8a03c27` | LLM config framework — BYO-key in-browser, 8 providers as data, cascading role defaults, 4 API-shape universal adapter |
+| v2.8.0 | `b4f0dd1` | Roles & multi-channel — owner/admin/teacher/student hierarchy, Google OAuth identity, flat-file user store, web/Telegram/WhatsApp adapters, zero new deps |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -736,6 +895,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 - 5 personalized-syllabus exam presets (distinct from admin curricula)
 - Multimodal analysis with 6 intents (explain / solve / practice / check / stuck / transcribe)
 - **LLM-agnostic runtime** — 8 providers configurable in-browser at `/llm-config`
+- **Role-based access** — owner/admin/teacher/student with multi-channel identity (web/Telegram/WhatsApp)
 - SSE-streaming test-paper diagnostic with auto-generated study plan
 - Admin dashboard live at `/admin/content`
 - Auth wall verified (HTTP 401 on unauth)
@@ -749,7 +909,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 19 — Cost Projections at Scale
+## Slide 20 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -769,7 +929,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 20 — Why Now
+## Slide 21 — Why Now
 
 **Three trends converge:**
 
@@ -791,7 +951,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 21 — Roadmap (Near-Term)
+## Slide 22 — Roadmap (Near-Term)
 
 **Content expansion** — 34 → 2000 problems over 90 days
 - Nightly CI already wired (needs workflow YAML upload)
@@ -817,7 +977,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 22 — Invitation
+## Slide 23 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -891,6 +1051,7 @@ Where to engage:
 | **Pedagogical (Lesson framework)** | 🔵🔵🔵🔵🔵 | Research-grounded template + attributed aggregation + layered personalization; compounds with bundle + user materials growth |
 | **Curriculum (admin-owned, compounding)** | 🔵🔵🔵🔵🔵 | Shared-concept strategy pays √N across exams; quality iterations measurably compound via engagement→quality→iteration loop |
 | **LLM-agnostic (BYO-key)** | 🔵🔵🔵🔵 | Provider-as-data — 8 providers, 4 API shapes; users pick + pay their own provider, no lock-in, rotate in 30s |
+| **Roles & multi-channel** | 🔵🔵🔵🔵 | Flat-file identity, zero-setup bootstrap (first signup = owner), 3 channels one account, zero new deps |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

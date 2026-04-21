@@ -1,0 +1,262 @@
+metadata:
+  id: gate-ma
+  name: GATE Engineering Mathematics
+  conducting_body: IIT (host rotates)
+  year_effective_from: 2024
+  syllabus_source_url: https://gate.iitk.ac.in/syllabi/MA.pdf
+  description: >
+    GATE Engineering Mathematics (MA) section. Tests undergraduate-level
+    engineering mathematics covering linear algebra, calculus, differential
+    equations, probability, numerical methods, complex variables, and
+    transform theory. MCQ and MSQ format; no subjective questions.
+  scope: mcq-rigorous
+  total_marks: 100
+  duration_minutes: 180
+  language: en
+
+# ---------------------------------------------------------------------------
+# Official syllabus structure — sections mirror the MA paper's sections
+# ---------------------------------------------------------------------------
+syllabus:
+  - id: linear-algebra
+    title: Linear Algebra
+    weight_pct: 14
+    concept_ids:
+      - matrix-operations
+      - determinants
+      - rank-nullity
+      - systems-of-equations
+      - eigenvalues
+      - diagonalization
+
+  - id: calculus
+    title: Calculus
+    weight_pct: 18
+    concept_ids:
+      - limits
+      - continuity
+      - differentiability
+      - derivatives-basic
+      - chain-rule
+      - integration-basics
+      - integration-by-parts
+      - definite-integrals
+      - taylor-laurent
+      - multivariable-calculus
+
+  - id: differential-equations
+    title: Differential Equations
+    weight_pct: 14
+    concept_ids:
+      - ode-first-order
+      - ode-second-order-homo
+      - ode-second-order-nonhomo
+
+  - id: complex-variables
+    title: Complex Variables
+    weight_pct: 10
+    concept_ids:
+      - complex-numbers
+      - complex-integration
+
+  - id: probability-statistics
+    title: Probability and Statistics
+    weight_pct: 14
+    concept_ids:
+      - probability-basics
+
+  - id: numerical-methods
+    title: Numerical Methods
+    weight_pct: 14
+    concept_ids:
+      - numerical-integration
+
+  - id: transforms
+    title: Transform Theory
+    weight_pct: 8
+    concept_ids:
+      - laplace-transform
+
+  - id: discrete
+    title: Combinatorics and Discrete Mathematics
+    weight_pct: 8
+    concept_ids:
+      - functions-combinatorics
+      - counting-principles
+      - graph-coloring
+
+# ---------------------------------------------------------------------------
+# Per-concept scope — what depth and emphasis this exam expects
+# Shared with other exams? Different treatment!
+# ---------------------------------------------------------------------------
+concept_links:
+  # Linear Algebra
+  - concept_id: matrix-operations
+    depth: standard
+    weight: 0.04
+    emphasis: [2x2-and-3x3, inverse-by-adjoint, elementary-row-ops]
+    restrictions: [infinite-dimensional, abstract-vector-spaces]
+
+  - concept_id: determinants
+    depth: standard
+    weight: 0.03
+    emphasis: [expansion-shortcuts, product-rule, cofactor]
+    restrictions: [multilinear-forms]
+
+  - concept_id: rank-nullity
+    depth: standard
+    weight: 0.02
+    emphasis: [row-echelon, pivot-counting]
+    restrictions: []
+
+  - concept_id: systems-of-equations
+    depth: standard
+    weight: 0.02
+    emphasis: [gauss-elimination, cramer-applicability-check]
+    restrictions: [iterative-solvers]
+    curator_note: GATE often tests consistency/inconsistency — emphasize that
+
+  - concept_id: eigenvalues
+    depth: standard
+    weight: 0.03
+    emphasis: [characteristic-polynomial, 2x2-and-3x3, sum-and-product-of-eigenvalues]
+    restrictions: [infinite-dimensional, operator-theory, spectral-theorem]
+
+  - concept_id: diagonalization
+    depth: standard
+    weight: 0.02
+    emphasis: [when-diagonalizable, A-power-n-via-D, symmetric-is-orthogonally-diagonalizable]
+    restrictions: [jordan-form]
+
+  # Calculus
+  - concept_id: limits
+    depth: standard
+    weight: 0.02
+    emphasis: [lhopital, standard-forms, one-sided]
+    restrictions: [epsilon-delta-proofs]
+
+  - concept_id: continuity
+    depth: introductory
+    weight: 0.01
+    emphasis: [piecewise-functions, ivt-applications]
+    restrictions: [uniform-continuity]
+
+  - concept_id: differentiability
+    depth: introductory
+    weight: 0.01
+    emphasis: [not-at-corners, differentiable-implies-continuous]
+    restrictions: []
+
+  - concept_id: derivatives-basic
+    depth: introductory
+    weight: 0.02
+    emphasis: [standard-formulas, product-quotient-rules]
+    restrictions: []
+
+  - concept_id: chain-rule
+    depth: standard
+    weight: 0.02
+    emphasis: [nested-functions, implicit-differentiation]
+    restrictions: []
+
+  - concept_id: integration-basics
+    depth: standard
+    weight: 0.02
+    emphasis: [standard-formulas, u-substitution]
+    restrictions: [improper-integrals-advanced]
+
+  - concept_id: integration-by-parts
+    depth: standard
+    weight: 0.02
+    emphasis: [liate, recursive-application]
+    restrictions: []
+
+  - concept_id: definite-integrals
+    depth: standard
+    weight: 0.02
+    emphasis: [properties, symmetric-limits, change-of-variables]
+    restrictions: []
+
+  - concept_id: taylor-laurent
+    depth: standard
+    weight: 0.02
+    emphasis: [maclaurin, approximation-error, standard-expansions]
+    restrictions: [convergence-radius-proofs]
+
+  - concept_id: multivariable-calculus
+    depth: standard
+    weight: 0.02
+    emphasis: [partial-derivatives, gradient, maxima-minima]
+    restrictions: [lagrange-multipliers-advanced]
+
+  # ODEs
+  - concept_id: ode-first-order
+    depth: standard
+    weight: 0.05
+    emphasis: [separable, linear-integrating-factor, exact]
+    restrictions: [nonlinear-general]
+
+  - concept_id: ode-second-order-homo
+    depth: standard
+    weight: 0.05
+    emphasis: [constant-coefficients, characteristic-equation, repeated-roots-case]
+    restrictions: [variable-coefficients-general]
+
+  - concept_id: ode-second-order-nonhomo
+    depth: standard
+    weight: 0.04
+    emphasis: [undetermined-coefficients, variation-of-parameters]
+    restrictions: []
+
+  # Complex
+  - concept_id: complex-numbers
+    depth: introductory
+    weight: 0.04
+    emphasis: [polar-form, de-moivre, roots-of-unity]
+    restrictions: []
+
+  - concept_id: complex-integration
+    depth: standard
+    weight: 0.06
+    emphasis: [cauchys-theorem, residue-theorem, pole-classification]
+    restrictions: [riemann-surfaces, branch-cuts-advanced]
+
+  # Probability
+  - concept_id: probability-basics
+    depth: standard
+    weight: 0.08
+    emphasis: [conditional-probability, bayes-theorem, expected-value, variance]
+    restrictions: [martingales, stochastic-processes]
+
+  # Numerical
+  - concept_id: numerical-integration
+    depth: standard
+    weight: 0.06
+    emphasis: [error-bounds, comparison-with-trapezoidal]
+    restrictions: [gauss-quadrature]
+
+  # Transform
+  - concept_id: laplace-transform
+    depth: standard
+    weight: 0.08
+    emphasis: [shift-theorems, derivative-property, solving-odes]
+    restrictions: [z-transform]
+
+  # Discrete
+  - concept_id: functions-combinatorics
+    depth: standard
+    weight: 0.04
+    emphasis: [permutations, combinations, pigeonhole]
+    restrictions: [generating-functions]
+
+  - concept_id: counting-principles
+    depth: introductory
+    weight: 0.02
+    emphasis: [inclusion-exclusion, sum-product-rules]
+    restrictions: []
+
+  - concept_id: graph-coloring
+    depth: standard
+    weight: 0.02
+    emphasis: [chromatic-number, bipartite, planar]
+    restrictions: [ramsey-theory]

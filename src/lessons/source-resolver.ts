@@ -22,6 +22,7 @@ import fs from 'fs';
 import path from 'path';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import { verifyProblemWithWolfram } from '../services/wolfram-service';
+import { filterChunksForExam } from '../curriculum/guardrails';
 import type { Attribution, LessonRequest } from './types';
 
 // ============================================================================
@@ -273,11 +274,18 @@ export async function resolveSources(req: LessonRequest): Promise<SourceBundle> 
     .filter(c => (c.prerequisites || []).includes(req.concept_id))
     .map(c => ({ id: c.id, label: c.label }));
 
+  // Apply curriculum guardrails: if the caller supplied an exam_id,
+  // filter user material chunks against the exam's concept scope. Without
+  // an exam_id, permissive (all chunks pass the similarity threshold).
+  const raw_user_chunks = (req.user_material_chunks || [])
+    .filter(c => c.similarity >= 0.55);
+  const { allowed: guarded_user_chunks } = (req as any).exam_id
+    ? filterChunksForExam(raw_user_chunks, (req as any).exam_id)
+    : { allowed: raw_user_chunks };
+
   return {
     concept_id: req.concept_id,
-    user_materials: (req.user_material_chunks || [])
-      .filter(c => c.similarity >= 0.55)
-      .slice(0, 5),
+    user_materials: guarded_user_chunks.slice(0, 5),
     bundle: { explainer, problems: bundleProblems },
     wolfram,
     graph: {

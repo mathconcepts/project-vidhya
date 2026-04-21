@@ -25,6 +25,7 @@ import {
 } from '../lessons/spaced-scheduler';
 import { resolveContent } from '../content/resolver';
 import { recordTelemetry } from '../content/telemetry';
+import { recordSignal } from '../curriculum/quality-aggregator';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import type { LessonRequest, Lesson } from '../lessons/types';
 
@@ -234,7 +235,21 @@ async function handleEngagement(req: ParsedRequest, res: ServerResponse): Promis
   if (!validEvents.has(body.event)) {
     return sendError(res, 400, `event must be one of: ${[...validEvents].join(', ')}`);
   }
-  // Log as a telemetry event — privacy-safe, categorical only
+
+  // Feed the curriculum quality aggregator — this is the compounding loop
+  // link. Every engagement signal now rolls up into component-level quality
+  // scores that the admin dashboard surfaces.
+  recordSignal({
+    concept_id: body.concept_id,
+    component_kind: body.component_kind,
+    event: body.event,
+    timestamp: new Date().toISOString(),
+    correct: body.correct,
+    duration_ms: body.duration_ms,
+    session_id: body.session_id,
+  });
+
+  // Also log to content telemetry (pre-existing — admin dashboard traffic)
   recordTelemetry({
     source: 'tier-0-bundle-exact',
     latency_ms: 0,

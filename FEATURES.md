@@ -6,7 +6,7 @@ the technical deep-dive for developers, evaluators, and decision-makers
 who need to understand what's under the hood.*
 
 - **Part 1 — For students, teachers, and institutional buyers** (Slides 1–8): what Vidhya *does for you*, in plain language
-- ****Part 2 — For developers and technical evaluators** (Slides 9–35): every architectural decision, moat, file reference, and cost metric
+- **Part 2 — For developers and technical evaluators** (Slides 9–35): every architectural decision, moat, file reference, and cost metric
 
 ---
 
@@ -82,6 +82,30 @@ plans.
 spaced intervals (based on real memory research), so things you learned
 three weeks ago don't slip away the week of the exam.
 
+**Know exactly where you stand, on every concept.** Open the app and see
+12 concepts mastered, 15 in progress, 3 struggling. Per-concept, real
+numbers, always visible. No vague "50% complete" progress bars. When
+someone asks "how's prep going?" you have an honest answer.
+
+**The app knows which exam you're taking.** When you set your target
+exam, every lesson, every "try this next" suggestion, every priority is
+filtered through that exam's syllabus and topic weightings. The topics
+your exam weighs heavily get more practice. Topics that aren't on your
+exam don't clutter your study time.
+
+**As your exam approaches, the app shifts gear.** Six months out and five
+wrong in a row → the app suggests a break. Three days out and five wrong
+in a row → the app switches to a focused lesson review instead. Telling
+a stressed student to "step away" two days before an exam reads as
+tone-deaf; Vidhya reads the urgency and adjusts every piece of advice.
+
+**If your plan bundles multiple exams, it's celebrated.** When your
+institute's plan covers GATE CS + JEE Advanced + IES + BARC, you see a
+dedicated "🎁 Giveaway · included in your plan" banner on sign-in
+listing every bonus exam. Each bonus shows *how much of it you've
+already covered through your primary prep* — so the bundle isn't just
+a promise, it's a visible head-start.
+
 ---
 
 ## Slide 3 — A day in the life
@@ -90,11 +114,22 @@ three weeks ago don't slip away the week of the exam.
 paste a problem you saw in last night's reading. A walkthrough comes
 back. You read it on the way in.
 
+**8:45 AM, signing in on the web app.** A violet banner appears at the
+top: *"🎁 Giveaway · included in your plan. One subscription, 4 exams.
+You're preparing for GATE CS, and your plan also covers JEE Advanced
+(42% covered), IES Electronics (18% covered), BARC CSE (8% covered)."*
+You didn't know your institute's subscription covered all four. Now
+you do — and you can see exactly how far along you already are in each.
+
 **2:15 PM, library.** You're stuck on a multivariable calculus problem.
 You snap a photo with your phone. The app reads your handwriting,
 identifies it as a Lagrange multiplier question, and walks you through
 setting up the equations. It flags the common trap: "students forget
 to check all the stationary points."
+
+**3:00 PM, quick glance at your home screen.** The exam countdown chip
+in the corner shows *"47 days to your exam."* A single line, always
+visible when you need it, gone from your head when you don't.
 
 **7:00 PM, home.** You finished a mock test this afternoon. You upload
 a photo of your answer sheet. Vidhya grades it, shows you the three
@@ -113,6 +148,24 @@ calls out what your exam covers and what's out of scope.
 
 No streaks were counted. No notifications were sent. The app didn't
 manipulate you.
+
+### Fast-forward five weeks — your exam is six days away
+
+**Same 2:15 PM library session, different response.** Five wrong
+answers in a row on partial differentials. Six months ago the app
+would have said *"Step away for 10 minutes."* Today, with your exam
+six days away, it says *"Switch to a lesson review — with your exam
+close, keep momentum."* It gives you a four-minute concept refresher
+instead of suggesting you stop studying two days before your exam.
+The urgency of your situation changed. The advice changed with it.
+
+**Your home screen** now shows the countdown chip in amber instead of
+sky blue. The color shifted as the exam got closer. The app is aware
+of your timeline without nagging.
+
+**You open the "Priority actions" panel.** Three concepts, ranked by
+exam weight and your current mastery. Not 47 things to do — three.
+You work through them. Fifteen minutes well spent.
 
 ---
 

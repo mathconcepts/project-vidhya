@@ -10,6 +10,9 @@ and respects your privacy.*
 Imagine a tutor who:
 
 - **Knows your exam inside out** — your syllabus, your weightages, the common traps examiners set
+- **Adapts to how close your exam is** — the advice you get 6 months out is different from what you get 3 days out
+- **Tracks your mastery per concept** — you always know which concepts are solid and which need work
+- **Celebrates bonus exams in your plan** — if your subscription covers multiple exams, you see it as a gift on sign-in, with a live "you're already X% ready" chip per bonus exam
 - **Has read all your class notes** — upload your PDFs; lessons adapt to what you've already written
 - **Is there whenever you're stuck** — at midnight before an exam, on the bus, in the library
 - **Double-checks every answer** — computationally verified, not just "the AI said so"
@@ -33,6 +36,25 @@ watch out for next time.
 Upload a photo of your last mock test. Vidhya grades each question, finds
 your weak spots, and builds you a focused study plan — "next 14 days, these
 12 concepts in this order." Gentle, no nagging. It's there if you want it.
+
+**Your exam is in 3 days and you're nervous.** The app knows. When you get
+five wrong answers in a row with your exam 6 months away, it suggests a
+break. With your exam in 3 days, it switches to a quick lesson review
+instead — because telling a stressed student two days from their exam to
+"step away for 10 minutes" reads as tone-deaf. The advice you get shifts
+as urgency shifts.
+
+**You want to know exactly where you stand.** Open the app — see 12
+concepts mastered, 15 in progress, 3 struggling, and what to review
+before your next session. Not a vague progress bar, not a streak counter.
+Real mastery, per concept, always visible.
+
+**Your plan covers multiple exams and you didn't realize.** On sign-in,
+Vidhya shows you a "🎁 Giveaway" banner: *"You're prepping for GATE CS,
+and your plan also covers JEE Advanced, IES Electronics, and BARC CSE."*
+Even better: each bonus exam shows how much you've already covered
+through your primary prep. "You're already 42% of the way through JEE
+Advanced." The bonus is celebrated, not buried.
 
 **You want to actually understand, not just memorize.** Every lesson is eight
 bite-sized pieces: hook → definition → intuition → worked example → mini

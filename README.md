@@ -16,6 +16,60 @@ domain-agnostic — any exam with a defined syllabus works.
 
 ---
 
+## What you actually get (as a student)
+
+We built Vidhya around six promises to the student. Each one is a
+concrete outcome, not a feature.
+
+### 1. You'll know exactly where you stand — on every concept in your syllabus
+
+Vidhya tracks your mastery per concept, not just overall. Open the app
+and you see: 12 concepts mastered, 15 in progress, 3 struggling. You
+know what to review before your next session. No dashboards to learn,
+no jargon — just "here's what needs work."
+
+### 2. The app knows which exam you're taking — and adapts every lesson
+
+When you pick your target exam (GATE CS, JEE Advanced, UPSC CSE,
+whatever), every lesson, every recommendation, every "try this next"
+is filtered through that exam's syllabus and topic weightings. The
+concepts your exam weighs heavily get more practice; the ones that
+aren't on your exam don't clutter your study time.
+
+### 3. As your exam approaches, the app stops telling you to rest
+
+Five wrong answers in a row when your exam is 6 months away? The app
+suggests a break. Same five wrong answers when your exam is 3 days
+away? The app switches to a lesson review instead — because telling
+a stressed student to "step away for 10 minutes" two days before
+their exam reads as tone-deaf. The urgency of your situation shapes
+every piece of advice the app gives.
+
+### 4. One subscription can unlock multiple exams
+
+If your coaching institute bundles GATE CS with JEE Advanced, IES
+Electronics, and BARC, you'll see a clear **🎁 Giveaway** banner on
+sign-in listing every bonus exam your plan covers — and how much of
+each you've *already* covered through your primary prep. "You're
+already 42% of the way through JEE Advanced through your current
+prep." The bundle is celebrated, not hidden.
+
+### 5. You can study on a slow phone, on spotty wifi
+
+The app pre-loads the 80% of questions students most commonly ask.
+When your wifi drops or the server is down, you can keep studying.
+Telegram and WhatsApp bots work from a 3-year-old Android just as
+well as a new laptop.
+
+### 6. Your data stays yours — and your AI provider is your choice
+
+Your class notes, your mock test scores, your study history — all
+stay on your device. If you want to use AI-powered features, you
+bring your own Gemini / Claude / OpenAI / Ollama key. Your key stays
+in your browser. We never see it, and we never charge you for the AI.
+
+---
+
 ## What Vidhya does for you
 
 **Study anything from your syllabus, instantly.** Ask a question in chat, or

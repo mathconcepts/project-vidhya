@@ -6,7 +6,7 @@ the technical deep-dive for developers, evaluators, and decision-makers
 who need to understand what's under the hood.*
 
 - **Part 1 — For students, teachers, and institutional buyers** (Slides 1–9): what Vidhya *does for you*, in plain language
-- **Part 2 — For developers and technical evaluators** (Slides 10–36): every architectural decision, moat, file reference, and cost metric
+- **Part 2 — For developers and technical evaluators** (Slides 10–37): every architectural decision, moat, file reference, and cost metric
 
 ---
 
@@ -1997,7 +1997,96 @@ Storage: `.data/exam-groups.json` via shared flat-file-store.
 
 ---
 
-## Slide 30 — Technical Differentiators (Head-to-Head)
+## Slide 30 — The Multi-Channel Interactive Rendering Moat
+
+Most educational platforms build interactivity for the web and treat
+chat-bot delivery as a degraded fallback. Students on Telegram get
+walls of text. Students on WhatsApp get screenshots. Students
+listening via voice get nothing.
+
+Vidhya ships a **rendering framework** that turns the canonical
+8-component Lesson into first-class interactive content on every
+delivery channel, with deliberate degradation when a channel can't
+support a given interaction mode.
+
+### The two-step pipeline
+
+    Lesson ──[enrichment]──> EnrichedLesson ──[channel-render]──> RenderedLesson
+
+**Enrichment** decides which components become interactive:
+
+    hook              → Callout (insight)
+    intuition         → Callout (tip)
+    worked-example    → StepReveal (progressive disclosure)
+    micro-exercise    → QuickCheck (tap to answer)
+    common-traps      → FlipCard (flip for explanation)
+    connections       → DragMatch (when 3+ pairs exist)
+
+Strategy is a lookup table. Adding an enrichment rule = one row.
+
+**Channel rendering** produces the right output for each channel:
+
+| Block type | Web | Telegram | WhatsApp | Voice |
+|------------|-----|----------|----------|-------|
+| step-reveal | slide-in on reveal | "Next step ▶" button, callback-driven | numbered list | sequential narration |
+| flip-card | 3D CSS flip | two-message flip via "Why?" button | "→" format | spoken pairs |
+| quick-check | tap with animated feedback | inline keyboard with try-again | numbered reply | skipped (no input) |
+| callout | animated badge | emoji + bold HTML | emoji + markdown | narrated with emphasis |
+
+### Telegram gets real interactivity
+
+The progressive-reveal state machine is the proof. Users tap "Next
+step ▶" and the webhook routes a callback like
+`reveal:{block_id}:{step_index}` — the server returns the next step
+as a fresh message with an updated button.
+
+No server-side state. The current progress is encoded in the
+callback data. A webhook failure doesn't lose progress. Multiple
+students can reveal different parts of the same lesson
+concurrently in different chats.
+
+### Why this is a moat
+
+1. **Channel-agnostic lessons.** Authors never think about
+   rendering. They produce canonical 8-component lessons. The
+   rendering layer handles the rest.
+
+2. **Decision logic in one place.** Adding a new component kind,
+   a new block type, or a new channel is a local change in
+   `src/rendering/`. No cross-codebase spaghetti.
+
+3. **Telegram first-class.** Progressive reveal, flip cards, quiz
+   buttons, retry on wrong answers — all via HTML + inline
+   keyboards. No client-side code needed. A student on a
+   five-year-old Android gets the same interactive experience as
+   one on a MacBook.
+
+4. **Accessibility by default.** Every web animation respects
+   `prefers-reduced-motion`. Voice segments carry narration hints
+   (`emphasis`, `pause_after_ms`). Every interactive element is
+   native `<button>`, focusable, keyboard-activatable.
+
+5. **Cache-safe.** Base Lesson preserved; enrichment is a pure
+   function. Existing lesson cache unaffected. Future enrichment
+   cache is trivial (lesson_id → EnrichedLesson).
+
+### Files
+
+    src/rendering/
+      types.ts              InteractiveBlock union, channel output types
+      lesson-enrichment.ts  Decision logic: components → blocks
+      channel-renderer.ts   Four renderers + Telegram callback state machine
+
+    src/api/rendering-routes.ts                            3 HTTP endpoints
+    frontend/src/components/lesson/InteractiveLessonBlock.tsx  Framer Motion views
+    docs/RENDERING-FRAMEWORK.md                           Framework doc
+
+Zero new npm dependencies. Reuses Framer Motion (already present
+since v2.4).
+
+---
+
+## Slide 31 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -2032,7 +2121,7 @@ Storage: `.data/exam-groups.json` via shared flat-file-store.
 
 ---
 
-## Slide 31 — Tech Stack
+## Slide 32 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -2052,7 +2141,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 32 — What's Shipped (at v2.10.0)
+## Slide 33 — What's Shipped (at v2.11.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2079,7 +2168,11 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.9.7 | `33447f7` | Dynamic Exam Framework — admin-managed exam registry with LLM-optional progressive enrichment + conversational assistant + unique multi-student IDs |
 | v2.9.8 | `3ec9f95` | Exam comparison + personalization — pairwise structured diff, nearest-match ranking across dynamic+static catalogs, GBrain exam-context bridge for student-facing content, urgency-aware insights, countdown chip |
 | v2.9.9 | `ddea07d` | Exam groups + giveaway — admin-managed master list of approved exam bundles, approval gate for student-facing activation, explicit "one subscription, many exams" banner at sign-in, zero-LLM pure-data mechanic |
-| v2.10.0 | *this* | GBrain sweep — per-exam coverage engine; giveaway banner personalized with per-bonus-exam readiness; unified /api/me/gbrain-summary endpoint; systematic integration audit doc proving GBrain is applied across all student-facing surfaces |
+| v2.10.0 | `f98950b` | GBrain sweep — per-exam coverage engine; giveaway banner personalized with per-bonus-exam readiness; unified /api/me/gbrain-summary endpoint; systematic integration audit doc |
+| v2.10.1 | `0c00b88` | Customer-centric messaging pass across README, PITCH, FEATURES |
+| v2.10.2 | `752aad1` | Pain → bliss framing — 10 pain/bliss pairs across all three customer-facing surfaces |
+| v2.10.3 | `56e2b11` | Six more pain/bliss pairs covering world-class access, foundations, pacing, social pressure, motivation, rigor+intuition |
+| v2.11.0 | *this* | Multi-channel interactive rendering framework — enrichment decision logic + channel renderer for web/Telegram/WhatsApp/voice; Framer Motion web components; progressive-reveal state machine for Telegram |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -2105,7 +2198,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — Cost Projections at Scale
+## Slide 34 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -2125,7 +2218,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 34 — Why Now
+## Slide 35 — Why Now
 
 **Three trends converge:**
 
@@ -2147,7 +2240,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 35 — Extension points (for contributors)
+## Slide 36 — Extension points (for contributors)
 
 Vidhya is open source. These are places where a contributor can add
 real value without rewriting the foundation:
@@ -2180,7 +2273,7 @@ architecture where someone else can.
 
 ---
 
-## Slide 36 — Invitation
+## Slide 37 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -2261,6 +2354,7 @@ Where to engage:
 | **Dynamic exam framework** | 🔵🔵🔵🔵🔵 | Admin-managed exam registry with 3-field minimal seed, LLM-optional progressive enrichment, conversational assistant, admin-edit-preserving provenance, unique IDs reusable across any number of students |
 | **Giveaway layer** | 🔵🔵🔵🔵🔵 | Admin-curated exam bundles with explicit approval gate; student-facing "one subscription, many exams" banner; per-group dismissal; zero-LLM pure-data lookup |
 | **GBrain uniformity** | 🔵🔵🔵🔵🔵 | Single /api/me/gbrain-summary endpoint exposes mastery stats + exam context + giveaway coverage + focus signal; cross-exam coverage engine; integration audit proves systematic GBrain application |
+| **Multi-channel rendering** | 🔵🔵🔵🔵🔵 | Canonical lessons enriched with interactive blocks; each block has first-class renderers for web (Framer Motion), Telegram (progressive-reveal keyboards), WhatsApp (numbered), voice (narration). Same pedagogical content, channel-appropriate interaction. |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

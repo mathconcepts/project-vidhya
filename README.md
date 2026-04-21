@@ -350,7 +350,7 @@ for the tiered breakdown.
 | Document                    | Scope                                       |
 |----------------------------|---------------------------------------------|
 | [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
-| [FEATURES.md](./FEATURES.md) | 36-slide deck (9 for students, 27 technical): every moat, metrics, cost model |
+| [FEATURES.md](./FEATURES.md) | 37-slide deck (9 for students, 28 technical): every moat, metrics, cost model |
 | [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
 | [docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) | BYO-key setup: 8 providers, cascading role defaults, privacy model |
 | [docs/USER-JOURNEY.md](./docs/USER-JOURNEY.md) | Student + admin journey maps with pain points and fixes |
@@ -358,6 +358,7 @@ for the tiered breakdown.
 | [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md) | After-each-attempt insight engine + Smart Notebook (auto-logged, concept-clustered, gap-analyzed, exportable) |
 | [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md) | Dynamic exam registry — admin-managed with LLM-optional enrichment, conversational assistant, unique multi-student IDs, progressive fill |
 | [docs/GBRAIN-INTEGRATION-AUDIT.md](./docs/GBRAIN-INTEGRATION-AUDIT.md) | Systematic per-feature audit proving GBrain is applied across all student-facing surfaces; unified /api/me/gbrain-summary endpoint; cross-exam coverage engine |
+| [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md) | Multi-channel interactive rendering — enriches canonical lessons with step-reveal / flip-card / quick-check / drag-match blocks; first-class renderers for web (Framer Motion), Telegram (progressive-reveal keyboards), WhatsApp, voice |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute — scrapers, concepts, code, PRs |
 | [SECURITY.md](./SECURITY.md) | Vulnerability disclosure policy + response timeline |

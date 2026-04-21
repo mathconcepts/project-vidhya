@@ -6,7 +6,7 @@ the technical deep-dive for developers, evaluators, and decision-makers
 who need to understand what's under the hood.*
 
 - **Part 1 — For students, teachers, and institutional buyers** (Slides 1–8): what Vidhya *does for you*, in plain language
-- **Part 2 — For developers and technical evaluators** (Slides 9–34): every architectural decision, moat, file reference, and cost metric
+- ****Part 2 — For developers and technical evaluators** (Slides 9–35): every architectural decision, moat, file reference, and cost metric
 
 ---
 
@@ -1616,7 +1616,110 @@ see zero behavioral change.
 
 ---
 
-## Slide 28 — Technical Differentiators (Head-to-Head)
+## Slide 28 — The Customer-Centric Giveaway (One Subscription, Many Exams)
+
+Coaching institutes often prepare students for multiple related exams
+at once. A student targeting GATE Computer Science may also benefit
+from JEE Advanced, IES Electronics, BARC, or ISRO recruitment
+practice. Traditional LMS pricing forces institutes to charge for
+each separately — or to bundle silently without the student ever
+realizing what they're getting.
+
+Vidhya makes the bundle **explicit, celebrated, and customer-centric**.
+
+### The mechanic
+
+Admins define **exam groups** — curated bundles of related exams.
+When a student is assigned to any exam in an approved group, they
+see a giveaway banner when they sign in:
+
+    🎁 Giveaway · included in your plan
+
+    One subscription, 4 exams
+
+    You're preparing for GATE Computer Science, and your plan
+    also covers:
+
+    [ JEE Advanced ]  [ IES Electronics ]  [ BARC CSE ]
+
+The violet-to-fuchsia gradient with subtle shimmer reads as "bonus"
+without being tacky. Dismissible per-group via localStorage — but
+if the admin later approves a second group the student qualifies
+for, the banner reappears for that new group. Students never miss
+newly-added bonus exams.
+
+### The admin master list
+
+`/exam-groups` — dedicated admin page to manage bundles. Create a
+group as a draft, add member exams from the registry or static
+catalog, add a tagline + benefits list, then explicitly approve.
+
+Key design choice: **approval is a gate, not a setting.** Drafts
+are admin-only — never surfaced to students. Approval requires ≥2
+member exams, stamps audit fields (`approved_by`, `approved_at`),
+and flips student-facing activation.
+
+PATCH explicitly strips `is_approved` to force use of the dedicated
+`/approve` endpoint. Approval cannot happen accidentally via a
+field update. That deliberate friction is the point — approval is
+an institutional commitment that flows into the student's trust in
+the bundle.
+
+### Why this is a moat
+
+1. **Zero-LLM feature.** The entire giveaway mechanic runs on pure
+   data lookup: student's exam_id → which approved groups contain
+   it → bonus exams. No API calls. No per-student cost.
+
+2. **Compatible with v2.9.7–8 provenance model.** Groups are a
+   clean layer on top; exam enrichment, comparison, similarity,
+   and personalization engines all work unchanged. The existing
+   19 moats compose cleanly with this one.
+
+3. **Positions the bundle as a gift, not a feature.** "One
+   subscription, 4 exams" reads better than "multi-exam access
+   enabled." The banner celebrates; it doesn't just inform.
+
+4. **Approval gate protects students from bad UX.** An admin
+   mid-editing a group never accidentally shows students a
+   half-formed bundle. The draft state is persistent and safe.
+
+5. **Per-group dismissal preserves trust.** Students who dismiss
+   a giveaway see it stay dismissed; students who later qualify
+   for new groups get fresh notification. Both respect their
+   attention.
+
+### HTTP surface (13 new endpoints)
+
+    POST   /api/exam-groups                        Create draft
+    GET    /api/exam-groups                        List all (admin)
+    GET    /api/exam-groups/approved               List approved (teacher+)
+    GET    /api/exam-groups/containing/:exam_id    Reverse lookup
+    GET    /api/exam-groups/:id                    Detail + members
+    PATCH  /api/exam-groups/:id                    Update (strips approval)
+    POST   /api/exam-groups/:id/approve            Approve (≥2 guard)
+    POST   /api/exam-groups/:id/unapprove          Unapprove
+    POST   /api/exam-groups/:id/members            Add exam
+    DELETE /api/exam-groups/:id/members/:eid       Remove exam
+    POST   /api/exam-groups/:id/archive            Archive
+    DELETE /api/exam-groups/:id                    Delete (owner)
+    GET    /api/my-giveaway                        Student resolution
+
+Storage: `.data/exam-groups.json` via shared flat-file-store.
+
+### Non-goals (deliberate scope)
+
+- **No billing integration.** Groups unlock access, not billing.
+- **No automatic group suggestion.** Admins curate manually.
+- **No student-initiated joining.** Only admin assignment triggers.
+- **No cross-group stacking.** First match wins (deterministic).
+- **No syllabus auto-merging.** GBrain still personalizes against
+  the student's primary exam only. Groups are a discovery +
+  access-unlock mechanic, not a personalization hook.
+
+---
+
+## Slide 29 — Technical Differentiators (Head-to-Head)
 
 | Capability | Typical LLM edtech | Vidhya |
 |-----------|-------------------|--------|
@@ -1651,7 +1754,7 @@ see zero behavioral change.
 
 ---
 
-## Slide 29 — Tech Stack
+## Slide 30 — Tech Stack
 
 **Backend** (8 runtime deps, 3 dev):
 Gemini SDK · Anthropic SDK · pg · tsx · TypeScript · katex ·
@@ -1671,7 +1774,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 30 — What's Shipped (at v2.9.8)
+## Slide 31 — What's Shipped (at v2.9.9)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -1696,7 +1799,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.9.5 | `97b45d1` | Syllabus-driven notebook export with per-concept timestamps — every concept listed with clear practiced/not-practiced markers + fixes hidden Map/Array bugs |
 | v2.9.6 | `23ff72b` | Notebook watermark + legally-binding-yet-friendly disclaimer — every export carries provenance + scope clarification |
 | v2.9.7 | `33447f7` | Dynamic Exam Framework — admin-managed exam registry with LLM-optional progressive enrichment + conversational assistant + unique multi-student IDs |
-| v2.9.8 | *this* | Exam comparison + personalization — pairwise structured diff, nearest-match ranking across dynamic+static catalogs, GBrain exam-context bridge for student-facing content, urgency-aware insights, countdown chip |
+| v2.9.8 | `3ec9f95` | Exam comparison + personalization — pairwise structured diff, nearest-match ranking across dynamic+static catalogs, GBrain exam-context bridge for student-facing content, urgency-aware insights, countdown chip |
+| v2.9.9 | *this* | Exam groups + giveaway — admin-managed master list of approved exam bundles, approval gate for student-facing activation, explicit "one subscription, many exams" banner at sign-in, zero-LLM pure-data mechanic |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics
@@ -1722,7 +1826,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 31 — Cost Projections at Scale
+## Slide 32 — Cost Projections at Scale
 
 Assumes 20 problems/day + 3 tutor turns/day per DAU, 80% tier-0 hit rate,
 Gemini 2.5 Flash-Lite pricing (Apr 2026), Wolfram free tier used for
@@ -1742,7 +1846,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 32 — Why Now
+## Slide 33 — Why Now
 
 **Three trends converge:**
 
@@ -1764,7 +1868,7 @@ tier-0 hit rate climbs toward 95%, driving per-DAU cost below $0.10/mo.
 
 ---
 
-## Slide 33 — Extension points (for contributors)
+## Slide 34 — Extension points (for contributors)
 
 Vidhya is open source. These are places where a contributor can add
 real value without rewriting the foundation:
@@ -1797,7 +1901,7 @@ architecture where someone else can.
 
 ---
 
-## Slide 34 — Invitation
+## Slide 35 — Invitation
 
 **Project Vidhya is open source under MIT.**
 
@@ -1876,6 +1980,7 @@ Where to engage:
 | **Compounding mastery** | 🔵🔵🔵🔵🔵 | Every attempt produces visible mastery delta + insight + single next step + pattern reinforcement; error-taxonomy-aware explanations reframe wrong answers as learning |
 | **Smart Notebook** | 🔵🔵🔵🔵🔵 | Every user input auto-logged, concept-clustered, syllabus gap-analyzed, exportable as Markdown — single source of truth, universal format, privacy-preserving |
 | **Dynamic exam framework** | 🔵🔵🔵🔵🔵 | Admin-managed exam registry with 3-field minimal seed, LLM-optional progressive enrichment, conversational assistant, admin-edit-preserving provenance, unique IDs reusable across any number of students |
+| **Giveaway layer** | 🔵🔵🔵🔵🔵 | Admin-curated exam bundles with explicit approval gate; student-facing "one subscription, many exams" banner; per-group dismissal; zero-LLM pure-data lookup |
 | **Content (curated + attributed)** | 🔵🔵🔵🔵 | Nightly CI compounds asset value |
 | **Observability (telemetry)** | 🔵🔵🔵 | Flat-file, no DB costs |
 | **Graceful degradation** | 🔵🔵🔵 | Works in constrained deployments |

@@ -43,6 +43,7 @@ import { adminDashboardRoutes } from './api/admin-dashboard-routes';
 import { teachingRoutes } from './api/teaching-routes';
 import { notebookRoutes as smartNotebookRoutes } from './api/notebook-insight-routes';
 import { examRoutes } from './api/exam-routes';
+import { examGroupRoutes } from './api/exam-group-routes';
 import { telegramRoutes as botTelegramRoutes } from './channels/telegram-adapter';
 import { whatsappRoutes } from './channels/whatsapp-adapter';
 import { getAuth, migrateSession } from './api/auth-middleware';
@@ -195,6 +196,9 @@ for (const route of smartNotebookRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of examRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of examGroupRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of botTelegramRoutes) {

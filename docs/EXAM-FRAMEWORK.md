@@ -320,24 +320,140 @@ All of these are one-liner integrations against the already-exposed bridge. Foll
 - **No file uploads (PDFs, DOCX) in v2.9.7.** Local data is text-only for now. File extraction is a separate feature with its own parser + sanitization concerns.
 - **No exam sharing across Vidhya instances.** Exams are local to a single deployment. Exporting/importing exam JSON across instances is a future feature.
 - **No LLM-generated test questions inside exam profiles.** The exam profile is metadata; question generation happens elsewhere.
-- **No human approval workflow.** Enrichment proposals apply immediately when the admin clicks Apply. If an organization wants multi-step approval, that's a future feature.
+- **No human approval workflow for enrichment proposals.** Enrichment applies immediately when the admin clicks Apply. (Exam group approval, however, IS a deliberate gate — see Section 14.)
 
 ---
 
-## 13. Files shipped in v2.9.7
+## 13. Files shipped (by version)
 
-New:
+**v2.9.7 — Dynamic exam framework:**
 - `src/exams/types.ts` — schema with provenance
 - `src/exams/exam-store.ts` — CRUD, completeness, unique IDs
 - `src/exams/exam-enrichment.ts` — LLM research with graceful fallback
 - `src/exams/exam-assistant.ts` — conversational helper
-- `src/api/exam-routes.ts` — 13 HTTP endpoints
+- `src/api/exam-routes.ts` — HTTP endpoints
 - `frontend/src/pages/gate/ExamSetupPage.tsx` — admin UI
-- `docs/EXAM-FRAMEWORK.md` — this document
 
-Modified:
-- `src/gate-server.ts` — register exam routes (also fixes a pre-existing `notebookRoutes` name collision)
-- `src/auth/types.ts` — add `user.exam_id`
-- `frontend/src/App.tsx` — `/exams` route
+**v2.9.8 — Comparison + personalization:**
+- `src/exams/exam-comparison.ts` — pairwise structured diff
+- `src/exams/exam-similarity.ts` — nearest-match across catalogs
+- `src/gbrain/exam-context.ts` — personalization bridge
+- `frontend/src/components/gate/ExamCountdownChip.tsx` — student urgency chip
 
-Zero new npm dependencies. Zero breaking changes.
+**v2.9.9 — Exam groups + giveaway:**
+- `src/exams/exam-group-store.ts` — master list with approval gate
+- `src/api/exam-group-routes.ts` — admin CRUD + student `/api/my-giveaway`
+- `frontend/src/pages/gate/ExamGroupsPage.tsx` — admin master list UI
+- `frontend/src/components/gate/GiveawayBanner.tsx` — student-facing bonus banner
+
+Zero new npm dependencies cumulative. Zero breaking changes.
+
+---
+
+## 14. Exam Groups + Giveaway (v2.9.9)
+
+### The customer-centric concept
+
+Coaching institutes often prepare students for multiple related exams at once — a student targeting GATE-CS may also find value in preparing for JEE Advanced, IES Electronics, or BARC recruitment. Rather than charging separately for each, institutes want to offer one subscription that unlocks preparation for several related exams. This feature makes that explicit to the student as a **giveaway**: when they sign in, a celebratory banner tells them their plan also covers other exams.
+
+### Data model
+
+```typescript
+interface ExamGroup {
+  id: string;                     // GRP-<CODE>-<BASE36-TS>
+  code: string;
+  name: string;
+  description?: string;
+  exam_ids: string[];             // dynamic registry members
+  static_exam_ids?: string[];     // static catalog members
+
+  is_approved: boolean;           // THE approval gate
+  approved_by?: string;
+  approved_at?: string;
+
+  tagline?: string;               // shown on giveaway banner
+  benefits?: string[];            // bullet points for the banner
+
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  is_archived: boolean;
+}
+```
+
+### The approval gate — why it matters
+
+Groups start as **drafts** (`is_approved: false`). Drafts are admin-only and never surface to students. Approval is an explicit admin action that:
+
+1. Requires at least 2 member exams (a group of one isn't a giveaway)
+2. Stamps `approved_by` + `approved_at` for audit
+3. Flips the group into student-facing activation
+
+This separation protects students from half-baked groups that don't actually make pedagogical sense together. An admin can experiment with different group compositions in draft state without any student ever seeing the wrong thing. `PATCH /api/exam-groups/:id` explicitly strips `is_approved` fields to force use of the dedicated approve endpoint — so approval cannot happen accidentally via a field-update.
+
+### The giveaway resolution algorithm
+
+When a student signs in, the banner calls `GET /api/my-giveaway`. The server:
+
+1. Looks up the student's `user.exam_id`
+2. If no exam assigned → returns `{ giveaway: null }`
+3. Walks all **approved** groups looking for one that contains the student's exam
+4. If found, returns a `GiveawayInfo` with `primary_exam` (the student's assigned exam) and `bonus_exams` (the other members of the group)
+5. If not found, returns `{ giveaway: null }`
+
+The approval invariant is enforced inside `resolveGiveaway()` — unapproved groups are skipped even if they contain the student's exam. This is the security boundary: no way for a draft to leak to students.
+
+### The student-facing banner
+
+`frontend/src/components/gate/GiveawayBanner.tsx` — violet-to-fuchsia gradient with a shimmer animation (deliberately subtle so it reads as "bonus" without being tacky), a gift icon, the group's tagline, the student's primary exam, and the bonus exams as tappable chips. If there are more than 5 bonus exams, an expansion toggle reveals the rest plus any admin-defined benefits list.
+
+**Per-group dismissal via `localStorage`:** once a student dismisses the banner for a group, it stays dismissed for that group. If the admin later approves a second group that the student also qualifies for, the banner reappears — so students never miss newly-added bonus exams.
+
+**Self-gating:** if `/api/my-giveaway` returns null, the component renders nothing. Exam-less students and students outside any approved group see zero UI change.
+
+### The admin master list UI
+
+`/exam-groups` — list view shows every group with its approval status (Approved chip or Draft chip) and member count. Detail view shows:
+
+- Approve / Unapprove action (approve disabled until ≥2 members)
+- Archive action
+- Full member list with per-member remove buttons
+- Add-member modal with searchable list of available exams from `/api/exams`
+- Tagline / description / benefits — all editable
+
+### HTTP endpoints
+
+```
+POST   /api/exam-groups                        Create draft (admin)
+GET    /api/exam-groups                        List all (admin)
+GET    /api/exam-groups/approved               List approved (teacher+)
+GET    /api/exam-groups/containing/:exam_id    Reverse lookup (admin)
+GET    /api/exam-groups/:id                    Detail + resolved members
+PATCH  /api/exam-groups/:id                    Update (strips approval fields)
+POST   /api/exam-groups/:id/approve            Approve (≥2 member guard)
+POST   /api/exam-groups/:id/unapprove          Unapprove
+POST   /api/exam-groups/:id/members            Add exam
+DELETE /api/exam-groups/:id/members/:eid       Remove exam
+POST   /api/exam-groups/:id/archive            Archive
+DELETE /api/exam-groups/:id                    Delete (owner only)
+GET    /api/my-giveaway                        Student-facing resolution
+```
+
+### Integration with the rest of the system
+
+- **No changes to the core exam framework.** Groups are a clean layer on top; the enrichment, comparison, similarity, and personalization engines from v2.9.7/8 all work unchanged.
+- **GBrain personalization is unaware of groups.** A student's GBrain still runs against their primary `exam_id` only. Groups are a **discovery + access-unlock** mechanic, not a personalization hook. If a student wants to study a bonus exam, they switch their assigned exam explicitly — the system doesn't auto-merge syllabi, which would produce surprising content.
+- **Similarity engine from v2.9.8 makes a great admin helper** for curating groups: when building a new group, admins can consult `/api/exams/:id/similar` to find exam candidates that overlap well. (The UI wiring for this is a future session.)
+
+### Why approval is a gate, not a setting
+
+A flag called `is_approved` could easily have been `is_visible` or `is_published`. The word "approved" is deliberate: it signals that a human admin has **taken explicit responsibility** for telling students these exams belong together. It's not just a visibility toggle — it's an institutional commitment that flows through to the student's trust in the bundle. That's why the endpoint is `/approve` not `/publish`, and why PATCH cannot flip it.
+
+### Non-goals for v2.9.9
+
+- **No billing integration.** Groups unlock access, not billing. Whether a subscription actually includes multiple exams is an org-level decision outside Vidhya's scope.
+- **No automatic group suggestion.** The admin curates groups manually. We don't auto-propose bundles based on similarity — that's a future feature where the admin reviews AI-suggested bundles.
+- **No student-initiated group joining.** Students can't opt into a group they're not assigned to. Only admin assignment + approved membership triggers the giveaway.
+- **No cross-group stacking.** A student's primary exam can belong to at most one group in the giveaway banner. If multiple approved groups contain the student's exam, the first match wins (deterministic by update order).
+
+---

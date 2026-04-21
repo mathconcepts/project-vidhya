@@ -22,6 +22,7 @@ import { StudentWelcomeCard, hasSeenWelcome } from '@/components/gate/StudentWel
 import { YourTeacherCard } from '@/components/gate/YourTeacherCard';
 import { AnnouncementBanner } from '@/components/gate/AnnouncementBanner';
 import { ExamCountdownChip } from '@/components/gate/ExamCountdownChip';
+import { GiveawayBanner } from '@/components/gate/GiveawayBanner';
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart,
   Hash, Repeat, Layers, Share2, Navigation,
@@ -339,6 +340,7 @@ export function GateHome() {
             {/* Teacher-assigned students get announcement banner + teacher card */}
             <motion.div variants={fadeInUp} className="w-full space-y-3">
               <AnnouncementBanner />
+              <GiveawayBanner />
               <ExamCountdownChip />
               <YourTeacherCard />
             </motion.div>
@@ -418,6 +420,7 @@ export function GateHome() {
           self-study students (taught_by null) see neither — both components self-gate. */}
       <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto mb-3 space-y-2">
         <AnnouncementBanner />
+        <GiveawayBanner />
         <ExamCountdownChip />
         <YourTeacherCard />
       </motion.div>

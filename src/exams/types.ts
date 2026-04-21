@@ -234,3 +234,70 @@ export interface ExamAssistantTurn {
   field_updates?: Partial<Exam>;       // changes the assistant proposes
   timestamp: string;
 }
+
+// ============================================================================
+// Exam Group — a bundle of related exams that share one subscription
+// ============================================================================
+
+/**
+ * An approved group of related exams. Students assigned to any exam in
+ * an approved group automatically get access to all other exams in the
+ * group — shown explicitly as a "giveaway" when they sign in.
+ *
+ * Lifecycle:
+ *   1. Admin creates a draft (is_approved=false)
+ *   2. Admin picks member exams (optionally guided by similarity engine)
+ *   3. Admin explicitly approves → is_approved=true
+ *   4. Approved groups trigger the student-facing giveaway banner
+ *
+ * Approval is a deliberate gate — it protects students from half-baked
+ * groups that don't actually make sense together.
+ */
+export interface ExamGroup {
+  /** Unique identifier: GRP-<CODE>-<BASE36-TS> */
+  id: string;
+
+  /** Admin-facing short code */
+  code: string;
+
+  /** Display name (e.g. "Engineering Entrance Exams") */
+  name: string;
+
+  /** Free-text explanation for admin + student */
+  description?: string;
+
+  /** Member exams from the dynamic registry */
+  exam_ids: string[];
+
+  /** Member exams from the static catalog (optional) */
+  static_exam_ids?: string[];
+
+  // ── Approval gate ──
+  /** True only after an admin explicitly approves. Gates student-facing use. */
+  is_approved: boolean;
+  approved_by?: string;
+  approved_at?: string;
+
+  // ── Student-facing messaging ──
+  /** Short punchy line shown on the giveaway banner */
+  tagline?: string;
+  /** Bullet points shown on the giveaway banner */
+  benefits?: string[];
+
+  // ── Lifecycle ──
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  is_archived: boolean;
+}
+
+/** Seed admin provides when creating a new group */
+export interface ExamGroupSeed {
+  code: string;
+  name: string;
+  description?: string;
+  exam_ids?: string[];
+  static_exam_ids?: string[];
+  tagline?: string;
+  benefits?: string[];
+}

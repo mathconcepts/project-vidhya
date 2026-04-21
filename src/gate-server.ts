@@ -32,6 +32,7 @@ import { gbrainRoutes } from './gbrain/gbrain-routes';
 import { geminiProxyRoutes } from './api/gemini-proxy';
 import { aggregateRoutes } from './api/aggregate';
 import { contentRoutes } from './api/content-routes';
+import { syllabusRoutes } from './api/syllabus-routes';
 import { getAuth, migrateSession } from './api/auth-middleware';
 import { TieredVerificationOrchestrator } from './verification/tiered-orchestrator';
 import { InMemoryVectorStore, PgVectorStore } from './data/vector-store';
@@ -149,6 +150,9 @@ for (const route of aggregateRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of contentRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of syllabusRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 

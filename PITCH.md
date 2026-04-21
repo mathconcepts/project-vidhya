@@ -5,28 +5,28 @@ and respects your privacy.*
 
 ---
 
-## From pain to takeaway
+## From pain to bliss
 
-Every Indian exam-prep cycle produces the same pains. Here's what Vidhya puts in your pocket — one row per pain, one takeaway per row.
+Every exam-prep cycle produces the same pains. Here's the bliss that names your takeaway — what you actually walk away with. One pain per row, one takeaway per row.
 
-| The pain | The takeaway you walk away with |
-|----------|----------------------------------|
-| *"Pata nahi exam mein kya aayega — am I really ready?"* | You see "12 mastered · 15 in progress · 3 struggling" — per concept, always visible. Real answer when parents ask how prep is going. |
-| *"Syllabus itna bada hai — where do I start today?"* | Three concepts for today, ranked by exam weight × your mastery. An hour of focused work. Not a hundred-item list. |
-| *"Exam 3 din door hai, aur app keh raha hai 'take a break'."* | Advice that reads urgency. Six months out: break. Three days out: quick review instead. No tone-deaf pings. |
-| *"45-minute lectures dekh liye, phir bhi samajh nahi aaya."* | Each concept in 8 bite-sized pieces. Skip what you know, linger on what you don't. Two focused minutes beat forty unfocused ones. |
-| *"2 baje raat, atka hua hoon, puchhun kisko?"* | Snap a photo. Full walkthrough in seconds with common traps flagged. Web, Telegram, or WhatsApp — same quality on Jio 4G or college wifi. |
-| *"Plan liya hai lekin kya milta hai, pata nahi."* | Sign in, see every exam your plan covers with live "you're already X% there" per bonus. Coverage updates as you study. |
-| *"Pichhle mahine jo padha, ab yaad nahi."* | Concepts resurface at memory-research intervals. Exam week, your day-one learning is still intact — because the system brought it back at the right moments. |
-| *"ChatGPT confidently bolta hai galat number."* | Answers go through Wolfram where possible. Past papers pre-checked. Uncertainty is named, not hidden. |
-| *"Apps streaks aur notifications se khelte hain."* | Zero streaks. Zero badges. Zero manipulation. You study when you want. |
-| *"Mera data corporate database mein chala jaayega."* | No server-side database of your progress exists. On your device. Architecturally. |
-| *"Kota-level teaching mere shehar mein nahi hai."* | Same lesson structure, rigor, and trap-flagging regardless of pin code. Your location stops deciding your prep quality. |
-| *"11th ki basics kachi reh gayi, 12th pahad lag raha hai."* | Wrong answers with a foundational gap route you upstream first. Fix the foundation, advanced unlocks naturally. |
-| *"Coaching class average pace pe chalti hai."* | Mastery per concept, not per class. Crush linear algebra in a day. Spend two weeks on measure theory. No batch to keep up with. |
-| *"Basic question poochhne mein sharmindagi hoti hai."* | Ask anything, any way, any number of times. No classmate sees. No teacher judges. |
-| *"Teacher samjhaate hain, kyun matter karta hai kabhi nahi batate."* | Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. Motivation before mechanics. |
-| *"Textbook abstract, YouTube hand-wavy — dono se kuch nahi milta."* | Every lesson has both — visualised intuition AND formal statement in your exam's terminology. Neither compromised. |
+| The pain | The bliss *(your takeaway)* |
+|----------|------------------------------|
+| *"I don't know if I'm actually ready."* | You see "12 mastered · 15 in progress · 3 struggling" — per concept, always visible. A real answer when parents ask how prep is going. |
+| *"The syllabus is overwhelming — where do I start today?"* | Three concepts for today, ranked by exam weight × your mastery. An hour of focused work, not a hundred-item list. |
+| *"My exam is in 3 days and every app says 'take a break'."* | Advice that reads urgency. Six months out: break. Three days out: quick review instead. No tone-deaf suggestions when you're stressed. |
+| *"I watch 45-minute lectures and still don't get the concept."* | Each concept in eight small pieces. Skip what you know. Linger on what you don't. Two focused minutes beat forty unfocused ones. |
+| *"It's 2 a.m. I'm stuck. I have nowhere to turn."* | Snap a photo. Walkthrough in seconds with common traps flagged. Web, Telegram, WhatsApp — same quality on slow connections or fast. |
+| *"I paid for a plan but don't know what I'm getting."* | Sign in, see every exam your plan covers with a live "you're already X% there" per bonus. Coverage updates as you study. |
+| *"I keep forgetting things I studied weeks ago."* | Concepts resurface at intervals backed by memory research. Exam week, your day-one learning is still intact. |
+| *"AI chatbots sometimes confidently give wrong answers."* | Wolfram-verified where possible. Past papers pre-checked. Uncertainty is named, not hidden. |
+| *"Apps use streaks and guilt-trip notifications."* | Zero streaks. Zero badges. Zero manipulation. You study when you want. |
+| *"I don't want my weak areas in a corporate database."* | No server-side database of your progress exists. On your device, architecturally — not just as policy. |
+| *"I don't have top-tier teaching where I live."* | Same lesson structure, rigor, and trap-flagging regardless of pin code. Your location stops deciding prep quality. |
+| *"My foundations are shaky, so advanced topics feel impossible."* | Wrong answers with a foundational gap route you upstream first. Fix the foundation, advanced unlocks naturally. |
+| *"Coaching moves at the average pace — I'm bored or lost."* | Mastery per concept, not per class schedule. Move quickly where it clicks. Spend extra time where it doesn't. |
+| *"I'm embarrassed to ask 'basic' questions in class."* | Ask anything, any way, any number of times. No classmate sees. No teacher judges. |
+| *"My teacher explains but I don't see why it matters."* | Every lesson opens with a one-sentence hook — the real problem this concept was invented to solve. Motivation before mechanics. |
+| *"Textbook too abstract, YouTube too hand-wavy — neither helps."* | Every lesson has both — visualised intuition AND formal statement in your exam's terminology. Neither compromised. |
 
 ---
 ---

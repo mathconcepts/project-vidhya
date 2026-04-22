@@ -49,6 +49,7 @@ import { renderingRoutes } from './api/rendering-routes';
 import { gbrainAuditRoutes } from './api/gbrain-audit-routes';
 import { bitsatSampleRoutes } from './api/bitsat-sample-routes';
 import { feedbackRoutes } from './api/feedback-routes';
+import { sampleCheckRoutes } from './api/sample-check-routes';
 import { telegramRoutes as botTelegramRoutes } from './channels/telegram-adapter';
 import { whatsappRoutes } from './channels/whatsapp-adapter';
 import { getAuth, migrateSession } from './api/auth-middleware';
@@ -219,6 +220,9 @@ for (const route of bitsatSampleRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of feedbackRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of sampleCheckRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of botTelegramRoutes) {

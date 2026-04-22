@@ -2110,7 +2110,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.18.0)
+## Slide 33 — What's Shipped (at v2.19.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2151,7 +2151,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.15.0 | `5705840` | Feedback-driven scope expansion framework — generic across all exams |
 | v2.16.0 | `06ca5a0` | Sample-check workflow — admin requests sample, shares /s/:token, collects version-pinned feedback, iterates with carry-forward; cross-exam framework with GBrain-assisted relevance; 13 endpoints |
 | v2.17.0 | `3ddf1e1` | LLM-backed sample generation + Course promotion pipeline with lineage log |
-| v2.18.0 | *this* | Master orchestrator + exam adapter registry — every new build consults student feedback first (direct/cross/sibling streams, GBrain-ranked), pre-applies high-confidence approved items, LLM-generates missing pieces, creates sample or promotes course; portable plugin pattern (drop adapter into src/exams/adapters/ to add exams); append-only build event log; 7 endpoints; 31/31 smoke cases pass |
+| v2.18.0 | `1f9aaf3` | Master orchestrator + exam adapter registry — plugin pattern, GBrain feedback consultation |
+| v2.19.0 | *this* | UGEE IIIT Hyderabad Mathematics live sample — real 2026 spec (SUPR +1/-0.25, 20-Q math mock, 8-component Mathematical Induction lesson, 18-topic syllabus, 6 strategies); proves v2.18.0 portability: one adapter file + one import line = new exam live; cross-exam GBrain discovery verified both directions BITSAT↔UGEE on shared topic_ids; 29/29 smoke cases pass |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

@@ -20,6 +20,7 @@
  */
 
 import './bitsat-mathematics';
+import './ugee-mathematics';
 
 // Future adapters go here:
 // import './gate-cs';

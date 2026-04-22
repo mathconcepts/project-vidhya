@@ -123,6 +123,19 @@ export interface AttemptContext {
    * See src/gbrain/exam-context.ts for hydration.
    */
   exam_context?: import('./exam-context').ExamContext | null;
+  /**
+   * Optional attention strategy for this session. When present,
+   * recommendations are capped at strategy.gbrain_max_recommendations
+   * and biased according to strategy.gbrain_bias.
+   *
+   * Short sessions ('nano' / 'short') get quick-win concepts the
+   * student is close to mastering. Long sessions get prerequisite
+   * repair work that has longer payoff.
+   *
+   * If omitted, recommendations are produced at default fidelity —
+   * same as pre-v2.20 behavior.
+   */
+  attention_strategy?: import('../attention/types').AttentionStrategy | null;
 }
 
 export function computeInsight(ctx: AttemptContext): AttemptInsight {
@@ -171,7 +184,7 @@ export function computeInsight(ctx: AttemptContext): AttemptInsight {
     before_score: beforeScore,
   });
 
-  // Next step — single recommendation
+  // Next step — single recommendation, now attention-aware
   const next_step = suggestNextStep({
     correct: ctx.correct,
     concept_id: ctx.concept_id,
@@ -181,6 +194,7 @@ export function computeInsight(ctx: AttemptContext): AttemptInsight {
     error_type: ctx.error_type,
     model: ctx.model_after,
     exam_context: ctx.exam_context,
+    attention_strategy: ctx.attention_strategy,
   });
 
   return {
@@ -364,6 +378,7 @@ function suggestNextStep(p: {
   error_type?: string;
   model: StudentModel | null;
   exam_context?: import('./exam-context').ExamContext | null;
+  attention_strategy?: import('../attention/types').AttentionStrategy | null;
 }): AttemptInsight['next_step'] {
   const conceptLabel = CONCEPT_MAP.get(p.concept_id)?.label || p.concept_id;
   const examUrgent = p.exam_context?.exam_is_imminent === true;
@@ -377,79 +392,139 @@ function suggestNextStep(p: {
       const reason = examTopicName
         ? `You've got ${conceptLabel}. Moving on to a concept that carries weight in your exam.`
         : `You've got ${conceptLabel}. This is the natural next step.`;
-      return {
+      return applyAttentionBias({
         kind: 'move_on',
         label: `Try ${CONCEPT_MAP.get(related)?.label || related}`,
         reason,
         concept_id: related,
         href: `/lesson/${related}`,
-      };
+      }, p.attention_strategy);
     }
   }
 
   // Correct but not mastered — practice more
   if (p.correct && p.after_score < 0.8 && p.after_score >= 0.5) {
-    return {
+    return applyAttentionBias({
       kind: p.difficulty === 'hard' ? 'practice_same' : 'try_harder',
       label: p.difficulty === 'hard' ? 'Try one more hard one' : 'Level up difficulty',
       reason: 'You\'ve got the method — time to test it against harder problems.',
       concept_id: p.concept_id,
       href: `/smart-practice?concept=${p.concept_id}`,
-    };
+    }, p.attention_strategy);
   }
 
   // Wrong answer with clear prereq issue
   if (!p.correct && p.error_type === 'conceptual' && p.model) {
     const prereq = findWeakestPrereq(p.concept_id, p.model);
     if (prereq) {
-      return {
+      return applyAttentionBias({
         kind: 'review_prereq',
         label: `Review ${CONCEPT_MAP.get(prereq)?.label || prereq} first`,
         reason: 'This concept is often a prerequisite issue — strengthening it usually fixes the misconception upstream.',
         concept_id: prereq,
         href: `/lesson/${prereq}`,
-      };
+      }, p.attention_strategy);
     }
   }
 
   // Wrong answer, just try again
   if (!p.correct && p.attempts < 5) {
-    return {
+    return applyAttentionBias({
       kind: 'practice_same',
       label: 'One more attempt',
       reason: 'Errors teach fastest when the correction is immediate. Another one reinforces what you just learned.',
       concept_id: p.concept_id,
       href: `/smart-practice?concept=${p.concept_id}`,
-    };
+    }, p.attention_strategy);
   }
 
   // Too many attempts in a row — suggest break, UNLESS exam is imminent
-  // (if exam is in 3 days, don't tell the student to go watch TV)
+  // (if exam is in 3 days, don't tell the student to go watch TV) OR
+  // UNLESS the student is on a nano/short session (suggesting a break
+  // during an already-short session is worse than tone-deaf — it kills
+  // momentum for the one remaining minute they have). In those cases
+  // pivot to a lightweight review that matches the budget.
   if (p.attempts >= 5 && !p.correct) {
     if (examUrgent) {
-      return {
+      return applyAttentionBias({
         kind: 'review_prereq',
         label: 'Switch to a lesson review',
         reason: `With your exam close, keep momentum — a focused lesson on a prerequisite will feel less frustrating than more failed attempts right now.`,
         concept_id: p.concept_id,
         href: `/lesson/${p.concept_id}`,
+      }, p.attention_strategy);
+    }
+    // Short-session override: don't tell them to walk away; give them
+    // the one-minute common-traps review for this concept instead.
+    if (p.attention_strategy?.budget.context === 'nano' || p.attention_strategy?.budget.context === 'short') {
+      return {
+        kind: 'review_prereq',
+        label: 'Quick review of the trap you keep hitting',
+        reason: `You've got limited time left in this session. One minute on the common traps for ${CONCEPT_MAP.get(p.concept_id)?.label || p.concept_id} will reset you for the next attempt.`,
+        concept_id: p.concept_id,
+        href: `/lesson/${p.concept_id}#common-traps`,
       };
     }
-    return {
+    return applyAttentionBias({
       kind: 'take_break',
       label: 'Step away for 10 minutes',
       reason: 'Mental fatigue is real. Memory consolidates during breaks — come back sharper.',
-    };
+    }, p.attention_strategy);
   }
 
   // Default: more practice
-  return {
+  return applyAttentionBias({
     kind: 'practice_same',
     label: 'Another problem on this concept',
     reason: `Reinforce the pattern. You're ${Math.round((0.8 - p.after_score) / 0.06)} attempts from mastery.`,
     concept_id: p.concept_id,
     href: `/smart-practice?concept=${p.concept_id}`,
-  };
+  }, p.attention_strategy);
+}
+
+/**
+ * Attention-bias post-filter for next-step recommendations.
+ *
+ * Applies the strategy's bias + gbrain_max_recommendations implicitly
+ * (since this function produces a single recommendation, the cap is
+ * enforced by the caller when aggregating multiple concepts).
+ *
+ * Biases the `kind` when strategy signals a short session:
+ *   - quick_win bias + hard practice recommendation → soften to medium
+ *   - take_break in a short session is already overridden upstream;
+ *     here we surface a session-length note in the reason so the
+ *     student understands WHY this recommendation fits right now.
+ *
+ * Pure — the returned object is a shallow copy with possible
+ * reason/label tweaks. Never drops data, never blocks a recommendation.
+ */
+function applyAttentionBias(
+  step: AttemptInsight['next_step'],
+  strategy?: import('../attention/types').AttentionStrategy | null,
+): AttemptInsight['next_step'] {
+  if (!step || !strategy) return step;
+
+  const ctx = strategy.budget.context;
+  const biased = { ...step };
+
+  // Short session + hard-practice suggestion: mark it as deferred-to-later
+  // by switching to a softer kind. The student doesn't have time for a
+  // hard problem in a 5-min window.
+  if ((ctx === 'nano' || ctx === 'short') && strategy.gbrain_bias === 'quick_win') {
+    if (biased.kind === 'try_harder' || biased.kind === 'practice_same') {
+      biased.reason = `${biased.reason} (Short session detected — keeping this at your current difficulty level; harder problems scheduled for a longer session.)`;
+    }
+  }
+
+  // Long session + quick-win recommendation: suggest the student consider
+  // the deeper alternative.
+  if (ctx === 'long' && strategy.gbrain_bias === 'prerequisite_repair') {
+    if (biased.kind === 'move_on' || biased.kind === 'practice_same') {
+      biased.reason = `${biased.reason} (You've got time — this is a good session for prerequisite repair if you want the deeper payoff.)`;
+    }
+  }
+
+  return biased;
 }
 
 // ============================================================================

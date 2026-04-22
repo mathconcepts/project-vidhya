@@ -52,6 +52,7 @@ import { feedbackRoutes } from './api/feedback-routes';
 import { sampleCheckRoutes } from './api/sample-check-routes';
 import { courseRoutes } from './api/course-routes';
 import { examBuilderRoutes } from './api/exam-builder-routes';
+import { attentionRoutes } from './api/attention-routes';
 // Side-effect: registers all bundled exam adapters via the registry pattern.
 // New adapters dropped into src/exams/adapters/ and imported from
 // src/exams/adapters/index.ts are picked up automatically at startup.
@@ -235,6 +236,9 @@ for (const route of courseRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of examBuilderRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of attentionRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of botTelegramRoutes) {

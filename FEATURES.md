@@ -2110,7 +2110,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.19.0)
+## Slide 33 — What's Shipped (at v2.20.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2152,7 +2152,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.16.0 | `06ca5a0` | Sample-check workflow — admin requests sample, shares /s/:token, collects version-pinned feedback, iterates with carry-forward; cross-exam framework with GBrain-assisted relevance; 13 endpoints |
 | v2.17.0 | `3ddf1e1` | LLM-backed sample generation + Course promotion pipeline with lineage log |
 | v2.18.0 | `1f9aaf3` | Master orchestrator + exam adapter registry — plugin pattern, GBrain feedback consultation |
-| v2.19.0 | *this* | UGEE IIIT Hyderabad Mathematics live sample — real 2026 spec (SUPR +1/-0.25, 20-Q math mock, 8-component Mathematical Induction lesson, 18-topic syllabus, 6 strategies); proves v2.18.0 portability: one adapter file + one import line = new exam live; cross-exam GBrain discovery verified both directions BITSAT↔UGEE on shared topic_ids; 29/29 smoke cases pass |
+| v2.19.0 | `6390db3` | UGEE IIIT Hyderabad Mathematics live sample — proves portability, cross-exam GBrain verified |
+| v2.20.0 | *this* | Attention primitive — short-session-aware delivery across orchestrator + GBrain + sample-check. Per-context strategies (nano/short/medium/long) with must-include floor (short ≠ shallow). Compound-competence promotion (90min trailing-7d promotes nano→short). Deferral promotion (3× avoided → force-surface). GBrain next_step honors attention_strategy across all 5 return paths; tone-deaf "take a break" overridden to 1-min trap review for short sessions. 33/33 smoke cases pass |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

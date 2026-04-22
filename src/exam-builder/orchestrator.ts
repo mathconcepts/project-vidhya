@@ -81,6 +81,21 @@ export interface BuildOptions {
    * silently supersede in-flight student feedback.
    */
   auto_supersede_open?: boolean;
+  /**
+   * Attention budget — if provided, the orchestrator scales the
+   * build output for short-session consumption.
+   *
+   *   - mock_question_count: capped by strategy for the budget
+   *   - snapshot carries _attention_strategy in _exam_day_notes so
+   *     downstream renderers (mock UI, lesson delivery) can adapt
+   *
+   * Respected by adapters that implement buildMicroMock() or that
+   * honor opts.attention_strategy in defaultGenerationSections.
+   *
+   * If omitted, full-fidelity content is produced (same as pre-v2.20
+   * behavior).
+   */
+  attention_budget_minutes?: number;
 }
 
 export interface BuildOrUpdateInput {
@@ -280,6 +295,41 @@ export async function buildOrUpdateCourse(
   // Adapter post-processing (dedup, metadata injection, schema checks)
   if (adapter.postProcessSnapshot) {
     snapshot = adapter.postProcessSnapshot(snapshot);
+  }
+
+  // ─── Step 4.5: attention-budget-aware filtering ─────────────────────
+  // If the caller passed an attention_budget_minutes, scale mocks and
+  // lessons to match what a student at that attention level can
+  // actually complete. The must-include floor in the resolver
+  // guarantees short ≠ shallow.
+  if (typeof input.options?.attention_budget_minutes === 'number') {
+    try {
+      const {
+        budgetFromMinutes, resolveStrategy, filterMockForStrategy, filterLessonForStrategy,
+      } = await import('../attention');
+      const budget = budgetFromMinutes(input.options.attention_budget_minutes);
+      const strategy = resolveStrategy(budget);
+
+      // Filter each mock to the strategy's question count + difficulty mix
+      snapshot.mocks = (snapshot.mocks ?? []).map((m: any) => ({
+        ...m,
+        questions: filterMockForStrategy(m.questions ?? [], strategy),
+        _attention_applied: true,
+      }));
+
+      // Filter each lesson to the components the strategy surfaces
+      snapshot.lessons = (snapshot.lessons ?? []).map((l: any) =>
+        filterLessonForStrategy(l, strategy),
+      );
+
+      // Attach the strategy to the snapshot for downstream transparency
+      snapshot._attention_strategy = strategy;
+    } catch (err: any) {
+      // Non-fatal — if attention module is missing somehow, fall back
+      // to full-fidelity content. This preserves the v2.18.0 behavior
+      // as the graceful degradation path.
+      errors.push(`attention filtering failed (non-fatal): ${err.message ?? err}`);
+    }
   }
 
   trace.snapshot_summary = {

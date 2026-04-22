@@ -51,6 +51,11 @@ import { bitsatSampleRoutes } from './api/bitsat-sample-routes';
 import { feedbackRoutes } from './api/feedback-routes';
 import { sampleCheckRoutes } from './api/sample-check-routes';
 import { courseRoutes } from './api/course-routes';
+import { examBuilderRoutes } from './api/exam-builder-routes';
+// Side-effect: registers all bundled exam adapters via the registry pattern.
+// New adapters dropped into src/exams/adapters/ and imported from
+// src/exams/adapters/index.ts are picked up automatically at startup.
+import './exams/adapters/index';
 import { telegramRoutes as botTelegramRoutes } from './channels/telegram-adapter';
 import { whatsappRoutes } from './channels/whatsapp-adapter';
 import { getAuth, migrateSession } from './api/auth-middleware';
@@ -227,6 +232,9 @@ for (const route of sampleCheckRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of courseRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of examBuilderRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of botTelegramRoutes) {

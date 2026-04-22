@@ -2110,7 +2110,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.17.0)
+## Slide 33 — What's Shipped (at v2.18.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2150,7 +2150,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.14.0 | `371d751` | BITSAT Mathematics live sample — complete exam spec, full 8-component lesson, 10-Q mock with GBrain-shaped analysis, BITSAT-specific strategies; 7 HTTP endpoints under /api/sample/bitsat/* |
 | v2.15.0 | `5705840` | Feedback-driven scope expansion framework — generic across all exams |
 | v2.16.0 | `06ca5a0` | Sample-check workflow — admin requests sample, shares /s/:token, collects version-pinned feedback, iterates with carry-forward; cross-exam framework with GBrain-assisted relevance; 13 endpoints |
-| v2.17.0 | *this* | LLM-backed sample generation + Course promotion pipeline — live tiered cascade (bundle→LLM→Wolfram) produces SampleSnapshots with full provenance; promoter merges N samples+applied feedback into versioned LiveCourse with semver auto-bump (patch/minor/major), content-addressed idempotency, append-only PromotionRecord audit log, full lineage traceability (course → samples → feedback → students), rollback as forward-promotion of earlier content; 11 endpoints |
+| v2.17.0 | `3ddf1e1` | LLM-backed sample generation + Course promotion pipeline with lineage log |
+| v2.18.0 | *this* | Master orchestrator + exam adapter registry — every new build consults student feedback first (direct/cross/sibling streams, GBrain-ranked), pre-applies high-confidence approved items, LLM-generates missing pieces, creates sample or promotes course; portable plugin pattern (drop adapter into src/exams/adapters/ to add exams); append-only build event log; 7 endpoints; 31/31 smoke cases pass |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

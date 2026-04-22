@@ -4,6 +4,76 @@
 
 ---
 
+## The catchline
+
+# **World-class prep. Without the world-class stress.**
+
+*Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
+
+---
+
+## Five promises. Five contrasts. One app.
+
+These are the five moats of Project Vidhya, each stated as a promise the infrastructure can defend — and each followed by the contrast that makes it land.
+
+### 1. Knowledge that compounds — not knowledge that evaporates
+
+> **Most apps reset your progress each session. Vidhya remembers every mistake, every skipped step, every late-night breakthrough. Every five minutes of practice keeps working long after you've closed the app.**
+
+A buffet leaves you full but no stronger. Vidhya leaves you stronger with every bite. Twelve 5-minute sessions build the mastery that one 60-minute session would — with spaced-repetition gains on top. Your effort compounds like interest; it does not vanish like a video on autoplay.
+
+*Soundbite: "Every hour you put in keeps working. Long after you've closed the app."*
+
+---
+
+### 2. Stress-free — because anxiety was never part of the syllabus
+
+> **Your exam should test your knowledge. Not your nervous system. The anxiety industry calls that pressure 'dedication.' We call it what it is — and we removed the sources that don't make you smarter.**
+
+Ambiguity stress, choice stress, isolation stress, trust stress, guilt stress — five specific anxieties the default exam-prep experience inflicts on every student. Vidhya removes them one by one at the architectural level. No streaks. No guilt pings. No "you lost your streak!" notifications. You study when you want; the app waits patiently when you don't.
+
+*Soundbite: "The anxiety was never going to teach you calculus. We took it out."*
+
+---
+
+### 3. World-class knowledge — without the world-class address
+
+> **The best coaching used to live in four metros. It now lives in your pocket. A student in Darbhanga gets the same lesson, the same trap-flagging, the same depth as a student in Kota — because the infrastructure doesn't know where you're logging in from, and doesn't care.**
+
+Every lesson has the same 8-component structure, the same concept graph, the same Wolfram-verified answer key. Rigorous like a textbook. Warm like a tutor. Available like neither. Your postal code no longer decides your preparation quality.
+
+*Soundbite: "Your pin code used to decide your prep. Not anymore."*
+
+---
+
+### 4. Judgment-free — because curiosity needs space
+
+> **Every student worries about looking dumb. In a classroom, the foundational question feels unaskable by month three. In Vidhya, there is no teacher's face, no peer's whisper, no side-eye at midnight. There are no eyes at all.**
+
+Ask the basic question. Ask it twice. Ask it at 2 a.m. on a Wednesday while everyone in your household sleeps. The system does not remember that you already did 200 derivative problems. It does not think less of you. It answers. You continue. That is the entire contract.
+
+*Soundbite: "No one watching. No one scoring your curiosity."*
+
+---
+
+### 5. Genuinely enjoyable — built for students, not for engagement metrics
+
+> **Most apps measure how long you spend inside them. Vidhya measures how well you do on the exam outside it. Streaks, badges, notifications chasing you through your day — all deliberately removed.**
+
+The goal is your exam score, not Vidhya's daily-active-users number. If you need a break, take one. No guilt. If you have five minutes, we give you five minutes of real content, not a "starter mode" designed to get you hooked. You are a student, not a metric to be optimised.
+
+*Soundbite: "You're a student, not a metric to be optimised."*
+
+---
+
+## The five promises, as a single breath
+
+> **Vidhya is knowledge that compounds, without stress that accumulates. World-class coaching, without the world-class address. A tutor that never judges, on a platform that never manipulates. Built for students, not for engagement dashboards.**
+
+That is the entire product.
+
+---
+
 ## The one-line positioning
 
 **Vidhya is a coach you keep in your pocket that knows your exam, remembers every mistake, and never runs out of patience.**
@@ -316,6 +386,18 @@ Vidhya is not a content company. It is an infrastructure company that happens to
 
 For use in marketing material, social, and talking points:
 
+**The catchline + headline soundbites (the tier-1 set):**
+
+- *"**World-class prep. Without the world-class stress.**"* ← the catchline
+- *"Every hour you put in keeps working. Long after you've closed the app."*
+- *"Your exam should test your knowledge. Not your nervous system."*
+- *"No one watching. No one scoring your curiosity."*
+- *"You're a student, not a metric to be optimised."*
+- *"A buffet leaves you full but no stronger. Vidhya leaves you stronger with every bite."*
+- *"The anxiety was never going to teach you calculus. We took it out."*
+
+**Earlier collected soundbites:**
+
 - *"Coaching centres teach you the syllabus. Vidhya teaches you your gaps."*
 - *"Your pin code used to decide your prep quality. Not anymore."*
 - *"2 a.m. Tuesday works like 2 p.m. Saturday."*
@@ -330,7 +412,6 @@ For use in marketing material, social, and talking points:
 - *"The leak is fixed where it actually lives."*
 - *"Your BITSAT practice is not someone else's JEE practice dressed up."*
 - *"Vidhya is the trainer who watches."*
-- *"You are a student, not a metric to be optimised."*
 
 ---
 

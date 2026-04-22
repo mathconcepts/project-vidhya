@@ -1,5 +1,23 @@
 # Project Vidhya
 
+# **World-class prep. Without the world-class stress.**
+
+*Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
+
+---
+
+### Five promises. Five contrasts. One app.
+
+- **Knowledge that compounds** — Most apps reset your progress each session. Vidhya remembers every mistake. Every five minutes of practice keeps working long after you've closed the app.
+- **Stress-free** — Your exam should test your knowledge. Not your nervous system. Zero streaks, zero guilt pings, zero gamification.
+- **World-class, without the world-class address** — A student in Darbhanga gets the same lesson, the same depth, the same trap-flagging as a student in Kota. Your pin code no longer decides your prep quality.
+- **Judgment-free** — Ask the basic question at midnight. No teacher's face. No peer's whisper. Just the answer.
+- **Built for students, not for engagement metrics** — We measure your exam score, not our daily-active-users. If you need a break, take one. No guilt.
+
+*Read the full positioning in [POSITIONING.md](./POSITIONING.md). Read the technical ledger in [FEATURES.md](./FEATURES.md).*
+
+---
+
 **Your AI study partner — knows your exam, reads your notes, verifies every answer, and respects your privacy.**
 
 Vidhya is a learning app that actually teaches. Upload your class notes,

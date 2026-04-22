@@ -16,6 +16,14 @@ who need to understand what's under the hood.*
 
 ## Slide 1 — Meet Vidhya
 
+# **World-class prep. Without the world-class stress.**
+
+*Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
+
+**Five promises, five contrasts.** Knowledge that compounds (most apps reset every session — we remember). Stress-free (your exam should test your knowledge, not your nervous system). World-class without the world-class address (same lesson in Darbhanga as in Kota). Judgment-free (ask the basic question at midnight — no one watching). Built for students, not metrics (we measure your exam score, not our daily-active-users).
+
+---
+
 A tutor that knows your exam, reads your notes, answers whenever you're
 stuck, and respects your privacy.
 

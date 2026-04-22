@@ -19,6 +19,7 @@ import { registerExamAdapter, type ExamAdapter } from '../../exam-builder/regist
 import {
   UGEE_EXAM, UGEE_MOCK_EXAM, LESSON_INDUCTION, UGEE_STRATEGIES,
 } from '../../samples/ugee-mathematics';
+import { UGEE_EXPANDED_LESSONS, UGEE_DRILL_MOCKS } from '../../samples/ugee-mathematics-expanded';
 
 const adapter: ExamAdapter = {
   exam_id: UGEE_EXAM.id,
@@ -26,13 +27,18 @@ const adapter: ExamAdapter = {
   exam_name: UGEE_EXAM.name,
   level: UGEE_EXAM.level,
   description: UGEE_EXAM.description,
-  adapter_version: '1.0.0',
+  adapter_version: '1.1.0',  // Bumped: expanded content corpus
 
   loadBaseContent() {
+    // v1.1.0: return the FULL content corpus, not just diagnostic
+    //   - 10 lessons (induction from v2.19.0 + 9 new from v2.19.1 expansion)
+    //   - 4 mocks (diagnostic + calculus drill + algebra drill + distinctive drill)
+    //   - All UGEE strategies
+    // Covers all 10 syllabus topic_ids. Ready for feedback loop.
     return {
       exam: UGEE_EXAM,
-      mocks: [UGEE_MOCK_EXAM],
-      lessons: [LESSON_INDUCTION],
+      mocks: [UGEE_MOCK_EXAM, ...UGEE_DRILL_MOCKS],
+      lessons: [LESSON_INDUCTION, ...UGEE_EXPANDED_LESSONS],
       strategies: UGEE_STRATEGIES.strategies.map(s => ({
         title: s.title, content: s.content, evidence: s.evidence,
       })),

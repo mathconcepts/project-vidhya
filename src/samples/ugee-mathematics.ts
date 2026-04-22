@@ -535,6 +535,18 @@ export const UGEE_MOCK_EXAM: { id: string; title: string; questions: MockQuestio
       trap_type: 'telescoping-sum',
     },
     {
+      id: 'q10b', topic_id: 'vectors-3d', concept_id: 'vector-dot-product', difficulty: 'medium', expected_seconds: 75,
+      prompt: 'If a = i + 2j + 3k and b = 2i − j + k, then a · b =',
+      options: [
+        { text: '1', is_correct: false },
+        { text: '3', is_correct: true },
+        { text: '5', is_correct: false },
+        { text: '6', is_correct: false },
+      ],
+      explanation: 'a · b = (1)(2) + (2)(−1) + (3)(1) = 2 − 2 + 3 = 3.',
+      trap_type: 'dot-product-sign-error',
+    },
+    {
       id: 'q11', topic_id: 'algebra', concept_id: 'permutation', difficulty: 'medium', expected_seconds: 90,
       prompt: 'The number of 4-letter words using letters of MATHS (no repetition) is:',
       options: [

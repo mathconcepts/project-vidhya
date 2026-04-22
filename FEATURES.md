@@ -2118,7 +2118,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.20.0)
+## Slide 33 — What's Shipped (at v2.20.0 + v2.19.1 content)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2161,7 +2161,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.17.0 | `3ddf1e1` | LLM-backed sample generation + Course promotion pipeline with lineage log |
 | v2.18.0 | `1f9aaf3` | Master orchestrator + exam adapter registry — plugin pattern, GBrain feedback consultation |
 | v2.19.0 | `6390db3` | UGEE IIIT Hyderabad Mathematics live sample — proves portability, cross-exam GBrain verified |
-| v2.20.0 | *this* | Attention primitive — short-session-aware delivery across orchestrator + GBrain + sample-check. Per-context strategies (nano/short/medium/long) with must-include floor (short ≠ shallow). Compound-competence promotion (90min trailing-7d promotes nano→short). Deferral promotion (3× avoided → force-surface). GBrain next_step honors attention_strategy across all 5 return paths; tone-deaf "take a break" overridden to 1-min trap review for short sessions. 33/33 smoke cases pass |
+| v2.20.0 | `3c10ef8` | Attention primitive — short-session-aware delivery across all modules including GBrain |
+| v2.19.1 | *this* | UGEE full content corpus + end-to-end feedback loop — 9 additional lessons (Limits, Continuity, Integrals, Complex, Sequences, Coord Geom, Trig, Probability, Reasoning), 3 drill mocks (Calculus 15Q + Algebra 15Q + Distinctive 10Q = 40 additional Q), 1 vectors-3d question added to diagnostic (full 10-topic coverage). Total 10 lessons + 4 mocks + 61 questions. Simulated 5 student feedback items (P1/P1/P2/P2/P3), walked triage→approve→apply→close→iterate→LiveCourse v1.0.0 promotion with full audit trail. 29/29 smoke cases pass |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

@@ -6,13 +6,13 @@
 
 ---
 
-### Five promises. Five contrasts. One app.
+### What you gain — five promises, written from where you stand
 
-- **Knowledge that compounds** — Most apps reset your progress each session. Vidhya remembers every mistake. Every five minutes of practice keeps working long after you've closed the app.
-- **Stress-free** — Your exam should test your knowledge. Not your nervous system. Zero streaks, zero guilt pings, zero gamification.
-- **World-class, without the world-class address** — A student in Darbhanga gets the same lesson, the same depth, the same trap-flagging as a student in Kota. Your pin code no longer decides your prep quality.
-- **Judgment-free** — Ask the basic question at midnight. No teacher's face. No peer's whisper. Just the answer.
-- **Built for students, not for engagement metrics** — We measure your exam score, not our daily-active-users. If you need a break, take one. No guilt.
+- **You never lose ground.** Other apps let your progress evaporate between sessions. Here, every mistake you make, every concept you skip, every late-night breakthrough — the system holds on to it for you. Twelve 5-minute sessions compound into the mastery a 60-minute session builds. Whatever you learn, you keep.
+- **You study without the anxiety tax.** The pressure was never going to teach you calculus — it was just going to cost you sleep. No streaks to maintain. No guilt pings. Miss a day, the app waits. You approach your prep with curiosity, not dread.
+- **Your address stops deciding your education.** A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre in the country. You compete on effort, not postal code.
+- **You can ask the question you've been afraid to ask.** No teacher's face. No peer's whisper. No side-eye at midnight. Ask the basic question, twice if you need to, and move on. Your curiosity stops costing you dignity.
+- **You are studied *for*, not studied *on*.** Your exam score is the only metric this app cares about. You stop being the product. You start being served.
 
 *Read the full positioning in [POSITIONING.md](./POSITIONING.md). Read the technical ledger in [FEATURES.md](./FEATURES.md).*
 

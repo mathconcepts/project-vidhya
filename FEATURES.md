@@ -20,7 +20,7 @@ who need to understand what's under the hood.*
 
 *Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
 
-**Five promises, five contrasts.** Knowledge that compounds (most apps reset every session — we remember). Stress-free (your exam should test your knowledge, not your nervous system). World-class without the world-class address (same lesson in Darbhanga as in Kota). Judgment-free (ask the basic question at midnight — no one watching). Built for students, not metrics (we measure your exam score, not our daily-active-users).
+**Five promises, written from where you stand.** *You never lose ground* — every mistake you make, every concept you skip, the system holds on to it for you; twelve 5-minute sessions compound into the mastery a 60-minute session builds. *You study without the anxiety tax* — no streaks, no guilt pings, no pressure that was never going to teach you calculus anyway. *Your address stops deciding your education* — same lesson in a small town as in the biggest coaching centre in the country. *You can ask the question you've been afraid to ask* — no teacher's face, no peer's whisper, no side-eye at midnight. *You are studied for, not studied on* — your exam score is the only metric this app cares about; you stop being the product and start being served.
 
 ---
 

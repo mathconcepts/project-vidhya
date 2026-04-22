@@ -14,63 +14,75 @@
 
 ## Five promises. Five contrasts. One app.
 
-These are the five moats of Project Vidhya, each stated as a promise the infrastructure can defend — and each followed by the contrast that makes it land.
-
-### 1. Knowledge that compounds — not knowledge that evaporates
-
-> **Most apps reset your progress each session. Vidhya remembers every mistake, every skipped step, every late-night breakthrough. Every five minutes of practice keeps working long after you've closed the app.**
-
-A buffet leaves you full but no stronger. Vidhya leaves you stronger with every bite. Twelve 5-minute sessions build the mastery that one 60-minute session would — with spaced-repetition gains on top. Your effort compounds like interest; it does not vanish like a video on autoplay.
-
-*Soundbite: "Every hour you put in keeps working. Long after you've closed the app."*
+Each promise is written from where you stand, not from where the app sits. Read this section slowly. By the end, you should feel that the tools you've been missing are now in your hands — and nothing is standing between you and a real exam score.
 
 ---
 
-### 2. Stress-free — because anxiety was never part of the syllabus
+### 1. You never lose ground.
 
-> **Your exam should test your knowledge. Not your nervous system. The anxiety industry calls that pressure 'dedication.' We call it what it is — and we removed the sources that don't make you smarter.**
+> **Most apps let your progress evaporate between sessions — you re-learn the same things, forget again, re-learn. Not here. Every mistake you make, every concept you skip, every late-night breakthrough — the system holds on to it for you.**
 
-Ambiguity stress, choice stress, isolation stress, trust stress, guilt stress — five specific anxieties the default exam-prep experience inflicts on every student. Vidhya removes them one by one at the architectural level. No streaks. No guilt pings. No "you lost your streak!" notifications. You study when you want; the app waits patiently when you don't.
+Your five-minute commute study compounds into the same mastery a 60-minute desk session would build. Twelve short sessions equal one long session plus spaced-repetition gains. You stop worrying that casual study is wasted time — because it isn't. Whatever you learn, you keep.
 
-*Soundbite: "The anxiety was never going to teach you calculus. We took it out."*
+**What you gain:** the confidence that every hour you invest adds up. No sliding back to square one. No "I should have revised that earlier" at the exam hall. Your preparation is a staircase, not a treadmill.
 
----
-
-### 3. World-class knowledge — without the world-class address
-
-> **The best coaching used to live in four metros. It now lives in your pocket. A student in Darbhanga gets the same lesson, the same trap-flagging, the same depth as a student in Kota — because the infrastructure doesn't know where you're logging in from, and doesn't care.**
-
-Every lesson has the same 8-component structure, the same concept graph, the same Wolfram-verified answer key. Rigorous like a textbook. Warm like a tutor. Available like neither. Your postal code no longer decides your preparation quality.
-
-*Soundbite: "Your pin code used to decide your prep. Not anymore."*
+*Soundbite: "Whatever I learn, I keep. Nothing slips through."*
 
 ---
 
-### 4. Judgment-free — because curiosity needs space
+### 2. You study without the anxiety tax.
 
-> **Every student worries about looking dumb. In a classroom, the foundational question feels unaskable by month three. In Vidhya, there is no teacher's face, no peer's whisper, no side-eye at midnight. There are no eyes at all.**
+> **You've been told that the pressure is part of dedication. It isn't. The anxiety was never going to teach you calculus — it was just going to cost you sleep, appetite, and peace of mind. We took the stress that doesn't make you smarter and removed it from the experience.**
 
-Ask the basic question. Ask it twice. Ask it at 2 a.m. on a Wednesday while everyone in your household sleeps. The system does not remember that you already did 200 derivative problems. It does not think less of you. It answers. You continue. That is the entire contract.
+No streaks to break. No guilt pings. No "you lost your 14-day streak!" notifications punishing you for taking one day off. Miss a day — the app will be right there when you come back, exactly where you left off, no lecture.
 
-*Soundbite: "No one watching. No one scoring your curiosity."*
+**What you gain:** you approach the app the way you should approach your prep — with curiosity, not dread. Your phone stops being another source of pressure. Your study time stops competing with your sanity. The hard thinking, the genuine struggle with a concept, the productive frustration of a difficult problem — that stays. Everything else is gone.
 
----
-
-### 5. Genuinely enjoyable — built for students, not for engagement metrics
-
-> **Most apps measure how long you spend inside them. Vidhya measures how well you do on the exam outside it. Streaks, badges, notifications chasing you through your day — all deliberately removed.**
-
-The goal is your exam score, not Vidhya's daily-active-users number. If you need a break, take one. No guilt. If you have five minutes, we give you five minutes of real content, not a "starter mode" designed to get you hooked. You are a student, not a metric to be optimised.
-
-*Soundbite: "You're a student, not a metric to be optimised."*
+*Soundbite: "The anxiety was never going to teach me calculus. I don't have to carry it anymore."*
 
 ---
 
-## The five promises, as a single breath
+### 3. Your address stops deciding your education.
 
-> **Vidhya is knowledge that compounds, without stress that accumulates. World-class coaching, without the world-class address. A tutor that never judges, on a platform that never manipulates. Built for students, not for engagement dashboards.**
+> **The best coaching used to live in four metros. You either lived near it or you didn't. Now it lives in your pocket. A student logging in from a small town gets the exact same lesson, the same worked example, the same trap-flagging, the same depth as a student in the most expensive coaching centre in the country.**
 
-That is the entire product.
+Every lesson has the same 8-component structure. Same concept graph. Same Wolfram-verified answer key. Rigorous like a textbook. Warm like a tutor. Available like neither.
+
+**What you gain:** you stop believing you're behind before you've started. You stop paying the geography tax. You compete on the strength of your effort, not the strength of your parents' postal code. The top coaching and the best prep infrastructure in the country is on your phone at this very moment — free to use.
+
+*Soundbite: "My pin code used to decide my prep quality. Now it decides nothing."*
+
+---
+
+### 4. You can ask the question you've been afraid to ask.
+
+> **By month three of any coaching class, the foundational question starts to feel unaskable. Everyone else has apparently moved on. The teacher has explained it before. The peer next to you might laugh. So you stay quiet. And the gap stays open. Not here.**
+
+Ask the basic question. Ask it twice. Ask it at 2 a.m. on a Wednesday while the rest of your household sleeps. The system does not remember that you already did 200 derivative problems. It does not think less of you for asking. There is no teacher's face. No peer's whisper. No side-eye. There are no eyes at all.
+
+**What you gain:** the permission to be confused. The permission to go back and fix the foundation you rushed past in Class 11. The permission to ask "what does *x* even mean here?" without social cost. Curiosity finally has a place where it can't be punished.
+
+*Soundbite: "I asked the basic question at midnight. Nobody saw. I got a clean answer. I moved on."*
+
+---
+
+### 5. You are studied *for*, not studied *on*.
+
+> **Most apps are built to keep you inside them. Streaks, badges, push notifications, "just one more lesson" prompts — all engineered to boost their daily-active-users number, not your exam readiness. You are the metric. That relationship is backwards, and here it is reversed.**
+
+Your exam score is the only number this app cares about. Your session time isn't tracked as "engagement." Your weak topics aren't used to sell you premium tiers. If you need a break, take one — the app will not guilt-trip you. If you have five minutes, you get five minutes of real content, not a starter mode designed to hook you.
+
+**What you gain:** a tool that works for you. You open the app when it's useful and close it when it isn't. You stop being the product. You stop being optimised. You start being served.
+
+*Soundbite: "I'm a student here. Not a daily-active-user."*
+
+---
+
+## The five promises, bound into one breath
+
+> **You never lose ground. You study without the anxiety tax. Your address doesn't decide your education. You can ask the question you've been afraid to ask. And through all of it, you are studied *for*, never studied *on*.**
+
+That is the entire product. Everything else in this document is proof.
 
 ---
 
@@ -128,57 +140,95 @@ Other analogies that land:
 
 ---
 
-## How the infrastructure makes this real — eight takiya (overheads) Vidhya removes
+## What you gain, session by session — the eight takiya (overheads) lifted off your shoulders
 
-The Hindi word *takiya* — a pillow, a crutch, a dependency — captures the preparation overhead students carry without noticing. Each one leaks time and energy. Vidhya's infrastructure is a quiet, deliberate removal of these:
+The Hindi word *takiya* means a pillow, a crutch, a dependency — something you've been carrying without noticing how heavy it is. Every exam student carries eight of these overheads. Here's what your day looks like once each one is gone.
 
-### 1. The overhead of *figuring out what to study today*
+### 1. You wake up knowing what to work on.
 
-The morning you sit down and stare at your syllabus, losing twenty minutes to choosing? That's an overhead. Vidhya removes it. Every session opens with three ranked priority actions, computed from your actual mastery intersected with your actual exam's weights. You stop choosing. You start doing.
+Other students lose twenty minutes every morning staring at their syllabus, trying to choose where to start. You don't. Every session opens with three concepts ranked for you — based on what your exam actually weighs and what you haven't yet mastered. The choice has been made. All that's left is the work.
 
-**Soundbite:** *"Three concepts today. Picked for me, by math, not by mood."*
+**What you gain:** the twenty minutes you used to lose to decision paralysis. More importantly, the quiet certainty that what you did today was the right thing to do today. No second-guessing. No wasted morning.
 
-### 2. The overhead of *not knowing what you don't know*
+*Soundbite: "Three concepts today. Picked for me, by math, not by mood."*
 
-Most students can't articulate their gaps. "Integration is weak" — but which kind? Definite? By parts? Substitution with trig? The system tracks mastery at concept granularity — more than 300 concepts for a typical engineering exam — and tells you where the real leak is.
+---
 
-**Soundbite:** *"The weakness wasn't calculus. It was one identity from three topics ago."*
+### 2. You finally know where your real weakness lives.
 
-### 3. The overhead of *searching for the concept you need, right now*
+Most students can say "integration is weak" but can't say *which kind*. Definite? By parts? Substitution with trig? You can. The system watches you at concept granularity — more than 300 concepts for a typical engineering exam — and points to the one upstream concept that's actually leaking.
 
-Your question is specific: "Why does this substitution work in this integral but not the last one?" The overhead is finding the answer in a textbook that covers 200 other things. Vidhya's lesson structure — eight components per concept, from one-line hook to formal statement — lets you skip directly to the layer you need.
+**What you gain:** the power to fix the root cause instead of the symptom. You stop wasting hours on the wrong topic. When you practice, you practice the thing that will actually move the needle.
 
-**Soundbite:** *"Eight bites, one concept. You eat only what you're hungry for."*
+*Soundbite: "The weakness wasn't calculus. It was one identity from three topics ago."*
 
-### 4. The overhead of *waiting for help*
+---
 
-Teacher at 2 a.m. is asleep. Study group on WhatsApp gets to it next week. The overhead is the hours lost waiting for a human. Vidhya answers now. Same account, same progress, across web, Telegram, WhatsApp. If you're awake and stuck, you're five seconds from an answer.
+### 3. You find exactly what you need, exactly when you need it.
 
-**Soundbite:** *"2 a.m. Tuesday works like 2 p.m. Saturday."*
+Your question is specific: "Why does this substitution work in this integral but not the last one?" The old way was flipping through a textbook covering 200 other things. Your way now is eight bite-sized lesson components per concept — hook, definition, intuition, worked example, micro-exercise, common traps, formal statement, connections. You go straight to the layer that answers your question. You skip the rest.
 
-### 5. The overhead of *doubting whether the answer is right*
+**What you gain:** five minutes to clarity instead of fifty minutes to confusion. Your study time stops being archaeology. You read what you need, learn it, close the app, move on with your day.
 
-Every time an AI tutor is confidently wrong, you lose trust in the next ten answers it gives. Vidhya double-checks math against Wolfram where it can, flags its own uncertainty explicitly, and tells you when it's quoting a verified past paper vs. generating fresh. Trust isn't a promise — it's an architecture.
+*Soundbite: "Eight bites, one concept. I eat only what I'm hungry for."*
 
-**Soundbite:** *"The AI doesn't get to invent numbers that look clean but aren't."*
+---
 
-### 6. The overhead of *forgetting what you learned last month*
+### 4. You never have to wait for help again.
 
-You studied thermodynamics in month one. Exam week in month six, it's fog. The overhead is re-learning. Vidhya surfaces concepts at spaced intervals tuned to how memory actually decays. You don't track anything — the system does it for you.
+2 a.m., stuck on a problem, teacher asleep, study group on WhatsApp won't respond until next week. You used to lose those hours. Not anymore. You ask, you get a full walkthrough, you continue. Same account works on web, Telegram, and WhatsApp — whichever channel you're on.
 
-**Soundbite:** *"Month-one material still with me in exam week, without me tracking anything."*
+**What you gain:** your momentum, protected. The stuck moment that used to kill an entire evening now lasts five seconds. You go to bed clear-headed instead of anxious. Midnight stops being the hour when your preparation stops.
 
-### 7. The overhead of *asking a basic question when you're "supposed" to know it*
+*Soundbite: "2 a.m. Tuesday works for me exactly like 2 p.m. Saturday does."*
 
-In a coaching class, by month three, the foundational questions feel unaskable. The embarrassment is real and it costs you. Vidhya doesn't judge. No peer, no teacher, no face made. You ask the basic question at midnight, you get a clean answer, you move on.
+---
 
-**Soundbite:** *"No one watching. No one scoring my curiosity."*
+### 5. You can trust the answer in front of you.
 
-### 8. The overhead of *guilt*
+Every time an AI tutor is confidently wrong, it costs you trust in the next ten answers it gives. You stop using the tool, or worse, you learn the wrong thing. That trust-tax is gone here. Math gets double-checked against Wolfram where it can be. When the system isn't sure, it says so explicitly. When it's quoting a verified past paper, you see that. When it's generating fresh content, you see that too.
 
-Streaks, badges, "You lost your 14-day streak!" notifications — they don't make you study better. They make you dread the app. Vidhya has zero gamification. Deliberately. Studied, considered, rejected. Your exam score is the only metric; engagement metrics aren't.
+**What you gain:** your confidence in what you just read. No more re-checking every answer. No more that-was-wrong-in-the-mock moment. Trust stops being something you hope for and becomes something the architecture provides.
 
-**Soundbite:** *"No streaks. No badges. Just a tool that waits when I need a break."*
+*Soundbite: "When it's sure, the math's been checked. When it's not sure, it tells me. I can finally trust what I read."*
+
+---
+
+### 6. You keep what you learned — for months, not minutes.
+
+Month-one thermodynamics, by exam week six months later, used to be fog. You would re-learn half of it frantically. Now you don't have to. Concepts come back to you at the cognitively-right intervals — backed by memory research, not by streak mechanics. You don't track anything. The system does it for you in the background.
+
+**What you gain:** the unfair-feeling advantage of still remembering what you studied six months ago. Your early prep wasn't wasted. Every hour from the start of the cycle still serves you at the finish.
+
+*Soundbite: "Month-one material is still with me in exam week, without me having to track a thing."*
+
+---
+
+### 7. You stop being afraid of sounding stupid.
+
+By month three of any coaching class, the foundational question feels unaskable. Everyone else has apparently moved on. You stay quiet. The gap stays open. Not anymore. You ask the basic question at midnight. Nobody sees. You get a clean answer. You move on. The system doesn't remember how many questions you've asked or how advanced they were — and it doesn't care.
+
+**What you gain:** the permission to be confused. The permission to go back and shore up Class 11 foundations you rushed past. The permission to ask "what does *x* even mean here?" without social cost. Your curiosity stops costing you dignity.
+
+*Soundbite: "I asked the basic question at midnight. Nobody saw. I got the answer. I kept going."*
+
+---
+
+### 8. You study without guilt.
+
+Streaks, badges, "you lost your 14-day streak!" notifications — they don't make you study better. They make you dread opening the app. None of them exist here. Deliberately. We considered gamification and rejected it at the design level. Miss a day, miss a week, come back when you're ready. No lecture. No countdown. No punishment.
+
+**What you gain:** a clean relationship with your own preparation. The app waits when you need a break. It's there when you're ready again. You study because you want to, not because a counter is about to reset.
+
+*Soundbite: "No streaks, no badges, no guilt. Just a tool that waits."*
+
+---
+
+## The takiya, summarized in one breath
+
+> **You wake up knowing what to study. You know where your real weakness lives. You find exactly what you need, exactly when you need it. You never wait for help. You trust the answer in front of you. You keep what you learned for months. You stop being afraid of sounding stupid. And you study without guilt.**
+
+Eight overheads, lifted. What's left is the actual learning — and that part, the hard thinking, the productive struggle, the real engagement with a real concept, is protected. We removed the friction that wasn't making you smarter. Everything that does make you smarter, you still get to do.
 
 ---
 

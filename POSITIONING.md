@@ -120,7 +120,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"I don't know if I'm actually ready. I tell my parents 'it's going fine' because I have nothing concrete to say. I'm hoping."*
 
-**Bliss:** *"Twelve concepts mastered. Fifteen in progress. Three I need to work on. When anyone asks, I have a real answer."*
+**Bliss:** *"Now I actually know where I stand. I can see that I have mastered twelve concepts, fifteen are still in progress, and three need more work. When my parents ask, I give them a clear answer instead of a hopeful one."*
 
 > *Vidhya turns hope into arithmetic.*
 
@@ -130,7 +130,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"The syllabus is so big I don't know where to start today. I open my notes, feel overwhelmed, and end up scrolling."*
 
-**Bliss:** *"Three concepts today. Ranked. Done by evening. I can see exactly what tomorrow looks like."*
+**Bliss:** *"The app shows me three concepts to focus on today, chosen based on what matters most for my exam and what I haven't mastered yet. I finish them by evening, and I can already see what I need to study tomorrow."*
 
 > *The blank page becomes a ranked to-do list.*
 
@@ -140,7 +140,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"My exam is in three days and the app is still telling me to take breaks. Tone-deaf. Two days out is not the time to 'recharge.'"*
 
-**Bliss:** *"When I was six months out, it suggested breaks. When I was three days out, it switched to prerequisite review. The advice matches where I actually am."*
+**Bliss:** *"Six months before my exam, it was fine when the app suggested I take breaks — that made sense. But when I got to three days before, the app automatically stopped suggesting breaks and started recommending quick prerequisite reviews instead. The advice finally matches where I actually am in my preparation."*
 
 > *A tool that understands when it's exam week and when it isn't.*
 
@@ -150,7 +150,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"I watched a 45-minute lecture and still don't get the concept. The useful ten minutes were buried somewhere in the middle."*
 
-**Bliss:** *"It clicked in ten. I skipped the parts I knew, lingered on the new idea, moved on."*
+**Bliss:** *"I understood the concept in ten minutes. I skipped the parts I already knew, spent extra time on the one new idea, and then moved on. No wasted time sitting through things I didn't need."*
 
 > *Your time is not the infrastructure's free variable anymore.*
 
@@ -160,7 +160,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"It's 2 a.m. and I'm stuck. My teacher is asleep. My group is asleep. I'm alone with my confusion, and tomorrow I'll have forgotten why I was stuck."*
 
-**Bliss:** *"I took a photo. Got a full walkthrough in seconds. The trap I was about to fall into was called out. I slept clear-headed."*
+**Bliss:** *"I took a photo of the problem and got a complete step-by-step walkthrough in seconds. The app even warned me about the common mistake I was about to make. I went to sleep with my mind clear, not anxious."*
 
 > *Midnight stops being the hour when preparation stops.*
 
@@ -170,7 +170,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"By exam week, month-one material is a blur. I can't tell if I've forgotten it or never learned it."*
 
-**Bliss:** *"Month-one material is still with me. It came back at the right moments across the prep cycle."*
+**Bliss:** *"The topics I studied in the first month are still fresh in my head during exam week. The app brought them back to me at the right moments throughout my preparation, so I didn't have to worry about tracking what to revise."*
 
 > *Memory, treated like the engineering problem it actually is.*
 
@@ -180,7 +180,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"The AI stated eigenvalues so confidently, and they were wrong. I didn't find out until the mock."*
 
-**Bliss:** *"When it's not sure, it says so. When it's sure, the math has been checked. I finally trust what I read."*
+**Bliss:** *"When the app is not sure about something, it tells me honestly. When it gives me a confident answer, the math has been checked for accuracy. I can finally trust what I am reading, so I don't waste time double-checking every answer."*
 
 > *Uncertainty is a feature, not a bug.*
 
@@ -190,7 +190,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"Streaks and notifications are making me resent this app. Miss one day and I'm guilt-tripped. I'm dreading opening it."*
 
-**Bliss:** *"No streaks. No badges. No guilt pings. I study when I want to; it waits when I don't."*
+**Bliss:** *"There are no streaks to maintain, no badges to collect, no guilt-inducing notifications. I study when I feel ready, and the app quietly waits when I need a break. Opening it doesn't feel like a chore anymore."*
 
 > *You are a student, not a metric to be optimised.*
 
@@ -200,7 +200,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"My weak areas are going to end up in a corporate database somewhere. Leaks happen. I don't want to be in one."*
 
-**Bliss:** *"My materials, my progress, my struggles — all on my device. Nothing lives on a server that could leak because that server doesn't exist."*
+**Bliss:** *"My study materials, my progress, and even my weak areas stay on my own device. None of it sits on a company server that could leak someday — because that server simply doesn't exist. My preparation is truly private."*
 
 > *Privacy isn't a policy. It's an architecture decision that's already been made.*
 
@@ -210,7 +210,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"The best coaching is in four metros. I'm not in any of them. I'm already behind the students who are."*
 
-**Bliss:** *"Same lessons, same trap-flagging, same depth, wherever I log in from. The top city no longer has the top prep."*
+**Bliss:** *"I get the same quality of lessons, the same explanations of common mistakes, and the same depth of teaching, no matter where I am logging in from. My town doesn't limit my preparation anymore — the best coaching is available on my phone."*
 
 > *World-class education without the world-class address.*
 
@@ -220,7 +220,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"Fourier is impossible. The real problem is I never solidly got trig identities. But I don't know how to go back without admitting defeat."*
 
-**Bliss:** *"It noticed the gap was three topics behind the one I was stuck on. Routed me there. The advanced topic started working again."*
+**Bliss:** *"The app noticed that my real weakness was actually three topics earlier than the one I was stuck on. It guided me back to fix that foundation first, and once that was solid, the advanced topic started making sense again. The actual gap got fixed, not just the symptom."*
 
 > *The leak is fixed where it actually lives.*
 
@@ -230,7 +230,7 @@ Each pair is the same student, speaking twice. The *before* is the default exam-
 
 **Pain:** *"Coaching lectures move at the average student's pace. If I'm faster, I'm bored. If I'm slower, I'm lost."*
 
-**Bliss:** *"Fast through linear algebra because it clicked. Slow through measure theory because I needed it. No batch to keep up with."*
+**Bliss:** *"I moved quickly through linear algebra because it clicked for me right away, and I took my time with measure theory because I really needed to sit with it. I'm studying at my own pace for each topic, not trying to match a classroom schedule that was never built for me."*
 
 > *The class schedule is a historical artefact. You're not in one anymore.*
 

@@ -2110,7 +2110,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.13.0)
+## Slide 33 — What's Shipped (at v2.14.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2143,7 +2143,11 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.10.3 | `56e2b11` | Six more pain/bliss pairs covering world-class access, foundations, pacing, social pressure, motivation, rigor+intuition |
 | v2.11.0 | `1a41f15` | Multi-channel interactive rendering framework — enrichment decision logic + channel renderer for web/Telegram/WhatsApp/voice; Framer Motion web components; progressive-reveal state machine for Telegram |
 | v2.12.0 | `24beb67` | Objective + GBrain-aware enrichment — same canonical lesson produces different interactive treatment per student based on exam question-type mix, mastery, and exam proximity; README pain/bliss condensed to soundbites |
-| v2.13.0 | *this* | GBrain sweep to every touchpoint — speed of answering threaded through enrichment; content-routes tier bias by mastery; /api/syllabus/me mastery overlay; /api/admin/gbrain-audit live registry; every student-facing feature confirmed integrated |
+| v2.13.0 | `72d4cb4` | GBrain sweep to every touchpoint — speed of answering threaded through enrichment; content-routes tier bias by mastery; /api/syllabus/me mastery overlay; /api/admin/gbrain-audit live registry; every student-facing feature confirmed integrated |
+| v2.13.1 | `1a62f3b` | Indian-context pain/takeaway experiment |
+| v2.13.2 | `3087cd2` | Clean English, Bliss restored with takeaway framing |
+| v2.13.3 | `ee773cc` | Reimagined as student-journey Before/After |
+| v2.14.0 | *this* | BITSAT Mathematics live sample — complete exam spec, full 8-component lesson, 10-Q mock with GBrain-shaped analysis, BITSAT-specific strategies; 7 HTTP endpoints under /api/sample/bitsat/*; exercises every shipped moat against real NCERT-grade content |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

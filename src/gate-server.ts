@@ -47,6 +47,7 @@ import { examGroupRoutes } from './api/exam-group-routes';
 import { meRoutes } from './api/me-routes';
 import { renderingRoutes } from './api/rendering-routes';
 import { gbrainAuditRoutes } from './api/gbrain-audit-routes';
+import { bitsatSampleRoutes } from './api/bitsat-sample-routes';
 import { telegramRoutes as botTelegramRoutes } from './channels/telegram-adapter';
 import { whatsappRoutes } from './channels/whatsapp-adapter';
 import { getAuth, migrateSession } from './api/auth-middleware';
@@ -211,6 +212,9 @@ for (const route of renderingRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of gbrainAuditRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of bitsatSampleRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of botTelegramRoutes) {

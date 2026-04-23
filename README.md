@@ -20,91 +20,73 @@ That's Vidhya.
 
 ## Why this is different — and why you can trust it
 
-We built Vidhya because we've been the student at 2 a.m. We know what bad exam-prep apps do, because we paid for them. Every design choice here is a direct answer to something that wasted our time or money when we were preparing.
+**We have been the student at 2 a.m.** Every design choice in Vidhya is a direct answer to something that wasted our time or our money when we were preparing for our own exams.
 
-**Open-source and inspectable.** Every claim on this page maps to code you can read. Nothing is hidden behind a paywall, an enterprise-tier, or a "contact sales". The four-tier content engine, the student model, the Wolfram verification — it's all in this repository. Read the code, run the tests, see for yourself.
+**Every claim maps to code.** Nothing is behind a paywall, an enterprise tier, or a "contact sales". The four-tier content engine, the student model, the Wolfram verification — all in this repository. Read it. Run it. See for yourself.
 
-**Pedagogy from the people who teach well.** The 82-concept library draws from OpenStax, MIT OpenCourseWare, and GATE previous-year papers — the sources top teachers already trust. Every maths answer is computationally checked against Wolfram Alpha before it reaches you. This is not generated slop. This is verified teaching.
+**Teaching from sources top teachers trust.** OpenStax, MIT OpenCourseWare, past exam papers from national boards. Every maths answer is computationally checked against Wolfram Alpha before it reaches you. Verified teaching, not generated slop.
 
-**No investors asking us to squeeze students.** There is no pricing tier. There is no ad model. Your AI costs are whatever Gemini or Claude charges you directly, at their rates, to your card. We do not sit in the middle.
+**No investors pushing us to squeeze students.** No pricing tier. No ad model. Your AI costs go directly to Gemini or Claude, at their rates, to your card. We do not sit in the middle.
 
 ---
 
-## What breaks today — and what we fix
+## What breaks — and what we fix
 
-Five everyday frustrations of exam prep in India. For each one — the direct answer, exactly what you get, and how we built it so it holds up.
-
-<br />
-
-> [!CAUTION]
-> ### 💸 **You study today, lose half of it by next week.**
-> *Most apps don't remember what you struggled with. Every session starts from scratch, so your effort keeps leaking out. The hard work is real; the retention isn't.*
-
-> [!TIP]
-> ### 📚 **Every minute of effort finally compounds into real competence.**
-> *Your weak spots, your mistakes, your breakthroughs — the app remembers all of them, forever. Twelve short sessions add up like one long one, instead of evaporating. A concept you cracked in January is still with you in March.*
->
-> **What you get:** A personal student model that tracks you across 15 cognitive attributes and 7 error categories. Your mistakes become tomorrow's revision queue. Your breakthroughs become the foundation for the next concept.
->
-> *How we built it:* A spaced-repetition engine layered on a Bayesian knowledge model — the same pedagogy principles that power elite tutoring, implemented in your browser. Full design in [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md).
+Five frustrations every exam aspirant knows. The direct answer to each. One sentence each, so they stick.
 
 <br />
 
 > [!CAUTION]
-> ### 😰 **The app is built to make you anxious, not to teach you.**
-> *Streaks, red notifications, guilt pings at 11 pm — the design is meant to keep you hooked, not help you crack the exam. Miss a single day and it makes you feel like you've failed.*
+> ### 💸 **Lose it** — *You study today, lose half of it by next week.*
 
 > [!TIP]
-> ### 🧘 **Study on your own terms. Your peace of mind is the point, not the price.**
-> *Miss a day? The app quietly waits. Come back whenever you're ready. No streaks. No shame. No guilt pings at 11 pm. The app earns your attention by being useful, not by holding it hostage.*
->
-> **What you get:** Zero growth-hack notifications. No streaks to maintain. No "you've broken your 47-day record" heartbreak. Just sessions when you want them, paused when you don't.
->
-> *How we built it:* We refused to instrument engagement metrics in the product. The codebase has no push notification service, no streak counter, no re-engagement campaign logic. It is not there because we chose not to build it.
+> ### 📚 **Keep it** — *Every minute of effort finally compounds into real competence.*
+> Twelve short sessions add up like one long one. A concept you cracked in January is still with you in March.
 
 <br />
 
 > [!CAUTION]
-> ### 🗺️ **Your pincode decides the quality of your teaching.**
-> *Top coaching centres sit in five or six cities. Students outside those cities make do with random YouTube lectures, outdated PDFs, and luck. That's not a level playing field.*
+> ### 😰 **Guilt** — *The app is built to make you anxious, not to teach you.*
 
 > [!TIP]
-> ### 🌍 **The same quality of teaching. Anywhere in India. On any phone.**
-> *A student in Kota, Durgapur, or a small town in Odisha gets the same lesson, the same worked example, the same depth as a student in South Delhi — on a three-year-old Android, on spotty wifi, in any language their browser supports.*
->
-> **What you get:** An app that pre-loads 80% of the content offline on first visit. Works without internet after the first sync. Runs on entry-level hardware. No premium tier for better teaching — there is one tier, and it is the good one.
->
-> *How we built it:* A four-tier cascade. 80% of student questions are served from a pre-built JSON bundle, delivered once and cached forever. The remaining 20% route to semantic search, then LLM, then Wolfram. Full architecture in [PLAN-content-engine.md](./PLAN-content-engine.md).
+> ### 🧘 **Calm** — *Study on your own terms. Peace of mind is the point, not the price.*
+> No streaks. No shame. No guilt pings at 11 pm. Miss a day, the app quietly waits.
 
 <br />
 
 > [!CAUTION]
-> ### 🎯 **Your struggles are being sold to advertisers.**
-> *Your weak areas, your wrong answers, your study timings — most apps store all of it on their servers, then monetise it. You became the product the day you signed up.*
+> ### 🗺️ **Lottery** — *Your postcode decides the quality of your teaching.*
 
 > [!TIP]
-> ### 🔒 **Your data lives on your phone. Your AI key stays yours. We see nothing.**
-> *Nothing leaves your device unless you choose to send it. Your uploaded PDFs, your study history, your mistakes — all in your browser, not on our servers. You bring your own Gemini or Claude or OpenAI key; we never see it, and we never charge for it.*
->
-> **What you get:** Student progress stored in IndexedDB on your device. PDFs parsed client-side. Embeddings computed on a 22 MB WASM model in your browser. Server sees only the bare minimum — proxied LLM calls with your own key, opt-in anonymous telemetry if you choose to contribute.
->
-> *How we built it:* The server is stateless by design. It has no user database, no behavioural analytics table, nowhere to keep you even if we wanted to. Inspect the code at [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md).
+> ### 🌍 **Equal ground** — *The same lesson, the same depth — anywhere in the world, on any phone.*
+> Works offline after the first sync. Runs on entry-level hardware. One tier of teaching, and it is the good one.
 
 <br />
 
 > [!CAUTION]
-> ### ⚠️ **The advice has nothing to do with your situation.**
-> *Three days before your exam, you get five questions wrong and the app tells you to "take a break and come back tomorrow". That advice was written for demos, not for a student whose exam is 72 hours away.*
+> ### 🎯 **Product** — *Your struggles are being sold to advertisers.*
 
 > [!TIP]
-> ### ⏰ **Advice that understands where you are. Six months out, or three days out.**
-> *Six months out, the app suggests rest when you are tired. Three days out, it switches straight to revision — because when the exam is near, rest is not the answer. Review is. Same app, different mode, driven by your actual exam dates.*
->
-> **What you get:** Sessions planned for the exact time you have — three minutes at a bus stop, sixty minutes on a weekend. Advice that changes as your exam approaches. Templates you save once (*"morning commute, 8 minutes"*) and fire with one tap.
->
-> *How we built it:* An exam-proximity-aware planner. Your registered exams and their dates drive every recommendation. Priority weightings shift as the exam date approaches. Smoke-tested across 15 backend routes and 33 MCP tools. See [FEATURES.md](./FEATURES.md) for the 48-release ledger.
+> ### 🔒 **Person** — *Your data lives on your device. Your AI key stays yours. We see nothing.*
+> Your notes, your progress, your mistakes — all in your browser, not on our servers.
 
 <br />
+
+> [!CAUTION]
+> ### ⚠️ **Generic** — *The advice has nothing to do with your actual situation.*
+
+> [!TIP]
+> ### ⏰ **Yours** — *Advice that understands where you are. Six months out, or three days out.*
+> Far from your exam: rest when you are tired. Close to it: straight to revision. Your dates drive every recommendation.
+
+<br />
+
+> [!NOTE]
+> ### How the promises are kept
+>
+> A Bayesian student model across 15 cognitive attributes and 7 error categories — covered in [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md). &nbsp;•&nbsp; A four-tier content cascade that serves 80% of requests from a pre-built bundle at zero marginal cost — covered in [PLAN-content-engine.md](./PLAN-content-engine.md). &nbsp;•&nbsp; A stateless server with no user database — covered in [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md). &nbsp;•&nbsp; 48 tagged releases, 163 passing smoke tests — tracked in [FEATURES.md](./FEATURES.md).
+>
+> *Every promise above is defended in code, not in copy.*
 
 ---
 
@@ -116,7 +98,7 @@ Five everyday frustrations of exam prep in India. For each one — the direct an
 
 Vidhya makes a different trade. Twelve five-minute sessions compound into the mastery a sixty-minute session builds; nothing evaporates between them. The app tunes its advice to how close your exam is. **Your notes, your progress, and your provider key all stay on your device.** The price of the AI is whatever the provider charges you directly — there is no intermediary pricing layer, because there is no intermediary.
 
-A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre in the country. **Geography stops being the limit.**
+A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre anywhere in the world. **Geography stops being the limit.**
 
 📖 *The full positioning is in [POSITIONING.md](./POSITIONING.md). The thirty-second shareable version is in [PITCH.md](./PITCH.md).*
 

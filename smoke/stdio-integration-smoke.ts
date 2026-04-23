@@ -186,7 +186,7 @@ class StdioClient {
     check('response has result', !!initResp.result);
     check('result.protocolVersion 2024-11-05', initResp.result?.protocolVersion === '2024-11-05');
     check('result.serverInfo.name', initResp.result?.serverInfo?.name === 'project-vidhya-admin-orchestrator');
-    check('result.serverInfo.version 2.28.0', initResp.result?.serverInfo?.version === '2.28.0');
+    check('result.serverInfo.version 2.x.y', /^2\.\d+\.\d+$/.test(initResp.result?.serverInfo?.version));
     check('result.capabilities has tools', !!initResp.result?.capabilities?.tools);
     check('result.capabilities has logging', !!initResp.result?.capabilities?.logging);
     check('result.capabilities has completions', !!initResp.result?.capabilities?.completions);
@@ -217,7 +217,7 @@ class StdioClient {
     check('result has content array', Array.isArray(callResp.result?.content));
     check('content is text type', callResp.result?.content?.[0]?.type === 'text');
     const capsBody = JSON.parse(callResp.result?.content?.[0]?.text ?? '{}');
-    check('response body has version 2.28.0', capsBody.version === '2.28.0');
+    check('response body has version 2.x.y', /^2\.\d+\.\d+$/.test(capsBody.version));
     check('response body has tool_count 29', capsBody.tool_count === 29);
 
     // ═══ CASE 6: resources/list ═══

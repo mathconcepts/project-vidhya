@@ -18,51 +18,61 @@ That's Vidhya.
 
 ---
 
-## What's wrong with how exam prep works today
+## What breaks today — and what we fix
+
+Five everyday frustrations of exam prep in India, and the direct answer to each.
+
+<br />
 
 > [!CAUTION]
-> ### 💸 **Progress evaporates between sessions.**
-> *Other apps let what you learned yesterday leak out before tomorrow's session. You start from zero, again.*
+> ### 💸 **You study today, lose half of it by next week.**
+> *Most apps don't remember what you struggled with. Every session starts from scratch, so your effort keeps leaking out. The hard work is real; the retention isn't.*
+
+> [!TIP]
+> ### 📚 **Every minute you put in actually stays with you.**
+> *Your weak spots, your mistakes, your breakthroughs — the app remembers all of them. Twelve short sessions add up like one long one. Your effort finally compounds instead of evaporating.*
+
+<br />
 
 > [!CAUTION]
-> ### 😰 **Streaks and guilt-pings punish your effort.**
-> *Miss a day and the app shames you. Maintain the streak and you study tired. Neither teaches you calculus.*
+> ### 😰 **The app is built to make you anxious, not to teach you.**
+> *Streaks, red notifications, guilt pings at 11 pm — the design is meant to keep you hooked, not help you crack the exam. Miss a single day and it makes you feel like you've failed.*
+
+> [!TIP]
+> ### 🧘 **Study on your own terms. No guilt. No streaks. No shame.**
+> *Miss a day? The app quietly waits. Come back whenever you're ready. Your peace of mind is not the price of learning here — it is the point of learning here.*
+
+<br />
 
 > [!CAUTION]
-> ### 🗺️ **Your postal code decides your teaching.**
-> *Top coaching centres cluster in a few cities. Students elsewhere get recycled YouTube lectures and luck.*
+> ### 🗺️ **Your pincode decides the quality of your teaching.**
+> *Top coaching centres sit in five or six cities. Students outside those cities make do with random YouTube lectures, outdated PDFs, and luck. That's not a level playing field.*
+
+> [!TIP]
+> ### 🌍 **One app. Same quality of teaching. Anywhere in India.**
+> *A student in Kota, Durgapur, or a small town in Odisha gets the same lesson, the same worked example, the same depth as a student in South Delhi. Your hard work deserves that much.*
+
+<br />
 
 > [!CAUTION]
-> ### 🎯 **You are the product.**
-> *Your weakest areas, your struggle patterns, your behavioural data — monetised by someone else's server.*
+> ### 🎯 **Your struggles are being sold to advertisers.**
+> *Your weak areas, your wrong answers, your study timings — most apps store all of it on their servers, then monetise it. You became the product the day you signed up.*
+
+> [!TIP]
+> ### 🔒 **Your data stays on your phone. Your AI key stays yours.**
+> *Nothing leaves your device unless you choose to send it. Bring your own Gemini or Claude or OpenAI key — we don't see it, we don't charge for it. You are the student here, not the product.*
+
+<br />
 
 > [!CAUTION]
-> ### ⚠️ **Tone-deaf "take a break" advice near your exam.**
-> *Three days out, five wrong answers in a row, and the app suggests you rest. The advice was written for demos, not for you.*
-
----
-
-## What you actually walk away with
+> ### ⚠️ **The advice has nothing to do with your situation.**
+> *Three days before your exam, you get five questions wrong and the app tells you to "take a break and come back tomorrow". That advice was written for demos, not for a student whose exam is 72 hours away.*
 
 > [!TIP]
-> ### 📚 **You never lose ground.**
-> *Twelve five-minute sessions compound into the mastery a sixty-minute session builds. Nothing evaporates between sittings.*
+> ### ⏰ **The advice changes as your exam comes closer.**
+> *Six months out, the app suggests rest when you're tired. Three days out, it switches straight to revision — because when the exam is near, rest is not the answer. Review is. The app knows the difference.*
 
-> [!TIP]
-> ### 🧘 **You study without the anxiety tax.**
-> *No streaks to maintain. No guilt pings. Miss a day, the app waits. Curiosity returns; dread doesn't.*
-
-> [!TIP]
-> ### 🌍 **Your address stops deciding your education.**
-> *A student in a small town gets the same lesson, same worked example, same depth as a student in the most expensive coaching centre in the country.*
-
-> [!TIP]
-> ### 🔒 **You are studied _for_, not studied _on_.**
-> *Your notes, your progress, your AI key — all on your device. You stop being the product.*
-
-> [!TIP]
-> ### ⏰ **The advice matches your reality.**
-> *Three days before your exam, the app stops telling you to rest. It switches to review — because tone-deaf advice is not advice.*
+<br />
 
 ---
 

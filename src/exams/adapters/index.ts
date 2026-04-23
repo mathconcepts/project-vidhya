@@ -21,9 +21,9 @@
 
 import './bitsat-mathematics';
 import './ugee-mathematics';
+import './jee-main-mathematics';
 
 // Future adapters go here:
 // import './gate-cs';
-// import './jee-main-mathematics';
 // import './neet-biology';
 // import './upsc-gs';

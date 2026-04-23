@@ -8,10 +8,14 @@
  * from one place.
  */
 
-export { planSession } from './planner';
+export { planSession, planMultiExamSession } from './planner';
 export {
-  savePlan, getPlan, listPlansForStudent, listAllPlans, _resetPlanStore,
+  savePlan, getPlan, listPlansForStudent, listAllPlans,
+  recordExecution, sumTrailingMinutes, projectSrStatsFromExecutions,
+  _resetPlanStore,
 } from './store';
 export type {
-  PlanRequest, SessionPlan, ActionRecommendation, ActionKind, ContentHint,
+  PlanRequest, MultiExamPlanRequest, SessionPlan,
+  ActionRecommendation, ActionKind, ContentHint,
+  PlanExecution, ActionOutcome,
 } from './types';

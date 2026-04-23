@@ -905,7 +905,7 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
     return el('header', {},
       el('h1', {}, 'Vidhya', el('em', {}, 'orchestrator')),
       el('div', { class: 'meta' },
-        el('span', {}, el('strong', {}, 'v'), '2.29.0'),
+        el('span', {}, el('strong', {}, 'v'), '2.31.0'),
         el('span', {}, el('strong', {}, 'llm'), ' ' + llmProvider),
         el('span', {}, el('strong', {}, 'run'), ' ' + (state.run?.id || '—')),
         el('span', {}, el('strong', {}, 'last'), ' ' + relativeTime(state.run?.completed_at)),

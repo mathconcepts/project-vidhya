@@ -262,4 +262,68 @@ export const INPUT_SCHEMAS: Record<string, JSONSchema> = {
 
   // Minimal MCP self-introspection tool
   'agent:describe-capabilities': EMPTY_SCHEMA,
+
+  // Student session planner (v2.31)
+  'student:plan-session': {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    type: 'object',
+    required: ['student_id', 'exam_id', 'exam_date', 'minutes_available'],
+    properties: {
+      student_id: { type: 'string', minLength: 1 },
+      exam_id: { type: 'string', minLength: 1 },
+      exam_date: { type: 'string', format: 'date',
+        description: 'ISO date (YYYY-MM-DD) of the student\'s target exam' },
+      minutes_available: { type: 'integer', minimum: 1, maximum: 180 },
+      topic_confidence: {
+        type: 'object',
+        description: 'Per-topic confidence on a 1-5 scale',
+        additionalProperties: { type: 'integer', minimum: 1, maximum: 5 },
+      },
+      diagnostic_scores: {
+        type: 'object',
+        description: 'Per-topic diagnostic accuracy in [0, 1]',
+        additionalProperties: { type: 'number', minimum: 0, maximum: 1 },
+      },
+      sr_stats: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['topic', 'accuracy', 'sessions_count',
+                     'accuracy_first_5', 'accuracy_last_5', 'last_practice_date'],
+          properties: {
+            topic: { type: 'string' },
+            accuracy: { type: 'number', minimum: 0, maximum: 1 },
+            sessions_count: { type: 'integer', minimum: 0 },
+            accuracy_first_5: { type: 'number', minimum: 0, maximum: 1 },
+            accuracy_last_5: { type: 'number', minimum: 0, maximum: 1 },
+            last_practice_date: {
+              oneOf: [{ type: 'string' }, { type: 'null' }],
+            },
+          },
+        },
+      },
+      weekly_hours: { type: 'number', minimum: 1, maximum: 60 },
+      trailing_7d_minutes: { type: 'number', minimum: 0 },
+    },
+    additionalProperties: false,
+  },
+  'student:list-plans': {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    type: 'object',
+    required: ['student_id'],
+    properties: {
+      student_id: { type: 'string', minLength: 1 },
+      limit: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+    },
+    additionalProperties: false,
+  },
+  'student:get-plan': {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    type: 'object',
+    required: ['plan_id'],
+    properties: {
+      plan_id: { type: 'string', pattern: '^PLN-[a-z0-9]+$' },
+    },
+    additionalProperties: false,
+  },
 };

@@ -333,6 +333,52 @@ export const TOOLS: Tool[] = [
     category: 'read',
     is_destructive: false,
   },
+
+  // ── Student session planner (v2.31) ──────────────────────────────
+  // Analytics-style tools — admin/analyst can query any student's
+  // planner history. The student-facing HTTP surface (which forces
+  // student_id from JWT) is separate; this tool path is for
+  // orchestrator-level introspection.
+  {
+    id: 'student:plan-session',
+    domain: 'student',
+    label: 'Generate a session plan for a student',
+    description:
+      'Run the session planner for a given student — returns an ordered list of ' +
+      'action recommendations (practice, review, spaced-review, micro-mock) that fit ' +
+      'within the provided minutes budget. Pure function; does not persist.',
+    required_roles: ['owner', 'admin', 'analyst'],
+    category: 'analysis',
+    is_destructive: false,
+    input_schema_doc:
+      '{ student_id, exam_id, exam_date, minutes_available, ' +
+      'topic_confidence?, diagnostic_scores?, sr_stats?, weekly_hours?, trailing_7d_minutes? }',
+  },
+  {
+    id: 'student:list-plans',
+    domain: 'student',
+    label: 'List recent session plans for a student',
+    description:
+      'Returns the most recent session plans (up to 50 per student) with their ' +
+      'execution outcomes where recorded. Useful for cohort analysis and longitudinal ' +
+      'review of study patterns.',
+    required_roles: ['owner', 'admin', 'analyst'],
+    category: 'read',
+    is_destructive: false,
+    input_schema_doc: '{ student_id: string, limit?: number (1-50) }',
+  },
+  {
+    id: 'student:get-plan',
+    domain: 'student',
+    label: 'Get a specific session plan by id',
+    description:
+      'Fetch a single session plan by id including its execution record if any. ' +
+      'Returns null if no plan exists with that id.',
+    required_roles: ['owner', 'admin', 'analyst'],
+    category: 'read',
+    is_destructive: false,
+    input_schema_doc: '{ plan_id: string }',
+  },
 ];
 
 // ============================================================================
@@ -567,6 +613,39 @@ async function _dispatch(tool_id: string, input: any): Promise<any> {
     case 'agent:describe-capabilities': {
       const { describeCapabilitiesTool } = await import('./agent-tools');
       return describeCapabilitiesTool();
+    }
+
+    // Student session planner (v2.31) ────────────────────────────────
+    case 'student:plan-session': {
+      const { planSession, savePlan } = await import('../session-planner');
+      const plan = planSession({
+        student_id: String(input?.student_id ?? ''),
+        exam_id: String(input?.exam_id ?? ''),
+        exam_date: String(input?.exam_date ?? ''),
+        minutes_available: Number(input?.minutes_available ?? 0),
+        topic_confidence: input?.topic_confidence,
+        diagnostic_scores: input?.diagnostic_scores,
+        sr_stats: input?.sr_stats,
+        weekly_hours: input?.weekly_hours,
+        trailing_7d_minutes: input?.trailing_7d_minutes,
+      });
+      // Persist as a side effect so the audit trail is consistent
+      // across HTTP and MCP paths. Non-fatal on failure.
+      try { savePlan(plan); } catch { /* best-effort */ }
+      return plan;
+    }
+    case 'student:list-plans': {
+      const { listPlansForStudent } = await import('../session-planner');
+      const limit = typeof input?.limit === 'number'
+        ? Math.min(50, Math.max(1, input.limit))
+        : 20;
+      const plans = listPlansForStudent(String(input?.student_id ?? ''), limit);
+      return { plans, count: plans.length };
+    }
+    case 'student:get-plan': {
+      const { getPlan } = await import('../session-planner');
+      const plan = getPlan(String(input?.plan_id ?? ''));
+      return plan ?? { error: `Plan '${input?.plan_id}' not found` };
     }
 
     default:

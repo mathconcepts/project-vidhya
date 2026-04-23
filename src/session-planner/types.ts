@@ -41,7 +41,7 @@ import type { SessionContext, AttentionStrategy, AttentionBudget } from '../atte
 import type { TopicPriority } from '../engine/priority-engine';
 
 // ============================================================================
-// Request
+// Request — single-exam (original) + multi-exam (v2.31)
 // ============================================================================
 
 export interface PlanRequest {
@@ -78,13 +78,36 @@ export interface PlanRequest {
   /**
    * Trailing-7-day minutes of study — if provided, the attention
    * resolver uses it to relax the strategy on a student who has been
-   * compounding short sessions.
+   * compounding short sessions. If omitted, the HTTP layer derives
+   * it from the student's recent plan executions.
    */
   trailing_7d_minutes?: number;
   /**
    * Anchor time for all date math. Defaults to `new Date()` at call
    * time. Tests pass a fixed Date for determinism.
    */
+  now?: Date;
+}
+
+/**
+ * MultiExamPlanRequest — for students prepping for more than one exam
+ * concurrently (e.g. JEE Main + BITSAT). The planner interleaves
+ * actions across exams, weighted by exam-proximity: the closest exam
+ * gets more attention on any given session.
+ */
+export interface MultiExamPlanRequest {
+  student_id: string;
+  minutes_available: number;
+  /** One entry per exam the student is prepping for. 1-5 exams supported. */
+  exams: Array<{
+    exam_id: string;
+    exam_date: string;
+    topic_confidence?: Record<string, number>;
+    diagnostic_scores?: Record<string, number>;
+    sr_stats?: PlanRequest['sr_stats'];
+  }>;
+  weekly_hours?: number;
+  trailing_7d_minutes?: number;
   now?: Date;
 }
 
@@ -127,6 +150,12 @@ export interface ActionRecommendation {
   content_hint: ContentHint;
   /** Priority score from the engine (0-10ish). Higher = more important. */
   priority_score: number;
+  /**
+   * Which exam this action targets. For single-exam plans this is the
+   * plan's exam_id; for multi-exam plans it tags each action back to
+   * its source exam. Always populated.
+   */
+  exam_id: string;
 }
 
 // ============================================================================
@@ -152,4 +181,41 @@ export interface SessionPlan {
   total_estimated_minutes: number;
   /** Human-readable one-sentence summary for the top of the screen */
   headline: string;
+  /**
+   * Populated when the student posts completion. Null/absent for
+   * plans that haven't been executed yet. One-shot: a plan is
+   * completed once; re-completion overwrites.
+   */
+  execution?: PlanExecution;
+}
+
+/**
+ * A PlanExecution records what actually happened during a session.
+ * Stored inline on the SessionPlan for audit locality — same file,
+ * same pruning cycle.
+ */
+export interface PlanExecution {
+  /** ISO timestamp the plan was marked complete */
+  completed_at: string;
+  /** Actual minutes the student spent (self-reported or measured client-side) */
+  actual_minutes_spent: number;
+  /** Per-action outcomes, keyed by action_id */
+  actions_completed: ActionOutcome[];
+  /** Optional student-visible note on the session as a whole */
+  session_note?: string;
+}
+
+export interface ActionOutcome {
+  /** References ActionRecommendation.id (e.g. "ACT-1") */
+  action_id: string;
+  /** Did the student actually attempt this action? */
+  completed: boolean;
+  /** Number of questions attempted (for practice / spaced-review / micro-mock) */
+  attempts?: number;
+  /** Number of correct answers */
+  correct?: number;
+  /** Minutes spent on this action specifically (may differ from estimated) */
+  actual_minutes?: number;
+  /** Optional per-action student note */
+  note?: string;
 }

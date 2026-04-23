@@ -27,13 +27,172 @@ import { computePriority, MARKS_WEIGHTS, TOPIC_NAMES } from '../engine/priority-
 import type { AttentionBudget, AttentionStrategy } from '../attention/types';
 import type { StudyProfile, TopicPriority, TopicSRStats } from '../engine/priority-engine';
 import type {
-  PlanRequest, SessionPlan, ActionRecommendation, ActionKind,
+  PlanRequest, MultiExamPlanRequest, SessionPlan,
+  ActionRecommendation, ActionKind,
 } from './types';
 
 // Inline helper — every admin-orchestrator module has one of these;
 // we follow the convention rather than introducing a new shared dep.
 function shortId(): string {
   return Math.random().toString(36).substring(2, 10);
+}
+
+// ============================================================================
+// Multi-exam planner (v2.31)
+// ============================================================================
+
+/**
+ * Plan a single session across multiple exams. Students prepping for
+ * more than one exam concurrently (e.g. JEE Main + BITSAT + CAT) need
+ * a blended session that doesn't ignore their second-closest exam.
+ *
+ * Design: run the single-exam planner for each exam with a share of
+ * the total minutes proportional to that exam's proximity factor,
+ * then interleave the resulting actions by priority score. Each
+ * action carries its source exam_id so the UI can group visually.
+ *
+ * Minimum allocation per exam: 2 minutes (below this the planner
+ * can't produce a meaningful action, so the exam is skipped with
+ * its share redistributed).
+ */
+export function planMultiExamSession(req: MultiExamPlanRequest): SessionPlan {
+  const now = req.now ?? new Date();
+  const totalMinutes = clampMinutes(req.minutes_available);
+
+  if (!req.exams || req.exams.length === 0) {
+    throw new Error('planMultiExamSession requires at least one exam');
+  }
+  if (req.exams.length > 5) {
+    throw new Error('planMultiExamSession supports at most 5 exams concurrently');
+  }
+
+  // Compute proximity weight per exam.
+  const weights = req.exams.map(e => ({
+    exam_id: e.exam_id,
+    weight: examProximityWeight(e.exam_date, now),
+    exam: e,
+  }));
+  const totalWeight = weights.reduce((s, w) => s + w.weight, 0) || 1;
+
+  // Allocate minutes proportional to weight; skip exams below 2min floor.
+  const allocations: Array<{ exam_id: string; minutes: number; exam: any }> = [];
+  let allocated = 0;
+  for (const w of weights) {
+    const share = Math.round((w.weight / totalWeight) * totalMinutes);
+    if (share >= 2) {
+      allocations.push({ exam_id: w.exam_id, minutes: share, exam: w.exam });
+      allocated += share;
+    }
+  }
+  // Redistribute any rounding leftover to the highest-weighted exam.
+  if (allocations.length > 0 && allocated !== totalMinutes) {
+    allocations.sort((a, b) => b.minutes - a.minutes);
+    allocations[0].minutes += (totalMinutes - allocated);
+  }
+  // Edge case: every exam fell below 2min (tiny budget). Fall back to
+  // the closest exam as a single-exam plan.
+  if (allocations.length === 0) {
+    const closest = weights.slice().sort((a, b) => b.weight - a.weight)[0];
+    return planSession({
+      student_id: req.student_id,
+      exam_id: closest.exam_id,
+      exam_date: closest.exam.exam_date,
+      minutes_available: totalMinutes,
+      topic_confidence: closest.exam.topic_confidence,
+      diagnostic_scores: closest.exam.diagnostic_scores,
+      sr_stats: closest.exam.sr_stats,
+      weekly_hours: req.weekly_hours,
+      trailing_7d_minutes: req.trailing_7d_minutes,
+      now,
+    });
+  }
+
+  // Run per-exam planner for each allocation.
+  const perExamPlans = allocations.map(a => planSession({
+    student_id: req.student_id,
+    exam_id: a.exam_id,
+    exam_date: a.exam.exam_date,
+    minutes_available: a.minutes,
+    topic_confidence: a.exam.topic_confidence,
+    diagnostic_scores: a.exam.diagnostic_scores,
+    sr_stats: a.exam.sr_stats,
+    weekly_hours: req.weekly_hours,
+    trailing_7d_minutes: req.trailing_7d_minutes,
+    now,
+  }));
+
+  // Interleave actions: sort globally by priority_score descending,
+  // preserving per-exam action order on ties. Renumber ids.
+  const allActions: ActionRecommendation[] = [];
+  for (const p of perExamPlans) allActions.push(...p.actions);
+  allActions.sort((a, b) => b.priority_score - a.priority_score);
+
+  const renumbered: ActionRecommendation[] = allActions.map((a, i) => ({
+    ...a,
+    id: `ACT-${i + 1}`,
+  }));
+
+  const total_estimated_minutes = renumbered.reduce((s, a) => s + a.estimated_minutes, 0);
+
+  // The "budget" and "strategy" reported at the plan level are derived
+  // from the full minutes_available (the overall budget the student
+  // declared) — individual exams' per-plan strategies are inside
+  // perExamPlans but not surfaced here to keep the envelope simple.
+  const budget: AttentionBudget = budgetFromMinutes(
+    totalMinutes, 'student_declared', req.trailing_7d_minutes,
+  );
+  const strategy: AttentionStrategy = resolveStrategy(budget);
+
+  // Top priorities: union, sorted by priority.
+  const mergedPriorities: TopicPriority[] = [];
+  for (const p of perExamPlans) mergedPriorities.push(...p.top_priorities);
+  mergedPriorities.sort((a, b) => b.priority - a.priority);
+
+  return {
+    id: `PLN-${shortId()}`,
+    generated_at: now.toISOString(),
+    request: {
+      // Render a synthetic single-exam request envelope so existing
+      // consumers don't break. exam_id is the comma-joined list.
+      student_id: req.student_id,
+      exam_id: allocations.map(a => a.exam_id).join(','),
+      minutes_available: totalMinutes,
+      exam_date: allocations.map(a => a.exam.exam_date).join(','),
+      topic_confidence: {},
+      sr_stats: [],
+      weekly_hours: req.weekly_hours,
+      trailing_7d_minutes: req.trailing_7d_minutes,
+    } as any,
+    budget,
+    strategy,
+    top_priorities: mergedPriorities.slice(0, 10),
+    actions: renumbered,
+    total_estimated_minutes,
+    headline: buildMultiExamHeadline(totalMinutes, renumbered, allocations.map(a => a.exam_id)),
+  };
+}
+
+function examProximityWeight(examDateISO: string, now: Date): number {
+  const then = new Date(examDateISO).getTime();
+  const daysRemaining = Math.max(1, Math.ceil((then - now.getTime()) / (1000 * 60 * 60 * 24)));
+  // Hyperbolic: 1-day-out ≈ 1.0; 30-days ≈ 0.5; 180-days ≈ 0.14
+  return 30 / (30 + daysRemaining);
+}
+
+function buildMultiExamHeadline(
+  minutes: number,
+  actions: ActionRecommendation[],
+  examIds: string[],
+): string {
+  const examCount = examIds.length;
+  const actionCount = actions.length;
+  if (actionCount === 0) {
+    return `${minutes} minutes across ${examCount} exams — budget too small to plan meaningfully.`;
+  }
+  if (examCount === 1) {
+    return `${minutes} minutes · ${actionCount} action${actionCount === 1 ? '' : 's'}.`;
+  }
+  return `${minutes} minutes across ${examCount} exams · ${actionCount} actions ordered by priority.`;
 }
 
 // ============================================================================
@@ -75,7 +234,7 @@ export function planSession(req: PlanRequest): SessionPlan {
   });
 
   // Compose actions ───────────────────────────────────────────────────
-  const actions = composeActions(sortedPriorities, strategy, srStats, now, budget);
+  const actions = composeActions(sortedPriorities, strategy, srStats, now, budget, req.exam_id);
 
   const total_estimated_minutes = actions.reduce((sum, a) => sum + a.estimated_minutes, 0);
   const plan: SessionPlan = {
@@ -107,6 +266,7 @@ function composeActions(
   srStats: TopicSRStats[],
   now: Date,
   budget: AttentionBudget,
+  exam_id: string,
 ): ActionRecommendation[] {
   const maxActions = Math.max(1, strategy.gbrain_max_recommendations);
   const actions: ActionRecommendation[] = [];
@@ -131,6 +291,7 @@ function composeActions(
         count: 1,
       },
       priority_score: priorityFor(priorities, overdueReview.topic),
+      exam_id,
     };
     actions.push(spacedAction);
     remainingMinutes -= spacedAction.estimated_minutes;
@@ -183,6 +344,7 @@ function composeActions(
         count: kind === 'review' ? 1 : cappedCount,
       },
       priority_score: pri.priority,
+      exam_id,
     };
     actions.push(action);
     remainingMinutes -= action.estimated_minutes;
@@ -211,6 +373,7 @@ function composeActions(
         count: mockCount,
       },
       priority_score: biasedTopics[0]?.priority ?? 0,
+      exam_id,
     });
     remainingMinutes -= mockMinutes;
   }
@@ -231,6 +394,7 @@ function composeActions(
         count: 1,
       },
       priority_score: top.priority,
+      exam_id,
     });
   }
 

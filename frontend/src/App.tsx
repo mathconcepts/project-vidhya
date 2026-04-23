@@ -42,6 +42,7 @@ const GBrainAdminPage = lazy(() => import('@/pages/gate/GBrainAdminPage'));
 const MarketingLanding = lazy(() => import('@/pages/gate/MarketingLanding'));
 const MaterialsPage = lazy(() => import('@/pages/gate/MaterialsPage'));
 const SmartPracticePage = lazy(() => import('@/pages/gate/SmartPracticePage'));
+const PlannedSessionPage = lazy(() => import('@/pages/gate/PlannedSessionPage'));
 const SnapPage = lazy(() => import('@/pages/gate/SnapPage'));
 const LessonPage = lazy(() => import('@/pages/gate/LessonPage'));
 const LLMConfigPage = lazy(() => import('@/pages/gate/LLMConfigPage'));
@@ -96,6 +97,7 @@ export default function App() {
           <Route path="gbrain" element={<MarketingLanding />} />
           <Route path="materials" element={<MaterialsPage />} />
           <Route path="smart-practice" element={<SmartPracticePage />} />
+          <Route path="planned" element={<PlannedSessionPage />} />
           <Route path="snap" element={<SnapPage />} />
           <Route path="lesson/:concept_id" element={<LessonPage />} />
           <Route path="llm-config" element={<LLMConfigPage />} />

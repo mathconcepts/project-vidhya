@@ -16,7 +16,7 @@
  * This test verifies:
  *   1. subprocess boots and stays alive
  *   2. initialize round-trip succeeds via real pipe I/O
- *   3. tools/list returns the expected 29 tools
+ *   3. tools/list returns the expected 32 tools
  *   4. tools/call invokes a read-only tool end-to-end
  *   5. logging/setLevel + a logger event emitted during a tool call
  *      produces a notifications/message on stdout
@@ -202,7 +202,7 @@ class StdioClient {
     console.log('\n═══ CASE 4: tools/list ═══');
     const toolsResp = await client.call('tools/list', undefined, 3);
     check('tools/list succeeds', !!toolsResp.result);
-    check('admin sees all 29 tools', toolsResp.result?.tools?.length === 29);
+    check('admin sees all 32 tools', toolsResp.result?.tools?.length === 32);
     check('tools have name + description + inputSchema',
       toolsResp.result?.tools?.every(t => !!t.name && !!t.description && !!t.inputSchema));
     check('tools have annotations', toolsResp.result?.tools?.every(t => !!t.annotations));
@@ -218,7 +218,7 @@ class StdioClient {
     check('content is text type', callResp.result?.content?.[0]?.type === 'text');
     const capsBody = JSON.parse(callResp.result?.content?.[0]?.text ?? '{}');
     check('response body has version 2.x.y', /^2\.\d+\.\d+$/.test(capsBody.version));
-    check('response body has tool_count 29', capsBody.tool_count === 29);
+    check('response body has tool_count 32', capsBody.tool_count === 32);
 
     // ═══ CASE 6: resources/list ═══
     console.log('\n═══ CASE 6: resources/list ═══');

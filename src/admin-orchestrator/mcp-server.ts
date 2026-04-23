@@ -71,7 +71,7 @@ const ERR_NOT_AUTHORIZED = -32002;
 
 export const MCP_SERVER_INFO = {
   name: 'project-vidhya-admin-orchestrator',
-  version: '2.23.0',
+  version: '2.24.0',
   /** Protocol version the server implements. 2024-11-05 is the stable MCP baseline. */
   protocolVersion: '2024-11-05',
 };
@@ -81,13 +81,19 @@ export const MCP_SERVER_INFO = {
  * MCP clients what families of calls are safe to make.
  *
  *   tools:           list + call (core); listChanged notifications unsupported
- *   resources:       unsupported in v2.23.0 — admin data comes through tool calls
+ *   resources:       list + read (v2.24.0); subscribe unsupported; listChanged unsupported
  *   prompts:         unsupported in v2.23.0 — no prompt templates exposed
  *   sampling:        unsupported — server does not ask client to generate
  *   logging:         unsupported — server does not forward logs to client
  */
 export const MCP_CAPABILITIES = {
   tools: {
+    /** Server does not emit listChanged notifications */
+    listChanged: false,
+  },
+  resources: {
+    /** Server does not support resources/subscribe (no push notifications) */
+    subscribe: false,
     /** Server does not emit listChanged notifications */
     listChanged: false,
   },
@@ -134,6 +140,10 @@ export async function handleMCPRequest(
         return handleToolsList(id, request.params, ctx);
       case 'tools/call':
         return await handleToolsCall(id, request.params, ctx);
+      case 'resources/list':
+        return await handleResourcesList(id, request.params, ctx);
+      case 'resources/read':
+        return await handleResourcesRead(id, request.params, ctx);
       case 'notifications/initialized':
         // Per MCP: client sends this after initialize. Acknowledge silently.
         return successResponse(id, null);
@@ -238,6 +248,44 @@ async function handleToolsCall(id: any, params: any, ctx: MCPContext): Promise<J
 }
 
 // ============================================================================
+// Resources handlers (v2.24.0)
+// ============================================================================
+
+async function handleResourcesList(id: any, _params: any, ctx: MCPContext): Promise<JsonRpcResponse> {
+  const { listResourcesForRole } = await import('./mcp-resources');
+  const listed = listResourcesForRole(ctx.role);
+  return successResponse(id, listed);
+}
+
+async function handleResourcesRead(id: any, params: any, ctx: MCPContext): Promise<JsonRpcResponse> {
+  if (!params || typeof params !== 'object' || typeof params.uri !== 'string') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params.uri (string) required');
+  }
+  const { readResource } = await import('./mcp-resources');
+  const result = await readResource(params.uri, { role: ctx.role, actor: ctx.actor });
+
+  if ('error' in result) {
+    const code = result.error.code === 'not-authorized' ? ERR_NOT_AUTHORIZED
+      : result.error.code === 'not-found' ? ERR_TOOL_NOT_FOUND  // reuse -32001 for resource-not-found
+      : ERR_INTERNAL_ERROR;
+    return errorResponse(id, code, result.error.message, { uri: params.uri });
+  }
+
+  // MCP resources/read returns { contents: [ { uri, mimeType, text } ] }
+  // — potentially multiple contents if the resource aggregates. Our
+  // server always returns a single content block.
+  return successResponse(id, {
+    contents: [
+      {
+        uri: result.uri,
+        mimeType: result.mimeType,
+        text: result.text,
+      },
+    ],
+  });
+}
+
+// ============================================================================
 // Response helpers
 // ============================================================================
 
@@ -271,13 +319,16 @@ export function getPublicManifest(): any {
     },
     tool_count: TOOLS.length,
     methods_supported: [
-      'initialize', 'ping', 'tools/list', 'tools/call', 'notifications/initialized',
+      'initialize', 'ping', 'tools/list', 'tools/call',
+      'resources/list', 'resources/read',
+      'notifications/initialized',
     ],
     protocol_notes: [
       'JSON-RPC 2.0 over HTTP POST (single endpoint)',
       'Tool inputs validated by JSON Schema Draft 2020-12',
       'Every tool call goes through role-based authorization',
       'Destructive tools flagged via annotations.destructiveHint=true',
+      'Resources are URI-addressed (vidhya://admin/...) and read-only',
     ],
   };
 }

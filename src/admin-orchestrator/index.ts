@@ -43,3 +43,9 @@ export {
 export type {
   JsonRpcRequest, JsonRpcResponse, MCPContext,
 } from './mcp-server';
+export {
+  RESOURCE_CATALOG, listResourcesForRole, readResource, findDescriptor, parseResourceURI,
+} from './mcp-resources';
+export type {
+  ResourceDescriptor, ResourceReadContext, ResourceReadResult, ResourceReadError,
+} from './mcp-resources';

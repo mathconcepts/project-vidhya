@@ -71,7 +71,7 @@ const ERR_NOT_AUTHORIZED = -32002;
 
 export const MCP_SERVER_INFO = {
   name: 'project-vidhya-admin-orchestrator',
-  version: '2.27.0',
+  version: '2.28.0',
   /** Protocol version the server implements. 2024-11-05 is the stable MCP baseline. */
   protocolVersion: '2024-11-05',
 };
@@ -88,6 +88,8 @@ export const MCP_SERVER_INFO = {
  *                    transport, setLevel is accepted for compliance
  *                    but events must be pulled via resource
  *                    vidhya://admin/logs/recent since HTTP can't push.
+ *   completions:     complete (v2.28.0) — argument auto-complete for
+ *                    prompts + resource template placeholders
  *   sampling:        unsupported — server does not ask client to generate
  */
 export const MCP_CAPABILITIES = {
@@ -106,6 +108,7 @@ export const MCP_CAPABILITIES = {
     listChanged: false,
   },
   logging: {},
+  completions: {},
 };
 
 // ============================================================================
@@ -159,6 +162,8 @@ export async function handleMCPRequest(
         return await handlePromptsGet(id, request.params, ctx);
       case 'logging/setLevel':
         return await handleLoggingSetLevel(id, request.params, ctx);
+      case 'completion/complete':
+        return await handleCompletionComplete(id, request.params, ctx);
       case 'notifications/initialized':
         // Per MCP: client sends this after initialize. Acknowledge silently.
         return successResponse(id, null);
@@ -371,6 +376,70 @@ async function handleLoggingSetLevel(id: any, params: any, ctx: MCPContext): Pro
 }
 
 // ============================================================================
+// Completion handler (v2.28.0)
+// ============================================================================
+
+/**
+ * handle `completion/complete`.
+ *
+ * Per MCP spec, returns candidate argument values for a given prompt
+ * or resource template placeholder. We centralize resolution by
+ * argument name — so `task_id` resolves the same whether it's the
+ * argument of `task-handoff` prompt or the `{task_id}` placeholder
+ * in `vidhya://admin/tasks/{task_id}`.
+ *
+ * Validation layers:
+ *   1. params.ref and params.argument must be shaped correctly.
+ *   2. params.ref.type must be 'ref/prompt' or 'ref/resource'.
+ *   3. The referenced prompt/resource must exist, and the argument
+ *      name must actually be declared on it (else -32001).
+ *   4. If argument name is not in the resolver registry, return empty
+ *      (not an error — unknown but benign).
+ */
+async function handleCompletionComplete(id: any, params: any, ctx: MCPContext): Promise<JsonRpcResponse> {
+  if (!params || typeof params !== 'object') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params required');
+  }
+  const ref = params.ref;
+  const argument = params.argument;
+  if (!ref || typeof ref !== 'object' || typeof ref.type !== 'string') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params.ref.type (string) required');
+  }
+  if (ref.type !== 'ref/prompt' && ref.type !== 'ref/resource') {
+    return errorResponse(id, ERR_INVALID_PARAMS,
+      `Invalid ref.type '${ref.type}'. Must be 'ref/prompt' or 'ref/resource'.`);
+  }
+  if (ref.type === 'ref/prompt' && typeof ref.name !== 'string') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params.ref.name (string) required for ref/prompt');
+  }
+  if (ref.type === 'ref/resource' && typeof ref.uri !== 'string') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params.ref.uri (string) required for ref/resource');
+  }
+  if (!argument || typeof argument !== 'object' || typeof argument.name !== 'string') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params.argument.name (string) required');
+  }
+  const value = typeof argument.value === 'string' ? argument.value : '';
+
+  const { complete } = await import('./mcp-completions');
+  const result = await complete(
+    { ref, argument: { name: argument.name, value } },
+    { role: ctx.role, actor: ctx.actor },
+  );
+
+  if ('error' in result) {
+    const code =
+      result.error.code === 'not-found' ? ERR_TOOL_NOT_FOUND :
+      ERR_INTERNAL_ERROR;
+    return errorResponse(id, code, result.error.message, {
+      ref: ref.type === 'ref/prompt' ? ref.name : ref.uri,
+      argument: argument.name,
+    });
+  }
+
+  return successResponse(id, result);
+}
+
+// ============================================================================
 // Response helpers
 // ============================================================================
 
@@ -408,6 +477,7 @@ export function getPublicManifest(): any {
       'resources/list', 'resources/read',
       'prompts/list', 'prompts/get',
       'logging/setLevel',
+      'completion/complete',
       'notifications/initialized',
     ],
     protocol_notes: [
@@ -418,6 +488,7 @@ export function getPublicManifest(): any {
       'Resources are URI-addressed (vidhya://admin/...) and read-only',
       'Prompts return MCP-formatted messages the client runs through its own LLM',
       'logging/setLevel is supported; under stdio transport events push as notifications/message, under HTTP transport events are pulled via vidhya://admin/logs/recent',
+      'completion/complete resolves prompt arguments and resource template placeholders against live state (tasks, runs, exams, roles)',
     ],
   };
 }

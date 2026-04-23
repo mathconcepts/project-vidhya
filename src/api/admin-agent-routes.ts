@@ -262,6 +262,29 @@ async function h_dashboard(req: ParsedRequest, res: ServerResponse): Promise<voi
   res.end('Moved Permanently — /admin/agent/dashboard');
 }
 
+/**
+ * GET /api/admin/agent/openapi.json
+ *
+ * OpenAPI 3.1 specification describing every /api/admin/agent/* route.
+ * Non-MCP clients (REST tools, Postman, Swagger UI, codegen frameworks)
+ * consume this to discover the surface without reading the source.
+ *
+ * Public — no authentication required, so clients can discover the API
+ * before they have credentials. This mirrors how /mcp/manifest is public.
+ * The spec itself declares bearerAuth as the security scheme for every
+ * non-public route.
+ *
+ * Generated at request time so the document always reflects current
+ * protocol versions, tool counts, and resource catalog sizes.
+ */
+async function h_openapi(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const { buildOpenAPISpec } = await import('./openapi');
+  const host = req.headers?.host || 'localhost:8080';
+  const proto = req.headers?.['x-forwarded-proto'] || 'http';
+  const baseUrl = `${proto}://${host}`;
+  sendJSON(res, buildOpenAPISpec(baseUrl));
+}
+
 // ============================================================================
 
 export const adminAgentRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
@@ -294,4 +317,7 @@ export const adminAgentRoutes: Array<{ method: string; path: string; handler: Ro
   // Dashboard — the old /api/ path now 301-redirects to the new
   // /admin/agent/dashboard URL served from the frontend bundle (v2.26.0).
   { method: 'GET',  path: '/api/admin/agent/dashboard',          handler: h_dashboard },
+
+  // OpenAPI 3.1 specification for non-MCP clients (v2.28.0)
+  { method: 'GET',  path: '/api/admin/agent/openapi.json',       handler: h_openapi },
 ];

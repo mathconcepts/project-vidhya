@@ -57,6 +57,13 @@ export type {
   PromptGetError, PromptGetContext,
 } from './mcp-prompts';
 export {
+  complete, listSupportedArguments,
+} from './mcp-completions';
+export type {
+  CompletionRef, CompletionRequest, CompletionResponse, CompletionContext,
+  CompletionError,
+} from './mcp-completions';
+export {
   emit as logEmit, debug as logDebug, info as logInfo, notice as logNotice,
   warning as logWarning, error as logError,
   subscribe as subscribeLogger, unsubscribe as unsubscribeLogger,

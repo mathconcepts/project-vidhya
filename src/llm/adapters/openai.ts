@@ -4,7 +4,7 @@
  * Supports GPT-4, GPT-4-turbo, GPT-3.5-turbo, and embedding models
  */
 
-import { BaseAdapter } from './base';
+import { BaseLLMAdapter } from './base';
 import {
   LLMRequest,
   LLMResponse,
@@ -16,7 +16,7 @@ import {
   StreamChunk,
 } from '../types';
 
-export class OpenAIAdapter extends BaseAdapter {
+export class OpenAIAdapter extends BaseLLMAdapter {
   private baseUrl: string;
 
   constructor(config: ProviderConfig) {

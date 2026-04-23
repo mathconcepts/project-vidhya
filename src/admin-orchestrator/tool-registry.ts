@@ -281,22 +281,82 @@ export const TOOLS: Tool[] = [
     is_destructive: false,
     input_schema_doc: '{ task_id: string, note?: string }',
   },
+
+  // ─── LLM-BACKED TOOLS (v2.23.0) ──────────────────────────────────
+  // These 4 tools route through the LLM bridge (llm-bridge.ts) which
+  // reuses the existing LLMConfig discovery path. Each tool has a
+  // deterministic fallback when no LLM is configured.
+  {
+    id: 'agent:narrate-strategy',
+    domain: 'agent',
+    label: 'Narrate a strategy',
+    description:
+      'Generate a 2-sentence human narration of a strategy for a busy admin. ' +
+      'Uses the configured LLM provider; falls back to template output when no LLM configured.',
+    required_roles: ['owner', 'admin', 'analyst', 'marketing-lead', 'content-ops', 'exam-ops'],
+    category: 'analysis',
+    is_destructive: false,
+    input_schema_doc: '{ strategy_id: string, run_id?: string }',
+  },
+  {
+    id: 'agent:summarize-health',
+    domain: 'agent',
+    label: 'Summarize health report',
+    description:
+      'Return a plain-English single-paragraph summary of the system health report. ' +
+      'Used by owner dashboards + external LLM agents exploring the system.',
+    required_roles: ['owner', 'admin', 'analyst'],
+    category: 'analysis',
+    is_destructive: false,
+    input_schema_doc: '{ run_id?: string }',
+  },
+  {
+    id: 'agent:suggest-next-action',
+    domain: 'agent',
+    label: 'Suggest next action for a role',
+    description:
+      'Given a role, pick the single highest-impact task they should do next. ' +
+      'Uses deterministic priority sorting; LLM optionally enriches with a one-line reason.',
+    required_roles: ['owner', 'admin', 'content-ops', 'exam-ops', 'marketing-lead', 'qa-reviewer', 'analyst', 'author'],
+    category: 'analysis',
+    is_destructive: false,
+    input_schema_doc: '{ role: RoleId }',
+  },
+  {
+    id: 'agent:describe-capabilities',
+    domain: 'agent',
+    label: 'Describe agent capabilities (self-introspection)',
+    description:
+      'Return a catalog of every tool, role, strategy kind, signal code, and insight kind ' +
+      'the agent understands. Intended for MCP clients on first connect.',
+    required_roles: ['owner', 'admin', 'content-ops', 'exam-ops', 'marketing-lead', 'qa-reviewer', 'analyst', 'author'],
+    category: 'read',
+    is_destructive: false,
+  },
 ];
 
 // ============================================================================
-// Query helpers
+// Query helpers — every read hydrates the tool with its JSON input_schema
 // ============================================================================
 
+import { INPUT_SCHEMAS } from './input-schemas';
+
+function hydrate(tool: Tool): Tool {
+  if (tool.input_schema) return tool;
+  return { ...tool, input_schema: INPUT_SCHEMAS[tool.id] ?? INPUT_SCHEMAS['agent:describe-capabilities'] };
+}
+
 export function getTool(id: string): Tool | null {
-  return TOOLS.find(t => t.id === id) ?? null;
+  const raw = TOOLS.find(t => t.id === id);
+  return raw ? hydrate(raw) : null;
 }
 
 export function listToolsByDomain(domain: string): Tool[] {
-  return TOOLS.filter(t => t.domain === domain);
+  return TOOLS.filter(t => t.domain === domain).map(hydrate);
 }
 
 export function listToolsForRole(role: RoleId): Tool[] {
-  return TOOLS.filter(t => t.required_roles.includes(role));
+  return TOOLS.filter(t => t.required_roles.includes(role)).map(hydrate);
 }
 
 export function canRoleInvoke(role: RoleId, tool_id: string): boolean {
@@ -489,6 +549,24 @@ async function _dispatch(tool_id: string, input: any): Promise<any> {
     case 'task:complete': {
       const { completeTask } = await import('./task-store');
       return completeTask(input.task_id, input.actor ?? 'agent', input.note);
+    }
+
+    // ─── LLM-BACKED TOOLS (v2.23.0) ──────────────────────────────────
+    case 'agent:narrate-strategy': {
+      const { narrateStrategyTool } = await import('./agent-tools');
+      return narrateStrategyTool(input);
+    }
+    case 'agent:summarize-health': {
+      const { summarizeHealthTool } = await import('./agent-tools');
+      return summarizeHealthTool(input);
+    }
+    case 'agent:suggest-next-action': {
+      const { suggestNextActionTool } = await import('./agent-tools');
+      return suggestNextActionTool(input);
+    }
+    case 'agent:describe-capabilities': {
+      const { describeCapabilitiesTool } = await import('./agent-tools');
+      return describeCapabilitiesTool();
     }
 
     default:

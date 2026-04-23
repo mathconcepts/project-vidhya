@@ -5,7 +5,7 @@
  * Models: Llama, Mistral, CodeLlama, Phi, etc.
  */
 
-import { BaseAdapter } from './base';
+import { BaseLLMAdapter } from './base';
 import {
   LLMRequest,
   LLMResponse,
@@ -17,7 +17,7 @@ import {
   StreamChunk,
 } from '../types';
 
-export class OllamaAdapter extends BaseAdapter {
+export class OllamaAdapter extends BaseLLMAdapter {
   private baseUrl: string;
 
   constructor(config: ProviderConfig) {

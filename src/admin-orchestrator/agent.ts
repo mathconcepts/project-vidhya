@@ -79,25 +79,39 @@ export async function runAdminAgent(input: RunAdminAgentInput): Promise<AgentRun
   }
 
   // Step 4: LLM narration (optional; never blocks)
+  // Routes through the LLM bridge which uses the existing LLMConfig
+  // discovery path (env vars or request header). Returns null gracefully
+  // when no LLM is configured.
   let llm_narration_attempted = false;
   let llm_narration_succeeded = false;
   if (input.attempt_llm_narration && strategies.length > 0) {
     llm_narration_attempted = true;
     try {
-      const { resolveContent } = await import('../content/resolver');
+      const { callLLMWithConfig } = await import('./llm-bridge');
       for (const strategy of strategies) {
         try {
-          const narration = await narrateStrategy(strategy, resolveContent);
-          if (narration) strategy.llm_narration = narration;
+          const { output } = await callLLMWithConfig({
+            system: 'You are a concise technical writer. Two sentences max. No preamble.',
+            user:
+              `Summarize this admin strategy for a busy founder. TWO sentences only.\n\n` +
+              `Headline: ${strategy.headline}\n` +
+              `Priority: ${strategy.priority}\n` +
+              `Rationale: ${strategy.rationale}\n` +
+              `Expected outcome: ${strategy.expected_outcome}`,
+            task_type: 'summarization',
+            max_tokens: 120,
+            temperature: 0.3,
+            agent_id: 'admin-orchestrator:run-narration',
+          });
+          if (output?.content) strategy.llm_narration = output.content;
         } catch {
           // Non-fatal per-strategy
         }
       }
-      // Check whether ANY strategy got a narration
       llm_narration_succeeded = strategies.some(s => !!s.llm_narration);
       notes.push(`LLM narration: ${llm_narration_succeeded ? 'succeeded (partial or full)' : 'fell back to deterministic rationale'}`);
     } catch (err: any) {
-      notes.push(`LLM narration unavailable: ${err.message ?? 'module not reachable'}`);
+      notes.push(`LLM narration unavailable: ${err.message ?? 'bridge not reachable'}`);
     }
   }
 
@@ -240,38 +254,6 @@ export function getLatestAgentRun(): AgentRun | null {
 export function listInsights(limit = 20): AgentInsight[] {
   const insights = _store.read().insights;
   return insights.slice(-limit).reverse();
-}
-
-// ============================================================================
-// LLM narration — optional layer
-// ============================================================================
-
-async function narrateStrategy(strategy: Strategy, resolveContent: any): Promise<string | null> {
-  // Request a short narrative explainer from the content resolver.
-  // Tier 2 will only fire if GEMINI_API_KEY is present; otherwise the
-  // cascade misses and we return null (deterministic rationale remains).
-  try {
-    const result = await resolveContent({
-      kind: 'explainer',
-      prompt: `Summarize this admin strategy in 2 sentences for a busy owner/admin:
-
-Strategy: ${strategy.headline}
-Why: ${strategy.rationale}
-Expected outcome: ${strategy.expected_outcome}
-Priority: ${strategy.priority}
-Tasks: ${strategy.proposed_tasks.length}`,
-      concept_id: 'admin-strategy-narration',
-      max_tokens: 100,
-    });
-    if (result && result.source && result.source !== 'miss' && result.explainer) {
-      return typeof result.explainer === 'string'
-        ? result.explainer
-        : result.explainer.text ?? null;
-    }
-  } catch {
-    // Content resolver unavailable or no LLM key — expected in smoke tests
-  }
-  return null;
 }
 
 // ============================================================================

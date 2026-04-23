@@ -19,6 +19,7 @@
 export * from './types';
 export * from './tool-registry';
 export * from './role-registry';
+export { INPUT_SCHEMAS } from './input-schemas';
 export { runScan } from './scanner';
 export { proposeStrategies } from './strategy-engine';
 export {
@@ -29,3 +30,16 @@ export {
   runAdminAgent, getAgentRun, listAgentRuns, getLatestAgentRun, listInsights,
   _resetAgentStore,
 } from './agent';
+export {
+  callLLMWithConfig, describeLLMAvailability,
+} from './llm-bridge';
+export {
+  narrateStrategyTool, summarizeHealthTool, suggestNextActionTool,
+  describeCapabilitiesTool,
+} from './agent-tools';
+export {
+  handleMCPRequest, getPublicManifest, MCP_SERVER_INFO, MCP_CAPABILITIES,
+} from './mcp-server';
+export type {
+  JsonRpcRequest, JsonRpcResponse, MCPContext,
+} from './mcp-server';

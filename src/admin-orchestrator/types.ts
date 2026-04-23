@@ -66,7 +66,8 @@ export type ToolDomain =
   | 'exam-builder'
   | 'scanner'
   | 'strategy'
-  | 'task';
+  | 'task'
+  | 'agent';
 
 export interface Tool {
   id: string;                          // e.g. 'feedback:list-pending-triage'
@@ -75,8 +76,15 @@ export interface Tool {
   description: string;
   /** Who can invoke this tool */
   required_roles: RoleId[];
-  /** Input shape description (informational) */
+  /** Human-readable input shape, for docs */
   input_schema_doc?: string;
+  /**
+   * Machine-readable JSON Schema (Draft 2020-12) describing the input
+   * shape. Populated by getTool() from input-schemas.ts for every
+   * registered tool. External agents consuming the MCP endpoint rely
+   * on this for parameter validation.
+   */
+  input_schema?: any;
   /** Tool category for UI grouping */
   category: 'read' | 'write' | 'action' | 'analysis';
   /** True if tool performs destructive/irreversible action */

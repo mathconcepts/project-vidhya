@@ -186,6 +186,63 @@ async function h_listRoles(req: ParsedRequest, res: ServerResponse): Promise<voi
 }
 
 // ============================================================================
+// MCP JSON-RPC — external agent interface (v2.23.0)
+// ============================================================================
+
+/**
+ * POST /api/admin/agent/mcp
+ * Accepts a JSON-RPC 2.0 request, dispatches to the MCP server, returns
+ * the JSON-RPC response. Authenticated via the standard requireAuth
+ * middleware — the caller's user id and claimed role become the actor
+ * on every tool invocation within the call.
+ *
+ * The claimed role is extracted from:
+ *   1. Body.params._role (explicit per-call override)
+ *   2. Query parameter ?role= (per-session fixed role)
+ *   3. Default: 'admin' (backward-compatible with direct-invoke path)
+ */
+async function h_mcpRpc(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
+  const { handleMCPRequest } = await import('../admin-orchestrator/mcp-server');
+
+  const body = (req.body || {}) as any;
+  const role = (body?.params?._role) || req.query.get('role') || 'admin';
+
+  const response = await handleMCPRequest(body, {
+    role,
+    actor: auth.user.id,
+    session_id: req.query.get('session') ?? undefined,
+  });
+  sendJSON(res, response);
+}
+
+/**
+ * GET /api/admin/agent/mcp/manifest
+ * Public, unauthenticated endpoint returning server info, protocol
+ * version, and auth scheme. External agents hit this first to discover
+ * how to talk to the server before initialize.
+ */
+async function h_mcpManifest(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const { getPublicManifest } = await import('../admin-orchestrator/mcp-server');
+  sendJSON(res, getPublicManifest());
+}
+
+/**
+ * GET /api/admin/agent/llm-status
+ * Diagnostic: returns whether the LLM bridge has a provider+key
+ * configured. Used by dashboards + smoke tests to verify LLM
+ * infrastructure is wired correctly without making a paid call.
+ */
+async function h_llmStatus(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const { describeLLMAvailability } = await import('../admin-orchestrator/llm-bridge');
+  sendJSON(res, { llm: describeLLMAvailability() });
+}
+
+// ============================================================================
 
 export const adminAgentRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   // Runs
@@ -208,4 +265,9 @@ export const adminAgentRoutes: Array<{ method: string; path: string; handler: Ro
   { method: 'GET',  path: '/api/admin/agent/tools',              handler: h_listTools },
   { method: 'POST', path: '/api/admin/agent/tools/:id/invoke',   handler: h_invokeTool },
   { method: 'GET',  path: '/api/admin/agent/roles',              handler: h_listRoles },
+
+  // MCP (v2.23.0)
+  { method: 'POST', path: '/api/admin/agent/mcp',                handler: h_mcpRpc },
+  { method: 'GET',  path: '/api/admin/agent/mcp/manifest',       handler: h_mcpManifest },
+  { method: 'GET',  path: '/api/admin/agent/llm-status',         handler: h_llmStatus },
 ];

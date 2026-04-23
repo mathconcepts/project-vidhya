@@ -18,9 +18,21 @@ That's Vidhya.
 
 ---
 
+## Why this is different — and why you can trust it
+
+We built Vidhya because we've been the student at 2 a.m. We know what bad exam-prep apps do, because we paid for them. Every design choice here is a direct answer to something that wasted our time or money when we were preparing.
+
+**Open-source and inspectable.** Every claim on this page maps to code you can read. Nothing is hidden behind a paywall, an enterprise-tier, or a "contact sales". The four-tier content engine, the student model, the Wolfram verification — it's all in this repository. Read the code, run the tests, see for yourself.
+
+**Pedagogy from the people who teach well.** The 82-concept library draws from OpenStax, MIT OpenCourseWare, and GATE previous-year papers — the sources top teachers already trust. Every maths answer is computationally checked against Wolfram Alpha before it reaches you. This is not generated slop. This is verified teaching.
+
+**No investors asking us to squeeze students.** There is no pricing tier. There is no ad model. Your AI costs are whatever Gemini or Claude charges you directly, at their rates, to your card. We do not sit in the middle.
+
+---
+
 ## What breaks today — and what we fix
 
-Five everyday frustrations of exam prep in India, and the direct answer to each.
+Five everyday frustrations of exam prep in India. For each one — the direct answer, exactly what you get, and how we built it so it holds up.
 
 <br />
 
@@ -29,8 +41,12 @@ Five everyday frustrations of exam prep in India, and the direct answer to each.
 > *Most apps don't remember what you struggled with. Every session starts from scratch, so your effort keeps leaking out. The hard work is real; the retention isn't.*
 
 > [!TIP]
-> ### 📚 **Every minute you put in actually stays with you.**
-> *Your weak spots, your mistakes, your breakthroughs — the app remembers all of them. Twelve short sessions add up like one long one. Your effort finally compounds instead of evaporating.*
+> ### 📚 **Every minute of effort finally compounds into real competence.**
+> *Your weak spots, your mistakes, your breakthroughs — the app remembers all of them, forever. Twelve short sessions add up like one long one, instead of evaporating. A concept you cracked in January is still with you in March.*
+>
+> **What you get:** A personal student model that tracks you across 15 cognitive attributes and 7 error categories. Your mistakes become tomorrow's revision queue. Your breakthroughs become the foundation for the next concept.
+>
+> *How we built it:* A spaced-repetition engine layered on a Bayesian knowledge model — the same pedagogy principles that power elite tutoring, implemented in your browser. Full design in [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md).
 
 <br />
 
@@ -39,8 +55,12 @@ Five everyday frustrations of exam prep in India, and the direct answer to each.
 > *Streaks, red notifications, guilt pings at 11 pm — the design is meant to keep you hooked, not help you crack the exam. Miss a single day and it makes you feel like you've failed.*
 
 > [!TIP]
-> ### 🧘 **Study on your own terms. No guilt. No streaks. No shame.**
-> *Miss a day? The app quietly waits. Come back whenever you're ready. Your peace of mind is not the price of learning here — it is the point of learning here.*
+> ### 🧘 **Study on your own terms. Your peace of mind is the point, not the price.**
+> *Miss a day? The app quietly waits. Come back whenever you're ready. No streaks. No shame. No guilt pings at 11 pm. The app earns your attention by being useful, not by holding it hostage.*
+>
+> **What you get:** Zero growth-hack notifications. No streaks to maintain. No "you've broken your 47-day record" heartbreak. Just sessions when you want them, paused when you don't.
+>
+> *How we built it:* We refused to instrument engagement metrics in the product. The codebase has no push notification service, no streak counter, no re-engagement campaign logic. It is not there because we chose not to build it.
 
 <br />
 
@@ -49,8 +69,12 @@ Five everyday frustrations of exam prep in India, and the direct answer to each.
 > *Top coaching centres sit in five or six cities. Students outside those cities make do with random YouTube lectures, outdated PDFs, and luck. That's not a level playing field.*
 
 > [!TIP]
-> ### 🌍 **One app. Same quality of teaching. Anywhere in India.**
-> *A student in Kota, Durgapur, or a small town in Odisha gets the same lesson, the same worked example, the same depth as a student in South Delhi. Your hard work deserves that much.*
+> ### 🌍 **The same quality of teaching. Anywhere in India. On any phone.**
+> *A student in Kota, Durgapur, or a small town in Odisha gets the same lesson, the same worked example, the same depth as a student in South Delhi — on a three-year-old Android, on spotty wifi, in any language their browser supports.*
+>
+> **What you get:** An app that pre-loads 80% of the content offline on first visit. Works without internet after the first sync. Runs on entry-level hardware. No premium tier for better teaching — there is one tier, and it is the good one.
+>
+> *How we built it:* A four-tier cascade. 80% of student questions are served from a pre-built JSON bundle, delivered once and cached forever. The remaining 20% route to semantic search, then LLM, then Wolfram. Full architecture in [PLAN-content-engine.md](./PLAN-content-engine.md).
 
 <br />
 
@@ -59,8 +83,12 @@ Five everyday frustrations of exam prep in India, and the direct answer to each.
 > *Your weak areas, your wrong answers, your study timings — most apps store all of it on their servers, then monetise it. You became the product the day you signed up.*
 
 > [!TIP]
-> ### 🔒 **Your data stays on your phone. Your AI key stays yours.**
-> *Nothing leaves your device unless you choose to send it. Bring your own Gemini or Claude or OpenAI key — we don't see it, we don't charge for it. You are the student here, not the product.*
+> ### 🔒 **Your data lives on your phone. Your AI key stays yours. We see nothing.**
+> *Nothing leaves your device unless you choose to send it. Your uploaded PDFs, your study history, your mistakes — all in your browser, not on our servers. You bring your own Gemini or Claude or OpenAI key; we never see it, and we never charge for it.*
+>
+> **What you get:** Student progress stored in IndexedDB on your device. PDFs parsed client-side. Embeddings computed on a 22 MB WASM model in your browser. Server sees only the bare minimum — proxied LLM calls with your own key, opt-in anonymous telemetry if you choose to contribute.
+>
+> *How we built it:* The server is stateless by design. It has no user database, no behavioural analytics table, nowhere to keep you even if we wanted to. Inspect the code at [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md).
 
 <br />
 
@@ -69,8 +97,12 @@ Five everyday frustrations of exam prep in India, and the direct answer to each.
 > *Three days before your exam, you get five questions wrong and the app tells you to "take a break and come back tomorrow". That advice was written for demos, not for a student whose exam is 72 hours away.*
 
 > [!TIP]
-> ### ⏰ **The advice changes as your exam comes closer.**
-> *Six months out, the app suggests rest when you're tired. Three days out, it switches straight to revision — because when the exam is near, rest is not the answer. Review is. The app knows the difference.*
+> ### ⏰ **Advice that understands where you are. Six months out, or three days out.**
+> *Six months out, the app suggests rest when you are tired. Three days out, it switches straight to revision — because when the exam is near, rest is not the answer. Review is. Same app, different mode, driven by your actual exam dates.*
+>
+> **What you get:** Sessions planned for the exact time you have — three minutes at a bus stop, sixty minutes on a weekend. Advice that changes as your exam approaches. Templates you save once (*"morning commute, 8 minutes"*) and fire with one tap.
+>
+> *How we built it:* An exam-proximity-aware planner. Your registered exams and their dates drive every recommendation. Priority weightings shift as the exam date approaches. Smoke-tested across 15 backend routes and 33 MCP tools. See [FEATURES.md](./FEATURES.md) for the 48-release ledger.
 
 <br />
 

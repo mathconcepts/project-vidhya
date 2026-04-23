@@ -447,6 +447,21 @@ export async function buildOrUpdateCourse(
         build_id, exam_id: input.exam_id, kind: 'course_promoted', actor: input.actor,
         payload: trace.course_promotion,
       });
+
+      // Announce on the marketing sync bus — articles referencing this
+      // exam can now detect content drift and mark themselves stale if
+      // referenced features changed. Lazy-imported so marketing module
+      // is optional (same degradation pattern as attention filtering).
+      try {
+        const { publishToSyncBus } = await import('../marketing/sync-engine');
+        publishToSyncBus({
+          kind: 'exam_content_promoted',
+          exam_id: input.exam_id,
+          course_version: versionToString(result.record.version_after),
+        });
+      } catch {
+        // Non-fatal if marketing module unavailable
+      }
     } catch (err: any) {
       errors.push(`promotion failed: ${err.message ?? err}`);
       logBuildEvent({

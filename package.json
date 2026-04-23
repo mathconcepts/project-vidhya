@@ -1,7 +1,7 @@
 {
   "name": "project-vidhya",
   "version": "2.2.3",
-  "description": "Project Vidhya \u2014 Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
+  "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -62,8 +62,9 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^20.19.33",
-    "vitest": "^1.6.1",
-    "@types/pg": "^8.18.0"
+    "@types/pg": "^8.18.0",
+    "vitest": "^1.6.1"
   }
 }

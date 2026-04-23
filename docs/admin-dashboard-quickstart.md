@@ -82,6 +82,16 @@ The page prompts for an admin JWT. Paste one (see `docs/01-quick-start.md` in th
 
 Click **Run Agent** to trigger a fresh run.
 
+### Interactive API docs
+
+If you prefer exploring the REST surface interactively — try any endpoint with "Try it out", inspect request/response schemas, copy curl snippets — the Swagger UI page is at:
+
+```
+http://localhost:8080/admin/agent/docs
+```
+
+It renders the live OpenAPI 3.1 spec from `/api/admin/agent/openapi.json`. Click Authorize once to paste your JWT, then any "Try it out" runs authenticated.
+
 ---
 
 ## Step 4 — Connect an external agent

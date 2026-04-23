@@ -73,3 +73,4 @@ export {
 } from './logger';
 export type { LogLevel, LogEvent } from './logger';
 export { getDashboardHTML } from './dashboard-html';
+export { getDocsHTML } from './docs-html';

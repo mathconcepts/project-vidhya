@@ -325,6 +325,30 @@ http://localhost:8080/admin/agent/dashboard
 
 The page prompts for a JWT on first load, stores it in localStorage, polls `/api/admin/agent/latest` every 30s, and surfaces all three MCP primitives (tools, resources, prompts) in an explorer panel. Each prompt has a **Generate** button (which calls `prompts/get` via JSON-RPC) and a **Copy to Clipboard** button on the result, so you can paste a `daily-standup` straight into any chat window without writing integration code.
 
+## Interactive API docs (Swagger UI)
+
+If you want to explore the REST surface interactively — try any endpoint, inspect request/response schemas, generate curl snippets — open the Swagger UI page at `/admin/agent/docs`:
+
+```
+http://localhost:8080/admin/agent/docs
+```
+
+It renders the live OpenAPI 3.1 spec from `/api/admin/agent/openapi.json` with:
+
+- All 20 admin-agent routes grouped by tag (Runs, Tasks, Tools, MCP, Diagnostics, Dashboard)
+- "Try it out" for every endpoint — click Authorize once to paste your JWT, it's auto-applied everywhere
+- Full JSON Schema for every request body and response (lifted straight from our tool `input_schema` fields)
+- 6 pre-filled example request bodies on the `/mcp` endpoint covering `initialize`, `tools/list`, `tools/call`, `resources/read`, `prompts/get`, `completion/complete`
+- `x-vidhya-stats` extension showing runtime tool counts, resource counts, prompt counts, and server capabilities
+
+The page loads Swagger UI v5.17.14 from unpkg. If the CDN is blocked (air-gapped environment), the page gracefully degrades with a pointer to fetch `/api/admin/agent/openapi.json` directly.
+
+## MCP SDK compatibility
+
+The server is tested against Anthropic's official `@modelcontextprotocol/sdk` — the same library that powers Claude Desktop, Cursor's MCP integration, and the MCP Inspector. Every response shape is validated by the SDK's Zod schemas across all 10 protocol methods. See `smoke/mcp-sdk-compatibility-smoke.ts` for the reference test that verifies this.
+
+If the SDK accepts our server, every MCP client in the ecosystem will too.
+
 ---
 
 ## Environment variables

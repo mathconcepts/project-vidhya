@@ -18,6 +18,18 @@ That's Vidhya.
 
 ---
 
+## What her life looks like six months in
+
+**Her exam is in three days.** She knows which four topics need one more pass, because the app kept a running map of her weak spots. Her revision plan this evening is twenty-two minutes — exactly the time she has between dinner and sleep. **She has no new concepts to learn.** Everything she needs is already in her head, waiting to be refreshed.
+
+She studies on the bus in the morning. Eight minutes, three questions, two of them ones she got wrong last month. She studies on her phone during the power cut that afternoon, because the app loaded offline on her first visit and stays that way. She doesn't study at all on Wednesday; her cousin's wedding runs late. **The app does not punish her for Wednesday.**
+
+On exam day she walks in without dread. **The hard work is in her bones, not in a dashboard somewhere.** She writes a paper she is ready for.
+
+That's the destination.
+
+---
+
 ## Why this is different — and why you can trust it
 
 **We have been the student at 2 a.m.** Every design choice in Vidhya is a direct answer to something that wasted our time or our money when we were preparing for our own exams.
@@ -26,13 +38,13 @@ That's Vidhya.
 
 **Teaching from sources top teachers trust.** OpenStax, MIT OpenCourseWare, past exam papers from national boards. Every maths answer is computationally checked against Wolfram Alpha before it reaches you. Verified teaching, not generated slop.
 
-**No investors pushing us to squeeze students.** No pricing tier. No ad model. Your AI costs go directly to Gemini or Claude, at their rates, to your card. We do not sit in the middle.
+**No investors pushing us to squeeze students.** One small honest price — not free, because free products end up monetising you somewhere else. One tier of access, period. No upsells. No "premium" feature gating. No nagware. And your AI costs go directly to Gemini or Claude, at their rates, to your card. We do not sit in the middle of that either.
 
 ---
 
 ## What breaks — and what we fix
 
-Five frustrations every exam aspirant knows. For each, the promise — the pain it solves — and how we built it to hold.
+Six frustrations every exam aspirant knows. For each, the promise — the pain it solves — and how we built it to hold.
 
 <br />
 
@@ -93,6 +105,18 @@ Five frustrations every exam aspirant knows. For each, the promise — the pain 
 
 > [!TIP]
 > ### ✅ **How we make it real** — *An exam-proximity-aware planner. Your registered exam dates reshape every priority weighting as the day approaches.*
+
+<br />
+
+> [!TIP]
+> ### ✨ **Your style** — *Study the way that actually works for you. We adapt. You succeed.*
+> Late nights or early mornings. Three minutes on a bus or sixty in one sitting. Web, Telegram, or WhatsApp. Your favourite AI provider, your favourite language. You pick the shape — the teaching fills it.
+
+> [!CAUTION]
+> ### ⚠ **Known pain** — *Most apps force you into one "optimal" study pattern and treat every deviation as a failure. Your habits, your timings, your context all become the enemy.*
+
+> [!TIP]
+> ### ✅ **How we make it real** — *The session planner budgets for whatever time you actually have. Multi-channel delivery meets you where you are. Bring-your-own-AI-key means even the model serving you is yours to pick. We adapt. You succeed.*
 
 <br />
 

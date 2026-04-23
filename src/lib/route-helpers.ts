@@ -70,6 +70,15 @@ export function sendText(res: ServerResponse, text: string, status = 200): void 
   res.end(text);
 }
 
+export function sendHTML(res: ServerResponse, html: string, status = 200): void {
+  res.writeHead(status, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    ...CORS_HEADERS,
+  });
+  res.end(html);
+}
+
 export function sendNoContent(res: ServerResponse): void {
   res.writeHead(204, CORS_HEADERS);
   res.end();

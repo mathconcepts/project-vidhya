@@ -1,0 +1,1236 @@
+// @ts-nocheck
+/**
+ * Admin Orchestrator Dashboard — operations control-room UI.
+ *
+ * Single-file deliverable: HTML + CSS + JS in one template literal,
+ * served by GET /api/admin/agent/dashboard. Uses fetch() directly
+ * against the /api/admin/agent/* endpoints shipped in v2.22-v2.24.
+ *
+ * Aesthetic direction: operations control-room. Dark slate background,
+ * editorial serif section headers, IBM Plex Sans/Mono body. Amber
+ * accent evokes brass instrumentation. Severity badges use semantic
+ * colour. Dense information layout — this is a founder's ops tool, not
+ * a marketing page.
+ *
+ * Design decisions:
+ *   - Zero build step (pure HTML, no JSX/React)
+ *   - Zero external dependencies (no CDN scripts; Google Fonts only)
+ *   - Auth via localStorage-stored JWT; UI shows a token prompt if
+ *     none is present
+ *   - Polling refresh every 30s; manual "Refresh" button available
+ *   - Claim + Complete task buttons issue POST and reload latest
+ *   - "Run Agent" button fires POST /run then reloads
+ *   - Collapsible MCP explorer panel at the bottom (tools + resources)
+ *
+ * Endpoints consumed:
+ *   GET  /api/admin/agent/latest           — core dashboard data
+ *   GET  /api/admin/agent/insights         — cross-module correlations
+ *   GET  /api/admin/agent/llm-status       — bridge availability
+ *   GET  /api/admin/agent/tools            — tool catalog
+ *   POST /api/admin/agent/mcp              — for resources/list
+ *   POST /api/admin/agent/run              — trigger a new run
+ *   POST /api/admin/agent/tasks/:id/claim  — claim a task
+ *   POST /api/admin/agent/tasks/:id/complete — complete a task
+ */
+
+const DASHBOARD_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Vidhya Admin Orchestrator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #0a0e13;
+      --bg-panel:    #10151c;
+      --bg-inset:    #070a0e;
+      --border:      #1f2937;
+      --border-hi:   #2d3a4a;
+      --text:        #e5e7eb;
+      --text-dim:    #9ca3af;
+      --text-faint:  #6b7280;
+      --accent:      #f0b060;
+      --accent-dim:  #a47a42;
+      --crit:        #dc2626;
+      --warn:        #f59e0b;
+      --info:        #60a5fa;
+      --ok:          #10b981;
+      --p0:          #dc2626;
+      --p1:          #f59e0b;
+      --p2:          #60a5fa;
+      --p3:          #6b7280;
+      --serif:       'IM Fell English', 'Times New Roman', serif;
+      --sans:        'IBM Plex Sans', system-ui, sans-serif;
+      --mono:        'IBM Plex Mono', 'Courier New', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100vh; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      font-size: 14px;
+      line-height: 1.55;
+      padding: 24px 32px 80px;
+      background-image:
+        radial-gradient(ellipse at top, rgba(240,176,96,0.03), transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(96,165,250,0.02), transparent 50%);
+      background-attachment: fixed;
+    }
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    /* ─── Header ─────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: 32px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--text-dim);
+      font-size: 20px;
+      margin-left: 6px;
+    }
+    .meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .meta span { margin-right: 14px; }
+    .meta strong { color: var(--text-dim); font-weight: 500; }
+
+    header .actions { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+
+    button, .btn {
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 8px 14px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-hi);
+      cursor: pointer;
+      transition: all 120ms ease;
+      border-radius: 2px;
+    }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    button.primary:hover { background: #ffc878; border-color: #ffc878; color: var(--bg); }
+    button.danger { color: var(--crit); border-color: var(--crit); }
+    button.danger:hover { background: var(--crit); color: #fff; }
+
+    label.toggle {
+      font-size: 11px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    label.toggle input { accent-color: var(--accent); cursor: pointer; }
+
+    /* ─── Status banner ──────────────────────────────────────── */
+    .status-bar {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto auto auto auto;
+      gap: 24px;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      margin-bottom: 28px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-radius: 2px;
+    }
+    .status-pill .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+    .status-healthy        { color: var(--ok);   background: rgba(16,185,129,0.08); }
+    .status-attention-needed { color: var(--warn); background: rgba(245,158,11,0.08); }
+    .status-degraded       { color: var(--crit); background: rgba(220,38,38,0.08); }
+
+    .status-summary {
+      font-size: 13px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    .counter {
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-faint);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .counter strong {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .counter.crit strong { color: var(--crit); }
+    .counter.warn strong { color: var(--warn); }
+    .counter.info strong { color: var(--info); }
+
+    /* ─── Main grid ──────────────────────────────────────────── */
+    main {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.3fr) minmax(300px, 1fr);
+      gap: 24px;
+    }
+    @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+
+    section {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 20px 22px;
+      border-radius: 2px;
+      min-height: 180px;
+    }
+    section + section { margin-top: 20px; }
+
+    h2 {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    h2 .count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── Signals ─────────────────────────────────────────────── */
+    .signal {
+      padding: 12px 0;
+      border-bottom: 1px dotted var(--border);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .signal:last-child { border-bottom: none; }
+    .signal .sev {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 2px;
+      min-width: 60px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .sev.critical { background: var(--crit); color: #fff; }
+    .sev.warning  { background: var(--warn); color: #1a1200; }
+    .sev.info     { background: var(--info); color: #0b1220; }
+    .signal .head {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .signal .detail {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .signal .code {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-faint);
+      margin-top: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ─── Strategies ─────────────────────────────────────────── */
+    .strategy {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      border-radius: 2px;
+    }
+    .strategy header {
+      padding: 0 0 10px;
+      border-bottom: 1px dotted var(--border);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .priority-pill {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 2px;
+      letter-spacing: 0.05em;
+    }
+    .priority-pill.P0 { background: var(--p0); color: #fff; }
+    .priority-pill.P1 { background: var(--p1); color: #1a1200; }
+    .priority-pill.P2 { background: var(--p2); color: #0b1220; }
+    .priority-pill.P3 { background: var(--p3); color: #fff; }
+    .strategy .headline {
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 500;
+      flex: 1;
+    }
+    .strategy .rationale {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-style: italic;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .strategy .narration {
+      font-family: var(--serif);
+      font-size: 13px;
+      color: var(--accent);
+      font-style: italic;
+      padding: 8px 10px;
+      border-left: 2px solid var(--accent);
+      background: rgba(240, 176, 96, 0.04);
+      margin: 8px 0 10px;
+      line-height: 1.5;
+    }
+    .strategy .tasks-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .strategy .task-line {
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 3px 0;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .strategy .task-line .role {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── Tasks ──────────────────────────────────────────────── */
+    .role-filter {
+      margin-bottom: 14px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .role-filter button {
+      font-size: 10px;
+      padding: 4px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .role-filter button.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .task {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border-radius: 2px;
+    }
+    .task header {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 6px;
+      padding: 0;
+      border: none;
+    }
+    .task .role {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .task .status {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-left: auto;
+    }
+    .task .status.open { color: var(--info); }
+    .task .status.in_progress { color: var(--warn); }
+    .task .status.blocked { color: var(--crit); }
+    .task .status.done { color: var(--ok); }
+    .task .title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    .task .desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+    .task .actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .task .actions button {
+      font-size: 10px;
+      padding: 4px 8px;
+    }
+    .task .meta {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-faint);
+      letter-spacing: 0.03em;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── Insights ───────────────────────────────────────────── */
+    .insight {
+      padding: 10px 0;
+      border-bottom: 1px dotted var(--border);
+    }
+    .insight:last-child { border-bottom: none; }
+    .insight .kind {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--accent-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 3px;
+    }
+    .insight .head {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    .insight .detail {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    .insight .data {
+      margin-top: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-faint);
+    }
+
+    /* ─── MCP explorer ───────────────────────────────────────── */
+    .mcp-section {
+      margin-top: 28px;
+      padding: 0;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+    .mcp-section > summary {
+      cursor: pointer;
+      padding: 14px 20px;
+      font-family: var(--serif);
+      font-size: 18px;
+      color: var(--text);
+      list-style: none;
+      user-select: none;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .mcp-section > summary::before {
+      content: '▸';
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      transition: transform 120ms ease;
+    }
+    .mcp-section[open] > summary::before { transform: rotate(90deg); display: inline-block; }
+    .mcp-section > summary .badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-left: auto;
+    }
+    .mcp-body {
+      padding: 0 20px 20px;
+    }
+
+    .mcp-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .mcp-tabs button {
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      background: transparent;
+      padding: 8px 16px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+    .mcp-tabs button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .mcp-tabs button:hover { color: var(--accent); }
+
+    .mcp-list { display: flex; flex-direction: column; gap: 6px; }
+    .mcp-row {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 2px;
+    }
+    .mcp-row header {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      padding: 0;
+      border: none;
+      margin: 0 0 4px;
+    }
+    .mcp-row .name {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .mcp-row .category {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+    .mcp-row .category.destructive { color: var(--crit); border-color: var(--crit); }
+    .mcp-row .category.read { color: var(--info); border-color: var(--border); }
+    .mcp-row .category.write { color: var(--warn); border-color: var(--border); }
+    .mcp-row .category.action { color: var(--accent); border-color: var(--border); }
+    .mcp-row .category.analysis { color: var(--text-dim); border-color: var(--border); }
+    .mcp-row .desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.45;
+    }
+    .mcp-row details {
+      margin-top: 8px;
+    }
+    .mcp-row details summary {
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      user-select: none;
+    }
+    .mcp-row pre {
+      margin-top: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      overflow-x: auto;
+      border-radius: 2px;
+    }
+
+    /* ─── Auth prompt ────────────────────────────────────────── */
+    .auth-prompt {
+      max-width: 520px;
+      margin: 80px auto;
+      padding: 32px 36px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 2px;
+    }
+    .auth-prompt h2 { border: none; margin-bottom: 12px; }
+    .auth-prompt p { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.6; }
+    .auth-prompt input {
+      width: 100%;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border-hi);
+      border-radius: 2px;
+      margin-bottom: 12px;
+    }
+    .auth-prompt input:focus { outline: none; border-color: var(--accent); }
+    .auth-prompt button { width: 100%; }
+
+    /* ─── Utility ────────────────────────────────────────────── */
+    .empty {
+      font-family: var(--serif);
+      font-style: italic;
+      color: var(--text-faint);
+      font-size: 13px;
+      padding: 24px 0;
+      text-align: center;
+    }
+    .spinner {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border: 1.5px solid var(--accent);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 800ms linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--crit);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 2px;
+      font-size: 13px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      max-width: 400px;
+      z-index: 100;
+    }
+
+    code, .mono { font-family: var(--mono); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─── Fade-in for initial load ───────────────────────────── */
+    main, .status-bar, .mcp-section {
+      opacity: 0;
+      animation: fadein 380ms ease forwards;
+    }
+    .status-bar   { animation-delay: 40ms; }
+    main          { animation-delay: 120ms; }
+    .mcp-section  { animation-delay: 220ms; }
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+  // ═══════════════════════════════════════════════════════════════════
+  // Admin Dashboard — vanilla JS, zero dependencies
+  // ═══════════════════════════════════════════════════════════════════
+
+  const TOKEN_KEY = 'vidhya_auth_token';
+  const POLL_INTERVAL_MS = 30000;
+
+  // ─── Auth ─────────────────────────────────────────────────────────
+  function getToken() { return localStorage.getItem(TOKEN_KEY); }
+  function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+  function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+  // ─── HTTP helpers ─────────────────────────────────────────────────
+  async function fetchJSON(path, opts = {}) {
+    const token = getToken();
+    const headers = Object.assign({
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
+    }, opts.headers || {});
+    const res = await fetch(path, { ...opts, headers });
+    if (res.status === 401) {
+      clearToken();
+      throw new Error('Unauthorized — please provide a valid token');
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(res.status + ': ' + (body || res.statusText));
+    }
+    return res.json();
+  }
+
+  // ─── Small DOM helper ─────────────────────────────────────────────
+  function el(tag, attrs = {}, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === 'class') e.className = v;
+      else if (k === 'onclick') e.onclick = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+      else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v);
+    }
+    for (const k of kids.flat()) {
+      if (k === null || k === undefined || k === false) continue;
+      e.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
+    }
+    return e;
+  }
+
+  function relativeTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso).getTime();
+    if (isNaN(d)) return '';
+    const diff = Math.floor((Date.now() - d) / 1000);
+    if (diff < 60) return diff + 's ago';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    return Math.floor(diff/86400) + 'd ago';
+  }
+
+  function toast(msg, kind = 'error') {
+    const t = el('div', { class: 'error-toast' }, msg);
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4500);
+  }
+
+  // ─── State ────────────────────────────────────────────────────────
+  const state = {
+    run: null,
+    insights: [],
+    llm: null,
+    tools: [],
+    resources: [],
+    roleFilter: null,
+    isRunning: false,
+    activeMcpTab: 'tools',
+  };
+
+  // ─── Root render ──────────────────────────────────────────────────
+  function render() {
+    const root = document.getElementById('app');
+    root.innerHTML = '';
+
+    if (!getToken()) { root.appendChild(renderAuthPrompt()); return; }
+    if (!state.run) { root.appendChild(renderLoading()); return; }
+
+    root.appendChild(renderHeader());
+    root.appendChild(renderStatusBar());
+    root.appendChild(renderMain());
+    root.appendChild(renderMCPExplorer());
+  }
+
+  function renderLoading() {
+    return el('div', { class: 'auth-prompt' },
+      el('h2', {}, el('span', { class: 'spinner' }), ' Loading…'),
+      el('p', {}, 'Fetching the most recent agent run. If no run exists yet, the dashboard will trigger one.')
+    );
+  }
+
+  // ─── Auth prompt ──────────────────────────────────────────────────
+  function renderAuthPrompt() {
+    const box = el('div', { class: 'auth-prompt' });
+    box.appendChild(el('h2', {}, 'Vidhya Admin Orchestrator'));
+    box.appendChild(el('p', {},
+      'Paste an admin JWT to unlock the dashboard. Tokens are stored in localStorage and ' +
+      'sent as a Bearer header on every request.'));
+    const input = el('input', { type: 'password', placeholder: 'eyJhbGci…' });
+    box.appendChild(input);
+    const btn = el('button', { class: 'primary' }, 'Authenticate');
+    btn.onclick = () => {
+      const t = input.value.trim();
+      if (!t) { toast('Token cannot be empty'); return; }
+      setToken(t);
+      boot();
+    };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') btn.click(); });
+    box.appendChild(btn);
+    return box;
+  }
+
+  // ─── Header ───────────────────────────────────────────────────────
+  function renderHeader() {
+    const cap = state.run?.health_report?.overall;
+    const llmProvider = state.llm?.available ? state.llm.provider_id : 'no llm';
+    return el('header', {},
+      el('h1', {}, 'Vidhya', el('em', {}, 'orchestrator')),
+      el('div', { class: 'meta' },
+        el('span', {}, el('strong', {}, 'v'), '2.25.0'),
+        el('span', {}, el('strong', {}, 'llm'), ' ' + llmProvider),
+        el('span', {}, el('strong', {}, 'run'), ' ' + (state.run?.id || '—')),
+        el('span', {}, el('strong', {}, 'last'), ' ' + relativeTime(state.run?.completed_at)),
+      ),
+      el('div', { class: 'actions' },
+        el('label', { class: 'toggle' },
+          el('input', { type: 'checkbox', checked: true, id: 'autorefresh' }),
+          'Auto-refresh'
+        ),
+        el('button', { onclick: () => refresh() }, 'Refresh'),
+        el('button', {
+          class: 'primary',
+          onclick: () => runAgent(),
+          disabled: state.isRunning || undefined,
+        }, state.isRunning ? el('span', { class: 'spinner' }) : 'Run Agent'),
+        el('button', { onclick: () => { clearToken(); render(); } }, 'Sign out'),
+      )
+    );
+  }
+
+  // ─── Status bar ───────────────────────────────────────────────────
+  function renderStatusBar() {
+    const h = state.run.health_report.overall;
+    const m = state.run.health_report.modules;
+    const bar = el('div', { class: 'status-bar' });
+
+    const pill = el('div', { class: 'status-pill status-' + h.status },
+      el('div', { class: 'dot' }), h.status);
+    bar.appendChild(pill);
+    bar.appendChild(el('div', { class: 'status-summary' }, h.summary));
+
+    bar.appendChild(el('div', { class: 'counter crit' },
+      el('strong', {}, String(h.critical_count)), 'crit'));
+    bar.appendChild(el('div', { class: 'counter warn' },
+      el('strong', {}, String(h.warning_count)), 'warn'));
+    bar.appendChild(el('div', { class: 'counter info' },
+      el('strong', {}, String(state.run.strategies_proposed.length)), 'strat'));
+    bar.appendChild(el('div', { class: 'counter' },
+      el('strong', {}, String(state.run.tasks_enqueued)), 'tasks'));
+    bar.appendChild(el('div', { class: 'counter' },
+      el('strong', {}, String(m.feedback.total_items)), 'fb'));
+
+    return bar;
+  }
+
+  // ─── Main grid: signals | strategies | tasks+insights ────────────
+  function renderMain() {
+    const m = el('main', {});
+    m.appendChild(renderSignalsColumn());
+    m.appendChild(renderStrategiesColumn());
+    m.appendChild(renderTasksColumn());
+    return m;
+  }
+
+  // ── Signals column ──
+  function renderSignalsColumn() {
+    const signals = state.run.health_report.signals || [];
+    const col = el('div', {});
+    const sec = el('section', {});
+    sec.appendChild(el('h2', {}, 'Signals', el('span', { class: 'count' }, '(' + signals.length + ')')));
+
+    if (signals.length === 0) {
+      sec.appendChild(el('div', { class: 'empty' }, 'No signals detected.'));
+    } else {
+      // Sort: critical > warning > info, each newest first within severity
+      const order = { critical: 0, warning: 1, info: 2 };
+      const sorted = [...signals].sort((a, b) => {
+        const ds = (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
+        if (ds !== 0) return ds;
+        return (b.detected_at || '').localeCompare(a.detected_at || '');
+      });
+      for (const s of sorted) {
+        const row = el('div', { class: 'signal' },
+          el('div', { class: 'sev ' + s.severity }, s.severity),
+          el('div', {},
+            el('div', { class: 'head' }, s.headline),
+            el('div', { class: 'detail' }, s.detail),
+            el('div', { class: 'code' }, s.code),
+          ),
+        );
+        sec.appendChild(row);
+      }
+    }
+    col.appendChild(sec);
+    col.appendChild(renderInsightsPanel());
+    return col;
+  }
+
+  // ── Insights panel ──
+  function renderInsightsPanel() {
+    const sec = el('section', {});
+    sec.appendChild(el('h2', {}, 'Insights', el('span', { class: 'count' }, '(' + state.insights.length + ')')));
+
+    if (state.insights.length === 0) {
+      sec.appendChild(el('div', { class: 'empty' }, 'No cross-module correlations yet.'));
+      return sec;
+    }
+    for (const ins of state.insights.slice(0, 6)) {
+      const dataPts = (ins.data_points || []).map(d => d.label + '=' + d.value).join(' · ');
+      sec.appendChild(el('div', { class: 'insight' },
+        el('div', { class: 'kind' }, ins.kind),
+        el('div', { class: 'head' }, ins.headline),
+        el('div', { class: 'detail' }, ins.detail),
+        dataPts ? el('div', { class: 'data' }, dataPts) : null,
+      ));
+    }
+    return sec;
+  }
+
+  // ── Strategies column ──
+  function renderStrategiesColumn() {
+    const strategies = state.run.strategies_proposed || [];
+    const sec = el('section', {});
+    sec.appendChild(el('h2', {}, 'Strategies', el('span', { class: 'count' }, '(P0→P3, ' + strategies.length + ')')));
+
+    if (strategies.length === 0) {
+      sec.appendChild(el('div', { class: 'empty' }, 'System is healthy. No strategies needed.'));
+      return el('div', {}, sec);
+    }
+
+    for (const s of strategies) {
+      const box = el('div', { class: 'strategy' });
+      box.appendChild(el('header', {},
+        el('span', { class: 'priority-pill ' + s.priority }, s.priority),
+        el('span', { class: 'headline' }, s.headline),
+      ));
+      box.appendChild(el('div', { class: 'rationale' }, s.rationale));
+      if (s.llm_narration) {
+        box.appendChild(el('div', { class: 'narration' }, '"' + s.llm_narration + '"'));
+      }
+      if (s.proposed_tasks && s.proposed_tasks.length > 0) {
+        box.appendChild(el('div', { class: 'tasks-title' }, s.proposed_tasks.length + ' task(s)'));
+        for (const pt of s.proposed_tasks) {
+          box.appendChild(el('div', { class: 'task-line' },
+            el('span', { class: 'role' }, pt.assigned_role),
+            el('span', {}, pt.title),
+            el('span', { class: 'mono', style: 'color:var(--text-faint);font-size:10px;' }, '~' + pt.estimated_effort_minutes + 'm'),
+          ));
+        }
+      }
+      sec.appendChild(box);
+    }
+    return el('div', {}, sec);
+  }
+
+  // ── Tasks column ──
+  function renderTasksColumn() {
+    const col = el('div', {});
+    const sec = el('section', {});
+    sec.appendChild(el('h2', {}, 'Open Tasks'));
+
+    const allRoles = [...new Set((state.run.strategies_proposed || []).flatMap(s =>
+      (s.proposed_tasks || []).map(t => t.assigned_role)))];
+    if (allRoles.length > 0) {
+      const filter = el('div', { class: 'role-filter' });
+      const allBtn = el('button', {
+        class: state.roleFilter === null ? 'active' : '',
+        onclick: () => { state.roleFilter = null; render(); },
+      }, 'All');
+      filter.appendChild(allBtn);
+      for (const r of allRoles) {
+        filter.appendChild(el('button', {
+          class: state.roleFilter === r ? 'active' : '',
+          onclick: () => { state.roleFilter = r; render(); },
+        }, r));
+      }
+      sec.appendChild(filter);
+    }
+
+    // Fetch-on-demand tasks; for now, we render the task stubs we know about
+    // from strategies_proposed, plus any tasks returned by a /tasks query.
+    // We pre-populated tasks via POST /run auto_enqueue_tasks=true, so
+    // /tasks endpoint has real data.
+    sec.appendChild(el('div', { id: 'tasks-container' }, el('div', { class: 'empty' }, 'Loading…')));
+    col.appendChild(sec);
+
+    // Trigger async load
+    loadTasks();
+
+    return col;
+  }
+
+  async function loadTasks() {
+    try {
+      const url = state.roleFilter ? '/api/admin/agent/tasks?role=' + encodeURIComponent(state.roleFilter) : '/api/admin/agent/tasks';
+      const data = await fetchJSON(url);
+      const container = document.getElementById('tasks-container');
+      if (!container) return;
+      container.innerHTML = '';
+      const open = (data.tasks || []).filter(t => t.status !== 'done' && t.status !== 'cancelled');
+      if (open.length === 0) {
+        container.appendChild(el('div', { class: 'empty' }, 'No open tasks for this filter.'));
+        return;
+      }
+      // Sort: blocked last, then by created_at asc
+      open.sort((a, b) => {
+        if (a.status === 'blocked' && b.status !== 'blocked') return 1;
+        if (b.status === 'blocked' && a.status !== 'blocked') return -1;
+        return (a.created_at || '').localeCompare(b.created_at || '');
+      });
+      for (const t of open) {
+        container.appendChild(renderTask(t));
+      }
+    } catch (err) {
+      toast('Tasks: ' + err.message);
+    }
+  }
+
+  function renderTask(t) {
+    const box = el('div', { class: 'task' });
+    box.appendChild(el('header', {},
+      el('span', { class: 'role' }, t.assigned_role),
+      el('span', { class: 'status ' + t.status }, t.status.replace('_', ' ')),
+    ));
+    box.appendChild(el('div', { class: 'title' }, t.title));
+    box.appendChild(el('div', { class: 'desc' }, t.description));
+
+    const metaBits = [t.id, '~' + t.estimated_effort_minutes + 'm'];
+    if (t.suggested_tool_ids && t.suggested_tool_ids.length > 0) {
+      metaBits.push(t.suggested_tool_ids.join(' · '));
+    }
+    box.appendChild(el('div', { class: 'meta' }, metaBits.map(b => el('span', {}, b))));
+
+    if (t.status === 'open') {
+      const actions = el('div', { class: 'actions' });
+      actions.appendChild(el('button', { onclick: () => claimTask(t.id) }, 'Claim'));
+      actions.appendChild(el('button', { onclick: () => completeTask(t.id) }, 'Complete'));
+      box.appendChild(actions);
+    } else if (t.status === 'in_progress') {
+      const actions = el('div', { class: 'actions' });
+      actions.appendChild(el('button', { class: 'primary', onclick: () => completeTask(t.id) }, 'Complete'));
+      box.appendChild(actions);
+    }
+
+    return box;
+  }
+
+  // ─── MCP explorer ─────────────────────────────────────────────────
+  function renderMCPExplorer() {
+    const sec = el('details', { class: 'mcp-section' });
+    sec.appendChild(el('summary', {},
+      'MCP Explorer',
+      el('span', { class: 'badge' },
+        state.tools.length + ' tools · ' + state.resources.length + ' resources'),
+    ));
+
+    const body = el('div', { class: 'mcp-body' });
+
+    const tabs = el('div', { class: 'mcp-tabs' });
+    const toolsTab = el('button', {
+      class: state.activeMcpTab === 'tools' ? 'active' : '',
+      onclick: () => { state.activeMcpTab = 'tools'; render(); },
+    }, 'Tools (' + state.tools.length + ')');
+    const resourcesTab = el('button', {
+      class: state.activeMcpTab === 'resources' ? 'active' : '',
+      onclick: () => { state.activeMcpTab = 'resources'; render(); },
+    }, 'Resources (' + state.resources.length + ')');
+    tabs.appendChild(toolsTab);
+    tabs.appendChild(resourcesTab);
+    body.appendChild(tabs);
+
+    if (state.activeMcpTab === 'tools') {
+      body.appendChild(renderToolsList());
+    } else {
+      body.appendChild(renderResourcesList());
+    }
+
+    sec.appendChild(body);
+    return sec;
+  }
+
+  function renderToolsList() {
+    const list = el('div', { class: 'mcp-list' });
+    for (const tool of state.tools) {
+      const row = el('div', { class: 'mcp-row' });
+      row.appendChild(el('header', {},
+        el('span', { class: 'name' }, tool.id),
+        el('span', { class: 'category ' + tool.category }, tool.category),
+        tool.is_destructive ? el('span', { class: 'category destructive' }, 'destructive') : null,
+      ));
+      row.appendChild(el('div', { class: 'desc' }, tool.description));
+      if (tool.input_schema && Object.keys(tool.input_schema.properties || {}).length > 0) {
+        row.appendChild(el('details', {},
+          el('summary', {}, 'JSON Schema'),
+          el('pre', {}, JSON.stringify(tool.input_schema, null, 2)),
+        ));
+      }
+      list.appendChild(row);
+    }
+    return list;
+  }
+
+  function renderResourcesList() {
+    const list = el('div', { class: 'mcp-list' });
+    for (const r of state.resources) {
+      const row = el('div', { class: 'mcp-row' });
+      row.appendChild(el('header', {},
+        el('span', { class: 'name' }, r.uri),
+      ));
+      row.appendChild(el('div', { class: 'desc' }, r.description));
+    }
+    return list;
+  }
+
+  // ─── Actions ──────────────────────────────────────────────────────
+  async function runAgent() {
+    if (state.isRunning) return;
+    state.isRunning = true;
+    render();
+    try {
+      await fetchJSON('/api/admin/agent/run', {
+        method: 'POST',
+        body: JSON.stringify({
+          auto_enqueue_tasks: true,
+          attempt_llm_narration: true,
+        }),
+      });
+      await refresh();
+    } catch (err) {
+      toast('Agent run: ' + err.message);
+    } finally {
+      state.isRunning = false;
+      render();
+    }
+  }
+
+  async function claimTask(taskId) {
+    try {
+      await fetchJSON('/api/admin/agent/tasks/' + taskId + '/claim', { method: 'POST' });
+      await loadTasks();
+    } catch (err) { toast('Claim: ' + err.message); }
+  }
+
+  async function completeTask(taskId) {
+    try {
+      await fetchJSON('/api/admin/agent/tasks/' + taskId + '/complete', {
+        method: 'POST',
+        body: JSON.stringify({ note: 'Completed via dashboard' }),
+      });
+      await refresh();
+    } catch (err) { toast('Complete: ' + err.message); }
+  }
+
+  async function refresh() {
+    try {
+      const [latest, insights, llm, tools] = await Promise.all([
+        fetchJSON('/api/admin/agent/latest').catch(() => ({ run: null })),
+        fetchJSON('/api/admin/agent/insights').catch(() => ({ insights: [] })),
+        fetchJSON('/api/admin/agent/llm-status').catch(() => ({ llm: { available: false } })),
+        fetchJSON('/api/admin/agent/tools').catch(() => ({ tools: [] })),
+      ]);
+
+      state.run = latest?.run || null;
+      state.insights = insights?.insights || [];
+      state.llm = llm?.llm || null;
+      state.tools = tools?.tools || [];
+
+      // Fetch MCP resources/list via the JSON-RPC endpoint
+      try {
+        const rpc = await fetchJSON('/api/admin/agent/mcp', {
+          method: 'POST',
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'resources/list' }),
+        });
+        state.resources = rpc?.result?.resources || [];
+      } catch { state.resources = []; }
+
+      render();
+    } catch (err) {
+      toast('Refresh: ' + err.message);
+    }
+  }
+
+  // ─── Boot ─────────────────────────────────────────────────────────
+  async function boot() {
+    if (!getToken()) { render(); return; }
+
+    // If no run exists, trigger one first
+    try {
+      const r = await fetchJSON('/api/admin/agent/latest');
+      if (!r?.run) {
+        await fetchJSON('/api/admin/agent/run', {
+          method: 'POST',
+          body: JSON.stringify({
+            auto_enqueue_tasks: true,
+            attempt_llm_narration: true,
+          }),
+        });
+      }
+    } catch (err) {
+      if (err.message.includes('Unauthorized')) { render(); return; }
+    }
+
+    await refresh();
+
+    // Auto-refresh polling
+    setInterval(() => {
+      const cb = document.getElementById('autorefresh');
+      if (cb && cb.checked) refresh();
+    }, POLL_INTERVAL_MS);
+  }
+
+  boot();
+  </script>
+</body>
+</html>`;
+
+export function getDashboardHTML(): string {
+  return DASHBOARD_HTML;
+}

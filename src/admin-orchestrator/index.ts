@@ -49,3 +49,4 @@ export {
 export type {
   ResourceDescriptor, ResourceReadContext, ResourceReadResult, ResourceReadError,
 } from './mcp-resources';
+export { getDashboardHTML } from './dashboard-html';

@@ -242,6 +242,21 @@ async function h_llmStatus(req: ParsedRequest, res: ServerResponse): Promise<voi
   sendJSON(res, { llm: describeLLMAvailability() });
 }
 
+/**
+ * GET /api/admin/agent/dashboard
+ * Serves the admin orchestrator UI — an HTML page with inline CSS+JS
+ * that consumes the /api/admin/agent/* endpoints via fetch(). The HTML
+ * itself is PUBLIC and unauthenticated so it can load before an auth
+ * token exists; the JS then prompts the user for a JWT which is
+ * attached to every API call as a Bearer header. This mirrors how
+ * bookmarkable single-page apps work everywhere else.
+ */
+async function h_dashboard(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const { sendHTML } = await import('../lib/route-helpers');
+  const { getDashboardHTML } = await import('../admin-orchestrator/dashboard-html');
+  sendHTML(res, getDashboardHTML());
+}
+
 // ============================================================================
 
 export const adminAgentRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
@@ -266,8 +281,11 @@ export const adminAgentRoutes: Array<{ method: string; path: string; handler: Ro
   { method: 'POST', path: '/api/admin/agent/tools/:id/invoke',   handler: h_invokeTool },
   { method: 'GET',  path: '/api/admin/agent/roles',              handler: h_listRoles },
 
-  // MCP (v2.23.0)
+  // MCP (v2.23.0, extended in v2.24.0 with resources)
   { method: 'POST', path: '/api/admin/agent/mcp',                handler: h_mcpRpc },
   { method: 'GET',  path: '/api/admin/agent/mcp/manifest',       handler: h_mcpManifest },
   { method: 'GET',  path: '/api/admin/agent/llm-status',         handler: h_llmStatus },
+
+  // Dashboard UI (v2.25.0) — public HTML page; API calls from JS are authenticated
+  { method: 'GET',  path: '/api/admin/agent/dashboard',          handler: h_dashboard },
 ];

@@ -114,7 +114,7 @@ export function GiveawayBanner() {
         />
 
         <button
-          onClick={() => markDismissed(info.group_id) || setInfo(null)}
+          onClick={() => { markDismissed(info.group_id); setInfo(null); }}
           aria-label="dismiss giveaway"
           className="absolute top-2 right-2 z-10 p-1 rounded text-surface-400 hover:text-surface-200"
         >

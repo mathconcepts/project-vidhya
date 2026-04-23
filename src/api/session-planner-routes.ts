@@ -353,17 +353,51 @@ async function h_createTemplate(req: ParsedRequest, res: ServerResponse): Promis
   if (!selectionValid) {
     return sendError(res, 400, 'exam_selection must be "all" | "primary" | string[]');
   }
+  // preset_slug (v2.33): if supplied, must match the format used by the
+  // preset catalog. Lightweight — any "preset-*" string is accepted, the
+  // catalog is the source of truth for which slugs are meaningful.
+  if (body.preset_slug !== undefined &&
+      (typeof body.preset_slug !== 'string' || body.preset_slug.length > 50)) {
+    return sendError(res, 400, 'preset_slug must be a short string');
+  }
   try {
     const t = createTemplate(auth.user.id, {
       name: body.name,
       minutes_available: body.minutes_available,
       exam_selection,
       weekly_hours: body.weekly_hours,
+      preset_slug: body.preset_slug,
     });
     sendJSON(res, t);
   } catch (err: any) {
     sendError(res, 400, err.message ?? String(err));
   }
+}
+
+// ============================================================================
+// v2.33 — Preset templates (Item 3)
+// ============================================================================
+
+/**
+ * GET /api/student/session/templates/presets
+ *
+ * Returns the curated preset catalog alongside a flag marking which
+ * ones the student has already adopted (to avoid re-suggesting).
+ */
+async function h_listPresets(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const { PRESET_TEMPLATES, listTemplatesForStudent } =
+    await import('../session-planner');
+  const existing = listTemplatesForStudent(auth.user.id);
+  const adopted = new Set(
+    existing.map((t: any) => t.preset_slug).filter(Boolean),
+  );
+  const presets = PRESET_TEMPLATES.map((p: any) => ({
+    ...p,
+    adopted: adopted.has(p.slug),
+  }));
+  sendJSON(res, { presets, adopted_count: adopted.size, total: presets.length });
 }
 
 async function h_deleteTemplate(req: ParsedRequest, res: ServerResponse): Promise<void> {
@@ -488,6 +522,36 @@ async function h_logPractice(req: ParsedRequest, res: ServerResponse): Promise<v
 }
 
 // ============================================================================
+// v2.33 — Trailing stats (Item 4)
+// ============================================================================
+
+/**
+ * GET /api/student/session/trailing-stats
+ *
+ * Returns the student's rolling 7-day activity totals, unioned
+ * across plan executions AND ad-hoc practice log entries. The UI
+ * shows this as a "you've studied N min this week" badge.
+ */
+async function h_trailingStats(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const { sumTrailingMinutes } = await import('../session-planner');
+    const { countTrailingSessions } = await import('../session-planner');
+    const mins = await sumTrailingMinutes(auth.user.id, 7);
+    const sessions = countTrailingSessions(auth.user.id, 7);
+    sendJSON(res, {
+      student_id: auth.user.id,
+      trailing_7d_minutes: mins,
+      trailing_7d_sessions: sessions,
+      computed_at: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    sendError(res, 500, err.message ?? String(err));
+  }
+}
+
+// ============================================================================
 // v2.32 — Student OpenAPI spec (Item 3)
 // ============================================================================
 
@@ -527,8 +591,14 @@ export const sessionPlannerRoutes: Array<{
   { method: 'DELETE', path: '/api/student/session/templates/:id',         handler: h_deleteTemplate },
   { method: 'POST', path: '/api/student/session/templates/:id/use',       handler: h_useTemplate },
 
+  // Template presets (v2.33, Item 3) — curated starter catalog
+  { method: 'GET',  path: '/api/student/session/templates/presets',       handler: h_listPresets },
+
   // Practice session log (v2.32, Item 4)
   { method: 'POST', path: '/api/student/session/practice-log',            handler: h_logPractice },
+
+  // Trailing stats (v2.33, Item 4)
+  { method: 'GET',  path: '/api/student/session/trailing-stats',          handler: h_trailingStats },
 
   // OpenAPI spec for Swagger UI (v2.32, Item 3) — public, no auth
   { method: 'GET',  path: '/api/student/openapi.json',                    handler: h_openapi },

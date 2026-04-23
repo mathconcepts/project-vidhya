@@ -62,7 +62,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
   // Instantiate a client that declares the full suite of capabilities —
   // mirroring how Claude Desktop + MCP Inspector introduce themselves.
   const client = new Client(
-    { name: 'vidhya-sdk-compat-test', version: '2.32.0' },
+    { name: 'vidhya-sdk-compat-test', version: '2.33.0' },
     { capabilities: { tools: {}, resources: {}, prompts: {}, sampling: {} } },
   );
 

@@ -71,7 +71,7 @@ const ERR_NOT_AUTHORIZED = -32002;
 
 export const MCP_SERVER_INFO = {
   name: 'project-vidhya-admin-orchestrator',
-  version: '2.32.0',
+  version: '2.33.0',
   /** Protocol version the server implements. 2024-11-05 is the stable MCP baseline. */
   protocolVersion: '2024-11-05',
 };

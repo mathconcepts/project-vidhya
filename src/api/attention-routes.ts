@@ -57,7 +57,7 @@ async function handleRecordSession(req: ParsedRequest, res: ServerResponse): Pro
   if (typeof body.minutes_spent !== 'number' || body.minutes_spent <= 0) {
     return sendError(res, 400, 'minutes_spent (positive number) required');
   }
-  const updated = recordSession(auth.user.id, body.minutes_spent);
+  const updated = await recordSession(auth.user.id, body.minutes_spent);
   sendJSON(res, { coverage: updated });
 }
 

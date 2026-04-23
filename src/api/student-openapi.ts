@@ -17,7 +17,7 @@ export function buildStudentOpenAPISpec(
     openapi: '3.1.0',
     info: {
       title: 'Project Vidhya — Student Session Planner API',
-      version: '2.32.0',
+      version: '2.33.0',
       description:
         'Student-facing HTTP surface for the session planner. Generate time-budgeted ' +
         'study plans, record executions, manage your exam profile, and save/recall ' +
@@ -492,6 +492,52 @@ function buildStudentPaths(): Record<string, any> {
         },
       },
     },
+    '/api/student/session/templates/presets': {
+      get: {
+        tags: ['Templates'],
+        summary: 'List curated starter-template presets',
+        description:
+          'Returns the curated catalog of suggestion templates, each flagged with ' +
+          'whether this student has already adopted it (POSTed it as a real template ' +
+          'carrying the matching preset_slug). The UI uses this to avoid re-suggesting ' +
+          'a preset the student already has.',
+        responses: {
+          '200': {
+            description: 'Preset catalog',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    presets: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          slug: { type: 'string' },
+                          name: { type: 'string' },
+                          minutes_available: { type: 'integer' },
+                          exam_selection: {
+                            oneOf: [
+                              { type: 'string', enum: ['all', 'primary'] },
+                              { type: 'array', items: { type: 'string' } },
+                            ],
+                          },
+                          description: { type: 'string' },
+                          adopted: { type: 'boolean' },
+                        },
+                      },
+                    },
+                    adopted_count: { type: 'integer' },
+                    total: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/student/session/practice-log': {
       post: {
         tags: ['Activity'],
@@ -523,6 +569,35 @@ function buildStudentPaths(): Record<string, any> {
         responses: {
           '200': { description: 'Logged' },
           '400': errorResponse('Bad minutes'),
+        },
+      },
+    },
+    '/api/student/session/trailing-stats': {
+      get: {
+        tags: ['Activity'],
+        summary: 'Rolling 7-day totals across all practice sources',
+        description:
+          'Unified across plan executions AND ad-hoc practice log entries. Plan-id-tagged ' +
+          'practice-log entries are de-duplicated against their plan execution. Used for ' +
+          'the "you\'ve studied N min this week" student-facing badge.',
+        responses: {
+          '200': {
+            description: 'Trailing totals',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    student_id: { type: 'string' },
+                    trailing_7d_minutes: { type: 'integer', minimum: 0 },
+                    trailing_7d_sessions: { type: 'integer', minimum: 0 },
+                    computed_at: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+          '401': errorResponse('Missing or invalid JWT'),
         },
       },
     },

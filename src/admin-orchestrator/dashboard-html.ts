@@ -858,6 +858,8 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
     recentPlans: [],
     recentPlansLoading: false,
     recentPlansError: null,
+    // v2.33: student filter for the recent-plans panel. Empty → '*' wildcard.
+    recentPlansFilter: '',
   };
 
   // ─── Root render ──────────────────────────────────────────────────
@@ -910,7 +912,7 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
     return el('header', {},
       el('h1', {}, 'Vidhya', el('em', {}, 'orchestrator')),
       el('div', { class: 'meta' },
-        el('span', {}, el('strong', {}, 'v'), '2.32.0'),
+        el('span', {}, el('strong', {}, 'v'), '2.33.0'),
         el('span', {}, el('strong', {}, 'llm'), ' ' + llmProvider),
         el('span', {}, el('strong', {}, 'run'), ' ' + (state.run?.id || '—')),
         el('span', {}, el('strong', {}, 'last'), ' ' + relativeTime(state.run?.completed_at)),
@@ -1381,18 +1383,41 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
 
     const body = el('div', { class: 'mcp-body' });
 
-    // Refresh button
-    const actions = el('div', { style: 'display:flex;gap:8px;margin-bottom:12px;' });
+    // Filter + refresh controls
+    const actions = el('div', { style: 'display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;' });
+    const filterInput = el('input', {
+      type: 'text',
+      placeholder: 'Filter by student_id (blank = all)',
+      value: state.recentPlansFilter,
+      style: 'flex:1;min-width:180px;padding:4px 8px;background:#16161a;border:1px solid #2a2a31;color:#e4e4e7;font-family:monospace;font-size:12px;border-radius:2px;',
+      oninput: (e) => { state.recentPlansFilter = e.target.value; },
+      onkeydown: (e) => { if (e.key === 'Enter') refreshRecentPlans(); },
+    });
+    actions.appendChild(filterInput);
     const refreshBtn = el('button', {
       class: 'btn',
       onclick: refreshRecentPlans,
     }, state.recentPlansLoading ? 'Loading…' : 'Refresh');
     actions.appendChild(refreshBtn);
+    if (state.recentPlansFilter) {
+      const clearBtn = el('button', {
+        class: 'btn',
+        style: 'opacity:0.7;',
+        onclick: () => { state.recentPlansFilter = ''; refreshRecentPlans(); },
+      }, 'Clear filter');
+      actions.appendChild(clearBtn);
+    }
     if (state.recentPlansError) {
       actions.appendChild(el('span', { class: 'error-text' },
         state.recentPlansError));
     }
     body.appendChild(actions);
+
+    if (state.recentPlansFilter) {
+      body.appendChild(el('div', {
+        style: 'color:#9ca0a8;font-size:11px;margin-bottom:8px;font-family:monospace;',
+      }, 'Filtered: student_id = ' + state.recentPlansFilter));
+    }
 
     if (state.recentPlans.length === 0 && !state.recentPlansLoading) {
       body.appendChild(el('div', { class: 'empty' },
@@ -1442,17 +1467,17 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
     render();
     try {
       // Uses the admin-agent proxy route to invoke the MCP tool.
+      // Filter: empty → '*' wildcard (cross-student view);
+      //         non-empty → specific student_id lookup
+      const filterTrimmed = state.recentPlansFilter.trim();
+      const studentId = filterTrimmed === '' ? '*' : filterTrimmed;
       const response = await fetchJSON('/api/admin/agent/invoke', {
         method: 'POST',
         body: JSON.stringify({
           tool_id: 'student:list-plans',
-          input: { student_id: '*', limit: 10 },
+          input: { student_id: studentId, limit: 10 },
         }),
       });
-      // student:list-plans is scoped per-student — for the admin
-      // dashboard we want a global list. The route is a thin wrapper;
-      // if '*' isn't supported on the backend, fall back to an empty
-      // list gracefully.
       const plans = (response && response.output && response.output.plans) || [];
       state.recentPlans = plans;
     } catch (err) {

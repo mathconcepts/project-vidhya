@@ -26,6 +26,8 @@ export {
   deleteTemplate, markTemplateUsed, _resetTemplateStore,
 } from './template-store';
 export type { PlanTemplate } from './template-store';
+export { PRESET_TEMPLATES, unadoptedPresets } from './template-presets';
+export type { PresetTemplate } from './template-presets';
 export {
   logPracticeSession, sumTrailingPracticeMinutes, countTrailingSessions,
   _resetPracticeSessionLog, _enumerateEntriesForTest,

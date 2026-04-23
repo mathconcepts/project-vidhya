@@ -38,6 +38,12 @@ export interface PlanTemplate {
   exam_selection: 'all' | 'primary' | string[];
   /** Optional weekly_hours override */
   weekly_hours?: number;
+  /**
+   * If this template was adopted from a curated preset (v2.33), the
+   * preset's slug. Used by the UI to avoid re-suggesting a preset
+   * the student already has. Null/absent for user-created templates.
+   */
+  preset_slug?: string;
   /** When the template was created (ISO) */
   created_at: string;
   /** When last recalled (ISO). Updated every time the student fires it. */

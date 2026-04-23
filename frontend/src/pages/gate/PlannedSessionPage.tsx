@@ -164,6 +164,15 @@ export default function PlannedSessionPage() {
   const [templateName, setTemplateName] = useState('');
   const [savingTemplate, setSavingTemplate] = useState(false);
 
+  // v2.33: trailing stats + preset catalog
+  const [trailingStats, setTrailingStats] = useState<{
+    trailing_7d_minutes: number; trailing_7d_sessions: number;
+  } | null>(null);
+  const [presets, setPresets] = useState<Array<{
+    slug: string; name: string; minutes_available: number;
+    exam_selection: 'all' | 'primary' | string[]; description: string; adopted: boolean;
+  }>>([]);
+
   // Session tracking — local-only outcomes that get posted together
   // at completion. Until the user hits "Finish", this state is
   // ephemeral.
@@ -172,20 +181,33 @@ export default function PlannedSessionPage() {
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
 
-  // Load profile + templates on mount — needed for "which exam(s)?" logic
+  // Load profile + templates + trailing stats + presets on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [profResp, tplResp] = await Promise.all([
+        const [profResp, tplResp, trailingResp, presetsResp] = await Promise.all([
           authFetch('/api/student/profile'),
           authFetch('/api/student/session/templates'),
+          authFetch('/api/student/session/trailing-stats'),
+          authFetch('/api/student/session/templates/presets'),
         ]);
         if (cancelled) return;
         if (profResp.ok) setProfile(await profResp.json());
         if (tplResp.ok) {
           const j = await tplResp.json();
           setTemplates(j.templates || []);
+        }
+        if (trailingResp.ok) {
+          const j = await trailingResp.json();
+          setTrailingStats({
+            trailing_7d_minutes: j.trailing_7d_minutes,
+            trailing_7d_sessions: j.trailing_7d_sessions,
+          });
+        }
+        if (presetsResp.ok) {
+          const j = await presetsResp.json();
+          setPresets(j.presets || []);
         }
       } catch {
         // Non-fatal — fall through to default exam
@@ -325,6 +347,37 @@ export default function PlannedSessionPage() {
     }
   }, []);
 
+  /**
+   * Adopt a preset — POST a real template carrying the preset's slug,
+   * then immediately recall it to generate a plan. The saved template
+   * stays for future one-tap use.
+   */
+  const adoptPreset = useCallback(async (preset: typeof presets[number]) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await authFetch('/api/student/session/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: preset.name,
+          minutes_available: preset.minutes_available,
+          exam_selection: preset.exam_selection,
+          preset_slug: preset.slug,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Preset adoption failed');
+      const tpl: PlanTemplate = await res.json();
+      setTemplates(cur => [tpl, ...cur]);
+      setPresets(cur => cur.map(p => p.slug === preset.slug ? { ...p, adopted: true } : p));
+      // Immediately recall so the student sees a plan
+      await useTemplate(tpl);
+    } catch (err: any) {
+      setError(err.message || 'Preset adoption failed');
+      setLoading(false);
+    }
+  }, [useTemplate]);
+
   const startAction = useCallback((action: ActionRecommendation) => {
     // Route the user into the existing practice flow with the topic +
     // difficulty pre-selected via query string. The SmartPracticePage
@@ -422,6 +475,13 @@ export default function PlannedSessionPage() {
               )}
             </Link>
           </div>
+          {trailingStats && trailingStats.trailing_7d_minutes > 0 && (
+            <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
+              <Clock className="w-3 h-3" />
+              You've studied <strong className="text-emerald-100 font-mono">{trailingStats.trailing_7d_minutes}</strong> min
+              {' '}across <strong className="text-emerald-100 font-mono">{trailingStats.trailing_7d_sessions}</strong> session{trailingStats.trailing_7d_sessions === 1 ? '' : 's'} this week.
+            </div>
+          )}
           {profile && profile.exams.length === 0 && (
             <div className="mt-3 text-xs text-amber-300/80 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2">
               Using a default exam. <Link to="/gate/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
@@ -474,6 +534,42 @@ export default function PlannedSessionPage() {
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Preset suggestions — curated starter templates (v2.33) */}
+        {!plan && !loading && presets.filter(p => !p.adopted).length > 0 && (
+          <motion.section
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            className="mb-6"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                <Sparkles className="inline w-3 h-3 mr-1 -mt-0.5" />
+                {templates.length === 0 ? 'Try a starter template' : 'More presets'}
+              </label>
+              <span className="text-[10px] text-zinc-600">tap to adopt + run</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {presets.filter(p => !p.adopted).slice(0, 6).map((preset) => (
+                <button
+                  key={preset.slug}
+                  onClick={() => adoptPreset(preset)}
+                  disabled={loading}
+                  className="px-3 py-2 rounded-lg bg-zinc-900/40 border border-dashed border-zinc-700 hover:border-sky-500/40 hover:bg-sky-500/5 text-left transition-colors disabled:opacity-50"
+                >
+                  <div className="text-sm font-semibold text-zinc-100">{preset.name}</div>
+                  <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                    {preset.minutes_available}min · {
+                      preset.exam_selection === 'all' ? 'all exams' : 'primary'
+                    }
+                  </div>
+                  <div className="text-[10px] text-zinc-600 mt-1 leading-tight">{preset.description}</div>
+                </button>
               ))}
             </div>
           </motion.section>

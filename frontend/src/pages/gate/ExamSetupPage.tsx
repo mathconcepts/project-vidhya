@@ -551,29 +551,29 @@ function FieldsTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => void 
   return (
     <motion.div variants={fadeInUp} className="space-y-3">
       <FieldGroup title="Basics">
-        <FieldInput label="Issuing body" value={val('issuing_body')} onChange={v => setField('issuing_body', v)} provenance={exam.provenance.issuing_body} placeholder="e.g. IIT Madras" />
-        <FieldInput label="Country" value={val('country')} onChange={v => setField('country', v)} provenance={exam.provenance.country} placeholder="e.g. India" />
-        <FieldInput label="Official URL" value={val('official_url')} onChange={v => setField('official_url', v)} provenance={exam.provenance.official_url} placeholder="https://..." />
-        <FieldTextarea label="Description" value={val('description')} onChange={v => setField('description', v)} provenance={exam.provenance.description} placeholder="A brief summary of this exam." />
+        <FieldInput label="Issuing body" value={val('issuing_body')} onChange={(v: string) => setField('issuing_body', v)} provenance={exam.provenance.issuing_body} placeholder="e.g. IIT Madras" />
+        <FieldInput label="Country" value={val('country')} onChange={(v: string) => setField('country', v)} provenance={exam.provenance.country} placeholder="e.g. India" />
+        <FieldInput label="Official URL" value={val('official_url')} onChange={(v: string) => setField('official_url', v)} provenance={exam.provenance.official_url} placeholder="https://..." />
+        <FieldTextarea label="Description" value={val('description')} onChange={(v: string) => setField('description', v)} provenance={exam.provenance.description} placeholder="A brief summary of this exam." />
       </FieldGroup>
 
       <FieldGroup title="Structure">
-        <FieldInput label="Duration (minutes)" value={val('duration_minutes')} onChange={v => setField('duration_minutes', parseInt(v) || undefined)} type="number" provenance={exam.provenance.duration_minutes} placeholder="180" />
-        <FieldInput label="Total marks" value={val('total_marks')} onChange={v => setField('total_marks', parseInt(v) || undefined)} type="number" provenance={exam.provenance.total_marks} placeholder="100" />
+        <FieldInput label="Duration (minutes)" value={val('duration_minutes')} onChange={(v: string) => setField('duration_minutes', parseInt(v) || undefined)} type="number" provenance={exam.provenance.duration_minutes} placeholder="180" />
+        <FieldInput label="Total marks" value={val('total_marks')} onChange={(v: string) => setField('total_marks', parseInt(v) || undefined)} type="number" provenance={exam.provenance.total_marks} placeholder="100" />
       </FieldGroup>
 
       <FieldGroup title="Schedule">
-        <FieldInput label="Next exam date" value={val('next_attempt_date')} onChange={v => setField('next_attempt_date', v)} type="date" provenance={exam.provenance.next_attempt_date} />
-        <FieldInput label="Frequency" value={val('frequency')} onChange={v => setField('frequency', v)} provenance={exam.provenance.frequency} placeholder="annual | biannual | ..." />
-        <FieldInput label="Typical prep (weeks)" value={val('typical_prep_weeks')} onChange={v => setField('typical_prep_weeks', parseInt(v) || undefined)} type="number" provenance={exam.provenance.typical_prep_weeks} placeholder="12" />
+        <FieldInput label="Next exam date" value={val('next_attempt_date')} onChange={(v: string) => setField('next_attempt_date', v)} type="date" provenance={exam.provenance.next_attempt_date} />
+        <FieldInput label="Frequency" value={val('frequency')} onChange={(v: string) => setField('frequency', v)} provenance={exam.provenance.frequency} placeholder="annual | biannual | ..." />
+        <FieldInput label="Typical prep (weeks)" value={val('typical_prep_weeks')} onChange={(v: string) => setField('typical_prep_weeks', parseInt(v) || undefined)} type="number" provenance={exam.provenance.typical_prep_weeks} placeholder="12" />
       </FieldGroup>
 
       <FieldGroup title="Eligibility">
-        <FieldTextarea label="Eligibility" value={val('eligibility')} onChange={v => setField('eligibility', v)} provenance={exam.provenance.eligibility} placeholder="Who can appear — age limits, qualifications, etc." />
+        <FieldTextarea label="Eligibility" value={val('eligibility')} onChange={(v: string) => setField('eligibility', v)} provenance={exam.provenance.eligibility} placeholder="Who can appear — age limits, qualifications, etc." />
       </FieldGroup>
 
       <FieldGroup title="Admin notes">
-        <FieldTextarea label="Admin notes" value={val('admin_notes')} onChange={v => setField('admin_notes', v)} placeholder="Private notes not shown to students." />
+        <FieldTextarea label="Admin notes" value={val('admin_notes')} onChange={(v: string) => setField('admin_notes', v)} placeholder="Private notes not shown to students." />
       </FieldGroup>
 
       {Object.keys(editing).length > 0 && (

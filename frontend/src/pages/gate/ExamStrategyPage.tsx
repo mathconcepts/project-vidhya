@@ -212,7 +212,8 @@ export default function ExamStrategyPage() {
               <p className="text-xs text-surface-500">expected gain</p>
             </div>
             <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-              <CountUp target={scorePlan.daily_hours_needed} decimals={1} suffix=" hrs/day" className="text-lg font-bold text-sky-400" />
+              {/* CountUp animates integers; round to 1dp and pass through suffix */}
+              <CountUp target={Math.round(scorePlan.daily_hours_needed * 10) / 10} suffix=" hrs/day" className="text-lg font-bold text-sky-400" />
               <p className="text-xs text-surface-500">study needed</p>
             </div>
           </motion.div>

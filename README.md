@@ -8,13 +8,37 @@
 
 ## The moment we built this for
 
-It's 2 a.m. She's stuck on an eigenvalue problem. Her exam is in four weeks. The coaching centre closed at nine. The top-ranked YouTube explanation runs forty-five minutes and assumes she already understands the thing she's trying to learn. Her notes are at home. She doesn't know what to ask because she doesn't know what she doesn't know.
+It's 2 a.m. She's stuck on an eigenvalue problem. Her exam is in four weeks. **The coaching centre closed at nine.** The top-ranked YouTube explanation runs forty-five minutes and assumes she already understands the thing she's trying to learn. **Her notes are at home. She doesn't know what to ask because she doesn't know what she doesn't know.**
 
-She opens her phone, takes a photo of the problem, and gets her answer — not just the number, but the method, the intuition, the trap she would have fallen into, the specific concept she's weak on, and three calibrated problems that will fix it. Ten minutes later she's moved on.
+She opens her phone, takes a photo of the problem, and gets her answer — not just the number, but the method, the intuition, the trap she would have fallen into, the specific concept she's weak on, and three calibrated problems that will fix it. **Ten minutes later she's moved on.**
 
 The next morning the app doesn't guilt-ping her about a broken streak. It just remembers where she stopped, and picks up when she's ready.
 
 That's Vidhya.
+
+---
+
+## What's wrong with how exam prep works today
+
+> [!CAUTION]
+> ### 💸 **Progress evaporates between sessions.**
+> *Other apps let what you learned yesterday leak out before tomorrow's session. You start from zero, again.*
+
+> [!CAUTION]
+> ### 😰 **Streaks and guilt-pings punish your effort.**
+> *Miss a day and the app shames you. Maintain the streak and you study tired. Neither teaches you calculus.*
+
+> [!CAUTION]
+> ### 🗺️ **Your postal code decides your teaching.**
+> *Top coaching centres cluster in a few cities. Students elsewhere get recycled YouTube lectures and luck.*
+
+> [!CAUTION]
+> ### 🎯 **You are the product.**
+> *Your weakest areas, your struggle patterns, your behavioural data — monetised by someone else's server.*
+
+> [!CAUTION]
+> ### ⚠️ **Tone-deaf "take a break" advice near your exam.**
+> *Three days out, five wrong answers in a row, and the app suggests you rest. The advice was written for demos, not for you.*
 
 ---
 
@@ -46,11 +70,11 @@ That's Vidhya.
 
 > ### 💡 **The stressed student is the profitable one.** Vidhya refuses that trade.
 
-Every existing exam-prep product makes the same bargain: to get personalised prep, you give up your data, your time, your peace of mind, and usually your money. Streak fatigue, push notifications, lock-screen guilt — none of it was ever going to teach you calculus. It was just going to cost you sleep.
+**Every existing exam-prep product makes the same bargain: to get personalised prep, you give up your data, your time, your peace of mind, and usually your money.** Streak fatigue, push notifications, lock-screen guilt — **none of it was ever going to teach you calculus. It was just going to cost you sleep.**
 
-Vidhya makes a different trade. Twelve five-minute sessions compound into the mastery a sixty-minute session builds; nothing evaporates between them. The app tunes its advice to how close your exam is. Your notes, your progress, and your provider key all stay on your device. The price of the AI is whatever the provider charges you directly — there is no intermediary pricing layer, because there is no intermediary.
+Vidhya makes a different trade. Twelve five-minute sessions compound into the mastery a sixty-minute session builds; nothing evaporates between them. The app tunes its advice to how close your exam is. **Your notes, your progress, and your provider key all stay on your device.** The price of the AI is whatever the provider charges you directly — there is no intermediary pricing layer, because there is no intermediary.
 
-A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre in the country. Geography stops being the limit.
+A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre in the country. **Geography stops being the limit.**
 
 📖 *The full positioning is in [POSITIONING.md](./POSITIONING.md). The thirty-second shareable version is in [PITCH.md](./PITCH.md).*
 

@@ -1,6 +1,6 @@
 # Project Vidhya
 
-> **World-class prep. Without the world-class stress.**
+> # **World-class prep. Without the world-class stress.**
 >
 > *Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
 
@@ -18,47 +18,80 @@ That's Vidhya.
 
 ---
 
+## What you actually walk away with
+
+> [!TIP]
+> ### 📚 **You never lose ground.**
+> *Twelve five-minute sessions compound into the mastery a sixty-minute session builds. Nothing evaporates between sittings.*
+
+> [!TIP]
+> ### 🧘 **You study without the anxiety tax.**
+> *No streaks to maintain. No guilt pings. Miss a day, the app waits. Curiosity returns; dread doesn't.*
+
+> [!TIP]
+> ### 🌍 **Your address stops deciding your education.**
+> *A student in a small town gets the same lesson, same worked example, same depth as a student in the most expensive coaching centre in the country.*
+
+> [!TIP]
+> ### 🔒 **You are studied _for_, not studied _on_.**
+> *Your notes, your progress, your AI key — all on your device. You stop being the product.*
+
+> [!TIP]
+> ### ⏰ **The advice matches your reality.**
+> *Three days before your exam, the app stops telling you to rest. It switches to review — because tone-deaf advice is not advice.*
+
+---
+
 ## Why it exists
 
-Every existing exam-prep product makes the same trade-off: to get personalised prep, you give up your data, your time, your peace of mind, and usually your money. The stressed student is the profitable one. Streak fatigue, push notifications, lock-screen guilt — none of it was ever going to teach you calculus. It was just going to cost you sleep.
+> ### 💡 **The stressed student is the profitable one.** Vidhya refuses that trade.
 
-Vidhya makes a different trade. Twelve five-minute sessions compound into the mastery a sixty-minute session builds; nothing evaporates between them. The app tunes its advice to how close your exam is, so a student two days out gets *"do a quick review"*, not *"take a break"*. Your notes, your progress, and your provider key all stay on your device. The price of the AI is whatever the provider charges you directly — there is no intermediary pricing layer, because there is no intermediary.
+Every existing exam-prep product makes the same bargain: to get personalised prep, you give up your data, your time, your peace of mind, and usually your money. Streak fatigue, push notifications, lock-screen guilt — none of it was ever going to teach you calculus. It was just going to cost you sleep.
+
+Vidhya makes a different trade. Twelve five-minute sessions compound into the mastery a sixty-minute session builds; nothing evaporates between them. The app tunes its advice to how close your exam is. Your notes, your progress, and your provider key all stay on your device. The price of the AI is whatever the provider charges you directly — there is no intermediary pricing layer, because there is no intermediary.
 
 A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre in the country. Geography stops being the limit.
 
-The full positioning is in [POSITIONING.md](./POSITIONING.md). The thirty-second shareable version is in [PITCH.md](./PITCH.md).
+📖 *The full positioning is in [POSITIONING.md](./POSITIONING.md). The thirty-second shareable version is in [PITCH.md](./PITCH.md).*
 
 ---
 
 ## What it actually does
 
-Ask a question in chat. Upload a PDF of your class notes. Snap a photo of a problem. For each request, Vidhya tries the cheapest path that works: first a pre-built bundle of the 82 highest-value concepts in the syllabus, then a client-side semantic search over your uploaded materials, then a live LLM call — only when the first two miss. Mathematical answers get computationally verified against Wolfram Alpha where possible, and the UI says so with an emerald *Wolfram-verified* badge.
+> ### 💡 **Ask anything. Upload anything. The cheapest path that works gets taken first.**
+
+Ask a question in chat. Upload a PDF of your class notes. Snap a photo of a problem. For each request, Vidhya tries the cheapest path that works: **first a pre-built bundle** of the 82 highest-value concepts in the syllabus, **then a client-side semantic search** over your uploaded materials, **then a live LLM call** — only when the first two miss. Mathematical answers get computationally verified against Wolfram Alpha where possible, and the UI says so with an emerald _Wolfram-verified_ badge.
 
 You register your exams once. The planner gives you sessions budgeted for the time you actually have in front of you — three minutes at a bus stop, sixty minutes on a weekend. You see your trailing weekly activity on the home screen. You save the patterns that work (*"morning commute, eight minutes"*) and fire them with one tap. When your exam is three days out the app stops telling you to rest; it switches to lesson review, because telling a stressed student to *"step away for ten minutes"* two days before her exam reads as tone-deaf.
 
-Everything reaches you through whichever channel you prefer — the web app, a Telegram bot, or WhatsApp. Same account, same progress, three surfaces.
+Everything reaches you through whichever channel you prefer — **the web app, a Telegram bot, or WhatsApp**. Same account, same progress, three surfaces.
 
-The complete ledger of shipped features across forty-eight tagged releases lives in [FEATURES.md](./FEATURES.md).
+📖 *The complete ledger of shipped features across forty-eight tagged releases lives in [FEATURES.md](./FEATURES.md).*
 
 ---
 
 ## What's underneath
 
-A React SPA backed by a stateless Node server on Express. Your student model, your uploaded notes, and your semantic embeddings all live in IndexedDB. A twenty-two-megabyte WASM embedding model ships to the browser once, and from then on embeddings are computed locally. The server is mostly a thin LLM proxy with an opt-in anonymous telemetry aggregator. Nothing is in Postgres. Nothing requires it. A five-dollar VPS handles a class of fifty.
+> ### 💡 **Stateless server. Local-first client. No database required.**
 
-The content layer is a four-tier cascade assembled overnight by GitHub Actions: scrape curated CC-licensed sources (OpenStax, MIT OCW, GATE previous-year papers, Stack Exchange), generate 82 concept explainers with a cheap LLM, verify every piece of math against Wolfram, assemble into `content-bundle.json`, and ship. Roughly eighty percent of student questions hit tier 0 at zero marginal cost. The remaining twenty percent fan out to semantic search, then to a live LLM call — and six percent of those get Wolfram-verified on the fly. The whole cascade is defended and cost-modelled in [PLAN-content-engine.md](./PLAN-content-engine.md).
+A React SPA backed by a stateless Node server on Express. **Your student model, your uploaded notes, and your semantic embeddings all live in IndexedDB.** A twenty-two-megabyte WASM embedding model ships to the browser once; from then on embeddings are computed locally. The server is mostly a thin LLM proxy with an opt-in anonymous telemetry aggregator. **Nothing is in Postgres. Nothing requires it.** A five-dollar VPS handles a class of fifty.
 
-Every other architectural choice is walked through in [DESIGN.md](./DESIGN.md). The hierarchical docs index is at [docs/00-index.md](./docs/00-index.md).
+The content layer is a **four-tier cascade** assembled overnight by GitHub Actions: scrape curated CC-licensed sources (OpenStax, MIT OCW, GATE previous-year papers, Stack Exchange), generate 82 concept explainers with a cheap LLM, verify every piece of math against Wolfram, assemble into `content-bundle.json`, and ship. **Roughly eighty percent of student questions hit tier 0 at zero marginal cost.** The remaining twenty percent fan out to semantic search, then to a live LLM call — and six percent of those get Wolfram-verified on the fly.
+
+📖 *The cascade is defended and cost-modelled in [PLAN-content-engine.md](./PLAN-content-engine.md). Every other architectural choice is in [DESIGN.md](./DESIGN.md). The hierarchical docs index is at [docs/00-index.md](./docs/00-index.md).*
 
 ---
 
 ## Getting started
 
-**As a student**, read [PITCH.md](./PITCH.md) for what Vidhya does for you, then follow [INSTALL.md](./INSTALL.md) to run it locally.
+> [!NOTE]
+> **Choose your path below.** Each takes you to the right starting file.
 
-**As a technical evaluator**, start at [FEATURES.md](./FEATURES.md) for the shipping ledger, then [DESIGN.md](./DESIGN.md) for the architectural principles, then dive into [docs/](./docs/).
+🎓 **As a student** → [PITCH.md](./PITCH.md) for what Vidhya does for you, then [INSTALL.md](./INSTALL.md) to run it locally.
 
-**As an institution deploying for a cohort**, install via [INSTALL.md](./INSTALL.md). No per-seat licence and no external database required. Role-based admin hierarchy — owner, admin, teacher, student — with the first sign-in auto-becoming owner. Add students through the admin dashboard or via CSV import. Define new exams as YAML files. Students reach their sessions through web, Telegram, or WhatsApp.
+🔬 **As a technical evaluator** → [FEATURES.md](./FEATURES.md) for the shipping ledger, [DESIGN.md](./DESIGN.md) for the architecture, then [docs/](./docs/).
+
+🏫 **As an institution deploying for a cohort** → [INSTALL.md](./INSTALL.md). No per-seat licence. No external database. Role-based admin hierarchy (owner / admin / teacher / student) with the first sign-in auto-becoming owner. Add students via dashboard or CSV import. Define new exams as YAML. Students reach sessions through web, Telegram, or WhatsApp.
 
 ---
 

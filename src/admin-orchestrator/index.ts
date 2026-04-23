@@ -49,4 +49,11 @@ export {
 export type {
   ResourceDescriptor, ResourceReadContext, ResourceReadResult, ResourceReadError,
 } from './mcp-resources';
+export {
+  PROMPT_CATALOG, listPromptsForRole, getPrompt,
+} from './mcp-prompts';
+export type {
+  PromptDescriptor, PromptArgumentSpec, PromptMessage, PromptGetResult,
+  PromptGetError, PromptGetContext,
+} from './mcp-prompts';
 export { getDashboardHTML } from './dashboard-html';

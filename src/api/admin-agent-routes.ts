@@ -244,17 +244,22 @@ async function h_llmStatus(req: ParsedRequest, res: ServerResponse): Promise<voi
 
 /**
  * GET /api/admin/agent/dashboard
- * Serves the admin orchestrator UI — an HTML page with inline CSS+JS
- * that consumes the /api/admin/agent/* endpoints via fetch(). The HTML
- * itself is PUBLIC and unauthenticated so it can load before an auth
- * token exists; the JS then prompts the user for a JWT which is
- * attached to every API call as a Bearer header. This mirrors how
- * bookmarkable single-page apps work everywhere else.
+ *
+ * DEPRECATED as of v2.26.0 — the dashboard now lives at /admin/agent/dashboard
+ * (no /api/ prefix), served from the frontend static bundle alongside the
+ * student-facing SPA. This endpoint remains as a 301 redirect so any
+ * existing bookmarks continue to work.
+ *
+ * The new URL benefits from the same origin + CSP as the rest of the
+ * app, and doesn't pollute the /api/ namespace with an HTML payload.
  */
 async function h_dashboard(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const { sendHTML } = await import('../lib/route-helpers');
-  const { getDashboardHTML } = await import('../admin-orchestrator/dashboard-html');
-  sendHTML(res, getDashboardHTML());
+  res.writeHead(301, {
+    'Location': '/admin/agent/dashboard',
+    'Cache-Control': 'no-cache',
+    'Access-Control-Allow-Origin': '*',
+  });
+  res.end('Moved Permanently — /admin/agent/dashboard');
 }
 
 // ============================================================================
@@ -286,6 +291,7 @@ export const adminAgentRoutes: Array<{ method: string; path: string; handler: Ro
   { method: 'GET',  path: '/api/admin/agent/mcp/manifest',       handler: h_mcpManifest },
   { method: 'GET',  path: '/api/admin/agent/llm-status',         handler: h_llmStatus },
 
-  // Dashboard UI (v2.25.0) — public HTML page; API calls from JS are authenticated
+  // Dashboard — the old /api/ path now 301-redirects to the new
+  // /admin/agent/dashboard URL served from the frontend bundle (v2.26.0).
   { method: 'GET',  path: '/api/admin/agent/dashboard',          handler: h_dashboard },
 ];

@@ -513,17 +513,30 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
     if (fs.existsSync(frontendDist)) {
       const filePath = path.join(frontendDist, pathname === '/' ? 'index.html' : pathname);
-      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-        const ext = path.extname(filePath);
-        const contentTypes: Record<string, string> = {
-          '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
-          '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml',
-          '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff',
-          '.map': 'application/json',
-        };
-        res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream' });
-        fs.createReadStream(filePath).pipe(res);
-        return;
+      if (fs.existsSync(filePath)) {
+        const stat = fs.statSync(filePath);
+        // 1) Direct file match
+        if (stat.isFile()) {
+          const ext = path.extname(filePath);
+          const contentTypes: Record<string, string> = {
+            '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
+            '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml',
+            '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff',
+            '.map': 'application/json',
+          };
+          res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream' });
+          fs.createReadStream(filePath).pipe(res);
+          return;
+        }
+        // 2) Directory with index.html — serves e.g. /admin/agent/dashboard/ → .../dashboard/index.html
+        if (stat.isDirectory()) {
+          const dirIndex = path.join(filePath, 'index.html');
+          if (fs.existsSync(dirIndex) && fs.statSync(dirIndex).isFile()) {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            fs.createReadStream(dirIndex).pipe(res);
+            return;
+          }
+        }
       }
       // SPA fallback — serve index.html for unknown paths
       const indexPath = path.join(frontendDist, 'index.html');

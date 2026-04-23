@@ -71,7 +71,7 @@ const ERR_NOT_AUTHORIZED = -32002;
 
 export const MCP_SERVER_INFO = {
   name: 'project-vidhya-admin-orchestrator',
-  version: '2.25.0',
+  version: '2.26.0',
   /** Protocol version the server implements. 2024-11-05 is the stable MCP baseline. */
   protocolVersion: '2024-11-05',
 };
@@ -82,7 +82,7 @@ export const MCP_SERVER_INFO = {
  *
  *   tools:           list + call (core); listChanged notifications unsupported
  *   resources:       list + read (v2.24.0); subscribe unsupported; listChanged unsupported
- *   prompts:         unsupported in v2.23.0 — no prompt templates exposed
+ *   prompts:         list + get (v2.26.0); listChanged unsupported
  *   sampling:        unsupported — server does not ask client to generate
  *   logging:         unsupported — server does not forward logs to client
  */
@@ -94,6 +94,10 @@ export const MCP_CAPABILITIES = {
   resources: {
     /** Server does not support resources/subscribe (no push notifications) */
     subscribe: false,
+    /** Server does not emit listChanged notifications */
+    listChanged: false,
+  },
+  prompts: {
     /** Server does not emit listChanged notifications */
     listChanged: false,
   },
@@ -144,6 +148,10 @@ export async function handleMCPRequest(
         return await handleResourcesList(id, request.params, ctx);
       case 'resources/read':
         return await handleResourcesRead(id, request.params, ctx);
+      case 'prompts/list':
+        return await handlePromptsList(id, request.params, ctx);
+      case 'prompts/get':
+        return await handlePromptsGet(id, request.params, ctx);
       case 'notifications/initialized':
         // Per MCP: client sends this after initialize. Acknowledge silently.
         return successResponse(id, null);
@@ -286,6 +294,39 @@ async function handleResourcesRead(id: any, params: any, ctx: MCPContext): Promi
 }
 
 // ============================================================================
+// Prompts handlers (v2.26.0)
+// ============================================================================
+
+async function handlePromptsList(id: any, _params: any, ctx: MCPContext): Promise<JsonRpcResponse> {
+  const { listPromptsForRole } = await import('./mcp-prompts');
+  return successResponse(id, listPromptsForRole(ctx.role));
+}
+
+async function handlePromptsGet(id: any, params: any, ctx: MCPContext): Promise<JsonRpcResponse> {
+  if (!params || typeof params !== 'object' || typeof params.name !== 'string') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params.name (string) required');
+  }
+  const args = params.arguments && typeof params.arguments === 'object' ? params.arguments : {};
+
+  const { getPrompt } = await import('./mcp-prompts');
+  const result = await getPrompt(params.name, args, { role: ctx.role, actor: ctx.actor });
+
+  if ('error' in result) {
+    const code =
+      result.error.code === 'not-authorized' ? ERR_NOT_AUTHORIZED :
+      result.error.code === 'not-found' ? ERR_TOOL_NOT_FOUND :  // reuse -32001 for prompt-not-found
+      result.error.code === 'invalid-arguments' ? ERR_INVALID_PARAMS :
+      ERR_INTERNAL_ERROR;
+    return errorResponse(id, code, result.error.message, { name: params.name });
+  }
+
+  return successResponse(id, {
+    description: result.description,
+    messages: result.messages,
+  });
+}
+
+// ============================================================================
 // Response helpers
 // ============================================================================
 
@@ -321,6 +362,7 @@ export function getPublicManifest(): any {
     methods_supported: [
       'initialize', 'ping', 'tools/list', 'tools/call',
       'resources/list', 'resources/read',
+      'prompts/list', 'prompts/get',
       'notifications/initialized',
     ],
     protocol_notes: [
@@ -329,6 +371,7 @@ export function getPublicManifest(): any {
       'Every tool call goes through role-based authorization',
       'Destructive tools flagged via annotations.destructiveHint=true',
       'Resources are URI-addressed (vidhya://admin/...) and read-only',
+      'Prompts return MCP-formatted messages the client runs through its own LLM',
     ],
   };
 }

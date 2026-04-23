@@ -1,327 +1,101 @@
 # Project Vidhya
 
-# **World-class prep. Without the world-class stress.**
-
-*Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
-
----
-
-### What you gain — five promises, written from where you stand
-
-- **You never lose ground.** Other apps let your progress evaporate between sessions. Here, every mistake you make, every concept you skip, every late-night breakthrough — the system holds on to it for you. Twelve 5-minute sessions compound into the mastery a 60-minute session builds. Whatever you learn, you keep.
-- **You study without the anxiety tax.** The pressure was never going to teach you calculus — it was just going to cost you sleep. No streaks to maintain. No guilt pings. Miss a day, the app waits. You approach your prep with curiosity, not dread.
-- **Your address stops deciding your education.** A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre in the country. You compete on effort, not postal code.
-- **You can ask the question you've been afraid to ask.** No teacher's face. No peer's whisper. No side-eye at midnight. Ask the basic question, twice if you need to, and move on. Your curiosity stops costing you dignity.
-- **You are studied *for*, not studied *on*.** Your exam score is the only metric this app cares about. You stop being the product. You start being served.
-
-*Read the full positioning in [POSITIONING.md](./POSITIONING.md). Read the technical ledger in [FEATURES.md](./FEATURES.md).*
+> **World-class prep. Without the world-class stress.**
+>
+> *Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
 
 ---
 
-**Your AI study partner — knows your exam, reads your notes, verifies every answer, and respects your privacy.**
+## The moment we built this for
 
-Vidhya is a learning app that actually teaches. Upload your class notes,
-snap a photo of any problem, and get a step-by-step explanation — with
-the common traps flagged, the common misconceptions called out, and the
-answer double-checked by Wolfram Alpha where possible. Your materials
-and progress stay on your device. The AI provider is your choice.
+It's 2 a.m. She's stuck on an eigenvalue problem. Her exam is in four weeks. The coaching centre closed at nine. The top-ranked YouTube explanation runs forty-five minutes and assumes she already understands the thing she's trying to learn. Her notes are at home. She doesn't know what to ask because she doesn't know what she doesn't know.
 
-Built initially for GATE Engineering Mathematics; the architecture is
-domain-agnostic — any exam with a defined syllabus works.
+She opens her phone, takes a photo of the problem, and gets her answer — not just the number, but the method, the intuition, the trap she would have fallen into, the specific concept she's weak on, and three calibrated problems that will fix it. Ten minutes later she's moved on.
 
-> **New to Vidhya?** Read the [**30-second pitch (PITCH.md)**](./PITCH.md) for what it does for you as a student. \
-> **Technical evaluator?** The [**full technical deck (FEATURES.md)**](./FEATURES.md) covers every architectural decision.
+The next morning the app doesn't guilt-ping her about a broken streak. It just remembers where she stopped, and picks up when she's ready.
+
+That's Vidhya.
 
 ---
 
-## The journey — from exam-prep pain to exam-prep bliss
+## Why it exists
 
-Below, the same student speaks twice. Once before Vidhya. Once after. Every "After" line is a real takeaway — what you'll actually find yourself saying, in your own voice, once you're using the product. Each bliss is tied to a feature shipped in the codebase; longer treatment is in [FEATURES.md](./FEATURES.md) Slide 2.
+Every existing exam-prep product makes the same trade-off: to get personalised prep, you give up your data, your time, your peace of mind, and usually your money. The stressed student is the profitable one. Streak fatigue, push notifications, lock-screen guilt — none of it was ever going to teach you calculus. It was just going to cost you sleep.
 
-- **Before:** *"I don't know if I'm actually ready for my exam."*    **After:** *"I know exactly where I stand. Twelve concepts mastered, fifteen in progress, three I need to work on. I stopped guessing."*
-- **Before:** *"The syllabus is so big I don't know where to start today."*    **After:** *"Three concepts today. Finished them by evening. I can see what's next."*
-- **Before:** *"My exam is in three days and every app is telling me to take a break."*    **After:** *"It switched me to a quick review instead of suggesting rest. The advice finally matches my reality."*
-- **Before:** *"I watch 45-minute lectures and still don't get the concept."*    **After:** *"It clicked in ten minutes. I skipped the parts I already knew and spent time on the one thing I didn't."*
-- **Before:** *"It's 2 a.m., I'm stuck on this problem, and I have nowhere to turn."*    **After:** *"I took a photo and had the full walkthrough in seconds. The trap I'd have fallen into was flagged before I hit it."*
-- **Before:** *"I paid for a plan and I don't really know what I'm getting."*    **After:** *"I can see every exam my plan covers, and how much of each one I've already prepared for. It's no longer a mystery."*
-- **Before:** *"I keep forgetting things I studied weeks ago."*    **After:** *"What I learned in the first month is still with me in exam week. It kept coming back at the right moments."*
-- **Before:** *"I can't tell when the AI is making things up."*    **After:** *"When the system isn't sure it tells me. When it's sure, the math has been checked. I finally trust what I read."*
-- **Before:** *"Streaks and notifications are making me resent studying."*    **After:** *"No streaks. No guilt. I study when I want to study, and the app doesn't interrupt me otherwise."*
-- **Before:** *"I'm nervous about my weak areas ending up in some corporate database."*    **After:** *"My materials, my progress, my struggles — all on my device. Nothing lives on a server that could leak."*
-- **Before:** *"I don't have access to top-tier teaching where I live."*    **After:** *"I'm getting the same structured lessons, the same trap-flagging, the same depth, no matter where I log in from. Geography stopped being the limit."*
-- **Before:** *"My foundations are shaky, which is making everything advanced feel impossible."*    **After:** *"It noticed the gap three topics behind the one I was stuck on, sent me there first, and the advanced stuff started making sense again."*
-- **Before:** *"Coaching moves at the average pace — I'm either bored or lost."*    **After:** *"I'm moving at my pace per concept. Quick where it clicks, slow where it doesn't. There's no batch to keep up with anymore."*
-- **Before:** *"I'm embarrassed to ask basic questions in class."*    **After:** *"I asked a 'basic' question at midnight with no one watching. I got an answer. I moved on."*
-- **Before:** *"My teacher explains the derivation but I don't see why any of it matters."*    **After:** *"Every lesson starts with what problem the concept was invented to solve. I finally understand why I'm learning this — so the derivation actually sticks."*
-- **Before:** *"Textbooks are too abstract, videos are too hand-wavy, neither works for me."*    **After:** *"I get the visual intuition and the rigorous statement — in the same place, for the same concept. I pick whichever layer I need today."*
+Vidhya makes a different trade. Twelve five-minute sessions compound into the mastery a sixty-minute session builds; nothing evaporates between them. The app tunes its advice to how close your exam is, so a student two days out gets *"do a quick review"*, not *"take a break"*. Your notes, your progress, and your provider key all stay on your device. The price of the AI is whatever the provider charges you directly — there is no intermediary pricing layer, because there is no intermediary.
+
+A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre in the country. Geography stops being the limit.
+
+The full positioning is in [POSITIONING.md](./POSITIONING.md). The thirty-second shareable version is in [PITCH.md](./PITCH.md).
 
 ---
 
+## What it actually does
 
+Ask a question in chat. Upload a PDF of your class notes. Snap a photo of a problem. For each request, Vidhya tries the cheapest path that works: first a pre-built bundle of the 82 highest-value concepts in the syllabus, then a client-side semantic search over your uploaded materials, then a live LLM call — only when the first two miss. Mathematical answers get computationally verified against Wolfram Alpha where possible, and the UI says so with an emerald *Wolfram-verified* badge.
 
+You register your exams once. The planner gives you sessions budgeted for the time you actually have in front of you — three minutes at a bus stop, sixty minutes on a weekend. You see your trailing weekly activity on the home screen. You save the patterns that work (*"morning commute, eight minutes"*) and fire them with one tap. When your exam is three days out the app stops telling you to rest; it switches to lesson review, because telling a stressed student to *"step away for ten minutes"* two days before her exam reads as tone-deaf.
 
+Everything reaches you through whichever channel you prefer — the web app, a Telegram bot, or WhatsApp. Same account, same progress, three surfaces.
 
-## What you actually get (as a student)
-
-We built Vidhya around six promises to the student. Each one is a
-concrete outcome, not a feature.
-
-### 1. You'll know exactly where you stand — on every concept in your syllabus
-
-Vidhya tracks your mastery per concept, not just overall. Open the app
-and you see: 12 concepts mastered, 15 in progress, 3 struggling. You
-know what to review before your next session. No dashboards to learn,
-no jargon — just "here's what needs work."
-
-### 2. The app knows which exam you're taking — and adapts every lesson
-
-When you pick your target exam (GATE CS, JEE Advanced, UPSC CSE,
-whatever), every lesson, every recommendation, every "try this next"
-is filtered through that exam's syllabus and topic weightings. The
-concepts your exam weighs heavily get more practice; the ones that
-aren't on your exam don't clutter your study time.
-
-### 3. As your exam approaches, the app stops telling you to rest
-
-Five wrong answers in a row when your exam is 6 months away? The app
-suggests a break. Same five wrong answers when your exam is 3 days
-away? The app switches to a lesson review instead — because telling
-a stressed student to "step away for 10 minutes" two days before
-their exam reads as tone-deaf. The urgency of your situation shapes
-every piece of advice the app gives.
-
-### 4. One subscription can unlock multiple exams
-
-If your coaching institute bundles GATE CS with JEE Advanced, IES
-Electronics, and BARC, you'll see a clear **🎁 Giveaway** banner on
-sign-in listing every bonus exam your plan covers — and how much of
-each you've *already* covered through your primary prep. "You're
-already 42% of the way through JEE Advanced through your current
-prep." The bundle is celebrated, not hidden.
-
-### 5. You can study on a slow phone, on spotty wifi
-
-The app pre-loads the 80% of questions students most commonly ask.
-When your wifi drops or the server is down, you can keep studying.
-Telegram and WhatsApp bots work from a 3-year-old Android just as
-well as a new laptop.
-
-### 6. Your data stays yours — and your AI provider is your choice
-
-Your class notes, your mock test scores, your study history — all
-stay on your device. If you want to use AI-powered features, you
-bring your own Gemini / Claude / OpenAI / Ollama key. Your key stays
-in your browser. We never see it, and we never charge you for the AI.
+The complete ledger of shipped features across forty-eight tagged releases lives in [FEATURES.md](./FEATURES.md).
 
 ---
 
-## What Vidhya does for you
+## What's underneath
 
-**Study anything from your syllabus, instantly.** Ask a question in chat, or
-upload a photo of a problem. You'll get a walkthrough — not just the
-answer, but the method, the intuition, and the common mistakes to avoid.
+A React SPA backed by a stateless Node server on Express. Your student model, your uploaded notes, and your semantic embeddings all live in IndexedDB. A twenty-two-megabyte WASM embedding model ships to the browser once, and from then on embeddings are computed locally. The server is mostly a thin LLM proxy with an opt-in anonymous telemetry aggregator. Nothing is in Postgres. Nothing requires it. A five-dollar VPS handles a class of fifty.
 
-**Lessons that actually stick.** Every concept is taught in 8 bite-sized
-components (hook → definition → intuition → worked example → mini
-exercise → common traps → formal statement → connections). Designed around
-how human memory actually works, not around video lecture formats.
+The content layer is a four-tier cascade assembled overnight by GitHub Actions: scrape curated CC-licensed sources (OpenStax, MIT OCW, GATE previous-year papers, Stack Exchange), generate 82 concept explainers with a cheap LLM, verify every piece of math against Wolfram, assemble into `content-bundle.json`, and ship. Roughly eighty percent of student questions hit tier 0 at zero marginal cost. The remaining twenty percent fan out to semantic search, then to a live LLM call — and six percent of those get Wolfram-verified on the fly. The whole cascade is defended and cost-modelled in [PLAN-content-engine.md](./PLAN-content-engine.md).
 
-**Works on a slow internet.** The app pre-loads the 80% of questions most
-students actually ask. You can keep studying when your wifi drops.
-
-**Reach it from anywhere.** Web, Telegram, or WhatsApp — the same Vidhya
-account, the same progress, across all three.
-
-**Your data stays yours.** Materials you upload, questions you ask, progress
-you make — all stay in your browser or on your local server. Nothing leaves
-unless you explicitly sync it.
-
-**Free to try, your AI your choice.** Use the free Gemini tier, or plug in
-your own key from any of 8 providers (Claude, OpenAI, Groq, Ollama local,
-and more). Your keys stay in your browser; we never see them.
+Every other architectural choice is walked through in [DESIGN.md](./DESIGN.md). The hierarchical docs index is at [docs/00-index.md](./docs/00-index.md).
 
 ---
 
-## Why institutions deploy it
+## Getting started
 
-- **Free to install and run** — no per-seat licensing, $5/month VPS covers a class of 50
-- **You own your users and data** — flat-file user directory on your server; nothing leaves
-- **Three access channels** — students use web, Telegram, or WhatsApp depending on what they prefer
-- **Customizable curriculum** — define any exam as a YAML file; works for GATE, JEE, CSIR-NET, custom in-house exams, anything with a syllabus
-- **Role-based admin** — owner/admin/teacher/student hierarchy with the first sign-in auto-becoming owner
+**As a student**, read [PITCH.md](./PITCH.md) for what Vidhya does for you, then follow [INSTALL.md](./INSTALL.md) to run it locally.
 
----
+**As a technical evaluator**, start at [FEATURES.md](./FEATURES.md) for the shipping ledger, then [DESIGN.md](./DESIGN.md) for the architectural principles, then dive into [docs/](./docs/).
 
-## How it works under the hood (the short version)
-
-| Tier | Source                                    | Cost per request | Typical hit rate |
-|------|-------------------------------------------|------------------|------------------|
-| 0    | Bundled JSON, served from CDN              | $0               | ~80%             |
-| 1    | Semantic RAG over bundle + your materials | $0 (client-side) | ~12% of misses   |
-| 2    | LLM generation (Gemini 2.5 Flash-Lite)     | ~$0.0005         | ~6% of misses    |
-| 3    | Wolfram-verified generation                | ~$0.002          | ~2% of misses    |
-
-Result: **86% cost reduction** vs a naive LLM-per-request setup, with no
-quality compromise — tier-0 hits carry the emerald "Wolfram-Verified"
-badge when computationally checked.
+**As an institution deploying for a cohort**, install via [INSTALL.md](./INSTALL.md). No per-seat licence and no external database required. Role-based admin hierarchy — owner, admin, teacher, student — with the first sign-in auto-becoming owner. Add students through the admin dashboard or via CSV import. Define new exams as YAML files. Students reach their sessions through web, Telegram, or WhatsApp.
 
 ---
 
-## Core architecture
+## Where the rest lives
 
-```
-Browser                                  Edge server (stateless)
-┌────────────────────────────┐          ┌──────────────────────────┐
-│  React + Vite SPA          │          │  Express on Node 20      │
-│  ├── IndexedDB (GBrain)    │          │  ├── /api/content/*      │
-│  │   • student model        │◄───REST──►  ├── /api/gemini/*        │
-│  │   • error history        │          │  ├── /api/aggregate/*    │
-│  │   • uploaded materials   │          │  └── no database         │
-│  ├── transformers.js WASM   │          └──────────┬───────────────┘
-│  │   • embeddings, offline  │                     │
-│  ├── content resolver       │                     ▼
-│  │   • 4-tier cascade       │          ┌──────────────────────────┐
-│  └── UI (Tailwind+Framer)   │          │ Gemini / Wolfram / Claude│
-└────────────────────────────┘          └──────────────────────────┘
+**Pitch and positioning**
+&nbsp;&nbsp;[PITCH.md](./PITCH.md) — thirty-second student-facing pitch
+&nbsp;&nbsp;[POSITIONING.md](./POSITIONING.md) — full brand and promise document
 
-Build-time pipeline (GitHub Actions, nightly)
-┌──────────────────────────────────────────────────────────────────┐
-│  scrape-corpus  →  scrape-textbooks  →  build-explainers (LLM)    │
-│                                 ↓                                 │
-│                   verify-wolfram-batch (Wolfram API)              │
-│                                 ↓                                 │
-│                      build-bundle (SHA-256 dedup)                 │
-│                                 ↓                                 │
-│          commit content-bundle.json to main → deploy              │
-└──────────────────────────────────────────────────────────────────┘
-```
+**Architecture and features**
+&nbsp;&nbsp;[DESIGN.md](./DESIGN.md) — visual and UX principles
+&nbsp;&nbsp;[FEATURES.md](./FEATURES.md) — forty-eight-release feature ledger
+&nbsp;&nbsp;[PLAN-content-engine.md](./PLAN-content-engine.md) — four-tier content cascade
+&nbsp;&nbsp;[PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md) — local-first architecture rationale
+&nbsp;&nbsp;[PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md) — the cognitive student model
+&nbsp;&nbsp;[docs/00-index.md](./docs/00-index.md) — hierarchical deep-reference index
 
-**What's local-first:**
-- Student progress lives in the browser (IndexedDB)
-- Embeddings computed client-side (22 MB WASM model, one-time download)
-- Uploaded PDFs/DOCXs parsed entirely in-browser (privacy-preserving)
+**Frameworks the product is built on**
+&nbsp;&nbsp;[docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md) — the insight engine and smart notebook
+&nbsp;&nbsp;[docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md) — exam registry, enrichment, progressive fill
+&nbsp;&nbsp;[docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md) — multi-channel interactive rendering
+&nbsp;&nbsp;[docs/GBRAIN-INTEGRATION-AUDIT.md](./docs/GBRAIN-INTEGRATION-AUDIT.md) — per-feature audit of the student model
 
-**What's on the edge server:**
-- Stateless LLM proxy (Gemini, Anthropic, others)
-- Content resolver with telemetry
-- Opt-in anonymous cohort aggregation (flat-file, not Postgres)
+**Setup and operation**
+&nbsp;&nbsp;[INSTALL.md](./INSTALL.md) — cross-platform installation, tiered by feature needs
+&nbsp;&nbsp;[DEPENDENCIES.md](./DEPENDENCIES.md) — toolchain + runtime packages, tagged by necessity
+&nbsp;&nbsp;[docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) — BYO-key setup for 8 providers
+&nbsp;&nbsp;[docs/08-testing-guide.md](./docs/08-testing-guide.md) — test commands and smoke checks
 
----
+**Journeys**
+&nbsp;&nbsp;[docs/USER-JOURNEY.md](./docs/USER-JOURNEY.md) — student and admin journey maps
+&nbsp;&nbsp;[docs/TEACHER-JOURNEY.md](./docs/TEACHER-JOURNEY.md) — teachers as end users
 
-## Quick start
-
-See [**INSTALL.md**](./INSTALL.md) for the full guide. TL;DR:
-
-```bash
-git clone https://github.com/mathconcepts/project-vidhya.git
-cd project-vidhya
-npm ci
-cd frontend && npm ci && npm run build && cd ..
-echo "JWT_SECRET=$(openssl rand -hex 32)" > .env
-npm run dev:server
-```
-
-Open `http://localhost:8080`. Works immediately with bundled content and no
-API keys. Add `GEMINI_API_KEY` to `.env` to unlock Tier 2. Add
-`WOLFRAM_APP_ID` to enable computational verification.
-
----
-
-## Key features
-
-- **Content engine** — scrape → tag → generate → verify → bundle → deliver, all automated
-- **GBrain cognitive model** — 15-attribute Bayesian student model, 7-category error taxonomy, 82-concept DAG
-- **Materials upload** — PDFs/DOCXs parsed + embedded entirely client-side, grounded into the tutor chat
-- **Four-tier resolver** — every content request routed to cheapest matching source
-- **Wolfram verification** — mathematical answers computationally checked at build time
-- **Opt-in cohort telemetry** — anonymous misconception aggregation without session IDs or PII
-- **Admin dashboards** — tier hit rates, cost per event, bundle coverage, student audits
-- **Offline-capable** — runs in-browser with no server once the bundle is cached
-
----
-
-## Dependencies overview
-
-All managed via `npm ci`. See [INSTALL.md](./INSTALL.md#requirements-at-a-glance)
-for the tiered breakdown.
-
-**Host toolchain** (required): Node.js ≥ 20, npm ≥ 10, git ≥ 2.30
-**Optional host tools**: PostgreSQL 14+, Docker 24+
-
-**Runtime packages** (auto-installed):
-- Backend: 11 runtime + 3 dev dependencies
-- Frontend: 21 runtime + 9 dev dependencies
-
-**External services** (all optional):
-- **Any LLM provider** — Gemini / Anthropic / OpenAI / OpenRouter / Groq / DeepSeek / Mistral / Ollama (local). **Users configure in-browser at `/llm-config`**; keys never touch the server.
-- Wolfram Alpha — tier-3 verification (unlocks emerald verified badges)
-- Supabase / PostgreSQL — persistent auth (runtime works without either)
-
----
-
-## Documentation
-
-| Document                    | Scope                                       |
-|----------------------------|---------------------------------------------|
-| [PITCH.md](./PITCH.md)     | 30-second shareable one-pager                |
-| [FEATURES.md](./FEATURES.md) | 37-slide deck (9 for students, 28 technical): every moat, metrics, cost model |
-| [INSTALL.md](./INSTALL.md) | Cross-platform installation, tiered by feature needs |
-| [docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) | BYO-key setup: 8 providers, cascading role defaults, privacy model |
-| [docs/USER-JOURNEY.md](./docs/USER-JOURNEY.md) | Student + admin journey maps with pain points and fixes |
-| [docs/TEACHER-JOURNEY.md](./docs/TEACHER-JOURNEY.md) | Teacher as end-user — what to teach + how to teach; human teacher ↔ AI teacher model |
-| [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md) | After-each-attempt insight engine + Smart Notebook (auto-logged, concept-clustered, gap-analyzed, exportable) |
-| [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md) | Dynamic exam registry — admin-managed with LLM-optional enrichment, conversational assistant, unique multi-student IDs, progressive fill |
-| [docs/GBRAIN-INTEGRATION-AUDIT.md](./docs/GBRAIN-INTEGRATION-AUDIT.md) | Systematic per-feature audit proving GBrain is applied across all student-facing surfaces; unified /api/me/gbrain-summary endpoint; cross-exam coverage engine |
-| [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md) | Multi-channel interactive rendering — enriches canonical lessons with step-reveal / flip-card / quick-check / drag-match blocks; first-class renderers for web (Framer Motion), Telegram (progressive-reveal keyboards), WhatsApp, voice |
-| [DEPENDENCIES.md](./DEPENDENCIES.md) | Canonical dep inventory tagged Required/Recommended/Optional |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute — scrapers, concepts, code, PRs |
-| [SECURITY.md](./SECURITY.md) | Vulnerability disclosure policy + response timeline |
-| [PLAN-content-engine.md](./PLAN-content-engine.md) | Four-tier cascade, cost analysis, Wolfram integration rationale |
-| [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md) | Local-first architecture, client-side embeddings, opt-in aggregation |
-| [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md) | Cognitive model: student attributes, error taxonomy, concept graph |
-| [DESIGN.md](./DESIGN.md)   | Visual and UX design principles             |
-| [CHANGELOG.md](./CHANGELOG.md) | Release history v2.0.0 onwards            |
-
----
-
-## Content pipeline scripts
-
-```bash
-# Scrape curated sources (no API keys needed)
-npx tsx scripts/scrape-corpus.ts --source gate
-npx tsx scripts/scrape-textbooks.ts --source openstax
-npx tsx scripts/scrape-textbooks.ts --source ocw
-
-# Build the 82-concept explainer library (requires GEMINI_API_KEY)
-npx tsx scripts/build-explainers.ts
-
-# Computationally verify every problem (requires WOLFRAM_APP_ID)
-npx tsx scripts/verify-wolfram-batch.ts
-
-# Assemble the deliverable bundle
-npx tsx scripts/build-bundle.ts
-```
-
-Output: `frontend/public/data/content-bundle.json` is served directly from
-the CDN/host and consumed by the client resolver.
-
----
-
-## Testing
-
-```bash
-# Backend
-npm test
-
-# Frontend typecheck
-cd frontend && npx tsc --noEmit
-
-# Production smoke test
-curl http://localhost:8080/api/content/stats
-curl -X POST http://localhost:8080/api/content/resolve \
-  -H "Content-Type: application/json" \
-  -d '{"intent":"practice","concept_id":"eigenvalues","difficulty":0.5}'
-```
+**Project meta**
+&nbsp;&nbsp;[CONTRIBUTING.md](./CONTRIBUTING.md) — PRs, new scrapers, new subject domains
+&nbsp;&nbsp;[SECURITY.md](./SECURITY.md) — private vulnerability disclosure
+&nbsp;&nbsp;[CHANGELOG.md](./CHANGELOG.md) — release history from v2.0.0
 
 ---
 
@@ -329,27 +103,7 @@ curl -X POST http://localhost:8080/api/content/resolve \
 
 MIT. See [LICENSE](./LICENSE).
 
-Content bundled from third-party sources carries per-record attribution:
-- OpenStax textbook excerpts → CC-BY 4.0
-- MIT OpenCourseWare problems → CC-BY-NC-SA 4.0
-- GATE previous year papers → public domain
-- Math Stack Exchange excerpts → CC-BY-SA 4.0
-
-See each record's `license` and `attribution` fields in
-`frontend/public/data/content-bundle.json`.
-
----
-
-## Contributing
-
-Pull requests welcome. See [**CONTRIBUTING.md**](./CONTRIBUTING.md) for the
-full guide. Highest-leverage areas:
-
-- **New content sources** — CC-licensed scrapers in `scripts/` following the existing JSONL schema
-- **Wolfram matcher improvements** — handle algebraically-equivalent restructured answers
-- **New subject domains** — swap `concept-graph.ts` and seed problems
-
-Security issues → [SECURITY.md](./SECURITY.md) (private disclosure).
+Bundled third-party content keeps its own per-record attribution: OpenStax textbook excerpts under CC-BY 4.0, MIT OpenCourseWare problems under CC-BY-NC-SA 4.0, GATE previous-year papers in the public domain, Math Stack Exchange excerpts under CC-BY-SA 4.0. Every record in `content-bundle.json` carries its own `license` and `attribution` fields.
 
 ---
 

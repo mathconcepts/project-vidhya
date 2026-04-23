@@ -62,7 +62,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
   // Instantiate a client that declares the full suite of capabilities —
   // mirroring how Claude Desktop + MCP Inspector introduce themselves.
   const client = new Client(
-    { name: 'vidhya-sdk-compat-test', version: '2.31.0' },
+    { name: 'vidhya-sdk-compat-test', version: '2.32.0' },
     { capabilities: { tools: {}, resources: {}, prompts: {}, sampling: {} } },
   );
 
@@ -116,10 +116,10 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
     console.log('\n═══ CASE 3: tools/list — SDK parses every tool ═══');
     const toolsResult = await client.listTools();
     check('listTools returned (Zod parse OK)', Array.isArray(toolsResult.tools));
-    check(`got 32 tools (admin role)`, toolsResult.tools.length === 32);
+    check(`got 33 tools (admin role)`, toolsResult.tools.length === 33);
 
     // The SDK enforces that every tool has: name, description, inputSchema.
-    // If any of our 32 tools had a misshaped schema, the Zod parse would
+    // If any of our 33 tools had a misshaped schema, the Zod parse would
     // have thrown before we got here.
     check('every tool has name', toolsResult.tools.every((t: any) => typeof t.name === 'string'));
     check('every tool has description', toolsResult.tools.every((t: any) => typeof t.description === 'string'));
@@ -139,7 +139,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
     check('content[0].type is text', (callResult.content as any[])[0]?.type === 'text');
     const capsBody = JSON.parse((callResult.content as any[])[0].text);
     check('parsed body has version', !!capsBody.version);
-    check(`tool_count matches list (${capsBody.tool_count})`, capsBody.tool_count === 32);
+    check(`tool_count matches list (${capsBody.tool_count})`, capsBody.tool_count === 33);
 
     // ═══ CASE 5: resources/list ═══
     console.log('\n═══ CASE 5: resources/list — SDK parses every resource ═══');

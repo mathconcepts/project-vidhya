@@ -14,6 +14,23 @@ export {
   recordExecution, sumTrailingMinutes, projectSrStatsFromExecutions,
   _resetPlanStore,
 } from './store';
+export {
+  getProfile, upsertProfile, addExam, removeExam,
+  _resetExamProfileStore,
+} from './exam-profile-store';
+export type {
+  ExamRegistration, StudentExamProfile,
+} from './exam-profile-store';
+export {
+  createTemplate, listTemplatesForStudent, getTemplate,
+  deleteTemplate, markTemplateUsed, _resetTemplateStore,
+} from './template-store';
+export type { PlanTemplate } from './template-store';
+export {
+  logPracticeSession, sumTrailingPracticeMinutes, countTrailingSessions,
+  _resetPracticeSessionLog, _enumerateEntriesForTest,
+} from './practice-session-log';
+export type { PracticeSessionEntry } from './practice-session-log';
 export type {
   PlanRequest, MultiExamPlanRequest, SessionPlan,
   ActionRecommendation, ActionKind, ContentHint,

@@ -312,12 +312,24 @@ export const INPUT_SCHEMAS: Record<string, JSONSchema> = {
     type: 'object',
     required: ['student_id'],
     properties: {
-      student_id: { type: 'string', minLength: 1 },
+      student_id: {
+        type: 'string', minLength: 1,
+        description: 'Student id, or "*" for cross-student listing (admin dashboard).',
+      },
       limit: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
     },
     additionalProperties: false,
   },
   'student:get-plan': {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    type: 'object',
+    required: ['plan_id'],
+    properties: {
+      plan_id: { type: 'string', pattern: '^PLN-[a-z0-9]+$' },
+    },
+    additionalProperties: false,
+  },
+  'student:get-plan-with-execution': {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
     type: 'object',
     required: ['plan_id'],

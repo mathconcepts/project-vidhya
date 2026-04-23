@@ -379,6 +379,19 @@ export const TOOLS: Tool[] = [
     is_destructive: false,
     input_schema_doc: '{ plan_id: string }',
   },
+  {
+    id: 'student:get-plan-with-execution',
+    domain: 'student',
+    label: 'Get a plan plus aggregated outcomes in one shape',
+    description:
+      'Fetch a plan AND compute roll-up outcome stats in a single call — total attempts, ' +
+      'total correct, accuracy, minutes-planned vs minutes-actual, per-topic breakdown. ' +
+      'Coaching tools use this to avoid stitching two separate calls.',
+    required_roles: ['owner', 'admin', 'analyst'],
+    category: 'analysis',
+    is_destructive: false,
+    input_schema_doc: '{ plan_id: string }',
+  },
 ];
 
 // ============================================================================
@@ -635,17 +648,66 @@ async function _dispatch(tool_id: string, input: any): Promise<any> {
       return plan;
     }
     case 'student:list-plans': {
-      const { listPlansForStudent } = await import('../session-planner');
+      const { listPlansForStudent, listAllPlans } = await import('../session-planner');
       const limit = typeof input?.limit === 'number'
         ? Math.min(50, Math.max(1, input.limit))
         : 20;
-      const plans = listPlansForStudent(String(input?.student_id ?? ''), limit);
+      const student_id = String(input?.student_id ?? '');
+      // '*' wildcard → cross-student recent-activity view for the
+      // admin dashboard. Role gating at the tool level (analyst+)
+      // already prevents students from hitting this.
+      const plans = student_id === '*'
+        ? listAllPlans(limit)
+        : listPlansForStudent(student_id, limit);
       return { plans, count: plans.length };
     }
     case 'student:get-plan': {
       const { getPlan } = await import('../session-planner');
       const plan = getPlan(String(input?.plan_id ?? ''));
       return plan ?? { error: `Plan '${input?.plan_id}' not found` };
+    }
+    case 'student:get-plan-with-execution': {
+      const { getPlan } = await import('../session-planner');
+      const plan = getPlan(String(input?.plan_id ?? ''));
+      if (!plan) {
+        return { error: `Plan '${input?.plan_id}' not found` };
+      }
+      // Aggregate outcomes into a flat rollup for one-call coaching UX.
+      const exec = plan.execution;
+      let totalAttempts = 0, totalCorrect = 0, actualMinutes = 0;
+      const perTopic: Record<string, { attempts: number; correct: number; minutes: number }> = {};
+      if (exec) {
+        actualMinutes = exec.actual_minutes_spent;
+        for (const outcome of exec.actions_completed) {
+          const action = plan.actions.find((a: any) => a.id === outcome.action_id);
+          if (!action) continue;
+          const attempts = outcome.attempts ?? 0;
+          const correct = outcome.correct ?? 0;
+          const minutes = outcome.actual_minutes ?? 0;
+          totalAttempts += attempts;
+          totalCorrect += correct;
+          const topic = action.content_hint?.topic ?? 'unknown';
+          if (!perTopic[topic]) perTopic[topic] = { attempts: 0, correct: 0, minutes: 0 };
+          perTopic[topic].attempts += attempts;
+          perTopic[topic].correct += correct;
+          perTopic[topic].minutes += minutes;
+        }
+      }
+      return {
+        plan,
+        rollup: {
+          executed: !!exec,
+          total_attempts: totalAttempts,
+          total_correct: totalCorrect,
+          accuracy: totalAttempts > 0 ? totalCorrect / totalAttempts : null,
+          minutes_planned: plan.total_estimated_minutes,
+          minutes_actual: actualMinutes,
+          adherence_ratio: plan.total_estimated_minutes > 0
+            ? actualMinutes / plan.total_estimated_minutes
+            : null,
+          per_topic: perTopic,
+        },
+      };
     }
 
     default:

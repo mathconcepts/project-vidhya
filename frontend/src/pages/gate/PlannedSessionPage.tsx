@@ -23,13 +23,14 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
   Sparkles, RefreshCw, AlertCircle, ChevronRight,
+  Bookmark, Settings, Plus, Trash2,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -128,6 +129,26 @@ const DEFAULT_EXAM_DATE = (() => {
   return d.toISOString().slice(0, 10);
 })();
 
+interface ExamRegistration {
+  exam_id: string;
+  exam_date: string;
+  weekly_hours?: number;
+  added_at: string;
+}
+interface ExamProfile {
+  student_id: string;
+  exams: ExamRegistration[];
+  updated_at: string;
+}
+interface PlanTemplate {
+  id: string;
+  name: string;
+  minutes_available: number;
+  exam_selection: 'all' | 'primary' | string[];
+  use_count: number;
+  last_used_at?: string;
+}
+
 export default function PlannedSessionPage() {
   const navigate = useNavigate();
 
@@ -135,6 +156,13 @@ export default function PlannedSessionPage() {
   const [plan, setPlan] = useState<SessionPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // v2.32: profile + templates
+  const [profile, setProfile] = useState<ExamProfile | null>(null);
+  const [templates, setTemplates] = useState<PlanTemplate[]>([]);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Session tracking — local-only outcomes that get posted together
   // at completion. Until the user hits "Finish", this state is
@@ -144,6 +172,28 @@ export default function PlannedSessionPage() {
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
 
+  // Load profile + templates on mount — needed for "which exam(s)?" logic
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [profResp, tplResp] = await Promise.all([
+          authFetch('/api/student/profile'),
+          authFetch('/api/student/session/templates'),
+        ]);
+        if (cancelled) return;
+        if (profResp.ok) setProfile(await profResp.json());
+        if (tplResp.ok) {
+          const j = await tplResp.json();
+          setTemplates(j.templates || []);
+        }
+      } catch {
+        // Non-fatal — fall through to default exam
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const fetchPlan = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -151,15 +201,45 @@ export default function PlannedSessionPage() {
     setOutcomes({});
     setCompleted(false);
     try {
-      const res = await authFetch('/api/student/session/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          exam_id: DEFAULT_EXAM_ID,
-          exam_date: DEFAULT_EXAM_DATE,
-          minutes_available: minutes,
-        }),
-      });
+      let res: Response;
+      const hasMultiple = profile && profile.exams.length >= 2;
+      const hasOne = profile && profile.exams.length === 1;
+      if (hasMultiple) {
+        // Multi-exam plan when student has ≥2 exams registered
+        res = await authFetch('/api/student/session/plan/multi-exam', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            minutes_available: minutes,
+            exams: profile!.exams.map(e => ({
+              exam_id: e.exam_id,
+              exam_date: e.exam_date,
+            })),
+          }),
+        });
+      } else if (hasOne) {
+        const e = profile!.exams[0];
+        res = await authFetch('/api/student/session/plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exam_id: e.exam_id,
+            exam_date: e.exam_date,
+            minutes_available: minutes,
+          }),
+        });
+      } else {
+        // No profile yet — use defaults (student can set this up later)
+        res = await authFetch('/api/student/session/plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exam_id: DEFAULT_EXAM_ID,
+            exam_date: DEFAULT_EXAM_DATE,
+            minutes_available: minutes,
+          }),
+        });
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(body.error || `Plan request failed: ${res.status}`);
@@ -172,7 +252,78 @@ export default function PlannedSessionPage() {
     } finally {
       setLoading(false);
     }
-  }, [minutes]);
+  }, [minutes, profile]);
+
+  // Recall a saved template
+  const useTemplate = useCallback(async (tpl: PlanTemplate) => {
+    setLoading(true);
+    setError(null);
+    setPlan(null);
+    setOutcomes({});
+    setCompleted(false);
+    try {
+      const res = await authFetch(
+        `/api/student/session/templates/${tpl.id}/use`,
+        { method: 'POST' },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(body.error || `Template recall failed: ${res.status}`);
+      }
+      const j = await res.json();
+      setPlan(j.plan);
+      setStartedAtMs(Date.now());
+      setMinutes(tpl.minutes_available);
+      // Optimistic: nudge the use_count so templates reorder. Real
+      // value re-syncs on next page load.
+      setTemplates(cur => cur.map(t =>
+        t.id === tpl.id ? { ...t, use_count: t.use_count + 1 } : t,
+      ));
+    } catch (err: any) {
+      setError(err.message || 'Template recall failed');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const saveTemplate = useCallback(async () => {
+    if (!templateName.trim()) return;
+    setSavingTemplate(true);
+    try {
+      const examSel: PlanTemplate['exam_selection'] =
+        (profile && profile.exams.length >= 2) ? 'all' :
+        (profile && profile.exams.length === 1) ? 'primary' : 'primary';
+      const res = await authFetch('/api/student/session/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: templateName.trim(),
+          minutes_available: minutes,
+          exam_selection: examSel,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'save failed');
+      const tpl: PlanTemplate = await res.json();
+      setTemplates(cur => [tpl, ...cur]);
+      setTemplateName('');
+      setShowSaveTemplate(false);
+    } catch (err: any) {
+      setError(err.message || 'save failed');
+    } finally {
+      setSavingTemplate(false);
+    }
+  }, [templateName, minutes, profile]);
+
+  const deleteTemplateFn = useCallback(async (id: string) => {
+    try {
+      const res = await authFetch(`/api/student/session/templates/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) setTemplates(cur => cur.filter(t => t.id !== id));
+    } catch {
+      // ignore — student can retry
+    }
+  }, []);
 
   const startAction = useCallback((action: ActionRecommendation) => {
     // Route the user into the existing practice flow with the topic +
@@ -249,12 +400,84 @@ export default function PlannedSessionPage() {
       <div className="max-w-3xl mx-auto px-4 pt-8">
 
         <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight mb-1">Plan my session</h1>
-          <p className="text-sm text-zinc-400">
-            Tell us how much time you have — we'll give you concrete actions
-            that fit, prioritized by what'll move your score most.
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight mb-1">Plan my session</h1>
+              <p className="text-sm text-zinc-400">
+                Tell us how much time you have — we'll give you concrete actions
+                that fit, prioritized by what'll move your score most.
+              </p>
+            </div>
+            <Link
+              to="/gate/exam-profile"
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 transition-colors"
+              title="Register the exams you're preparing for"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Exam profile
+              {profile && (
+                <span className="ml-1 px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono">
+                  {profile.exams.length}
+                </span>
+              )}
+            </Link>
+          </div>
+          {profile && profile.exams.length === 0 && (
+            <div className="mt-3 text-xs text-amber-300/80 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2">
+              Using a default exam. <Link to="/gate/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
+            </div>
+          )}
+          {profile && profile.exams.length >= 2 && (
+            <div className="mt-3 text-xs text-sky-300/80">
+              Multi-exam mode — planning across your {profile.exams.length} registered exams, weighted by proximity.
+            </div>
+          )}
         </motion.header>
+
+        {/* Template bar — saved recurring patterns, one-tap recall */}
+        {!plan && !loading && templates.length > 0 && (
+          <motion.section
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            className="mb-6"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                <Bookmark className="inline w-3 h-3 mr-1 -mt-0.5" />
+                Your templates
+              </label>
+              <span className="text-[10px] text-zinc-600">tap to recall</span>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {templates.map((tpl) => (
+                <div key={tpl.id} className="group flex items-stretch bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden hover:border-purple-500/30 transition-colors">
+                  <button
+                    onClick={() => useTemplate(tpl)}
+                    className="px-3 py-2 text-left hover:bg-purple-500/5 transition-colors"
+                  >
+                    <div className="text-sm font-semibold text-zinc-100">{tpl.name}</div>
+                    <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                      {tpl.minutes_available}min · {
+                        tpl.exam_selection === 'all' ? 'all exams' :
+                        tpl.exam_selection === 'primary' ? 'primary' :
+                        Array.isArray(tpl.exam_selection) ? `${tpl.exam_selection.length} exam${tpl.exam_selection.length === 1 ? '' : 's'}` :
+                        ''
+                      }{tpl.use_count > 0 ? ` · used ${tpl.use_count}×` : ''}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => deleteTemplateFn(tpl.id)}
+                    className="px-2 border-l border-zinc-800 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400 text-zinc-600 transition-all"
+                    title="Delete template"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
 
         {/* Minutes picker — hidden once a plan is loaded, shown on reset */}
         {!plan && !loading && (
@@ -299,13 +522,57 @@ export default function PlannedSessionPage() {
               <span className="text-sm font-mono w-20 text-right">{minutes} min</span>
             </div>
 
-            <button
-              onClick={fetchPlan}
-              disabled={loading}
-              className="w-full px-4 py-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Planning…' : 'Generate my plan'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={fetchPlan}
+                disabled={loading}
+                className="flex-1 px-4 py-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Planning…' : 'Generate my plan'}
+              </button>
+              <button
+                onClick={() => setShowSaveTemplate(v => !v)}
+                className="px-4 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-sm transition-colors"
+                title="Save these settings as a template"
+              >
+                <Bookmark className="w-4 h-4 inline" />
+              </button>
+            </div>
+
+            {/* Save-as-template inline form */}
+            {showSaveTemplate && (
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+                className="mt-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/20"
+              >
+                <label className="block text-xs text-zinc-400 mb-2">
+                  Name this template ({minutes} min
+                  {profile && profile.exams.length >= 2 ? ', all exams' :
+                   profile && profile.exams.length === 1 ? ', primary exam' : ''})
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="e.g. Morning commute"
+                    maxLength={60}
+                    className="flex-1 px-3 py-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm"
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveTemplate(); }}
+                  />
+                  <button
+                    onClick={saveTemplate}
+                    disabled={!templateName.trim() || savingTemplate}
+                    className="px-3 py-2 rounded bg-purple-500 hover:bg-purple-400 text-zinc-950 text-sm font-semibold disabled:opacity-50"
+                  >
+                    {savingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </motion.section>
         )}
 

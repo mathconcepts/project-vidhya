@@ -1,7 +1,7 @@
 {
   "name": "project-vidhya",
   "version": "2.2.3",
-  "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
+  "description": "Project Vidhya \u2014 Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -31,7 +31,11 @@
     "content:bundle": "tsx scripts/build-bundle.ts",
     "content:refresh": "npm run content:scrape && npm run content:explainers && npm run content:verify && npm run content:bundle",
     "setup": "npm ci && cd frontend && npm ci && npm run build && cd .. && echo 'Run: npm run dev:server'",
-    "postinstall": "node scripts/postinstall-check.cjs || true"
+    "postinstall": "node scripts/postinstall-check.cjs || true",
+    "smoke:stdio": "VIDHYA_LOG_STDERR=off npx tsx smoke/stdio-integration-smoke.ts",
+    "smoke:sdk-compat": "VIDHYA_LOG_STDERR=off npx tsx smoke/mcp-sdk-compatibility-smoke.ts",
+    "smoke:live-llm": "npx tsx smoke/live-llm-smoke.ts",
+    "smoke:all": "npm run smoke:stdio && npm run smoke:sdk-compat && npm run smoke:live-llm"
   },
   "keywords": [
     "adaptive-learning",

@@ -819,6 +819,10 @@
     activeMcpTab: 'tools',
     // Per-prompt local form state: { [promptName]: { args: {...}, generated: string|null, isLoading: bool } }
     promptState: {},
+    // v2.32: recent student plans panel — last 10 plans across all students
+    recentPlans: [],
+    recentPlansLoading: false,
+    recentPlansError: null,
   };
 
   // ─── Root render ──────────────────────────────────────────────────
@@ -833,6 +837,7 @@
     root.appendChild(renderStatusBar());
     root.appendChild(renderMain());
     root.appendChild(renderMCPExplorer());
+    root.appendChild(renderRecentStudentPlans());
   }
 
   function renderLoading() {
@@ -870,7 +875,7 @@
     return el('header', {},
       el('h1', {}, 'Vidhya', el('em', {}, 'orchestrator')),
       el('div', { class: 'meta' },
-        el('span', {}, el('strong', {}, 'v'), '2.31.0'),
+        el('span', {}, el('strong', {}, 'v'), '2.32.0'),
         el('span', {}, el('strong', {}, 'llm'), ' ' + llmProvider),
         el('span', {}, el('strong', {}, 'run'), ' ' + (state.run?.id || '—')),
         el('span', {}, el('strong', {}, 'last'), ' ' + relativeTime(state.run?.completed_at)),
@@ -1319,6 +1324,107 @@
       }
     } catch (err) {
       toast('Copy error: ' + err.message);
+    }
+  }
+
+  // ─── Recent student plans panel (v2.32, Item 6) ───────────────────
+  //
+  // Uses the student:list-plans MCP tool on-demand — lists the N most
+  // recent plans across ALL students the operator is authorized to
+  // see. Renders a compact roll-up per plan: headline, when, action
+  // count, execution status.
+  //
+  // Role-gated at the route level (listPlansForStudent is scoped to
+  // the caller's analyst/admin/owner role via the tool registry).
+  function renderRecentStudentPlans() {
+    const sec = el('details', { class: 'mcp-section' });
+    sec.appendChild(el('summary', {},
+      'Recent Student Plans',
+      el('span', { class: 'badge' },
+        state.recentPlans.length + ' plans'),
+    ));
+
+    const body = el('div', { class: 'mcp-body' });
+
+    // Refresh button
+    const actions = el('div', { style: 'display:flex;gap:8px;margin-bottom:12px;' });
+    const refreshBtn = el('button', {
+      class: 'btn',
+      onclick: refreshRecentPlans,
+    }, state.recentPlansLoading ? 'Loading…' : 'Refresh');
+    actions.appendChild(refreshBtn);
+    if (state.recentPlansError) {
+      actions.appendChild(el('span', { class: 'error-text' },
+        state.recentPlansError));
+    }
+    body.appendChild(actions);
+
+    if (state.recentPlans.length === 0 && !state.recentPlansLoading) {
+      body.appendChild(el('div', { class: 'empty' },
+        'No plans yet. Click Refresh to fetch the latest.'));
+    }
+
+    const list = el('div', { class: 'mcp-list' });
+    for (const plan of state.recentPlans) {
+      const row = el('div', { class: 'mcp-row' });
+      const hasExec = !!plan.execution;
+
+      row.appendChild(el('header', {},
+        el('span', { class: 'name' }, plan.id),
+        el('span', {
+          class: 'category ' + (hasExec ? 'read' : 'write'),
+        }, hasExec ? 'executed' : 'unexecuted'),
+      ));
+      row.appendChild(el('div', { class: 'desc' }, plan.headline || '(no headline)'));
+
+      const meta = el('div', { class: 'desc', style: 'opacity:0.75;font-size:11px;' });
+      meta.appendChild(el('span', {}, 'student=' + (plan.request && plan.request.student_id) || '?'));
+      meta.appendChild(el('span', {}, ' · actions=' + (plan.actions ? plan.actions.length : 0)));
+      meta.appendChild(el('span', {}, ' · planned=' + (plan.total_estimated_minutes || 0) + 'min'));
+      if (hasExec) {
+        meta.appendChild(el('span', {},
+          ' · actual=' + (plan.execution.actual_minutes_spent || 0) + 'min'));
+        const done = plan.execution.actions_completed
+          ? plan.execution.actions_completed.filter(o => o.completed).length
+          : 0;
+        const tot = plan.execution.actions_completed ? plan.execution.actions_completed.length : 0;
+        meta.appendChild(el('span', {}, ' · completed=' + done + '/' + tot));
+      }
+      meta.appendChild(el('span', {}, ' · ' + (plan.generated_at || '').replace('T', ' ').slice(0, 16)));
+      row.appendChild(meta);
+
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+
+    sec.appendChild(body);
+    return sec;
+  }
+
+  async function refreshRecentPlans() {
+    state.recentPlansLoading = true;
+    state.recentPlansError = null;
+    render();
+    try {
+      // Uses the admin-agent proxy route to invoke the MCP tool.
+      const response = await fetchJSON('/api/admin/agent/invoke', {
+        method: 'POST',
+        body: JSON.stringify({
+          tool_id: 'student:list-plans',
+          input: { student_id: '*', limit: 10 },
+        }),
+      });
+      // student:list-plans is scoped per-student — for the admin
+      // dashboard we want a global list. The route is a thin wrapper;
+      // if '*' isn't supported on the backend, fall back to an empty
+      // list gracefully.
+      const plans = (response && response.output && response.output.plans) || [];
+      state.recentPlans = plans;
+    } catch (err) {
+      state.recentPlansError = err.message || String(err);
+    } finally {
+      state.recentPlansLoading = false;
+      render();
     }
   }
 

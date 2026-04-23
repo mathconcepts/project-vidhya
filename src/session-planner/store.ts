@@ -115,10 +115,57 @@ export function recordExecution(
 
 /**
  * Sum up the `actual_minutes_spent` across this student's completed
- * plans in the trailing N days. Used to derive trailing_7d_minutes
+ * plans in the trailing N days, PLUS free-form practice sessions
+ * logged outside of any plan (v2.32). Used to derive trailing_7d_minutes
  * server-side so the client doesn't have to self-report it.
+ *
+ * Two sources:
+ *   1. Plan executions (this store) — structured session outcomes
+ *   2. Ad-hoc practice log (practice-session-log.ts) — free-form
+ *      sessions that aren't tied to a plan
+ *
+ * Union avoids double-counting: if a plan-execution recorded itself
+ * into both stores (belt + braces), we'd over-report. The practice
+ * log entries carry plan_id when they came from a plan so we can
+ * skip them here.
  */
-export function sumTrailingMinutes(student_id: string, days = 7, now = new Date()): number {
+export async function sumTrailingMinutes(student_id: string, days = 7, now = new Date()): Promise<number> {
+  const store = _store.read();
+  const cutoffMs = now.getTime() - days * 24 * 60 * 60 * 1000;
+  let total = 0;
+  for (const p of store.plans) {
+    if (p.request.student_id !== student_id) continue;
+    if (!p.execution) continue;
+    const executedAt = new Date(p.execution.completed_at).getTime();
+    if (executedAt < cutoffMs) continue;
+    total += p.execution.actual_minutes_spent || 0;
+  }
+
+  // Add ad-hoc practice sessions (v2.32). Skip entries tagged with a
+  // plan_id — those are already counted via plan executions above.
+  try {
+    const mod = await import('./practice-session-log');
+    const entries = mod._enumerateEntriesForTest();
+    for (const e of entries) {
+      if (e.student_id !== student_id) continue;
+      if (e.plan_id) continue;            // already counted via plan execution
+      const t = new Date(e.completed_at).getTime();
+      if (isNaN(t) || t < cutoffMs) continue;
+      total += e.minutes || 0;
+    }
+  } catch {
+    // Module not available — skip ad-hoc integration gracefully.
+  }
+  return total;
+}
+
+/**
+ * Sync variant — only counts plan executions (no practice-log union).
+ * Used when we can't await (e.g. planner.ts pure-core path that
+ * doesn't want async propagation). Returns just the plan-execution
+ * portion of the trailing minutes.
+ */
+export function sumTrailingMinutesSync(student_id: string, days = 7, now = new Date()): number {
   const store = _store.read();
   const cutoffMs = now.getTime() - days * 24 * 60 * 60 * 1000;
   let total = 0;

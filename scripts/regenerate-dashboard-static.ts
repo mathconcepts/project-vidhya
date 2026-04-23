@@ -35,11 +35,13 @@ import path from 'path';
 async function main(): Promise<void> {
   const { getDashboardHTML } = await import('../src/admin-orchestrator/dashboard-html');
   const { getDocsHTML } = await import('../src/admin-orchestrator/docs-html');
+  const { getStudentDocsHTML } = await import('../src/session-planner/docs-html');
 
   // Map of route-path → HTML generator
   const artifacts: Array<{ route: string; html: string }> = [
     { route: 'admin/agent/dashboard', html: getDashboardHTML() },
     { route: 'admin/agent/docs',      html: getDocsHTML() },
+    { route: 'student/docs',          html: getStudentDocsHTML() },
   ];
 
   const distRoot = path.resolve(process.cwd(), 'frontend/dist');

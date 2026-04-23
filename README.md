@@ -1,8 +1,8 @@
 # Project Vidhya
 
-> # **World-class prep. Without the world-class stress.**
+> # **The ingredients every champion needs — for your exam, your goals, your breakthrough.**
 >
-> *Every five minutes of practice compounds into real competence — and none of it comes at the cost of your peace of mind.*
+> *Calm. Strategy. Focus. Compounding. Vidhya builds all four in you, every time you practise.*
 
 ---
 
@@ -24,9 +24,9 @@ That's Vidhya.
 
 She studies on the bus in the morning. Eight minutes, three questions, two of them ones she got wrong last month. She studies on her phone during the power cut that afternoon, because the app loaded offline on her first visit and stays that way. She doesn't study at all on Wednesday; her cousin's wedding runs late. **The app does not punish her for Wednesday.**
 
-On exam day she walks in without dread. **The hard work is in her bones, not in a dashboard somewhere.** She writes a paper she is ready for.
+**On exam day she walks in like a champion who has trained right.** Calm, because she slept well for months. Strategic, because she knows exactly what's likely to appear and where her strengths sit. Focused, because every session through the year targeted the next-most-important thing. And the work has compounded — every problem she solved in January, every concept she cracked in March, is still with her at the desk.
 
-That's the destination.
+**She writes a paper she is ready for.** That's the destination.
 
 ---
 
@@ -42,63 +42,31 @@ That's the destination.
 
 ---
 
-## What breaks — and what we fix
+## The four ingredients Vidhya builds in you
 
-Six frustrations every exam aspirant knows. For each, the promise — the pain it solves — and how we built it to hold.
+Every champion — in any field — walks into the arena with the same four things. **Calm. Strategy. Focus. Compounding.** Vidhya is the training camp that builds all four in you, every time you practise. Each ingredient below: the promise, the pain it replaces, and the specific mechanism that makes it real.
 
 <br />
 
+### 📚 Compounding — *every rep adds to the next*
+
 > [!TIP]
-> ### ✨ **Keep it** — *Every minute of effort finally compounds into real competence.*
+> ### ✨ **You build an unshakeable base.**
 > Twelve short sessions add up like one long session. A concept you cracked in January is still with you in March.
 
 > [!CAUTION]
 > ### ⚠ **Known pain** — *Most apps make you start from scratch every session. Your effort leaks out before it builds up.*
 
 > [!TIP]
-> ### ✅ **How we make it real** — *A Bayesian student model remembers every mistake, every breakthrough, every weak spot — forever. Your effort compounds, guaranteed.*
+> ### ✅ **How we make it real** — *A Bayesian student model remembers every mistake, every breakthrough, every weak spot — forever. Your effort compounds, session after session.*
 
 <br />
 
-> [!TIP]
-> ### ✨ **Calm** — *Study on your own terms. Your peace of mind is the point, not the price.*
-> No streaks. No shame. No guilt pings at 11 pm. Miss a day, the app quietly waits.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Exam-prep apps are engineered to keep you hooked. Missing a day becomes a moral failure.*
+### 🎯 Strategy — *you always know where to focus*
 
 > [!TIP]
-> ### ✅ **How we make it real** — *Our codebase has no notification service, no streak counter, no re-engagement logic. We chose not to build them.*
-
-<br />
-
-> [!TIP]
-> ### ✨ **Equal ground** — *The same lesson, the same depth, anywhere in the world, on any phone.*
-> Works offline after the first sync. Runs on entry-level hardware. One tier of teaching — and it is the good one.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Top teaching clusters in a few cities. Everyone else makes do with random YouTube and luck.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *A four-tier content engine. 80% of requests hit a pre-built bundle delivered once and cached forever. The teaching travels to you.*
-
-<br />
-
-> [!TIP]
-> ### ✨ **Person** — *Your data lives on your device. Your AI key stays yours. We see nothing.*
-> Your notes, your progress, your mistakes — all in your browser, not on our servers.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Most apps harvest your weak spots, your timings, your behaviour — and monetise them.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *The server is stateless by design. No user database. No analytics table. Nowhere to keep you, even if we wanted to.*
-
-<br />
-
-> [!TIP]
-> ### ✨ **Yours** — *Advice that understands where you are. Six months out, or three days out.*
-> Far from your exam: rest when you are tired. Close to it: straight to revision. Your dates drive every recommendation.
+> ### ✨ **The right priority, at the right distance from the exam.**
+> Six months out: patient base-building. Three days out: straight to revision, on your weakest topics. Your dates drive every recommendation.
 
 > [!CAUTION]
 > ### ⚠ **Known pain** — *Most apps give the same advice on day 180 and day 3. "Take a break" does not land the same both times.*
@@ -109,23 +77,63 @@ Six frustrations every exam aspirant knows. For each, the promise — the pain i
 <br />
 
 > [!TIP]
-> ### ✨ **Your style** — *Study the way that actually works for you. We adapt. You succeed.*
-> Late nights or early mornings. Three minutes on a bus or sixty in one sitting. Web, Telegram, or WhatsApp. Your favourite AI provider, your favourite language. You pick the shape — the teaching fills it.
+> ### ✨ **The strategy adapts to your shape, not the other way around.**
+> Late nights or early mornings. Three minutes on a bus or sixty in one sitting. Web, Telegram, or WhatsApp. Your favourite AI provider, your favourite language. You pick the shape — the strategy fills it.
 
 > [!CAUTION]
 > ### ⚠ **Known pain** — *Most apps force you into one "optimal" study pattern and treat every deviation as a failure. Your habits, your timings, your context all become the enemy.*
 
 > [!TIP]
-> ### ✅ **How we make it real** — *The session planner budgets for whatever time you actually have. Multi-channel delivery meets you where you are. Bring-your-own-AI-key means even the model serving you is yours to pick. We adapt. You succeed.*
+> ### ✅ **How we make it real** — *A session planner that budgets for whatever time you actually have. Multi-channel delivery meets you where you are. Bring-your-own-AI-key means even the model serving you is yours to pick.*
+
+<br />
+
+### 🧘 Calm — *you study from strength, not fear*
+
+> [!TIP]
+> ### ✨ **Peace of mind is the point, not the price of admission.**
+> No streaks. No shame. No guilt pings at 11 pm. Miss a day, the app quietly waits. You study because you want to, not because you are afraid.
+
+> [!CAUTION]
+> ### ⚠ **Known pain** — *Exam-prep apps are engineered to keep you hooked. Missing a day becomes a moral failure.*
+
+> [!TIP]
+> ### ✅ **How we make it real** — *Our codebase has no notification service, no streak counter, no re-engagement logic. We chose not to build them.*
+
+<br />
+
+> [!TIP]
+> ### ✨ **Your data stays yours. One less thing to worry about.**
+> Your notes, your progress, your mistakes — all in your browser, not on our servers. Your AI key stays yours. We see nothing.
+
+> [!CAUTION]
+> ### ⚠ **Known pain** — *Most apps harvest your weak spots, your timings, your behaviour — and monetise them. The product was never you.*
+
+> [!TIP]
+> ### ✅ **How we make it real** — *The server is stateless by design. No user database. No analytics table. Nowhere to keep you, even if we wanted to.*
+
+<br />
+
+### 🌍 Focus — *the quality teaching travels to you*
+
+> [!TIP]
+> ### ✨ **World-class teaching on any phone, anywhere, online or off.**
+> Same lesson, same depth, same rigour — whether you study in a capital city on fibre-optic or in a small town on patchy 3G. Works offline after the first sync. One tier of teaching, and it is the good one.
+
+> [!CAUTION]
+> ### ⚠ **Known pain** — *Top teaching clusters in a few cities. Everyone else makes do with random YouTube and luck. Your focus gets broken by chasing the material itself.*
+
+> [!TIP]
+> ### ✅ **How we make it real** — *A four-tier content engine. 80% of requests hit a pre-built bundle delivered once and cached forever. The teaching travels to you — so your focus can stay on learning.*
 
 <br />
 
 > [!NOTE]
-> ### Every promise defended in code
+> ### Every ingredient defended in code
 >
-> The student model → [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md). &nbsp;•&nbsp; The four-tier content cascade → [PLAN-content-engine.md](./PLAN-content-engine.md). &nbsp;•&nbsp; The stateless server → [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md). &nbsp;•&nbsp; 48 tagged releases, 163 passing smoke tests → [FEATURES.md](./FEATURES.md).
+> The Bayesian student model that powers **Compounding** → [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md). &nbsp;•&nbsp; The four-tier content cascade that powers **Focus** → [PLAN-content-engine.md](./PLAN-content-engine.md). &nbsp;•&nbsp; The stateless server that powers **Calm** → [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md). &nbsp;•&nbsp; The exam-proximity planner that powers **Strategy**, plus 48 tagged releases and 163 passing smoke tests → [FEATURES.md](./FEATURES.md).
 >
-> *Every claim above is defended in the codebase, not in copy. Read the tests. Run the smokes. Inspect every layer.*
+> *Every ingredient above is defended in the codebase, not in copy. Read the tests. Run the smokes. Inspect every layer.*
 
 ---
 

@@ -124,7 +124,47 @@ def validate(agents, mcp_tools):
             warnings.append(
                 f"{aid}: has {len(downs)} direct downstream agents (>8 is hard to manage)")
 
-    return errors, warnings
+    # 7. GBrain integration — the cognitive spine is mandatory for
+    # cognitively-dependent agents. See agents/_shared/gbrain-integration.md.
+    # Every agent in this set MUST declare at least one src/gbrain/* module
+    # in its owned_tools. This invariant is what "ensure GBrain is used" is.
+    GBRAIN_DEPENDENT = {
+        'cdo',
+        'student-model-manager',
+        'planner-manager',
+        'teaching-manager',
+        'assessment-manager',
+        'authoring-manager',
+        'feedback-manager',
+    }
+    for aid in GBRAIN_DEPENDENT:
+        if aid not in agents:
+            errors.append(
+                f"GBrain-dependency check: expected agent '{aid}' is missing")
+            continue
+        has_gbrain = any(
+            t.get('type') == 'module'
+            and isinstance(t.get('id'), str)
+            and t['id'].startswith('src/gbrain/')
+            for t in (agents[aid].get('owned_tools') or [])
+        )
+        if not has_gbrain:
+            errors.append(
+                f"{aid}: declared GBrain-dependent but owned_tools has no "
+                f"src/gbrain/* module — GBrain is the cognitive spine "
+                f"and cannot be implicit. See _shared/gbrain-integration.md.")
+
+    # 8. Count GBrain usage — surfaces how widely GBrain is wired
+    gbrain_users = []
+    for aid, a in agents.items():
+        for t in (a.get('owned_tools') or []):
+            if (t.get('type') == 'module' and
+                isinstance(t.get('id'), str) and
+                t['id'].startswith('src/gbrain/')):
+                gbrain_users.append(aid)
+                break
+
+    return errors, warnings, gbrain_users
 
 # ─── Report ───────────────────────────────────────────────────────────
 
@@ -147,7 +187,13 @@ def main():
         print(f"  {tier:12} {count:3}")
     print()
 
-    errors, warnings = validate(agents, mcp_tools)
+    errors, warnings, gbrain_users = validate(agents, mcp_tools)
+
+    print(f"GBrain cognitive-spine usage: {len(gbrain_users)} agents declare "
+          f"src/gbrain/* dependencies")
+    for aid in sorted(gbrain_users):
+        print(f"  • {aid}")
+    print()
 
     if warnings:
         print(f"WARNINGS ({len(warnings)}):")

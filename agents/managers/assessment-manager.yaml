@@ -23,6 +23,17 @@ owned_tools:
   - type: module
     id: 'src/attention#recordSession'
     purpose: Update trailing-window attention state.
+  # --- GBrain write dependency (the canonical write path) ---
+  - type: module
+    id: 'src/gbrain/after-each-attempt'
+    purpose: THE GBrain write hook. Every logged attempt flows through
+      this before returning. Computes the AttemptInsight, routes it to
+      student-model-manager, and produces the model delta. No attempt
+      bypasses this hook — no shadow writes.
+  - type: module
+    id: 'src/gbrain/error-taxonomy'
+    purpose: Read-only — classify each incorrect attempt into one of
+      the 7 error categories before handing off to the write hook.
 
 connections:
   upstream: [{ id: cpo, channel: delegation }]
@@ -31,6 +42,8 @@ connections:
       channel: delegation
     - id: mock-exam-builder
       channel: delegation
+    - id: attempt-insight-specialist
+      channel: delegation     # GBrain write path (after-each-attempt)
   peers:
     - id: teaching-manager
       channel: query          # ask for next-concept hint mid-assessment

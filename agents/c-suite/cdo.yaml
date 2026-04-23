@@ -31,6 +31,15 @@ owned_tools:
   - type: mcp
     id: 'attention:get-overdue-deferrals'
     purpose: Find nano-session deferrals that need promotion.
+  - type: module
+    id: 'src/gbrain/index'
+    purpose: Departmental oversight of the GBrain cognitive spine —
+      read-only access to every GBrain module for audit and
+      invariant enforcement.
+  - type: module
+    id: 'agents/_shared/gbrain-integration.md'
+    purpose: The CDO enforces the GBrain integration contract.
+      Changes to the contract require CDO + CEO sign-off.
 
 connections:
   upstream:

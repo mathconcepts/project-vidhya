@@ -19,6 +19,9 @@ MCP, LangGraph, or a bespoke router.
 - **[`_shared/constitution.md`](./_shared/constitution.md)** — the four
   product promises and the non-negotiable invariants every agent is
   bound by.
+- **[`_shared/gbrain-integration.md`](./_shared/gbrain-integration.md)** —
+  the GBrain cognitive-spine contract. Names which agents read and
+  write GBrain; defines the invariants the validator enforces.
 - **[`_shared/manifest-schema.md`](./_shared/manifest-schema.md)** —
   the contract every manifest respects.
 - **[`_shared/communication-protocols.md`](./_shared/communication-protocols.md)** —

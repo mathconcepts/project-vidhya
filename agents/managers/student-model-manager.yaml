@@ -25,9 +25,31 @@ owned_tools:
   - type: module
     id: 'src/session-planner/practice-session-log'
     purpose: Timestamped session log.
+  # --- GBrain ownership (authoritative; this manager is the write path) ---
   - type: module
-    id: 'src/gbrain#*'
-    purpose: The cognitive model proper.
+    id: 'src/gbrain/student-model'
+    purpose: The core Bayesian model — MasteryEntry, 15 attributes,
+      mastery query and update operations.
+  - type: module
+    id: 'src/gbrain/error-taxonomy'
+    purpose: The 7-category error classification used to tag every
+      incorrect attempt.
+  - type: module
+    id: 'src/gbrain/task-reasoner'
+    purpose: Intent inference — StudentIntent derivation from model
+      state + recent attempts.
+  - type: module
+    id: 'src/gbrain/after-each-attempt'
+    purpose: The canonical write path — every attempt flows through
+      this hook before the model is updated. No shadow writes.
+  - type: module
+    id: 'src/gbrain/cross-exam-coverage'
+    purpose: Multi-exam reconciliation — one student registered for
+      multiple exams has one model, with per-exam mastery surfaces.
+  - type: module
+    id: 'src/gbrain/integration'
+    purpose: Bridge to lesson rendering — modelToLessonSnapshot and
+      related translators.
 
 connections:
   upstream: [{ id: cdo, channel: delegation }]

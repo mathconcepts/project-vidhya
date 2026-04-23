@@ -22,6 +22,21 @@ owned_tools:
   - type: module
     id: 'src/multimodal#parseProblemImage'
     purpose: OCR + structure extraction for photo-uploaded problems.
+  # --- GBrain read dependencies (cognitive spine) ---
+  - type: module
+    id: 'src/gbrain/integration'
+    purpose: Pull the model-to-lesson snapshot — what this student's
+      weak spots and strengths imply for the current explanation.
+      Lets teaching tailor depth and examples to the learner.
+  - type: module
+    id: 'src/gbrain/student-model'
+    purpose: Read mastery for the concept under teaching. Mastered
+      concepts get concise refreshers; unmastered ones get the full
+      8-component explainer.
+  - type: module
+    id: 'src/gbrain/problem-generator'
+    purpose: Request a calibrated problem tuned to this student's
+      current level — not too easy (boring), not too hard (frustrating).
 
 connections:
   upstream: [{ id: cpo, channel: delegation }]
@@ -32,6 +47,8 @@ connections:
       channel: delegation
     - id: content-resolver
       channel: delegation     # cross-functional lever into CCO's content
+    - id: problem-generator-specialist
+      channel: delegation     # GBrain-calibrated problems
   peers:
     - id: planner-manager
       channel: query

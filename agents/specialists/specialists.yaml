@@ -265,7 +265,8 @@ specialists:
       - Expose read-only mastery queries
     owned_tools:
       - type: module
-        id: 'src/gbrain/mastery'
+        id: 'src/gbrain/student-model'
+        purpose: The MasteryEntry store and query surface.
 
   - id: error-classifier
     reports_to: student-model-manager
@@ -277,7 +278,50 @@ specialists:
       - Maintain per-student error distribution
     owned_tools:
       - type: module
-        id: 'src/gbrain/errors'
+        id: 'src/gbrain/error-taxonomy'
+        purpose: The ErrorType classification + rules.
+      - type: module
+        id: 'src/gbrain/after-each-attempt'
+        purpose: Hand classified attempts to the write hook.
+
+  # ═══ Under teaching-manager — GBrain consumers ═════════════════════
+
+  - id: problem-generator-specialist
+    reports_to: teaching-manager
+    mission: Generate a calibrated problem for the current student
+      using their live GBrain model state.
+    skills:
+      - Read mastery + attribute vector from the student model
+      - Invoke the problem generator with model-aware difficulty
+      - Tag the generated problem with target error categories
+        so the student's response can be classified cleanly
+    owned_tools:
+      - type: module
+        id: 'src/gbrain/problem-generator'
+        purpose: GeneratedProblem — calibrated to current mastery.
+      - type: module
+        id: 'src/gbrain/student-model'
+        purpose: Read mastery vector for calibration.
+
+  # ═══ Under assessment-manager — GBrain write specialist ════════════
+
+  - id: attempt-insight-specialist
+    reports_to: assessment-manager
+    mission: Convert every logged attempt into a GBrain AttemptInsight
+      and route through the canonical after-each-attempt hook. This
+      specialist is the sole legitimate invoker of the GBrain write
+      path at the assessment layer.
+    skills:
+      - Convert raw attempt data to AttemptInsight shape
+      - Invoke after-each-attempt deterministically
+      - Emit the attempt-recorded signal with model-delta attribution
+    owned_tools:
+      - type: module
+        id: 'src/gbrain/after-each-attempt'
+        purpose: The canonical write path. No shadow writes.
+      - type: module
+        id: 'src/gbrain/error-taxonomy'
+        purpose: Classify before writing.
 
   # ═══ Under telemetry-manager ══════════════════════════════════════
 

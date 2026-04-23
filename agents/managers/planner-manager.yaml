@@ -27,6 +27,27 @@ owned_tools:
   - type: module
     id: 'src/session-planner#planSession'
     purpose: Pure planner function.
+  # --- GBrain read dependencies (cognitive spine) ---
+  - type: module
+    id: 'src/gbrain/student-model'
+    purpose: Read current mastery + attribute state for every plan.
+      Priority ordering is model-derived; without this the plan
+      is generic.
+  - type: module
+    id: 'src/gbrain/exam-strategy'
+    purpose: Apply exam-proximity weighting. Day 180 produces
+      base-building priorities; day 3 produces revision-only
+      priorities. This is the Strategy promise made real.
+  - type: module
+    id: 'src/gbrain/cross-exam-coverage'
+    purpose: For multi-exam students, reconcile priorities across
+      registered exams. One study minute should serve the most
+      exams it can.
+  - type: module
+    id: 'src/gbrain/task-reasoner'
+    purpose: Infer StudentIntent — is the student building a new
+      concept, reviewing a weak area, or drilling a mastered one?
+      Plans branch on intent.
 
 connections:
   upstream:

@@ -25,9 +25,12 @@ Vidhya builds four capabilities in every student who uses it:
    violation.
 
 4. **Compounding.** Every minute of practice adds to the next. No
-   session starts from scratch. The student model persists weak spots,
-   breakthroughs, and errors forever. Losing student state between
-   sessions is a constitutional violation.
+   session starts from scratch. The **GBrain** Bayesian student model
+   persists weak spots, breakthroughs, and errors forever. Losing
+   student state between sessions is a constitutional violation.
+   GBrain is the cognitive spine of the organisation; see
+   [`gbrain-integration.md`](./gbrain-integration.md) for the
+   authoritative integration contract.
 
 ## Non-negotiable invariants
 

@@ -18,6 +18,14 @@ owned_tools:
   - type: module
     id: 'scripts/build-explainers.ts'
     purpose: Build / rebuild the 82-concept library.
+  # --- GBrain read dependency (read-only reference) ---
+  - type: module
+    id: 'src/gbrain/error-taxonomy'
+    purpose: Read-only reference. Authoring designs explainers that
+      target the 7 specific error categories — a theorem explainer
+      anticipates category-3 and category-5 errors; a procedure
+      explainer anticipates category-1 and category-7. The taxonomy
+      is the pedagogical spec for the "common traps" component.
 
 connections:
   upstream: [{ id: cco, channel: delegation }]

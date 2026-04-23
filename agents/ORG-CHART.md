@@ -228,6 +228,36 @@ The validator enforces these at load time:
 - No agent has more than 8 direct downstreams (human cognitive limit,
   enforced on agents for orchestrator readability).
 - No tool is owned by more than one agent unless it is read-only.
+- **GBrain cognitive-spine invariant.** Every cognitively-dependent
+  agent must declare at least one `src/gbrain/*` module in its
+  `owned_tools`. The cognitively-dependent set — `cdo`,
+  `student-model-manager`, `planner-manager`, `teaching-manager`,
+  `assessment-manager`, `authoring-manager`, `feedback-manager` — is
+  enforced by the validator. See
+  [`_shared/gbrain-integration.md`](./_shared/gbrain-integration.md)
+  for the full contract.
+
+## GBrain — the cognitive spine
+
+GBrain is not a module that some agents happen to call; it is the
+cognitive spine that every cognitively-dependent agent leans on. All
+four of the constitutional promises rest on it:
+
+- **Compounding** is GBrain's persistent Bayesian model
+- **Strategy** is GBrain's `exam-strategy` + `task-reasoner` modules
+- **Focus** is GBrain's `error-taxonomy` + `cross-exam-coverage`
+- **Calm** is GBrain's local-first, on-device posture
+
+The eight GBrain modules (`student-model`, `error-taxonomy`,
+`task-reasoner`, `problem-generator`, `exam-strategy`,
+`after-each-attempt`, `integration`, `cross-exam-coverage`) are wired
+into specific agents. Writes flow through a single canonical path —
+`after-each-attempt`. Reads are explicit and declared in each agent's
+manifest.
+
+The full integration contract, including which agents read, which
+write, the signals emitted, and the invariants the validator checks,
+is defined in [`_shared/gbrain-integration.md`](./_shared/gbrain-integration.md).
 
 ## Agents by department — the full roster
 
@@ -240,16 +270,21 @@ The validator enforces these at load time:
 
 - [`c-suite/cpo.yaml`](./c-suite/cpo.yaml)
 - [`managers/planner-manager.yaml`](./managers/planner-manager.yaml) —
-  session plans across exam profiles
+  session plans across exam profiles *(reads GBrain: `student-model`,
+  `exam-strategy`, `cross-exam-coverage`, `task-reasoner`)*
 - [`managers/teaching-manager.yaml`](./managers/teaching-manager.yaml) —
-  explanations, walkthroughs, four-tier content access
+  explanations, walkthroughs, four-tier content access *(reads GBrain:
+  `integration`, `student-model`, `problem-generator`)*
 - [`managers/assessment-manager.yaml`](./managers/assessment-manager.yaml) —
-  attempt capture, micro-mocks
+  attempt capture, micro-mocks *(writes GBrain via `after-each-attempt`)*
 - [`managers/feedback-manager.yaml`](./managers/feedback-manager.yaml) —
-  triage and cross-functional routing to CCO lanes
+  triage and cross-functional routing to CCO lanes *(reads GBrain:
+  `error-taxonomy`)*
 - Specialists: `session-executor`, `template-curator`, `explainer-
   specialist`, `walkthrough-specialist`, `content-resolver`,
-  `attempt-logger`, `mock-exam-builder`
+  `attempt-logger`, `mock-exam-builder`, `problem-generator-specialist`
+  (GBrain-calibrated problems), `attempt-insight-specialist` (GBrain
+  write path)
 
 ### Under CCO
 
@@ -257,6 +292,8 @@ The validator enforces these at load time:
 - [`managers/acquisition-manager.yaml`](./managers/acquisition-manager.yaml)
 - [`managers/verification-manager.yaml`](./managers/verification-manager.yaml)
 - [`managers/authoring-manager.yaml`](./managers/authoring-manager.yaml)
+  *(reads GBrain: `error-taxonomy` — designs explainers to anticipate
+  the 7 specific error categories)*
 - [`managers/curriculum-manager.yaml`](./managers/curriculum-manager.yaml)
 - Specialists: `scraper-operator`, `licence-checker`, `wolfram-verifier`,
   `sample-reviewer`, `explainer-writer`, `concept-reviewer`
@@ -273,8 +310,11 @@ The validator enforces these at load time:
 
 ### Under CDO
 
-- [`c-suite/cdo.yaml`](./c-suite/cdo.yaml)
+- [`c-suite/cdo.yaml`](./c-suite/cdo.yaml) *(GBrain departmental
+  oversight — owns `src/gbrain/index` + the `gbrain-integration.md`
+  contract)*
 - [`managers/student-model-manager.yaml`](./managers/student-model-manager.yaml)
+  *(authoritative GBrain ownership — all 8 modules; sole write path)*
 - [`managers/telemetry-manager.yaml`](./managers/telemetry-manager.yaml)
 - Specialists: `mastery-estimator`, `error-classifier`,
   `aggregation-specialist`
@@ -295,6 +335,9 @@ The validator enforces these at load time:
 
 - [`_shared/constitution.md`](./_shared/constitution.md) — the four
   promises and non-negotiable invariants
+- [`_shared/gbrain-integration.md`](./_shared/gbrain-integration.md) —
+  the GBrain cognitive-spine integration contract (which agents read,
+  which write, the invariants the validator enforces)
 - [`_shared/manifest-schema.md`](./_shared/manifest-schema.md) — the
   contract every manifest respects
 - [`_shared/communication-protocols.md`](./_shared/communication-protocols.md) —

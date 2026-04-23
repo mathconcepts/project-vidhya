@@ -28,6 +28,13 @@ owned_tools:
   - type: mcp
     id: 'feedback:apply'
     purpose: Apply the approved action.
+  # --- GBrain read dependency (triage uses error categories) ---
+  - type: module
+    id: 'src/gbrain/error-taxonomy'
+    purpose: Read-only. When clustering feedback, tag each cluster
+      with the likely error category. Routing decisions depend on
+      this — category-3 errors route to authoring for rewrite;
+      category-5 errors route to verification for re-check.
 
 connections:
   upstream: [{ id: cpo, channel: delegation }]
@@ -39,6 +46,10 @@ connections:
       channel: delegation
     - id: teaching-manager
       channel: query
+    - id: student-model-manager
+      channel: query          # ask cohort mastery state when triaging —
+                              # a concept with high cohort error rate
+                              # gets prioritised in the queue
 
 decision_rules:
   - Feedback older than 14 days without triage escalates to CPO.

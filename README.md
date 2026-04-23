@@ -32,61 +32,76 @@ That's Vidhya.
 
 ## What breaks — and what we fix
 
-Five frustrations every exam aspirant knows. The direct answer to each. One sentence each, so they stick.
+Five frustrations every exam aspirant knows. For each, the promise — the pain it solves — and how we built it to hold.
 
 <br />
 
+> [!TIP]
+> ### ✨ **Keep it** — *Every minute of effort finally compounds into real competence.*
+> Twelve short sessions add up like one long session. A concept you cracked in January is still with you in March.
+
 > [!CAUTION]
-> ### 💸 **Lose it** — *You study today, lose half of it by next week.*
+> ### ⚠ **Known pain** — *Most apps make you start from scratch every session. Your effort leaks out before it builds up.*
 
 > [!TIP]
-> ### 📚 **Keep it** — *Every minute of effort finally compounds into real competence.*
-> Twelve short sessions add up like one long one. A concept you cracked in January is still with you in March.
+> ### ✅ **How we make it real** — *A Bayesian student model remembers every mistake, every breakthrough, every weak spot — forever. Your effort compounds, guaranteed.*
 
 <br />
 
-> [!CAUTION]
-> ### 😰 **Guilt** — *The app is built to make you anxious, not to teach you.*
-
 > [!TIP]
-> ### 🧘 **Calm** — *Study on your own terms. Peace of mind is the point, not the price.*
+> ### ✨ **Calm** — *Study on your own terms. Your peace of mind is the point, not the price.*
 > No streaks. No shame. No guilt pings at 11 pm. Miss a day, the app quietly waits.
 
-<br />
-
 > [!CAUTION]
-> ### 🗺️ **Lottery** — *Your postcode decides the quality of your teaching.*
+> ### ⚠ **Known pain** — *Exam-prep apps are engineered to keep you hooked. Missing a day becomes a moral failure.*
 
 > [!TIP]
-> ### 🌍 **Equal ground** — *The same lesson, the same depth — anywhere in the world, on any phone.*
-> Works offline after the first sync. Runs on entry-level hardware. One tier of teaching, and it is the good one.
+> ### ✅ **How we make it real** — *Our codebase has no notification service, no streak counter, no re-engagement logic. We chose not to build them.*
 
 <br />
 
+> [!TIP]
+> ### ✨ **Equal ground** — *The same lesson, the same depth, anywhere in the world, on any phone.*
+> Works offline after the first sync. Runs on entry-level hardware. One tier of teaching — and it is the good one.
+
 > [!CAUTION]
-> ### 🎯 **Product** — *Your struggles are being sold to advertisers.*
+> ### ⚠ **Known pain** — *Top teaching clusters in a few cities. Everyone else makes do with random YouTube and luck.*
 
 > [!TIP]
-> ### 🔒 **Person** — *Your data lives on your device. Your AI key stays yours. We see nothing.*
+> ### ✅ **How we make it real** — *A four-tier content engine. 80% of requests hit a pre-built bundle delivered once and cached forever. The teaching travels to you.*
+
+<br />
+
+> [!TIP]
+> ### ✨ **Person** — *Your data lives on your device. Your AI key stays yours. We see nothing.*
 > Your notes, your progress, your mistakes — all in your browser, not on our servers.
 
-<br />
-
 > [!CAUTION]
-> ### ⚠️ **Generic** — *The advice has nothing to do with your actual situation.*
+> ### ⚠ **Known pain** — *Most apps harvest your weak spots, your timings, your behaviour — and monetise them.*
 
 > [!TIP]
-> ### ⏰ **Yours** — *Advice that understands where you are. Six months out, or three days out.*
+> ### ✅ **How we make it real** — *The server is stateless by design. No user database. No analytics table. Nowhere to keep you, even if we wanted to.*
+
+<br />
+
+> [!TIP]
+> ### ✨ **Yours** — *Advice that understands where you are. Six months out, or three days out.*
 > Far from your exam: rest when you are tired. Close to it: straight to revision. Your dates drive every recommendation.
+
+> [!CAUTION]
+> ### ⚠ **Known pain** — *Most apps give the same advice on day 180 and day 3. "Take a break" does not land the same both times.*
+
+> [!TIP]
+> ### ✅ **How we make it real** — *An exam-proximity-aware planner. Your registered exam dates reshape every priority weighting as the day approaches.*
 
 <br />
 
 > [!NOTE]
-> ### How the promises are kept
+> ### Every promise defended in code
 >
-> A Bayesian student model across 15 cognitive attributes and 7 error categories — covered in [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md). &nbsp;•&nbsp; A four-tier content cascade that serves 80% of requests from a pre-built bundle at zero marginal cost — covered in [PLAN-content-engine.md](./PLAN-content-engine.md). &nbsp;•&nbsp; A stateless server with no user database — covered in [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md). &nbsp;•&nbsp; 48 tagged releases, 163 passing smoke tests — tracked in [FEATURES.md](./FEATURES.md).
+> The student model → [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md). &nbsp;•&nbsp; The four-tier content cascade → [PLAN-content-engine.md](./PLAN-content-engine.md). &nbsp;•&nbsp; The stateless server → [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md). &nbsp;•&nbsp; 48 tagged releases, 163 passing smoke tests → [FEATURES.md](./FEATURES.md).
 >
-> *Every promise above is defended in code, not in copy.*
+> *Every claim above is defended in the codebase, not in copy. Read the tests. Run the smokes. Inspect every layer.*
 
 ---
 

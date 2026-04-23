@@ -2118,7 +2118,7 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 
 ---
 
-## Slide 33 — What's Shipped (at v2.21.0)
+## Slide 33 — What's Shipped (at v2.22.0)
 
 | Milestone | Commits | Highlights |
 |-----------|---------|-----------|
@@ -2163,7 +2163,8 @@ Node ≥ 20 · npm ≥ 10 · git ≥ 2.30. Nothing else.
 | v2.19.0 | `6390db3` | UGEE IIIT Hyderabad Mathematics live sample — proves portability, cross-exam GBrain verified |
 | v2.20.0 | `3c10ef8` | Attention primitive — short-session-aware delivery across all modules including GBrain |
 | v2.19.1 | `7703e4c` | UGEE full content corpus + end-to-end feedback loop — 10 lessons, 4 mocks, 61 Q, LiveCourse v1.0.0 promotion |
-| v2.21.0 | *this* | Marketing + Acquisition Module — blog with draft→in_review→approved→published→stale→archived lifecycle; content-addressed articles (SHA-256); derived layout engine (landing page auto-recomputes on publish); social card generation across 5 platforms (Twitter, LinkedIn, Instagram, WhatsApp, Telegram) with platform-tuned copy + UTM tags; campaign coordinator for multi-article multi-channel pushes; sync bus with automatic drift detection (app feature change → affected articles auto-marked stale); block-check bulk admin review; dashboard single-pane-of-glass; orchestrator cross-wired to emit `exam_content_promoted` events. 55/55 smoke cases pass |
+| v2.21.0 | `ef9d378` | Marketing + Acquisition Module — blog with draft→in_review→approved→published→stale→archived lifecycle; content-addressed articles (SHA-256); derived layout engine (landing page auto-recomputes on publish); social card generation across 5 platforms (Twitter, LinkedIn, Instagram, WhatsApp, Telegram) with platform-tuned copy + UTM tags; campaign coordinator for multi-article multi-channel pushes; sync bus with automatic drift detection (app feature change → affected articles auto-marked stale); block-check bulk admin review; dashboard single-pane-of-glass; orchestrator cross-wired to emit `exam_content_promoted` events. 55/55 smoke cases pass |
+| v2.22.0 | *this* | Admin Orchestrator Agent — deterministic agentic single source of truth. 25-tool registry across 8 domains (feedback, sample-check, course, exam-builder, attention, marketing, scanner, strategy, task); 8-role registry (owner, admin, content-ops, exam-ops, marketing-lead, qa-reviewer, analyst, author) with tool-level authorization; scanner produces unified HealthReport across all 6 modules emitting 11 distinct signal codes; strategy engine pattern-matches 7 distinct strategy kinds (triage-feedback-backlog, iterate-and-promote-course, rereview-stale-articles, launch-marketing-campaign, address-attention-deferrals, nudge-aging-sample-checks, expand-content-corpus) with P0-P3 priority ordering; task store materializes proposed tasks with append-only activity log + auto-dependency-unblocking; runAdminAgent() performs full scan→propose→enqueue→narrate cycle; 4 cross-module insight kinds (feedback-attention-correlation, course-feedback-debt, campaign-opportunity, marketing-content-gap); 15 HTTP endpoints under /api/admin/agent/*; optional opt-in LLM narration via content resolver cascade with deterministic fallback. 70/70 smoke cases pass |
 
 **Production numbers at v2.6.0:**
 - 34 curated + attributed problems across 10 topics

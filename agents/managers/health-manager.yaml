@@ -1,0 +1,45 @@
+id: health-manager
+tier: manager
+reports_to: coo
+
+mission: >
+  Monitor the health of every agent in the org, run the periodic
+  health checks, publish org-health reports.
+
+skills:
+  - Invoke each agent's health_check hook.
+  - Aggregate results into an org-level health state.
+  - Detect loops and oscillation patterns.
+
+owned_tools:
+  - type: mcp
+    id: 'agent:summarize-health'
+    purpose: Generate the summary.
+  - type: mcp
+    id: 'agent:describe-capabilities'
+    purpose: Enumerate current agent surface.
+  - type: mcp
+    id: 'strategy:list-proposed'
+    purpose: Proposed strategies needing CEO review.
+
+connections:
+  upstream: [{ id: coo, channel: delegation }]
+  downstream: []
+  peers:
+    - id: task-manager
+      channel: query
+
+decision_rules:
+  - Any agent failing 3 consecutive health checks triggers an
+    escalation to its C-suite parent.
+
+emits_signals:
+  - name: org-health-report
+    schema: '{ healthy: int, degraded: int, failed: int, agents: [...] }'
+    when: Hourly.
+
+subscribes_to: []
+
+portability: { tested_runtimes: [claude-agent-sdk, mcp-stdio], minimum_context_window: 8000 }
+quality_gates:
+  - Health reports are reproducible from the same inputs.

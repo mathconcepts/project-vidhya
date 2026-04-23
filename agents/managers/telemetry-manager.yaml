@@ -1,0 +1,48 @@
+id: telemetry-manager
+tier: manager
+reports_to: cdo
+
+mission: >
+  Opt-in anonymous aggregation of cohort misconceptions — no user ids,
+  no sessions, no PII. The only signal that legitimately leaves a
+  student's device.
+
+skills:
+  - Accept only opt-in anonymised deltas; refuse anything with a
+    session id or personally-identifying metadata.
+  - Aggregate across cohort buckets (exam × concept × difficulty).
+  - Emit cohort-level signals for CCO to act on.
+
+owned_tools:
+  - type: module
+    id: 'src/content/telemetry'
+    purpose: Aggregation primitives.
+
+connections:
+  upstream: [{ id: cdo, channel: delegation }]
+  downstream:
+    - id: aggregation-specialist
+      channel: delegation
+  peers:
+    - id: student-model-manager
+      channel: query
+
+decision_rules:
+  - Any incoming event carrying a session id or PII is dropped at the
+    edge. Log the drop; do not retain the content.
+  - Cohort buckets under 30 members do not emit signals — preserves
+    k-anonymity.
+
+emits_signals:
+  - name: cohort-misconception-cluster
+    schema: '{ concept_id, misconception, sample_count, severity }'
+    when: A cluster crosses the severity threshold.
+
+subscribes_to: []
+
+portability:
+  tested_runtimes: [claude-agent-sdk, mcp-stdio]
+  minimum_context_window: 4000
+quality_gates:
+  - Zero PII in any persisted row.
+  - Every emitted cluster has ≥ 30 underlying samples.

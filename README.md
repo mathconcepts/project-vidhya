@@ -199,6 +199,7 @@ The content layer is a **four-tier cascade** assembled overnight by GitHub Actio
 **Architecture and features**
 &nbsp;&nbsp;[DESIGN.md](./DESIGN.md) — visual and UX principles
 &nbsp;&nbsp;[FEATURES.md](./FEATURES.md) — forty-eight-release feature ledger
+&nbsp;&nbsp;[agents/ORG-CHART.md](./agents/ORG-CHART.md) — the 46-agent organisation chart (CEO + 6 C-suite + 17 managers + 22 specialists)
 &nbsp;&nbsp;[PLAN-content-engine.md](./PLAN-content-engine.md) — four-tier content cascade
 &nbsp;&nbsp;[PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md) — local-first architecture rationale
 &nbsp;&nbsp;[PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md) — the cognitive student model

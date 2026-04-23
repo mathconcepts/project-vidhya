@@ -1,0 +1,316 @@
+# Specialists layer — consolidated manifest.
+#
+# Each specialist is a narrow operator reporting to a single manager.
+# Specialists are defined in one file (rather than one-file-per-agent)
+# because their manifests are short and their boundaries are tight.
+# An orchestrator loading this file treats each entry as a distinct
+# agent.
+#
+# Adding a new specialist: add an entry to this file, reference it from
+# the parent manager's downstream list, and confirm its owned_tools in
+# src/admin-orchestrator/tool-registry.ts or elsewhere.
+
+specialists:
+
+  # ═══ Under planner-manager (CPO side) ══════════════════════════════
+
+  - id: session-executor
+    reports_to: planner-manager
+    mission: Walk the student through an active plan, surfacing one action
+      at a time, capturing outcomes.
+    skills:
+      - Render the next action and its content hint for the channel in use
+      - Capture attempt outcomes as structured data
+      - Advance or pause the plan based on student signals
+    owned_tools:
+      - type: module
+        id: 'src/session-planner#planSession'
+        purpose: Access plan structure
+      - type: http
+        id: 'POST /api/student/session/plans/:id/complete'
+        purpose: Submit completed plan
+    connections:
+      peers:
+        - id: template-curator
+          channel: query
+
+  - id: template-curator
+    reports_to: planner-manager
+    mission: Maintain the student's saved templates and surface the right
+      preset at the right time.
+    skills:
+      - Detect when the student's pattern could be saved as a template
+      - Surface unadopted presets when appropriate
+      - Retire templates that have gone unused for 90+ days
+    owned_tools:
+      - type: http
+        id: 'GET /api/student/session/templates'
+      - type: http
+        id: 'POST /api/student/session/templates'
+      - type: http
+        id: 'POST /api/student/session/templates/:id/use'
+      - type: http
+        id: 'GET /api/student/session/templates/presets'
+
+  # ═══ Under teaching-manager ════════════════════════════════════════
+
+  - id: explainer-specialist
+    reports_to: teaching-manager
+    mission: Produce the 8-component explainer for a single concept on
+      demand — hook, definition, intuition, worked example, mini exercise,
+      common traps, formal statement, connections.
+    skills:
+      - Write each component in the voice appropriate to the concept type
+      - Ground every component in the source material
+      - Sequence the 8 components for cognitive build-up
+    owned_tools:
+      - type: module
+        id: 'src/lessons#renderLesson'
+        purpose: Lesson rendering primitives
+
+  - id: walkthrough-specialist
+    reports_to: teaching-manager
+    mission: Walk a student through a specific problem end-to-end —
+      method, intuition, trap flagging, answer verification.
+    skills:
+      - Sequence the walkthrough as the student would work through it
+      - Flag common traps before the student hits them
+      - Route math through Wolfram verification before stating the answer
+    owned_tools:
+      - type: module
+        id: 'src/content/resolver#resolve'
+        purpose: Four-tier cascade
+
+  - id: content-resolver
+    reports_to: teaching-manager
+    mission: Execute the four-tier cascade — bundle, RAG, LLM, Wolfram —
+      for every content request and return the tier hit.
+    skills:
+      - Walk the cascade in order
+      - Track per-tier hit rate
+      - Escalate when no tier yields a confident answer
+    owned_tools:
+      - type: module
+        id: 'src/content/resolver'
+        purpose: The cascade
+
+  # ═══ Under assessment-manager ═════════════════════════════════════
+
+  - id: attempt-logger
+    reports_to: assessment-manager
+    mission: Capture every student attempt with timing, outcome, and
+      context into the practice log and attention store.
+    skills:
+      - Normalise attempts to the canonical shape
+      - Detect idempotency violations
+      - Route into attention + practice log atomically
+    owned_tools:
+      - type: http
+        id: 'POST /api/student/session/practice-log'
+
+  - id: mock-exam-builder
+    reports_to: assessment-manager
+    mission: Assemble a micro-mock sized for the caller's time budget
+      with a proper pacing arc.
+    skills:
+      - Choose questions spanning the exam's expected difficulty curve
+      - Include the pacing warm-up and wind-down
+      - Report the expected score under the student's model
+    owned_tools: []
+
+  # ═══ Under acquisition-manager ════════════════════════════════════
+
+  - id: scraper-operator
+    reports_to: acquisition-manager
+    mission: Run each scraper script, detect format drift, report counts
+      and anomalies.
+    skills:
+      - Execute scrape-corpus, scrape-textbooks without tripping rate limits
+      - Detect output-schema drift from upstream sources
+      - Emit a per-run report with counts and licence attribution
+    owned_tools:
+      - type: module
+        id: 'scripts/scrape-corpus.ts'
+      - type: module
+        id: 'scripts/scrape-textbooks.ts'
+
+  - id: licence-checker
+    reports_to: acquisition-manager
+    mission: Verify every incoming record carries a valid licence tag
+      and refuse any that do not.
+    skills:
+      - Parse licence terms per source
+      - Reject records missing licence metadata
+      - Maintain the licence-by-source ledger
+    owned_tools: []
+
+  # ═══ Under verification-manager ═══════════════════════════════════
+
+  - id: wolfram-verifier
+    reports_to: verification-manager
+    mission: Send each math record through Wolfram Alpha and attach the
+      query id + result.
+    skills:
+      - Convert record notation to Wolfram syntax
+      - Handle algebraically-equivalent restructured answers
+      - Emit verification-complete on each batch
+    owned_tools:
+      - type: module
+        id: 'scripts/verify-wolfram-batch.ts'
+
+  - id: sample-reviewer
+    reports_to: verification-manager
+    mission: Sample-check non-verifiable content through structured
+      rubric reviews.
+    skills:
+      - Apply the review rubric consistently
+      - Surface samples that need human review
+      - Close resolved samples with audit trail
+    owned_tools:
+      - type: mcp
+        id: 'sample-check:list-open'
+      - type: mcp
+        id: 'sample-check:close-resolved'
+
+  # ═══ Under authoring-manager ══════════════════════════════════════
+
+  - id: explainer-writer
+    reports_to: authoring-manager
+    mission: Generate a draft 8-component explainer from a seed concept +
+      source anchor.
+    skills:
+      - Expand a concept skeleton into the 8 components
+      - Prompt-engineer per concept type (definition / procedure / theorem)
+      - Never invent source material — always cite
+    owned_tools:
+      - type: module
+        id: 'scripts/build-explainers.ts'
+
+  - id: concept-reviewer
+    reports_to: authoring-manager
+    mission: Review a draft explainer for completeness, source fidelity,
+      and pedagogical flow.
+    skills:
+      - Check all 8 components present
+      - Verify every component cites a source
+      - Flag discontinuities in the pedagogical sequence
+    owned_tools: []
+
+  # ═══ Under llm-router-manager ═════════════════════════════════════
+
+  - id: provider-adapter-gemini
+    reports_to: llm-router-manager
+    mission: Execute Gemini-provider calls with the right config.
+    owned_tools:
+      - type: module
+        id: 'src/llm/adapters/gemini'
+
+  - id: provider-adapter-anthropic
+    reports_to: llm-router-manager
+    mission: Execute Anthropic-provider calls.
+    owned_tools:
+      - type: module
+        id: 'src/llm/adapters/anthropic'
+
+  - id: provider-adapter-openai
+    reports_to: llm-router-manager
+    mission: Execute OpenAI-provider calls.
+    owned_tools:
+      - type: module
+        id: 'src/llm/adapters/openai'
+
+  - id: cost-accountant
+    reports_to: llm-router-manager
+    mission: Track cost per LLM call across providers and surface alerts
+      when cost drifts from baseline.
+    skills:
+      - Attribute each call's token counts to the routing decision
+      - Roll up into daily/weekly cost summaries
+      - Emit llm-cost-alert when thresholds breach
+    owned_tools: []
+
+  # ═══ Under infrastructure-manager ═════════════════════════════════
+
+  - id: bundle-builder
+    reports_to: infrastructure-manager
+    mission: Assemble content-bundle.json from verified records plus
+      explainer output; ship via GitHub Actions.
+    skills:
+      - SHA-256 dedup across records
+      - Size budget enforcement (≤ 50 MB)
+      - Version tagging
+    owned_tools:
+      - type: module
+        id: 'scripts/build-bundle.ts'
+
+  - id: cascade-tuner
+    reports_to: infrastructure-manager
+    mission: Tune the four-tier cascade when hit rates drift from target.
+    skills:
+      - Read tier hit-rate telemetry
+      - Adjust tier-0 inclusion rules
+      - Propose new tier-1 RAG index candidates
+    owned_tools:
+      - type: module
+        id: 'src/content/resolver'
+
+  # ═══ Under student-model-manager ═══════════════════════════════════
+
+  - id: mastery-estimator
+    reports_to: student-model-manager
+    mission: Compute per-concept mastery from the attempt stream.
+    skills:
+      - Apply the Bayesian update rule per attempt
+      - Detect threshold crossings
+      - Expose read-only mastery queries
+    owned_tools:
+      - type: module
+        id: 'src/gbrain/mastery'
+
+  - id: error-classifier
+    reports_to: student-model-manager
+    mission: Classify each incorrect attempt into one of the 7 error
+      categories.
+    skills:
+      - Apply the error taxonomy consistently
+      - Flag attempts where classification is ambiguous
+      - Maintain per-student error distribution
+    owned_tools:
+      - type: module
+        id: 'src/gbrain/errors'
+
+  # ═══ Under telemetry-manager ══════════════════════════════════════
+
+  - id: aggregation-specialist
+    reports_to: telemetry-manager
+    mission: Aggregate opt-in anonymous deltas into cohort buckets;
+      enforce k-anonymity minimums.
+    skills:
+      - Bucket by (exam × concept × difficulty)
+      - Drop sub-30-member buckets
+      - Emit cohort signals on threshold breaches
+    owned_tools:
+      - type: module
+        id: 'src/content/telemetry'
+
+# ─── Portability ──────────────────────────────────────────────────────
+#
+# Every specialist in this file:
+#   - reports to exactly one manager
+#   - has a one-sentence mission
+#   - lists the tools it may call
+#   - is optionally connected to specific peers
+#
+# An orchestrator that loads this file constructs a node per specialist.
+# Peer connections are edges in the agent graph. The orchestrator
+# enforces least-privilege via owned_tools.
+
+portability:
+  tested_runtimes:
+    - claude-agent-sdk
+    - mcp-stdio
+  minimum_context_window: 4000
+  decision_rule: >
+    Specialists run in the cheapest usable model by default — they
+    execute narrow tasks with known inputs. A manager may upgrade the
+    model per-call when the task requires larger reasoning.

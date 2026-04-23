@@ -1,0 +1,56 @@
+id: authoring-manager
+tier: manager
+reports_to: cco
+
+mission: >
+  Generate and refresh the 82-concept explainer library — LLM-
+  written, human-reviewed, structured in 8 bite-sized components.
+
+skills:
+  - Generate explainers across hook → definition → intuition →
+    worked example → mini exercise → common traps → formal statement
+    → connections.
+  - Prompt-engineer per concept type (definition vs procedure vs
+    theorem).
+  - Re-author after feedback triage.
+
+owned_tools:
+  - type: module
+    id: 'scripts/build-explainers.ts'
+    purpose: Build / rebuild the 82-concept library.
+
+connections:
+  upstream: [{ id: cco, channel: delegation }]
+  downstream:
+    - id: explainer-writer
+      channel: delegation
+    - id: concept-reviewer
+      channel: delegation
+  peers:
+    - id: verification-manager
+      channel: query
+    - id: feedback-manager
+      channel: query          # what feedback told us to change
+    - id: curriculum-manager
+      channel: query
+
+decision_rules:
+  - Never author a concept without a source anchor from Acquisition.
+  - After feedback triage names a concept, rewrite within one cycle.
+
+emits_signals:
+  - name: concept-authored
+    schema: '{ concept_id, version, llm_used }'
+    when: An explainer is written or rewritten.
+
+subscribes_to:
+  - name: feedback-triage-complete
+    from: feedback-manager
+    action: If the triaged cluster names a concept, enqueue rewrite.
+
+portability:
+  tested_runtimes: [claude-agent-sdk, mcp-stdio]
+  minimum_context_window: 32000
+quality_gates:
+  - Every explainer covers all 8 components.
+  - Every explainer cites its source anchor.

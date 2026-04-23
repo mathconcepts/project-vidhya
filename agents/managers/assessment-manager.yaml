@@ -1,0 +1,62 @@
+id: assessment-manager
+tier: manager
+reports_to: cpo
+
+mission: >
+  Measure what the student has learned — micro-mocks, problem
+  attempts, spaced-review quizzes. Every attempt feeds the student
+  model; every result feeds the next planner decision.
+
+skills:
+  - Design micro-mock exams sized for the caller's time budget.
+  - Capture attempt outcomes as structured data (attempts, correct,
+    time spent) rather than free-form logs.
+  - Route outcomes into the student model via the attention store.
+
+owned_tools:
+  - type: http
+    id: 'POST /api/student/session/plans/:id/complete'
+    purpose: Record executed plan outcomes.
+  - type: http
+    id: 'POST /api/student/session/practice-log'
+    purpose: Ad-hoc practice session logging.
+  - type: module
+    id: 'src/attention#recordSession'
+    purpose: Update trailing-window attention state.
+
+connections:
+  upstream: [{ id: cpo, channel: delegation }]
+  downstream:
+    - id: attempt-logger
+      channel: delegation
+    - id: mock-exam-builder
+      channel: delegation
+  peers:
+    - id: teaching-manager
+      channel: query          # ask for next-concept hint mid-assessment
+    - id: student-model-manager
+      channel: query          # mastery state affects difficulty
+
+decision_rules:
+  - Every logged attempt includes timing; missing timestamps are
+    rejected at the edge.
+  - If a mock exam's budget is < 5 minutes, return 1-3 questions not
+    a mock — a mock needs pacing.
+
+emits_signals:
+  - name: attempt-recorded
+    schema: '{ student_id, concept_id, correct, attempts, minutes }'
+    when: Every logged attempt.
+
+subscribes_to:
+  - name: plan-executed
+    from: planner-manager
+    action: Mirror the plan's outcomes into the practice log with
+      plan_id tag to avoid double-counting.
+
+portability:
+  tested_runtimes: [claude-agent-sdk, mcp-stdio]
+  minimum_context_window: 8000
+quality_gates:
+  - Every assessment event is idempotent — replaying does not double-count.
+  - No assessment result is accepted without a timestamp.

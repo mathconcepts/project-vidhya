@@ -165,6 +165,16 @@ export const RESOURCE_CATALOG: ResourceDescriptor[] = [
     mimeType: 'application/json',
     authorized_roles: ALL_READERS,
   },
+  {
+    uri: 'vidhya://admin/logs/recent',
+    name: 'Recent log events',
+    description:
+      'Up to 200 most recent log events from the in-memory ring buffer. ' +
+      'Useful for HTTP clients (which cannot receive pushed notifications/message) ' +
+      'after calling logging/setLevel.',
+    mimeType: 'application/json',
+    authorized_roles: ANALYST_READERS,
+  },
 ];
 
 // ============================================================================
@@ -366,6 +376,16 @@ async function _dispatch(parsed: ParsedURI, ctx: ResourceReadContext): Promise<a
   if (bucket === 'roles' && segments[0] === 'catalog') {
     const { listRoles } = await import('./role-registry');
     return { roles: listRoles() };
+  }
+
+  if (bucket === 'logs' && segments[0] === 'recent') {
+    const { recentEvents, getSessionLevel } = await import('./logger');
+    // If the session has set a level via logging/setLevel, filter by that.
+    // Otherwise return everything in the ring.
+    const sessionKey = ctx.actor || 'default';
+    const threshold = getSessionLevel(sessionKey) || 'debug';
+    const events = recentEvents(200, threshold);
+    return { count: events.length, threshold, events };
   }
 
   throw new Error(`No dispatch handler for bucket '${bucket}'`);

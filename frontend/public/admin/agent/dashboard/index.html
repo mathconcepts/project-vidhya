@@ -582,6 +582,84 @@
       border-radius: 2px;
     }
 
+    /* ─── Prompts tab (v2.27.0) ──────────────────────────────── */
+    .prompt-row .prompt-args {
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .prompt-arg {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    @media (max-width: 700px) {
+      .prompt-arg { grid-template-columns: 1fr; }
+    }
+    .prompt-arg .arg-name {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .prompt-arg .arg-name .required {
+      color: var(--crit);
+      margin-left: 3px;
+      font-style: normal;
+      font-weight: 600;
+    }
+    .prompt-arg .arg-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    .prompt-arg input {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      background: var(--bg-inset);
+      border: 1px solid var(--border-hi);
+      color: var(--text);
+      border-radius: 2px;
+      min-width: 140px;
+    }
+    .prompt-arg input:focus { outline: none; border-color: var(--accent); }
+    .prompt-controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .prompt-controls button { font-size: 11px; padding: 6px 12px; }
+    .prompt-error {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: rgba(220,38,38,0.08);
+      border-left: 2px solid var(--crit);
+      color: var(--crit);
+      font-size: 12px;
+      border-radius: 2px;
+    }
+    .prompt-preview {
+      max-height: 320px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px !important;
+      line-height: 1.6 !important;
+    }
+    /* OK toast variant */
+    .error-toast.ok {
+      background: var(--ok);
+      color: #04221a;
+    }
+
     /* ─── Auth prompt ────────────────────────────────────────── */
     .auth-prompt {
       max-width: 520px;
@@ -723,7 +801,7 @@
   }
 
   function toast(msg, kind = 'error') {
-    const t = el('div', { class: 'error-toast' }, msg);
+    const t = el('div', { class: 'error-toast' + (kind === 'ok' ? ' ok' : '') }, msg);
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 4500);
   }
@@ -735,9 +813,12 @@
     llm: null,
     tools: [],
     resources: [],
+    prompts: [],
     roleFilter: null,
     isRunning: false,
     activeMcpTab: 'tools',
+    // Per-prompt local form state: { [promptName]: { args: {...}, generated: string|null, isLoading: bool } }
+    promptState: {},
   };
 
   // ─── Root render ──────────────────────────────────────────────────
@@ -789,7 +870,7 @@
     return el('header', {},
       el('h1', {}, 'Vidhya', el('em', {}, 'orchestrator')),
       el('div', { class: 'meta' },
-        el('span', {}, el('strong', {}, 'v'), '2.25.0'),
+        el('span', {}, el('strong', {}, 'v'), '2.27.0'),
         el('span', {}, el('strong', {}, 'llm'), ' ' + llmProvider),
         el('span', {}, el('strong', {}, 'run'), ' ' + (state.run?.id || '—')),
         el('span', {}, el('strong', {}, 'last'), ' ' + relativeTime(state.run?.completed_at)),
@@ -1033,28 +1114,34 @@
     sec.appendChild(el('summary', {},
       'MCP Explorer',
       el('span', { class: 'badge' },
-        state.tools.length + ' tools · ' + state.resources.length + ' resources'),
+        state.tools.length + ' tools · ' +
+        state.resources.length + ' resources · ' +
+        state.prompts.length + ' prompts'),
     ));
 
     const body = el('div', { class: 'mcp-body' });
 
     const tabs = el('div', { class: 'mcp-tabs' });
-    const toolsTab = el('button', {
+    tabs.appendChild(el('button', {
       class: state.activeMcpTab === 'tools' ? 'active' : '',
       onclick: () => { state.activeMcpTab = 'tools'; render(); },
-    }, 'Tools (' + state.tools.length + ')');
-    const resourcesTab = el('button', {
+    }, 'Tools (' + state.tools.length + ')'));
+    tabs.appendChild(el('button', {
       class: state.activeMcpTab === 'resources' ? 'active' : '',
       onclick: () => { state.activeMcpTab = 'resources'; render(); },
-    }, 'Resources (' + state.resources.length + ')');
-    tabs.appendChild(toolsTab);
-    tabs.appendChild(resourcesTab);
+    }, 'Resources (' + state.resources.length + ')'));
+    tabs.appendChild(el('button', {
+      class: state.activeMcpTab === 'prompts' ? 'active' : '',
+      onclick: () => { state.activeMcpTab = 'prompts'; render(); },
+    }, 'Prompts (' + state.prompts.length + ')'));
     body.appendChild(tabs);
 
     if (state.activeMcpTab === 'tools') {
       body.appendChild(renderToolsList());
-    } else {
+    } else if (state.activeMcpTab === 'resources') {
       body.appendChild(renderResourcesList());
+    } else {
+      body.appendChild(renderPromptsList());
     }
 
     sec.appendChild(body);
@@ -1090,8 +1177,149 @@
         el('span', { class: 'name' }, r.uri),
       ));
       row.appendChild(el('div', { class: 'desc' }, r.description));
+      list.appendChild(row);
     }
     return list;
+  }
+
+  // ─── Prompts tab (v2.27.0) ────────────────────────────────────────
+  // Each prompt renders: name, description, an inputs section for its
+  // args (respecting required flag), a Generate button that calls
+  // prompts/get via JSON-RPC, and on result: a preview + Copy button.
+  function renderPromptsList() {
+    const list = el('div', { class: 'mcp-list' });
+    if (state.prompts.length === 0) {
+      list.appendChild(el('div', { class: 'empty' }, 'No prompts available for this role.'));
+      return list;
+    }
+    for (const p of state.prompts) {
+      // Lazily initialise this prompt's local state
+      if (!state.promptState[p.name]) {
+        state.promptState[p.name] = { args: {}, generated: null, isLoading: false, error: null };
+      }
+      const ps = state.promptState[p.name];
+
+      const row = el('div', { class: 'mcp-row prompt-row' });
+      row.appendChild(el('header', {},
+        el('span', { class: 'name' }, p.name),
+      ));
+      row.appendChild(el('div', { class: 'desc' }, p.description));
+
+      // Argument inputs
+      if (p.arguments && p.arguments.length > 0) {
+        const form = el('div', { class: 'prompt-args' });
+        for (const arg of p.arguments) {
+          const label = el('label', { class: 'prompt-arg' });
+          label.appendChild(el('span', { class: 'arg-name' },
+            arg.name, arg.required ? el('em', { class: 'required' }, '*') : null));
+          label.appendChild(el('span', { class: 'arg-desc' }, arg.description));
+          const input = el('input', {
+            type: 'text',
+            placeholder: arg.required ? 'required' : 'optional',
+            value: ps.args[arg.name] || '',
+            onchange: (e) => { ps.args[arg.name] = e.target.value; },
+            oninput: (e) => { ps.args[arg.name] = e.target.value; },
+          });
+          label.appendChild(input);
+          form.appendChild(label);
+        }
+        row.appendChild(form);
+      }
+
+      // Generate + Copy controls
+      const controls = el('div', { class: 'prompt-controls' });
+      controls.appendChild(el('button', {
+        class: 'primary',
+        disabled: ps.isLoading || undefined,
+        onclick: () => generatePrompt(p.name),
+      }, ps.isLoading ? el('span', { class: 'spinner' }) : 'Generate'));
+
+      if (ps.generated) {
+        controls.appendChild(el('button', {
+          onclick: () => copyToClipboard(ps.generated, p.name),
+        }, 'Copy to Clipboard'));
+        controls.appendChild(el('button', {
+          onclick: () => { ps.generated = null; ps.error = null; render(); },
+        }, 'Clear'));
+      }
+      row.appendChild(controls);
+
+      // Error display
+      if (ps.error) {
+        row.appendChild(el('div', { class: 'prompt-error' }, 'Error: ' + ps.error));
+      }
+
+      // Generated preview
+      if (ps.generated) {
+        row.appendChild(el('details', { open: true },
+          el('summary', {}, 'Generated prompt (' + ps.generated.length + ' chars)'),
+          el('pre', { class: 'prompt-preview' }, ps.generated),
+        ));
+      }
+
+      list.appendChild(row);
+    }
+    return list;
+  }
+
+  async function generatePrompt(name) {
+    const ps = state.promptState[name];
+    ps.isLoading = true;
+    ps.error = null;
+    render();
+    try {
+      // Strip empty string args — treat as omitted
+      const cleanArgs = {};
+      for (const [k, v] of Object.entries(ps.args)) {
+        if (v !== '' && v !== null && v !== undefined) cleanArgs[k] = v;
+      }
+      const resp = await fetchJSON('/api/admin/agent/mcp', {
+        method: 'POST',
+        body: JSON.stringify({
+          jsonrpc: '2.0', id: Date.now(),
+          method: 'prompts/get',
+          params: { name, arguments: cleanArgs },
+        }),
+      });
+      if (resp.error) {
+        ps.error = resp.error.message || 'Unknown error (' + resp.error.code + ')';
+      } else {
+        const text = resp.result?.messages?.[0]?.content?.text;
+        if (typeof text === 'string') {
+          ps.generated = text;
+        } else {
+          ps.error = 'Unexpected response shape';
+        }
+      }
+    } catch (err) {
+      ps.error = err.message || String(err);
+    } finally {
+      ps.isLoading = false;
+      render();
+    }
+  }
+
+  async function copyToClipboard(text, promptName) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        toast('Copied ' + text.length + ' chars for "' + promptName + '"', 'ok');
+      } else {
+        // Fallback for older browsers / non-https contexts
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (ok) toast('Copied ' + text.length + ' chars for "' + promptName + '"', 'ok');
+        else toast('Copy failed — select the preview text and copy manually');
+      }
+    } catch (err) {
+      toast('Copy error: ' + err.message);
+    }
   }
 
   // ─── Actions ──────────────────────────────────────────────────────
@@ -1147,14 +1375,21 @@
       state.llm = llm?.llm || null;
       state.tools = tools?.tools || [];
 
-      // Fetch MCP resources/list via the JSON-RPC endpoint
+      // Fetch MCP resources/list AND prompts/list via the JSON-RPC endpoint
       try {
-        const rpc = await fetchJSON('/api/admin/agent/mcp', {
-          method: 'POST',
-          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'resources/list' }),
-        });
-        state.resources = rpc?.result?.resources || [];
-      } catch { state.resources = []; }
+        const [resRpc, promptsRpc] = await Promise.all([
+          fetchJSON('/api/admin/agent/mcp', {
+            method: 'POST',
+            body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'resources/list' }),
+          }).catch(() => null),
+          fetchJSON('/api/admin/agent/mcp', {
+            method: 'POST',
+            body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'prompts/list' }),
+          }).catch(() => null),
+        ]);
+        state.resources = resRpc?.result?.resources || [];
+        state.prompts = promptsRpc?.result?.prompts || [];
+      } catch { state.resources = []; state.prompts = []; }
 
       render();
     } catch (err) {

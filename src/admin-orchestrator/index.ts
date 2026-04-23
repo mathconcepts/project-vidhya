@@ -56,4 +56,13 @@ export type {
   PromptDescriptor, PromptArgumentSpec, PromptMessage, PromptGetResult,
   PromptGetError, PromptGetContext,
 } from './mcp-prompts';
+export {
+  emit as logEmit, debug as logDebug, info as logInfo, notice as logNotice,
+  warning as logWarning, error as logError,
+  subscribe as subscribeLogger, unsubscribe as unsubscribeLogger,
+  listSubscribers, recentEvents, clearRingBuffer,
+  setSessionLevel, getSessionLevel, clearSessionLevel,
+  parseLevel, levelPasses, _resetLoggerForTests,
+} from './logger';
+export type { LogLevel, LogEvent } from './logger';
 export { getDashboardHTML } from './dashboard-html';

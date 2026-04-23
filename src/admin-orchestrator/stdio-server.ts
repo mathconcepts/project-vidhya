@@ -60,19 +60,29 @@
  */
 
 import { handleMCPRequest, type JsonRpcRequest, type JsonRpcResponse, type MCPContext } from './mcp-server';
+import {
+  subscribe as subscribeLogger,
+  getSessionLevel,
+  setSessionLevel,
+  levelPasses,
+  info as logInfo,
+  warning as logWarn,
+  error as logError,
+  type LogEvent,
+} from './logger';
 import type { RoleId } from './types';
 
 // ============================================================================
-// Logger — writes to stderr ONLY so stdout stays protocol-pure
+// Logger — stdio routes all logs through the central logger.
+// Since central logger already writes to stderr, the local log() helper
+// just calls through to it.
 // ============================================================================
 
-const LOG_PREFIX = '[vidhya-mcp-stdio]';
+const STDIO_LOGGER = 'mcp-stdio';
 function log(level: 'info' | 'warn' | 'error', msg: string, extra?: any): void {
-  const now = new Date().toISOString();
-  const line = extra
-    ? `${now} ${LOG_PREFIX} [${level}] ${msg} ${JSON.stringify(extra)}`
-    : `${now} ${LOG_PREFIX} [${level}] ${msg}`;
-  process.stderr.write(line + '\n');
+  if (level === 'info') logInfo(STDIO_LOGGER, msg, extra);
+  else if (level === 'warn') logWarn(STDIO_LOGGER, msg, extra);
+  else logError(STDIO_LOGGER, msg, extra);
 }
 
 // ============================================================================
@@ -220,6 +230,42 @@ async function main(): Promise<void> {
 
   installSignalHandlers();
   startStdinReader(ctx);
+
+  // Subscribe to central logger so we push notifications/message to the
+  // client whenever an event passes the session-level filter. The
+  // session id is derived from the actor (stdio sessions are 1:1 with
+  // the process, so actor is a stable key).
+  //
+  // Initial level is 'info' — client can change via logging/setLevel.
+  const sessionKey = ctx.actor || 'stdio-session';
+  if (!getSessionLevel(sessionKey)) {
+    setSessionLevel(sessionKey, 'info');
+  }
+  subscribeLogger(`stdio:${sessionKey}`, 'debug', (event: LogEvent) => {
+    // Apply the session's threshold on every event. We subscribe at
+    // 'debug' so we see everything, then filter per session threshold.
+    const threshold = getSessionLevel(sessionKey) || 'info';
+    if (!levelPasses(event.level, threshold)) return;
+
+    const notification = {
+      jsonrpc: '2.0',
+      method: 'notifications/message',
+      params: {
+        level: event.level,
+        logger: event.logger,
+        data: {
+          message: event.message,
+          timestamp: event.ts,
+          ...(event.data || {}),
+        },
+      },
+    };
+    try {
+      process.stdout.write(JSON.stringify(notification) + '\n');
+    } catch {
+      // Swallow — stdout may be closed during shutdown
+    }
+  });
 
   // Pre-load exam adapters so the scanner sees them. Without this step,
   // the first tools/list or resources/list call to a fresh stdio

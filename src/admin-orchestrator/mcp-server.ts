@@ -71,7 +71,7 @@ const ERR_NOT_AUTHORIZED = -32002;
 
 export const MCP_SERVER_INFO = {
   name: 'project-vidhya-admin-orchestrator',
-  version: '2.26.0',
+  version: '2.27.0',
   /** Protocol version the server implements. 2024-11-05 is the stable MCP baseline. */
   protocolVersion: '2024-11-05',
 };
@@ -83,8 +83,12 @@ export const MCP_SERVER_INFO = {
  *   tools:           list + call (core); listChanged notifications unsupported
  *   resources:       list + read (v2.24.0); subscribe unsupported; listChanged unsupported
  *   prompts:         list + get (v2.26.0); listChanged unsupported
+ *   logging:         setLevel (v2.27.0). Under stdio transport, events
+ *                    are pushed as notifications/message. Under HTTP
+ *                    transport, setLevel is accepted for compliance
+ *                    but events must be pulled via resource
+ *                    vidhya://admin/logs/recent since HTTP can't push.
  *   sampling:        unsupported — server does not ask client to generate
- *   logging:         unsupported — server does not forward logs to client
  */
 export const MCP_CAPABILITIES = {
   tools: {
@@ -101,6 +105,7 @@ export const MCP_CAPABILITIES = {
     /** Server does not emit listChanged notifications */
     listChanged: false,
   },
+  logging: {},
 };
 
 // ============================================================================
@@ -152,6 +157,8 @@ export async function handleMCPRequest(
         return await handlePromptsList(id, request.params, ctx);
       case 'prompts/get':
         return await handlePromptsGet(id, request.params, ctx);
+      case 'logging/setLevel':
+        return await handleLoggingSetLevel(id, request.params, ctx);
       case 'notifications/initialized':
         // Per MCP: client sends this after initialize. Acknowledge silently.
         return successResponse(id, null);
@@ -327,6 +334,43 @@ async function handlePromptsGet(id: any, params: any, ctx: MCPContext): Promise<
 }
 
 // ============================================================================
+// Logging handler (v2.27.0)
+// ============================================================================
+
+/**
+ * handle `logging/setLevel`.
+ *
+ * Per MCP spec, the call persists a threshold for subsequent
+ * `notifications/message` events. Our implementation:
+ *
+ *   1. Parses + validates the level (debug/info/notice/warning/error/
+ *      critical/alert/emergency).
+ *   2. Stores it keyed by session id (from ctx.session_id, falling
+ *      back to ctx.actor if no session is declared).
+ *   3. Returns an empty success result per spec.
+ *
+ * The stdio transport separately subscribes a callback that pushes
+ * matching events as `notifications/message` to stdout. The HTTP
+ * transport doesn't push — HTTP callers can pull recent events via
+ * vidhya://admin/logs/recent resource.
+ */
+async function handleLoggingSetLevel(id: any, params: any, ctx: MCPContext): Promise<JsonRpcResponse> {
+  if (!params || typeof params !== 'object') {
+    return errorResponse(id, ERR_INVALID_PARAMS, 'params.level (string) required');
+  }
+  const { parseLevel, setSessionLevel, info } = await import('./logger');
+  const level = parseLevel(params.level);
+  if (!level) {
+    return errorResponse(id, ERR_INVALID_PARAMS,
+      `Invalid level '${params.level}'. Must be one of: debug, info, notice, warning, error, critical, alert, emergency`);
+  }
+  const sessionKey = ctx.session_id || ctx.actor || 'default';
+  setSessionLevel(sessionKey, level);
+  info('mcp-server', `logging level set`, { session: sessionKey, level, actor: ctx.actor });
+  return successResponse(id, {});
+}
+
+// ============================================================================
 // Response helpers
 // ============================================================================
 
@@ -363,6 +407,7 @@ export function getPublicManifest(): any {
       'initialize', 'ping', 'tools/list', 'tools/call',
       'resources/list', 'resources/read',
       'prompts/list', 'prompts/get',
+      'logging/setLevel',
       'notifications/initialized',
     ],
     protocol_notes: [
@@ -372,6 +417,7 @@ export function getPublicManifest(): any {
       'Destructive tools flagged via annotations.destructiveHint=true',
       'Resources are URI-addressed (vidhya://admin/...) and read-only',
       'Prompts return MCP-formatted messages the client runs through its own LLM',
+      'logging/setLevel is supported; under stdio transport events push as notifications/message, under HTTP transport events are pulled via vidhya://admin/logs/recent',
     ],
   };
 }

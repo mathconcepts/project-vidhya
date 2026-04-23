@@ -343,7 +343,7 @@ export function describeCapabilitiesTool(): DescribeCapabilitiesOutput {
 
   // Count tools + roles from the top-level imports (ESM-safe)
   return {
-    version: '2.26.0',
+    version: '2.27.0',
     schema_dialect: 'https://json-schema.org/draft/2020-12/schema',
     tool_count: TOOLS.length,
     role_count: Object.keys(ROLES).length,

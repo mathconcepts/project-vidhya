@@ -170,6 +170,23 @@ export function confirmDeletion(user_id: string): DeletionResult {
   // --- unlink channels
   result.channels_unlinked = Array.isArray(user.channels) ? user.channels.length : 0;
 
+  // --- drop user's uploads (upload-specialist boundary)
+  // Use dynamic import + sync-safe fallback via eval-require to
+  // avoid making this function async (which would cascade to all
+  // callers). Works in the tsx ESM runtime.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const uploads = eval('require')('../content/uploads');
+    if (uploads?.dropAllForUser) uploads.dropAllForUser(user_id);
+  } catch { /* best effort */ }
+
+  // --- drop user's content subscriptions (community-content-specialist)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const comm = eval('require')('../content/community');
+    if (comm?.dropUserSubscriptions) comm.dropUserSubscriptions(user_id);
+  } catch { /* best effort */ }
+
   // --- drop the user itself
   delete raw.users[user_id];
   writeFileSync(usersPath, JSON.stringify(raw, null, 2));

@@ -192,6 +192,8 @@ The content layer is a **four-tier cascade** assembled overnight by GitHub Actio
 
 📚 **As someone evaluating which exams this supports** → [EXAMS.md](./EXAMS.md). Three bundled mathematics exams — BITSAT, JEE Main, UGEE — with full structure, scoring, topic weights, and an adapter pattern so a new exam takes two files.
 
+📖 **As someone designing or contributing content** → [CONTENT.md](./CONTENT.md). The seven-layer content pipeline, multi-source ingestion (scraped / Wolfram / user uploads / community), intent-based routing with source disclosure, per-user subscriptions, and the separate-content-repo proposal.
+
 🔬 **As a technical evaluator** → [FEATURES.md](./FEATURES.md) for the shipping ledger, [DESIGN.md](./DESIGN.md) for the architecture, then [docs/](./docs/).
 
 🏫 **As an institution deploying for a cohort** → [INSTALL.md](./INSTALL.md). No per-seat licence. No external database. Role-based admin hierarchy (owner / admin / teacher / student) with the first sign-in auto-becoming owner. Add students via dashboard or CSV import. Define new exams as YAML. Students reach sessions through web, Telegram, or WhatsApp.

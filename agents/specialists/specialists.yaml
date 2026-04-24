@@ -458,6 +458,107 @@ specialists:
       - Channel bindings are always unlinked on hard-delete — a user
         shouldn't keep reaching a bot they no longer have an account with.
 
+  # ═══ Under teaching-manager (CPO side) — content-routing ═══════════
+
+  - id: content-router
+    reports_to: teaching-manager
+    mission: Classify student content intent and route to the best
+      available source (shipped bundle, cached, user uploads, community
+      contributions, generated, or Wolfram live) — always disclosing
+      the source to the student in the response.
+    skills:
+      - Parse natural-language requests into { intent, concept_id, modifiers }.
+      - Walk the source priority list respecting user subscriptions,
+        bundle availability, and verified status.
+      - Bypass the tier cascade for Wolfram-live intents.
+      - Emit CONTENT_ROUTED signals capturing the decision.
+    owned_tools:
+      - type: module
+        id: 'src/content/router.ts'
+        purpose: Intent classification + source selection.
+      - type: http
+        id: 'POST /api/student/content/request'
+        purpose: Intent-based content request HTTP surface.
+    decision_rules:
+      - Every returned content carries source disclosure. A student
+        never sees unattributed content.
+      - Unverified content cannot be routed to production surfaces
+        unless the student opts into preview mode explicitly.
+      - Fails closed — ambiguous intent routes to the most conservative
+        source (stored explainer over generation).
+    emits_signals:
+      - name: content-routed
+        schema: '{ user_id_hash, concept_id, chosen_source, rejected_because }'
+        when: Every routing decision.
+    connections:
+      peers:
+        - id: content-resolver
+          channel: query
+        - id: upload-specialist
+          channel: query
+        - id: community-content-specialist
+          channel: query
+        - id: wolfram-verifier
+          channel: query
+
+  # ═══ Under acquisition-manager (CCO side) — user uploads ══════════
+
+  - id: upload-specialist
+    reports_to: acquisition-manager
+    mission: Ingest and index user-uploaded material (photos, PDFs,
+      handwritten notes) privately. Never mix with cohort data.
+    skills:
+      - Store uploads under .data/user-uploads/{user_id}/.
+      - Extract text (OCR images, PDF-text PDFs) where possible.
+      - Maintain a per-user index mapping concept_id to relevant uploads.
+      - Chain into data-rights-specialist's hard-delete path.
+    owned_tools:
+      - type: module
+        id: 'src/content/uploads.ts'
+        purpose: Private upload storage + indexing.
+      - type: http
+        id: 'POST /api/student/uploads'
+      - type: http
+        id: 'GET /api/student/uploads'
+      - type: http
+        id: 'DELETE /api/student/uploads/:id'
+    decision_rules:
+      - Uploads are user-private. They NEVER enter cohort telemetry.
+      - LLM or Wolfram calls against an upload require explicit
+        per-request user consent.
+      - Uploads are deleted on account-close (chained from
+        data-rights-specialist).
+      - The upload index (concept_id mappings) is private per-user too.
+
+  # ═══ Under acquisition-manager (CCO side) — community content ═════
+
+  - id: community-content-specialist
+    reports_to: acquisition-manager
+    mission: Manage the link between this code repo and the separate
+      project-vidhya-content community repo. Pull pinned content,
+      register it with content-router, and operate user subscriptions.
+    skills:
+      - Read content.pin and sync the pinned SHA of the content repo.
+      - Build a manifest of available community bundles.
+      - Maintain .data/content-subscriptions.json.
+      - Expose community bundles to content-router via peer query.
+    owned_tools:
+      - type: module
+        id: 'src/content/community.ts'
+        purpose: Content-repo sync + user subscriptions.
+      - type: http
+        id: 'GET /api/student/content/subscriptions'
+      - type: http
+        id: 'POST /api/student/content/subscribe'
+    decision_rules:
+      - Pinned SHA governs which content version a deployment uses.
+      - Content from unverified bundles is gated through
+        verification-manager before routing.
+      - User subscriptions are additive — subscribing to a bundle
+        preferences it; un-subscribing returns to the default.
+      - Stub mode (empty manifest) is valid when the content repo
+        doesn't exist yet.
+
 # ─── Portability ──────────────────────────────────────────────────────
 #
 # Every specialist in this file:

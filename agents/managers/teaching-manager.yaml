@@ -49,6 +49,8 @@ connections:
       channel: delegation     # cross-functional lever into CCO's content
     - id: problem-generator-specialist
       channel: delegation     # GBrain-calibrated problems
+    - id: content-router
+      channel: delegation     # intent classification + source selection
   peers:
     - id: planner-manager
       channel: query

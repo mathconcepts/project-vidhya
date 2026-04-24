@@ -29,6 +29,10 @@ connections:
       channel: delegation
     - id: licence-checker
       channel: delegation
+    - id: upload-specialist
+      channel: delegation     # user-private upload ingestion
+    - id: community-content-specialist
+      channel: delegation     # sync pinned SHA of project-vidhya-content
   peers:
     - id: verification-manager
       channel: delegation     # hand off acquired records for verification

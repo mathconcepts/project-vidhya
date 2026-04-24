@@ -57,6 +57,7 @@ import { marketingRoutes } from './api/marketing-routes';
 import { adminAgentRoutes } from './api/admin-agent-routes';
 import { sessionPlannerRoutes } from './api/session-planner-routes';
 import { lifecycleRoutes } from './api/lifecycle-routes';
+import { contentLifecycleRoutes } from './api/content-lifecycle-routes';
 // Side-effect: registers all bundled exam adapters via the registry pattern.
 // New adapters dropped into src/exams/adapters/ and imported from
 // src/exams/adapters/index.ts are picked up automatically at startup.
@@ -255,6 +256,9 @@ for (const route of sessionPlannerRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of lifecycleRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of contentLifecycleRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of botTelegramRoutes) {

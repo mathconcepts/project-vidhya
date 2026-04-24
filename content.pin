@@ -1,0 +1,19 @@
+# content.pin — pinned version of the separate content repo
+#
+# When the project-vidhya-content repo is created, this file will be
+# bumped (manually, by a maintainer) to a specific commit SHA. Until
+# then, sha=pending keeps the community-content-specialist in stub
+# mode (returns empty bundle lists — routing falls back to shipped
+# default).
+#
+# To bump after the content repo exists:
+#   1. Review the changes in the content repo
+#   2. Update sha and pinned_at below
+#   3. Run: npx tsx scripts/content-sync.ts
+#   4. Commit the change
+#
+# See CONTENT.md for the full flow.
+
+repo: mathconcepts/project-vidhya-content
+sha: pending
+pinned_at: 2026-04-24

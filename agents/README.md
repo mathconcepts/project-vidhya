@@ -16,6 +16,12 @@ MCP, LangGraph, or a bespoke router.
 - **[`ORG-CHART.md`](./ORG-CHART.md)** — the canonical human-readable
   reference. Who reports to whom, what each agent owns, how the graph
   is wired.
+- **[`CUSTOMER-LIFECYCLE.md`](./CUSTOMER-LIFECYCLE.md)** — the
+  customer journey from awareness to win-back, mapped onto the agent
+  org. Shows which agents own which lifecycle stage, names the four
+  gap roles, and works out two concrete scenarios (demo → paid
+  conversion with telemetry continuity, and content add/remove from
+  the student's perspective).
 - **[`_shared/constitution.md`](./_shared/constitution.md)** — the four
   product promises and the non-negotiable invariants every agent is
   bound by.

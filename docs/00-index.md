@@ -28,6 +28,7 @@ This is the master index of all documentation in the `docs/` directory, organise
 | 01 | `01-quick-start.md` | 5-minute local setup guide |
 | 02 | `02-agent-architecture.md` | *Legacy 7-agent persona architecture — superseded by [`agents/ORG-CHART.md`](../agents/ORG-CHART.md)* |
 | — | [`../agents/ORG-CHART.md`](../agents/ORG-CHART.md) | **Current** 48-agent C-suite organisation chart |
+| — | [`../agents/CUSTOMER-LIFECYCLE.md`](../agents/CUSTOMER-LIFECYCLE.md) | Customer journey (acquisition → retention → win-back) mapped onto the agent org, with demo→paid conversion and content add/remove worked scenarios |
 | — | [`../agents/_shared/constitution.md`](../agents/_shared/constitution.md) | The four core promises + non-negotiable invariants |
 | — | [`../agents/_shared/gbrain-integration.md`](../agents/_shared/gbrain-integration.md) | GBrain cognitive-spine contract |
 | 03 | `03-llm-abstraction.md` | LLM service layer, model fallback chain |

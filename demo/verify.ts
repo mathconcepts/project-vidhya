@@ -102,7 +102,7 @@ async function main() {
       method: 'POST',
       headers: { ...H('student-active'), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        exam_id: 'EXM-BITSAT-SAMPLE',
+        exam_id: 'EXM-BITSAT-MATH-SAMPLE',
         exam_date: new Date(Date.now() + 7 * 86400e3).toISOString().slice(0, 10),
         minutes_available: 15,
       }),

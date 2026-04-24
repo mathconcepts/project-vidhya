@@ -186,6 +186,8 @@ The content layer is a **four-tier cascade** assembled overnight by GitHub Actio
 
 🧪 **As a tester wanting a working demo right now** → [DEMO.md](./DEMO.md). One command seeds a realistic student (2 exams, 6 plan history, templates, trailing stats), another command boots backend + frontend. Open `/demo.html` → you're auto-logged-in on the planned-session surface with live data.
 
+📚 **As someone evaluating which exams this supports** → [EXAMS.md](./EXAMS.md). Three bundled mathematics exams — BITSAT, JEE Main, UGEE — with full structure, scoring, topic weights, and an adapter pattern so a new exam takes two files.
+
 🔬 **As a technical evaluator** → [FEATURES.md](./FEATURES.md) for the shipping ledger, [DESIGN.md](./DESIGN.md) for the architecture, then [docs/](./docs/).
 
 🏫 **As an institution deploying for a cohort** → [INSTALL.md](./INSTALL.md). No per-seat licence. No external database. Role-based admin hierarchy (owner / admin / teacher / student) with the first sign-in auto-becoming owner. Add students via dashboard or CSV import. Define new exams as YAML. Students reach sessions through web, Telegram, or WhatsApp.

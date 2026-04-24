@@ -133,11 +133,11 @@ const lightStudent  = studentUsers.find(s => s.pattern === 'light')!.user;
 
 console.log('\n--- step 5: exam profiles ---');
 upsertProfile(activeStudent.id, [
-  { exam_id: 'EXM-BITSAT-SAMPLE',       exam_date: daysOut(7),  weekly_hours: 10, topic_confidence: { algebra: 3, calculus: 2, mechanics: 4 }, added_at: daysOut(-30) },
+  { exam_id: 'EXM-BITSAT-MATH-SAMPLE',       exam_date: daysOut(7),  weekly_hours: 10, topic_confidence: { algebra: 3, calculus: 2, mechanics: 4 }, added_at: daysOut(-30) },
   { exam_id: 'EXM-JEEMAIN-MATH-SAMPLE', exam_date: daysOut(90), weekly_hours: 8,  topic_confidence: { algebra: 2, calculus: 2, trigonometry: 3 }, added_at: daysOut(-15) },
 ]);
 upsertProfile(lightStudent.id, [
-  { exam_id: 'EXM-BITSAT-SAMPLE', exam_date: daysOut(30), weekly_hours: 6, topic_confidence: { algebra: 2, calculus: 1 }, added_at: daysOut(-7) },
+  { exam_id: 'EXM-BITSAT-MATH-SAMPLE', exam_date: daysOut(30), weekly_hours: 6, topic_confidence: { algebra: 2, calculus: 1 }, added_at: daysOut(-7) },
 ]);
 console.log(`  Priya  (active): 2 exams (7d + 90d out)`);
 console.log(`  Rahul  (light):  1 exam (30d out)`);
@@ -147,8 +147,8 @@ console.log(`  Aditya (new):    0 exams (intentional)`);
 
 console.log('\n--- step 6: Priya\'s saved templates ---');
 for (const t of [
-  { name: 'Morning commute',   minutes_available: 8,  exam_id: 'EXM-BITSAT-SAMPLE',       difficulty: 'medium', preset_slug: 'commute-8min'  },
-  { name: 'Focused morning',   minutes_available: 15, exam_id: 'EXM-BITSAT-SAMPLE',       difficulty: 'medium', preset_slug: 'morning-15min' },
+  { name: 'Morning commute',   minutes_available: 8,  exam_id: 'EXM-BITSAT-MATH-SAMPLE',       difficulty: 'medium', preset_slug: 'commute-8min'  },
+  { name: 'Focused morning',   minutes_available: 15, exam_id: 'EXM-BITSAT-MATH-SAMPLE',       difficulty: 'medium', preset_slug: 'morning-15min' },
   { name: 'Weekend deep dive', minutes_available: 60, exam_id: 'EXM-JEEMAIN-MATH-SAMPLE', difficulty: 'hard',   preset_slug: 'weekend-60min' },
 ]) {
   const created = createTemplate(activeStudent.id, {
@@ -164,7 +164,7 @@ console.log('\n--- step 7: plan history + practice log ---');
 
 function seedPriyaHistory() {
   const profile = [
-    { exam_id: 'EXM-BITSAT-SAMPLE',       exam_date: daysOut(7),  weekly_hours: 10, topic_confidence: { algebra: 3, calculus: 2, mechanics: 4 } },
+    { exam_id: 'EXM-BITSAT-MATH-SAMPLE',       exam_date: daysOut(7),  weekly_hours: 10, topic_confidence: { algebra: 3, calculus: 2, mechanics: 4 } },
     { exam_id: 'EXM-JEEMAIN-MATH-SAMPLE', exam_date: daysOut(90), weekly_hours: 8,  topic_confidence: { algebra: 2, calculus: 2, trigonometry: 3 } },
   ];
   const hist = [
@@ -226,7 +226,7 @@ function seedPriyaHistory() {
 }
 
 function seedRahulHistory() {
-  const exam = { exam_id: 'EXM-BITSAT-SAMPLE', exam_date: daysOut(30), weekly_hours: 6, topic_confidence: { algebra: 2, calculus: 1 } };
+  const exam = { exam_id: 'EXM-BITSAT-MATH-SAMPLE', exam_date: daysOut(30), weekly_hours: 6, topic_confidence: { algebra: 2, calculus: 1 } };
   let plans = 0, minutes = 0;
   for (const h of [{ daysAgo: 5, minutes: 15 }, { daysAgo: 2, minutes: 8 }]) {
     const when = new Date(today);

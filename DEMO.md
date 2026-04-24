@@ -12,6 +12,48 @@ required for the baseline experience.
 
 ---
 
+## Quick reference — every demo command
+
+```bash
+# First time
+npm run demo:setup             # install deps + seed (one-off)
+npm run demo:start             # boot backend + frontend
+# → open http://localhost:3000/demo.html
+
+# Day-to-day
+npm run demo:reset             # clear seed artefacts
+npm run demo:seed              # reseed (without reinstalling)
+npm run demo:verify            # 14 checks across all 4 roles
+npm run demo:log               # owner-visible usage log (+ --summary, --all)
+
+# Channels (Telegram / WhatsApp — see demo/CHANNELS.md)
+npm run demo:channel-setup     # validate operator-provided creds
+npm run demo:channel-link      # bind a demo role to a channel identity
+```
+
+## What ships — one scrollable page
+
+| Piece | Where | Status |
+|---|---|---|
+| 6 seeded users across 4 roles | `demo/seed.ts` | ✓ shipped |
+| Role picker (one-click sign-in) | `/demo.html` | ✓ shipped |
+| BYOK discovery page | `/demo-api-keys.html` | ✓ shipped |
+| Owner-visible usage telemetry | `.data/demo-usage-log.json` | ✓ shipped |
+| Telegram + WhatsApp channel linking | `demo/CHANNELS.md` | ✓ shipped |
+| **Demo → paid conversion flow** | `/gate/convert-demo` + `/api/demo/convert` | ✓ shipped |
+| **Self-service account deletion** | `/api/me/delete*` + `/api/me/export` | ✓ shipped |
+| **Activation-funnel metrics (admin)** | `/api/admin/lifecycle/funnel` | ✓ shipped |
+| **Cohort-retention analysis (admin)** | `/api/admin/lifecycle/retention` | ✓ shipped |
+| Deployment (Render / Railway / Fly / Docker) | `demo/HOSTING.md` | ✓ documented |
+
+The **four exam adapters** the demo exercises — BITSAT, JEE Main,
+UGEE — are documented separately in [`EXAMS.md`](./EXAMS.md). The
+demo seed uses the real canonical exam IDs, so everything the
+planner computes for a demo student is the same computation it
+would run for a production student on the same exam.
+
+---
+
 ## One-command start
 
 ```bash
@@ -38,6 +80,54 @@ user.
 
 Kavita (the teacher) is explicitly wired to Priya and Rahul. Aditya
 has no teacher — testers can try assigning one from the admin view.
+
+---
+
+## The demo → real account flow
+
+Every demo student sees a sticky **"Demo mode — Make this real →"**
+banner at the top of `/gate/planned`. Clicking it opens a page at
+`/gate/convert-demo` where they enter a real email and name. A
+single API call to `POST /api/demo/convert`:
+
+1. Creates a real user account
+2. Carries over exam profiles, plans, templates, and practice-log
+   entries (so the trailing-stats badge doesn't reset to zero — the
+   act of signing up is not punished)
+3. Anonymises `demo-usage-log.json` entries tied to the demo user
+   (the owner keeps the cohort aggregate but loses the per-user link)
+4. Returns a success summary with the carry-over counts
+
+Proven end-to-end: on a clean demo seed, **Priya's 97 min trailing
+stats / 6 plans / 3 templates / 2 exam registrations / 9 practice
+sessions** all survive the conversion. See the worked scenario in
+[`agents/CUSTOMER-LIFECYCLE.md`](./agents/CUSTOMER-LIFECYCLE.md) for
+the field-by-field migration specification.
+
+## Admin lifecycle reports
+
+Two owner-facing endpoints expose the customer-lifecycle health at a
+glance. Both are `admin+` gated; student tokens get HTTP 403.
+
+```
+GET /api/admin/lifecycle/funnel        # activation funnel per cohort
+GET /api/admin/lifecycle/retention     # cohort disengagement signals
+```
+
+- **Funnel** reports the 5-step conversion: *signed_up →
+  exam_registered → first_plan → first_attempt → activated (trailing
+  stats > 0)*. Cohorts under 5 members merge into
+  `small-cohorts-combined` to avoid fingerprinting.
+- **Retention** reports week-over-week practice-minutes per cohort.
+  Findings emit at ≥50% drop (`severity: warn`); alert at ≥75%.
+  K-anonymity threshold of 30 — populations below that produce an
+  explicit `under-threshold` finding rather than noise.
+
+Both modules are pure read-only queries; they have no outbound
+surface and cannot trigger per-user messaging. This is enforced
+constitutionally in the owning specialist manifests (onboarding-
+specialist and retention-specialist; see
+[`agents/CUSTOMER-LIFECYCLE.md`](./agents/CUSTOMER-LIFECYCLE.md)).
 
 ---
 

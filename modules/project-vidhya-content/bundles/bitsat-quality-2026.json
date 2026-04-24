@@ -1,0 +1,14 @@
+{
+  "id": "bitsat-quality-2026",
+  "name": "BITSAT Quality — 2026",
+  "description": "Community-vetted high-quality explainers targeting BITSAT Math 2026. Focus on speed-accurate presentation respecting BITSAT's -1 negative marking strategy.",
+  "concepts": [
+    "calculus-derivatives",
+    "complex-numbers"
+  ],
+  "licence": "MIT",
+  "maintainer": "project-vidhya",
+  "verified": false,
+  "target_exams": ["EXM-BITSAT-MATH-SAMPLE"],
+  "version": "0.1.0"
+}

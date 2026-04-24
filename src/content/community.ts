@@ -19,12 +19,13 @@
  * bundle's explainers over the default.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import path from 'path';
 
 const SUBSCRIPTIONS_PATH = '.data/content-subscriptions.json';
 const PIN_PATH           = 'content.pin';
 const COMMUNITY_DIR      = '.data/community-content';
+const LOCAL_SUBREPO_DIR  = 'modules/project-vidhya-content';
 
 // ─── Subscription model ──────────────────────────────────────────────
 
@@ -88,7 +89,22 @@ export function readContentPin(): ContentPin {
   }
 }
 
-// ─── Community bundles (stub) ────────────────────────────────────────
+/**
+ * Resolves where to read community content from.
+ *
+ *   sha=local   → modules/project-vidhya-content/   (development, pre-GitHub)
+ *   sha=<SHA>   → .data/community-content/          (synced via content-sync.ts)
+ *   sha=pending → null                              (stub mode, no content)
+ */
+function _resolveContentDir(pin: ContentPin): string | null {
+  if (pin.stub) return null;
+  if (pin.sha === 'local') {
+    return existsSync(LOCAL_SUBREPO_DIR) ? LOCAL_SUBREPO_DIR : null;
+  }
+  return existsSync(COMMUNITY_DIR) ? COMMUNITY_DIR : null;
+}
+
+// ─── Community bundles ───────────────────────────────────────────────
 
 export interface Bundle {
   id:          string;            // e.g. "bitsat-quality-2026"
@@ -105,17 +121,17 @@ export interface Bundle {
  * When the repo exists, scripts/content-sync.ts will populate
  * COMMUNITY_DIR with bundle manifests that this function reads.
  */
-export function listCommunityBundles(): { bundles: Bundle[]; mode: 'stub' | 'live'; pin: ContentPin } {
+export function listCommunityBundles(): { bundles: Bundle[]; mode: 'stub' | 'live' | 'local'; pin: ContentPin } {
   const pin = readContentPin();
-  if (pin.stub || !existsSync(COMMUNITY_DIR)) {
+  const contentDir = _resolveContentDir(pin);
+  if (!contentDir) {
     return { bundles: [], mode: 'stub', pin };
   }
-  // Live mode — read manifests from COMMUNITY_DIR
+  const mode: 'local' | 'live' = pin.sha === 'local' ? 'local' : 'live';
   try {
-    const bundlesDir = path.join(COMMUNITY_DIR, 'bundles');
-    if (!existsSync(bundlesDir)) return { bundles: [], mode: 'live', pin };
-    const fs = require('fs') as typeof import('fs');
-    const files = fs.readdirSync(bundlesDir);
+    const bundlesDir = path.join(contentDir, 'bundles');
+    if (!existsSync(bundlesDir)) return { bundles: [], mode, pin };
+    const files = readdirSync(bundlesDir);
     const bundles: Bundle[] = [];
     for (const f of files) {
       if (!f.endsWith('.json')) continue;
@@ -130,9 +146,9 @@ export function listCommunityBundles(): { bundles: Bundle[]; mode: 'stub' | 'liv
         });
       } catch { /* skip malformed */ }
     }
-    return { bundles, mode: 'live', pin };
+    return { bundles, mode, pin };
   } catch {
-    return { bundles: [], mode: 'live', pin };
+    return { bundles: [], mode, pin };
   }
 }
 
@@ -143,10 +159,13 @@ export function listCommunityBundles(): { bundles: Bundle[]; mode: 'stub' | 'liv
 export function findCommunityContent(bundle_id: string, concept_id: string): {
   body: string; source_ref: string; licence: string;
 } | null {
-  if (!existsSync(COMMUNITY_DIR)) return null;
-  const contentPath = path.join(COMMUNITY_DIR, 'concepts', concept_id, 'explainer.md');
+  const pin = readContentPin();
+  const contentDir = _resolveContentDir(pin);
+  if (!contentDir) return null;
+
+  const contentPath = path.join(contentDir, 'concepts', concept_id, 'explainer.md');
   if (!existsSync(contentPath)) return null;
-  const bundleManifestPath = path.join(COMMUNITY_DIR, 'bundles', `${bundle_id}.json`);
+  const bundleManifestPath = path.join(contentDir, 'bundles', `${bundle_id}.json`);
   if (!existsSync(bundleManifestPath)) return null;
 
   try {

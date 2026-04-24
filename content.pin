@@ -1,19 +1,27 @@
 # content.pin — pinned version of the separate content repo
 #
-# When the project-vidhya-content repo is created, this file will be
-# bumped (manually, by a maintainer) to a specific commit SHA. Until
-# then, sha=pending keeps the community-content-specialist in stub
-# mode (returns empty bundle lists — routing falls back to shipped
-# default).
+# Three modes:
 #
-# To bump after the content repo exists:
-#   1. Review the changes in the content repo
-#   2. Update sha and pinned_at below
-#   3. Run: npx tsx scripts/content-sync.ts
-#   4. Commit the change
+#   sha: pending   STUB MODE. No community content served.
+#                  Falls back to shipped default bundle only.
 #
-# See CONTENT.md for the full flow.
+#   sha: local     LOCAL MODE. Reads from modules/project-vidhya-content/
+#                  in this repo. Good for development + before the
+#                  separate GitHub repo exists.
+#
+#   sha: <40-char> LIVE MODE. Reads from .data/community-content/
+#                  after scripts/content-sync.ts has cloned the pinned
+#                  SHA from the GitHub repo.
+#
+# To move between modes:
+#   - stub → local:     edit sha: local below
+#   - local → live:     create github.com/mathconcepts/project-vidhya-content,
+#                       git subtree push modules/project-vidhya-content/ to it,
+#                       then set sha: to a commit SHA
+#
+# See CONTENT.md for the full flow and MODULARISATION.md for the
+# sub-repo split plan.
 
 repo: mathconcepts/project-vidhya-content
-sha: pending
+sha: local
 pinned_at: 2026-04-24

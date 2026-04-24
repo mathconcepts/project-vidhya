@@ -475,13 +475,38 @@ Routing behaviour:
 This is the "selected content / all content can be routed to a
 particular Project Vidhya user" the brief asked for.
 
-**Today's shipping status:** the subscription model and router
-honor it are shipped in this commit. The actual separate content
-repo (`project-vidhya-content`) does not yet exist — creating it
-is the next step after this commit lands. Until it exists, the
-`community-content-specialist` operates in a stub mode (returns
-empty manifests), and the subscription system works purely with
-the shipped default bundle.
+**Today's shipping status:** The subrepo has been **built** — see
+[`modules/project-vidhya-content/`](./modules/project-vidhya-content/)
+in this repo. It contains 3 seed concepts (derivatives, eigenvalues,
+complex numbers) with explainers + worked examples, 2 bundle
+manifests, its own `check.js` PR validator, GitHub Actions CI config,
+README, CONTRIBUTING, and LICENSE.
+
+Three `content.pin` modes are now supported:
+
+| Mode | `sha:` value | Source of content |
+|---|---|---|
+| **stub** | `pending` | No community content; falls back to shipped default |
+| **local** | `local` | Reads from `modules/project-vidhya-content/` in this repo |
+| **live** | `<40-char SHA>` | Reads from `.data/community-content/` after content-sync clones the pinned GitHub SHA |
+
+The pin is currently set to `local`, so the router serves community
+content end-to-end today. Proven: subscribe to `bitsat-quality-2026`
+→ ask *"explain derivatives"* → router returns the human-authored
+explainer from `modules/project-vidhya-content/concepts/calculus-derivatives/explainer.md`
+with `source: "subscription"`, `licence: "MIT"`, and appropriate
+disclosure.
+
+**When the operator is ready to go live:**
+
+1. Create `github.com/mathconcepts/project-vidhya-content` (empty repo)
+2. `git subtree push --prefix modules/project-vidhya-content/ <repo-url> main`
+3. Bump `content.pin` — change `sha: local` to `sha: <commit-SHA>`
+4. Run `npx tsx scripts/content-sync.ts` — clones the SHA to `.data/community-content/`
+5. Deploy. Content now served from the real subrepo.
+
+Community PRs thereafter go to the subrepo; a main-repo maintainer
+bumps the pin at each release cadence.
 
 ---
 

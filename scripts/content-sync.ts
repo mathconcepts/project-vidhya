@@ -57,12 +57,31 @@ function main(): void {
     console.log('community content until the content repo exists and');
     console.log('content.pin is bumped to a real SHA.');
     console.log('');
-    console.log('To move out of stub mode:');
-    console.log(`  1. Create ${pin.repo} on GitHub`);
-    console.log('  2. Populate it (see CONTENT.md for the layout)');
-    console.log('  3. Edit content.pin, set sha to a commit SHA');
-    console.log('  4. Re-run: npx tsx scripts/content-sync.ts');
+    console.log('To move out of stub mode, pick one:');
     console.log('');
+    console.log('  A) Use the local subrepo for development:');
+    console.log('       edit content.pin → set sha: local');
+    console.log('       (reads from modules/project-vidhya-content/ directly)');
+    console.log('');
+    console.log('  B) After creating the GitHub subrepo:');
+    console.log(`       1. Create ${pin.repo} on GitHub`);
+    console.log('       2. git subtree push the modules/project-vidhya-content/');
+    console.log('          directory to populate it');
+    console.log('       3. Edit content.pin, set sha to a commit SHA');
+    console.log('       4. Re-run: npx tsx scripts/content-sync.ts');
+    console.log('');
+    return;
+  }
+
+  if (pin.sha === 'local') {
+    console.log('');
+    console.log('Content pin is in LOCAL MODE — reads from modules/project-vidhya-content/');
+    console.log('directly. No sync needed. The community-content-specialist will serve');
+    console.log('content from there.');
+    console.log('');
+    console.log('When ready for production, push modules/project-vidhya-content/ to a');
+    console.log(`GitHub repo (${pin.repo}), bump content.pin to a commit SHA, and re-run`);
+    console.log('this script to clone.');
     return;
   }
 

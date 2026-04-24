@@ -1,0 +1,10 @@
+{
+  "name": "project-vidhya-content",
+  "version": "0.1.0-seed",
+  "description": "Community-authored content bundles for Project Vidhya — consumed by the main repo via pinned SHA",
+  "license": "MIT",
+  "homepage": "https://github.com/mathconcepts/project-vidhya-content",
+  "scripts": {
+    "check": "node scripts/check.js"
+  }
+}

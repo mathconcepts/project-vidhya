@@ -1,0 +1,18 @@
+{
+  "id": "community-algebra",
+  "name": "Community Algebra Foundations",
+  "description": "Foundational algebra explainers maintained by the community — broad appeal across BITSAT, JEE Main, UGEE, and general post-secondary study.",
+  "concepts": [
+    "complex-numbers",
+    "linear-algebra-eigenvalues"
+  ],
+  "licence": "MIT",
+  "maintainer": "project-vidhya",
+  "verified": false,
+  "target_exams": [
+    "EXM-BITSAT-MATH-SAMPLE",
+    "EXM-JEEMAIN-MATH-SAMPLE",
+    "EXM-UGEE-MATH-SAMPLE"
+  ],
+  "version": "0.1.0"
+}

@@ -1,0 +1,32 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate content integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run content checks
+        run: node scripts/check.js
+
+      - name: Summarize
+        if: always()
+        run: |
+          echo "### Content validation" >> $GITHUB_STEP_SUMMARY
+          if [ $? -eq 0 ]; then
+            echo "✓ All checks passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✗ See logs above for validation errors" >> $GITHUB_STEP_SUMMARY
+          fi

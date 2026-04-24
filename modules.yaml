@@ -1,0 +1,313 @@
+# modules.yaml — the authoritative module + tier + profile registry
+#
+# Owning agent: orchestrator-specialist (under task-manager, COO).
+# Loaded by: src/orchestrator/registry.ts at startup.
+#
+# Three sections:
+#   1. modules   — code boundaries (every directory in src/ belongs to
+#                  exactly one; sub-repo-split candidates listed)
+#   2. tiers     — activatable capabilities composed from modules
+#   3. profiles  — named deployments (tier mixes)
+#
+# See MODULARISATION.md for the full design.
+
+# ──────────────────────────────────────────────────────────────────────
+# 1. MODULES
+# ──────────────────────────────────────────────────────────────────────
+
+modules:
+  - name: core
+    description: Identity, middleware, shared libs. Every module depends on this.
+    source: src/auth,src/lib,src/utils,src/events,src/constants,src/services
+    depends_on: []
+    health_check: src/orchestrator/health-checks#coreHealth
+    subrepo_candidate: false      # must stay in main repo
+    public_api:
+      - requireAuth, requireRole
+      - sendJSON, sendError, RouteHandler
+      - issueToken, verifyToken
+
+  - name: content
+    description: Sources → acquisition → authoring → verification → routing.
+    source: src/content,src/content-pipeline,src/curriculum,src/syllabus,src/exam-builder,src/samples,src/sample-check
+    depends_on: [core]
+    health_check: src/orchestrator/health-checks#contentHealth
+    subrepo_candidate: true
+    subrepo_url: mathconcepts/project-vidhya-content
+    pin_file: content.pin
+    public_api:
+      - resolveContent, routeContent, classifyIntent
+      - getUserSubscriptions, subscribeToBundle
+      - createUpload, listUploads, findUploadsByConcept
+    owning_agents:
+      - curriculum-manager
+      - acquisition-manager
+      - authoring-manager
+      - verification-manager
+      - content-router
+      - upload-specialist
+      - community-content-specialist
+
+  - name: rendering
+    description: Web frontend + SEO + blog/video surface + animation tiers.
+    source: frontend,src/api,src/marketing,src/rendering,src/multimodal,src/notebook,src/deployment
+    depends_on: [core, content, learning, exams]
+    health_check: src/orchestrator/health-checks#renderingHealth
+    subrepo_candidate: true
+    subrepo_url: mathconcepts/project-vidhya-web
+    public_api:
+      - registerRoute   # gate-server.ts
+      - marketingRoutes, gateRoutes, adminRoutes
+    owning_agents:
+      - seo-manager
+      - outreach-manager
+
+  - name: channels
+    description: Non-web delivery — Telegram, WhatsApp, future channels.
+    source: src/bot-telegram,src/bot-whatsapp,src/channels
+    depends_on: [core, content, learning]
+    health_check: src/orchestrator/health-checks#channelsHealth
+    subrepo_candidate: true
+    subrepo_url: mathconcepts/project-vidhya-channels
+    public_api:
+      - linkChannel, unlinkChannel
+      - telegramWebhook, whatsappWebhook
+
+  - name: learning
+    description: >
+      The cognitive core — GBrain, planner, onboarding, retention.
+      Holds the four constitutional promises in code. NOT recommended
+      for subrepo split.
+    source: src/gbrain,src/session-planner,src/attention,src/onboarding,src/retention,src/engine,src/templates,src/course
+    depends_on: [core]
+    health_check: src/orchestrator/health-checks#learningHealth
+    subrepo_candidate: false
+    public_api:
+      - planSession, recordExecution, sumTrailingMinutes
+      - computeActivationFunnel, computeRetentionReport
+      - getUserMasteryState
+    owning_agents:
+      - planner-manager
+      - teaching-manager
+      - assessment-manager
+      - student-model-manager
+      - onboarding-specialist
+      - retention-specialist
+
+  - name: exams
+    description: Per-exam adapters + verification.
+    source: src/exams,src/verification
+    depends_on: [core, content]
+    health_check: src/orchestrator/health-checks#examsHealth
+    subrepo_candidate: true
+    subrepo_url: mathconcepts/project-vidhya-exams
+    public_api:
+      - registerExamAdapter, listExamAdapters, getExamAdapter
+      - wolframSolve, verifyProblemWithWolfram
+    owning_agents:
+      - curriculum-manager
+      - verification-manager
+      - wolfram-verifier
+
+  - name: lifecycle
+    description: Demo→paid conversion, data rights, feedback, teacher surface.
+    source: src/conversion,src/data-rights,src/feedback,src/teacher
+    depends_on: [core, content, learning]
+    health_check: src/orchestrator/health-checks#lifecycleHealth
+    subrepo_candidate: false      # too cross-cutting
+    public_api:
+      - migrateDemoToReal
+      - requestDeletion, cancelDeletion, confirmDeletion, exportUserData
+    owning_agents:
+      - conversion-specialist
+      - data-rights-specialist
+      - feedback-manager
+
+  - name: orchestrator
+    description: The master composer — reads this manifest, resolves deps, activates tiers.
+    source: src/orchestrator,src/admin-orchestrator
+    depends_on: [core]
+    health_check: src/orchestrator/health-checks#orchestratorHealth
+    subrepo_candidate: false      # IS the main repo
+
+# ──────────────────────────────────────────────────────────────────────
+# 2. TIERS
+# ──────────────────────────────────────────────────────────────────────
+
+tiers:
+  # ─── student-facing ──────────────────────────────────────────────
+  - name: web-app
+    description: Students use the web UI (the default)
+    modules: [core, rendering, learning, content, exams, lifecycle]
+    status: shipped
+
+  - name: telegram-channel
+    description: Students use the Telegram bot
+    modules: [core, channels, content, learning]
+    status: shipped
+
+  - name: whatsapp-channel
+    description: Students use WhatsApp
+    modules: [core, channels, content, learning]
+    status: shipped
+
+  - name: web-seo
+    description: Public-facing SEO surface — topics, solutions, blog
+    modules: [core, rendering, content]
+    status: shipped
+
+  - name: wolfram-live
+    description: Live Wolfram queries for verify / solve intents
+    modules: [core, exams, content]
+    status: shipped
+    requires_env: [WOLFRAM_APP_ID]
+
+  # ─── institutional ────────────────────────────────────────────────
+  - name: institutional-b2b
+    description: Org-level management, tenant isolation, institution role
+    modules: [core, rendering, learning, lifecycle]
+    status: planned
+    notes: >
+      Requires schema migration to add institution_id to per-user
+      stores; adds 'institution' role above 'owner'. Documented in
+      MODULARISATION.md.
+
+  - name: proctored-exam
+    description: Formal proctored exam delivery for institutions
+    modules: [core, exams]
+    status: future
+    notes: Needs new 'proctor' module not yet in scope
+
+  - name: reporting-dashboard
+    description: Institution-scoped analytics + cohort retention
+    modules: [core, rendering, lifecycle, learning]
+    status: partial
+    notes: Endpoints live (/api/admin/lifecycle/*); UI page is future work
+
+  # ─── operator ─────────────────────────────────────────────────────
+  - name: admin-dashboard
+    description: Owner views — roster, campaigns, content, telemetry
+    modules: [core, rendering, lifecycle]
+    status: shipped
+
+  - name: agent-org-health
+    description: Health-check aggregation for every agent in the org
+    modules: [core]
+    status: shipped
+
+  # ─── content-ops ──────────────────────────────────────────────────
+  - name: content-create
+    description: Content authoring pipeline — scraping, LLM drafting, review
+    modules: [core, content]
+    status: shipped
+
+  - name: content-verify
+    description: Wolfram + human verification of content
+    modules: [core, content, exams]
+    status: shipped
+
+  - name: content-sync
+    description: Sync community-contributed content from separate repo
+    modules: [core, content]
+    status: stub
+    notes: Ready but requires project-vidhya-content repo to exist
+
+  # ─── future tiers (identified use cases) ─────────────────────────
+  - name: manim-animation
+    description: Animated maths using Manim (Python) rendered to video
+    modules: [core, rendering, content]
+    status: future
+    notes: Needs new 'animation' module + Manim runtime
+
+  - name: blog-video
+    description: Long-form + video explainers
+    modules: [core, rendering, content]
+    status: future
+
+  - name: language-localisation
+    description: Hindi / Tamil / regional language content tiers
+    modules: [core, content, rendering]
+    status: future
+    notes: Authoring cost is the bottleneck; infrastructure is ready
+
+  - name: accessibility
+    description: Screen-reader, large-text, TTS for all content
+    modules: [core, rendering]
+    status: future
+
+  - name: api-as-service
+    description: Paid API for third-party EdTech — intent routing + content
+    modules: [core, content, learning]
+    status: future
+    notes: Needs API key management + rate limiting + billing
+
+  - name: parent-guardian-view
+    description: Parent read-only view of a student's progress
+    modules: [core, rendering, learning, lifecycle]
+    status: future
+    notes: Requires new 'parent' role; student opt-in
+
+  - name: research-tier
+    description: Opt-in anonymised aggregate data for academic researchers
+    modules: [core, learning]
+    status: future
+    notes: Builds on telemetry-manager's existing k-anon aggregation
+
+# ──────────────────────────────────────────────────────────────────────
+# 3. DEPLOYMENT PROFILES
+# ──────────────────────────────────────────────────────────────────────
+
+profiles:
+  - name: minimal
+    description: Free-tier Render deploy, no channels, no Wolfram
+    tiers:
+      - web-app
+      - admin-dashboard
+      - web-seo
+
+  - name: full
+    description: Everything shipped today
+    tiers:
+      - web-app
+      - telegram-channel
+      - whatsapp-channel
+      - web-seo
+      - wolfram-live
+      - admin-dashboard
+      - agent-org-health
+      - content-create
+      - content-verify
+
+  - name: channel-only
+    description: No web UI; WhatsApp + Telegram only
+    tiers:
+      - telegram-channel
+      - whatsapp-channel
+      - admin-dashboard
+
+  - name: institutional-b2b
+    description: College / coaching-centre multi-tenant deployment
+    tiers:
+      - web-app
+      - institutional-b2b
+      - proctored-exam
+      - reporting-dashboard
+      - admin-dashboard
+      - wolfram-live
+    status: planned      # activation blocked on schema migration
+
+  - name: demo
+    description: The multi-role demo — seeded users, BYOK-ready
+    tiers:
+      - web-app
+      - admin-dashboard
+      - content-create      # seed populates content
+      - web-seo
+
+  - name: content-author
+    description: Content-team deployment — authoring + verification only
+    tiers:
+      - content-create
+      - content-verify
+      - content-sync
+      - admin-dashboard

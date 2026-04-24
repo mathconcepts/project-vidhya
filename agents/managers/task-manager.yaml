@@ -24,7 +24,9 @@ owned_tools:
 
 connections:
   upstream: [{ id: coo, channel: delegation }]
-  downstream: []              # the queue is the downstream
+  downstream:
+    - id: orchestrator-specialist
+      channel: delegation     # master module+tier orchestration
   peers:
     - id: health-manager
       channel: query

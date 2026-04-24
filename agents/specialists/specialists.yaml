@@ -559,6 +559,47 @@ specialists:
       - Stub mode (empty manifest) is valid when the content repo
         doesn't exist yet.
 
+  # ═══ Under task-manager (COO side) — orchestration ═════════════════
+
+  - id: orchestrator-specialist
+    reports_to: task-manager
+    mission: Operate the master module+tier+profile orchestrator.
+      Read modules.yaml, validate invariants, compose deployments
+      per profile, aggregate per-module health.
+    skills:
+      - Load modules.yaml and validate — unique names, deps resolve,
+        no cycles, tiers reference declared modules.
+      - Given a profile, resolve the tiers → modules → load order.
+      - Aggregate per-module health into an org-level response.
+      - Emit a DOT-format dependency graph for visualisation.
+    owned_tools:
+      - type: module
+        id: 'src/orchestrator/registry.ts'
+      - type: module
+        id: 'src/orchestrator/composer.ts'
+      - type: module
+        id: 'src/orchestrator/health.ts'
+      - type: http
+        id: 'GET /api/orchestrator/modules'
+      - type: http
+        id: 'GET /api/orchestrator/tiers'
+      - type: http
+        id: 'GET /api/orchestrator/profiles'
+      - type: http
+        id: 'POST /api/orchestrator/compose'
+      - type: http
+        id: 'GET /api/orchestrator/graph'
+      - type: http
+        id: 'GET /api/orchestrator/health'
+    decision_rules:
+      - If modules.yaml fails to load, orchestrator refuses to start.
+        Degraded operation is less safe than explicit failure.
+      - Tiers with status 'future' cannot be activated in any profile.
+      - Tiers with status 'planned' or 'stub' emit warnings when
+        included in a composed deployment; operator must acknowledge.
+      - Health endpoint MUST NOT emit PII — modules probes return
+        boolean-plus-reason only.
+
 # ─── Portability ──────────────────────────────────────────────────────
 #
 # Every specialist in this file:

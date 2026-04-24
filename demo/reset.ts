@@ -14,8 +14,11 @@ const files = [
   '.data/plan-templates.json',
   '.data/session-plans.json',
   '.data/practice-sessions.json',
+  '.data/demo-usage-log.json',
   'demo/demo-token.txt',
+  'demo/demo-tokens.json',
   'frontend/public/demo.html',
+  'frontend/public/demo-api-keys.html',
 ];
 
 console.log('Clearing demo seed data…\n');

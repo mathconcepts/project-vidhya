@@ -1,243 +1,314 @@
-# Vidhya Demo — walk-through
+# Vidhya demo — the multi-role walkthrough
 
-A **ready-to-test local demo** of Project Vidhya with a pre-seeded
-student, two registered exams, a plan history, saved templates, and
-practice sessions already in the trailing window.
+A **ready-to-test local demo** of Project Vidhya that covers every
+role the product has: **owner, admin, teacher, student**. One seed
+creates all of them — interlinked. One picker page lets testers
+sign in as any of them. No sign-up. No Google OAuth. No LLM keys
+required for the baseline experience.
 
-Designed for you to open the browser and see the four capabilities —
-**Calm, Strategy, Focus, Compounding** — working on live data, without
-signing up, without Google OAuth, and without any LLM API keys.
+```
+  one-command setup + one-click role switching + owner-visible telemetry
+```
 
 ---
 
 ## One-command start
 
-From a freshly cloned repo:
-
 ```bash
-npm run demo:setup      # installs deps + builds frontend + seeds data
-npm run demo:start      # boots backend + frontend, opens the demo
+npm run demo:setup      # install deps + build frontend + seed all six users
+npm run demo:start      # boot backend + frontend
+# open http://localhost:3000/demo.html
 ```
 
-Then open: <http://localhost:3000/demo.html>
-
-That's it. You land on the **Planned Session** page, logged in as the
-demo student, with a trailing-stats badge already reading a realistic
-number of minutes.
+The landing page shows six cards. Click any one to auto-login as that
+user.
 
 ---
 
-## What gets seeded
+## Who gets seeded
 
-| Artifact | What's in it | Shows |
+| Card | Role | Name | What their view shows |
+|---|---|---|---|
+| 👑 | owner | Nisha Rao | Platform-wide user list, role promotion, ownership transfer |
+| ⚙️ | admin | Arjun Gupta | Content management, campaigns, user admin, dashboard summary |
+| 🎓 | teacher | Kavita Menon | Roster of 2 students, push-to-review queue |
+| 📚 | student · active | Priya Sharma | 2 exams (7d + 90d out), 6 plans, trailing stats, 3 templates |
+| 📖 | student · light | Rahul Iyer | 1 exam (30d out), 2 plans, minimal activity |
+| 🆕 | student · new | Aditya Shah | Empty account — feel the first-time UX |
+
+Kavita (the teacher) is explicitly wired to Priya and Rahul. Aditya
+has no teacher — testers can try assigning one from the admin view.
+
+---
+
+## The four capabilities each role highlights
+
+The same four promises (**Calm, Strategy, Focus, Compounding**) appear
+differently depending on who is looking:
+
+### As a **student** (Priya)
+
+- **Compounding** — the trailing-stats badge at the top of
+  `/gate/planned` already reads "You've studied 97 min across 6
+  sessions this week." Real seed data, real math.
+- **Strategy** — two exams registered, one 7 days out (BITSAT) and
+  one 90 days out (JEE Maths). Request a 60-minute plan — the
+  multi-exam planner proximity-weights the close exam.
+- **Focus** — content bundle loads offline after first sync.
+  One-tap recall of saved templates (commute / morning / weekend).
+- **Calm** — no streaks, no guilt pings, no re-engagement logic.
+  Miss a day (Aditya already has) → no shame UI.
+
+### As a **teacher** (Kavita)
+
+- Roster of 2 students (Priya + Rahul) visible at `/api/teacher/roster`.
+- Per-student progress views — you can open each student's plan
+  history, error-patterns page, etc.
+- Push a concept to a student's review queue via `push-to-review` —
+  it appears in their notebook next time they sign in.
+- No view into other teachers' students — role boundary is structural.
+
+### As an **admin** (Arjun)
+
+- User admin: list every user, promote/demote, assign teachers.
+- Content admin: browse the exam library, inspect exam adapters,
+  trigger content refresh.
+- Campaign dashboard: run / retire / check drift on public articles.
+- Feedback triage: pending clusters, route to authoring or verification.
+- Everything at `/gate/admin` and `/gate/content-admin`.
+
+### As the **owner** (Nisha)
+
+- Everything admins can do, plus:
+- Transfer ownership (to another user).
+- Constitutional authority — read-only but system-wide.
+- See the demo-usage log of every tester who has touched the demo.
+- `/gate/user-admin` is the entry point.
+
+---
+
+## BYOK — full functionality without shipping our keys
+
+Most of the demo works with zero API keys — planning, templates,
+trailing stats, admin views, teacher roster. A few features call a
+live LLM: the AI tutor chat, photo-snap problem analysis, explainer
+generation, the admin's `narrate-strategy` / `summarize-health` /
+`suggest-next-action` tools.
+
+For those, **every demo user can plug in their own provider key**:
+
+1. Sign in as any role (student gives the richest BYOK UX).
+2. Open `/gate/llm-config`.
+3. Pick a provider (Gemini / Claude / OpenAI / Groq / OpenRouter / Ollama).
+4. Paste the key, click **Validate**.
+5. Done — chat, Snap, and explainers now use live LLM.
+
+Keys stay in `localStorage`. The backend receives them only as
+request headers and never persists them. This is the design:
+**student pays the LLM directly, we don't sit in the middle**.
+
+A full matrix of which features need which keys is published at
+`/demo-api-keys.html` (visible without login).
+
+---
+
+## Data logging back to the owner
+
+Every demo session is logged. The log is **owner-visible only**.
+
+**What gets logged:** demo-user id, event code (e.g. `seed.user-created`,
+`http.POST /api/student/session/plan`), timestamp, optional structured
+detail. No free-text content. No request bodies. No responses.
+
+**Why:** testers want to know their demo session is observable; the
+owner wants to see how testers use the product. The log is the
+demonstrable proof that cohort analytics can run at the system level
+without touching what individual users type.
+
+**Storage:** `.data/demo-usage-log.json` — flat file, append-only,
+trimmed to last 1000 entries.
+
+**Reading it:**
+
+```bash
+npm run demo:log              # last 50 events, newest first
+npm run demo:log -- --all     # everything in the log
+npm run demo:log -- --summary # aggregate counts, no per-event list
+```
+
+Example output:
+
+```
+Demo usage log
+────────────────────────────────────────────────────
+  total events: 10
+  first:        2026-04-24T01:30:12.341Z
+  last:         2026-04-24T01:30:14.022Z
+
+  by role:
+    student    5
+    owner      2
+    admin      1
+    teacher    1
+    unknown    1
+
+  by event kind:
+    seed.user-created    5
+    seed.plans-written   2
+    seed.started         1
+    seed.completed       1
+    seed.owner-elevated  1
+```
+
+**Telling testers:** the role-picker page displays an explicit notice
+above the cards: *"Heads up — this session is logged."* It's visible
+every time anyone opens the demo.
+
+**Opting out:** there is no opt-out inside the demo; it's a demo
+session, everyone who uses it accepts the logging. For a production
+deployment, the CDO department's `telemetry-manager` enforces
+k-anonymity and PII-free aggregation
+(see `agents/_shared/gbrain-integration.md`).
+
+---
+
+## Hosting — running this for a team, not just yourself
+
+Full guide in [`demo/HOSTING.md`](./demo/HOSTING.md). Four paths
+covered:
+
+| Path | Effort | Persistent data | URL |
+|---|---|---|---|
+| **Local** | 0 min | Yes (your disk) | `http://localhost:3000` |
+| **Render** | 10 min | With paid disk add-on | `https://<your-app>.onrender.com` |
+| **Railway** | 5 min | Yes (volumes default) | `https://<your-app>.up.railway.app` |
+| **Fly.io** | 15 min | Yes (mounted volumes) | `https://<your-app>.fly.dev` |
+| **Docker** | any | Via `-v` volume mount | Wherever you run it |
+
+A `demo/Dockerfile` is bundled and tested. It builds frontend + backend
+into one image; the container runs the seed + serve on boot.
+
+---
+
+## API keys — the full matrix
+
+Full table at `demo/API-KEYS.md`, or open `/demo-api-keys.html` in the
+running demo.
+
+| Category | Works without key | Needs which key |
 |---|---|---|
-| Demo user | Priya Sharma (student role) | Auth with JWT, no Google OAuth needed |
-| Exam profile | 2 exams — one 7 days out, one 90 days out | **Strategy** — multi-exam planner |
-| Plan history | 6 plans over the last 14 days | **Compounding** — trailing stats surface real numbers |
-| Saved templates | 3 — commute / morning / weekend | **Calm** — one-tap recall |
-| Practice log | Plan executions + 3 ad-hoc entries | **Compounding** — the "this week" badge |
+| Session planner | ✓ | — |
+| Trailing stats | ✓ | — |
+| Exam profile | ✓ | — |
+| Templates + presets | ✓ | — |
+| Notebook | ✓ | — |
+| Admin / teacher views | ✓ | — |
+| Content bundle | ✓ (tier-0 cached) | — |
+| AI tutor chat | — | any LLM provider |
+| Photo-snap analysis | — | Gemini / Claude / OpenAI (vision) |
+| Explainer generation | — | any LLM |
+| Admin agent tools | — | any LLM |
+| Wolfram-verified maths | — | `WOLFRAM_APP_ID` |
+| Telegram delivery | — | `TELEGRAM_BOT_TOKEN` |
+| WhatsApp delivery | — | WhatsApp Cloud API |
 
-All data lives in flat files under `.data/`. No database. No external service.
-
----
-
-## The four capabilities — where to click
-
-### 📚 Compounding — *every rep adds to the next*
-
-Open **Planned Session** (`/gate/planned`). Top of the page:
-
-> You've studied **N minutes** across **M sessions** this week.
-
-The N and M come from the seeded practice log. Click any saved
-template → the planner generates a fresh plan informed by past activity.
-
-### 🎯 Strategy — *you always know where to focus*
-
-The demo has two registered exams:
-
-- **BITSAT** — 7 days from today → revision-heavy plans
-- **JEE Main Maths** — 90 days from today → base-building plans
-
-In **Exam Profile** (`/gate/exam-profile`) you'll see both. Go back to
-Planned Session and request a 60-minute plan — the multi-exam planner
-splits the budget by exam proximity (the close exam gets the lion's
-share of minutes).
-
-### 🧘 Calm — *you study from strength, not fear*
-
-- No streak counter anywhere
-- No re-engagement notification
-- Miss a day → no shame UI; just "pick a template when you're ready"
-- 3 saved templates ready for one-tap use
-- Preset cards (the dotted-border ones) for instant adoption
-
-### 🌍 Focus — *the quality teaching travels to you*
-
-After the first page load, open DevTools → Network → reload. Most
-content requests are served from the pre-built bundle (tier 0 of the
-four-tier cascade). Works offline once the first sync completes.
+Every feature that *needs* a key degrades gracefully. The absence of
+`WOLFRAM_APP_ID` downgrades maths verification from "proven correct"
+to "LLM-checked". The absence of any LLM key disables chat but keeps
+everything planning-related fully functional.
 
 ---
 
-## The demo user
-
-| Field | Value |
-|---|---|
-| Name | Priya Sharma (demo) |
-| Email | priya.demo@vidhya.local |
-| Role | student |
-| User ID | written to `demo/demo-token.txt` metadata |
-
-The JWT for this user is in `demo/demo-token.txt`. The bootstrap page
-at `/demo.html` sets it in `localStorage` automatically. If you need
-to manually authenticate a different tab or tool, the header is:
-
-```
-Authorization: Bearer <token>
-```
-
----
-
-## Manual setup (if you prefer explicit control)
-
-If `npm run demo:setup` isn't right for your setup:
+## Automated verification
 
 ```bash
-# 1. Install dependencies
-npm install
-cd frontend && npm install && cd ..
-
-# 2. Build the frontend (optional — skip if using vite dev server)
-cd frontend && npm run build && cd ..
-
-# 3. Set the JWT secret (must match the seed script's default)
-export JWT_SECRET="demo-secret-for-local-testing-only-min-16ch"
-
-# 4. Seed demo data
-npm run demo:seed
-
-# 5. Start the backend (port 8080)
-npm run dev:server &
-
-# 6. Start the frontend (port 3000, proxies /api to 8080)
-cd frontend && npm run dev
+npm run demo:verify
 ```
 
-Open <http://localhost:3000/demo.html> and you're in.
+Probes each role's JWT against its role-specific endpoints:
 
----
-
-## Verifying the demo works (for automated testing)
-
-If you want to verify the demo pipeline from a script:
-
-```bash
-# 1. Seed
-npm run demo:seed
-
-# 2. Start backend in background
-export JWT_SECRET="demo-secret-for-local-testing-only-min-16ch"
-npm run dev:server &
-SERVER_PID=$!
-sleep 3
-
-# 3. Use the minted token to probe a protected endpoint
-TOKEN=$(cat demo/demo-token.txt)
-curl -sS -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/api/student/session/trailing-stats \
-  | python3 -m json.tool
-
-# Expected: JSON with trailing_7d_minutes > 0
-
-# 4. Clean up
-kill $SERVER_PID
-npm run demo:reset
 ```
+Multi-role demo verification
+
+  ✓ tokens loaded: owner, admin, teacher, student-active, student-light, student-new
+  ✓ backend reachable at http://localhost:8080
+
+── owner ────────────────────────────────────────
+  ✓ owner lists 6 users
+
+── admin ────────────────────────────────────────
+  ✓ admin can list users
+  ✓ admin can fetch dashboard summary
+
+── teacher ──────────────────────────────────────
+  ✓ teacher roster: 2 students
+
+── student · active (Priya) ─────────────────────
+  ✓ Priya: 2 registered exams
+  ✓ Priya trailing stats: 97 min / 6 sessions
+  ✓ Priya: 3 saved templates
+  ✓ Priya live plan: 3 actions, 15 min
+
+── student · light (Rahul) ──────────────────────
+  ✓ Rahul: 1 registered exam
+  ✓ Rahul: 2 plans in history
+
+── student · new (Aditya) ───────────────────────
+  ✓ Aditya: empty profile (first-time-UX)
+
+── demo telemetry ───────────────────────────────
+  ✓ demo log: 10 events across 5 roles
+
+═════════════════════════════════════════════════
+All 13 checks passed. Multi-role demo working end-to-end.
+```
+
+No browser, no clicks, no sleep statements. The script hits real HTTP
+routes with real JWTs. Confidence that the verify passes IS confidence
+that the demo works for every role.
 
 ---
 
 ## Resetting between test runs
 
 ```bash
-npm run demo:reset   # removes all seeded files
-npm run demo:seed    # re-seeds from scratch
-```
-
-The reset also removes `frontend/public/demo.html` and
-`demo/demo-token.txt`.
-
----
-
-## What you're actually testing
-
-This demo exercises the **shipped** product, not a simplified mock.
-Every capability it shows maps to real code:
-
-| What you see | What's running | Doc |
-|---|---|---|
-| Multi-exam planner | `src/session-planner/planner.ts#planMultiExamSession` | `PLAN-gbrain-mvp.md` |
-| Trailing-stats badge | `src/session-planner/practice-session-log.ts` + `attention/store.ts` | Sourced from `.data/practice-sessions.json` |
-| Template presets | `src/session-planner/template-presets.ts` | 5 curated starters, one-tap adoption |
-| Exam profile | `src/session-planner/exam-profile-store.ts` | Registered exams drive planning |
-| Auth + JWT | `src/auth/jwt.ts` + `src/auth/user-store.ts` | Real HS256 tokens, no OAuth needed |
-
-The agent organisation (`agents/ORG-CHART.md`) is the conceptual model
-behind all of this — *planner-manager* owns the planning surface,
-*student-model-manager* owns the trailing stats, and so on.
-
----
-
-## Troubleshooting
-
-**The demo page shows the sign-in wall instead of logging in.**
-The bootstrap page tried to set localStorage before the frontend
-loaded. Refresh. If that fails, the JWT might have expired
-(30 days). Re-seed:
-
-```bash
-npm run demo:reset && npm run demo:seed
-```
-
-**curl returns 401 Unauthorized.**
-The `JWT_SECRET` environment variable isn't set on the server to
-the same value the seed script used. Either start the server with
-`demo/start.sh` (which sets the right secret), or export it
-yourself:
-
-```bash
-export JWT_SECRET="demo-secret-for-local-testing-only-min-16ch"
-```
-
-**The trailing-stats badge says 0 minutes.**
-The practice log wasn't seeded. Re-run `npm run demo:seed` and
-confirm `.data/practice-sessions.json` contains entries.
-
-**The planner returns "no exam profile found".**
-The exam-profile store wasn't seeded. Check `.data/student-exam-profiles.json`
-exists. If not, re-seed.
-
-**The frontend dev server fails to start.**
-Dependencies haven't been installed:
-
-```bash
-cd frontend && npm install
+npm run demo:reset   # clear seed data + tokens + landing pages + log
+npm run demo:seed    # re-seed from scratch
 ```
 
 ---
 
-## Full verification — 6 gates
-
-Before shipping anything, run the full verification matrix
-documented in [`docs/08-testing-guide.md`](./docs/08-testing-guide.md):
+## Commands, consolidated
 
 ```bash
-npx tsc --noEmit                          # backend typecheck
-(cd frontend && npx tsc --noEmit)         # frontend typecheck
-npx vitest run src/__tests__/unit         # unit tests
-npm run smoke:stdio                       # MCP stdio transport
-npm run smoke:sdk-compat                  # MCP SDK compat
-python3 agents/validate-graph.py          # agent graph invariants
+# First time
+npm run demo:setup             # install deps + seed
+npm run demo:start             # boot backend + frontend
+
+# Between test runs
+npm run demo:reset             # clean
+npm run demo:seed              # reseed
+npm run demo:verify            # automated end-to-end check
+npm run demo:log               # owner-visible usage log
+
+# Deployment
+# see demo/HOSTING.md for Render / Railway / Fly / Docker
 ```
 
-All six passing ≡ the product is shippable.
+---
+
+## Full verification — 7 gates
+
+Before shipping the demo to testers, run the full matrix:
+
+| Gate | Command |
+|---|---|
+| 1 · Backend typecheck | `npx tsc --noEmit` |
+| 2 · Frontend typecheck | `cd frontend && npx tsc --noEmit` |
+| 3 · Unit tests | `npx vitest run src/__tests__/unit` |
+| 4 · Smoke stdio | `npm run smoke:stdio` |
+| 5 · Smoke SDK compat | `npm run smoke:sdk-compat` |
+| 6 · Agent graph | `python3 agents/validate-graph.py` |
+| 7 · Demo verify | `npm run demo:verify` |
+
+All seven passing ≡ the demo is shippable.

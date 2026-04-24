@@ -2,6 +2,53 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-24
+
+### 📋 Documentation refresh + pending-items ledger
+
+- **`PENDING.md`** — new comprehensive ledger of every deferred / future / stub item across 14 subsystems, with priority and effort. Supersedes the older `TODOS.md`.
+- **`INSTALL.md`** — rewritten for the current flat-file architecture. Previous version described a Supabase-era install path. Now covers Minimal / Recommended / Full paths, demo install, env-var quick reference, data-directory layout, seven-gate regression check list.
+- **`TODOS.md`** — retired; points at `PENDING.md`.
+- **`README.md`** — updated navigation block with a "what's NOT done yet" entry pointing to PENDING.md.
+
+### 🧱 Subrepo (earlier this day)
+
+- **`modules/project-vidhya-content/`** — full working subrepo with 3 real seed concepts (derivatives, eigenvalues, complex numbers), 2 bundle manifests, CI config, CONTRIBUTING guide, LICENCE-MANIFEST.
+- **`content.pin` — new `local` mode** reading directly from `modules/project-vidhya-content/` in this repo (pre-GitHub-subrepo). End-to-end verified: subscribe to bundle → get real community content.
+- Bug fix: `src/content/community.ts` used dynamic `require('fs')` inside ESM; surfaced when content went beyond stub-mode.
+
+### 🎯 Orchestrator & modularisation
+
+- `MODULARISATION.md` + `modules.yaml` + `src/orchestrator/` — 8 modules, 20 tiers, 6 deployment profiles. Master composer resolves profile → tier → module load order, warns on planned tiers, errors on future ones. Health-check aggregation across all modules. 6 admin HTTP endpoints.
+- 1 new agent specialist: `orchestrator-specialist` under `task-manager`. Agent org now at **56 agents**.
+
+### 📖 Content subsystem
+
+- `CONTENT.md` — 7-layer content architecture (sources → acquisition → authoring → verification → representation → routing → delivery).
+- 3 new content specialists: `content-router`, `upload-specialist`, `community-content-specialist`.
+- `src/content/router.ts` — intent classification (6 intents) + source priority cascade (subscription → bundle → cache → uploads → community → generated → wolfram → decline).
+- Every returned content carries source disclosure. Constitutional constraints honored (opt-in for generation / Wolfram, subscription `exclude_sources` wins over per-request `allow_*` flags).
+- User uploads — private per-user storage, hard-delete chains through `data-rights-specialist`.
+
+### 🚀 Deployment
+
+- `DEPLOY.md` + "Deploy to Render" button in README + cleaned up `render.yaml` + two-stage `demo/Dockerfile`.
+- Production-mirror-simulated deploy verified: all 3 exam adapters load, frontend builds, demo seed runs.
+
+### 🔁 Customer lifecycle
+
+- `agents/CUSTOMER-LIFECYCLE.md` — 6-stage journey (awareness → consideration → trial → activation → retention → win-back/offboard) mapped to the agent org.
+- 4 new lifecycle specialists: `conversion-specialist`, `data-rights-specialist`, `onboarding-specialist`, `retention-specialist`.
+- `POST /api/demo/convert` — demo→paid conversion with 97-min trailing stats carried over verified end-to-end.
+- `POST /api/me/delete*` + `GET /api/me/export` — 24h cooling + cancel + confirm + portable export.
+- `GET /api/admin/lifecycle/{funnel,retention}` — cohort-level analytics, k-anon enforced.
+- Frontend CTA `/gate/convert-demo` + `DemoBanner` component.
+
+### 📚 Exams inventory
+
+- `EXAMS.md` — authoritative inventory of the 3 shipped math exams (BITSAT, JEE Main, UGEE) with scoring, topic weights, adapter-pattern for new exams.
+- Bug fixed: demo seed used non-canonical `EXM-BITSAT-SAMPLE`; fixed to `EXM-BITSAT-MATH-SAMPLE` across 7 replacements.
+
 ## [2.2.0] — 2026-04-20
 
 ### 🧩 Content Engine — Cost-Minimal Four-Tier Delivery

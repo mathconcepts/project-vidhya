@@ -196,6 +196,8 @@ The content layer is a **four-tier cascade** assembled overnight by GitHub Actio
 
 🧩 **As someone thinking about module composition / B2B / monetization** → [MODULARISATION.md](./MODULARISATION.md). 8 modules, 20 tiers, 6 deployment profiles, master orchestrator composing them, GitHub subrepo split plan, monetization model, institutional-B2B tier, + 8 further use cases.
 
+📋 **As someone wanting to know what's NOT done yet** → [PENDING.md](./PENDING.md). The full honest ledger — every deferred item, every "future", every "stub mode" across 14 subsystems, with priority and effort.
+
 🔬 **As a technical evaluator** → [FEATURES.md](./FEATURES.md) for the shipping ledger, [DESIGN.md](./DESIGN.md) for the architecture, then [docs/](./docs/).
 
 🏫 **As an institution deploying for a cohort** → [INSTALL.md](./INSTALL.md). No per-seat licence. No external database. Role-based admin hierarchy (owner / admin / teacher / student) with the first sign-in auto-becoming owner. Add students via dashboard or CSV import. Define new exams as YAML. Students reach sessions through web, Telegram, or WhatsApp.

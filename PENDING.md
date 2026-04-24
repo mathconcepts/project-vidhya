@@ -1,0 +1,593 @@
+# Pending items — the full honest ledger
+
+> **Status:** canonical reference · last reviewed 2026-04-24
+> **Purpose:** every deferred item, every "future", every "stub mode" across the project — grouped by subsystem, with honest effort estimates and dependencies.
+> **Supersedes:** the older TODOS.md from before the current architecture stabilized.
+
+This document is the single place a reader or new contributor can go to find **"what's not done yet and why"** across the entire project. It is intentionally exhaustive rather than curated.
+
+Each item is tagged:
+
+- **Priority** — `P1` blocks the next natural milestone / `P2` valuable but deferrable / `P3` nice-to-have
+- **Effort** — `S` ≤ 1 day / `M` 2-5 days / `L` 1-3 weeks / `XL` weeks-of-work / `migration` needs a data or schema change
+- **Depends on** — what must exist before this can be done
+- **Status** — `deferred` (we chose not to ship) / `planned` (next up) / `future` (when relevant) / `stub` (scaffolded but inactive)
+
+Navigation by subsystem:
+
+1. [Deployment & hosting](#1-deployment--hosting)
+2. [Demo & installation](#2-demo--installation)
+3. [Exams & content adapters](#3-exams--content-adapters)
+4. [Content subsystem](#4-content-subsystem)
+5. [Customer lifecycle](#5-customer-lifecycle)
+6. [Agent org](#6-agent-org)
+7. [GBrain cognitive spine](#7-gbrain-cognitive-spine)
+8. [Modularisation & orchestrator](#8-modularisation--orchestrator)
+9. [B2B institutional tier](#9-b2b-institutional-tier)
+10. [Monetization](#10-monetization)
+11. [Further use cases identified](#11-further-use-cases-identified)
+12. [Frontend UI gaps](#12-frontend-ui-gaps)
+13. [Runtime integration gaps](#13-runtime-integration-gaps)
+14. [Documentation gaps](#14-documentation-gaps)
+
+---
+
+## 1. Deployment & hosting
+
+### 1.1 Live production URL
+
+**Status:** deferred — operator decision
+**Priority:** P1
+**Effort:** S (one click + three minutes)
+**Depends on:** `render.yaml` (shipped), operator creating a Render account
+
+**Detail:** The "Deploy to Render" button in README.md is the one-click path. Clicking it provisions the service per `render.yaml`. I cannot do this from a sandbox — no Render credentials. See [`DEPLOY.md`](./DEPLOY.md) for the three-click walkthrough.
+
+### 1.2 BYOK key rotation procedure
+
+**Status:** not yet documented
+**Priority:** P2
+**Effort:** S
+**Depends on:** a live deployment
+
+**Detail:** When a LLM provider key gets compromised or rotated, the operator should know which env var to change and expect a ~30-second redeploy. This is a short DEPLOY.md addition.
+
+### 1.3 Scheduled cron — `finaliseExpiredDeletions()`
+
+**Status:** function exists, cron registration does not
+**Priority:** P1
+**Effort:** S
+**Depends on:** a cron infrastructure choice (Render cron jobs, GitHub Actions scheduled, OS-level)
+
+**Detail:** `src/data-rights/delete.ts#finaliseExpiredDeletions()` is the handler that hard-deletes soft-deleted users whose 24h cooling period has elapsed. Today nothing calls it periodically. Either wire into Render's cron jobs, add a GitHub Actions scheduled workflow, or add a simple `setInterval` inside the server process (simplest, works for single-instance deploys).
+
+### 1.4 Database backups for the flat-file store
+
+**Status:** not addressed
+**Priority:** P1 once real users
+**Effort:** S
+**Depends on:** nothing
+
+**Detail:** `.data/` is the source of truth. A simple daily `tar.gz` uploaded to S3 or similar is the natural approach. No user data currently, so not urgent; the moment a real user signs up, this becomes P1.
+
+### 1.5 Multi-region / HA
+
+**Status:** out of scope
+**Priority:** P3
+**Effort:** XL
+**Depends on:** scale
+**Detail:** Flat-file store rules out multi-instance writes without a coordination layer. When scale forces this, the natural path is replacing `src/lib/flat-file-store.ts` with a DB-backed equivalent (Postgres or SQLite replicated). Plan this as a migration when traffic warrants, not before.
+
+---
+
+## 2. Demo & installation
+
+### 2.1 INSTALL.md cleanup
+
+**Status:** done in this commit
+**Priority:** P1
+**Effort:** S (already done)
+
+**Detail:** Previous INSTALL.md described a Supabase-era install path. This commit rewrites it for the current flat-file architecture.
+
+### 2.2 Live LLM smoke test in CI
+
+**Status:** deferred — requires real API keys
+**Priority:** P2
+**Effort:** S
+**Depends on:** GitHub Actions secrets for at least one provider
+
+**Detail:** The smoke suites (`smoke:stdio`, `smoke:sdk-compat`) test the SDK surface but don't exercise real LLM calls. Adding one test that calls Gemini/Anthropic/OpenAI via the router would catch regressions in the adapter code. Needs a repo secret (operator call — gets charged against that provider).
+
+### 2.3 Demo seed idempotency tests
+
+**Status:** informally tested, not in CI
+**Priority:** P3
+**Effort:** S
+
+**Detail:** `upsertFromGoogle` is idempotent by `google_sub`, so re-running `demo:seed` on a populated `.data/` doesn't duplicate users. There's no explicit test that proves this beyond the manual `demo:verify`. A 10-line vitest unit test would lock the property.
+
+---
+
+## 3. Exams & content adapters
+
+### 3.1 More exams
+
+**Status:** 3 shipped (BITSAT, JEE Main, UGEE Math); pattern documented
+**Priority:** P2 per new exam
+**Effort:** M per exam (authoring + verification data; code is ~2 files)
+**Depends on:** content-team bandwidth, access to canonical exam material
+
+Candidate exams per [`EXAMS.md`](./EXAMS.md):
+
+| Exam | Priority | Notes |
+|---|---|---|
+| NEET Biology | P2 | Huge target audience; biology is a different content authoring discipline |
+| JEE Advanced | P2 | Natural next step after JEE Main |
+| GATE Mathematics | P3 | Legacy reference exists, needs adapter |
+| CAT Quant | P3 | Large audience but very different (aptitude style) |
+| GRE Quant | P3 | International audience |
+| SAT Math | P3 | International audience |
+
+**Recipe for adding an exam is documented in EXAMS.md** — two files + one line in the aggregator.
+
+### 3.2 Topic-weight updates annually
+
+**Status:** informal process
+**Priority:** P2
+**Effort:** S per exam per year
+
+**Detail:** Exam topic distributions drift year-to-year. BITSAT's 27.5% calculus weighting is from 5 years of past-paper analysis, valid today. No scheduled re-audit. Probably want a manual process: `curriculum-manager` checks January of each year and bumps weights if needed.
+
+### 3.3 Sample paper generation refresh
+
+**Status:** `src/samples/` exists for all 3 exams
+**Priority:** P3
+**Effort:** M
+
+**Detail:** The sample-paper generators produce mock exams. They work but the question quality is constrained by what the LLM + Wolfram-verify pipeline can generate. Human curation of a gold-standard mock set per exam would be a quality lift, not a code change.
+
+---
+
+## 4. Content subsystem
+
+### 4.1 Create `project-vidhya-content` GitHub repo
+
+**Status:** deferred — operator decision
+**Priority:** P1
+**Effort:** S (one `gh repo create` + `git subtree push`)
+**Depends on:** decision to accept community PRs
+
+**Detail:** The subrepo is **built** at `modules/project-vidhya-content/` and `content.pin` is in `local` mode serving it end-to-end. Converting to a real GitHub subrepo requires the four commands documented in CONTENT.md. This is a governance call (who maintains the repo, licensing defaults, PR review policy) rather than engineering.
+
+### 4.2 More seed concepts in the subrepo
+
+**Status:** 3 seed concepts shipped
+**Priority:** P2
+**Effort:** M per concept (4-8 hours each of authoring + review)
+
+**Detail:** Today's seed has `calculus-derivatives`, `linear-algebra-eigenvalues`, `complex-numbers`. Any of the ~80 concepts in `src/curriculum/concept-exam-map.ts` can get a corresponding subrepo concept. Each one is independent work. The pattern is clear; what's needed is content-author time.
+
+### 4.3 Wolfram verification in subrepo CI
+
+**Status:** documented in CONTRIBUTING.md, not wired to CI
+**Priority:** P2
+**Effort:** M
+**Depends on:** Wolfram App ID secret in the subrepo's GitHub Actions
+
+**Detail:** CONTRIBUTING.md says PRs with numerics get Wolfram-verified. The CI workflow (`checks.yml`) runs the basic validator but not Wolfram-verify. Adding the step: extend `scripts/check.js` to find `$...$` and `$$...$$` LaTeX blocks in explainers and worked-examples, extract numerics, submit to Wolfram, flag disagreements.
+
+### 4.4 OCR for image uploads
+
+**Status:** stub — image uploads stored without text extraction
+**Priority:** P2
+**Effort:** M
+**Depends on:** `tesseract` or equivalent
+
+**Detail:** `src/content/uploads.ts` stores images fine, returns them to the owner, but doesn't extract text for the router to find via `find-in-uploads` intent. Concept tagging is user-provided only. Adding tesseract-based OCR would let the router match uploads by content rather than just by explicit tagging.
+
+### 4.5 PDF text extraction for uploads
+
+**Status:** stub — same as OCR
+**Priority:** P2
+**Effort:** S
+**Depends on:** `pdf-parse` npm package
+
+**Detail:** PDF uploads store the file but don't extract text. `pdf-parse` is ~100 lines of integration code.
+
+### 4.6 LLM-backed intent classifier
+
+**Status:** rule-based classifier shipped
+**Priority:** P3
+**Effort:** S
+**Depends on:** nothing — router has a clean `classifyIntent(text) → Intent` interface
+
+**Detail:** Current classifier is keyword-regex. Works deterministically, fast, testable, but limited. Swapping to an LLM call with strict JSON schema is a drop-in — just route through `llm-router-manager`. Wait until the rule-based one is shown to misclassify in production.
+
+### 4.7 Frontend subscription picker UI
+
+**Status:** endpoints shipped, no UI
+**Priority:** P2
+**Effort:** M
+**Depends on:** nothing
+
+**Detail:** `POST /api/student/content/subscribe` works. Students today would need to hit it via curl. A `/gate/settings/content` page showing available bundles with subscribe/unsubscribe buttons is the natural UI. Small React component.
+
+### 4.8 Frontend upload UI
+
+**Status:** endpoints shipped, no UI
+**Priority:** P2
+**Effort:** M
+**Depends on:** nothing
+
+**Detail:** `POST /api/student/uploads` accepts JSON with base64 body. A drag-and-drop UI at `/gate/uploads` would let students upload directly. Relevant for `find-in-uploads` intent flow.
+
+### 4.9 "Wolfram live" disclosure in frontend
+
+**Status:** endpoint shipped, UI doesn't exist
+**Priority:** P2
+**Effort:** S
+
+**Detail:** When content-router returns `source: "wolfram"`, the response has a `disclosure` field *"Computed live by Wolfram Alpha"*. No frontend reads this yet. Should show a badge next to Wolfram-sourced content to keep students clear on attribution.
+
+---
+
+## 5. Customer lifecycle
+
+### 5.1 Onboarding / retention frontend dashboards
+
+**Status:** endpoints shipped, UI doesn't exist
+**Priority:** P2
+**Effort:** M
+
+**Detail:** `GET /api/admin/lifecycle/funnel` and `/retention` return detailed reports. No admin-facing React page visualises them. Once built, owners can see cohort conversion + retention without curl.
+
+### 5.2 Rout retention findings to feedback-manager
+
+**Status:** findings are produced, routing is manual
+**Priority:** P2
+**Effort:** S
+
+**Detail:** `retention-specialist` emits findings (e.g. *"cohort 2026-W15 dropped 60%"*). Today they sit in the HTTP response. The design intent is that sufficiently-severe findings auto-route as events to `feedback-manager` for human triage. Add an event emission + subscription in `feedback-manager`'s manifest.
+
+### 5.3 "Carry over" opt-in UI polish
+
+**Status:** MVP shipped
+**Priority:** P3
+**Effort:** S
+
+**Detail:** The `/gate/convert-demo` page asks for email and shows a carry-over summary. It could be improved: preview the actual plans/templates about to be carried over, let the user deselect individual items, show the trailing-stats badge before/after.
+
+### 5.4 Google OAuth handoff on conversion
+
+**Status:** demo stub — real OAuth not wired
+**Priority:** P1 before real-user launch
+**Effort:** M
+
+**Detail:** Production conversion would chain: click "Make this real" → Google OAuth popup → backend verifies id_token → migration runs → new real JWT minted → user logged in as real account. Today's demo stops at "your data has been migrated, sign in with Google next". Real OAuth is wired elsewhere in the app (`src/auth/google-verify.ts` exists); hooking into the conversion flow is straightforward.
+
+### 5.5 Exit-feedback collection
+
+**Status:** `feedback-manager` exists, no exit-path collection
+**Priority:** P2
+**Effort:** M
+
+**Detail:** When a user requests account deletion, we currently say goodbye. `data-rights-specialist`'s manifest mentions exit feedback (why are you leaving?). A 1-question optional form before `confirmDeletion` would feed `feedback-manager`.
+
+---
+
+## 6. Agent org
+
+### 6.1 Agent runtime
+
+**Status:** manifests define the org; runtime is limited
+**Priority:** P2
+**Effort:** L
+**Depends on:** runtime choice (Claude Agent SDK / MCP stdio / LangGraph)
+
+**Detail:** The agent org (56 agents across 4 tiers) is authoritative in manifests but the actual runtime composition — dispatching tasks to specific agents via their declared skills — exists only partially via the MCP tool layer. A full runtime would read each manifest's `owned_tools` + `skills` and auto-wire agent-to-agent delegation. Today, most agent responsibility is enforced at review time, not runtime.
+
+### 6.2 Per-agent system prompts
+
+**Status:** not implemented
+**Priority:** P2
+**Effort:** M
+
+**Detail:** Each manager and specialist manifest could declare a `system_prompt` field used when the agent is invoked via LLM. Today agent mission/skills/decision_rules sit in YAML but aren't composed into actual LLM calls. Implementing: `src/agents/prompt-composer.ts` that reads a manifest and generates a system prompt.
+
+### 6.3 Agent graph validator coverage
+
+**Status:** 8 invariants, all passing
+**Priority:** P3
+**Effort:** S
+
+**Detail:** The Python validator (`agents/validate-graph.py`) enforces graph invariants. Could add: "every agent's `owned_tools.id` referencing `src/` must exist", "every `emits_signals` name has at least one `subscribes_to` subscriber somewhere in the org", "every manager has ≥1 specialist under it OR a justification note".
+
+### 6.4 Orchestrator-specialist runtime
+
+**Status:** HTTP surface shipped, doesn't actually orchestrate runtime yet
+**Priority:** P3
+**Effort:** L
+
+**Detail:** `src/orchestrator/` reads `modules.yaml` and exposes composition queries. It doesn't yet influence the actual boot process — the server boots with all routes registered, regardless of deployment profile. Wiring composer → conditional route registration is straightforward but needs a refactor of `gate-server.ts` to route registration through the composer.
+
+---
+
+## 7. GBrain cognitive spine
+
+### 7.1 Retire legacy `attention_counter` field
+
+**Status:** deprecated but present
+**Priority:** P2 (schema hygiene)
+**Effort:** S
+**Depends on:** data migration
+
+**Detail:** Older schema had `attention_counter` on user objects. Replaced by the attention-store. A migration to drop the legacy field from all existing `.data/users.json` records. ~10 line migration script + release note.
+
+### 7.2 Source-aware mastery weighting
+
+**Status:** documented in CONTENT.md, not implemented
+**Priority:** P3
+**Effort:** M
+
+**Detail:** Content from Wolfram-verified sources should contribute higher-confidence mastery estimates than content from LLM-generated sources. Today `attempt-insight-specialist` records all attempts equally. Adding a confidence-weight based on the `source` field of the attempt's content record is a ~20-line change in the mastery update logic.
+
+### 7.3 Error-cluster → content traceback
+
+**Status:** each exists; connection not drawn
+**Priority:** P3
+**Effort:** M
+
+**Detail:** `error-classifier` clusters student mistakes. `content-router` knows what content preceded an attempt. Joining these so that *"this error cluster correlates with this explainer"* becomes visible to `authoring-manager` is a schema + view. Useful for identifying which explainers create misconceptions.
+
+### 7.4 Per-student trailing stats on admin dashboard
+
+**Status:** endpoint exists, admin UI doesn't show per-student
+**Priority:** P3
+**Effort:** S
+
+**Detail:** Admin can see aggregate retention. Viewing a specific student's trailing-stats would require an endpoint (exists: `/api/student/session/trailing-stats` works for self) + admin-impersonation endpoint (doesn't exist).
+
+---
+
+## 8. Modularisation & orchestrator
+
+### 8.1 Actually execute subrepo splits
+
+**Status:** 1 subrepo built (content), 3 others documented but unsplit
+**Priority:** P2
+**Effort:** S per split once decided
+
+**Detail:** Per MODULARISATION.md split-order recommendation:
+1. ✓ **content** — built (this commit)
+2. **exams** — smallest, cleanest next split
+3. **channels** — independent licensing concerns
+4. **rendering (frontend)** — biggest, requires coordination
+
+Each split is a `git subtree push` + `modules.yaml` source-pointer update + main-repo import path change. Commands documented; execution is an operator choice per module.
+
+### 8.2 Profile-driven conditional boot
+
+**Status:** composer resolves profiles; boot doesn't use it
+**Priority:** P3
+**Effort:** M
+
+**Detail:** Today `gate-server.ts` registers every route regardless of the deployment profile. A `channel-only` deployment currently includes the web-facing surfaces (harmless but wasteful). Making boot conditional: read `DEPLOYMENT_PROFILE` env var, pass to composer, register only the routes for active modules. Touches ~20 lines in `gate-server.ts`.
+
+### 8.3 Orchestrator dashboard UI
+
+**Status:** endpoints shipped, no UI
+**Priority:** P3
+**Effort:** M
+
+**Detail:** `GET /api/orchestrator/modules`, `/tiers`, `/profiles`, `/health`, `/graph` all return JSON today. An admin page visualising the dependency graph + health per module + active profile would make the orchestration concrete for operators.
+
+---
+
+## 9. B2B institutional tier
+
+Status across-the-board: **documented, not implemented.** See MODULARISATION.md's B2B section and `modules.yaml#tiers.institutional-b2b` (`status: planned`).
+
+### 9.1 `institution` role in auth middleware
+
+**Status:** planned
+**Priority:** P1 before B2B launch
+**Effort:** S
+
+**Detail:** Add `institution` to the role hierarchy above `owner` in `src/auth/middleware.ts`. Update `requireRole` to recognise it. ~15 lines.
+
+### 9.2 `institution_id` schema migration
+
+**Status:** planned
+**Priority:** P1 before B2B launch
+**Effort:** migration (real data migration)
+
+**Detail:** Every per-user flat-file store gets an `institution_id` field. Users belonging to institution A cannot be queried by institution B's owner. Migration script: iterate existing records, default-assign to a "no institution" tenant for backward compat.
+
+### 9.3 Per-institution admin UI
+
+**Status:** planned
+**Priority:** P1 before B2B launch
+**Effort:** L
+
+**Detail:** An "institution owner" role needs a page to: provision per-branch owners, set institution-wide policies (which exams, which channels, which monetization tiers), run institution-wide reporting. Significant frontend work.
+
+### 9.4 Tenant-isolation test suite
+
+**Status:** planned
+**Priority:** P1 before B2B launch
+**Effort:** M
+
+**Detail:** Before shipping B2B, need a test suite that proves: institution A's data is invisible to institution B's owner, cross-tenant writes are refused, content/exam adapters are correctly shared across tenants while data stays isolated.
+
+---
+
+## 10. Monetization
+
+Status across-the-board: **catalog designed, runtime not built.**
+
+### 10.1 Payment rails integration
+
+**Status:** not implemented
+**Priority:** P1 before monetization launch
+**Effort:** L
+**Depends on:** payment provider choice (Stripe / Razorpay / both)
+
+**Detail:** Users purchase bundle subscriptions. Today all `paid-basic` / `paid-premium` entries in the catalog are theoretical. Adding Stripe webhooks + purchase UI + refund flow is significant.
+
+### 10.2 Entitlement enforcement in content-router
+
+**Status:** not implemented
+**Priority:** P1 before monetization launch
+**Effort:** S
+**Depends on:** entitlement store schema
+
+**Detail:** `content-router` checks subscriptions today. It should also check entitlements: *"is this user's subscription to `bitsat-prep-2026` still active?"* Not expensive — a JSON lookup — but requires the entitlement store to exist first.
+
+### 10.3 Subscription lifecycle
+
+**Status:** not implemented
+**Priority:** P2
+**Effort:** M
+
+**Detail:** Expiring subscriptions should notify the user before expiry (but not in a guilt-pingy way — constitutional). Renewal flow, grace period policy, downgrade behaviour all need design.
+
+### 10.4 Revenue share for community authors
+
+**Status:** not designed
+**Priority:** P3
+**Effort:** L
+
+**Detail:** If a community author contributes a bundle that students subscribe to, the author's `meta.yaml.contributor_github` should receive a cut. Mechanics (accumulating, paying out, tax reporting) are substantial. Design before building.
+
+---
+
+## 11. Further use cases identified
+
+Per MODULARISATION.md's "8 further use cases" section:
+
+| # | Use case | Status | Priority | Effort |
+|---|---|---|---|---|
+| 11.1 | API-as-a-service | future | P3 | L |
+| 11.2 | Language localisation (Hindi/Tamil) | future | P2 | content-heavy |
+| 11.3 | Accessibility (TTS, large-text) | future | P2 | M |
+| 11.4 | Content marketplace | future | P3 | L |
+| 11.5 | Teacher-as-a-service | future | P3 | L |
+| 11.6 | Research tier | future | P3 | M |
+| 11.7 | Parent / guardian view | future | P3 | S (role addition) |
+| 11.8 | Proctored exam | future | P3 | XL |
+
+Each has documented fit assessment + effort estimate in MODULARISATION.md's "further use cases" section. None are in flight.
+
+---
+
+## 12. Frontend UI gaps
+
+Aggregated list of UI pages that don't exist yet where the backend endpoint does:
+
+| Missing page | Backend endpoint(s) | Priority | Effort |
+|---|---|---|---|
+| Content subscription picker | `/api/student/content/*` | P2 | M |
+| Upload drag-and-drop | `/api/student/uploads` | P2 | M |
+| Activation funnel dashboard | `/api/admin/lifecycle/funnel` | P2 | M |
+| Retention findings dashboard | `/api/admin/lifecycle/retention` | P2 | M |
+| Orchestrator dependency graph | `/api/orchestrator/graph` | P3 | M |
+| Per-module health dashboard | `/api/orchestrator/health` | P3 | S |
+| Module / tier browser | `/api/orchestrator/modules` `/tiers` | P3 | M |
+| Admin data-rights controls | `/api/me/delete*` | P3 | S |
+
+All endpoints work today via curl. These are React component additions.
+
+---
+
+## 13. Runtime integration gaps
+
+### 13.1 Route registration is unconditional
+
+**Status:** intentional today, orchestrator-gated is the plan
+**Priority:** P3
+**Effort:** M
+
+**Detail:** See §8.2.
+
+### 13.2 Signal bus not implemented
+
+**Status:** manifests declare `emits_signals` / `subscribes_to`; no bus
+**Priority:** P3
+**Effort:** M
+
+**Detail:** Agents declare signal emissions in their manifest (e.g. `content-router` emits `CONTENT_ROUTED`). There's no actual message bus yet — signals are documentation. A minimal in-process pub/sub (nothing fancy) would let agent-to-agent subscription work at runtime.
+
+### 13.3 Health probe cadence
+
+**Status:** on-demand only
+**Priority:** P3
+**Effort:** S
+
+**Detail:** `/api/orchestrator/health` computes on request. Adding periodic health scans + alerting when a module flips from healthy to degraded is straightforward but needs an alerting destination (email? a webhook?).
+
+### 13.4 Frontend build caching in Docker
+
+**Status:** rebuild from scratch every deploy
+**Priority:** P3
+**Effort:** S
+
+**Detail:** `demo/Dockerfile` builds the frontend in stage 1 every time. Adding a proper layer-cache strategy (copying `package.json` first, running npm ci as its own layer) would cut deploy time. Not urgent — Render deploys are fine.
+
+---
+
+## 14. Documentation gaps
+
+### 14.1 CHANGELOG.md freshness
+
+**Status:** stale relative to recent commits
+**Priority:** P2
+**Effort:** S
+
+**Detail:** CHANGELOG stops covering some of the more recent work. Appending entries for each of the last ~10 commits would close the gap. Every commit message has the full context in it.
+
+### 14.2 docs/ tree — overlaps with top-level docs
+
+**Status:** some duplication
+**Priority:** P3
+**Effort:** M
+
+**Detail:** There are both `docs/09-deployment.md` and `DEPLOY.md`, `docs/12-content-delivery.md` and `CONTENT.md`. The newer top-level docs are authoritative; the `docs/` ones pre-date them. A consolidation pass would reduce reader confusion.
+
+### 14.3 API reference generation
+
+**Status:** `docs/06-api-reference.md` exists, hand-maintained
+**Priority:** P3
+**Effort:** M
+
+**Detail:** Auto-generating from route declarations (we have `lifecycleRoutes`, `contentLifecycleRoutes`, `orchestratorRoutes` arrays with consistent shape) would keep it fresh without effort. Not urgent while the API is still evolving.
+
+### 14.4 Screenshot / walkthrough video for demo
+
+**Status:** not produced
+**Priority:** P3
+**Effort:** S
+**Depends on:** a live URL
+
+**Detail:** A 90-second video walking through the demo landing page → planned session → admin view would be a much better sales tool than text. Requires §1.1 first.
+
+---
+
+## Priority snapshot — what's most pressing
+
+The **P1** items across the ledger, grouped by what unlocks them:
+
+**Unblocked, operator action:**
+- §1.1 Live production URL (click the Deploy button)
+- §4.1 Create `project-vidhya-content` GitHub repo
+
+**Unblocked, small engineering:**
+- §1.3 Cron for `finaliseExpiredDeletions()`
+- §1.4 Backup job for `.data/`
+
+**Blocked on a bigger decision:**
+- §5.4 Google OAuth handoff on conversion (blocks real-user launch)
+- §9.1–9.4 All B2B institutional items (blocks B2B launch)
+- §10.1–10.2 Monetization payment rails (blocks monetization launch)
+
+Nothing in this ledger is hidden. Every *"future"* / *"stub"* / *"deferred"* that was scattered across 14 documents is consolidated here.

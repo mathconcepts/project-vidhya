@@ -164,6 +164,58 @@ def validate(agents, mcp_tools):
                 gbrain_users.append(aid)
                 break
 
+    # 9. Every owned_tool referencing src/ must exist on disk
+    #    (PENDING.md §6.3 — invariant coverage)
+    for aid, a in agents.items():
+        for t in (a.get('owned_tools') or []):
+            if t.get('type') != 'module':
+                continue
+            tid = t.get('id')
+            if not isinstance(tid, str):
+                continue
+            if '#' in tid:
+                # Symbol reference: path#exportedName — resolve the path part only
+                tid = tid.split('#', 1)[0]
+            if not (tid.startswith('src/') or tid.startswith('scripts/') or tid.startswith('frontend/')):
+                continue
+            check_paths = [tid, f"{tid}.ts"]
+            if not any(os.path.exists(os.path.join(os.path.dirname(AGENTS_ROOT), p))
+                       for p in check_paths):
+                warnings.append(
+                    f"{aid}: owned_tool id='{t.get('id')}' does not resolve to a file or directory")
+
+    # 10. Every emits_signals name has at least one subscriber somewhere
+    #     (PENDING.md §6.3 — catches orphaned signals)
+    all_emitted = {}  # name -> emitting agent id
+    all_subscribed = set()
+    for aid, a in agents.items():
+        for sig in (a.get('emits_signals') or []):
+            name = sig.get('name')
+            if name:
+                all_emitted[name] = aid
+        subs = a.get('subscribes_to')
+        if isinstance(subs, list):
+            for s in subs:
+                if isinstance(s, dict) and s.get('name'):
+                    all_subscribed.add(s['name'])
+                elif isinstance(s, str):
+                    all_subscribed.add(s)
+    for name, emitter in all_emitted.items():
+        if name not in all_subscribed:
+            warnings.append(
+                f"signal '{name}' emitted by {emitter} has no subscribers")
+
+    # 11. Every manager has at least 1 downstream OR a declared
+    #     'standalone' flag (PENDING.md §6.3 — catches manager bloat)
+    for aid, a in agents.items():
+        if a.get('tier') != 'manager':
+            continue
+        downstream = (a.get('connections') or {}).get('downstream') or []
+        if not downstream and not a.get('standalone'):
+            warnings.append(
+                f"manager '{aid}' has no downstream specialists and no "
+                f"'standalone: true' flag — is it a manager or an IC?")
+
     return errors, warnings, gbrain_users
 
 # ─── Report ───────────────────────────────────────────────────────────

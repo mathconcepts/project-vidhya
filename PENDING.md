@@ -32,6 +32,28 @@ Navigation by subsystem:
 
 ---
 
+## ✓ Shipped in the 2026-04-24 "perform pending activities" commit
+
+Eleven items moved from pending → done. The sections below show the full remaining list.
+
+| Item | What shipped |
+|---|---|
+| **§1.3** Scheduler | `src/jobs/scheduler.ts` — `finaliseExpiredDeletions` hourly + `healthScan` every 5min. Wired into gate-server boot. `/api/orchestrator/jobs` admin view. |
+| **§1.4** Backups | `scripts/backup-data.ts` — tarball to `backups/` (gitignored) with `--list` and `--prune N` subcommands. `npm run backup:create`. |
+| **§2.3** Idempotency tests | `src/__tests__/unit/data/lifecycle.test.ts` — 6 new tests proving seed idempotency + data-rights cooling period + scheduler registration. Vitest 107→113. |
+| **§3.1** NEET Biology | 4th exam adapter. `src/samples/neet-biology.ts` + `src/exams/adapters/neet-biology.ts` + aggregator line. Full ExamAdapter contract. |
+| **§4.6** Intent classifier | `src/content/intent-classifier.ts` — extracted the rule-based classifier and added an async path with LLM fallback (opt-in via `VIDHYA_INTENT_CLASSIFIER=llm`). Drop-in when budget allows. |
+| **§6.3** Validator coverage | 3 new invariants in `agents/validate-graph.py`: owned-tool paths exist, signal pairing (emits → subscribers), manager has downstream or `standalone: true`. 24 honest warnings surfaced. |
+| **§7.1** Attention-counter migration | `scripts/migrations/001-drop-attention-counter.ts` — idempotent strip of the legacy field. |
+| **§11.7** Parent role | `parent` added to backend + frontend `Role` type. `ROLE_RANK.parent = 0` (orthogonal — scope is per-student, not site-wide). `User.guardian_of[]` / `User.guardians[]` fields. `hasGuardianOf()` helper. |
+| **§13.2** Signal bus | `src/events/signal-bus.ts` — in-process pub/sub. `content-router` publishes `content-routed` per decision. `/api/orchestrator/signals` admin view with recent-events buffer. |
+| **§13.3** Periodic health scan | Included as a job in the scheduler (every 5 minutes). Degraded-state transitions surface in logs even without operator polling. |
+| **§1.1** (documentation only) | Live URL — still operator action; link to [`DEPLOY.md`](./DEPLOY.md) clarified. |
+
+Everything tested end-to-end on a live backend before this commit landed. See commit message for proofs.
+
+---
+
 ## 1. Deployment & hosting
 
 ### 1.1 Live production URL

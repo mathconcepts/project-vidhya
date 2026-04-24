@@ -28,6 +28,7 @@
 import { createHash } from 'crypto';
 import { findCommunityContent, getUserSubscriptions } from './community';
 import { findUploadsByConcept } from './uploads';
+import { classifyByRules, classifyIntent as classifyIntentAsync } from './intent-classifier';
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -74,18 +75,15 @@ export interface RouteResult {
 // ─── Intent classification ───────────────────────────────────────────
 
 /**
- * Classify intent. This uses a small rule-set for deterministic
- * behaviour; swap for an LLM classifier if/when we have the budget.
- * Fails closed — ambiguous inputs route to explain-concept.
+ * Classify intent. Routes through the intent-classifier module which
+ * supports both rule-based (default) and LLM-backed (opt-in via
+ * VIDHYA_INTENT_CLASSIFIER=llm env var) classification.
+ *
+ * Re-exported here for backward compatibility with callers importing
+ * classifyIntent from src/content/router.
  */
 export function classifyIntent(text: string): Intent {
-  const t = text.toLowerCase().trim();
-  if (/(is my|check my|verify)\s+(answer|result|solution)/i.test(t)) return 'verify-answer';
-  if (/^solve\s|^compute\s|^evaluate\s|^factoris/i.test(t))            return 'solve-for-me';
-  if (/walk\s*me\s*through|step[\s-]*by[\s-]*step/i.test(t))           return 'walkthrough-problem';
-  if (/(what did i|my upload|in my notes|in my files)/i.test(t))       return 'find-in-uploads';
-  if (/(give me|show me|practice)\s+(a |an )?\s*(problem|question)/i.test(t)) return 'practice-problem';
-  return 'explain-concept';
+  return classifyByRules(text);
 }
 
 /**
@@ -116,8 +114,8 @@ export function extractConceptId(text: string, fallback?: string): string | null
 
 // ─── Main routing entry ──────────────────────────────────────────────
 
-export async function routeContent(req: RouteRequest): Promise<RouteResult> {
-  const intent = classifyIntent(req.text);
+async function _routeContentImpl(req: RouteRequest): Promise<RouteResult> {
+  const intent = await classifyIntentAsync(req.text);
   const concept_id = extractConceptId(req.text, req.concept_id);
   const subs = getUserSubscriptions(req.user_id);
   const rejected_because: Record<string, string> = {};
@@ -303,4 +301,28 @@ function _decline(
  */
 export function hashUserId(user_id: string): string {
   return createHash('sha256').update(user_id).digest('hex').slice(0, 8);
+}
+
+/**
+ * Main entry — classify intent, select source, emit CONTENT_ROUTED
+ * signal on the in-process signal bus (so subscribers like telemetry
+ * and feedback-manager can react).
+ *
+ * Signal payload uses hashed user_id (8-char sha256 prefix) — enough
+ * to aggregate per-user in cohort analysis, not enough to deanonymise.
+ */
+export async function routeContent(req: RouteRequest): Promise<RouteResult> {
+  const result = await _routeContentImpl(req);
+  // Fire-and-forget signal; lazy-load to avoid hard coupling at startup
+  try {
+    const { publish } = await import('../events/signal-bus');
+    publish('content-routed', 'content-router', {
+      user_id_hash: hashUserId(req.user_id),
+      concept_id: result.concept_id,
+      intent: result.intent,
+      chosen_source: result.source,
+      rejected_because: result.rejected_because,
+    });
+  } catch { /* bus unavailable — signal lost, no functional impact */ }
+  return result;
 }

@@ -2,6 +2,26 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-24 (later)
+
+### 🎯 "Perform pending activities" — 11 items moved from PENDING → shipped
+
+Everything tested end-to-end on a live backend.
+
+- **§1.3** Scheduler — `src/jobs/scheduler.ts` runs `finaliseExpiredDeletions()` hourly and `healthScan` every 5 min. Wired into gate-server boot with graceful shutdown. `GET /api/orchestrator/jobs` exposes job status. Toggle with `VIDHYA_DISABLE_SCHEDULER=1`.
+- **§1.4** Backups — `scripts/backup-data.ts` creates `.tar.gz` snapshots of `.data/` into gitignored `backups/`. `npm run backup:create | :list | :prune`. 8.3 KB for a seeded demo.
+- **§2.3** Idempotency tests — `src/__tests__/unit/data/lifecycle.test.ts` — 6 tests proving upsertFromGoogle idempotency, data-rights cooling-period enforcement, scheduler job registration. Vitest 107 → 113.
+- **§3.1** NEET Biology — the 4th exam adapter. 2-file recipe (sample + adapter). Full ExamAdapter contract. Registered as `EXM-NEET-BIO-SAMPLE`.
+- **§4.6** Intent classifier — extracted to `src/content/intent-classifier.ts` with rule-based default + async LLM-backed path (opt-in via `VIDHYA_INTENT_CLASSIFIER=llm`). Drop-in when budget allows.
+- **§6.3** Validator coverage — 3 new invariants in `agents/validate-graph.py`: (a) owned-tool paths exist on disk, (b) every emitted signal has ≥1 subscriber, (c) every manager has downstream or `standalone: true`. 24 honest warnings surfaced + 0 errors.
+- **§7.1** Attention-counter migration — `scripts/migrations/001-drop-attention-counter.ts` strips the legacy field idempotently.
+- **§11.7** Parent role — `Role` now includes `'parent'` with `ROLE_RANK.parent = 0` (orthogonal — scope is per-student, not site-wide). `User.guardian_of[]` / `User.guardians[]`. `hasGuardianOf()` helper enforces per-student access. Mirrored on frontend.
+- **§13.2** Signal bus — `src/events/signal-bus.ts` in-process pub/sub. Content-router publishes `content-routed` per decision. `GET /api/orchestrator/signals` admin view with 200-event recent buffer.
+- **§13.3** Health scan — included as a scheduler job; degraded transitions surface in server logs.
+- **§1.1** Live URL — remains operator-actionable (click DEPLOY button); PENDING.md entry clarified.
+
+PENDING.md updated with a "✓ Shipped" banner at the top.
+
 ## [Unreleased] — 2026-04-24
 
 ### 📋 Documentation refresh + pending-items ledger

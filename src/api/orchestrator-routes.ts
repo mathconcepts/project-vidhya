@@ -22,6 +22,7 @@ import { requireRole } from '../auth/middleware';
 import { listModules, listTiers, listProfiles, loadRegistry } from '../orchestrator/registry';
 import { composeDeployment, renderDependencyGraph } from '../orchestrator/composer';
 import { computeOrgHealth } from '../orchestrator/health';
+import { jobStatus } from '../jobs/scheduler';
 
 async function h_modules(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const auth = await requireRole(req, res, 'admin');
@@ -91,6 +92,23 @@ async function h_health(_req: ParsedRequest, res: ServerResponse): Promise<void>
   }
 }
 
+async function h_jobs(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+  sendJSON(res, { jobs: jobStatus() });
+}
+
+async function h_signals(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+  try {
+    const { inspect } = await import('../events/signal-bus');
+    sendJSON(res, inspect());
+  } catch (e: any) {
+    sendError(res, 500, `signal-bus unavailable: ${e?.message}`);
+  }
+}
+
 export const orchestratorRoutes: Array<{
   method: string;
   path: string;
@@ -102,4 +120,6 @@ export const orchestratorRoutes: Array<{
   { method: 'POST', path: '/api/orchestrator/compose',  handler: h_compose },
   { method: 'GET',  path: '/api/orchestrator/graph',    handler: h_graph },
   { method: 'GET',  path: '/api/orchestrator/health',   handler: h_health },
+  { method: 'GET',  path: '/api/orchestrator/jobs',     handler: h_jobs },
+  { method: 'GET',  path: '/api/orchestrator/signals',  handler: h_signals },
 ];

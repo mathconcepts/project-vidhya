@@ -785,11 +785,26 @@ Solve carefully:`;
 │    POST /telegram/daily-problem Daily Post    │
 └──────────────────────────────────────────────┘
 `);
+
+    // Start in-process periodic jobs (deletion cleanup, health scan)
+    // — see src/jobs/scheduler.ts. Disable with VIDHYA_DISABLE_SCHEDULER=1.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { startScheduler } = eval('require')('./jobs/scheduler');
+      startScheduler();
+    } catch (e: any) {
+      console.error(`[gate-server] scheduler start failed: ${e?.message}`);
+    }
   });
 
   // Graceful shutdown
   const shutdown = () => {
     console.log('\n[gate-server] Shutting down...');
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { stopScheduler } = eval('require')('./jobs/scheduler');
+      stopScheduler();
+    } catch { /* noop */ }
     server.close(() => process.exit(0));
   };
   process.on('SIGINT', shutdown);

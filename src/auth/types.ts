@@ -2,19 +2,29 @@
 /**
  * Auth Types & Role Hierarchy
  *
- * The canonical role model for Vidhya. Linear hierarchy:
+ * Main hierarchy (linear — higher roles inherit lower-role permissions):
  *   anonymous < student < teacher < admin < owner
  *
- * Higher roles inherit all lower-role permissions.
+ * Orthogonal roles (not in the main hierarchy — scoped read access):
+ *   - parent: read-only view of linked students' progress
+ *             (PENDING.md §11.7)
+ *
+ * Future: B2B (PENDING.md §9) adds `institution` above owner.
  */
 
-export type Role = 'owner' | 'admin' | 'teacher' | 'student';
+export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'parent';
 
 /**
  * Numeric ranking for comparison. Higher = more permissions.
  * Anonymous (not in Role type) is implicitly 0.
+ *
+ * Parent is ranked at 0 for general permissions — it grants NO
+ * site-wide access. Parent permissions are scoped per-student via
+ * User.guardian_of[]. Code checking "can read student X's progress"
+ * must use hasGuardianOf(), not roleGte(...'student').
  */
 const ROLE_RANK: Record<Role, number> = {
+  parent: 0,    // orthogonal — scope is per-student, not site-wide
   student: 1,
   teacher: 2,
   admin: 3,
@@ -24,6 +34,18 @@ const ROLE_RANK: Record<Role, number> = {
 export function roleGte(actual: Role | null, min: Role): boolean {
   if (!actual) return false;
   return ROLE_RANK[actual] >= ROLE_RANK[min];
+}
+
+/**
+ * Check if a user has guardian access to a specific student.
+ * Use this instead of roleGte for parent-scoped reads.
+ *
+ * Parents' read access is per-student. A parent linked to student A
+ * can read A's progress but NOT any other student's.
+ */
+export function hasGuardianOf(user: User | null, student_id: string): boolean {
+  if (!user || user.role !== 'parent') return false;
+  return (user.guardian_of || []).includes(student_id);
 }
 
 /**
@@ -41,6 +63,19 @@ export interface User {
   teacher_of: string[];
   /** For students — teacher id who manages them (null = no teacher) */
   taught_by: string | null;
+  /**
+   * For parents — student ids they have read-only access to.
+   * A parent's access is scoped: they can only read progress for
+   * students in this array. Not site-wide.
+   * PENDING.md §11.7.
+   */
+  guardian_of?: string[];
+  /**
+   * For students — parent ids who have read access to their progress.
+   * Student controls who gets access; adding/removing is student-opt-in.
+   * Mirrors guardian_of on the parent's User record.
+   */
+  guardians?: string[];
   created_at: string;
   last_seen_at: string;
   /**

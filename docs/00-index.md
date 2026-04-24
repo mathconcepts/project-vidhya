@@ -1,9 +1,22 @@
 # Project Vidhya v2.0 — Documentation Index
 
-> **Last updated:** 2026-03-13  
-> **Total docs:** 26 files + 1 guide + infra/  
+> **Last updated:** 2026-04-24
+> **Total docs:** 26 files + 1 guide + infra/ + `agents/` org chart
 
 This is the master index of all documentation in the `docs/` directory, organised hierarchically.
+
+> [!IMPORTANT]
+> **Agent organisation has been restructured.** The product is now
+> designed as a one-person company run by 48 agents under a single
+> CEO (1 CEO + 6 C-suite + 17 managers + 24 specialists). This
+> supersedes the original 7-agent persona architecture described in
+> `02-agent-architecture.md`. The authoritative current reference is
+> [`../agents/ORG-CHART.md`](../agents/ORG-CHART.md). GBrain is the
+> cognitive spine — every cognitively-dependent agent declares its
+> GBrain dependency in its YAML manifest, and the validator
+> (`python3 agents/validate-graph.py`) enforces it. See
+> [`../agents/_shared/gbrain-integration.md`](../agents/_shared/gbrain-integration.md)
+> for the contract.
 
 ---
 
@@ -13,7 +26,10 @@ This is the master index of all documentation in the `docs/` directory, organise
 |---|------|----------|
 | 00 | `00-overview.md` | Product overview, mission, agent roster |
 | 01 | `01-quick-start.md` | 5-minute local setup guide |
-| 02 | `02-agent-architecture.md` | All 7 agents, roles, signal wiring |
+| 02 | `02-agent-architecture.md` | *Legacy 7-agent persona architecture — superseded by [`agents/ORG-CHART.md`](../agents/ORG-CHART.md)* |
+| — | [`../agents/ORG-CHART.md`](../agents/ORG-CHART.md) | **Current** 48-agent C-suite organisation chart |
+| — | [`../agents/_shared/constitution.md`](../agents/_shared/constitution.md) | The four core promises + non-negotiable invariants |
+| — | [`../agents/_shared/gbrain-integration.md`](../agents/_shared/gbrain-integration.md) | GBrain cognitive-spine contract |
 | 03 | `03-llm-abstraction.md` | LLM service layer, model fallback chain |
 | 04 | `04-event-system.md` | Typed signal bus, event catalogue |
 | 05 | `05-data-layer.md` | localStorage schema, IndexedDB, Supabase |

@@ -1,5 +1,25 @@
 # Agent Architecture
 
+> [!IMPORTANT]
+> **This document describes the legacy 7-agent persona architecture
+> (Sage / Oracle / Mentor / Scout / Prism etc.) from the v2.2.3 release
+> line.** It is retained for historical reference. The current
+> agent organisation of Project Vidhya is a 48-agent C-suite graph
+> defined under [`../agents/`](../agents/). The authoritative
+> references are:
+>
+> - [`../agents/ORG-CHART.md`](../agents/ORG-CHART.md) — the current
+>   canonical human-readable org chart
+> - [`../agents/_shared/constitution.md`](../agents/_shared/constitution.md) —
+>   the four core promises and non-negotiable invariants
+> - [`../agents/_shared/gbrain-integration.md`](../agents/_shared/gbrain-integration.md) —
+>   the GBrain cognitive-spine integration contract
+> - [`../agents/validate-graph.py`](../agents/validate-graph.py) — the
+>   graph-invariant validator
+>
+> When these two documents disagree, the agent manifests under
+> `../agents/` and `ORG-CHART.md` win.
+
 Comprehensive documentation of all 8 agents (7 domain + Prism) and their 45+ sub-agents.
 
 > **Last updated:** 2026-03-11 — Prism agent added (commit `d5968b0`)  

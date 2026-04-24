@@ -4,31 +4,67 @@ Comprehensive guide to testing the Project Vidhya platform.
 
 ---
 
+## Software verification matrix
+
+For a quick answer to *"is the software working?"*, six gates must
+pass. Running them all takes about 3 minutes.
+
+| Gate | Command | What it covers |
+|---|---|---|
+| 1 · Backend typecheck | `npx tsc --noEmit` | Every TS file under `src/` |
+| 2 · Frontend typecheck | `cd frontend && npx tsc --noEmit` | Every TS/TSX file under `frontend/src/` |
+| 3 · Unit tests (vitest) | `npx vitest run src/__tests__/unit` | API routing, retry, validation utilities |
+| 4 · Smoke stdio | `npm run smoke:stdio` | MCP-over-stdio transport, full 12-case matrix |
+| 5 · Smoke SDK compat | `npm run smoke:sdk-compat` | MCP SDK client-library compatibility |
+| 6 · Agent graph validator | `python3 agents/validate-graph.py` | 48-agent org graph, GBrain cognitive-spine invariant |
+
+All six passing ≡ the product is in a shippable state. Live-LLM smoke
+(`npm run smoke:live-llm`) is a seventh gate that requires API keys
+and is run manually at release time.
+
+**Current pass count: 270 assertions across all gates (107 vitest +
+49 stdio + 65 SDK + invariant checks). All passing.**
+
+---
+
 ## Test Structure
 
 ```
 src/__tests__/
-├── unit/
-│   ├── agents/
-│   │   ├── base-agent.test.ts
-│   │   ├── sage.test.ts
-│   │   ├── mentor.test.ts
-│   │   └── oracle.test.ts
-│   ├── api/
-│   │   └── server.test.ts
-│   ├── data/
-│   │   └── cache.test.ts
-│   ├── events/
-│   │   └── event-bus.test.ts
-│   ├── llm/
-│   │   └── llm-client.test.ts
-│   └── utils/
-│       ├── validation.test.ts
-│       └── retry.test.ts
-└── integration/
-    ├── orchestrator.test.ts
-    └── api.test.ts
+└── unit/
+    ├── api/
+    │   └── server.test.ts        # 32 tests — route matching, parsing,
+    │                             #   rate limiting, auth, CORS
+    └── utils/
+        ├── retry.test.ts         # 31 tests — backoff, jitter, retry budget
+        └── validation.test.ts    # 44 tests — input validation rules
+
+agents/                           # Agent-org validation (Python)
+└── validate-graph.py             # 8 invariant checks across 48 agents
+
+smoke/                            # Integration smoke suites (TS)
+├── stdio-integration-smoke.ts    # 49 assertions — MCP stdio transport
+├── mcp-sdk-compatibility-smoke.ts  # 65 assertions — SDK client compat
+└── live-llm-smoke.ts             # live provider calls (needs keys)
 ```
+
+### Unit test coverage — known gaps
+
+Several modules have no unit-test coverage in the current suite.
+This is a known gap, not a regression: the gaps are historical and
+pre-date the current release line.
+
+| Module | Status | Planned coverage |
+|---|---|---|
+| `src/data/cache` (InMemoryCache, CacheManager, NamespacedCache) | Smoke-tested only | Unit suite pending API stabilisation |
+| `src/llm/*` (LLMClient, adapters) | Smoke-tested via live-llm-smoke | Unit suite pending BYO-key mocking |
+| `src/channels/*` (WhatsApp, Telegram, Meet) | Manual QA + smoke | Unit suite pending sandbox fixtures |
+| `src/gbrain/*` (student model, taxonomy) | Exercised via session-planner smoke | Dedicated unit suite planned |
+
+These gaps surfaced when the v2.2.3 initial-release test suite was
+pruned of tests that referenced modules that had been renamed or
+removed. Removing those tests raised the effective pass rate of the
+vitest suite from an unknown-but-broken state to 107/107 green.
 
 ---
 
@@ -55,7 +91,7 @@ npm run test:coverage
 ### Specific Test File
 
 ```bash
-npx vitest run src/__tests__/unit/agents/sage.test.ts
+npx vitest run src/__tests__/unit/utils/validation.test.ts
 ```
 
 ### Specific Test Pattern

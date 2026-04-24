@@ -1,53 +1,74 @@
+# render.yaml — Render Blueprint for the Vidhya demo
+#
+# Deploy via either:
+#
+#   1. One-click — use the "Deploy to Render" button in README.md, which
+#      opens https://dashboard.render.com/select-repo?type=blueprint
+#      pre-pointed at this repo. Render reads this file and provisions
+#      everything.
+#
+#   2. Manual — in Render dashboard: New + > Blueprint > connect this
+#      repo > apply. Same result.
+#
+# What gets provisioned:
+#   - 1 web service (Docker runtime, uses demo/Dockerfile)
+#   - 1 persistent disk, 1 GB, mounted at /app/.data
+#     → keeps demo seed data, demo-usage log, user store across restarts
+#   - JWT_SECRET auto-generated (32 chars, unique per deployment)
+#   - All LLM / Wolfram / Telegram keys marked sync:false so the Render
+#     UI prompts the operator to paste them (or skip — the demo works
+#     without any of them at baseline)
+#
+# First boot runs: npm run demo:seed && tsx src/gate-server.ts
+#   → on fresh deploys this seeds the 6 demo users; on restarts with an
+#     existing disk, seed is idempotent (upsert-by-google-sub; existing
+#     users are updated rather than duplicated).
+
 services:
-  # ── Backend API (serves API + SEO pages + Telegram bot) ──────
   - type: web
-    name: gate-math-api
-    runtime: node
-    plan: free
-    buildCommand: npm install && cd frontend && npm install --include=dev && VITE_SUPABASE_URL=$SUPABASE_URL VITE_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY npx vite build
-    startCommand: npx tsx src/gate-server.ts
+    name: vidhya-demo
+    runtime: docker
+    plan: free                       # upgrade to 'starter' if demo traffic warrants it
+    dockerfilePath: ./demo/Dockerfile
+    dockerContext: .
     healthCheckPath: /health
+    disk:
+      name: vidhya-demo-data
+      mountPath: /app/.data
+      sizeGB: 1
     envVars:
-      # NODE_ENV is set by Render automatically at runtime.
-      # Do NOT set it here — it breaks the build by skipping devDependencies.
+      # ─── required ───────────────────────────────────────────────
+      - key: NODE_ENV
+        value: production
       - key: PORT
-        value: "3000"
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
+        value: "8080"
+      - key: JWT_SECRET
+        generateValue: true          # Render picks a random 32-char secret on first deploy
+      - key: PUBLIC_URL
+        sync: false                  # operator sets this to their Render URL after first deploy
+
+      # ─── BYOK LLM providers (one enables AI tutor / Snap / explainers) ─
+      # Each is optional. Demo works with NONE at baseline (planning,
+      # templates, trailing stats, admin dashboards).
       - key: GEMINI_API_KEY
         sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: VIDHYA_LLM_PRIMARY_PROVIDER
+        sync: false                  # "gemini" / "anthropic" / "openai"
+
+      # ─── optional: Wolfram (maths verification) ─────────────────
       - key: WOLFRAM_APP_ID
         sync: false
-      - key: JWT_SECRET
-        sync: false
+
+      # ─── optional: channel delivery ─────────────────────────────
       - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: TELEGRAM_GROUP_IDS
+      - key: WHATSAPP_ACCESS_TOKEN
         sync: false
-      - key: CRON_SECRET
-        generateValue: true
-      - key: TELEGRAM_WEBHOOK_SECRET
-        generateValue: true
-      - key: FRONTEND_URL
-        value: https://gate-math.onrender.com
-      - key: APP_URL
-        value: https://gate-math-api.onrender.com
-      - key: ADMIN_EMAILS
+      - key: WHATSAPP_PHONE_NUMBER_ID
         sync: false
-
-# External cron jobs (Render cron requires paid plan).
-# Use cron-job.org or GitHub Actions:
-#
-# Daily Telegram problem:
-#   curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
-#     https://gate-math-api.onrender.com/telegram/daily-problem
-#
-# Content flywheel (daily, generates 5 problems):
-#   curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
-#     https://gate-math-api.onrender.com/api/flywheel/generate
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false

@@ -186,6 +186,10 @@ The content layer is a **four-tier cascade** assembled overnight by GitHub Actio
 
 🧪 **As a tester wanting a working demo right now** → [DEMO.md](./DEMO.md). One command seeds a realistic student (2 exams, 6 plan history, templates, trailing stats), another command boots backend + frontend. Open `/demo.html` → you're auto-logged-in on the planned-session surface with live data.
 
+🚀 **As someone wanting a live public demo URL** → click below (free Render account), then follow [DEPLOY.md](./DEPLOY.md). Render reads the repo's `render.yaml`, provisions a web service + 1 GB persistent disk, and ~3 minutes later you have a live `.onrender.com` URL with all three exams loaded and BYOK-ready.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya)
+
 📚 **As someone evaluating which exams this supports** → [EXAMS.md](./EXAMS.md). Three bundled mathematics exams — BITSAT, JEE Main, UGEE — with full structure, scoring, topic weights, and an adapter pattern so a new exam takes two files.
 
 🔬 **As a technical evaluator** → [FEATURES.md](./FEATURES.md) for the shipping ledger, [DESIGN.md](./DESIGN.md) for the architecture, then [docs/](./docs/).

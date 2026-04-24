@@ -44,6 +44,7 @@ npm run demo:channel-link      # bind a demo role to a channel identity
 | **Self-service account deletion** | `/api/me/delete*` + `/api/me/export` | ✓ shipped |
 | **Activation-funnel metrics (admin)** | `/api/admin/lifecycle/funnel` | ✓ shipped |
 | **Cohort-retention analysis (admin)** | `/api/admin/lifecycle/retention` | ✓ shipped |
+| **One-click Render deploy** | `render.yaml` + `demo/Dockerfile` + [`DEPLOY.md`](./DEPLOY.md) | ✓ shipped |
 | Deployment (Render / Railway / Fly / Docker) | `demo/HOSTING.md` | ✓ documented |
 
 The **four exam adapters** the demo exercises — BITSAT, JEE Main,

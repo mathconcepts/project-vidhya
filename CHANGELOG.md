@@ -2,6 +2,17 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-24 (frontend)
+
+### 🎨 First frontend page backed by existing content endpoints
+
+- `frontend/src/pages/gate/ContentSettingsPage.tsx` at route `/gate/content-settings` (PENDING §4.7) — students manage their community-bundle subscriptions and which source classes to exclude from routing. Lazy-loaded; linked from `/gate/settings`.
+- Backend untouched — page reads from `GET /api/student/content/bundles` + `GET /api/student/content/subscriptions` in parallel on load; writes via the three `POST` mutations.
+- **Optimistic UX with rollback**: tap Subscribe → UI updates immediately → network confirms or rolls back with inline error. Never leaves the user staring at a spinner.
+- **Honest mode banner** — the page surfaces whether the content subrepo is in `stub`, `local`, or `live` mode with the pinned SHA visible in live mode.
+- **Constitutional integrity preserved** — when a user excludes `generated`, the router's existing behaviour of refusing LLM content even with `allow_generation=true` is honored end-to-end (verified).
+- **Side effect fix**: `UserAdminPage.tsx`'s `ROLE_META` record was incomplete after the parent-role addition in §11.7. Added the `parent` entry with a Heart icon; frontend typecheck now clean.
+
 ## [Unreleased] — 2026-04-24 (later)
 
 ### 🎯 "Perform pending activities" — 11 items moved from PENDING → shipped

@@ -106,6 +106,21 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
+      {/* Content settings — bundles + source exclusions */}
+      <motion.a
+        variants={fadeInUp}
+        href="/gate/content-settings"
+        className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-surface-700 hover:bg-surface-850 transition-colors"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-surface-200">Content settings</p>
+            <p className="text-xs text-surface-500">Manage bundle subscriptions and excluded sources</p>
+          </div>
+          <span className="text-surface-500">→</span>
+        </div>
+      </motion.a>
+
       {/* Session */}
       <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
         <p className="text-sm font-medium text-surface-200">Session</p>

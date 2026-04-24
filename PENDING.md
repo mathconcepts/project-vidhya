@@ -34,7 +34,7 @@ Navigation by subsystem:
 
 ## ✓ Shipped in the 2026-04-24 "perform pending activities" commit
 
-Eleven items moved from pending → done. The sections below show the full remaining list.
+Twelve items moved from pending → done (11 backend/infra + 1 frontend page in a follow-up). The sections below show the full remaining list.
 
 | Item | What shipped |
 |---|---|
@@ -43,6 +43,7 @@ Eleven items moved from pending → done. The sections below show the full remai
 | **§2.3** Idempotency tests | `src/__tests__/unit/data/lifecycle.test.ts` — 6 new tests proving seed idempotency + data-rights cooling period + scheduler registration. Vitest 107→113. |
 | **§3.1** NEET Biology | 4th exam adapter. `src/samples/neet-biology.ts` + `src/exams/adapters/neet-biology.ts` + aggregator line. Full ExamAdapter contract. |
 | **§4.6** Intent classifier | `src/content/intent-classifier.ts` — extracted the rule-based classifier and added an async path with LLM fallback (opt-in via `VIDHYA_INTENT_CLASSIFIER=llm`). Drop-in when budget allows. |
+| **§4.7** Content subscription picker UI | `frontend/src/pages/gate/ContentSettingsPage.tsx` at `/gate/content-settings`. Lists bundles, optimistic subscribe/unsubscribe with rollback on error, source-exclusion toggles, honest stub-mode banner. Linked from `/gate/settings`. |
 | **§6.3** Validator coverage | 3 new invariants in `agents/validate-graph.py`: owned-tool paths exist, signal pairing (emits → subscribers), manager has downstream or `standalone: true`. 24 honest warnings surfaced. |
 | **§7.1** Attention-counter migration | `scripts/migrations/001-drop-attention-counter.ts` — idempotent strip of the legacy field. |
 | **§11.7** Parent role | `parent` added to backend + frontend `Role` type. `ROLE_RANK.parent = 0` (orthogonal — scope is per-student, not site-wide). `User.guardian_of[]` / `User.guardians[]` fields. `hasGuardianOf()` helper. |
@@ -226,14 +227,13 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 
 **Detail:** Current classifier is keyword-regex. Works deterministically, fast, testable, but limited. Swapping to an LLM call with strict JSON schema is a drop-in — just route through `llm-router-manager`. Wait until the rule-based one is shown to misclassify in production.
 
-### 4.7 Frontend subscription picker UI
+### 4.7 Frontend subscription picker UI — ✓ SHIPPED 2026-04-24
 
-**Status:** endpoints shipped, no UI
-**Priority:** P2
-**Effort:** M
-**Depends on:** nothing
+**Status:** ✓ shipped at `frontend/src/pages/gate/ContentSettingsPage.tsx` — route `/gate/content-settings`, linked from `/gate/settings`.
+**Priority:** ~~P2~~
+**Effort:** ~~M~~
 
-**Detail:** `POST /api/student/content/subscribe` works. Students today would need to hit it via curl. A `/gate/settings/content` page showing available bundles with subscribe/unsubscribe buttons is the natural UI. Small React component.
+**What landed:** Lists available bundles with descriptions + concept counts + verified badges. Optimistic subscribe/unsubscribe with per-bundle rollback on error. Source-exclusion toggles for generated / wolfram / uploads / community / cache. Honest mode banner (stub / local / live) with pin SHA. All bundle and subscription state read from / written to the existing `/api/student/content/*` endpoints. Frontend typecheck clean; no backend changes needed.
 
 ### 4.8 Frontend upload UI
 
@@ -509,7 +509,7 @@ Aggregated list of UI pages that don't exist yet where the backend endpoint does
 
 | Missing page | Backend endpoint(s) | Priority | Effort |
 |---|---|---|---|
-| Content subscription picker | `/api/student/content/*` | P2 | M |
+| Content subscription picker | `/api/student/content/*` | ✓ shipped | — |
 | Upload drag-and-drop | `/api/student/uploads` | P2 | M |
 | Activation funnel dashboard | `/api/admin/lifecycle/funnel` | P2 | M |
 | Retention findings dashboard | `/api/admin/lifecycle/retention` | P2 | M |

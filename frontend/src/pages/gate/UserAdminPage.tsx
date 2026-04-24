@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Crown, Shield, GraduationCap, UserCircle,
+  Users, Crown, Shield, GraduationCap, UserCircle, Heart,
   Search, Loader2, RefreshCw, AlertCircle,
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -27,6 +27,7 @@ const ROLE_META: Record<Role, { icon: typeof Crown; color: string; label: string
   admin:   { icon: Shield,        color: 'text-sky-400',     label: 'Admin' },
   teacher: { icon: GraduationCap, color: 'text-emerald-400', label: 'Teacher' },
   student: { icon: UserCircle,    color: 'text-surface-400', label: 'Student' },
+  parent:  { icon: Heart,         color: 'text-rose-400',    label: 'Parent' },
 };
 
 export default function UserAdminPage() {

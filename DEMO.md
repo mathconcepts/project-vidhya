@@ -190,6 +190,72 @@ into one image; the container runs the seed + serve on boot.
 
 ---
 
+## Via Telegram or WhatsApp — not just the browser
+
+The role-picker at `/demo.html` is the easiest path, but Vidhya was
+designed to reach students on the channels they already use. Demo
+testers can message the product on Telegram or WhatsApp too — with
+their real chat account mapped to any seeded demo user.
+
+This path is **genuinely more complex than the web demo**:
+it requires real bot credentials (from @BotFather and Meta) and a
+publicly reachable URL for webhooks. Full guide in
+[`demo/CHANNELS.md`](./demo/CHANNELS.md).
+
+**Operator quickstart:**
+
+```bash
+# 1. Get a Telegram bot token from @BotFather and a public URL
+#    (via ngrok for local, or Render/Railway/Fly for hosted)
+export TELEGRAM_BOT_TOKEN="7112345678:AAE…"
+export PUBLIC_URL="https://<public-domain>"
+
+# 2. Verify credentials and get exact webhook URL + next steps
+npm run demo:channel-setup
+
+# 3. Register the webhook with Telegram (command printed by step 2)
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+     -d "url=$PUBLIC_URL/api/channels/telegram/webhook"
+
+# 4. Start the backend with the bot token in the env
+npm run demo:start
+
+# 5. Bind your own Telegram user id to a demo role
+#    (Use @userinfobot on Telegram to find your numeric id.)
+npm run demo:channel-link -- --role=student-active \
+    --channel=telegram --id=<your-tg-user-id>
+```
+
+Message the bot; the conversation arrives server-side as Priya
+Sharma. Same pattern for WhatsApp — `demo/CHANNELS.md` documents
+both.
+
+**What works, what doesn't:**
+
+| Capability | Telegram | WhatsApp |
+|---|---|---|
+| Text chat with the demo tutor | ✓ (needs server-side LLM key) | ✓ (same) |
+| Photo upload for Snap problem analysis | ✓ | ✓ |
+| Scheduled daily-problem push | ✓ | ✓ |
+| Role switching via `/demo-as <role>` | pattern in `CHANNELS.md` | same |
+| Inline buttons | ✓ keyboard | limited (list messages) |
+| Per-user BYOK | ✗ server-side key only | ✗ same |
+
+**The BYOK caveat.** In the web demo, each tester's LLM key stays in
+their browser. Messages on Telegram/WhatsApp arrive at the server,
+which means chat responses use the server-side default provider
+(`VIDHYA_LLM_PRIMARY_PROVIDER` + matching `*_API_KEY`). That key is
+paid for by the demo operator. Budget accordingly; the admin
+dashboard's usage panel shows spend.
+
+**The hosting dependency.** Both channels require HTTPS webhooks.
+localhost will not work — Telegram and Meta both reject non-public
+URLs. Either use ngrok (local dev) or deploy to any of the
+hosting paths in `HOSTING.md`. Full matrix of options in
+`CHANNELS.md`.
+
+---
+
 ## API keys — the full matrix
 
 Full table at `demo/API-KEYS.md`, or open `/demo-api-keys.html` in the

@@ -41,7 +41,9 @@
     "demo:reset": "tsx demo/reset.ts",
     "demo:start": "bash demo/start.sh",
     "demo:verify": "tsx demo/verify.ts",
-    "demo:log": "tsx demo/log.ts"
+    "demo:log": "tsx demo/log.ts",
+    "demo:channel-setup": "tsx demo/channel-setup.ts",
+    "demo:channel-link": "tsx demo/channel-link.ts"
   },
   "keywords": [
     "adaptive-learning",

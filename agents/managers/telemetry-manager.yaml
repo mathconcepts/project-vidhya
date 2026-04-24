@@ -23,6 +23,8 @@ connections:
   downstream:
     - id: aggregation-specialist
       channel: delegation
+    - id: retention-specialist
+      channel: delegation
   peers:
     - id: student-model-manager
       channel: query

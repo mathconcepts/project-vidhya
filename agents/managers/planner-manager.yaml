@@ -58,6 +58,8 @@ connections:
       channel: delegation     # Specialist that walks a plan with the student
     - id: template-curator
       channel: delegation     # Specialist that manages saved templates + presets
+    - id: onboarding-specialist
+      channel: delegation     # Specialist that owns the activation funnel
   peers:
     - id: teaching-manager
       channel: query          # content availability per concept

@@ -337,6 +337,127 @@ specialists:
       - type: module
         id: 'src/content/telemetry'
 
+  # ═══ Under outreach-manager (CMO side) — customer-lifecycle ════════
+
+  - id: conversion-specialist
+    reports_to: outreach-manager
+    mission: Own the demo-to-paid conversion handoff. Ensure demo
+      testers who decide to become real users carry their work with them
+      while the demo-usage log is anonymised at the moment of conversion.
+    skills:
+      - Execute migrateDemoToReal(from_user_id, to_user_id) across the
+        five per-student flat-file stores (exam-profiles, session-plans,
+        plan-templates, practice-sessions, users).
+      - Null out user_id fields in demo-usage-log entries tied to the
+        converting demo user — preserve event codes for cohort aggregate.
+      - Record the converted_to link on the demo user record.
+    owned_tools:
+      - type: module
+        id: 'src/conversion/migrate-demo-to-real.ts'
+        purpose: Run the conversion migration.
+      - type: http
+        id: 'POST /api/demo/convert'
+        purpose: Trigger conversion via the running backend.
+    decision_rules:
+      - Never migrate attention-store entries — those are ephemeral by
+        design (fatigue signal, not identity).
+      - Never draw more than one cross-account link. users.json's
+        demo_user.converted_to field is the only such link permitted.
+      - If migration fails midway, roll back writes to avoid partial state.
+    connections:
+      peers:
+        - id: aggregation-specialist
+          channel: query
+
+  # ═══ Under planner-manager (CPO side) — customer-lifecycle ═════════
+
+  - id: onboarding-specialist
+    reports_to: planner-manager
+    mission: Own the activation funnel — the path from fresh account
+      to first compounding moment (trailing-stats badge > 0 minutes).
+      Measure it end-to-end; surface drop-offs to product.
+    skills:
+      - Compute activation funnel conversion for fresh accounts
+        (steps sign-up → exam registered → first plan → first attempt
+        → trailing stats positive).
+      - Tag users at each step so drop-offs between steps are visible.
+      - Emit activation-milestone signals.
+    owned_tools:
+      - type: module
+        id: 'src/onboarding/funnel.ts'
+        purpose: Query the activation funnel metrics.
+    decision_rules:
+      - No per-user nudging or email — activation funnel is a COHORT
+        metric, not a push-notification trigger. Calm promise applies.
+      - Empty-state copy improvements flow back through feedback-manager,
+        not directly to UI.
+    emits_signals:
+      - name: activation-milestone
+        schema: '{ step, user_count, week }'
+        when: Weekly cohort snapshot.
+
+  # ═══ Under telemetry-manager (CDO side) — customer-lifecycle ═══════
+
+  - id: retention-specialist
+    reports_to: telemetry-manager
+    mission: Detect disengagement patterns at the COHORT level without
+      violating the Calm promise. Surface systemic issues (week-2 drop,
+      topic-triggered churn) to the people who can fix them — not nudges
+      to the individual student.
+    skills:
+      - Run cohort queries over anonymised telemetry
+        (trailing-minutes by cohort, retention curves by entry vector).
+      - Detect statistically significant drop patterns.
+      - Route findings to feedback-manager or curriculum-manager.
+    owned_tools:
+      - type: module
+        id: 'src/retention/cohort-queries.ts'
+        purpose: Run retention queries against aggregated telemetry.
+    decision_rules:
+      - Cohort buckets under 30 members do not emit findings — preserves
+        k-anonymity (inherited from telemetry-manager's rule).
+      - Findings route to a HUMAN-readable dashboard, never to an
+        outbound-email queue addressed at users.
+      - The constitution bans streak-based gamification and guilt pings.
+        This agent MUST NOT produce anything that violates that clause;
+        violations are caught at review, not at runtime.
+    connections:
+      peers:
+        - id: aggregation-specialist
+          channel: query
+
+  # ═══ Under security-manager (CTO side) — customer-lifecycle ════════
+
+  - id: data-rights-specialist
+    reports_to: security-manager
+    mission: Execute self-service data rights — account deletion with
+      cooling period, data export, and channel unlinking on offboard.
+    skills:
+      - Initiate soft-delete with 24h reversible window.
+      - Finalise hard-delete after cooling period — drop all per-user
+        flat-file entries, null user_id fields in demo telemetry,
+        unlink any channel bindings.
+      - Produce a portable JSON export of a user's data on request.
+    owned_tools:
+      - type: module
+        id: 'src/data-rights/delete.ts'
+        purpose: Delete or export a user's data.
+      - type: http
+        id: 'POST /api/me/delete'
+        purpose: Student-initiated account deletion request.
+      - type: http
+        id: 'POST /api/me/delete/confirm'
+        purpose: Confirm deletion after cooling period.
+      - type: http
+        id: 'GET /api/me/export'
+        purpose: Portable JSON export of the user's data.
+    decision_rules:
+      - Soft-delete is reversible within 24h via a cancellation route.
+      - Hard-delete is destructive and final. No data survives except
+        k-anonymised aggregates telemetry-manager has already emitted.
+      - Channel bindings are always unlinked on hard-delete — a user
+        shouldn't keep reaching a bot they no longer have an account with.
+
 # ─── Portability ──────────────────────────────────────────────────────
 #
 # Every specialist in this file:

@@ -21,7 +21,9 @@ owned_tools:
 
 connections:
   upstream: [{ id: cmo, channel: delegation }]
-  downstream: []
+  downstream:
+    - id: conversion-specialist
+      channel: delegation
   peers:
     - id: seo-manager
       channel: query

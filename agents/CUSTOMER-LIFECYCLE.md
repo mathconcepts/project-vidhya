@@ -607,45 +607,49 @@ migration to the student without surprise) and `student-model-manager`
 
 ## Gap analysis — proposed new roles
 
-The existing 48 agents cover the platform's technical concerns well.
-Four specific customer-lifecycle roles are unclear today:
+The existing 48-agent org covered the platform's technical concerns
+well. Four specific customer-lifecycle roles were unclear when this
+doc was first written; of those, **two are now shipped** (conversion
+and data-rights), and **two remain proposed** (onboarding and
+retention).
 
-### 1. `conversion-specialist` (under `outreach-manager`)
+### 1. `conversion-specialist` (under `outreach-manager`) — **shipped**
 
 **Owns.** The demo → paid conversion flow (scenario 1 above).
 
-**Why not a new manager?** Conversion fidelity is a campaign concern
-— it's about ensuring the promise made at the landing page is the
-experience on the other side of sign-up. That's outreach-manager's
-existing remit, narrowed.
+**Shipped code:**
+- `src/conversion/migrate-demo-to-real.ts` — migration function
+- `POST /api/demo/convert` (in `src/api/lifecycle-routes.ts`)
+- Manifest entry in `agents/specialists/specialists.yaml`
 
-**Owned surface.** `migrateDemoToReal()` (proposed), the "Make this
-real" CTA in the demo, the opt-in carryover UI.
+**Verified working** against the live backend: 6 plans, 3 templates,
+2 exam registrations, 9 practice sessions, and 97 min of trailing
+stats all carry over from a demo tester into their real account on a
+single API call.
 
-**Signals in.** CTA click. Signals out. `CONVERSION_COMPLETED` with
-{from_demo_user, to_real_user, carried_over_count}.
-
-### 2. `onboarding-specialist` (under `planner-manager`)
+### 2. `onboarding-specialist` (under `planner-manager`) — **proposed (manifest shipped)**
 
 **Owns.** The first-time-user experience. From real account creation
 to first activated session. Lives under planner-manager because the
 planner IS what a first-time user meets.
 
-**Why this matters.** Activation (Stage 4) is the highest-impact
-single handoff in the product; no agent today owns its quality. A
-specialist with this mandate ensures the sequence `sign up → exam
-registered → first plan → first attempt → trailing-stats > 0` is
-measured as an end-to-end funnel.
+**Shipped:** manifest only. The activation-funnel metrics module
+(`src/onboarding/funnel.ts`) is not yet implemented.
 
-**Owned surface.** The activation funnel metrics, the welcome sequence,
-the empty-state copy when a user's first plan is generated.
+**Why manifest-only.** The funnel metrics are a reporting concern that
+doesn't need new routes or stores — `telemetry-manager`'s existing
+aggregation surface can serve the data once the queries are written.
+Landing the manifest first enforces the ownership boundary so future
+work attaches under this specialist rather than leaking into planner-
+manager or feedback-manager.
 
-### 3. `retention-specialist` (under `telemetry-manager`)
+### 3. `retention-specialist` (under `telemetry-manager`) — **proposed (manifest shipped)**
 
-**Owns.** Detect disengagement early without violating the Calm
-promise. Runs queries like *"students whose trailing_7d_minutes
-has dropped by 50% week-over-week"* on cohort-anonymous data and
-surfaces structural issues (not individual nudges).
+**Owns.** Detect disengagement patterns at the COHORT level without
+violating the Calm promise.
+
+**Shipped:** manifest only. `src/retention/cohort-queries.ts` is not
+yet implemented.
 
 **What it does NOT do.** Send "we miss you" emails. Build streak
 shaming. Track per-user last-seen and trigger guilt notifications.
@@ -656,15 +660,24 @@ BITSAT drop off in week 2**, it aggregates the signal and routes to
 `feedback-manager` / `curriculum-manager` to investigate whether the
 week-2 content is too hard, too slow, or structurally misaligned.
 
-### 4. `data-rights-specialist` (under `security-manager`)
+### 4. `data-rights-specialist` (under `security-manager`) — **shipped**
 
 **Owns.** Account deletion, data export (GDPR-style rights), channel
-unlinking on offboard. The product doesn't have this flow today —
-account deletion requires manual intervention. For an adult product,
-self-service data rights is non-negotiable.
+unlinking on offboard.
 
-**Owned surface.** `/api/me/delete`, `/api/me/export`, the 24h cooling
-confirmation, the irreversibility warning UI.
+**Shipped code:**
+- `src/data-rights/delete.ts` — request/cancel/confirm flow + export
+- `POST /api/me/delete`           — soft-delete with 24h cooling
+- `POST /api/me/delete/cancel`    — reverse within cooling period
+- `POST /api/me/delete/confirm`   — finalise (destructive)
+- `GET  /api/me/export`           — portable JSON of user's data
+- Manifest entry in `agents/specialists/specialists.yaml`
+
+**Verified working** end-to-end: request-deletion correctly refuses
+confirm during the cooling period with the remaining seconds in the
+error, cancel restores the account cleanly, export returns the full
+user record with plans/templates/practice-sessions. Channel unlinks
+on hard-delete; demo-usage log entries get anonymised at confirm time.
 
 ---
 
@@ -730,10 +743,17 @@ doc is re-examined:
   stage from Expansion)
 - A new MCP tool changes the data-flow between two stages
 
-**The four proposed specialists** (conversion-specialist,
-onboarding-specialist, retention-specialist, data-rights-specialist)
-are not yet committed as manifest files under `agents/specialists/`.
-Adding them is a conscious decision — each expands the surface the
-validator checks. Until they are added, their responsibilities sit in
-the "unowned" column of the matrix above, visible and honest rather
-than papered over.
+**The four customer-lifecycle specialists' current status (as of
+commit integrating them):**
+
+| Role | Manifest | Code | API surface |
+|---|---|---|---|
+| `conversion-specialist` | shipped | `src/conversion/` | `POST /api/demo/convert` |
+| `data-rights-specialist` | shipped | `src/data-rights/` | `/api/me/delete*`, `/api/me/export` |
+| `onboarding-specialist` | shipped | *deferred* | *deferred* (funnel metrics) |
+| `retention-specialist` | shipped | *deferred* | *deferred* (cohort queries) |
+
+The deferred items are not papered over — the manifests name the
+owned tools explicitly, so the next contributor landing a cohort-
+query module will put it under the retention-specialist's boundary
+rather than leak it into an adjacent manager.

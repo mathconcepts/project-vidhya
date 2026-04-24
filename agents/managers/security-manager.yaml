@@ -20,7 +20,9 @@ owned_tools:
 
 connections:
   upstream: [{ id: cto, channel: delegation }]
-  downstream: []
+  downstream:
+    - id: data-rights-specialist
+      channel: delegation
   peers:
     - id: infrastructure-manager
       channel: query

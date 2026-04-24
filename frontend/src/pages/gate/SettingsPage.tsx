@@ -121,6 +121,21 @@ export default function SettingsPage() {
         </div>
       </motion.a>
 
+      {/* Uploads — private file library */}
+      <motion.a
+        variants={fadeInUp}
+        href="/gate/uploads"
+        className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-surface-700 hover:bg-surface-850 transition-colors"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-surface-200">Your uploads</p>
+            <p className="text-xs text-surface-500">Upload class notes, problem photos, PDFs — private to you</p>
+          </div>
+          <span className="text-surface-500">→</span>
+        </div>
+      </motion.a>
+
       {/* Session */}
       <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
         <p className="text-sm font-medium text-surface-200">Session</p>

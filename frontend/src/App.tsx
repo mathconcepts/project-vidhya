@@ -59,6 +59,7 @@ const ExamSetupPage = lazy(() => import('@/pages/gate/ExamSetupPage'));
 const ExamGroupsPage = lazy(() => import('@/pages/gate/ExamGroupsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/gate/ContentSettingsPage'));
+const UploadsPage = lazy(() => import('@/pages/gate/UploadsPage'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -106,6 +107,7 @@ export default function App() {
           <Route path="lesson/:concept_id" element={<LessonPage />} />
           <Route path="llm-config" element={<LLMConfigPage />} />
           <Route path="content-settings" element={<ContentSettingsPage />} />
+          <Route path="uploads" element={<UploadsPage />} />
           <Route path="convert-demo" element={<ConvertDemoPage />} />
           <Route path="sign-in" element={<SignInPage />} />
           <Route path="admin/users" element={<UserAdminPage />} />

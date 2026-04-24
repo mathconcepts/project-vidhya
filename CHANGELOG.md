@@ -2,6 +2,19 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-24 (uploads UI)
+
+### 📤 Upload drag-and-drop page
+
+- `frontend/src/pages/gate/UploadsPage.tsx` at route `/gate/uploads` (PENDING §4.8) — students upload class notes, problem photos, PDFs, or text files which the content router can later find via the `find-in-uploads` intent.
+- **Drag-and-drop zone** + click-to-select fallback, keyboard-accessible (Enter / Space triggers file picker).
+- **Per-upload metadata**: optional note + concept-tag chips. Tag input accepts free strings with autocomplete chips for known concept IDs (`calculus-derivatives`, `linear-algebra-eigenvalues`, etc.) — saves students guessing exact strings.
+- **Optimistic delete** with rollback + per-item inline error message on failure.
+- **Client-side size validation**: refuses files > 7.5 MB up-front with a clear explanation of the base64-encoding overhead rather than letting the server return a confusing error. Backend accepts 10 MB JSON body; base64 adds ~33% for binary files.
+- **Privacy banner** makes the constitutional constraint visible: uploads are user-private, never enter cohort telemetry, never passed to LLM/Wolfram without per-request consent, deleted on account close.
+- Backend untouched — uses the four existing `/api/student/uploads*` endpoints from commit `faf6aaa`.
+- **End-to-end verified**: upload a file tagged `calculus-derivatives` → send content request `"what did I upload about derivatives"` → router returns `source: uploads` with the correct file. The `find-in-uploads` intent is now reachable from the UI for the first time.
+
 ## [Unreleased] — 2026-04-24 (frontend)
 
 ### 🎨 First frontend page backed by existing content endpoints

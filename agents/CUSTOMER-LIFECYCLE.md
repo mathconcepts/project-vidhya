@@ -620,40 +620,60 @@ retention).
 **Shipped code:**
 - `src/conversion/migrate-demo-to-real.ts` — migration function
 - `POST /api/demo/convert` (in `src/api/lifecycle-routes.ts`)
+- `frontend/src/pages/gate/ConvertDemoPage.tsx` — the conversion UI
+- `frontend/src/components/DemoBanner.tsx` — demo-mode banner with CTA
 - Manifest entry in `agents/specialists/specialists.yaml`
 
 **Verified working** against the live backend: 6 plans, 3 templates,
 2 exam registrations, 9 practice sessions, and 97 min of trailing
 stats all carry over from a demo tester into their real account on a
-single API call.
+single API call. The frontend CTA is lazy-loaded (separate bundle);
+`DemoBanner` auto-detects demo mode via the `@vidhya.local` email
+convention and surfaces a "Make this real →" link on `/gate/planned`.
 
-### 2. `onboarding-specialist` (under `planner-manager`) — **proposed (manifest shipped)**
+### 2. `onboarding-specialist` (under `planner-manager`) — **shipped**
 
 **Owns.** The first-time-user experience. From real account creation
 to first activated session. Lives under planner-manager because the
 planner IS what a first-time user meets.
 
-**Shipped:** manifest only. The activation-funnel metrics module
-(`src/onboarding/funnel.ts`) is not yet implemented.
+**Shipped code:**
+- `src/onboarding/funnel.ts` — the activation-funnel query
+- `GET /api/admin/lifecycle/funnel` (admin+ only)
+- Manifest entry in `agents/specialists/specialists.yaml`
 
-**Why manifest-only.** The funnel metrics are a reporting concern that
-doesn't need new routes or stores — `telemetry-manager`'s existing
-aggregation surface can serve the data once the queries are written.
-Landing the manifest first enforces the ownership boundary so future
-work attaches under this specialist rather than leaking into planner-
-manager or feedback-manager.
+**What the funnel measures.** Five cumulative steps: signed-up →
+exam-registered → first-plan → first-attempt → activated (trailing
+stats > 0). Per-cohort (weekly ISO cohorts) and global conversion
+rates between each step. Cohorts under 5 members are merged into a
+`small-cohorts-combined` bucket to avoid fingerprinting.
 
-### 3. `retention-specialist` (under `telemetry-manager`) — **proposed (manifest shipped)**
+**Constitutional constraints** (from the manifest `decision_rules`):
+no per-user nudging, no push-notification triggers, no outbound email
+queues. The funnel is a cohort metric for human review, nothing more.
+
+### 3. `retention-specialist` (under `telemetry-manager`) — **shipped**
 
 **Owns.** Detect disengagement patterns at the COHORT level without
 violating the Calm promise.
 
-**Shipped:** manifest only. `src/retention/cohort-queries.ts` is not
-yet implemented.
+**Shipped code:**
+- `src/retention/cohort-queries.ts` — cohort disengagement queries
+- `GET /api/admin/lifecycle/retention` (admin+ only)
+- Manifest entry in `agents/specialists/specialists.yaml`
+
+**What it reports.** Week-over-week practice-minutes changes per
+cohort, with `minutes-declining` findings emitted when a cohort
+drops ≥50% compared to the prior week (severity `warn` at 50-75%,
+`alert` ≥75%). An `under-threshold` finding is emitted explicitly
+when population falls below the k-anonymity cutoff of 30 — the
+demo environment (3 students) hits this and correctly reports it
+rather than making noise with tiny-n signals.
 
 **What it does NOT do.** Send "we miss you" emails. Build streak
 shaming. Track per-user last-seen and trigger guilt notifications.
-These violate the constitution.
+These violate the constitution. The `decision_rules` in the manifest
+banish these explicitly.
 
 **What it DOES do.** If it sees that **30% of students who register
 BITSAT drop off in week 2**, it aggregates the signal and routes to
@@ -743,17 +763,26 @@ doc is re-examined:
   stage from Expansion)
 - A new MCP tool changes the data-flow between two stages
 
-**The four customer-lifecycle specialists' current status (as of
-commit integrating them):**
+**The four customer-lifecycle specialists' current status:**
 
 | Role | Manifest | Code | API surface |
 |---|---|---|---|
-| `conversion-specialist` | shipped | `src/conversion/` | `POST /api/demo/convert` |
+| `conversion-specialist` | shipped | `src/conversion/` | `POST /api/demo/convert` + frontend CTA |
 | `data-rights-specialist` | shipped | `src/data-rights/` | `/api/me/delete*`, `/api/me/export` |
-| `onboarding-specialist` | shipped | *deferred* | *deferred* (funnel metrics) |
-| `retention-specialist` | shipped | *deferred* | *deferred* (cohort queries) |
+| `onboarding-specialist` | shipped | `src/onboarding/funnel.ts` | `GET /api/admin/lifecycle/funnel` |
+| `retention-specialist` | shipped | `src/retention/cohort-queries.ts` | `GET /api/admin/lifecycle/retention` |
 
-The deferred items are not papered over — the manifests name the
-owned tools explicitly, so the next contributor landing a cohort-
-query module will put it under the retention-specialist's boundary
-rather than leak it into an adjacent manager.
+All four now land a real surface. The funnel and retention reports
+are admin+ gated — student tokens get 403. Both reports are
+constitutionally bound: funnel is cohort-only (small-cohort bucket
+merges <5 members to avoid fingerprinting); retention enforces a
+k-anonymity threshold of 30 (demo environments surface an explicit
+`under-threshold` finding rather than pretending they have signal).
+
+**Frontend conversion CTA.** Demo users see a `DemoBanner` component
+at the top of `/gate/planned` with a "Make this real →" link that
+navigates to `/gate/convert-demo`. That page collects email + name,
+calls `POST /api/demo/convert` with `carry_over: true`, and shows the
+carry-over summary (exam profiles / plans / templates / practice
+sessions / anonymised demo-log entries). Non-demo users hitting the
+route see a friendly "this is for demo conversion only" message.

@@ -26,6 +26,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
+import { DemoBanner } from '@/components/DemoBanner';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
@@ -450,6 +451,7 @@ export default function PlannedSessionPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20">
+      <DemoBanner />
       <div className="max-w-3xl mx-auto px-4 pt-8">
 
         <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">

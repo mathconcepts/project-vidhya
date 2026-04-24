@@ -21,7 +21,7 @@
 import type { ServerResponse } from 'http';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
-import { requireAuth } from '../auth/middleware';
+import { requireAuth, requireRole } from '../auth/middleware';
 import { upsertFromGoogle, getUserById } from '../auth/user-store';
 import { migrateDemoToReal } from '../conversion/migrate-demo-to-real';
 import {
@@ -30,6 +30,8 @@ import {
   confirmDeletion,
   exportUserData,
 } from '../data-rights/delete';
+import { computeActivationFunnel } from '../onboarding/funnel';
+import { computeRetentionReport } from '../retention/cohort-queries';
 
 // ─── POST /api/demo/convert ────────────────────────────────────────────
 
@@ -149,6 +151,36 @@ async function h_export(req: ParsedRequest, res: ServerResponse): Promise<void> 
   sendJSON(res, data);
 }
 
+// ─── GET /api/admin/lifecycle/funnel ──────────────────────────────────
+
+/**
+ * Activation-funnel report. Admin+ only. Cohort-level output;
+ * no per-user data leaves the module.
+ */
+async function h_funnel(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+  const weeks = parseInt(req.query?.get('weeks') ?? '8', 10);
+  const report = computeActivationFunnel({
+    cohort_weeks: Number.isFinite(weeks) && weeks > 0 ? weeks : 8,
+  });
+  sendJSON(res, report);
+}
+
+// ─── GET /api/admin/lifecycle/retention ───────────────────────────────
+
+/**
+ * Cohort retention + disengagement report. Admin+ only.
+ * Constitutionally bound: output goes to human review, never
+ * becomes outbound messaging at individual students.
+ */
+async function h_retention(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+  const report = computeRetentionReport();
+  sendJSON(res, report);
+}
+
 // ─── route table ──────────────────────────────────────────────────────
 
 export const lifecycleRoutes: Array<{
@@ -161,4 +193,6 @@ export const lifecycleRoutes: Array<{
   { method: 'POST', path: '/api/me/delete/cancel',    handler: h_deleteCancel },
   { method: 'POST', path: '/api/me/delete/confirm',   handler: h_deleteConfirm },
   { method: 'GET',  path: '/api/me/export',           handler: h_export },
+  { method: 'GET',  path: '/api/admin/lifecycle/funnel',    handler: h_funnel },
+  { method: 'GET',  path: '/api/admin/lifecycle/retention', handler: h_retention },
 ];

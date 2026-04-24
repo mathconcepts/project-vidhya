@@ -47,6 +47,7 @@ const ExamProfilePage = lazy(() => import('@/pages/gate/ExamProfilePage'));
 const SnapPage = lazy(() => import('@/pages/gate/SnapPage'));
 const LessonPage = lazy(() => import('@/pages/gate/LessonPage'));
 const LLMConfigPage = lazy(() => import('@/pages/gate/LLMConfigPage'));
+const ConvertDemoPage = lazy(() => import('@/pages/gate/ConvertDemoPage'));
 const SignInPage = lazy(() => import('@/pages/gate/SignInPage'));
 const UserAdminPage = lazy(() => import('@/pages/gate/UserAdminPage'));
 const OwnerSettingsPage = lazy(() => import('@/pages/gate/OwnerSettingsPage'));
@@ -103,6 +104,7 @@ export default function App() {
           <Route path="snap" element={<SnapPage />} />
           <Route path="lesson/:concept_id" element={<LessonPage />} />
           <Route path="llm-config" element={<LLMConfigPage />} />
+          <Route path="convert-demo" element={<ConvertDemoPage />} />
           <Route path="sign-in" element={<SignInPage />} />
           <Route path="admin/users" element={<UserAdminPage />} />
           <Route path="owner/settings" element={<OwnerSettingsPage />} />

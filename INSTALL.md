@@ -1,13 +1,30 @@
 # Installation
 
-> **Goal:** running Project Vidhya locally in under 10 minutes.
-> **If you want a live public URL:** see [`DEPLOY.md`](./DEPLOY.md) — one click to Render.
-> **If you want the multi-role demo:** see [`DEMO.md`](./DEMO.md) — one command after installation.
+> **Goal:** running Project Vidhya — locally, on Render, or on a Netlify + Render hybrid.
+> Start in whichever environment you'll actually use; you can switch later without changes.
 
-This guide covers three local installation paths:
+This guide is the single reference for **getting Vidhya running**. There are three deployment paths and three local install profiles.
 
-- **Minimal** — runs the app with shipped content, no keys
-- **Recommended** — plus BYOK LLM for full AI tutor experience
+## Pick a deployment path
+
+| | When to use | Setup time | Walk-through |
+|---|---|---|---|
+| **Local** | development, evaluating, demoing offline | 5 min | This file (below) |
+| **Render** | one-click public URL, single vendor, single bill | 5 min | [`DEPLOY.md`](./DEPLOY.md) |
+| **Netlify + Render** | want Netlify's CDN / branch previews + Render's Node runtime | 10 min | [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md) |
+
+**Short version: try Render first.** Click the Deploy button in the [README](./README.md), wait three minutes, share the URL. The Netlify hybrid is for teams that have a specific reason to want Netlify (CDN, branch previews, one-frontend-many-backends). Local install is what you want for development.
+
+The rest of this file covers **local installation** in detail.
+
+---
+
+## Local install — three profiles
+
+Pick the profile that matches what you want to try:
+
+- **Minimal** — runs the app with shipped content, no keys (planning, templates, trailing stats, admin views, lifecycle reports all work)
+- **Recommended** — plus BYOK LLM for full AI tutor experience (chat, Snap solve, explainer generation)
 - **Full** — plus Wolfram for maths verification, Telegram/WhatsApp for channel delivery
 
 Flat-file storage (`.data/`) is the default. **No database required.**
@@ -259,7 +276,8 @@ Another process is on 8080. Change with `PORT=8081 npx tsx src/gate-server.ts`.
 ## Where to go next
 
 - **Running a demo?** → [`DEMO.md`](./DEMO.md) — the multi-role walkthrough
-- **Deploying live?** → [`DEPLOY.md`](./DEPLOY.md) — one-click Render
+- **Deploying live (Render)?** → [`DEPLOY.md`](./DEPLOY.md) — single-vendor, one click
+- **Deploying live (Netlify + Render)?** → [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md) — hybrid, frontend on Netlify CDN
 - **Adding an exam?** → [`EXAMS.md`](./EXAMS.md) — the two-file adapter pattern
 - **Contributing content?** → [`CONTENT.md`](./CONTENT.md) + [`modules/project-vidhya-content/CONTRIBUTING.md`](./modules/project-vidhya-content/CONTRIBUTING.md)
 - **Architecture / modules?** → [`MODULARISATION.md`](./MODULARISATION.md)

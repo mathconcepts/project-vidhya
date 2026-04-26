@@ -7,10 +7,12 @@
 > **Target:** Render (free tier). Render is what this repo's deployment
 > config targets natively; Fly.io works too via the same Dockerfile.
 >
-> **Cannot-target:** Netlify. Netlify is static + serverless functions;
-> Vidhya's backend is a long-running Node server with flat-file
-> persistence and MCP stdio runners. Porting would require rewriting as
-> Lambda — scope kill. Render is the right tool.
+> **Hybrid Netlify option:** If you want the frontend on Netlify (CDN,
+> branch previews, instant deploys) and the backend on Render, see
+> [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md). Netlify cannot host the
+> backend alone — it's a long-running Node server with flat-file
+> persistence and MCP stdio runners — but the hybrid pattern works
+> well and is fully supported.
 
 This doc is the authoritative path from *"clone the repo"* to *"live
 demo URL you can share"*. Three clicks after signing into Render.

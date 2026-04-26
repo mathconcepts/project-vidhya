@@ -1,0 +1,86 @@
+# netlify.toml — Netlify deploy config for the Vidhya frontend
+#
+# This file deploys ONLY the frontend (frontend/dist) to Netlify.
+# Vidhya's backend is a long-running Node server with flat-file
+# persistence — it does NOT run on Netlify Functions. The backend
+# must be hosted separately (Render is the natively-supported path;
+# any Node host works).
+#
+# The frontend reaches the backend via a same-origin /api/* path.
+# Netlify rewrites those calls to your live backend URL (set below).
+#
+# ─── To deploy ───────────────────────────────────────────────────────
+#
+#   1. Deploy the backend to Render first (see DEPLOY.md). You'll
+#      get a URL like https://vidhya-demo.onrender.com.
+#
+#   2. In Netlify dashboard: New site > Import from GitHub >
+#      pick mathconcepts/project-vidhya. Netlify auto-detects this file.
+#
+#   3. Set the env var BACKEND_URL in Netlify dashboard (Site settings
+#      > Environment variables) to your Render URL. Example:
+#         BACKEND_URL = https://vidhya-demo.onrender.com
+#
+#   4. Trigger a deploy. Netlify builds the frontend and serves it
+#      at https://<your-site>.netlify.app — every /api/* request
+#      proxies to BACKEND_URL.
+#
+# ─── To switch to a different backend later ──────────────────────────
+#
+#   Update BACKEND_URL env var in Netlify dashboard and redeploy.
+#   No code changes needed.
+#
+# See DEPLOY-NETLIFY.md for the full walkthrough including how to
+# avoid CORS issues, set up auth.netlify-side, and run a custom
+# domain.
+
+[build]
+  base = "frontend"
+  publish = "frontend/dist"
+  command = "npm ci && npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Single-page-app fallback — every non-asset request returns index.html
+# so React Router handles client-side routing. Specific paths above
+# (/api/*) are proxied; everything else falls through to the SPA.
+[[redirects]]
+  from = "/api/*"
+  to = "https://vidhya-demo.onrender.com/api/:splat"
+  status = 200
+  force = true
+  # Override this `to` URL by setting BACKEND_URL in the Netlify
+  # dashboard. The build process substitutes ${BACKEND_URL} at deploy
+  # time; the literal default here points at the example Render URL.
+
+# (Optional) proxy the bot webhook paths too if you're testing
+# Telegram / WhatsApp delivery against your Netlify-hosted UI.
+# Not strictly required — channel webhooks are usually pointed
+# directly at the Render URL.
+[[redirects]]
+  from = "/telegram/*"
+  to = "https://vidhya-demo.onrender.com/telegram/:splat"
+  status = 200
+  force = true
+
+# SPA fallback — must come LAST so the /api/* and /telegram/*
+# rules match first.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers — applied to every response Netlify serves
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets aggressively
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

@@ -177,6 +177,64 @@ The content layer is a **four-tier cascade** assembled overnight by GitHub Actio
 
 ---
 
+## Quick start
+
+Three deployment paths. Pick one. Each takes ~5 minutes from a fresh clone.
+
+### 🖥️ Local — runs on your laptop
+
+```bash
+git clone https://github.com/mathconcepts/project-vidhya
+cd project-vidhya
+npm run demo:setup     # installs both backend + frontend, seeds 6 demo users
+npm run demo:start     # boots backend + frontend
+# open http://localhost:3000/demo.html — pick any role, you're in
+```
+
+No keys required. Works offline once installed. Full walkthrough: [`DEMO.md`](./DEMO.md).
+
+### ☁️ Render — one-click public URL
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya)
+
+Click the button → sign into Render (free) → Apply Blueprint → wait ~3 minutes → live URL.
+
+Render reads [`render.yaml`](./render.yaml) and provisions a web service with a 1 GB persistent disk. JWT secret auto-generated. All optional keys (LLM, Wolfram, channel webhooks) marked sync:false so the dashboard prompts you to paste them — or skip them; the demo works without any of them at baseline.
+
+Full walkthrough: [`DEPLOY.md`](./DEPLOY.md).
+
+### 🌐 Netlify (frontend) + Render (backend) — hybrid
+
+Best when you want Netlify's CDN, branch deploy previews, and instant rollbacks for the frontend, while the backend keeps a real Node runtime + persistent disk on Render.
+
+```
+  Netlify (CDN, SPA)  ─/api/*─►  Render (Node + flat-file .data)
+```
+
+1. Deploy the backend to Render first ([`DEPLOY.md`](./DEPLOY.md))
+2. Connect this repo to Netlify; it auto-detects [`netlify.toml`](./netlify.toml)
+3. Set `BACKEND_URL` env var in Netlify dashboard to your Render URL
+4. Trigger a deploy — done
+
+Full walkthrough: [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md).
+
+> **Why not Netlify alone?** The backend is a long-running Node server with flat-file persistence and MCP stdio runners. Netlify Functions are short-lived Lambdas. Porting would mean rewriting persistence to a database and rewriting every long-poll surface — a multi-week refactor for no functional gain. Render hosts the backend natively; Netlify hosts the frontend natively; the hybrid combines them cleanly.
+
+### Comparison
+
+| | Local | Render | Netlify + Render |
+|---|---|---|---|
+| Public URL | no | ✓ | ✓ |
+| Persistent data | local `.data/` | 1 GB disk | 1 GB disk on Render |
+| Frontend CDN | no | basic | Netlify edge |
+| Branch previews | no | no | ✓ |
+| Cost | $0 | $0 (free tier) | $0 (both free tiers) |
+| Cold start | none | ~30s after 15min idle (free tier) | same (backend cold) |
+| Setup time | 5 min | 5 min | 10 min |
+| Vendors | 0 | 1 | 2 |
+
+---
+
 ## Getting started
 
 > [!NOTE]

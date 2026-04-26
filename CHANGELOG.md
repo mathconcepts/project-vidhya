@@ -2,6 +2,22 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-24 (deployment docs + Netlify path)
+
+### 📚 Three deployment paths surfaced clearly
+
+Closes the documentation ask: a reader landing on the repo can now see, in three seconds, the three ways to run Vidhya — local, Render, or Netlify+Render hybrid — with side-by-side trade-offs.
+
+- **README.md** — new `## Quick start` section above `## Getting started`. Three deployment paths in three code blocks: local (`npm run demo:setup`), Render (Deploy button), Netlify+Render hybrid. Comparison table with cost, cold-start latency, vendor count, setup time. The existing persona-based "Getting started" navigation kept intact for readers who want context.
+
+- **NEW: `DEPLOY-NETLIFY.md`** — focused walkthrough for the hybrid path. Step-by-step from "deploy backend on Render first" through to "set BACKEND_URL in Netlify dashboard". Honest about trade-offs (Netlify CDN + branch previews vs. two services to monitor) and one critical gotcha: channel webhooks (Telegram / WhatsApp) must point directly at the Render URL, not the Netlify proxy, because synchronous bot timeouts.
+
+- **NEW: `netlify.toml`** — production config so a `git push` to a Netlify-connected repo just works. SPA fallback + `/api/*` proxy to `BACKEND_URL` (env var, not hardcoded — same config works for staging and production). Includes security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy) and aggressive `/assets/*` cache control.
+
+- **DEPLOY.md** — replaced the "cannot-target Netlify" claim with a pointer to the hybrid doc. The original framing was technically true (Netlify alone can't host the backend) but rejected too much: the Netlify+Render combination is fully supported and now clearly documented.
+
+- **INSTALL.md** — preamble rewritten with a deployment-path comparison table at the top. Reader picks Local / Render / Netlify+Render before reading the rest. The detailed Minimal/Recommended/Full local install profiles continue below — readers who want the demo URL don't need to read them.
+
 ## [Unreleased] — 2026-04-24 (uploads UI)
 
 ### 📤 Upload drag-and-drop page

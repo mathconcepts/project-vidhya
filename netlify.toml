@@ -7,7 +7,27 @@
 # any Node host works).
 #
 # The frontend reaches the backend via a same-origin /api/* path.
-# Netlify rewrites those calls to your live backend URL (set below).
+# Netlify rewrites those calls to your backend URL — set via the
+# BACKEND_URL environment variable, NOT hardcoded.
+#
+# ─── How the BACKEND_URL substitution works ──────────────────────────
+#
+# Netlify does NOT natively substitute env-vars inside [[redirects]]
+# 'to' fields. (Quoting Netlify's docs: "Using environment variables
+# directly as values in your netlify.toml isn't supported. For example,
+# key = '$VARIABLENAME' will not inject $VARIABLENAME's value into
+# netlify.toml.")
+#
+# The redirects below use a placeholder string (see the `to = ` lines
+# in the [[redirects]] sections). At build time, the [build] command
+# runs scripts/netlify-prebuild.sh which performs a `sed` substitution
+# on this file BEFORE running the frontend build — replacing every
+# placeholder occurrence with the value of $BACKEND_URL.
+#
+# The script also verifies BACKEND_URL is set and looks like a URL,
+# and FAILS THE BUILD if it isn't. This is intentional: a deploy
+# without BACKEND_URL would silently 404 every API call, which is
+# worse than failing fast.
 #
 # ─── To deploy ───────────────────────────────────────────────────────
 #
@@ -17,50 +37,60 @@
 #   2. In Netlify dashboard: New site > Import from GitHub >
 #      pick mathconcepts/project-vidhya. Netlify auto-detects this file.
 #
-#   3. Set the env var BACKEND_URL in Netlify dashboard (Site settings
-#      > Environment variables) to your Render URL. Example:
-#         BACKEND_URL = https://vidhya-demo.onrender.com
+#   3. Set the env var BACKEND_URL in Netlify dashboard
+#      (Site settings > Environment variables) to your backend URL.
+#      Example:  BACKEND_URL = https://vidhya-demo.onrender.com
+#      (no trailing slash).
 #
-#   4. Trigger a deploy. Netlify builds the frontend and serves it
-#      at https://<your-site>.netlify.app — every /api/* request
-#      proxies to BACKEND_URL.
+#   4. Trigger a deploy. The build script substitutes BACKEND_URL into
+#      the redirects, then runs `npm ci && npm run build`. Netlify
+#      serves the frontend at https://<your-site>.netlify.app — every
+#      /api/* request proxies to BACKEND_URL.
 #
-# ─── To switch to a different backend later ──────────────────────────
+# ─── To switch backends ──────────────────────────────────────────────
 #
-#   Update BACKEND_URL env var in Netlify dashboard and redeploy.
-#   No code changes needed.
+#   Update BACKEND_URL in Netlify dashboard. Trigger a deploy. The
+#   sed substitution rewrites netlify.toml on every build; no code
+#   change needed.
 #
-# See DEPLOY-NETLIFY.md for the full walkthrough including how to
-# avoid CORS issues, set up auth.netlify-side, and run a custom
-# domain.
+# ─── For local testing of the substitution ───────────────────────────
+#
+#   BACKEND_URL=https://my-backend.example.com bash scripts/netlify-prebuild.sh
+#   grep "to = " netlify.toml
+#
+# See DEPLOY-NETLIFY.md for the full walkthrough.
 
 [build]
   base = "frontend"
   publish = "frontend/dist"
-  command = "npm ci && npm run build"
+  # The prebuild script lives at the repo root (../scripts/...) because
+  # the build base is `frontend/`. The script runs sed against ../netlify.toml
+  # (the repo-root file Netlify reads), then chains into the actual build.
+  command = "bash ../scripts/netlify-prebuild.sh && npm ci && npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
 
 # Single-page-app fallback — every non-asset request returns index.html
 # so React Router handles client-side routing. Specific paths above
-# (/api/*) are proxied; everything else falls through to the SPA.
+# (/api/*, /telegram/*) are proxied; everything else falls through to
+# the SPA.
 [[redirects]]
   from = "/api/*"
-  to = "https://vidhya-demo.onrender.com/api/:splat"
+  to = "__BACKEND_URL__/api/:splat"
   status = 200
   force = true
-  # Override this `to` URL by setting BACKEND_URL in the Netlify
-  # dashboard. The build process substitutes ${BACKEND_URL} at deploy
-  # time; the literal default here points at the example Render URL.
+  # The placeholder above is replaced by scripts/netlify-prebuild.sh
+  # at build time using the BACKEND_URL env var. If BACKEND_URL is
+  # not set, the prebuild script fails the build loudly.
 
 # (Optional) proxy the bot webhook paths too if you're testing
-# Telegram / WhatsApp delivery against your Netlify-hosted UI.
+# Telegram delivery against your Netlify-hosted UI.
 # Not strictly required — channel webhooks are usually pointed
-# directly at the Render URL.
+# directly at the backend URL.
 [[redirects]]
   from = "/telegram/*"
-  to = "https://vidhya-demo.onrender.com/telegram/:splat"
+  to = "__BACKEND_URL__/telegram/:splat"
   status = 200
   force = true
 

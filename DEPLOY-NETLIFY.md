@@ -93,10 +93,16 @@ In Netlify: **Domain settings** → **Add custom domain**. Netlify provisions Le
 
 ## Updating the proxy without touching code
 
-The redirect rule in `netlify.toml` points at a literal URL by default (`https://vidhya-demo.onrender.com`). When you set `BACKEND_URL` as an env var, **Netlify substitutes it at build time** — no code changes needed. To switch backends:
+The redirect rules in `netlify.toml` use a `__BACKEND_URL__` placeholder. The repo's [`scripts/netlify-prebuild.sh`](./scripts/netlify-prebuild.sh) substitutes that placeholder with the value of `BACKEND_URL` before each build.
+
+**This is necessary because** Netlify does NOT natively substitute env-var values inside `[[redirects]]` `to` fields. (Quoting Netlify's docs: *"Using environment variables directly as values in your netlify.toml isn't supported."*) The recommended pattern is exactly what this repo does — sed-replace a placeholder string from the build command. Confusingly, this repo had documentation prior to this commit that suggested Netlify did substitute env vars natively. That was wrong; this section corrects it.
+
+To switch backends:
 
 1. Update `BACKEND_URL` in Netlify dashboard
-2. Redeploy
+2. Trigger a redeploy (the prebuild script reruns automatically)
+
+The script also fails the build loudly if `BACKEND_URL` is missing or non-HTTPS. This is intentional: a deploy without `BACKEND_URL` would silently 404 every API call from the frontend — failing fast at build time is much easier to debug than a deployed site where login mysteriously doesn't work.
 
 The same `netlify.toml` works for staging, production, or any operator's fork — only the env var differs per deployment.
 
@@ -111,6 +117,16 @@ When you visit `https://your-site.netlify.app/demo.html`, the frontend fetches t
 ---
 
 ## Troubleshooting
+
+### Build fails with "BACKEND_URL environment variable is not set"
+
+The prebuild script (`scripts/netlify-prebuild.sh`) refuses to build without `BACKEND_URL`. Set it in **Site settings → Environment variables** in the Netlify dashboard, then trigger a redeploy. Use the HTTPS URL of your backend, no trailing slash.
+
+### Build fails with "BACKEND_URL must start with https://"
+
+Browsers block mixed-content requests from an HTTPS Netlify frontend to an HTTP backend. Use the HTTPS URL your backend host provides (Render, Fly.io, etc. provide one by default).
+
+If you really need HTTP for testing, set `ALLOW_HTTP_BACKEND=1` as a second env var. This is a deliberate footgun — production deploys should never use it.
 
 ### `502 Bad Gateway` from Netlify
 

@@ -17,6 +17,26 @@
 This doc is the authoritative path from *"clone the repo"* to *"live
 demo URL you can share"*. Three clicks after signing into Render.
 
+> **Live demo URL:** _none yet — operator action required._
+>
+> Once someone clicks the Deploy button below, run `bash scripts/update-readme-url.sh https://your-service.onrender.com` to fill this line in across the README and DEPLOY docs in one command.
+>
+> Once someone clicks the Deploy button below, run `bash scripts/update-readme-url.sh https://your-service.onrender.com` to fill this line in across the README and DEPLOY docs in one command.
+
+---
+
+## Three-click checklist (operator-facing)
+
+For the maintainer or any operator who wants to produce the live URL right now:
+
+1. **Sign into Render** (free account at https://render.com — Google sign-in works)
+2. **Click the Deploy button** in [README.md](./README.md#-render--one-click-public-url) — this opens `https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya`
+3. **Apply the Blueprint** — Render reads `render.yaml`, provisions everything, ~3 minutes later you have a URL
+4. **Verify** with `curl https://your-service.onrender.com/health`
+5. **Update the docs** — `bash scripts/update-readme-url.sh https://your-service.onrender.com` and commit
+
+That's the entire happy path. The remaining sections below explain what each step does in detail.
+
 ---
 
 ## The three-click deploy

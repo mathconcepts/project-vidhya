@@ -201,6 +201,10 @@ Click the button → sign into Render (free) → Apply Blueprint → wait ~3 min
 
 Render reads [`render.yaml`](./render.yaml) and provisions a web service with a 1 GB persistent disk. JWT secret auto-generated. All optional keys (LLM, Wolfram, channel webhooks) marked sync:false so the dashboard prompts you to paste them — or skip them; the demo works without any of them at baseline.
 
+> **Live demo URL:** _none yet — operator action required._
+>
+> Once the maintainer (or you, on your fork) clicks the Deploy button and gets a Render URL, replace this line by running `bash scripts/update-readme-url.sh https://your-service.onrender.com`. The script substitutes the URL across this README and DEPLOY.md in one command. Until then this README is honest about not having a live URL to point at.
+
 Full walkthrough: [`DEPLOY.md`](./DEPLOY.md).
 
 ### 🌐 Netlify (frontend) + Render (backend) — hybrid

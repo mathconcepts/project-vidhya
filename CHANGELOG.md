@@ -2,6 +2,34 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-26 (deploy infra correction + URL helper)
+
+### 🛠️ BACKEND_URL substitution: corrected mechanism
+
+Fixes a real bug in the previous Netlify deploy story.
+
+The previous commit (`a9c8f7f`) claimed *"Netlify substitutes BACKEND_URL at build time in [[redirects]] to fields"*. **That was wrong.** Netlify's docs are explicit: *"Using environment variables directly as values in your netlify.toml isn't supported."* An operator following the previous documentation would have set `BACKEND_URL` in the dashboard, redeployed, and watched the proxy continue pointing at the literal default URL with no obvious explanation.
+
+This commit corrects the mechanism to match Netlify's actual recommended pattern:
+
+- **`netlify.toml`** — the redirect targets now use a `__BACKEND_URL__` placeholder string. The `[build]` command runs `bash ../scripts/netlify-prebuild.sh` before `npm ci && npm run build`.
+
+- **NEW: `scripts/netlify-prebuild.sh`** — substitutes the placeholder using sed, exactly as Netlify documents. Validates that `BACKEND_URL` is set and HTTPS (with `ALLOW_HTTP_BACKEND=1` escape hatch for local testing). **Fails the build loudly** if `BACKEND_URL` is missing — better to fail at build than silently deploy a broken proxy. Strips trailing slashes. Idempotent: if the placeholder is already gone, logs a warning and exits 0 instead of erroring. Tested across 5 paths (missing var, http rejection, http override, valid https, idempotent re-run).
+
+- **`DEPLOY-NETLIFY.md`** — corrected the wrong claim with explicit attribution to Netlify's docs and a "this section corrects it" note. Added two troubleshooting entries for the new build-failure modes.
+
+### 🔗 Live demo URL — placeholder + helper script
+
+Honest framing: this commit cannot produce a live URL — that requires Render credentials and a browser, neither of which exist in the build sandbox. The README and DEPLOY.md now have **clearly-labelled placeholder slots** that admit they're placeholders and explain what an operator needs to do.
+
+- **NEW: `scripts/update-readme-url.sh`** — one-command tool that fills in the live URL across both README.md and DEPLOY.md once an operator has clicked the Deploy button and gotten a real URL. Validates HTTPS, idempotent (safely re-run with a different URL).
+
+- **README.md** — Render section gets a `> **Live demo URL:** _none yet — operator action required._` blockquote with instructions on how to fill it in.
+
+- **DEPLOY.md** — same placeholder near the top, plus a new `## Three-click checklist (operator-facing)` section that walks an operator from "sign in to Render" to "URL filled in across docs" in 5 steps. The detailed three-click deploy section that already existed continues below.
+
+The Render Deploy button itself is unchanged — a maintainer (or any forker) clicks it, gets a real URL, runs the helper script, commits. The repo now makes that path frictionless.
+
 ## [Unreleased] — 2026-04-24 (deployment docs + Netlify path)
 
 ### 📚 Three deployment paths surfaced clearly

@@ -4,8 +4,16 @@
 > are immediately usable, and the full AI tutor / chat / Snap / explainer
 > pipeline lights up as soon as any BYOK LLM key is provided.
 >
-> **Target:** Render (free tier). Render is what this repo's deployment
-> config targets natively; Fly.io works too via the same Dockerfile.
+> **Primary target:** Render (free tier). Render is what this repo's
+> deployment config targets natively, with the free tier giving you a
+> public URL in ~3 minutes. If your Render free-tier quota is
+> exhausted, see [If Render's free tier doesn't work for you](#if-renders-free-tier-doesnt-work-for-you)
+> below for current always-free alternatives (Oracle Cloud Always
+> Free, Google Cloud Run) and paid options under $10/month.
+>
+> **Fly.io** still works via the same Dockerfile but is no longer
+> free for new accounts (Fly.io ended its free tier on
+> October 7, 2024). Existing legacy accounts retain their allowances.
 >
 > **Hybrid Netlify option:** If you want the frontend on Netlify (CDN,
 > branch previews, instant deploys) and the backend on Render, see
@@ -187,11 +195,25 @@ idle on free, never on starter+). Important behaviour:
 
 ## Deploying elsewhere
 
-### Fly.io
+### Fly.io (paid, no longer free)
 
-Same Dockerfile works. `fly launch` → it autodetects the Dockerfile,
-asks about volumes (say yes, mount at `/app/.data`). Set `JWT_SECRET`
-via `fly secrets set JWT_SECRET=$(openssl rand -hex 16)`. Done.
+Fly.io ended its free tier for new accounts on **October 7, 2024**.
+Existing legacy Hobby-plan customers retained their 3 shared-cpu-1x
+256MB VMs + 3 GB volume allowances; new accounts get a free trial of
+2 VM-hours OR 7 days, whichever expires first, then pay-as-you-go.
+
+The same `demo/Dockerfile` still works fine on Fly. Expect roughly
+$2–5/month for a small always-on machine + 1 GB volume:
+
+```bash
+fly launch                            # autodetects the Dockerfile
+                                      # → say yes when it asks about volumes,
+                                      # mount at /app/.data
+fly secrets set JWT_SECRET=$(openssl rand -hex 16)
+```
+
+If you want strictly $0/month, see
+[Always-free alternatives](#always-free-alternatives) below.
 
 ### Docker Hub + any container host
 
@@ -212,13 +234,126 @@ docker run -d \
   your-registry/vidhya-demo
 ```
 
-### Netlify — NOT supported
+### Netlify alone — backend cannot run there
 
 Netlify hosts static sites + serverless functions. Vidhya's backend
 is a long-running Node server with MCP stdio runners and flat-file
-persistence. A Netlify port would mean rewriting the server as
-individual Lambda-style functions, losing the MCP runner and the
-stdio-based agent execution. **Use Render or Fly instead.**
+persistence — the Netlify Functions model can't host it without
+rewriting the server as Lambdas (and losing the MCP runner with the
+stdio-based agent execution).
+
+**However, the Netlify+Render hybrid is fully supported** — frontend
+on Netlify's CDN, backend on Render. See
+[`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md) for the walkthrough.
+
+---
+
+## If Render's free tier doesn't work for you
+
+Hosting platforms have shifted in 2024–2026. Several alternatives
+that used to be the standard "free Heroku replacement" answers have
+changed terms quietly. Here's the current state, verified against
+official docs in April 2026.
+
+### First, check whether your Render quota actually reset
+
+Render's free tier is **750 instance-hours per workspace per month**,
+resetting at 00:00 UTC on the 1st of each calendar month. "Free tier
+seems over" usually means one of three things:
+
+- **Combined hours across active services hit 750.** Open the Render
+  dashboard → Account Settings → Usage. If active services have eaten
+  the cap, deleting unused services that were *running* frees those
+  hours immediately. Services that already spun down for inactivity
+  don't accumulate hours — deleting those won't help your cap, only
+  your project list.
+- **It's late in the month and you're waiting for the rollover.**
+  Hours reset at the start of the next calendar month, not on a
+  rolling 30-day window.
+- **You've hit a different limit** — e.g., a free Postgres database
+  paused for inactivity, or the workspace requires a card on file
+  for new free services (since 2024 Render asks for verification —
+  no charge, just a card).
+
+If after cleanup or the next rollover Render still won't host the
+service, look at the alternatives below.
+
+### Always-free alternatives
+
+| Option | Compute | Persistent disk | Cold start | Setup time | Fits Vidhya? |
+|---|---|---|---|---|---|
+| **Render free tier** | 0.1 vCPU + 512 MB RAM | 1 GB (config'd in `render.yaml`) | 30–60s after 15min idle | 5 min | ✓ already wired |
+| **Oracle Cloud Always Free** | up to 4 ARM vCPU + 24 GB RAM | 200 GB block storage | None — always-on VM | ~30 min | ✓ best fit if you can do the setup |
+| **Google Cloud Run** | 180,000 vCPU-seconds/mo | None — stateless only | ~5s scale-from-zero | 15 min + adaptation | ⚠ needs persistence workaround |
+
+Sources verified April 2026:
+[Render pricing](https://render.com/pricing),
+[Oracle Always Free docs](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm),
+[Cloud Run pricing](https://cloud.google.com/run/pricing).
+
+**Honest recommendation for "demo URL up at all times, $0/month":**
+
+1. **Oracle Cloud Always Free** — best fit. Real always-on VM (no
+   cold starts), 4 ARM cores + 24 GB RAM is overkill for Vidhya. The
+   `demo/Dockerfile` runs as-is. Trade-off: ~30 min initial setup
+   (VM provisioning, NGINX + Let's Encrypt for HTTPS, systemd or PM2
+   to keep the container up). One known gotcha: ARM A1 capacity is
+   tight in popular regions; try off-peak or pick less-popular
+   regions (Phoenix, Tokyo). Convert the account to "Pay As You Go"
+   (still no charge if you stay within free limits) to prevent
+   Oracle from reclaiming idle instances — a documented community
+   pattern.
+2. **Render free tier** (existing path) — 5 min setup, 30–60s cold
+   starts after 15 min idle. Acceptable for a demo where the first
+   visitor each cycle waits a bit.
+3. **Google Cloud Run with stateless mode** — 5 min deploy, 5s
+   cold starts (much faster than Render). Catch: Cloud Run is
+   stateless, and Vidhya's `.data/` flat-file store needs
+   persistence. Simplest workaround: let every cold start re-run
+   `npm run demo:seed` — fine for a *demo* (you're showing the
+   product, not collecting real user sessions) but not for anything
+   that needs to remember user state. Mounting Cloud Storage with
+   FUSE preserves data across cold starts but slows down the many
+   small writes Vidhya's flat-file store does.
+
+If you want to pursue Oracle Cloud or Cloud Run, the focused
+walkthroughs (`DEPLOY-OCI.md`, `DEPLOY-CLOUDRUN.md`) aren't yet
+written — open a request and they're a doc-PR's worth of work each.
+
+### Hosts that are no longer free for new accounts
+
+The repo's earlier docs treated some of these as free options. As of
+April 2026 they're not:
+
+- **Fly.io** — free tier ended October 7, 2024 for new accounts.
+  Legacy customers retained allowances. Still works as a paid host
+  via the same Dockerfile (~$2–5/month). See the Fly.io section
+  above.
+- **Railway** — dropped its 500-hour free plan in 2023. Now offers a
+  one-time $5 trial credit (30 days), then $5/month Hobby plan
+  minimum.
+- **Koyeb** — removed its free *compute* tier in 2024. Free Postgres
+  database is still available, but a free web service for Vidhya
+  isn't.
+- **Heroku** — discontinued its free tier in November 2022. Paid
+  Eco/Basic dynos start at $5/month.
+
+### Paid options under $10/month
+
+If "always-on, no cold starts, but tiny budget" is the right shape
+for you:
+
+| Host | Plan | Notes |
+|---|---|---|
+| Render | Starter | $7/month, always-on, 1 GB persistent disk, runs `render.yaml` unchanged |
+| Fly.io | Pay-as-you-go | ~$2–5/month for shared-cpu-1x 256MB + 1 GB volume |
+| Railway | Hobby | $5/month + usage; usually stays at $5–10/month for Vidhya's footprint |
+| DigitalOcean App Platform | Basic | $5/month for a 512 MB container; Vidhya needs adapting since DO App Platform doesn't expose a true persistent disk on basic — use DO Droplet ($4/month) + Docker if you want flat-file persistence |
+
+Render Starter is the path of least change — same `render.yaml`,
+same `demo/Dockerfile`, just toggle the plan in the dashboard from
+Free to Starter. Cold starts disappear, the 750-hour cap goes away,
+and persistence behaves the same.
 
 ---
 
@@ -249,19 +384,39 @@ Your `VIDHYA_LLM_PRIMARY_PROVIDER` points at a provider whose key
 isn't set, OR the key is invalid. Check Environment tab; redeploy
 after fixing.
 
+### Render says you've exceeded the free tier
+
+Free tier is 750 instance-hours per workspace per month, resetting
+on the 1st (UTC). To free hours immediately:
+
+1. Render dashboard → Account Settings → Usage. See which services
+   consumed the cap.
+2. Delete services you don't actively need. Note: only services
+   that were *running* contribute to the cap. Already-spun-down
+   services don't count, so deleting those tidies your project list
+   but doesn't free hours.
+3. Wait ~5 minutes for usage to refresh in the dashboard, then
+   redeploy.
+
+If the cap is still saturated after cleanup and the rollover is far
+away, see [If Render's free tier doesn't work for you](#if-renders-free-tier-doesnt-work-for-you).
+
 ---
 
-## Why Render, not Netlify, one more time
+## Why Render, not Netlify alone
 
-| Property | Vidhya needs | Render | Netlify |
+| Property | Vidhya needs | Render | Netlify alone |
 |---|---|---|---|
 | Long-running Node server | ✓ | ✓ | ✗ (serverless only) |
 | MCP stdio runners | ✓ | ✓ | ✗ |
 | Flat-file persistent disk | ✓ | ✓ (disks) | ✗ (stateless functions) |
 | Dockerfile support | ✓ | ✓ | ✗ (only "build hooks") |
-| Free tier | nice-to-have | ✓ | ✓ |
+| Free tier | nice-to-have | ✓ (with cold starts) | ✓ |
 
-Netlify for a static front-end of Vidhya's SEO pages is possible but
-pointless — the backend has to live somewhere else, and once the
-backend is somewhere that serves Node, that somewhere can serve the
-frontend too. One-service wins.
+The backend must live on a Node-runtime host. Render is the
+simplest single-vendor path; the alternatives section above covers
+when other hosts make sense. The Netlify+Render hybrid documented
+in [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md) gets you Netlify's
+CDN for the frontend without trying to wedge the backend into
+Lambda — that's the right way to use Netlify with Vidhya, and it's
+fully supported.

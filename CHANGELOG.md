@@ -2,6 +2,33 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-26 (DEPLOY.md hosting landscape correction)
+
+### 📝 DEPLOY.md updated to reflect the actual 2026 hosting landscape
+
+The repo's earlier docs presented Fly.io as "works too via the same Dockerfile" without context. As of October 7, 2024 Fly.io ended its free tier for new accounts, so a new Vidhya operator following the previous wording would have been surprised by the trial-credit experience and the requirement to upgrade. Several other "free Heroku replacements" the docs had implicitly recommended over the years also changed terms in 2024–2025 (Railway dropped the 500-hour free plan, Koyeb removed free compute, Heroku already gone). DEPLOY.md was due for a correction pass.
+
+What landed:
+
+- **Header blockquote rewritten** — Fly.io's free-tier sunset called out explicitly with date, and a pointer to the new "If Render's free tier doesn't work for you" section.
+- **NEW section: "If Render's free tier doesn't work for you"** — three subsections:
+  - "First, check whether your Render quota actually reset" — explains the 750 instance-hours/month cap, when rollovers happen, what cleanup actually frees hours vs. just tidies the project list.
+  - "Always-free alternatives" — comparison table covering Render free tier, Oracle Cloud Always Free, and Google Cloud Run with sources verified April 2026 (Render pricing, Oracle Always Free docs, Cloud Run pricing). Honest recommendation: Oracle Cloud is the best fit for "always-on, $0/month" Vidhya hosting if you can do the ~30min initial setup.
+  - "Hosts that are no longer free for new accounts" — Fly.io (Oct 2024), Railway (2023), Koyeb (2024), Heroku (Nov 2022). Each with the date the change happened.
+  - "Paid options under $10/month" — Render Starter, Fly.io PAYG, Railway Hobby, DigitalOcean App Platform — with notes on what fits Vidhya without modification.
+- **Fly.io section corrected** — heading now reads "Fly.io (paid, no longer free)", body explains the trial mechanics and approximate monthly cost, and links to the always-free alternatives section.
+- **Netlify rejection rephrased** — "Netlify — NOT supported" was misleading given the hybrid path is now first-class. Rewritten as "Netlify alone — backend cannot run there" with an explicit pointer to `DEPLOY-NETLIFY.md` for the supported hybrid.
+- **NEW troubleshooting entry: "Render says you've exceeded the free tier"** — concrete steps to check usage, what cleanup actually helps, when to look at alternatives.
+- **Closing comparison table updated** — "Why Render, not Netlify, one more time" → "Why Render, not Netlify alone" with the table compared against Netlify-alone (not Netlify-as-frontend-of-hybrid which is fine).
+
+Sources verified for every dated claim:
+- [Render pricing](https://render.com/pricing) — April 2026
+- [Oracle Cloud Always Free docs](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm) — April 2026
+- [Google Cloud Run pricing](https://cloud.google.com/run/pricing) — April 2026
+- Fly.io, Railway, Koyeb sunset dates from each platform's pricing/docs/blog posts
+
+Zero behavioural changes to the running app. Pure documentation correctness pass.
+
 ## [Unreleased] — 2026-04-26 (deploy infra correction + URL helper)
 
 ### 🛠️ BACKEND_URL substitution: corrected mechanism

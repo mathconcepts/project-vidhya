@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   Crown, Shield, Activity, Users, MessageCircle, Smartphone, Key,
   CheckCircle2, Circle, AlertTriangle, TrendingDown, Brain,
-  ArrowRight, Loader2, RefreshCw, Sparkles,
+  ArrowRight, Loader2, RefreshCw, Sparkles, Settings,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
@@ -269,6 +269,7 @@ export default function AdminDashboardPage() {
             <p className="text-[10px] text-surface-500 uppercase tracking-wide">Admin pages</p>
             <div className="grid grid-cols-2 gap-2">
               <QuickLink href="/admin/users" label="User management" icon={Users} />
+              <QuickLink href="/admin/features" label="Feature flags" icon={Settings} />
               <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
               <QuickLink href="/llm-config" label="AI config" icon={Key} />
               {isOwner && <QuickLink href="/owner/settings" label="Owner settings" icon={Crown} />}

@@ -50,6 +50,7 @@ const LLMConfigPage = lazy(() => import('@/pages/gate/LLMConfigPage'));
 const ConvertDemoPage = lazy(() => import('@/pages/gate/ConvertDemoPage'));
 const SignInPage = lazy(() => import('@/pages/gate/SignInPage'));
 const UserAdminPage = lazy(() => import('@/pages/gate/UserAdminPage'));
+const FeaturesPage = lazy(() => import('@/pages/gate/FeaturesPage'));
 const OwnerSettingsPage = lazy(() => import('@/pages/gate/OwnerSettingsPage'));
 const TeacherRosterPage = lazy(() => import('@/pages/gate/TeacherRosterPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/gate/AdminDashboardPage'));
@@ -111,6 +112,7 @@ export default function App() {
           <Route path="convert-demo" element={<ConvertDemoPage />} />
           <Route path="sign-in" element={<SignInPage />} />
           <Route path="admin/users" element={<UserAdminPage />} />
+          <Route path="admin/features" element={<FeaturesPage />} />
           <Route path="owner/settings" element={<OwnerSettingsPage />} />
           <Route path="teacher/roster" element={<TeacherRosterPage />} />
           <Route path="owner/dashboard" element={<AdminDashboardPage />} />

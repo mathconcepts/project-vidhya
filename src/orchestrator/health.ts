@@ -76,6 +76,27 @@ const PROBES: Record<string, () => Promise<Omit<ModuleHealth, 'name' | 'latency_
     }
   },
 
+  teaching: async () => {
+    if (!existsSync('src/teaching/turn-store.ts')) {
+      return { status: 'unavailable', detail: 'teaching turn-store missing' };
+    }
+    if (!existsSync('src/modules/teaching/index.ts')) {
+      return { status: 'degraded', detail: 'teaching barrel missing' };
+    }
+    try {
+      const { listAllTurns } = await import('../modules/teaching');
+      const recent = listAllTurns(5);
+      return {
+        status: 'healthy',
+        detail: recent.length > 0
+          ? `${recent.length} recent turn(s) tracked`
+          : 'no turns recorded yet (expected for fresh deployment)',
+      };
+    } catch (e: any) {
+      return { status: 'degraded', detail: `turn-store read failed: ${e?.message}` };
+    }
+  },
+
   content: async () => {
     if (!existsSync('src/content/router.ts')) {
       return { status: 'unavailable', detail: 'content-router missing' };

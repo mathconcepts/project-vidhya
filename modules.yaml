@@ -173,6 +173,27 @@ modules:
       - data-rights-specialist
       - feedback-manager
 
+  - name: teaching
+    description: |
+      The teaching loop's legibility layer. Records every content-
+      generation-and-delivery interaction as a TeachingTurn so the
+      loop is observable: pre-state, what got served, what happened,
+      mastery delta. Does not generate content or update models —
+      it observes and reports. Public surface at
+      src/modules/teaching/index.ts.
+    source: src/teaching,src/modules/teaching
+    depends_on: [core, content, learning]
+    health_check: src/orchestrator/health-checks#teachingHealth
+    subrepo_candidate: false
+    public_api:
+      - TeachingTurn, MasterySnapshot, TurnDegradationReason (types)
+      - openTurn, closeTurn (write API)
+      - getTurn, listTurnsForStudent, listAllTurns (read API)
+      - summariseStudent (per-student improvement signal)
+    owning_agents:
+      - student-model-manager
+      - mastery-estimator
+
   - name: orchestrator
     description: The master composer — reads this manifest, resolves deps, activates tiers.
     source: src/orchestrator,src/admin-orchestrator

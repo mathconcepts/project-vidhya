@@ -2,6 +2,118 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-27 (master docs + coherence pass)
+
+### 📚 Four master docs land + system-design language is now consistent
+
+The repo had `DESIGN.md` (visual design only — typography, colour, spacing) and a sprawl of topic docs but no single entry point that explained Vidhya as a system. This commit creates that entry point.
+
+**Four new master files:**
+
+- **`OVERVIEW.md`** — what Vidhya is, who it's for, what's actually shipping vs. what's planned. The first doc anyone new to the repo should read.
+- **`DESIGN.md`** — the *why* of the architecture. Five load-bearing decisions (flat-file persistence, BYOK LLMs, module barrels over sub-repos, env-var feature flags, Google-OIDC-only auth) with the costs each choice imposes documented honestly. What we deliberately reject and why. What's open for change vs. stable.
+- **`ARCHITECTURE.md`** — the *how*. Modules + tiers + profiles. Runtime topology diagram. Request lifecycle walk-through. Persistence layout. Scaling characteristics with honest ceilings.
+- **`LAYOUT.md`** — the *where*. Top-level shape. Backend `src/` directory map. Frontend `frontend/src/` map. Naming conventions. A "where do new things go?" lookup table.
+
+**One renamed:**
+
+- **`DESIGN.md` → `DESIGN-SYSTEM.md`** — the existing visual design doc kept its content; only the filename changed so it doesn't collide with the new system-design master. References across the repo (CLAUDE.md, README.md, FEATURES.md, CHANGELOG.md historical) updated to point at the new name.
+
+**One brand-new domain doc:**
+
+- **`AUTH.md`** — the auth module's full surface. 6 roles with rank table, 4 feature flags, 10 HTTP routes (5 auth + 5 admin), JWT mechanics, channel linking, the module boundary at `src/modules/auth/index.ts`, the auth health probe, and an honest "what this module does NOT provide" section.
+
+**Coherence pass on existing docs (focused, not exhaustive):**
+
+- `MODULARISATION.md` — module count corrected from 8 → 9 (auth carved out of core in `ebdf23c`). New `auth` section (`§2`). Section numbers re-shuffled. New "Feature flags — within-module toggles" section explaining the env-var pattern, with pointer to AUTH.md for the auth-specific inventory.
+- `INSTALL.md` — new "Enable / disable features" subsection covering the 4 auth flags with example env-var lines, how to inspect flag state via `/api/orchestrator/features` and `/admin/features`, and why flag flipping is intentionally restart-required (with pointer to DESIGN.md §4).
+- `PENDING.md` — three more shipped items added to the post-banner table: auth-as-first-class-module (§8.x), institution role scaffolding (§9.1 partial), feature matrix UI. §9.1 entry updated to reflect partial-scaffolding state. §11.7 parent role entry updated from "future" to "partial" (backend + flag shipped, only the guardian view UI remains).
+- `README.md` — Architecture and features link block restructured to feature the four masters prominently. Stale "DESIGN.md for the architecture" pointer redirected to ARCHITECTURE.md. The 46-agent count (which was wrong — the actual count is 56) corrected throughout.
+- `CLAUDE.md` — visual UI checks now point at DESIGN-SYSTEM.md (the file that actually describes UI principles), not the new system-design DESIGN.md master.
+- `FEATURES.md` — DESIGN reference split: visual lives in DESIGN-SYSTEM.md, system-level in DESIGN.md.
+
+### What this commit deliberately does NOT do
+
+This is the heaviest doc commit in repo history but it's still focused. To be transparent about scope:
+
+- **Coherence pass on `docs/` was NOT performed.** That subdirectory has ~40 framework docs (`docs/EXAM-FRAMEWORK.md`, `docs/RENDERING-FRAMEWORK.md`, `docs/COMPOUNDING-MASTERY-FRAMEWORK.md`, etc.) plus the numbered `00-25` series. Each is a deep-dive that hasn't drifted in any way the new masters changed. Spot-check, don't assume coherence.
+- **Coherence pass on `agents/` was NOT performed.** The 56-agent org-chart documentation references the modules but doesn't reference the auth-vs-core split. ORG-CHART.md and the `_shared/` files are stable.
+- **Coherence pass on `context/` was NOT performed.** Long-form positioning docs (COMPANY.md, CONTACTS.md, GLOSSARY.md, SKILLS.md, SQUAD.md, VOICE.md) are aspirational/positioning documents that don't reference architecture details.
+- **Coherence pass on `modules/project-vidhya-content/`'s docs was NOT performed.** The sub-repo has its own README and CONTRIBUTING. That's the sub-repo's responsibility.
+
+If a doc in any of those directories says something inconsistent with the new masters, file an issue — I didn't read every file.
+
+### Files
+
+```
+NEW    OVERVIEW.md                ~2.5 KB master — what & who
+NEW    DESIGN.md                  ~5.5 KB master — why
+NEW    ARCHITECTURE.md            ~6 KB master — how
+NEW    LAYOUT.md                  ~5 KB master — where
+NEW    AUTH.md                    ~4 KB auth module surface
+RENAMED DESIGN.md → DESIGN-SYSTEM.md  (no content change)
+MOD    MODULARISATION.md          9-module model + feature-flags section
+MOD    INSTALL.md                 +Enable/disable features subsection (~30 lines)
+MOD    PENDING.md                 3 shipped items added; §9.1 + §11.7 updated
+MOD    README.md                  4 stale pointers + agent count fix
+MOD    CLAUDE.md                  2 visual-check pointers → DESIGN-SYSTEM.md
+MOD    FEATURES.md                1 doc reference split
+MOD    CHANGELOG.md               this entry
+```
+
+Pure documentation work. Zero behavioural changes to the running app.
+
+## [Unreleased] — 2026-04-27 (auth as first-class module + operator feature matrix)
+
+Two commits landed in sequence; this entry covers both.
+
+### `ebdf23c` — auth module barrel + feature flags
+
+Auth becomes its own module in the orchestrator. Files stay in `src/auth/`; the boundary is a barrel re-export at `src/modules/auth/index.ts` that future extraction (if ever warranted) can pivot on as a `git subtree split` rather than a rewrite.
+
+**Why not a sub-repo:** the user originally asked about extracting auth to a sub-repo, listmonk-style. After audit I argued against it (recorded in the conversation): auth has no external contributor surface, the API isn't stable yet (institutional-b2b changes pending), tight coupling with every protected route makes the boundary expensive across repos, blast radius of bugs is much higher than for content. The user agreed.
+
+**Four feature flags ship:**
+
+| Flag | Env var | Default |
+|---|---|---|
+| `auth.google_oidc` | `VIDHYA_AUTH_GOOGLE_OIDC` | on |
+| `auth.demo_seed` | `VIDHYA_AUTH_DEMO_SEED` | on |
+| `auth.parent_role` | `VIDHYA_AUTH_PARENT_ROLE` | on |
+| `auth.institution_role` | `VIDHYA_AUTH_INSTITUTION_ROLE` | off |
+
+Flags are read once at boot via `process.env`, exposed as a sync getter (`isAuthFeatureEnabled`), and aggregated at `GET /api/orchestrator/features` (admin-only). Flipping a flag requires a server restart — by design, not a runtime API. Default state matches existing behaviour exactly.
+
+**Other notable changes:**
+
+- `modules.yaml` carved `src/auth` out of `core`'s source list. New `auth` module with `foundation: true` (auto-included in every composition).
+- New auth health probe — separate from core. Reports degraded if `auth.google_oidc=on` but `GOOGLE_OAUTH_CLIENT_ID` is not set, surfacing a misconfiguration that would otherwise be invisible until login fails.
+- `Role` union extended with `'institution'` (rank 5, scaffolding for PENDING §9). The user-store rejects assignment unless `auth.institution_role` is on.
+- **Bug fix:** `handleSetRole`'s hardcoded role allowlist was `['owner','admin','teacher','student']` — it never accepted `parent` despite the type system claiming otherwise (the parent role had been in the union for two prior commits without ever being reachable). Replaced with a derived list of all 6 valid roles; flag-gated roles are accepted at the route layer and rejected by the user-store with a clear reason if their flag is off.
+
+### `dd7dc2f` — operator-facing feature matrix at `/gate/admin/features`
+
+Renders the runtime state of every module's feature flags so an operator can confirm what a deployment actually has enabled without reading boot logs. Backs onto the new `/api/orchestrator/features` endpoint.
+
+- Admin-gated (same `hasRole('admin')` check as `UserAdminPage`)
+- Overridden flags get an amber-bordered card + "overridden" pill
+- Each card shows current state, default, env var name, and one-paragraph description
+- Read-only by design — flipping is a redeploy with the new env var
+- Linked from `/gate/admin/dashboard` via a Settings-icon QuickLink
+
+### Regression — 8 gates green for both commits
+
+```
+Backend tsc            0 errors
+Frontend tsc           0 errors
+Vitest                 113 / 113
+Smoke stdio            49 / 49
+Smoke SDK compat       65 / 65
+Graph validator        56 agents valid
+Subrepo check          passed
+Demo verify            14 / 14 multi-role
+```
+
 ## [Unreleased] — 2026-04-26 (DEPLOY.md hosting landscape correction)
 
 ### 📝 DEPLOY.md updated to reflect the actual 2026 hosting landscape
@@ -458,7 +570,7 @@ Transforms Project Vidhya from a practice app into a cognitive learning platform
 - **PracticePage:** Removed verification metadata (tier, duration, confidence). Compact result banner (icon + verdict). "Next Problem" is full-width primary CTA; "All Problems" becomes small text link.
 - **ChatPage:** Simplified empty state from 4-card grid to 3 compact chips with colored dots. Shrunk icon from 64px to 48px. Added URL param support (`?prompt=...`) for pre-filling input from home page tutor chips.
 - **OnboardPage:** Replaced 10 individual confidence sliders with 3-bucket tappable sort (Weak / Okay / Strong). Faster (10 taps vs 10 drags), more mobile-friendly.
-- **DESIGN.md:** Updated nav spec, added FAB spec, rewrote App Declutter Rules, added 4 decisions to log.
+- **DESIGN.md** *(renamed to `DESIGN-SYSTEM.md` in a later commit)*: Updated nav spec, added FAB spec, rewrote App Declutter Rules, added 4 decisions to log.
 
 ## [0.2.2.1] - 2026-04-09
 

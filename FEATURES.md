@@ -2334,7 +2334,8 @@ Where to engage:
 - `PLAN-content-engine.md` — cost math
 - `PLAN-dbless-gbrain.md` — architecture rationale
 - `PLAN-gbrain-mvp.md` — cognitive model design
-- `DESIGN.md` — UI principles
+- `DESIGN-SYSTEM.md` — UI principles (typography, colour, spacing)
+- `DESIGN.md` — system design rationale
 - `CHANGELOG.md` — release history
 
 ---

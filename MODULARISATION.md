@@ -56,23 +56,52 @@ and decides which tiers to wire up on a given instance.
 
 ---
 
-## The 8 modules — current natural boundaries
+## The 9 modules — current natural boundaries
 
 Grounded in `src/` directory audit. Total ~21,000 LOC.
 
-### 1. `core` — the backbone (every module depends on this)
+> **Note:** Until commit `ebdf23c` this section listed 8 modules with
+> auth nested inside `core`. As of that commit, `auth` is its own
+> first-class module with feature flags and a barrel boundary at
+> `src/modules/auth/`. The current count is 9.
 
-**What's in it:** `src/auth`, `src/lib`, `src/utils`, `src/events`,
+### 1. `core` — shared library layer (foundation)
+
+**What's in it:** `src/lib`, `src/utils`, `src/events`,
 `src/constants`, `src/services` (Wolfram wrapper + LLM wrapper stubs).
 
-**Boundary:** identity, middleware, shared utilities. No
-domain logic. Every module depends on `core`; `core` depends on
-nothing else.
+**Boundary:** generic shared utilities. Response helpers (`sendJSON`,
+`sendError`), event bus, time/string utils. No domain logic, no
+identity logic.
 
 **Why it can't be split:** everything else needs it. This stays in
-the main repo permanently.
+the main repo permanently. Marked `foundation: true` in `modules.yaml` —
+implicit dependency for every other module.
 
-### 2. `content` — accumulation + delivery (the notes' first example)
+### 2. `auth` — identity + sessions (foundation)
+
+**What's in it:** `src/auth/` (the implementation files), with public
+surface at `src/modules/auth/index.ts` (a barrel re-export).
+
+**LOC:** ~1,400 (auth + middleware + user-store + types + jwt + google-verify)
+
+**Boundary:** user identity, role model, JWT, Google OIDC, the
+flat-file user store. The barrel is the only place outside the module
+that should be imported from.
+
+**Owning agents:** `identity-specialist`, `permissions-specialist`,
+`data-rights-specialist`.
+
+**Subrepo candidate:** No, deliberately. The brainstorm in commit
+`ebdf23c` argued against extraction: no external contributor surface,
+unstable API (institutional-b2b changes pending), tight coupling with
+every protected route. The barrel-as-boundary keeps the door open
+without paying the extraction cost now.
+
+**Feature flags:** 4 (`auth.google_oidc`, `auth.demo_seed`,
+`auth.parent_role`, `auth.institution_role`). See [AUTH.md](./AUTH.md).
+
+### 3. `content` — accumulation + delivery (the notes' first example)
 
 **What's in it:** `src/content`, `src/content-pipeline`,
 `src/curriculum`, `src/syllabus`, `src/exam-builder`, `src/samples`,
@@ -93,7 +122,7 @@ representation → routing (per [`CONTENT.md`](./CONTENT.md)).
 **Subrepo candidate:** `mathconcepts/project-vidhya-content` (already
 scaffolded — see [`CONTENT.md`](./CONTENT.md) for the sync model).
 
-### 3. `rendering` — the frontend layer (the notes' second example)
+### 4. `rendering` — the frontend layer (the notes' second example)
 
 **What's in it:** `frontend/`, `src/api` (the HTTP surface),
 `src/marketing`, `src/rendering`, `src/multimodal`, `src/notebook`,
@@ -114,7 +143,7 @@ institutions (different branding, same modules under the hood).
 **Subrepo candidate:** `mathconcepts/project-vidhya-web` (frontend only,
 consumes the API via the same HTTP surface).
 
-### 4. `channels` — non-web delivery (Telegram, WhatsApp, more)
+### 5. `channels` — non-web delivery (Telegram, WhatsApp, more)
 
 **What's in it:** `src/bot-telegram`, `src/bot-whatsapp`,
 `src/channels`.
@@ -131,7 +160,7 @@ wants Telegram delivery → they pay for the channel tier).
 
 **Subrepo candidate:** `mathconcepts/project-vidhya-channels`.
 
-### 5. `learning` — the cognitive core
+### 6. `learning` — the cognitive core
 
 **What's in it:** `src/gbrain`, `src/session-planner`, `src/attention`,
 `src/onboarding`, `src/retention`, `src/engine`, `src/templates`,
@@ -152,7 +181,7 @@ plan templates.
 **Subrepo candidate:** NOT recommended. This module is the product's
 core IP. Keeping it in main repo protects it.
 
-### 6. `exams` — exam adapters + verification
+### 7. `exams` — exam adapters + verification
 
 **What's in it:** `src/exams`, `src/exams/adapters` (BITSAT, JEE
 Main, UGEE), `src/verification` (Wolfram), `src/services/wolfram-service`.
@@ -172,7 +201,7 @@ cohort doing only BITSAT → they pay only for BITSAT adapter.
 adapter is self-contained (see [`EXAMS.md`](./EXAMS.md)'s "how to
 add a new exam" recipe).
 
-### 7. `lifecycle` — customer journey
+### 8. `lifecycle` — customer journey
 
 **What's in it:** `src/conversion`, `src/data-rights`,
 `src/feedback`, `src/teacher`.
@@ -187,7 +216,7 @@ feedback loops, teacher roster management. Described fully in
 **Subrepo candidate:** NOT recommended. Lifecycle touches auth,
 payments (future), analytics — too cross-cutting to split cleanly.
 
-### 8. `orchestrator` — the master (new)
+### 9. `orchestrator` — the master (new)
 
 **What's in it (new):** `src/orchestrator/registry.ts`,
 `src/orchestrator/composer.ts`, `src/orchestrator/health.ts`.
@@ -308,6 +337,25 @@ tiers:
 
 For a college deploying Vidhya. Institutional-b2b tier adds the new
 `institution` role above owner — see B2B section below.
+
+---
+
+## Feature flags — within-module toggles
+
+Profiles compose tiers; tiers compose modules. **Feature flags are a finer layer**: per-module toggles that flip behaviour within an active module without changing what modules are loaded.
+
+Currently the only module with feature flags is `auth`, declared in [`src/modules/auth/feature-flags.ts`](./src/modules/auth/feature-flags.ts) and the `feature_flags:` block of `auth` in `modules.yaml`.
+
+Mechanics:
+- Each flag has an env var (e.g. `VIDHYA_AUTH_GOOGLE_OIDC`) and a default
+- The flag module reads `process.env` once at boot
+- Flipping a flag requires a server restart — by design, not a runtime API
+- State surfaced at `GET /api/orchestrator/features` (admin-only)
+- Operator UI at `/admin/features`
+
+The auth flags are documented in [AUTH.md](./AUTH.md). When other modules grow flag surfaces, the same pattern applies — a `feature-flags.ts` in the module barrel directory + a `feature_flags:` block in `modules.yaml`.
+
+**Why flags are intentionally restart-required, not API-flippable:** runtime mutation of auth-related toggles is the kind of feature that turns into a CVE. Operator oversight matters more than zero-downtime here. See [DESIGN.md](./DESIGN.md) §"4. Feature flags as env-var toggles, read once at boot".
 
 ---
 

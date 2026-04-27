@@ -173,7 +173,7 @@ A React SPA backed by a stateless Node server on Express. **Your student model, 
 
 The content layer is a **four-tier cascade** assembled overnight by GitHub Actions: scrape curated CC-licensed sources (OpenStax, MIT OCW, GATE previous-year papers, Stack Exchange), generate 82 concept explainers with a cheap LLM, verify every piece of math against Wolfram, assemble into `content-bundle.json`, and ship. **Roughly eighty percent of student questions hit tier 0 at zero marginal cost.** The remaining twenty percent fan out to semantic search, then to a live LLM call — and six percent of those get Wolfram-verified on the fly.
 
-📖 *The cascade is defended and cost-modelled in [PLAN-content-engine.md](./PLAN-content-engine.md). Every other architectural choice is in [DESIGN.md](./DESIGN.md). The hierarchical docs index is at [docs/00-index.md](./docs/00-index.md).*
+📖 *The cascade is defended and cost-modelled in [PLAN-content-engine.md](./PLAN-content-engine.md). Every other architectural choice is in [ARCHITECTURE.md](./ARCHITECTURE.md), with the design rationale in [DESIGN.md](./DESIGN.md). For a guided tour start with [OVERVIEW.md](./OVERVIEW.md); the hierarchical docs index is at [docs/00-index.md](./docs/00-index.md).*
 
 ---
 
@@ -260,7 +260,7 @@ Full walkthrough: [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md).
 
 📋 **As someone wanting to know what's NOT done yet** → [PENDING.md](./PENDING.md). The full honest ledger — every deferred item, every "future", every "stub mode" across 14 subsystems, with priority and effort.
 
-🔬 **As a technical evaluator** → [FEATURES.md](./FEATURES.md) for the shipping ledger, [DESIGN.md](./DESIGN.md) for the architecture, then [docs/](./docs/).
+🔬 **As a technical evaluator** → [OVERVIEW.md](./OVERVIEW.md) for the product summary, [ARCHITECTURE.md](./ARCHITECTURE.md) for how it's wired, [FEATURES.md](./FEATURES.md) for the shipping ledger, then [docs/](./docs/).
 
 🏫 **As an institution deploying for a cohort** → [INSTALL.md](./INSTALL.md). No per-seat licence. No external database. Role-based admin hierarchy (owner / admin / teacher / student) with the first sign-in auto-becoming owner. Add students via dashboard or CSV import. Define new exams as YAML. Students reach sessions through web, Telegram, or WhatsApp.
 
@@ -273,9 +273,14 @@ Full walkthrough: [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md).
 &nbsp;&nbsp;[POSITIONING.md](./POSITIONING.md) — full brand and promise document
 
 **Architecture and features**
-&nbsp;&nbsp;[DESIGN.md](./DESIGN.md) — visual and UX principles
+&nbsp;&nbsp;[OVERVIEW.md](./OVERVIEW.md) — what Vidhya is, who it's for, what's actually shipping
+&nbsp;&nbsp;[DESIGN.md](./DESIGN.md) — system design rationale (the *why* of the architecture)
+&nbsp;&nbsp;[ARCHITECTURE.md](./ARCHITECTURE.md) — modules, runtime topology, request lifecycle
+&nbsp;&nbsp;[LAYOUT.md](./LAYOUT.md) — file/directory map and naming conventions
+&nbsp;&nbsp;[DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md) — visual design language (typography, colour, spacing)
+&nbsp;&nbsp;[AUTH.md](./AUTH.md) — auth module surface, roles, feature flags
 &nbsp;&nbsp;[FEATURES.md](./FEATURES.md) — forty-eight-release feature ledger
-&nbsp;&nbsp;[agents/ORG-CHART.md](./agents/ORG-CHART.md) — the 46-agent organisation chart (CEO + 6 C-suite + 17 managers + 22 specialists)
+&nbsp;&nbsp;[agents/ORG-CHART.md](./agents/ORG-CHART.md) — the 56-agent organisation chart (CEO + 6 C-suite + 17 managers + 32 specialists)
 &nbsp;&nbsp;[PLAN-content-engine.md](./PLAN-content-engine.md) — four-tier content cascade
 &nbsp;&nbsp;[PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md) — local-first architecture rationale
 &nbsp;&nbsp;[PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md) — the cognitive student model

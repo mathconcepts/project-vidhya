@@ -180,6 +180,59 @@ A reference file is at [`.env.deploy.example`](./.env.deploy.example).
 
 ---
 
+## Enable / disable features
+
+In addition to the env vars above, individual modules expose **feature flags** that toggle behaviour without changing code. Flags are read once at server boot — flipping one means changing the env var on your host (or in your local `.env`) and restarting the server.
+
+### Auth module flags
+
+The auth module ships with 4 flags. Defaults preserve existing behaviour, so a fresh clone runs identically to before any flag is touched.
+
+| Flag | Env var | Default | Off-state effect |
+|---|---|---|---|
+| `auth.google_oidc` | `VIDHYA_AUTH_GOOGLE_OIDC` | `on` | Google sign-in disabled. Unless another auth path is implemented, **nobody can log in.** |
+| `auth.demo_seed` | `VIDHYA_AUTH_DEMO_SEED` | `on` | `npm run demo:seed` exits cleanly without creating users. Use for production deployments where the 6 demo personas would confuse real users. |
+| `auth.parent_role` | `VIDHYA_AUTH_PARENT_ROLE` | `on` | Assigning the `parent` role is rejected. Existing parent users keep their record but lose access until re-enabled. |
+| `auth.institution_role` | `VIDHYA_AUTH_INSTITUTION_ROLE` | `off` | Scaffolding for the multi-tenant B2B role (PENDING.md §9). Default off until tenancy isolation lands. |
+
+Flag values accept `1`/`true`/`yes`/`on` (case-insensitive) for true and `0`/`false`/`no`/`off`/empty for false.
+
+Examples:
+
+```bash
+# Production deployment — turn off the demo seed
+export VIDHYA_AUTH_DEMO_SEED=0
+npm run demo:seed   # exits with "demo seed disabled"
+
+# Disable parent-role linkage (e.g. coaching centre for adult students)
+export VIDHYA_AUTH_PARENT_ROLE=0
+# subsequent POSTs to /api/admin/users/:id/role with new_role=parent now reject
+```
+
+### Inspecting flag state
+
+Once the server is running:
+
+```bash
+# As the owner (any admin works)
+TOKEN=$(jq -r .owner.token demo/demo-tokens.json)
+curl -sS -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/orchestrator/features | jq
+```
+
+Or open `http://localhost:8080/admin/features` in a browser — the Feature flags page shows every flag's current state, default, env-var name, description, and which ones are overridden from default. Admin-only.
+
+### Why not toggle from the UI?
+
+The Feature flags page is intentionally read-only. Flipping a flag through the UI would mean:
+
+1. Adding a write API (more attack surface)
+2. Designing the audit trail (who flipped what, when)
+3. Handling the case where a flag flip leaves a deployment in a state where nobody can log in
+
+Restart-required is the safer default. See [DESIGN.md](./DESIGN.md) §"4. Feature flags as env-var toggles, read once at boot" for the full reasoning.
+
+---
+
 ## Data directory — `.data/`
 
 Everything persistent lives under `.data/` as flat JSON files:

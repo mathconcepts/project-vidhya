@@ -45,10 +45,10 @@ cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 10 migrations (001–010) in `supabase/migrations/`. **Auto-applied on server startup** via `src/db/auto-migrate.ts`. Tracked in `_migrations` table. All migrations must be idempotent (`IF NOT EXISTS`). Key tables: pyq_questions, sr_sessions, chat_messages, user_profiles, social_content, verification_log, rag_cache, blog_posts, trend_signals, content_priorities.
 
 ### Design System
-Always read DESIGN.md before making any visual or UI decisions.
+Always read DESIGN-SYSTEM.md before making any visual or UI decisions.
 All font choices, colors, spacing, and aesthetic direction are defined there.
 Do not deviate without explicit user approval.
-In QA mode, flag any code that doesn't match DESIGN.md.
+In QA mode, flag any code that doesn't match DESIGN-SYSTEM.md.
 
 ---
 

@@ -34,7 +34,7 @@ Navigation by subsystem:
 
 ## ✓ Shipped in the 2026-04-24 "perform pending activities" commit
 
-Thirteen items moved from pending → done (11 backend/infra + 2 frontend pages in follow-ups). The sections below show the full remaining list.
+Thirteen items moved from pending → done (11 backend/infra + 2 frontend pages in follow-ups). The sections below show the full remaining list. Three more items shipped in subsequent commits and are listed at the bottom of this banner.
 
 | Item | What shipped |
 |---|---|
@@ -51,8 +51,11 @@ Thirteen items moved from pending → done (11 backend/infra + 2 frontend pages 
 | **§13.2** Signal bus | `src/events/signal-bus.ts` — in-process pub/sub. `content-router` publishes `content-routed` per decision. `/api/orchestrator/signals` admin view with recent-events buffer. |
 | **§13.3** Periodic health scan | Included as a job in the scheduler (every 5 minutes). Degraded-state transitions surface in logs even without operator polling. |
 | **§1.1** (documentation only) | Live URL — still operator action; link to [`DEPLOY.md`](./DEPLOY.md) clarified. |
+| **§8.x** (new, post-banner) — Auth as first-class module | `ebdf23c`. Carved `src/auth` out of `core` in `modules.yaml`; new `auth` module with `foundation: true`. Public surface at `src/modules/auth/index.ts` (barrel re-export). 4 feature flags (`auth.google_oidc`, `auth.demo_seed`, `auth.parent_role`, `auth.institution_role`) with env-var control read once at boot. New `GET /api/orchestrator/features` endpoint. Auth health probe separate from core. Bug fix: `handleSetRole`'s hardcoded role allowlist never accepted `parent` despite the type system claiming otherwise — now derived from the full `Role` union. Scaffolding for `institution` role added (rank 5, flag-gated, default off). |
+| **§9.1** (partial) — Institution role scaffolding | `ebdf23c`. Type-system scaffolding only — `institution` in the `Role` union, `ROLE_RANK = 5`, frontend mirror, `setRole()` flag gate. Tenant isolation (the actual B2B tenancy logic) is still PENDING.md §9.2 onwards. |
+| **§(operator UX)** — Feature matrix UI | `dd7dc2f`. New page at `/gate/admin/features` (admin-only). Renders flag state with overridden/default badges, env-var name, and one-paragraph description per flag. Read-only by design. QuickLink added to `/gate/admin/dashboard`. |
 
-Everything tested end-to-end on a live backend before this commit landed. See commit message for proofs.
+Everything tested end-to-end on a live backend before each commit landed. See commit messages for proofs.
 
 ---
 
@@ -412,11 +415,13 @@ Status across-the-board: **documented, not implemented.** See MODULARISATION.md'
 
 ### 9.1 `institution` role in auth middleware
 
-**Status:** planned
+**Status:** partial — type-system scaffolding shipped in `ebdf23c`
 **Priority:** P1 before B2B launch
-**Effort:** S
+**Effort:** S (remaining)
 
-**Detail:** Add `institution` to the role hierarchy above `owner` in `src/auth/middleware.ts`. Update `requireRole` to recognise it. ~15 lines.
+**Detail:**
+- ✅ **Done (ebdf23c):** `institution` added to the `Role` union (`src/auth/types.ts`), `ROLE_RANK.institution = 5` (above owner). Frontend mirror updated. `setRole()` accepts `'institution'` only when the `auth.institution_role` feature flag is on (default off — `VIDHYA_AUTH_INSTITUTION_ROLE`). `UserAdminPage.tsx`'s `ROLE_META` carries an entry for institution so the type system stays exhaustive.
+- ⏳ **Remaining:** `requireRole` middleware doesn't yet handle institution-specific scoping. The role rank check works, but tenant isolation logic (i.e. "institution-admin can only see users in their tenant") is not implemented. That work belongs in §9.2 once the schema migration lands.
 
 ### 9.2 `institution_id` schema migration
 
@@ -496,7 +501,7 @@ Per MODULARISATION.md's "8 further use cases" section:
 | 11.4 | Content marketplace | future | P3 | L |
 | 11.5 | Teacher-as-a-service | future | P3 | L |
 | 11.6 | Research tier | future | P3 | M |
-| 11.7 | Parent / guardian view | future | P3 | S (role addition) |
+| 11.7 | Parent / guardian view | partial | P3 | S (UI page remaining; backend role + flag shipped) |
 | 11.8 | Proctored exam | future | P3 | XL |
 
 Each has documented fit assessment + effort estimate in MODULARISATION.md's "further use cases" section. None are in flight.

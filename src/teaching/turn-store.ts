@@ -93,10 +93,19 @@ export interface TurnOpenEvent {
   student_id:         string;
   initiated_at:       string;     // ISO 8601
   intent:             Intent;
+  /**
+   * Richer intent from the GBrain task reasoner, when available.
+   * Captures motivational signals (expressing_frustration,
+   * expressing_confusion, greeting) that the content-router intent
+   * vocabulary doesn't have. Optional — only set when the request
+   * went through gbrain/task-reasoner.
+   */
+  student_intent?:    string;       // StudentIntent from gbrain
+  pedagogical_action?: string;      // PedagogicalAction chosen by reasoner
   delivery_channel:   string;     // 'web' / 'telegram' / 'whatsapp' / etc.
   routed_source:     Source | null;
   generated_content: {
-    type: 'lesson' | 'explanation' | 'problem' | 'verification' | 'snap-result' | 'other';
+    type: 'lesson' | 'explanation' | 'problem' | 'verification' | 'snap-result' | 'chat-response' | 'other';
     summary: string;             // short human-readable description
     content_id?: string;         // ref to a stored content record if applicable
     content_version?: string;    // for stale-content detection
@@ -147,6 +156,8 @@ export interface TeachingTurn {
   closed_at?:       string;        // absent if turn is still open
   status:           'open' | 'closed';
   intent:           Intent;
+  student_intent?:    string;
+  pedagogical_action?: string;
   delivery_channel: string;
   routed_source:    Source | null;
   generated_content: TurnOpenEvent['generated_content'];
@@ -192,6 +203,8 @@ export function openTurn(
     initiated_at: new Date().toISOString(),
     student_id: params.student_id,
     intent: params.intent,
+    student_intent: params.student_intent,
+    pedagogical_action: params.pedagogical_action,
     delivery_channel: params.delivery_channel,
     routed_source: params.routed_source,
     generated_content: params.generated_content,
@@ -251,6 +264,8 @@ function reconcile(events: TurnEvent[]): TeachingTurn[] {
       closed_at:        close?.closed_at,
       status:           close ? 'closed' : 'open',
       intent:           open.intent,
+      student_intent:   open.student_intent,
+      pedagogical_action: open.pedagogical_action,
       delivery_channel: open.delivery_channel,
       routed_source:    open.routed_source,
       generated_content: open.generated_content,

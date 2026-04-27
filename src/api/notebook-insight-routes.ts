@@ -42,6 +42,7 @@ import {
 import { getExamContextForStudent } from '../gbrain/exam-context';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { getUserById } from '../auth/user-store';
+import { openTurn, closeTurn, type MasterySnapshot } from '../modules/teaching';
 
 // ============================================================================
 // Helper: resolve the notebook subject — signed-in user, or anon session
@@ -166,6 +167,12 @@ async function handleAttemptInsight(req: ParsedRequest, res: ServerResponse): Pr
     return sendError(res, 400, 'session_id, concept_id, correct required');
   }
 
+  // Resolve student_id for the turn record (signed-in or anon)
+  const auth = await getCurrentUser(req);
+  const student_id = auth ? auth.user.id : `anon_${session_id}`;
+  const turn_started_at = Date.now();
+  let turn_id: string | null = null;
+
   try {
     // We compute the insight WITHOUT writing — the actual attempt
     // recording is a separate call at /api/gbrain/attempt which persists
@@ -176,6 +183,38 @@ async function handleAttemptInsight(req: ParsedRequest, res: ServerResponse): Pr
 
     const model_after = await getOrCreateStudentModel(session_id, null);
     const recentAttempts = (model_after as any)?.recent_attempts || [];
+
+    // ── Open the teaching turn ────────────────────────────────────────
+    // This is a "practice-problem" intent in the content-router vocabulary
+    // since the notebook-insight endpoint is fired after a problem attempt.
+    try {
+      const afterEntryForOpen = model_after?.mastery_vector?.[concept_id];
+      const pre_mastery = afterEntryForOpen && afterEntryForOpen.attempts > 0
+        ? Math.max(0, afterEntryForOpen.score - (correct ? 0.06 : -0.02))
+        : null;
+      const pre_state: MasterySnapshot = {
+        concept_id,
+        topic: null,
+        mastery_before: pre_mastery,
+        attempts_so_far: afterEntryForOpen
+          ? Math.max(0, afterEntryForOpen.attempts - 1)
+          : null,
+        zpd_concept: null,
+      };
+      turn_id = openTurn({
+        student_id,
+        intent: 'practice-problem',
+        delivery_channel: 'web',
+        routed_source: 'generated',
+        generated_content: {
+          type: 'problem',
+          summary: `Concept ${concept_id}, ${difficulty ?? 'unknown'} difficulty`,
+        },
+        pre_state,
+      });
+    } catch (turnOpenErr) {
+      console.error('[attempt-insight] turn-open failed (non-fatal):', (turnOpenErr as Error).message);
+    }
 
     // Hydrate optional exam context if session_id maps to a signed-in user
     // with exam_id assigned. Missing / anon sessions → null, which the
@@ -221,11 +260,41 @@ async function handleAttemptInsight(req: ParsedRequest, res: ServerResponse): Pr
       exam_context: examCtx,
     });
 
+    // ── Close the turn with the real mastery delta ───────────────────
+    if (turn_id) {
+      try {
+        closeTurn({
+          turn_id,
+          attempt_outcome: { correct, response_time_ms: time_ms ?? 0 },
+          insight,
+          mastery_delta: insight.mastery_delta
+            ? {
+                before: insight.mastery_delta.before,
+                after:  insight.mastery_delta.after,
+                delta_pct: insight.mastery_delta.delta_pct,
+              }
+            : undefined,
+          duration_ms: Date.now() - turn_started_at,
+        });
+      } catch (turnCloseErr) {
+        console.error('[attempt-insight] turn-close failed (non-fatal):', (turnCloseErr as Error).message);
+      }
+    }
+
     sendJSON(res, {
       insight,
       exam_context: examCtx,  // exposed to client for countdown UI etc.
     });
   } catch (err) {
+    // Best-effort close on the error path
+    if (turn_id) {
+      try {
+        closeTurn({
+          turn_id,
+          duration_ms: Date.now() - turn_started_at,
+        });
+      } catch { /* swallow */ }
+    }
     console.error('[attempt-insight] error:', (err as Error).message);
     sendError(res, 500, 'insight computation failed');
   }

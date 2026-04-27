@@ -16,6 +16,9 @@ import type { UserContext } from '../content-pipeline/prompt-modifiers';
 import type { VectorStore, VectorSearchResult } from '../data/vector-store';
 import { getOrCreateStudentModel, saveStudentModel } from '../gbrain/student-model';
 import { runTaskReasoner, buildContentGeneratorPrompt } from '../gbrain/task-reasoner';
+import { getCurrentUser } from '../auth/middleware';
+import { openTurn, closeTurn, type MasterySnapshot } from '../modules/teaching';
+import { classifyIntent } from '../content/router';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 
@@ -133,6 +136,39 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
 
   const model = getChatModel();
   if (!model) {
+    // LLM unavailable — record a degraded-mode turn so the failure is
+    // legible in the turn log. (Without this, an admin debugging
+    // "why isn't chat working?" sees zero traces despite real traffic.)
+    // Open + close immediately because we know the turn is complete:
+    // no response will follow this.
+    try {
+      const auth = await getCurrentUser(req);
+      const student_id = auth ? auth.user.id : `anon_${sessionId}`;
+      const degraded_turn_id = openTurn({
+        student_id,
+        intent: classifyIntent(message),
+        delivery_channel: 'web',
+        routed_source: null,
+        generated_content: {
+          type: 'chat-response',
+          summary: '(no response — LLM unavailable)',
+        },
+        pre_state: {
+          concept_id: null,
+          topic: null,
+          mastery_before: null,
+          attempts_so_far: null,
+          zpd_concept: null,
+        },
+        degraded: {
+          reason: 'no-llm-available',
+          detail: 'GEMINI_API_KEY not configured',
+        },
+      });
+      closeTurn({ turn_id: degraded_turn_id, duration_ms: 0 });
+    } catch (turnErr) {
+      console.error('[chat] turn-open on degraded path failed (non-fatal):', (turnErr as Error).message);
+    }
     return sendError(res, 503, 'AI tutor not available (GEMINI_API_KEY not configured)');
   }
 
@@ -215,9 +251,11 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
   // ── GBrain Layer 2: Task Reasoner ─────────────────────────────────────
   // Run the 5-node decision tree to determine pedagogical action
   let gbrainPrompt = enrichedSystemPrompt;
+  let _reasonerInstructions: any = null;
   try {
     const studentModel = await getOrCreateStudentModel(sessionId);
     const reasonerInstructions = await runTaskReasoner(message, studentModel, history);
+    _reasonerInstructions = reasonerInstructions;
     gbrainPrompt = buildContentGeneratorPrompt(reasonerInstructions, studentModel) +
       groundingContext;
     // Send reasoner metadata via SSE before streaming starts
@@ -234,6 +272,50 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     console.error('[chat] GBrain Task Reasoner error, using fallback prompt:', (gbrainErr as Error).message);
     // Non-fatal: fall back to flat prompt
     var _reasonerMeta = null;
+  }
+
+  // ── Open a TeachingTurn ───────────────────────────────────────────────
+  // Wraps this content-generation interaction in a legibility record.
+  // Closed below after the response stream finishes (or on error).
+  // Resolves student_id from auth if available, else falls back to
+  // anon_<sessionId> per the existing convention used by notebook-insight.
+  let _turn_id: string | null = null;
+  const _turn_started_at = Date.now();
+  try {
+    const auth = await getCurrentUser(req);
+    const student_id = auth ? auth.user.id : `anon_${sessionId}`;
+    const studentModel = await getOrCreateStudentModel(sessionId);
+    const concept_id = _reasonerInstructions?.selected_concept ?? null;
+    const conceptEntry = concept_id
+      ? (studentModel.mastery_vector?.[concept_id] ?? null)
+      : null;
+    const pre_state: MasterySnapshot = {
+      concept_id,
+      topic: _reasonerInstructions?.topic ?? null,
+      mastery_before: conceptEntry?.score ?? null,
+      attempts_so_far: conceptEntry?.attempts ?? null,
+      zpd_concept: _reasonerInstructions?.selected_concept ?? null,
+    };
+    const degraded = !getChatModel()
+      ? { reason: 'no-llm-available' as const, detail: 'GEMINI_API_KEY not configured (caught earlier)' }
+      : undefined;
+    _turn_id = openTurn({
+      student_id,
+      intent: classifyIntent(message),
+      student_intent: _reasonerInstructions?.intent,
+      pedagogical_action: _reasonerInstructions?.action,
+      delivery_channel: 'web',
+      routed_source: groundingContext ? 'cache' : 'generated',
+      generated_content: {
+        type: 'chat-response',
+        summary: message.slice(0, 120),
+      },
+      pre_state,
+      degraded,
+    });
+  } catch (turnErr) {
+    // Turn instrumentation must never break the chat. Log + continue.
+    console.error('[chat] turn-open failed (non-fatal):', (turnErr as Error).message);
   }
 
   // Set up SSE
@@ -307,6 +389,27 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
   } catch (err) {
     console.error('[chat] Stream error:', (err as Error).message);
     res.write(`data: ${JSON.stringify({ type: 'error', content: 'Sorry, I encountered an error. Please try again.' })}\n\n`);
+    if (_turn_id) {
+      try {
+        closeTurn({
+          turn_id: _turn_id,
+          duration_ms: Date.now() - _turn_started_at,
+        });
+      } catch { /* swallow — turn close must not break the request */ }
+    }
+  }
+
+  // Close the turn on the success path. If we already errored above, the
+  // catch block closed it; this no-op-protected close happens only when
+  // streaming completed cleanly. (closeTurn appends an event each call,
+  // and reconcile() takes the earliest — so a double-close is safe.)
+  if (_turn_id) {
+    try {
+      closeTurn({
+        turn_id: _turn_id,
+        duration_ms: Date.now() - _turn_started_at,
+      });
+    } catch { /* swallow */ }
   }
 
   res.end();

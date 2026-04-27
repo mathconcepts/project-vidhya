@@ -205,7 +205,7 @@ user_abc123
   │             "whatsapp:+14155551234"]
 ```
 
-The same user accessing Vidhya from web, Telegram, and WhatsApp sees the same materials, same progress, same lessons. Their role (owner/admin/teacher/student) applies uniformly across channels.
+The same user accessing Vidhya from web, Telegram, and WhatsApp sees the same materials, same progress, same lessons. Their role (owner/admin/teacher/student/parent, plus institution when enabled) applies uniformly across channels.
 
 **Linking flow** (same pattern for Telegram and WhatsApp):
 

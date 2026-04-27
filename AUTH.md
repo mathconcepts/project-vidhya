@@ -39,6 +39,8 @@ There is exactly one owner per deployment. Mechanics:
 
 The auth module ships with 4 flags. State surfaced at `GET /api/orchestrator/features` and visualised at `/admin/features`.
 
+> **Two unrelated "feature flag" systems live in this codebase.** The flags described here are *module flags* — env-var driven, read once at boot, intended for operators to toggle subsystem behaviour (Google OIDC on/off, demo seed on/off, etc.). A separate concept lives in [`src/deployment/manager.ts`](./src/deployment/manager.ts) under the same name: per-exam-deployment runtime toggles for staged pilot/promote/rollback. Those are not currently HTTP-exposed but are described in [`docs/13-deployment-modes.md`](./docs/13-deployment-modes.md). The two systems share a name but not a domain — module flags are operator territory; exam-deployment flags are content-rollout territory.
+
 ### `auth.google_oidc`
 
 | | |

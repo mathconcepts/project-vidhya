@@ -160,7 +160,16 @@ The middleware:
 4. Checks the user's role meets or exceeds `minRole`
 5. Attaches user info to the request for downstream handlers
 
-Role hierarchy is linear: `owner > admin > teacher > student > anonymous`. `requireRole('teacher')` allows owner/admin/teacher; rejects student/anonymous.
+Role hierarchy is mostly linear, with two exceptions:
+
+`institution > owner > admin > teacher > student > anonymous`, plus the orthogonal `parent` role at rank 0.
+
+`requireRole('teacher')` allows institution/owner/admin/teacher; rejects student/anonymous/parent.
+
+Two roles need extra context:
+
+- **`parent`** is rank 0 (deliberately — it grants no site-wide access). A parent can read the progress of *specific* students linked via `User.guardian_of[]`, scoped per-student. Code checking "can read student X's progress" must use `hasGuardianOf()`, not `roleGte(...'student')`. See [AUTH.md](../AUTH.md) for the full surface.
+- **`institution`** is rank 5 (above owner) and is **scaffolding** for the multi-tenant B2B tier (PENDING.md §9). Default-disabled via the `auth.institution_role` feature flag. Until that flag is on and tenancy isolation lands (PENDING §9.2 onwards), assigning the role is rejected by the user-store.
 
 ---
 

@@ -109,6 +109,45 @@ async function h_signals(req: ParsedRequest, res: ServerResponse): Promise<void>
   }
 }
 
+/**
+ * GET /api/orchestrator/features — operator-facing inventory of every
+ * module's feature flags + their current state. Useful for confirming
+ * what a deployment actually has enabled without reading boot logs.
+ *
+ * Aggregates from every module's runtime feature-flags module (when
+ * present). Falls back to the modules.yaml declaration for modules
+ * that don't have a runtime feature-flags file yet.
+ */
+async function h_features(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+
+  const result: Array<{
+    module: string;
+    flags: Array<{
+      flag: string;
+      enabled: boolean;
+      default: boolean;
+      env_var: string;
+      description: string;
+      overridden: boolean;
+    }>;
+  }> = [];
+
+  // Auth module — runtime source of truth
+  try {
+    const { authFeatureFlags } = await import('../modules/auth/feature-flags');
+    result.push({ module: 'auth', flags: authFeatureFlags() });
+  } catch (e: any) {
+    result.push({ module: 'auth', flags: [] });
+  }
+
+  // Future modules with feature flags would add their own block here.
+  // The yaml declaration is the contract; runtime state is the truth.
+
+  sendJSON(res, { modules: result });
+}
+
 export const orchestratorRoutes: Array<{
   method: string;
   path: string;
@@ -122,4 +161,5 @@ export const orchestratorRoutes: Array<{
   { method: 'GET',  path: '/api/orchestrator/health',   handler: h_health },
   { method: 'GET',  path: '/api/orchestrator/jobs',     handler: h_jobs },
   { method: 'GET',  path: '/api/orchestrator/signals',  handler: h_signals },
+  { method: 'GET',  path: '/api/orchestrator/features', handler: h_features },
 ];

@@ -53,6 +53,13 @@ export function composeDeployment(profile_name: string): ComposedDeployment {
     for (const m of t.modules) needed_module_names.add(m);
   }
 
+  // Foundation modules (e.g. core, auth) are implicitly part of every
+  // composition — every tier needs them, so requiring each tier to
+  // list them is busywork. Add them after the tier-driven union.
+  for (const m of Object.values(reg.modules)) {
+    if (m.foundation) needed_module_names.add(m.name);
+  }
+
   // Transitive closure of depends_on
   function closure(name: string, acc: Set<string>): void {
     if (acc.has(name)) return;

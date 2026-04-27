@@ -18,14 +18,64 @@
 modules:
   - name: core
     description: Identity, middleware, shared libs. Every module depends on this.
-    source: src/auth,src/lib,src/utils,src/events,src/constants,src/services
+    source: src/lib,src/utils,src/events,src/constants,src/services
     depends_on: []
     health_check: src/orchestrator/health-checks#coreHealth
     subrepo_candidate: false      # must stay in main repo
     public_api:
-      - requireAuth, requireRole
       - sendJSON, sendError, RouteHandler
+
+  - name: auth
+    description: |
+      User identity, role/permission model, JWT, Google OIDC,
+      flat-file user store. The public surface lives at
+      src/modules/auth/index.ts. Files stay in src/auth/ for now;
+      that boundary is the module's barrel re-export, ready for a
+      future `git subtree split` if extraction is ever warranted.
+
+      auth is a FOUNDATION module — every other module uses it
+      (requireAuth on routes, User type on records). Declaring it
+      under each consumer's depends_on would be noise; treat its
+      presence as implicit, like core. Composition still excludes
+      modules that aren't enabled in the active profile.
+    source: src/auth,src/modules/auth
+    depends_on: [core]
+    foundation: true              # implicit dependency for all other modules
+    health_check: src/orchestrator/health-checks#authHealth
+    subrepo_candidate: false      # see brainstorm in commit message —
+                                  # kept in main repo, boundary is the
+                                  # barrel at src/modules/auth/index.ts
+    public_api:
+      - User, Role, AuthContext (types)
+      - roleGte, hasGuardianOf
+      - requireAuth, requireRole
       - issueToken, verifyToken
+      - verifyGoogleIdToken
+      - getUserById, getUserByGoogleSub, listUsers
+      - upsertFromGoogle, setRole, transferOwnership, assignTeacher
+      - linkChannel, unlinkChannel
+      - isAuthFeatureEnabled, authFeatureFlags
+    feature_flags:
+      - flag: auth.google_oidc
+        env_var: VIDHYA_AUTH_GOOGLE_OIDC
+        default: true
+        description: Google sign-in via OIDC (the only currently-supported auth path).
+      - flag: auth.demo_seed
+        env_var: VIDHYA_AUTH_DEMO_SEED
+        default: true
+        description: Whether `npm run demo:seed` creates the 6 demo users.
+      - flag: auth.parent_role
+        env_var: VIDHYA_AUTH_PARENT_ROLE
+        default: true
+        description: Whether the `parent` role is recognised at runtime.
+      - flag: auth.institution_role
+        env_var: VIDHYA_AUTH_INSTITUTION_ROLE
+        default: false
+        description: Scaffolding for the institutional-b2b role (PENDING §9).
+    owning_agents:
+      - identity-specialist
+      - permissions-specialist
+      - data-rights-specialist
 
   - name: content
     description: Sources → acquisition → authoring → verification → routing.

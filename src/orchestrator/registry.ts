@@ -23,6 +23,13 @@ const MODULES_YAML = 'modules.yaml';
 
 // ─── types ────────────────────────────────────────────────────────────
 
+export interface ModuleFeatureFlag {
+  flag:        string;
+  env_var:     string;
+  default:     boolean;
+  description: string;
+}
+
 export interface Module {
   name:               string;
   description:        string;
@@ -34,6 +41,19 @@ export interface Module {
   pin_file?:          string;
   public_api?:        string[];
   owning_agents?:     string[];
+  /**
+   * Foundation modules are implicit dependencies of every other
+   * module. They don't need to appear in any other module's
+   * depends_on list. Currently: core, auth.
+   */
+  foundation?:        boolean;
+  /**
+   * Per-module env-var feature flags. Mirrored at runtime by the
+   * module's feature-flags.ts, which is the source of truth for
+   * actual flag state. The yaml entry is for operators reading the
+   * config + the orchestrator features endpoint.
+   */
+  feature_flags?:     ModuleFeatureFlag[];
 }
 
 export type TierStatus = 'shipped' | 'partial' | 'stub' | 'planned' | 'future';
@@ -87,6 +107,8 @@ export function loadRegistry(opts?: { reload?: boolean }): Registry {
       pin_file: m.pin_file,
       public_api: m.public_api,
       owning_agents: m.owning_agents,
+      foundation: !!m.foundation,
+      feature_flags: m.feature_flags,
     };
   }
 

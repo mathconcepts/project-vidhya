@@ -46,6 +46,21 @@ if (!process.env.JWT_SECRET) {
   console.log('Note: JWT_SECRET not set, using demo default (OK for local testing).');
 }
 
+// Honour the auth.demo_seed feature flag — production deployments
+// where the demo personas would confuse real users can disable seeding
+// by setting VIDHYA_AUTH_DEMO_SEED=0. Use top-level await for the
+// dynamic import (tsx + Node 22 in ESM mode supports it).
+{
+  const { isAuthFeatureEnabled } = await import('../src/modules/auth/feature-flags');
+  if (!isAuthFeatureEnabled('auth.demo_seed')) {
+    console.log('');
+    console.log('Demo seed is disabled on this deployment (auth.demo_seed=off).');
+    console.log('Set VIDHYA_AUTH_DEMO_SEED=1 to enable, or run with the demo profile.');
+    console.log('No users were created.');
+    process.exit(0);
+  }
+}
+
 if (!existsSync('.data')) mkdirSync('.data', { recursive: true });
 
 clearDemoLog();

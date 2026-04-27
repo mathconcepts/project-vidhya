@@ -40,11 +40,40 @@ export interface OrgHealth {
 
 const PROBES: Record<string, () => Promise<Omit<ModuleHealth, 'name' | 'latency_ms'>>> = {
   core: async () => {
-    // core is present if src/auth exists
-    if (existsSync('src/auth/middleware.ts')) {
-      return { status: 'healthy', detail: 'auth middleware present' };
+    // core is the shared library layer — present if the response helpers
+    // are loadable. Auth specifically is now its own module (see auth probe).
+    if (existsSync('src/lib') && existsSync('src/utils')) {
+      return { status: 'healthy', detail: 'core libs present' };
     }
-    return { status: 'unavailable', detail: 'auth middleware missing' };
+    return { status: 'unavailable', detail: 'core libs missing' };
+  },
+
+  auth: async () => {
+    if (!existsSync('src/auth/middleware.ts')) {
+      return { status: 'unavailable', detail: 'auth middleware missing' };
+    }
+    if (!existsSync('src/modules/auth/index.ts')) {
+      return { status: 'degraded', detail: 'auth barrel missing — module boundary not declared' };
+    }
+    // Check the Google OIDC flag is consistent with available config
+    try {
+      const { isAuthFeatureEnabled } = await import('../modules/auth/feature-flags');
+      const oidcOn = isAuthFeatureEnabled('auth.google_oidc');
+      const hasClientId = !!process.env.GOOGLE_OAUTH_CLIENT_ID;
+      if (oidcOn && !hasClientId) {
+        return {
+          status: 'degraded',
+          detail: 'auth.google_oidc=on but GOOGLE_OAUTH_CLIENT_ID not set',
+        };
+      }
+      const flagSummary = oidcOn ? 'google_oidc=on' : 'google_oidc=off (no auth path active!)';
+      return {
+        status: oidcOn ? 'healthy' : 'degraded',
+        detail: `auth module loaded; ${flagSummary}`,
+      };
+    } catch (e: any) {
+      return { status: 'degraded', detail: `flags unreadable: ${e?.message}` };
+    }
   },
 
   content: async () => {

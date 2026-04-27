@@ -78,8 +78,13 @@ async function handleSetRole(req: ParsedRequest, res: ServerResponse): Promise<v
   if (!auth) return;
   const body = (req.body as any) || {};
   const new_role: Role = body.new_role;
-  if (!['owner', 'admin', 'teacher', 'student'].includes(new_role)) {
-    return sendJSON(res, { error: 'invalid role' }, 400);
+  // The full allowed set matches the Role union in src/auth/types.ts.
+  // Flag-gated roles (parent, institution) are accepted at the route
+  // layer; the user-store's setRole() rejects them with a clear reason
+  // when their feature flag is off.
+  const VALID_ROLES: Role[] = ['owner', 'admin', 'teacher', 'student', 'parent', 'institution'];
+  if (!VALID_ROLES.includes(new_role)) {
+    return sendJSON(res, { error: 'invalid role', expected: VALID_ROLES }, 400);
   }
   const result = setRole({
     actor_id: auth.user.id,

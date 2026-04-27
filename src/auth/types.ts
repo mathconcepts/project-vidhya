@@ -3,16 +3,21 @@
  * Auth Types & Role Hierarchy
  *
  * Main hierarchy (linear — higher roles inherit lower-role permissions):
- *   anonymous < student < teacher < admin < owner
+ *   anonymous < student < teacher < admin < owner < institution
  *
  * Orthogonal roles (not in the main hierarchy — scoped read access):
  *   - parent: read-only view of linked students' progress
  *             (PENDING.md §11.7)
  *
- * Future: B2B (PENDING.md §9) adds `institution` above owner.
+ * `institution` is the scaffolding for B2B multi-tenant deploys
+ * (PENDING.md §9). When the auth.institution_role feature flag is
+ * off (default), assigning the role is rejected by the user-store —
+ * the type stays in the union so code referencing it compiles, but
+ * runtime behaviour matches "role doesn't exist". Flip the flag on
+ * for development of the B2B tenancy work.
  */
 
-export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'parent';
+export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'parent' | 'institution';
 
 /**
  * Numeric ranking for comparison. Higher = more permissions.
@@ -22,13 +27,19 @@ export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'parent';
  * site-wide access. Parent permissions are scoped per-student via
  * User.guardian_of[]. Code checking "can read student X's progress"
  * must use hasGuardianOf(), not roleGte(...'student').
+ *
+ * Institution is ranked above owner because the B2B model has
+ * institution-admins who manage multiple owners (one per tenant).
+ * Without the auth.institution_role flag this rank is unreachable —
+ * setRole rejects the assignment.
  */
 const ROLE_RANK: Record<Role, number> = {
-  parent: 0,    // orthogonal — scope is per-student, not site-wide
+  parent: 0,        // orthogonal — scope is per-student, not site-wide
   student: 1,
   teacher: 2,
   admin: 3,
   owner: 4,
+  institution: 5,   // PENDING §9 scaffolding — flag-gated
 };
 
 export function roleGte(actual: Role | null, min: Role): boolean {

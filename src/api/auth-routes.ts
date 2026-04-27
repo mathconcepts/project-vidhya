@@ -64,6 +64,16 @@ async function handleConfig(_req: ParsedRequest, res: ServerResponse): Promise<v
 }
 
 async function handleGoogleCallback(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  // Honour the auth.google_oidc feature flag
+  const { isAuthFeatureEnabled } = await import('../modules/auth/feature-flags');
+  if (!isAuthFeatureEnabled('auth.google_oidc')) {
+    return sendJSON(res, {
+      error: 'Google OIDC sign-in is disabled on this deployment (auth.google_oidc=off). ' +
+             'Enable it via the VIDHYA_AUTH_GOOGLE_OIDC env var, or use a different auth path ' +
+             'if one is available.',
+    }, 503);
+  }
+
   const body = (req.body as any) || {};
   const { id_token, link_token } = body;
   if (typeof id_token !== 'string' || id_token.length < 100) {

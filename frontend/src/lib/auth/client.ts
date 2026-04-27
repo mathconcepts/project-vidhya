@@ -9,7 +9,7 @@
 
 const TOKEN_KEY = 'vidhya.auth.token.v1';
 
-export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'parent';
+export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'parent' | 'institution';
 
 export interface ClientUser {
   id: string;
@@ -23,7 +23,7 @@ export interface ClientUser {
   created_at?: string;
 }
 
-const ROLE_RANK: Record<Role, number> = { parent: 0, student: 1, teacher: 2, admin: 3, owner: 4 };
+const ROLE_RANK: Record<Role, number> = { parent: 0, student: 1, teacher: 2, admin: 3, owner: 4, institution: 5 };
 
 export function roleGte(actual: Role | null | undefined, min: Role): boolean {
   if (!actual) return false;

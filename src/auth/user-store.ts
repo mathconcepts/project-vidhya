@@ -15,6 +15,7 @@
 import crypto from 'crypto';
 import { roleGte, type User, type Role } from './types';
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { isAuthFeatureEnabled } from '../modules/auth/feature-flags';
 
 const STORE_PATH = '.data/users.json';
 const ORG_ID = 'default';
@@ -158,6 +159,16 @@ export function setRole(params: {
 
   // Can't demote yourself
   if (actor.id === target.id) return { ok: false, reason: 'cannot change own role' };
+
+  // Honour role-feature flags. The flag module reads env vars once at
+  // boot and exports a sync getter, so a top-level static import is
+  // safe and avoids the tsx-ESM `eval('require')` trap.
+  if (params.new_role === 'parent' && !isAuthFeatureEnabled('auth.parent_role')) {
+    return { ok: false, reason: 'parent role is disabled on this deployment (auth.parent_role=off)' };
+  }
+  if (params.new_role === 'institution' && !isAuthFeatureEnabled('auth.institution_role')) {
+    return { ok: false, reason: 'institution role is disabled on this deployment (auth.institution_role=off — scaffolding only, see PENDING.md §9)' };
+  }
 
   // Only owner can create/demote owners
   if ((params.new_role === 'owner' || target.role === 'owner') && actor.role !== 'owner') {

@@ -19,6 +19,8 @@ import { ServerResponse } from 'http';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { checkRateLimit } from '../lib/rate-limit';
+import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
+import { requireAuth } from '../auth/middleware';
 import { getLlmForRole, embedText } from '../llm/runtime';
 
 function sendError(res: ServerResponse, status: number, message: string) {
@@ -31,48 +33,23 @@ function sendError(res: ServerResponse, status: number, message: string) {
 // LLM-config headers. Endpoints stay at /api/gemini/* for backward
 // compatibility — the URL path doesn't dictate which provider serves
 // the request.
-
-/**
- * Resolve an actor id for rate-limit bucketing on these unauthenticated
- * endpoints. Priority order:
- *
- *   1. The body's `sessionId` if the client supplied one
- *   2. The X-Forwarded-For IP (first hop, in case of comma-separated
- *      proxy chain)
- *   3. The remote address from socket
- *   4. Literal 'anon' fallback
- *
- * SessionId-as-actor is the most useful — most public flows pass one
- * for state continuity. IP fallback works for genuinely anonymous
- * single-page hits but is shared across NAT'd networks. The 'anon'
- * fallback means a misconfigured request lands all spam in one
- * bucket — strictly more conservative than no rate limit.
- */
-function getProxyActor(req: ParsedRequest): string {
-  const body = (req.body as any) || {};
-  if (typeof body.sessionId === 'string' && body.sessionId.trim()) {
-    return `session:${body.sessionId.trim()}`;
-  }
-  const xff = req.headers['x-forwarded-for'];
-  const ip = typeof xff === 'string' ? xff.split(',')[0].trim() : '';
-  if (ip) return `ip:${ip}`;
-  // ParsedRequest exposes raw socket via the Node request — best-effort
-  const socketIp = (req as any).socket?.remoteAddress
-                ?? (req as any).connection?.remoteAddress
-                ?? '';
-  if (socketIp) return `ip:${socketIp}`;
-  return 'anon';
-}
+//
+// Auth: as of this commit all 5 endpoints require an authenticated user.
+// Anonymous calls return 401. The previous unauthenticated state was a
+// real cost-leak (anyone hitting the deployment URL spent the operator's
+// tokens) flagged in PRODUCTION.md. With auth in place, the rate-limit
+// actor becomes `user:${user.id}` and per-user budget caps apply.
 
 /**
  * Single-line rate-limit guard. Returns true when the request should
  * proceed; false when the response has already been sent (429).
  *
- * This wraps checkRateLimit so each handler stays a single readable
- * block. The shape mirrors how chat-routes.ts uses checkRateLimit.
+ * Now that auth is required upstream, the actor is the authenticated
+ * user — same key the chat handler uses, so a user's chat + gemini-proxy
+ * traffic share buckets where appropriate. Pass the user id explicitly
+ * since it's resolved once per handler.
  */
-function rlGuard(endpoint: string, req: ParsedRequest, res: ServerResponse): boolean {
-  const actor = getProxyActor(req);
+function rlGuard(endpoint: string, actor: string, res: ServerResponse): boolean {
   const rl = checkRateLimit(endpoint, actor);
   if (!rl.allowed) {
     res.setHeader('Retry-After', String(Math.ceil((rl.retry_after_ms ?? 1000) / 1000)));
@@ -86,12 +63,52 @@ function rlGuard(endpoint: string, req: ParsedRequest, res: ServerResponse): boo
   return true;
 }
 
+/**
+ * Reserve a budget for an LLM call. Returns the reservation amount
+ * if allowed, null if budget exceeded (and sends 429). Caller is
+ * responsible for one of `recordUsage` (success path) or
+ * `cancelReservation` (failure path).
+ *
+ * Estimates per endpoint, in tokens (input + output, mixed pricing
+ * approximation — exact token counts vary per provider but the
+ * budget cap is in our normalized "tokens" unit):
+ *
+ *   classify-error    ~1500 tokens (small JSON in/out)
+ *   generate-problem  ~3000 tokens (does 2 calls — gen + verify)
+ *   embed             ~200  tokens (cheap, but counted)
+ *   vision-ocr        ~2000 tokens (image input weight)
+ *   chat              ~4000 tokens (longer responses, multi-turn)
+ */
+function budgetGuard(
+  endpoint: string,
+  actor: string,
+  estTokens: number,
+  res: ServerResponse,
+): number | null {
+  const result = tryReserveTokens(actor, estTokens);
+  if (!result.allowed) {
+    sendJSON(res, {
+      error: 'budget_exceeded',
+      endpoint,
+      detail: `daily token budget exceeded — ${result.used_today}/${result.cap} tokens used today`,
+      remaining: result.remaining,
+    }, 429);
+    return null;
+  }
+  return estTokens;
+}
+
 // ============================================================================
 // POST /api/gemini/classify-error
 // ============================================================================
 
 async function handleClassifyError(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!rlGuard('gemini.classify-error', req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const actor = `user:${auth.user.id}`;
+
+  if (!rlGuard('gemini.classify-error', actor, res)) return;
+
   const body = req.body as any;
   const { problem, studentAnswer, correctAnswer, timeTakenMs } = body || {};
   if (!problem || !studentAnswer || !correctAnswer) return sendError(res, 400, 'problem, studentAnswer, correctAnswer required');
@@ -109,6 +126,9 @@ async function handleClassifyError(req: ParsedRequest, res: ServerResponse): Pro
       corrective_hint: 'Review the topic and try again.',
     });
   }
+
+  const reservation = budgetGuard('gemini.classify-error', actor, 1500, res);
+  if (reservation === null) return;
 
   const prompt = `You are an expert math error diagnostician.
 Classify this error. Respond ONLY with JSON (no markdown):
@@ -128,12 +148,19 @@ Correct answer: ${correctAnswer}
 ${timeTakenMs ? `Time: ${Math.round(timeTakenMs / 1000)}s` : ''}`;
 
   const text = await llm.generate(prompt);
-  if (!text) return sendError(res, 500, 'Classification failed: LLM returned no response');
+  if (!text) {
+    cancelReservation(actor, reservation);
+    return sendError(res, 500, 'Classification failed: LLM returned no response');
+  }
   try {
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
+    // Reconcile actual usage. Rough rule: 1 token ≈ 4 chars (input+output).
+    const actualTokens = Math.ceil((prompt.length + text.length) / 4);
+    recordUsage(actor, actualTokens, reservation);
     sendJSON(res, parsed);
   } catch (err) {
+    cancelReservation(actor, reservation);
     sendError(res, 500, `Classification failed: bad JSON from LLM`);
   }
 }
@@ -143,13 +170,22 @@ ${timeTakenMs ? `Time: ${Math.round(timeTakenMs / 1000)}s` : ''}`;
 // ============================================================================
 
 async function handleGenerateProblem(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!rlGuard('gemini.generate-problem', req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const actor = `user:${auth.user.id}`;
+
+  if (!rlGuard('gemini.generate-problem', actor, res)) return;
+
   const body = req.body as any;
   const { conceptId, conceptLabel, conceptDescription, difficulty, targetErrorType, format } = body || {};
   if (!conceptId) return sendError(res, 400, 'conceptId required');
 
   const llm = await getLlmForRole('json', req.headers);
   if (!llm) return sendError(res, 503, 'No LLM provider configured');
+
+  // Two LLM calls (gen + verify), so reservation is double the per-call estimate
+  const reservation = budgetGuard('gemini.generate-problem', actor, 3000, res);
+  if (reservation === null) return;
 
   const diffLabel = difficulty < 0.33 ? 'easy' : difficulty < 0.66 ? 'medium' : 'hard';
 
@@ -169,7 +205,10 @@ Respond ONLY with JSON (no markdown):
 }`;
 
   const text = await llm.generate(prompt);
-  if (!text) return sendError(res, 500, 'Generation failed: LLM returned no response');
+  if (!text) {
+    cancelReservation(actor, reservation);
+    return sendError(res, 500, 'Generation failed: LLM returned no response');
+  }
   try {
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
@@ -189,8 +228,13 @@ Problem: ${parsed.question_text}`;
       || normalize(expected) === normalize(verifiedAnswer)
       || (!isNaN(numE) && !isNaN(numA) && Math.abs(numE - numA) < 0.001);
 
+    // Reconcile both calls together
+    const actualTokens = Math.ceil((prompt.length + text.length + verifyPrompt.length + verifyText.length) / 4);
+    recordUsage(actor, actualTokens, reservation);
+
     sendJSON(res, { ...parsed, verified, verification_answer: verifiedAnswer });
   } catch (err) {
+    cancelReservation(actor, reservation);
     sendError(res, 500, `Generation failed: bad JSON from LLM`);
   }
 }
@@ -200,15 +244,31 @@ Problem: ${parsed.question_text}`;
 // ============================================================================
 
 async function handleEmbed(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!rlGuard('gemini.embed', req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const actor = `user:${auth.user.id}`;
+
+  if (!rlGuard('gemini.embed', actor, res)) return;
+
   const body = req.body as any;
   const { text } = body || {};
   if (!text || typeof text !== 'string') return sendError(res, 400, 'text required');
 
+  const reservation = budgetGuard('gemini.embed', actor, 200, res);
+  if (reservation === null) return;
+
   // The runtime helper picks the best embedding provider from the
   // resolved config. Today: Gemini if available, OpenAI as fallback.
   const result = await embedText(text, req.headers);
-  if (!result) return sendError(res, 503, 'No embedding provider configured');
+  if (!result) {
+    cancelReservation(actor, reservation);
+    return sendError(res, 503, 'No embedding provider configured');
+  }
+
+  // Embeddings consume input tokens only; rough estimate from char count
+  const actualTokens = Math.ceil(text.length / 4);
+  recordUsage(actor, actualTokens, reservation);
+
   sendJSON(res, {
     embedding:   result.embedding,
     dim:         result.dim,
@@ -222,7 +282,12 @@ async function handleEmbed(req: ParsedRequest, res: ServerResponse): Promise<voi
 // ============================================================================
 
 async function handleVisionOCR(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!rlGuard('gemini.vision-ocr', req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const actor = `user:${auth.user.id}`;
+
+  if (!rlGuard('gemini.vision-ocr', actor, res)) return;
+
   const body = req.body as any;
   const { image, mimeType } = body || {};
   if (!image) return sendError(res, 400, 'image (base64) required');
@@ -233,13 +298,24 @@ async function handleVisionOCR(req: ParsedRequest, res: ServerResponse): Promise
   const llm = await getLlmForRole('vision', req.headers);
   if (!llm) return sendError(res, 503, 'No vision-capable provider configured');
 
+  const reservation = budgetGuard('gemini.vision-ocr', actor, 2000, res);
+  if (reservation === null) return;
+
   const text = await llm.generate({
     text: `Extract ALL text visible in this image, preserving mathematical notation in LaTeX.
 If the image shows handwritten work, transcribe it exactly. If a math problem, include the full problem.
 Respond with ONLY the extracted text, no commentary.`,
     image: { mimeType: mimeType || 'image/jpeg', data: image },
   });
-  if (!text) return sendError(res, 500, 'OCR failed: LLM returned no response');
+  if (!text) {
+    cancelReservation(actor, reservation);
+    return sendError(res, 500, 'OCR failed: LLM returned no response');
+  }
+
+  // Vision input is hard to estimate accurately; rough tokens for image + output text
+  const actualTokens = Math.ceil(text.length / 4) + 1500; // ~1500 token-equivalent for the image
+  recordUsage(actor, actualTokens, reservation);
+
   sendJSON(res, { text: text.trim(), character_count: text.trim().length });
 }
 
@@ -248,7 +324,12 @@ Respond with ONLY the extracted text, no commentary.`,
 // ============================================================================
 
 async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!rlGuard('gemini.chat', req, res)) return;
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const actor = `user:${auth.user.id}`;
+
+  if (!rlGuard('gemini.chat', actor, res)) return;
+
   const body = req.body as any;
   const { message, history, systemPrompt, groundingChunks, image, imageMimeType } = body || {};
   if (!message) return sendError(res, 400, 'message required');
@@ -257,6 +338,9 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
   // streaming dispatches via the runtime helper.
   const llm = await getLlmForRole(image ? 'vision' : 'chat', req.headers);
   if (!llm) return sendError(res, 503, 'No LLM provider configured');
+
+  const reservation = budgetGuard('gemini.chat', actor, 4000, res);
+  if (reservation === null) return;
 
   // Build system prompt with optional grounding
   const groundingText = (groundingChunks || []).length > 0
@@ -279,6 +363,8 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
     'Access-Control-Allow-Origin': '*',
   });
 
+  let fullResponse = '';
+  let streamErrored = false;
   try {
     const input: any = {
       text: message,
@@ -288,13 +374,26 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
     if (image) input.image = { mimeType: imageMimeType || 'image/jpeg', data: image };
 
     for await (const chunk of llm.generateStream(input)) {
-      if (chunk) res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+      if (chunk) {
+        fullResponse += chunk;
+        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+      }
     }
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     res.end();
   } catch (err) {
+    streamErrored = true;
     res.write(`data: ${JSON.stringify({ type: 'error', error: (err as Error).message })}\n\n`);
     res.end();
+  }
+
+  // Reconcile budget. If the stream errored before any chunks, it's a
+  // wash — cancel. If chunks streamed, count what was actually delivered.
+  if (streamErrored && fullResponse.length === 0) {
+    cancelReservation(actor, reservation);
+  } else {
+    const actualTokens = Math.ceil((message.length + fullSystem.length + fullResponse.length) / 4);
+    recordUsage(actor, actualTokens, reservation);
   }
 }
 

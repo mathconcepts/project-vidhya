@@ -151,10 +151,10 @@ isolation, per-endpoint isolation, lazy refill. Override via
 - Non-LLM admin endpoints (admin user management, exam authoring,
   curriculum, etc.). These are admin-only so the surface is small;
   rate-limiting them would be belt-and-braces, not load-bearing.
-- The `/api/gemini/*` endpoints are *unauthenticated*. Rate-limit
-  alone doesn't fix the cost-leak fully — an attacker hitting from
-  many IPs gets many buckets. Auth on these endpoints is a known
-  gap documented in the next section.
+
+(Previous note about `/api/gemini/*` being unauthenticated has been
+addressed — see the "LLM proxy endpoints — now authenticated"
+section below.)
 
 **Multi-process gap:**
 The rate limiter is in-memory and per-process. A multi-replica
@@ -192,43 +192,41 @@ There's no defined SLO, no on-call rotation, no documented incident response.
 - For a class-of-fifty deployment, treat outages as best-effort
 - For paying customer deployments, write your own runbook
 
-### Unauthenticated LLM proxy endpoints
+### LLM proxy endpoints — now authenticated
 
-The `/api/gemini/*` family of five endpoints (classify-error,
-generate-problem, embed, vision-ocr, chat) calls Gemini directly
-with no `getCurrentUser` / `requireAuth` check. Anyone hitting the
-deployment URL can spend tokens on the operator's account.
+The `/api/gemini/*` family of five endpoints (`classify-error`,
+`generate-problem`, `embed`, `vision-ocr`, `chat`) was previously
+unauthenticated, which was a real cost-leak. As of `<this-commit>`
+all five require a valid JWT via `requireAuth`. The previous
+"What's still vulnerable" list is closed:
 
-This is partially mitigated by the rate-limit additions above, but
-the underlying gap (no authentication) remains:
+**What's now protected:**
+- All 5 endpoints reject unauthenticated requests with HTTP 401
+  ("authentication required")
+- Rate-limit actor is `user:${user.id}` (was `session:`/`ip:` fallback).
+  A user's chat + gemini-proxy traffic now share buckets where the
+  endpoint matches; coordinated multi-IP attacks no longer get
+  fresh buckets per IP.
+- Per-user daily token budget cap applies (`tryReserveTokens` /
+  `recordUsage` / `cancelReservation` from `src/lib/llm-budget.ts`).
+  Reservations per endpoint, in tokens: classify-error 1500,
+  generate-problem 3000 (does 2 LLM calls), embed 200, vision-ocr
+  2000, chat 4000. Configured via
+  `VIDHYA_LLM_DAILY_TOKEN_CAP_PER_USER` env var (default off).
 
-**Today's protections:**
-- Per-session/IP rate limit on each endpoint (cap depends on
-  endpoint cost)
-- Different endpoints have separate buckets so a vision-OCR drain
-  doesn't lock out classify-error
+**Frontend was updated** to use `authFetch` (which auto-attaches the
+JWT bearer header) for all 4 caller paths in `frontend/src/lib/gbrain/`.
+Pages hosting these calls were already auth-protected at the routing
+layer; the previous bare-`fetch` was an oversight.
 
-**What's still vulnerable:**
-- A coordinated attacker rotating through IPs gets a fresh bucket
-  per IP — total budget drainable proportional to IP count
-- The `/api/gemini/chat` endpoint accepts an arbitrary
-  `systemPrompt` from the body, so a hostile caller can override
-  the system prompt to do anything — not just GATE math tutoring
-- No `user_id` attribution means no per-user daily budget cap on
-  these endpoints
-
-**Mitigations:**
-- The natural fix is `requireAuth` at the top of each handler.
-  Whether to do this depends on whether these endpoints are
-  intentionally public for a demo / preview flow. Operators
-  doing real-user deployments should add auth.
-- A pragmatic interim: add a deployment-wide IP allowlist (e.g.
-  only the Netlify edge for the frontend) at the proxy / load
-  balancer level. Render and Cloudflare both support this.
-- Long-term: either add auth or remove these endpoints if they're
-  no longer used (the protected `/api/chat` endpoint covers the
-  same needs as `/api/gemini/chat` but with full instrumentation
-  + auth).
+**The `systemPrompt` injection vector remains.** `/api/gemini/chat`
+still accepts an arbitrary `systemPrompt` from the body. A hostile
+authenticated caller can override the system prompt to do anything —
+not just GATE math tutoring. With auth in place this is now a per-
+user concern (the operator pays for prompt-injection-driven calls
+out of THAT user's budget), not an unbounded cost-leak. Still worth
+addressing — either by stripping `systemPrompt` from the body and
+hardcoding a fixed system, or by validating it. Deferred.
 
 ### No security audit
 
@@ -330,11 +328,11 @@ inside `src/llm/adapters/gemini.ts` (the Gemini-specific provider
 adapter, which is correct — that's where Gemini-specific logic
 belongs).
 
-### LLM cost controls — partial
+### LLM cost controls
 
 If a deployment has any LLM provider configured (Gemini, Anthropic,
 OpenAI, etc.), every LLM request consumes API credit. Per-user
-budget caps are wired into the authenticated LLM-spending surfaces.
+budget caps are wired into all authenticated LLM-spending surfaces.
 
 **What's protected:**
 - `/api/chat` — per-user daily token budget via `tryReserveTokens` /
@@ -342,18 +340,20 @@ budget caps are wired into the authenticated LLM-spending surfaces.
 - `/api/content-studio` LLM source — same per-user budget,
   6000-token reservation per generation, reconciled to actuals
   post-call (`7578da9`)
+- `/api/gemini/classify-error` — 1500-token reservation per call
+- `/api/gemini/generate-problem` — 3000-token reservation (does
+  2 LLM calls — gen + verify)
+- `/api/gemini/embed` — 200-token reservation
+- `/api/gemini/vision-ocr` — 2000-token reservation
+- `/api/gemini/chat` — 4000-token reservation (streaming;
+  reconciliation deferred until after stream completes — cancel if
+  zero chunks streamed, record actual otherwise)
 
 **What's NOT protected:**
-- `/api/gemini/*` endpoints (classify-error, generate-problem,
-  embed, vision-ocr, chat) — these are unauthenticated, so there's
-  no `user_id` to attribute per-user budget to. Rate-limit alone
-  protects against single-client spam, but a coordinated multi-IP
-  attacker can drain budget. Adding auth to these endpoints (and
-  thus enabling per-user budget) is a known follow-up.
-- Other LLM helpers in `src/gbrain/` and `src/content/resolver.ts`
-  are called *through* the protected surfaces above, so their
-  cost is captured at the entrypoint level. But a future direct-
-  helper handler would bypass the cap. New endpoints must opt in.
+- LLM helpers in `src/gbrain/` and `src/content/resolver.ts` are
+  called *through* the protected surfaces above, so their cost is
+  captured at the entrypoint level. But a future direct-helper
+  handler would bypass the cap. New endpoints must opt in.
 
 **Configuration:**
 - Default OFF (no cap). Opt in via `VIDHYA_LLM_DAILY_TOKEN_CAP_PER_USER`

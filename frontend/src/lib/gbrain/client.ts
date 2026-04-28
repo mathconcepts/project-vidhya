@@ -16,6 +16,7 @@ import {
 } from './db';
 import { embed } from './embedder';
 import { trackAggregate } from './aggregate';
+import { authFetch } from '@/lib/auth/client';
 import {
   createEmptyStudentModel, updateMasteryPure, updateConfidenceCalibrationPure,
   getMasterySummaryPure, getTopicMasteryPure, getZPDConceptPure,
@@ -93,7 +94,7 @@ export async function recordAttempt(input: AttemptInput): Promise<AttemptResult>
   let errorDiagnosis: any = null;
   if (!input.isCorrect && input.problem && input.studentAnswer && input.correctAnswer) {
     try {
-      const res = await fetch('/api/gemini/classify-error', {
+      const res = await authFetch('/api/gemini/classify-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -226,7 +227,7 @@ export async function generateProblemClient(
   }
 
   // Generate via stateless proxy
-  const res = await fetch('/api/gemini/generate-problem', {
+  const res = await authFetch('/api/gemini/generate-problem', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ conceptId, conceptLabel, difficulty, targetErrorType }),
@@ -302,7 +303,7 @@ ${studentProfile}
 Use LaTeX: inline $..$ and display $$...$$.`;
 
   // Stream
-  const res = await fetch('/api/gemini/chat', {
+  const res = await authFetch('/api/gemini/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

@@ -7,6 +7,7 @@
 
 import { saveMaterial, saveChunk, saveEmbedding, type GBrainDB } from './db';
 import { embed } from './embedder';
+import { authFetch } from '@/lib/auth/client';
 
 export interface ParsedMaterial {
   text: string;
@@ -78,7 +79,7 @@ export async function parseText(file: File): Promise<ParsedMaterial> {
 /** OCR a handwritten note/work image via server Gemini Vision proxy */
 export async function parseImage(file: File): Promise<ParsedMaterial> {
   const base64 = await fileToBase64(file);
-  const res = await fetch('/api/gemini/vision-ocr', {
+  const res = await authFetch('/api/gemini/vision-ocr', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ image: base64, mimeType: file.type }),

@@ -42,6 +42,7 @@
     "demo:start": "bash demo/start.sh",
     "demo:verify": "tsx demo/verify.ts",
     "verify:teaching": "tsx scripts/verify-teaching-loop.ts",
+    "verify:budget": "tsx scripts/verify-llm-budget.ts",
     "demo:log": "tsx demo/log.ts",
     "demo:channel-setup": "tsx demo/channel-setup.ts",
     "demo:channel-link": "tsx demo/channel-link.ts",

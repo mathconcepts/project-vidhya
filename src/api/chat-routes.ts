@@ -19,6 +19,8 @@ import { runTaskReasoner, buildContentGeneratorPrompt } from '../gbrain/task-rea
 import { getCurrentUser } from '../auth/middleware';
 import { openTurn, closeTurn, type MasterySnapshot } from '../modules/teaching';
 import { classifyIntent } from '../content/router';
+import { checkRateLimit } from '../lib/rate-limit';
+import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 
@@ -134,6 +136,51 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     return sendError(res, 400, 'sessionId and message are required');
   }
 
+  // ── Rate limit + budget cap protection ────────────────────────────────
+  // Resolve the actor id for both checks. Authenticated users get their
+  // user.id; anonymous traffic gets the sessionId. Both share the same
+  // bucket per actor — an anonymous abuser can't bypass by signing in
+  // under a fresh session.
+  const _actor_for_limits = await getCurrentUser(req);
+  const _actor_id = _actor_for_limits ? _actor_for_limits.user.id : sessionId;
+
+  // Rate limit FIRST — cheaper to reject than the budget check.
+  const rl = checkRateLimit('chat', _actor_id);
+  if (!rl.allowed) {
+    res.writeHead(429, {
+      'Content-Type': 'application/json',
+      'Retry-After': String(Math.ceil(rl.retry_after_ms / 1000)),
+    });
+    res.end(JSON.stringify({
+      error: 'rate_limit_exceeded',
+      detail: `too many chat requests; retry in ${Math.ceil(rl.retry_after_ms / 1000)}s`,
+      retry_after_ms: rl.retry_after_ms,
+    }));
+    return;
+  }
+
+  // Budget cap. Reserve a conservative estimate; reconcile after the
+  // call. The estimate counts the input length; output length is added
+  // post-stream. ~250 tokens per 1k chars is a rough conversion for
+  // English; we round up and add 2k for the system prompt.
+  const _est_input_tokens = Math.ceil((message?.length ?? 0) / 4) + 2000;
+  // Estimate output tokens too — chat responses average ~800 tokens.
+  const _est_total_tokens = _est_input_tokens + 800;
+  const _budget = tryReserveTokens(_actor_id, _est_total_tokens);
+  if (!_budget.allowed) {
+    res.writeHead(429, {
+      'Content-Type': 'application/json',
+    });
+    res.end(JSON.stringify({
+      error: 'daily_budget_exceeded',
+      detail: 'your daily LLM token budget for this deployment is used up; resets at UTC midnight',
+      used_today: _budget.used_today,
+      cap: _budget.cap,
+      remaining: _budget.remaining,
+    }));
+    return;
+  }
+
   const model = getChatModel();
   if (!model) {
     // LLM unavailable — record a degraded-mode turn so the failure is
@@ -141,6 +188,7 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     // "why isn't chat working?" sees zero traces despite real traffic.)
     // Open + close immediately because we know the turn is complete:
     // no response will follow this.
+    cancelReservation(_actor_id, _est_total_tokens);   // free the reservation
     try {
       const auth = await getCurrentUser(req);
       const student_id = auth ? auth.user.id : `anon_${sessionId}`;
@@ -281,6 +329,9 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
   // anon_<sessionId> per the existing convention used by notebook-insight.
   let _turn_id: string | null = null;
   const _turn_started_at = Date.now();
+  // Track response length for token-usage reconciliation; populated
+  // by the streaming loop, read by recordUsage at the tail.
+  let _response_chars = 0;
   try {
     const auth = await getCurrentUser(req);
     const student_id = auth ? auth.user.id : `anon_${sessionId}`;
@@ -368,6 +419,7 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
       const text = chunk.text();
       if (text) {
         fullResponse += text;
+        _response_chars = fullResponse.length;
         res.write(`data: ${JSON.stringify({ type: 'chunk', content: text })}\n\n`);
       }
     }
@@ -410,6 +462,11 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
         });
       } catch { /* swallow — turn close must not break the request */ }
     }
+    // Free the budget reservation since the call effectively didn't
+    // happen end-to-end. Conservative — if the LLM consumed tokens
+    // before the error, we under-report; budget over-runs slightly
+    // rather than denying recovery.
+    cancelReservation(_actor_id, _est_total_tokens);
   }
 
   // Close the turn on the success path. If we already errored above, the
@@ -424,6 +481,18 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
       });
     } catch { /* swallow */ }
   }
+
+  // Reconcile actual token usage against the reservation. We don't get
+  // a precise token count from the streaming Gemini API today, so we
+  // estimate from response length: ~250 tokens per 1k chars of English
+  // (≈ 1 token per 4 chars). Add the input estimate to capture both
+  // sides of the call. If a future Gemini SDK version returns a usage
+  // object, swap this for the exact value.
+  try {
+    const _output_tokens_est = Math.ceil(_response_chars / 4);
+    const _actual = _est_input_tokens + _output_tokens_est;
+    recordUsage(_actor_id, _actual, _est_total_tokens);
+  } catch { /* swallow — budget tracking must not break the request */ }
 
   res.end();
 }

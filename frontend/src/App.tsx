@@ -52,6 +52,7 @@ const SignInPage = lazy(() => import('@/pages/gate/SignInPage'));
 const UserAdminPage = lazy(() => import('@/pages/gate/UserAdminPage'));
 const FeaturesPage = lazy(() => import('@/pages/gate/FeaturesPage'));
 const ContentStudioPage = lazy(() => import('@/pages/gate/ContentStudioPage'));
+const FounderDashboardPage = lazy(() => import('@/pages/gate/FounderDashboardPage'));
 const TurnsPage = lazy(() => import('@/pages/gate/TurnsPage'));
 const OwnerSettingsPage = lazy(() => import('@/pages/gate/OwnerSettingsPage'));
 const TeacherRosterPage = lazy(() => import('@/pages/gate/TeacherRosterPage'));
@@ -116,6 +117,7 @@ export default function App() {
           <Route path="admin/users" element={<UserAdminPage />} />
           <Route path="admin/features" element={<FeaturesPage />} />
           <Route path="admin/content-studio" element={<ContentStudioPage />} />
+          <Route path="admin/founder" element={<FounderDashboardPage />} />
           <Route path="turns" element={<TurnsPage />} />
           <Route path="turns/:id" element={<TurnsPage />} />
           <Route path="owner/settings" element={<OwnerSettingsPage />} />

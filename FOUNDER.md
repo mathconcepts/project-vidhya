@@ -59,6 +59,7 @@ If you cloned this repo today and want to ship something users could actually us
 [ ] Set up Google OAuth — go to console.cloud.google.com, create credentials, paste GOOGLE_OAUTH_CLIENT_ID
 [ ] Tweet / post on r/learnmath / share with one IRL student — get one user
 [ ] Watch them use it. Take notes. Don't ship features without watching at least one user use the current ones
+[ ] Bookmark `/gate/admin/founder` on your auto-promoted admin account — single-screen dashboard with users, revenue, activity, LLM cost, module health
 ```
 
 Total time: ~1 hour. Total cost: $10 (domain).
@@ -177,11 +178,13 @@ A solo founder is the on-call for everything. Specific things to set up:
 **Incident response runbook** — you are this. Write down:
 
 - What does "down" mean? (API returns 5xx for 5 consecutive minutes)
-- What do you check first? (`/api/orchestrator/health`, Render dashboard)
+- What do you check first? (`/api/orchestrator/health`, Render dashboard, the `/gate/admin/founder` page for the at-a-glance view)
 - Who do you tell? (status page; email to active users if more than an hour)
 - When do you escalate? (when you've spent an hour without progress, ask for help in your community)
 
 Even a 10-line runbook beats none. Iterate after the first incident.
+
+**The founder dashboard at `/gate/admin/founder`** surfaces the metrics that matter (users, revenue, activity, LLM cost, module health) on one screen. Bookmark it. The same data is available at `GET /api/operator/dashboard` if you'd rather curl from a script or wire to your monitoring tool.
 
 ---
 

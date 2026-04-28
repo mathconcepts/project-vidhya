@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Loader2, RefreshCw, AlertCircle, AlertTriangle,
   Users, DollarSign, Activity, Coins, Server, FileText,
+  UserPlus,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +52,11 @@ interface FounderDashboard {
     plans_run_7d:     number;
     library_views_7d: number;
     studio_drafts_7d: number;
+  };
+  lifecycle: {
+    signups_30d:         number;
+    channels_linked_30d: number;
+    role_changes_30d:    number;
   };
   cost: {
     llm_tokens_7d:        number;
@@ -170,6 +176,9 @@ export default function FounderDashboardPage() {
             <ActivityCard activity={data.activity} />
             <CostCard cost={data.cost} />
           </div>
+
+          {/* Lifecycle events — full width with 3 inline metrics */}
+          <LifecycleCard lifecycle={data.lifecycle} />
 
           {/* Module health table */}
           <HealthTable
@@ -319,6 +328,64 @@ function CostCard({ cost }: { cost: FounderDashboard['cost'] }) {
         </div>
       )}
     </Card>
+  );
+}
+
+// ─── Lifecycle card — full-width, 3 inline metrics ───────────────────
+//
+// Surfaces signup / channel-link / role-change events from the operator
+// analytics adapter. Different visual treatment from the 4-col primary
+// cards because the data is sparser (most deployments will see a few
+// signups per week, not per minute) — a full-width strip with three
+// inline metrics fits better than a tall card with a single big number.
+
+function LifecycleCard({ lifecycle }: { lifecycle: FounderDashboard['lifecycle'] }) {
+  const total = lifecycle.signups_30d + lifecycle.channels_linked_30d + lifecycle.role_changes_30d;
+  return (
+    <div className="bg-surface-900 border border-surface-800 rounded p-4">
+      <div className="flex items-center gap-2 text-xs text-surface-400 mb-3">
+        <UserPlus className="w-4 h-4" />
+        <span className="font-medium uppercase tracking-wider">
+          Lifecycle events (30d)
+        </span>
+      </div>
+      {total === 0 ? (
+        <div className="text-xs text-surface-500">
+          No lifecycle events recorded in the last 30 days.{' '}
+          <span className="text-surface-600">
+            Events fire on signup, channel-link, and role-change. New activity will populate this section over time.
+          </span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <LifecycleStat
+            label="Signups"
+            value={lifecycle.signups_30d}
+            hint="new users registered"
+          />
+          <LifecycleStat
+            label="Channels linked"
+            value={lifecycle.channels_linked_30d}
+            hint="Telegram / WhatsApp connections"
+          />
+          <LifecycleStat
+            label="Role changes"
+            value={lifecycle.role_changes_30d}
+            hint="admin promoted / demoted users"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LifecycleStat({ label, value, hint }: { label: string; value: number; hint: string }) {
+  return (
+    <div>
+      <div className="text-2xl font-semibold text-surface-100">{value.toLocaleString()}</div>
+      <div className="text-xs text-surface-300 mt-0.5">{label}</div>
+      <div className="text-xs text-surface-500">{hint}</div>
+    </div>
   );
 }
 

@@ -184,7 +184,9 @@ A solo founder is the on-call for everything. Specific things to set up:
 
 Even a 10-line runbook beats none. Iterate after the first incident.
 
-**The founder dashboard at `/gate/admin/founder`** surfaces the metrics that matter (users, revenue, activity, LLM cost, module health) on one screen. Bookmark it. The same data is available at `GET /api/operator/dashboard` if you'd rather curl from a script or wire to your monitoring tool.
+**The founder dashboard at `/gate/admin/founder`** surfaces the metrics that matter (users, revenue, activity, LLM cost, lifecycle events, module health) on one screen. Bookmark it. The same data is available at `GET /api/operator/dashboard` if you'd rather curl from a script or wire to your monitoring tool.
+
+**Lifecycle events** are recorded automatically into `.data/analytics.jsonl` whenever a user signs up, links a channel (Telegram/WhatsApp), or has their role changed by an admin. The dashboard's "Lifecycle events (30d)" section shows counts; the raw JSONL has full attribution (which actor changed which user, what email domain signed up, etc.). PII-aware by default: email is never stored in events, only the domain. To pipe events to an external tool (PostHog, Plausible, Segment), swap `localAnalyticsAdapter` in `src/operator/analytics.ts` for a custom implementation — the producers in `src/auth/user-store.ts` will continue to call it transparently.
 
 ---
 

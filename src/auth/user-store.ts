@@ -21,6 +21,35 @@ const STORE_PATH = '.data/users.json';
 const ORG_ID = 'default';
 
 // ============================================================================
+// Lifecycle event capture (fire-and-forget)
+// ============================================================================
+//
+// Records signup / channel_linked / role_changed events into the operator
+// analytics adapter. Lazy import to avoid a hard dep cycle (operator/
+// already imports auth/user-store for listUsers; this is the reverse
+// direction). Errors are swallowed — analytics is non-load-bearing,
+// must never break the request path.
+//
+// The adapter today is local-JSONL (writes to .data/analytics-events.jsonl).
+// When an operator wires PostHog / Plausible / Segment via a custom
+// adapter, these events automatically flow there too — no further
+// code changes needed.
+
+function fireLifecycleEvent(event_type: string, actor_id: string | undefined, props?: Record<string, any>) {
+  // Async, fire-and-forget. Don't await; don't surface errors.
+  import('../operator/analytics')
+    .then(({ localAnalyticsAdapter }) => {
+      localAnalyticsAdapter.recordEvent({
+        event_type,
+        at: new Date().toISOString(),
+        actor_id,
+        props,
+      }).catch(() => {});
+    })
+    .catch(() => {});
+}
+
+// ============================================================================
 // File layout
 // ============================================================================
 
@@ -141,6 +170,20 @@ export function upsertFromGoogle(params: {
   store.users[user.id] = user;
   if (isBootstrap) store.owner_id = user.id;
   writeStore(store);
+
+  // Fire signup event. props captures attribution useful for funnel
+  // analysis: was this the bootstrap (owner) signup, or a regular
+  // student. Email domain is captured but not the email itself —
+  // PII-aware by default; an operator who wants full email can
+  // inspect users.json directly.
+  const emailDomain = params.email.split('@')[1] || 'unknown';
+  fireLifecycleEvent('signup', user.id, {
+    role: user.role,
+    is_bootstrap: isBootstrap,
+    email_domain: emailDomain,
+    channels: user.channels,
+  });
+
   return user;
 }
 
@@ -186,6 +229,7 @@ export function setRole(params: {
   }
 
   // Promotion/demotion between teacher and student is always fine for admins
+  const fromRole = target.role;
   target.role = params.new_role;
   // When demoting teacher → student, unlink their students
   if (params.new_role !== 'teacher') {
@@ -197,6 +241,18 @@ export function setRole(params: {
   }
   // When demoting student out of a teacher's roster, just leave it
   writeStore(store);
+
+  // Fire only on actual change (not on no-op same-role assignments).
+  // The event's actor_id is the TARGET user (whose role changed) for
+  // consistency with signup/channel_linked. The acting admin is in props.
+  if (fromRole !== params.new_role) {
+    fireLifecycleEvent('role_changed', target.id, {
+      from_role: fromRole,
+      to_role: params.new_role,
+      changed_by: params.actor_id,
+    });
+  }
+
   return { ok: true, user: target };
 }
 
@@ -276,8 +332,17 @@ export function linkChannel(params: {
       return { ok: false, reason: 'channel already linked to another user' };
     }
   }
-  if (!user.channels.includes(channelKey)) user.channels.push(channelKey);
-  writeStore(store);
+  if (!user.channels.includes(channelKey)) {
+    user.channels.push(channelKey);
+    writeStore(store);
+    // Fire event only on actual link (not on idempotent re-link)
+    fireLifecycleEvent('channel_linked', user.id, {
+      channel: params.channel,
+      total_channels: user.channels.length,
+    });
+  } else {
+    writeStore(store);
+  }
   return { ok: true };
 }
 

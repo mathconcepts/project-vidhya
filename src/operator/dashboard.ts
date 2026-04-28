@@ -113,6 +113,38 @@ export async function buildDashboard(): Promise<FounderDashboard> {
     caveats.push(`content-studio read failed: ${e?.message ?? 'unknown'}`);
   }
 
+  // ─── Lifecycle events ─────────────────────────────────────────
+  //
+  // Counts of signup / channel_linked / role_changed events from the
+  // analytics adapter. These events are fired from src/auth/user-store
+  // as fire-and-forget. Today the local-JSONL adapter persists them
+  // to .data/analytics-events.jsonl; an operator wiring PostHog /
+  // Plausible / Segment via a custom adapter would automatically
+  // see them flow there too.
+  const lifecycle = {
+    signups_30d:        0,
+    channels_linked_30d: 0,
+    role_changes_30d:   0,
+  };
+  try {
+    const { localAnalyticsAdapter } = await import('./analytics');
+    if (localAnalyticsAdapter.countByType) {
+      const counts = await localAnalyticsAdapter.countByType({ since: daysAgoIso(30) });
+      lifecycle.signups_30d         = counts['signup']         ?? 0;
+      lifecycle.channels_linked_30d = counts['channel_linked'] ?? 0;
+      lifecycle.role_changes_30d    = counts['role_changed']   ?? 0;
+      // Caveat if analytics is wired but no events recorded yet — usually
+      // because the deployment is fresh and no signups have happened YET,
+      // or because the wiring point in user-store is broken
+      const total = lifecycle.signups_30d + lifecycle.channels_linked_30d + lifecycle.role_changes_30d;
+      if (total === 0 && users.total > 0) {
+        caveats.push('analytics events file is empty despite users existing — events fire only on new signups/role-changes after this commit; older users won\'t have events. New activity will populate over time.');
+      }
+    }
+  } catch (e: any) {
+    caveats.push(`analytics read failed: ${e?.message ?? 'unknown'}`);
+  }
+
   // ─── Cost ──────────────────────────────────────────────────────
   // We don't have a global usage counter today — only per-user. The
   // honest answer: aggregate per-user usage from the budget module
@@ -163,6 +195,7 @@ export async function buildDashboard(): Promise<FounderDashboard> {
     users,
     revenue,
     activity,
+    lifecycle,
     cost,
     health,
     caveats,

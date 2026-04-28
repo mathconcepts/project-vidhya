@@ -119,6 +119,13 @@ export interface FounderDashboard {
     library_views_7d:    number;
     studio_drafts_7d:    number;
   };
+  /** Lifecycle events from the operator analytics adapter (signup,
+   *  channel_linked, role_changed). Last 30 days. */
+  lifecycle: {
+    signups_30d:          number;
+    channels_linked_30d:  number;
+    role_changes_30d:     number;
+  };
   /** Cost. */
   cost: {
     /** Estimated LLM spend across all users in the last 7d, in tokens. */

@@ -41,7 +41,7 @@ Honest accounting, not aspirational. From [`PENDING.md`](./PENDING.md) and [`FEA
 - Spaced repetition engine
 - 3 content delivery modes: web app, Telegram channel, WhatsApp channel
 - 56 agents organised into a 4-tier org chart
-- 10 modules (`core`, `auth`, `content`, `rendering`, `channels`, `learning`, `exams`, `lifecycle`, `teaching`, `orchestrator`)
+- 11 modules (`core`, `auth`, `content`, `rendering`, `channels`, `learning`, `exams`, `lifecycle`, `teaching`, `content-library`, `orchestrator`)
 - 6 deployment profiles (`minimal`, `full`, `channel-only`, `institutional-b2b`, `demo`, `content-author`)
 - Feature flags for the auth module (Google OIDC, demo seed, parent role, institution role)
 
@@ -77,6 +77,7 @@ Topic-specific docs that go deeper than the masters:
 - **[DEMO.md](./DEMO.md)** — multi-role demo walkthrough
 - **[AUTH.md](./AUTH.md)** — auth module surface (5 endpoints, 5 admin endpoints, JWT, Google OIDC, feature flags)
 - **[TEACHING.md](./TEACHING.md)** — the teaching loop (TeachingTurn schema, scenarios, instrumentation contract)
+- **[LIBRARY.md](./LIBRARY.md)** — the content library (LibraryEntry schema, seed + additions, cascade tier, extension)
 - **[CONTENT.md](./CONTENT.md)** — 7-layer content architecture, the 3 modes of `content.pin`
 - **[EXAMS.md](./EXAMS.md)** — exam inventory and the adapter pattern
 - **[MODULARISATION.md](./MODULARISATION.md)** — the 8-module / 20-tier / 6-profile registry

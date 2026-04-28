@@ -56,7 +56,7 @@ and decides which tiers to wire up on a given instance.
 
 ---
 
-## The 10 modules — current natural boundaries
+## The 11 modules — current natural boundaries
 
 Grounded in `src/` directory audit. Total ~21,000 LOC.
 
@@ -252,7 +252,60 @@ listed there; four currently detected (cold start, ZPD candidate,
 repeated error, no-LLM degraded), three deferred (plateau, stale
 content, verification failure).
 
-### 10. `orchestrator` — the master (new)
+### 10. `content-library` — runtime-augmentable content store
+
+**What's in it:** `src/content-library/types.ts` (LibraryEntry schema),
+`src/content-library/store.ts` (two-source loader + in-memory index +
+add API), `src/modules/content-library/index.ts` (public barrel),
+`src/modules/content-library/feature-flags.ts` (one flag),
+`src/api/content-library-routes.ts` (3 HTTP endpoints),
+`data/content-library/seed/<concept_id>/{meta.yaml, explainer.md,
+worked-example.md}` (committed seed concepts).
+
+**LOC:** ~750 (types + store + barrel + flags + routes + tests)
+
+**Boundary:** the content-library is a passive data store of teaching
+materials keyed by concept_id. Two sources: seeds committed in
+`data/content-library/seed/` (ships with the repo) and additions
+appended to `.data/content-library-additions.jsonl` at runtime via
+POST. In-memory Map index built at boot, O(1) lookup.
+
+The library does NOT generate content (that's the LLM in the
+`generated` cascade tier), does NOT decide which content to serve a
+student (that's the gbrain task-reasoner), and does NOT own routing
+(that's `src/content/router.ts`). It plugs into the router cascade as
+the second tier:
+
+```
+1. uploads / wolfram → 2. subscription → 3. library → 4. bundle →
+5. community → 6. generated → 7. declined
+```
+
+**Why it earns a separate module:** the user originally asked for
+"GBrain to contain predefined teaching materials." Pushed back —
+content is a different concern from the cognitive layer (mastery,
+motivation, error patterns). Putting them in the same module would
+couple two things that are clean today, make GBrain harder to swap,
+and violate the modular boundary DESIGN.md argued for. The cleaner
+shape is "GBrain consults content-library at decision time." Today
+the consult happens at the router layer; future work could let the
+task-reasoner consult the library directly.
+
+**Owning agents:** `content-curator-manager`, `tier-0-bundle-specialist`.
+
+**Subrepo candidate:** NOT recommended. The two surfaces (this module
++ `modules/project-vidhya-content/`) serve different purposes — one
+is runtime-augmentable starter content shipped with the deployment;
+the other is the community git-contribution surface. They use the
+same file format so concepts can move between them.
+
+**Contract reference:** [LIBRARY.md](./LIBRARY.md). Three endpoints,
+one feature flag (`content_library.user_authoring`, default off),
+seed-vs-additions override semantics, and the worked-example-vs-
+explainer selection rule for `practice-problem` and
+`walkthrough-problem` intents.
+
+### 11. `orchestrator` — the master (new)
 
 **What's in it (new):** `src/orchestrator/registry.ts`,
 `src/orchestrator/composer.ts`, `src/orchestrator/health.ts`.

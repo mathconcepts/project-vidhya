@@ -31,6 +31,7 @@ project-vidhya/
 ├── DEPLOY-NETLIFY.md         ← Netlify+Render hybrid
 ├── AUTH.md                   ← Auth module surface
 ├── TEACHING.md               ← The teaching loop contract
+├── LIBRARY.md                ← The content library contract
 ├── CONTENT.md                ← Content engine internals
 ├── EXAMS.md                  ← Exam adapters
 ├── DEMO.md                   ← Demo walkthrough
@@ -66,8 +67,11 @@ src/
 │   ├── auth/                 ← Auth module barrel + flag implementation
 │   │   ├── index.ts          ← Public re-exports — import from here
 │   │   └── feature-flags.ts  ← env-var driven flags, read once at boot
-│   └── teaching/             ← Teaching module barrel
-│       └── index.ts          ← Public re-exports for openTurn / closeTurn / etc.
+│   ├── teaching/             ← Teaching module barrel
+│   │   └── index.ts          ← Public re-exports for openTurn / closeTurn / etc.
+│   └── content-library/      ← Content library barrel
+│       ├── index.ts          ← Public re-exports for getEntry / addEntry / etc.
+│       └── feature-flags.ts  ← user_authoring flag
 │
 ├── api/                      ← HTTP route handlers (one file per resource)
 │   ├── auth-routes.ts        ← /api/auth/* (5 routes)
@@ -119,6 +123,10 @@ src/
 
 ├── teaching/                 ← Teaching module
 │   └── turn-store.ts         ← TeachingTurn schema + persistence (.data/teaching-turns.jsonl)
+│
+├── content-library/          ← Content library module
+│   ├── types.ts              ← LibraryEntry schema
+│   └── store.ts              ← Two-source loader (seed + JSONL additions) + in-memory index
 │
 ├── events/                   ← Event bus (signal-bus.ts)
 ├── utils/                    ← Generic utilities
@@ -211,8 +219,8 @@ Confusingly named, totally different:
 
 | Directory | Lifecycle | Source-controlled? | What it holds |
 |---|---|---|---|
-| `data/` | Built into the repo | Yes | Static course content (markdown lecture notes, formula sheets, teaching tips for the 10 GATE EM topics + 4 CAT topics). Updated by content authors. |
-| `.data/` | Runtime, gitignored | No | Live persistence — users.json, plans.json, vector store, chat history, etc. Created at boot. |
+| `data/` | Built into the repo | Yes | Static course content (markdown lecture notes, formula sheets, teaching tips for the 10 GATE EM topics + 4 CAT topics) plus the content-library seed at `data/content-library/seed/<concept_id>/`. Updated by content authors. |
+| `.data/` | Runtime, gitignored | No | Live persistence — users.json, plans.json, vector store, chat history, teaching-turns.jsonl, content-library-additions.jsonl, etc. Created at boot. |
 
 If you delete `.data/`, the next `npm run demo:seed` recreates it. If you delete `data/`, you lose the static lecture content (but `git checkout` brings it back).
 

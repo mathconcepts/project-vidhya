@@ -2,6 +2,204 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-28 (the content library)
+
+Three commits in sequence that add an 11th module: a runtime-
+augmentable, DB-free store of teaching materials. Pre-populated with
+3 starter concepts so a fresh deployment has something to teach with
+on day one. Pluggable via API for admins or LLMs to add new entries
+without committing to git or running a sub-repo sync.
+
+The user originally asked for "GBrain to already contain predefined
+teaching materials." Pushed back — content is a different concern
+from the cognitive layer (mastery, motivation, error patterns).
+Coupling them would make GBrain harder to swap and violate the
+modular boundary. The cleaner shape is "GBrain consults
+content-library at decision time" — which is what the existing
+content router already does, just with a better-stocked place to
+consult. User said go.
+
+### `4df51ba` — module substrate
+
+A new `content-library` module (11th in modules.yaml, `foundation:
+true`). Two sources: seed at `data/content-library/seed/<concept_id>/`
+(committed in git, ships with repo) and additions at
+`.data/content-library-additions.jsonl` (appended at runtime via
+POST). In-memory Map<concept_id, LibraryEntry> built at boot,
+additions override seeds.
+
+The schema mirrors the existing community-content `meta.yaml` shape
+(`modules/project-vidhya-content/concepts/`) — don't invent a parallel
+vocabulary. Difficulty values: `intro | intermediate | advanced`.
+Three starter concepts copied (not moved) from the subrepo into the
+seed dir: calculus-derivatives, complex-numbers,
+linear-algebra-eigenvalues.
+
+One feature flag: `content_library.user_authoring`, default off.
+When on, broadens the POST endpoint to teacher+ (commit 2). Default
+off because there's no moderation flow yet.
+
+Files:
+- `src/content-library/types.ts` — schema (140 LOC)
+- `src/content-library/store.ts` — two-source loader, in-memory index,
+  add API, validation, masteryToDifficulty helper (280 LOC)
+- `src/modules/content-library/{index.ts, feature-flags.ts}` — barrel
+  + flags
+- `data/content-library/seed/{README.md, ...}` — three starter concepts
+- modules.yaml entry, health probe, feature-flag aggregator wiring
+- 14 unit tests covering all ranking vectors, validation,
+  additions-override-seeds, stats, mastery-to-difficulty bands
+
+### `4aea4d2` — HTTP endpoints
+
+Three endpoints. Reads are public (the library is content, not
+personal data); writes go through admin by default with a feature
+flag for teacher+ broadening.
+
+- `GET /api/content-library/concepts` — list summaries, optional
+  `?source=seed|user|llm` filter
+- `GET /api/content-library/concept/:id` — full LibraryEntry
+- `POST /api/content-library/concept` — admin (or teacher+ when
+  flag), creates a runtime addition
+
+Three security choices, all noted at the call site:
+
+1. POST always overrides client-supplied `added_by` with the actor's
+   identity. Spoofing attempts are silently dropped.
+2. POST rejects `source: 'seed'` at the API layer. Seeds come from
+   disk at boot, not from POSTs.
+3. For LLM-tagged adds, the optional `llm_provider` field annotates
+   `added_by` as `llm:<provider> (via <admin-id>)` so the audit
+   trail records both the LLM and the human admin who wired it up.
+   No separate "LLM auth" path — LLMs are wired via admin running a
+   script.
+
+Real bug caught and fixed during test writing: `handleListConcepts`
+read `(req.query as any)?.source` treating `req.query` as a plain
+object. But `req.query` is a `URLSearchParams` in production
+(`gate-server.ts:590`). The buggy access returned undefined silently,
+so `?source=seed` would never filter — every request would return
+all entries. Without the route tests this would have shipped silently
+broken.
+
+11 route tests cover the auth model end-to-end:
+- public reads
+- 401 unauth, 403 student/teacher-flag-off, 201 admin
+- env-var hint in 403 message
+- spoof attempts dropped
+- seed source rejected
+- kebab-case enforcement
+- llm:provider annotation
+
+### (this commit) — router cascade integration + master doc
+
+The library plugs into the existing content router cascade between
+the `subscription` and `bundle` tiers:
+
+```
+1. uploads / wolfram (intent-specific early routes)
+2. subscription      ← user-explicit
+3. library           ← THIS MODULE
+4. bundle            ← legacy shipped content-bundle.json
+5. community         ← unsubscribed community repos
+6. generated         ← LLM live generation
+```
+
+When the router receives a `concept_id`, it calls `getEntry(concept_id)`.
+If found, returns immediately with `source: 'library'` and
+`source_ref: library:<seed|user|llm>:<concept_id>`. If not found, the
+cascade continues to the legacy bundle.
+
+For `practice-problem` and `walkthrough-problem` intents, the library
+prefers the `worked_example_md` body. For all other intents, it
+returns `explainer_md`. Disclosure text reflects the choice and the
+source — a student sees "From the built-in content library —
+explainer (MIT)" for a seed, "From the content library,
+user-contributed — explainer (user-contributed)" for a user-added
+entry.
+
+`RouteRequest` gains two optional fields, `preferred_difficulty` and
+`preferred_exam_id`. These are forward-looking scaffolding — today
+the cascade does exact-match by `concept_id` so the hints don't
+change behaviour. They'll matter when concepts start having multiple
+difficulty entries (e.g. `derivatives-intro` + `derivatives-advanced`).
+
+8 router cascade tests verify:
+- library wins for a seeded concept
+- disclosure varies by source
+- intent → body selection (worked example vs explainer)
+- considered-list ordering (library before bundle)
+- user-contributed disclosure phrasing
+- intent vocab preserved through library hits
+- walkthrough-problem also gets worked example
+
+New `LIBRARY.md` master doc (~340 lines) is the contract:
+- The two sources (seed + additions) with the override rule
+- The full LibraryEntry schema
+- The three API endpoints with their auth model
+- The router cascade tier + intent → body selection
+- The `masteryToDifficulty` thresholds
+- Three workflows for adding content (seed, runtime POST, LLM script)
+- Durability properties of the JSONL log
+- Honest non-goals (no versioning, no moderation queue, no bulk
+  import, no rate limit, no delete API)
+
+Coherence pass on existing docs:
+- OVERVIEW.md — module count 10 → 11, LIBRARY.md added to doc map
+- DESIGN.md — three references to "10 modules" → 11
+- ARCHITECTURE.md — `## The 11 modules`, content-library row in
+  module table, new "Content library" section with cascade + endpoints
+- LAYOUT.md — `src/content-library/` and `src/modules/content-library/`
+  added, `data/content-library/` mentioned in the data/ row,
+  LIBRARY.md added to top-level doc listing
+- MODULARISATION.md — `## The 11 modules`, new §10 `content-library`
+  section with the why-not-inside-gbrain rationale, orchestrator
+  bumped §10 → §11
+- PENDING.md — three new entries in the post-banner shipped table,
+  intro count 6 → 9 follow-up commits
+
+### Regression — 9 gates green for each commit
+
+```
+Backend tsc            0 errors
+Frontend tsc           0 errors
+Vitest                 154 / 154   (was 121 — 33 new tests across the trio)
+Smoke stdio            49 / 49
+Smoke SDK compat       65 / 65
+Graph validator        56 agents valid
+Subrepo check          passed
+Demo verify            14 / 14
+Teaching loop verify   10 / 10
+```
+
+### Honest non-goals
+
+- The router cascade does **exact-match** by `concept_id`. The
+  `preferred_difficulty` / `preferred_exam_id` hints exist on
+  `RouteRequest` but don't change behaviour today. They'll matter
+  when the library has multiple difficulty entries per concept — a
+  separate PR.
+- The router doesn't yet pass `preferred_difficulty` automatically.
+  The chat handler / lesson handler / etc. would need to compute it
+  from the gbrain student model and pass it. Wiring that is a
+  separate small commit.
+- No frontend UI for content authoring. Admin can curl the POST or
+  wire an LLM script; a `/gate/admin/content-library` page would be
+  a follow-up.
+- No bulk import endpoint. 100 entries means 100 POSTs; a one-off
+  script using `addEntry()` directly is cleaner for curated dumps.
+- No rate limiting on POST. Admin is trusted; documented as a
+  follow-up when middleware exists.
+- No content versioning. Re-POST silently overrides; previous version
+  stays in the JSONL log but isn't queryable through the API.
+- No moderation queue. The flag exists to gate the surface; once
+  moderation lands, the flag becomes meaningful to flip.
+- No delete endpoint. To remove an entry, an operator manually edits
+  `.data/content-library-additions.jsonl` and restarts.
+- No expansion of seed beyond the 3 existing concepts. Migrating
+  more is mechanical (drop new dirs in `data/content-library/seed/`)
+  but not this PR's scope.
+
 ## [Unreleased] — 2026-04-27 (the teaching loop made legible)
 
 Three commits in sequence that build the legibility layer for content

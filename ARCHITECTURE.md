@@ -4,7 +4,7 @@
 
 ---
 
-## The 10 modules
+## The 11 modules
 
 Every directory under `src/` belongs to exactly one module. Modules can depend on other modules; the dependency graph is a DAG, validated at boot in [`src/orchestrator/registry.ts`](./src/orchestrator/registry.ts).
 
@@ -19,6 +19,7 @@ Every directory under `src/` belongs to exactly one module. Modules can depend o
 | **exams** | `src/exam-engine`, `src/proctored` | no | no | Exam adapters (BITSAT, JEE Main, UGEE, NEET), proctored mode, scoring. |
 | **lifecycle** | `src/lifecycle`, `src/data-rights`, `src/jobs` | no | no | Funnel + retention specialists, GDPR-style data rights (export/delete), in-process job scheduler. |
 | **teaching** | `src/teaching`, `src/modules/teaching` | no | no | Legibility layer for the content-generation-and-delivery loop. Records every interaction as a TeachingTurn with pre-state, what got served, what happened, mastery delta. Append-only JSONL log. See [TEACHING.md](./TEACHING.md). |
+| **content-library** | `src/content-library`, `src/modules/content-library`, `data/content-library` | no | no | Runtime-augmentable, DB-free store of teaching materials keyed by concept_id. Two sources: seeds (committed in `data/content-library/seed/`) and additions (`.data/content-library-additions.jsonl`). Plugged into the router cascade between `subscription` and `bundle`. See [LIBRARY.md](./LIBRARY.md). |
 | **orchestrator** | `src/orchestrator` | no | no | Module registry, profile composer, health probes, feature aggregation. |
 
 `core` and `auth` are **foundation modules** (`foundation: true` in `modules.yaml`). They're implicit dependencies of every other module — a tier doesn't need to list them in `modules:`, the composer auto-includes them.
@@ -114,7 +115,7 @@ The orchestrator module doesn't *do* anything at request-time. It exposes a cont
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/orchestrator/modules` | List all 10 modules + their feature-flag declarations |
+| `GET /api/orchestrator/modules` | List all 11 modules + their feature-flag declarations |
 | `GET /api/orchestrator/tiers` | List 20 tiers + status |
 | `GET /api/orchestrator/profiles` | List 6 profiles + their tier compositions |
 | `POST /api/orchestrator/compose` | Given a profile name, return the resolved active modules + required env vars + warnings |
@@ -154,6 +155,29 @@ The `teaching` module is the legibility layer for the content-generation-and-del
 | `GET /api/turns` | Admin firehose — every recent turn |
 
 Frontend at `/gate/turns` (own) and `/gate/turns/:id` (admin/teacher/parent view). Persistence is append-only JSONL at `.data/teaching-turns.jsonl`. The full contract — what's recorded, when, by whom, with what scenario detection — lives in [TEACHING.md](./TEACHING.md).
+
+## Content library
+
+The `content-library` module is a runtime-augmentable, DB-free store of teaching materials keyed by concept_id. Built-in starter content ships in `data/content-library/seed/` (3 concepts: calculus-derivatives, complex-numbers, linear-algebra-eigenvalues). New entries via API append to `.data/content-library-additions.jsonl`. The library plugs into the router cascade as the second tier:
+
+```
+1. uploads / wolfram (intent-specific early routes)
+2. subscription   ← user-explicit
+3. library        ← THIS MODULE (seeds + additions)
+4. bundle         ← legacy shipped content-bundle.json
+5. community      ← unsubscribed community repos
+6. generated      ← LLM live generation
+```
+
+| Endpoint | Auth | Purpose |
+|---|---|---|
+| `GET /api/content-library/concepts` | public | List summaries (optional `?source=` filter) |
+| `GET /api/content-library/concept/:id` | public | Full LibraryEntry |
+| `POST /api/content-library/concept` | admin (or teacher+ when flag) | Add a new entry |
+
+Reads are public — the library is content, not personal data. Writes default to admin; the `content_library.user_authoring` feature flag broadens to teacher+ for trusted-contributor deployments.
+
+For `practice-problem` and `walkthrough-problem` intents, the library serves the worked-example body; for other intents, the explainer. Disclosure text reflects the choice and the source (seed / user / llm). See [LIBRARY.md](./LIBRARY.md) for the schema, the two sources, the cascade behaviour, and how to extend.
 
 ## Persistence layout
 

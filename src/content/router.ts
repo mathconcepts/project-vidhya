@@ -42,7 +42,8 @@ export type Intent =
 
 export type Source =
   | 'subscription'          // from a user-subscribed community bundle
-  | 'bundle'                // shipped default bundle
+  | 'library'               // from the content-library module (seeds + additions)
+  | 'bundle'                // shipped default bundle (legacy)
   | 'cache'                 // server-side cache
   | 'uploads'               // user's own uploads
   | 'community'             // community repo (unsubscribed)
@@ -56,6 +57,30 @@ export interface RouteRequest {
   concept_id?: string;                 // if already known (e.g. from URL)
   allow_generation?: boolean;          // per-request opt-in for LLM
   allow_wolfram?:    boolean;          // per-request opt-in for Wolfram
+  /**
+   * Personalisation hints — caller computes from gbrain student
+   * model and passes in. Router stays decoupled from gbrain;
+   * if the caller has no model handy, omit and the library will
+   * rank by title alone.
+   *
+   *   preferred_difficulty   intro / intermediate / advanced — usually
+   *                          derived via masteryToDifficulty(mastery)
+   *
+   *   preferred_exam_id      The student's current exam (e.g.
+   *                          'EXM-BITSAT-MATH-SAMPLE') — used as a
+   *                          tiebreak so exam-relevant entries
+   *                          rank higher.
+   *
+   * Status: forward-looking scaffolding. Today the cascade does
+   * exact-match by concept_id, so these hints only matter when
+   * the library starts having multiple entries per concept (e.g.
+   * derivatives-intro + derivatives-advanced) — the router would
+   * then call findEntries() instead of getEntry() and rank using
+   * these hints. That selection-vs-resolution change is a separate
+   * PR; today the fields ride along for type compatibility.
+   */
+  preferred_difficulty?: 'intro' | 'intermediate' | 'advanced';
+  preferred_exam_id?: string;
 }
 
 export interface RouteResult {
@@ -190,7 +215,7 @@ async function _routeContentImpl(req: RouteRequest): Promise<RouteResult> {
   }
 
   // Standard explain-concept / walkthrough-problem / practice-problem
-  // Priority cascade: subscription → bundle → community → generation
+  // Priority cascade: subscription → library → bundle → community → generation
 
   // 1. user subscriptions
   for (const bundle_id of subs.bundles) {
@@ -207,7 +232,47 @@ async function _routeContentImpl(req: RouteRequest): Promise<RouteResult> {
     rejected_because[`subscription:${bundle_id}`] = 'no match for concept_id';
   }
 
-  // 2. shipped bundle — delegate to existing resolver (tier-0)
+  // 2. content-library — seeds + runtime additions, ranked by
+  //    preferred_difficulty / preferred_exam_id when supplied
+  if (concept_id) {
+    considered.push('library');
+    try {
+      const lib = await import('../modules/content-library');
+      const exact = lib.getEntry(concept_id);
+      if (exact) {
+        // For "explain" + "walkthrough" intents, prefer the explainer body
+        // For "practice-problem" intent, prefer the worked example as the
+        // problem prompt
+        const prefer_worked = intent === 'practice-problem'
+          || intent === 'walkthrough-problem';
+        const body = (prefer_worked && exact.worked_example_md)
+          ? exact.worked_example_md
+          : exact.explainer_md;
+        const variant_label = prefer_worked && exact.worked_example_md
+          ? 'worked example'
+          : 'explainer';
+        return {
+          ok: true, intent, source: 'library',
+          content: body, concept_id,
+          source_ref: `library:${exact.source}:${exact.concept_id}`,
+          licence: exact.licence,
+          disclosure: exact.source === 'seed'
+            ? `From the built-in content library — ${variant_label} (${exact.licence}).`
+            : `From the content library, ${exact.source}-contributed — ${variant_label} (${exact.licence}).`,
+          considered, rejected_because,
+        };
+      }
+      // No exact match. Try a personalised find — same concept_id is the
+      // primary key, so this only finds matches by tag/exam if the caller
+      // didn't pass a concept_id at all (we already gated on concept_id
+      // above). Skip ranked lookup for now — exact match is the contract.
+      rejected_because.library = `no library entry for concept_id='${concept_id}'`;
+    } catch (e: any) {
+      rejected_because.library = `library read failed: ${e?.message ?? 'unknown'}`;
+    }
+  }
+
+  // 3. shipped bundle — legacy fallback for concepts the library doesn't carry
   if (concept_id) {
     considered.push('bundle');
     try {
@@ -229,7 +294,7 @@ async function _routeContentImpl(req: RouteRequest): Promise<RouteResult> {
     }
   }
 
-  // 3. community repo (unsubscribed bundles — a browse, not a prefer)
+  // 4. community repo (unsubscribed bundles — a browse, not a prefer)
   if (concept_id) {
     considered.push('community');
     // Stub: findCommunityContent also works for any registered bundle
@@ -238,7 +303,7 @@ async function _routeContentImpl(req: RouteRequest): Promise<RouteResult> {
     rejected_because.community = 'no matching community content (stub mode)';
   }
 
-  // 4. live generation (LLM)
+  // 5. live generation (LLM)
   considered.push('generated');
   if (subs.exclude_sources.includes('generated')) {
     rejected_because.generated = 'user subscription excludes generated content';

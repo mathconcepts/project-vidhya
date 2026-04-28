@@ -91,4 +91,43 @@ describe('rate limiter', () => {
     expect(stats.by_endpoint['chat']).toBe(2);
     expect(stats.by_endpoint['content-library.write']).toBe(1);
   });
+
+  // ── New endpoints in DEFAULT_LIMITS ──
+
+  it('gemini-proxy endpoints are in DEFAULT_LIMITS with sensible caps', () => {
+    // classify-error 60/min — 60 calls allowed, 61st denied
+    for (let i = 0; i < 60; i++) {
+      expect(checkRateLimit('gemini.classify-error', 'session-A').allowed).toBe(true);
+    }
+    expect(checkRateLimit('gemini.classify-error', 'session-A').allowed).toBe(false);
+  });
+
+  it('gemini.vision-ocr has tighter cap than gemini.embed (vision is pricier)', () => {
+    // vision-ocr: 20/min
+    for (let i = 0; i < 20; i++) {
+      expect(checkRateLimit('gemini.vision-ocr', 'session-V').allowed).toBe(true);
+    }
+    expect(checkRateLimit('gemini.vision-ocr', 'session-V').allowed).toBe(false);
+    // embed: 100/min — much more permissive
+    for (let i = 0; i < 100; i++) {
+      expect(checkRateLimit('gemini.embed', 'session-E').allowed).toBe(true);
+    }
+    expect(checkRateLimit('gemini.embed', 'session-E').allowed).toBe(false);
+  });
+
+  it('gate.verify-any is bucketed separately from gemini.* endpoints', () => {
+    // Drain gate.verify-any — 30/min
+    for (let i = 0; i < 30; i++) checkRateLimit('gate.verify-any', 'session-X');
+    expect(checkRateLimit('gate.verify-any', 'session-X').allowed).toBe(false);
+    // gemini.chat for the same actor still has full quota
+    expect(checkRateLimit('gemini.chat', 'session-X').allowed).toBe(true);
+  });
+
+  it('gemini-proxy buckets isolate per-actor (sessionId vs IP)', () => {
+    // Drain session:abc — 60 capacity for classify-error
+    for (let i = 0; i < 60; i++) checkRateLimit('gemini.classify-error', 'session:abc');
+    expect(checkRateLimit('gemini.classify-error', 'session:abc').allowed).toBe(false);
+    // ip:127.0.0.1 has its own bucket
+    expect(checkRateLimit('gemini.classify-error', 'ip:127.0.0.1').allowed).toBe(true);
+  });
 });

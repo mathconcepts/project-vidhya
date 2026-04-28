@@ -20,6 +20,7 @@ import { detectTopic } from '../utils/topic-detection';
 import { GATE_TOPICS, TOPIC_LABELS, TOPIC_ICONS } from '../constants/topics';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { checkRateLimit } from '../lib/rate-limit';
 const { Pool } = pg;
 
 // ============================================================================
@@ -220,15 +221,33 @@ async function handleVerify(req: ParsedRequest, res: ServerResponse): Promise<vo
   }
 }
 
-// Rate-limited verify-any: uses IP + session for rate limiting
-const verifyAnyRateLimit = new Map<string, { count: number; resetAt: number }>();
-const VERIFY_ANY_LIMIT = 10; // per hour per session
-const VERIFY_ANY_WINDOW = 60 * 60 * 1000; // 1 hour
+// verify-any: rate-limit guard moved BEFORE the vision OCR call
+// (previously the OCR happened first; rate limit was strictly cosmetic
+// for image-input cases). The previous ad-hoc per-session map has been
+// replaced by the standard checkRateLimit primitive — same in-memory
+// model, same per-actor isolation, but consistent with /api/chat,
+// content-studio, content-library, and the gemini-proxy endpoints.
 
 async function handleVerifyAny(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const body = req.body as { problem?: string; answer?: string; sessionId?: string; image?: string; imageMimeType?: string };
 
-  // If image provided but no problem text, extract via Gemini vision
+  // Rate limit by session-or-IP, BEFORE any LLM spend. Previously this
+  // check ran AFTER the vision OCR call below — meaning a rate-limited
+  // request had still spent a vision call. That bug fixed here.
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 'unknown';
+  const actor = body?.sessionId ? `session:${body.sessionId}` : `ip:${ip}`;
+  const rl = checkRateLimit('gate.verify-any', actor);
+  if (!rl.allowed) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.retry_after_ms ?? 1000) / 1000)));
+    return sendJSON(res, {
+      error: 'rate_limit_exceeded',
+      endpoint: 'gate.verify-any',
+      retry_after_ms: rl.retry_after_ms,
+    }, 429);
+  }
+
+  // If image provided but no problem text, extract via Gemini vision.
+  // This call now runs only after the rate-limit guard above has cleared.
   if (body?.image && !body?.problem && _geminiModel) {
     try {
       const extractResult = await _geminiModel.generateContent([
@@ -244,21 +263,6 @@ async function handleVerifyAny(req: ParsedRequest, res: ServerResponse): Promise
 
   if (!body?.problem || !body?.answer) {
     return sendError(res, 400, 'problem and answer required (or provide an image)');
-  }
-
-  // Rate limit by session + IP
-  const ip = req.headers['x-forwarded-for'] as string || 'unknown';
-  const key = `${body.sessionId || ip}`;
-  const now = Date.now();
-  const entry = verifyAnyRateLimit.get(key);
-
-  if (entry && now < entry.resetAt) {
-    if (entry.count >= VERIFY_ANY_LIMIT) {
-      return sendError(res, 429, `Rate limit: ${VERIFY_ANY_LIMIT} verifications per hour`);
-    }
-    entry.count++;
-  } else {
-    verifyAnyRateLimit.set(key, { count: 1, resetAt: now + VERIFY_ANY_WINDOW });
   }
 
   // Use same handler

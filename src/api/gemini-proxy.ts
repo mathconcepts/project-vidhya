@@ -19,6 +19,7 @@ import { ServerResponse } from 'http';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { checkRateLimit } from '../lib/rate-limit';
 
 function sendError(res: ServerResponse, status: number, message: string) {
   sendJSON(res, { error: message }, status);
@@ -30,11 +31,66 @@ function getGenAI(): GoogleGenerativeAI | null {
   return new GoogleGenerativeAI(key);
 }
 
+/**
+ * Resolve an actor id for rate-limit bucketing on these unauthenticated
+ * endpoints. Priority order:
+ *
+ *   1. The body's `sessionId` if the client supplied one
+ *   2. The X-Forwarded-For IP (first hop, in case of comma-separated
+ *      proxy chain)
+ *   3. The remote address from socket
+ *   4. Literal 'anon' fallback
+ *
+ * SessionId-as-actor is the most useful — most public flows pass one
+ * for state continuity. IP fallback works for genuinely anonymous
+ * single-page hits but is shared across NAT'd networks. The 'anon'
+ * fallback means a misconfigured request lands all spam in one
+ * bucket — strictly more conservative than no rate limit.
+ */
+function getProxyActor(req: ParsedRequest): string {
+  const body = (req.body as any) || {};
+  if (typeof body.sessionId === 'string' && body.sessionId.trim()) {
+    return `session:${body.sessionId.trim()}`;
+  }
+  const xff = req.headers['x-forwarded-for'];
+  const ip = typeof xff === 'string' ? xff.split(',')[0].trim() : '';
+  if (ip) return `ip:${ip}`;
+  // ParsedRequest exposes raw socket via the Node request — best-effort
+  const socketIp = (req as any).socket?.remoteAddress
+                ?? (req as any).connection?.remoteAddress
+                ?? '';
+  if (socketIp) return `ip:${socketIp}`;
+  return 'anon';
+}
+
+/**
+ * Single-line rate-limit guard. Returns true when the request should
+ * proceed; false when the response has already been sent (429).
+ *
+ * This wraps checkRateLimit so each handler stays a single readable
+ * block. The shape mirrors how chat-routes.ts uses checkRateLimit.
+ */
+function rlGuard(endpoint: string, req: ParsedRequest, res: ServerResponse): boolean {
+  const actor = getProxyActor(req);
+  const rl = checkRateLimit(endpoint, actor);
+  if (!rl.allowed) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.retry_after_ms ?? 1000) / 1000)));
+    sendJSON(res, {
+      error: 'rate_limit_exceeded',
+      endpoint,
+      retry_after_ms: rl.retry_after_ms,
+    }, 429);
+    return false;
+  }
+  return true;
+}
+
 // ============================================================================
 // POST /api/gemini/classify-error
 // ============================================================================
 
 async function handleClassifyError(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!rlGuard('gemini.classify-error', req, res)) return;
   const body = req.body as any;
   const { problem, studentAnswer, correctAnswer, timeTakenMs } = body || {};
   if (!problem || !studentAnswer || !correctAnswer) return sendError(res, 400, 'problem, studentAnswer, correctAnswer required');
@@ -86,6 +142,7 @@ ${timeTakenMs ? `Time: ${Math.round(timeTakenMs / 1000)}s` : ''}`;
 // ============================================================================
 
 async function handleGenerateProblem(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!rlGuard('gemini.generate-problem', req, res)) return;
   const body = req.body as any;
   const { conceptId, conceptLabel, conceptDescription, difficulty, targetErrorType, format } = body || {};
   if (!conceptId) return sendError(res, 400, 'conceptId required');
@@ -144,6 +201,7 @@ Problem: ${parsed.question_text}`;
 // ============================================================================
 
 async function handleEmbed(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!rlGuard('gemini.embed', req, res)) return;
   const body = req.body as any;
   const { text } = body || {};
   if (!text || typeof text !== 'string') return sendError(res, 400, 'text required');
@@ -165,6 +223,7 @@ async function handleEmbed(req: ParsedRequest, res: ServerResponse): Promise<voi
 // ============================================================================
 
 async function handleVisionOCR(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!rlGuard('gemini.vision-ocr', req, res)) return;
   const body = req.body as any;
   const { image, mimeType } = body || {};
   if (!image) return sendError(res, 400, 'image (base64) required');
@@ -194,6 +253,7 @@ Respond with ONLY the extracted text, no commentary.`;
 // ============================================================================
 
 async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!rlGuard('gemini.chat', req, res)) return;
   const body = req.body as any;
   const { message, history, systemPrompt, groundingChunks, image, imageMimeType } = body || {};
   if (!message) return sendError(res, 400, 'message required');

@@ -122,14 +122,45 @@ Content-library entries POSTed via API go live immediately. Content-studio draft
 - Operators in trusted-contributor mode (flag on) need an out-of-band trust model
 - Future: add a moderation queue with timed review window before live promotion
 
-### No rate limiting
+### Rate limiting — partial
 
-There's no rate-limiter on any endpoint. An admin or attacker could in principle hammer any endpoint as fast as the network allows.
+Rate limiting is in place on the LLM-spending surfaces, with one
+known auth gap.
 
-**Mitigations:**
-- Render's edge does have basic rate limits
-- Auth endpoints have JWT-signing CPU cost which provides natural throttling
-- For sustained abuse, add `express-rate-limit` or similar — known gap, deliberate scope choice
+**What's protected:**
+- `/api/chat` — 30/min per authenticated actor (`48b50ad`)
+- `/api/content-studio/generate` — 10/hour per admin
+- `/api/content-studio` LLM source — 5/hour separate bucket (`7578da9`)
+- `/api/content-library` POST — 60/min
+- `/api/attempt-insight` — 100/min
+- `/api/gemini/classify-error` — 60/min per session-or-IP
+- `/api/gemini/generate-problem` — 30/min per session-or-IP
+- `/api/gemini/embed` — 100/min per session-or-IP
+- `/api/gemini/vision-ocr` — 20/min per session-or-IP (vision is pricier)
+- `/api/gemini/chat` — 30/min per session-or-IP
+- `/api/verify-any` — 30/min per session-or-IP (rate-limit moved
+  before the LLM call; previously the OCR ran first then the limit
+  checked, which was strictly cosmetic)
+
+The implementation is hand-rolled token-bucket at
+`src/lib/rate-limit.ts` (~150 LOC, zero new deps). Per-actor
+isolation, per-endpoint isolation, lazy refill. Override via
+`VIDHYA_RATE_LIMIT_DISABLED=true` for load testing.
+
+**What's NOT protected:**
+- Non-LLM admin endpoints (admin user management, exam authoring,
+  curriculum, etc.). These are admin-only so the surface is small;
+  rate-limiting them would be belt-and-braces, not load-bearing.
+- The `/api/gemini/*` endpoints are *unauthenticated*. Rate-limit
+  alone doesn't fix the cost-leak fully — an attacker hitting from
+  many IPs gets many buckets. Auth on these endpoints is a known
+  gap documented in the next section.
+
+**Multi-process gap:**
+The rate limiter is in-memory and per-process. A multi-replica
+deployment would need a shared store (Redis, the database). Vidhya
+today is single-process anyway (flat-file persistence), so this is
+the same gap as the persistence layer's.
 
 ### No retention policy on append-only logs
 
@@ -161,6 +192,44 @@ There's no defined SLO, no on-call rotation, no documented incident response.
 - For a class-of-fifty deployment, treat outages as best-effort
 - For paying customer deployments, write your own runbook
 
+### Unauthenticated LLM proxy endpoints
+
+The `/api/gemini/*` family of five endpoints (classify-error,
+generate-problem, embed, vision-ocr, chat) calls Gemini directly
+with no `getCurrentUser` / `requireAuth` check. Anyone hitting the
+deployment URL can spend tokens on the operator's account.
+
+This is partially mitigated by the rate-limit additions above, but
+the underlying gap (no authentication) remains:
+
+**Today's protections:**
+- Per-session/IP rate limit on each endpoint (cap depends on
+  endpoint cost)
+- Different endpoints have separate buckets so a vision-OCR drain
+  doesn't lock out classify-error
+
+**What's still vulnerable:**
+- A coordinated attacker rotating through IPs gets a fresh bucket
+  per IP — total budget drainable proportional to IP count
+- The `/api/gemini/chat` endpoint accepts an arbitrary
+  `systemPrompt` from the body, so a hostile caller can override
+  the system prompt to do anything — not just GATE math tutoring
+- No `user_id` attribution means no per-user daily budget cap on
+  these endpoints
+
+**Mitigations:**
+- The natural fix is `requireAuth` at the top of each handler.
+  Whether to do this depends on whether these endpoints are
+  intentionally public for a demo / preview flow. Operators
+  doing real-user deployments should add auth.
+- A pragmatic interim: add a deployment-wide IP allowlist (e.g.
+  only the Netlify edge for the frontend) at the proxy / load
+  balancer level. Render and Cloudflare both support this.
+- Long-term: either add auth or remove these endpoints if they're
+  no longer used (the protected `/api/chat` endpoint covers the
+  same needs as `/api/gemini/chat` but with full instrumentation
+  + auth).
+
 ### No security audit
 
 The codebase has not been audited by a third party. Common vulnerabilities (XSS, SQL injection — N/A since no SQL today, CSRF, JWT flaws) have been considered but not formally reviewed.
@@ -179,14 +248,44 @@ The frontend ships a 22 MB WASM embedding model. On slow connections this is sig
 - Code-splitting is partial — could be deeper
 - Consider serving the model from a CDN if your users have slow connections
 
-### LLM cost controls
+### LLM cost controls — partial
 
-If a deployment has `GEMINI_API_KEY` set, every chat request consumes API credit. There's no per-user budget cap.
+If a deployment has `GEMINI_API_KEY` set, every LLM request
+consumes API credit. Per-user budget caps are now wired into the
+authenticated LLM-spending surfaces.
 
-**Mitigations:**
-- Gemini's free tier is generous
-- For a paid-tier deployment, set provider-side spending limits in the Google Cloud Console
-- Future: per-user daily budget caps in the chat handler — not implemented
+**What's protected:**
+- `/api/chat` — per-user daily token budget via `tryReserveTokens` /
+  `recordUsage` / `cancelReservation` (`48b50ad`)
+- `/api/content-studio` LLM source — same per-user budget,
+  6000-token reservation per generation, reconciled to actuals
+  post-call (`7578da9`)
+
+**What's NOT protected:**
+- `/api/gemini/*` endpoints (classify-error, generate-problem,
+  embed, vision-ocr, chat) — these are unauthenticated, so there's
+  no `user_id` to attribute per-user budget to. Rate-limit alone
+  protects against single-client spam, but a coordinated multi-IP
+  attacker can drain budget. Adding auth to these endpoints (and
+  thus enabling per-user budget) is a known follow-up.
+- Other LLM helpers in `src/gbrain/` and `src/content/resolver.ts`
+  are called *through* the protected surfaces above, so their
+  cost is captured at the entrypoint level. But a future direct-
+  helper handler would bypass the cap. New endpoints must opt in.
+
+**Configuration:**
+- Default OFF (no cap). Opt in via `VIDHYA_LLM_DAILY_TOKEN_CAP_PER_USER`
+  env var, denominated in tokens
+- Daily UTC midnight reset
+- Cost math (Gemini 2.5 Flash mixed pricing): 100k tokens/day cap
+  ≈ $0.013/user/day ≈ $0.40/user/month
+
+**Provider-side defense in depth:**
+- Gemini's free tier is generous; for paid-tier set provider-side
+  spending limits in the Google Cloud Console
+- These caps are denominated in tokens, not dollars; an operator
+  needing dollar caps would need a wrapper layer that knows
+  per-model pricing
 
 ### No PII redaction in logs
 

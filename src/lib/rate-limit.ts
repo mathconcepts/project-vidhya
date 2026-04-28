@@ -78,6 +78,44 @@ export const DEFAULT_LIMITS: Record<string, Limit> = {
 
   // Attempt-insight: high-traffic from real attempts. 100/min.
   'attempt-insight':           { capacity: 100, refill_per_sec: 100 / 60 },
+
+  // ── gemini-proxy endpoints ──
+  //
+  // These five endpoints are currently UNAUTHENTICATED — anyone hitting
+  // the deployment URL can spend tokens. Rate-limit alone doesn't fix
+  // that (per-user budget would, but needs auth). What rate-limit
+  // does fix: unbounded spam attack from a single client. Each bucket
+  // is keyed by sessionId-or-IP via the helper in gemini-proxy.ts.
+  //
+  // Auth + per-user budget on these endpoints is a separate decision
+  // documented in PRODUCTION.md as a known gap.
+
+  // Classify-error: called per wrong answer in the practice flow. 60/min
+  // is generous — a real student doesn't get 60 wrong answers a minute.
+  'gemini.classify-error':     { capacity: 60,  refill_per_sec: 60 / 60 },
+
+  // Generate-problem: each call does TWO LLM round-trips (generation
+  // + self-verify). 30/min keeps the cost ceiling at ~60 LLM calls/min.
+  'gemini.generate-problem':   { capacity: 30,  refill_per_sec: 30 / 60 },
+
+  // Embed: cheapest of the bunch (embedding model, not chat). 100/min.
+  'gemini.embed':              { capacity: 100, refill_per_sec: 100 / 60 },
+
+  // Vision-OCR: pricier model (gemini-2.5-flash with image input).
+  // 20/min ceiling — vision queries should be deliberate, not
+  // background-polled.
+  'gemini.vision-ocr':         { capacity: 20,  refill_per_sec: 20 / 60 },
+
+  // Gemini-chat: stripped-down chat surface, same shape as /api/chat
+  // but no GBrain instrumentation. Use the same 30/min ceiling.
+  'gemini.chat':               { capacity: 30,  refill_per_sec: 30 / 60 },
+
+  // Verify-any: image-or-text answer verification. The handler does
+  // an OPTIONAL vision OCR call up front (when image given without
+  // problem text). 30/min is generous; matches the previous ad-hoc
+  // limit in gate-routes.ts which was 10/hour but applied AFTER the
+  // vision call — strictly worse than what we have now.
+  'gate.verify-any':           { capacity: 30,  refill_per_sec: 30 / 60 },
 };
 
 const buckets = new Map<string, Bucket>();

@@ -4,7 +4,7 @@
 
 ---
 
-## The 11 modules
+## The 13 modules
 
 Every directory under `src/` belongs to exactly one module. Modules can depend on other modules; the dependency graph is a DAG, validated at boot in [`src/orchestrator/registry.ts`](./src/orchestrator/registry.ts).
 
@@ -20,6 +20,8 @@ Every directory under `src/` belongs to exactly one module. Modules can depend o
 | **lifecycle** | `src/lifecycle`, `src/data-rights`, `src/jobs` | no | no | Funnel + retention specialists, GDPR-style data rights (export/delete), in-process job scheduler. |
 | **teaching** | `src/teaching`, `src/modules/teaching` | no | no | Legibility layer for the content-generation-and-delivery loop. Records every interaction as a TeachingTurn with pre-state, what got served, what happened, mastery delta. Append-only JSONL log. See [TEACHING.md](./TEACHING.md). |
 | **content-library** | `src/content-library`, `src/modules/content-library`, `data/content-library` | no | no | Runtime-augmentable, DB-free store of teaching materials keyed by concept_id. Two sources: seeds (committed in `data/content-library/seed/`) and additions (`.data/content-library-additions.jsonl`). Plugged into the router cascade between `subscription` and `bundle`. See [LIBRARY.md](./LIBRARY.md). |
+| **content-studio** | `src/content-studio`, `src/modules/content-studio` | no | no | Admin-driven content authoring with four sources (uploads, wolfram, url-extract, llm) cascading in priority order. Drafts go through review → approve before promotion to library. Persistence: `.data/content-drafts.jsonl`. See module barrel at `src/modules/content-studio/index.ts`. |
+| **operator** | `src/operator`, `src/api/operator-routes.ts` | no | no | Solo-founder business surface — payments adapter, analytics adapter, founder dashboard. Local-JSONL defaults; external tools (Stripe, Plausible) plug in via webhook + adapter swap. See [FOUNDER.md](./FOUNDER.md) for the runbook. |
 | **orchestrator** | `src/orchestrator` | no | no | Module registry, profile composer, health probes, feature aggregation. |
 
 `core` and `auth` are **foundation modules** (`foundation: true` in `modules.yaml`). They're implicit dependencies of every other module — a tier doesn't need to list them in `modules:`, the composer auto-includes them.
@@ -115,7 +117,7 @@ The orchestrator module doesn't *do* anything at request-time. It exposes a cont
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/orchestrator/modules` | List all 11 modules + their feature-flag declarations |
+| `GET /api/orchestrator/modules` | List all 13 modules + their feature-flag declarations |
 | `GET /api/orchestrator/tiers` | List 20 tiers + status |
 | `GET /api/orchestrator/profiles` | List 6 profiles + their tier compositions |
 | `POST /api/orchestrator/compose` | Given a profile name, return the resolved active modules + required env vars + warnings |
@@ -179,6 +181,26 @@ Reads are public — the library is content, not personal data. Writes default t
 
 For `practice-problem` and `walkthrough-problem` intents, the library serves the worked-example body; for other intents, the explainer. Disclosure text reflects the choice and the source (seed / user / llm). See [LIBRARY.md](./LIBRARY.md) for the schema, the two sources, the cascade behaviour, and how to extend.
 
+## Operator (founder) surface
+
+The `operator` module is a small set of integration points for the external tools a solo founder uses to run the business. It is NOT a marketing/CRM/billing engine — it's the seam where Stripe, Plausible, etc. plug in.
+
+| Endpoint | Auth | Purpose |
+|---|---|---|
+| `GET /api/operator/dashboard` | admin | Aggregated view: users, revenue, activity, cost, health, caveats |
+| `POST /api/operator/payments/record` | admin | Manual payment entry (UPI / bank transfer / etc.) |
+| `POST /api/operator/payments/webhook` | shared-secret | Provider webhooks normalised to PaymentEvent |
+| `POST /api/operator/analytics/event` | admin | Manual event recording |
+
+Two adapters with local-JSONL defaults so a fresh deployment tracks revenue and events without external accounts:
+
+- `localPaymentsAdapter` — append-only `.data/payments.jsonl`, Stripe-compatible PaymentEvent shape
+- `localAnalyticsAdapter` — append-only `.data/analytics.jsonl`, recordEvent never throws
+
+Webhook auth uses a shared secret (`OPERATOR_WEBHOOK_SECRET` env var) because the caller is an external provider, not a logged-in user. Default 503 if the secret is unset — operators must opt in.
+
+The runbook for the founder side of running this product (marketing, acquisition, strategy, revenue, ops) lives in [FOUNDER.md](./FOUNDER.md), not in code.
+
 ## Persistence layout
 
 Every module that persists data does so via [`src/lib/flat-file-store.ts`'s `createFlatFileStore`](./src/lib/flat-file-store.ts). Files in `.data/`:
@@ -195,6 +217,11 @@ Every module that persists data does so via [`src/lib/flat-file-store.ts`'s `cre
 | `community-content/` *(directory)* | content | resolved subrepo content (when `content.pin` is `local` or a SHA) |
 | `llm-config.json` | (admin route, not module-owned) | provider config + BYOK keys |
 | `demo-usage-log.json` | lifecycle | demo telemetry, owner-visible only |
+| `teaching-turns.jsonl` | teaching | append-only event log of every TeachingTurn open/close |
+| `content-library-additions.jsonl` | content-library | append-only runtime entries; merge with seed at boot |
+| `content-drafts.jsonl` | content-studio | append-only event log of draft lifecycle (created/edited/approved/rejected/archived) |
+| `payments.jsonl` | operator | append-only revenue events from manual entry + webhooks |
+| `analytics.jsonl` | operator | append-only analytics events |
 
 For deployment hosts: as long as `.data/` is on a persistent disk, the flat-file model works. Render's "Persistent Disk" feature is configured in `render.yaml` to mount at `/app/.data`.
 

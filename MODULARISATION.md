@@ -56,7 +56,7 @@ and decides which tiers to wire up on a given instance.
 
 ---
 
-## The 11 modules — current natural boundaries
+## The 13 modules — current natural boundaries
 
 Grounded in `src/` directory audit. Total ~21,000 LOC.
 
@@ -305,7 +305,83 @@ seed-vs-additions override semantics, and the worked-example-vs-
 explainer selection rule for `practice-problem` and
 `walkthrough-problem` intents.
 
-### 11. `orchestrator` — the master (new)
+### 11. `content-studio` — admin-driven content authoring
+
+**What's in it:** `src/content-studio/types.ts`,
+`src/content-studio/store.ts` (orchestrator + persistence),
+`src/content-studio/sources/{uploads,wolfram,url-extract,llm}.ts`
+(four source adapters), `src/modules/content-studio/index.ts`
+(public barrel). Persistence at `.data/content-drafts.jsonl`.
+
+**LOC:** ~900 (types + orchestrator + 4 adapters + barrel + tests)
+
+**Boundary:** the studio is a CREATION workflow that feeds the
+content library. Drafts go through review → approve before being
+promoted into library entries. The four source adapters cascade
+in admin-chosen priority order; first non-null result wins; later
+sources are recorded as 'skipped' for audit.
+
+The studio depends on the library (calls addEntry on approve);
+the library doesn't know about the studio. One-way dependency.
+
+**Why a separate module from content-library:** the library is
+the SERVED content store — what cascade tier 3 reads. The studio
+is the draft-and-review surface. Conflating them would mix
+LibraryEntry (no draft state) and ContentDraft (no concept of
+being live) in one schema. The two-module split keeps each one's
+responsibility clean.
+
+**Owning agents:** `content-curator-manager`.
+
+**Subrepo candidate:** NOT recommended. Studio drafts are
+deployment-specific runtime state, not content to commit.
+
+**Contract reference:** module barrel at
+`src/modules/content-studio/index.ts`. STUDIO.md is a planned
+follow-up master doc; until then the inline comments in
+`src/content-studio/store.ts` are the contract.
+
+### 12. `operator` — solo-founder business surface
+
+**What's in it:** `src/operator/types.ts`,
+`src/operator/payments.ts` (local-JSONL adapter),
+`src/operator/analytics.ts` (local-JSONL adapter),
+`src/operator/dashboard.ts` (aggregator),
+`src/api/operator-routes.ts` (4 endpoints). Persistence at
+`.data/payments.jsonl` and `.data/analytics.jsonl`.
+
+**LOC:** ~600 (types + 2 adapters + dashboard + routes + tests)
+
+**Boundary:** the operator module is a small set of integration
+points for the external tools a solo founder uses to run the
+business. The module is NOT trying to replicate Stripe / Plausible
+/ etc. — it's the seam where they plug in.
+
+The dashboard reads from existing modules (user store, payments
+adapter, teaching turn store, content-studio drafts, budget
+module, health probes). It introduces no new persistence beyond
+the two append-logs.
+
+**Why this earns a module:** without it, founder-side work
+(payments tracking, analytics, dashboard) sprawls across handlers
+and ad-hoc files. Concentrating it in one module gives the
+founder one place to look — matches the "easily traceable"
+constraint stated when the module was scoped.
+
+**Why this is NOT a marketing/sales/support module:** those
+concerns live in external tools (Stripe, Plausible, ConvertKit,
+etc.), not in this codebase. FOUNDER.md is the runbook for which
+external tools to use; the operator module is the seam.
+
+**Owning agents:** `infrastructure-manager`, `acquisition-manager`.
+
+**Subrepo candidate:** NOT recommended. Tightly coupled to the
+deployment's auth + persistence.
+
+**Contract reference:** [FOUNDER.md](./FOUNDER.md) for the runbook.
+Module surface in `modules.yaml` and `src/operator/types.ts`.
+
+### 13. `orchestrator` — the master
 
 **What's in it (new):** `src/orchestrator/registry.ts`,
 `src/orchestrator/composer.ts`, `src/orchestrator/health.ts`.

@@ -152,6 +152,28 @@ const PROBES: Record<string, () => Promise<Omit<ModuleHealth, 'name' | 'latency_
     }
   },
 
+  operator: async () => {
+    if (!existsSync('src/operator/dashboard.ts')) {
+      return { status: 'unavailable', detail: 'operator module missing' };
+    }
+    if (!existsSync('src/api/operator-routes.ts')) {
+      return { status: 'degraded', detail: 'operator routes missing' };
+    }
+    try {
+      const { localPaymentsAdapter } = await import('../operator/payments');
+      const payments_count = localPaymentsAdapter.list().length;
+      const webhook_configured = !!process.env.OPERATOR_WEBHOOK_SECRET;
+      // Empty payments log is the expected state on a fresh deployment —
+      // healthy regardless. Just report what we see.
+      return {
+        status: 'healthy',
+        detail: `${payments_count} payment events recorded; webhook ${webhook_configured ? 'configured' : 'not configured (OPERATOR_WEBHOOK_SECRET unset)'}`,
+      };
+    } catch (e: any) {
+      return { status: 'degraded', detail: `operator read failed: ${e?.message}` };
+    }
+  },
+
   content: async () => {
     if (!existsSync('src/content/router.ts')) {
       return { status: 'unavailable', detail: 'content-router missing' };

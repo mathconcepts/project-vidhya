@@ -34,6 +34,8 @@ project-vidhya/
 ├── LIBRARY.md                ← The content library contract
 ├── CONTENT.md                ← Content engine internals
 ├── EXAMS.md                  ← Exam adapters
+├── FOUNDER.md                ← Solo-founder runbook (the business side)
+├── PRODUCTION.md             ← Production-readiness checklist
 ├── DEMO.md                   ← Demo walkthrough
 ├── MODULARISATION.md         ← Module/tier/profile registry (companion to modules.yaml)
 ├── PENDING.md                ← What's done / partial / planned
@@ -69,9 +71,11 @@ src/
 │   │   └── feature-flags.ts  ← env-var driven flags, read once at boot
 │   ├── teaching/             ← Teaching module barrel
 │   │   └── index.ts          ← Public re-exports for openTurn / closeTurn / etc.
-│   └── content-library/      ← Content library barrel
-│       ├── index.ts          ← Public re-exports for getEntry / addEntry / etc.
-│       └── feature-flags.ts  ← user_authoring flag
+│   ├── content-library/      ← Content library barrel
+│   │   ├── index.ts          ← Public re-exports for getEntry / addEntry / etc.
+│   │   └── feature-flags.ts  ← user_authoring flag
+│   └── content-studio/       ← Content studio barrel
+│       └── index.ts          ← Public re-exports for generateDraft / approve / etc.
 │
 ├── api/                      ← HTTP route handlers (one file per resource)
 │   ├── auth-routes.ts        ← /api/auth/* (5 routes)
@@ -127,6 +131,21 @@ src/
 ├── content-library/          ← Content library module
 │   ├── types.ts              ← LibraryEntry schema
 │   └── store.ts              ← Two-source loader (seed + JSONL additions) + in-memory index
+│
+├── content-studio/           ← Content studio module
+│   ├── types.ts              ← ContentDraft schema + StudioEvent log shape
+│   ├── store.ts              ← Generation orchestrator + draft lifecycle
+│   └── sources/              ← Four source adapters
+│       ├── uploads.ts        ← Pulls from admin's existing uploads
+│       ├── wolfram.ts        ← Wolfram Alpha for verified math
+│       ├── url-extract.ts    ← Single-URL fetch + main-content extraction
+│       └── llm.ts            ← Gemini-backed last-resort generation
+│
+├── operator/                 ← Solo-founder business surface
+│   ├── types.ts              ← PaymentEvent / AnalyticsEvent / FounderDashboard
+│   ├── payments.ts           ← Local-JSONL payments adapter (Stripe-compatible)
+│   ├── analytics.ts          ← Local-JSONL analytics adapter
+│   └── dashboard.ts          ← Founder dashboard aggregator
 │
 ├── events/                   ← Event bus (signal-bus.ts)
 ├── utils/                    ← Generic utilities
@@ -220,7 +239,7 @@ Confusingly named, totally different:
 | Directory | Lifecycle | Source-controlled? | What it holds |
 |---|---|---|---|
 | `data/` | Built into the repo | Yes | Static course content (markdown lecture notes, formula sheets, teaching tips for the 10 GATE EM topics + 4 CAT topics) plus the content-library seed at `data/content-library/seed/<concept_id>/`. Updated by content authors. |
-| `.data/` | Runtime, gitignored | No | Live persistence — users.json, plans.json, vector store, chat history, teaching-turns.jsonl, content-library-additions.jsonl, etc. Created at boot. |
+| `.data/` | Runtime, gitignored | No | Live persistence — users.json, plans.json, vector store, chat history, teaching-turns.jsonl, content-library-additions.jsonl, content-drafts.jsonl, payments.jsonl, analytics.jsonl, etc. Created at boot. |
 
 If you delete `.data/`, the next `npm run demo:seed` recreates it. If you delete `data/`, you lose the static lecture content (but `git checkout` brings it back).
 

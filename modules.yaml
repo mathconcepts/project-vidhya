@@ -269,6 +269,46 @@ modules:
     owning_agents:
       - content-curator-manager
 
+  - name: operator
+    description: |
+      Solo-founder business surface. Three small adapters (payments,
+      analytics, founder dashboard) that plug into external tools
+      (Stripe, Plausible, etc.) when configured, with local-JSONL
+      defaults so a fresh deployment tracks revenue and events on
+      day one without external accounts.
+
+      Public surface at src/api/operator-routes.ts:
+        GET  /api/operator/dashboard           admin only
+        POST /api/operator/payments/record     admin only
+        POST /api/operator/payments/webhook    shared-secret
+        POST /api/operator/analytics/event     admin only
+
+      The dashboard aggregates from the user store, payments adapter,
+      teaching turn store, content-studio drafts, budget module, and
+      health probes. Honest about what's missing — `caveats` field on
+      every dashboard response lists what's not yet configured.
+
+      The webhook endpoint is auth-by-shared-secret because the
+      caller is an external provider (Stripe, Razorpay) not a logged-
+      in user. Default 503 when OPERATOR_WEBHOOK_SECRET is unset —
+      operators must opt in.
+
+      The runbook for the founder side of running this product
+      lives in FOUNDER.md, not in code. This module is the seam where
+      external tools plug in; FOUNDER.md is what to plug in and why.
+    source: src/operator,src/api/operator-routes.ts
+    depends_on: [core, auth, teaching, content-studio]
+    health_check: src/orchestrator/health-checks#operatorHealth
+    subrepo_candidate: false
+    public_api:
+      - PaymentEvent, AnalyticsEvent, FounderDashboard (types)
+      - localPaymentsAdapter (record + list + totalRevenue)
+      - localAnalyticsAdapter (recordEvent + query + countByType)
+      - buildDashboard (aggregator)
+    owning_agents:
+      - infrastructure-manager
+      - acquisition-manager
+
   - name: orchestrator
     description: The master composer — reads this manifest, resolves deps, activates tiers.
     source: src/orchestrator,src/admin-orchestrator

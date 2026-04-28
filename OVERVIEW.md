@@ -41,7 +41,7 @@ Honest accounting, not aspirational. From [`PENDING.md`](./PENDING.md) and [`FEA
 - Spaced repetition engine
 - 3 content delivery modes: web app, Telegram channel, WhatsApp channel
 - 56 agents organised into a 4-tier org chart
-- 11 modules (`core`, `auth`, `content`, `rendering`, `channels`, `learning`, `exams`, `lifecycle`, `teaching`, `content-library`, `orchestrator`)
+- 13 modules (`core`, `auth`, `content`, `rendering`, `channels`, `learning`, `exams`, `lifecycle`, `teaching`, `content-library`, `content-studio`, `operator`, `orchestrator`)
 - 6 deployment profiles (`minimal`, `full`, `channel-only`, `institutional-b2b`, `demo`, `content-author`)
 - Feature flags for the auth module (Google OIDC, demo seed, parent role, institution role)
 
@@ -80,7 +80,9 @@ Topic-specific docs that go deeper than the masters:
 - **[LIBRARY.md](./LIBRARY.md)** — the content library (LibraryEntry schema, seed + additions, cascade tier, extension)
 - **[CONTENT.md](./CONTENT.md)** — 7-layer content architecture, the 3 modes of `content.pin`
 - **[EXAMS.md](./EXAMS.md)** — exam inventory and the adapter pattern
-- **[MODULARISATION.md](./MODULARISATION.md)** — the 8-module / 20-tier / 6-profile registry
+- **[MODULARISATION.md](./MODULARISATION.md)** — the 13-module / 20-tier / 6-profile registry
+- **[PRODUCTION.md](./PRODUCTION.md)** — honest production-readiness checklist for real-user deployments
+- **[FOUNDER.md](./FOUNDER.md)** — solo-founder runbook (the business side: marketing, acquisition, revenue, ops)
 - **[PENDING.md](./PENDING.md)** — what's done, what's partial, what's planned
 
 For the design system specifically (typography, colour, spacing, motion), see [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md). That's the visual design language; this OVERVIEW and the other three masters are the system design.

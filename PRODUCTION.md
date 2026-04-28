@@ -86,7 +86,7 @@ This is verified by the existing test suite and the live probes during commit ve
 
 ### Observability
 
-- `/api/orchestrator/health` reports per-module health for all 12 modules
+- `/api/orchestrator/health` reports per-module health for all 13 modules
 - `/api/orchestrator/features` lists all feature flags with default + enabled + overridden state
 - `/api/turns` admin firehose shows every recent teaching interaction with full metadata
 - `/api/content-library/concepts` exposes the served library
@@ -96,7 +96,7 @@ This is verified by the existing test suite and the live probes during commit ve
 
 - 14 master docs at the repo root (OVERVIEW, DESIGN, ARCHITECTURE, LAYOUT, AUTH, TEACHING, LIBRARY, CONTENT, EXAMS, MODULARISATION, DEPLOY, INSTALL, SECURITY, PRODUCTION)
 - Per-module health probe descriptions in `modules.yaml`
-- 11-module model fully described in MODULARISATION.md with per-module boundary justification
+- 13-module model fully described in MODULARISATION.md with per-module boundary justification
 - CHANGELOG covers every shipped commit
 
 ---

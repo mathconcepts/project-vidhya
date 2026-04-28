@@ -2,6 +2,119 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-28 (the production trio)
+
+Three commits that close the highest-leverage production gaps and stand up the founder-ecosystem surface. Two distinct decisions bundled per the user's request:
+
+  1. Vidhya as a production-grade end-user app — close the LLM-cost runaway gaps (rate limiting + per-user budget caps)
+  2. Vidhya as a solo-founder ecosystem — small adapter module + the FOUNDER.md runbook
+
+The honest framing: production-grade is a property of an observed deployment, not code in a PR. What ships here is *production-readiness work* — concrete fixes, gates, docs. Real readiness arrives only after deployment and observation. PRODUCTION.md (shipped previously in `98bdc16`) frames this distinction at the top.
+
+### `48b50ad` — rate limit + per-user LLM budget cap
+
+Two of the eight gaps from PRODUCTION.md closed in one commit because both protect the operator from runaway LLM costs. Without rate limiting, an authenticated student could in principle hammer the chat endpoint as fast as the network allows; each call costs Gemini tokens. Without per-user budget caps, a single user could consume an outsized share of the operator's daily LLM budget.
+
+**`src/lib/rate-limit.ts`** — hand-rolled token-bucket (~150 LOC). Buckets keyed by `${endpoint}:${actor_id}`. Lazy refill on each check (no background CPU). In-memory only; multi-process is shared-nothing. `VIDHYA_RATE_LIMIT_DISABLED=true` override for load testing.
+
+Default limits:
+- chat: 30/min
+- content-studio.generate: 10/hour
+- content-library.write: 60/min
+- attempt-insight: 100/min
+
+Unknown endpoints fail-open (allowed=true). New endpoints are unlimited until added.
+
+Why hand-rolled instead of `express-rate-limit`: ~30 lines of logic auditable in one screen, zero new deps, codebase already eschews deps for small things. Token-bucket is the right semantic — smooth refill, no window-reset thundering herd.
+
+**`src/lib/llm-budget.ts`** — per-user daily token budget (~140 LOC, default OFF). Opt in via `VIDHYA_LLM_DAILY_TOKEN_CAP_PER_USER`. UTC-midnight reset (predictable for users, simple bookkeeping). Reservation/recordUsage/cancelReservation flow.
+
+Cost math (Gemini 2.5 Flash, ~$0.13 per million mixed tokens):
+- 100k tokens/day cap = ~$0.013/user/day = ~$0.40/user/month
+
+**Wiring into chat-routes**: rate limit + budget reservation AFTER input validation BEFORE `getChatModel()`. recordUsage at the success tail with token estimate from response length (~1 token per 4 chars). cancelReservation on error and on the no-LLM-degraded path so the budget tracks actual spend, not attempted spend.
+
+**Live verified against real backend**: 35 rapid chat calls → 29 passed + 6 rate-limited with HTTP 429 + `retry_after_ms: 512`. Budget cap verified via `npm run verify:budget` script that sets the env var BEFORE module load (vitest can't reliably override at module-load time).
+
+13 unit tests + 9 runtime assertions. Vitest 169→182.
+
+### (this commit) — operator module + FOUNDER.md
+
+A new `operator` module (13th in modules.yaml). Small by design — three adapters with local-JSONL defaults so a fresh deployment tracks revenue and events on day one without any external accounts.
+
+**Module surface**:
+
+- `localPaymentsAdapter` — Stripe-compatible PaymentEvent shape, append-only JSONL at `.data/payments.jsonl`, list/totalRevenue/record API
+- `localAnalyticsAdapter` — event recording with query + countByType, recordEvent never throws (analytics shouldn't break the request)
+- `buildDashboard` — aggregator pulling from user store, payments, teaching turns, content-studio drafts, budget module, and `/api/orchestrator/health`. `caveats` array on every response is honest about what's missing
+
+**Four HTTP endpoints**:
+
+- `GET /api/operator/dashboard` — admin only
+- `POST /api/operator/payments/record` — admin only, manual payment entry
+- `POST /api/operator/payments/webhook` — shared-secret via `OPERATOR_WEBHOOK_SECRET`, default 503 if unset
+- `POST /api/operator/analytics/event` — admin only
+
+The webhook endpoint is auth-by-shared-secret because the caller is an external provider (Stripe, Razorpay), not a logged-in user. Stripe's raw webhook shape is NOT what the endpoint expects — operators normalise via either an in-codebase shim or a service like Hookdeck, then POST the normalised shape. Documented in FOUNDER.md.
+
+**Live verified**: dashboard as admin returns full aggregated view (6 users, 13 modules, honest caveats). Dashboard as student → 403. Manual payment recorded ($29 USD = 2900 minor units), dashboard immediately reflects total_30d / paid_users_30d / arpu_30d. Webhook correctly refuses 503 when secret unset.
+
+**`FOUNDER.md`** — ~340-line solo-founder runbook. The honest framing up front: almost nothing a solo founder needs lives in this codebase. A "marketing module" written in TypeScript would be a worse Mailchimp. What the codebase does is provide clean integration points; FOUNDER.md is what to plug in and why.
+
+Sections:
+- Stack with cost estimates: Render, Netlify, Cloudflare, Resend, Stripe, Plausible, Sentry, BetterStack — total floor cost $0, realistic monthly $20
+- Day-1 checklist (~1 hour, $10)
+- Marketing — channels worth trying, channels that won't work yet
+- Acquisition — the funnel + the time-to-value lever
+- Strategy — how to decide what to build next, things to deliberately NOT build
+- Revenue — when to charge, how, what; concrete pricing
+- Operations — you are the on-call; monitoring, errors, status page, backups, runbook
+- Support — at solo-founder scale, an email forwarded to your inbox is a system
+- Dependencies — critical-path vs convenience vs setup-time, with fallback paths
+- Anti-patterns to avoid
+
+11 unit tests for the operator module. Vitest 182→193.
+
+**Coherence pass**: module count 12→13 across OVERVIEW, DESIGN, ARCHITECTURE, LAYOUT, MODULARISATION, PRODUCTION, README. FOUNDER.md added to OVERVIEW doc map and README's "where to go next" + collapsed doc tree. PENDING.md gets four new entries in the post-banner shipped table.
+
+### Regression — 10 gates green for each commit
+
+```
+Backend tsc            0 errors
+Frontend tsc           0 errors
+Vitest                 193 / 193   (was 169 — 24 new tests across the trio)
+Smoke stdio            49 / 49
+Smoke SDK compat       65 / 65
+Graph validator        56 agents valid
+Subrepo check          passed
+Demo verify            14 / 14
+Teaching loop verify   10 / 10
+Budget verify          9 / 9
+```
+
+### Honest non-goals
+
+**Production gaps still open** (from PRODUCTION.md):
+
+- Single-process state — flat-file persistence assumes one writer; a multi-instance deploy would need DATABASE_URL plus a re-architecture
+- No moderation flow — content-library POST is admin-only but bypasses studio approval; studio gates correctly
+- No retention policy on append-only logs — three logs (turns, library additions, studio drafts) grow unbounded; monthly rotation deferred
+- Limited observability — no APM, no request tracing, no per-endpoint latency histograms
+- No SLO / no incident response runbook — each operator writes their own
+- No third-party security audit
+- No PII redaction in logs — log lines include user IDs, sometimes emails
+- Rate limit + budget aren't yet wired to other LLM-spending surfaces beyond chat — content-studio's LLM source could in theory bypass them
+
+**Operator module non-goals**:
+
+- No Stripe SDK in code — operators wire Stripe via webhook normalised to the local shape (in-process shim or Hookdeck). Keeps the codebase free of provider lock-in
+- No PostHog / Plausible adapter shipped — adapters are documented in the type contract but only `localAnalyticsAdapter` ships today; adding one is a ~50-line addition the operator can do when they sign up
+- No founder dashboard UI — `/api/operator/dashboard` returns JSON. An admin React page is a follow-up if useful
+- No global per-deployment budget — per-user is what was asked for; an operator-wide cap layers on top
+- No real-time dashboard for budget consumption — `getBudgetStatus` exposes the data; UI is a follow-up
+
+**Content-studio commits 2 + 3 still open** from before this trio: HTTP routes + GBrain feedback hook (commit 2), admin UI + STUDIO.md + commit-3 doc coherence (commit 3). The trio split was made before these production decisions came in; will be resumed if requested.
+
 ## [Unreleased] — 2026-04-28 (the content library)
 
 Three commits in sequence that add an 11th module: a runtime-

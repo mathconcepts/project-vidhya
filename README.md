@@ -100,9 +100,10 @@ For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPL
 | 🚀 Spinning up a public URL | The Deploy button above → [DEPLOY.md](./DEPLOY.md) |
 | 📚 Evaluating exams | [EXAMS.md](./EXAMS.md) — three bundled, adapter pattern for new ones |
 | 📖 Designing content | [CONTENT.md](./CONTENT.md) + [LIBRARY.md](./LIBRARY.md) |
-| 🧩 Thinking about modules / B2B | [MODULARISATION.md](./MODULARISATION.md) — 12 modules, 20 tiers, 6 profiles |
+| 🧩 Thinking about modules / B2B | [MODULARISATION.md](./MODULARISATION.md) — 13 modules, 20 tiers, 6 profiles |
 | 🔬 Technical evaluator | [OVERVIEW.md](./OVERVIEW.md) → [ARCHITECTURE.md](./ARCHITECTURE.md) → [docs/](./docs/) |
 | 🛡 Production deployer | [PRODUCTION.md](./PRODUCTION.md) — honest readiness checklist |
+| 🚀 Solo founder | [FOUNDER.md](./FOUNDER.md) — running the business: stack, day-1 checklist, revenue, ops |
 | 📋 Wanting to know what's NOT done | [PENDING.md](./PENDING.md) — the full ledger |
 
 ---
@@ -118,7 +119,7 @@ For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPL
 
 **Modules** — [AUTH.md](./AUTH.md), [TEACHING.md](./TEACHING.md), [LIBRARY.md](./LIBRARY.md), [CONTENT.md](./CONTENT.md), [EXAMS.md](./EXAMS.md)
 
-**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [PRODUCTION.md](./PRODUCTION.md), [SECURITY.md](./SECURITY.md)
+**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [PRODUCTION.md](./PRODUCTION.md), [FOUNDER.md](./FOUNDER.md), [SECURITY.md](./SECURITY.md)
 
 **Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md)
 

@@ -56,7 +56,7 @@ and decides which tiers to wire up on a given instance.
 
 ---
 
-## The 9 modules — current natural boundaries
+## The 10 modules — current natural boundaries
 
 Grounded in `src/` directory audit. Total ~21,000 LOC.
 
@@ -216,7 +216,43 @@ feedback loops, teacher roster management. Described fully in
 **Subrepo candidate:** NOT recommended. Lifecycle touches auth,
 payments (future), analytics — too cross-cutting to split cleanly.
 
-### 9. `orchestrator` — the master (new)
+### 9. `teaching` — the loop's legibility layer
+
+**What's in it:** `src/teaching/turn-store.ts` (TeachingTurn schema +
+persistence), `src/modules/teaching/index.ts` (public barrel),
+`src/api/turns-routes.ts` (read API).
+
+**LOC:** ~500 (turn-store + barrel + routes + frontend page)
+
+**Boundary:** the teaching module is a passive observer. Every
+content-generation-and-delivery interaction (chat, attempt-insight,
+etc.) opens a TeachingTurn at the start and closes it at the end.
+The record carries pre-state (mastery snapshot + scenario flags),
+what got served, what happened, mastery delta. Persisted as
+append-only JSONL at `.data/teaching-turns.jsonl`.
+
+The module does NOT generate content, update student models, or
+decide pedagogy — those stay in content/, gbrain/, and rendering/.
+Teaching is the layer that makes the existing loop *visible*.
+
+**Why it earns a separate module:** legibility is a cross-cutting
+concern. Putting the turn-store in any one of content/rendering/gbrain
+would create circular dependency pressure. Living in its own module
+keeps the consumers (any handler that wants to instrument) decoupled
+from the implementation.
+
+**Owning agents:** `student-model-manager`, `mastery-estimator`.
+
+**Subrepo candidate:** NOT recommended. The audit-trail data is
+deployment-specific; sharing across repos would require a stable
+schema across versions which we don't currently guarantee.
+
+**Contract reference:** [TEACHING.md](./TEACHING.md). Seven scenarios
+listed there; four currently detected (cold start, ZPD candidate,
+repeated error, no-LLM degraded), three deferred (plateau, stale
+content, verification failure).
+
+### 10. `orchestrator` — the master (new)
 
 **What's in it (new):** `src/orchestrator/registry.ts`,
 `src/orchestrator/composer.ts`, `src/orchestrator/health.ts`.

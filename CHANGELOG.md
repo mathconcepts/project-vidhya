@@ -2,6 +2,131 @@
 
 All notable changes to GATE Math are documented here.
 
+## [Unreleased] — 2026-04-27 (the teaching loop made legible)
+
+Three commits in sequence that build the legibility layer for content
+generation and delivery, then wire it into the existing handlers, then
+document the contract.
+
+### `807e179` — TeachingTurn schema + persistence + read API + UI
+
+The codebase had a teaching loop that sort-of-existed: chat-routes
+called the GBrain task reasoner, content-router published events to
+the signal bus, computeInsight ran after attempts. But the loop wasn't
+**observable** — there was no single record showing "this student saw
+X because Y, attempted Z, and mastery moved by N%". This commit creates
+that record.
+
+A TeachingTurn is a two-phase append-only event: `openTurn` when a
+content request enters, `closeTurn` when the response or attempt
+arrives. Reconcile merges the pair on read. Earliest-wins on
+double-close keeps the log a true audit trail.
+
+Files:
+- `src/lib/append-log.ts` — JSONL append helper, companion to flat-file-store
+- `src/teaching/turn-store.ts` — types, persistence, reconcile, summariseStudent
+- `src/modules/teaching/index.ts` — public barrel
+- `src/api/turns-routes.ts` — three read endpoints with layered auth
+- `frontend/src/pages/gate/TurnsPage.tsx` — student-facing UI
+- `src/__tests__/unit/data/teaching-turns.test.ts` — 8 unit tests
+
+modules.yaml gets a 10th module (`teaching`, depends on core+content+learning).
+Health probe added.
+
+### `df0b2eb` — instrumentation of chat-routes + notebook-insight
+
+Wires `openTurn`/`closeTurn` into the two main response surfaces so
+real traffic produces real turn records.
+
+- `chat-routes.ts handleChat` — three call paths covered: degraded
+  early-exit (no GEMINI_API_KEY, opens + immediately closes with
+  `degraded.reason='no-llm-available'`), main streaming path (open
+  after GBrain reasoner runs so `student_intent` and
+  `pedagogical_action` are populated, close after SSE completes),
+  stream-error catch.
+- `notebook-insight-routes.ts handleAttemptInsight` — open before
+  model_after read, close after `computeInsight` returns. This is the
+  highest-fidelity turn — real `mastery_delta` (before/after/delta_pct),
+  real `attempt_outcome`, full `insight` payload.
+
+The schema gained `student_intent` and `pedagogical_action` fields to
+carry the GBrain reasoner's richer vocabulary.
+
+Honest gap: notebook-insight depends on Postgres (`getOrCreateStudentModel`)
+so the live mastery-delta path was only sandbox-verifiable in
+type-check terms. The chat path's degraded-mode end-to-end was
+verified live.
+
+### (this commit) — scenario detection + master doc + e2e runtime test
+
+Four scenarios detected and flagged on `pre_state` at turn-open time:
+
+- **cold start** — `is_cold_start` when total mastery_vector attempts < 3
+- **ZPD candidate** — `is_zpd_candidate` when GBrain reasoner picked the concept
+- **repeated error pattern** — `repeated_error_pattern` + `consecutive_failures` when GBrain reports ≥3 consecutive failures
+- **no-LLM degraded** — `degraded.reason='no-llm-available'` (already in `df0b2eb`, called out here for completeness)
+
+Three scenarios deliberately deferred (each needs infrastructure beyond
+the schema): plateau (cross-turn analytics), stale content (syllabus
+version registry), verification failure (rendering-routes Wolfram hook).
+
+New files:
+- `TEACHING.md` — master doc. The contract: what a turn is, when open
+  fires, when close fires, what fields it carries, the seven scenarios
+  with detection status, the pattern for instrumenting new handlers,
+  privacy + access control.
+- `scripts/verify-teaching-loop.ts` — runtime end-to-end test, 10
+  assertions covering the full open → close cycle, cross-student
+  isolation, anon flows, admin firehose visibility. Runs against a live
+  backend.
+- `npm run verify:teaching` — npm script to run it.
+
+Coherence pass on existing docs:
+- OVERVIEW.md — module count 9 → 10, TEACHING.md added to doc map
+- DESIGN.md — three references to "9 modules" updated to 10
+- ARCHITECTURE.md — `## The 10 modules`, teaching row added to module
+  table, new "Teaching loop" section after "Feature flags"
+- LAYOUT.md — `src/teaching/` and `src/modules/teaching/` added,
+  TEACHING.md added to top-level doc listing
+- MODULARISATION.md — `## The 10 modules`, new §9 `teaching` section,
+  orchestrator bumped to §10
+- PENDING.md — three new entries in the post-banner shipped table
+
+### Regression
+
+All 8 gates green for each of the three commits:
+
+```
+Backend tsc            0 errors
+Frontend tsc           0 errors
+Vitest                 121 / 121 (was 113)
+Smoke stdio            49 / 49
+Smoke SDK compat       65 / 65
+Graph validator        56 agents valid
+Subrepo check          passed
+Demo verify            14 / 14 multi-role
+```
+
+Plus the new `verify:teaching` runtime test passes 10/10 against a
+live backend.
+
+### Honest non-goals
+
+- No instrumentation of `snap-solve-routes`, `bitsat-sample-routes`,
+  or `rendering-routes` yet. Each is a clean ~30-line pattern-copy
+  from `chat-routes`. Deferred to keep this PR's diff focused.
+- No log rotation. JSONL grows unbounded. At ~100k records the linear
+  scan slows; rotation by month is the obvious follow-up.
+- No retention policy. Turn records persist forever in `.data/`. When
+  data-rights deletion runs, it should also clear that user's turns.
+  Open follow-up.
+- The mastery_delta path can't be sandbox-verified end-to-end (Postgres
+  dependency). Verified by type-check + unit test in this environment.
+- "All possible scenarios" was honestly not promised — 13 brainstormed,
+  4 detected, 3 explicitly deferred with reasons, 6 scaffolded but not
+  exercised. The schema is structured to accept them all without further
+  type changes.
+
 ## [Unreleased] — 2026-04-27 (master docs + coherence pass)
 
 ### 📚 Four master docs land + system-design language is now consistent

@@ -4,7 +4,7 @@
 
 ---
 
-## The 9 modules
+## The 10 modules
 
 Every directory under `src/` belongs to exactly one module. Modules can depend on other modules; the dependency graph is a DAG, validated at boot in [`src/orchestrator/registry.ts`](./src/orchestrator/registry.ts).
 
@@ -18,6 +18,7 @@ Every directory under `src/` belongs to exactly one module. Modules can depend o
 | **learning** | `src/session-planner`, `src/spaced-repetition`, `src/mastery` | no | no | Daily plan, study commander priority engine, spaced repetition, mastery tracking. |
 | **exams** | `src/exam-engine`, `src/proctored` | no | no | Exam adapters (BITSAT, JEE Main, UGEE, NEET), proctored mode, scoring. |
 | **lifecycle** | `src/lifecycle`, `src/data-rights`, `src/jobs` | no | no | Funnel + retention specialists, GDPR-style data rights (export/delete), in-process job scheduler. |
+| **teaching** | `src/teaching`, `src/modules/teaching` | no | no | Legibility layer for the content-generation-and-delivery loop. Records every interaction as a TeachingTurn with pre-state, what got served, what happened, mastery delta. Append-only JSONL log. See [TEACHING.md](./TEACHING.md). |
 | **orchestrator** | `src/orchestrator` | no | no | Module registry, profile composer, health probes, feature aggregation. |
 
 `core` and `auth` are **foundation modules** (`foundation: true` in `modules.yaml`). They're implicit dependencies of every other module — a tier doesn't need to list them in `modules:`, the composer auto-includes them.
@@ -113,7 +114,7 @@ The orchestrator module doesn't *do* anything at request-time. It exposes a cont
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/orchestrator/modules` | List all 9 modules + their feature-flag declarations |
+| `GET /api/orchestrator/modules` | List all 10 modules + their feature-flag declarations |
 | `GET /api/orchestrator/tiers` | List 20 tiers + status |
 | `GET /api/orchestrator/profiles` | List 6 profiles + their tier compositions |
 | `POST /api/orchestrator/compose` | Given a profile name, return the resolved active modules + required env vars + warnings |
@@ -141,6 +142,18 @@ export function fooFeatureFlags() { return FLAGS.map(... + overridden status); }
 ```
 
 Read once at boot. Flipping a flag requires a server restart. Aggregated at `/api/orchestrator/features`. Surfaced in the UI at `/admin/features`. See [AUTH.md](./AUTH.md) for the auth module's specific flag inventory.
+
+## Teaching loop
+
+The `teaching` module is the legibility layer for the content-generation-and-delivery loop. Every interaction (chat, attempt-insight, etc.) is wrapped in a TeachingTurn record:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/turns/me` | Authenticated user's own turn history + improvement summary |
+| `GET /api/turns/student/:id` | Another student's turns — admin/teacher (roster) /parent (guardian_of) only |
+| `GET /api/turns` | Admin firehose — every recent turn |
+
+Frontend at `/gate/turns` (own) and `/gate/turns/:id` (admin/teacher/parent view). Persistence is append-only JSONL at `.data/teaching-turns.jsonl`. The full contract — what's recorded, when, by whom, with what scenario detection — lives in [TEACHING.md](./TEACHING.md).
 
 ## Persistence layout
 

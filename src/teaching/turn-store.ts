@@ -65,6 +65,12 @@ import type { AttemptInsight } from '../gbrain/after-each-attempt';
  * Snapshot of student mastery on the concept(s) relevant to this turn.
  * Captured at turn-open time so we can later answer "what did the
  * system know when it chose this?".
+ *
+ * Scenario-detection fields (is_cold_start, repeated_error_pattern,
+ * is_zpd_candidate) are populated by the open-site if cheap to
+ * compute. Absent fields mean "not detected" — they don't mean
+ * "detected and false." A turn opened from a code path that doesn't
+ * have a student model handy will leave them undefined.
  */
 export interface MasterySnapshot {
   concept_id: string | null;       // primary concept, if any
@@ -73,6 +79,14 @@ export interface MasterySnapshot {
   attempts_so_far: number | null;
   /** ZPD candidate (the concept the system thinks is "ready" next). */
   zpd_concept: string | null;
+  /** Scenario: student has effectively no mastery data yet. */
+  is_cold_start?: boolean;
+  /** Scenario: this concept is the ZPD candidate (ready-to-learn). */
+  is_zpd_candidate?: boolean;
+  /** Scenario: GBrain reports recent consecutive failures > threshold. */
+  repeated_error_pattern?: boolean;
+  /** When repeated_error_pattern is true, how many consecutive failures. */
+  consecutive_failures?: number;
 }
 
 /**

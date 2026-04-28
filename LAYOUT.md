@@ -30,6 +30,7 @@ project-vidhya/
 ├── DEPLOY.md                 ← Render + alternatives
 ├── DEPLOY-NETLIFY.md         ← Netlify+Render hybrid
 ├── AUTH.md                   ← Auth module surface
+├── TEACHING.md               ← The teaching loop contract
 ├── CONTENT.md                ← Content engine internals
 ├── EXAMS.md                  ← Exam adapters
 ├── DEMO.md                   ← Demo walkthrough
@@ -62,9 +63,11 @@ src/
 │   └── user-store.ts         ← createFlatFileStore for users
 │
 ├── modules/
-│   └── auth/                 ← Auth module barrel + flag implementation
-│       ├── index.ts          ← Public re-exports — import from here
-│       └── feature-flags.ts  ← env-var driven flags, read once at boot
+│   ├── auth/                 ← Auth module barrel + flag implementation
+│   │   ├── index.ts          ← Public re-exports — import from here
+│   │   └── feature-flags.ts  ← env-var driven flags, read once at boot
+│   └── teaching/             ← Teaching module barrel
+│       └── index.ts          ← Public re-exports for openTurn / closeTurn / etc.
 │
 ├── api/                      ← HTTP route handlers (one file per resource)
 │   ├── auth-routes.ts        ← /api/auth/* (5 routes)
@@ -113,6 +116,9 @@ src/
 ├── lifecycle/                ← Customer lifecycle agents
 ├── data-rights/              ← GDPR-style export/delete (request/cancel/confirm/finalise)
 ├── jobs/                     ← In-process job scheduler
+
+├── teaching/                 ← Teaching module
+│   └── turn-store.ts         ← TeachingTurn schema + persistence (.data/teaching-turns.jsonl)
 │
 ├── events/                   ← Event bus (signal-bus.ts)
 ├── utils/                    ← Generic utilities

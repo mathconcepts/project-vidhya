@@ -43,12 +43,12 @@ The platform never holds an LLM provider key. The operator (or admin) pastes the
 
 ### 3. Module barrels over sub-repo extraction
 
-Vidhya has 9 modules but only 1 sub-repo (`project-vidhya-content`). The rest live in the main repo with explicit module barrels at `src/modules/<name>/index.ts` declaring the public surface.
+Vidhya has 10 modules but only 1 sub-repo (`project-vidhya-content`). The rest live in the main repo with explicit module barrels at `src/modules/<name>/index.ts` declaring the public surface.
 
 **Why:**
 - Sub-repos are heavyweight: pin files, separate releases, drift between SHAs, cross-repo PRs to ship a coupled change.
 - The barrel pattern (`module by re-export`) gives most of the benefits of extraction (clear public surface, mechanical refactor target, future `git subtree split` is trivial) without the operational cost.
-- Of the 9 modules, only `content` has a real external contributor surface (community-authored explainers). That's the one that earned a sub-repo.
+- Of the 10 modules, only `content` has a real external contributor surface (community-authored explainers). That's the one that earned a sub-repo.
 
 **What it costs:**
 - A future operator who wants to pin only the auth code at a specific SHA, independent of the rest, can't. They get the whole repo.
@@ -118,7 +118,7 @@ The codebase ships with a fictional 56-person org chart (CEO, 6 C-suite, 17 mana
 1. **Conceptual modelling**: it forces clear ownership for every module and tier. Agents are the layer at which we ask "who designed this and who maintains it." See [`agents/ORG-CHART.md`](./agents/ORG-CHART.md).
 2. **Future automation**: the constitution at [`agents/_shared/constitution.md`](./agents/_shared/constitution.md) is shaped so individual agents can later be implemented as LLM-driven sub-systems. None of them are today.
 
-The org chart is *not* required to read or contribute to Vidhya. If it confuses you, ignore it; the 9 modules and the file layout in [LAYOUT.md](./LAYOUT.md) are what matter.
+The org chart is *not* required to read or contribute to Vidhya. If it confuses you, ignore it; the 10 modules and the file layout in [LAYOUT.md](./LAYOUT.md) are what matter.
 
 ## Where this doc came from
 

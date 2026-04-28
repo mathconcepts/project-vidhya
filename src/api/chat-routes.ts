@@ -289,16 +289,30 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     const conceptEntry = concept_id
       ? (studentModel.mastery_vector?.[concept_id] ?? null)
       : null;
+
+    // Scenario detection — read existing GBrain state, label the turn.
+    // Each flag is "detected"=true / undefined=not-detected; never false.
+    // We don't claim "not cold start" — we just don't say anything if
+    // we can't tell.
+    const total_attempts = Object.values(studentModel.mastery_vector ?? {})
+      .reduce((sum, e: any) => sum + (e?.attempts ?? 0), 0);
+    const is_cold_start = total_attempts < 3 ? true : undefined;
+    const is_zpd_candidate = (concept_id && concept_id === _reasonerInstructions?.selected_concept)
+      ? true : undefined;
+    const consecutive_failures = (studentModel.consecutive_failures ?? 0);
+    const repeated_error_pattern = consecutive_failures >= 3 ? true : undefined;
+
     const pre_state: MasterySnapshot = {
       concept_id,
       topic: _reasonerInstructions?.topic ?? null,
       mastery_before: conceptEntry?.score ?? null,
       attempts_so_far: conceptEntry?.attempts ?? null,
       zpd_concept: _reasonerInstructions?.selected_concept ?? null,
+      is_cold_start,
+      is_zpd_candidate,
+      repeated_error_pattern,
+      consecutive_failures: repeated_error_pattern ? consecutive_failures : undefined,
     };
-    const degraded = !getChatModel()
-      ? { reason: 'no-llm-available' as const, detail: 'GEMINI_API_KEY not configured (caught earlier)' }
-      : undefined;
     _turn_id = openTurn({
       student_id,
       intent: classifyIntent(message),
@@ -311,7 +325,6 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
         summary: message.slice(0, 120),
       },
       pre_state,
-      degraded,
     });
   } catch (turnErr) {
     // Turn instrumentation must never break the chat. Log + continue.

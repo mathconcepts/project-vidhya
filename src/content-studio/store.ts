@@ -153,7 +153,7 @@ export async function generateDraft(
         case 'uploads':     res = await tryUploadsSource(req, actor_id); break;
         case 'wolfram':     res = await tryWolframSource(req); break;
         case 'url-extract': res = await tryUrlExtractSource(req); break;
-        case 'llm':         res = await tryLlmSource(req); break;
+        case 'llm':         res = await tryLlmSource(req, actor_id); break;
         default:
           // Unknown source — record and continue
           attempts.push({
@@ -229,7 +229,7 @@ function source_empty_reason(src: StudioSourceKind, req: GenerationRequest): str
     case 'url-extract': return req.source_url
                           ? `URL fetch failed or extracted < 100 chars from ${req.source_url}`
                           : 'no source_url provided';
-    case 'llm':         return 'LLM not available (no GEMINI_API_KEY) or returned empty';
+    case 'llm':         return 'LLM not available — no GEMINI_API_KEY, rate-limited (5/hour for studio), budget cap exceeded, or empty response';
     default:            return 'unknown source';
   }
 }

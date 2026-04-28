@@ -78,6 +78,7 @@ Topic-specific docs that go deeper than the masters:
 - **[AUTH.md](./AUTH.md)** — auth module surface (5 endpoints, 5 admin endpoints, JWT, Google OIDC, feature flags)
 - **[TEACHING.md](./TEACHING.md)** — the teaching loop (TeachingTurn schema, scenarios, instrumentation contract)
 - **[LIBRARY.md](./LIBRARY.md)** — the content library (LibraryEntry schema, seed + additions, cascade tier, extension)
+- **[STUDIO.md](./STUDIO.md)** — the content studio (4 sources, draft lifecycle, library promotion, GBrain feedback hook)
 - **[CONTENT.md](./CONTENT.md)** — 7-layer content architecture, the 3 modes of `content.pin`
 - **[EXAMS.md](./EXAMS.md)** — exam inventory and the adapter pattern
 - **[MODULARISATION.md](./MODULARISATION.md)** — the 13-module / 20-tier / 6-profile registry

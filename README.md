@@ -117,7 +117,7 @@ For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPL
 
 **Architecture** — [OVERVIEW.md](./OVERVIEW.md), [DESIGN.md](./DESIGN.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [LAYOUT.md](./LAYOUT.md), [MODULARISATION.md](./MODULARISATION.md)
 
-**Modules** — [AUTH.md](./AUTH.md), [TEACHING.md](./TEACHING.md), [LIBRARY.md](./LIBRARY.md), [CONTENT.md](./CONTENT.md), [EXAMS.md](./EXAMS.md)
+**Modules** — [AUTH.md](./AUTH.md), [TEACHING.md](./TEACHING.md), [LIBRARY.md](./LIBRARY.md), [STUDIO.md](./STUDIO.md), [CONTENT.md](./CONTENT.md), [EXAMS.md](./EXAMS.md)
 
 **Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [PRODUCTION.md](./PRODUCTION.md), [FOUNDER.md](./FOUNDER.md), [SECURITY.md](./SECURITY.md)
 

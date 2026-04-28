@@ -336,10 +336,11 @@ responsibility clean.
 **Subrepo candidate:** NOT recommended. Studio drafts are
 deployment-specific runtime state, not content to commit.
 
-**Contract reference:** module barrel at
-`src/modules/content-studio/index.ts`. STUDIO.md is a planned
-follow-up master doc; until then the inline comments in
-`src/content-studio/store.ts` are the contract.
+**Contract reference:** [STUDIO.md](./STUDIO.md). Seven endpoints,
+admin-only across the board (no flag broadens), draft lifecycle
+(draft → approved/rejected/archived), library promotion via
+`addLibraryEntry`, and the manual-trigger underperforming scan
+that reads from teaching turns.
 
 ### 12. `operator` — solo-founder business surface
 

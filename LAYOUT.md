@@ -32,6 +32,7 @@ project-vidhya/
 ├── AUTH.md                   ← Auth module surface
 ├── TEACHING.md               ← The teaching loop contract
 ├── LIBRARY.md                ← The content library contract
+├── STUDIO.md                 ← The content studio contract
 ├── CONTENT.md                ← Content engine internals
 ├── EXAMS.md                  ← Exam adapters
 ├── FOUNDER.md                ← Solo-founder runbook (the business side)

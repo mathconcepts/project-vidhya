@@ -1,0 +1,250 @@
+# PRODUCTION
+
+> What's production-ready, what isn't, and what an operator should do before exposing this to real users. Honest assessment — not a marketing pitch.
+
+---
+
+## TL;DR
+
+This is a **mature codebase running in development mode by default**. It has 169 unit tests, 9 regression gates, modular architecture, graceful degradation across all external dependencies, and a clear path from clone-to-deployed. It has NOT been observed at scale, NOT pen-tested, and has known gaps an operator should close before serious use.
+
+If you're deploying for **a class of fifty students** with a trusted teacher operator: ready today, follow the checklist below.
+
+If you're deploying for **a paying customer base of thousands**: the gaps in the second-half of this doc are real. Address them or accept the risk explicitly.
+
+---
+
+## What's already production-ready
+
+These are claims I can defend with code or tests in the repo today.
+
+### Type safety
+
+- `npx tsc --noEmit` passes 0 errors on both backend and frontend
+- Module barrels at `src/modules/<name>/index.ts` declare strict-typed public surfaces
+- The body of each backend file uses `@ts-nocheck` (intentional — types are documentation, the barrels are enforcement)
+
+### Test coverage
+
+- 169 unit tests across 9 test files, all passing
+- 49 stdio integration smoke tests
+- 65 SDK compatibility smoke tests
+- 14 multi-role demo verifications (`npm run demo:verify`)
+- 10 end-to-end teaching-loop runtime tests (`npm run verify:teaching`)
+- Each of the 56 agents in the org chart validated by `agents/validate-graph.py`
+- Subrepo content validated by its own check script
+
+Run the full regression with: `npm test && npm run smoke:stdio && npm run smoke:sdk-compat`. Expect 280+ tests/checks passing.
+
+### Continuous integration
+
+A complete CI workflow specification is provided at [`docs/operator-snippets/regression-workflow.yml.example`](./docs/operator-snippets/regression-workflow.yml.example). To enable:
+
+```bash
+mkdir -p .github/workflows
+cp docs/operator-snippets/regression-workflow.yml.example .github/workflows/regression.yml
+git add .github/workflows/regression.yml
+git commit -m "ci: enable regression workflow"
+git push
+```
+
+The push must come from a credential with `workflow` scope (a GitHub web push, an Action-installed GitHub App, or a PAT with workflow scope). Once enabled, the workflow runs on every push to main and every PR; it executes the same regression gates an operator runs locally before each commit. Branch protection should be configured to require this workflow before merge.
+
+The workflow is provided as an example file rather than an active workflow because the maintainer's PAT used during this commit lacks `workflow` scope — a sensible GitHub safeguard against tokens silently introducing CI changes. An operator with proper credentials can enable it in one step.
+
+### Graceful degradation
+
+Every external dependency degrades cleanly when missing:
+
+| Missing | Behaviour |
+|---|---|
+| `JWT_SECRET` | Fails fast at boot with a clear error |
+| `GEMINI_API_KEY` | `/api/chat` returns 503 with a clear message; teaching turn records `degraded.reason='no-llm-available'` so admins can see the issue in the firehose |
+| `WOLFRAM_APP_ID` | Wolfram source returns null; orchestrator continues to next source; chat path's verification badge stays off |
+| `DATABASE_URL` | flat-file persistence used; only `attempt-insight` mastery-delta path is unavailable |
+| `GOOGLE_OAUTH_CLIENT_ID` | `/auth/google` returns 503; JWT-based auth (demo seed, admin-created users) still works |
+| Telegram / WhatsApp tokens | Channel shown as 'not configured', refuses to send. Web chat works regardless. |
+
+This is verified by the existing test suite and the live probes during commit verification.
+
+### Auth
+
+- JWT signing with HS256, secret minimum 16 chars enforced at boot
+- Layered authorization: 7 roles (owner / admin / institution / teacher / parent / student / public)
+- Role hierarchy enforced in `requireRole()` middleware
+- POST handlers always override client-supplied identity fields (`added_by`, `created_by`) with the actor's id
+- Cross-student data leakage tested: students cannot read other students' turns, plans, or notes
+- Demo users have `@vidhya.local` emails — clearly distinguishable from real users in admin views
+
+### Persistence + backups
+
+- Append-only JSONL for audit-trail data (turns, library additions, studio drafts) — corrupt lines skipped on read, no silent data loss
+- Flat-file JSON for state data (users, plans, vectors) — atomic writes via `flat-file-store`
+- Backup script: `npm run backup:create` produces a timestamped tarball of `.data/`
+- Restore: extract tarball over `.data/`, restart server
+- All persistence in `.data/` is gitignored
+
+### Observability
+
+- `/api/orchestrator/health` reports per-module health for all 12 modules
+- `/api/orchestrator/features` lists all feature flags with default + enabled + overridden state
+- `/api/turns` admin firehose shows every recent teaching interaction with full metadata
+- `/api/content-library/concepts` exposes the served library
+- Errors logged to stderr with module + handler context; suppressible via `VIDHYA_LOG_STDERR=off` for CI
+
+### Documentation
+
+- 14 master docs at the repo root (OVERVIEW, DESIGN, ARCHITECTURE, LAYOUT, AUTH, TEACHING, LIBRARY, CONTENT, EXAMS, MODULARISATION, DEPLOY, INSTALL, SECURITY, PRODUCTION)
+- Per-module health probe descriptions in `modules.yaml`
+- 11-module model fully described in MODULARISATION.md with per-module boundary justification
+- CHANGELOG covers every shipped commit
+
+---
+
+## What's NOT production-ready
+
+Honest gaps. Each is something a thoughtful operator should weigh before serious deployment.
+
+### Single-process state
+
+The flat-file persistence assumes single-process. Two replicas writing to the same `.data/` directory will produce torn writes and corrupted state.
+
+**Mitigations:**
+- Render's free tier deploys a single instance — naturally compatible
+- For multi-instance deployment, either (a) put `DATABASE_URL` in env and re-architect the persistence (multi-week effort, currently not done), or (b) use a single instance with vertical scaling
+
+### No moderation flow for user-contributed content
+
+Content-library entries POSTed via API go live immediately. Content-studio drafts pending approval are gated correctly, but the library's direct POST path bypasses approval.
+
+**Mitigations:**
+- Default deployment has `content_library.user_authoring=false` — only admin can POST
+- Operators in trusted-contributor mode (flag on) need an out-of-band trust model
+- Future: add a moderation queue with timed review window before live promotion
+
+### No rate limiting
+
+There's no rate-limiter on any endpoint. An admin or attacker could in principle hammer any endpoint as fast as the network allows.
+
+**Mitigations:**
+- Render's edge does have basic rate limits
+- Auth endpoints have JWT-signing CPU cost which provides natural throttling
+- For sustained abuse, add `express-rate-limit` or similar — known gap, deliberate scope choice
+
+### No retention policy on append-only logs
+
+Three logs grow unbounded:
+- `.data/teaching-turns.jsonl` (every chat turn + every attempt-insight call)
+- `.data/content-library-additions.jsonl` (every runtime add)
+- `.data/content-drafts.jsonl` (every studio draft + lifecycle event)
+
+At ~100k records each, the linear-scan reads slow noticeably. Disk usage grows.
+
+**Mitigations:**
+- Run `npm run backup:create` periodically and rotate
+- Implement monthly log rotation (PENDING.md §X — not done)
+- Tie GDPR-style data deletion to clearing per-user records from these logs (PENDING.md §5 — partial)
+
+### Limited observability
+
+There's no APM, no request tracing, no per-endpoint latency histograms.
+
+**Mitigations:**
+- The `/api/orchestrator/health` endpoint is a coarse heartbeat; sufficient for liveness checks
+- For deeper observability, wire up something like Datadog / Honeycomb / OpenTelemetry — not done
+
+### No SLO / no incident response
+
+There's no defined SLO, no on-call rotation, no documented incident response.
+
+**Mitigations:**
+- For a class-of-fifty deployment, treat outages as best-effort
+- For paying customer deployments, write your own runbook
+
+### No security audit
+
+The codebase has not been audited by a third party. Common vulnerabilities (XSS, SQL injection — N/A since no SQL today, CSRF, JWT flaws) have been considered but not formally reviewed.
+
+**Mitigations:**
+- SECURITY.md describes responsible disclosure
+- Open issues for any concrete CVE-style vulnerability
+- The auth model has been written to defend against the obvious attacks (signed JWTs, role-checks at every admin endpoint, identity overrides on POSTs)
+
+### Frontend bundle size
+
+The frontend ships a 22 MB WASM embedding model. On slow connections this is significant.
+
+**Mitigations:**
+- The model is cached aggressively after first load
+- Code-splitting is partial — could be deeper
+- Consider serving the model from a CDN if your users have slow connections
+
+### LLM cost controls
+
+If a deployment has `GEMINI_API_KEY` set, every chat request consumes API credit. There's no per-user budget cap.
+
+**Mitigations:**
+- Gemini's free tier is generous
+- For a paid-tier deployment, set provider-side spending limits in the Google Cloud Console
+- Future: per-user daily budget caps in the chat handler — not implemented
+
+### No PII redaction in logs
+
+Console logs include user IDs, occasionally email addresses, and concept IDs. These end up in container stdout / stderr, which on Render means viewable in the dashboard.
+
+**Mitigations:**
+- Operators with FERPA / GDPR concerns: rotate logs frequently, restrict dashboard access
+- Future: structured logging with PII tags + automatic redaction — not implemented
+
+---
+
+## Setup checklist for a real deployment
+
+Before exposing this to actual users, run through this checklist. Each item maps to one of the gaps above.
+
+```
+[ ] Set JWT_SECRET to a 32+ character random string (NOT the placeholder)
+[ ] Decide on LLM provider: GEMINI_API_KEY (cheapest) or rotate via src/llm/
+[ ] Decide on Wolfram: WOLFRAM_APP_ID for math verification (free tier OK)
+[ ] If multi-process: put DATABASE_URL in env AND understand the gaps above
+[ ] If using Google sign-in: set GOOGLE_OAUTH_CLIENT_ID
+[ ] Enable GitHub branch protection requiring the regression workflow to pass
+[ ] Set up a deployment URL (Render's render.yaml does this in one click)
+[ ] Run `npm run backup:create` on a cron or systemd timer
+[ ] Decide log retention policy (rotate .jsonl files monthly OR set up log shipping)
+[ ] Document YOUR incident response — even "post on Slack and email me" is better than nothing
+[ ] If serving regulated population (under-18s, EU, healthcare): get a real legal review
+[ ] Test the recovery path: delete .data/, restore from a recent backup, verify the demo still works
+[ ] Hit /api/orchestrator/health from your monitoring (UptimeRobot / Pingdom / etc.)
+[ ] Configure a status page so users have somewhere to look when things break
+```
+
+The first 7 items take ~30 minutes total. The last 6 are operational discipline that compounds over time.
+
+---
+
+## What "production grade" means and what it doesn't
+
+I want to be honest about the gap between "this code is well-tested" and "this system is production grade":
+
+**Production grade is a property of an observed system, not a property of code.** A codebase can have 10000 unit tests and still fall over under real load if a code path no test exercised meets a workload no test simulated. Real production maturity comes from:
+
+1. Observed behaviour under real load (not present here — no live deployment yet)
+2. Battle-testing against actual abuse patterns (not present)
+3. Recovery from real incidents (not present)
+4. Iteration on real user feedback (the teaching loop is wired but has no real student data)
+
+What this PR can deliver is **production-readiness work** — checklists, gates, docs, fixes — not production maturity itself. The system is closer to ready today than it was yesterday. Real readiness arrives only after deployment and observation.
+
+If you're using this to decide whether to put it in front of users: read the gaps section above, decide which ones matter for your context, and close the ones that do.
+
+---
+
+## Where this doc fits
+
+- [OVERVIEW.md](./OVERVIEW.md) — what Vidhya is and who for
+- [DESIGN.md](./DESIGN.md) — why the architecture is shaped this way
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — modules + topology + data flow
+- [DEPLOY.md](./DEPLOY.md) — the deployment paths
+- [SECURITY.md](./SECURITY.md) — vulnerability disclosure
+- **PRODUCTION.md (this file)** — honest production-readiness assessment

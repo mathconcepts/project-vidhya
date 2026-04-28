@@ -8,312 +8,133 @@
 
 ## The moment we built this for
 
-It's 2 a.m. She's stuck on an eigenvalue problem. Her exam is in four weeks. **The coaching centre closed at nine.** The top-ranked YouTube explanation runs forty-five minutes and assumes she already understands the thing she's trying to learn. **Her notes are at home. She doesn't know what to ask because she doesn't know what she doesn't know.**
+It's 2 a.m. She's stuck on an eigenvalue problem. Her exam is in four weeks. **The coaching centre closed at nine.** The top YouTube explanation runs forty-five minutes and assumes she already understands the thing she's trying to learn.
 
 She opens her phone, takes a photo of the problem, and gets her answer — not just the number, but the method, the intuition, the trap she would have fallen into, the specific concept she's weak on, and three calibrated problems that will fix it. **Ten minutes later she's moved on.**
 
-The next morning the app doesn't guilt-ping her about a broken streak. It just remembers where she stopped, and picks up when she's ready.
+The next morning the app doesn't guilt-ping her about a broken streak. It just remembers where she stopped, and picks up when she's ready. **On exam day she walks in like a champion who has trained right.**
 
 That's Vidhya.
 
 ---
 
-## What her life looks like six months in
+## The four ingredients
 
-**Her exam is in three days.** She knows which four topics need one more pass, because the app kept a running map of her weak spots. Her revision plan this evening is twenty-two minutes — exactly the time she has between dinner and sleep. **She has no new concepts to learn.** Everything she needs is already in her head, waiting to be refreshed.
+| | What it gives you | How we make it real |
+|---|---|---|
+| 📚 **Compounding** | Every rep adds to the next. Twelve short sessions add up like one long session; what you cracked in January is still with you in March. | A Bayesian student model remembers every mistake, breakthrough, and weak spot. Effort compounds. |
+| 🎯 **Strategy** | The right priority at the right distance from your exam. Six months out: base-building. Three days out: revision on weakest topics. | Exam-proximity-aware planner. Your registered dates reshape every priority weighting as the day approaches. |
+| 🧘 **Calm** | No streaks. No shame. No guilt pings. Your data stays yours — notes, progress, AI key all on your device. | Stateless server. No notification service, no streak counter. Nowhere to keep you even if we wanted to. |
+| 🌍 **Focus** | World-class teaching on any phone, anywhere, online or off. Same lesson, same depth, whether on fibre or 3G. | Four-tier content engine. ~80% of requests hit a pre-built bundle delivered once and cached. |
 
-She studies on the bus in the morning. Eight minutes, three questions, two of them ones she got wrong last month. She studies on her phone during the power cut that afternoon, because the app loaded offline on her first visit and stays that way. She doesn't study at all on Wednesday; her cousin's wedding runs late. **The app does not punish her for Wednesday.**
-
-**On exam day she walks in like a champion who has trained right.** Calm, because she slept well for months. Strategic, because she knows exactly what's likely to appear and where her strengths sit. Focused, because every session through the year targeted the next-most-important thing. And the work has compounded — every problem she solved in January, every concept she cracked in March, is still with her at the desk.
-
-**She writes a paper she is ready for.** That's the destination.
-
----
-
-## Why this is different — and why you can trust it
-
-**We have been the student at 2 a.m.** Every design choice in Vidhya is a direct answer to something that wasted our time or our money when we were preparing for our own exams.
-
-**Every claim maps to code.** Nothing is behind a paywall, an enterprise tier, or a "contact sales". The four-tier content engine, the student model, the Wolfram verification — all in this repository. Read it. Run it. See for yourself.
-
-**Teaching from sources top teachers trust.** OpenStax, MIT OpenCourseWare, past exam papers from national boards. Every maths answer is computationally checked against Wolfram Alpha before it reaches you. Verified teaching, not generated slop.
-
-**No investors pushing us to squeeze students.** One small honest price — not free, because free products end up monetising you somewhere else. One tier of access, period. No upsells. No "premium" feature gating. No nagware. And your AI costs go directly to Gemini or Claude, at their rates, to your card. We do not sit in the middle of that either.
-
----
-
-## The four ingredients Vidhya builds in you
-
-Every champion — in any field — walks into the arena with the same four things. **Calm. Strategy. Focus. Compounding.** Vidhya is the training camp that builds all four in you, every time you practise. Each ingredient below: the promise, the pain it replaces, and the specific mechanism that makes it real.
-
-<br />
-
-### 📚 Compounding — *every rep adds to the next*
-
-> [!TIP]
-> ### ✨ **You build an unshakeable base.**
-> Twelve short sessions add up like one long session. A concept you cracked in January is still with you in March.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Most apps make you start from scratch every session. Your effort leaks out before it builds up.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *A Bayesian student model remembers every mistake, every breakthrough, every weak spot — forever. Your effort compounds, session after session.*
-
-<br />
-
-### 🎯 Strategy — *you always know where to focus*
-
-> [!TIP]
-> ### ✨ **The right priority, at the right distance from the exam.**
-> Six months out: patient base-building. Three days out: straight to revision, on your weakest topics. Your dates drive every recommendation.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Most apps give the same advice on day 180 and day 3. "Take a break" does not land the same both times.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *An exam-proximity-aware planner. Your registered exam dates reshape every priority weighting as the day approaches.*
-
-<br />
-
-> [!TIP]
-> ### ✨ **The strategy adapts to your shape, not the other way around.**
-> Late nights or early mornings. Three minutes on a bus or sixty in one sitting. Web, Telegram, or WhatsApp. Your favourite AI provider, your favourite language. You pick the shape — the strategy fills it.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Most apps force you into one "optimal" study pattern and treat every deviation as a failure. Your habits, your timings, your context all become the enemy.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *A session planner that budgets for whatever time you actually have. Multi-channel delivery meets you where you are. Bring-your-own-AI-key means even the model serving you is yours to pick.*
-
-<br />
-
-### 🧘 Calm — *you study from strength, not fear*
-
-> [!TIP]
-> ### ✨ **Peace of mind is the point, not the price of admission.**
-> No streaks. No shame. No guilt pings at 11 pm. Miss a day, the app quietly waits. You study because you want to, not because you are afraid.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Exam-prep apps are engineered to keep you hooked. Missing a day becomes a moral failure.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *Our codebase has no notification service, no streak counter, no re-engagement logic. We chose not to build them.*
-
-<br />
-
-> [!TIP]
-> ### ✨ **Your data stays yours. One less thing to worry about.**
-> Your notes, your progress, your mistakes — all in your browser, not on our servers. Your AI key stays yours. We see nothing.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Most apps harvest your weak spots, your timings, your behaviour — and monetise them. The product was never you.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *The server is stateless by design. No user database. No analytics table. Nowhere to keep you, even if we wanted to.*
-
-<br />
-
-### 🌍 Focus — *the quality teaching travels to you*
-
-> [!TIP]
-> ### ✨ **World-class teaching on any phone, anywhere, online or off.**
-> Same lesson, same depth, same rigour — whether you study in a capital city on fibre-optic or in a small town on patchy 3G. Works offline after the first sync. One tier of teaching, and it is the good one.
-
-> [!CAUTION]
-> ### ⚠ **Known pain** — *Top teaching clusters in a few cities. Everyone else makes do with random YouTube and luck. Your focus gets broken by chasing the material itself.*
-
-> [!TIP]
-> ### ✅ **How we make it real** — *A four-tier content engine. 80% of requests hit a pre-built bundle delivered once and cached forever. The teaching travels to you — so your focus can stay on learning.*
-
-<br />
-
-> [!NOTE]
-> ### Every ingredient defended in code
->
-> The Bayesian student model that powers **Compounding** → [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md). &nbsp;•&nbsp; The four-tier content cascade that powers **Focus** → [PLAN-content-engine.md](./PLAN-content-engine.md). &nbsp;•&nbsp; The stateless server that powers **Calm** → [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md). &nbsp;•&nbsp; The exam-proximity planner that powers **Strategy**, plus 48 tagged releases and 163 passing smoke tests → [FEATURES.md](./FEATURES.md).
->
-> *Every ingredient above is defended in the codebase, not in copy. Read the tests. Run the smokes. Inspect every layer.*
+Every ingredient defended in code, not in copy. Read the tests, run the smokes, inspect every layer.
 
 ---
 
 ## Why it exists
 
-> ### 💡 **The stressed student is the profitable one.** Vidhya refuses that trade.
+> ### 💡 **The stressed student is the profitable one. Vidhya refuses that trade.**
 
-**Every existing exam-prep product makes the same bargain: to get personalised prep, you give up your data, your time, your peace of mind, and usually your money.** Streak fatigue, push notifications, lock-screen guilt — **none of it was ever going to teach you calculus. It was just going to cost you sleep.**
+Every existing exam-prep product makes the same bargain: to get personalised prep, you give up your data, your time, your peace of mind, and usually your money. Streak fatigue, push notifications, lock-screen guilt — **none of it was ever going to teach you calculus.**
 
-Vidhya makes a different trade. Twelve five-minute sessions compound into the mastery a sixty-minute session builds; nothing evaporates between them. The app tunes its advice to how close your exam is. **Your notes, your progress, and your provider key all stay on your device.** The price of the AI is whatever the provider charges you directly — there is no intermediary pricing layer, because there is no intermediary.
+Vidhya makes a different trade. Sessions compound; your provider key stays yours; the price of the AI is whatever the provider charges you directly. A student logging in from a small town gets the same lesson as a student in the most expensive coaching centre anywhere. **Geography stops being the limit.**
 
-A student logging in from a small town gets the same lesson, the same worked example, the same depth as a student in the most expensive coaching centre anywhere in the world. **Geography stops being the limit.**
-
-📖 *The full positioning is in [POSITIONING.md](./POSITIONING.md). The thirty-second shareable version is in [PITCH.md](./PITCH.md).*
+📖 *Full positioning in [POSITIONING.md](./POSITIONING.md). Thirty-second version in [PITCH.md](./PITCH.md).*
 
 ---
 
 ## What it actually does
 
-> ### 💡 **Ask anything. Upload anything. The cheapest path that works gets taken first.**
+Ask a question in chat. Upload a PDF of your class notes. Snap a photo of a problem. Vidhya tries the cheapest path that works: a pre-built bundle of high-value concepts, then client-side semantic search over your uploads, then a live LLM call. Mathematical answers get verified against Wolfram Alpha where possible.
 
-Ask a question in chat. Upload a PDF of your class notes. Snap a photo of a problem. For each request, Vidhya tries the cheapest path that works: **first a pre-built bundle** of the 82 highest-value concepts in the syllabus, **then a client-side semantic search** over your uploaded materials, **then a live LLM call** — only when the first two miss. Mathematical answers get computationally verified against Wolfram Alpha where possible, and the UI says so with an emerald _Wolfram-verified_ badge.
+The planner budgets for the time you actually have — three minutes at a bus stop, sixty on a weekend. When your exam is three days out, the app stops telling you to rest; it switches to revision. Everything reaches you through web, Telegram, or WhatsApp — same account, same progress, three surfaces.
 
-You register your exams once. The planner gives you sessions budgeted for the time you actually have in front of you — three minutes at a bus stop, sixty minutes on a weekend. You see your trailing weekly activity on the home screen. You save the patterns that work (*"morning commute, eight minutes"*) and fire them with one tap. When your exam is three days out the app stops telling you to rest; it switches to lesson review, because telling a stressed student to *"step away for ten minutes"* two days before her exam reads as tone-deaf.
-
-Everything reaches you through whichever channel you prefer — **the web app, a Telegram bot, or WhatsApp**. Same account, same progress, three surfaces.
-
-📖 *The complete ledger of shipped features across forty-eight tagged releases lives in [FEATURES.md](./FEATURES.md).*
+📖 *Forty-eight-release feature ledger: [FEATURES.md](./FEATURES.md). Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md).*
 
 ---
 
 ## What's underneath
 
-> ### 💡 **Stateless server. Local-first client. No database required.**
+A React SPA backed by a stateless Node server. **Your student model and uploaded notes live in IndexedDB.** A 22 MB WASM embedding model ships once; from then on embeddings are computed locally. The server is mostly a thin LLM proxy. **Nothing is in Postgres. Nothing requires it.** A five-dollar VPS handles a class of fifty.
 
-A React SPA backed by a stateless Node server on Express. **Your student model, your uploaded notes, and your semantic embeddings all live in IndexedDB.** A twenty-two-megabyte WASM embedding model ships to the browser once; from then on embeddings are computed locally. The server is mostly a thin LLM proxy with an opt-in anonymous telemetry aggregator. **Nothing is in Postgres. Nothing requires it.** A five-dollar VPS handles a class of fifty.
+Twelve modules: core, auth, content, rendering, channels, learning, exams, lifecycle, teaching, content-library, content-studio, orchestrator. Each declares its public surface in `src/modules/<n>/index.ts` and registers in `modules.yaml`. The orchestrator composes them per deployment profile.
 
-The content layer is a **four-tier cascade** assembled overnight by GitHub Actions: scrape curated CC-licensed sources (OpenStax, MIT OCW, GATE previous-year papers, Stack Exchange), generate 82 concept explainers with a cheap LLM, verify every piece of math against Wolfram, assemble into `content-bundle.json`, and ship. **Roughly eighty percent of student questions hit tier 0 at zero marginal cost.** The remaining twenty percent fan out to semantic search, then to a live LLM call — and six percent of those get Wolfram-verified on the fly.
-
-📖 *The cascade is defended and cost-modelled in [PLAN-content-engine.md](./PLAN-content-engine.md). Every other architectural choice is in [ARCHITECTURE.md](./ARCHITECTURE.md), with the design rationale in [DESIGN.md](./DESIGN.md). For a guided tour start with [OVERVIEW.md](./OVERVIEW.md); the hierarchical docs index is at [docs/00-index.md](./docs/00-index.md).*
+📖 *Module map in [MODULARISATION.md](./MODULARISATION.md). Production-readiness in [PRODUCTION.md](./PRODUCTION.md).*
 
 ---
 
 ## Quick start
 
-Three deployment paths. Pick one. Each takes ~5 minutes from a fresh clone.
-
-### 🖥️ Local — runs on your laptop
+Three deployment paths. Pick one.
 
 ```bash
+# Local — runs on your laptop, no keys required
 git clone https://github.com/mathconcepts/project-vidhya
 cd project-vidhya
-npm run demo:setup     # installs both backend + frontend, seeds 6 demo users
-npm run demo:start     # boots backend + frontend
-# open http://localhost:3000/demo.html — pick any role, you're in
+npm run demo:setup
+npm run demo:start
+# open http://localhost:3000/demo.html
 ```
 
-No keys required. Works offline once installed. Full walkthrough: [`DEMO.md`](./DEMO.md).
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya) — one-click public URL, free tier.
 
-### ☁️ Render — one-click public URL
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya)
-
-Click the button → sign into Render (free) → Apply Blueprint → wait ~3 minutes → live URL.
-
-Render reads [`render.yaml`](./render.yaml) and provisions a web service with a 1 GB persistent disk. JWT secret auto-generated. All optional keys (LLM, Wolfram, channel webhooks) marked sync:false so the dashboard prompts you to paste them — or skip them; the demo works without any of them at baseline.
-
-> **Live demo URL:** _none yet — operator action required._
->
-> Once the maintainer (or you, on your fork) clicks the Deploy button and gets a Render URL, replace this line by running `bash scripts/update-readme-url.sh https://your-service.onrender.com`. The script substitutes the URL across this README and DEPLOY.md in one command. Until then this README is honest about not having a live URL to point at.
-
-Full walkthrough: [`DEPLOY.md`](./DEPLOY.md).
-
-### 🌐 Netlify (frontend) + Render (backend) — hybrid
-
-Best when you want Netlify's CDN, branch deploy previews, and instant rollbacks for the frontend, while the backend keeps a real Node runtime + persistent disk on Render.
-
-```
-  Netlify (CDN, SPA)  ─/api/*─►  Render (Node + flat-file .data)
-```
-
-1. Deploy the backend to Render first ([`DEPLOY.md`](./DEPLOY.md))
-2. Connect this repo to Netlify; it auto-detects [`netlify.toml`](./netlify.toml)
-3. Set `BACKEND_URL` env var in Netlify dashboard to your Render URL
-4. Trigger a deploy — done
-
-Full walkthrough: [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md).
-
-> **Why not Netlify alone?** The backend is a long-running Node server with flat-file persistence and MCP stdio runners. Netlify Functions are short-lived Lambdas. Porting would mean rewriting persistence to a database and rewriting every long-poll surface — a multi-week refactor for no functional gain. Render hosts the backend natively; Netlify hosts the frontend natively; the hybrid combines them cleanly.
-
-### Comparison
+For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md).
 
 | | Local | Render | Netlify + Render |
 |---|---|---|---|
 | Public URL | no | ✓ | ✓ |
-| Persistent data | local `.data/` | 1 GB disk | 1 GB disk on Render |
-| Frontend CDN | no | basic | Netlify edge |
 | Branch previews | no | no | ✓ |
-| Cost | $0 | $0 (free tier) | $0 (both free tiers) |
-| Cold start | none | ~30s after 15min idle (free tier) | same (backend cold) |
 | Setup time | 5 min | 5 min | 10 min |
-| Vendors | 0 | 1 | 2 |
+| Cost | $0 | $0 (free tier) | $0 (both free tiers) |
+
+📖 *[DEMO.md](./DEMO.md) for the local walkthrough. [DEPLOY.md](./DEPLOY.md) for Render. [PRODUCTION.md](./PRODUCTION.md) before any real-user deployment.*
 
 ---
 
-## Getting started
+## Where to go next
 
-> [!NOTE]
-> **Choose your path below.** Each takes you to the right starting file.
-
-🎓 **As a student** → [PITCH.md](./PITCH.md) for what Vidhya does for you, then [INSTALL.md](./INSTALL.md) to run it locally.
-
-🧪 **As a tester wanting a working demo right now** → [DEMO.md](./DEMO.md). One command seeds a realistic student (2 exams, 6 plan history, templates, trailing stats), another command boots backend + frontend. Open `/demo.html` → you're auto-logged-in on the planned-session surface with live data.
-
-🚀 **As someone wanting a live public demo URL** → click below (free Render account), then follow [DEPLOY.md](./DEPLOY.md). Render reads the repo's `render.yaml`, provisions a web service + 1 GB persistent disk, and ~3 minutes later you have a live `.onrender.com` URL with all three exams loaded and BYOK-ready.
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya)
-
-📚 **As someone evaluating which exams this supports** → [EXAMS.md](./EXAMS.md). Three bundled mathematics exams — BITSAT, JEE Main, UGEE — with full structure, scoring, topic weights, and an adapter pattern so a new exam takes two files.
-
-📖 **As someone designing or contributing content** → [CONTENT.md](./CONTENT.md). The seven-layer content pipeline, multi-source ingestion (scraped / Wolfram / user uploads / community), intent-based routing with source disclosure, per-user subscriptions, and the separate-content-repo proposal.
-
-🧩 **As someone thinking about module composition / B2B / monetization** → [MODULARISATION.md](./MODULARISATION.md). 8 modules, 20 tiers, 6 deployment profiles, master orchestrator composing them, GitHub subrepo split plan, monetization model, institutional-B2B tier, + 8 further use cases.
-
-📋 **As someone wanting to know what's NOT done yet** → [PENDING.md](./PENDING.md). The full honest ledger — every deferred item, every "future", every "stub mode" across 14 subsystems, with priority and effort.
-
-🔬 **As a technical evaluator** → [OVERVIEW.md](./OVERVIEW.md) for the product summary, [ARCHITECTURE.md](./ARCHITECTURE.md) for how it's wired, [FEATURES.md](./FEATURES.md) for the shipping ledger, then [docs/](./docs/).
-
-🏫 **As an institution deploying for a cohort** → [INSTALL.md](./INSTALL.md). No per-seat licence. No external database. Role-based admin hierarchy (owner / admin / teacher / student) with the first sign-in auto-becoming owner. Add students via dashboard or CSV import. Define new exams as YAML. Students reach sessions through web, Telegram, or WhatsApp.
+| You are | Read |
+|---|---|
+| 🎓 A student | [PITCH.md](./PITCH.md) → [INSTALL.md](./INSTALL.md) |
+| 🧪 A tester wanting it live now | [DEMO.md](./DEMO.md) — one command, six demo users seeded |
+| 🚀 Spinning up a public URL | The Deploy button above → [DEPLOY.md](./DEPLOY.md) |
+| 📚 Evaluating exams | [EXAMS.md](./EXAMS.md) — three bundled, adapter pattern for new ones |
+| 📖 Designing content | [CONTENT.md](./CONTENT.md) + [LIBRARY.md](./LIBRARY.md) |
+| 🧩 Thinking about modules / B2B | [MODULARISATION.md](./MODULARISATION.md) — 12 modules, 20 tiers, 6 profiles |
+| 🔬 Technical evaluator | [OVERVIEW.md](./OVERVIEW.md) → [ARCHITECTURE.md](./ARCHITECTURE.md) → [docs/](./docs/) |
+| 🛡 Production deployer | [PRODUCTION.md](./PRODUCTION.md) — honest readiness checklist |
+| 📋 Wanting to know what's NOT done | [PENDING.md](./PENDING.md) — the full ledger |
 
 ---
 
-## Where the rest lives
+## Doc tree
 
-**Pitch and positioning**
-&nbsp;&nbsp;[PITCH.md](./PITCH.md) — thirty-second student-facing pitch
-&nbsp;&nbsp;[POSITIONING.md](./POSITIONING.md) — full brand and promise document
+<details>
+<summary>All master docs at the repo root</summary>
 
-**Architecture and features**
-&nbsp;&nbsp;[OVERVIEW.md](./OVERVIEW.md) — what Vidhya is, who it's for, what's actually shipping
-&nbsp;&nbsp;[DESIGN.md](./DESIGN.md) — system design rationale (the *why* of the architecture)
-&nbsp;&nbsp;[ARCHITECTURE.md](./ARCHITECTURE.md) — modules, runtime topology, request lifecycle
-&nbsp;&nbsp;[LAYOUT.md](./LAYOUT.md) — file/directory map and naming conventions
-&nbsp;&nbsp;[DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md) — visual design language (typography, colour, spacing)
-&nbsp;&nbsp;[AUTH.md](./AUTH.md) — auth module surface, roles, feature flags
-&nbsp;&nbsp;[FEATURES.md](./FEATURES.md) — forty-eight-release feature ledger
-&nbsp;&nbsp;[agents/ORG-CHART.md](./agents/ORG-CHART.md) — the 56-agent organisation chart (CEO + 6 C-suite + 17 managers + 32 specialists)
-&nbsp;&nbsp;[PLAN-content-engine.md](./PLAN-content-engine.md) — four-tier content cascade
-&nbsp;&nbsp;[PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md) — local-first architecture rationale
-&nbsp;&nbsp;[PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md) — the cognitive student model
-&nbsp;&nbsp;[docs/00-index.md](./docs/00-index.md) — hierarchical deep-reference index
+**Pitch** — [PITCH.md](./PITCH.md), [POSITIONING.md](./POSITIONING.md)
 
-**Frameworks the product is built on**
-&nbsp;&nbsp;[docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md) — the insight engine and smart notebook
-&nbsp;&nbsp;[docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md) — exam registry, enrichment, progressive fill
-&nbsp;&nbsp;[docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md) — multi-channel interactive rendering
-&nbsp;&nbsp;[docs/GBRAIN-INTEGRATION-AUDIT.md](./docs/GBRAIN-INTEGRATION-AUDIT.md) — per-feature audit of the student model
+**Architecture** — [OVERVIEW.md](./OVERVIEW.md), [DESIGN.md](./DESIGN.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [LAYOUT.md](./LAYOUT.md), [MODULARISATION.md](./MODULARISATION.md)
 
-**Setup and operation**
-&nbsp;&nbsp;[INSTALL.md](./INSTALL.md) — cross-platform installation, tiered by feature needs
-&nbsp;&nbsp;[DEPENDENCIES.md](./DEPENDENCIES.md) — toolchain + runtime packages, tagged by necessity
-&nbsp;&nbsp;[docs/LLM-CONFIGURATION.md](./docs/LLM-CONFIGURATION.md) — BYO-key setup for 8 providers
-&nbsp;&nbsp;[docs/08-testing-guide.md](./docs/08-testing-guide.md) — test commands and smoke checks
+**Modules** — [AUTH.md](./AUTH.md), [TEACHING.md](./TEACHING.md), [LIBRARY.md](./LIBRARY.md), [CONTENT.md](./CONTENT.md), [EXAMS.md](./EXAMS.md)
 
-**Journeys**
-&nbsp;&nbsp;[docs/USER-JOURNEY.md](./docs/USER-JOURNEY.md) — student and admin journey maps
-&nbsp;&nbsp;[docs/TEACHER-JOURNEY.md](./docs/TEACHER-JOURNEY.md) — teachers as end users
+**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [PRODUCTION.md](./PRODUCTION.md), [SECURITY.md](./SECURITY.md)
 
-**Project meta**
-&nbsp;&nbsp;[CONTRIBUTING.md](./CONTRIBUTING.md) — PRs, new scrapers, new subject domains
-&nbsp;&nbsp;[SECURITY.md](./SECURITY.md) — private vulnerability disclosure
-&nbsp;&nbsp;[CHANGELOG.md](./CHANGELOG.md) — release history from v2.0.0
+**Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md)
+
+**Plans** — [PLAN-content-engine.md](./PLAN-content-engine.md), [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md), [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md)
+
+**Project meta** — [CONTRIBUTING.md](./CONTRIBUTING.md), [CHANGELOG.md](./CHANGELOG.md), [FEATURES.md](./FEATURES.md), [PENDING.md](./PENDING.md)
+
+**Hierarchical reference** — [docs/00-index.md](./docs/00-index.md)
+
+</details>
 
 ---
 
 ## License
 
-MIT. See [LICENSE](./LICENSE).
-
-Bundled third-party content keeps its own per-record attribution: OpenStax textbook excerpts under CC-BY 4.0, MIT OpenCourseWare problems under CC-BY-NC-SA 4.0, GATE previous-year papers in the public domain, Math Stack Exchange excerpts under CC-BY-SA 4.0. Every record in `content-bundle.json` carries its own `license` and `attribution` fields.
+MIT. See [LICENSE](./LICENSE). Bundled third-party content keeps its own per-record attribution: OpenStax under CC-BY 4.0, MIT OCW under CC-BY-NC-SA 4.0, GATE papers in the public domain, Math Stack Exchange under CC-BY-SA 4.0. Every record in `content-bundle.json` carries its own `license` and `attribution` fields.
 
 ---
 

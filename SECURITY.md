@@ -9,10 +9,9 @@ settings where students' materials and progress data must stay private.
 
 **Please do not open public GitHub Issues for security problems.**
 
-Instead, email the details to: **security@project-vidhya.dev**
+The preferred path is to open a [private security advisory](https://github.com/mathconcepts/project-vidhya/security/advisories/new) on GitHub. This routes the report to the maintainers without making it public, and provides a thread for coordinated disclosure.
 
-Or open a [private security advisory](https://github.com/mathconcepts/project-vidhya/security/advisories/new)
-via GitHub.
+If you cannot use GitHub for the report, contact the maintainer through the channel listed on the GitHub profile page of the [repository owner](https://github.com/mathconcepts).
 
 ### What to include
 

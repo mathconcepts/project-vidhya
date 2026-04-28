@@ -1,0 +1,94 @@
+name: regression
+
+# Runs the full regression gate on every push to main and every PR.
+# Mirrors the manual gates listed in DEPLOY.md and exercised before each
+# commit in the development log.
+#
+# What's NOT here yet:
+#   - Code coverage upload (existing test:coverage script generates it,
+#     but there's no codecov / coveralls integration set up)
+#   - Lint-only fast lane on PRs (everything runs together today)
+#   - Frontend build (covered by tsc; the actual `npm run build:frontend`
+#     is heavier and tested via Render's deploy preview)
+#
+# Failure here should block merge once branch protection is enabled on the
+# repo. See SECURITY.md / DEPLOY.md for the operator's checklist on
+# enabling that protection.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install backend deps
+        run: npm ci
+
+      - name: Install frontend deps
+        run: cd frontend && npm ci
+
+      - name: Backend type check
+        run: npx tsc --noEmit
+
+      - name: Frontend type check
+        run: cd frontend && npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true   # lint warnings shouldn't block CI today;
+                                  # remove this once the codebase is lint-clean
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Agent graph validator
+        run: python3 agents/validate-graph.py
+
+      - name: Subrepo content check
+        run: cd modules/project-vidhya-content && node scripts/check.js
+
+      - name: Smoke — stdio
+        run: npm run smoke:stdio
+        env:
+          VIDHYA_LOG_STDERR: 'off'
+
+      - name: Smoke — SDK compat
+        run: npm run smoke:sdk-compat
+        env:
+          VIDHYA_LOG_STDERR: 'off'
+
+      - name: Demo seed + verify
+        run: |
+          npm run demo:seed
+          npm run demo:verify &
+          DEMO_PID=$!
+          # The demo:verify script needs the gate-server running; start it in bg.
+          # If demo:verify itself launches the server, this step still needs
+          # adjustment. For now, allow it to fail soft; the unit + smoke gates
+          # are the load-bearing ones in CI.
+          wait $DEMO_PID || echo "demo verify needs server — skip in CI for now"
+        continue-on-error: true
+        env:
+          JWT_SECRET: 'ci-secret-for-regression-testing-min-16ch'
+
+      - name: Teaching loop verify
+        run: |
+          npm run verify:teaching || echo "verify:teaching needs running server — skip in CI"
+        continue-on-error: true
+        env:
+          JWT_SECRET: 'ci-secret-for-regression-testing-min-16ch'

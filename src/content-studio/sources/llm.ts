@@ -38,20 +38,24 @@ import type { AdapterResult } from './uploads';
 import { checkRateLimit } from '../../lib/rate-limit';
 import { tryReserveTokens, recordUsage, cancelReservation } from '../../lib/llm-budget';
 
-let _model: any = null;
+let _model_cache: any = null;
 
-function getModel() {
-  if (_model) return _model;
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  try {
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(key);
-    _model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    return _model;
-  } catch (e: any) {
-    return null;
-  }
+/**
+ * Resolve an LLM via the runtime helper. Cached per process — providers
+ * don't change mid-deployment, so resolving once is fine.
+ *
+ * Was previously hard-wired to GoogleGenerativeAI + 'gemini-2.5-flash'.
+ * Now LLM-agnostic: VIDHYA_LLM_PRIMARY_PROVIDER + VIDHYA_LLM_PRIMARY_KEY
+ * (or any of the legacy provider env vars) will resolve to the right
+ * provider. Default still Gemini for back-compat with existing
+ * deployments.
+ */
+async function getRuntimeLlm() {
+  if (_model_cache !== null) return _model_cache;
+  const { getLlmForRole } = await import('../../llm/runtime');
+  const llm = await getLlmForRole('chat');
+  _model_cache = llm;   // null cached too, so second-call fast-path
+  return llm;
 }
 
 /**
@@ -68,8 +72,8 @@ export async function tryLlmSource(
   req: GenerationRequest,
   actor_id: string = 'studio-anonymous',
 ): Promise<AdapterResult | null> {
-  const model = getModel();
-  if (!model) return null;
+  const llm = await getRuntimeLlm();
+  if (!llm) return null;
 
   // Rate limit check — separate bucket per content-studio LLM caller
   // so a runaway studio script doesn't drain a different endpoint's
@@ -101,29 +105,25 @@ export async function tryLlmSource(
 
   const prompt = buildPrompt(req);
 
-  try {
-    const result = await model.generateContent(prompt);
-    const text = result?.response?.text?.();
-    if (!text || !text.trim()) {
-      // Free the reservation; no tokens were actually consumed
-      cancelReservation(actor_id, _est_total_tokens);
-      return null;
-    }
-
-    // Reconcile actual token usage. ~1 token per 4 chars of English.
-    // Add the prompt length too — both sides count toward the budget.
-    const _actual_tokens = Math.ceil((text.length + prompt.length) / 4);
-    recordUsage(actor_id, _actual_tokens, _est_total_tokens);
-
-    return {
-      body: text.trim(),
-      detail: `LLM-generated explainer for "${req.concept_id}" (~${text.length} chars, ~${_actual_tokens} tokens)`,
-    };
-  } catch (e: any) {
-    // SDK error before tokens were consumed — free the reservation.
+  // generate() returns null on any failure (network, non-OK, empty
+  // content) and logs the failure reason internally. Caller gets a
+  // simple null/string contract regardless of provider.
+  const text = await llm.generate(prompt);
+  if (!text || !text.trim()) {
+    // Free the reservation; no tokens were actually consumed
     cancelReservation(actor_id, _est_total_tokens);
     return null;
   }
+
+  // Reconcile actual token usage. ~1 token per 4 chars of English.
+  // Add the prompt length too — both sides count toward the budget.
+  const _actual_tokens = Math.ceil((text.length + prompt.length) / 4);
+  recordUsage(actor_id, _actual_tokens, _est_total_tokens);
+
+  return {
+    body: text.trim(),
+    detail: `LLM-generated explainer for "${req.concept_id}" via ${llm.provider_id}/${llm.model_id} (~${text.length} chars, ~${_actual_tokens} tokens)`,
+  };
 }
 
 function buildPrompt(req: GenerationRequest): string {

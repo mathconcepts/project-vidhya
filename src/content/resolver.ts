@@ -16,7 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// LLM access goes through src/llm/runtime — see tier2() below.
+// We deliberately don't import GoogleGenerativeAI here anymore; the
+// runtime layer is provider-agnostic and falls back to env defaults.
 import { verifyProblemWithWolfram } from '../services/wolfram-service';
 
 export type ContentSource =
@@ -231,13 +233,16 @@ async function tier1(req: ResolveRequest, bundle: ContentBundle): Promise<Resolv
 // ============================================================================
 
 async function tier2(req: ResolveRequest): Promise<ResolvedContent | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
   const start = Date.now();
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  // Flash-Lite is 3x cheaper and sufficient for this
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+  // Provider-agnostic LLM resolution. Was previously hard-wired to
+  // Gemini Flash-Lite for cost reasons; now the resolver picks the
+  // 'chat' role's resolved provider/model. Operators wanting a cheaper
+  // model for tier-2 generation should set the per-role override on
+  // their primary provider in /gate/llm-config.
+  const { getLlmForRole } = await import('../llm/runtime');
+  const llm = await getLlmForRole('chat');
+  if (!llm) return null;
 
   const diff = req.difficulty ?? 0.5;
   const diffLabel = diff < 0.33 ? 'easy' : diff < 0.66 ? 'medium' : 'hard';
@@ -256,10 +261,16 @@ Respond ONLY with JSON (no markdown):
   "distractors": ["...", "...", "..."]
 }`;
 
+  // generate() returns null on any failure (network, non-OK, empty
+  // response) and logs the reason. Caller can't distinguish failure
+  // modes — that's fine for tier-2; the cascade falls through to
+  // tier 1 / tier 0.
+  const text = await llm.generate(prompt);
+  if (!text) return null;
+
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().replace(/```json\s*|\s*```/g, '').trim();
-    const problem = JSON.parse(text);
+    const cleaned = text.replace(/```json\s*|\s*```/g, '').trim();
+    const problem = JSON.parse(cleaned);
     problem.id = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     problem.concept_id = req.concept_id;
     problem.topic = req.topic;
@@ -274,6 +285,7 @@ Respond ONLY with JSON (no markdown):
       cost_estimate_usd: 0.0005,
     };
   } catch (err) {
+    // JSON parse failed — bad LLM output. Fall through to tier 1.
     return null;
   }
 }

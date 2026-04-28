@@ -16,20 +16,21 @@
  */
 
 import { ServerResponse } from 'http';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { checkRateLimit } from '../lib/rate-limit';
+import { getLlmForRole, embedText } from '../llm/runtime';
 
 function sendError(res: ServerResponse, status: number, message: string) {
   sendJSON(res, { error: message }, status);
 }
 
-function getGenAI(): GoogleGenerativeAI | null {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  return new GoogleGenerativeAI(key);
-}
+// Note: this file used to import @google/generative-ai directly. It now
+// goes through src/llm/runtime, which falls back to env defaults
+// (GEMINI_API_KEY, ANTHROPIC_API_KEY, etc.) and respects per-request
+// LLM-config headers. Endpoints stay at /api/gemini/* for backward
+// compatibility — the URL path doesn't dictate which provider serves
+// the request.
 
 /**
  * Resolve an actor id for rate-limit bucketing on these unauthenticated
@@ -95,8 +96,9 @@ async function handleClassifyError(req: ParsedRequest, res: ServerResponse): Pro
   const { problem, studentAnswer, correctAnswer, timeTakenMs } = body || {};
   if (!problem || !studentAnswer || !correctAnswer) return sendError(res, 400, 'problem, studentAnswer, correctAnswer required');
 
-  const genAI = getGenAI();
-  if (!genAI) {
+  // Use the 'json' role since we ask the model for structured output
+  const llm = await getLlmForRole('json', req.headers);
+  if (!llm) {
     return sendJSON(res, {
       error_type: 'conceptual',
       concept_id: 'unknown',
@@ -108,7 +110,6 @@ async function handleClassifyError(req: ParsedRequest, res: ServerResponse): Pro
     });
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const prompt = `You are an expert math error diagnostician.
 Classify this error. Respond ONLY with JSON (no markdown):
 {
@@ -126,14 +127,14 @@ Student's answer: ${studentAnswer}
 Correct answer: ${correctAnswer}
 ${timeTakenMs ? `Time: ${Math.round(timeTakenMs / 1000)}s` : ''}`;
 
+  const text = await llm.generate(prompt);
+  if (!text) return sendError(res, 500, 'Classification failed: LLM returned no response');
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
     sendJSON(res, parsed);
   } catch (err) {
-    sendError(res, 500, `Classification failed: ${(err as Error).message}`);
+    sendError(res, 500, `Classification failed: bad JSON from LLM`);
   }
 }
 
@@ -147,10 +148,9 @@ async function handleGenerateProblem(req: ParsedRequest, res: ServerResponse): P
   const { conceptId, conceptLabel, conceptDescription, difficulty, targetErrorType, format } = body || {};
   if (!conceptId) return sendError(res, 400, 'conceptId required');
 
-  const genAI = getGenAI();
-  if (!genAI) return sendError(res, 503, 'Gemini not configured');
+  const llm = await getLlmForRole('json', req.headers);
+  if (!llm) return sendError(res, 503, 'No LLM provider configured');
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const diffLabel = difficulty < 0.33 ? 'easy' : difficulty < 0.66 ? 'medium' : 'hard';
 
   const prompt = `Generate a ${diffLabel} difficulty ${format === 'mcq' ? 'multiple choice' : 'numerical answer'} GATE math problem.
@@ -168,9 +168,9 @@ Respond ONLY with JSON (no markdown):
   "distractors": ["wrong 1", "wrong 2", "wrong 3"]
 }`;
 
+  const text = await llm.generate(prompt);
+  if (!text) return sendError(res, 500, 'Generation failed: LLM returned no response');
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
@@ -178,8 +178,7 @@ Respond ONLY with JSON (no markdown):
     const verifyPrompt = `Solve independently. End with: ANSWER: <final>
 
 Problem: ${parsed.question_text}`;
-    const verifyRes = await model.generateContent(verifyPrompt);
-    const verifyText = verifyRes.response.text();
+    const verifyText = await llm.generate(verifyPrompt) || '';
     const match = verifyText.match(/ANSWER:\s*(.+)/i);
     const verifiedAnswer = match ? match[1].trim() : '';
 
@@ -192,7 +191,7 @@ Problem: ${parsed.question_text}`;
 
     sendJSON(res, { ...parsed, verified, verification_answer: verifiedAnswer });
   } catch (err) {
-    sendError(res, 500, `Generation failed: ${(err as Error).message}`);
+    sendError(res, 500, `Generation failed: bad JSON from LLM`);
   }
 }
 
@@ -206,16 +205,16 @@ async function handleEmbed(req: ParsedRequest, res: ServerResponse): Promise<voi
   const { text } = body || {};
   if (!text || typeof text !== 'string') return sendError(res, 400, 'text required');
 
-  const genAI = getGenAI();
-  if (!genAI) return sendError(res, 503, 'Gemini not configured');
-
-  const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
-  try {
-    const result = await model.embedContent(text);
-    sendJSON(res, { embedding: result.embedding.values, dim: result.embedding.values.length });
-  } catch (err) {
-    sendError(res, 500, `Embedding failed: ${(err as Error).message}`);
-  }
+  // The runtime helper picks the best embedding provider from the
+  // resolved config. Today: Gemini if available, OpenAI as fallback.
+  const result = await embedText(text, req.headers);
+  if (!result) return sendError(res, 503, 'No embedding provider configured');
+  sendJSON(res, {
+    embedding:   result.embedding,
+    dim:         result.dim,
+    provider_id: result.provider_id,
+    model_id:    result.model_id,
+  });
 }
 
 // ============================================================================
@@ -228,24 +227,20 @@ async function handleVisionOCR(req: ParsedRequest, res: ServerResponse): Promise
   const { image, mimeType } = body || {};
   if (!image) return sendError(res, 400, 'image (base64) required');
 
-  const genAI = getGenAI();
-  if (!genAI) return sendError(res, 503, 'Gemini not configured');
+  // Vision role — caller provides image, runtime helper picks a vision-
+  // capable provider/model. Most providers have vision support today
+  // (Gemini Flash, Claude Sonnet, GPT-4o, etc.).
+  const llm = await getLlmForRole('vision', req.headers);
+  if (!llm) return sendError(res, 503, 'No vision-capable provider configured');
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-  const prompt = `Extract ALL text visible in this image, preserving mathematical notation in LaTeX.
+  const text = await llm.generate({
+    text: `Extract ALL text visible in this image, preserving mathematical notation in LaTeX.
 If the image shows handwritten work, transcribe it exactly. If a math problem, include the full problem.
-Respond with ONLY the extracted text, no commentary.`;
-
-  try {
-    const result = await model.generateContent([
-      prompt,
-      { inlineData: { mimeType: mimeType || 'image/jpeg', data: image } },
-    ]);
-    const text = result.response.text().trim();
-    sendJSON(res, { text, character_count: text.length });
-  } catch (err) {
-    sendError(res, 500, `OCR failed: ${(err as Error).message}`);
-  }
+Respond with ONLY the extracted text, no commentary.`,
+    image: { mimeType: mimeType || 'image/jpeg', data: image },
+  });
+  if (!text) return sendError(res, 500, 'OCR failed: LLM returned no response');
+  sendJSON(res, { text: text.trim(), character_count: text.trim().length });
 }
 
 // ============================================================================
@@ -258,22 +253,24 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
   const { message, history, systemPrompt, groundingChunks, image, imageMimeType } = body || {};
   if (!message) return sendError(res, 400, 'message required');
 
-  const genAI = getGenAI();
-  if (!genAI) return sendError(res, 503, 'Gemini not configured');
-
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  // Vision role if image is present, chat role otherwise. Either way,
+  // streaming dispatches via the runtime helper.
+  const llm = await getLlmForRole(image ? 'vision' : 'chat', req.headers);
+  if (!llm) return sendError(res, 503, 'No LLM provider configured');
 
   // Build system prompt with optional grounding
   const groundingText = (groundingChunks || []).length > 0
     ? `\n\n## Student's Uploaded Materials\n${(groundingChunks as string[]).join('\n---\n')}`
     : '';
-
   const fullSystem = (systemPrompt || 'You are a GATE Engineering Mathematics tutor.') + groundingText;
 
-  const chatHistory = (history || []).slice(-10).map((m: any) => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
+  // History — last 10 turns, normalized to the runtime's role/content shape.
+  const normalizedHistory = (history || [])
+    .slice(-10)
+    .map((m: any) => ({
+      role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+      content: m.content,
+    }));
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -283,21 +280,15 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
   });
 
   try {
-    const chat = model.startChat({
-      history: [
-        { role: 'user', parts: [{ text: 'System: ' + fullSystem }] },
-        { role: 'model', parts: [{ text: 'Understood.' }] },
-        ...chatHistory,
-      ],
-    });
+    const input: any = {
+      text: message,
+      system: fullSystem,
+      history: normalizedHistory,
+    };
+    if (image) input.image = { mimeType: imageMimeType || 'image/jpeg', data: image };
 
-    const parts: any[] = [{ text: message }];
-    if (image) parts.push({ inlineData: { mimeType: imageMimeType || 'image/jpeg', data: image } });
-
-    const result = await chat.sendMessageStream(parts);
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
-      if (text) res.write(`data: ${JSON.stringify({ type: 'chunk', content: text })}\n\n`);
+    for await (const chunk of llm.generateStream(input)) {
+      if (chunk) res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
     }
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     res.end();

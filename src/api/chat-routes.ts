@@ -9,7 +9,6 @@
 
 import { ServerResponse } from 'http';
 import pg from 'pg';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { detectTopic } from '../utils/topic-detection';
 import { composeSystemContext } from '../content-pipeline/prompt-modifiers';
 import type { UserContext } from '../content-pipeline/prompt-modifiers';
@@ -21,6 +20,7 @@ import { openTurn, closeTurn, type MasterySnapshot } from '../modules/teaching';
 import { classifyIntent } from '../content/router';
 import { checkRateLimit } from '../lib/rate-limit';
 import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
+import { getLlmForRole } from '../llm/runtime';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 
@@ -66,19 +66,18 @@ export function setChatVectorStore(vs: VectorStore): void { _vectorStore = vs; }
 export function setChatEmbedder(fn: (text: string) => Promise<number[]>): void { _embedder = fn; }
 
 // ============================================================================
-// Gemini Chat Model
+// Chat LLM resolution
 // ============================================================================
-
-let _chatModel: any = null;
-
-function getChatModel() {
-  if (_chatModel) return _chatModel;
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  const genAI = new GoogleGenerativeAI(key);
-  _chatModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-  return _chatModel;
-}
+//
+// Goes through src/llm/runtime, which respects per-request LLM config
+// headers AND falls back to env vars (GEMINI_API_KEY, ANTHROPIC_API_KEY,
+// etc.). Default still Gemini for back-compat.
+//
+// Resolution happens per-request because the user's LLM config can
+// change without a server restart — they pick a different provider in
+// /gate/llm-config and the next message uses it. The ResolvedRoleConfig
+// is small; resolution overhead is negligible compared to the LLM call
+// itself (~ms vs ~seconds).
 
 // ============================================================================
 // System Prompt
@@ -181,8 +180,9 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     return;
   }
 
-  const model = getChatModel();
-  if (!model) {
+  // Resolve LLM via runtime helper (respects per-request config or env)
+  const llm = await getLlmForRole(image ? 'vision' : 'chat', req.headers);
+  if (!llm) {
     // LLM unavailable — record a degraded-mode turn so the failure is
     // legible in the turn log. (Without this, an admin debugging
     // "why isn't chat working?" sees zero traces despite real traffic.)
@@ -210,20 +210,23 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
         },
         degraded: {
           reason: 'no-llm-available',
-          detail: 'GEMINI_API_KEY not configured',
+          detail: 'No LLM provider configured (set GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or use /gate/llm-config)',
         },
       });
       closeTurn({ turn_id: degraded_turn_id, duration_ms: 0 });
     } catch (turnErr) {
       console.error('[chat] turn-open on degraded path failed (non-fatal):', (turnErr as Error).message);
     }
-    return sendError(res, 503, 'AI tutor not available (GEMINI_API_KEY not configured)');
+    return sendError(res, 503, 'AI tutor not available (no LLM provider configured)');
   }
 
-  // Build conversation history for context
+  // Build conversation history for context — runtime helper expects
+  // {role: 'user' | 'assistant', content: string} shape (same as
+  // OpenAI/Anthropic; Gemini-specific 'model' role gets mapped inside
+  // the helper's per-provider builder).
   const chatHistory = (history || []).slice(-10).map((msg: any) => ({
-    role: msg.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: msg.content }],
+    role: (msg.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+    content: msg.content,
   }));
 
   // ── Content grounding + prompt modifiers ──────────────────────────────
@@ -396,31 +399,27 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
       res.write(`data: ${JSON.stringify({ type: 'reasoner', ...(_reasonerMeta) })}\n\n`);
     }
 
-    // Start chat with history — uses GBrain layered prompt (Layer 0 + 1 + 2 instructions)
-    const chat = model.startChat({
-      history: [
-        { role: 'user', parts: [{ text: 'System instructions: ' + gbrainPrompt }] },
-        { role: 'model', parts: [{ text: 'Understood! I\'m GBrain, your GATE Engineering Mathematics tutor. I adapt to your learning style, diagnose your specific gaps, and help you maximize your exam score. How can I help you today?' }] },
-        ...chatHistory,
-      ],
-    });
-
-    // Build message parts (text + optional image)
-    const messageParts: any[] = [{ text: message }];
+    // Stream response via runtime LLM helper. The helper handles the
+    // per-provider streaming protocol (SSE for Gemini/Anthropic/OpenAI,
+    // NDJSON for Ollama) and yields plain text chunks regardless of
+    // provider. The 'assistant primer' that used to be hardcoded here
+    // (a fake first model turn after the system prompt) goes away —
+    // each provider's API natively supports a system prompt.
+    const streamInput: any = {
+      text: message,
+      system: gbrainPrompt,
+      history: chatHistory,
+    };
     if (image) {
-      messageParts.push({ inlineData: { mimeType: imageMimeType || 'image/jpeg', data: image } });
+      streamInput.image = { mimeType: imageMimeType || 'image/jpeg', data: image };
     }
 
-    // Stream response
-    const result = await chat.sendMessageStream(messageParts);
     let fullResponse = '';
-
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
-      if (text) {
-        fullResponse += text;
+    for await (const chunk of llm.generateStream(streamInput)) {
+      if (chunk) {
+        fullResponse += chunk;
         _response_chars = fullResponse.length;
-        res.write(`data: ${JSON.stringify({ type: 'chunk', content: text })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
       }
     }
 

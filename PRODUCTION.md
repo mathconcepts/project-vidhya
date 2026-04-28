@@ -248,6 +248,57 @@ The frontend ships a 22 MB WASM embedding model. On slow connections this is sig
 - Code-splitting is partial — could be deeper
 - Consider serving the model from a CDN if your users have slow connections
 
+### LLM provider — pluggable
+
+Vidhya is provider-agnostic. The runtime helper at `src/llm/runtime.ts`
+resolves an LLM per request from one of:
+
+  1. The `X-Vidhya-Llm-Config` header (per-request user config, set
+     via the `/gate/llm-config` admin page)
+  2. Explicit env vars `VIDHYA_LLM_PRIMARY_PROVIDER` +
+     `VIDHYA_LLM_PRIMARY_KEY`
+  3. Legacy provider env vars (`GEMINI_API_KEY`, `ANTHROPIC_API_KEY`,
+     `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`,
+     `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`)
+  4. null → callers graceful-degrade
+
+All authenticated LLM-spending paths go through this layer. Four
+provider API shapes are supported: `google-gemini`, `anthropic`,
+`openai-compatible` (OpenAI / Groq / OpenRouter / DeepSeek / Mistral),
+`ollama`. Each exposes `generate()`, `generateStream()`, and (for the
+helper's `embedText()`) embedding.
+
+**What this fixes:** previously, ~12 hot-path files imported
+`@google/generative-ai` directly and were locked to Gemini. The
+provider field in the per-request config was ignored on those paths.
+
+**What it deliberately keeps thin:** no retry, no fallback, no health
+tracking, no per-call cost accounting. Those belong at the LLMClient
+layer (still available via YAML config for code paths that want them).
+Hot paths get a simple "give me an LLM, call it, get text" contract.
+
+**What's still pinned to Gemini today:** embeddings (Gemini's
+`text-embedding-004`) with OpenAI's `text-embedding-3-small` as
+fallback. Other providers don't expose first-class embeddings or use
+incompatible vector dimensions; cross-provider embedding compatibility
+is a separate concern.
+
+**Migration status (commit `<this>`):**
+- `src/api/chat-routes.ts` (the streaming chat path) — migrated
+- `src/api/gemini-proxy.ts` (5 endpoints) — migrated
+- `src/content-studio/sources/llm.ts` — migrated
+- `src/content/resolver.ts` (router cascade tier-2) — migrated
+- `src/gbrain/error-taxonomy.ts` — pending follow-up
+- `src/gbrain/operations/moat-operations.ts` — pending follow-up
+- `src/gbrain/problem-generator.ts` — pending follow-up
+- `src/gbrain/task-reasoner.ts` — pending follow-up
+- `src/jobs/content-flywheel.ts` — pending follow-up
+- `src/multimodal/intent-analyzer.ts` — pending follow-up
+- `src/multimodal/diagnostic-analyzer.ts` — pending follow-up
+
+The pending files are gbrain internals and background jobs — less
+user-visible, mechanical migration, deferred to a focused follow-up.
+
 ### LLM cost controls — partial
 
 If a deployment has `GEMINI_API_KEY` set, every LLM request

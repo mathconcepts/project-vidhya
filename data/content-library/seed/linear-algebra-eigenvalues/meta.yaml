@@ -1,0 +1,18 @@
+concept_id: linear-algebra-eigenvalues
+title: Eigenvalues and Eigenvectors
+licence: MIT
+contributor: Project Vidhya Seed
+contributor_github: project-vidhya
+reviewed_at: 2026-04-24
+difficulty: intermediate
+derived_from: null
+wolfram_checkable: true
+tags:
+  - linear-algebra
+  - eigenvalues
+  - matrices
+  - determinant
+  - trace
+exams:
+  - EXM-UGEE-MATH-SAMPLE
+  - EXM-JEEMAIN-MATH-SAMPLE

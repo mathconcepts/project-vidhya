@@ -97,6 +97,35 @@ const PROBES: Record<string, () => Promise<Omit<ModuleHealth, 'name' | 'latency_
     }
   },
 
+  'content-library': async () => {
+    if (!existsSync('src/content-library/store.ts')) {
+      return { status: 'unavailable', detail: 'content-library store missing' };
+    }
+    if (!existsSync('src/modules/content-library/index.ts')) {
+      return { status: 'degraded', detail: 'content-library barrel missing' };
+    }
+    try {
+      const { getStats } = await import('../modules/content-library');
+      const stats = getStats();
+      const seed_count = stats.by_source['seed'] ?? 0;
+      const user_count = stats.by_source['user'] ?? 0;
+      const llm_count = stats.by_source['llm'] ?? 0;
+      // No entries at all is degraded — the seed dir exists but failed to load
+      if (stats.total === 0) {
+        return {
+          status: 'degraded',
+          detail: 'library empty — check data/content-library/seed/ exists and parses',
+        };
+      }
+      return {
+        status: 'healthy',
+        detail: `${stats.total} entries (${seed_count} seed, ${user_count} user, ${llm_count} llm)`,
+      };
+    } catch (e: any) {
+      return { status: 'degraded', detail: `library read failed: ${e?.message}` };
+    }
+  },
+
   content: async () => {
     if (!existsSync('src/content/router.ts')) {
       return { status: 'unavailable', detail: 'content-router missing' };

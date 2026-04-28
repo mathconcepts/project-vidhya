@@ -194,6 +194,43 @@ modules:
       - student-model-manager
       - mastery-estimator
 
+  - name: content-library
+    description: |
+      Runtime-augmentable, DB-free store of teaching materials
+      (explainers + worked examples) keyed by concept_id. Two
+      sources: seed (committed in data/content-library/seed/,
+      ships with the repo) and additions (.data/content-library-
+      additions.jsonl, appended via API). Built-in index in memory
+      at boot. Public surface at src/modules/content-library/index.ts.
+
+      The library is consulted by the content router and the
+      gbrain task-reasoner, but does not depend on either — it's
+      a passive data store. New entries via POST require admin role
+      (or the content_library.user_authoring flag for teacher+).
+    source: src/content-library,src/modules/content-library,data/content-library
+    depends_on: [core]
+    foundation: true              # auto-included in every composition
+    health_check: src/orchestrator/health-checks#contentLibraryHealth
+    subrepo_candidate: false
+    feature_flags:
+      - flag: content_library.user_authoring
+        env_var: VIDHYA_CONTENT_LIBRARY_USER_AUTHORING
+        default: false
+        description: |
+          Allow teacher+ roles (not just admin) to POST entries via
+          /api/content-library/concept. Default off — opens up a
+          submission surface that needs a moderation flow which is
+          not yet built.
+    public_api:
+      - LibraryEntry, LibrarySummary, LibraryDifficulty (types)
+      - getEntry, findEntries, listSummaries (read)
+      - addEntry (write — runtime additions)
+      - masteryToDifficulty (personalisation helper)
+      - getStats (operational visibility)
+    owning_agents:
+      - content-curator-manager
+      - tier-0-bundle-specialist
+
   - name: orchestrator
     description: The master composer — reads this manifest, resolves deps, activates tiers.
     source: src/orchestrator,src/admin-orchestrator

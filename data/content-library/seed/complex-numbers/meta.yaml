@@ -1,0 +1,17 @@
+concept_id: complex-numbers
+title: Complex Numbers
+licence: MIT
+contributor: Project Vidhya Seed
+contributor_github: project-vidhya
+reviewed_at: 2026-04-24
+difficulty: intermediate
+derived_from: null
+wolfram_checkable: true
+tags:
+  - complex-numbers
+  - polar-form
+  - euler
+  - de-moivre
+exams:
+  - EXM-BITSAT-MATH-SAMPLE
+  - EXM-JEEMAIN-MATH-SAMPLE

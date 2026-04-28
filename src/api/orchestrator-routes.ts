@@ -142,6 +142,14 @@ async function h_features(req: ParsedRequest, res: ServerResponse): Promise<void
     result.push({ module: 'auth', flags: [] });
   }
 
+  // Content-library module
+  try {
+    const { contentLibraryFeatureFlags } = await import('../modules/content-library/feature-flags');
+    result.push({ module: 'content-library', flags: contentLibraryFeatureFlags() });
+  } catch (e: any) {
+    result.push({ module: 'content-library', flags: [] });
+  }
+
   // Future modules with feature flags would add their own block here.
   // The yaml declaration is the contract; runtime state is the truth.
 

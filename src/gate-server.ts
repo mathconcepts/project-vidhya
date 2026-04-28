@@ -42,6 +42,7 @@ import { userAdminRoutes } from './api/user-admin-routes';
 import { adminDashboardRoutes } from './api/admin-dashboard-routes';
 import { teachingRoutes } from './api/teaching-routes';
 import { turnsRoutes } from './api/turns-routes';
+import { contentLibraryRoutes } from './api/content-library-routes';
 import { notebookRoutes as smartNotebookRoutes } from './api/notebook-insight-routes';
 import { examRoutes } from './api/exam-routes';
 import { examGroupRoutes } from './api/exam-group-routes';
@@ -213,6 +214,9 @@ for (const route of teachingRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of turnsRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of contentLibraryRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of smartNotebookRoutes) {

@@ -231,6 +231,44 @@ modules:
       - content-curator-manager
       - tier-0-bundle-specialist
 
+  - name: content-studio
+    description: |
+      Admin-driven content authoring workflow with four generation
+      sources (uploads, wolfram, url-extract, llm) feeding a draft
+      → review → approve pipeline. Approved drafts are promoted into
+      the content library. Persistence is append-only JSONL at
+      .data/content-drafts.jsonl. Public surface at
+      src/modules/content-studio/index.ts.
+
+      The studio is a creation workflow — it sits in front of the
+      content library but does not modify it directly. Approval
+      promotes drafts via the library's existing addEntry path.
+      Drafts that are never approved stay in the studio as audit
+      trail.
+
+      The four sources cascade in admin-chosen priority order. First
+      adapter to return a non-null result wins; the others are
+      recorded as 'skipped' for the audit trail. Each adapter
+      degrades gracefully — a missing GEMINI_API_KEY makes the LLM
+      adapter return null, not throw, so the orchestrator keeps
+      walking.
+
+      All endpoints are admin-only. There is no teacher+ flag
+      because draft creation requires more careful review than
+      runtime library additions.
+    source: src/content-studio,src/modules/content-studio
+    depends_on: [core, content-library]
+    health_check: src/orchestrator/health-checks#contentStudioHealth
+    subrepo_candidate: false
+    public_api:
+      - ContentDraft, GenerationRequest, StudioSourceKind (types)
+      - generateDraft (orchestrator)
+      - getDraft, listDrafts (read)
+      - editDraft, approveDraft, rejectDraft (lifecycle)
+      - getStats (operational visibility)
+    owning_agents:
+      - content-curator-manager
+
   - name: orchestrator
     description: The master composer — reads this manifest, resolves deps, activates tiers.
     source: src/orchestrator,src/admin-orchestrator

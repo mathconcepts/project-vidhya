@@ -126,6 +126,32 @@ const PROBES: Record<string, () => Promise<Omit<ModuleHealth, 'name' | 'latency_
     }
   },
 
+  'content-studio': async () => {
+    if (!existsSync('src/content-studio/store.ts')) {
+      return { status: 'unavailable', detail: 'content-studio store missing' };
+    }
+    if (!existsSync('src/modules/content-studio/index.ts')) {
+      return { status: 'degraded', detail: 'content-studio barrel missing' };
+    }
+    try {
+      const { getStats } = await import('../modules/content-studio');
+      const stats = getStats();
+      const draft_count = stats.by_status.draft ?? 0;
+      const approved_count = stats.by_status.approved ?? 0;
+      const rejected_count = stats.by_status.rejected ?? 0;
+      // The studio being empty is the expected state on a fresh deployment.
+      // Healthy regardless — no drafts is not a problem.
+      return {
+        status: 'healthy',
+        detail: stats.total === 0
+          ? 'no drafts yet (expected for fresh deployment)'
+          : `${stats.total} drafts (${draft_count} pending, ${approved_count} approved, ${rejected_count} rejected)`,
+      };
+    } catch (e: any) {
+      return { status: 'degraded', detail: `studio read failed: ${e?.message}` };
+    }
+  },
+
   content: async () => {
     if (!existsSync('src/content/router.ts')) {
       return { status: 'unavailable', detail: 'content-router missing' };

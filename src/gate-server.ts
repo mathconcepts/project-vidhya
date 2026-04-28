@@ -10,7 +10,7 @@
 
 import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { URL } from 'url';
-import { gateRoutes, setOrchestrator, setGeminiModel } from './api/gate-routes';
+import { gateRoutes, setOrchestrator } from './api/gate-routes';
 import { notebookRoutes } from './api/notebook-routes';
 import { dailyProblemRoutes } from './jobs/daily-problem';
 import { telegramWebhookRoutes } from './jobs/telegram-webhook';
@@ -73,7 +73,7 @@ import { getAuth, migrateSession } from './api/auth-middleware';
 import { TieredVerificationOrchestrator } from './verification/tiered-orchestrator';
 import { InMemoryVectorStore, PgVectorStore } from './data/vector-store';
 import { WolframVerifier } from './verification/verifiers/wolfram';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { embedText, getLlmForRole } from './llm/runtime';
 import { renderBlogPost } from './templates/blog-post';
 import { renderBlogIndex } from './templates/blog-index';
 import { renderExamLanding } from './templates/exam-landing';
@@ -637,36 +637,35 @@ async function main() {
     await migratePool.end();
   }
 
-  // ── Gemini SDK ──────────────────────────────────────────────────────────
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
-
-  // ── Embedder (gemini-embedding-001, 3072 dims) ──────────────────────────
-  const embeddingModel = genAI ? genAI.getGenerativeModel({ model: 'gemini-embedding-001' }) : null;
-  const embedder = embeddingModel
-    ? async (text: string): Promise<number[]> => {
-        const result = await embeddingModel.embedContent(text);
-        return result.embedding.values;
-      }
-    : async (_text: string) => {
-        console.warn('[gate-server] GEMINI_API_KEY not set — using zero embeddings');
-        return new Array(3072).fill(0);
-      };
-
-  // ── LLM dual-solve (Gemini 2.0 Flash for speed) ────────────────────────
-  const makeLLMSolver = (modelName: string) => {
-    if (!genAI) {
-      return {
-        solve: async (_problem: string) => ({
-          answer: 'LLM not configured (GEMINI_API_KEY missing)',
-          confidence: 0.5,
-        }),
-      };
+  // ── Embedder (provider-agnostic — Gemini default, OpenAI fallback) ─────
+  // Boot-time wrapper around the runtime helper. The runtime helper picks
+  // the best embedding provider from the resolved config; this closure
+  // adapts it to the existing `(text) => number[]` shape that callers
+  // expect. Returns zero-vectors when no provider is configured.
+  const embedder = async (text: string): Promise<number[]> => {
+    const result = await embedText(text);
+    if (!result) {
+      console.warn('[gate-server] No embedding provider configured — using zero embeddings');
+      return new Array(3072).fill(0);   // Gemini-shape default; pgvector tolerates dim mismatch by failing on insert
     }
-    const model = genAI.getGenerativeModel({ model: modelName });
-    return {
-      solve: async (problem: string, context?: any) => {
-        const prompt = `You are a GATE Engineering Mathematics expert. Solve the following problem step by step.
+    return result.embedding;
+  };
+
+  // ── LLM dual-solve (provider-agnostic) ──────────────────────────────────
+  // Was previously two Gemini Flash calls; now resolves the 'chat' role
+  // per-call so the operator's /gate/llm-config choice flows through.
+  // Both solvers use the same role today (real dual-solve diversity needs
+  // separate role overrides — a separate config decision).
+  const makeLLMSolver = (label: string) => ({
+    solve: async (problem: string, context?: any) => {
+      const llm = await getLlmForRole('chat');
+      if (!llm) {
+        return {
+          answer: 'LLM not configured (no provider available)',
+          confidence: 0.5,
+        };
+      }
+      const prompt = `You are a GATE Engineering Mathematics expert. Solve the following problem step by step.
 Give ONLY the final answer value on the last line, prefixed with "ANSWER: ".
 If it's multiple choice, state the letter and value.
 
@@ -674,24 +673,22 @@ Problem: ${problem}
 ${context?.expectedAnswer ? `Student's answer: ${context.expectedAnswer}` : ''}
 
 Solve carefully:`;
-        try {
-          const result = await model.generateContent(prompt);
-          const text = result.response.text();
-          // Extract answer from last line
-          const answerMatch = text.match(/ANSWER:\s*(.+)/i);
-          const answer = answerMatch ? answerMatch[1].trim() : text.trim().split('\n').pop()?.trim() || '';
-          return { answer, confidence: 0.8 };
-        } catch (err) {
-          console.error(`[${modelName}] solve error:`, (err as Error).message);
-          return { answer: '', confidence: 0 };
-        }
-      },
-    };
-  };
+      const text = await llm.generate(prompt);
+      if (!text) {
+        return { answer: '', confidence: 0 };
+      }
+      // Extract answer from last line
+      const answerMatch = text.match(/ANSWER:\s*(.+)/i);
+      const answer = answerMatch ? answerMatch[1].trim() : text.trim().split('\n').pop()?.trim() || '';
+      return { answer, confidence: 0.8 };
+    },
+  });
 
-  // Use 2.5-flash for both solvers (fast + available on current quota)
-  const llmA = makeLLMSolver('gemini-2.5-flash');
-  const llmB = makeLLMSolver('gemini-2.5-flash');
+  // Two solver instances (different labels for diagnostic logging; they
+  // resolve to the same provider/model unless the operator sets
+  // different per-role overrides in /gate/llm-config).
+  const llmA = makeLLMSolver('solver-A');
+  const llmB = makeLLMSolver('solver-B');
 
   // ── Wolfram Alpha ───────────────────────────────────────────────────────
   const wolframAppId = process.env.WOLFRAM_APP_ID;
@@ -739,17 +736,24 @@ Solve carefully:`;
   setOrchestrator(orchestrator);
   setFlywheelOrchestrator(orchestrator);
 
-  // Inject Gemini model for image extraction in verify-any
-  if (genAI) {
-    setGeminiModel(genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }));
-  }
+  // Note: setGeminiModel() injection was removed — verify-any now uses
+  // src/llm/runtime directly so the operator's per-request LLM config
+  // flows through to image OCR. setGeminiModel is kept as a no-op for
+  // back-compat with any external caller.
 
   // ── Content Pipeline: inject vector store + embedder into chat routes ──
   setChatVectorStore(vectorStore);
   setChatEmbedder(embedder);
   console.log(`[gate-server] Content pipeline: chat grounding enabled`);
 
-  console.log(`[gate-server] Verification tiers: RAG${genAI ? ' + Gemini LLM' : ''}${wolfram ? ' + Wolfram' : ''}`);
+  // Probe whether any LLM provider is reachable at boot time, for the
+  // diagnostic banner. Does not block startup; just informational.
+  const bootLlm = await getLlmForRole('chat');
+  console.log(
+    `[gate-server] Verification tiers: RAG` +
+    `${bootLlm ? ` + LLM (${bootLlm.provider_id}/${bootLlm.model_id})` : ''}` +
+    `${wolfram ? ' + Wolfram' : ''}`
+  );
 
   const server = createServer((req, res) => {
     handleRequest(req, res).catch((err) => {

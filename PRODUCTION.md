@@ -283,27 +283,58 @@ fallback. Other providers don't expose first-class embeddings or use
 incompatible vector dimensions; cross-provider embedding compatibility
 is a separate concern.
 
-**Migration status (commit `<this>`):**
-- `src/api/chat-routes.ts` (the streaming chat path) — migrated
-- `src/api/gemini-proxy.ts` (5 endpoints) — migrated
-- `src/content-studio/sources/llm.ts` — migrated
-- `src/content/resolver.ts` (router cascade tier-2) — migrated
-- `src/gbrain/error-taxonomy.ts` — pending follow-up
-- `src/gbrain/operations/moat-operations.ts` — pending follow-up
-- `src/gbrain/problem-generator.ts` — pending follow-up
-- `src/gbrain/task-reasoner.ts` — pending follow-up
-- `src/jobs/content-flywheel.ts` — pending follow-up
-- `src/multimodal/intent-analyzer.ts` — pending follow-up
-- `src/multimodal/diagnostic-analyzer.ts` — pending follow-up
+**Migration status — complete:**
 
-The pending files are gbrain internals and background jobs — less
-user-visible, mechanical migration, deferred to a focused follow-up.
+Every direct `@google/generative-ai` import in the codebase has been
+replaced with `getLlmForRole()` / `embedText()` from `src/llm/runtime`.
+The system is genuinely LLM-agnostic — operators set their preferred
+provider once (env var or `/gate/llm-config`), and every code path
+that spends LLM tokens flows through that choice.
+
+Files migrated across two commits:
+
+In `3f7e164` (commit 1):
+- `src/api/chat-routes.ts` (streaming chat path)
+- `src/api/gemini-proxy.ts` (5 endpoints — URL stays `/api/gemini/*`
+  for back-compat, but the URL no longer dictates the provider)
+- `src/content-studio/sources/llm.ts`
+- `src/content/resolver.ts` (router cascade tier-2)
+
+In this commit:
+- `src/gate-server.ts` (boot-time embedder + dual-solve verifiers;
+  the `setGeminiModel` injection that used to push a Gemini SDK
+  instance into gate-routes was removed — verify-any uses the
+  runtime helper directly now)
+- `src/api/gate-routes.ts` (verify-any image OCR)
+- `src/gbrain/error-taxonomy.ts` (`classifyError` +
+  `generateMisconceptionExplanation`)
+- `src/gbrain/operations/moat-operations.ts` (health probe renamed
+  `gemini_api` → `llm_provider`, reports `provider_id/model_id`;
+  `seedRagCache` uses the `embedText` helper with graceful "no
+  provider" handling; `verifySweep` uses the chat role)
+- `src/gbrain/problem-generator.ts` (`generateProblem` +
+  `selfVerifyProblem`)
+- `src/gbrain/task-reasoner.ts` (`runGeminiReasoner` renamed to
+  `runLlmReasoner`; the upstream env-var precondition was removed
+  since the runtime helper handles it internally)
+- `src/jobs/content-flywheel.ts` (3 sites: `generateProblem`,
+  `generateSocialContent`, `generateBlogPost`)
+- `src/multimodal/intent-analyzer.ts` (the function still accepts
+  the legacy `LLMConfig` parameter for back-compat, but encodes it
+  into the runtime helper's header format internally — caller in
+  `multimodal-routes.ts` unchanged)
+- `src/multimodal/diagnostic-analyzer.ts`
+
+The only remaining `@google/generative-ai` imports in `src/` are
+inside `src/llm/adapters/gemini.ts` (the Gemini-specific provider
+adapter, which is correct — that's where Gemini-specific logic
+belongs).
 
 ### LLM cost controls — partial
 
-If a deployment has `GEMINI_API_KEY` set, every LLM request
-consumes API credit. Per-user budget caps are now wired into the
-authenticated LLM-spending surfaces.
+If a deployment has any LLM provider configured (Gemini, Anthropic,
+OpenAI, etc.), every LLM request consumes API credit. Per-user
+budget caps are wired into the authenticated LLM-spending surfaces.
 
 **What's protected:**
 - `/api/chat` — per-user daily token budget via `tryReserveTokens` /

@@ -16,7 +16,7 @@
  */
 
 import { ServerResponse } from 'http';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getLlmForRole } from '../llm/runtime';
 import { GATE_TOPICS } from '../constants/topics';
 import { BLOG_CONTENT_TYPES } from '../constants/content-types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
@@ -128,14 +128,11 @@ async function selectTopic(): Promise<string> {
 // ============================================================================
 
 async function generateProblem(topic: string): Promise<GeneratedProblem | null> {
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey) {
-    console.error('[flywheel] GEMINI_API_KEY not set');
+  const llm = await getLlmForRole('json');
+  if (!llm) {
+    console.error('[flywheel] No LLM provider configured');
     return null;
   }
-
-  const genAI = new GoogleGenerativeAI(geminiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const topicLabel = topic.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   const difficulty = ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)];
@@ -160,10 +157,9 @@ Respond in EXACTLY this JSON format (no markdown, no code fences):
   "difficulty": "${difficulty}"
 }`;
 
+  const text = await llm.generate(prompt);
+  if (!text) return null;
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-
     // Strip markdown code fences if present
     const jsonStr = text.replace(/^```(?:json)?\n?/g, '').replace(/\n?```$/g, '').trim();
     const parsed = JSON.parse(jsonStr);
@@ -279,11 +275,9 @@ async function verifyAndPublish(problem: GeneratedProblem): Promise<{ verified: 
  * Generate social media content for Twitter, Instagram, and LinkedIn.
  */
 async function generateSocialContent(problem: GeneratedProblem, pyqId: string): Promise<void> {
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey) return;
+  const llm = await getLlmForRole('chat');
+  if (!llm) return;
 
-  const genAI = new GoogleGenerativeAI(geminiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const topicLabel = problem.topic.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   const appUrl = process.env.APP_URL || 'https://gate-math-api.onrender.com';
 
@@ -305,9 +299,9 @@ Generate content for all 3 platforms in this exact JSON format:
 
 Return ONLY valid JSON, no markdown.`;
 
+  const text = await llm.generate(prompt);
+  if (!text) return;
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
     // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return;
@@ -340,11 +334,9 @@ Return ONLY valid JSON, no markdown.`;
 let _blogTypeIndex = 0;
 
 async function generateBlogPost(problem: GeneratedProblem, pyqId: string): Promise<void> {
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey) return;
+  const llm = await getLlmForRole('chat');
+  if (!llm) return;
 
-  const genAI = new GoogleGenerativeAI(geminiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const topicLabel = problem.topic.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   const contentType = BLOG_CONTENT_TYPES[_blogTypeIndex % BLOG_CONTENT_TYPES.length];
   _blogTypeIndex++;
@@ -456,8 +448,11 @@ Return ONLY valid JSON in this format:
 }`;
 
   try {
-    const result = await model.generateContent(blogPrompt);
-    const text = result.response.text().trim();
+    const text = await llm.generate(blogPrompt);
+    if (!text) {
+      console.warn('[flywheel] Blog generation: LLM returned no response');
+      return;
+    }
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.warn('[flywheel] Blog generation: no JSON found in response');

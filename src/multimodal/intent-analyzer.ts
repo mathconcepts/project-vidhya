@@ -18,11 +18,10 @@
  *   - User text is used for analysis but stripped before telemetry
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { MultimodalRequest, IntentAnalysis, ImageCategory, MultimodalIntent } from './types';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
-import { resolveConfig, loadConfigFromEnv, type LLMConfig } from '../llm/config-resolver';
-import { callChat } from '../api/llm-config-routes';
+import { getLlmForRole } from '../llm/runtime';
+import type { LLMConfig } from '../llm/config-resolver';
 
 // ============================================================================
 // Concept ID whitelist — used to sanity-check Gemini's detected_concepts field
@@ -162,57 +161,47 @@ function sanitize(raw: any, req: MultimodalRequest): IntentAnalysis {
 /**
  * Analyze a multimodal input. Returns a structured IntentAnalysis.
  *
- * Graceful degradation: when GEMINI_API_KEY is missing or the call fails,
- * falls back to the user's hinted intent (or 'concept_question') with
- * image_category='unclear'. Downstream handlers still work, they just can't
- * personalize as well.
+ * Graceful degradation: when no LLM provider is configured or the call
+ * fails, falls back to the user's hinted intent (or 'concept_question')
+ * with image_category='unclear'. Downstream handlers still work, they
+ * just can't personalize as well.
+ *
+ * The `llm_config` parameter is preserved for back-compat. When passed,
+ * it's serialized into the X-Vidhya-Llm-Config header that the runtime
+ * helper reads. Most callers should pass headers directly via the
+ * second-form signature; this overload is what `multimodal-routes.ts`
+ * already uses.
  */
 export async function analyzeIntent(
   req: MultimodalRequest,
   llm_config?: LLMConfig | null,
 ): Promise<IntentAnalysis> {
-  // Resolve which provider handles vision for this request
-  const config = llm_config || loadConfigFromEnv();
-  if (!config) return sanitize(null, req);
-  const resolved = resolveConfig(config).vision;
-  if (!resolved) return sanitize(null, req);
+  // Encode the LLMConfig as the header the runtime helper expects.
+  // If llm_config is null/undefined, the runtime helper falls back to
+  // env vars on its own.
+  const headers: Record<string, any> = {};
+  if (llm_config) {
+    const { encodeConfigForHeader, LLM_CONFIG_HEADER } = await import('../llm/config-resolver');
+    headers[LLM_CONFIG_HEADER] = encodeConfigForHeader(llm_config);
+  }
+
+  const llm = await getLlmForRole('vision', headers);
+  if (!llm) return sanitize(null, req);
 
   try {
-    // Gemini gets the SDK path (keeps existing streaming + inlineData semantics)
-    if (resolved.provider_id === 'google-gemini') {
-      const genAI = new GoogleGenerativeAI(resolved.key || '');
-      const model = genAI.getGenerativeModel({
-        model: resolved.model_id,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.1,
-        },
-      });
-      const prompt = buildPrompt(req);
-      const result = await model.generateContent([
-        prompt,
-        { inlineData: { mimeType: req.image_mime_type || 'image/jpeg', data: req.image } },
-      ]);
-      const text = result.response.text();
-      const parsed = JSON.parse(text);
-      return sanitize(parsed, req);
-    }
+    // Runtime helper takes a uniform input shape across providers. For
+    // providers without native multimodal (text-only fallback), the
+    // helper builds the request from the text portion only.
+    const prompt = buildPrompt(req);
+    const text = await llm.generate({
+      text: prompt,
+      image: { mimeType: req.image_mime_type || 'image/jpeg', data: req.image },
+    }, { temperature: 0.1 });
+    if (!text) return sanitize(null, req);
 
-    // Other providers — use the universal adapter with a text-shaped prompt.
-    // (MVP: image-input shape varies by provider; full multimodal for
-    // non-Gemini providers is a follow-up. We still get hinted-intent
-    // + caption-based classification.)
-    const textOnlyPrompt = buildPrompt(req) +
-      '\n\nNOTE: Classify based on user caption only (image analysis for this provider is a follow-up).';
-    const text = await callChat({
-      provider_id: resolved.provider_id,
-      endpoint: resolved.endpoint,
-      key: resolved.key,
-      model_id: resolved.model_id,
-      prompt: textOnlyPrompt,
-      max_tokens: 512,
-    });
-    const parsed = JSON.parse(text);
+    // The model may wrap output in code fences for some providers — strip them
+    const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(cleaned);
     return sanitize(parsed, req);
   } catch {
     return sanitize(null, req);

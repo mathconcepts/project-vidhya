@@ -16,7 +16,7 @@
  */
 
 import pg from 'pg';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getLlmForRole } from '../llm/runtime';
 import { CONCEPT_MAP, getConceptsForTopic } from '../constants/concept-graph';
 import type { StudentModel } from './student-model';
 import { getZPDConcept, getTopicMastery } from './student-model';
@@ -222,11 +222,8 @@ async function generateSingleProblem(
   target: { conceptId: string; topic: string; difficulty: number; errorType: string | null; misconception: string | null },
   format: string,
 ): Promise<GeneratedProblem | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const llm = await getLlmForRole('json');
+  if (!llm) return null;
 
   const concept = CONCEPT_MAP.get(target.conceptId);
   const difficultyLabel = target.difficulty < 0.33 ? 'easy' : target.difficulty < 0.66 ? 'medium' : 'hard';
@@ -246,9 +243,9 @@ Topic: ${concept?.label || target.conceptId}
 Description: ${concept?.description || ''}
 Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${targeting}`;
 
+  const text = await llm.generate(prompt);
+  if (!text) return null;
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
@@ -266,18 +263,15 @@ Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${target
       verified: false,
     };
   } catch (err) {
-    console.error('[gbrain/problem-gen] Generation failed:', (err as Error).message);
+    console.error('[gbrain/problem-gen] Bad JSON from LLM:', (err as Error).message);
     return null;
   }
 }
 
 /** Self-verify a generated problem by re-solving it */
 async function selfVerifyProblem(problem: GeneratedProblem): Promise<boolean> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return true; // skip verification if no API key
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const llm = await getLlmForRole('chat');
+  if (!llm) return true; // skip verification if no LLM provider
 
   const prompt = `Solve this math problem independently. Do NOT look at any provided answer.
 
@@ -286,10 +280,9 @@ Problem: ${problem.question_text}
 Solve step by step, then give your final answer.
 At the end, respond with EXACTLY one line: ANSWER: <your answer>`;
 
+  const text = await llm.generate(prompt);
+  if (!text) return false;
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-
     // Extract answer
     const answerMatch = text.match(/ANSWER:\s*(.+)/i);
     if (!answerMatch) return false;

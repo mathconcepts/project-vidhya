@@ -22,7 +22,7 @@
  */
 
 import { ServerResponse } from 'http';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getLlmForRole } from '../llm/runtime';
 import { ALL_CONCEPTS, CONCEPT_MAP } from '../constants/concept-graph';
 import { verifyProblemWithWolfram } from '../services/wolfram-service';
 import { generateSyllabus } from '../syllabus/generator';
@@ -107,26 +107,25 @@ interface ParsedProblem {
 }
 
 async function parseTestImage(req: DiagnosticRequest): Promise<ParsedProblem[]> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    // No LLM — return empty so the handler emits a graceful error
+  // Provider-agnostic vision call. The runtime helper handles the
+  // per-provider request shape (Gemini inlineData, OpenAI image_url,
+  // Anthropic image-block, Ollama images[]); caller passes a uniform
+  // {text, image} input.
+  const llm = await getLlmForRole('vision');
+  if (!llm) {
+    // No vision provider — return empty so the handler emits a graceful error
     return [];
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-      },
-    });
-    const result = await model.generateContent([
-      buildDiagnosticPrompt(),
-      { inlineData: { mimeType: req.image_mime_type || 'image/jpeg', data: req.image } },
-    ]);
-    const parsed = JSON.parse(result.response.text());
+    const text = await llm.generate({
+      text: buildDiagnosticPrompt(),
+      image: { mimeType: req.image_mime_type || 'image/jpeg', data: req.image },
+    }, { temperature: 0.1 });
+    if (!text) return [];
+
+    const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(cleaned);
     const problems = Array.isArray(parsed.problems) ? parsed.problems : [];
 
     // Sanitize each problem

@@ -17,7 +17,7 @@
  */
 
 import pg from 'pg';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getLlmForRole } from '../llm/runtime';
 import type { StudentModel } from './student-model';
 import { serializeForPrompt, getZPDConcept, getTopicMastery } from './student-model';
 import { CONCEPT_MAP, getConceptsForTopic, traceWeakestPrerequisite } from '../constants/concept-graph';
@@ -140,21 +140,20 @@ export async function runTaskReasoner(
     }
   }
 
-  // Try Gemini for intelligent reasoning
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (apiKey) {
-    try {
-      const geminiResult = await runGeminiReasoner(
-        studentMessage, model, detectedTopic, topicMastery, prereqRepairTarget
-      );
-      if (geminiResult) {
-        // Log the decision
-        logReasonerDecision(model.session_id, studentMessage, geminiResult).catch(() => {});
-        return geminiResult;
-      }
-    } catch (err) {
-      console.error('[gbrain/task-reasoner] Gemini reasoning failed, using heuristic:', (err as Error).message);
+  // Try LLM for intelligent reasoning. The runtime helper resolves
+  // a 'json' role provider (LLM-agnostic — Gemini default, Anthropic
+  // / OpenAI / Ollama all supported via /gate/llm-config).
+  try {
+    const llmResult = await runLlmReasoner(
+      studentMessage, model, detectedTopic, topicMastery, prereqRepairTarget
+    );
+    if (llmResult) {
+      // Log the decision
+      logReasonerDecision(model.session_id, studentMessage, llmResult).catch(() => {});
+      return llmResult;
     }
+  } catch (err) {
+    console.error('[gbrain/task-reasoner] LLM reasoning failed, using heuristic:', (err as Error).message);
   }
 
   // Fallback: heuristic-based reasoning
@@ -163,16 +162,16 @@ export async function runTaskReasoner(
   return instructions;
 }
 
-/** Gemini-based reasoning */
-async function runGeminiReasoner(
+/** LLM-based reasoning (provider-agnostic via src/llm/runtime) */
+async function runLlmReasoner(
   message: string,
   model: StudentModel,
   topic: string | null,
   topicMastery: number | null,
   prereqTarget: string | null,
 ): Promise<TaskReasonerInstructions | null> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const gemini = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const llm = await getLlmForRole('json');
+  if (!llm) return null;
 
   const studentProfile = serializeForPrompt(model);
 
@@ -188,12 +187,16 @@ Topic mastery: ${topicMastery !== null ? Math.round(topicMastery * 100) + '%' : 
 Prerequisite repair needed: ${prereqTarget || 'no'}
 Consecutive failures: ${model.consecutive_failures}`;
 
-  const result = await gemini.generateContent(prompt);
-  const text = result.response.text().trim();
-  const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  const parsed = JSON.parse(cleaned);
-
-  return buildInstructions(parsed, model, topic, topicMastery, prereqTarget);
+  const text = await llm.generate(prompt);
+  if (!text) return null;
+  try {
+    const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    return buildInstructions(parsed, model, topic, topicMastery, prereqTarget);
+  } catch (err) {
+    console.error('[gbrain/task-reasoner] Bad JSON from LLM:', (err as Error).message);
+    return null;
+  }
 }
 
 /** Heuristic-based reasoning (no LLM needed) */

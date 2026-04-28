@@ -16,7 +16,7 @@
  */
 
 import pg from 'pg';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getLlmForRole } from '../../llm/runtime';
 import { ALL_CONCEPTS, CONCEPT_MAP } from '../../constants/concept-graph';
 import { MARKS_WEIGHTS, TOPIC_NAMES } from '../../engine/priority-engine';
 import { getOrCreateStudentModel, getMasterySummary, saveStudentModel } from '../student-model';
@@ -254,29 +254,30 @@ export async function gbrainHealthCheck() {
       : `${orphanConcepts.length} concepts with broken prerequisite references`,
   });
 
-  // 6. Gemini connectivity
+  // 6. LLM connectivity (provider-agnostic)
   try {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) {
-      checks.push({ name: 'gemini_api', status: 'warn', value: false, message: 'GEMINI_API_KEY not set — reasoner runs in heuristic mode' });
+    const llm = await getLlmForRole('chat');
+    if (!llm) {
+      checks.push({ name: 'llm_provider', status: 'warn', value: false, message: 'No LLM provider configured — reasoner runs in heuristic mode' });
     } else {
-      const genAI = new GoogleGenerativeAI(key);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
       const start = Date.now();
-      await Promise.race([
-        model.generateContent('Respond with just OK'),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+      const result = await Promise.race([
+        llm.generate('Respond with just OK'),
+        new Promise<null>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
       ]);
       const latency = Date.now() - start;
+      const ok = result !== null;
       checks.push({
-        name: 'gemini_api',
-        status: latency < 3000 ? 'ok' : 'warn',
+        name: 'llm_provider',
+        status: ok ? (latency < 3000 ? 'ok' : 'warn') : 'fail',
         value: latency,
-        message: `Gemini responded in ${latency}ms`,
+        message: ok
+          ? `${llm.provider_id}/${llm.model_id} responded in ${latency}ms`
+          : `${llm.provider_id} returned null`,
       });
     }
   } catch (err) {
-    checks.push({ name: 'gemini_api', status: 'fail', value: null, message: (err as Error).message });
+    checks.push({ name: 'llm_provider', status: 'fail', value: null, message: (err as Error).message });
   }
 
   const overallStatus = checks.some(c => c.status === 'fail') ? 'fail'
@@ -572,13 +573,8 @@ export async function mineMisconceptions(topN: number = 20) {
 
 export async function seedRagCache(source: 'pyq' | 'generated' | 'all' = 'pyq', budget: number = 500) {
   const pool = getPool();
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return { error: 'GEMINI_API_KEY not set — cannot generate embeddings', seeded: 0 };
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const embedModel = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+  // Provider-agnostic embeddings (Gemini default, OpenAI fallback)
+  const { embedText } = await import('../../llm/runtime');
 
   let problems: any[] = [];
   if (source === 'pyq' || source === 'all') {
@@ -613,8 +609,12 @@ export async function seedRagCache(source: 'pyq' | 'generated' | 'all' = 'pyq', 
 
       // Embed
       const content = `${p.question_text}\n\nAnswer: ${p.correct_answer}\n\n${p.explanation || ''}`;
-      const result = await embedModel.embedContent(content);
-      const embedding = result.embedding.values;
+      const result = await embedText(content);
+      if (!result) {
+        // No embedding provider configured — bail with a clear message
+        return { error: 'No embedding provider configured (Gemini or OpenAI key needed)', seeded };
+      }
+      const embedding = result.embedding;
 
       // Insert
       await pool.query(
@@ -638,11 +638,8 @@ export async function seedRagCache(source: 'pyq' | 'generated' | 'all' = 'pyq', 
 
 export async function verifySweep(opts: { topic?: string; strict?: boolean; limit?: number } = {}) {
   const pool = getPool();
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return { error: 'GEMINI_API_KEY not set', re_verified: 0 };
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const llm = await getLlmForRole('chat');
+  if (!llm) return { error: 'No LLM provider configured', re_verified: 0 };
 
   let sql = `SELECT id, question_text, correct_answer, topic FROM generated_problems WHERE verified = true`;
   const params: any[] = [];
@@ -665,8 +662,8 @@ Problem: ${p.question_text}
 
 Solve step by step. End with: ANSWER: <final answer>`;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      const text = await llm.generate(prompt);
+      if (!text) { results.errors++; continue; }
       const match = text.match(/ANSWER:\s*(.+)/i);
       const newAnswer = match ? match[1].trim() : null;
 

@@ -10,10 +10,11 @@
  * does this automatically).
  *
  * Mirrors the pattern used in src/api/chat-routes.ts:
- *   - Reads GEMINI_API_KEY from env
- *   - Returns null if not configured (graceful degrade — orchestrator
- *     falls through to the next source, or fails if this was last)
- *   - Uses the @google/generative-ai SDK directly
+ *   - Resolves an LLM via src/llm/runtime (provider-agnostic; respects
+ *     per-request /gate/llm-config or env vars)
+ *   - Returns null if no provider is configured (graceful degrade —
+ *     orchestrator falls through to the next source, or fails if this
+ *     was the last source attempted)
  *   - Goes through the same rate-limit + budget-cap protections
  *     so studio generation can't bypass the LLM-cost protections
  *     the chat path enforces

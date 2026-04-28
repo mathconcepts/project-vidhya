@@ -133,16 +133,21 @@ async function handleGetProblemById(req: ParsedRequest, res: ServerResponse): Pr
 
 // The actual orchestrator is injected via setOrchestrator() from server.ts.
 // These handlers call it and log to verification_log.
+//
+// Image OCR for verify-any used to also be injected (setGeminiModel), but
+// that's been replaced by direct calls to src/llm/runtime — the runtime
+// helper resolves a vision-capable provider per-request, no injection needed.
 
 let _orchestrator: any = null;
-let _geminiModel: any = null;
 
 export function setOrchestrator(orch: any): void {
   _orchestrator = orch;
 }
 
-export function setGeminiModel(model: any): void {
-  _geminiModel = model;
+/** @deprecated kept for back-compat with gate-server; no-op now.
+ *  verify-any goes through src/llm/runtime directly. */
+export function setGeminiModel(_model: any): void {
+  // intentionally empty — verify-any uses the runtime helper now
 }
 
 async function handleVerify(req: ParsedRequest, res: ServerResponse): Promise<void> {
@@ -246,19 +251,25 @@ async function handleVerifyAny(req: ParsedRequest, res: ServerResponse): Promise
     }, 429);
   }
 
-  // If image provided but no problem text, extract via Gemini vision.
+  // If image provided but no problem text, extract via the vision LLM.
   // This call now runs only after the rate-limit guard above has cleared.
-  if (body?.image && !body?.problem && _geminiModel) {
-    try {
-      const extractResult = await _geminiModel.generateContent([
-        { text: 'Extract the math problem from this image. Return ONLY the problem text exactly as written, no solutions or commentary.' },
-        { inlineData: { mimeType: body.imageMimeType || 'image/jpeg', data: body.image } },
-      ]);
-      body.problem = extractResult.response.text().trim();
-    } catch (err) {
-      console.error('[gate-routes] Image extraction error:', (err as Error).message);
-      return sendError(res, 422, 'Could not extract problem from image');
+  // Provider-agnostic via src/llm/runtime — Gemini default, Anthropic /
+  // OpenAI / Ollama all supported via /gate/llm-config.
+  if (body?.image && !body?.problem) {
+    const { getLlmForRole } = await import('../llm/runtime');
+    const visionLlm = await getLlmForRole('vision', req.headers);
+    if (visionLlm) {
+      const extracted = await visionLlm.generate({
+        text: 'Extract the math problem from this image. Return ONLY the problem text exactly as written, no solutions or commentary.',
+        image: { mimeType: body.imageMimeType || 'image/jpeg', data: body.image },
+      });
+      if (!extracted) {
+        return sendError(res, 422, 'Could not extract problem from image');
+      }
+      body.problem = extracted.trim();
     }
+    // If no vision provider, fall through; the validation check below
+    // will return 400 with the "problem and answer required" message.
   }
 
   if (!body?.problem || !body?.answer) {

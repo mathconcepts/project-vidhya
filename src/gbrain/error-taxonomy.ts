@@ -19,7 +19,7 @@
  */
 
 import pg from 'pg';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getLlmForRole } from '../llm/runtime';
 import { CONCEPT_MAP } from '../constants/concept-graph';
 import { detectTopic } from '../utils/topic-detection';
 
@@ -122,8 +122,11 @@ export async function classifyError(
   correctAnswer: string,
   timeTakenMs?: number,
 ): Promise<ErrorDiagnosis> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  // LLM-agnostic resolution. Falls back to env defaults; respects
+  // per-request config when this helper is called from a request
+  // handler that propagates headers through.
+  const llm = await getLlmForRole('json');
+  if (!llm) {
     // Fallback: return generic diagnosis
     return {
       error_type: 'conceptual',
@@ -136,9 +139,6 @@ export async function classifyError(
     };
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
   const timeContext = timeTakenMs
     ? `\nTime taken: ${Math.round(timeTakenMs / 1000)}s (consider time_pressure if very fast)`
     : '';
@@ -149,9 +149,19 @@ Problem: ${problem}
 Student's answer: ${studentAnswer}
 Correct answer: ${correctAnswer}${timeContext}`;
 
+  const text = await llm.generate(prompt);
+  if (!text) {
+    return {
+      error_type: 'conceptual',
+      concept_id: detectTopic(problem) || 'unknown',
+      misconception_id: 'classification-failed',
+      diagnosis: 'The answer was incorrect. Error classification unavailable.',
+      why_tempting: '',
+      why_wrong: '',
+      corrective_hint: 'Review the core concept and try again.',
+    };
+  }
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned) as ErrorDiagnosis;
 
@@ -166,7 +176,7 @@ Correct answer: ${correctAnswer}${timeContext}`;
 
     return parsed;
   } catch (err) {
-    console.error('[gbrain/error-taxonomy] Classification failed:', (err as Error).message);
+    console.error('[gbrain/error-taxonomy] Bad JSON from LLM:', (err as Error).message);
     return {
       error_type: 'conceptual',
       concept_id: detectTopic(problem) || 'unknown',
@@ -207,11 +217,8 @@ export async function generateMisconceptionExplanation(
   problem: string,
   representationMode: string = 'balanced',
 ): Promise<ErrorDiagnosis> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return diagnosis;
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const llm = await getLlmForRole('json');
+  if (!llm) return diagnosis;
 
   const prompt = `${MISCONCEPTION_PROMPT}
 
@@ -223,9 +230,9 @@ Why tempting: ${diagnosis.why_tempting}
 Why wrong: ${diagnosis.why_wrong}
 Student's preferred representation: ${representationMode}`;
 
+  const text = await llm.generate(prompt);
+  if (!text) return diagnosis;
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
@@ -238,7 +245,7 @@ Student's preferred representation: ${representationMode}`;
 
     return diagnosis;
   } catch (err) {
-    console.error('[gbrain/error-taxonomy] Misconception explanation failed:', (err as Error).message);
+    console.error('[gbrain/error-taxonomy] Misconception parse failed:', (err as Error).message);
     return diagnosis;
   }
 }

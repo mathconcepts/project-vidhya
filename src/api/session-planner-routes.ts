@@ -460,7 +460,7 @@ async function h_useTemplate(req: ParsedRequest, res: ServerResponse): Promise<v
     let plan;
     if (exams.length === 1) {
       const e = exams[0];
-      plan = planSession({
+      plan = await planSession({
         student_id: auth.user.id,
         exam_id: e.exam_id,
         exam_date: e.exam_date,
@@ -472,7 +472,7 @@ async function h_useTemplate(req: ParsedRequest, res: ServerResponse): Promise<v
         now,
       });
     } else {
-      plan = planMultiExamSession({
+      plan = await planMultiExamSession({
         student_id: auth.user.id,
         minutes_available: t.minutes_available,
         exams: exams.map(e => ({

@@ -631,7 +631,7 @@ async function _dispatch(tool_id: string, input: any): Promise<any> {
     // Student session planner (v2.31) ────────────────────────────────
     case 'student:plan-session': {
       const { planSession, savePlan } = await import('../session-planner');
-      const plan = planSession({
+      const plan = await planSession({
         student_id: String(input?.student_id ?? ''),
         exam_id: String(input?.exam_id ?? ''),
         exam_date: String(input?.exam_date ?? ''),

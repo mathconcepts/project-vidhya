@@ -86,6 +86,23 @@ export function GateHome() {
   const sessionId = useSession();
   const navigate = useNavigate();
 
+  // If the user is JWT-authenticated and has an exam profile, they belong on
+  // /planned — not on GateHome (which was built for anonymous/guest sessions).
+  // Redirect silently on mount so they always land on the right page.
+  useEffect(() => {
+    import('@/lib/auth/client').then(({ authFetch, getToken }) => {
+      if (!getToken()) return; // anonymous user — stay on GateHome
+      authFetch('/api/student/profile')
+        .then(r => r.ok ? r.json() : null)
+        .then((data: any) => {
+          if (data?.exams?.length > 0) {
+            navigate('/planned', { replace: true });
+          }
+        })
+        .catch(() => {}); // non-blocking
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [profile, setProfile] = useState<StudyProfile | null>(null);
@@ -261,7 +278,7 @@ export function GateHome() {
 
           <motion.div variants={fadeInUp} className="w-full">
             <motion.button
-              onClick={() => { trackEvent('one_thing_onboard'); navigate('/onboard'); }}
+              onClick={() => { trackEvent('one_thing_onboard'); navigate('/planned'); }}
               className="w-full h-11 rounded-[10px] bg-emerald-500 text-white text-[15px] font-semibold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
               whileTap={{ scale: 0.97 }}
             >

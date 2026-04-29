@@ -1,20 +1,20 @@
-# render.yaml — Render Blueprint for the Vidhya demo
+# render.yaml -- Render Blueprint for the Vidhya demo
 #
 # Deploy via either:
 #
-#   1. One-click — use the "Deploy to Render" button in README.md, which
+#   1. One-click -- use the "Deploy to Render" button in README.md, which
 #      opens https://dashboard.render.com/select-repo?type=blueprint
 #      pre-pointed at this repo. Render reads this file and provisions
 #      everything.
 #
-#   2. Manual — in Render dashboard: New + > Blueprint > connect this
+#   2. Manual -- in Render dashboard: New > Blueprint > connect this
 #      repo > apply. Same result.
 #
 # What gets provisioned:
 #   - 1 web service (Docker runtime, uses demo/Dockerfile)
 #   - JWT_SECRET auto-generated (32 chars, unique per deployment)
 #   - All LLM / Wolfram / Telegram keys marked sync:false so the Render
-#     UI prompts the operator to paste them (or skip — the demo works
+#     UI prompts the operator to paste them (or skip -- the demo works
 #     without any of them at baseline)
 #
 # PERSISTENCE NOTE (free tier):
@@ -22,10 +22,10 @@
 #   .data/ (user store, analytics, teaching turns) lives in the
 #   container's ephemeral filesystem and resets when the service restarts
 #   or spins down after inactivity. The Dockerfile CMD runs
-#   `npm run demo:seed` on every boot, so the 6 demo users are always
+#   "npm run demo:seed" on every boot, so the 6 demo users are always
 #   recreated fresh.
 #
-#   For a demo this is fine — each restart gives a clean slate.
+#   For a demo this is fine -- each restart gives a clean slate.
 #   For persistent state (user data survives restarts, real signups
 #   accumulate over time), upgrade to the Starter plan ($7/month)
 #   and add this block back under the service:
@@ -35,9 +35,9 @@
 #       mountPath: /app/.data
 #       sizeGB: 1
 #
-# First boot runs: npm run demo:seed && tsx src/gate-server.ts
-#   → seeds the 6 demo users (Nisha/Arjun/Kavita/Priya/Rahul/Aditya)
-#   → seed is idempotent (upsert-by-google-sub) so re-running is safe
+# First boot: npm run demo:seed && tsx src/gate-server.ts
+#   Seeds 6 demo users (Nisha/Arjun/Kavita/Priya/Rahul/Aditya).
+#   Seed is idempotent (upsert-by-google-sub) so re-running is safe.
 
 services:
   - type: web
@@ -48,19 +48,18 @@ services:
     dockerContext: .
     healthCheckPath: /health
     envVars:
-      # ─── required ───────────────────────────────────────────────
+      # required
       - key: NODE_ENV
         value: production
       - key: PORT
         value: "8080"
       - key: JWT_SECRET
-        generateValue: true          # Render picks a random 32-char secret on first deploy
+        generateValue: true
       - key: PUBLIC_URL
-        sync: false                  # operator sets this to their Render URL after first deploy
+        sync: false
 
-      # ─── BYOK LLM providers (one enables AI tutor / Snap / explainers) ─
-      # Each is optional. Demo works with NONE at baseline (planning,
-      # templates, trailing stats, admin dashboards).
+      # BYOK LLM providers (one enables AI tutor / chat / explainers)
+      # Each is optional. Demo works with NONE at baseline.
       - key: GEMINI_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
@@ -68,13 +67,13 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: VIDHYA_LLM_PRIMARY_PROVIDER
-        sync: false                  # "gemini" / "anthropic" / "openai"
+        sync: false
 
-      # ─── optional: Wolfram (maths verification) ─────────────────
+      # optional: Wolfram (maths verification)
       - key: WOLFRAM_APP_ID
         sync: false
 
-      # ─── optional: channel delivery ─────────────────────────────
+      # optional: channel delivery
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: WHATSAPP_ACCESS_TOKEN

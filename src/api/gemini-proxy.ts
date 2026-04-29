@@ -22,6 +22,7 @@ import { checkRateLimit } from '../lib/rate-limit';
 import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
 import { requireAuth } from '../auth/middleware';
 import { getLlmForRole, embedText } from '../llm/runtime';
+import { validateSystemPrompt, getAllowedPromptPrefixes } from './gemini-prompt-validator';
 
 function sendError(res: ServerResponse, status: number, message: string) {
   sendJSON(res, { error: message }, status);
@@ -331,8 +332,32 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
   if (!rlGuard('gemini.chat', actor, res)) return;
 
   const body = req.body as any;
-  const { message, history, systemPrompt, groundingChunks, image, imageMimeType } = body || {};
+  const {
+    message,
+    history,
+    systemPrompt,
+    student_context,    // new — opaque dynamic context (reasoner decision,
+                        // student profile, etc). Appended to the validated
+                        // tutor identity. Not validated; used only after
+                        // the tutor identity has been pinned.
+    groundingChunks,
+    image,
+    imageMimeType,
+  } = body || {};
   if (!message) return sendError(res, 400, 'message required');
+
+  // Validate user-supplied systemPrompt against the per-exam whitelist.
+  // Done BEFORE LLM resolution and budget reservation — no point spending
+  // either on a request we're going to reject. Empty/undefined systemPrompt
+  // is OK; the handler falls back to a server-supplied default below.
+  const userExamId = (auth.user as any).exam_id as string | undefined;
+  const validation = validateSystemPrompt(systemPrompt, userExamId);
+  if (!validation.ok) {
+    return sendJSON(res, {
+      error: 'system_prompt_rejected',
+      detail: validation.reason,
+    }, 400);
+  }
 
   // Vision role if image is present, chat role otherwise. Either way,
   // streaming dispatches via the runtime helper.
@@ -342,11 +367,27 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
   const reservation = budgetGuard('gemini.chat', actor, 4000, res);
   if (reservation === null) return;
 
-  // Build system prompt with optional grounding
+  // Build the system prompt in three layers:
+  //   1. Tutor identity (validated systemPrompt OR exam-specific default)
+  //   2. Optional student_context (reasoner decision, profile, etc.)
+  //   3. Optional grounding chunks (uploaded materials snippets)
+  let baseSystem: string;
+  if (systemPrompt && systemPrompt.trim()) {
+    baseSystem = systemPrompt;
+  } else {
+    // Default: pick the first allowed prefix for the user's exam.
+    // Was hardcoded "GATE Engineering Mathematics" before — wrong for
+    // BITSAT/NEET/etc. users.
+    const allowed = getAllowedPromptPrefixes(userExamId);
+    baseSystem = allowed[0] ?? 'You are an expert tutor.';
+  }
+  const contextText = student_context && typeof student_context === 'string' && student_context.trim()
+    ? `\n\n${student_context.trim()}`
+    : '';
   const groundingText = (groundingChunks || []).length > 0
     ? `\n\n## Student's Uploaded Materials\n${(groundingChunks as string[]).join('\n---\n')}`
     : '';
-  const fullSystem = (systemPrompt || 'You are a GATE Engineering Mathematics tutor.') + groundingText;
+  const fullSystem = baseSystem + contextText + groundingText;
 
   // History — last 10 turns, normalized to the runtime's role/content shape.
   const normalizedHistory = (history || [])

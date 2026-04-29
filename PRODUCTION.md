@@ -219,14 +219,34 @@ JWT bearer header) for all 4 caller paths in `frontend/src/lib/gbrain/`.
 Pages hosting these calls were already auth-protected at the routing
 layer; the previous bare-`fetch` was an oversight.
 
-**The `systemPrompt` injection vector remains.** `/api/gemini/chat`
-still accepts an arbitrary `systemPrompt` from the body. A hostile
-authenticated caller can override the system prompt to do anything —
-not just GATE math tutoring. With auth in place this is now a per-
-user concern (the operator pays for prompt-injection-driven calls
-out of THAT user's budget), not an unbounded cost-leak. Still worth
-addressing — either by stripping `systemPrompt` from the body and
-hardcoding a fixed system, or by validating it. Deferred.
+**The `systemPrompt` injection vector — closed.** `/api/gemini/chat`
+now validates user-supplied `systemPrompt` against a per-exam
+whitelist of allowed prefixes. The whitelist is keyed on
+`User.exam_id` — a BITSAT student can only pass a BITSAT tutor
+prefix; a NEET student a NEET prefix; etc. Cross-exam mismatch and
+jailbreak attempts ("Ignore previous instructions...") are rejected
+with HTTP 400 `system_prompt_rejected` before any LLM resolution
+or budget reservation. Validator at `src/api/gemini-prompt-validator.ts`.
+
+The frontend was also refactored: it no longer sends `systemPrompt`
+at all. Dynamic context (task-reasoner decision, student profile,
+representation hints) goes in a new `student_context` body field
+that the server appends AFTER the validated tutor identity. The
+server picks the tutor identity from the user's exam — was
+hardcoded to "GATE Engineering Mathematics" before, which was
+wrong for BITSAT/NEET/etc. users.
+
+**Honest non-goals:** This validates the OPENING of the system
+prompt, not the whole prompt. Mid-prompt injection attempts ("...
+ignore previous instructions ...") at line 6 of a 12-line prompt
+are not blocked here — that's a model-safety concern, not this
+validator's job. Modern LLMs don't reliably obey mid-prompt
+override instructions when the opening pins identity. Same applies
+to injection in the user `message` field: the user can write
+anything in their message; that's the model's content-safety layer,
+not this codebase's. Adding a new exam means adding an entry to
+`ALLOWED_PREFIXES` in the validator (same churn as registering a
+new exam adapter).
 
 ### No security audit
 

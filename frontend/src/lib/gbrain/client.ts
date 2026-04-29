@@ -290,9 +290,19 @@ export async function streamGroundedChat(
   const model = await loadOrCreateModel(sessionId);
   const reasonerDecision = runTaskReasonerPure(message, model);
   const studentProfile = await serializeForPromptPure(model);
-  const systemPrompt = `You are GBrain, an expert GATE Engineering Mathematics tutor.
 
-TASK REASONER DECISION:
+  // We deliberately do NOT send a `systemPrompt` field — the server
+  // picks the tutor identity based on the user's exam profile (BITSAT
+  // / JEE Main / UGEE / NEET) and validates against a whitelist. The
+  // dynamic context (reasoner decision + student profile) goes in a
+  // separate `student_context` field that the server appends to the
+  // validated tutor identity.
+  //
+  // Why: previously the frontend sent a hardcoded "GATE Engineering
+  // Mathematics tutor" prompt that an authenticated user could
+  // override to anything (jailbreak vector). Now the server pins the
+  // identity to the user's exam.
+  const studentContext = `TASK REASONER DECISION:
 Intent: ${reasonerDecision.intent}
 Action: ${reasonerDecision.action}
 Reasoning: ${reasonerDecision.reasoning}
@@ -307,7 +317,7 @@ Use LaTeX: inline $..$ and display $$...$$.`;
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message, history, systemPrompt, groundingChunks,
+      message, history, student_context: studentContext, groundingChunks,
     }),
   });
 

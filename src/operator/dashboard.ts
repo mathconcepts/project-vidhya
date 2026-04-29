@@ -127,9 +127,10 @@ export async function buildDashboard(): Promise<FounderDashboard> {
     role_changes_30d:   0,
   };
   try {
-    const { localAnalyticsAdapter } = await import('./analytics');
-    if (localAnalyticsAdapter.countByType) {
-      const counts = await localAnalyticsAdapter.countByType({ since: daysAgoIso(30) });
+    const { getAnalyticsAdapter } = await import('./analytics-selector');
+    const analytics = getAnalyticsAdapter();
+    if (analytics.countByType) {
+      const counts = await analytics.countByType({ since: daysAgoIso(30) });
       lifecycle.signups_30d         = counts['signup']         ?? 0;
       lifecycle.channels_linked_30d = counts['channel_linked'] ?? 0;
       lifecycle.role_changes_30d    = counts['role_changed']   ?? 0;

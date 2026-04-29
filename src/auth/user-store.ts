@@ -37,9 +37,11 @@ const ORG_ID = 'default';
 
 function fireLifecycleEvent(event_type: string, actor_id: string | undefined, props?: Record<string, any>) {
   // Async, fire-and-forget. Don't await; don't surface errors.
-  import('../operator/analytics')
-    .then(({ localAnalyticsAdapter }) => {
-      localAnalyticsAdapter.recordEvent({
+  // Lazy import via the selector picks PostHog when configured,
+  // local-JSONL otherwise. The selector caches; first call resolves.
+  import('../operator/analytics-selector')
+    .then(({ getAnalyticsAdapter }) => {
+      getAnalyticsAdapter().recordEvent({
         event_type,
         at: new Date().toISOString(),
         actor_id,

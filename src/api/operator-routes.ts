@@ -26,7 +26,7 @@ import {
 } from '../lib/route-helpers';
 import { getCurrentUser } from '../auth/middleware';
 import { localPaymentsAdapter } from '../operator/payments';
-import { localAnalyticsAdapter } from '../operator/analytics';
+import { getAnalyticsAdapter } from '../operator/analytics-selector';
 import { buildDashboard } from '../operator/dashboard';
 import type { PaymentEvent, AnalyticsEvent } from '../operator/types';
 
@@ -152,7 +152,7 @@ async function h_record_event(req: ParsedRequest, res: ServerResponse): Promise<
     props: body.props,
   };
   try {
-    await localAnalyticsAdapter.recordEvent(event);
+    await getAnalyticsAdapter().recordEvent(event);
     sendJSON(res, { ok: true, event }, 201);
   } catch (e: any) {
     sendError(res, 500, `event record failed: ${e?.message ?? 'unknown'}`);

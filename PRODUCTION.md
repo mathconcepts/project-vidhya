@@ -90,7 +90,9 @@ This is verified by the existing test suite and the live probes during commit ve
 - `/api/orchestrator/features` lists all feature flags with default + enabled + overridden state
 - `/api/turns` admin firehose shows every recent teaching interaction with full metadata
 - `/api/content-library/concepts` exposes the served library
+- `/api/operator/dashboard` aggregates users / revenue / activity / lifecycle / cost / health into one view; the "Lifecycle events (30d)" card surfaces signup / channel-linked / role-changed counts from the analytics adapter
 - Errors logged to stderr with module + handler context; suppressible via `VIDHYA_LOG_STDERR=off` for CI
+- Analytics events flow to PostHog when `POSTHOG_API_KEY` is set (dual-write to local JSONL by default — see "Analytics — pluggable adapter" below)
 
 ### Documentation
 
@@ -347,6 +349,50 @@ The only remaining `@google/generative-ai` imports in `src/` are
 inside `src/llm/adapters/gemini.ts` (the Gemini-specific provider
 adapter, which is correct — that's where Gemini-specific logic
 belongs).
+
+### Analytics — pluggable adapter
+
+Lifecycle events (signup, channel_linked, role_changed) are recorded
+through a swappable adapter. Three call sites — `src/auth/user-store.ts`
+(producer), `src/api/operator-routes.ts` (manual record endpoint),
+and `src/operator/dashboard.ts` (lifecycle card read) — all reach
+the active adapter via `getAnalyticsAdapter()` from
+`src/operator/analytics-selector.ts`.
+
+**Resolution:**
+- `POSTHOG_API_KEY` set → PostHog adapter (dual-writes to PostHog +
+  local-JSONL by default)
+- `POSTHOG_API_KEY` unset → local-JSONL adapter (regression-safe
+  default; existing deployments continue exactly as before)
+
+**PostHog config:**
+- `POSTHOG_API_KEY` — your project token, starts with `phc_`
+- `POSTHOG_HOST` — defaults to `https://us.i.posthog.com`. EU is
+  `https://eu.i.posthog.com`. Self-hosted: your instance URL.
+- `VIDHYA_ANALYTICS_DISABLE_LOCAL=true` — skip the JSONL mirror
+  (PostHog-only mode; the dashboard's lifecycle card will be empty
+  in that mode since it reads from local)
+
+**What this fixes:** the dashboard reads from local-fast storage
+(JSONL append + read-all + filter), but operators wanting funnel /
+cohort / retention analytics had no way to pipe events out. The
+PostHog adapter is dual-write so both stories work — local
+dashboard stays fast, PostHog gets the same events for analytics.
+
+**What it deliberately keeps thin:** no retry on PostHog 5xx, no
+graceful flush on process exit, no identify / alias / group events,
+no feature-flag integration. Events buffered in-memory at the
+moment of a crash are lost from PostHog's perspective (still in
+JSONL — the durable record). For at-least-once delivery, an
+operator should use PostHog's official Node SDK, which handles
+retry + flush + dead-letter queues. Implementation at
+`src/operator/posthog-analytics.ts` is ~200 LOC; swapping for
+Plausible / Segment / Mixpanel means implementing the
+`AnalyticsAdapter` interface in a new file and updating the
+selector.
+
+**Batching:** 1-second flush window OR 50 events, whichever first.
+Per-process, in-memory queue.
 
 ### LLM cost controls
 

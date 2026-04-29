@@ -248,7 +248,7 @@ export default function ChatPage() {
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div className="text-center">
-              <h2 className="text-xl font-bold text-white mb-2">GATE Math Tutor</h2>
+              <h2 className="text-xl font-bold text-white mb-2">AI Tutor</h2>
               <p className="text-surface-400 text-sm max-w-xs">
                 Ask me anything about GATE Engineering Mathematics.
               </p>
@@ -362,7 +362,7 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about GATE math..."
+              placeholder="Ask anything about your exam..."
               rows={1}
               className="w-full resize-none rounded-xl bg-surface-900 border border-surface-700 px-4 py-3 pr-12 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 transition-all max-h-32"
               style={{ minHeight: '44px' }}

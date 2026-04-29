@@ -272,7 +272,7 @@ export default function SettingsPage() {
 
       {/* About */}
       <motion.div variants={fadeInUp} className="text-center text-xs text-surface-600 space-y-1 pt-4">
-        <p>GATE Engineering Mathematics Practice</p>
+        <p>Exam Practice</p>
         <p>Powered by RAG + LLM Dual-Solve + Wolfram Alpha</p>
       </motion.div>
     </motion.div>

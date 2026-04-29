@@ -1,42 +1,45 @@
 /**
- * OnboardPage — 4-step wizard for Study Commander onboarding.
- * Steps: Exam Date → Target Score → Weekly Hours → Topic Confidence
+ * OnboardPage — Exam-aware onboarding wizard.
+ * Steps: Exam Date → Weekly Hours → Topic Confidence
+ *
+ * Reads the student's exam from their JWT profile so all text and
+ * topic lists are tailored to their actual exam (BITSAT, NEET, GATE, etc.).
+ * Saves to the flat-file profile store via POST /api/onboard (no Postgres).
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
+import { authFetch } from '@/lib/auth/client';
 import { trackEvent } from '@/lib/analytics';
-import { Calendar, Target, Clock, Brain, ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { Calendar, Clock, Brain, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const TOPICS = [
-  { id: 'linear-algebra', name: 'Linear Algebra' },
-  { id: 'calculus', name: 'Calculus' },
-  { id: 'probability-statistics', name: 'Probability & Statistics' },
-  { id: 'differential-equations', name: 'Differential Equations' },
-  { id: 'complex-variables', name: 'Complex Variables' },
-  { id: 'transform-theory', name: 'Transform Theory' },
-  { id: 'numerical-methods', name: 'Numerical Methods' },
-  { id: 'discrete-mathematics', name: 'Discrete Mathematics' },
-  { id: 'graph-theory', name: 'Graph Theory' },
-  { id: 'vector-calculus', name: 'Vector Calculus' },
-];
-
 const BUCKETS = [
-  { key: 'weak', label: 'Weak', value: 1, border: 'border-red-500/30', bg: 'bg-red-500/5', chip: 'bg-red-500/15 text-red-400 border-red-500/30' },
-  { key: 'okay', label: 'Okay', value: 3, border: 'border-amber-500/30', bg: 'bg-amber-500/5', chip: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  { key: 'weak',   label: 'Weak',   value: 1, border: 'border-red-500/30',     bg: 'bg-red-500/5',     chip: 'bg-red-500/15 text-red-400 border-red-500/30'       },
+  { key: 'okay',   label: 'Okay',   value: 3, border: 'border-amber-500/30',   bg: 'bg-amber-500/5',   chip: 'bg-amber-500/15 text-amber-400 border-amber-500/30'   },
   { key: 'strong', label: 'Strong', value: 5, border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', chip: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
 ] as const;
 
 const STEPS = [
   { icon: Calendar, label: 'Exam Date' },
-  { icon: Target, label: 'Target Score' },
-  { icon: Clock, label: 'Weekly Hours' },
-  { icon: Brain, label: 'Confidence' },
+  { icon: Clock,    label: 'Weekly Hours' },
+  { icon: Brain,    label: 'Confidence' },
 ];
+
+// Fallback topic list shown when no exam adapter data is available.
+const FALLBACK_TOPICS = [
+  { id: 'algebra', name: 'Algebra' },
+  { id: 'calculus', name: 'Calculus' },
+  { id: 'geometry', name: 'Geometry' },
+];
+
+interface ExamMeta {
+  exam_id: string;
+  exam_name: string;
+  topics: { id: string; name: string }[];
+}
 
 export default function OnboardPage() {
   const sessionId = useSession();
@@ -44,14 +47,33 @@ export default function OnboardPage() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [examMeta, setExamMeta] = useState<ExamMeta | null>(null);
+  const [loadingExam, setLoadingExam] = useState(true);
 
   // Form state
   const [examDate, setExamDate] = useState('');
-  const [targetScore, setTargetScore] = useState<number>(60);
   const [weeklyHours, setWeeklyHours] = useState<number>(10);
-  const [confidence, setConfidence] = useState<Record<string, number>>(
-    Object.fromEntries(TOPICS.map(t => [t.id, 3]))
-  );
+  const [confidence, setConfidence] = useState<Record<string, number>>({});
+
+  // Load exam metadata from the server (exam_id, exam_name, topics)
+  useEffect(() => {
+    authFetch('/api/onboard/meta')
+      .then(r => r.json())
+      .then((data: ExamMeta) => {
+        setExamMeta(data);
+        // Initialise all topics to "Okay" (3)
+        setConfidence(Object.fromEntries(data.topics.map(t => [t.id, 3])));
+      })
+      .catch(() => {
+        // Fallback: generic topics
+        setExamMeta({ exam_id: '', exam_name: 'Exam', topics: FALLBACK_TOPICS });
+        setConfidence(Object.fromEntries(FALLBACK_TOPICS.map(t => [t.id, 3])));
+      })
+      .finally(() => setLoadingExam(false));
+  }, []);
+
+  const topics = examMeta?.topics ?? FALLBACK_TOPICS;
+  const examLabel = examMeta?.exam_name ?? 'Exam';
 
   const canAdvance = () => {
     if (step === 0) return examDate !== '';
@@ -59,11 +81,8 @@ export default function OnboardPage() {
   };
 
   const handleNext = () => {
-    if (step < 3) {
-      setStep(step + 1);
-    } else {
-      handleSubmit();
-    }
+    if (step < STEPS.length - 1) setStep(step + 1);
+    else handleSubmit();
   };
 
   const handleBack = () => {
@@ -74,17 +93,19 @@ export default function OnboardPage() {
     setSaving(true);
     setError('');
     try {
-      await apiFetch('/api/onboard', {
+      const res = await authFetch('/api/onboard', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: sessionId,
+          exam_id: examMeta?.exam_id,
           exam_date: examDate,
-          target_score: targetScore,
           weekly_hours: weeklyHours,
           topic_confidence: confidence,
         }),
       });
-      trackEvent('onboard_complete', { weekly_hours: weeklyHours });
+      if (!res.ok) throw new Error('Failed to save profile');
+      trackEvent('onboard_complete', { weekly_hours: weeklyHours, exam_id: examMeta?.exam_id });
       navigate('/diagnostic');
     } catch (err: any) {
       setError(err.message || 'Failed to save');
@@ -92,6 +113,14 @@ export default function OnboardPage() {
       setSaving(false);
     }
   };
+
+  if (loadingExam) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex flex-col">
@@ -119,11 +148,12 @@ export default function OnboardPage() {
             transition={{ duration: 0.2 }}
             className="flex-1 flex flex-col"
           >
+            {/* Step 0 — Exam date */}
             {step === 0 && (
               <div className="space-y-6 px-1">
                 <div className="text-center space-y-2">
                   <Calendar size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">When is your GATE exam?</h2>
+                  <h2 className="text-xl font-bold text-surface-100">When is your {examLabel}?</h2>
                   <p className="text-sm text-surface-400">We'll pace your study plan accordingly</p>
                 </div>
                 <input
@@ -140,47 +170,19 @@ export default function OnboardPage() {
                       'text-center text-sm font-medium',
                       days < 60 ? 'text-amber-400' : 'text-emerald-400'
                     )}>
-                      {days} days from now
-                      {days < 60 && ' — every day counts!'}
+                      {days} days from now{days < 60 && ' — every day counts!'}
                     </p>
                   );
                 })()}
               </div>
             )}
 
+            {/* Step 1 — Weekly hours */}
             {step === 1 && (
               <div className="space-y-6 px-1">
                 <div className="text-center space-y-2">
-                  <Target size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">Target score in Engineering Math?</h2>
-                  <p className="text-sm text-surface-400">Out of 100 marks (13 marks in GATE)</p>
-                </div>
-                <div className="text-center">
-                  <span className="text-5xl font-bold text-emerald-400 font-mono">{targetScore}</span>
-                  <span className="text-xl text-surface-500 ml-1">/100</span>
-                </div>
-                <input
-                  type="range"
-                  min={20}
-                  max={100}
-                  step={5}
-                  value={targetScore}
-                  onChange={e => setTargetScore(parseInt(e.target.value))}
-                  className="w-full accent-emerald-500"
-                />
-                <div className="flex justify-between text-xs text-surface-500">
-                  <span>20 (pass)</span>
-                  <span>60 (good)</span>
-                  <span>100 (max)</span>
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-6 px-1">
-                <div className="text-center space-y-2">
                   <Clock size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">Hours per week for math?</h2>
+                  <h2 className="text-xl font-bold text-surface-100">Hours per week to study?</h2>
                   <p className="text-sm text-surface-400">Be realistic — we'll plan around this</p>
                 </div>
                 <div className="text-center">
@@ -188,10 +190,7 @@ export default function OnboardPage() {
                   <span className="text-xl text-surface-500 ml-1">hrs/week</span>
                 </div>
                 <input
-                  type="range"
-                  min={3}
-                  max={40}
-                  step={1}
+                  type="range" min={3} max={40} step={1}
                   value={weeklyHours}
                   onChange={e => setWeeklyHours(parseInt(e.target.value))}
                   className="w-full accent-emerald-500"
@@ -204,16 +203,17 @@ export default function OnboardPage() {
               </div>
             )}
 
-            {step === 3 && (
+            {/* Step 2 — Topic confidence */}
+            {step === 2 && (
               <div className="space-y-4 px-1">
                 <div className="text-center space-y-2">
                   <Brain size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">Sort your topics</h2>
+                  <h2 className="text-xl font-bold text-surface-100">Rate your topics</h2>
                   <p className="text-sm text-surface-400">Tap a topic to cycle: Weak → Okay → Strong</p>
                 </div>
                 <div className="space-y-3 max-h-[50vh] overflow-y-auto pb-4">
                   {BUCKETS.map(bucket => {
-                    const topicsInBucket = TOPICS.filter(t => confidence[t.id] === bucket.value);
+                    const topicsInBucket = topics.filter(t => (confidence[t.id] ?? 3) === bucket.value);
                     return (
                       <div key={bucket.key} className={clsx('p-3 rounded-xl border', bucket.border, bucket.bg)}>
                         <p className="text-xs font-semibold text-surface-300 mb-2">{bucket.label}</p>
@@ -227,7 +227,7 @@ export default function OnboardPage() {
                               <button
                                 key={topic.id}
                                 onClick={() => {
-                                  const cur = confidence[topic.id];
+                                  const cur = confidence[topic.id] ?? 3;
                                   const next = cur === 1 ? 3 : cur === 3 ? 5 : 1;
                                   setConfidence(prev => ({ ...prev, [topic.id]: next }));
                                 }}
@@ -255,7 +255,7 @@ export default function OnboardPage() {
           <p className="text-sm text-red-400 text-center px-4">{error}</p>
         )}
 
-        {/* Navigation buttons */}
+        {/* Navigation */}
         <div className="flex gap-3 pt-4 pb-6 px-1">
           {step > 0 && (
             <button
@@ -278,16 +278,10 @@ export default function OnboardPage() {
           >
             {saving ? (
               <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-            ) : step === 3 ? (
-              <>
-                <Check size={18} />
-                Start Diagnostic
-              </>
+            ) : step === STEPS.length - 1 ? (
+              <><Check size={18} /> Start Diagnostic</>
             ) : (
-              <>
-                Next
-                <ChevronRight size={18} />
-              </>
+              <><span>Next</span><ChevronRight size={18} /></>
             )}
           </button>
         </div>

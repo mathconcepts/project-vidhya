@@ -119,30 +119,104 @@ function validateOnboardInput(body: any): string | null {
 // Handlers
 // ============================================================================
 
-/** POST /api/onboard — Save study profile */
+/** GET /api/onboard/meta — Return the student's exam name + topic list for the onboarding UI */
+async function handleGetOnboardMeta(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const { getCurrentUser } = await import('../auth/middleware');
+  const auth = await getCurrentUser(req);
+
+  const { getExamAdapter, listExamAdapters, loadBundledAdapters } = await import('../exam-builder/registry');
+  try { loadBundledAdapters(); } catch {}
+
+  let examAdapter: any = null;
+  if (auth) {
+    const { getProfile } = await import('../session-planner/exam-profile-store');
+    const profile = getProfile(auth.user.id);
+    const primaryId = profile?.exams?.[0]?.exam_id;
+    if (primaryId) examAdapter = getExamAdapter(primaryId);
+  }
+  if (!examAdapter) {
+    const all = listExamAdapters();
+    examAdapter = all[0] ?? null;
+  }
+  if (!examAdapter) return sendError(res, 503, 'No exam adapters registered');
+
+  const topics = examAdapter.getSyllabusTopicIds().map((id: string) => ({
+    id,
+    name: id.replace(/-/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase()),
+  }));
+
+  sendJSON(res, {
+    exam_id: examAdapter.exam_id,
+    exam_name: examAdapter.exam_name,
+    topics,
+  });
+}
+
+/** POST /api/onboard — Save study profile to the flat-file store (no Postgres) */
 async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const body = req.body as any;
-  const error = validateOnboardInput(body);
-  if (error) return sendError(res, 400, error);
+  const { session_id, exam_date, exam_id, weekly_hours, topic_confidence } = body;
 
-  const { session_id, exam_date, target_score, weekly_hours, topic_confidence } = body;
-  if (!session_id || typeof session_id !== 'string') return sendError(res, 400, 'session_id is required');
+  if (!exam_date || isNaN(new Date(exam_date).getTime())) {
+    return sendError(res, 400, 'exam_date (ISO date string) is required');
+  }
 
-  const pool = getPool();
-  const result = await pool.query(
-    `INSERT INTO study_profiles (session_id, exam_date, target_score, weekly_hours, topic_confidence)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (session_id) DO UPDATE SET
-       exam_date = EXCLUDED.exam_date,
-       target_score = EXCLUDED.target_score,
-       weekly_hours = EXCLUDED.weekly_hours,
-       topic_confidence = EXCLUDED.topic_confidence,
-       updated_at = NOW()
-     RETURNING id, session_id, exam_date, target_score, weekly_hours, topic_confidence, created_at`,
-    [session_id, exam_date, target_score || null, weekly_hours || 10, JSON.stringify(topic_confidence)]
-  );
+  // Prefer JWT auth so we save to the authenticated student's profile.
+  const { getCurrentUser } = await import('../auth/middleware');
+  const auth = await getCurrentUser(req);
 
-  sendJSON(res, { profile: result.rows[0] }, 201);
+  if (auth) {
+    // Save to the flat-file exam-profile store.
+    const { upsertProfile } = await import('../session-planner/exam-profile-store');
+    const { getExamAdapter, loadBundledAdapters } = await import('../exam-builder/registry');
+    try { loadBundledAdapters(); } catch {}
+
+    // Determine exam_id: use the submitted one, or the student's first existing exam,
+    // or the first registered adapter.
+    let effectiveExamId = exam_id;
+    if (!effectiveExamId) {
+      const { getProfile } = await import('../session-planner/exam-profile-store');
+      const existing = getProfile(auth.user.id);
+      effectiveExamId = existing?.exams?.[0]?.exam_id;
+    }
+    if (!effectiveExamId) {
+      const { listExamAdapters } = await import('../exam-builder/registry');
+      effectiveExamId = listExamAdapters()[0]?.exam_id;
+    }
+    if (!effectiveExamId) return sendError(res, 503, 'No exam configured');
+
+    const profile = upsertProfile(auth.user.id, [{
+      exam_id: effectiveExamId,
+      exam_date,
+      weekly_hours: typeof weekly_hours === 'number' ? weekly_hours : 10,
+      topic_confidence: topic_confidence ?? {},
+      added_at: new Date().toISOString(),
+    }]);
+    return sendJSON(res, { profile }, 201);
+  }
+
+  // Anonymous fallback: try Postgres; if unavailable, acknowledge without saving.
+  try {
+    const pool = getPool();
+    if (!session_id) return sendError(res, 400, 'session_id or JWT auth is required');
+    const result = await pool.query(
+      `INSERT INTO study_profiles (session_id, exam_date, weekly_hours, topic_confidence)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (session_id) DO UPDATE SET
+         exam_date = EXCLUDED.exam_date,
+         weekly_hours = EXCLUDED.weekly_hours,
+         topic_confidence = EXCLUDED.topic_confidence,
+         updated_at = NOW()
+       RETURNING *`,
+      [session_id, exam_date, weekly_hours || 10, JSON.stringify(topic_confidence || {})]
+    );
+    return sendJSON(res, { profile: result.rows[0] }, 201);
+  } catch {
+    // DB unavailable — acknowledge without persisting for anonymous users.
+    return sendJSON(res, {
+      profile: { session_id, exam_date, weekly_hours: weekly_hours || 10, topic_confidence: topic_confidence || {} }
+    }, 201);
+  }
 }
 
 /** GET /api/onboard/:sessionId — Get study profile */
@@ -150,19 +224,20 @@ async function handleGetOnboard(req: ParsedRequest, res: ServerResponse): Promis
   const { sessionId } = req.params;
   if (!sessionId) return sendError(res, 400, 'sessionId required');
 
-  const pool = getPool();
-  const result = await pool.query(
-    `SELECT id, session_id, exam_date, target_score, weekly_hours, topic_confidence,
-            diagnostic_scores, diagnostic_taken_at, created_at, updated_at
-     FROM study_profiles WHERE session_id = $1`,
-    [sessionId]
-  );
-
-  if (result.rows.length === 0) {
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT id, session_id, exam_date, target_score, weekly_hours, topic_confidence,
+              diagnostic_scores, diagnostic_taken_at, created_at, updated_at
+       FROM study_profiles WHERE session_id = $1`,
+      [sessionId]
+    );
+    if (result.rows.length === 0) return sendJSON(res, { profile: null });
+    return sendJSON(res, { profile: result.rows[0] });
+  } catch {
+    // DB unavailable — return null profile so GateHome shows onboarding.
     return sendJSON(res, { profile: null });
   }
-
-  sendJSON(res, { profile: result.rows[0] });
 }
 
 /** GET /api/diagnostic/:sessionId
@@ -546,8 +621,9 @@ async function handleGetPriority(req: ParsedRequest, res: ServerResponse): Promi
 // ============================================================================
 
 export const commanderRoutes: RouteDefinition[] = [
-  { method: 'POST', path: '/api/onboard', handler: handlePostOnboard },
-  { method: 'GET', path: '/api/onboard/:sessionId', handler: handleGetOnboard },
+  { method: 'GET',  path: '/api/onboard/meta',           handler: handleGetOnboardMeta },
+  { method: 'POST', path: '/api/onboard',                handler: handlePostOnboard },
+  { method: 'GET',  path: '/api/onboard/:sessionId',     handler: handleGetOnboard },
   { method: 'GET', path: '/api/diagnostic/:sessionId', handler: handleGetDiagnostic },
   { method: 'POST', path: '/api/diagnostic/:sessionId', handler: handlePostDiagnostic },
   { method: 'GET', path: '/api/today/:sessionId', handler: handleGetToday },

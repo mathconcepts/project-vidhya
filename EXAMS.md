@@ -30,7 +30,9 @@ nothing exam-specific.
 | 2 | `EXM-JEEMAIN-MATH-SAMPLE` | JEEMAIN-MATH-2026 | Entrance | India | National Testing Agency (NTA) |
 | 3 | `EXM-UGEE-MATH-SAMPLE` | UGEE-MATH-2026 | Entrance | India | IIIT Hyderabad |
 | 4 | `EXM-NEET-BIO-SAMPLE` | NEET-BIO-2026 | Entrance | India | National Testing Agency (NTA) |
-| 5 | `EXM-GATE-MATH-SAMPLE` | GATE-MATH-2026 | Postgraduate | India | IISc Bangalore + 7 IITs |
+| 5 | `EXM-NEET-PHYS-SAMPLE` | NEET-PHYS-2026 | Entrance | India | National Testing Agency (NTA) |
+| 6 | `EXM-NEET-CHEM-SAMPLE` | NEET-CHEM-2026 | Entrance | India | National Testing Agency (NTA) |
+| 7 | `EXM-GATE-MATH-SAMPLE` | GATE-MATH-2026 | Postgraduate | India | IISc Bangalore + 7 IITs |
 
 ---
 

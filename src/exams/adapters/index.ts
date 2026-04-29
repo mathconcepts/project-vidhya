@@ -23,6 +23,8 @@ import './bitsat-mathematics';
 import './ugee-mathematics';
 import './jee-main-mathematics';
 import './neet-biology';
+import './neet-physics';
+import './neet-chemistry';
 import './gate-mathematics';
 
 // Future adapters go here:

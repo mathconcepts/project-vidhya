@@ -113,6 +113,22 @@ const ALLOWED_PREFIXES: Record<string, string[]> = {
     'You are a NEET Biology tutor.',
   ],
 
+  // NEET Physics — companion to NEET Biology, completes the medical-
+  // entrance triad along with NEET Chemistry.
+  'EXM-NEET-PHYS-SAMPLE': [
+    'You are GBrain, an expert NEET Physics tutor.',
+    'You are an expert NEET Physics tutor.',
+    'You are a NEET Physics tutor.',
+  ],
+
+  // NEET Chemistry — third NEET subject. Three sub-disciplines
+  // (Physical / Organic / Inorganic) but the tutor identity is unified.
+  'EXM-NEET-CHEM-SAMPLE': [
+    'You are GBrain, an expert NEET Chemistry tutor.',
+    'You are an expert NEET Chemistry tutor.',
+    'You are a NEET Chemistry tutor.',
+  ],
+
   // GATE — Graduate Aptitude Test in Engineering (Engineering Mathematics)
   // First postgraduate-level exam in the system. Engineering Mathematics
   // is the math section shared across most GATE branches (CS, EE, ME,

@@ -34,7 +34,7 @@ Honest accounting, not aspirational. From [`PENDING.md`](./PENDING.md) and [`FEA
 
 **Shipped and used:**
 - Multi-role demo (6 personas: owner / admin / teacher / 3 students)
-- 5 sample exams: BITSAT, JEE Main, UGEE (math), NEET (bio), GATE Engineering Mathematics (postgraduate)
+- 7 sample exams: BITSAT, JEE Main, UGEE (math), NEET (biology + physics + chemistry — full PCB triad), GATE Engineering Mathematics (postgraduate)
 - AI tutor (chat) with BYOK for 3 providers + Wolfram fallback when set
 - Snap-a-photo solver
 - Daily study plan / Study Commander

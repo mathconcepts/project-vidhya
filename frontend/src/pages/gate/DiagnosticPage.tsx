@@ -20,6 +20,8 @@ interface DiagnosticQuestion {
   question_text: string;
   options: any;
   difficulty: string;
+  exam_name?: string;
+  explanation?: string;
 }
 
 export default function DiagnosticPage() {
@@ -147,7 +149,7 @@ export default function DiagnosticPage() {
         className="space-y-6 py-4"
       >
         <div className="text-center space-y-3">
-          <h1 className="text-2xl font-bold text-surface-100">Your GATE Math Profile</h1>
+          <h1 className="text-2xl font-bold text-surface-100">Your {questions[0]?.exam_name ?? 'Exam'} Profile</h1>
           <div className="text-5xl font-bold font-mono text-emerald-400">
             {correctCount}/{totalCount}
           </div>

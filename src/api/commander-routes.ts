@@ -165,84 +165,129 @@ async function handleGetOnboard(req: ParsedRequest, res: ServerResponse): Promis
   sendJSON(res, { profile: result.rows[0] });
 }
 
-/** GET /api/diagnostic/:sessionId — Get 10 diagnostic questions (1/topic) */
+/** GET /api/diagnostic/:sessionId
+ * Returns exam-aware diagnostic questions from the bundled sample data.
+ * No Postgres required. Detects the student's exam from their JWT profile;
+ * falls back to the first registered adapter for anonymous users.
+ */
 async function handleGetDiagnostic(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const { sessionId } = req.params;
-  if (!sessionId) return sendError(res, 400, 'sessionId required');
+  // Prefer JWT auth (identifies the student's exam from their profile).
+  const { getCurrentUser } = await import('../auth/middleware');
+  const auth = await getCurrentUser(req);
 
-  const pool = getPool();
+  // Load exam adapters so we can pull sample questions.
+  const { getExamAdapter, listExamAdapters, loadBundledAdapters } = await import('../exam-builder/registry');
+  try { loadBundledAdapters(); } catch { /* already loaded */ }
 
-  // Get 1 question per topic, preferring easy/medium difficulty
-  const result = await pool.query(`
-    SELECT DISTINCT ON (topic) id, topic, question_text, options, difficulty, year
-    FROM pyq_questions
-    WHERE topic = ANY($1)
-    ORDER BY topic,
-      CASE WHEN difficulty IN ('easy', 'medium') THEN 0 ELSE 1 END,
-      RANDOM()
-  `, [VALID_TOPIC_IDS]);
+  // Determine which exam to diagnose:
+  //   1. JWT user -> read their primary exam from the flat-file profile store
+  //   2. Anonymous -> fall back to the first registered adapter
+  let examAdapter: any = null;
+  if (auth) {
+    const { getProfile: getExamProfile } = await import('../session-planner/exam-profile-store');
+    const profile = getExamProfile(auth.user.id);
+    const primaryExamId = profile?.exams?.[0]?.exam_id;
+    if (primaryExamId) examAdapter = getExamAdapter(primaryExamId);
+  }
+  if (!examAdapter) {
+    const all = listExamAdapters();
+    examAdapter = all[0] ?? null;
+  }
+  if (!examAdapter) {
+    return sendError(res, 503, 'No exam adapters registered');
+  }
 
-  const questions = result.rows.map((row: any, idx: number) => ({
-    index: idx,
-    id: row.id,
-    topic: row.topic,
-    topic_name: TOPIC_NAMES[row.topic] || row.topic,
-    question_text: row.question_text,
-    options: row.options,
-    difficulty: row.difficulty,
-    year: row.year,
-  }));
+  // Pull sample questions from the adapter's bundled mock exam.
+  const content = examAdapter.loadBaseContent();
+  const allQuestions: any[] = content.mocks?.[0]?.questions ?? [];
 
-  sendJSON(res, { questions, total: questions.length });
+  // Select 1 question per topic_id (up to 10 questions).
+  const byTopic: Record<string, any> = {};
+  for (const q of allQuestions) {
+    const topicKey = q.topic_id ?? q.topic ?? 'general';
+    if (!byTopic[topicKey]) byTopic[topicKey] = q;
+  }
+  const selected = Object.values(byTopic).slice(0, 10);
+
+  // Normalise to the shape DiagnosticPage expects.
+  // Different sample files use different schemas; we unify them here.
+  const questions = selected.map((q: any, idx: number) => {
+    const topicId = q.topic_id ?? q.topic ?? 'general';
+
+    // Normalise options to [{text, is_correct}] shape
+    let options: { text: string; is_correct: boolean }[] = [];
+    if (Array.isArray(q.options) && q.options.length > 0) {
+      if (typeof q.options[0] === 'string') {
+        // NEET-style: options is string[], correct_index is an integer
+        options = q.options.map((o: string, i: number) => ({
+          text: o,
+          is_correct: i === q.correct_index,
+        }));
+      } else if (typeof q.options[0] === 'object' && 'text' in q.options[0]) {
+        // BITSAT/JEE-style: [{text, is_correct}]
+        options = q.options;
+      } else if (typeof q.options[0] === 'object' && 'id' in q.options[0]) {
+        // GATE/MCQ-style: [{id:'A', text:'...'}] + correct_option_id
+        const correctId = q.correct_option_id;
+        options = q.options.map((o: any) => ({
+          text: o.text ?? String(o),
+          is_correct: o.id === correctId,
+        }));
+      }
+    }
+
+    return {
+      index: idx,
+      id: q.id ?? `q${idx}`,
+      topic: topicId,
+      topic_name: topicId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+      question_text: q.statement ?? q.prompt ?? q.question_text ?? '',
+      options,
+      difficulty: q.difficulty ?? 'medium',
+      exam_name: examAdapter.exam_name,
+      explanation: q.explanation,
+    };
+  }).filter((q: any) => q.options.length >= 2 && q.question_text); // MCQ only, skip NAT
+
+  sendJSON(res, {
+    questions,
+    total: questions.length,
+    exam_id: examAdapter.exam_id,
+    exam_name: examAdapter.exam_name,
+  });
 }
 
-/** POST /api/diagnostic/:sessionId — Save diagnostic scores */
+/** POST /api/diagnostic/:sessionId — Record diagnostic completion (flat-file, no Postgres) */
 async function handlePostDiagnostic(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const { sessionId } = req.params;
-  if (!sessionId) return sendError(res, 400, 'sessionId required');
 
   const body = req.body as any;
   if (!body || !body.scores || typeof body.scores !== 'object') {
-    return sendError(res, 400, 'scores object required (topic_id → 0-1 accuracy)');
+    return sendError(res, 400, 'scores object required (topic_id -> 0-1 accuracy)');
   }
 
-  // Validate scores
-  for (const [topic, score] of Object.entries(body.scores)) {
-    if (!VALID_TOPIC_IDS.includes(topic)) {
-      return sendError(res, 400, `Invalid topic: ${topic}`);
-    }
-    if (typeof score !== 'number' || score < 0 || score > 1) {
-      return sendError(res, 400, `Score for ${topic} must be 0-1`);
-    }
+  const entry = { scores: body.scores, taken_at: new Date().toISOString() };
+
+  // Fire-and-forget: record to analytics adapter (non-blocking, swallows errors).
+  const { getCurrentUser } = await import('../auth/middleware');
+  const auth = await getCurrentUser(req);
+  if (auth) {
+    import('../operator/analytics-selector')
+      .then(({ getAnalyticsAdapter }) => getAnalyticsAdapter().recordEvent({
+        event_type: 'diagnostic_completed',
+        at: entry.taken_at,
+        actor_id: auth.user.id,
+        props: {
+          session_id: sessionId,
+          scores: body.scores,
+          correct: Object.values(body.scores).filter((s: any) => s === 1).length,
+          total: Object.keys(body.scores).length,
+        },
+      }))
+      .catch(() => {});
   }
 
-  const pool = getPool();
-
-  // Check profile exists
-  const profileResult = await pool.query(
-    'SELECT id, diagnostic_scores FROM study_profiles WHERE session_id = $1',
-    [sessionId]
-  );
-  if (profileResult.rows.length === 0) {
-    return sendError(res, 404, 'Study profile not found — complete onboarding first');
-  }
-
-  // Append to diagnostic_scores array (preserve history)
-  const newEntry = {
-    scores: body.scores,
-    taken_at: new Date().toISOString(),
-  };
-
-  await pool.query(
-    `UPDATE study_profiles
-     SET diagnostic_scores = COALESCE(diagnostic_scores, '[]'::jsonb) || $2::jsonb,
-         diagnostic_taken_at = NOW(),
-         updated_at = NOW()
-     WHERE session_id = $1`,
-    [sessionId, JSON.stringify([newEntry])]
-  );
-
-  sendJSON(res, { ok: true, entry: newEntry });
+  sendJSON(res, { ok: true, entry });
 }
 
 /** GET /api/today/:sessionId — Get/create today's daily plan (idempotent) */

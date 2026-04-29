@@ -488,25 +488,78 @@ registerRoute('POST', '/api/auth/migrate-session', async (req, res) => {
 // Health check
 registerRoute('GET', '/health', async (_req, res) => {
   const info: Record<string, unknown> = { status: 'ok', service: 'gate-math-api' };
-  info.database_url_set = !!process.env.DATABASE_URL;
-  info.supabase_url_set = !!process.env.SUPABASE_URL;
-  // Quick DB ping
+
+  // Feature capability flags — tells operators what's configured
+  info.features = {
+    ai_chat: !!(
+      process.env.GEMINI_API_KEY ||
+      process.env.ANTHROPIC_API_KEY ||
+      process.env.OPENAI_API_KEY ||
+      process.env.VIDHYA_LLM_PRIMARY_KEY
+    ),
+    wolfram: !!process.env.WOLFRAM_APP_ID,
+    google_auth: !!process.env.GOOGLE_OAUTH_CLIENT_ID,
+    analytics: !!process.env.POSTHOG_HOST,
+    telegram: !!process.env.TELEGRAM_BOT_TOKEN,
+    whatsapp: !!(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID),
+    database: !!(process.env.DATABASE_URL || process.env.SUPABASE_DB_URL),
+  };
+
+  // DB ping (only if configured)
   if (process.env.DATABASE_URL) {
     try {
       const pg = await import('pg');
       const client = new pg.default.Client({ connectionString: process.env.DATABASE_URL });
       await client.connect();
       const r = await client.query('SELECT 1 as ok');
-      info.database = r.rows[0]?.ok === 1 ? 'connected' : 'unexpected';
+      info.database_status = r.rows[0]?.ok === 1 ? 'connected' : 'unexpected';
       await client.end();
     } catch (e: any) {
-      info.database = `error: ${e.message}`;
+      info.database_status = `error: ${e.message}`;
     }
-  } else {
-    info.database = 'not configured';
   }
+
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(info));
+});
+
+// /demo-login?role=student|teacher|admin — sets localStorage token and redirects to /
+// Reads demo/demo-tokens.json written by npm run demo:seed (runs on every Render boot).
+registerRoute('GET', '/demo-login', async (req, res) => {
+  const role = (req.query?.role as string) || 'student-active';
+
+  let tokens: Record<string, { token: string; name: string; email: string; role: string }> = {};
+  try {
+    const fs = await import('fs');
+    const raw = fs.readFileSync('demo/demo-tokens.json', 'utf8');
+    tokens = JSON.parse(raw);
+  } catch {
+    res.writeHead(503, { 'Content-Type': 'text/plain' });
+    res.end('Demo not seeded. The server seeds on boot — please wait 30 seconds and try again.');
+    return;
+  }
+
+  const key = role === 'student' ? 'student-active' : role;
+  const entry = tokens[key];
+  if (!entry) {
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    res.end(`Unknown role: ${role}. Valid roles: student, teacher, admin, owner.`);
+    return;
+  }
+
+  const TOKEN_KEY = 'vidhya.auth.token.v1';
+  const html = `<!doctype html>
+<html><head><title>Loading demo…</title></head>
+<body>
+<script>
+  localStorage.setItem(${JSON.stringify(TOKEN_KEY)}, ${JSON.stringify(entry.token)});
+  window.location.replace('/');
+</script>
+<p>Logging you in as ${entry.name} (${entry.role})…</p>
+</body></html>`;
+
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(html);
 });
 
 // ============================================================================

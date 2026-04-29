@@ -164,7 +164,15 @@ export default function ChatPage() {
         body: JSON.stringify(chatBody),
       });
 
-      if (!response.ok) throw new Error('Chat request failed');
+      if (!response.ok) {
+        let detail = 'Chat request failed';
+        try {
+          const errBody = await response.json();
+          if (errBody?.detail) detail = errBody.detail;
+          else if (errBody?.error) detail = errBody.error;
+        } catch { /* not JSON — keep generic message */ }
+        throw new Error(detail);
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();

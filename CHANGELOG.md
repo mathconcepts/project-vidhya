@@ -2,6 +2,19 @@
 
 All notable changes to GATE Math are documented here.
 
+> **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
+
+## [Unreleased] — 2026-04-29 (DX pass — demo login, feature health, error surfaces)
+
+**Operator action:** none. Render auto-deploys from `main`. Demo seed runs automatically on every boot.
+
+### What changed for operators
+- `/health` now returns `features: {ai_chat, wolfram, google_auth, analytics, telegram, whatsapp, database}` — shows exactly which capabilities are configured on your deployment.
+- `/demo-login?role=student` — new endpoint that logs anyone into the demo student account instantly. Share this URL with teachers evaluating the platform. Requires `demo:seed` (runs automatically on every Render boot).
+- `render.yaml` — ENV var comments now explain what each key does and where to get it. `POSTHOG_HOST`, `DEFAULT_EXAM_ID`, `DATABASE_URL` added to the form.
+- Chat page — when AI chat is unconfigured (503), the UI now shows the specific reason instead of a generic error.
+- `README.md` — live demo link added at the top.
+
 ## [Unreleased] — 2026-04-28 (the production trio)
 
 Three commits that close the highest-leverage production gaps and stand up the founder-ecosystem surface. Two distinct decisions bundled per the user's request:

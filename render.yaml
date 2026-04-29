@@ -58,22 +58,31 @@ services:
       - key: PUBLIC_URL
         sync: false
 
-      # BYOK LLM providers (one enables AI tutor / chat / explainers)
-      # Each is optional. Demo works with NONE at baseline.
+      # ── AI tutor (STEP 1: paste one key to unlock AI chat) ──────────────
+      # Get a free Gemini key at https://aistudio.google.com/apikey
+      # Without any key: demo, plans, and exam content all work; only AI chat is disabled.
       - key: GEMINI_API_KEY
         sync: false
+      # Alternatives to Gemini (pick any one; Gemini recommended for free tier):
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      # Override which provider is primary (default: auto-detect from key present):
       - key: VIDHYA_LLM_PRIMARY_PROVIDER
         sync: false
 
-      # optional: Wolfram (maths verification)
+      # ── Maths verification (STEP 2: optional, improves answer accuracy) ─
+      # Free key at https://products.wolframalpha.com/api
       - key: WOLFRAM_APP_ID
         sync: false
 
-      # optional: channel delivery
+      # ── Analytics (optional: see how students use the app) ───────────────
+      # Free PostHog account at https://posthog.com — paste your host URL here
+      - key: POSTHOG_HOST
+        sync: false
+
+      # ── Channel delivery (optional: Telegram / WhatsApp bots) ────────────
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: WHATSAPP_ACCESS_TOKEN
@@ -81,4 +90,14 @@ services:
       - key: WHATSAPP_PHONE_NUMBER_ID
         sync: false
       - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+
+      # ── GATE Math specific (optional) ────────────────────────────────────
+      # Which exam to serve (default: gate-ma). Other values: jee-main, neet, etc.
+      - key: DEFAULT_EXAM_ID
+        sync: false
+      # Supabase database (optional: enables GBrain student model persistence)
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_DB_URL
         sync: false

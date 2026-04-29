@@ -63,6 +63,12 @@ Twelve modules: core, auth, content, rendering, channels, learning, exams, lifec
 
 ---
 
+## Try it live
+
+**[→ Open live demo](https://gate-math-api.onrender.com/demo-login)** — logs you in as a demo student instantly. No account needed.
+
+---
+
 ## Quick start
 
 Three deployment paths. Pick one.

@@ -26,9 +26,7 @@
 This doc is the authoritative path from *"clone the repo"* to *"live
 demo URL you can share"*. Three clicks after signing into Render.
 
-> **Live demo URL:** _none yet — operator action required._
->
-> Once someone clicks the Deploy button below, run `bash scripts/update-readme-url.sh https://your-service.onrender.com` to fill this line in across the README and DEPLOY docs in one command.
+> **Live demo URL:** https://gate-math-api.onrender.com/demo-login — logs you in as a demo student instantly. No account needed.
 
 > **Free tier — ephemeral state:** Render's free tier does not support
 > persistent disks. The app's `.data/` directory lives in the container's

@@ -29,6 +29,8 @@ nothing exam-specific.
 | 1 | `EXM-BITSAT-MATH-SAMPLE` | BITSAT-MATH-2026 | Entrance | India | BITS Pilani |
 | 2 | `EXM-JEEMAIN-MATH-SAMPLE` | JEEMAIN-MATH-2026 | Entrance | India | National Testing Agency (NTA) |
 | 3 | `EXM-UGEE-MATH-SAMPLE` | UGEE-MATH-2026 | Entrance | India | IIIT Hyderabad |
+| 4 | `EXM-NEET-BIO-SAMPLE` | NEET-BIO-2026 | Entrance | India | National Testing Agency (NTA) |
+| 5 | `EXM-GATE-MATH-SAMPLE` | GATE-MATH-2026 | Postgraduate | India | IISc Bangalore + 7 IITs |
 
 ---
 

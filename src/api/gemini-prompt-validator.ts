@@ -112,6 +112,16 @@ const ALLOWED_PREFIXES: Record<string, string[]> = {
     'You are an expert NEET Biology tutor.',
     'You are a NEET Biology tutor.',
   ],
+
+  // GATE — Graduate Aptitude Test in Engineering (Engineering Mathematics)
+  // First postgraduate-level exam in the system. Engineering Mathematics
+  // is the math section shared across most GATE branches (CS, EE, ME,
+  // CE, EC, etc.).
+  'EXM-GATE-MATH-SAMPLE': [
+    'You are GBrain, an expert GATE Engineering Mathematics tutor.',
+    'You are an expert GATE Engineering Mathematics tutor.',
+    'You are a GATE Engineering Mathematics tutor.',
+  ],
 };
 
 export interface PromptValidationResult {

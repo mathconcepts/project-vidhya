@@ -109,7 +109,7 @@ export default function SettingsPage() {
       {/* Content settings — bundles + source exclusions */}
       <motion.a
         variants={fadeInUp}
-        href="/gate/content-settings"
+        href="/content-settings"
         className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-surface-700 hover:bg-surface-850 transition-colors"
       >
         <div className="flex items-center justify-between">
@@ -124,7 +124,7 @@ export default function SettingsPage() {
       {/* Uploads — private file library */}
       <motion.a
         variants={fadeInUp}
-        href="/gate/uploads"
+        href="/uploads"
         className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-surface-700 hover:bg-surface-850 transition-colors"
       >
         <div className="flex items-center justify-between">

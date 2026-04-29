@@ -66,7 +66,7 @@ export default function ConvertDemoPage() {
             not a demo user. Nothing to convert.
           </p>
           <button
-            onClick={() => navigate('/gate/planned')}
+            onClick={() => navigate('/planned')}
             className="text-sky-400 hover:text-sky-300"
           >
             Back to planned session →
@@ -178,7 +178,7 @@ export default function ConvertDemoPage() {
 
           <div className="mt-6 flex gap-3">
             <button
-              onClick={() => navigate('/gate/planned')}
+              onClick={() => navigate('/planned')}
               className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded px-4 py-2 text-sm font-medium transition"
             >
               Back to planned session

@@ -389,7 +389,7 @@ export default function PlannedSessionPage() {
       from_plan: plan?.id ?? '',
       action_id: action.id,
     });
-    navigate(`/gate/smart-practice?${params}`);
+    navigate(`/smart-practice?${params}`);
   }, [plan, navigate]);
 
   const markDone = useCallback((action_id: string, completed: boolean) => {
@@ -464,7 +464,7 @@ export default function PlannedSessionPage() {
               </p>
             </div>
             <Link
-              to="/gate/exam-profile"
+              to="/exam-profile"
               className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 transition-colors"
               title="Register the exams you're preparing for"
             >
@@ -486,7 +486,7 @@ export default function PlannedSessionPage() {
           )}
           {profile && profile.exams.length === 0 && (
             <div className="mt-3 text-xs text-amber-300/80 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2">
-              Using a default exam. <Link to="/gate/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
+              Using a default exam. <Link to="/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
             </div>
           )}
           {profile && profile.exams.length >= 2 && (

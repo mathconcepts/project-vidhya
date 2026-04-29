@@ -34,7 +34,7 @@ export function DemoBanner() {
           </span>
         </div>
         <Link
-          to="/gate/convert-demo"
+          to="/convert-demo"
           className="text-sky-300 hover:text-white font-medium whitespace-nowrap"
         >
           Make this real →

@@ -121,7 +121,7 @@ export default function ExamProfilePage() {
       <div className="max-w-2xl mx-auto px-4 pt-8">
 
         <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
-          <Link to="/gate/planned" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 mb-3">
+          <Link to="/planned" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 mb-3">
             <ChevronLeft className="w-3.5 h-3.5" />
             Back to Planner
           </Link>

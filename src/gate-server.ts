@@ -61,6 +61,7 @@ import { attentionRoutes } from './api/attention-routes';
 import { marketingRoutes } from './api/marketing-routes';
 import { adminAgentRoutes } from './api/admin-agent-routes';
 import { sessionPlannerRoutes } from './api/session-planner-routes';
+import { studymateRoutes } from './api/studymate-routes';
 import { knowledgeRoutes } from './api/knowledge-routes';
 import { lifecycleRoutes } from './api/lifecycle-routes';
 import { contentLifecycleRoutes } from './api/content-lifecycle-routes';
@@ -275,6 +276,9 @@ for (const route of adminAgentRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of sessionPlannerRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of studymateRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of knowledgeRoutes) {

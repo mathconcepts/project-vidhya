@@ -16,7 +16,7 @@
  */
 
 import { ServerResponse } from 'http';
-import { GATE_TOPICS } from '../constants/topics';
+import { getTopicIdsForExam } from '../curriculum/topic-adapter';
 import { BLOG_CONTENT_TYPES } from '../constants/content-types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
@@ -27,9 +27,9 @@ interface RouteDefinition {
   handler: RouteHandler;
 }
 
-// GATE_TOPICS imported from ../constants/topics
 // BLOG_CONTENT_TYPES imported from ../constants/content-types
 const CONTENT_TYPES = BLOG_CONTENT_TYPES;
+const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
 
 // ============================================================================
 // Database
@@ -83,7 +83,7 @@ async function computeUserStruggle(): Promise<Record<string, number>> {
   }
 
   // Default: 0.5 struggle for topics with no data
-  for (const topic of GATE_TOPICS) {
+  for (const topic of getTopicIdsForExam(DEFAULT_EXAM_ID)) {
     if (!(topic in result)) result[topic] = 0.5;
   }
   return result;
@@ -110,7 +110,7 @@ async function computeTrendSignal(): Promise<Record<string, number>> {
     console.warn('[prioritizer] Trend signal query failed:', (err as Error).message);
   }
 
-  for (const topic of GATE_TOPICS) {
+  for (const topic of getTopicIdsForExam(DEFAULT_EXAM_ID)) {
     if (!(topic in result)) result[topic] = 0;
   }
   return result;
@@ -141,7 +141,7 @@ async function computeConversionRate(): Promise<Record<string, number>> {
     console.warn('[prioritizer] Conversion rate query failed:', (err as Error).message);
   }
 
-  for (const topic of GATE_TOPICS) {
+  for (const topic of getTopicIdsForExam(DEFAULT_EXAM_ID)) {
     if (!(topic in result)) result[topic] = 0;
   }
   return result;
@@ -177,7 +177,7 @@ async function computeViewVelocity(): Promise<Record<string, number>> {
     console.warn('[prioritizer] View velocity query failed:', (err as Error).message);
   }
 
-  for (const topic of GATE_TOPICS) {
+  for (const topic of getTopicIdsForExam(DEFAULT_EXAM_ID)) {
     if (!(topic in result)) result[topic] = 0;
   }
   return result;
@@ -205,7 +205,7 @@ async function computeCoverageGap(): Promise<Record<string, number>> {
   }
 
   // Topics with zero problems get max gap
-  for (const topic of GATE_TOPICS) {
+  for (const topic of getTopicIdsForExam(DEFAULT_EXAM_ID)) {
     if (!(topic in result)) result[topic] = 1;
   }
   return result;
@@ -228,7 +228,7 @@ function selectContentType(
   // High conversion → whatever converts (default: exam_strategy)
   if (conversion > 0.3) return 'exam_strategy';
   // Default: rotate
-  const idx = GATE_TOPICS.indexOf(topic) % CONTENT_TYPES.length;
+  const idx = getTopicIdsForExam(DEFAULT_EXAM_ID).indexOf(topic) % CONTENT_TYPES.length;
   return CONTENT_TYPES[idx >= 0 ? idx : 0];
 }
 
@@ -255,7 +255,7 @@ async function runPrioritization(): Promise<PriorityResult[]> {
 
   const priorities: PriorityResult[] = [];
 
-  for (const topic of GATE_TOPICS) {
+  for (const topic of getTopicIdsForExam(DEFAULT_EXAM_ID)) {
     const signals = {
       user_struggle: struggle[topic] || 0,
       trend_signal: trends[topic] || 0,

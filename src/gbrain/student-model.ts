@@ -16,6 +16,7 @@
 import pg from 'pg';
 import { CONCEPT_MAP, traceWeakestPrerequisite, getConceptsForTopic } from '../constants/concept-graph';
 import { MARKS_WEIGHTS } from '../engine/priority-engine';
+import { getExam } from '../curriculum/exam-loader';
 
 const { Pool } = pg;
 
@@ -367,4 +368,50 @@ export function serializeForPrompt(model: StudentModel): string {
   }
 
   return parts.join('\n');
+}
+
+// ============================================================================
+// Cold-start seeding from /onboard 3-bucket
+// ============================================================================
+
+type OnboardBucket = 'weak' | 'okay' | 'strong';
+
+const BUCKET_SEED: Record<OnboardBucket, { score: number; attempts: number; correct: number }> = {
+  weak:   { score: 0.2, attempts: 1, correct: 0 },
+  okay:   { score: 0.5, attempts: 2, correct: 1 },
+  strong: { score: 0.8, attempts: 3, correct: 3 },
+};
+
+/**
+ * Seed mastery_vector from the 3-bucket onboarding response.
+ * topic_confidence maps topic section IDs (e.g. 'linear-algebra') → bucket.
+ * Each concept under that section gets the bucket's seed values.
+ * Only applies to concepts not already in the mastery_vector.
+ */
+export async function seedMasteryFromOnboard(
+  sessionId: string,
+  examId: string,
+  topicConfidence: Record<string, OnboardBucket | string>,
+): Promise<void> {
+  const exam = getExam(examId);
+  if (!exam) return;
+
+  const model = await getOrCreateStudentModel(sessionId);
+  const now = new Date().toISOString();
+  let changed = false;
+
+  for (const section of exam.syllabus) {
+    const raw = topicConfidence[section.id];
+    const bucket = (['weak', 'okay', 'strong'].includes(raw) ? raw : null) as OnboardBucket | null;
+    if (!bucket) continue;
+
+    const seed = BUCKET_SEED[bucket];
+    for (const conceptId of section.concept_ids) {
+      if (model.mastery_vector[conceptId]) continue; // don't overwrite real data
+      model.mastery_vector[conceptId] = { ...seed, last_update: now };
+      changed = true;
+    }
+  }
+
+  if (changed) await saveStudentModel(model);
 }

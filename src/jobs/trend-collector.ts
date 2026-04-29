@@ -10,7 +10,7 @@
  */
 
 import { ServerResponse } from 'http';
-import { TOPIC_KEYWORDS } from '../constants/topics';
+import { getKeywordsForExam } from '../curriculum/topic-adapter';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 
@@ -33,13 +33,14 @@ interface TrendSignal {
 // Topic keyword matching
 // ============================================================================
 
-// TOPIC_KEYWORDS imported from ../constants/topics
+const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
 
 function matchTopics(text: string): string[] {
   const lower = text.toLowerCase();
+  const keywords = getKeywordsForExam(DEFAULT_EXAM_ID);
   const matches: string[] = [];
-  for (const [topic, keywords] of Object.entries(TOPIC_KEYWORDS)) {
-    if (keywords.some(kw => lower.includes(kw))) {
+  for (const [topic, kws] of Object.entries(keywords)) {
+    if (kws.some(kw => lower.includes(kw))) {
       matches.push(topic);
     }
   }
@@ -326,7 +327,6 @@ async function handleTrendCollect(req: ParsedRequest, res: ServerResponse): Prom
 // ============================================================================
 
 export { runTrendCollection, matchTopics };
-export { TOPIC_KEYWORDS } from '../constants/topics';
 
 export const trendCollectorRoutes: RouteDefinition[] = [
   { method: 'POST', path: '/api/trends/collect', handler: handleTrendCollect },

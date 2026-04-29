@@ -15,7 +15,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
 import { useSession } from '@/hooks/useSession';
@@ -54,8 +54,22 @@ const SOURCE_META: Record<ContentSource, { label: string; icon: typeof Sparkles;
 export default function SmartPracticePage() {
   const sessionId = useSession();
   const navigate = useNavigate();
-  const [topic, setTopic] = useState<string>('linear-algebra');
-  const [difficulty, setDifficulty] = useState<number>(0.5);
+
+  // Read plan-seeded params from the URL query string.
+  // PlannedSessionPage navigates here with:
+  //   ?topic=calculus&difficulty=hard&from_plan=PLN-xxx&action_id=act-yyy
+  // We initialize topic + difficulty from those values so the practice
+  // session starts on the topic the plan recommended.
+  const [searchParams] = useSearchParams();
+  const initialTopic = searchParams.get('topic') || 'linear-algebra';
+  const rawDiff = searchParams.get('difficulty');
+  const initialDifficulty = rawDiff === 'easy' ? 0.2
+    : rawDiff === 'hard' ? 0.8
+    : rawDiff === 'medium' ? 0.5
+    : 0.5;
+
+  const [topic, setTopic] = useState<string>(initialTopic);
+  const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
   const [requireWolfram, setRequireWolfram] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resolved, setResolved] = useState<ResolvedContent | null>(null);

@@ -15,6 +15,7 @@ import { authFetch } from '@/lib/auth/client';
 import { trackEvent } from '@/lib/analytics';
 import { Calendar, Clock, Brain, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
 const BUCKETS = [
   { key: 'weak',   label: 'Weak',   value: 1, border: 'border-red-500/30',     bg: 'bg-red-500/5',     chip: 'bg-red-500/15 text-red-400 border-red-500/30'       },
@@ -45,6 +46,7 @@ interface ExamMeta {
 export default function OnboardPage() {
   const sessionId = useSession();
   const navigate = useNavigate();
+  const checking = useAuthRedirect('/planned'); // redirect if already onboarded
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -115,7 +117,7 @@ export default function OnboardPage() {
     }
   };
 
-  if (loadingExam) {
+  if (loadingExam || checking) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />

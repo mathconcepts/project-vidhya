@@ -11,6 +11,7 @@ import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { Clock, ChevronRight, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
 interface DiagnosticQuestion {
   index: number;
@@ -27,6 +28,10 @@ interface DiagnosticQuestion {
 export default function DiagnosticPage() {
   const sessionId = useSession();
   const navigate = useNavigate();
+  // Authenticated users with exam profiles who land here directly should
+  // go to /planned (not restart the diagnostic).
+  // The `checking` state prevents the page from flashing before redirect.
+  const checking = useAuthRedirect('/planned');
   const [questions, setQuestions] = useState<DiagnosticQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, { selected: string | null; correct: boolean }>>({});
@@ -38,6 +43,7 @@ export default function DiagnosticPage() {
 
   // Load questions
   useEffect(() => {
+    if (checking) return; // wait for auth check before loading questions
     trackEvent('page_view', { page: 'diagnostic' });
     authFetch(`/api/diagnostic/${sessionId}`)
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
@@ -45,11 +51,12 @@ export default function DiagnosticPage() {
         setQuestions(data.questions);
       })
       .catch(() => {
-        // If no profile or error, redirect to onboard
-        navigate('/onboard');
+        // Genuine failure — go home (GateHome will redirect to /planned for
+        // authenticated users; anonymous users see the onboarding state).
+        navigate('/');
       })
       .finally(() => setLoading(false));
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, checking]);
 
   // Timer countdown
   useEffect(() => {
@@ -123,7 +130,7 @@ export default function DiagnosticPage() {
     }
   };
 
-  if (loading) {
+  if (loading || checking) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 size={32} className="text-sky-400 animate-spin" />

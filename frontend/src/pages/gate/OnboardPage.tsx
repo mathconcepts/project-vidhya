@@ -38,6 +38,7 @@ const FALLBACK_TOPICS = [
 interface ExamMeta {
   exam_id: string;
   exam_name: string;
+  exam_short_name: string;
   topics: { id: string; name: string }[];
 }
 
@@ -66,14 +67,14 @@ export default function OnboardPage() {
       })
       .catch(() => {
         // Fallback: generic topics
-        setExamMeta({ exam_id: '', exam_name: 'Exam', topics: FALLBACK_TOPICS });
+        setExamMeta({ exam_id: '', exam_name: 'Exam', exam_short_name: 'Exam', topics: FALLBACK_TOPICS });
         setConfidence(Object.fromEntries(FALLBACK_TOPICS.map(t => [t.id, 3])));
       })
       .finally(() => setLoadingExam(false));
   }, []);
 
   const topics = examMeta?.topics ?? FALLBACK_TOPICS;
-  const examLabel = examMeta?.exam_name ?? 'Exam';
+  const examLabel = examMeta?.exam_short_name ?? examMeta?.exam_name ?? 'Exam';
 
   const canAdvance = () => {
     if (step === 0) return examDate !== '';
@@ -153,8 +154,8 @@ export default function OnboardPage() {
               <div className="space-y-6 px-1">
                 <div className="text-center space-y-2">
                   <Calendar size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">When is your {examLabel}?</h2>
-                  <p className="text-sm text-surface-400">We'll pace your study plan accordingly</p>
+                  <h2 className="text-xl font-bold text-surface-100">When is your {examLabel} exam?</h2>
+                  <p className="text-sm text-surface-400">Set your date — we'll make every day count</p>
                 </div>
                 <input
                   type="date"

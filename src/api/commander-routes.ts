@@ -145,9 +145,22 @@ async function handleGetOnboardMeta(req: ParsedRequest, res: ServerResponse): Pr
     name: id.replace(/-/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase()),
   }));
 
+  // Derive a short, friendly label (e.g. "BITSAT", "NEET Physics", "JEE Main")
+  // so UI copy like "When is your BITSAT exam?" stays concise.
+  const codeUpper = (examAdapter.exam_code ?? examAdapter.exam_id ?? '').toUpperCase();
+  const shortNameMap: Record<string, string> = {
+    'NEET-BIO': 'NEET Biology', 'NEET-PHYS': 'NEET Physics', 'NEET-CHEM': 'NEET Chemistry',
+    'JEEMAIN': 'JEE Main', 'BITSAT': 'BITSAT', 'UGEE': 'UGEE', 'GATE': 'GATE',
+  };
+  let examShortName = examAdapter.exam_name; // fallback
+  for (const [prefix, label] of Object.entries(shortNameMap)) {
+    if (codeUpper.includes(prefix)) { examShortName = label; break; }
+  }
+
   sendJSON(res, {
     exam_id: examAdapter.exam_id,
     exam_name: examAdapter.exam_name,
+    exam_short_name: examShortName,
     topics,
   });
 }

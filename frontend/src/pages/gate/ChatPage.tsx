@@ -21,9 +21,9 @@ interface ChatMessage {
 }
 
 const SUGGESTIONS = [
-  { text: 'Explain eigenvalues with examples', dot: 'bg-sky-400' },
-  { text: 'What should I focus on for GATE 2027?', dot: 'bg-emerald-400' },
-  { text: 'Verify my answer to a problem', dot: 'bg-amber-400' },
+  { text: 'Explain this concept with a worked example', dot: 'bg-sky-400' },
+  { text: 'Where should I focus to maximise my score?', dot: 'bg-emerald-400' },
+  { text: 'Check my answer — did I get this right?', dot: 'bg-amber-400' },
 ];
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
@@ -248,9 +248,9 @@ export default function ChatPage() {
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div className="text-center">
-              <h2 className="text-xl font-bold text-white mb-2">AI Tutor</h2>
+              <h2 className="text-xl font-bold text-white mb-2">GBrain</h2>
               <p className="text-surface-400 text-sm max-w-xs">
-                Ask me anything about GATE Engineering Mathematics.
+                Your concepts. Your questions. Explained clearly, worked step-by-step.
               </p>
             </div>
 

@@ -272,8 +272,8 @@ export default function SettingsPage() {
 
       {/* About */}
       <motion.div variants={fadeInUp} className="text-center text-xs text-surface-600 space-y-1 pt-4">
-        <p>Exam Practice</p>
-        <p>Powered by RAG + LLM Dual-Solve + Wolfram Alpha</p>
+        <p className="font-medium text-surface-500">Vidhya — built for India's toughest exams</p>
+        <p>AI-powered planning &middot; Practice &middot; Smart review</p>
       </motion.div>
     </motion.div>
   );

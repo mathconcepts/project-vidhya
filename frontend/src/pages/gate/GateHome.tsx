@@ -90,10 +90,13 @@ export function GateHome() {
   // /planned — not on GateHome (which was built for anonymous/guest sessions).
   // Redirect silently on mount so they always land on the right page.
   useEffect(() => {
-    import('@/lib/auth/client').then(({ authFetch, getToken }) => {
+    import('@/lib/auth/client').then(({ authFetch, getToken, clearToken }) => {
       if (!getToken()) return; // anonymous user — stay on GateHome
       authFetch('/api/student/profile')
-        .then(r => r.ok ? r.json() : null)
+        .then(r => {
+          if (r.status === 401) { clearToken(); return null; } // stale token
+          return r.ok ? r.json() : null;
+        })
         .then((data: any) => {
           if (data?.exams?.length > 0) {
             navigate('/planned', { replace: true });

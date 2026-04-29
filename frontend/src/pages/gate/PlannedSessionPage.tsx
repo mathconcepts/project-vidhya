@@ -194,6 +194,13 @@ export default function PlannedSessionPage() {
           authFetch('/api/student/session/templates/presets'),
         ]);
         if (cancelled) return;
+        // 401 means stale/missing JWT — clear it and show session-expired state
+        if (profResp.status === 401) {
+          const { clearToken } = await import('@/lib/auth/client');
+          clearToken();
+          setError('session_expired');
+          return;
+        }
         if (profResp.ok) setProfile(await profResp.json());
         if (tplResp.ok) {
           const j = await tplResp.json();
@@ -681,7 +688,20 @@ export default function PlannedSessionPage() {
           </div>
         )}
 
-        {error && (
+        {error === 'session_expired' ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <p className="text-surface-300 font-medium">Session expired</p>
+            <p className="text-sm text-surface-500 max-w-xs">
+              Your session has expired. Go back to the demo and select a role to sign in again.
+            </p>
+            <a
+              href="/demo.html"
+              className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
+            >
+              Back to demo sign-in
+            </a>
+          </div>
+        ) : error && (
           <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-200 text-sm">
             <div className="flex items-start gap-2">
               <XCircle className="w-4 h-4 mt-0.5 shrink-0" />

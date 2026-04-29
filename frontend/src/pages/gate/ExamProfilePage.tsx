@@ -12,9 +12,9 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { authFetch } from '@/lib/auth/client';
+import { authFetch, getToken, clearToken } from '@/lib/auth/client';
 import { fadeInUp } from '@/lib/animations';
 import {
   Plus, Trash2, Loader2, CheckCircle2, ChevronLeft, Save,
@@ -39,19 +39,33 @@ const KNOWN_EXAMS: Array<{ id: string; label: string }> = [
 const MAX_EXAMS = 5;
 
 export default function ExamProfilePage() {
+  const navigate = useNavigate();
   const [exams, setExams] = useState<ExamRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [notAuthenticated, setNotAuthenticated] = useState(false);
 
   // Load existing profile on mount
   useEffect(() => {
     let cancelled = false;
+    // No token at all → show not-authenticated state immediately
+    if (!getToken()) {
+      setNotAuthenticated(true);
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const res = await authFetch('/api/student/profile');
         if (cancelled) return;
+        if (res.status === 401) {
+          // Stale token (e.g. after demo:reset) — clear it and show friendly message
+          clearToken();
+          setNotAuthenticated(true);
+          return;
+        }
         if (res.ok) {
           const p = await res.json();
           setExams(p.exams || []);
@@ -59,7 +73,7 @@ export default function ExamProfilePage() {
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
@@ -103,6 +117,11 @@ export default function ExamProfilePage() {
         body: JSON.stringify({ exams }),
       });
       if (!res.ok) {
+        if (res.status === 401) {
+          clearToken();
+          setNotAuthenticated(true);
+          return;
+        }
         const body = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(body.error || `Save failed: ${res.status}`);
       }
@@ -115,6 +134,24 @@ export default function ExamProfilePage() {
       setSaving(false);
     }
   }, [exams]);
+
+  if (notAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
+        <p className="text-surface-300 font-medium">Session expired</p>
+        <p className="text-sm text-surface-500 max-w-xs">
+          Your session has expired or you're not signed in.
+          Go back to the demo and select a role to continue.
+        </p>
+        <a
+          href="/demo.html"
+          className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
+        >
+          Back to demo sign-in
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20">

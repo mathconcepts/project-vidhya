@@ -314,12 +314,12 @@ const publicDir = 'frontend/public';
 if (!existsSync(publicDir)) mkdirSync(publicDir, { recursive: true });
 
 const roleCards = [
-  { key: 'owner',          emoji: '👑', role: 'Owner',   name: 'Nisha Rao',    lede: 'Platform-wide view. Promote admins. Transfer ownership. See every user.', landing: '/gate/admin',    colour: '#fbbf24' },
-  { key: 'admin',          emoji: '⚙️', role: 'Admin',   name: 'Arjun Gupta',  lede: 'Content + campaigns. Exam builder. Feedback triage. User admin.',           landing: '/gate/admin',    colour: '#60a5fa' },
-  { key: 'teacher',        emoji: '🎓', role: 'Teacher', name: 'Kavita Menon', lede: '2 students on the roster. Push concepts to their review queues.',           landing: '/gate',          colour: '#a78bfa' },
-  { key: 'student-active', emoji: '📚', role: 'Student', name: 'Priya Sharma', lede: 'Full history — 2 exams, 6 plans, 3 templates, live trailing stats.',        landing: '/gate/planned',  colour: '#10b981', tag: 'active' },
-  { key: 'student-light',  emoji: '📖', role: 'Student', name: 'Rahul Iyer',   lede: 'Light activity — 1 exam 30 days out, 2 plans. Just getting going.',         landing: '/gate/planned',  colour: '#10b981', tag: 'light' },
-  { key: 'student-new',    emoji: '🆕', role: 'Student', name: 'Aditya Shah',  lede: 'Fresh account. No profile, no history. Feel the first-time UX.',            landing: '/gate',          colour: '#10b981', tag: 'new' },
+  { key: 'owner',          emoji: '👑', role: 'Owner',   name: 'Nisha Rao',    lede: 'Platform-wide view. Promote admins. Transfer ownership. See every user.', landing: '/admin/founder', colour: '#fbbf24' },
+  { key: 'admin',          emoji: '⚙️', role: 'Admin',   name: 'Arjun Gupta',  lede: 'Content + campaigns. Exam builder. Feedback triage. User admin.',           landing: '/admin',         colour: '#60a5fa' },
+  { key: 'teacher',        emoji: '🎓', role: 'Teacher', name: 'Kavita Menon', lede: '2 students on the roster. Push concepts to their review queues.',           landing: '/teaching',      colour: '#a78bfa' },
+  { key: 'student-active', emoji: '📚', role: 'Student', name: 'Priya Sharma', lede: 'Full history — 2 exams, 6 plans, 3 templates, live trailing stats.',        landing: '/planned',       colour: '#10b981', tag: 'active' },
+  { key: 'student-light',  emoji: '📖', role: 'Student', name: 'Rahul Iyer',   lede: 'Light activity — 1 exam 30 days out, 2 plans. Just getting going.',         landing: '/planned',       colour: '#10b981', tag: 'light' },
+  { key: 'student-new',    emoji: '🆕', role: 'Student', name: 'Aditya Shah',  lede: 'Fresh account. No profile, no history. Feel the first-time UX.',            landing: '/',              colour: '#10b981', tag: 'new' },
 ];
 
 const cardHtml = roleCards.map(c => {
@@ -497,7 +497,7 @@ Roles created:
 
 Start:
   npm run demo:start
-  → open http://localhost:3000/demo.html
+  -> open http://localhost:3000/demo.html
 
 Logs (owner-visible):
   npm run demo:log    (or read .data/demo-usage-log.json)

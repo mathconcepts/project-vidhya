@@ -68,18 +68,24 @@ const GATE_TOPIC_OBJECTS = GATE_TOPICS.map(id => ({
 }));
 
 async function handleGetTopics(_req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const pool = getPool();
-  // Get problem counts per topic
-  const result = await pool.query(`
-    SELECT topic, COUNT(*) as count
-    FROM pyq_questions
-    GROUP BY topic
-    ORDER BY topic
-  `);
-
-  const countMap: Record<string, number> = {};
-  for (const row of result.rows) {
-    countMap[row.topic] = parseInt(row.count, 10);
+  // Try to enrich with Postgres problem-count data.
+  // If Postgres is unavailable (DATABASE_URL not set / ECONNREFUSED),
+  // fall back to the static topic list with problemCount: 0. This lets
+  // GateHome work in demo/DB-less mode without throwing.
+  let countMap: Record<string, number> = {};
+  try {
+    const pool = getPool();
+    const result = await pool.query(`
+      SELECT topic, COUNT(*) as count
+      FROM pyq_questions
+      GROUP BY topic
+      ORDER BY topic
+    `);
+    for (const row of result.rows) {
+      countMap[row.topic] = parseInt(row.count, 10);
+    }
+  } catch {
+    // DB unavailable -- serve the static list with zero counts
   }
 
   const topics = GATE_TOPIC_OBJECTS.map(t => ({

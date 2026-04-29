@@ -141,7 +141,7 @@ export function GateHome() {
 
     Promise.all([
       apiFetch<{ profile: StudyProfile | null }>(`/api/onboard/${sessionId}`).catch(() => ({ profile: null })),
-      apiFetch<{ topics: Topic[] }>('/api/topics'),
+      apiFetch<{ topics: Topic[] }>('/api/topics').catch(() => ({ topics: [] as Topic[] })),
       apiFetch<{ topics: TopicMastery[] }>(`/api/progress/${sessionId}`).catch(() => ({ topics: [] as TopicMastery[] })),
     ]).then(([profileRes, topicRes, progressRes]) => {
       setProfile(profileRes.profile);

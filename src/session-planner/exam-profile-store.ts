@@ -24,6 +24,13 @@ export interface ExamRegistration {
   exam_date: string;              // ISO date (YYYY-MM-DD)
   weekly_hours?: number;
   topic_confidence?: Record<string, number>;  // 1-5 per topic
+  /**
+   * Optional knowledge track that led the student to register this
+   * exam — e.g. 'CBSE-12-MATH'. When set, the planner and GBrain can
+   * personalize against the student's school curriculum context.
+   * See src/knowledge/tracks.ts.
+   */
+  knowledge_track_id?: string;
   /** When the student added this exam — informational */
   added_at: string;
 }

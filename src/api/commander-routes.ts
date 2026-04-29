@@ -159,18 +159,38 @@ async function handleGetOnboardMeta(req: ParsedRequest, res: ServerResponse): Pr
     if (codeUpper.includes(prefix)) { examShortName = label; break; }
   }
 
+  // If the authenticated student has a knowledge track registered, surface it
+  // so OnboardPage / ExamProfilePage can display "CBSE Class 12" alongside.
+  let knowledgeTrack: any = null;
+  if (auth) {
+    const { getProfile } = await import('../session-planner/exam-profile-store');
+    const profile = getProfile(auth.user.id);
+    const trackId = profile?.exams?.[0]?.knowledge_track_id;
+    if (trackId) {
+      const { getTrack } = await import('../knowledge/tracks');
+      const t = getTrack(trackId);
+      if (t) {
+        knowledgeTrack = {
+          id: t.id, display_name: t.display_name,
+          board_name: t.board_name, grade_name: t.grade_name, subject_name: t.subject_name,
+        };
+      }
+    }
+  }
+
   sendJSON(res, {
     exam_id: examAdapter.exam_id,
     exam_name: examAdapter.exam_name,
     exam_short_name: examShortName,
     topics,
+    knowledge_track: knowledgeTrack,
   });
 }
 
 /** POST /api/onboard — Save study profile to the flat-file store (no Postgres) */
 async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const body = req.body as any;
-  const { session_id, exam_date, exam_id, weekly_hours, topic_confidence } = body;
+  const { session_id, exam_date, exam_id, weekly_hours, topic_confidence, knowledge_track_id } = body;
 
   if (!exam_date || isNaN(new Date(exam_date).getTime())) {
     return sendError(res, 400, 'exam_date (ISO date string) is required');
@@ -200,11 +220,23 @@ async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promi
     }
     if (!effectiveExamId) return sendError(res, 503, 'No exam configured');
 
+    // Validate knowledge_track_id if provided
+    let validatedTrackId: string | undefined;
+    if (knowledge_track_id) {
+      const { getTrack } = await import('../knowledge/tracks');
+      const track = getTrack(knowledge_track_id);
+      if (!track) {
+        return sendError(res, 400, `Unknown knowledge_track_id: ${knowledge_track_id}`);
+      }
+      validatedTrackId = knowledge_track_id;
+    }
+
     const profile = upsertProfile(auth.user.id, [{
       exam_id: effectiveExamId,
       exam_date,
       weekly_hours: typeof weekly_hours === 'number' ? weekly_hours : 10,
       topic_confidence: topic_confidence ?? {},
+      knowledge_track_id: validatedTrackId,
       added_at: new Date().toISOString(),
     }]);
     return sendJSON(res, { profile }, 201);

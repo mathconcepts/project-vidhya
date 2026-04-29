@@ -88,30 +88,44 @@ export function setChatEmbedder(fn: (text: string) => Promise<number[]>): void {
 async function buildSystemPrompt(req: any): Promise<string> {
   let examName = 'competitive exam';
   let topicList = '';
+  let knowledgeContext = ''; // e.g. " (a CBSE Class 12 student)"
   try {
     const auth = await getCurrentUser(req);
     if (auth) {
       const { getProfile } = await import('../session-planner/exam-profile-store');
       const profile = getProfile(auth.user.id);
-      const primaryExamId = profile?.exams?.[0]?.exam_id;
-      if (primaryExamId) {
+      const primaryExam = profile?.exams?.[0];
+      if (primaryExam?.exam_id) {
         const { getExamAdapter, loadBundledAdapters } = await import('../exam-builder/registry');
         await loadBundledAdapters();
-        const adapter = getExamAdapter(primaryExamId);
+        const adapter = getExamAdapter(primaryExam.exam_id);
         if (adapter) {
           examName = adapter.exam_name;
-          const content = adapter.loadBaseContent();
           const topics = adapter.getSyllabusTopicIds();
           topicList = topics.map((t: string, i: number) => {
             const name = t.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             return `${i + 1}. ${name}`;
           }).join('\n');
         }
+        // Knowledge track context — student's school curriculum (CBSE Class 12 etc.)
+        if (primaryExam.knowledge_track_id) {
+          const { getTrack } = await import('../knowledge/tracks');
+          const track = getTrack(primaryExam.knowledge_track_id);
+          if (track) {
+            knowledgeContext = ` (currently in ${track.display_name})`;
+          }
+        }
       }
     }
   } catch { /* non-blocking — use generic fallback */ }
 
-  return `You are GBrain, an expert AI tutor helping students prepare for the ${examName}.
+  // School-curriculum addendum: align explanations with the student's textbook
+  // (NCERT for CBSE, etc.) before pushing into exam-level depth.
+  const curriculumGuidance = knowledgeContext
+    ? `\n## School Curriculum Alignment\nThis student is also studying the standard school curriculum${knowledgeContext}. When explaining concepts, anchor them to the chapters and notation they encounter in their textbook (NCERT for CBSE, ICSE textbooks for ICSE, state board books otherwise). Bridge from school syllabus to exam-level depth — don't assume they have already gone past their current grade.\n`
+    : '';
+
+  return `You are GBrain, an expert AI tutor helping students prepare for the ${examName}${knowledgeContext}.
 
 ## Your Role
 - **Concept Explanation**: Explain topics clearly with worked examples
@@ -120,9 +134,7 @@ async function buildSystemPrompt(req: any): Promise<string> {
 - **Doubt Clearing**: Answer any question about the syllabus
 - **Motivation**: Encourage students and celebrate progress
 
-${topicList ? `## ${examName} Topics
-${topicList}
-` : ''}
+${topicList ? `## ${examName} Topics\n${topicList}\n` : ''}${curriculumGuidance}
 ## Response Guidelines
 - Use LaTeX for math: inline $...$ and display $$...$$
 - Be concise but thorough — students are preparing for a competitive exam

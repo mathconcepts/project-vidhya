@@ -46,6 +46,7 @@ import { contentLibraryRoutes } from './api/content-library-routes';
 import { contentStudioRoutes } from './api/content-studio-routes';
 import { operatorRoutes } from './api/operator-routes';
 import { notebookRoutes as smartNotebookRoutes } from './api/notebook-insight-routes';
+import { neetPaperRoutes } from './api/neet-paper-routes';
 import { examRoutes } from './api/exam-routes';
 import { examGroupRoutes } from './api/exam-group-routes';
 import { meRoutes } from './api/me-routes';
@@ -60,6 +61,7 @@ import { attentionRoutes } from './api/attention-routes';
 import { marketingRoutes } from './api/marketing-routes';
 import { adminAgentRoutes } from './api/admin-agent-routes';
 import { sessionPlannerRoutes } from './api/session-planner-routes';
+import { knowledgeRoutes } from './api/knowledge-routes';
 import { lifecycleRoutes } from './api/lifecycle-routes';
 import { contentLifecycleRoutes } from './api/content-lifecycle-routes';
 import { orchestratorRoutes } from './api/orchestrator-routes';
@@ -227,6 +229,9 @@ for (const route of contentStudioRoutes) {
 for (const route of operatorRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
+for (const route of neetPaperRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
 for (const route of smartNotebookRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
@@ -270,6 +275,9 @@ for (const route of adminAgentRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of sessionPlannerRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of knowledgeRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of lifecycleRoutes) {

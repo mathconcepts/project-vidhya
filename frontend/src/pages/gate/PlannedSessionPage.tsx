@@ -492,8 +492,13 @@ export default function PlannedSessionPage() {
             </div>
           )}
           {profile && profile.exams.length === 0 && (
-            <div className="mt-3 text-xs text-amber-300/80 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2">
-              Using a default exam. <Link to="/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
+            <div className="mt-3 text-xs text-amber-300/80 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 space-y-1">
+              <div>
+                Using a default exam. <Link to="/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
+              </div>
+              <div className="text-amber-200/60">
+                Or <Link to="/knowledge" className="underline">tell us your school curriculum</Link> and we'll suggest the right exams.
+              </div>
             </div>
           )}
           {profile && profile.exams.length >= 2 && (

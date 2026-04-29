@@ -177,7 +177,7 @@ for (const t of [
 
 console.log('\n--- step 7: plan history + practice log ---');
 
-function seedPriyaHistory() {
+async function seedPriyaHistory() {
   const profile = [
     { exam_id: 'EXM-BITSAT-MATH-SAMPLE',       exam_date: daysOut(7),  weekly_hours: 10, topic_confidence: { algebra: 3, calculus: 2, mechanics: 4 } },
     { exam_id: 'EXM-JEEMAIN-MATH-SAMPLE', exam_date: daysOut(90), weekly_hours: 8,  topic_confidence: { algebra: 2, calculus: 2, trigonometry: 3 } },
@@ -194,7 +194,7 @@ function seedPriyaHistory() {
   for (const h of hist) {
     const when = new Date(today);
     when.setUTCDate(when.getUTCDate() - h.daysAgo);
-    const plan = h.multiExam
+    const plan = await (h.multiExam
       ? planMultiExamSession({ student_id: activeStudent.id, exams: profile, minutes_available: h.minutes, now: when })
       : planSession({
           student_id: activeStudent.id,
@@ -204,7 +204,7 @@ function seedPriyaHistory() {
           weekly_hours: 10,
           topic_confidence: profile[0].topic_confidence,
           now: when,
-        });
+        }));
     savePlan(plan);
     const completionRate = 0.8 + Math.random() * 0.2;
     const actualMinutes = Math.round(h.minutes * completionRate);
@@ -240,13 +240,13 @@ function seedPriyaHistory() {
   return { plans, minutes };
 }
 
-function seedRahulHistory() {
+async function seedRahulHistory() {
   const exam = { exam_id: 'EXM-BITSAT-MATH-SAMPLE', exam_date: daysOut(30), weekly_hours: 6, topic_confidence: { algebra: 2, calculus: 1 } };
   let plans = 0, minutes = 0;
   for (const h of [{ daysAgo: 5, minutes: 15 }, { daysAgo: 2, minutes: 8 }]) {
     const when = new Date(today);
     when.setUTCDate(when.getUTCDate() - h.daysAgo);
-    const plan = planSession({
+    const plan = await planSession({
       student_id: lightStudent.id,
       exam_id: exam.exam_id,
       exam_date: exam.exam_date,
@@ -278,8 +278,8 @@ function seedRahulHistory() {
   return { plans, minutes };
 }
 
-const priyaStats = seedPriyaHistory();
-const rahulStats = seedRahulHistory();
+const priyaStats = await seedPriyaHistory();
+const rahulStats = await seedRahulHistory();
 console.log(`  Priya:  ${priyaStats.plans} plans / ${priyaStats.minutes} min`);
 console.log(`  Rahul:  ${rahulStats.plans} plans / ${rahulStats.minutes} min`);
 console.log(`  Aditya: 0 plans (intentional — first-time tester experience)`);

@@ -25,8 +25,8 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
-# Check the seed has run.
-if [ ! -f demo/demo-token.txt ]; then
+# Check the seed has run (seed.ts writes demo/demo-tokens.json).
+if [ ! -f demo/demo-tokens.json ]; then
   echo "Demo has not been seeded yet."
   echo "Run:  npm run demo:seed"
   exit 1
@@ -60,7 +60,7 @@ echo "[backend] pid=$BACKEND_PID — logs: /tmp/vidhya-demo-backend.log"
 
 # Wait for backend to respond.
 for i in $(seq 1 20); do
-  if curl -sS -o /dev/null http://localhost:8080/api/health 2>/dev/null; then
+  if curl -sS -o /dev/null http://localhost:8080/health 2>/dev/null; then
     echo "[backend] ready."
     break
   fi
@@ -87,9 +87,7 @@ echo "════════════════════════�
 echo "  Ready. Open: http://localhost:3000/demo.html"
 echo "═══════════════════════════════════════════════════════════════"
 
-# Keep the script alive until Ctrl-C. `wait` returns when either child
-# process exits; we re-loop so both have to actually die.
-while true; do
-  wait -n "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
-  sleep 1
+# Keep the script alive until Ctrl-C.
+while kill -0 "$BACKEND_PID" 2>/dev/null || kill -0 "$FRONTEND_PID" 2>/dev/null; do
+  sleep 2
 done

@@ -543,9 +543,9 @@ async function handleExamReadiness(req: ParsedRequest, res: ServerResponse): Pro
       (coverage * 0.30 + accuracy * 0.25 + srHealth * 0.25 + weakPenalty * 0.10 + consistency * 0.10) * 100
     );
 
-    // Days until GATE 2027 (Feb 1)
-    const gateDate = new Date('2027-02-01T00:00:00+05:30');
-    const daysLeft = Math.max(0, Math.ceil((gateDate.getTime() - Date.now()) / 86400000));
+    // Use a generic 1-year horizon for daysLeft since we don't know this
+    // session's exam date (this endpoint is Postgres-backed and anonymous).
+    const daysLeft = 365;
 
     sendJSON(res, {
       score,

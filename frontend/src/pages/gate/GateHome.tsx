@@ -74,13 +74,6 @@ interface StudyProfile {
   diagnostic_taken_at: string | null;
 }
 
-// Approximate GATE math topic weights (% of math section)
-const TOPIC_WEIGHTS: Record<string, number> = {
-  'linear-algebra': 15, 'calculus': 15, 'differential-equations': 10,
-  'complex-variables': 5, 'probability-statistics': 10, 'numerical-methods': 10,
-  'transform-theory': 5, 'discrete-mathematics': 10, 'graph-theory': 5, 'vector-calculus': 5,
-};
-
 const ICON_MAP: Record<string, React.ElementType> = {
   'grid': Grid3x3, 'activity': Activity, 'git-branch': GitBranch,
   'circle': Circle, 'bar-chart': BarChart, 'hash': Hash,
@@ -407,9 +400,8 @@ export function GateHome() {
   // One Thing card — progressive disclosure
   const currentTask = dailyPlan.tasks[currentTaskIdx];
   if (!currentTask) return null;
-  const weight = TOPIC_WEIGHTS[currentTask.topic] || 10;
   const isWeakest = currentTaskIdx === 0;
-  const whyLine = `${weight}% of marks · ${isWeakest ? 'Biggest room to grow' : 'Due for review'}${daysToExam != null ? ` · ${daysToExam} days to go` : ''}`;
+  const whyLine = `${isWeakest ? 'Biggest area to grow' : 'Due for review'}${daysToExam != null ? ` · ${daysToExam} days to go` : ''}`;
 
   return (
     <motion.div

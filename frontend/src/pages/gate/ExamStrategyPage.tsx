@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { apiFetch } from '@/hooks/useApi';
+import { authFetch } from '@/lib/auth/client';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
@@ -63,8 +63,8 @@ export default function ExamStrategyPage() {
     trackEvent('page_view', { page: 'exam-strategy' });
 
     Promise.all([
-      apiFetch<{ playbook: Playbook }>(`/api/gbrain/exam-strategy/${sessionId}`),
-      apiFetch<{ plan: ScorePlan }>(`/api/gbrain/score-plan/${sessionId}?days=90&hours=15`),
+      authFetch(`/api/gbrain/exam-strategy/${sessionId}`).then(r => r.json()) as Promise<{ playbook: Playbook }>,
+      authFetch(`/api/gbrain/score-plan/${sessionId}?days=90&hours=15`).then(r => r.json()) as Promise<{ plan: ScorePlan }>,
     ])
       .then(([pb, sp]) => {
         setPlaybook(pb.playbook);

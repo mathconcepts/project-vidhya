@@ -174,7 +174,7 @@ export default function MockExamPage() {
         <motion.div variants={fadeInUp} className="space-y-2">
           <p className="text-xs text-surface-500 px-1">Rules</p>
           <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-1.5 text-sm text-surface-400">
-            <p>• +2 marks for correct, -2/3 for wrong (GATE scheme)</p>
+            <p>• Marks scheme matches your exam</p>
             <p>• Timer starts when you click Start — runs continuously</p>
             <p>• You can skip questions and return</p>
             <p>• Results update your GBrain student model</p>

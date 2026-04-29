@@ -8,33 +8,12 @@
 
 import { getConcept, getAllConcepts, traceWeakestPrerequisiteClient } from './concept-loader';
 
-// MARKS_WEIGHTS & TOPIC_NAMES — duplicated from src/engine/priority-engine.ts
-// (small static data, no need to fetch)
-export const MARKS_WEIGHTS_CLIENT: Record<string, number> = {
-  'linear-algebra': 0.15,
-  'calculus': 0.15,
-  'probability-statistics': 0.12,
-  'differential-equations': 0.10,
-  'complex-variables': 0.08,
-  'transform-theory': 0.08,
-  'numerical-methods': 0.08,
-  'discrete-mathematics': 0.08,
-  'graph-theory': 0.08,
-  'vector-calculus': 0.08,
-};
-
-export const TOPIC_NAMES_CLIENT: Record<string, string> = {
-  'linear-algebra': 'Linear Algebra',
-  'calculus': 'Calculus',
-  'differential-equations': 'Differential Equations',
-  'complex-variables': 'Complex Variables',
-  'probability-statistics': 'Probability & Statistics',
-  'numerical-methods': 'Numerical Methods',
-  'transform-theory': 'Transform Theory',
-  'discrete-mathematics': 'Discrete Mathematics',
-  'graph-theory': 'Graph Theory',
-  'vector-calculus': 'Vector Calculus',
-};
+// MARKS_WEIGHTS_CLIENT / TOPIC_NAMES_CLIENT — intentionally empty.
+// The real topic weights per exam come from the server (exam adapters).
+// Client-side GBrain uses server-returned plan data for topic context,
+// not a static hardcoded list. Do NOT re-populate with GATE topics here.
+export const MARKS_WEIGHTS_CLIENT: Record<string, number> = {};
+export const TOPIC_NAMES_CLIENT: Record<string, string> = {};
 
 // ============================================================================
 // Types
@@ -237,14 +216,29 @@ export interface ExamConfig {
 }
 
 export const EXAM_CONFIGS_PURE: Record<string, ExamConfig> = {
-  gate: { name: 'GATE Engineering Mathematics', total_time_minutes: 180, total_questions: 65, marks_per_correct: 2, marks_per_wrong: -0.67 },
-  bitsat: { name: 'BITSAT Mathematics', total_time_minutes: 180, total_questions: 45, marks_per_correct: 3, marks_per_wrong: -1 },
-  'jee-main': { name: 'JEE Main Mathematics', total_time_minutes: 60, total_questions: 30, marks_per_correct: 4, marks_per_wrong: -1 },
+  // Map exam_id patterns to exam configs for client-side GBrain scoring.
+  // Source of truth: exam adapter loadBaseContent().exam in the backend.
+  'EXM-GATE-MATH-SAMPLE':   { name: 'GATE Engineering Mathematics', total_time_minutes: 180, total_questions: 65, marks_per_correct: 2,  marks_per_wrong: -0.67 },
+  'EXM-BITSAT-MATH-SAMPLE': { name: 'BITSAT Mathematics',           total_time_minutes: 180, total_questions: 45, marks_per_correct: 3,  marks_per_wrong: -1 },
+  'EXM-JEEMAIN-MATH-SAMPLE':{ name: 'JEE Main Mathematics',         total_time_minutes: 60,  total_questions: 30, marks_per_correct: 4,  marks_per_wrong: -1 },
+  'EXM-UGEE-MATH-SAMPLE':   { name: 'UGEE Mathematics',             total_time_minutes: 120, total_questions: 60, marks_per_correct: 4,  marks_per_wrong: -1 },
+  'EXM-NEET-BIO-SAMPLE':    { name: 'NEET Biology',                 total_time_minutes: 80,  total_questions: 90, marks_per_correct: 4,  marks_per_wrong: -1 },
+  'EXM-NEET-PHYS-SAMPLE':   { name: 'NEET Physics',                 total_time_minutes: 50,  total_questions: 45, marks_per_correct: 4,  marks_per_wrong: -1 },
+  'EXM-NEET-CHEM-SAMPLE':   { name: 'NEET Chemistry',               total_time_minutes: 50,  total_questions: 45, marks_per_correct: 4,  marks_per_wrong: -1 },
+  // Legacy short-key aliases kept for backward compatibility
+  gate:       { name: 'GATE Engineering Mathematics', total_time_minutes: 180, total_questions: 65, marks_per_correct: 2,  marks_per_wrong: -0.67 },
+  bitsat:     { name: 'BITSAT Mathematics',           total_time_minutes: 180, total_questions: 45, marks_per_correct: 3,  marks_per_wrong: -1 },
+  'jee-main': { name: 'JEE Main Mathematics',         total_time_minutes: 60,  total_questions: 30, marks_per_correct: 4,  marks_per_wrong: -1 },
 };
 
-export async function generateAttemptSequencePure(model: StudentModel, examConfig: ExamConfig = EXAM_CONFIGS_PURE.gate) {
+export async function generateAttemptSequencePure(
+  model: StudentModel,
+  examConfig: ExamConfig = EXAM_CONFIGS_PURE.gate,
+  topicWeights?: Record<string, number>,
+) {
   const mastery = await getMasterySummaryPure(model);
-  const topics = Object.keys(MARKS_WEIGHTS_CLIENT);
+  const weights = topicWeights ?? MARKS_WEIGHTS_CLIENT;
+  const topics = Object.keys(weights).length > 0 ? Object.keys(weights) : ['general'];
 
   const topicMetrics = topics.map(topic => {
     const accuracy = mastery[topic] || 0;
@@ -281,7 +275,7 @@ export async function generateAttemptSequencePure(model: StudentModel, examConfi
 
   let totalMarks = 0;
   for (const m of topicMetrics) {
-    const qs = Math.round(examConfig.total_questions * (m.weight / Object.keys(MARKS_WEIGHTS_CLIENT).length));
+    const qs = Math.round(examConfig.total_questions * (m.weight / Math.max(1, Object.keys(weights).length)));
     const attemptRate = m.accuracy > skip_threshold ? 1.0 : 0.5;
     const attempted = qs * attemptRate;
     totalMarks += attempted * m.accuracy * examConfig.marks_per_correct + attempted * (1 - m.accuracy) * examConfig.marks_per_wrong;

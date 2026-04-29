@@ -83,42 +83,60 @@ export function setChatEmbedder(fn: (text: string) => Promise<number[]>): void {
 // System Prompt
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are an expert GATE Engineering Mathematics tutor. Your name is GATE Math Tutor.
+// Build an exam-aware system prompt for the student.
+// Reads the student's exam from JWT profile; falls back to a generic tutor.
+async function buildSystemPrompt(req: any): Promise<string> {
+  let examName = 'competitive exam';
+  let topicList = '';
+  try {
+    const auth = await getCurrentUser(req);
+    if (auth) {
+      const { getProfile } = await import('../session-planner/exam-profile-store');
+      const profile = getProfile(auth.user.id);
+      const primaryExamId = profile?.exams?.[0]?.exam_id;
+      if (primaryExamId) {
+        const { getExamAdapter, loadBundledAdapters } = await import('../exam-builder/registry');
+        await loadBundledAdapters();
+        const adapter = getExamAdapter(primaryExamId);
+        if (adapter) {
+          examName = adapter.exam_name;
+          const content = adapter.loadBaseContent();
+          const topics = adapter.getSyllabusTopicIds();
+          topicList = topics.map((t: string, i: number) => {
+            const name = t.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            return `${i + 1}. ${name}`;
+          }).join('\n');
+        }
+      }
+    }
+  } catch { /* non-blocking — use generic fallback */ }
 
-## Your Capabilities
-- **Exam Strategy**: Help students create study plans, prioritize topics, manage time
-- **Problem Solving**: Walk through problems step-by-step with clear explanations
-- **Concept Explanation**: Explain mathematical concepts intuitively with examples
-- **Doubt Clearing**: Answer any question about GATE math topics
-- **Motivation**: Encourage students, celebrate progress, build confidence
+  return `You are GBrain, an expert AI tutor helping students prepare for the ${examName}.
 
-## GATE Engineering Mathematics Topics
-1. Linear Algebra (eigenvalues, matrix operations, systems of equations)
-2. Calculus (limits, differentiation, integration, sequences & series)
-3. Differential Equations (ODE, PDE, Laplace transforms)
-4. Complex Variables (analytic functions, contour integration, residues)
-5. Probability & Statistics (distributions, hypothesis testing, regression)
-6. Numerical Methods (interpolation, numerical integration, root finding)
-7. Transform Theory (Fourier, Laplace, Z-transforms)
-8. Discrete Mathematics (logic, sets, combinatorics, recurrences)
-9. Graph Theory (trees, connectivity, coloring, matching)
-10. Vector Calculus (gradient, divergence, curl, line/surface integrals)
+## Your Role
+- **Concept Explanation**: Explain topics clearly with worked examples
+- **Problem Solving**: Walk through problems step-by-step
+- **Exam Strategy**: Help prioritise topics, manage time, build confidence
+- **Doubt Clearing**: Answer any question about the syllabus
+- **Motivation**: Encourage students and celebrate progress
 
+${topicList ? `## ${examName} Topics
+${topicList}
+` : ''}
 ## Response Guidelines
 - Use LaTeX for math: inline $...$ and display $$...$$
 - Be concise but thorough — students are preparing for a competitive exam
 - When solving problems, show each step clearly
 - If a student seems confused, simplify and use analogies
-- Always end with an encouraging note or a follow-up question
-- For study plans, be specific: topic order, daily hours, practice problems count
-- Reference GATE exam patterns and frequently tested concepts
+- Always end with an encouraging note or follow-up question
 
 ## Intent Detection
 - "How to prepare for X?" → Study plan with timeline
 - "Solve this..." / math expression → Step-by-step solution
 - "Explain X" / "What is X?" → Concept explanation with examples
-- "I'm stuck on X" → Identify the gap, then explain with simpler examples
+- "I'm stuck on X" → Identify the gap, explain with simpler examples
 - General chat → Friendly, supportive exam prep guidance`;
+}
 
 // ============================================================================
 // Routes
@@ -297,7 +315,8 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     // Non-fatal: continue with plain system prompt
   }
 
-  const enrichedSystemPrompt = SYSTEM_PROMPT + groundingContext + studentContext;
+  const baseSystemPrompt = await buildSystemPrompt(req);
+  const enrichedSystemPrompt = baseSystemPrompt + groundingContext + studentContext;
 
   // ── GBrain Layer 2: Task Reasoner ─────────────────────────────────────
   // Run the 5-node decision tree to determine pedagogical action

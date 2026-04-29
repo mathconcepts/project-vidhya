@@ -74,7 +74,9 @@ function getISTNow(): Date {
 // Validation
 // ============================================================================
 
-const VALID_TOPIC_IDS = Object.keys(MARKS_WEIGHTS);
+// Note: VALID_TOPIC_IDS was removed — topic validation is now exam-agnostic
+// (see validateOnboardInput). Topic IDs come from the exam adapter's
+// getSyllabusTopicIds(), not from a hardcoded GATE list.
 
 function validateOnboardInput(body: any): string | null {
   if (!body || typeof body !== 'object') return 'Request body required';
@@ -98,17 +100,17 @@ function validateOnboardInput(body: any): string | null {
     }
   }
 
-  if (!topic_confidence || typeof topic_confidence !== 'object') {
-    return 'topic_confidence is required (object with topic keys)';
-  }
-
-  for (const topicId of VALID_TOPIC_IDS) {
-    const val = topic_confidence[topicId];
-    if (val === undefined || val === null) {
-      return `topic_confidence missing key: ${topicId}`;
+  // topic_confidence is optional (new flow submits partial or empty map).
+  // When present, validate each value is in 1-5 range without enforcing
+  // a specific set of topic keys (topics vary by exam).
+  if (topic_confidence !== undefined && topic_confidence !== null) {
+    if (typeof topic_confidence !== 'object' || Array.isArray(topic_confidence)) {
+      return 'topic_confidence must be an object (topic_id -> 1-5)';
     }
-    if (typeof val !== 'number' || val < 1 || val > 5) {
-      return `topic_confidence[${topicId}] must be 1-5`;
+    for (const [topicId, val] of Object.entries(topic_confidence)) {
+      if (typeof val !== 'number' || (val as number) < 1 || (val as number) > 5) {
+        return `topic_confidence[${topicId}] must be 1-5`;
+      }
     }
   }
 
@@ -383,7 +385,14 @@ async function handleGetToday(req: ParsedRequest, res: ServerResponse): Promise<
   const { sessionId } = req.params;
   if (!sessionId) return sendError(res, 400, 'sessionId required');
 
-  const pool = getPool();
+  let pool: any;
+  try {
+    pool = getPool();
+  } catch {
+    // Postgres unavailable in demo mode — return null plan so GateHome
+    // degrades to the onboarding/diagnostic state gracefully.
+    return sendJSON(res, { plan: null });
+  }
   const todayIST = getISTDate();
 
   // Check if plan already exists (most common path)
@@ -410,7 +419,7 @@ async function handleGetToday(req: ParsedRequest, res: ServerResponse): Promise<
   const profile = profileResult.rows[0];
 
   // Get SR stats for priority computation (JOIN with pyq_questions to get topic)
-  const srResult = await pool.query(`
+  const srResult = await pool2.query(`
     SELECT
       pq.topic,
       AVG(CASE WHEN ss.correct_count > 0 THEN ss.correct_count::float / NULLIF(ss.attempts, 0) ELSE 0 END) as accuracy,
@@ -534,7 +543,13 @@ async function handleRateTask(req: ParsedRequest, res: ServerResponse): Promise<
     return sendError(res, 400, 'rating must be one of: easy, medium, hard, skip');
   }
 
-  const pool = getPool();
+  let pool: any;
+  try {
+    pool = getPool();
+  } catch {
+    // Demo mode — acknowledge without persisting
+    return sendJSON(res, { ok: true });
+  }
   const todayIST = getISTDate();
 
   // Get today's plan
@@ -582,16 +597,21 @@ async function handleGetPriority(req: ParsedRequest, res: ServerResponse): Promi
   const { sessionId } = req.params;
   if (!sessionId) return sendError(res, 400, 'sessionId required');
 
-  const pool = getPool();
+  let pool2: any;
+  try {
+    pool2 = getPool();
+  } catch {
+    return sendJSON(res, { priorities: [], profile: null });
+  }
 
-  const profileResult = await pool.query(
+  const profileResult = await pool2.query(
     `SELECT exam_date, target_score, weekly_hours, topic_confidence, diagnostic_scores
      FROM study_profiles WHERE session_id = $1`,
     [sessionId]
   );
 
   if (profileResult.rows.length === 0) {
-    return sendError(res, 404, 'Study profile not found — complete onboarding first');
+    return sendJSON(res, { priorities: [], profile: null });
   }
 
   const profile = profileResult.rows[0];

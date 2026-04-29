@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiFetch } from '@/hooks/useApi';
+import { authFetch } from '@/lib/auth/client';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { Clock, ChevronRight, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
@@ -39,12 +39,13 @@ export default function DiagnosticPage() {
   // Load questions
   useEffect(() => {
     trackEvent('page_view', { page: 'diagnostic' });
-    apiFetch<{ questions: DiagnosticQuestion[] }>(`/api/diagnostic/${sessionId}`)
-      .then(data => {
+    authFetch(`/api/diagnostic/${sessionId}`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data: { questions: DiagnosticQuestion[] }) => {
         setQuestions(data.questions);
       })
       .catch(() => {
-        // If no profile, redirect to onboard
+        // If no profile or error, redirect to onboard
         navigate('/onboard');
       })
       .finally(() => setLoading(false));
@@ -102,10 +103,12 @@ export default function DiagnosticPage() {
         scores[q.topic] = answer?.correct ? 1 : 0;
       }
 
-      await apiFetch(`/api/diagnostic/${sessionId}`, {
+      const res = await authFetch(`/api/diagnostic/${sessionId}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scores }),
       });
+      if (!res.ok) throw new Error('Failed to save');
 
       trackEvent('diagnostic_complete', {
         correct: Object.values(scores).filter(s => s === 1).length,

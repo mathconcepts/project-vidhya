@@ -105,6 +105,14 @@ In a second terminal:
 cd frontend && npm run dev    # Vite dev server with HMR on :5173
 ```
 
+### Claude Code skills (optional)
+
+If you use Claude Code, run `.claude/bootstrap-skills.sh` once after cloning
+to vendor [gstack](https://github.com/garrytan/gstack) into
+`.claude/skills/gstack/`. The repo's skill symlinks (e.g. `/ship`, `/review`,
+`/qa`, `/browse`) resolve into that directory. Requires `bun` (the script
+installs it if missing).
+
 ---
 
 ## Code style

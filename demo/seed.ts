@@ -24,7 +24,7 @@
  *   - Telemetry:  .data/demo-usage-log.json — owner-visible.
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, copyFileSync, mkdirSync, existsSync } from 'fs';
 import { issueToken } from '../src/auth/jwt';
 import {
   upsertFromGoogle,
@@ -402,6 +402,15 @@ writeFileSync('frontend/public/demo.html', `<!doctype html>
 `);
 console.log('  frontend/public/demo.html written');
 
+// In Docker (production), gate-server serves from frontend/dist/ only —
+// frontend/public/ is not served. Copy the generated pages there too so
+// http://<host>/demo.html works without a Vite dev server.
+const distDir = 'frontend/dist';
+if (existsSync(distDir)) {
+  copyFileSync('frontend/public/demo.html', `${distDir}/demo.html`);
+  console.log('  frontend/dist/demo.html written (Docker/production path)');
+}
+
 // API-keys reference page
 writeFileSync('frontend/public/demo-api-keys.html', `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
@@ -465,6 +474,10 @@ writeFileSync('frontend/public/demo-api-keys.html', `<!doctype html>
 <p><a href="/demo.html">← back to role picker</a></p>
 </body></html>`);
 console.log('  frontend/public/demo-api-keys.html written');
+if (existsSync(distDir)) {
+  copyFileSync('frontend/public/demo-api-keys.html', `${distDir}/demo-api-keys.html`);
+  console.log('  frontend/dist/demo-api-keys.html written (Docker/production path)');
+}
 
 logDemoEvent({ role: 'unknown', user_id: null, event: 'seed.completed' });
 

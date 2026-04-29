@@ -12,30 +12,41 @@
 #
 # What gets provisioned:
 #   - 1 web service (Docker runtime, uses demo/Dockerfile)
-#   - 1 persistent disk, 1 GB, mounted at /app/.data
-#     → keeps demo seed data, demo-usage log, user store across restarts
 #   - JWT_SECRET auto-generated (32 chars, unique per deployment)
 #   - All LLM / Wolfram / Telegram keys marked sync:false so the Render
 #     UI prompts the operator to paste them (or skip — the demo works
 #     without any of them at baseline)
 #
+# PERSISTENCE NOTE (free tier):
+#   Render's free tier does not support persistent disks. This means
+#   .data/ (user store, analytics, teaching turns) lives in the
+#   container's ephemeral filesystem and resets when the service restarts
+#   or spins down after inactivity. The Dockerfile CMD runs
+#   `npm run demo:seed` on every boot, so the 6 demo users are always
+#   recreated fresh.
+#
+#   For a demo this is fine — each restart gives a clean slate.
+#   For persistent state (user data survives restarts, real signups
+#   accumulate over time), upgrade to the Starter plan ($7/month)
+#   and add this block back under the service:
+#
+#     disk:
+#       name: vidhya-demo-data
+#       mountPath: /app/.data
+#       sizeGB: 1
+#
 # First boot runs: npm run demo:seed && tsx src/gate-server.ts
-#   → on fresh deploys this seeds the 6 demo users; on restarts with an
-#     existing disk, seed is idempotent (upsert-by-google-sub; existing
-#     users are updated rather than duplicated).
+#   → seeds the 6 demo users (Nisha/Arjun/Kavita/Priya/Rahul/Aditya)
+#   → seed is idempotent (upsert-by-google-sub) so re-running is safe
 
 services:
   - type: web
     name: vidhya-demo
     runtime: docker
-    plan: free                       # upgrade to 'starter' if demo traffic warrants it
+    plan: free
     dockerfilePath: ./demo/Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    disk:
-      name: vidhya-demo-data
-      mountPath: /app/.data
-      sizeGB: 1
     envVars:
       # ─── required ───────────────────────────────────────────────
       - key: NODE_ENV

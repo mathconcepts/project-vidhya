@@ -1,8 +1,9 @@
 # Deploying the Vidhya demo
 
-> **Goal:** one live URL where all three exams (BITSAT, JEE Main, UGEE)
-> are immediately usable, and the full AI tutor / chat / Snap / explainer
-> pipeline lights up as soon as any BYOK LLM key is provided.
+> **Goal:** one live URL where all seven exams (BITSAT, JEE Main, UGEE,
+> NEET Biology/Physics/Chemistry, GATE) are immediately usable, and the
+> full AI tutor / chat / Snap / explainer pipeline lights up as soon as
+> any BYOK LLM key is provided.
 >
 > **Primary target:** Render (free tier). Render is what this repo's
 > deployment config targets natively, with the free tier giving you a
@@ -28,8 +29,16 @@ demo URL you can share"*. Three clicks after signing into Render.
 > **Live demo URL:** _none yet — operator action required._
 >
 > Once someone clicks the Deploy button below, run `bash scripts/update-readme-url.sh https://your-service.onrender.com` to fill this line in across the README and DEPLOY docs in one command.
->
-> Once someone clicks the Deploy button below, run `bash scripts/update-readme-url.sh https://your-service.onrender.com` to fill this line in across the README and DEPLOY docs in one command.
+
+> **Free tier — ephemeral state:** Render's free tier does not support
+> persistent disks. The app's `.data/` directory lives in the container's
+> ephemeral filesystem and resets whenever the service restarts or spins
+> down after 15 minutes of inactivity. The container CMD runs
+> `npm run demo:seed` on every boot, so the 6 demo users are always
+> recreated fresh. **For a demo this is fine** — each restart gives a
+> clean slate. For persistent state (real sign-ups accumulate over time,
+> teaching turns survive restarts), upgrade to the Starter plan ($7/month)
+> and add a disk block back to `render.yaml` (instructions in that file).
 
 ---
 
@@ -66,13 +75,15 @@ shows:
 
 - One **web service** named `vidhya-demo` (Docker runtime, uses
   `demo/Dockerfile`)
-- One **1 GB persistent disk** named `vidhya-demo-data`, mounted at
-  `/app/.data`
 - Auto-generated `JWT_SECRET` (Render picks a random 32-char string)
 - A list of optional env vars (all LLM / Wolfram / channel keys)
   marked for the operator to fill in
 
 Click **Apply**.
+
+> **No disk on the free plan.** The free tier provisions ephemeral
+> storage only. State resets on restart. See the note at the top of
+> this file for the upgrade path if you need persistence.
 
 ### 3. Wait ~3 minutes
 
@@ -81,14 +92,13 @@ Render does the following:
 1. Clones the repo
 2. Runs the Dockerfile — stage 1 builds the frontend, stage 2 bundles
    the runtime
-3. Mounts the persistent disk
-4. Starts the container, which runs `npm run demo:seed && npx tsx
+3. Starts the container, which runs `npm run demo:seed && npx tsx
    src/gate-server.ts`
-5. The seed creates 6 demo users (Nisha, Arjun, Kavita, Priya, Rahul,
+4. The seed creates 6 demo users (Nisha, Arjun, Kavita, Priya, Rahul,
    Aditya), issues their JWTs, writes `/demo.html` and `/demo-api-keys.html`
-   into `frontend/dist/`
-6. The server binds to port 8080 (Render proxies to 443 externally)
-7. Health check at `/health` flips green
+   into `frontend/dist/` (the only served path in Docker)
+5. The server binds to port 8080 (Render proxies to 443 externally)
+6. Health check at `/health` flips green
 
 Your live URL is `https://vidhya-demo-<suffix>.onrender.com`. Share it.
 
@@ -177,19 +187,22 @@ If all four return as expected, the deployment is confirmed healthy.
 
 ## What happens on restarts
 
-Render occasionally recycles free-tier instances (once every 15 min of
-idle on free, never on starter+). Important behaviour:
+Render occasionally recycles free-tier instances (after 15 min of
+idle). Important behaviour:
 
-- **Persistent disk survives** — your `.data/` flat-file stores stay
-  intact across restarts
-- **Seed is idempotent** — `upsertFromGoogle` updates existing users
-  by google_sub rather than duplicating. Restarts don't multiply the
-  demo users.
+- **State resets on restart** — the free tier has no persistent disk.
+  `.data/` is ephemeral. When the service restarts, the seed runs
+  fresh and creates a new set of demo users with new IDs.
+- **Seed is idempotent within a single run** — `upsertFromGoogle`
+  upserts by google_sub, so running the seed twice in one boot is
+  safe. Across cold starts, state is reset.
 - **JWT_SECRET survives** — Render sticks with the secret it generated
-  on first deploy. Demo JWTs minted by the first seed remain valid.
-- **Render's free tier sleeps after 15 min idle** — first request after
-  sleep cold-starts in ~30 s. This is a free-tier limitation, not a
-  product limitation. Upgrade to starter ($7/mo) to eliminate cold starts.
+  on first deploy, even across restarts. Demo JWTs minted by a
+  previous boot are still valid until they expire (30 days).
+- **First request after sleep cold-starts in ~30 s** — free-tier
+  instances sleep after 15 min idle; the next visitor triggers a boot.
+  Upgrade to starter ($7/mo) to eliminate cold starts AND get a
+  persistent disk for lasting state.
 
 ---
 

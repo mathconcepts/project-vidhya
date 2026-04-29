@@ -373,19 +373,27 @@ export function GateHome() {
               </p>
             </motion.div>
 
-            <motion.div variants={fadeInUp} className="w-full flex gap-3">
+            <motion.div variants={fadeInUp} className="w-full flex flex-col gap-3">
               <Link
-                to="/progress"
-                className="flex-1 h-11 rounded-[10px] bg-surface-800 text-surface-200 text-[15px] font-semibold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                to="/session"
+                className="w-full h-11 rounded-[10px] bg-emerald-500 text-white text-[15px] font-semibold flex items-center justify-center hover:bg-emerald-400 transition-colors"
               >
-                Review progress
+                15-min Studymate session
               </Link>
-              <Link
-                to="/chat"
-                className="flex-1 h-11 rounded-[10px] bg-sky-500 text-white text-[15px] font-semibold flex items-center justify-center hover:bg-sky-400 transition-colors"
-              >
-                Ask the tutor
-              </Link>
+              <div className="flex gap-3">
+                <Link
+                  to="/progress"
+                  className="flex-1 h-11 rounded-[10px] bg-surface-800 text-surface-200 text-[15px] font-semibold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                >
+                  Review progress
+                </Link>
+                <Link
+                  to="/chat"
+                  className="flex-1 h-11 rounded-[10px] bg-sky-500/15 border border-sky-500/25 text-sky-400 text-[15px] font-semibold flex items-center justify-center hover:bg-sky-500/20 transition-colors"
+                >
+                  Ask the tutor
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -407,7 +415,13 @@ export function GateHome() {
           <p className="text-[15px] text-surface-500">
             No tasks scheduled. Pick any topic to practice.
           </p>
-          <Link to="/chat" className="text-[13px] text-sky-400 hover:text-sky-300 transition-colors mt-1">
+          <Link
+            to="/session"
+            className="mt-2 px-6 h-10 rounded-[10px] bg-emerald-500 text-white text-[14px] font-semibold flex items-center hover:bg-emerald-400 transition-colors"
+          >
+            Start 15-min session
+          </Link>
+          <Link to="/chat" className="text-[13px] text-sky-400 hover:text-sky-300 transition-colors">
             Or ask the tutor for help →
           </Link>
         </motion.div>

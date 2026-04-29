@@ -11,7 +11,7 @@
 
 import { ServerResponse } from 'http';
 import pg from 'pg';
-import { GATE_TOPICS, TOPIC_LABELS } from '../constants/topics';
+import { getTopicsForExam } from '../curriculum/topic-adapter';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 const { Pool } = pg;
@@ -40,8 +40,8 @@ function getPool() {
   return _pool;
 }
 
-// GATE_TOPICS, TOPIC_LABELS imported from ../constants/topics
-const GATE_TOPIC_OBJECTS = GATE_TOPICS.map(id => ({ id, name: TOPIC_LABELS[id] }));
+const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+const GATE_TOPIC_OBJECTS = getTopicsForExam(DEFAULT_EXAM_ID).map(t => ({ id: t.id, name: t.name }));
 
 // ============================================================================
 // Topic Landing Page

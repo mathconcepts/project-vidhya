@@ -65,6 +65,7 @@ const ExamGroupsPage = lazy(() => import('@/pages/gate/ExamGroupsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/gate/ContentSettingsPage'));
 const UploadsPage = lazy(() => import('@/pages/gate/UploadsPage'));
+const StudymateSessionPage = lazy(() => import('@/pages/gate/StudymateSessionPage'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -131,6 +132,7 @@ export default function App() {
           <Route path="exams" element={<ExamSetupPage />} />
           <Route path="exam-groups" element={<ExamGroupsPage />} />
           <Route path="admin/content" element={<ContentAdminPage />} />
+          <Route path="session" element={<StudymateSessionPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

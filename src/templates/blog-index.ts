@@ -8,7 +8,7 @@
  * Zero JS. ~4KB CSS. prefers-reduced-motion respected.
  */
 
-import { GATE_TOPICS } from '../constants/topics';
+import { getTopicIdsForExam } from '../curriculum/topic-adapter';
 import { CONTENT_TYPE_LABELS, CONTENT_TYPE_ACCENTS } from '../constants/content-types';
 
 const BASE_URL = process.env.BASE_URL || 'https://gate-math-api.onrender.com';
@@ -83,7 +83,8 @@ export function renderBlogIndex(
   };
 
   // Topic filter pills
-  const topicPillsHtml = GATE_TOPICS.map(t => {
+  const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+  const topicPillsHtml = getTopicIdsForExam(DEFAULT_EXAM_ID).map(t => {
     const isActive = topic === t;
     const label = t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const href = isActive

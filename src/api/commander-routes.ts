@@ -239,6 +239,13 @@ async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promi
       knowledge_track_id: validatedTrackId,
       added_at: new Date().toISOString(),
     }]);
+    // Seed mastery_vector from 3-bucket onboarding async — don't block response
+    const seedSessionId = session_id || auth?.user?.id;
+    if (seedSessionId && effectiveExamId && topic_confidence) {
+      const { seedMasteryFromOnboard } = await import('../gbrain/student-model');
+      seedMasteryFromOnboard(seedSessionId, effectiveExamId, topic_confidence)
+        .catch(err => console.error('[onboard] seedMasteryFromOnboard error:', err));
+    }
     return sendJSON(res, { profile }, 201);
   }
 
@@ -257,6 +264,15 @@ async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promi
        RETURNING *`,
       [session_id, exam_date, weekly_hours || 10, JSON.stringify(topic_confidence || {})]
     );
+
+    // Seed mastery_vector for anonymous session async
+    const effectiveExamIdAnon = exam_id ?? 'gate-ma';
+    if (topic_confidence && Object.keys(topic_confidence).length > 0) {
+      const { seedMasteryFromOnboard } = await import('../gbrain/student-model');
+      seedMasteryFromOnboard(session_id, effectiveExamIdAnon, topic_confidence)
+        .catch(err => console.error('[onboard] seedMasteryFromOnboard error:', err));
+    }
+
     return sendJSON(res, { profile: result.rows[0] }, 201);
   } catch {
     // DB unavailable — acknowledge without persisting for anonymous users.

@@ -17,7 +17,7 @@
 import { ServerResponse } from 'http';
 import pg from 'pg';
 import { detectTopic } from '../utils/topic-detection';
-import { GATE_TOPICS, TOPIC_LABELS, TOPIC_ICONS } from '../constants/topics';
+import { getTopicsForExam } from '../curriculum/topic-adapter';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { checkRateLimit } from '../lib/rate-limit';
@@ -60,11 +60,11 @@ function sendError(res: ServerResponse, status: number, message: string): void {
 // GATE Topics (static — derived from seed data)
 // ============================================================================
 
-// GATE_TOPICS, TOPIC_LABELS, TOPIC_ICONS imported from ../constants/topics
-const GATE_TOPIC_OBJECTS = GATE_TOPICS.map(id => ({
-  id,
-  name: TOPIC_LABELS[id],
-  icon: TOPIC_ICONS[id],
+const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+const GATE_TOPIC_OBJECTS = getTopicsForExam(DEFAULT_EXAM_ID).map(t => ({
+  id: t.id,
+  name: t.name,
+  icon: t.icon,
 }));
 
 async function handleGetTopics(_req: ParsedRequest, res: ServerResponse): Promise<void> {
@@ -532,7 +532,7 @@ async function handleExamReadiness(req: ParsedRequest, res: ServerResponse): Pro
     const weakCount = weakTopics.rows.length;
 
     // Sub-scores (each 0-1)
-    const coverage = topicsAttempted / GATE_TOPICS.length;
+    const coverage = topicsAttempted / (GATE_TOPIC_OBJECTS.length || 1);
     const accuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
     const srHealth = totalSR > 0 ? onSchedule / totalSR : 0;
     const weakPenalty = topicsAttempted > 0 ? 1 - (weakCount / topicsAttempted) : 0;

@@ -17,7 +17,7 @@
 
 import { ServerResponse } from 'http';
 import { getLlmForRole } from '../llm/runtime';
-import { GATE_TOPICS } from '../constants/topics';
+import { getTopicIdsForExam } from '../curriculum/topic-adapter';
 import { BLOG_CONTENT_TYPES } from '../constants/content-types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
@@ -45,7 +45,7 @@ interface GeneratedProblem {
 // Configuration
 // ============================================================================
 
-// GATE_TOPICS imported from ../constants/topics
+const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
 
 const BATCH_SIZE = 5;
 const MIN_CONFIDENCE = 0.8;
@@ -107,7 +107,8 @@ async function selectTopic(): Promise<string> {
     }
 
     const maxCount = Math.max(...Object.values(counts), 1);
-    const weighted = GATE_TOPICS.map(t => ({
+    const topics = getTopicIdsForExam(DEFAULT_EXAM_ID);
+    const weighted = topics.map(t => ({
       topic: t,
       weight: maxCount - (counts[t] || 0) + 1,
     }));
@@ -117,10 +118,11 @@ async function selectTopic(): Promise<string> {
       roll2 -= w.weight;
       if (roll2 <= 0) return w.topic;
     }
+    if (topics.length > 0) return topics[Math.floor(Math.random() * topics.length)];
   } catch {
-    // Fallback: random topic
+    // Fallback: first topic
   }
-  return GATE_TOPICS[Math.floor(Math.random() * GATE_TOPICS.length)];
+  return getTopicIdsForExam(DEFAULT_EXAM_ID)[0] ?? 'linear-algebra';
 }
 
 // ============================================================================

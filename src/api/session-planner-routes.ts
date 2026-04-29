@@ -101,7 +101,7 @@ async function h_plan(req: ParsedRequest, res: ServerResponse): Promise<void> {
   };
 
   try {
-    const plan = planSession(request);
+    const plan = await planSession(request);
     try {
       savePlan(plan);
     } catch (err: any) {
@@ -158,7 +158,7 @@ async function h_planMultiExam(req: ParsedRequest, res: ServerResponse): Promise
   };
 
   try {
-    const plan = planMultiExamSession(request);
+    const plan = await planMultiExamSession(request);
     try {
       savePlan(plan);
     } catch (err: any) {

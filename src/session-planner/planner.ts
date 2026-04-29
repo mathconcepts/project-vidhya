@@ -55,7 +55,7 @@ function shortId(): string {
  * can't produce a meaningful action, so the exam is skipped with
  * its share redistributed).
  */
-export function planMultiExamSession(req: MultiExamPlanRequest): SessionPlan {
+export async function planMultiExamSession(req: MultiExamPlanRequest): Promise<SessionPlan> {
   const now = req.now ?? new Date();
   const totalMinutes = clampMinutes(req.minutes_available);
 
@@ -108,7 +108,7 @@ export function planMultiExamSession(req: MultiExamPlanRequest): SessionPlan {
   }
 
   // Run per-exam planner for each allocation.
-  const perExamPlans = allocations.map(a => planSession({
+  const perExamPlans = await Promise.all(allocations.map(a => planSession({
     student_id: req.student_id,
     exam_id: a.exam_id,
     exam_date: a.exam.exam_date,
@@ -119,7 +119,7 @@ export function planMultiExamSession(req: MultiExamPlanRequest): SessionPlan {
     weekly_hours: req.weekly_hours,
     trailing_7d_minutes: req.trailing_7d_minutes,
     now,
-  }));
+  })));
 
   // Interleave actions: sort globally by priority_score descending,
   // preserving per-exam action order on ties. Renumber ids.
@@ -199,7 +199,7 @@ function buildMultiExamHeadline(
 // Core
 // ============================================================================
 
-export function planSession(req: PlanRequest): SessionPlan {
+export async function planSession(req: PlanRequest): Promise<SessionPlan> {
   // Normalize inputs ──────────────────────────────────────────────────
   const now = req.now ?? new Date();
   const minutes = clampMinutes(req.minutes_available);
@@ -224,7 +224,23 @@ export function planSession(req: PlanRequest): SessionPlan {
   };
   const srStats: TopicSRStats[] = req.sr_stats ?? [];
 
-  const allPriorities = computePriority(profile, srStats, now);
+  const allPriorities = await (async () => {
+    // Look up exam-specific topic weights from the registered adapter.
+    // Falls back to the GATE default weights when the adapter is not found.
+    let examTopicWeights: Record<string, number> | undefined;
+    if (req.exam_id) {
+      try {
+        const { getExamAdapter, loadBundledAdapters } = await import('../exam-builder/registry');
+        await loadBundledAdapters();
+        const adapter = getExamAdapter(req.exam_id);
+        if (adapter) {
+          const content = adapter.loadBaseContent();
+          examTopicWeights = content.exam?.topic_weights as Record<string, number> | undefined;
+        }
+      } catch { /* non-blocking: fall back to default weights */ }
+    }
+    return computePriority(profile, srStats, now, examTopicWeights);
+  })();
   // Order by priority score descending; ties broken by marks_weight
   // descending (alphabetical topic as ultimate tiebreaker) for stability.
   const sortedPriorities = allPriorities.slice().sort((a, b) => {

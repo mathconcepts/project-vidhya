@@ -92,6 +92,7 @@ export function computePriority(
   profile: StudyProfile,
   srStats: TopicSRStats[],
   now: Date,
+  examTopicWeights?: Record<string, number>,  // from exam adapter; falls back to GATE MARKS_WEIGHTS
 ): TopicPriority[] {
   const examDate = new Date(profile.exam_date);
   const daysRemaining = Math.ceil((examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -107,11 +108,13 @@ export function computePriority(
     srMap.set(s.topic, s);
   }
 
-  const topicIds = Object.keys(MARKS_WEIGHTS);
+  // Use exam-specific weights when available; fall back to GATE defaults.
+  const weights = examTopicWeights ?? MARKS_WEIGHTS;
+  const topicIds = Object.keys(weights);
   const results: TopicPriority[] = [];
 
   for (const topic of topicIds) {
-    const marks_weight = MARKS_WEIGHTS[topic] || 0.08;
+    const marks_weight = weights[topic] || 0.08;
     const sr = srMap.get(topic);
 
     // Weakness: 1 - accuracy. Fall back to confidence mapping if no diagnostic/SR data.

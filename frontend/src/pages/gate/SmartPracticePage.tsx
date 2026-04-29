@@ -28,7 +28,9 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const TOPICS = [
+// Topics are loaded dynamically from the student's exam adapter (see useEffect below).
+// This fallback covers the brief moment before the fetch completes.
+const GATE_FALLBACK_TOPICS = [
   'linear-algebra', 'calculus', 'differential-equations', 'probability-statistics',
   'complex-variables', 'numerical-methods', 'transform-theory',
   'discrete-mathematics', 'graph-theory', 'vector-calculus',
@@ -68,6 +70,9 @@ export default function SmartPracticePage() {
     : rawDiff === 'medium' ? 0.5
     : 0.5;
 
+  // Dynamic topic list from the student's exam adapter.
+  // Falls back to GATE topics until the profile fetch completes.
+  const [examTopics, setExamTopics] = useState<string[]>(GATE_FALLBACK_TOPICS);
   const [topic, setTopic] = useState<string>(initialTopic);
   const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
   const [requireWolfram, setRequireWolfram] = useState(false);
@@ -85,6 +90,26 @@ export default function SmartPracticePage() {
     warmContentBundle();
     getBundleStats().then(setBundleStats).catch(() => {});
   }, []);
+
+  // Load the student's exam topic list so the topic picker shows their
+  // actual exam syllabus instead of the hardcoded GATE topic list.
+  useEffect(() => {
+    import('@/lib/auth/client').then(({ authFetch, getToken }) => {
+      if (!getToken()) return; // anonymous → keep GATE fallback
+      authFetch('/api/onboard/meta')
+        .then(r => r.ok ? r.json() : null)
+        .then((data: any) => {
+          if (data?.topics?.length > 0) {
+            const ids = data.topics.map((t: any) => t.id as string);
+            setExamTopics(ids);
+            // If the current topic (from URL param or default) isn't in
+            // the student's syllabus, reset to their first topic.
+            setTopic(prev => ids.includes(prev) ? prev : ids[0]);
+          }
+        })
+        .catch(() => {}); // keep GATE fallback on error
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextProblem = useCallback(async () => {
     setLoading(true);
@@ -175,7 +200,7 @@ export default function SmartPracticePage() {
         <div>
           <label className="text-[10px] text-surface-500 uppercase tracking-wide">Topic</label>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {TOPICS.map(t => (
+            {examTopics.map(t => (
               <button key={t}
                 onClick={() => setTopic(t)}
                 className={clsx(

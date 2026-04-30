@@ -117,7 +117,22 @@ export function ownerExists(): boolean {
 // Create / update
 // ============================================================================
 
-function newUserId(): string {
+/**
+ * Generate a stable user id.
+ *
+ * v4.0.4: Deterministic from google_sub when provided. SHA256(google_sub)
+ * truncated to 12 chars yields stable IDs across deployments — JWTs issued
+ * before a Render free-tier restart remain valid after the restart re-seeds
+ * users.json (which wipes the file but recreates rows with the same google_sub).
+ *
+ * Without google_sub (legacy callers, channel-only users), falls back to
+ * random bytes — those rows have no JWT contract anyway.
+ */
+function newUserId(google_sub?: string): string {
+  if (google_sub && google_sub.trim().length > 0) {
+    const hash = crypto.createHash('sha256').update(google_sub).digest('base64url');
+    return 'user_' + hash.slice(0, 12);
+  }
   return 'user_' + crypto.randomBytes(9).toString('base64url');
 }
 
@@ -157,7 +172,7 @@ export function upsertFromGoogle(params: {
   // New user — bootstrap first = owner
   const isBootstrap = !store.owner_id;
   const user: User = {
-    id: newUserId(),
+    id: newUserId(params.google_sub),
     google_sub: params.google_sub,
     email: params.email,
     name: params.name,

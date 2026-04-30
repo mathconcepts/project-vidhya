@@ -61,9 +61,32 @@ export function buildAuthHeaders(): Record<string, string> {
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
-export async function authFetch(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
-  const headers = { ...buildAuthHeaders(), ...(init.headers || {}) };
-  return fetch(input, { ...init, headers });
+/**
+ * authFetch — Bearer-injecting fetch with stale-token recovery.
+ *
+ * v4.0.4: When the server returns 401 and we currently hold a token, we
+ * clear the local token before returning the response. This unblocks the
+ * "ghost JWT" state where a user has a token in localStorage that points
+ * at a deleted user record (Render free tier ephemeral .data resets,
+ * JWT_SECRET rotation, force-deleted user, etc.). Without this clear,
+ * the dead JWT keeps trying on every request and the user is wedged in
+ * a "session expired" loop.
+ *
+ * Pages can pass `noClearOn401: true` for endpoints where 401 is the way
+ * you check "am I signed in?" (e.g. /api/auth/me).
+ */
+export interface AuthFetchInit extends RequestInit {
+  noClearOn401?: boolean;
+}
+
+export async function authFetch(input: RequestInfo, init: AuthFetchInit = {}): Promise<Response> {
+  const { noClearOn401, ...rest } = init;
+  const headers = { ...buildAuthHeaders(), ...(rest.headers || {}) };
+  const res = await fetch(input, { ...rest, headers });
+  if (res.status === 401 && !noClearOn401 && getToken()) {
+    clearToken();
+  }
+  return res;
 }
 
 // ============================================================================

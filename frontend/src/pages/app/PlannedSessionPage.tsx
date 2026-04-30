@@ -289,6 +289,13 @@ export default function PlannedSessionPage() {
           }),
         });
       }
+      if (res.status === 401) {
+        // authFetch already cleared the stale token; surface the friendly state.
+        // Do NOT route this through the generic "Couldn't generate the plan"
+        // red box — this is auth, not a plan-generation failure.
+        setError('session_expired');
+        return;
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(body.error || `Plan request failed: ${res.status}`);
@@ -720,16 +727,24 @@ export default function PlannedSessionPage() {
 
         {error === 'session_expired' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <p className="text-surface-300 font-medium">Session expired</p>
-            <p className="text-sm text-surface-500 max-w-xs">
-              Your session has expired. Go back to the demo and select a role to sign in again.
+            <p className="text-surface-300 font-display text-lg font-semibold">Sign in again to continue</p>
+            <p className="text-sm text-surface-500 max-w-sm">
+              Your sign-in expired. Pick a demo role to start a new session.
             </p>
-            <a
-              href="/demo.html"
-              className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
-            >
-              Back to demo sign-in
-            </a>
+            <div className="flex gap-2">
+              <a
+                href="/demo.html"
+                className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
+              >
+                Demo sign-in
+              </a>
+              <a
+                href="/sign-in"
+                className="px-5 py-2.5 rounded-xl bg-surface-800 text-surface-200 text-sm font-medium hover:bg-surface-700 border border-surface-700 transition-colors"
+              >
+                Real sign-in
+              </a>
+            </div>
           </div>
         ) : error && (
           <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-200 text-sm">

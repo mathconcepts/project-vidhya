@@ -27,6 +27,7 @@ import type {
 } from './types.js';
 import type { VectorStore, VectorSearchResult } from '../data/vector-store.js';
 import type { WolframVerifier } from './verifiers/wolfram.js';
+import type { AnswerVerifier } from './verifiers/types.js';
 
 // ============================================================================
 // Types
@@ -80,6 +81,8 @@ export interface TierSignalEmitter {
 export class TieredVerificationOrchestrator {
   private wolframCallsToday = 0;
   private wolframResetDate: string = new Date().toISOString().slice(0, 10);
+  /** Tier 4+ verifiers registered via registerVerifier(). Run after Wolfram, in tier order. */
+  private extraVerifiers: AnswerVerifier[] = [];
 
   constructor(
     private vectorStore: VectorStore,
@@ -89,7 +92,38 @@ export class TieredVerificationOrchestrator {
     private wolfram: WolframVerifier,
     private config: TieredOrchestratorConfig = DEFAULT_CONFIG,
     private signals?: TierSignalEmitter,
-  ) {}
+    extraVerifiers: AnswerVerifier[] = [],
+  ) {
+    for (const v of extraVerifiers) this.registerVerifier(v);
+  }
+
+  /**
+   * Register a Tier 4+ AnswerVerifier. Runs after Tier 3 (Wolfram) in tier order.
+   * Designed for cross-checks like SymPy or domain-specific verifiers; Tier 1-3
+   * remain hardcoded because their behaviors (RAG writeback, LLM agreement, Wolfram
+   * rate-limit fallback) don't fit the simple verifiers[] iteration pattern.
+   *
+   * Throws if a verifier with the same name is already registered.
+   */
+  registerVerifier(verifier: AnswerVerifier): void {
+    if (verifier.tier < 4) {
+      throw new Error(
+        `registerVerifier rejected '${verifier.name}': tier ${verifier.tier} reserved for built-in cascade. ` +
+          `Tier 4+ only. Use the constructor's named verifier slots for tier 1-3.`,
+      );
+    }
+    if (this.extraVerifiers.some(v => v.name === verifier.name)) {
+      throw new Error(`Verifier '${verifier.name}' already registered`);
+    }
+    this.extraVerifiers.push(verifier);
+    // Keep the array sorted so iteration runs in tier order regardless of registration order.
+    this.extraVerifiers.sort((a, b) => a.tier - b.tier);
+  }
+
+  /** Names of all registered Tier 4+ verifiers; useful for telemetry and tests. */
+  listExtraVerifiers(): string[] {
+    return this.extraVerifiers.map(v => v.name);
+  }
 
   /**
    * Verify a student's answer to a math problem.

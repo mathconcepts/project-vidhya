@@ -29,12 +29,10 @@ const STEPS = [
   { icon: Brain,    label: 'Confidence' },
 ];
 
-// Fallback topic list shown when no exam adapter data is available.
-const FALLBACK_TOPICS = [
-  { id: 'algebra', name: 'Algebra' },
-  { id: 'calculus', name: 'Calculus' },
-  { id: 'geometry', name: 'Geometry' },
-];
+// v2.5: removed the algebra/calculus/geometry FALLBACK_TOPICS list.
+// When the exam adapter API fails, we now show an explicit error state with
+// a "Pick your exam" CTA rather than fabricating fake topics that don't match
+// any real exam. Showing wrong topics is worse than showing a loading skeleton.
 
 interface ExamMeta {
   exam_id: string;
@@ -58,24 +56,28 @@ export default function OnboardPage() {
   const [weeklyHours, setWeeklyHours] = useState<number>(10);
   const [confidence, setConfidence] = useState<Record<string, number>>({});
 
-  // Load exam metadata from the server (exam_id, exam_name, topics)
+  const [examLoadError, setExamLoadError] = useState(false);
+
+  // Load exam metadata from the server (exam_id, exam_name, topics).
+  // v2.5: on failure, surface an error state with a "Pick your exam" CTA
+  // rather than fabricate generic topics. See FALLBACK_TOPICS comment above.
   useEffect(() => {
     authFetch('/api/onboard/meta')
       .then(r => r.json())
       .then((data: ExamMeta) => {
+        if (!data?.topics?.length) {
+          setExamLoadError(true);
+          return;
+        }
         setExamMeta(data);
         // Initialise all topics to "Okay" (3)
         setConfidence(Object.fromEntries(data.topics.map(t => [t.id, 3])));
       })
-      .catch(() => {
-        // Fallback: generic topics
-        setExamMeta({ exam_id: '', exam_name: 'Exam', exam_short_name: 'Exam', topics: FALLBACK_TOPICS });
-        setConfidence(Object.fromEntries(FALLBACK_TOPICS.map(t => [t.id, 3])));
-      })
+      .catch(() => setExamLoadError(true))
       .finally(() => setLoadingExam(false));
   }, []);
 
-  const topics = examMeta?.topics ?? FALLBACK_TOPICS;
+  const topics = examMeta?.topics ?? [];
   const examLabel = examMeta?.exam_short_name ?? examMeta?.exam_name ?? 'Exam';
 
   const canAdvance = () => {
@@ -119,8 +121,34 @@ export default function OnboardPage() {
 
   if (loadingExam || checking) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
+        <p className="text-xs text-surface-500 font-display">Loading your exam profile…</p>
+      </div>
+    );
+  }
+
+  // v2.5: explicit error state when the exam adapter API fails or returns
+  // empty topics. Replaces the prior algebra/calculus/geometry fake-fallback.
+  if (examLoadError || !examMeta) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
+        <div className="w-12 h-12 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+          <Calendar size={20} className="text-amber-400" />
+        </div>
+        <div>
+          <h1 className="text-xl font-display font-bold text-surface-100">Pick your exam first</h1>
+          <p className="text-sm text-surface-400 mt-2 max-w-sm">
+            We couldn't load your exam profile. Choose your exam so the topics, dates, and study plan
+            calibrate to you — not to a generic placeholder.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/exams')}
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white text-sm font-bold inline-flex items-center gap-1.5"
+        >
+          Pick exam <ChevronRight size={14} />
+        </button>
       </div>
     );
   }

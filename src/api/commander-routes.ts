@@ -18,6 +18,8 @@ import pg from 'pg';
 import { computePriority, generateDailyTasks, MARKS_WEIGHTS, TOPIC_NAMES } from '../engine/priority-engine';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+// v2.5: replaces hardcoded 'gate-ma' fallback for anonymous sessions.
+import { resolveDefaultExamIdOrNull } from '../exams/default-exam';
 
 const { Pool } = pg;
 
@@ -265,9 +267,12 @@ async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promi
       [session_id, exam_date, weekly_hours || 10, JSON.stringify(topic_confidence || {})]
     );
 
-    // Seed mastery_vector for anonymous session async
-    const effectiveExamIdAnon = exam_id ?? 'gate-ma';
-    if (topic_confidence && Object.keys(topic_confidence).length > 0) {
+    // Seed mastery_vector for anonymous session async.
+    // v2.5: was `exam_id ?? 'gate-ma'` — now resolves via exam-store with
+    // null fallback. When no exam is configured AND no exam_id is in the
+    // request, mastery seeding is skipped (anon user will pick exam at /exams).
+    const effectiveExamIdAnon = exam_id ?? resolveDefaultExamIdOrNull();
+    if (effectiveExamIdAnon && topic_confidence && Object.keys(topic_confidence).length > 0) {
       const { seedMasteryFromOnboard } = await import('../gbrain/student-model');
       seedMasteryFromOnboard(session_id, effectiveExamIdAnon, topic_confidence)
         .catch(err => console.error('[onboard] seedMasteryFromOnboard error:', err));

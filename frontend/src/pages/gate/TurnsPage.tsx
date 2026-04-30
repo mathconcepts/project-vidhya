@@ -117,9 +117,19 @@ export default function TurnsPage() {
       <motion.div variants={fadeInUp} className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Activity className="w-6 h-6 text-violet-400" />
-          <h1 className="text-2xl font-semibold text-surface-50">
-            {id ? `${data?.student_name ?? 'Student'}'s learning history` : 'Your learning history'}
-          </h1>
+          <div>
+            <h1 className="text-2xl font-display font-semibold text-surface-50">
+              {id ? `${data?.student_name ?? 'Student'}'s learning history` : 'Your learning history'}
+            </h1>
+            {/* v2.5: explicit "viewing as" indicator when viewing another
+                student's history — makes the role-based access transparent
+                to teachers and admins. */}
+            {id && user?.role && (
+              <p className="text-[11px] text-surface-500 uppercase tracking-wide mt-0.5">
+                Viewing as {user.role}
+              </p>
+            )}
+          </div>
         </div>
         <button
           onClick={refresh}

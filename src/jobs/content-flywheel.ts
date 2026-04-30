@@ -45,7 +45,11 @@ interface GeneratedProblem {
 // Configuration
 // ============================================================================
 
-const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+// v2.5: was `process.env.DEFAULT_EXAM_ID ?? 'gate-ma'` — silent GATE fallback
+// removed. Now resolves via the exam-store; throws clear error if no exam
+// configured (operator must configure one before flywheel can run).
+import { resolveDefaultExamId } from '../exams/default-exam';
+const DEFAULT_EXAM_ID = resolveDefaultExamId();
 
 const BATCH_SIZE = 5;
 const MIN_CONFIDENCE = 0.8;

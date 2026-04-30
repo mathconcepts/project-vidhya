@@ -29,7 +29,9 @@ interface RouteDefinition {
 
 // BLOG_CONTENT_TYPES imported from ../constants/content-types
 const CONTENT_TYPES = BLOG_CONTENT_TYPES;
-const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+// v2.5: silent 'gate-ma' fallback removed; resolves via exam-store.
+import { resolveDefaultExamId } from '../exams/default-exam';
+const DEFAULT_EXAM_ID = resolveDefaultExamId();
 
 // ============================================================================
 // Database

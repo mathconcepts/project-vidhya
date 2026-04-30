@@ -25,20 +25,20 @@ export default function MarketingLanding() {
           className="relative max-w-2xl mx-auto text-center space-y-6"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20">
-            <Brain size={13} className="text-violet-400" />
-            <span className="text-xs font-semibold text-violet-300 uppercase tracking-wide">GBrain Cognitive Architecture</span>
+            <Sparkles size={13} className="text-violet-400" />
+            <span className="text-xs font-semibold text-violet-300 uppercase tracking-wide">Daily study plan, calibrated to you</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-surface-100 leading-tight">
-            A tutor that knows <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">how</span> you think, not just what you answered.
+          <h1 className="text-3xl sm:text-4xl font-display font-black text-surface-100 leading-tight">
+            Know exactly the <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">three things</span> to study tomorrow.
           </h1>
           <p className="text-base text-surface-400 leading-relaxed">
-            Most test prep apps track accuracy. We model your cognition — representation mode, working memory,
-            abstraction comfort, motivation state, 82-concept prerequisite graph, 7-type error taxonomy. Every
-            wrong answer makes the system smarter about you. Every night, your exam strategy re-computes while you sleep.
+            Stop guessing what to revise. Vidhya tells you the three problems that move the needle most for
+            your exam, today. Tomorrow it tells you what's next. Every wrong answer makes the next session smarter for you.
+            Show up, follow the plan, get better. That's it.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <Link to="/" className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/25 inline-flex items-center justify-center gap-1.5">
-              Start Practicing Free <ArrowRight size={14} />
+              Start Free — No Card <ArrowRight size={14} />
             </Link>
             <Link to="/mock-exam" className="px-6 py-3 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm font-semibold">
               Try a Mock Exam
@@ -47,29 +47,37 @@ export default function MarketingLanding() {
         </motion.div>
       </section>
 
-      {/* === STATS STRIP === */}
+      {/* === STUDENT PROMISE STRIP ===
+          v2.5: replaced the architecture-pride strip ("82 concepts mapped, 112
+          prereq edges") with a student-outcome strip. The architecture is real
+          but it's investor language. Students want to know what they get. */}
       <section className="px-4 py-6 bg-surface-900/50 border-y border-surface-800">
-        <div className="max-w-2xl mx-auto grid grid-cols-4 gap-3 text-center">
+        <div className="max-w-2xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
           {[
-            { value: '82', label: 'concepts mapped' },
-            { value: '112', label: 'prereq edges' },
-            { value: '7', label: 'error types' },
-            { value: '6', label: 'cognitive pillars' },
+            { value: '3', label: 'tasks per day, not 30' },
+            { value: '0', label: 'streak guilt, ever' },
+            { value: '∞', label: 'questions, on demand' },
+            { value: '1', label: 'plan you actually follow' },
           ].map(s => (
             <div key={s.label}>
-              <p className="text-xl sm:text-2xl font-black text-surface-100">{s.value}</p>
+              <p className="text-xl sm:text-2xl font-display font-black text-surface-100">{s.value}</p>
               <p className="text-[10px] text-surface-500 uppercase tracking-wide">{s.label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* === HOW IT WORKS === */}
+      {/* === HOW IT WORKS — collapsed by default. v2.5: this is depth-of-craft
+            content for builders/investors who want to see what's under the
+            hood. Students don't need to read it to start. */}
       <section className="px-4 py-10 max-w-2xl mx-auto">
-        <motion.h2 initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-xl font-bold text-surface-100 text-center mb-1">
-          Six pillars that compound
-        </motion.h2>
-        <p className="text-xs text-surface-500 text-center mb-6">Each layer makes the next one smarter</p>
+        <details className="group">
+          <summary className="cursor-pointer list-none text-center mb-6">
+            <motion.h2 initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-xl font-display font-bold text-surface-100 text-center mb-1">
+              For builders &amp; the curious — six pillars under the hood <span className="text-violet-400 group-open:rotate-90 inline-block transition-transform">›</span>
+            </motion.h2>
+            <p className="text-xs text-surface-500">Each layer makes the next one smarter. Click to expand.</p>
+          </summary>
         <div className="space-y-3">
           {[
             {
@@ -88,7 +96,7 @@ export default function MarketingLanding() {
               icon: GitBranch,
               color: 'text-purple-400 bg-purple-500/10',
               title: '3 — Concept Graph',
-              desc: '82 GATE concepts in a prerequisite DAG. When you miss "chain rule," we trace back to find your actual weakness might be "limits."',
+              desc: 'Concepts in a prerequisite DAG, per exam. When you miss "chain rule," we trace back to find your actual weakness might be "limits."',
             },
             {
               icon: Sparkles,
@@ -129,6 +137,7 @@ export default function MarketingLanding() {
             </motion.div>
           ))}
         </div>
+        </details>
       </section>
 
       {/* === DIFFERENTIATION === */}

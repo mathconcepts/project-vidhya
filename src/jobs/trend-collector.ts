@@ -33,7 +33,9 @@ interface TrendSignal {
 // Topic keyword matching
 // ============================================================================
 
-const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+// v2.5: silent 'gate-ma' fallback removed; resolves via exam-store.
+import { resolveDefaultExamId } from '../exams/default-exam';
+const DEFAULT_EXAM_ID = resolveDefaultExamId();
 
 function matchTopics(text: string): string[] {
   const lower = text.toLowerCase();

@@ -24,7 +24,7 @@ import { resolve, warmContentBundle, getBundleStats, type ResolvedContent, type 
 import { recordAttempt } from '@/lib/gbrain/client';
 import {
   Sparkles, Zap, Database, Server, CheckCircle2, XCircle, Loader2, ArrowRight,
-  BookOpen, Target, DollarSign, Clock, GraduationCap,
+  BookOpen, Target, GraduationCap,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -173,13 +173,15 @@ export default function SmartPracticePage() {
           Smart Practice
         </h1>
         <p className="text-xs text-surface-500 mt-1">
-          Content routed through the cheapest matching tier. Watch the cost meter.
+          Pick a topic and difficulty — the right problem comes to you.
         </p>
       </motion.div>
 
-      {/* Bundle stats mini-dash */}
+      {/* Bundle stats mini-dash. v2.5: session-cost meter removed from
+          student view (admin telemetry). Kept the library-size context
+          because students benefit from knowing how much content is on tap. */}
       {bundleStats && (
-        <motion.div variants={fadeInUp} className="grid grid-cols-3 gap-2">
+        <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-2">
           <div className="p-2.5 rounded-xl bg-surface-900 border border-surface-800 text-center">
             <p className="text-lg font-bold text-surface-100">{bundleStats.total_problems}</p>
             <p className="text-[10px] text-surface-500">bundled problems</p>
@@ -187,10 +189,6 @@ export default function SmartPracticePage() {
           <div className="p-2.5 rounded-xl bg-surface-900 border border-surface-800 text-center">
             <p className="text-lg font-bold text-surface-100">{bundleStats.total_explainers}</p>
             <p className="text-[10px] text-surface-500">explainers</p>
-          </div>
-          <div className="p-2.5 rounded-xl bg-surface-900 border border-surface-800 text-center">
-            <p className="text-lg font-bold text-emerald-400">${sessionStats.total_cost_usd.toFixed(4)}</p>
-            <p className="text-[10px] text-surface-500">session cost</p>
           </div>
         </motion.div>
       )}
@@ -263,20 +261,16 @@ export default function SmartPracticePage() {
             exit={{ opacity: 0 }}
             className="space-y-3"
           >
-            {/* Provenance badge */}
-            {sourceMeta && (
-              <div className={clsx('p-3 rounded-xl border flex items-start gap-2', sourceMeta.color)}>
-                <sourceMeta.icon size={14} className="shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide">{sourceMeta.label}</p>
-                    <div className="flex items-center gap-3 text-[10px] shrink-0">
-                      <span className="flex items-center gap-1"><Clock size={10} />{resolved.latency_ms}ms</span>
-                      <span className="flex items-center gap-1"><DollarSign size={10} />{resolved.cost_estimate_usd === 0 ? 'free' : resolved.cost_estimate_usd.toFixed(4)}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs opacity-80 mt-0.5">{sourceMeta.description}</p>
-                </div>
+            {/* Wolfram-verified is the only provenance signal worth surfacing
+                to students — it's a trust marker. All other tiers (bundle,
+                cache, RAG, generated) are admin telemetry and don't help the
+                student learn. Latency + per-problem USD cost stripped per
+                v2.5 frugal-layout principle. Aggregate session cost moved
+                behind the "transparency" expandable below. */}
+            {resolved.source === 'tier-3-wolfram-verified' && (
+              <div className="p-2.5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 flex items-center gap-2 text-emerald-400">
+                <CheckCircle2 size={14} className="shrink-0" />
+                <p className="text-xs font-medium">Computationally verified by Wolfram Alpha</p>
               </div>
             )}
 
@@ -383,24 +377,13 @@ export default function SmartPracticePage() {
         )}
       </AnimatePresence>
 
-      {/* Session stats */}
+      {/* Session stats. v2.5: avg-latency + total-cost stripped (admin
+          telemetry, not student value). Kept the problem count because
+          "you've done N problems this session" is real Compounding evidence. */}
       {sessionStats.problems_served > 0 && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-2">Session</p>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-lg font-bold text-surface-200">{sessionStats.problems_served}</p>
-              <p className="text-[10px] text-surface-500">problems</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-surface-200">{sessionStats.avg_latency_ms}ms</p>
-              <p className="text-[10px] text-surface-500">avg latency</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-emerald-400">${sessionStats.total_cost_usd.toFixed(4)}</p>
-              <p className="text-[10px] text-surface-500">total cost</p>
-            </div>
-          </div>
+        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
+          <p className="text-lg font-bold text-surface-200">{sessionStats.problems_served}</p>
+          <p className="text-[10px] text-surface-500 uppercase tracking-wide">problems this session</p>
         </motion.div>
       )}
     </motion.div>

@@ -1,5 +1,8 @@
 /**
- * PracticePage — Answer a GATE problem with celebration animations.
+ * PracticePage — Answer a problem with celebration animations.
+ *
+ * Exam-agnostic: the problem topic + exam name come from the active
+ * exam adapter (or the URL params), not hardcoded GATE references.
  *
  * Flow: Read problem → Select answer → Submit → Celebration/Encouragement → Next
  */
@@ -38,11 +41,12 @@ interface VerifyResult {
 
 type Phase = 'answering' | 'verifying' | 'result';
 
-const VERIFY_STAGES = [
-  { text: 'Checking knowledge base...', icon: '🔍' },
-  { text: 'Running AI verification...', icon: '🤖' },
-  { text: 'Confirming result...', icon: '✨' },
-];
+// v2.5 (per /plan-ceo-review): students don't learn from watching the AI work.
+// Old code exposed a 3-stage VERIFY_STAGES animation ("Checking knowledge base /
+// Running AI verification / Confirming result") — admin-process spectacle that
+// added latency theater without value. Removed; verifying phase shows a single
+// subtle shimmer for slow verifies (>1.5s) and nothing for fast ones.
+const SLOW_VERIFY_THRESHOLD_MS = 1500;
 
 export default function PracticePage() {
   const { problemId } = useParams<{ problemId: string }>();
@@ -53,7 +57,7 @@ export default function PracticePage() {
   const [phase, setPhase] = useState<Phase>('answering');
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [verifyStageIndex, setVerifyStageIndex] = useState(0);
+  const [showVerifyShimmer, setShowVerifyShimmer] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [message, setMessage] = useState('');
   const [nextProblemId, setNextProblemId] = useState<string | null>(null);
@@ -68,7 +72,7 @@ export default function PracticePage() {
     setVerifyResult(null);
     setShowConfetti(false);
     setErrorDiagnosis(null);
-    setVerifyStageIndex(0);
+    setShowVerifyShimmer(false);
     setLoading(true);
 
     apiFetch<{ problem: Problem }>(`/api/problems/id/${problemId}`)
@@ -97,19 +101,19 @@ export default function PracticePage() {
       .catch(() => {});
   }, [problem, problemId]);
 
-  // Animate verification stages
+  // Show a single subtle shimmer ONLY when verification takes longer than the
+  // SLOW_VERIFY_THRESHOLD_MS budget. Fast verifies show no spinner — instant
+  // result lands as soon as the API resolves.
   useEffect(() => {
     if (phase !== 'verifying') return;
-    const interval = setInterval(() => {
-      setVerifyStageIndex(prev => Math.min(prev + 1, VERIFY_STAGES.length - 1));
-    }, 1500);
-    return () => clearInterval(interval);
+    const t = setTimeout(() => setShowVerifyShimmer(true), SLOW_VERIFY_THRESHOLD_MS);
+    return () => clearTimeout(t);
   }, [phase]);
 
   const handleSubmit = async () => {
     if (!selected || !problem) return;
     setPhase('verifying');
-    setVerifyStageIndex(0);
+    setShowVerifyShimmer(false);
 
     trackEvent('answer_submit', {
       problemId,
@@ -228,7 +232,7 @@ export default function PracticePage() {
           <ChevronLeft size={20} className="text-surface-400" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs text-surface-500">{topicName} | GATE {problem.year} | {problem.marks}M</p>
+          <p className="text-xs text-surface-500">{topicName} | {problem.year} | {problem.marks}M</p>
         </div>
         <span className={clsx(
           'text-[10px] font-medium px-2 py-0.5 rounded-full',
@@ -341,31 +345,16 @@ export default function PracticePage() {
           </motion.button>
         )}
 
-        {phase === 'verifying' && (
+        {phase === 'verifying' && showVerifyShimmer && (
           <motion.div
             key="verifying"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex flex-col items-center gap-3 py-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex justify-center py-4"
           >
-            <div className="flex items-center gap-3">
-              <Loader2 className="animate-spin text-violet-400" size={20} />
-              <span className="text-sm text-surface-400">
-                {VERIFY_STAGES[verifyStageIndex]?.icon} {VERIFY_STAGES[verifyStageIndex]?.text}
-              </span>
-            </div>
-            <div className="flex gap-1.5">
-              {VERIFY_STAGES.map((_, i) => (
-                <div
-                  key={i}
-                  className={clsx(
-                    'w-2 h-2 rounded-full transition-all duration-300',
-                    i <= verifyStageIndex ? 'bg-violet-400' : 'bg-surface-700',
-                  )}
-                />
-              ))}
-            </div>
+            <Loader2 className="animate-spin text-violet-400" size={18} />
           </motion.div>
         )}
 

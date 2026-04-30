@@ -85,13 +85,17 @@ const ICON_MAP: Record<string, React.ElementType> = {
 export function GateHome() {
   const sessionId = useSession();
   const navigate = useNavigate();
+  // v2.5: track whether the visitor is anonymous so we can render the
+  // "New here?" discoverability link to MarketingLanding only for anon users.
+  const [isAnonymous, setIsAnonymous] = useState(true);
 
   // If the user is JWT-authenticated and has an exam profile, they belong on
   // /planned — not on GateHome (which was built for anonymous/guest sessions).
   // Redirect silently on mount so they always land on the right page.
   useEffect(() => {
     import('@/lib/auth/client').then(({ authFetch, getToken, clearToken }) => {
-      if (!getToken()) return; // anonymous user — stay on GateHome
+      if (!getToken()) { setIsAnonymous(true); return; } // anonymous — stay on GateHome
+      setIsAnonymous(false);
       authFetch('/api/student/profile')
         .then(r => {
           if (r.status === 401) { clearToken(); return null; } // stale token
@@ -254,6 +258,18 @@ export function GateHome() {
           className="w-full max-w-md flex flex-col items-center gap-5 text-center"
           initial="hidden" animate="visible" variants={staggerContainer}
         >
+          {/* v2.5: discoverability link for anonymous visitors who landed
+              on /gate via a deep link or referral. Subtle, dismissible by
+              navigating elsewhere. Logged-in users never see it. */}
+          {isAnonymous && (
+            <Link
+              to="/gbrain"
+              className="inline-flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+            >
+              New here? See how Vidhya works <ArrowRight size={11} />
+            </Link>
+          )}
+
           {/* Welcome card on first visit — discovery over setup */}
           {!hasSeenWelcome() && (
             <motion.div variants={fadeInUp} className="w-full text-left">

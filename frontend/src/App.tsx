@@ -1,5 +1,5 @@
 /**
- * GATE Math Practice — 10-route app with AI tutor, auth, and admin.
+ * Vidhya — exam-agnostic adaptive prep app with AI tutor, auth, and admin.
  *
  * Routes:
  *   /              → Home (topic grid)

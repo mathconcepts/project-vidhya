@@ -1,11 +1,11 @@
-# Design System — GATE Math
+# Design System — Vidhya
 
 ## Product Context
-- **What this is:** Mobile-first GATE Engineering Mathematics exam prep app with Study Commander (tells you what to study each day), AI tutor, camera scan, and smart notebook
-- **Who it's for:** GATE exam aspirants (engineering students, 21-28), studying late nights on mobile
-- **Space/industry:** Competitive exam prep (India). Peers: EduRev, Testbook, GradeUp, Unacademy
+- **What this is:** Mobile-first exam-prep platform with Study Commander (tells you what to study each day), AI tutor, camera scan, and smart notebook. Exam-agnostic: GATE, BITSAT, NEET, civil services, or any competitive exam configured via the exam adapter system.
+- **Who it's for:** Competitive-exam aspirants (typically 18-28), studying late nights on mobile
+- **Space/industry:** Competitive exam prep. Peers: EduRev, Testbook, GradeUp, Unacademy
 - **Project type:** Progressive web app, mobile-first SPA
-- **Differentiator:** Study strategist that tells you what to study next — priority engine based on marks weight, weakness, improvement speed, recency, and exam proximity. No other GATE app provides personalized daily study plans.
+- **Differentiator:** Study strategist that tells you what to study next — priority engine based on marks weight, weakness, improvement speed, recency, and exam proximity. No other prep app provides personalized daily study plans across exams.
 
 ## The Memorable Thing (the north star)
 **Compounding.** Every rep adds to the next. What you cracked in January is still with you in March. The visual system serves *this one promise* — substantial, journal-like, time-aware. Not gamified-warm, not techy-flashy. Real knowledge work that compounds.
@@ -33,7 +33,7 @@ Every typographic, color, and spacing decision below traces back to "does this f
 - **Background:** `#0a0f1a` (deep navy-black)
 - **Surfaces:** `#111827` (surface-1), `#1f2937` (surface-2), `#374151` (surface-3)
 - **Primary accent (mastery):** `#10b981` (emerald) — correct answers, mastered concepts, primary CTA. Functional.
-- **Signature (AI / Tutor / Study Plan):** `#a78bfa` (soft violet) — RESERVED for the tutor surface, the daily study plan card, and study-commander suggestions. This is GATE Math's color; no other surface uses it. Violet because no other GATE prep app uses it; pairs naturally with Fraunces serif on dark navy; signals "thoughtful guidance" rather than alarm.
+- **Signature (AI / Tutor / Study Plan):** `#a78bfa` (soft violet) — RESERVED for the tutor surface, the daily study plan card, and study-commander suggestions. This is Vidhya's signature color; no other surface uses it. Violet because no incumbent exam-prep app uses it; pairs naturally with Fraunces serif on dark navy; signals "thoughtful guidance" rather than alarm.
 - **Warning/error only:** `#ef4444` (error), `#f59e0b` (warning) — used for system errors and timer running out, NOT as decorative accent. Amber demoted from "streaks/urgency" because streaks were removed in v2.3 declutter.
 - **Text:** `#f9fafb` (primary), `#d1d5db` (secondary), `#9ca3af` (muted), `#6b7280` (dim)
 - **Soft variants:** Emerald and violet each have a 15% opacity background variant for badges, alerts, soft buttons. Warning/error stay solid.
@@ -117,7 +117,7 @@ Every typographic, color, and spacing decision below traces back to "does this f
 
 ## App Declutter Rules
 - **Mental model:** Anytime help portal, not a test center. Tutor is always one tap away via FAB.
-- **Header:** 48px height, "G" logo badge only (no "GATE Math" text), streak + user avatar right.
+- **Header:** 48px height, "V" logo badge only (no product name text), streak + user avatar right.
 - **Content padding:** `px-4 pt-2 pb-4` — saves 8px dead space at top of every page.
 - **Progressive disclosure:** Collapse by default, expand on demand. ProgressPage shows top 3 topics; NotebookPage hides topic summary grid.
 - **No dead ends:** Every terminal state (all done, free study day, celebration) links to the tutor.
@@ -132,7 +132,7 @@ Every typographic, color, and spacing decision below traces back to "does this f
 | 2026-03-28 | Dark-first with emerald/amber/sky | Late-night study context, emerald = mastery/success, amber = urgency/streaks, sky = AI/focus |
 | 2026-03-28 | 6-tab nav (added Scan + Notebook) | Camera input and structured notebook are the key differentiators |
 | 2026-03-28 | Exam Readiness Score | Single motivating metric that goes beyond "problems solved" |
-| 2026-04-04 | Dark blog (unified brand) | Every GATE prep site has white blogs. Dark stands out, feels premium, matches app. 11.5:1 contrast ratio exceeds WCAG AAA |
+| 2026-04-04 | Dark blog (unified brand) | Every exam-prep site has white blogs. Dark stands out, feels premium, matches app. 11.5:1 contrast ratio exceeds WCAG AAA |
 | 2026-04-04 | Single-column feed layout | Card grids waste space on mobile. Feed is scannable, each post gets enough room to read |
 | 2026-04-04 | CSS-only blog animations | Zero JS runtime cost. scroll-driven animations via CSS. Progressive enhancement for Safari |
 | 2026-04-04 | Home declutter — removed welcome banner, consolidated CTAs | Topic grid is the product. CTAs should support, not compete with content |

@@ -483,7 +483,7 @@ export default function PlannedSessionPage() {
   // ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20">
+    <div className="min-h-screen text-surface-100 pb-20">
       <DemoBanner />
       <div className="max-w-3xl mx-auto px-4 pt-8">
 
@@ -497,20 +497,20 @@ export default function PlannedSessionPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-display font-semibold tracking-tight mb-1">Today's plan</h1>
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-surface-400">
                 Tell us how long you have. We'll give you the three things that move
                 your score most — in order. Show up, follow it, get better.
               </p>
             </div>
             <Link
               to="/exam-profile"
-              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 transition-colors"
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-xs text-surface-300 transition-colors"
               title="Register the exams you're preparing for"
             >
               <Settings className="w-3.5 h-3.5" />
               Exam profile
               {profile && (
-                <span className="ml-1 px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono">
+                <span className="ml-1 px-1.5 py-0.5 rounded bg-surface-800 text-surface-400 text-[10px] font-mono">
                   {profile.exams.length}
                 </span>
               )}
@@ -549,21 +549,21 @@ export default function PlannedSessionPage() {
             className="mb-6"
           >
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500">
                 <Bookmark className="inline w-3 h-3 mr-1 -mt-0.5" />
                 Your templates
               </label>
-              <span className="text-[10px] text-zinc-600">tap to recall</span>
+              <span className="text-[10px] text-surface-600">tap to recall</span>
             </div>
             <div className="flex gap-2 flex-wrap">
               {templates.map((tpl) => (
-                <div key={tpl.id} className="group flex items-stretch bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden hover:border-purple-500/30 transition-colors">
+                <div key={tpl.id} className="group flex items-stretch bg-surface-900 border border-surface-800 rounded-lg overflow-hidden hover:border-purple-500/30 transition-colors">
                   <button
                     onClick={() => useTemplate(tpl)}
                     className="px-3 py-2 text-left hover:bg-purple-500/5 transition-colors"
                   >
-                    <div className="text-sm font-semibold text-zinc-100">{tpl.name}</div>
-                    <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                    <div className="text-sm font-semibold text-surface-100">{tpl.name}</div>
+                    <div className="text-[10px] text-surface-500 font-mono mt-0.5">
                       {tpl.minutes_available}min · {
                         tpl.exam_selection === 'all' ? 'all exams' :
                         tpl.exam_selection === 'primary' ? 'primary' :
@@ -574,7 +574,7 @@ export default function PlannedSessionPage() {
                   </button>
                   <button
                     onClick={() => deleteTemplateFn(tpl.id)}
-                    className="px-2 border-l border-zinc-800 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400 text-zinc-600 transition-all"
+                    className="px-2 border-l border-surface-800 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400 text-surface-600 transition-all"
                     title="Delete template"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -594,11 +594,11 @@ export default function PlannedSessionPage() {
             className="mb-6"
           >
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500">
                 <Sparkles className="inline w-3 h-3 mr-1 -mt-0.5" />
                 {templates.length === 0 ? 'Try a starter template' : 'More presets'}
               </label>
-              <span className="text-[10px] text-zinc-600">tap to adopt + run</span>
+              <span className="text-[10px] text-surface-600">tap to adopt + run</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {presets.filter(p => !p.adopted).slice(0, 6).map((preset) => (
@@ -606,15 +606,15 @@ export default function PlannedSessionPage() {
                   key={preset.slug}
                   onClick={() => adoptPreset(preset)}
                   disabled={loading}
-                  className="px-3 py-2 rounded-lg bg-zinc-900/40 border border-dashed border-zinc-700 hover:border-violet-500/40 hover:bg-violet-500/5 text-left transition-colors disabled:opacity-50"
+                  className="px-3 py-2 rounded-lg bg-surface-900/40 border border-dashed border-surface-700 hover:border-violet-500/40 hover:bg-violet-500/5 text-left transition-colors disabled:opacity-50"
                 >
-                  <div className="text-sm font-semibold text-zinc-100">{preset.name}</div>
-                  <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                  <div className="text-sm font-semibold text-surface-100">{preset.name}</div>
+                  <div className="text-[10px] text-surface-500 font-mono mt-0.5">
                     {preset.minutes_available}min · {
                       preset.exam_selection === 'all' ? 'all exams' : 'primary'
                     }
                   </div>
-                  <div className="text-[10px] text-zinc-600 mt-1 leading-tight">{preset.description}</div>
+                  <div className="text-[10px] text-surface-600 mt-1 leading-tight">{preset.description}</div>
                 </button>
               ))}
             </div>
@@ -629,7 +629,7 @@ export default function PlannedSessionPage() {
             animate="visible"
             className="mb-8"
           >
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 mb-3">
               How many minutes do you have?
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
@@ -641,14 +641,14 @@ export default function PlannedSessionPage() {
                     'px-4 py-3 rounded-lg border text-left transition-colors',
                     minutes === p.minutes
                       ? 'bg-violet-500/15 border-violet-500/40 text-violet-100'
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700',
+                      : 'bg-surface-900 border-surface-800 text-surface-300 hover:border-surface-700',
                   )}
                 >
                   <div className="text-sm font-semibold flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     {p.label}
                   </div>
-                  <div className="text-xs text-zinc-500 mt-0.5">{p.subtitle}</div>
+                  <div className="text-xs text-surface-500 mt-0.5">{p.subtitle}</div>
                 </button>
               ))}
             </div>
@@ -668,13 +668,13 @@ export default function PlannedSessionPage() {
               <button
                 onClick={fetchPlan}
                 disabled={loading}
-                className="flex-1 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-white font-semibold transition-colors disabled:opacity-50"
               >
                 {loading ? 'Planning…' : 'Generate my plan'}
               </button>
               <button
                 onClick={() => setShowSaveTemplate(v => !v)}
-                className="px-4 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-sm transition-colors"
+                className="px-4 py-3 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-surface-300 text-sm transition-colors"
                 title="Save these settings as a template"
               >
                 <Bookmark className="w-4 h-4 inline" />
@@ -689,7 +689,7 @@ export default function PlannedSessionPage() {
                 animate="visible"
                 className="mt-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/20"
               >
-                <label className="block text-xs text-zinc-400 mb-2">
+                <label className="block text-xs text-surface-400 mb-2">
                   Name this template ({minutes} min
                   {profile && profile.exams.length >= 2 ? ', all exams' :
                    profile && profile.exams.length === 1 ? ', primary exam' : ''})
@@ -702,13 +702,13 @@ export default function PlannedSessionPage() {
                     onChange={(e) => setTemplateName(e.target.value)}
                     placeholder="e.g. Morning commute"
                     maxLength={60}
-                    className="flex-1 px-3 py-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm"
+                    className="flex-1 px-3 py-2 rounded bg-surface-900 border border-surface-800 text-surface-100 text-sm"
                     onKeyDown={(e) => { if (e.key === 'Enter') saveTemplate(); }}
                   />
                   <button
                     onClick={saveTemplate}
                     disabled={!templateName.trim() || savingTemplate}
-                    className="px-3 py-2 rounded bg-purple-500 hover:bg-purple-400 text-zinc-950 text-sm font-semibold disabled:opacity-50"
+                    className="px-3 py-2 rounded bg-purple-500 hover:bg-purple-400 text-white text-sm font-semibold disabled:opacity-50"
                   >
                     {savingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   </button>
@@ -771,11 +771,9 @@ export default function PlannedSessionPage() {
               {/* Headline */}
               <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">
                 <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-1">Your plan</div>
-                <div className="text-lg font-semibold text-zinc-100 mb-2">{plan.headline}</div>
-                <div className="flex gap-3 text-xs text-zinc-400">
-                  <span>{plan.budget.context} budget</span>
-                  <span>·</span>
-                  <span>{plan.strategy.gbrain_bias.replace(/_/g, ' ')} bias</span>
+                <div className="text-lg font-semibold text-surface-100 mb-2">{plan.headline}</div>
+                <div className="flex gap-3 text-xs text-surface-400">
+                  <span>{plan.budget.context} session</span>
                   <span>·</span>
                   <span>{plan.total_estimated_minutes} min total</span>
                 </div>
@@ -798,7 +796,7 @@ export default function PlannedSessionPage() {
                           ? `All done. ${total} actions complete today.`
                           : `${doneCount} of ${total} done. ${total - doneCount} to go.`}
                       </div>
-                      <div className="mt-1.5 h-1 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="mt-1.5 h-1 rounded-full bg-surface-800 overflow-hidden">
                         <div
                           className="h-full bg-emerald-500 transition-all duration-500"
                           style={{ width: `${pct}%` }}
@@ -830,8 +828,8 @@ export default function PlannedSessionPage() {
                         className={clsx(
                           'p-4 rounded-lg border transition-colors',
                           doneState === 'done'    && 'bg-emerald-500/5 border-emerald-500/30',
-                          doneState === 'skipped' && 'bg-zinc-900/50 border-zinc-800 opacity-60',
-                          doneState === 'pending' && !isNext && 'bg-zinc-900 border-zinc-800',
+                          doneState === 'skipped' && 'bg-surface-900/50 border-surface-800 opacity-60',
+                          doneState === 'pending' && !isNext && 'bg-surface-900 border-surface-800',
                           doneState === 'pending' && isNext && 'bg-violet-500/5 border-violet-400/40 ring-1 ring-violet-400/20',
                         )}
                       >
@@ -841,37 +839,37 @@ export default function PlannedSessionPage() {
                           </div>
                         )}
                       <div className="flex items-start gap-3">
-                        <div className="text-xs text-zinc-500 font-mono w-6 pt-1">{i + 1}</div>
+                        <div className="text-xs text-surface-500 font-mono w-6 pt-1">{i + 1}</div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className={clsx('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border', meta.color)}>
                               <Icon className="w-3 h-3" />
                               {meta.label}
                             </span>
-                            <span className="text-xs text-zinc-500">~{action.estimated_minutes} min</span>
+                            <span className="text-xs text-surface-500">~{action.estimated_minutes} min</span>
                           </div>
-                          <div className="text-sm font-semibold text-zinc-100 mb-1">{action.title}</div>
-                          <div className="text-xs text-zinc-400 leading-relaxed">{action.rationale}</div>
+                          <div className="text-sm font-semibold text-surface-100 mb-1">{action.title}</div>
+                          <div className="text-xs text-surface-400 leading-relaxed">{action.rationale}</div>
 
                           {/* Controls */}
                           {doneState === 'pending' && (
                             <div className="mt-3 flex gap-2 flex-wrap">
                               <button
                                 onClick={() => startAction(action)}
-                                className="px-3 py-1.5 rounded bg-violet-500 hover:bg-violet-400 text-zinc-950 text-xs font-semibold transition-colors inline-flex items-center gap-1"
+                                className="px-3 py-1.5 rounded bg-violet-500 hover:bg-violet-400 text-white text-xs font-semibold transition-colors inline-flex items-center gap-1"
                               >
                                 <Play className="w-3 h-3" /> Start
                                 <ChevronRight className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => markDone(action.id, true)}
-                                className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs transition-colors"
+                                className="px-3 py-1.5 rounded bg-surface-800 hover:bg-surface-700 text-surface-200 text-xs transition-colors"
                               >
                                 Mark done
                               </button>
                               <button
                                 onClick={() => markDone(action.id, false)}
-                                className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs transition-colors"
+                                className="px-3 py-1.5 rounded bg-surface-800 hover:bg-surface-700 text-surface-400 text-xs transition-colors"
                               >
                                 Skip
                               </button>
@@ -885,7 +883,7 @@ export default function PlannedSessionPage() {
                               </div>
                               {(action.kind === 'practice' || action.kind === 'micro-mock' || action.kind === 'spaced-review') && (
                                 <div className="flex gap-2 items-center text-xs">
-                                  <span className="text-zinc-500">Attempts:</span>
+                                  <span className="text-surface-500">Attempts:</span>
                                   <input
                                     type="number" min={0} max={action.content_hint.count}
                                     value={outcome?.attempts ?? 0}
@@ -894,9 +892,9 @@ export default function PlannedSessionPage() {
                                       parseInt(e.target.value, 10) || 0,
                                       outcome?.correct ?? 0,
                                     )}
-                                    className="w-14 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-100 font-mono"
+                                    className="w-14 px-2 py-1 rounded bg-surface-800 border border-surface-700 text-surface-100 font-mono"
                                   />
-                                  <span className="text-zinc-500">Correct:</span>
+                                  <span className="text-surface-500">Correct:</span>
                                   <input
                                     type="number" min={0} max={outcome?.attempts ?? action.content_hint.count}
                                     value={outcome?.correct ?? 0}
@@ -905,14 +903,14 @@ export default function PlannedSessionPage() {
                                       outcome?.attempts ?? 0,
                                       parseInt(e.target.value, 10) || 0,
                                     )}
-                                    className="w-14 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-100 font-mono"
+                                    className="w-14 px-2 py-1 rounded bg-surface-800 border border-surface-700 text-surface-100 font-mono"
                                   />
                                 </div>
                               )}
                             </div>
                           )}
                           {doneState === 'skipped' && (
-                            <div className="mt-3 flex items-center gap-2 text-xs text-zinc-500">
+                            <div className="mt-3 flex items-center gap-2 text-xs text-surface-500">
                               <XCircle className="w-3.5 h-3.5" />
                               <span>Skipped</span>
                             </div>
@@ -930,14 +928,14 @@ export default function PlannedSessionPage() {
                 <button
                   onClick={finishSession}
                   disabled={submittingCompletion}
-                  className="flex-1 px-4 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {submittingCompletion ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                   Finish & log this session
                 </button>
                 <button
                   onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
-                  className="px-4 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 transition-colors"
+                  className="px-4 py-3 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-surface-300 transition-colors"
                 >
                   Reset
                 </button>
@@ -957,13 +955,13 @@ export default function PlannedSessionPage() {
                 <CheckCircle2 className="w-9 h-9 text-emerald-400" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Session logged</h2>
-              <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
+              <p className="text-sm text-surface-400 max-w-md mx-auto mb-6">
                 Your outcomes feed into the next plan — so the more sessions you complete,
                 the better your recommendations get.
               </p>
               <button
                 onClick={() => { setPlan(null); setCompleted(false); setOutcomes({}); }}
-                className="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-zinc-950 font-semibold text-sm transition-colors"
+                className="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white font-semibold text-sm transition-colors"
               >
                 Plan another session
               </button>

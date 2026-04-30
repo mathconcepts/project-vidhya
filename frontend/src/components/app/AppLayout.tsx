@@ -46,7 +46,7 @@ export function AppLayout() {
       )}>
         <a href="/" className="flex items-center gap-2.5 min-w-[44px] min-h-[44px]">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-            <span className="text-white font-black text-sm">G</span>
+            <span className="text-white font-black text-sm">V</span>
           </div>
           <span className="font-bold text-white text-base tracking-tight sr-only">Vidhya</span>
         </a>

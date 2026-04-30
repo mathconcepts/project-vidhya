@@ -304,11 +304,14 @@ export function Home() {
 
           <motion.div variants={fadeInUp} className="w-full">
             <motion.button
-              onClick={() => { trackEvent('one_thing_onboard'); navigate('/planned'); }}
+              onClick={() => {
+                trackEvent('one_thing_onboard');
+                navigate(isAnonymous ? '/sign-in' : '/planned');
+              }}
               className="w-full h-11 rounded-[10px] bg-emerald-500 text-white text-[15px] font-semibold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
               whileTap={{ scale: 0.97 }}
             >
-              Build my plan
+              {isAnonymous ? 'Sign in to get started' : 'Build my plan'}
             </motion.button>
           </motion.div>
         </motion.div>
@@ -613,11 +616,9 @@ function TopicGrid({ topics }: { topics: Topic[] }) {
                 <p className="text-sm font-semibold text-surface-200 leading-tight">{topic.name}</p>
                 <p className="text-xs text-surface-500 mt-0.5">{topic.problemCount} problems</p>
               </div>
-              {topic.problemCount > 0 && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 shrink-0">
-                  NEW
-                </span>
-              )}
+              <span className="text-[10px] font-mono text-surface-600 shrink-0">
+                {topic.problemCount}
+              </span>
             </Link>
           </motion.div>
         );

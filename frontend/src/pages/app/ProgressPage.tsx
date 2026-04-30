@@ -231,7 +231,7 @@ export default function ProgressPage() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-surface-200">Smart Practice</p>
-            <p className="text-xs text-surface-500">Four-tier cost-optimized delivery</p>
+            <p className="text-xs text-surface-500">Adaptive problems matched to your weak areas</p>
           </div>
           <ChevronRight size={14} className="text-surface-600 group-hover:text-violet-400 transition-colors" />
         </Link>

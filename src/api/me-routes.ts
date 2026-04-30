@@ -214,13 +214,13 @@ async function handleCompounding(req: ParsedRequest, res: ServerResponse): Promi
   const auth = await requireAuth(req, res);
   if (!auth) return; // requireAuth sent 401
 
-  const user = getUserById(auth.userId);
+  const user = getUserById(auth.user.id);
   if (!user) {
     return sendJSON(res, { should_show: false, headline: '' });
   }
 
   // Pull the student model for mastery + attempt history.
-  const model = getOrCreateStudentModel(auth.userId);
+  const model = getOrCreateStudentModel(auth.user.id);
   if (!model) {
     return sendJSON(res, { should_show: false, headline: '' });
   }

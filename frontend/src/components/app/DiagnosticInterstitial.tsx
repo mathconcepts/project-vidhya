@@ -97,7 +97,7 @@ export function DiagnosticInterstitial({ topStrength, biggestGap, onContinue }: 
         Skip <X size={12} />
       </button>
 
-      {step === 0 && <Confetti />}
+      {step === 0 && <Confetti trigger={true} />}
 
       <AnimatePresence mode="wait">
         <motion.div

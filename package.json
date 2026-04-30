@@ -21,6 +21,8 @@
     "dev": "tsx watch src/gate-server.ts",
     "dev:server": "tsx watch src/gate-server.ts",
     "test": "vitest run",
+    "test:content": "vitest run src/content/ src/verification/ --reporter=verbose",
+    "test:content:watch": "vitest src/content/ src/verification/",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",

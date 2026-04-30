@@ -152,6 +152,13 @@ export default function TeachingDashboardPage() {
               Cohort mastery: {Math.round(nextClass.cohort_avg_mastery * 100)}% across {nextClass.cohort_size} students
             </p>
           )}
+          {/* v4.0 P7: link to weekly cohort brief */}
+          <a
+            href="/teaching/brief"
+            className="inline-flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300 mt-1 font-medium"
+          >
+            This week's brief →
+          </a>
         </div>
         <button
           onClick={refresh}

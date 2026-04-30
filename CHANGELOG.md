@@ -4,6 +4,59 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.0.0] - 2026-04-30 — Persona delight + retention architecture
+
+**Operator action:** none for runtime. Email surface is now branded "Vidhya" (was leaking "GATE Math" from `src/jobs/retention-engine.ts`); set `FROM_EMAIL` and `BASE_URL` env vars if you want to override the defaults in `src/lib/brand.ts`. Frontend test scripts added — run `cd frontend && npm install && npm test` to enable the new component test suite.
+
+### What changed for users
+
+- **Streak appears on Home.** CompoundingCard's "streak: coming soon" placeholder is replaced with the live count from `GET /api/streak/:id`. Glance at Home and see "7-day streak" right next to your mastery ring. (P2)
+- **Sessions end with closure, not a void.** Finishing a planned session shows a 5-second screen with what you covered + tomorrow's first priority before navigating Home. Headline rotates from a 6-variant array — no mechanical template. Respects `prefers-reduced-motion` (manual Continue, no auto-navigate). (P3)
+- **Diagnostic results feel like the system understands you.** A 3-step interstitial reveals your top strength (with confetti, the only place confetti fires per design system rules), your biggest gap, and "your plan is ready" before navigating to /planned. Reduced-motion users get manual continue per step. (P4)
+- **Returning students feel remembered.** Lapsed for 2+ days? Home shows: "Linear Algebra is still here when you're ready. It's been 4 days. Nothing's changed but the date." Personalized from the actual weak concept — never the AI-slop "Welcome back". Account-age guard prevents the card firing for users who never practiced in the first place. (P5)
+- **Weekly Digest is discoverable.** A chip on Home Mon/Tue surfaces the digest at /digest (the best narrative the product produces, previously orphaned). Dismissible per ISO week. (P6)
+- **Teachers get a weekly cohort brief.** New page at /teaching/brief showing cohort mastery, week-over-week delta, top performer, students-needing-attention, and one suggested action. Backed by `/api/teaching/weekly-brief` which uses Promise.all to load the full cohort in <100ms. Snapshot key includes a sha256 of the sorted roster so cohort changes don't miscompute delta. (P7)
+- **Anonymous visitors can try a real problem.** MarketingLanding now renders one GATE problem inline — answer it, get instant feedback, see a "Create your free plan" CTA. No auth required. The first problem is the most memorable moment in any student's journey with a learning product. (P8)
+- **Emails finally say Vidhya.** All 5 templates (welcome day-0/3/7, streak reminder, weekly digest) rebranded. `welcome_day3` CTA now links to `/planned` (was `/`). FROM_EMAIL and BASE_URL centralised in `src/lib/brand.ts`. (P1)
+
+### What changed for engineers
+
+- New module `src/lib/brand.ts` — single source of truth for `BRAND_NAME`, `FROM_EMAIL`, `BASE_URL`. The next rebrand is a one-file edit. (Q2)
+- New hook `frontend/src/hooks/useDismissible.ts` — `{ dismissed, dismiss }` per `(key, ttlHours)`. Used by CompoundingCard, DigestChip, WelcomeBackCard. Failure-soft when localStorage is unavailable. (Q1)
+- 8 new components on the frontend: `DigestChip`, `SessionEndScreen`, `DiagnosticInterstitial`, `WelcomeBackCard`, `StaticSampleProblem`, `WeeklyTeacherBriefPage`, plus refactored `CompoundingCard` and instrumented `Home`/`PlannedSessionPage`/`DiagnosticPage`/`MarketingLanding`/`TeachingDashboardPage`.
+- New backend endpoint `GET /api/teaching/weekly-brief` in `src/api/teaching-routes.ts`. Auth-gated to `teacher` role; aggregates over `teacher.teacher_of[]` via `Promise.all(getOrCreateStudentModel)`; persists weekly snapshots in `.data/teacher-brief-snapshots.json` keyed by `teacher_id + ISO_week + sha256(sorted teacher_of[])`. The fingerprint key means a roster change creates a fresh snapshot rather than miscomputing delta against a different cohort.
+- Frontend test infrastructure bootstrapped — `vitest` + `@testing-library/react` + `jsdom`. Run with `cd frontend && npm install && npm test`. 5 test files committed (`useDismissible.test.ts`, `WelcomeBackCard.test.tsx`, `DigestChip.test.tsx`).
+- Backend tests added: `src/__tests__/unit/lib/brand.test.ts` (6 tests, env-fallback contract) and `src/__tests__/unit/jobs/retention-engine-templates.test.ts` (15 tests, brand regression guard for every template).
+- 23 `trackEvent` calls instrumenting all 8 features (closure_screen_viewed, welcome_back_shown/clicked/dismissed, digest_chip_shown/clicked/dismissed, sample_problem_attempted/converted, teacher_brief_opened, etc.) so every retention feature can be measured and falsified.
+- New static asset module `frontend/src/data/marketing-samples.ts` — 3 hand-verified GATE Engineering Mathematics problems for the anonymous try-one experience.
+
+### Persona journey map (post-v4.0)
+
+```
+ANONYMOUS                NEW STUDENT              ACTIVE STUDENT
+  ↓ MarketingLanding       ↓ OnboardPage            ↓ Home
+  + Try one problem        DiagnosticPage           + Live streak (P2)
+  inline (P8)              + 3-step interstitial    + DigestChip Mon-Tue (P6)
+  No auth wall             celebrating result (P4)  + CompoundingCard
+
+LAPSED STUDENT (2d+)     TEACHER                  OWNER/ADMIN
+  ↓ /planned                ↓ TeachingDashboard      ↓ FounderDashboard
+  + WelcomeBackCard         + "This week's brief →"  Email surface
+  with personalized copy    + WeeklyTeacherBriefPage rebranded (P1)
+  + account-age guard (P5)  page (P7)
+  
+  Session ends: SessionEndScreen with summary + tomorrow priority (P3)
+```
+
+### What we deliberately deferred
+
+- **MilestoneCard (P9):** "first concept mastered", "10th problem solved", etc. — defer to v4.1. The current 8 features cover the high-leverage moments; milestone celebration can be added once we see retention data.
+- **Personalized welcome email chain (P10):** day-3/day-7 emails currently use generic copy. Personalization with real progress data deferred to follow-up.
+- **Parent portal:** scaffolded in `src/auth/types.ts` but not built. Separate initiative.
+- **Push notifications:** `Settings` UI exposes the toggle but the backend FCM integration is not implemented.
+- **Real-time teacher alerts:** WebSocket/SSE for "student just struggled" notifications. Deferred — the weekly brief covers the cadence cohort owners actually want.
+- **A/B testing of delight copy variants:** requires feature-flag infrastructure not in scope.
+
 ## [3.0.0] - 2026-04-30 — Exam-agnostic structural cleanup (Phase 3)
 
 **Operator action:** none for runtime. CI/IDE caches that index `frontend/src/pages/gate/*` paths should be invalidated — the directory is now `frontend/src/pages/app/` and the components dir is `frontend/src/components/app/`. No public URL or API contract changed.

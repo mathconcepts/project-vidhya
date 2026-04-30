@@ -12,6 +12,7 @@ import { trackEvent } from '@/lib/analytics';
 import { Clock, ChevronRight, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
+import { DiagnosticInterstitial } from '@/components/app/DiagnosticInterstitial';
 
 interface DiagnosticQuestion {
   index: number;
@@ -39,6 +40,7 @@ export default function DiagnosticPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [interstitial, setInterstitial] = useState<{ topStrength: string; biggestGap: string } | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load questions
@@ -122,7 +124,24 @@ export default function DiagnosticPage() {
         total: questions.length,
       });
 
-      navigate('/');
+      // P4: Compute top strength + biggest gap from scores, show interstitial
+      // before navigating. If we can't determine either (e.g., all wrong or
+      // all right), skip the interstitial and navigate straight through.
+      const correctTopics = questions
+        .filter(q => answers[q.topic]?.correct)
+        .map(q => q.topic_name);
+      const wrongTopics = questions
+        .filter(q => !answers[q.topic]?.correct)
+        .map(q => q.topic_name);
+
+      if (correctTopics.length > 0 && wrongTopics.length > 0) {
+        setInterstitial({
+          topStrength: correctTopics[0],
+          biggestGap: wrongTopics[0],
+        });
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       // Retry on error — save locally
       console.error('Failed to save diagnostic:', err);
@@ -299,6 +318,18 @@ export default function DiagnosticPage() {
           </button>
         </motion.div>
       </AnimatePresence>
+
+      {/* P4: 3-step interstitial overlay shown after submit, before navigating home */}
+      {interstitial && (
+        <DiagnosticInterstitial
+          topStrength={interstitial.topStrength}
+          biggestGap={interstitial.biggestGap}
+          onContinue={() => {
+            setInterstitial(null);
+            navigate('/');
+          }}
+        />
+      )}
     </div>
   );
 }

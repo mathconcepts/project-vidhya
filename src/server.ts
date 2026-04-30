@@ -46,7 +46,10 @@ import { contentLibraryRoutes } from './api/content-library-routes';
 import { contentStudioRoutes } from './api/content-studio-routes';
 import { operatorRoutes } from './api/operator-routes';
 import { notebookRoutes as smartNotebookRoutes } from './api/notebook-insight-routes';
-import { neetPaperRoutes } from './api/neet-paper-routes';
+// neetPaperRoutes import removed in v4.0.2: introduced speculatively in
+// f577c92 but the routes file was never created. // @ts-nocheck above hid
+// the broken import from tsc; tsx caught it at runtime, blocking the
+// v4.0 Render deploy. Reintroduce when src/api/neet-paper-routes.ts ships.
 import { examRoutes } from './api/exam-routes';
 import { examGroupRoutes } from './api/exam-group-routes';
 import { meRoutes } from './api/me-routes';
@@ -232,9 +235,7 @@ for (const route of contentStudioRoutes) {
 for (const route of operatorRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
-for (const route of neetPaperRoutes) {
-  registerRoute(route.method, route.path, route.handler);
-}
+// neetPaperRoutes registration removed in v4.0.2 (see import comment above).
 for (const route of smartNotebookRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }

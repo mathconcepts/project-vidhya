@@ -55,6 +55,45 @@ Intents:
 Fail closed — if ambiguous, return explain-concept.`;
 
 /**
+ * Startup warning when VIDHYA_INTENT_CLASSIFIER=llm is set but no LLM keys are
+ * configured. Without this, operators silently fall back to rule-based
+ * classification thinking they got the smarter LLM path. Per ER-D-P2B.
+ *
+ * Idempotent: only warns once per process. Call from server bootstrap.
+ */
+let _llmWarningFired = false;
+export function warnIfLlmClassifierStubActive(env: Record<string, string | undefined> = process.env): void {
+  if (_llmWarningFired) return;
+  if (env.VIDHYA_INTENT_CLASSIFIER !== 'llm') return;
+  const hasKey =
+    !!env.GEMINI_API_KEY ||
+    !!env.ANTHROPIC_API_KEY ||
+    !!env.OPENAI_API_KEY ||
+    !!env.VIDHYA_LLM_PRIMARY_KEY;
+  if (!hasKey) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      'WARN: VIDHYA_INTENT_CLASSIFIER=llm but no LLM keys found ' +
+        '(GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY / VIDHYA_LLM_PRIMARY_KEY). ' +
+        'Falling back to rule-based classifier.',
+    );
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(
+      'WARN: VIDHYA_INTENT_CLASSIFIER=llm is set, but the LLM classifier path ' +
+        'is currently a no-op stub. Rule-based classification is in effect. ' +
+        'See src/content/intent-classifier.ts:_classifyByLLM.',
+    );
+  }
+  _llmWarningFired = true;
+}
+
+/** Test-only helper: reset the warning idempotency flag between tests. */
+export function _resetLlmWarningForTest(): void {
+  _llmWarningFired = false;
+}
+
+/**
  * Async entry. Route to LLM if configured; fall back to rules on any
  * error, missing key, or timeout. Safe to call in a hot path.
  */

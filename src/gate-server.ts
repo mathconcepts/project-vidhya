@@ -493,6 +493,14 @@ registerRoute('GET', '/health', async (_req, res) => {
 
   info.features = computeFeatureFlags();
 
+  // Content cascade health: tier-miss rate over the last 24h.
+  // Surfaces the content router's primary failure mode (no tier produced
+  // content) without needing the admin telemetry dashboard.
+  try {
+    const { getTierMissRate24h } = await import('./content/telemetry');
+    info.content = getTierMissRate24h();
+  } catch { /* telemetry unavailable; non-fatal */ }
+
   // DB ping (only if configured)
   if (process.env.DATABASE_URL) {
     try {
@@ -805,6 +813,12 @@ Solve carefully:`;
       }
     });
   });
+
+  // Surface common silent misconfigurations at startup (per ER-D-P2B).
+  try {
+    const { warnIfLlmClassifierStubActive } = await import('./content/intent-classifier');
+    warnIfLlmClassifierStubActive();
+  } catch { /* non-fatal */ }
 
   server.listen(port, '0.0.0.0', () => {
     console.log(`

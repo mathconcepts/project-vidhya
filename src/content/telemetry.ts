@@ -122,6 +122,31 @@ export function recordTelemetry(rawEvent: any): { accepted: boolean } {
   catch { return { accepted: false }; }
 }
 
+/**
+ * Tier-miss rate over the last 24 hours.
+ * Returned as a fraction in [0, 1]; null when there are no events at all.
+ *
+ * Wired into /health to make content cascade health observable without a dashboard.
+ * Per ER-D4 + Pass 8 of PLAN-content-module-dx.md.
+ */
+export function getTierMissRate24h(): { miss_rate: number | null; total_events: number } {
+  const state = loadState();
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const buckets = [state.daily[today], state.daily[yesterday]].filter(Boolean) as DailyBucket[];
+
+  if (buckets.length === 0) return { miss_rate: null, total_events: 0 };
+
+  let total = 0;
+  let misses = 0;
+  for (const b of buckets) {
+    total += b.total_events;
+    misses += b.by_source['miss'] || 0;
+  }
+  if (total === 0) return { miss_rate: null, total_events: 0 };
+  return { miss_rate: misses / total, total_events: total };
+}
+
 export function getTelemetrySummary() {
   const state = loadState();
   const days = Object.keys(state.daily).sort();

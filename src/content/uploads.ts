@@ -137,6 +137,7 @@ export function createUpload(input: CreateUploadInput): CreateUploadResult {
   const store = _loadStore();
   store.uploads.push(record);
   _saveStore(store);
+  _bumpCount(input.user_id, +1);
 
   return { ok: true, record };
 }
@@ -174,7 +175,9 @@ export function deleteUpload(user_id: string, upload_id: string): boolean {
   try { if (existsSync(blobPath)) unlinkSync(blobPath); } catch { /* best effort */ }
   store.uploads = store.uploads.filter(u => !(u.user_id === user_id && u.id === upload_id));
   _saveStore(store);
-  return store.uploads.length < before;
+  const removed = store.uploads.length < before;
+  if (removed) _bumpCount(user_id, -1);
+  return removed;
 }
 
 /**
@@ -186,6 +189,7 @@ export function dropAllForUser(user_id: string): { uploads_dropped: number } {
   const before = store.uploads.length;
   store.uploads = store.uploads.filter(u => u.user_id !== user_id);
   _saveStore(store);
+  _userUploadCountCache.set(user_id, 0);
   // Remove the user's blob directory
   const dir = _userDir(user_id);
   try {
@@ -200,4 +204,38 @@ export function dropAllForUser(user_id: string): { uploads_dropped: number } {
  */
 export function findUploadsByConcept(user_id: string, concept_id: string): UploadRecord[] {
   return listUploads(user_id).filter(u => u.concept_tags.includes(concept_id));
+}
+
+// ─── Fast-path cache for upload blending ─────────────────────────────
+//
+// Per ER-D8: most users have zero uploads. Calling listUploads() on every
+// route request is wasteful. Cache the per-user count so the router can
+// skip the call entirely when there's nothing to find. Cache is invalidated
+// on createUpload / deleteUpload / dropAllForUser.
+
+const _userUploadCountCache = new Map<string, number>();
+
+function _bumpCount(user_id: string, delta: number): void {
+  const current = _userUploadCountCache.get(user_id);
+  if (current === undefined) return; // not cached, will be computed on next read
+  _userUploadCountCache.set(user_id, Math.max(0, current + delta));
+}
+
+/**
+ * Fast-path check: does this user have any uploads at all?
+ * Used by the router to skip findUploadsByConcept() for the common case (zero uploads).
+ */
+export function userHasUploads(user_id: string): boolean {
+  if (!user_id) return false;
+  let count = _userUploadCountCache.get(user_id);
+  if (count === undefined) {
+    count = listUploads(user_id).length;
+    _userUploadCountCache.set(user_id, count);
+  }
+  return count > 0;
+}
+
+/** Test-only helper: clear the upload-count cache between tests. */
+export function _resetUploadCountCache(): void {
+  _userUploadCountCache.clear();
 }

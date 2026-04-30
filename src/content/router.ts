@@ -27,7 +27,7 @@
 
 import { createHash } from 'crypto';
 import { findCommunityContent, getUserSubscriptions } from './community';
-import { findUploadsByConcept } from './uploads';
+import { findUploadsByConcept, userHasUploads } from './uploads';
 import { classifyByRules, classifyIntent as classifyIntentAsync } from './intent-classifier';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -378,6 +378,25 @@ export function hashUserId(user_id: string): string {
  */
 export async function routeContent(req: RouteRequest): Promise<RouteResult> {
   const result = await _routeContentImpl(req);
+
+  // ── Upload blending post-filter (ER-D8 + P2A) ────────────────────────
+  // After primary route, surface user uploads alongside if the concept matches.
+  // Fast-path: skip entirely if user has zero uploads (the common case).
+  // Skipped when intent is already 'find-in-uploads' (uploads are the primary
+  // result), or when the route declined.
+  if (result.ok && result.intent !== 'find-in-uploads' && result.concept_id && userHasUploads(req.user_id)) {
+    const blended = findUploadsByConcept(req.user_id, result.concept_id);
+    if (blended.length > 0) {
+      result.blended_uploads = blended.map(u => ({
+        id: u.id,
+        filename: u.filename,
+        note: u.note,
+      }));
+      // Surface in the disclosure so the student knows their uploads were considered.
+      result.disclosure = `${result.disclosure} (Plus ${blended.length} from your uploads.)`;
+    }
+  }
+
   // Fire-and-forget signal; lazy-load to avoid hard coupling at startup
   try {
     const { publish } = await import('../events/signal-bus');
@@ -386,8 +405,26 @@ export async function routeContent(req: RouteRequest): Promise<RouteResult> {
       concept_id: result.concept_id,
       intent: result.intent,
       chosen_source: result.source,
+      session_mode: req.session_mode ?? 'knowledge',
+      blended_uploads_count: result.blended_uploads?.length ?? 0,
       rejected_because: result.rejected_because,
     });
   } catch { /* bus unavailable — signal lost, no functional impact */ }
+
+  // Debug trace (ER-D4): when VIDHYA_CONTENT_DEBUG=true, log to console.
+  // Reuses the same data path as production telemetry for parity.
+  if (process.env.VIDHYA_CONTENT_DEBUG === 'true') {
+    // eslint-disable-next-line no-console
+    console.log('[content-router]', {
+      intent: result.intent,
+      source: result.source,
+      concept_id: result.concept_id,
+      considered: result.considered,
+      rejected_because: result.rejected_because,
+      blended_uploads: result.blended_uploads?.length ?? 0,
+      session_mode: req.session_mode ?? 'knowledge',
+    });
+  }
+
   return result;
 }

@@ -4,6 +4,44 @@ All notable changes to GATE Math are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [2.3.0] - 2026-04-30 — Content module DX expansion
+
+**Operator action:** none. Render auto-deploys from `main`. Optional: set `VIDHYA_CONTENT_DEBUG=true` locally to see every router decision logged.
+
+### What changed for operators
+- `/health` now returns `content: { miss_rate, total_events }` covering the last 24 hours so the content cascade is observable from one endpoint.
+- Server boot now logs a clear WARN if `VIDHYA_INTENT_CLASSIFIER=llm` is set without LLM keys (or set when the LLM path is still a stub). Operators no longer fall into silent-misconfiguration mode.
+
+### What changed for engineers
+- New `EXTENDING.md` at the repo root maps the four extension contracts (AnswerVerifier, ContentVerifier, CadenceStrategy, PedagogyReviewer) with file paths, walkthroughs, and pitfalls. Time to first extension drops from ~75 min to <20 min.
+- `npm run test:content` runs only the content + verification suites (~3s feedback) instead of the full 654-test suite (~45s).
+- `src/verification/verifiers/example.ts` (`AlwaysTrueVerifier`) is a Tier 9 live reference engineers copy when adding a new AnswerVerifier. Its contract test fails first if the interface drifts.
+- `TieredVerificationOrchestrator.registerVerifier(v)` accepts Tier 4+ AnswerVerifiers with zero orchestrator edits. Tier 1-3 stay reserved for the built-in cascade.
+- Snapshot regression test gates the orchestrator change so its Tier 1-3 behavior is byte-identical to pre-refactor.
+
+### Added
+- `ContentVerifier` interface (`src/content/verifiers/types.ts`) plus `runContentVerifierContract`.
+- `AnswerVerifier` interface (`src/verification/verifiers/types.ts`) plus `runAnswerVerifierContract`.
+- `CadenceStrategy` interface (`src/content/cadence.ts`) plus `runCadenceStrategyContract`. `session_mode` and `exam_proximity_days` added to `RouteRequest`.
+- `PedagogyReviewer` interface (`src/content/pedagogy.ts`, async post-delivery) plus `runPedagogyReviewerContract`. Score writes back to RAG cache; bad content gets demoted on next request. Never blocks student-facing latency.
+- `registerVerifier()` and `listExtraVerifiers()` on `TieredVerificationOrchestrator`.
+- `userHasUploads()` fast-path with cached count, invalidated on createUpload / deleteUpload / dropAllForUser.
+- `RouteResult.blended_uploads` — concept-matched uploads surface alongside the primary source on every route (when the user has uploads).
+- `ResolvedContent.declined_reason` typed enum so callers can distinguish RAG miss from Wolfram timeout from rate-limit hit.
+- `getTierMissRate24h()` aggregator wired into `/health`.
+- `warnIfLlmClassifierStubActive()` startup check.
+- `npm run test:content` and `test:content:watch` package scripts.
+
+### Changed
+- `src/content/types.ts` renamed to `src/content/blog-types.ts` — that file held blog/marketing types, not content module types. New `src/content/content-types.ts` holds the actual content module domain (RouteRequest, RouteResult, ResolvedContent, Source, SessionMode, DeclinedReason).
+- `Intent` type consolidated to a single source (`src/content/intent-classifier.ts`); re-exported from `src/content/index.ts`.
+- Router post-filter blends user uploads when `concept_id` matches and `intent !== 'find-in-uploads'`. Skipped entirely when the user has zero uploads.
+
+### Deferred (TODOs)
+- Scaffold CLI (`npx vidhya-scaffold verifier <name>`): `AlwaysTrueVerifier` covers the copy-paste workflow.
+- `@ts-nocheck` removal from `src/content/router.ts` and other content files: separate focused PR.
+- Full LLM intent classifier implementation: stub still in place; startup warning surfaces the gap.
+
 ## [Unreleased] — 2026-04-29 (DX pass — demo login, feature health, error surfaces)
 
 **Operator action:** none. Render auto-deploys from `main`. Demo seed runs automatically on every boot.

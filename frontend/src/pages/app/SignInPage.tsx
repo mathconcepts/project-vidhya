@@ -26,7 +26,7 @@ export default function SignInPage() {
 
   // If already signed in, redirect unless we need to bind a link token
   useEffect(() => {
-    if (user && !link_token) navigate('/chat');
+    if (user && !link_token) navigate('/');
   }, [user, link_token, navigate]);
 
   // Render the Google button once config + script are ready
@@ -52,7 +52,7 @@ export default function SignInPage() {
             if (link_token) {
               navigate('/link-complete');
             } else {
-              navigate('/chat');
+              navigate('/');
             }
           } catch (err) {
             setError((err as Error).message);

@@ -139,7 +139,7 @@ export default function VerifyPage() {
             onChange={handleProblemChange}
             placeholder="e.g. Find the eigenvalues of the matrix [[2,1],[1,2]]"
             rows={3}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50 resize-none transition-[border-color] duration-200"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 resize-none transition-[border-color] duration-200"
             style={{ minHeight: '5rem', overflow: 'hidden' }}
           />
         </div>
@@ -150,7 +150,7 @@ export default function VerifyPage() {
             value={answer}
             onChange={e => setAnswer(e.target.value)}
             placeholder="e.g. 1 and 3"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50 transition-[border-color] duration-200"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 transition-[border-color] duration-200"
           />
         </div>
 
@@ -161,7 +161,7 @@ export default function VerifyPage() {
           className={clsx(
             'w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200',
             canSubmit
-              ? 'bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-lg shadow-emerald-500/25 active:scale-[0.98]'
+              ? 'bg-gradient-to-r from-emerald-500 to-violet-500 text-white shadow-lg shadow-emerald-500/25 active:scale-[0.98]'
               : 'bg-surface-800 text-surface-500 cursor-not-allowed',
             canSubmit && !loading && 'animate-pulse',
           )}

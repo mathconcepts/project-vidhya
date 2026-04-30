@@ -161,12 +161,12 @@ export function renderBlogIndex(
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta name="twitter:card" content="summary">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="alternate" type="application/rss+xml" title="GATE Math Blog" href="${BASE_URL}/rss.xml">
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Space Grotesk',system-ui,sans-serif;background:#0a0f1a;color:#e2e8f0;-webkit-font-smoothing:antialiased}
+    h1,h2,h3{font-family:'Fraunces',ui-serif,Georgia,serif;letter-spacing:-0.01em;font-optical-sizing:auto}body{font-family:'DM Sans',system-ui,sans-serif;background:#0a0f1a;color:#e2e8f0;-webkit-font-smoothing:antialiased}
     .wrap{max-width:660px;margin:0 auto;padding:32px 20px}
     nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:40px}
     nav .logo{color:#f8fafc;font-weight:700;font-size:1.05rem;text-decoration:none;letter-spacing:-0.02em}
@@ -176,30 +176,30 @@ export function renderBlogIndex(
     .subtitle{color:#64748b;font-size:0.9rem;margin-bottom:24px}
     .pills{display:flex;gap:6px;overflow-x:auto;padding:2px 0 18px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
     .pills::-webkit-scrollbar{display:none}
-    .pill{white-space:nowrap;padding:7px 14px;border-radius:4px;font-size:0.78rem;font-weight:600;color:#94a3b8;background:#111827;border:2px solid #1f2937;text-decoration:none;transition:all 0.2s ease;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em}
+    .pill{white-space:nowrap;padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;color:#94a3b8;background:#111827;border:1.5px solid #1f2937;text-decoration:none;transition:all 0.2s ease;flex-shrink:0;letter-spacing:0.04em}
     .pill:hover{color:#e2e8f0;border-color:#475569;transform:translateY(-1px)}
     .pill.active{color:#10b981;background:rgba(16,185,129,0.08);border-color:#10b981}
     .controls{display:flex;gap:12px;align-items:center;margin-bottom:28px;flex-wrap:wrap}
-    .tab{color:#64748b;font-size:0.8rem;font-weight:600;text-decoration:none;padding:6px 12px;border-radius:4px;border:2px solid transparent;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.03em}
+    .tab{color:#64748b;font-size:0.8rem;font-weight:600;text-decoration:none;padding:6px 12px;border-radius:8px;border:1.5px solid transparent;transition:all 0.2s;letter-spacing:0.03em}
     .tab:hover{color:#cbd5e1;border-color:#374151}
     .tab.active{color:#f8fafc;border-color:#f8fafc;background:rgba(248,250,252,0.05)}
     .divider{width:2px;height:18px;background:#1f2937;margin:0 2px}
     .feed{display:flex;flex-direction:column;gap:16px}
-    .card{display:block;padding:20px;border:2px solid var(--accent,#10b981);border-radius:4px;background:#111827;text-decoration:none;box-shadow:3px 3px 0 var(--accent,#10b981);transition:transform 0.2s ease,box-shadow 0.2s ease;animation:enterUp 0.4s ease both;animation-delay:var(--delay,0ms)}
-    .card:hover{transform:translate(3px,3px);box-shadow:0 0 0 var(--accent,#10b981)}
-    .card:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--accent,#10b981)}
+    .card{display:block;padding:20px;border:1.5px solid var(--accent,#10b981);border-radius:8px;background:#111827;text-decoration:none;transition:transform 0.2s ease,box-shadow 0.2s ease;animation:enterUp 0.4s ease both;animation-delay:var(--delay,0ms)}
+    .card:hover{border-color:#a78bfa}
+    .card:active{border-color:#8b5cf6}
     .card-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-    .badge{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:3px 10px;border:2px solid;border-radius:2px}
+    .badge{font-size:0.7rem;font-weight:700;padding:3px 10px;border:1.5px solid;border-radius:6px}
     .card-meta{color:#475569;font-size:0.78rem;font-weight:500}
     .card-title{color:#f1f5f9;font-size:1.05rem;font-weight:600;line-height:1.4;margin-bottom:6px;letter-spacing:-0.01em}
     .card:hover .card-title{color:#fff}
     .card-excerpt{color:#64748b;font-size:0.88rem;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .empty{text-align:center;padding:64px 0;color:#475569}
     .pagination{display:flex;justify-content:space-between;align-items:center;padding:24px 0;margin-top:8px}
-    .page-btn{color:#f8fafc;text-decoration:none;font-size:0.85rem;font-weight:600;padding:8px 18px;border-radius:4px;border:2px solid #f8fafc;box-shadow:3px 3px 0 #f8fafc;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.03em}
-    .page-btn:hover{transform:translate(3px,3px);box-shadow:0 0 0 #f8fafc}
+    .page-btn{color:#f8fafc;text-decoration:none;font-size:0.85rem;font-weight:600;padding:8px 18px;border-radius:8px;border:1.5px solid #f8fafc;transition:all 0.2s;letter-spacing:0.03em}
+    .page-btn:hover{background:#1f2937;border-color:#a78bfa}
     .page-info{color:#475569;font-size:0.82rem;font-weight:600}
-    footer{margin-top:48px;padding-top:20px;border-top:2px solid #1f2937;color:#374151;font-size:0.78rem;text-align:center}
+    footer{margin-top:48px;padding-top:20px;border-top:1px solid #1f2937;color:#374151;font-size:0.78rem;text-align:center}
     footer a{color:#475569;text-decoration:none}
     footer a:hover{color:#10b981}
     @keyframes enterUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}

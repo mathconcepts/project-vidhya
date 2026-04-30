@@ -275,7 +275,7 @@ export default function OnboardPage() {
             className={clsx(
               'flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white transition-all',
               canAdvance() && !saving
-                ? 'bg-gradient-to-r from-emerald-500 to-sky-500 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40'
+                ? 'bg-gradient-to-r from-emerald-500 to-violet-500 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40'
                 : 'bg-surface-700 text-surface-500 cursor-not-allowed'
             )}
           >

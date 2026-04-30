@@ -143,7 +143,7 @@ export default function ExamSetupPage() {
       <motion.div variants={fadeInUp} className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            <GraduationCap size={20} className="text-sky-400" />
+            <GraduationCap size={20} className="text-violet-400" />
             Exam Setup
           </h1>
           <p className="text-xs text-surface-500 mt-1">
@@ -153,7 +153,7 @@ export default function ExamSetupPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCreate(true)}
-            className="px-3 h-9 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
+            className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
           >
             <Plus size={13} />
             New exam
@@ -197,7 +197,7 @@ export default function ExamSetupPage() {
           </p>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 h-9 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
+            className="px-4 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
           >
             <Plus size={13} />
             Create your first exam
@@ -221,7 +221,7 @@ export default function ExamSetupPage() {
                   )}
                 </div>
                 <p className="text-[11px] text-surface-500">
-                  <code className="text-sky-400">{e.code}</code>
+                  <code className="text-violet-400">{e.code}</code>
                   {e.issuing_body && <span> · {e.issuing_body}</span>}
                   {e.country && <span> · {e.country}</span>}
                 </p>
@@ -268,12 +268,12 @@ function ExamDetailView({
         <div className="flex-1 min-w-0">
           <button
             onClick={onBack}
-            className="text-[11px] text-sky-400 hover:text-sky-300 mb-1"
+            className="text-[11px] text-violet-400 hover:text-violet-300 mb-1"
           >
             ← All exams
           </button>
           <h1 className="text-lg font-bold text-surface-100 flex items-center gap-2 flex-wrap">
-            <GraduationCap size={18} className="text-sky-400 shrink-0" />
+            <GraduationCap size={18} className="text-violet-400 shrink-0" />
             {exam.name}
             {exam.is_draft && (
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium uppercase tracking-wide">
@@ -380,7 +380,7 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
               </div>
               <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
                 <div
-                  className="h-full bg-sky-500 transition-all"
+                  className="h-full bg-violet-500 transition-all"
                   style={{ width: `${(cat.filled / cat.total) * 100}%` }}
                 />
               </div>
@@ -397,8 +397,8 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
 
       {/* Suggestions */}
       {suggestions.length > 0 && (
-        <div className="p-4 rounded-xl bg-sky-500/5 border border-sky-500/20 space-y-2">
-          <p className="text-[10px] text-sky-300 uppercase tracking-wide font-medium flex items-center gap-1.5">
+        <div className="p-4 rounded-xl bg-violet-500/5 border border-violet-500/20 space-y-2">
+          <p className="text-[10px] text-violet-300 uppercase tracking-wide font-medium flex items-center gap-1.5">
             <Lightbulb size={10} />
             Priority actions
           </p>
@@ -420,7 +420,7 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
           <button
             onClick={runEnrich}
             disabled={enriching}
-            className="px-3 h-9 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+            className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
           >
             {enriching ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             Auto-enrich from web
@@ -488,7 +488,7 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
       {/* Summary */}
       <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2 text-xs">
         <p className="text-[10px] text-surface-500 uppercase tracking-wide font-medium">Summary</p>
-        <OverviewRow label="Code" value={<code className="text-sky-400">{exam.code}</code>} />
+        <OverviewRow label="Code" value={<code className="text-violet-400">{exam.code}</code>} />
         <OverviewRow label="Level" value={exam.level} />
         {exam.country && <OverviewRow label="Country" value={exam.country} />}
         {exam.issuing_body && <OverviewRow label="Issuing body" value={exam.issuing_body} />}
@@ -577,7 +577,7 @@ function FieldsTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => void 
       </FieldGroup>
 
       {Object.keys(editing).length > 0 && (
-        <div className="sticky bottom-4 z-10 p-3 rounded-xl bg-surface-900 border border-sky-500/40 shadow-xl flex items-center justify-between gap-3">
+        <div className="sticky bottom-4 z-10 p-3 rounded-xl bg-surface-900 border border-violet-500/40 shadow-xl flex items-center justify-between gap-3">
           <p className="text-xs text-surface-300">
             {Object.keys(editing).length} field{Object.keys(editing).length !== 1 ? 's' : ''} changed
           </p>
@@ -591,7 +591,7 @@ function FieldsTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => void 
             <button
               onClick={save}
               disabled={saving}
-              className="px-3 h-8 rounded-lg bg-sky-500 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+              className="px-3 h-8 rounded-lg bg-violet-500 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               {saving ? <Loader2 size={11} className="animate-spin" /> : saved ? <CheckCircle size={11} /> : null}
               {saved ? 'Saved' : 'Save changes'}
@@ -624,7 +624,7 @@ function FieldInput({ label, value, onChange, type = 'text', provenance, placeho
         value={value || ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-9 px-3 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50"
+        className="w-full h-9 px-3 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
       />
     </div>
   );
@@ -642,7 +642,7 @@ function FieldTextarea({ label, value, onChange, provenance, placeholder }: any)
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50 resize-none"
+        className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 resize-none"
       />
     </div>
   );
@@ -651,7 +651,7 @@ function FieldTextarea({ label, value, onChange, provenance, placeholder }: any)
 function ProvenanceChip({ source, confidence }: { source: string; confidence?: number }) {
   const config: Record<string, { label: string; tone: string }> = {
     admin_manual: { label: 'manual', tone: 'bg-emerald-500/15 text-emerald-300' },
-    user_upload: { label: 'upload', tone: 'bg-sky-500/15 text-sky-300' },
+    user_upload: { label: 'upload', tone: 'bg-violet-500/15 text-violet-300' },
     web_research: { label: `web ${confidence ? Math.round(confidence * 100) + '%' : ''}`, tone: 'bg-amber-500/15 text-amber-300' },
     default: { label: 'default', tone: 'bg-surface-800 text-surface-400' },
     none: { label: 'empty', tone: 'bg-surface-800 text-surface-500' },
@@ -691,9 +691,9 @@ function LocalDataTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
 
   return (
     <motion.div variants={fadeInUp} className="space-y-3">
-      <div className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20 flex items-start gap-2.5">
-        <Lightbulb size={13} className="shrink-0 mt-0.5 text-sky-400" />
-        <div className="text-[11px] text-sky-200/80 leading-relaxed">
+      <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
+        <Lightbulb size={13} className="shrink-0 mt-0.5 text-violet-400" />
+        <div className="text-[11px] text-violet-200/80 leading-relaxed">
           Paste official syllabus text, prep-guide excerpts, or other authoritative material. Local data takes priority over web research during enrichment.
         </div>
       </div>
@@ -703,19 +703,19 @@ function LocalDataTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Title (e.g. 'Official syllabus 2027')"
-          className="w-full h-9 px-3 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50"
+          className="w-full h-9 px-3 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
         />
         <textarea
           value={content}
           onChange={e => setContent(e.target.value)}
           placeholder="Paste content here..."
           rows={6}
-          className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50 resize-none font-mono text-[11px]"
+          className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 resize-none font-mono text-[11px]"
         />
         <button
           onClick={add}
           disabled={!title.trim() || !content.trim() || saving}
-          className="px-3 h-9 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+          className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
         >
           {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
           Add entry
@@ -784,7 +784,7 @@ function AssistantTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
             className={clsx(
               'p-3 rounded-xl max-w-[85%]',
               turn.role === 'assistant'
-                ? 'bg-sky-500/10 border border-sky-500/25 text-surface-200'
+                ? 'bg-violet-500/10 border border-violet-500/25 text-surface-200'
                 : 'bg-surface-800 text-surface-200 ml-auto',
             )}
           >
@@ -795,7 +795,7 @@ function AssistantTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
                   <button
                     key={s}
                     onClick={() => send('reply', s)}
-                    className="text-[10px] px-2 py-1 rounded-full bg-surface-900 hover:bg-surface-800 text-sky-300 border border-sky-500/20"
+                    className="text-[10px] px-2 py-1 rounded-full bg-surface-900 hover:bg-surface-800 text-violet-300 border border-violet-500/20"
                   >
                     {s}
                   </button>
@@ -805,7 +805,7 @@ function AssistantTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
           </div>
         ))}
         {sending && (
-          <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/25 inline-flex items-center gap-2 text-xs text-surface-400">
+          <div className="p-3 rounded-xl bg-violet-500/10 border border-violet-500/25 inline-flex items-center gap-2 text-xs text-surface-400">
             <Loader2 size={12} className="animate-spin" />
             Thinking…
           </div>
@@ -817,12 +817,12 @@ function AssistantTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && input.trim()) send('reply', input.trim()); }}
           placeholder="Ask for help — 'auto-enrich', 'what's missing?', ..."
-          className="flex-1 h-9 px-3 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50"
+          className="flex-1 h-9 px-3 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
         />
         <button
           onClick={() => input.trim() && send('reply', input.trim())}
           disabled={!input.trim() || sending}
-          className="px-3 h-9 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+          className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
         >
           <Send size={12} />
           Send
@@ -842,7 +842,7 @@ function TabButton({ active, onClick, icon: Icon, label }: {
       onClick={onClick}
       className={clsx(
         'px-3 h-8 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors',
-        active ? 'bg-sky-500/20 text-sky-200 border border-sky-500/30' : 'text-surface-400 hover:text-surface-200',
+        active ? 'bg-violet-500/20 text-violet-200 border border-violet-500/30' : 'text-surface-400 hover:text-surface-200',
       )}
     >
       <Icon size={12} />
@@ -953,7 +953,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
               value={code}
               onChange={e => setCode(e.target.value)}
               placeholder="e.g. GATE-CS-2027"
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-sky-500/50 font-mono"
+              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50 font-mono"
             />
             <p className="text-[10px] text-surface-600 mt-1">2-40 chars, alphanumeric + dot/dash/underscore</p>
           </div>
@@ -964,7 +964,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. GATE Computer Science 2027"
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-sky-500/50"
+              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50"
             />
           </div>
 
@@ -992,7 +992,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <select
               value={level}
               onChange={e => setLevel(e.target.value as any)}
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-sky-500/50"
+              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50"
             >
               <option value="undergraduate">Undergraduate</option>
               <option value="postgraduate">Postgraduate</option>
@@ -1010,7 +1010,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
               value={country}
               onChange={e => setCountry(e.target.value)}
               placeholder="e.g. India"
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-sky-500/50"
+              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50"
             />
           </div>
 
@@ -1020,7 +1020,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
               value={issuingBody}
               onChange={e => setIssuingBody(e.target.value)}
               placeholder="e.g. IIT Madras / IISc"
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-sky-500/50"
+              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50"
             />
           </div>
 
@@ -1031,7 +1031,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
               onChange={e => setSeedText(e.target.value)}
               placeholder="Paste any syllabus text, prep notes, or exam info you already have. This helps enrichment produce better results."
               rows={3}
-              className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-sky-500/50 resize-none"
+              className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50 resize-none"
             />
           </div>
 
@@ -1044,7 +1044,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <button
             onClick={submit}
             disabled={!code.trim() || !name.trim() || creating}
-            className="w-full h-10 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full h-10 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {creating ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
             Create exam
@@ -1115,7 +1115,7 @@ function SimilarExamsPanel({ examId, examName }: { examId: string; examName: str
                     <p className="text-sm font-medium text-surface-200 truncate">{m.exam_name}</p>
                     <span className={clsx(
                       'text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
-                      m.source === 'static' ? 'bg-sky-500/15 text-sky-300' : 'bg-emerald-500/15 text-emerald-300',
+                      m.source === 'static' ? 'bg-violet-500/15 text-violet-300' : 'bg-emerald-500/15 text-emerald-300',
                     )}>
                       {m.source}
                     </span>
@@ -1142,7 +1142,7 @@ function SimilarExamsPanel({ examId, examName }: { examId: string; examName: str
               )}
               <button
                 onClick={() => setCompareId(m.exam_id)}
-                className="text-[10px] text-sky-400 hover:text-sky-300 inline-flex items-center gap-1"
+                className="text-[10px] text-violet-400 hover:text-violet-300 inline-flex items-center gap-1"
               >
                 <GitCompare size={9} />
                 Compare side by side
@@ -1204,7 +1204,7 @@ function CompareDrawer({ aId, aName, bId, onClose }: {
       >
         <div className="sticky top-0 bg-surface-950/95 backdrop-blur-sm border-b border-surface-800 px-4 py-3 flex items-center justify-between z-10">
           <p className="text-sm font-medium text-surface-100 flex items-center gap-2">
-            <GitCompare size={14} className="text-sky-400" />
+            <GitCompare size={14} className="text-violet-400" />
             Compare
           </p>
           <button onClick={onClose} className="p-1 rounded text-surface-500 hover:text-surface-200">
@@ -1222,8 +1222,8 @@ function CompareDrawer({ aId, aName, bId, onClose }: {
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20">
-                  <p className="text-[10px] text-sky-400 uppercase font-medium">A</p>
+                <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
+                  <p className="text-[10px] text-violet-400 uppercase font-medium">A</p>
                   <p className="text-sm font-medium text-surface-200 mt-1">{comparison.a.name}</p>
                   <p className="text-[10px] font-mono text-surface-500 mt-0.5">{comparison.a.code}</p>
                 </div>
@@ -1298,7 +1298,7 @@ function ContentBlock({ cat }: { cat: any }) {
           <p className="text-[9px] text-surface-500 uppercase">shared</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-sky-400">{cat.only_in_a.length}</p>
+          <p className="text-lg font-bold text-violet-400">{cat.only_in_a.length}</p>
           <p className="text-[9px] text-surface-500 uppercase">A only</p>
         </div>
         <div>

@@ -49,7 +49,7 @@ export function YourTeacherCard() {
     <motion.div
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/6 via-surface-900 to-sky-500/6 border border-emerald-500/20 space-y-2.5"
+      className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/6 via-surface-900 to-violet-500/6 border border-emerald-500/20 space-y-2.5"
     >
       <div className="flex items-center gap-3">
         {t.picture ? (
@@ -66,7 +66,7 @@ export function YourTeacherCard() {
           <p className="text-sm font-medium text-surface-100 truncate">{t.name}</p>
           <a
             href={`mailto:${t.email}`}
-            className="text-[11px] text-surface-400 hover:text-sky-300 inline-flex items-center gap-1 truncate"
+            className="text-[11px] text-surface-400 hover:text-violet-300 inline-flex items-center gap-1 truncate"
           >
             <Mail size={9} />
             {t.email}

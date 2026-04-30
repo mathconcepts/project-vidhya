@@ -39,7 +39,7 @@ const ERROR_ICONS: Record<string, typeof Brain> = {
 const ERROR_COLORS: Record<string, string> = {
   conceptual: 'bg-red-500',
   procedural: 'bg-amber-500',
-  notation: 'bg-sky-500',
+  notation: 'bg-violet-500',
   misread: 'bg-purple-500',
   time_pressure: 'bg-orange-500',
   arithmetic: 'bg-emerald-500',
@@ -187,7 +187,7 @@ export default function ErrorPatternsPage() {
           {report.top_misconceptions.map((m, i) => (
             <div key={i} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-mono text-sky-400">{m.id.replace(/-/g, ' ')}</span>
+                <span className="text-xs font-mono text-violet-400">{m.id.replace(/-/g, ' ')}</span>
                 <span className="text-xs text-surface-500">{m.count}×</span>
               </div>
               <p className="text-sm text-surface-400">{m.description}</p>

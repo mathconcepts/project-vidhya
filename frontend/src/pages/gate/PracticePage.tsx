@@ -190,7 +190,7 @@ export default function PracticePage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <Loader2 className="animate-spin text-sky-400" size={32} />
+        <Loader2 className="animate-spin text-violet-400" size={32} />
         <span className="text-sm text-surface-500">Loading problem...</span>
       </div>
     );
@@ -204,7 +204,7 @@ export default function PracticePage() {
         className="text-center py-12"
       >
         <p className="text-surface-500">Problem not found.</p>
-        <Link to="/" className="text-sky-400 text-sm mt-2 inline-block">Back to topics</Link>
+        <Link to="/" className="text-violet-400 text-sm mt-2 inline-block">Back to topics</Link>
       </motion.div>
     );
   }
@@ -271,9 +271,9 @@ export default function PracticePage() {
               textColor = 'text-red-300';
             }
           } else if (isThisSelected) {
-            borderColor = 'border-sky-500/50';
-            bgColor = 'bg-sky-500/10';
-            textColor = 'text-sky-300';
+            borderColor = 'border-violet-500/50';
+            bgColor = 'bg-violet-500/10';
+            textColor = 'text-violet-300';
           }
 
           return (
@@ -288,12 +288,12 @@ export default function PracticePage() {
               className={clsx(
                 'w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all duration-200',
                 borderColor, bgColor, textColor,
-                phase === 'answering' && 'hover:border-sky-500/30 hover:bg-surface-800/80',
+                phase === 'answering' && 'hover:border-violet-500/30 hover:bg-surface-800/80',
               )}
             >
               <span className={clsx(
                 'w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0',
-                isThisSelected ? 'bg-sky-500/20 text-sky-300' : 'bg-surface-800 text-surface-400',
+                isThisSelected ? 'bg-violet-500/20 text-violet-300' : 'bg-surface-800 text-surface-400',
                 phase === 'result' && isThisCorrect && 'bg-emerald-500/20 text-emerald-300',
               )}>
                 {key}
@@ -333,7 +333,7 @@ export default function PracticePage() {
             className={clsx(
               'w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200',
               selected
-                ? 'bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-lg shadow-emerald-500/25'
+                ? 'bg-gradient-to-r from-emerald-500 to-violet-500 text-white shadow-lg shadow-emerald-500/25'
                 : 'bg-surface-800 text-surface-500 cursor-not-allowed',
             )}
           >
@@ -350,7 +350,7 @@ export default function PracticePage() {
             className="flex flex-col items-center gap-3 py-6"
           >
             <div className="flex items-center gap-3">
-              <Loader2 className="animate-spin text-sky-400" size={20} />
+              <Loader2 className="animate-spin text-violet-400" size={20} />
               <span className="text-sm text-surface-400">
                 {VERIFY_STAGES[verifyStageIndex]?.icon} {VERIFY_STAGES[verifyStageIndex]?.text}
               </span>
@@ -361,7 +361,7 @@ export default function PracticePage() {
                   key={i}
                   className={clsx(
                     'w-2 h-2 rounded-full transition-all duration-300',
-                    i <= verifyStageIndex ? 'bg-sky-400' : 'bg-surface-700',
+                    i <= verifyStageIndex ? 'bg-violet-400' : 'bg-surface-700',
                   )}
                 />
               ))}

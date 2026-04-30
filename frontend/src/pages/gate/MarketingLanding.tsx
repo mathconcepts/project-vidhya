@@ -18,18 +18,18 @@ export default function MarketingLanding() {
     <div className="-mx-4">
       {/* === HERO === */}
       <section className="relative px-4 pt-8 pb-12 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-500/5 via-purple-500/5 to-emerald-500/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-purple-500/5 to-emerald-500/5" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative max-w-2xl mx-auto text-center space-y-6"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20">
-            <Brain size={13} className="text-sky-400" />
-            <span className="text-xs font-semibold text-sky-300 uppercase tracking-wide">GBrain Cognitive Architecture</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20">
+            <Brain size={13} className="text-violet-400" />
+            <span className="text-xs font-semibold text-violet-300 uppercase tracking-wide">GBrain Cognitive Architecture</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-surface-100 leading-tight">
-            A tutor that knows <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">how</span> you think, not just what you answered.
+            A tutor that knows <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">how</span> you think, not just what you answered.
           </h1>
           <p className="text-base text-surface-400 leading-relaxed">
             Most test prep apps track accuracy. We model your cognition — representation mode, working memory,
@@ -37,7 +37,7 @@ export default function MarketingLanding() {
             wrong answer makes the system smarter about you. Every night, your exam strategy re-computes while you sleep.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <Link to="/" className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/25 inline-flex items-center justify-center gap-1.5">
+            <Link to="/" className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/25 inline-flex items-center justify-center gap-1.5">
               Start Practicing Free <ArrowRight size={14} />
             </Link>
             <Link to="/mock-exam" className="px-6 py-3 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm font-semibold">
@@ -74,7 +74,7 @@ export default function MarketingLanding() {
           {[
             {
               icon: Brain,
-              color: 'text-sky-400 bg-sky-500/10',
+              color: 'text-violet-400 bg-violet-500/10',
               title: '1 — Student Model',
               desc: '15 live attributes updating on every attempt: mastery per concept, speed, cognitive style, motivation, confidence calibration.',
             },
@@ -104,7 +104,7 @@ export default function MarketingLanding() {
             },
             {
               icon: Layers,
-              color: 'text-sky-400 bg-sky-500/10',
+              color: 'text-violet-400 bg-violet-500/10',
               title: '6 — Task Reasoner',
               desc: '5-node decision tree runs before every chat message: intent → action → difficulty → format → verification. Never generic advice.',
             },
@@ -149,8 +149,8 @@ export default function MarketingLanding() {
                 <li>• Identical for every student</li>
               </ul>
             </div>
-            <div className="p-4 rounded-xl bg-gradient-to-br from-sky-500/10 to-emerald-500/10 border border-sky-500/25">
-              <p className="text-xs font-semibold text-sky-400 uppercase tracking-wide mb-3">GBrain</p>
+            <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/10 to-emerald-500/10 border border-violet-500/25">
+              <p className="text-xs font-semibold text-violet-400 uppercase tracking-wide mb-3">GBrain</p>
               <ul className="space-y-2 text-sm text-surface-200">
                 <li className="flex gap-2"><CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" /> Infinite generated + verified problems</li>
                 <li className="flex gap-2"><CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" /> "Your chain-rule confusion is because limits at 30%"</li>
@@ -185,11 +185,11 @@ export default function MarketingLanding() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
             >
-              <Link to={f.to} className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-sky-500/30 transition-colors group h-full">
-                <f.icon size={16} className="text-sky-400 mb-2" />
+              <Link to={f.to} className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/30 transition-colors group h-full">
+                <f.icon size={16} className="text-violet-400 mb-2" />
                 <h3 className="text-sm font-bold text-surface-100 mb-1">{f.title}</h3>
                 <p className="text-xs text-surface-400 leading-relaxed">{f.desc}</p>
-                <ArrowRight size={12} className="text-surface-600 group-hover:text-sky-400 mt-2 group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight size={12} className="text-surface-600 group-hover:text-violet-400 mt-2 group-hover:translate-x-0.5 transition-all" />
               </Link>
             </motion.div>
           ))}
@@ -232,7 +232,7 @@ export default function MarketingLanding() {
           <p className="text-sm text-surface-400">Free to start. No signup to try a problem.</p>
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-white font-bold shadow-lg shadow-emerald-500/25"
+            className="inline-flex items-center gap-1.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white font-bold shadow-lg shadow-emerald-500/25"
           >
             Practice Now <ArrowRight size={15} />
           </Link>

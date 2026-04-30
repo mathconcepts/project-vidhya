@@ -198,7 +198,7 @@ export default function NotebookPage() {
                       className="border-t border-surface-800"
                     >
                       <div className="flex items-center gap-2 px-3 pt-2">
-                        <span className="text-[10px] font-mono text-sky-400">{formatTopicName(entry.topic)}</span>
+                        <span className="text-[10px] font-mono text-violet-400">{formatTopicName(entry.topic)}</span>
                         <SourceIcon size={10} className="text-surface-500" />
                       </div>
                       {entry.answer_text && (

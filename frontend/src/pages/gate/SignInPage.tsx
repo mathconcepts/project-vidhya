@@ -78,8 +78,8 @@ export default function SignInPage() {
       initial="hidden" animate="visible" variants={staggerContainer}
     >
       <motion.div variants={fadeInUp} className="text-center space-y-2">
-        <div className="inline-flex w-16 h-16 rounded-full bg-gradient-to-br from-sky-500/20 to-emerald-500/20 items-center justify-center border border-sky-500/30">
-          <Key size={28} className="text-sky-400" />
+        <div className="inline-flex w-16 h-16 rounded-full bg-gradient-to-br from-violet-500/20 to-emerald-500/20 items-center justify-center border border-violet-500/30">
+          <Key size={28} className="text-violet-400" />
         </div>
         <h1 className="text-2xl font-bold text-surface-100">Sign in to Vidhya</h1>
         <p className="text-sm text-surface-400">
@@ -90,10 +90,10 @@ export default function SignInPage() {
       </motion.div>
 
       {link_token && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20 flex items-start gap-2.5">
-          <MessageCircle size={14} className="shrink-0 mt-0.5 text-sky-400" />
-          <div className="text-xs text-sky-200/90 leading-relaxed">
-            <span className="font-medium text-sky-300">Linking a chat app.</span>{' '}
+        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
+          <MessageCircle size={14} className="shrink-0 mt-0.5 text-violet-400" />
+          <div className="text-xs text-violet-200/90 leading-relaxed">
+            <span className="font-medium text-violet-300">Linking a chat app.</span>{' '}
             Once you sign in, your Telegram or WhatsApp chat will be bound to this account.
           </div>
         </motion.div>
@@ -148,7 +148,7 @@ export default function SignInPage() {
           <div className="space-y-1.5">
             {config.channels.telegram && (
               <div className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 flex items-center gap-2">
-                <Smartphone size={13} className="text-sky-400" />
+                <Smartphone size={13} className="text-violet-400" />
                 <p className="text-xs text-surface-300 flex-1">
                   Telegram bot available — send <span className="font-mono">/start</span> to the Vidhya bot
                 </p>

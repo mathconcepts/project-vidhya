@@ -66,7 +66,7 @@ export function ExamCountdownChip() {
   const toneClass =
     tier === 'critical' ? 'bg-rose-500/10 border-rose-500/30 text-rose-200'
     : tier === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
-    : tier === 'medium' ? 'bg-sky-500/10 border-sky-500/30 text-sky-200'
+    : tier === 'medium' ? 'bg-violet-500/10 border-violet-500/30 text-violet-200'
     : 'bg-surface-900 border-surface-800 text-surface-300';
 
   return (

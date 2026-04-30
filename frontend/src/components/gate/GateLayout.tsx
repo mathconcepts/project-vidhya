@@ -42,7 +42,7 @@ export function GateLayout() {
         scrolled ? 'border-surface-800/80 shadow-lg shadow-black/20' : 'border-transparent',
       )}>
         <a href="/" className="flex items-center gap-2.5 min-w-[44px] min-h-[44px]">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
             <span className="text-white font-black text-sm">G</span>
           </div>
           <span className="font-bold text-white text-base tracking-tight sr-only">GATE Math</span>
@@ -58,7 +58,7 @@ export function GateLayout() {
                 {user.avatar_url ? (
                   <img src={user.avatar_url} alt="" className="w-7 h-7 rounded-full" />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center text-xs font-bold">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-emerald-500 flex items-center justify-center text-xs font-bold">
                     {(user.display_name || user.email)?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}
@@ -143,7 +143,7 @@ export function GateLayout() {
       {location.pathname !== '/chat' && (
         <motion.button
           onClick={() => navigate('/chat')}
-          className="fixed z-50 right-4 w-14 h-14 rounded-full bg-sky-500 text-white shadow-lg shadow-sky-500/25 flex items-center justify-center hover:bg-sky-400 transition-colors cursor-pointer touch-manipulation"
+          className="fixed z-50 right-4 w-14 h-14 rounded-full bg-violet-500 text-white shadow-lg shadow-violet-500/25 flex items-center justify-center hover:bg-violet-400 transition-colors cursor-pointer touch-manipulation"
           style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)' }}
           whileTap={{ scale: 0.9 }}
           aria-label="Ask the tutor"
@@ -170,13 +170,13 @@ export function GateLayout() {
               className={clsx(
                 'relative flex-1 flex flex-col items-center justify-center py-2.5 gap-1',
                 'touch-manipulation transition-colors duration-150',
-                isActive ? 'text-sky-400' : 'text-surface-500',
+                isActive ? 'text-violet-400' : 'text-surface-500',
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="nav-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-sky-400"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-violet-400"
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}

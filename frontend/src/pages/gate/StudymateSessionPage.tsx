@@ -258,7 +258,7 @@ export default function StudymateSessionPage() {
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mx-auto">
             <Zap className="w-7 h-7 text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-black text-surface-50" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+          <h1 className="text-2xl font-display font-black text-surface-50">
             Anytime Studymate
           </h1>
           <p className="text-sm text-surface-400">
@@ -296,7 +296,7 @@ export default function StudymateSessionPage() {
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mx-auto">
             <CheckCircle className="w-7 h-7 text-emerald-400" />
           </div>
-          <h2 className="text-xl font-black text-surface-50" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+          <h2 className="text-xl font-display font-black text-surface-50">
             Session complete
           </h2>
           <p className="text-base text-emerald-400 font-medium">{statLine}</p>
@@ -348,7 +348,7 @@ export default function StudymateSessionPage() {
         >
           {/* Meta */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-sky-400 font-mono">{currentProblem.concept_id.replace(/-/g, ' ')}</span>
+            <span className="text-xs text-violet-400 font-mono">{currentProblem.concept_id.replace(/-/g, ' ')}</span>
             <DifficultyPip difficulty={currentProblem.difficulty} />
           </div>
 
@@ -365,7 +365,7 @@ export default function StudymateSessionPage() {
                 onChange={e => setUserAnswer(e.target.value)}
                 placeholder="Your answer…"
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-surface-2 border border-surface-3 text-surface-100 text-sm placeholder:text-surface-500 focus:outline-none focus:border-sky-500/60 resize-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-surface-2 border border-surface-3 text-surface-100 text-sm placeholder:text-surface-500 focus:outline-none focus:border-violet-500/60 resize-none transition-colors"
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !e.shiftKey && userAnswer.trim()) {
                     e.preventDefault();
@@ -423,13 +423,13 @@ export default function StudymateSessionPage() {
                   <AnimatePresence>
                     {gapText ? (
                       <motion.div
-                        className="flex gap-3 px-4 py-3 rounded-xl bg-sky-500/8 border border-sky-500/20"
+                        className="flex gap-3 px-4 py-3 rounded-xl bg-violet-500/8 border border-violet-500/20"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         transition={{ duration: 0.35, ease: 'easeOut' }}
                       >
-                        <BookOpen className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-sky-300 leading-relaxed">{gapText}</p>
+                        <BookOpen className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-violet-300 leading-relaxed">{gapText}</p>
                       </motion.div>
                     ) : pollGap ? (
                       <motion.div
@@ -449,7 +449,7 @@ export default function StudymateSessionPage() {
                   <p className="text-xs text-surface-500 font-mono">
                     Source: {currentProblem.source}
                     {currentProblem.source_url && (
-                      <> · <a href={currentProblem.source_url} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300">view</a></>
+                      <> · <a href={currentProblem.source_url} target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300">view</a></>
                     )}
                   </p>
                 )}

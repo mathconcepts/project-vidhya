@@ -24,7 +24,7 @@ interface AdminUser {
 
 const ROLE_META: Record<Role, { icon: typeof Crown; color: string; label: string }> = {
   owner:       { icon: Crown,         color: 'text-amber-400',   label: 'Owner' },
-  admin:       { icon: Shield,        color: 'text-sky-400',     label: 'Admin' },
+  admin:       { icon: Shield,        color: 'text-violet-400',     label: 'Admin' },
   teacher:     { icon: GraduationCap, color: 'text-emerald-400', label: 'Teacher' },
   student:     { icon: UserCircle,    color: 'text-surface-400', label: 'Student' },
   parent:      { icon: Heart,         color: 'text-rose-400',    label: 'Parent' },
@@ -117,7 +117,7 @@ export default function UserAdminPage() {
       <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            <Users size={20} className="text-sky-400" />
+            <Users size={20} className="text-violet-400" />
             User Management
           </h1>
           <p className="text-xs text-surface-500 mt-1">
@@ -140,7 +140,7 @@ export default function UserAdminPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or email"
-          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50"
+          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
         />
       </motion.div>
 
@@ -181,7 +181,7 @@ export default function UserAdminPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-surface-100 truncate">
-                      {u.name} {isMe && <span className="text-[10px] text-sky-400">(you)</span>}
+                      {u.name} {isMe && <span className="text-[10px] text-violet-400">(you)</span>}
                     </p>
                     <p className="text-[11px] text-surface-500 truncate">{u.email}</p>
                   </div>

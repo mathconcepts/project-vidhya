@@ -74,7 +74,7 @@ interface Provider {
 // ============================================================================
 
 const ROLE_META: Record<LLMRole, { icon: typeof Sparkles; label: string; description: string; color: string }> = {
-  chat:   { icon: Sparkles, label: 'Chat & reasoning', description: 'Conversational responses, tutor-style', color: 'text-sky-400' },
+  chat:   { icon: Sparkles, label: 'Chat & reasoning', description: 'Conversational responses, tutor-style', color: 'text-violet-400' },
   vision: { icon: ImageIcon, label: 'Image understanding', description: 'Photos of math problems, diagrams, handwriting', color: 'text-emerald-400' },
   json:   { icon: Braces, label: 'Structured output', description: 'Intent detection, explainer generation, extraction', color: 'text-purple-400' },
 };
@@ -84,7 +84,7 @@ const COST_TIER_LABEL: Record<ProviderModel['cost_tier'], string> = {
 };
 const COST_TIER_COLOR: Record<ProviderModel['cost_tier'], string> = {
   free: 'text-emerald-400',
-  cheap: 'text-sky-400',
+  cheap: 'text-violet-400',
   mid: 'text-amber-400',
   premium: 'text-rose-400',
 };
@@ -213,7 +213,7 @@ export default function LLMConfigPage() {
       {/* Header */}
       <motion.div variants={fadeInUp}>
         <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Key size={20} className="text-sky-400" />
+          <Key size={20} className="text-violet-400" />
           AI Provider Setup
         </h1>
         <p className="text-xs text-surface-500 mt-1">
@@ -248,18 +248,18 @@ export default function LLMConfigPage() {
                 className={clsx(
                   'p-3 rounded-xl border text-left transition-all',
                   isSelected
-                    ? 'bg-sky-500/10 border-sky-500/40 ring-1 ring-sky-500/30'
+                    ? 'bg-violet-500/10 border-violet-500/40 ring-1 ring-violet-500/30'
                     : 'bg-surface-900 border-surface-800 hover:border-surface-600',
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{p.icon}</span>
-                    <span className={clsx('text-sm font-medium', isSelected ? 'text-sky-200' : 'text-surface-200')}>
+                    <span className={clsx('text-sm font-medium', isSelected ? 'text-violet-200' : 'text-surface-200')}>
                       {p.name}
                     </span>
                   </div>
-                  {isSelected && <Check size={14} className="text-sky-400 shrink-0 mt-0.5" />}
+                  {isSelected && <Check size={14} className="text-violet-400 shrink-0 mt-0.5" />}
                 </div>
                 <p className="text-[10px] text-surface-500 mt-1.5 leading-relaxed">
                   {p.description}
@@ -304,7 +304,7 @@ export default function LLMConfigPage() {
                   placeholder={primary.key_format?.prefix ? `${primary.key_format.prefix}...` : 'paste your key'}
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full px-3 py-2.5 pr-10 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 font-mono placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50"
+                  className="w-full px-3 py-2.5 pr-10 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 font-mono placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
                 />
                 <button
                   onClick={() => setShowKey(!showKey)}
@@ -320,7 +320,7 @@ export default function LLMConfigPage() {
                 href={primary.key_docs_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] text-sky-400 hover:text-sky-300"
+                className="inline-flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300"
               >
                 Get an API key <ExternalLink size={10} />
               </a>
@@ -344,7 +344,7 @@ export default function LLMConfigPage() {
                 value={endpointDraft}
                 onChange={e => setEndpointDraft(e.target.value)}
                 placeholder={primary.default_endpoint}
-                className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-xs text-surface-200 font-mono placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50"
+                className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-xs text-surface-200 font-mono placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
               />
               <p className="text-[10px] text-surface-500">
                 Leave blank to use default: <span className="font-mono">{primary.default_endpoint}</span>
@@ -359,7 +359,7 @@ export default function LLMConfigPage() {
               disabled={validating || (primary.requires_key && !localCheck.ok)}
               className={clsx(
                 'flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2',
-                'bg-gradient-to-r from-sky-500 to-emerald-500 text-white',
+                'bg-gradient-to-r from-violet-500 to-emerald-500 text-white',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
             >

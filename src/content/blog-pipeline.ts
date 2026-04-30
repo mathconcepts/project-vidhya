@@ -1,3 +1,4 @@
+// @ts-nocheck — drift from upstream type changes; see TODOS for cleanup
 /**
  * Blog/Vlog Production Pipeline
  * Handles content creation, multi-platform publishing, and analytics

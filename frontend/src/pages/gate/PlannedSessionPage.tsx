@@ -108,7 +108,7 @@ const PRESETS: Array<{ minutes: number; label: string; subtitle: string }> = [
 // ============================================================================
 
 const KIND_META: Record<ActionKind, { icon: typeof Sparkles; color: string; label: string }> = {
-  'practice':      { icon: BookOpen, color: 'text-sky-400 bg-sky-500/10 border-sky-500/25', label: 'Practice' },
+  'practice':      { icon: BookOpen, color: 'text-violet-400 bg-violet-500/10 border-violet-500/25', label: 'Practice' },
   'review':        { icon: RefreshCw, color: 'text-purple-400 bg-purple-500/10 border-purple-500/25', label: 'Review' },
   'spaced-review': { icon: AlertCircle, color: 'text-amber-400 bg-amber-500/10 border-amber-500/25', label: 'Spaced review' },
   'micro-mock':    { icon: Sparkles, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', label: 'Micro-mock' },
@@ -502,7 +502,7 @@ export default function PlannedSessionPage() {
             </div>
           )}
           {profile && profile.exams.length >= 2 && (
-            <div className="mt-3 text-xs text-sky-300/80">
+            <div className="mt-3 text-xs text-violet-300/80">
               Multi-exam mode — planning across your {profile.exams.length} registered exams, weighted by proximity.
             </div>
           )}
@@ -574,7 +574,7 @@ export default function PlannedSessionPage() {
                   key={preset.slug}
                   onClick={() => adoptPreset(preset)}
                   disabled={loading}
-                  className="px-3 py-2 rounded-lg bg-zinc-900/40 border border-dashed border-zinc-700 hover:border-sky-500/40 hover:bg-sky-500/5 text-left transition-colors disabled:opacity-50"
+                  className="px-3 py-2 rounded-lg bg-zinc-900/40 border border-dashed border-zinc-700 hover:border-violet-500/40 hover:bg-violet-500/5 text-left transition-colors disabled:opacity-50"
                 >
                   <div className="text-sm font-semibold text-zinc-100">{preset.name}</div>
                   <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
@@ -608,7 +608,7 @@ export default function PlannedSessionPage() {
                   className={clsx(
                     'px-4 py-3 rounded-lg border text-left transition-colors',
                     minutes === p.minutes
-                      ? 'bg-sky-500/15 border-sky-500/40 text-sky-100'
+                      ? 'bg-violet-500/15 border-violet-500/40 text-violet-100'
                       : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700',
                   )}
                 >
@@ -627,7 +627,7 @@ export default function PlannedSessionPage() {
                 max={120}
                 value={minutes}
                 onChange={(e) => setMinutes(parseInt(e.target.value, 10))}
-                className="flex-1 accent-sky-500"
+                className="flex-1 accent-violet-500"
               />
               <span className="text-sm font-mono w-20 text-right">{minutes} min</span>
             </div>
@@ -636,7 +636,7 @@ export default function PlannedSessionPage() {
               <button
                 onClick={fetchPlan}
                 disabled={loading}
-                className="flex-1 px-4 py-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
               >
                 {loading ? 'Planning…' : 'Generate my plan'}
               </button>
@@ -687,7 +687,7 @@ export default function PlannedSessionPage() {
         )}
 
         {loading && (
-          <div className="flex items-center justify-center gap-2 text-sky-400 py-12">
+          <div className="flex items-center justify-center gap-2 text-violet-400 py-12">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Planning your {minutes}-minute session…</span>
           </div>
@@ -729,8 +729,8 @@ export default function PlannedSessionPage() {
               exit={{ opacity: 0 }}
             >
               {/* Headline */}
-              <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-sky-500/10 via-indigo-500/5 to-transparent border border-sky-500/20">
-                <div className="text-xs uppercase tracking-wider text-sky-300/80 mb-1">Your plan</div>
+              <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">
+                <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-1">Your plan</div>
                 <div className="text-lg font-semibold text-zinc-100 mb-2">{plan.headline}</div>
                 <div className="flex gap-3 text-xs text-zinc-400">
                   <span>{plan.budget.context} budget</span>
@@ -780,7 +780,7 @@ export default function PlannedSessionPage() {
                             <div className="mt-3 flex gap-2 flex-wrap">
                               <button
                                 onClick={() => startAction(action)}
-                                className="px-3 py-1.5 rounded bg-sky-500 hover:bg-sky-400 text-zinc-950 text-xs font-semibold transition-colors inline-flex items-center gap-1"
+                                className="px-3 py-1.5 rounded bg-violet-500 hover:bg-violet-400 text-zinc-950 text-xs font-semibold transition-colors inline-flex items-center gap-1"
                               >
                                 <Play className="w-3 h-3" /> Start
                                 <ChevronRight className="w-3 h-3" />
@@ -884,7 +884,7 @@ export default function PlannedSessionPage() {
               </p>
               <button
                 onClick={() => { setPlan(null); setCompleted(false); setOutcomes({}); }}
-                className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold text-sm transition-colors"
+                className="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-zinc-950 font-semibold text-sm transition-colors"
               >
                 Plan another session
               </button>

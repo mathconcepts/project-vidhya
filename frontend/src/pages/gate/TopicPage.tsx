@@ -103,7 +103,7 @@ export default function TopicPage() {
           <BookOpen size={40} className="text-surface-700 mx-auto" />
           <p className="text-surface-400 font-medium">Coming soon!</p>
           <p className="text-sm text-surface-600">Problems for this topic are being verified and added.</p>
-          <Link to="/" className="text-sky-400 hover:underline text-sm mt-2 inline-block">
+          <Link to="/" className="text-violet-400 hover:underline text-sm mt-2 inline-block">
             Back to topics
           </Link>
         </motion.div>
@@ -115,7 +115,7 @@ export default function TopicPage() {
                 to={`/practice/${problem.id}`}
                 className={clsx(
                   'flex items-center gap-3 p-4 rounded-xl border transition-all duration-200',
-                  'bg-surface-900 border-surface-800 hover:border-sky-500/30 hover:bg-surface-800/80',
+                  'bg-surface-900 border-surface-800 hover:border-violet-500/30 hover:bg-surface-800/80',
                   'active:scale-[0.99] group',
                 )}
                 onClick={() => trackEvent('problem_view', { problemId: problem.id, topic: topicId })}
@@ -139,7 +139,7 @@ export default function TopicPage() {
                     <span className="text-xs text-surface-500">{problem.marks}M</span>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-surface-600 shrink-0 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight size={16} className="text-surface-600 shrink-0 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" />
               </Link>
             </motion.div>
           ))}

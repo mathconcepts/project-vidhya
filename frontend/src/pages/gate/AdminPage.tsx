@@ -32,7 +32,7 @@ const PLATFORM_ICONS: Record<string, any> = {
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
-  twitter: 'text-sky-400',
+  twitter: 'text-violet-400',
   instagram: 'text-pink-400',
   linkedin: 'text-blue-400',
 };
@@ -41,7 +41,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-amber-500/20 text-amber-400',
   approved: 'bg-emerald-500/20 text-emerald-400',
   rejected: 'bg-red-500/20 text-red-400',
-  published: 'bg-sky-500/20 text-sky-400',
+  published: 'bg-violet-500/20 text-violet-400',
 };
 
 export default function AdminPage() {
@@ -102,7 +102,7 @@ export default function AdminPage() {
             onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === t
-                ? 'bg-sky-600 text-white'
+                ? 'bg-violet-600 text-white'
                 : 'bg-surface-800 text-surface-400 hover:text-white'
             }`}
           >
@@ -119,7 +119,7 @@ export default function AdminPage() {
         >
           {[
             { label: 'Problems', value: stats?.total_problems || 0, icon: Zap, color: 'from-emerald-500 to-green-600' },
-            { label: 'Active Sessions', value: stats?.total_sessions || '-', icon: Users, color: 'from-sky-500 to-blue-600' },
+            { label: 'Active Sessions', value: stats?.total_sessions || '-', icon: Users, color: 'from-violet-500 to-blue-600' },
             { label: 'Verifications', value: stats?.total_verifications || '-', icon: BarChart3, color: 'from-purple-500 to-violet-600' },
             { label: 'SEO Pages', value: '-', icon: Globe, color: 'from-amber-500 to-orange-600' },
           ].map((stat, i) => (
@@ -148,7 +148,7 @@ export default function AdminPage() {
         >
           {socialLoading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-sky-500" />
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500" />
             </div>
           ) : socialPosts.length === 0 ? (
             <div className="text-center py-12">
@@ -200,7 +200,7 @@ export default function AdminPage() {
                       </button>
                       <button
                         onClick={() => updatePostStatus(post.id, 'scheduled')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600/20 text-sky-400 text-xs font-medium hover:bg-sky-600/30 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/20 text-violet-400 text-xs font-medium hover:bg-violet-600/30 transition-colors"
                       >
                         <Clock size={14} /> Schedule
                       </button>

@@ -55,7 +55,7 @@ export default function LoginPage() {
       >
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30 mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30 mb-4">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">
@@ -97,7 +97,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
               required
-              className="w-full rounded-xl bg-surface-900 border border-surface-700 pl-10 pr-4 py-3 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30"
+              className="w-full rounded-xl bg-surface-900 border border-surface-700 pl-10 pr-4 py-3 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30"
             />
           </div>
 
@@ -110,7 +110,7 @@ export default function LoginPage() {
               placeholder="Password"
               required
               minLength={6}
-              className="w-full rounded-xl bg-surface-900 border border-surface-700 pl-10 pr-10 py-3 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30"
+              className="w-full rounded-xl bg-surface-900 border border-surface-700 pl-10 pr-10 py-3 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30"
             />
             <button
               type="button"
@@ -135,7 +135,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-sky-600 text-white font-medium text-sm hover:from-emerald-500 hover:to-sky-500 transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-violet-600 text-white font-medium text-sm hover:from-emerald-500 hover:to-violet-500 transition-all disabled:opacity-50"
           >
             {loading ? (
               <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
@@ -152,14 +152,14 @@ export default function LoginPage() {
           {mode === 'login' ? (
             <>
               New here?{' '}
-              <button onClick={() => { setMode('signup'); setError(''); }} className="text-sky-400 hover:text-sky-300">
+              <button onClick={() => { setMode('signup'); setError(''); }} className="text-violet-400 hover:text-violet-300">
                 Create an account
               </button>
             </>
           ) : (
             <>
               Already have an account?{' '}
-              <button onClick={() => { setMode('login'); setError(''); }} className="text-sky-400 hover:text-sky-300">
+              <button onClick={() => { setMode('login'); setError(''); }} className="text-violet-400 hover:text-violet-300">
                 Sign in
               </button>
             </>

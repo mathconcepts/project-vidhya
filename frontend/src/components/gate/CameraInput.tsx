@@ -129,7 +129,7 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
           <button
             onClick={() => galleryRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-surface-900 border border-surface-700 hover:border-sky-500/50 text-surface-300 hover:text-sky-400 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-surface-900 border border-surface-700 hover:border-violet-500/50 text-surface-300 hover:text-violet-400 transition-all"
           >
             <Image size={24} />
             <span className="text-sm font-medium">From Gallery</span>

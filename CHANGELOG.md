@@ -4,6 +4,39 @@ All notable changes to GATE Math are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [2.4.0] - 2026-04-30 — Design system v2.3 lands in the frontend
+
+**Operator action:** none. Render auto-deploys from `main`. Three new fonts (Fraunces, DM Sans, JetBrains Mono) load from Google Fonts on page open.
+
+### What changed for users
+- The app now reads with serif headlines (Fraunces) — gives the product the editorial weight that matches the Compounding promise. Body text is DM Sans (was Inter).
+- AI/Tutor surfaces use a soft violet (`#a78bfa`) — the new signature color reserved for the tutor FAB, study planner suggestions, and AI tutor surfaces. Mastery stays emerald. Sky was retired.
+- The blog reads as the same product as the app (was visually different): same Fraunces serif headlines, same violet/emerald palette, softer 1.5px borders and 8px corners (was 2px / 4px neubrutalist), and a calm border-color hover instead of the offset-shadow shift.
+
+### What changed for engineers
+- `frontend/index.html` now loads Fraunces + DM Sans + JetBrains Mono. Inter retained as a fallback during the migration window.
+- `frontend/tailwind.config.cjs` adds `navy.*`, `emerald.*`, `violet.*` color tokens and `font-display` (Fraunces) / `font-sans` (DM Sans) / `font-mono` (JetBrains) / `font-legacy` (Inter) family utilities.
+- `globals.css` sets `body { font-family: 'DM Sans' }` and routes `h1, h2, h3, .font-display` through Fraunces with `font-optical-sizing: auto` and `letter-spacing: -0.01em`.
+- CSS custom properties (`--primary`, `--accent`, `--ring`) realign to v2.3 emerald + violet in both light and dark modes. shadcn/ui components inherit automatically.
+- `src/templates/blog-post.ts` and `blog-index.ts` regenerated: Fraunces headlines, DM Sans body, 1.5px borders, 8px corners, border-color hover (was translate+shadow), no UPPERCASE labels.
+
+### Added
+- Tailwind tokens: `navy.{50..950}` (background), `emerald.{50..950}` (mastery), `violet.{50..950}` (AI/Tutor signature).
+- Font utilities: `font-display`, `font-sans`, `font-mono`, `font-legacy`.
+- Light-mode CSS variables that pick darker shades (emerald-600, violet-500) for white-bg contrast.
+
+### Changed
+- 57 frontend files: `bg-sky-*` / `text-sky-*` / `border-sky-*` / etc. → `*-violet-*` (sky retired per v2.3 design tweak; violet is the new AI/info accent).
+- `frontend/src/pages/gate/StudymateSessionPage.tsx`: removed dead inline `style={{ fontFamily: 'Satoshi' }}` references; uses `font-display` utility now (Fraunces).
+- `src/templates/blog-{index,post}.ts`: Space Grotesk → Fraunces + DM Sans, neubrutalist styling softened to editorial.
+- CSS variables `--primary` / `--accent` / `--ring` realigned to emerald + violet.
+
+### Known issues / deferred
+- `@ts-nocheck` re-applied to `src/content/blog-pipeline.ts` (broken `../prompts/repository` import, pre-existing) and `src/verification/verifiers/{wolfram,sympy,llm-consensus}.ts` (type drift with internal LLM/HTTP types). Tracked as TODOs.
+- Frontend `tsc --noEmit` reports 5856 pre-existing errors (broken JSX intrinsic types — separate tsconfig issue, not introduced by this PR). Frontend build (`vite build`) succeeds cleanly.
+- Light-mode pass is a CSS-variables update only; no per-page light-mode QA performed. May need accent saturation tweaks on individual pages.
+- The 4-tab nav vs FAB tutor question (raised in design consultation) is not in scope for this PR.
+
 ## [2.3.0] - 2026-04-30 — Content module DX expansion
 
 **Operator action:** none. Render auto-deploys from `main`. Optional: set `VIDHYA_CONTENT_DEBUG=true` locally to see every router decision logged.

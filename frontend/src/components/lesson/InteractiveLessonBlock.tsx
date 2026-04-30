@@ -58,7 +58,7 @@ export function InteractiveLessonBlock({ block }: { block: Block }) {
 function CalloutView({ block }: { block: Callout }) {
   const reduce = useReducedMotion();
   const cfg = {
-    tip:     { Icon: Lightbulb,      tone: 'bg-sky-500/10 border-sky-500/30 text-sky-100',      label: 'TIP' },
+    tip:     { Icon: Lightbulb,      tone: 'bg-violet-500/10 border-violet-500/30 text-violet-100',      label: 'TIP' },
     insight: { Icon: Sparkles,       tone: 'bg-violet-500/10 border-violet-500/30 text-violet-100', label: 'INSIGHT' },
     warning: { Icon: AlertTriangle,  tone: 'bg-amber-500/10 border-amber-500/30 text-amber-100', label: 'WARNING' },
     gotcha:  { Icon: AlertTriangle,  tone: 'bg-rose-500/10 border-rose-500/30 text-rose-100',    label: 'GOTCHA' },
@@ -118,7 +118,7 @@ function StepRevealView({ block }: { block: StepReveal }) {
               </p>
               <p className="text-sm text-surface-200 whitespace-pre-wrap leading-relaxed">{step.content_md}</p>
               {step.latex && (
-                <div className="mt-2 p-2 rounded bg-surface-900 font-mono text-xs text-sky-300 overflow-x-auto">
+                <div className="mt-2 p-2 rounded bg-surface-900 font-mono text-xs text-violet-300 overflow-x-auto">
                   {step.latex}
                 </div>
               )}
@@ -129,7 +129,7 @@ function StepRevealView({ block }: { block: StepReveal }) {
       {canReveal && (
         <button
           onClick={() => setRevealed(r => Math.min(r + 1, block.steps.length))}
-          className="w-full h-9 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-medium inline-flex items-center justify-center gap-1.5 hover:bg-sky-500/20"
+          className="w-full h-9 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-medium inline-flex items-center justify-center gap-1.5 hover:bg-violet-500/20"
         >
           Next step ({block.steps.length - revealed} more)
           <ChevronRight size={12} />
@@ -246,7 +246,7 @@ function QuickCheckView({ block }: { block: QuickCheck }) {
                 'p-3 rounded-lg border text-left text-sm transition-colors',
                 showResult && opt.is_correct  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-100'
                 : showResult && !opt.is_correct ? 'bg-rose-500/15 border-rose-500/40 text-rose-100'
-                : isChosen                      ? 'bg-sky-500/15 border-sky-500/40 text-sky-100'
+                : isChosen                      ? 'bg-violet-500/15 border-violet-500/40 text-violet-100'
                 : 'bg-surface-950/60 border-surface-800 text-surface-200 hover:border-surface-700',
               )}
             >
@@ -309,7 +309,7 @@ function AnimatedDerivationView({ block }: { block: AnimatedDerivation }) {
         )}
         <button
           onClick={() => setPlaythrough(p => p + 1)}
-          className="text-[10px] text-sky-400 hover:text-sky-300 inline-flex items-center gap-1"
+          className="text-[10px] text-violet-400 hover:text-violet-300 inline-flex items-center gap-1"
         >
           <RotateCw size={9} />
           Replay
@@ -327,7 +327,7 @@ function AnimatedDerivationView({ block }: { block: AnimatedDerivation }) {
             {idx > 0 && (
               <p className="text-[10px] text-surface-500 italic ml-4">↓ {line.rationale_md}</p>
             )}
-            <div className="p-2.5 rounded-lg bg-surface-950 font-mono text-sm text-sky-300 overflow-x-auto">
+            <div className="p-2.5 rounded-lg bg-surface-950 font-mono text-sm text-violet-300 overflow-x-auto">
               {line.latex}
             </div>
           </motion.div>

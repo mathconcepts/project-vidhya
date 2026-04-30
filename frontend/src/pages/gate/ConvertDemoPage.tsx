@@ -67,7 +67,7 @@ export default function ConvertDemoPage() {
           </p>
           <button
             onClick={() => navigate('/planned')}
-            className="text-sky-400 hover:text-sky-300"
+            className="text-violet-400 hover:text-violet-300"
           >
             Back to planned session →
           </button>
@@ -193,7 +193,7 @@ export default function ConvertDemoPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-8">
-      <div className="flex items-center gap-2 text-sky-400 mb-2">
+      <div className="flex items-center gap-2 text-violet-400 mb-2">
         <Sparkles size={18} />
         <span className="text-xs uppercase tracking-wider font-semibold">Make this real</span>
       </div>
@@ -220,7 +220,7 @@ export default function ConvertDemoPage() {
             value={realName}
             onChange={e => setRealName(e.target.value)}
             placeholder="Priya Sharma"
-            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500"
+            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-violet-500"
             required
           />
         </div>
@@ -235,7 +235,7 @@ export default function ConvertDemoPage() {
             value={realEmail}
             onChange={e => setRealEmail(e.target.value)}
             placeholder="priya@example.com"
-            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-sky-500"
+            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-violet-500"
             required
           />
           <p className="text-xs text-slate-500 mt-1">
@@ -265,7 +265,7 @@ export default function ConvertDemoPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded px-4 py-2.5 text-sm font-medium transition flex items-center justify-center gap-2"
+          className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded px-4 py-2.5 text-sm font-medium transition flex items-center justify-center gap-2"
         >
           {submitting ? (
             <>

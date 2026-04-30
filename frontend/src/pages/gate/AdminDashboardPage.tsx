@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
       <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            {isOwner ? <Crown size={20} className="text-amber-400" /> : <Shield size={20} className="text-sky-400" />}
+            {isOwner ? <Crown size={20} className="text-amber-400" /> : <Shield size={20} className="text-violet-400" />}
             {isOwner ? 'Owner' : 'Admin'} Dashboard
           </h1>
           <p className="text-xs text-surface-500 mt-1">
@@ -110,10 +110,10 @@ export default function AdminDashboardPage() {
         <>
           {/* Setup checklist — only shown if there are incomplete items */}
           {incompleteChecklist.length > 0 && (
-            <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-gradient-to-br from-sky-500/5 to-emerald-500/5 border border-sky-500/20 space-y-3">
+            <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-gradient-to-br from-violet-500/5 to-emerald-500/5 border border-violet-500/20 space-y-3">
               <div className="flex items-center gap-2">
-                <Sparkles size={14} className="text-sky-400" />
-                <p className="text-sm font-medium text-sky-200">
+                <Sparkles size={14} className="text-violet-400" />
+                <p className="text-sm font-medium text-violet-200">
                   Get started — {data.checklist.filter(c => c.done).length} of {data.checklist.length} done
                 </p>
               </div>
@@ -126,15 +126,15 @@ export default function AdminDashboardPage() {
                   >
                     {item.done
                       ? <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
-                      : <Circle size={14} className="shrink-0 text-surface-600 group-hover:text-sky-400" />}
+                      : <Circle size={14} className="shrink-0 text-surface-600 group-hover:text-violet-400" />}
                     <span className={clsx(
                       'text-xs flex-1',
-                      item.done ? 'text-surface-500 line-through' : 'text-surface-200 group-hover:text-sky-200'
+                      item.done ? 'text-surface-500 line-through' : 'text-surface-200 group-hover:text-violet-200'
                     )}>
                       {item.label}
                     </span>
                     {!item.done && (
-                      <ArrowRight size={11} className="text-surface-600 group-hover:text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight size={11} className="text-surface-600 group-hover:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     )}
                   </Link>
                 ))}
@@ -184,13 +184,13 @@ export default function AdminDashboardPage() {
             </p>
             <div className="grid grid-cols-4 gap-2">
               <MetricCard label="Owner" value={data.users.by_role.owner || 0} tone="amber" />
-              <MetricCard label="Admins" value={data.users.by_role.admin || 0} tone="sky" />
+              <MetricCard label="Admins" value={data.users.by_role.admin || 0} tone="violet" />
               <MetricCard label="Teachers" value={data.users.by_role.teacher || 0} tone="emerald" />
               <MetricCard label="Students" value={data.users.by_role.student || 0} tone="neutral" />
             </div>
             <div className="grid grid-cols-3 gap-2 pt-1">
               <MetricCard label="Active today" value={data.users.active_today} tone="emerald" />
-              <MetricCard label="Active this week" value={data.users.active_7d} tone="sky" />
+              <MetricCard label="Active this week" value={data.users.active_7d} tone="violet" />
               <MetricCard label="New this week" value={data.users.signed_up_7d} tone="neutral" />
             </div>
 
@@ -212,7 +212,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <p className="text-[10px] text-surface-500">Average mastery</p>
-                  <p className="text-2xl font-bold text-sky-300">{Math.round(data.cohort.avg_mastery * 100)}%</p>
+                  <p className="text-2xl font-bold text-violet-300">{Math.round(data.cohort.avg_mastery * 100)}%</p>
                 </div>
                 {data.cohort.flagged_for_teacher_attention > 0 && (
                   <Link
@@ -312,11 +312,11 @@ function StatusCard({ icon: Icon, label, value, good, href }: {
 }
 
 function MetricCard({ label, value, tone }: {
-  label: string; value: number; tone: 'amber' | 'sky' | 'emerald' | 'neutral';
+  label: string; value: number; tone: 'amber' | 'violet' | 'emerald' | 'neutral';
 }) {
   const toneClass =
     tone === 'amber' ? 'text-amber-300'
-    : tone === 'sky' ? 'text-sky-300'
+    : tone === 'violet' ? 'text-violet-300'
     : tone === 'emerald' ? 'text-emerald-300'
     : 'text-surface-200';
   return (
@@ -335,7 +335,7 @@ function Sparkline({ points }: { points: number[] }) {
       {points.map((p, i) => (
         <div
           key={i}
-          className="flex-1 bg-sky-500/30 rounded-sm min-h-[2px] transition-all"
+          className="flex-1 bg-violet-500/30 rounded-sm min-h-[2px] transition-all"
           style={{ height: `${Math.max(8, (p / max) * 100)}%` }}
           title={`${p} active ${i === 6 ? 'today' : `${6 - i} day${6 - i !== 1 ? 's' : ''} ago`}`}
         />
@@ -348,10 +348,10 @@ function QuickLink({ href, label, icon: Icon }: {
   href: string; label: string; icon: typeof Key;
 }) {
   return (
-    <Link to={href} className="p-3 rounded-lg bg-surface-900 border border-surface-800 hover:border-sky-500/40 flex items-center gap-2 text-xs text-surface-200 transition-colors group">
-      <Icon size={12} className="text-surface-500 group-hover:text-sky-400" />
+    <Link to={href} className="p-3 rounded-lg bg-surface-900 border border-surface-800 hover:border-violet-500/40 flex items-center gap-2 text-xs text-surface-200 transition-colors group">
+      <Icon size={12} className="text-surface-500 group-hover:text-violet-400" />
       <span className="flex-1">{label}</span>
-      <ArrowRight size={11} className="text-surface-600 group-hover:text-sky-400" />
+      <ArrowRight size={11} className="text-surface-600 group-hover:text-violet-400" />
     </Link>
   );
 }

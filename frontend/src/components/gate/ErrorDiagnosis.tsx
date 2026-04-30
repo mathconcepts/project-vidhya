@@ -42,7 +42,7 @@ interface ErrorDiagnosisProps {
 const ERROR_TYPE_CONFIG: Record<string, { label: string; color: string; icon: typeof Brain; tip: string }> = {
   conceptual:          { label: 'Conceptual Gap',      color: 'text-red-400',    icon: Brain,         tip: 'The underlying concept needs review' },
   procedural:          { label: 'Wrong Procedure',     color: 'text-amber-400',  icon: GitBranch,     tip: 'Right concept, wrong method applied' },
-  notation:            { label: 'Notation Confusion',  color: 'text-sky-400',    icon: AlertTriangle, tip: 'Mathematical notation was misread' },
+  notation:            { label: 'Notation Confusion',  color: 'text-violet-400',    icon: AlertTriangle, tip: 'Mathematical notation was misread' },
   misread:             { label: 'Question Misread',    color: 'text-purple-400', icon: AlertTriangle, tip: 'The question was misinterpreted' },
   time_pressure:       { label: 'Rushed Error',        color: 'text-amber-400',  icon: Target,        tip: 'You knew the method but went too fast' },
   arithmetic:          { label: 'Calculation Error',   color: 'text-emerald-400',icon: Target,        tip: 'Right approach, arithmetic slip' },
@@ -137,7 +137,7 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
                 <div className="space-y-2">
                   <button
                     onClick={() => setShowCorrective(!showCorrective)}
-                    className="flex items-center gap-2 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
+                    className="flex items-center gap-2 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors cursor-pointer"
                   >
                     <Target size={12} />
                     {showCorrective ? 'Hide' : 'Try'} a corrective problem
@@ -152,7 +152,7 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="p-3 rounded-lg bg-sky-500/5 border border-sky-500/15 space-y-3">
+                        <div className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/15 space-y-3">
                           <p className="text-sm text-surface-200 leading-relaxed whitespace-pre-wrap">
                             {diagnosis.corrective_problem.question}
                           </p>
@@ -160,7 +160,7 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
                           {!corrAnswerRevealed ? (
                             <button
                               onClick={() => setCorrAnswerRevealed(true)}
-                              className="text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
+                              className="text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors cursor-pointer"
                             >
                               Reveal answer
                             </button>
@@ -191,9 +191,9 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="p-3 rounded-lg bg-sky-500/5 border border-sky-500/15 text-center"
+                  className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/15 text-center"
                 >
-                  <p className="text-sm text-sky-300">
+                  <p className="text-sm text-violet-300">
                     Struggling is how learning happens. Every expert was once a beginner who didn't quit.
                   </p>
                 </motion.div>

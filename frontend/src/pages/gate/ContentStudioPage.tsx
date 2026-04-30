@@ -211,7 +211,7 @@ function TabButton({ active, onClick, children }: any) {
       className={clsx(
         'flex items-center gap-1.5 px-4 py-2 text-sm transition-colors border-b-2',
         active
-          ? 'text-sky-400 border-sky-500'
+          ? 'text-violet-400 border-violet-500'
           : 'text-surface-400 border-transparent hover:text-surface-200',
       )}
     >
@@ -401,8 +401,8 @@ function GenerateTab({ onCreated }: { onCreated: (d: Draft) => void }) {
         disabled={busy || !conceptOk || !title.trim() || sources.length === 0}
         className={clsx(
           'px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2',
-          busy ? 'bg-sky-600/50 text-sky-100 cursor-wait'
-               : 'bg-sky-600 hover:bg-sky-500 text-white disabled:opacity-30 disabled:cursor-not-allowed',
+          busy ? 'bg-violet-600/50 text-violet-100 cursor-wait'
+               : 'bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-30 disabled:cursor-not-allowed',
         )}
       >
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
@@ -447,7 +447,7 @@ function DraftsTab({
               className={clsx(
                 'px-3 py-1 rounded text-xs transition-colors',
                 statusFilter === s
-                  ? 'bg-sky-600/30 text-sky-300 border border-sky-700'
+                  ? 'bg-violet-600/30 text-violet-300 border border-violet-700'
                   : 'bg-surface-900 text-surface-400 border border-surface-800 hover:text-surface-200',
               )}
             >

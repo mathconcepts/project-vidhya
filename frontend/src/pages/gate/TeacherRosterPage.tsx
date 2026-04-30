@@ -116,10 +116,10 @@ export default function TeacherRosterPage() {
       ) : null}
 
       {/* Info panel */}
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20 flex items-start gap-2.5">
-        <Brain size={13} className="shrink-0 mt-0.5 text-sky-400" />
-        <div className="text-[11px] text-sky-200/80 leading-relaxed">
-          <span className="font-medium text-sky-300">About these summaries.</span>{' '}
+      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
+        <Brain size={13} className="shrink-0 mt-0.5 text-violet-400" />
+        <div className="text-[11px] text-violet-200/80 leading-relaxed">
+          <span className="font-medium text-violet-300">About these summaries.</span>{' '}
           Each student's mastery is estimated from their answer history using a Bayesian cognitive model.
           Aggregate only — raw answers stay private to each student.
         </div>
@@ -134,7 +134,7 @@ function StudentRow({ student: s }: { student: RosterStudent }) {
   const masteryPct = Math.round(s.overall_mastery * 100);
   const masteryTone =
     masteryPct >= 70 ? 'text-emerald-400'
-    : masteryPct >= 40 ? 'text-sky-400'
+    : masteryPct >= 40 ? 'text-violet-400'
     : 'text-amber-400';
 
   return (
@@ -175,7 +175,7 @@ function StudentRow({ student: s }: { student: RosterStudent }) {
             className={clsx(
               'h-full rounded-full transition-all',
               masteryPct >= 70 ? 'bg-emerald-500'
-              : masteryPct >= 40 ? 'bg-sky-500'
+              : masteryPct >= 40 ? 'bg-violet-500'
               : 'bg-amber-500',
             )}
             style={{ width: `${masteryPct}%` }}
@@ -190,7 +190,7 @@ function StudentRow({ student: s }: { student: RosterStudent }) {
           {s.concepts_mastered} mastered
         </span>
         <span className="inline-flex items-center gap-1">
-          <Activity size={10} className="text-sky-400" />
+          <Activity size={10} className="text-violet-400" />
           {s.concepts_in_progress} in progress
         </span>
         <span className="inline-flex items-center gap-1">

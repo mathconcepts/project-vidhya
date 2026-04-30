@@ -89,8 +89,8 @@ export default function NextStepChip({ step, onAccept, acceptLabel }: Props) {
       transition={{ duration: 0.25 }}
       className="p-3 rounded-xl bg-surface-900/60 border border-surface-800 flex items-start gap-2.5"
     >
-      <div className="shrink-0 w-7 h-7 rounded-full bg-sky-500/15 border border-sky-500/25 flex items-center justify-center">
-        <Sparkles size={12} className="text-sky-400" />
+      <div className="shrink-0 w-7 h-7 rounded-full bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
+        <Sparkles size={12} className="text-violet-400" />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -101,8 +101,8 @@ export default function NextStepChip({ step, onAccept, acceptLabel }: Props) {
           <button
             onClick={handleAccept}
             className={clsx(
-              'px-2.5 py-1 rounded-md bg-sky-500/15 hover:bg-sky-500/25',
-              'text-[11px] font-medium text-sky-300 border border-sky-500/30',
+              'px-2.5 py-1 rounded-md bg-violet-500/15 hover:bg-violet-500/25',
+              'text-[11px] font-medium text-violet-300 border border-violet-500/30',
               'transition-colors'
             )}
           >

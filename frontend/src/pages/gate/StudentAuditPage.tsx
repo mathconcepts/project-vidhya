@@ -61,7 +61,7 @@ interface AuditReport {
 const READINESS_CONFIG = {
   'not-ready': { label: 'Foundation Phase', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/25' },
   'building': { label: 'Building', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/25' },
-  'ready': { label: 'Exam-Ready', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/25' },
+  'ready': { label: 'Exam-Ready', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/25' },
   'confident': { label: 'Peak Form', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25' },
 };
 
@@ -159,7 +159,7 @@ export default function StudentAuditPage() {
       {/* Mastery Heatmap */}
       <motion.div variants={fadeInUp} className="space-y-2">
         <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-          <Target size={13} className="text-sky-400" />
+          <Target size={13} className="text-violet-400" />
           Mastery Heatmap
         </h2>
         <div className="space-y-1.5">
@@ -227,7 +227,7 @@ export default function StudentAuditPage() {
       {/* Cognitive Profile */}
       <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
         <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5 mb-2">
-          <Brain size={13} className="text-sky-400" />
+          <Brain size={13} className="text-violet-400" />
           How You Think
         </h2>
         <div className="grid grid-cols-3 gap-2 mb-3">
@@ -274,14 +274,14 @@ export default function StudentAuditPage() {
       {/* Action Plan */}
       <motion.div variants={fadeInUp} className="space-y-2">
         <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-          <TrendingUp size={13} className="text-sky-400" />
+          <TrendingUp size={13} className="text-violet-400" />
           Next 3 Sessions
         </h2>
         {report.action_plan.map(s => (
           <div key={s.session} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold bg-sky-500/15 text-sky-400">
+                <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold bg-violet-500/15 text-violet-400">
                   {s.session}
                 </span>
                 <span className="text-sm font-medium text-surface-200">{s.focus}</span>

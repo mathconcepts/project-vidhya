@@ -69,7 +69,7 @@ const StudymateSessionPage = lazy(() => import('@/pages/gate/StudymateSessionPag
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-sky-500"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500"></div>
   </div>
 );
 
@@ -77,7 +77,7 @@ const NotFound = () => (
   <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
     <h1 className="text-4xl font-bold text-surface-400">404</h1>
     <p className="text-surface-500">Page not found</p>
-    <a href="/" className="text-sky-400 hover:text-sky-300 underline">Back to Home</a>
+    <a href="/" className="text-violet-400 hover:text-violet-300 underline">Back to Home</a>
   </div>
 );
 

@@ -213,7 +213,7 @@ export default function ExamStrategyPage() {
             </div>
             <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
               {/* CountUp animates integers; round to 1dp and pass through suffix */}
-              <CountUp target={Math.round(scorePlan.daily_hours_needed * 10) / 10} suffix=" hrs/day" className="text-lg font-bold text-sky-400" />
+              <CountUp target={Math.round(scorePlan.daily_hours_needed * 10) / 10} suffix=" hrs/day" className="text-lg font-bold text-violet-400" />
               <p className="text-xs text-surface-500">study needed</p>
             </div>
           </motion.div>
@@ -254,7 +254,7 @@ export default function ExamStrategyPage() {
                   <span className="text-[10px] text-surface-500 w-8">{currentPct}%</span>
                   <div className="flex-1 h-2 rounded-full bg-surface-800 overflow-hidden relative">
                     <motion.div
-                      className="h-full rounded-full bg-sky-500/60"
+                      className="h-full rounded-full bg-violet-500/60"
                       initial={{ width: 0 }}
                       animate={{ width: `${currentPct}%` }}
                       transition={{ duration: 0.6, ease: 'easeOut' }}

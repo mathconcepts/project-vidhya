@@ -77,7 +77,7 @@ export default function ProgressPage() {
         <p className="text-sm text-surface-500">Start practicing to see your progress here.</p>
         <Link
           to="/"
-          className="inline-block mt-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white text-sm font-medium shadow-lg shadow-sky-500/25"
+          className="inline-block mt-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white text-sm font-medium shadow-lg shadow-violet-500/25"
         >
           Start Practicing
         </Link>
@@ -136,7 +136,7 @@ export default function ProgressPage() {
       {allCaughtUp && (
         <motion.div
           variants={fadeInUp}
-          className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-sky-500/10 border border-emerald-500/25 text-center"
+          className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-violet-500/10 border border-emerald-500/25 text-center"
         >
           <PartyPopper size={24} className="text-emerald-400 mx-auto mb-2" />
           <p className="text-sm font-semibold text-emerald-300">You're all caught up!</p>
@@ -189,7 +189,7 @@ export default function ProgressPage() {
                       </span>
                     )}
                   </div>
-                  <ChevronRight size={14} className="text-surface-600 shrink-0 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight size={14} className="text-surface-600 shrink-0 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" />
                 </Link>
               </motion.div>
             );
@@ -224,16 +224,16 @@ export default function ProgressPage() {
         </Link>
         <Link
           to="/smart-practice"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-sky-500/30 transition-colors group"
+          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/30 transition-colors group"
         >
-          <div className="p-2 rounded-lg bg-sky-500/10">
-            <Sparkles size={16} className="text-sky-400" />
+          <div className="p-2 rounded-lg bg-violet-500/10">
+            <Sparkles size={16} className="text-violet-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-surface-200">Smart Practice</p>
             <p className="text-xs text-surface-500">Four-tier cost-optimized delivery</p>
           </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-sky-400 transition-colors" />
+          <ChevronRight size={14} className="text-surface-600 group-hover:text-violet-400 transition-colors" />
         </Link>
         <Link
           to="/audit"
@@ -276,16 +276,16 @@ export default function ProgressPage() {
         </Link>
         <Link
           to="/exam-strategy"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-sky-500/30 transition-colors group"
+          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/30 transition-colors group"
         >
-          <div className="p-2 rounded-lg bg-sky-500/10">
-            <Target size={16} className="text-sky-400" />
+          <div className="p-2 rounded-lg bg-violet-500/10">
+            <Target size={16} className="text-violet-400" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-surface-200">Exam Strategy</p>
             <p className="text-xs text-surface-500">Personalized playbook, time budgets, skip thresholds</p>
           </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-sky-400 transition-colors" />
+          <ChevronRight size={14} className="text-surface-600 group-hover:text-violet-400 transition-colors" />
         </Link>
         <Link
           to="/error-patterns"

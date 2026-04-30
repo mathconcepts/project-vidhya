@@ -133,7 +133,7 @@ export default function DiagnosticPage() {
   if (loading || checking) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 size={32} className="text-sky-400 animate-spin" />
+        <Loader2 size={32} className="text-violet-400 animate-spin" />
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function DiagnosticPage() {
     return (
       <div className="text-center py-16 space-y-4">
         <p className="text-surface-400">No diagnostic questions available.</p>
-        <button onClick={() => navigate('/')} className="text-sky-400 underline">Go home</button>
+        <button onClick={() => navigate('/')} className="text-violet-400 underline">Go home</button>
       </div>
     );
   }
@@ -203,7 +203,7 @@ export default function DiagnosticPage() {
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-white font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all flex items-center justify-center gap-2"
         >
           {submitting ? (
             <Loader2 size={18} className="animate-spin" />
@@ -234,7 +234,7 @@ export default function DiagnosticPage() {
         </span>
         <div className={clsx(
           'flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-sm font-semibold',
-          timer > 30 ? 'text-sky-400 bg-sky-500/10' :
+          timer > 30 ? 'text-violet-400 bg-violet-500/10' :
           timer > 10 ? 'text-amber-400 bg-amber-500/10' :
           'text-red-400 bg-red-500/10'
         )}>
@@ -246,7 +246,7 @@ export default function DiagnosticPage() {
       {/* Progress bar */}
       <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
         <motion.div
-          className="h-full bg-sky-500 rounded-full"
+          className="h-full bg-violet-500 rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${((currentIdx) / questions.length) * 100}%` }}
           transition={{ duration: 0.3 }}
@@ -254,7 +254,7 @@ export default function DiagnosticPage() {
       </div>
 
       {/* Topic tag */}
-      <span className="inline-block text-xs font-mono px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400">
+      <span className="inline-block text-xs font-mono px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400">
         {q.topic_name}
       </span>
 
@@ -281,9 +281,9 @@ export default function DiagnosticPage() {
                 <button
                   key={i}
                   onClick={() => handleAnswer(optKey)}
-                  className="w-full text-left p-3 rounded-xl border border-surface-700 bg-surface-900 hover:border-sky-500/50 hover:bg-surface-800 transition-all active:scale-[0.98]"
+                  className="w-full text-left p-3 rounded-xl border border-surface-700 bg-surface-900 hover:border-violet-500/50 hover:bg-surface-800 transition-all active:scale-[0.98]"
                 >
-                  <span className="text-xs font-mono text-sky-400 mr-2">{optKey}.</span>
+                  <span className="text-xs font-mono text-violet-400 mr-2">{optKey}.</span>
                   <span className="text-sm text-surface-200">{optText}</span>
                 </button>
               );

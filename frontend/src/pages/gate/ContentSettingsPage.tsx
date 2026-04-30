@@ -268,7 +268,7 @@ export default function ContentSettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <BookOpen className="w-6 h-6 text-sky-400" />
+          <BookOpen className="w-6 h-6 text-violet-400" />
           Content settings
         </h1>
         <p className="text-slate-400 mt-1">
@@ -303,7 +303,7 @@ export default function ContentSettingsPage() {
                   key={bundle.id}
                   className={`rounded-lg border p-4 transition-colors ${
                     isSubscribed
-                      ? 'bg-sky-950/30 border-sky-700/60'
+                      ? 'bg-violet-950/30 border-violet-700/60'
                       : 'bg-slate-800/40 border-slate-700/60 hover:border-slate-600'
                   }`}
                 >
@@ -334,7 +334,7 @@ export default function ContentSettingsPage() {
                       onClick={() => toggleSubscription(bundle.id, isSubscribed)}
                       className={`flex-shrink-0 text-sm px-3 py-1.5 rounded-md transition-colors ${
                         isSubscribed
-                          ? 'bg-sky-600 hover:bg-sky-500 text-white'
+                          ? 'bg-violet-600 hover:bg-violet-500 text-white'
                           : 'bg-slate-700 hover:bg-slate-600 text-slate-100'
                       } ${isBusy ? 'opacity-60 cursor-wait' : ''}`}
                       aria-label={isSubscribed ? `Unsubscribe from ${bundle.name}` : `Subscribe to ${bundle.name}`}
@@ -444,12 +444,12 @@ function ModeBanner({ mode, pin }: { mode: 'stub' | 'local' | 'live'; pin: Conte
   }
   if (mode === 'local') {
     return (
-      <div className="bg-sky-950/30 border border-sky-800/50 rounded-lg p-4 flex gap-3">
-        <Info className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
+      <div className="bg-violet-950/30 border border-violet-800/50 rounded-lg p-4 flex gap-3">
+        <Info className="w-5 h-5 text-violet-400 flex-shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="text-sky-200 font-medium">Content served from local subrepo</p>
-          <p className="text-sky-300/80 mt-0.5">
-            This deployment reads community content from <code className="text-sky-200">modules/project-vidhya-content/</code>{' '}
+          <p className="text-violet-200 font-medium">Content served from local subrepo</p>
+          <p className="text-violet-300/80 mt-0.5">
+            This deployment reads community content from <code className="text-violet-200">modules/project-vidhya-content/</code>{' '}
             in the main repo. When the separate content repo goes live, subscriptions here keep working without changes.
           </p>
         </div>

@@ -100,7 +100,7 @@ export default function SettingsPage() {
               animate={{ rotate: 0, opacity: 1 }}
               transition={{ duration: 0.2 }}
             >
-              {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-sky-400" />}
+              {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-violet-400" />}
             </motion.div>
           </button>
         </div>
@@ -165,7 +165,7 @@ export default function SettingsPage() {
       {/* Storage Mode (DB-less GBrain) */}
       <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
         <div className="flex items-center gap-2">
-          <Database size={14} className="text-sky-400" />
+          <Database size={14} className="text-violet-400" />
           <p className="text-sm font-medium text-surface-200">Storage Mode</p>
         </div>
         <p className="text-xs text-surface-500 leading-relaxed">
@@ -183,12 +183,12 @@ export default function SettingsPage() {
               onClick={() => setStorageMode(opt.id)}
               className={`p-2 rounded-lg border transition-colors text-left ${
                 storageMode === opt.id
-                  ? 'bg-sky-500/10 border-sky-500/40'
+                  ? 'bg-violet-500/10 border-violet-500/40'
                   : 'bg-surface-800 border-surface-700 hover:border-surface-600'
               }`}
             >
-              <opt.icon size={12} className={storageMode === opt.id ? 'text-sky-400 mb-1' : 'text-surface-500 mb-1'} />
-              <p className={`text-xs font-medium ${storageMode === opt.id ? 'text-sky-300' : 'text-surface-300'}`}>{opt.label}</p>
+              <opt.icon size={12} className={storageMode === opt.id ? 'text-violet-400 mb-1' : 'text-surface-500 mb-1'} />
+              <p className={`text-xs font-medium ${storageMode === opt.id ? 'text-violet-300' : 'text-surface-300'}`}>{opt.label}</p>
               <p className="text-[10px] text-surface-500">{opt.desc}</p>
             </button>
           ))}

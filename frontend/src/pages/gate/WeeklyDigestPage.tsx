@@ -75,15 +75,15 @@ export default function WeeklyDigestPage() {
       </motion.div>
 
       {/* Opening */}
-      <motion.div variants={fadeInUp} className="p-5 rounded-xl bg-gradient-to-br from-sky-500/10 to-emerald-500/10 border border-sky-500/20">
-        <Sparkles size={20} className="text-sky-400 mb-3" />
+      <motion.div variants={fadeInUp} className="p-5 rounded-xl bg-gradient-to-br from-violet-500/10 to-emerald-500/10 border border-violet-500/20">
+        <Sparkles size={20} className="text-violet-400 mb-3" />
         <p className="text-base text-surface-100 leading-relaxed font-medium">{digest.opening}</p>
       </motion.div>
 
       {/* Stats Grid */}
       <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
         <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <Target size={14} className="text-sky-400 mx-auto mb-1" />
+          <Target size={14} className="text-violet-400 mx-auto mb-1" />
           <CountUp target={digest.stats.problems_this_week} className="text-lg font-bold text-surface-200 block" />
           <p className="text-[10px] text-surface-500">problems solved</p>
         </div>
@@ -121,8 +121,8 @@ export default function WeeklyDigestPage() {
       )}
 
       {/* One Action */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/25">
-        <p className="text-xs font-semibold text-sky-400 mb-1">Your One Action This Week</p>
+      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/25">
+        <p className="text-xs font-semibold text-violet-400 mb-1">Your One Action This Week</p>
         <p className="text-sm text-surface-100 leading-relaxed font-medium">{digest.one_action}</p>
       </motion.div>
 

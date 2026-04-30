@@ -248,7 +248,7 @@ export default function ExamProfilePage() {
                 'w-full px-4 py-3 rounded-lg border border-dashed text-sm font-semibold transition-colors',
                 exams.length >= MAX_EXAMS
                   ? 'border-zinc-800 text-zinc-600 cursor-not-allowed'
-                  : 'border-zinc-700 text-zinc-300 hover:border-sky-500/40 hover:text-sky-300'
+                  : 'border-zinc-700 text-zinc-300 hover:border-violet-500/40 hover:text-violet-300'
               )}
             >
               <Plus className="w-4 h-4 inline mr-1" />
@@ -269,7 +269,7 @@ export default function ExamProfilePage() {
               <button
                 onClick={save}
                 disabled={saving}
-                className="flex-1 px-4 py-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save profile

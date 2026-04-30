@@ -281,7 +281,7 @@ export default function KnowledgePickerPage() {
             className={clsx(
               'w-full py-3 rounded-xl font-semibold text-white transition-all',
               pickedExamIds.size > 0 && !saving
-                ? 'bg-gradient-to-r from-emerald-500 to-sky-500'
+                ? 'bg-gradient-to-r from-emerald-500 to-violet-500'
                 : 'bg-zinc-800 text-zinc-500 cursor-not-allowed',
             )}
           >

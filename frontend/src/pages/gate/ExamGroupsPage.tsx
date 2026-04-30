@@ -179,7 +179,7 @@ export default function ExamGroupsPage() {
                 </div>
                 {g.tagline && <p className="text-[11px] text-violet-300/80">{g.tagline}</p>}
                 <p className="text-[10px] text-surface-500 mt-0.5">
-                  <code className="text-sky-400">{g.code}</code>
+                  <code className="text-violet-400">{g.code}</code>
                   {' · '}{g.member_count} exam{g.member_count !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -280,7 +280,7 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
   return (
     <motion.div className="space-y-4 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
       <motion.div variants={fadeInUp}>
-        <button onClick={onBack} className="text-[11px] text-sky-400 hover:text-sky-300 mb-1">
+        <button onClick={onBack} className="text-[11px] text-violet-400 hover:text-violet-300 mb-1">
           ← All groups
         </button>
         <div className="flex items-start justify-between gap-3">
@@ -330,7 +330,7 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
         )}
         <button
           onClick={() => setShowAddMember(true)}
-          className="px-3 h-9 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
+          className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
         >
           <ListPlus size={12} />
           Add exam
@@ -414,7 +414,7 @@ function MemberRow({ entry, isStatic, onRemove, working }: {
           <p className="text-sm text-surface-200 truncate">{entry.name}</p>
           <span className={clsx(
             'text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
-            isStatic ? 'bg-sky-500/15 text-sky-300' : 'bg-emerald-500/15 text-emerald-300',
+            isStatic ? 'bg-violet-500/15 text-violet-300' : 'bg-emerald-500/15 text-emerald-300',
           )}>
             {isStatic ? 'static' : 'dynamic'}
           </span>

@@ -179,7 +179,7 @@ export default function TeachingDashboardPage() {
       ) : nextClass?.recommendation ? (
         <>
           {/* Primary: next-class recommendation */}
-          <motion.div variants={fadeInUp} className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/8 via-surface-900 to-sky-500/8 border border-emerald-500/25 space-y-3">
+          <motion.div variants={fadeInUp} className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/8 via-surface-900 to-violet-500/8 border border-emerald-500/25 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <p className="text-[10px] text-emerald-400 uppercase tracking-wide font-medium">
@@ -265,7 +265,7 @@ export default function TeachingDashboardPage() {
               value={announcementText}
               onChange={e => setAnnouncementText(e.target.value.slice(0, 280))}
               placeholder="e.g., We'll continue eigenvalues tomorrow. Please review problem 3 before class."
-              className="w-full min-h-[60px] p-2.5 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50 resize-none"
+              className="w-full min-h-[60px] p-2.5 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 resize-none"
             />
             <div className="flex items-center justify-between">
               <span className={clsx(
@@ -277,7 +277,7 @@ export default function TeachingDashboardPage() {
               <button
                 onClick={postAnnouncement}
                 disabled={!announcementText.trim() || announcementPosting}
-                className="px-3 h-8 rounded-lg bg-sky-500 text-white text-xs font-medium hover:bg-sky-400 disabled:opacity-40 inline-flex items-center gap-1.5 transition-all"
+                className="px-3 h-8 rounded-lg bg-violet-500 text-white text-xs font-medium hover:bg-violet-400 disabled:opacity-40 inline-flex items-center gap-1.5 transition-all"
               >
                 {announcementPosting ? <Loader2 size={11} className="animate-spin" />
                   : announcementPosted ? <><Check size={11} /> Posted</>
@@ -302,10 +302,10 @@ export default function TeachingDashboardPage() {
       </AnimatePresence>
 
       {/* Design-principle note */}
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20 flex items-start gap-2.5">
-        <Lightbulb size={13} className="shrink-0 mt-0.5 text-sky-400" />
-        <div className="text-[11px] text-sky-200/80 leading-relaxed">
-          <span className="font-medium text-sky-300">Why this works.</span>{' '}
+      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
+        <Lightbulb size={13} className="shrink-0 mt-0.5 text-violet-400" />
+        <div className="text-[11px] text-violet-200/80 leading-relaxed">
+          <span className="font-medium text-violet-300">Why this works.</span>{' '}
           Every recommendation and brief is composed from your cohort's actual learning data.
           No guessing, no generic content. The app tells you what your students need; you bring the teaching.
         </div>
@@ -381,7 +381,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                     'text-lg font-bold',
                     brief.cohort.avg_mastery === null ? 'text-surface-500'
                     : brief.cohort.avg_mastery < 0.4 ? 'text-amber-400'
-                    : brief.cohort.avg_mastery < 0.7 ? 'text-sky-400'
+                    : brief.cohort.avg_mastery < 0.7 ? 'text-violet-400'
                     : 'text-emerald-400',
                   )}>
                     {brief.cohort.avg_mastery === null ? '—' : Math.round(brief.cohort.avg_mastery * 100) + '%'}
@@ -402,7 +402,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                   'w-full h-10 rounded-lg font-medium text-sm inline-flex items-center justify-center gap-2 transition-all',
                   pushStatus === 'done'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-sky-500 text-white hover:bg-sky-400 active:scale-[0.98]',
+                    : 'bg-violet-500 text-white hover:bg-violet-400 active:scale-[0.98]',
                 )}
               >
                 {pushStatus === 'pushing' ? <Loader2 size={13} className="animate-spin" />
@@ -436,7 +436,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
 
               {/* Worked examples */}
               {brief.teaching_brief.worked_examples.length > 0 && (
-                <Section title="Worked examples for class" icon={BookMarked} tone="sky">
+                <Section title="Worked examples for class" icon={BookMarked} tone="violet">
                   <div className="space-y-2">
                     {brief.teaching_brief.worked_examples.map((ex, i) => (
                       <div key={i} className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-300 leading-relaxed">
@@ -491,13 +491,13 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
 function Section({ title, icon: Icon, tone, children }: {
   title: string;
   icon: typeof Lightbulb;
-  tone: 'amber' | 'rose' | 'sky' | 'emerald' | 'neutral';
+  tone: 'amber' | 'rose' | 'violet' | 'emerald' | 'neutral';
   children: React.ReactNode;
 }) {
   const toneAccent =
     tone === 'amber' ? 'text-amber-400'
     : tone === 'rose' ? 'text-rose-400'
-    : tone === 'sky' ? 'text-sky-400'
+    : tone === 'violet' ? 'text-violet-400'
     : tone === 'emerald' ? 'text-emerald-400'
     : 'text-surface-400';
   return (

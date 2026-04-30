@@ -22,7 +22,7 @@ interface ChatMessage {
 }
 
 const SUGGESTIONS = [
-  { text: 'Explain this concept with a worked example', dot: 'bg-sky-400' },
+  { text: 'Explain this concept with a worked example', dot: 'bg-violet-400' },
   { text: 'Where should I focus to maximise my score?', dot: 'bg-emerald-400' },
   { text: 'Check my answer — did I get this right?', dot: 'bg-amber-400' },
 ];
@@ -248,7 +248,7 @@ export default function ChatPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center h-full gap-6"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div className="text-center">
@@ -290,7 +290,7 @@ export default function ChatPage() {
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                       msg.role === 'user'
-                        ? 'bg-sky-600 text-white rounded-br-md'
+                        ? 'bg-violet-600 text-white rounded-br-md'
                         : 'bg-surface-800/80 text-surface-200 rounded-bl-md border border-surface-700/50'
                     }`}
                   >
@@ -368,7 +368,7 @@ export default function ChatPage() {
               onKeyDown={handleKeyDown}
               placeholder="Ask anything about your exam..."
               rows={1}
-              className="w-full resize-none rounded-xl bg-surface-900 border border-surface-700 px-4 py-3 pr-12 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 transition-all max-h-32"
+              className="w-full resize-none rounded-xl bg-surface-900 border border-surface-700 px-4 py-3 pr-12 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all max-h-32"
               style={{ minHeight: '44px' }}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
@@ -379,7 +379,7 @@ export default function ChatPage() {
             <button
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isStreaming}
-              className="absolute right-2 bottom-2 p-2 rounded-lg bg-sky-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-sky-500 transition-colors"
+              className="absolute right-2 bottom-2 p-2 rounded-lg bg-violet-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-violet-500 transition-colors"
             >
               {isStreaming ? (
                 <Loader2 size={16} className="animate-spin" />

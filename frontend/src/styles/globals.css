@@ -3,61 +3,72 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Design system v2.3 — semantic CSS variables aligned with DESIGN-SYSTEM.md.
+   *
+   *   --primary  = emerald (mastery, primary CTA)
+   *   --accent   = violet  (AI / tutor / study plan signature)
+   *   --ring     = follows --primary
+   *
+   * Light mode uses slightly darker shades (emerald-600, violet-500) to maintain
+   * contrast on white surfaces. Dark mode uses the canonical signature shades
+   * (emerald-500 #10b981, violet-400 #a78bfa).
+   */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 210 40% 98%;            /* slate-50  — light surface per DESIGN-SYSTEM.md */
+    --foreground: 222 47% 11%;            /* slate-900 — readable on slate-50 */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 292 91% 73%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 199 89% 48%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 158 64% 36%;               /* emerald-600 — better contrast on white than emerald-500 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;             /* slate-100 */
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;      /* slate-500 */
+    --accent: 250 95% 64%;                /* violet-500 — darker than dark-mode signature for white-bg contrast */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;             /* red-500 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;                /* slate-200 */
+    --input: 214 32% 91%;
+    --ring: 158 64% 36%;                  /* emerald-600 to match --primary */
     --radius: 0.75rem;
     /* Confidence-building palette */
-    --confidence-bg: 45 100% 97%;
-    --success-glow: 142 76% 36%;
-    --streak-fire: 38 92% 50%;
-    --progress-fill: 199 89% 48%;
-    --encourage-text: 142 72% 29%;
+    --confidence-bg: 158 76% 96%;         /* emerald-50 */
+    --success-glow: 158 64% 36%;          /* emerald-600 */
+    --streak-fire: 38 92% 50%;            /* amber-500 — kept for true warnings only */
+    --progress-fill: 158 64% 36%;         /* emerald-600 (was sky) */
+    --encourage-text: 158 64% 28%;        /* emerald-700 */
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 292 91% 73%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 199 89% 48%;
+    --background: 222 47% 7%;             /* navy-950 #0a0f1a — DESIGN-SYSTEM.md target */
+    --foreground: 210 20% 98%;            /* near-white */
+    --card: 217 33% 12%;                  /* navy-900 #111827 */
+    --card-foreground: 210 20% 98%;
+    --popover: 217 33% 12%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 158 84% 39%;               /* emerald-500 #10b981 — canonical mastery */
+    --primary-foreground: 222 47% 7%;
+    --secondary: 215 28% 17%;             /* navy-800 #1f2937 */
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 11% 65%;      /* slate-400 */
+    --accent: 252 95% 76%;                /* violet-400 #a78bfa — canonical AI/Tutor signature */
+    --accent-foreground: 222 47% 7%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 158 84% 39%;                  /* emerald-500 */
     /* Confidence-building palette — dark mode */
-    --confidence-bg: 45 30% 12%;
-    --success-glow: 142 60% 40%;
+    --confidence-bg: 158 30% 12%;
+    --success-glow: 158 60% 40%;
     --streak-fire: 38 92% 55%;
-    --progress-fill: 199 89% 52%;
-    --encourage-text: 142 60% 55%;
+    --progress-fill: 158 84% 39%;         /* emerald-500 (was sky) */
+    --encourage-text: 158 60% 55%;
   }
 
   * {
@@ -66,8 +77,10 @@
 
   /* Dark mode (default) */
   body {
-    background-color: #09090b; /* surface-950 */
+    background-color: #09090b; /* surface-950 — Phase B will migrate to navy-950 (#0a0f1a) */
     color: #ffffff;
+    /* Design system v2.3: DM Sans body, Inter fallback while migration in progress. */
+    font-family: 'DM Sans', Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'rlig' 1, 'calt' 1;
@@ -75,6 +88,22 @@
     overscroll-behavior: none;
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
+  }
+
+  /*
+   * Design system v2.3: serif headlines for Compounding weight.
+   * Fraunces is variable (opsz 9-144) so it auto-calibrates from h3 to display.
+   *
+   * Pairing rule from DESIGN-SYSTEM.md: serif only ≥18px (h1/h2/h3 default to that or larger).
+   * For smaller "heading" elements (h4/h5/h6), DM Sans is preserved via the body cascade.
+   *
+   * Override per element via class="font-sans" if a particular heading needs the body font.
+   */
+  h1, h2, h3, .font-display {
+    font-family: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+    font-optical-sizing: auto;
+    /* Slight tracking pull-in for serif at display sizes; matches Stripe Press / Browser Co. feel */
+    letter-spacing: -0.01em;
   }
 
   /* Mobile base font size — 16px prevents iOS zoom on inputs */

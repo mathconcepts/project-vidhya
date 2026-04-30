@@ -41,7 +41,7 @@ const TYPE_ICONS: Record<Material['type'], typeof FileText> = {
 
 const TYPE_COLORS: Record<Material['type'], string> = {
   pdf: 'text-red-400 bg-red-500/10',
-  docx: 'text-sky-400 bg-sky-500/10',
+  docx: 'text-violet-400 bg-violet-500/10',
   md: 'text-purple-400 bg-purple-500/10',
   txt: 'text-surface-400 bg-surface-800',
   'image-notes': 'text-emerald-400 bg-emerald-500/10',
@@ -204,11 +204,11 @@ export default function MaterialsPage() {
 
       {/* Grounding indicator */}
       {materials.length > 0 && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/15 flex items-center gap-2">
-          <Sparkles size={14} className="text-sky-400 shrink-0" />
+        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/15 flex items-center gap-2">
+          <Sparkles size={14} className="text-violet-400 shrink-0" />
           <p className="text-xs text-surface-300">
-            <span className="font-semibold text-sky-300">{materials.length}</span> material{materials.length === 1 ? '' : 's'} ·{' '}
-            <span className="font-semibold text-sky-300">
+            <span className="font-semibold text-violet-300">{materials.length}</span> material{materials.length === 1 ? '' : 's'} ·{' '}
+            <span className="font-semibold text-violet-300">
               {Object.values(chunkCounts).reduce((a, b) => a + b, 0)}
             </span>{' '}
             chunks ready for chat grounding

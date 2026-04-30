@@ -132,7 +132,7 @@ const INTENTS: Array<{ id: Intent; label: string; description: string; icon: typ
     label: 'Explain',
     description: 'Overview and intuition for the concept',
     icon: BookOpen,
-    color: 'text-sky-400 bg-sky-500/10 border-sky-500/25',
+    color: 'text-violet-400 bg-violet-500/10 border-violet-500/25',
   },
   {
     id: 'solve_problem',
@@ -428,7 +428,7 @@ export default function SnapPage() {
     <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
       <motion.div variants={fadeInUp}>
         <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Camera size={20} className="text-sky-400" />
+          <Camera size={20} className="text-violet-400" />
           Snap
         </h1>
         <p className="text-xs text-surface-500 mt-1">
@@ -444,7 +444,7 @@ export default function SnapPage() {
           onClick={() => { setMode('analyze'); clearImage(); }}
           className={clsx(
             'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
-            mode === 'analyze' ? 'bg-sky-500/15 text-sky-300' : 'text-surface-500 hover:text-surface-300'
+            mode === 'analyze' ? 'bg-violet-500/15 text-violet-300' : 'text-surface-500 hover:text-surface-300'
           )}
         >
           <Sparkles size={12} />
@@ -467,9 +467,9 @@ export default function SnapPage() {
         <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="p-5 rounded-xl bg-surface-900 border border-surface-800 hover:border-sky-500/30 transition-colors flex flex-col items-center gap-2"
+            className="p-5 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/30 transition-colors flex flex-col items-center gap-2"
           >
-            <Camera size={28} className="text-sky-400" />
+            <Camera size={28} className="text-violet-400" />
             <span className="text-sm font-medium text-surface-200">Take photo</span>
             <span className="text-[10px] text-surface-500">Camera</span>
           </button>
@@ -504,7 +504,7 @@ export default function SnapPage() {
             placeholder="Optional: add a note ('I got stuck at step 3', 'is this right?', etc.)"
             rows={2}
             maxLength={500}
-            className="w-full px-3 py-2 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-sky-500/50"
+            className="w-full px-3 py-2 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
           />
         </motion.div>
       )}
@@ -540,7 +540,7 @@ export default function SnapPage() {
           <button
             onClick={submit}
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={16} /> : <ArrowRight size={16} />}
             {loading ? 'Analyzing...' : selectedIntent ? 'Analyze' : 'Auto-detect & analyze'}
@@ -557,7 +557,7 @@ export default function SnapPage() {
           <button
             onClick={submit}
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={16} /> : <ClipboardCheck size={16} />}
             {loading ? (diagStatus || 'Grading…') : 'Grade my test'}
@@ -631,7 +631,7 @@ export default function SnapPage() {
           {diagSummary && (
             <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
               <div className="flex items-center gap-2">
-                <Brain size={13} className="text-sky-400" />
+                <Brain size={13} className="text-violet-400" />
                 <h3 className="text-sm font-semibold text-surface-200">How you did</h3>
               </div>
               <div className="grid grid-cols-4 gap-2 text-center">
@@ -680,7 +680,7 @@ export default function SnapPage() {
           {diagSyllabus && diagSyllabusRevealed && (
             <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
               <div className="flex items-center gap-2">
-                <BookOpen size={13} className="text-sky-400" />
+                <BookOpen size={13} className="text-violet-400" />
                 <h3 className="text-sm font-semibold text-surface-200">Your focused plan</h3>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-surface-400">
@@ -699,13 +699,13 @@ export default function SnapPage() {
                     onClick={() => navigate(`/lesson/${n.concept_id}`)}
                     className="w-full flex items-start gap-2 text-xs text-left p-1.5 -mx-1.5 rounded-lg hover:bg-surface-800/60 transition-colors group"
                   >
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-surface-800 text-surface-400 text-[10px] flex items-center justify-center group-hover:bg-sky-500/20 group-hover:text-sky-300">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-surface-800 text-surface-400 text-[10px] flex items-center justify-center group-hover:bg-violet-500/20 group-hover:text-violet-300">
                       {n.scheduled_day}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-surface-200 group-hover:text-sky-200 flex items-center gap-1">
+                      <p className="text-surface-200 group-hover:text-violet-200 flex items-center gap-1">
                         {n.concept_label}
-                        <span className="text-[10px] text-surface-600 group-hover:text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] text-surface-600 group-hover:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity">
                           → study
                         </span>
                       </p>
@@ -776,7 +776,7 @@ export default function SnapPage() {
             {response.explanation && (
               <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
                 <div className="flex items-center gap-2">
-                  <BookOpen size={13} className="text-sky-400" />
+                  <BookOpen size={13} className="text-violet-400" />
                   <h3 className="text-sm font-semibold text-surface-200">Overview</h3>
                 </div>
                 <p className="text-sm text-surface-300 leading-relaxed">{response.explanation.summary}</p>
@@ -853,10 +853,10 @@ export default function SnapPage() {
 
             {/* Strategy hints */}
             {response.strategy_hints && response.strategy_hints.length > 0 && (
-              <div className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20 space-y-1.5">
+              <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <Brain size={12} className="text-sky-400" />
-                  <p className="text-[10px] text-sky-300 uppercase tracking-wide font-medium">Strategy</p>
+                  <Brain size={12} className="text-violet-400" />
+                  <p className="text-[10px] text-violet-300 uppercase tracking-wide font-medium">Strategy</p>
                 </div>
                 <ul className="space-y-1">
                   {response.strategy_hints.map((h, i) => (

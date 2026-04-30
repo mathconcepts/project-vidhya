@@ -57,7 +57,7 @@ export function StudentWelcomeCard({ onDismiss }: Props) {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="relative p-4 rounded-2xl bg-gradient-to-br from-sky-500/8 via-surface-900 to-emerald-500/8 border border-sky-500/20 space-y-3"
+      className="relative p-4 rounded-2xl bg-gradient-to-br from-violet-500/8 via-surface-900 to-emerald-500/8 border border-violet-500/20 space-y-3"
     >
       <button
         onClick={dismiss}
@@ -68,7 +68,7 @@ export function StudentWelcomeCard({ onDismiss }: Props) {
       </button>
 
       <div className="flex items-center gap-2">
-        <Sparkles size={14} className="text-sky-400" />
+        <Sparkles size={14} className="text-violet-400" />
         <p className="text-sm font-medium text-surface-100">
           Hi, I'm Vidhya. Here are three things I can do right now.
         </p>
@@ -85,7 +85,7 @@ export function StudentWelcomeCard({ onDismiss }: Props) {
           description="Type any question from your textbook — get a walkthrough, not just an answer."
           actionLabel="Try chat"
           onClick={() => tryIt('/chat')}
-          tone="sky"
+          tone="violet"
         />
         <WelcomeAction
           icon={Camera}
@@ -120,14 +120,14 @@ function WelcomeAction({ icon: Icon, title, description, actionLabel, onClick, t
   description: string;
   actionLabel: string;
   onClick: () => void;
-  tone: 'sky' | 'emerald' | 'amber';
+  tone: 'violet' | 'emerald' | 'amber';
 }) {
   const toneAccent =
-    tone === 'sky' ? 'text-sky-400'
+    tone === 'violet' ? 'text-violet-400'
     : tone === 'emerald' ? 'text-emerald-400'
     : 'text-amber-400';
   const toneBtn =
-    tone === 'sky' ? 'text-sky-300 hover:text-sky-200'
+    tone === 'violet' ? 'text-violet-300 hover:text-violet-200'
     : tone === 'emerald' ? 'text-emerald-300 hover:text-emerald-200'
     : 'text-amber-300 hover:text-amber-200';
 

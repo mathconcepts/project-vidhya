@@ -44,11 +44,11 @@ const DIFFICULTY_LABELS: Array<{ label: string; value: number }> = [
 
 const SOURCE_META: Record<ContentSource, { label: string; icon: typeof Sparkles; color: string; description: string }> = {
   'tier-0-bundle-exact': { label: 'Bundled', icon: Database, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', description: 'Served from pre-verified bundle — instant, free.' },
-  'tier-0-explainer': { label: 'Explainer', icon: BookOpen, color: 'text-sky-400 bg-sky-500/10 border-sky-500/25', description: 'Canonical concept explainer — pre-computed.' },
+  'tier-0-explainer': { label: 'Explainer', icon: BookOpen, color: 'text-violet-400 bg-violet-500/10 border-violet-500/25', description: 'Canonical concept explainer — pre-computed.' },
   'tier-0-client-cache': { label: 'Cached', icon: Zap, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', description: 'Cached on your device from previous session.' },
   'tier-1-rag': { label: 'RAG', icon: Sparkles, color: 'text-purple-400 bg-purple-500/10 border-purple-500/25', description: 'Semantic match over bundle.' },
   'tier-1-material': { label: 'Your Notes', icon: BookOpen, color: 'text-amber-400 bg-amber-500/10 border-amber-500/25', description: 'Grounded in your uploaded materials.' },
-  'tier-2-generated': { label: 'Generated', icon: Sparkles, color: 'text-sky-400 bg-sky-500/10 border-sky-500/25', description: 'Generated live via Gemini Flash-Lite.' },
+  'tier-2-generated': { label: 'Generated', icon: Sparkles, color: 'text-violet-400 bg-violet-500/10 border-violet-500/25', description: 'Generated live via Gemini Flash-Lite.' },
   'tier-3-wolfram-verified': { label: 'Wolfram-Verified', icon: CheckCircle2, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', description: 'Computationally verified by Wolfram|Alpha.' },
   'miss': { label: 'No Match', icon: XCircle, color: 'text-red-400 bg-red-500/10 border-red-500/25', description: 'No content available. Upload materials or pick another topic.' },
 };
@@ -169,7 +169,7 @@ export default function SmartPracticePage() {
     <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
       <motion.div variants={fadeInUp}>
         <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Sparkles size={20} className="text-sky-400" />
+          <Sparkles size={20} className="text-violet-400" />
           Smart Practice
         </h1>
         <p className="text-xs text-surface-500 mt-1">
@@ -205,7 +205,7 @@ export default function SmartPracticePage() {
                 onClick={() => setTopic(t)}
                 className={clsx(
                   'px-2.5 py-1 rounded-lg text-xs transition-colors',
-                  topic === t ? 'bg-sky-500 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200',
+                  topic === t ? 'bg-violet-500 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200',
                 )}>
                 {t.replace(/-/g, ' ')}
               </button>
@@ -220,7 +220,7 @@ export default function SmartPracticePage() {
                 onClick={() => setDifficulty(d.value)}
                 className={clsx(
                   'flex-1 py-1.5 rounded-lg text-xs',
-                  difficulty === d.value ? 'bg-sky-500 text-white' : 'bg-surface-800 text-surface-400',
+                  difficulty === d.value ? 'bg-violet-500 text-white' : 'bg-surface-800 text-surface-400',
                 )}>
                 {d.label}
               </button>
@@ -246,7 +246,7 @@ export default function SmartPracticePage() {
         <button
           onClick={nextProblem}
           disabled={loading}
-          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white font-semibold flex items-center justify-center gap-1.5"
+          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white font-semibold flex items-center justify-center gap-1.5"
         >
           {loading ? <Loader2 className="animate-spin" size={14} /> : <ArrowRight size={14} />}
           {loading ? 'Resolving...' : resolved ? 'Next problem' : 'Get problem'}
@@ -283,7 +283,7 @@ export default function SmartPracticePage() {
             {resolved.source === 'miss' && (
               <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-center text-sm text-surface-400">
                 No match for this topic at this difficulty. Try a different combination,
-                or upload study materials at <a href="/materials" className="text-sky-400 underline">/materials</a>.
+                or upload study materials at <a href="/materials" className="text-violet-400 underline">/materials</a>.
               </div>
             )}
 
@@ -301,7 +301,7 @@ export default function SmartPracticePage() {
                   {(resolved.problem.concept_id || topic) && (
                     <button
                       onClick={() => navigate(`/lesson/${resolved.problem.concept_id || topic}`)}
-                      className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-colors"
+                      className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
                     >
                       <GraduationCap size={11} />
                       Study this concept
@@ -323,7 +323,7 @@ export default function SmartPracticePage() {
                           'w-full text-left p-2.5 rounded-lg border transition-colors text-sm',
                           submitted && key === resolved.problem.correct_answer ? 'bg-emerald-500/15 border-emerald-500/40' :
                           submitted && key === answer && key !== resolved.problem.correct_answer ? 'bg-red-500/15 border-red-500/40' :
-                          answer === key ? 'bg-sky-500/15 border-sky-500/40 text-sky-200' :
+                          answer === key ? 'bg-violet-500/15 border-violet-500/40 text-violet-200' :
                           'bg-surface-800 border-surface-700 text-surface-300',
                         )}
                       >
@@ -341,7 +341,7 @@ export default function SmartPracticePage() {
                     disabled={submitted}
                     onChange={e => setAnswer(e.target.value)}
                     placeholder="Your answer..."
-                    className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 text-sm focus:outline-none focus:border-sky-500/50"
+                    className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 text-sm focus:outline-none focus:border-violet-500/50"
                   />
                 )}
 
@@ -349,7 +349,7 @@ export default function SmartPracticePage() {
                   <button
                     onClick={handleSubmit}
                     disabled={!answer}
-                    className="w-full py-2.5 rounded-lg bg-sky-500 text-white text-sm font-semibold disabled:opacity-50"
+                    className="w-full py-2.5 rounded-lg bg-violet-500 text-white text-sm font-semibold disabled:opacity-50"
                   >
                     Submit
                   </button>
@@ -375,7 +375,7 @@ export default function SmartPracticePage() {
                 <h3 className="text-sm font-semibold text-surface-100">{resolved.explainer.label}</h3>
                 <p className="text-xs text-surface-400 leading-relaxed">{resolved.explainer.canonical_definition}</p>
                 {resolved.explainer.exam_tip && (
-                  <p className="text-xs text-sky-300 mt-2">💡 {resolved.explainer.exam_tip}</p>
+                  <p className="text-xs text-violet-300 mt-2">💡 {resolved.explainer.exam_tip}</p>
                 )}
               </div>
             )}

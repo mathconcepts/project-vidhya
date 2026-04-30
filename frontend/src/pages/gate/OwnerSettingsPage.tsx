@@ -119,7 +119,7 @@ export default function OwnerSettingsPage() {
 
         {admins.length === 0 ? (
           <p className="text-xs text-surface-500">
-            No admins to transfer to. Promote a user to admin first on the <a href="/admin/users" className="text-sky-400 hover:text-sky-300">User Management</a> page.
+            No admins to transfer to. Promote a user to admin first on the <a href="/admin/users" className="text-violet-400 hover:text-violet-300">User Management</a> page.
           </p>
         ) : (
           <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-2">

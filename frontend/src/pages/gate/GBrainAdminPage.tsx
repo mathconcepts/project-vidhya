@@ -143,7 +143,7 @@ export default function GBrainAdminPage() {
 
   // Auth gating
   if (authLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-sky-400" size={24} /></div>;
+    return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-violet-400" size={24} /></div>;
   }
   if (!user) {
     return (
@@ -151,7 +151,7 @@ export default function GBrainAdminPage() {
         <Shield size={48} className="text-surface-700 mx-auto" />
         <h2 className="text-xl font-bold text-surface-300">Sign in required</h2>
         <p className="text-sm text-surface-500">The admin dashboard requires authentication.</p>
-        <a href="/login" className="inline-block mt-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white text-sm font-medium">
+        <a href="/login" className="inline-block mt-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white text-sm font-medium">
           Sign in
         </a>
       </div>
@@ -171,7 +171,7 @@ export default function GBrainAdminPage() {
     <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
       <motion.div variants={fadeInUp}>
         <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Brain size={20} className="text-sky-400" />
+          <Brain size={20} className="text-violet-400" />
           GBrain Admin
         </h1>
         <p className="text-xs text-surface-500 mt-1">Cognitive architecture observability + control plane</p>
@@ -256,7 +256,7 @@ export default function GBrainAdminPage() {
                   cohort.top_misconceptions.slice(0, 10).map((m, i) => (
                     <div key={i} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-mono text-sky-400">{m.id}</span>
+                        <span className="text-xs font-mono text-violet-400">{m.id}</span>
                         <div className="flex items-center gap-2 text-xs">
                           <span className="text-surface-500">{m.count}×</span>
                           <span className="text-emerald-400">impact: {m.impact_score.toFixed(1)}</span>

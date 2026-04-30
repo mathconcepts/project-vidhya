@@ -40,7 +40,7 @@ function AnimatedNumber({ value }: { value: number }) {
 
 const BREAKDOWN_ITEMS = [
   { key: 'coverage', label: 'Topic Coverage', icon: Target, color: 'emerald' },
-  { key: 'accuracy', label: 'Accuracy', icon: TrendingUp, color: 'sky' },
+  { key: 'accuracy', label: 'Accuracy', icon: TrendingUp, color: 'violet' },
   { key: 'srHealth', label: 'Review Health', icon: Brain, color: 'amber' },
   { key: 'weakSpots', label: 'Weak Spots', icon: AlertTriangle, color: 'emerald' },
   { key: 'consistency', label: 'Consistency', icon: Flame, color: 'amber' },
@@ -124,7 +124,7 @@ export function ExamReadinessBreakdown({ sessionId }: { sessionId: string }) {
         >
           {BREAKDOWN_ITEMS.map(({ key, label, icon: Icon, color }) => {
             const value = data.breakdown[key];
-            const barColor = color === 'emerald' ? 'bg-emerald-500' : color === 'sky' ? 'bg-sky-500' : 'bg-amber-500';
+            const barColor = color === 'emerald' ? 'bg-emerald-500' : color === 'violet' ? 'bg-violet-500' : 'bg-amber-500';
             return (
               <div key={key}>
                 <div className="flex items-center justify-between mb-1">

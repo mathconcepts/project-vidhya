@@ -67,7 +67,7 @@ interface Lesson {
 
 const KIND_META: Record<ComponentKind, { icon: typeof Lightbulb; color: string; title: string }> = {
   hook:             { icon: Lightbulb,    color: 'text-amber-400',   title: 'Why care' },
-  definition:       { icon: BookOpen,     color: 'text-sky-400',     title: 'Definition' },
+  definition:       { icon: BookOpen,     color: 'text-violet-400',     title: 'Definition' },
   intuition:        { icon: Eye,          color: 'text-emerald-400', title: 'Intuition' },
   worked_example:   { icon: Target,       color: 'text-purple-400',  title: 'Worked example' },
   micro_exercise:   { icon: Zap,          color: 'text-orange-400',  title: 'Quick check' },
@@ -105,7 +105,7 @@ function AttributionBadge({ a }: { a: Attribution | undefined }) {
   if (!a) return null;
   const kindTone: Record<Attribution['kind'], string> = {
     'user-material':    'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
-    'bundle-canon':     'bg-sky-500/10 text-sky-300 border-sky-500/25',
+    'bundle-canon':     'bg-violet-500/10 text-violet-300 border-violet-500/25',
     'wolfram-computed': 'bg-amber-500/10 text-amber-300 border-amber-500/25',
     'concept-graph':    'bg-surface-800/60 text-surface-400 border-surface-700',
     'generated':        'bg-purple-500/10 text-purple-300 border-purface-500/25',
@@ -169,7 +169,7 @@ function ComponentCard({
         <div className="flex gap-2 pt-2">
           <button
             onClick={() => onComplete()}
-            className="flex-1 py-2.5 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sm text-sky-300 hover:bg-sky-500/25"
+            className="flex-1 py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30 text-sm text-violet-300 hover:bg-violet-500/25"
           >
             Got it
           </button>
@@ -197,9 +197,9 @@ function DefinitionBody({ c }: { c: any }) {
         <p className="text-sm text-surface-200">{c.canonical}</p>
       </div>
       {c.plain_english && c.plain_english !== c.canonical && (
-        <div className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20">
-          <p className="text-[10px] text-sky-300 uppercase tracking-wide mb-1">In plain English</p>
-          <p className="text-sm text-sky-100/90">{c.plain_english}</p>
+        <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
+          <p className="text-[10px] text-violet-300 uppercase tracking-wide mb-1">In plain English</p>
+          <p className="text-sm text-violet-100/90">{c.plain_english}</p>
         </div>
       )}
     </div>
@@ -248,7 +248,7 @@ function WorkedExampleBody({ c, onReveal }: { c: any; onReveal: () => void }) {
                   ) : (
                     <button
                       onClick={() => { setRevealed(p => ({ ...p, [step.step_number]: true })); onReveal(); }}
-                      className="mt-1.5 text-xs text-sky-400 hover:text-sky-300"
+                      className="mt-1.5 text-xs text-violet-400 hover:text-violet-300"
                     >
                       Why this step? →
                     </button>
@@ -298,13 +298,13 @@ function MicroExerciseBody({ c, onComplete }: { c: any; onComplete: (extra?: any
             onChange={e => setAnswer(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && submit()}
             placeholder="Your answer"
-            className="w-full px-3 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-sky-500/50"
+            className="w-full px-3 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50"
           />
           <div className="flex gap-2">
             <button
               onClick={submit}
               disabled={!answer.trim()}
-              className="flex-1 py-2.5 rounded-xl bg-sky-500/20 border border-sky-500/40 text-sm text-sky-200 font-medium disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-xl bg-violet-500/20 border border-violet-500/40 text-sm text-violet-200 font-medium disabled:opacity-50"
             >
               Check my answer
             </button>
@@ -392,7 +392,7 @@ function ConnectionsBody({ c }: { c: any }) {
               <button
                 key={p.concept_id}
                 onClick={() => navigate(`/lesson/${p.concept_id}`)}
-                className="text-xs px-2 py-1 rounded-lg bg-surface-900 border border-surface-800 text-surface-300 hover:border-sky-500/30"
+                className="text-xs px-2 py-1 rounded-lg bg-surface-900 border border-surface-800 text-surface-300 hover:border-violet-500/30"
               >
                 {p.label}
               </button>
@@ -408,7 +408,7 @@ function ConnectionsBody({ c }: { c: any }) {
               <button
                 key={p.concept_id}
                 onClick={() => navigate(`/lesson/${p.concept_id}`)}
-                className="text-xs px-2 py-1 rounded-lg bg-sky-500/5 border border-sky-500/20 text-sky-300 hover:bg-sky-500/15"
+                className="text-xs px-2 py-1 rounded-lg bg-violet-500/5 border border-violet-500/20 text-violet-300 hover:bg-violet-500/15"
               >
                 {p.label} →
               </button>
@@ -579,7 +579,7 @@ export default function LessonPage() {
       {!doneState && (
         <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-sky-400 to-emerald-400"
+            className="h-full bg-gradient-to-r from-violet-400 to-emerald-400"
             initial={{ width: 0 }}
             animate={{ width: `${progress * 100}%` }}
             transition={{ duration: 0.3 }}
@@ -604,9 +604,9 @@ export default function LessonPage() {
       {/* Completion screen */}
       {doneState && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-sky-500/15 to-emerald-500/15 border border-sky-500/25">
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-violet-500/15 to-emerald-500/15 border border-violet-500/25">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={16} className="text-sky-400" />
+              <Sparkles size={16} className="text-violet-400" />
               <h2 className="text-base font-semibold text-surface-100">Lesson complete</h2>
             </div>
             <div className="grid grid-cols-3 gap-3 mt-3">
@@ -619,7 +619,7 @@ export default function LessonPage() {
                 <p className="text-[10px] text-surface-500">skipped</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-sky-400">{engagement.reveals}</p>
+                <p className="text-xl font-bold text-violet-400">{engagement.reveals}</p>
                 <p className="text-[10px] text-surface-500">explanations</p>
               </div>
             </div>
@@ -652,7 +652,7 @@ export default function LessonPage() {
           <div className="flex gap-2">
             <button
               onClick={() => navigate('/smart-practice')}
-              className="flex-1 py-2.5 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sm text-sky-300 hover:bg-sky-500/25"
+              className="flex-1 py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30 text-sm text-violet-300 hover:bg-violet-500/25"
             >
               Practice more
             </button>

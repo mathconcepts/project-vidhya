@@ -90,7 +90,7 @@ export default function FeaturesPage() {
     >
       <motion.div variants={fadeInUp} className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Settings className="w-6 h-6 text-sky-400" />
+          <Settings className="w-6 h-6 text-violet-400" />
           <h1 className="text-2xl font-semibold text-surface-50">Feature flags</h1>
         </div>
         <button
@@ -104,7 +104,7 @@ export default function FeaturesPage() {
       </motion.div>
 
       <motion.div variants={fadeInUp} className="mb-6 p-4 rounded-lg bg-surface-900 border border-surface-700 flex gap-3">
-        <Info className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+        <Info className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
         <div className="text-sm text-surface-300 leading-relaxed">
           <p className="mb-2">
             This page shows feature-flag state for the running deployment. Flags are read from
@@ -159,7 +159,7 @@ export default function FeaturesPage() {
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <code className="text-sky-300 font-mono text-sm">{flag.flag}</code>
+                      <code className="text-violet-300 font-mono text-sm">{flag.flag}</code>
                       {flag.overridden && (
                         <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-300 border border-amber-700/50">
                           overridden

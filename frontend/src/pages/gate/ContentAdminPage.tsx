@@ -58,7 +58,7 @@ const SOURCE_LABELS: Record<string, { label: string; color: string; tier: string
   'tier-0-bundle-exact': { label: 'Bundle Exact', color: 'bg-emerald-500/60', tier: 'Tier 0' },
   'tier-0-explainer': { label: 'Explainer', color: 'bg-emerald-400/60', tier: 'Tier 0' },
   'tier-0-client-cache': { label: 'Client Cache', color: 'bg-teal-500/60', tier: 'Tier 0' },
-  'tier-1-rag': { label: 'Bundle RAG', color: 'bg-sky-500/60', tier: 'Tier 1' },
+  'tier-1-rag': { label: 'Bundle RAG', color: 'bg-violet-500/60', tier: 'Tier 1' },
   'tier-1-material': { label: 'Your Notes', color: 'bg-purple-500/60', tier: 'Tier 1' },
   'tier-2-generated': { label: 'Generated (LLM)', color: 'bg-amber-500/60', tier: 'Tier 2' },
   'tier-3-wolfram-verified': { label: 'Wolfram Verified', color: 'bg-blue-500/60', tier: 'Tier 3' },
@@ -100,7 +100,7 @@ export default function ContentAdminPage() {
   }, [authLoading, user, load]);
 
   if (authLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-sky-400" size={24} /></div>;
+    return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-violet-400" size={24} /></div>;
   }
   if (!user || (user.role !== 'admin' && user.role !== 'teacher')) {
     return (
@@ -108,7 +108,7 @@ export default function ContentAdminPage() {
         <Shield size={48} className="text-surface-700 mx-auto" />
         <h2 className="text-xl font-bold text-surface-300">Admin access required</h2>
         {!user && (
-          <a href="/login" className="inline-block px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white text-sm font-medium">
+          <a href="/login" className="inline-block px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white text-sm font-medium">
             Sign in
           </a>
         )}
@@ -121,7 +121,7 @@ export default function ContentAdminPage() {
       <motion.div variants={fadeInUp} className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            <Layers size={20} className="text-sky-400" />
+            <Layers size={20} className="text-violet-400" />
             Content Engine
           </h1>
           <p className="text-xs text-surface-500 mt-1">Tier hit rates, cost trends, bundle inventory</p>
@@ -145,7 +145,7 @@ export default function ContentAdminPage() {
         <>
           {/* Headline metrics */}
           <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-sky-500/10 border border-emerald-500/25 text-center">
+            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-violet-500/10 border border-emerald-500/25 text-center">
               <p className="text-3xl font-black text-emerald-400">{summary.lifetime.free_hit_rate_pct}%</p>
               <p className="text-xs text-surface-400 mt-1">free tier hit rate</p>
               <p className="text-[10px] text-surface-600 mt-0.5">target ≥ 85%</p>
@@ -177,7 +177,7 @@ export default function ContentAdminPage() {
           {/* Tier source breakdown — lifetime */}
           <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
             <h3 className="text-sm font-semibold text-surface-200 mb-3 flex items-center gap-1.5">
-              <Layers size={13} className="text-sky-400" />
+              <Layers size={13} className="text-violet-400" />
               Lifetime Source Distribution
             </h3>
             {summary.lifetime.total_events === 0 ? (
@@ -231,7 +231,7 @@ export default function ContentAdminPage() {
                         <div className="bg-emerald-500/70" style={{ width: `${(d.tier_0 / d.total) * 100}%` }} title={`Tier 0: ${d.tier_0}`} />
                       )}
                       {d.tier_1 > 0 && (
-                        <div className="bg-sky-500/70" style={{ width: `${(d.tier_1 / d.total) * 100}%` }} title={`Tier 1: ${d.tier_1}`} />
+                        <div className="bg-violet-500/70" style={{ width: `${(d.tier_1 / d.total) * 100}%` }} title={`Tier 1: ${d.tier_1}`} />
                       )}
                       {d.tier_2 > 0 && (
                         <div className="bg-amber-500/70" style={{ width: `${(d.tier_2 / d.total) * 100}%` }} title={`Tier 2: ${d.tier_2}`} />
@@ -251,7 +251,7 @@ export default function ContentAdminPage() {
             )}
             <div className="mt-3 flex items-center gap-3 text-[10px] text-surface-500 flex-wrap">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500/70" /> Tier 0 (free)</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-sky-500/70" /> Tier 1 (free)</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-violet-500/70" /> Tier 1 (free)</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-amber-500/70" /> Tier 2 (LLM)</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70" /> Tier 3 (Wolfram)</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500/60" /> Miss</span>

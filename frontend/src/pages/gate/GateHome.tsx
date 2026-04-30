@@ -307,7 +307,7 @@ export function GateHome() {
               animate={prefersReducedMotion ? {} : { opacity: [0.6, 1, 0.6] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <MasteryRing value={0} size={48} strokeWidth={3} className="text-sky-500" />
+              <MasteryRing value={0} size={48} strokeWidth={3} className="text-violet-500" />
             </motion.div>
           </motion.div>
 
@@ -323,7 +323,7 @@ export function GateHome() {
           <motion.div variants={fadeInUp} className="w-full">
             <motion.button
               onClick={() => { trackEvent('one_thing_diagnostic'); navigate('/diagnostic'); }}
-              className="w-full h-11 rounded-[10px] bg-sky-500 text-white text-[15px] font-semibold hover:bg-sky-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
+              className="w-full h-11 rounded-[10px] bg-violet-500 text-white text-[15px] font-semibold hover:bg-violet-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
               whileTap={{ scale: 0.97 }}
             >
               Start diagnostic
@@ -389,7 +389,7 @@ export function GateHome() {
                 </Link>
                 <Link
                   to="/chat"
-                  className="flex-1 h-11 rounded-[10px] bg-sky-500/15 border border-sky-500/25 text-sky-400 text-[15px] font-semibold flex items-center justify-center hover:bg-sky-500/20 transition-colors"
+                  className="flex-1 h-11 rounded-[10px] bg-violet-500/15 border border-violet-500/25 text-violet-400 text-[15px] font-semibold flex items-center justify-center hover:bg-violet-500/20 transition-colors"
                 >
                   Ask the tutor
                 </Link>
@@ -421,7 +421,7 @@ export function GateHome() {
           >
             Start 15-min session
           </Link>
-          <Link to="/chat" className="text-[13px] text-sky-400 hover:text-sky-300 transition-colors">
+          <Link to="/chat" className="text-[13px] text-violet-400 hover:text-violet-300 transition-colors">
             Or ask the tutor for help →
           </Link>
         </motion.div>
@@ -573,17 +573,17 @@ function TopicGrid({ topics }: { topics: Topic[] }) {
           <motion.div key={topic.id} variants={fadeInUp}>
             <Link
               to={`/topic/${topic.id}`}
-              className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-sky-500/40 hover:bg-surface-800/80 transition-all group"
+              className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/40 hover:bg-surface-800/80 transition-all group"
             >
-              <div className="w-9 h-9 rounded-lg bg-sky-500/10 flex items-center justify-center group-hover:bg-sky-500/20 transition-colors shrink-0">
-                <Icon size={18} className="text-sky-400" />
+              <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors shrink-0">
+                <Icon size={18} className="text-violet-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-surface-200 leading-tight">{topic.name}</p>
                 <p className="text-xs text-surface-500 mt-0.5">{topic.problemCount} problems</p>
               </div>
               {topic.problemCount > 0 && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 shrink-0">
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 shrink-0">
                   NEW
                 </span>
               )}

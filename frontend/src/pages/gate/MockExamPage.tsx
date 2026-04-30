@@ -154,7 +154,7 @@ export default function MockExamPage() {
           <p className="text-xs text-surface-500 mt-1">Full-length, GBrain-calibrated to your mastery</p>
         </motion.div>
 
-        <motion.div variants={fadeInUp} className="p-5 rounded-xl bg-gradient-to-br from-sky-500/10 to-emerald-500/10 border border-sky-500/20 text-center space-y-3">
+        <motion.div variants={fadeInUp} className="p-5 rounded-xl bg-gradient-to-br from-violet-500/10 to-emerald-500/10 border border-violet-500/20 text-center space-y-3">
           <div className="flex items-center justify-center gap-8 py-4">
             <div>
               <p className="text-3xl font-black text-surface-100">180</p>
@@ -185,7 +185,7 @@ export default function MockExamPage() {
           variants={fadeInUp}
           onClick={handleStart}
           disabled={loading}
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+          className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} fill="white" />}
           {loading ? 'Preparing your exam...' : 'Start Mock Exam'}
@@ -226,7 +226,7 @@ export default function MockExamPage() {
           className="p-4 rounded-xl bg-surface-900 border border-surface-800"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-mono text-sky-400 uppercase tracking-wide">{q.topic}</span>
+            <span className="text-[10px] font-mono text-violet-400 uppercase tracking-wide">{q.topic}</span>
             <span className="text-[10px] text-surface-500">
               {q.source === 'generated' ? 'GBrain-generated' : 'PYQ'} · {q.marks || 2}m
             </span>
@@ -245,7 +245,7 @@ export default function MockExamPage() {
                     className={clsx(
                       'w-full text-left p-3 rounded-lg border transition-colors text-sm',
                       isSelected
-                        ? 'bg-sky-500/10 border-sky-500/40 text-sky-300'
+                        ? 'bg-violet-500/10 border-violet-500/40 text-violet-300'
                         : 'bg-surface-800 border-surface-700 text-surface-300 hover:border-surface-600',
                     )}
                   >
@@ -261,7 +261,7 @@ export default function MockExamPage() {
               value={answers[q.id] || ''}
               onChange={e => handleAnswer(q.id, e.target.value || null)}
               placeholder="Enter your answer..."
-              className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 font-mono text-sm focus:outline-none focus:border-sky-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 font-mono text-sm focus:outline-none focus:border-violet-500/50"
             />
           )}
         </motion.div>
@@ -278,7 +278,7 @@ export default function MockExamPage() {
           {currentQ < exam.questions.length - 1 ? (
             <button
               onClick={() => setCurrentQ(currentQ + 1)}
-              className="flex-1 py-2.5 rounded-lg bg-sky-500 text-white text-sm font-semibold"
+              className="flex-1 py-2.5 rounded-lg bg-violet-500 text-white text-sm font-semibold"
             >
               Next →
             </button>
@@ -302,7 +302,7 @@ export default function MockExamPage() {
                 onClick={() => setCurrentQ(i)}
                 className={clsx(
                   'h-7 rounded text-[10px] font-bold transition-colors',
-                  i === currentQ ? 'bg-sky-500 text-white'
+                  i === currentQ ? 'bg-violet-500 text-white'
                     : answers[qq.id] ? 'bg-emerald-500/20 text-emerald-400'
                     : 'bg-surface-800 text-surface-500',
                 )}
@@ -320,7 +320,7 @@ export default function MockExamPage() {
   if (phase === 'submitting') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <Loader2 className="animate-spin text-sky-400" size={32} />
+        <Loader2 className="animate-spin text-violet-400" size={32} />
         <p className="text-sm text-surface-400">Grading your exam and updating GBrain...</p>
       </div>
     );
@@ -385,8 +385,8 @@ export default function MockExamPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/25 text-sm text-surface-300">
-          <p className="font-semibold text-sky-400 mb-1">What GBrain learned</p>
+        <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/25 text-sm text-surface-300">
+          <p className="font-semibold text-violet-400 mb-1">What GBrain learned</p>
           <p>
             {results.correct + results.wrong} attempts recorded. Your mastery vector, speed profile,
             and error patterns have been updated. Check /error-patterns and /exam-strategy for

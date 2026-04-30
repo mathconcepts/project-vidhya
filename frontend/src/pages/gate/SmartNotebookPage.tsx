@@ -101,7 +101,7 @@ export default function SmartNotebookPage() {
         <p className="text-xs text-surface-500">
           Every question you've asked, every concept you've studied, and every gap in your coverage — in one place.
         </p>
-        <a href="/sign-in" className="inline-block px-4 py-2 rounded-lg bg-sky-500 text-white text-sm font-medium">
+        <a href="/sign-in" className="inline-block px-4 py-2 rounded-lg bg-violet-500 text-white text-sm font-medium">
           Sign in with Google
         </a>
       </div>
@@ -113,7 +113,7 @@ export default function SmartNotebookPage() {
       <motion.div variants={fadeInUp} className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            <BookOpen size={20} className="text-sky-400" />
+            <BookOpen size={20} className="text-violet-400" />
             Smart Notebook
           </h1>
           <p className="text-xs text-surface-500 mt-1">
@@ -123,7 +123,7 @@ export default function SmartNotebookPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={downloadMarkdown}
-            className="px-3 h-9 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+            className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
           >
             <Download size={13} />
             Download .md
@@ -146,7 +146,7 @@ export default function SmartNotebookPage() {
 
       {clusters && gaps && (
         <motion.div variants={fadeInUp} className="grid grid-cols-3 gap-2">
-          <Stat label="Entries" value={clusters.total_entries} tone="sky" />
+          <Stat label="Entries" value={clusters.total_entries} tone="violet" />
           <Stat label="Concepts touched" value={gaps.total_covered} tone="emerald" />
           <Stat label="Coverage" value={`${gaps.overall_coverage_pct}%`} tone="amber" />
         </motion.div>
@@ -170,10 +170,10 @@ export default function SmartNotebookPage() {
         </>
       )}
 
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-sky-500/5 border border-sky-500/20 flex items-start gap-2.5">
-        <Lightbulb size={13} className="shrink-0 mt-0.5 text-sky-400" />
-        <div className="text-[11px] text-sky-200/80 leading-relaxed">
-          <span className="font-medium text-sky-300">How it works.</span>{' '}
+      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
+        <Lightbulb size={13} className="shrink-0 mt-0.5 text-violet-400" />
+        <div className="text-[11px] text-violet-200/80 leading-relaxed">
+          <span className="font-medium text-violet-300">How it works.</span>{' '}
           Every question in chat, every snap, every lesson you open becomes an entry. Auto-clustered by concept. Gaps = syllabus concepts you haven't touched yet. Download anytime as a study reference.
         </div>
       </motion.div>
@@ -181,8 +181,8 @@ export default function SmartNotebookPage() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string | number; tone: 'sky' | 'emerald' | 'amber' }) {
-  const t = tone === 'sky' ? 'text-sky-300' : tone === 'emerald' ? 'text-emerald-300' : 'text-amber-300';
+function Stat({ label, value, tone }: { label: string; value: string | number; tone: 'violet' | 'emerald' | 'amber' }) {
+  const t = tone === 'violet' ? 'text-violet-300' : tone === 'emerald' ? 'text-emerald-300' : 'text-amber-300';
   return (
     <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
       <p className={clsx('text-2xl font-bold', t)}>{value}</p>
@@ -197,7 +197,7 @@ function Tab({ active, onClick, icon: Icon, label }: { active: boolean; onClick:
       onClick={onClick}
       className={clsx(
         'px-3 h-8 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors',
-        active ? 'bg-sky-500/20 text-sky-200 border border-sky-500/30' : 'text-surface-400 hover:text-surface-200',
+        active ? 'bg-violet-500/20 text-violet-200 border border-violet-500/30' : 'text-surface-400 hover:text-surface-200',
       )}
     >
       <Icon size={12} />

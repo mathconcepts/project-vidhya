@@ -24,9 +24,9 @@ export function DemoBanner() {
   if (!user || !isDemoEmail(user.email)) return null;
 
   return (
-    <div className="bg-sky-900/40 border-b border-sky-800 px-4 py-2 text-xs">
+    <div className="bg-violet-900/40 border-b border-violet-800 px-4 py-2 text-xs">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-sky-200">
+        <div className="flex items-center gap-2 text-violet-200">
           <Sparkles size={14} className="flex-shrink-0" />
           <span>
             <strong>Demo mode</strong> — you're signed in as {user.name}. Your work
@@ -35,7 +35,7 @@ export function DemoBanner() {
         </div>
         <Link
           to="/convert-demo"
-          className="text-sky-300 hover:text-white font-medium whitespace-nowrap"
+          className="text-violet-300 hover:text-white font-medium whitespace-nowrap"
         >
           Make this real →
         </Link>

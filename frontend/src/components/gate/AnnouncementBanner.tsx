@@ -61,12 +61,12 @@ export function AnnouncementBanner() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
-        className="relative p-3 pr-10 rounded-xl bg-sky-500/10 border border-sky-500/30"
+        className="relative p-3 pr-10 rounded-xl bg-violet-500/10 border border-violet-500/30"
       >
         <div className="flex items-start gap-2.5">
-          <Megaphone size={13} className="shrink-0 mt-0.5 text-sky-400" />
+          <Megaphone size={13} className="shrink-0 mt-0.5 text-violet-400" />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-sky-400 uppercase tracking-wide font-medium">
+            <p className="text-[10px] text-violet-400 uppercase tracking-wide font-medium">
               From {announcement.teacher_name}
             </p>
             <p className="text-[13px] text-surface-200 leading-relaxed mt-1">

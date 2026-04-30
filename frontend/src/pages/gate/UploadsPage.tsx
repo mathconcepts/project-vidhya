@@ -177,7 +177,7 @@ function UploadZone({ onFileChosen, disabled }: UploadZoneProps) {
         transition-colors
         ${disabled ? 'opacity-60 cursor-not-allowed' : ''}
         ${isDragging
-          ? 'border-sky-500 bg-sky-950/30'
+          ? 'border-violet-500 bg-violet-950/30'
           : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'}
       `}
     >
@@ -271,7 +271,7 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           onChange={e => setNote(e.target.value)}
           disabled={submitting}
           placeholder="e.g. Class notes from Oct 15 on derivatives"
-          className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-600"
+          className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-violet-600"
         />
       </div>
 
@@ -317,7 +317,7 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           onBlur={() => tagInput && addTag(tagInput)}
           disabled={submitting}
           placeholder="calculus-derivatives"
-          className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-600"
+          className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-violet-600"
         />
 
         {/* Known-concept suggestions */}
@@ -363,7 +363,7 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           type="button"
           onClick={() => onSubmit(note, conceptTags)}
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 text-sm bg-sky-600 hover:bg-sky-500 text-white px-4 py-1.5 rounded-md disabled:opacity-60 disabled:cursor-wait"
+          className="inline-flex items-center gap-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-1.5 rounded-md disabled:opacity-60 disabled:cursor-wait"
         >
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
           {submitting ? 'Uploading…' : 'Upload'}
@@ -585,7 +585,7 @@ export default function UploadsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Upload className="w-6 h-6 text-sky-400" />
+          <Upload className="w-6 h-6 text-violet-400" />
           Your uploads
         </h1>
         <p className="text-slate-400 mt-1 text-sm">

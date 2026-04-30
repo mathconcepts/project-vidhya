@@ -116,7 +116,7 @@ export default function TurnsPage() {
     >
       <motion.div variants={fadeInUp} className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Activity className="w-6 h-6 text-sky-400" />
+          <Activity className="w-6 h-6 text-violet-400" />
           <h1 className="text-2xl font-semibold text-surface-50">
             {id ? `${data?.student_name ?? 'Student'}'s learning history` : 'Your learning history'}
           </h1>
@@ -132,7 +132,7 @@ export default function TurnsPage() {
       </motion.div>
 
       <motion.div variants={fadeInUp} className="mb-6 p-4 rounded-lg bg-surface-900 border border-surface-700 flex gap-3">
-        <Info className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+        <Info className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
         <div className="text-sm text-surface-300 leading-relaxed">
           Each row below is a "turn" — one round of (you opened something → the system served something →
           you responded → the system observed and updated your mastery model). The summary below shows
@@ -257,7 +257,7 @@ function TurnCard({ turn }: { turn: TeachingTurn }) {
       <div className="flex items-start justify-between gap-4 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs px-2 py-0.5 rounded bg-sky-900/30 text-sky-300 font-mono">
+            <span className="text-xs px-2 py-0.5 rounded bg-violet-900/30 text-violet-300 font-mono">
               {turn.intent}
             </span>
             {turn.routed_source && (

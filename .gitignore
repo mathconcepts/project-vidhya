@@ -61,3 +61,5 @@ frontend/public/demo.html
 frontend/public/demo-api-keys.html
 backups/
 .claude/skills/gstack/
+__pycache__/
+*.pyc

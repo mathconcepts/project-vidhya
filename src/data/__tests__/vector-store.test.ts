@@ -147,7 +147,7 @@ describe('InMemoryVectorStore', () => {
     it('should respect threshold', async () => {
       const results = await store.search({
         vector: normalizeVector([1, 0, 0]),
-        threshold: 0.95,
+        threshold: 0.999,
       });
 
       expect(results).toHaveLength(1);

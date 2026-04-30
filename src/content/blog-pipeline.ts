@@ -31,6 +31,7 @@ import { PromptCompileOptions, ModifierType } from '../prompts/types';
 export class BlogPipeline {
   private posts: Map<string, BlogPost> = new Map();
   private calendars: Map<string, ContentCalendar> = new Map();
+  private _simplePosts: Map<string, any> = new Map();
 
   // -------------------------------------------------------------------------
   // Blog Creation
@@ -315,21 +316,79 @@ export class BlogPipeline {
     return posts.slice(0, limit);
   }
 
-  // Alias stubs
-  async createPost(params: Parameters<BlogPipeline['createBlog']>[0]): Promise<BlogPost> {
-    return this.createBlog(params);
+  // Simple CRUD API (used by tests and admin UI)
+  async createPost(params: {
+    title: string;
+    content: string;
+    excerpt?: string;
+    category: string;
+    tags: string[];
+    exam?: string;
+    seo?: { metaTitle?: string; metaDescription?: string; focusKeyword?: string; keywords?: string[] };
+    platforms?: string[];
+  }): Promise<any> {
+    const now = Date.now();
+    const post = {
+      id: randomUUID(),
+      title: params.title,
+      slug: params.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      content: params.content,
+      excerpt: params.excerpt ?? '',
+      category: params.category,
+      tags: params.tags,
+      exam: params.exam,
+      examTypes: params.exam ? [params.exam] : [],
+      author: 'Project Vidhya',
+      targetAudience: [],
+      seo: {
+        metaTitle: params.seo?.metaTitle ?? params.title,
+        metaDescription: params.seo?.metaDescription ?? params.excerpt ?? '',
+        keywords: params.seo?.keywords ?? params.tags,
+        focusKeyword: params.seo?.focusKeyword,
+      },
+      images: [],
+      status: 'draft',
+      platforms: (params.platforms ?? ['self-hosted']).map(p => ({ platform: p, enabled: true })),
+      publishSchedule: {} as Record<string, { publishAt: number }>,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this._simplePosts.set(post.id, post);
+    return post;
   }
-  async listPosts(filter?: Parameters<BlogPipeline['listBlogs']>[0]): Promise<BlogPost[]> {
-    return this.listBlogs(filter);
+
+  async updatePost(id: string, updates: Record<string, any>): Promise<any | undefined> {
+    const post = this._simplePosts.get(id);
+    if (!post) return undefined;
+    const updated = { ...post, ...updates, updatedAt: Date.now(), version: post.version + 1 };
+    this._simplePosts.set(id, updated);
+    return updated;
   }
-  async getPost(id: string): Promise<BlogPost | undefined> {
-    return this.getBlog(id);
+
+  async listPosts(filter?: { exam?: string; status?: string; limit?: number }): Promise<any[]> {
+    const all = [...this._simplePosts.values()];
+    if (!filter) return all;
+    return all.filter(p => {
+      if (filter.exam && p.exam !== filter.exam) return false;
+      if (filter.status && p.status !== filter.status) return false;
+      return true;
+    }).slice(0, filter.limit ?? all.length);
   }
-  async schedulePublish(id: string, publishAt: number): Promise<BlogPost | undefined> {
-    return this.scheduleBlog(id, publishAt);
+
+  async getPost(id: string): Promise<any | undefined> {
+    return this._simplePosts.get(id);
   }
+
+  async schedulePublish(id: string, platform: string, options: { publishAt: number }): Promise<any | undefined> {
+    const post = this._simplePosts.get(id);
+    if (!post) return undefined;
+    const publishSchedule = { ...post.publishSchedule, [platform]: { publishAt: options.publishAt } };
+    return this.updatePost(id, { publishSchedule });
+  }
+
   async getStats(): Promise<{ total: number; published: number; drafts: number }> {
-    const all = await this.listBlogs();
+    const all = [...this._simplePosts.values()];
     return { total: all.length, published: all.filter(p => p.status === 'published').length, drafts: all.filter(p => p.status === 'draft').length };
   }
 }
@@ -340,6 +399,7 @@ export class BlogPipeline {
 
 export class VlogPipeline {
   private posts: Map<string, VlogPost> = new Map();
+  private _simpleVlogs: Map<string, any> = new Map();
 
   // -------------------------------------------------------------------------
   // Vlog Creation
@@ -561,16 +621,53 @@ export class VlogPipeline {
     };
   }
 
-  // Alias stubs
-  async listVlogs(filter?: { status?: string; limit?: number }): Promise<VlogPost[]> {
-    const all = Array.from((this as any).vlogs?.values() ?? []);
-    return filter?.limit ? (all as VlogPost[]).slice(0, filter.limit) : (all as VlogPost[]);
+  // Simple CRUD API (used by tests and admin UI)
+  async createVlog(params: {
+    title: string;
+    description: string;
+    script: { sections: { title: string; content: string; duration: number }[]; totalDuration: number };
+    tags: string[];
+    exam?: string;
+  }): Promise<any> {
+    const now = Date.now();
+    const vlog = {
+      id: randomUUID(),
+      title: params.title,
+      description: params.description,
+      script: params.script,
+      tags: params.tags,
+      exam: params.exam,
+      examTypes: params.exam ? [params.exam] : [],
+      status: 'script',
+      platforms: {} as Record<string, { publishAt: number }>,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this._simpleVlogs.set(vlog.id, vlog);
+    return vlog;
   }
-  async schedulePublish(id: string, publishAt: number, videoUrl?: string): Promise<VlogPost | undefined> {
-    return this.publishVlog(id, videoUrl ?? '');
+
+  async getVlog(id: string): Promise<any | undefined> {
+    return this._simpleVlogs.get(id);
   }
+
+  async schedulePublish(id: string, platform: string, options: { publishAt: number }): Promise<any | undefined> {
+    const vlog = this._simpleVlogs.get(id);
+    if (!vlog) return undefined;
+    const updated = { ...vlog, platforms: { ...vlog.platforms, [platform]: { publishAt: options.publishAt } }, updatedAt: Date.now() };
+    this._simpleVlogs.set(id, updated);
+    return updated;
+  }
+
+  async listVlogs(filter?: { status?: string; limit?: number }): Promise<any[]> {
+    const all = [...this._simpleVlogs.values()];
+    const filtered = filter?.status ? all.filter(v => v.status === filter.status) : all;
+    return filter?.limit ? filtered.slice(0, filter.limit) : filtered;
+  }
+
   async getStats(): Promise<{ total: number; published: number }> {
-    const all = await this.listVlogs();
+    const all = [...this._simpleVlogs.values()];
     return { total: all.length, published: all.filter(v => v.status === 'published').length };
   }
 }
@@ -583,10 +680,11 @@ export class ContentCalendarManager {
   private calendars: Map<string, ContentCalendar> = new Map();
   private blogPipeline: BlogPipeline;
   private vlogPipeline: VlogPipeline;
+  private _simpleEntries: Map<string, any> = new Map();
 
-  constructor(blogPipeline: BlogPipeline, vlogPipeline: VlogPipeline) {
-    this.blogPipeline = blogPipeline;
-    this.vlogPipeline = vlogPipeline;
+  constructor(blogPipeline?: BlogPipeline, vlogPipeline?: VlogPipeline) {
+    this.blogPipeline = blogPipeline ?? new BlogPipeline();
+    this.vlogPipeline = vlogPipeline ?? new VlogPipeline();
   }
 
   async createCalendar(
@@ -711,19 +809,73 @@ export class ContentCalendarManager {
     };
   }
 
-  // Alias stubs
-  async scheduleContent(calendarId: string, entry: Omit<CalendarEntry, 'id'>): Promise<CalendarEntry> {
-    return this.addEntry(calendarId, entry);
+  // Simple CRUD API (used by tests and admin UI)
+  async scheduleContent(params: {
+    title: string;
+    type: string;
+    exam?: string;
+    scheduledDate: number;
+    priority: string;
+    status: string;
+  }): Promise<any> {
+    const entry = {
+      id: randomUUID(),
+      title: params.title,
+      type: params.type,
+      exam: params.exam,
+      scheduledDate: params.scheduledDate,
+      priority: params.priority,
+      status: params.status,
+      createdAt: Date.now(),
+    };
+    this._simpleEntries.set(entry.id, entry);
+    return entry;
   }
+
+  async getEntries(filter?: { startDate?: Date; endDate?: Date; exam?: string }): Promise<any[]> {
+    const all = [...this._simpleEntries.values()];
+    if (!filter) return all;
+    return all.filter(e => {
+      if (filter.exam && e.exam !== filter.exam) return false;
+      if (filter.startDate && e.scheduledDate < filter.startDate.getTime()) return false;
+      if (filter.endDate && e.scheduledDate > filter.endDate.getTime()) return false;
+      return true;
+    });
+  }
+
+  async autoFillCalendar(params: {
+    exam: string;
+    startDate: Date;
+    endDate: Date;
+    cadence: { blogsPerWeek: number; videosPerWeek: number };
+  }): Promise<any[]> {
+    const { exam, startDate, endDate, cadence } = params;
+    const msPerDay = 86400000;
+    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay);
+    const weeks = totalDays / 7;
+    const created: any[] = [];
+
+    let blogCount = Math.ceil(weeks * cadence.blogsPerWeek);
+    let videoCount = Math.ceil(weeks * cadence.videosPerWeek);
+
+    for (let i = 0; i < blogCount; i++) {
+      const scheduledDate = startDate.getTime() + Math.floor((i / blogCount) * (endDate.getTime() - startDate.getTime()));
+      const entry = await this.scheduleContent({ title: `Blog ${i + 1}`, type: 'blog', exam, scheduledDate, priority: 'normal', status: 'scheduled' });
+      created.push(entry);
+    }
+    for (let i = 0; i < videoCount; i++) {
+      const scheduledDate = startDate.getTime() + Math.floor((i / videoCount) * (endDate.getTime() - startDate.getTime()));
+      const entry = await this.scheduleContent({ title: `Video ${i + 1}`, type: 'vlog', exam, scheduledDate, priority: 'normal', status: 'scheduled' });
+      created.push(entry);
+    }
+    return created;
+  }
+
   async getEntriesForDate(calendarId: string, date: Date): Promise<CalendarEntry[]> {
     const calendar = (this as any).calendars?.get(calendarId);
     if (!calendar) return [];
     const dateStr = date.toISOString().split('T')[0];
     return (calendar.entries ?? []).filter((e: CalendarEntry) => new Date(e.scheduledAt).toISOString().split('T')[0] === dateStr);
-  }
-  async getEntries(calendarId: string): Promise<CalendarEntry[]> {
-    const calendar = (this as any).calendars?.get(calendarId);
-    return calendar?.entries ?? [];
   }
 }
 

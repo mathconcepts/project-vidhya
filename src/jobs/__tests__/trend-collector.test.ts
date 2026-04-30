@@ -11,6 +11,8 @@ vi.mock('pg', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+process.env.DEFAULT_EXAM_ID = 'gate-ma';
+
 const { matchTopics, trendCollectorRoutes } = await import('../trend-collector');
 
 function makeReq(overrides: Record<string, unknown> = {}) {

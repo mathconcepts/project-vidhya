@@ -20,8 +20,17 @@
  *   - listDrafts: filter by status / concept_id
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { mkdirSync, existsSync, rmSync, cpSync } from 'fs';
+
+const EXAMPLE_HTML = `<!DOCTYPE html><html><head><title>Example Domain</title></head>
+<body><main><h1>Example Domain</h1><p>This domain is for use in illustrative examples. https://example.com/ is the canonical URL.</p></main></body></html>`;
+
+vi.stubGlobal('fetch', async (url: string) => ({
+  ok: true,
+  headers: { get: () => null },
+  text: async () => EXAMPLE_HTML,
+}));
 
 let savedBackup = '';
 

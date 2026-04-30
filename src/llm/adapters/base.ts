@@ -141,6 +141,10 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
   
   // Check if error should not be retried
   protected isNonRetryableError(error: unknown): boolean {
+    // Structured LLMError objects are already classified — don't retry internally
+    if (error && typeof error === 'object' && 'type' in error) {
+      return true;
+    }
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       return (
@@ -170,5 +174,32 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
   protected getModelId(taskType?: string): string {
     // Can be overridden to select model based on task type
     return this.models[this.defaultModel]?.id || this.defaultModel;
+  }
+
+  getCapabilities(modelId: string): Record<string, unknown> {
+    const model = this.models[modelId] || this.models[this.defaultModel];
+    return {
+      maxTokens: model?.contextWindow ?? 4096,
+      supportsStreaming: true,
+      supportsFunctionCalling: true,
+      supportsVision: true,
+      costPer1kInput: model?.costPer1kInput ?? 0,
+      costPer1kOutput: model?.costPer1kOutput ?? 0,
+    };
+  }
+
+  classifyError(error: Error): { type: string; retryable?: boolean } {
+    const msg = error.message?.toLowerCase() ?? '';
+    const status = (error as any).status;
+    if (status === 429 || msg.includes('rate limit') || msg.includes('429')) {
+      return { type: 'rate_limit', retryable: true };
+    }
+    if (status === 413 || msg.includes('context') || msg.includes('too large') || msg.includes('context_length') || msg.includes('context length')) {
+      return { type: 'context_length', retryable: false };
+    }
+    if (status === 401 || status === 403 || msg.includes('invalid api key') || msg.includes('unauthorized') || msg.includes('authentication')) {
+      return { type: 'authentication', retryable: false };
+    }
+    return { type: 'unknown', retryable: true };
   }
 }

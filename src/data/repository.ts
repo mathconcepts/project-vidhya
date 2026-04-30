@@ -129,7 +129,7 @@ export class InMemoryRepository<T extends BaseEntity> implements Repository<T> {
       ...data,
       id, // Prevent ID modification
       createdAt: existing.createdAt, // Prevent creation time modification
-      updatedAt: Date.now(),
+      updatedAt: Math.max(Date.now(), existing.updatedAt + 1),
       version: existing.version + 1,
     } as T;
 

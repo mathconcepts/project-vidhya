@@ -56,7 +56,7 @@ export function createAdapter(
     };
   }
   
-  const defaultModel = config.fallbackOrder[0] || Object.keys(config.models)[0];
+  const defaultModel = config.fallbackOrder?.[0] || Object.keys(config.models)[0];
   
   const adapterConfig = {
     apiKey: key,

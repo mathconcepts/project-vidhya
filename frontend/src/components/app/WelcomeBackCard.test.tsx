@@ -107,7 +107,9 @@ describe('WelcomeBackCard render', () => {
         user={{ created_at: FIVE_DAYS_AGO() }}
       />,
     );
-    expect(screen.getByText(/Linear Algebra/)).toBeInTheDocument();
+    // Both the headline and the CTA mention the topic — confirm at least one
+    // appearance (full match would require getAllByText).
+    expect(screen.getAllByText(/Linear Algebra/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Welcome back/i)).not.toBeInTheDocument(); // AI-slop blacklist guard
   });
 
@@ -131,6 +133,7 @@ describe('WelcomeBackCard render', () => {
         user={{ created_at: FIVE_DAYS_AGO() }}
       />,
     );
-    expect(screen.getByText(/Probability/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Probability/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Linear Algebra/)).not.toBeInTheDocument();
   });
 });

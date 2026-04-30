@@ -28,6 +28,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import { DemoBanner } from '@/components/DemoBanner';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
+import { SessionEndScreen } from '@/components/app/SessionEndScreen';
+import { WelcomeBackCard } from '@/components/app/WelcomeBackCard';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
   Sparkles, RefreshCw, AlertCircle, ChevronRight,
@@ -181,6 +183,23 @@ export default function PlannedSessionPage() {
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [closurePassed, setClosurePassed] = useState(false);
+  // P5: gbrain summary for WelcomeBackCard lapse detection
+  const [gbrainSummary, setGbrainSummary] = useState<any>(null);
+  const [userMeta, setUserMeta] = useState<{ created_at?: string } | null>(null);
+
+  useEffect(() => {
+    authFetch('/api/me/gbrain-summary')
+      .then(r => (r.ok ? r.json() : null))
+      .then(setGbrainSummary)
+      .catch(() => { /* fail soft */ });
+    authFetch('/api/auth/me')
+      .then(r => (r.ok ? r.json() : null))
+      .then((data: any) => {
+        if (data?.user) setUserMeta({ created_at: data.user.created_at });
+      })
+      .catch(() => { /* fail soft */ });
+  }, []);
 
   // Load profile + templates + trailing stats + presets on mount
   useEffect(() => {
@@ -460,6 +479,12 @@ export default function PlannedSessionPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20">
       <DemoBanner />
       <div className="max-w-3xl mx-auto px-4 pt-8">
+
+        {/* P5: WelcomeBackCard self-gates on lapse + account-age. No-op
+            for active users or new accounts. */}
+        <div className="mb-6">
+          <WelcomeBackCard summary={gbrainSummary} user={userMeta} />
+        </div>
 
         <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
           <div className="flex items-start justify-between gap-4">
@@ -932,6 +957,25 @@ export default function PlannedSessionPage() {
         </AnimatePresence>
 
       </div>
+
+      {/* P3 SessionEndScreen — overlay shown on session completion before
+          the inline "Session logged" view becomes reachable. Auto-navigates
+          to Home after 5s (or stays open with prefers-reduced-motion). */}
+      {completed && plan && !closurePassed && (
+        <SessionEndScreen
+          completedCount={plan.actions.filter(a => outcomes[a.id]?.completed === true).length}
+          totalCount={plan.actions.length}
+          elapsedMin={startedAtMs ? Math.max(1, Math.round((Date.now() - startedAtMs) / 60000)) : 0}
+          coveredConcepts={plan.actions
+            .filter(a => outcomes[a.id]?.completed === true)
+            .map(a => a.title)}
+          tomorrowPriority={plan.top_priorities?.[0]?.topic}
+          onContinue={() => {
+            setClosurePassed(true);
+            navigate('/');
+          }}
+        />
+      )}
     </div>
   );
 }

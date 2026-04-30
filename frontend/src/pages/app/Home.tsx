@@ -22,6 +22,7 @@ import { StudentWelcomeCard, hasSeenWelcome } from '@/components/app/StudentWelc
 import { AnnouncementBanner } from '@/components/app/AnnouncementBanner';
 import { ExamCountdownChip } from '@/components/app/ExamCountdownChip';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
+import { DigestChip } from '@/components/app/DigestChip';
 // v2.6 decoration declutter:
 // - GiveawayBanner removed entirely (visual noise vs. the One Thing anchor).
 // - YourTeacherCard removed from Home (self-gating component never shows for
@@ -477,7 +478,8 @@ export function Home() {
       <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto mb-3 space-y-2">
         <AnnouncementBanner />
         <ExamCountdownChip />
-        <CompoundingCard />
+        <DigestChip sessionId={sessionId} />
+        <CompoundingCard sessionId={sessionId} />
       </motion.div>
 
       <AnimatePresence mode="wait">

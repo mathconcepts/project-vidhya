@@ -102,6 +102,36 @@ Custom skills that compound GBrain's cognitive architecture into defensible adva
 
 All MOAT skills have SKILL.md at `.claude/skills/<name>/` and backing TypeScript at `src/gbrain/operations/`. Each is invocable via CLI, REST API (`/api/gbrain/*`), or as a Claude Code slash command.
 
+## Deploy Configuration
+
+For `/land-and-deploy` to skip the dry-run on subsequent runs.
+
+- **Platform:** Render (auto-deploys backend from `main` branch via `render.yaml`)
+- **Production URL:** https://gate-math-api.onrender.com
+- **Frontend platform:** Netlify (auto-deploys via `netlify.toml`, separate repo target)
+- **Deploy workflow:** none — Render watches the `main` branch directly. There is no GitHub Actions deploy step.
+- **Health check:** `curl -sI https://gate-math-api.onrender.com` — the API root returns HTTP 403 by design (auth-gated). Treat any non-5xx response as "deploy is live"; treat 502/503 as "Render is still spinning the service up."
+- **Typical deploy duration:** ~2-5 minutes after push to `main`.
+- **Staging:** none configured.
+- **Persistent state caveat:** Render free tier uses ephemeral disk; `.data/` resets on restart/sleep. Paid plans get `/app/.data` mount per `render.yaml` comments.
+
+## Local development
+
+```bash
+# Backend (port 8080)
+npm install
+npx tsx src/server.ts
+
+# Frontend (port 3000) — separate terminal
+cd frontend && npm install && npm run dev
+
+# Tests
+npm test                          # backend (vitest)
+cd frontend && npm test           # frontend (vitest + RTL, post-v4.0)
+```
+
+`render.yaml` builds the same way: `npm install && npm run build && cd frontend && npm install && npm run build`. If your local `npm test` passes, the Render build will too.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

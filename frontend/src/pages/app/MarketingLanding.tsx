@@ -12,6 +12,7 @@ import {
   Brain, Target, Zap, Layers, Sparkles, TrendingUp, ArrowRight, GitBranch,
   Microscope, BarChart3, Shield, CheckCircle2,
 } from 'lucide-react';
+import { StaticSampleProblem } from '@/components/app/StaticSampleProblem';
 
 export default function MarketingLanding() {
   return (
@@ -45,6 +46,14 @@ export default function MarketingLanding() {
             </Link>
           </div>
         </motion.div>
+      </section>
+
+      {/* === TRY ONE ===
+          v4.0 P8: Anonymous visitors get to feel the product before
+          committing an email. One real GATE problem, instant feedback,
+          then sign-up CTA. The first problem > the first page of copy. */}
+      <section className="px-4 py-8">
+        <StaticSampleProblem />
       </section>
 
       {/* === STUDENT PROMISE STRIP ===

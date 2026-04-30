@@ -116,6 +116,212 @@ async function loadCohortForTeacher(teacher_id: string) {
 }
 
 // ============================================================================
+// P7: Weekly brief snapshot store
+// ============================================================================
+//
+// Snapshots cohort mastery weekly so the brief can show week-over-week
+// delta. Keyed by teacher_id + ISO week + sha256(sorted teacher_of[]) so
+// a cohort change creates a fresh snapshot rather than miscomputing delta
+// against a different roster.
+//
+// Persistence caveat: .data/ is ephemeral on Render free tier (resets on
+// restart/sleep). Acceptable: a missed snapshot just means the first brief
+// after deploy shows 0 delta. Operators on paid plans get persistent disk
+// at /app/.data automatically.
+// ============================================================================
+
+import crypto from 'crypto';
+
+interface BriefSnapshot {
+  teacher_id: string;
+  iso_week: string;
+  cohort_fingerprint: string; // sha256 of sorted teacher_of[]
+  cohort_avg_mastery: number; // 0..1
+  recorded_at: string;
+}
+
+interface BriefSnapshotStore {
+  version: 1;
+  snapshots: BriefSnapshot[]; // capped append-only, drop oldest after 50
+}
+
+const briefSnapshotStore = createFlatFileStore<BriefSnapshotStore>({
+  path: '.data/teacher-brief-snapshots.json',
+  defaultShape: () => ({ version: 1, snapshots: [] }),
+});
+
+function isoWeekOf(date: Date): string {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+function cohortFingerprint(teacher_of: string[]): string {
+  const sorted = [...teacher_of].sort();
+  return crypto.createHash('sha256').update(JSON.stringify(sorted)).digest('hex').slice(0, 16);
+}
+
+function avgMastery(models: any[]): number {
+  let sum = 0;
+  let count = 0;
+  for (const m of models) {
+    if (!m?.mastery_vector) continue;
+    const entries = Object.values(m.mastery_vector) as Array<{ score?: number; attempts?: number }>;
+    for (const e of entries) {
+      if (typeof e.score === 'number' && (e.attempts ?? 0) > 0) {
+        sum += e.score;
+        count++;
+      }
+    }
+  }
+  return count > 0 ? sum / count : 0;
+}
+
+// ============================================================================
+// Handler: weekly brief
+// ============================================================================
+
+async function handleWeeklyBrief(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireRole(req, res, 'teacher');
+  if (!auth) return;
+
+  const teacher = getUserById(auth.user.id);
+  if (!teacher || teacher.teacher_of.length === 0) {
+    return sendJSON(res, {
+      should_show: false,
+      reason: 'no_cohort',
+      message: 'No cohort yet — invite students to start seeing weekly insights.',
+    });
+  }
+
+  // Pf1: parallel student-model fetch — cohort of 30 students completes
+  // in ~50ms vs ~1.5s sequential.
+  const studentResults = await Promise.all(
+    teacher.teacher_of.map(async id => {
+      const student = getUserById(id);
+      if (!student) return null;
+      try {
+        const model = await getOrCreateStudentModel(student.id, student.id);
+        return { student, model };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const cohort = studentResults.filter((r): r is NonNullable<typeof r> => r !== null);
+  const models = cohort.map(c => c.model);
+
+  // Current week's avg mastery
+  const currentMastery = avgMastery(models);
+
+  // A2: snapshot key includes cohort fingerprint so roster changes don't
+  // miscompute delta.
+  const week = isoWeekOf(new Date());
+  const fingerprint = cohortFingerprint(teacher.teacher_of);
+  const lastWeek = isoWeekOf(new Date(Date.now() - 7 * 24 * 3600 * 1000));
+
+  // Find prior snapshot — must match teacher AND fingerprint
+  const store = briefSnapshotStore.read();
+  const priorSnapshot = store.snapshots.find(
+    s =>
+      s.teacher_id === teacher.id &&
+      s.iso_week === lastWeek &&
+      s.cohort_fingerprint === fingerprint
+  );
+  const priorMastery = priorSnapshot?.cohort_avg_mastery ?? 0;
+  const delta = currentMastery - priorMastery;
+  const hasPrior = !!priorSnapshot;
+
+  // Top performer: highest avg mastery
+  const ranked = cohort
+    .map(c => ({
+      student: c.student,
+      mastery: avgMastery([c.model]),
+    }))
+    .filter(r => r.mastery > 0)
+    .sort((a, b) => b.mastery - a.mastery);
+  const topPerformer = ranked[0]
+    ? {
+        id: ranked[0].student.id,
+        name: ranked[0].student.name || ranked[0].student.email,
+        mastery: ranked[0].mastery,
+      }
+    : null;
+
+  // Struggling: students with avg mastery < 0.4 or recent inactivity
+  const struggling = cohort
+    .filter(c => {
+      const m = avgMastery([c.model]);
+      const recent = (c.model as any)?.recent_attempts ?? [];
+      const lastAttempt = recent[recent.length - 1];
+      const lastTs = lastAttempt?.timestamp ?? lastAttempt?.attempted_at;
+      const daysSince = lastTs
+        ? (Date.now() - Date.parse(lastTs)) / (24 * 3600 * 1000)
+        : 999;
+      return m < 0.4 || daysSince > 3;
+    })
+    .map(c => ({
+      id: c.student.id,
+      name: c.student.name || c.student.email,
+      reason: avgMastery([c.model]) < 0.4 ? 'low_mastery' : 'inactive',
+    }))
+    .slice(0, 5);
+
+  // Save current week's snapshot for next week's delta. Cap at 50.
+  briefSnapshotStore.write(prev => {
+    const next = [...prev.snapshots];
+    const existingIdx = next.findIndex(
+      s =>
+        s.teacher_id === teacher.id &&
+        s.iso_week === week &&
+        s.cohort_fingerprint === fingerprint
+    );
+    const snap: BriefSnapshot = {
+      teacher_id: teacher.id,
+      iso_week: week,
+      cohort_fingerprint: fingerprint,
+      cohort_avg_mastery: currentMastery,
+      recorded_at: new Date().toISOString(),
+    };
+    if (existingIdx >= 0) next[existingIdx] = snap;
+    else next.push(snap);
+    return { ...prev, snapshots: next.slice(-50) };
+  });
+
+  // Compose the one-line opening
+  const deltaPct = Math.round(delta * 100);
+  const currentPct = Math.round(currentMastery * 100);
+  let opening = `Cohort mastery: ${currentPct}% across ${cohort.length} student${cohort.length === 1 ? '' : 's'}.`;
+  if (hasPrior && Math.abs(deltaPct) >= 1) {
+    opening += deltaPct > 0
+      ? ` Up ${deltaPct} point${deltaPct === 1 ? '' : 's'} from last week.`
+      : ` Down ${Math.abs(deltaPct)} point${Math.abs(deltaPct) === 1 ? '' : 's'} from last week.`;
+  }
+
+  const oneAction = struggling.length > 0
+    ? `Reach out to ${struggling[0].name} — ${struggling[0].reason === 'inactive' ? 'inactive 3+ days' : 'mastery below 40%'}.`
+    : topPerformer
+      ? `Highlight ${topPerformer.name}'s progress to the cohort. Strong work compounds when others see it.`
+      : 'Keep the cadence steady. Compounding does the work.';
+
+  return sendJSON(res, {
+    should_show: true,
+    opening,
+    cohort_size: cohort.length,
+    cohort_avg_mastery: currentMastery,
+    cohort_delta_pct: hasPrior ? deltaPct : null,
+    top_performer: topPerformer,
+    struggling_students: struggling,
+    one_action: oneAction,
+    week,
+  });
+}
+
+// ============================================================================
 // Handler: next-class recommendation
 // ============================================================================
 
@@ -415,6 +621,7 @@ async function handleDismissPushedReview(req: ParsedRequest, res: ServerResponse
 // ============================================================================
 
 export const teachingRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
+  { method: 'GET',  path: '/api/teaching/weekly-brief',      handler: handleWeeklyBrief },
   { method: 'GET',  path: '/api/teaching/next-class',        handler: handleNextClass },
   { method: 'GET',  path: '/api/teaching/brief/:concept_id', handler: handleBrief },
   { method: 'POST', path: '/api/teaching/push-to-review',    handler: handlePushToReview },

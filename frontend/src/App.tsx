@@ -60,6 +60,7 @@ const OwnerSettingsPage = lazy(() => import('@/pages/app/OwnerSettingsPage'));
 const TeacherRosterPage = lazy(() => import('@/pages/app/TeacherRosterPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/app/AdminDashboardPage'));
 const TeachingDashboardPage = lazy(() => import('@/pages/app/TeachingDashboardPage'));
+const WeeklyTeacherBriefPage = lazy(() => import('@/pages/app/WeeklyTeacherBriefPage'));
 // SmartNotebookPage import removed in v2.6 (route is now a redirect). The page
 // itself stays in tree for the Phase 3 content merge into NotebookPage.
 const ExamSetupPage = lazy(() => import('@/pages/app/ExamSetupPage'));
@@ -143,6 +144,7 @@ export default function App() {
           <Route path="owner/dashboard" element={<AdminDashboardPage />} />
           <Route path="admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="teaching" element={<TeachingDashboardPage />} />
+          <Route path="teaching/brief" element={<WeeklyTeacherBriefPage />} />
           {/* v2.6: /smart-notebook redirects to canonical /notebook. The
               full content merge (clusters + gaps + download into NotebookPage
               gated by auth state) is a Phase 3 follow-up — for now the URL

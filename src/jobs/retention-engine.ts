@@ -14,6 +14,7 @@ import { ServerResponse } from 'http';
 import pg from 'pg';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { BRAND_NAME, FROM_EMAIL, BASE_URL } from '../lib/brand';
 
 interface RouteDefinition {
   method: string;
@@ -22,9 +23,6 @@ interface RouteDefinition {
 }
 
 const pool = new pg.Pool({ connectionString: process.env.SUPABASE_DB_URL || process.env.DATABASE_URL });
-
-const FROM_EMAIL = process.env.FROM_EMAIL || 'GATE Math <noreply@gatemath.app>';
-const BASE_URL = process.env.BASE_URL || 'https://gate-math-api.onrender.com';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -42,53 +40,53 @@ interface EmailTemplate {
   html: string;
 }
 
-function renderEmailTemplate(template: string, payload: Record<string, unknown>): EmailTemplate {
+export function renderEmailTemplate(template: string, payload: Record<string, unknown>): EmailTemplate {
   switch (template) {
     case 'welcome_day0':
       return {
-        subject: 'Welcome to GATE Math — Your Study Plan Starts Now',
+        subject: `Welcome to ${BRAND_NAME} — Your Study Plan Starts Now`,
         html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;padding:24px">
-          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Welcome to GATE Math!</h1>
-          <p style="color:#334155;line-height:1.6">You've taken the first step toward mastering GATE Engineering Mathematics. Our AI-powered platform creates personalized study plans based on your strengths and weaknesses.</p>
+          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Welcome to ${BRAND_NAME}.</h1>
+          <p style="color:#334155;line-height:1.6">You've taken the first step. ${BRAND_NAME} is an exam-agnostic adaptive prep platform — it builds your daily study plan around your strengths, weaknesses, and exam date.</p>
           <div style="text-align:center;margin:32px 0">
-            <a href="${BASE_URL}/onboard" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">Start Your Diagnostic Test</a>
+            <a href="${BASE_URL}/onboard" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">Start your diagnostic</a>
           </div>
-          <p style="color:#64748b;font-size:14px">The diagnostic takes about 10 minutes and helps us build your personalized plan.</p>
+          <p style="color:#64748b;font-size:14px">The diagnostic takes about 10 minutes and helps us build your plan.</p>
         </div>`,
       };
 
     case 'welcome_day3':
       return {
-        subject: 'Your GATE Math Study Plan is Ready',
+        subject: `Your ${BRAND_NAME} study plan is ready`,
         html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;padding:24px">
-          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Your Personalized Plan</h1>
-          <p style="color:#334155;line-height:1.6">Based on your diagnostic results, Study Commander has created a daily plan focused on your weak topics. Log in to see today's tasks.</p>
+          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Your plan is ready.</h1>
+          <p style="color:#334155;line-height:1.6">Based on your diagnostic, we've built a daily plan focused on what moves your score most. Each session is time-bounded and prioritised.</p>
           <div style="text-align:center;margin:32px 0">
-            <a href="${BASE_URL}/" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">See Today's Plan</a>
+            <a href="${BASE_URL}/planned" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">See today's plan</a>
           </div>
         </div>`,
       };
 
     case 'welcome_day7':
       return {
-        subject: 'Your First Week with GATE Math — Progress Report',
+        subject: `Your first week with ${BRAND_NAME}`,
         html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;padding:24px">
-          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Week 1 Complete!</h1>
-          <p style="color:#334155;line-height:1.6">You've been with GATE Math for a week. ${payload.problems_solved ? `You've solved ${payload.problems_solved} problems.` : 'Time to start solving problems!'}</p>
+          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Week 1.</h1>
+          <p style="color:#334155;line-height:1.6">You've been with ${BRAND_NAME} for a week. ${payload.problems_solved ? `You've solved ${payload.problems_solved} problems so far. Every rep adds.` : 'Time to start practising — every rep adds.'}</p>
           <div style="text-align:center;margin:32px 0">
-            <a href="${BASE_URL}/progress" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">View Your Progress</a>
+            <a href="${BASE_URL}/progress" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">See your progress</a>
           </div>
         </div>`,
       };
 
     case 'streak_reminder':
       return {
-        subject: `Your ${payload.streak_count}-day streak is at risk!`,
+        subject: `${payload.streak_count} days. Keep it going.`,
         html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;padding:24px">
-          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Don't break your streak!</h1>
-          <p style="color:#334155;line-height:1.6">You have a ${payload.streak_count}-day streak going. Solve just one problem today to keep it alive.</p>
+          <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">${payload.streak_count} days in a row.</h1>
+          <p style="color:#334155;line-height:1.6">One problem today and your streak holds. Compounding works — what you cracked yesterday is still with you.</p>
           <div style="text-align:center;margin:32px 0">
-            <a href="${BASE_URL}/" style="display:inline-block;background:#f59e0b;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">Quick Practice</a>
+            <a href="${BASE_URL}/planned" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">Quick practice</a>
           </div>
         </div>`,
       };
@@ -96,7 +94,7 @@ function renderEmailTemplate(template: string, payload: Record<string, unknown>)
     case 'weekly_digest': {
       const stats = payload as { problems_solved?: number; accuracy?: number; streak?: number; weak_topics?: string[] };
       return {
-        subject: 'Your Weekly GATE Math Digest',
+        subject: `Your weekly ${BRAND_NAME} digest`,
         html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;padding:24px">
           <h1 style="color:#0f172a;font-size:24px;margin-bottom:16px">Weekly Progress</h1>
           <div style="display:flex;gap:24px;margin:24px 0">
@@ -106,7 +104,7 @@ function renderEmailTemplate(template: string, payload: Record<string, unknown>)
           </div>
           ${stats.weak_topics?.length ? `<p style="color:#334155;margin-top:16px">Focus areas this week: <strong>${stats.weak_topics.join(', ')}</strong></p>` : ''}
           <div style="text-align:center;margin:32px 0">
-            <a href="${BASE_URL}/" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">Continue Studying</a>
+            <a href="${BASE_URL}/digest" style="display:inline-block;background:#10b981;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600">See full digest</a>
           </div>
         </div>`,
       };
@@ -114,8 +112,8 @@ function renderEmailTemplate(template: string, payload: Record<string, unknown>)
 
     default:
       return {
-        subject: 'GATE Math Update',
-        html: `<p>You have an update from GATE Math. <a href="${BASE_URL}">Visit the app</a>.</p>`,
+        subject: `${BRAND_NAME} update`,
+        html: `<p>You have an update from ${BRAND_NAME}. <a href="${BASE_URL}/planned">Visit the app</a>.</p>`,
       };
   }
 }

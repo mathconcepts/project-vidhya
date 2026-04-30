@@ -1,72 +1,63 @@
 /**
- * CompoundingCard (v2.6) — periodic Compounding-evidence surface.
+ * CompoundingCard (v4.0) — periodic Compounding-evidence surface.
  *
  * The v2.4 design system anchored the product on Compounding: "every rep
  * adds; what you cracked in October is still with you in November." This
  * card makes that promise visible inside the daily product loop.
  *
+ * v4.0 changes:
+ *   - dismissibility extracted to useDismissible hook (shared with
+ *     DigestChip, WelcomeBackCard).
+ *   - live streak wired in via /api/streak/:sessionId (P2). Streak row
+ *     hides when fetch fails or value is 0 (failure-soft).
+ *
  * Behavior:
- *   - Dismissible (per-day localStorage).
- *   - Loads from /api/student/compounding (fail-soft: render nothing if API
- *     unavailable or returns no data).
+ *   - Dismissible (per-day TTL via useDismissible).
+ *   - Loads from /api/student/compounding (fail-soft).
+ *   - Streak fetched separately from /api/streak/:sessionId.
  *   - Subtle by default, click-to-expand for deeper analytics.
  *
- * Where it shows up:
- *   - Home page (visible periodically — every 7 days OR after a streak of 3+
- *     completed sessions; backend decides via `should_show` flag).
- *   - PlannedSessionPage post-session ("nice work, here's what compounded").
- *
  * Failure modes:
- *   - Network error → render nothing. No error UI on Home.
+ *   - Network error → render nothing on Home.
  *   - Empty data → render nothing.
- *   - Localstorage blocked → re-show every load (acceptable).
+ *   - Streak fetch error → streak row hidden, rest of card still renders.
  */
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Sparkles, X, ChevronRight } from 'lucide-react';
+import { TrendingUp, X, ChevronRight } from 'lucide-react';
+import { useDismissible } from '@/hooks/useDismissible';
+import { trackEvent } from '@/lib/analytics';
 
 interface CompoundingEvidence {
-  /** Backend decides whether to show this card (e.g. weekly cadence, streak). */
   should_show: boolean;
-  /** One-line headline, e.g., "47 problems this month — 12 concepts mastered." */
   headline: string;
-  /** Optional supporting line, e.g., "What you cracked in October is still with you (87% retention)." */
   subline?: string;
-  /** Detailed metrics shown on expand. */
   details?: Array<{ label: string; value: string | number; hint?: string }>;
 }
 
-const DISMISS_KEY = 'vidhya.compounding.dismissed.v1';
-const DISMISS_TTL_HOURS = 20; // re-show next day even if dismissed
-
-function isDismissedToday(): boolean {
-  try {
-    const v = localStorage.getItem(DISMISS_KEY);
-    if (!v) return false;
-    const ts = parseInt(v, 10);
-    if (Number.isNaN(ts)) return false;
-    return Date.now() - ts < DISMISS_TTL_HOURS * 60 * 60 * 1000;
-  } catch {
-    return false;
-  }
-}
-
-function dismissForToday(): void {
-  try {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-  } catch { /* localStorage blocked — accept re-show */ }
+interface StreakResponse {
+  current_streak: number;
+  longest_streak?: number;
+  last_practice_date?: string | null;
 }
 
 interface Props {
+  /** Session id, passed to /api/streak/:id. */
+  sessionId?: string;
   /** Override the API endpoint for testing. */
   endpoint?: string;
 }
 
-export function CompoundingCard({ endpoint = '/api/student/compounding' }: Props) {
+export function CompoundingCard({ sessionId, endpoint = '/api/student/compounding' }: Props) {
   const [data, setData] = useState<CompoundingEvidence | null>(null);
+  const [streak, setStreak] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const [dismissed, setDismissed] = useState(() => isDismissedToday());
+
+  const { dismissed, dismiss } = useDismissible({
+    key: 'vidhya.compounding.dismissed.v1',
+    ttlHours: 20,
+  });
 
   useEffect(() => {
     if (dismissed) return;
@@ -81,13 +72,52 @@ export function CompoundingCard({ endpoint = '/api/student/compounding' }: Props
     return () => { cancelled = true; };
   }, [endpoint, dismissed]);
 
+  // P2: separate streak fetch — independent failure mode from compounding.
+  useEffect(() => {
+    if (dismissed || !sessionId) return;
+    let cancelled = false;
+    fetch(`/api/streak/${sessionId}`, { credentials: 'include' })
+      .then(r => (r.ok ? r.json() : null))
+      .then((body: StreakResponse | null) => {
+        if (cancelled || !body) return;
+        if (typeof body.current_streak === 'number') {
+          setStreak(body.current_streak);
+        }
+      })
+      .catch(() => { /* fail soft — streak row stays hidden */ });
+    return () => { cancelled = true; };
+  }, [sessionId, dismissed]);
+
   if (dismissed || !data) return null;
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
-    dismissForToday();
-    setDismissed(true);
+    trackEvent('compounding_card_dismissed', {});
+    dismiss();
   };
+
+  const handleExpand = () => {
+    setExpanded(v => {
+      const next = !v;
+      if (next) trackEvent('compounding_card_expanded', { streak: streak ?? 0 });
+      return next;
+    });
+  };
+
+  // Build details list — replace the "coming soon" streak placeholder when
+  // we have live data, drop the row entirely when streak is 0 (empty-state
+  // warmth lives elsewhere; here we just hide the row).
+  const details = data.details
+    ? data.details.map(d => {
+        if (d.label === 'streak') {
+          if (streak !== null && streak > 0) {
+            return { ...d, value: streak, hint: 'day streak' };
+          }
+          return null; // hide row
+        }
+        return d;
+      }).filter((d): d is NonNullable<typeof d> => d !== null)
+    : data.details;
 
   return (
     <AnimatePresence>
@@ -99,7 +129,7 @@ export function CompoundingCard({ endpoint = '/api/student/compounding' }: Props
         className="w-full max-w-md rounded-xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-surface-900 to-emerald-500/8 overflow-hidden"
       >
         <button
-          onClick={() => setExpanded(v => !v)}
+          onClick={handleExpand}
           className="w-full text-left p-3 flex items-start gap-3 hover:bg-violet-500/5 transition-colors"
         >
           <div className="shrink-0 mt-0.5">
@@ -114,7 +144,7 @@ export function CompoundingCard({ endpoint = '/api/student/compounding' }: Props
                 {data.subline}
               </p>
             )}
-            {data.details && data.details.length > 0 && (
+            {details && details.length > 0 && (
               <span className="inline-flex items-center gap-1 mt-2 text-[11px] text-violet-400">
                 {expanded ? 'Less' : 'More detail'} <ChevronRight size={11} className={expanded ? 'rotate-90' : ''} />
               </span>
@@ -129,7 +159,7 @@ export function CompoundingCard({ endpoint = '/api/student/compounding' }: Props
           </button>
         </button>
 
-        {expanded && data.details && data.details.length > 0 && (
+        {expanded && details && details.length > 0 && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -137,7 +167,7 @@ export function CompoundingCard({ endpoint = '/api/student/compounding' }: Props
             transition={{ duration: 0.2 }}
             className="border-t border-violet-500/15 px-3 py-3 grid grid-cols-2 gap-3"
           >
-            {data.details.map((d, i) => (
+            {details.map((d, i) => (
               <div key={i} className="text-center">
                 <p className="text-lg font-display font-bold text-surface-100">{d.value}</p>
                 <p className="text-[10px] text-surface-400 uppercase tracking-wide">{d.label}</p>
@@ -150,10 +180,3 @@ export function CompoundingCard({ endpoint = '/api/student/compounding' }: Props
     </AnimatePresence>
   );
 }
-
-/* eslint-disable react-refresh/only-export-components */
-export const _testHelpers = {
-  isDismissedToday,
-  dismissForToday,
-  DISMISS_KEY,
-};

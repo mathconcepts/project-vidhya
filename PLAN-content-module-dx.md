@@ -110,7 +110,20 @@ STAGE           | DEVELOPER DOES                  | FRICTION POINTS             
 | # | Decision | Implementation |
 |---|---|---|
 | TODO-1 | **Provider-agnostic LLM in resolver.ts** | Remove `import { GoogleGenerativeAI }` from `src/content/resolver.ts`. Route all LLM calls through `src/llm/runtime.ts`. Env var swaps provider. |
-| TODO-2 | **PedagogyReviewer interface** | `interface PedagogyReviewer { review(content, rubric): Promise<PedagogyResult> }`. Rubric: accuracy, clarity, difficulty-appropriateness, GATE syllabus alignment. Tier 2/3 content passes through it before delivery. Gemini-backed implementation ships with it. |
+| TODO-2 | **PedagogyReviewer interface (async)** | `interface PedagogyReviewer { review(content, rubric): Promise<PedagogyResult \| null> }`. Rubric: accuracy, clarity, difficulty-appropriateness, GATE syllabus alignment. Runs **async post-delivery**; writes `pedagogy_score` to RAG cache. Bad scores demote content from cache. Zero student-facing latency. |
+
+### Eng Review Decisions (overrides DX plan where conflicting)
+
+| # | Decision | Rationale |
+|---|---|---|
+| ER-D1 | **Rename: `ContentVerifier` (new, in src/content/verifiers/) vs `AnswerVerifier` (existing, src/verification/verifiers/)** | Two different concepts. Naming collision would re-create the same confusion EXTENDING.md was meant to fix. |
+| ER-D2 | **Refactor `TieredVerificationOrchestrator` constructor to `constructor(verifiers: AnswerVerifier[], config)` with tier ordering** | Auto-registry promise (D7) requires this. Named-slot constructor blocks the registry pattern. Behavior-preservation snapshot test (ER-D7) gates the refactor. |
+| ER-D3 | **PedagogyReviewer is async post-delivery, not a sync gate** | Sync placement would 2x LLM latency and cost. Async writes pedagogy_score to RAG cache; bad content gets demoted on next request. Zero student-facing impact. |
+| ER-D4 | **Debug trace plugs into existing `TierSignalEmitter` (tiered-orchestrator.ts:72)** | Reuses the existing telemetry seam. `VIDHYA_CONTENT_DEBUG=true` attaches a console-logging consumer; production telemetry consumer remains attached. Single source of truth. |
+| ER-D5 | **`@ts-nocheck` removal: per-line `@ts-expect-error` with TODO comments** | Surfaces every type error explicitly without ballooning the PR. Future PRs fix them one at a time. |
+| ER-D6 | **Contract test functions for every interface** | `runContentVerifierContract(v)`, `runAnswerVerifierContract(v)`, `runCadenceStrategyContract(s)`, `runPedagogyReviewerContract(p)`. Every implementation passes them. |
+| ER-D7 | **REGRESSION (CRITICAL): snapshot test for `TieredVerificationOrchestrator.verify()` behavior pre/post refactor** | Constructor refactor is the riskiest change. Snapshot test gates the merge. |
+| ER-D8 | **Upload blending: fast-path when user has zero uploads + verify (user_id, concept_id) index** | Avoids a query per request for users with no uploads. Verify the index exists in `src/content/uploads.ts` storage layer before shipping. |
 
 ### Not in Scope
 
@@ -161,6 +174,17 @@ DX IMPLEMENTATION CHECKLIST
 [ ] PedagogyReviewer interface defined in src/content/pedagogy.ts
 [ ] Gemini-backed PedagogyReviewer implementation wired into Tier 2/3 content delivery
 [ ] PedagogyReviewer test fixtures in src/content/__tests__/pedagogy.test.ts
+[ ] ContentVerifier interface in src/content/verifiers/ (NOT named "Verifier" — collides with AnswerVerifier)
+[ ] AnswerVerifier shared interface for src/verification/verifiers/{wolfram,sympy,llm-consensus}.ts
+[ ] TieredVerificationOrchestrator constructor refactored to accept verifiers: AnswerVerifier[]
+[ ] [CRITICAL REGRESSION TEST] Snapshot test: pre/post refactor verify() behavior is byte-identical
+[ ] Contract test fns: runContentVerifierContract, runAnswerVerifierContract, runCadenceStrategyContract, runPedagogyReviewerContract
+[ ] Every interface implementation has a one-line `runContract()` test
+[ ] PedagogyReviewer runs ASYNC post-delivery (writes pedagogy_score to RAG cache)
+[ ] Debug trace consumer attaches to existing TierSignalEmitter (NOT a new mechanism)
+[ ] @ts-nocheck removed from router.ts; per-line @ts-expect-error with TODO comments
+[ ] Upload blending fast-path: skip findUploadsByConcept if userUploadCount[user_id] === 0
+[ ] (user_id, concept_id) index verified in uploads storage layer
 ```
 
 ---
@@ -226,8 +250,9 @@ Total: 20 min. Code written: ~40 lines. Confusion: ~2 min.
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | — |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | — | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR | 8 issues, 0 critical gaps, 1 regression test added |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | — |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 1 | CLEAR | score: 2.3/10 → 7.6/10, TTHW: 75min → <20min |
 
-**VERDICT:** DX Review CLEAR. Eng review required before implementation.
+- **UNRESOLVED:** 0
+- **VERDICT:** DX + ENG CLEARED — ready to implement.

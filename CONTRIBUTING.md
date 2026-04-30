@@ -52,7 +52,24 @@ Schema per concept:
 Open a PR that adds nodes + updates `scripts/build-bundle.ts` if you're
 also adding matching problems.
 
-### 3. Fix Wolfram matcher edge cases
+### 3. Extend the content module
+
+The content module has four typed extension contracts: **AnswerVerifier** (math
+correctness), **ContentVerifier** (content quality), **CadenceStrategy** (knowledge
+vs exam-prep cadence), and **PedagogyReviewer** (async quality gate).
+
+Read `EXTENDING.md` first — it covers the four contracts with concrete walkthroughs,
+file paths, and pitfalls. Each contract has a contract-test function (e.g.,
+`runAnswerVerifierContract(myVerifier)`) that every implementation must pass.
+
+Concrete example: adding a SymPy cross-check at Tier 4. Copy
+`src/verification/verifiers/example.ts` (`AlwaysTrueVerifier`), rename, fill in
+`verify()`, register at server bootstrap with `orchestrator.registerVerifier(yours)`.
+No orchestrator edits needed.
+
+Run `npm run test:content` for fast iteration (~3s vs ~45s for the full suite).
+
+### 4. Fix Wolfram matcher edge cases
 
 `src/services/wolfram-service.ts` has `answersAgree()` which handles most
 math-answer comparison cases but currently misses algebraically-equivalent
@@ -60,7 +77,7 @@ restructured answers (e.g., `x² + x·cos(xy)` vs `x(cos(xy) + x)`).
 
 Improvements welcome. Add cases to the test file alongside your fix.
 
-### 4. Ship a new subject domain
+### 5. Ship a new subject domain
 
 The architecture is domain-agnostic. To ship a JEE/CAT/UPSC variant:
 
@@ -73,7 +90,7 @@ The architecture is domain-agnostic. To ship a JEE/CAT/UPSC variant:
 
 We'll happily link to subject-specific forks from the main README.
 
-### 5. Improve the client UX
+### 6. Improve the client UX
 
 Pages in `frontend/src/pages/gate/` are the UI surface. Submit PRs that:
 - Improve accessibility (keyboard nav, ARIA, contrast)

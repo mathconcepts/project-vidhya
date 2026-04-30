@@ -34,7 +34,14 @@ cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 - `src/api/gate-routes.ts` — Core API (topics, problems, verify, SR)
 - `src/api/chat-routes.ts` — AI tutor chat (SSE streaming)
 - `src/api/auth-middleware.ts` — JWT verification + role-based access
-- `src/verification/tiered-orchestrator.ts` — 3-tier verification engine
+- `src/verification/tiered-orchestrator.ts` — 3-tier verification engine + `registerVerifier()` for Tier 4+ extensions
+- `src/verification/verifiers/types.ts` — `AnswerVerifier` interface (math correctness)
+- `src/verification/verifiers/example.ts` — `AlwaysTrueVerifier` live reference; copy this when adding new verifiers
+- `src/content/content-types.ts` — Content module domain types (RouteRequest, ResolvedContent, SessionMode, DeclinedReason)
+- `src/content/blog-types.ts` — Blog/marketing types (renamed from content/types.ts in v2.3.0)
+- `src/content/cadence.ts` — `CadenceStrategy` interface (knowledge vs exam-prep post-filter)
+- `src/content/pedagogy.ts` — `PedagogyReviewer` interface (async post-delivery quality gate)
+- `src/content/verifiers/types.ts` — `ContentVerifier` interface (content quality, distinct from AnswerVerifier)
 - `src/jobs/content-flywheel.ts` — Auto-generate problems + social content
 - `src/jobs/trend-collector.ts` — External trend collection (Reddit, Stack Exchange, YouTube, NewsAPI)
 - `src/jobs/content-prioritizer.ts` — 5-signal weighted priority scoring
@@ -49,6 +56,11 @@ Always read DESIGN-SYSTEM.md before making any visual or UI decisions.
 All font choices, colors, spacing, and aesthetic direction are defined there.
 Do not deviate without explicit user approval.
 In QA mode, flag any code that doesn't match DESIGN-SYSTEM.md.
+
+### Extending the Content Module
+Read EXTENDING.md before adding new verifiers, cadence strategies, intent classifiers, or pedagogy reviewers. The four extension contracts (AnswerVerifier, ContentVerifier, CadenceStrategy, PedagogyReviewer) each have a contract test function — every implementation must pass it. Time to first extension target: <20 min.
+
+Run `npm run test:content` for fast iteration on the content + verification module (~3s feedback). The full suite (`npm test`) takes ~45s.
 
 ---
 

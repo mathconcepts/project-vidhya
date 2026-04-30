@@ -131,7 +131,7 @@ For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPL
 
 **Plans** — [PLAN-content-engine.md](./PLAN-content-engine.md), [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md), [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md)
 
-**Project meta** — [CONTRIBUTING.md](./CONTRIBUTING.md), [CHANGELOG.md](./CHANGELOG.md), [FEATURES.md](./FEATURES.md), [PENDING.md](./PENDING.md)
+**Project meta** — [CONTRIBUTING.md](./CONTRIBUTING.md), [EXTENDING.md](./EXTENDING.md), [CHANGELOG.md](./CHANGELOG.md), [FEATURES.md](./FEATURES.md), [PENDING.md](./PENDING.md)
 
 **Hierarchical reference** — [docs/00-index.md](./docs/00-index.md)
 

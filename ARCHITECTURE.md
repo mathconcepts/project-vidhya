@@ -181,6 +181,23 @@ Reads are public — the library is content, not personal data. Writes default t
 
 For `practice-problem` and `walkthrough-problem` intents, the library serves the worked-example body; for other intents, the explainer. Disclosure text reflects the choice and the source (seed / user / llm). See [LIBRARY.md](./LIBRARY.md) for the schema, the two sources, the cascade behaviour, and how to extend.
 
+### Extension contracts (v2.3.0+)
+
+The content module exposes four typed extension contracts so internal engineers can add new capabilities with zero orchestrator edits. See [EXTENDING.md](./EXTENDING.md) for the full reference.
+
+| Contract | Purpose | File |
+|---|---|---|
+| `AnswerVerifier` | Math answer correctness (Wolfram, SymPy, LLM consensus) | `src/verification/verifiers/types.ts` |
+| `ContentVerifier` | Content quality gates (clarity, syllabus alignment) | `src/content/verifiers/types.ts` |
+| `CadenceStrategy` | Knowledge vs exam-prep post-filter on routed content | `src/content/cadence.ts` |
+| `PedagogyReviewer` | Async post-delivery quality review (writes back to RAG cache) | `src/content/pedagogy.ts` |
+
+The `TieredVerificationOrchestrator` keeps Tier 1-3 hardcoded (RAG → LLM dual-solve → Wolfram, each with tier-specific behavior like RAG cache writeback and Wolfram rate-limit fallback). Tier 4+ verifiers register via `orchestrator.registerVerifier(v)` and run in tier order after Wolfram. Every implementation passes a contract test (e.g., `runAnswerVerifierContract(yours)`) before merge.
+
+Upload blending: after the router resolves a primary source, it surfaces `concept_id`-matched user uploads as `RouteResult.blended_uploads`. Skipped via O(1) cached count when the user has zero uploads.
+
+Debug trace: set `VIDHYA_CONTENT_DEBUG=true` to log every router decision (intent, source, considered, rejected_because, blended count, session_mode) to console. Production telemetry is unaffected.
+
 ## Operator (founder) surface
 
 The `operator` module is a small set of integration points for the external tools a solo founder uses to run the business. It is NOT a marketing/CRM/billing engine — it's the seam where Stripe, Plausible, etc. plug in.

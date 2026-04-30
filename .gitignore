@@ -63,3 +63,4 @@ backups/
 .claude/skills/gstack/
 __pycache__/
 *.pyc
+.claude/skills/gstack

@@ -137,13 +137,21 @@ export default function TeachingDashboardPage() {
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
+          <h1 className="text-xl font-display font-bold text-surface-100 flex items-center gap-2">
             <BookOpen size={20} className="text-emerald-400" />
             Teaching
           </h1>
           <p className="text-xs text-surface-500 mt-1">
             What to teach next, based on your cohort.
           </p>
+          {/* v2.6: cohort-mastery stat surfaced at the top — this IS the
+              teacher-progress signal ("are my students learning what I teach?").
+              Was previously buried in a stats-bar at the bottom. */}
+          {nextClass && nextClass.cohort_size > 0 && typeof nextClass.cohort_avg_mastery === 'number' && (
+            <p className="text-[11px] text-emerald-400 uppercase tracking-wide font-medium mt-2">
+              Cohort mastery: {Math.round(nextClass.cohort_avg_mastery * 100)}% across {nextClass.cohort_size} students
+            </p>
+          )}
         </div>
         <button
           onClick={refresh}
@@ -178,6 +186,26 @@ export default function TeachingDashboardPage() {
         </motion.div>
       ) : nextClass?.recommendation ? (
         <>
+          {/* v2.6: flagged-students alert promoted to a prominent card when
+              count > 0. Was previously a small inline link in the bottom
+              stats bar. Teachers care most about students at risk; this
+              should be immediate, not buried. */}
+          {(nextClass.flagged_students ?? 0) > 0 && (
+            <motion.a
+              variants={fadeInUp}
+              href="/teacher/roster"
+              className="block p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/15 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={16} className="shrink-0" />
+                <p className="text-sm font-medium">
+                  {nextClass.flagged_students} {nextClass.flagged_students === 1 ? 'student needs' : 'students need'} attention
+                </p>
+                <span className="ml-auto text-xs">View roster →</span>
+              </div>
+            </motion.a>
+          )}
+
           {/* Primary: next-class recommendation */}
           <motion.div variants={fadeInUp} className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/8 via-surface-900 to-violet-500/8 border border-emerald-500/25 space-y-3">
             <div className="flex items-start justify-between gap-3">

@@ -19,10 +19,14 @@ import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { MasteryRing } from '@/components/gate/MasteryRing';
 import { Confetti } from '@/components/gate/Confetti';
 import { StudentWelcomeCard, hasSeenWelcome } from '@/components/gate/StudentWelcomeCard';
-import { YourTeacherCard } from '@/components/gate/YourTeacherCard';
 import { AnnouncementBanner } from '@/components/gate/AnnouncementBanner';
 import { ExamCountdownChip } from '@/components/gate/ExamCountdownChip';
-import { GiveawayBanner } from '@/components/gate/GiveawayBanner';
+import { CompoundingCard } from '@/components/gate/CompoundingCard';
+// v2.6 decoration declutter:
+// - GiveawayBanner removed entirely (visual noise vs. the One Thing anchor).
+// - YourTeacherCard removed from Home (self-gating component never shows for
+//   most students; for those with a teacher, the teacher relationship is
+//   visible from the teacher's roster and from chat — no need to repeat on home).
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart,
   Hash, Repeat, Layers, Share2, Navigation,
@@ -368,12 +372,16 @@ export function Home() {
             className="w-full max-w-md flex flex-col items-center gap-5 text-center"
             initial="hidden" animate="visible" variants={staggerContainer}
           >
-            {/* Teacher-assigned students get announcement banner + teacher card */}
+            {/* v2.6: Decoration declutter per the v2.4 design system "restrained
+                decoration" + v2.5 "frugal layout" principles. Removed GiveawayBanner
+                (was visual noise on the home anchor). YourTeacherCard demoted to
+                lazy-render below — most students never have a teacher; cluttering
+                the One Thing card with a teacher-mention default fights the focus.
+                AnnouncementBanner kept (operator-driven, user-relevant).
+                ExamCountdownChip kept (Compounding-relevant — days to exam matters). */}
             <motion.div variants={fadeInUp} className="w-full space-y-3">
               <AnnouncementBanner />
-              <GiveawayBanner />
               <ExamCountdownChip />
-              <YourTeacherCard />
             </motion.div>
 
             <motion.div variants={fadeInUp}>
@@ -462,11 +470,14 @@ export function Home() {
     >
       {/* Teacher-assigned students see announcement banner + teacher card;
           self-study students (taught_by null) see neither — both components self-gate. */}
+      {/* v2.6: declutter — Giveaway + YourTeacher banners removed from default
+          home stack. AnnouncementBanner kept (operator-driven). ExamCountdown
+          kept (Compounding-relevant). CompoundingCard added (the v2.4 promise
+          made daily-visible). */}
       <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto mb-3 space-y-2">
         <AnnouncementBanner />
-        <GiveawayBanner />
         <ExamCountdownChip />
-        <YourTeacherCard />
+        <CompoundingCard />
       </motion.div>
 
       <AnimatePresence mode="wait">

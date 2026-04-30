@@ -60,7 +60,8 @@ const OwnerSettingsPage = lazy(() => import('@/pages/gate/OwnerSettingsPage'));
 const TeacherRosterPage = lazy(() => import('@/pages/gate/TeacherRosterPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/gate/AdminDashboardPage'));
 const TeachingDashboardPage = lazy(() => import('@/pages/gate/TeachingDashboardPage'));
-const SmartNotebookPage = lazy(() => import('@/pages/gate/SmartNotebookPage'));
+// SmartNotebookPage import removed in v2.6 (route is now a redirect). The page
+// itself stays in tree for the Phase 3 content merge into NotebookPage.
 const ExamSetupPage = lazy(() => import('@/pages/gate/ExamSetupPage'));
 const ExamGroupsPage = lazy(() => import('@/pages/gate/ExamGroupsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
@@ -89,6 +90,15 @@ export default function App() {
         <Route element={<GateLayout />}>
           <Route index element={<GateHome />} />
           <Route path="topic/:topicId" element={<TopicPage />} />
+          {/* Practice-surface hierarchy (v2.6 consolidation):
+              /practice              → /planned (canonical entry, Study Commander)
+              /practice/:problemId   → PracticePage (deep-link to specific problem)
+              /smart-practice        → SmartPracticePage (topic + difficulty picker)
+              /planned               → PlannedSessionPage (time-bounded session — DEFAULT)
+              /session               → StudymateSessionPage (15-min anytime drop-in)
+              The 4 surfaces serve distinct entry needs; the canonical /practice
+              redirect ensures one obvious place to start. */}
+          <Route path="practice" element={<Navigate to="/planned" replace />} />
           <Route path="practice/:problemId" element={<PracticePage />} />
           <Route path="verify" element={<VerifyPage />} />
           <Route path="chat" element={<ChatPage />} />
@@ -96,7 +106,11 @@ export default function App() {
           <Route path="progress" element={<ProgressPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="login" element={<Navigate to="/sign-in" replace />} />
-          <Route path="admin" element={<AdminPage />} />
+          {/* v2.6: /admin redirects to canonical dashboard. AdminPage's social
+              queue moved to /admin/social. AdminDashboardPage is the role-aware
+              landing for admin + owner roles. */}
+          <Route path="admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="admin/social" element={<AdminPage />} />
           <Route path="onboard" element={<OnboardPage />} />
           <Route path="diagnostic" element={<DiagnosticPage />} />
           <Route path="exam-strategy" element={<ExamStrategyPage />} />
@@ -129,7 +143,11 @@ export default function App() {
           <Route path="owner/dashboard" element={<AdminDashboardPage />} />
           <Route path="admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="teaching" element={<TeachingDashboardPage />} />
-          <Route path="smart-notebook" element={<SmartNotebookPage />} />
+          {/* v2.6: /smart-notebook redirects to canonical /notebook. The
+              full content merge (clusters + gaps + download into NotebookPage
+              gated by auth state) is a Phase 3 follow-up — for now the URL
+              consolidation removes the duplicate entry point. */}
+          <Route path="smart-notebook" element={<Navigate to="/notebook" replace />} />
           <Route path="exams" element={<ExamSetupPage />} />
           <Route path="exam-groups" element={<ExamGroupsPage />} />
           <Route path="admin/content" element={<ContentAdminPage />} />

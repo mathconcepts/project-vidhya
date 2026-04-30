@@ -464,10 +464,10 @@ export default function PlannedSessionPage() {
         <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight mb-1">Plan my session</h1>
+              <h1 className="text-2xl font-display font-semibold tracking-tight mb-1">Today's plan</h1>
               <p className="text-sm text-zinc-400">
-                Tell us how much time you have — we'll give you concrete actions
-                that fit, prioritized by what'll move your score most.
+                Tell us how long you have. We'll give you the three things that move
+                your score most — in order. Show up, follow it, get better.
               </p>
             </div>
             <Link
@@ -741,27 +741,65 @@ export default function PlannedSessionPage() {
                 </div>
               </div>
 
-              {/* Action cards */}
+              {/* v2.6: Compounding progress ribbon. "completed N of M today"
+                  reinforces the v2.4 Compounding promise — every action ticks
+                  the visible counter forward. */}
+              {plan.actions.length > 0 && (() => {
+                const doneCount = plan.actions.filter(a => outcomes[a.id]?.completed === true).length;
+                const total = plan.actions.length;
+                const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+                return (
+                  <motion.div variants={fadeInUp} className="mb-4 flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                    <div className="flex-1">
+                      <div className="text-xs text-emerald-300 font-medium">
+                        {doneCount === 0
+                          ? `${total} action${total === 1 ? '' : 's'} ahead — start with #1.`
+                          : doneCount === total
+                          ? `All done. ${total} actions complete today.`
+                          : `${doneCount} of ${total} done. ${total - doneCount} to go.`}
+                      </div>
+                      <div className="mt-1.5 h-1 rounded-full bg-zinc-800 overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+
+              {/* Action cards. v2.6: First pending action gets a violet accent
+                  + "NEXT" label so the student sees unambiguously where to start. */}
               <div className="space-y-3 mb-8">
-                {plan.actions.map((action, i) => {
-                  const meta = KIND_META[action.kind];
-                  const Icon = meta.icon;
-                  const outcome = outcomes[action.id];
-                  const doneState =
-                    outcome?.completed === true ? 'done' :
-                    outcome?.completed === false ? 'skipped' :
-                    'pending';
-                  return (
-                    <motion.div
-                      key={action.id}
-                      variants={fadeInUp}
-                      className={clsx(
-                        'p-4 rounded-lg border transition-colors',
-                        doneState === 'done'    && 'bg-emerald-500/5 border-emerald-500/30',
-                        doneState === 'skipped' && 'bg-zinc-900/50 border-zinc-800 opacity-60',
-                        doneState === 'pending' && 'bg-zinc-900 border-zinc-800',
-                      )}
-                    >
+                {(() => {
+                  const firstPendingIdx = plan.actions.findIndex(a => outcomes[a.id]?.completed === undefined || outcomes[a.id]?.completed === null);
+                  return plan.actions.map((action, i) => {
+                    const meta = KIND_META[action.kind];
+                    const Icon = meta.icon;
+                    const outcome = outcomes[action.id];
+                    const doneState =
+                      outcome?.completed === true ? 'done' :
+                      outcome?.completed === false ? 'skipped' :
+                      'pending';
+                    const isNext = i === firstPendingIdx;
+                    return (
+                      <motion.div
+                        key={action.id}
+                        variants={fadeInUp}
+                        className={clsx(
+                          'p-4 rounded-lg border transition-colors',
+                          doneState === 'done'    && 'bg-emerald-500/5 border-emerald-500/30',
+                          doneState === 'skipped' && 'bg-zinc-900/50 border-zinc-800 opacity-60',
+                          doneState === 'pending' && !isNext && 'bg-zinc-900 border-zinc-800',
+                          doneState === 'pending' && isNext && 'bg-violet-500/5 border-violet-400/40 ring-1 ring-violet-400/20',
+                        )}
+                      >
+                        {isNext && (
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2">
+                            Next →
+                          </div>
+                        )}
                       <div className="flex items-start gap-3">
                         <div className="text-xs text-zinc-500 font-mono w-6 pt-1">{i + 1}</div>
                         <div className="flex-1">
@@ -843,7 +881,8 @@ export default function PlannedSessionPage() {
                       </div>
                     </motion.div>
                   );
-                })}
+                  });
+                })()}
               </div>
 
               {/* Finish */}

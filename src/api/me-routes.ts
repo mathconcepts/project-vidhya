@@ -200,7 +200,97 @@ function computeFocusSignal(p: {
 }
 
 // ============================================================================
+// v2.6: Compounding Visibility endpoint
+//
+// Returns concrete evidence of the v2.4 design system's "Compounding" promise:
+// "every rep adds; what you cracked in October is still with you in November."
+//
+// The frontend CompoundingCard polls this; backend decides via `should_show`
+// whether to surface the card today (cadence: weekly OR after a 3+ session
+// streak). Failure-soft on the frontend — empty/error response renders nothing.
+// ============================================================================
+
+async function handleCompounding(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAuth(req, res);
+  if (!auth) return; // requireAuth sent 401
+
+  const user = getUserById(auth.userId);
+  if (!user) {
+    return sendJSON(res, { should_show: false, headline: '' });
+  }
+
+  // Pull the student model for mastery + attempt history.
+  const model = getOrCreateStudentModel(auth.userId);
+  if (!model) {
+    return sendJSON(res, { should_show: false, headline: '' });
+  }
+
+  const now = Date.now();
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+  // Compute Compounding metrics from the student model.
+  // Schema is loose — be defensive about missing fields.
+  const mastery = (model as any).concept_mastery ?? {};
+  const attempts = (model as any).recent_attempts ?? [];
+
+  const recentAttempts = Array.isArray(attempts)
+    ? attempts.filter((a: any) => {
+        const ts = a?.timestamp ?? a?.attempted_at ?? null;
+        if (!ts) return false;
+        const t = typeof ts === 'string' ? Date.parse(ts) : Number(ts);
+        return Number.isFinite(t) && now - t < THIRTY_DAYS_MS;
+      })
+    : [];
+
+  const conceptsMastered = Object.values(mastery).filter(
+    (m: any) => typeof m === 'number' ? m >= 0.85 : (m?.value ?? 0) >= 0.85,
+  ).length;
+
+  const totalConcepts = Object.keys(mastery).length;
+  const problems30d = recentAttempts.length;
+
+  // Cadence: show when there's something to celebrate. Either:
+  //   - 5+ problems in last 30 days (active student)
+  //   - At least 1 concept mastered
+  // Otherwise hide (no compounding-evidence to show).
+  const should_show = problems30d >= 5 || conceptsMastered >= 1;
+
+  if (!should_show) {
+    return sendJSON(res, { should_show: false, headline: '' });
+  }
+
+  // Headline composition. Lead with the most concrete number.
+  let headline: string;
+  let subline: string | undefined;
+  if (conceptsMastered >= 1 && problems30d >= 5) {
+    headline = `${problems30d} problems this month — ${conceptsMastered} concept${conceptsMastered === 1 ? '' : 's'} mastered.`;
+    subline = totalConcepts > conceptsMastered
+      ? `${totalConcepts - conceptsMastered} more to go. Every rep gets you closer.`
+      : 'You\'re on a streak — keep showing up.';
+  } else if (conceptsMastered >= 1) {
+    headline = `${conceptsMastered} concept${conceptsMastered === 1 ? '' : 's'} mastered so far.`;
+    subline = 'What you cracked once is still with you. Keep going.';
+  } else {
+    headline = `${problems30d} problems in the last 30 days.`;
+    subline = 'You\'re building momentum. Every problem teaches the system more about how you think.';
+  }
+
+  return sendJSON(res, {
+    should_show: true,
+    headline,
+    subline,
+    details: [
+      { label: 'problems', value: problems30d, hint: 'last 30 days' },
+      { label: 'concepts', value: conceptsMastered, hint: 'mastered (≥85%)' },
+      { label: 'concepts seen', value: totalConcepts },
+      { label: 'streak', value: '—', hint: 'coming soon' },
+    ],
+  });
+}
+
+// ============================================================================
 
 export const meRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   { method: 'GET', path: '/api/me/gbrain-summary', handler: handleGBrainSummary },
+  { method: 'GET', path: '/api/student/compounding', handler: handleCompounding },
 ];

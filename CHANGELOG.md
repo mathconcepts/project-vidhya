@@ -4,6 +4,31 @@ All notable changes to GATE Math are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [2.6.0] - 2026-04-30 — UX coherence + Compounding made daily-visible (Phase 2)
+
+**Operator action:** none. The new `/api/student/compounding` endpoint is additive and renders nothing on the frontend if the student has no activity yet — no UX regression for fresh accounts.
+
+### What changed for users
+- **Compounding Visibility Card.** Periodic, dismissible card on home that surfaces concrete evidence of improvement: "47 problems this month — 12 concepts mastered." Click to expand for detail. Hidden when there's nothing yet to celebrate. Anchors the v2.4 Compounding promise into the daily product loop.
+- **Today's plan, focused.** PlannedSessionPage now leads with "Today's plan" + the three things that move your score most. The first pending action gets a **NEXT** label and violet accent — unambiguous starting point. New progress ribbon below the timing bar: "2 of 5 done. 3 to go."
+- **Home, decluttered.** Giveaway banner removed from the home stack. YourTeacher card removed from default home (still surfaces from teacher's roster + chat). AnnouncementBanner + ExamCountdown kept — these earn their pixels.
+- **Teaching dashboard, delighted.** Cohort mastery percentage promoted to a top-of-page indicator ("Cohort mastery: 73% across 24 students"). Students-needing-attention promoted from a tiny inline link to a prominent amber alert when count > 0. Page now uses Fraunces serif for headlines (v2.4 alignment).
+- **One canonical sign-in route.** `/admin` redirects to `/admin/dashboard` (canonical). `/smart-notebook` redirects to `/notebook` (canonical). `/practice` redirects to `/planned` (Study Commander default). Existing deep links to specific pages still work — only the bare-route entry points are deduplicated.
+
+### What changed for engineers
+- New component: `frontend/src/components/gate/CompoundingCard.tsx` — failure-soft (renders nothing on API error), localStorage-dismissible (per-day), self-loading.
+- New endpoint: `GET /api/student/compounding` in `src/api/me-routes.ts`. Returns `{ should_show, headline, subline, details }` based on student model state. Cadence: shown when 5+ problems in last 30d OR 1+ concept mastered.
+- Route consolidations (App.tsx): `/login → /sign-in`, `/admin → /admin/dashboard`, `/smart-notebook → /notebook`, `/practice → /planned`. Old routes redirect via `<Navigate replace />` so back-button + bookmarks behave correctly.
+- Practice-surface hierarchy documented inline: 4 surfaces (PracticePage, SmartPracticePage, PlannedSessionPage, StudymateSessionPage) serve distinct entry needs; PlannedSessionPage is canonical.
+- AdminPage's social queue moved from `/admin` to `/admin/social` (kept functional as a dedicated admin sub-route).
+
+### Phase 3 (deferred)
+- GATE_TOPICS dynamic per-exam loader (the structural fix to make the platform truly exam-agnostic).
+- PracticePage refactor (split into smaller components + edge-case tests).
+- ExamSetupPage 1318-line wizard split.
+- 3 content admin pages → ContentStudioPage consolidation.
+- `frontend/src/pages/gate/` → `app/` directory rename (50+ import paths).
+
 ## [2.5.0] - 2026-04-30 — Customer delight + exam-agnostic Phase 1
 
 **Operator action:** if you previously relied on `DEFAULT_EXAM_ID = 'gate-ma'` as a silent default in jobs, configure an exam now (POST /api/exams or via the admin UI) — the silent fallback is gone. Optionally set `ENV DEFAULT_EXAM_ID` to override the auto-resolved default.

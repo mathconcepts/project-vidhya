@@ -84,7 +84,7 @@ export function GateLayout() {
                   </button>
                   {(user.role === 'teacher' || user.role === 'admin') && (
                     <button
-                      onClick={() => navigate('/admin')}
+                      onClick={() => navigate('/admin/dashboard')}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
                     >
                       <Shield size={14} /> Admin

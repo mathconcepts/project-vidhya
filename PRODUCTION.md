@@ -321,7 +321,7 @@ In `3f7e164` (commit 1):
 - `src/content/resolver.ts` (router cascade tier-2)
 
 In this commit:
-- `src/gate-server.ts` (boot-time embedder + dual-solve verifiers;
+- `src/server.ts` (boot-time embedder + dual-solve verifiers;
   the `setGeminiModel` injection that used to push a Gemini SDK
   instance into gate-routes was removed — verify-any uses the
   runtime helper directly now)

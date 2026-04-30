@@ -15,11 +15,11 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { GateLayout } from '@/components/gate/GateLayout';
 
 // Eager load home (fast first paint)
-import { GateHome } from '@/pages/gate/GateHome';
+import { Home as GateHome } from "@/pages/gate/Home";
 
 // Lazy load everything else
 const TopicPage = lazy(() => import('@/pages/gate/TopicPage'));
@@ -29,7 +29,8 @@ const ProgressPage = lazy(() => import('@/pages/gate/ProgressPage'));
 const SettingsPage = lazy(() => import('@/pages/gate/SettingsPage'));
 const ChatPage = lazy(() => import('@/pages/gate/ChatPage'));
 const NotebookPage = lazy(() => import('@/pages/gate/NotebookPage'));
-const LoginPage = lazy(() => import('@/pages/gate/LoginPage'));
+// v2.5: LoginPage deleted — used Supabase Auth which the backend never validated.
+// /login now redirects to /sign-in (canonical Vidhya JWT auth via SignInPage).
 const AdminPage = lazy(() => import('@/pages/gate/AdminPage'));
 const OnboardPage = lazy(() => import('@/pages/gate/OnboardPage'));
 const DiagnosticPage = lazy(() => import('@/pages/gate/DiagnosticPage'));
@@ -94,7 +95,7 @@ export default function App() {
           <Route path="notebook" element={<NotebookPage />} />
           <Route path="progress" element={<ProgressPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="login" element={<LoginPage />} />
+          <Route path="login" element={<Navigate to="/sign-in" replace />} />
           <Route path="admin" element={<AdminPage />} />
           <Route path="onboard" element={<OnboardPage />} />
           <Route path="diagnostic" element={<DiagnosticPage />} />

@@ -49,7 +49,7 @@ import { isContentLibraryFeatureEnabled } from '../modules/content-library/featu
 async function h_list_concepts(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const summaries = listSummaries();
   // Optional query filter: ?source=seed (or user, llm). req.query is a
-  // URLSearchParams in production (see gate-server.ts), so use .get().
+  // URLSearchParams in production (see server.ts), so use .get().
   const source_filter = req.query?.get?.('source');
   const filtered = source_filter
     ? summaries.filter(s => s.source === source_filter)

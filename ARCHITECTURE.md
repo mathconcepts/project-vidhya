@@ -67,7 +67,7 @@ Vidhya is one Node process. There's no service mesh, no message broker, no sidec
 │                                                                    │
 │   ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐ │
 │   │ HTTP server  │  │  Job         │  │  Channel runtime         │ │
-│   │ (gate-server │  │  scheduler   │  │  (Telegram, WhatsApp     │ │
+│   │ (server │  │  scheduler   │  │  (Telegram, WhatsApp     │ │
 │   │  .ts, port   │  │  (cleanup,   │  │  webhook handlers — only │ │
 │   │  8080)       │  │  health,     │  │  if env vars set)        │ │
 │   │              │  │  retention)  │  │                          │ │
@@ -99,7 +99,7 @@ What's not in this diagram by design:
 Walking through `POST /api/student/session/plan` as an example:
 
 1. **TLS termination** at the host (Render / Oracle Cloud / wherever) → HTTP/1.1 to port 8080.
-2. **Route resolution** in `src/gate-server.ts`'s router — matches `(method, path)`.
+2. **Route resolution** in `src/server.ts`'s router — matches `(method, path)`.
 3. **Auth check** via `requireAuth` (middleware from the auth module) — validates the JWT, loads the user record from `.data/users.json`, attaches `auth.user` to the request.
 4. **Role check** via `requireRole(req, res, 'student')` — fails fast with 403 if the user's role rank is below `student`.
 5. **Body parse** — JSON body parser produces the request DTO.

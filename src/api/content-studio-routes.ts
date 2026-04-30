@@ -156,7 +156,7 @@ async function h_list_drafts(req: ParsedRequest, res: ServerResponse): Promise<v
   const ok = await requireAdmin(req, res);
   if (!ok) return;
 
-  // req.query is URLSearchParams (gate-server.ts line 590)
+  // req.query is URLSearchParams (server.ts line 590)
   const status_filter = req.query?.get?.('status') as StudioDraftStatus | null;
   const concept_filter = req.query?.get?.('concept_id') ?? undefined;
 

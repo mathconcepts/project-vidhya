@@ -4,6 +4,36 @@ All notable changes to GATE Math are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [2.5.0] - 2026-04-30 — Customer delight + exam-agnostic Phase 1
+
+**Operator action:** if you previously relied on `DEFAULT_EXAM_ID = 'gate-ma'` as a silent default in jobs, configure an exam now (POST /api/exams or via the admin UI) — the silent fallback is gone. Optionally set `ENV DEFAULT_EXAM_ID` to override the auto-resolved default.
+
+### What changed for users
+- New visitors land on a marketing page that leads with the student promise ("know exactly the three things to study tomorrow") instead of architecture ("82-concept prerequisite graph"). The technical depth is still there — collapsed under "For builders & the curious."
+- Practice answer-checking no longer plays a 3-stage "Checking knowledge base / Running AI verification / Confirming result" theater. Fast verifies show no spinner; slow ones (>1.5s) show a single subtle shimmer.
+- Smart Practice no longer exposes tier names, latency in milliseconds, or per-problem USD cost to students. The "Wolfram-verified" trust badge is preserved (the only provenance that helps students). Session footer simplified to "problems this session."
+- Sign-in is now one canonical page. `/login` redirects to `/sign-in` (the production-validated auth path).
+- Anonymous visitors who land on the home page get a subtle "New here? See how Vidhya works →" link to the marketing page.
+- Onboarding never shows fake topics anymore. When the exam profile fails to load, you see "Pick exam first" with an explicit CTA — not a generic algebra/calculus/geometry fallback.
+- "Viewing as {role}" indicator on TurnsPage when teachers/admins view another student's history.
+
+### What changed for the platform (exam-agnostic cleanup)
+- The product is now branded "Vidhya" everywhere (was "GATE Math" in DESIGN-SYSTEM.md, App.tsx, CLAUDE.md). GATE is one of N exams the platform serves, not the product identity.
+- `src/gate-server.ts` → `src/server.ts` (filename + 14+ doc/config references updated).
+- `frontend/src/pages/gate/GateHome.tsx` → `frontend/src/pages/gate/Home.tsx` (function renamed too). Directory rename queued as a follow-up PR (50+ import paths, too risky for this batch).
+- New `src/exams/default-exam.ts` resolves the default exam id with proper precedence: ENV `DEFAULT_EXAM_ID` → first registered exam → throw clear error. Replaces 4 hardcoded `'gate-ma'` fallbacks (3 jobs files + commander-routes anonymous seeding).
+
+### What changed for engineers
+- **Auth system unified.** Two parallel auth systems coexisted: Vidhya JWT (validated by the backend) and Supabase Auth (frontend-only state never validated by the backend). The Supabase one is gone:
+  - Deleted `frontend/src/pages/gate/LoginPage.tsx`
+  - Deleted `frontend/src/hooks/useAuth.ts`
+  - Deleted `frontend/src/lib/supabase.ts` (auth-only client)
+  - Migrated `GateLayout.tsx`, `ContentAdminPage.tsx`, `GBrainAdminPage.tsx` to use `@/contexts/AuthContext` (Vidhya JWT). Field names map: `display_name` → `name`, `avatar_url` → `picture`. Async `getToken()` → sync `getToken()` from `@/lib/auth/client`.
+- Documentation updated: `CLAUDE.md`, `DESIGN-SYSTEM.md`, `ARCHITECTURE.md`, `DEPLOY.md`, `LAYOUT.md`, `INSTALL.md`, `PRODUCTION.md`, `FEATURES.md`, `PENDING.md`, `PLAN-gbrain-mvp.md`.
+
+### Phase 2 + 3 (deferred)
+The CEO review accepted 23 items in 3 phases. Phase 1 (this release) shipped 12 customer-visible quick wins. Phases 2 + 3 (decoration declutter on Home, /notebook + /smart-notebook merge, 4 practice surfaces consolidation, Compounding Visibility Card, admin-landing consolidation, GATE_TOPICS dynamic loader, ExamSetup wizard split, etc.) are tracked in `PLAN-exam-agnostic-and-delight.md` and will land in subsequent PRs. Phase 3 items each need their own `/plan-eng-review`.
+
 ## [2.4.0] - 2026-04-30 — Design system v2.3 lands in the frontend
 
 **Operator action:** none. Render auto-deploys from `main`. Three new fonts (Fraunces, DM Sans, JetBrains Mono) load from Google Fonts on page open.

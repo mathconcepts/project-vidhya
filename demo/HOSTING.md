@@ -50,7 +50,7 @@ on the same LAN (and then via your machine's LAN IP, not localhost).
 1. Fork this repo.
 2. Create a Web Service on Render → connect the fork.
 3. Build command: `npm ci && cd frontend && npm ci && npm run build`
-4. Start command: `npm run demo:seed && node --import tsx src/gate-server.ts`
+4. Start command: `npm run demo:seed && node --import tsx src/server.ts`
 5. Environment variables (in the Render UI):
    - `JWT_SECRET` — a 32+ char random string
    - `NODE_ENV=production`
@@ -124,7 +124,7 @@ RUN cd frontend && npm run build
 
 EXPOSE 8080
 # Seed-then-serve entrypoint. JWT_SECRET must be passed in at run time.
-CMD ["sh", "-c", "npm run demo:seed && node --import tsx src/gate-server.ts"]
+CMD ["sh", "-c", "npm run demo:seed && node --import tsx src/server.ts"]
 ```
 
 ```bash
@@ -145,7 +145,7 @@ Then browse to `http://localhost:8080/demo.html`.
 ## Frontend + backend on one domain — or two?
 
 On all the hosted options above, **one service serves both**. The
-backend (`src/gate-server.ts`) is configured to serve the built
+backend (`src/server.ts`) is configured to serve the built
 frontend from `frontend/dist` on every non-API path. The vite dev
 server on port 3000 is a development-only proxy.
 

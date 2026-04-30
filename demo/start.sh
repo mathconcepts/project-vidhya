@@ -54,7 +54,7 @@ echo ""
 
 # Start backend in the background.
 echo "[backend] starting..."
-npx tsx watch src/gate-server.ts > /tmp/vidhya-demo-backend.log 2>&1 &
+npx tsx watch src/server.ts > /tmp/vidhya-demo-backend.log 2>&1 &
 BACKEND_PID=$!
 echo "[backend] pid=$BACKEND_PID -- logs: /tmp/vidhya-demo-backend.log"
 

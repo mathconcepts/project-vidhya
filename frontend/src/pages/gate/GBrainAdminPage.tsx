@@ -12,7 +12,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
-import { useAuth } from '@/hooks/useAuth';
+// v2.5: migrated from @/hooks/useAuth (Supabase) to @/contexts/AuthContext (Vidhya JWT).
+import { useAuth } from '@/contexts/AuthContext';
+import { getToken } from '@/lib/auth/client';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
@@ -47,15 +49,15 @@ interface ContentGaps {
   }>;
 }
 
-// Get auth header for admin endpoints via the useAuth getToken() method.
+// v2.5: getToken() is now sync (Vidhya JWT in localStorage). Hook kept
+// for callsite compatibility; the Promise wrap is incidental.
 function useAuthHeaders() {
-  const { getToken } = useAuth();
   return useCallback(async (): Promise<Record<string, string>> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = await getToken();
+    const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
     return headers;
-  }, [getToken]);
+  }, []);
 }
 
 export default function GBrainAdminPage() {

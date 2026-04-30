@@ -5,7 +5,7 @@
  * Owning agent: task-manager (COO side).
  *
  * Minimal in-process scheduler for periodic hygiene tasks. Runs
- * inside the gate-server process — single-instance deploys only (the
+ * inside the server process — single-instance deploys only (the
  * flat-file store has the same constraint anyway).
  *
  * For multi-instance deploys, replace with Render Cron Jobs or

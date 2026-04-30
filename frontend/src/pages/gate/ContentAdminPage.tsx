@@ -14,7 +14,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
-import { useAuth } from '@/hooks/useAuth';
+// v2.5: migrated from @/hooks/useAuth (Supabase) to @/contexts/AuthContext (Vidhya JWT).
+import { useAuth } from '@/contexts/AuthContext';
+import { getToken } from '@/lib/auth/client';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
@@ -66,7 +68,7 @@ const SOURCE_LABELS: Record<string, { label: string; color: string; tier: string
 };
 
 export default function ContentAdminPage() {
-  const { user, loading: authLoading, getToken } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [stats, setStats] = useState<BundleStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,8 @@ export default function ContentAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await getToken();
+      // v2.5: getToken() is now sync (Vidhya JWT in localStorage).
+      const token = getToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers.Authorization = `Bearer ${token}`;
       const [sum, st] = await Promise.all([
@@ -90,7 +93,7 @@ export default function ContentAdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => {
     trackEvent('page_view', { page: 'admin-content' });

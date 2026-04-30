@@ -448,7 +448,7 @@ Node 5: VERIFICATION GATE
 - Parent/teacher progress sharing
 - Multi-exam support (JEE, BITSAT) — architecture supports it, just needs exam skill modules
 - Community features
-- GBrain as a separate service (stays embedded in gate-server for now)
+- GBrain as a separate service (stays embedded in server for now)
 
 ---
 

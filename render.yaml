@@ -35,7 +35,7 @@
 #       mountPath: /app/.data
 #       sizeGB: 1
 #
-# First boot: npm run demo:seed && tsx src/gate-server.ts
+# First boot: npm run demo:seed && tsx src/server.ts
 #   Seeds 6 demo users (Nisha/Arjun/Kavita/Priya/Rahul/Aditya).
 #   Seed is idempotent (upsert-by-google-sub) so re-running is safe.
 

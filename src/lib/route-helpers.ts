@@ -22,7 +22,7 @@ import type { ServerResponse } from 'http';
 
 // ============================================================================
 // Shared request shape — matches what every route handler receives from
-// the gate-server router. Keeping the field names unchanged so dropping
+// the server router. Keeping the field names unchanged so dropping
 // this import in is a no-op substitution.
 // ============================================================================
 

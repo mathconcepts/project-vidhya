@@ -71,7 +71,7 @@ export JWT_SECRET=$(openssl rand -hex 16)
 
 # 4. Run
 npm run build:frontend
-npx tsx src/gate-server.ts
+npx tsx src/server.ts
 ```
 
 Visit `http://localhost:8080/` — the web app serves.
@@ -322,7 +322,7 @@ Gate-server serves `frontend/dist/` statically. The dist directory must exist be
 
 ### Port conflict
 
-Another process is on 8080. Change with `PORT=8081 npx tsx src/gate-server.ts`.
+Another process is on 8080. Change with `PORT=8081 npx tsx src/server.ts`.
 
 ---
 

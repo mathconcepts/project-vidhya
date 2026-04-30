@@ -402,7 +402,7 @@ writeFileSync('frontend/public/demo.html', `<!doctype html>
 `);
 console.log('  frontend/public/demo.html written');
 
-// In Docker (production), gate-server serves from frontend/dist/ only —
+// In Docker (production), server serves from frontend/dist/ only —
 // frontend/public/ is not served. Copy the generated pages there too so
 // http://<host>/demo.html works without a Vite dev server.
 const distDir = 'frontend/dist';

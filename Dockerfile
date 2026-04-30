@@ -45,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 EXPOSE ${PORT:-8080}
 ENV NODE_ENV=production
 
-CMD ["npx", "tsx", "src/gate-server.ts"]
+CMD ["npx", "tsx", "src/server.ts"]

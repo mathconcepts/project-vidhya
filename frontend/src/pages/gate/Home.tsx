@@ -82,7 +82,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 // --- Component ---
 
-export function GateHome() {
+// v2.5: file + function renamed (was GateHome / GateHome.tsx). The
+// gate/ directory rename is queued as a follow-up PR (50+ import paths).
+export function Home() {
   const sessionId = useSession();
   const navigate = useNavigate();
   // v2.5: track whether the visitor is anonymous so we can render the

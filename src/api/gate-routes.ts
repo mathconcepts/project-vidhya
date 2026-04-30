@@ -150,7 +150,7 @@ export function setOrchestrator(orch: any): void {
   _orchestrator = orch;
 }
 
-/** @deprecated kept for back-compat with gate-server; no-op now.
+/** @deprecated kept for back-compat with server; no-op now.
  *  verify-any goes through src/llm/runtime directly. */
 export function setGeminiModel(_model: any): void {
   // intentionally empty — verify-any uses the runtime helper now

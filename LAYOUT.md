@@ -156,7 +156,7 @@ src/
 ├── __tests__/                ← Vitest test suites
 │   └── unit/                 ← 113 unit tests, no HTTP boot
 │
-└── gate-server.ts            ← Entrypoint — assembles routes, listens on :8080
+└── server.ts            ← Entrypoint — assembles routes, listens on :8080
 ```
 
 ### Backend conventions

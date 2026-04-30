@@ -7,7 +7,10 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, BookOpen, Brain } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useAuth } from '@/hooks/useAuth';
+// v2.5: migrated from @/hooks/useAuth (Supabase Auth) to @/contexts/AuthContext
+// (Vidhya JWT). Backend only validates Vidhya JWTs — the Supabase hook was
+// frontend-only state that never matched what the API would accept.
+import { useAuth } from '@/contexts/AuthContext';
 import { useSession } from '@/hooks/useSession';
 import { StreakBadge } from '@/components/gate/StreakBadge';
 
@@ -45,7 +48,7 @@ export function GateLayout() {
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
             <span className="text-white font-black text-sm">G</span>
           </div>
-          <span className="font-bold text-white text-base tracking-tight sr-only">GATE Math</span>
+          <span className="font-bold text-white text-base tracking-tight sr-only">Vidhya</span>
         </a>
         <div className="flex items-center gap-2">
           <StreakBadge sessionId={sessionId} />
@@ -55,11 +58,11 @@ export function GateLayout() {
                 onClick={() => setShowMenu(!showMenu)}
                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-800 transition-colors"
               >
-                {user.avatar_url ? (
-                  <img src={user.avatar_url} alt="" className="w-7 h-7 rounded-full" />
+                {user.picture ? (
+                  <img src={user.picture} alt="" className="w-7 h-7 rounded-full" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-emerald-500 flex items-center justify-center text-xs font-bold">
-                    {(user.display_name || user.email)?.[0]?.toUpperCase() || 'U'}
+                    {(user.name || user.email)?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}
               </button>
@@ -70,7 +73,7 @@ export function GateLayout() {
                   className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-900 border border-surface-700 shadow-xl py-1 z-50"
                 >
                   <div className="px-3 py-2 border-b border-surface-800">
-                    <p className="text-xs font-medium text-white truncate">{user.display_name || user.email}</p>
+                    <p className="text-xs font-medium text-white truncate">{user.name || user.email}</p>
                     <p className="text-xs text-surface-500 capitalize">{user.role}</p>
                   </div>
                   <button
@@ -121,7 +124,7 @@ export function GateLayout() {
                 <Settings size={16} className="text-surface-400" />
               </button>
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/sign-in')}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 text-sm transition-colors"
               >
                 <User size={14} />

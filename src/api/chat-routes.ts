@@ -56,7 +56,7 @@ function sendError(res: ServerResponse, status: number, message: string): void {
 }
 
 // ============================================================================
-// Content Pipeline Dependencies (injected from gate-server.ts)
+// Content Pipeline Dependencies (injected from server.ts)
 // ============================================================================
 
 let _vectorStore: VectorStore | null = null;

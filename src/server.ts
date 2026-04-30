@@ -5,7 +5,7 @@
  * Lightweight entry point that boots only the GATE math API
  * without the full 8-agent orchestrator.
  *
- * Usage: npx tsx src/gate-server.ts
+ * Usage: npx tsx src/server.ts
  */
 
 import { createServer, IncomingMessage, ServerResponse } from 'http';
@@ -653,7 +653,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     try {
       await route.handler(parsedReq, res);
     } catch (err) {
-      console.error(`[gate-server] Error handling ${method} ${pathname}:`, err);
+      console.error(`[server] Error handling ${method} ${pathname}:`, err);
       if (!res.headersSent) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Internal server error' }));
@@ -681,7 +681,7 @@ async function main() {
     try {
       await autoMigrate(migratePool);
     } catch (err) {
-      console.error('[gate-server] Auto-migrate error (non-fatal):', (err as Error).message);
+      console.error('[server] Auto-migrate error (non-fatal):', (err as Error).message);
     }
     await migratePool.end();
   }
@@ -694,7 +694,7 @@ async function main() {
   const embedder = async (text: string): Promise<number[]> => {
     const result = await embedText(text);
     if (!result) {
-      console.warn('[gate-server] No embedding provider configured — using zero embeddings');
+      console.warn('[server] No embedding provider configured — using zero embeddings');
       return new Array(3072).fill(0);   // Gemini-shape default; pgvector tolerates dim mismatch by failing on insert
     }
     return result.embedding;
@@ -749,9 +749,9 @@ Solve carefully:`;
       timeoutMs: 15_000,
     });
     const healthy = await wolfram.checkHealth();
-    console.log(`[gate-server] Wolfram Alpha: ${healthy ? 'connected' : 'FAILED health check'}`);
+    console.log(`[server] Wolfram Alpha: ${healthy ? 'connected' : 'FAILED health check'}`);
   } else {
-    console.warn('[gate-server] WOLFRAM_APP_ID not set — Tier 3 disabled');
+    console.warn('[server] WOLFRAM_APP_ID not set — Tier 3 disabled');
   }
 
   // ── Vector store (pgvector-backed for persistence across cold starts) ──
@@ -763,7 +763,7 @@ Solve carefully:`;
     await pgStore.initialize();
     vectorStore = pgStore;
   } else {
-    console.warn('[gate-server] DATABASE_URL not set — using in-memory vector store (no persistence)');
+    console.warn('[server] DATABASE_URL not set — using in-memory vector store (no persistence)');
     vectorStore = new InMemoryVectorStore();
   }
 
@@ -793,20 +793,20 @@ Solve carefully:`;
   // ── Content Pipeline: inject vector store + embedder into chat routes ──
   setChatVectorStore(vectorStore);
   setChatEmbedder(embedder);
-  console.log(`[gate-server] Content pipeline: chat grounding enabled`);
+  console.log(`[server] Content pipeline: chat grounding enabled`);
 
   // Probe whether any LLM provider is reachable at boot time, for the
   // diagnostic banner. Does not block startup; just informational.
   const bootLlm = await getLlmForRole('chat');
   console.log(
-    `[gate-server] Verification tiers: RAG` +
+    `[server] Verification tiers: RAG` +
     `${bootLlm ? ` + LLM (${bootLlm.provider_id}/${bootLlm.model_id})` : ''}` +
     `${wolfram ? ' + Wolfram' : ''}`
   );
 
   const server = createServer((req, res) => {
     handleRequest(req, res).catch((err) => {
-      console.error('[gate-server] Unhandled request error:', err);
+      console.error('[server] Unhandled request error:', err);
       if (!res.headersSent) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Internal server error' }));
@@ -869,13 +869,13 @@ Solve carefully:`;
       const { startScheduler } = eval('require')('./jobs/scheduler');
       startScheduler();
     } catch (e: any) {
-      console.error(`[gate-server] scheduler start failed: ${e?.message}`);
+      console.error(`[server] scheduler start failed: ${e?.message}`);
     }
   });
 
   // Graceful shutdown
   const shutdown = () => {
-    console.log('\n[gate-server] Shutting down...');
+    console.log('\n[server] Shutting down...');
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { stopScheduler } = eval('require')('./jobs/scheduler');

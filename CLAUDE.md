@@ -1,12 +1,11 @@
 # CLAUDE.md
 
-## Project: GATE Math
+## Project: Vidhya
 
-GATE Math is a focused, mobile-first exam prep app for GATE Engineering Mathematics.
-This is the active project — the legacy 7-agent Project Vidhya system (src/index.ts, agents/) is NOT in use.
+Vidhya is a focused, mobile-first exam-prep platform. Exam-agnostic by design — GATE, BITSAT, NEET, civil services, or any competitive exam configured via the exam adapter system. This is the active project — the legacy 7-agent system (src/index.ts, agents/) is NOT in use.
 
 ### Key Entry Points
-- **Server:** `src/gate-server.ts` (NOT `src/index.ts`) — standalone GATE API on port 8080
+- **Server:** `src/server.ts` (NOT `src/index.ts`) — standalone Vidhya API on port 8080
 - **Frontend:** `frontend/src/App.tsx` — 10-route React SPA
 - **Deploy:** Render (auto-deploys from `main` branch) — see `render.yaml`
 - **DB:** Supabase (PostgreSQL + pgvector) — migrations in `supabase/migrations/`
@@ -15,7 +14,7 @@ This is the active project — the legacy 7-agent Project Vidhya system (src/ind
 ### Running Locally
 ```bash
 npm install && cd frontend && npm install && cd ..
-npx tsx src/gate-server.ts        # backend on :8080
+npx tsx src/server.ts        # backend on :8080
 cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 ```
 

@@ -91,7 +91,7 @@ Render does the following:
 2. Runs the Dockerfile — stage 1 builds the frontend, stage 2 bundles
    the runtime
 3. Starts the container, which runs `npm run demo:seed && npx tsx
-   src/gate-server.ts`
+   src/server.ts`
 4. The seed creates 6 demo users (Nisha, Arjun, Kavita, Priya, Rahul,
    Aditya), issues their JWTs, writes `/demo.html` and `/demo-api-keys.html`
    into `frontend/dist/` (the only served path in Docker)

@@ -11,7 +11,7 @@ import { authFetch } from '@/lib/auth/client';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { CountUp } from '@/components/gate/CountUp';
+import { CountUp } from '@/components/app/CountUp';
 import {
   Target, Clock, TrendingUp, AlertTriangle, ChevronRight,
   BarChart3, Zap, Shield, ArrowUpRight,

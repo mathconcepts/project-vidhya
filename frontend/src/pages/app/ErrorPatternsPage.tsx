@@ -9,7 +9,7 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { CountUp } from '@/components/gate/CountUp';
+import { CountUp } from '@/components/app/CountUp';
 import {
   Brain, TrendingDown, TrendingUp, Minus, AlertTriangle, Lightbulb,
   Target, GitBranch, Calculator, Clock, Eye, SkipForward,

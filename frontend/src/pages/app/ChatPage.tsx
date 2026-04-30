@@ -9,8 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Loader2, Sparkles, Trash2, BookOpen } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useStorageMode } from '@/hooks/useStorageMode';
-import { CameraInput } from '@/components/gate/CameraInput';
-import NextStepChip, { type NextStepData } from '@/components/gate/NextStepChip';
+import { CameraInput } from '@/components/app/CameraInput';
+import NextStepChip, { type NextStepData } from '@/components/app/NextStepChip';
 import { streamGroundedChat } from '@/lib/gbrain/client';
 import { extractErrorDetail } from '@/lib/api-error';
 

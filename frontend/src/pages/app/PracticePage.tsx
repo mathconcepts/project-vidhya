@@ -14,8 +14,8 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, celebration, tapScale, getRandomMessage } from '@/lib/animations';
-import { Confetti } from '@/components/gate/Confetti';
-import { ErrorDiagnosis } from '@/components/gate/ErrorDiagnosis';
+import { Confetti } from '@/components/app/Confetti';
+import { ErrorDiagnosis } from '@/components/app/ErrorDiagnosis';
 import { ChevronLeft, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 

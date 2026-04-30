@@ -9,9 +9,9 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { CountUp } from '@/components/gate/CountUp';
-import { Confetti } from '@/components/gate/Confetti';
-import { ExamReadinessBreakdown } from '@/components/gate/ExamReadiness';
+import { CountUp } from '@/components/app/CountUp';
+import { Confetti } from '@/components/app/Confetti';
+import { ExamReadinessBreakdown } from '@/components/app/ExamReadiness';
 import { BarChart3, Clock, ChevronRight, PartyPopper, Target, Brain, Sparkles, Calendar, FileText, BookOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 

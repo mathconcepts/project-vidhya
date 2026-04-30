@@ -16,12 +16,12 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { setAnalyticsSession, trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { MasteryRing } from '@/components/gate/MasteryRing';
-import { Confetti } from '@/components/gate/Confetti';
-import { StudentWelcomeCard, hasSeenWelcome } from '@/components/gate/StudentWelcomeCard';
-import { AnnouncementBanner } from '@/components/gate/AnnouncementBanner';
-import { ExamCountdownChip } from '@/components/gate/ExamCountdownChip';
-import { CompoundingCard } from '@/components/gate/CompoundingCard';
+import { MasteryRing } from '@/components/app/MasteryRing';
+import { Confetti } from '@/components/app/Confetti';
+import { StudentWelcomeCard, hasSeenWelcome } from '@/components/app/StudentWelcomeCard';
+import { AnnouncementBanner } from '@/components/app/AnnouncementBanner';
+import { ExamCountdownChip } from '@/components/app/ExamCountdownChip';
+import { CompoundingCard } from '@/components/app/CompoundingCard';
 // v2.6 decoration declutter:
 // - GiveawayBanner removed entirely (visual noise vs. the One Thing anchor).
 // - YourTeacherCard removed from Home (self-gating component never shows for

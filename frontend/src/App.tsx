@@ -16,58 +16,58 @@
 
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { GateLayout } from '@/components/gate/GateLayout';
+import { AppLayout } from '@/components/app/AppLayout';
 
 // Eager load home (fast first paint)
-import { Home as GateHome } from "@/pages/gate/Home";
+import { Home } from '@/pages/app/Home';
 
 // Lazy load everything else
-const TopicPage = lazy(() => import('@/pages/gate/TopicPage'));
-const PracticePage = lazy(() => import('@/pages/gate/PracticePage'));
-const VerifyPage = lazy(() => import('@/pages/gate/VerifyPage'));
-const ProgressPage = lazy(() => import('@/pages/gate/ProgressPage'));
-const SettingsPage = lazy(() => import('@/pages/gate/SettingsPage'));
-const ChatPage = lazy(() => import('@/pages/gate/ChatPage'));
-const NotebookPage = lazy(() => import('@/pages/gate/NotebookPage'));
+const TopicPage = lazy(() => import('@/pages/app/TopicPage'));
+const PracticePage = lazy(() => import('@/pages/app/PracticePage'));
+const VerifyPage = lazy(() => import('@/pages/app/VerifyPage'));
+const ProgressPage = lazy(() => import('@/pages/app/ProgressPage'));
+const SettingsPage = lazy(() => import('@/pages/app/SettingsPage'));
+const ChatPage = lazy(() => import('@/pages/app/ChatPage'));
+const NotebookPage = lazy(() => import('@/pages/app/NotebookPage'));
 // v2.5: LoginPage deleted — used Supabase Auth which the backend never validated.
 // /login now redirects to /sign-in (canonical Vidhya JWT auth via SignInPage).
-const AdminPage = lazy(() => import('@/pages/gate/AdminPage'));
-const OnboardPage = lazy(() => import('@/pages/gate/OnboardPage'));
-const DiagnosticPage = lazy(() => import('@/pages/gate/DiagnosticPage'));
-const ExamStrategyPage = lazy(() => import('@/pages/gate/ExamStrategyPage'));
-const ErrorPatternsPage = lazy(() => import('@/pages/gate/ErrorPatternsPage'));
-const StudentAuditPage = lazy(() => import('@/pages/gate/StudentAuditPage'));
-const WeeklyDigestPage = lazy(() => import('@/pages/gate/WeeklyDigestPage'));
-const MockExamPage = lazy(() => import('@/pages/gate/MockExamPage'));
-const GBrainAdminPage = lazy(() => import('@/pages/gate/GBrainAdminPage'));
-const MarketingLanding = lazy(() => import('@/pages/gate/MarketingLanding'));
-const MaterialsPage = lazy(() => import('@/pages/gate/MaterialsPage'));
-const SmartPracticePage = lazy(() => import('@/pages/gate/SmartPracticePage'));
-const PlannedSessionPage = lazy(() => import('@/pages/gate/PlannedSessionPage'));
-const ExamProfilePage = lazy(() => import('@/pages/gate/ExamProfilePage'));
-const KnowledgePickerPage = lazy(() => import('@/pages/gate/KnowledgePickerPage'));
-const SnapPage = lazy(() => import('@/pages/gate/SnapPage'));
-const LessonPage = lazy(() => import('@/pages/gate/LessonPage'));
-const LLMConfigPage = lazy(() => import('@/pages/gate/LLMConfigPage'));
-const ConvertDemoPage = lazy(() => import('@/pages/gate/ConvertDemoPage'));
-const SignInPage = lazy(() => import('@/pages/gate/SignInPage'));
-const UserAdminPage = lazy(() => import('@/pages/gate/UserAdminPage'));
-const FeaturesPage = lazy(() => import('@/pages/gate/FeaturesPage'));
-const ContentStudioPage = lazy(() => import('@/pages/gate/ContentStudioPage'));
-const FounderDashboardPage = lazy(() => import('@/pages/gate/FounderDashboardPage'));
-const TurnsPage = lazy(() => import('@/pages/gate/TurnsPage'));
-const OwnerSettingsPage = lazy(() => import('@/pages/gate/OwnerSettingsPage'));
-const TeacherRosterPage = lazy(() => import('@/pages/gate/TeacherRosterPage'));
-const AdminDashboardPage = lazy(() => import('@/pages/gate/AdminDashboardPage'));
-const TeachingDashboardPage = lazy(() => import('@/pages/gate/TeachingDashboardPage'));
+const AdminPage = lazy(() => import('@/pages/app/AdminPage'));
+const OnboardPage = lazy(() => import('@/pages/app/OnboardPage'));
+const DiagnosticPage = lazy(() => import('@/pages/app/DiagnosticPage'));
+const ExamStrategyPage = lazy(() => import('@/pages/app/ExamStrategyPage'));
+const ErrorPatternsPage = lazy(() => import('@/pages/app/ErrorPatternsPage'));
+const StudentAuditPage = lazy(() => import('@/pages/app/StudentAuditPage'));
+const WeeklyDigestPage = lazy(() => import('@/pages/app/WeeklyDigestPage'));
+const MockExamPage = lazy(() => import('@/pages/app/MockExamPage'));
+const GBrainAdminPage = lazy(() => import('@/pages/app/GBrainAdminPage'));
+const MarketingLanding = lazy(() => import('@/pages/app/MarketingLanding'));
+const MaterialsPage = lazy(() => import('@/pages/app/MaterialsPage'));
+const SmartPracticePage = lazy(() => import('@/pages/app/SmartPracticePage'));
+const PlannedSessionPage = lazy(() => import('@/pages/app/PlannedSessionPage'));
+const ExamProfilePage = lazy(() => import('@/pages/app/ExamProfilePage'));
+const KnowledgePickerPage = lazy(() => import('@/pages/app/KnowledgePickerPage'));
+const SnapPage = lazy(() => import('@/pages/app/SnapPage'));
+const LessonPage = lazy(() => import('@/pages/app/LessonPage'));
+const LLMConfigPage = lazy(() => import('@/pages/app/LLMConfigPage'));
+const ConvertDemoPage = lazy(() => import('@/pages/app/ConvertDemoPage'));
+const SignInPage = lazy(() => import('@/pages/app/SignInPage'));
+const UserAdminPage = lazy(() => import('@/pages/app/UserAdminPage'));
+const FeaturesPage = lazy(() => import('@/pages/app/FeaturesPage'));
+const ContentStudioPage = lazy(() => import('@/pages/app/ContentStudioPage'));
+const FounderDashboardPage = lazy(() => import('@/pages/app/FounderDashboardPage'));
+const TurnsPage = lazy(() => import('@/pages/app/TurnsPage'));
+const OwnerSettingsPage = lazy(() => import('@/pages/app/OwnerSettingsPage'));
+const TeacherRosterPage = lazy(() => import('@/pages/app/TeacherRosterPage'));
+const AdminDashboardPage = lazy(() => import('@/pages/app/AdminDashboardPage'));
+const TeachingDashboardPage = lazy(() => import('@/pages/app/TeachingDashboardPage'));
 // SmartNotebookPage import removed in v2.6 (route is now a redirect). The page
 // itself stays in tree for the Phase 3 content merge into NotebookPage.
-const ExamSetupPage = lazy(() => import('@/pages/gate/ExamSetupPage'));
-const ExamGroupsPage = lazy(() => import('@/pages/gate/ExamGroupsPage'));
-const ContentAdminPage = lazy(() => import('@/pages/gate/ContentAdminPage'));
-const ContentSettingsPage = lazy(() => import('@/pages/gate/ContentSettingsPage'));
-const UploadsPage = lazy(() => import('@/pages/gate/UploadsPage'));
-const StudymateSessionPage = lazy(() => import('@/pages/gate/StudymateSessionPage'));
+const ExamSetupPage = lazy(() => import('@/pages/app/ExamSetupPage'));
+const ExamGroupsPage = lazy(() => import('@/pages/app/ExamGroupsPage'));
+const ContentAdminPage = lazy(() => import('@/pages/app/ContentAdminPage'));
+const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage'));
+const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
+const StudymateSessionPage = lazy(() => import('@/pages/app/StudymateSessionPage'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -87,8 +87,8 @@ export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route element={<GateLayout />}>
-          <Route index element={<GateHome />} />
+        <Route element={<AppLayout />}>
+          <Route index element={<Home />} />
           <Route path="topic/:topicId" element={<TopicPage />} />
           {/* Practice-surface hierarchy (v2.6 consolidation):
               /practice              → /planned (canonical entry, Study Commander)

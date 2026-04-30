@@ -9,7 +9,7 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { MasteryRing } from '@/components/gate/MasteryRing';
+import { MasteryRing } from '@/components/app/MasteryRing';
 import { ChevronLeft, ChevronRight, CheckCircle, BookOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 

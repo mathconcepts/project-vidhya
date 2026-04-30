@@ -62,6 +62,19 @@ interface AssistantTurn {
   timestamp: string;
 }
 
+/*
+ * v2.7 refactor roadmap (Phase 3 deferred):
+ * The 1318-line monolith contains ExamDetailView + 4 tab components +
+ * CreateExamModal + SimilarExamsPanel + CompareDrawer + helpers. The tab
+ * pattern is sound — what's left is file-level extraction, not architecture
+ * redesign. Splitting tabs into `frontend/src/components/exam-setup/<TabName>.tsx`
+ * shrinks the parent to ~300 lines.
+ *
+ * Not done in this PR because (1) the architecture (tabs for an EDIT view) is
+ * correct, (2) the file works, (3) gate/→app/ dir rename ships first.
+ * When next touched: extract the 4 tabs, then evaluate a wizard variant for
+ * first-time exam creation (CreateExamModal already covers basic cases).
+ */
 type Tab = 'overview' | 'fields' | 'local' | 'assistant';
 
 export default function ExamSetupPage() {

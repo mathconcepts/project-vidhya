@@ -1,5 +1,5 @@
 /**
- * GateLayout — Mobile-first layout with animated bottom nav, scroll-aware header, auth.
+ * AppLayout — Mobile-first layout with animated bottom nav, scroll-aware header, auth.
  */
 
 import { useState, useEffect } from 'react';
@@ -12,7 +12,7 @@ import { clsx } from 'clsx';
 // frontend-only state that never matched what the API would accept.
 import { useAuth } from '@/contexts/AuthContext';
 import { useSession } from '@/hooks/useSession';
-import { StreakBadge } from '@/components/gate/StreakBadge';
+import { StreakBadge } from '@/components/app/StreakBadge';
 
 const NAV_ITEMS = [
   { to: '/',          icon: Home,          label: 'Home',     end: true },
@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   { to: '/progress',  icon: BarChart3,     label: 'Progress' },
 ];
 
-export function GateLayout() {
+export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();

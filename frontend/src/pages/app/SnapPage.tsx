@@ -24,7 +24,7 @@ import { clsx } from 'clsx';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import NextStepChip, { type NextStepData } from '@/components/gate/NextStepChip';
+import NextStepChip, { type NextStepData } from '@/components/app/NextStepChip';
 
 // ============================================================================
 // Types mirroring server

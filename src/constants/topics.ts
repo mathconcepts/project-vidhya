@@ -1,49 +1,39 @@
-// Centralized GATE Engineering Mathematics topic definitions.
-// Single source of truth — imported by jobs, templates, routes, and utils.
+/**
+ * @deprecated Use `getTopicsForExam(examId)` from `src/curriculum/topic-adapter`.
+ *
+ * This file used to be the single source of truth for "the 10 GATE topics."
+ * v2.7 made the platform exam-agnostic at the type-level by routing every
+ * topic lookup through `getTopicsForExam(examId)`, which reads from the
+ * per-exam YAML syllabus (see `src/curriculum/exam-loader.ts`).
+ *
+ * Audit (2026-04-30): zero consumers in src/ or frontend/src/. The constants
+ * here were already dead code by Phase 2; this file remains only so legacy
+ * imports (if any third-party code still references it) get a clear deprecation
+ * pointer rather than a missing-module error.
+ *
+ * REMOVAL TARGET: v3.0 (after one release of grace).
+ */
 
-export const GATE_TOPICS = [
-  'linear-algebra', 'calculus', 'differential-equations', 'complex-variables',
-  'probability-statistics', 'numerical-methods', 'transform-theory',
-  'discrete-mathematics', 'graph-theory', 'vector-calculus',
-] as const;
+import { getTopicsForExam, getTopicKeywords } from '../curriculum/topic-adapter';
 
-export type GateTopic = typeof GATE_TOPICS[number];
+/** @deprecated Use `getTopicsForExam('gate-ma')`. */
+export function getGateMathTopicIds(): string[] {
+  return getTopicsForExam('gate-ma').map(t => t.id);
+}
 
-export const TOPIC_LABELS: Record<GateTopic, string> = {
-  'linear-algebra': 'Linear Algebra',
-  'calculus': 'Calculus',
-  'differential-equations': 'Differential Equations',
-  'complex-variables': 'Complex Variables',
-  'probability-statistics': 'Probability & Statistics',
-  'numerical-methods': 'Numerical Methods',
-  'transform-theory': 'Transform Theory',
-  'discrete-mathematics': 'Discrete Mathematics',
-  'graph-theory': 'Graph Theory',
-  'vector-calculus': 'Vector Calculus',
-};
+/** @deprecated Use `getTopicsForExam(examId)` then map to `t.name`. */
+export function getGateMathTopicLabels(): Record<string, string> {
+  return Object.fromEntries(getTopicsForExam('gate-ma').map(t => [t.id, t.name]));
+}
 
-export const TOPIC_ICONS: Record<GateTopic, string> = {
-  'linear-algebra': 'grid',
-  'calculus': 'activity',
-  'differential-equations': 'git-branch',
-  'complex-variables': 'circle',
-  'probability-statistics': 'bar-chart',
-  'numerical-methods': 'hash',
-  'transform-theory': 'repeat',
-  'discrete-mathematics': 'layers',
-  'graph-theory': 'share-2',
-  'vector-calculus': 'navigation',
-};
+/** @deprecated Use `getTopicsForExam(examId)` then map to `t.icon`. */
+export function getGateMathTopicIcons(): Record<string, string> {
+  return Object.fromEntries(getTopicsForExam('gate-ma').map(t => [t.id, t.icon]));
+}
 
-export const TOPIC_KEYWORDS: Record<GateTopic, string[]> = {
-  'linear-algebra': ['matrix', 'matrices', 'eigenvalue', 'eigenvector', 'determinant', 'rank', 'linear algebra', 'vector space', 'basis', 'span', 'orthogonal', 'diagonalization', 'cayley-hamilton', 'trace', 'linear transformation'],
-  'calculus': ['integral', 'derivative', 'limit', 'differentiation', 'integration', 'calculus', 'maxima', 'minima', 'continuity', 'taylor', 'maclaurin', 'rolle', 'mean value theorem', 'series', 'convergence'],
-  'differential-equations': ['ode', 'pde', 'differential equation', 'laplace', 'bernoulli equation', 'exact equation', 'first order', 'second order', 'homogeneous', 'particular solution', 'boundary value', 'initial value'],
-  'complex-variables': ['complex', 'analytic', 'residue', 'contour', 'cauchy', 'laurent', 'singularity', 'conformal', 'harmonic', 'complex analysis', 'analytic function', 'conformal mapping', 'holomorphic'],
-  'probability-statistics': ['probability', 'statistics', 'distribution', 'random variable', 'bayes', 'expected value', 'variance', 'poisson', 'binomial', 'normal distribution', 'gaussian', 'expectation'],
-  'numerical-methods': ['interpolation', 'newton-raphson', 'numerical', 'bisection', 'trapezoidal', 'simpson', 'runge-kutta', 'gauss elimination', 'iteration', 'numerical method', 'newton raphson', 'numerical integration', 'finite difference'],
-  'transform-theory': ['fourier', 'laplace transform', 'z-transform', 'inverse transform', 'convolution', 'transfer function', 'fourier transform', 'fourier series', 'dft', 'fft'],
-  'discrete-mathematics': ['combinatorics', 'recurrence', 'logic', 'boolean', 'set theory', 'relation', 'function', 'pigeonhole', 'permutation', 'combination', 'boolean algebra', 'lattice', 'group theory'],
-  'graph-theory': ['graph', 'tree', 'vertex', 'edge', 'coloring', 'eulerian', 'hamiltonian', 'adjacency', 'degree', 'planar', 'graph theory', 'spanning tree', 'shortest path', 'euler', 'planar graph'],
-  'vector-calculus': ['gradient', 'divergence', 'curl', 'stokes', "green's theorem", 'line integral', 'surface integral', 'flux', 'gauss divergence', 'vector calculus', 'green theorem'],
-};
+/** @deprecated Use `getKeywordsForExam(examId)` or `getTopicKeywords(topicId)`. */
+export function getGateMathTopicKeywords(): Record<string, string[]> {
+  return Object.fromEntries(
+    getTopicsForExam('gate-ma').map(t => [t.id, getTopicKeywords(t.id)]),
+  );
+}

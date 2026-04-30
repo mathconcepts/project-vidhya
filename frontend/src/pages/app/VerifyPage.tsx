@@ -11,7 +11,7 @@ import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer, tapScale, celebration } from '@/lib/animations';
 import { CheckCircle, XCircle, Loader2, AlertTriangle, Zap, Clock, Camera } from 'lucide-react';
 import { clsx } from 'clsx';
-import { CameraInput } from '@/components/gate/CameraInput';
+import { CameraInput } from '@/components/app/CameraInput';
 
 interface VerifyResult {
   traceId: string;

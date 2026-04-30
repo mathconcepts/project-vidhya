@@ -1,8 +1,42 @@
 # Changelog
 
-All notable changes to GATE Math are documented here.
+All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
+
+## [3.0.0] - 2026-04-30 — Exam-agnostic structural cleanup (Phase 3)
+
+**Operator action:** none for runtime. CI/IDE caches that index `frontend/src/pages/gate/*` paths should be invalidated — the directory is now `frontend/src/pages/app/` and the components dir is `frontend/src/components/app/`. No public URL or API contract changed.
+
+### Why a major bump
+The directory rename from `gate/` → `app/` is structurally significant: 44 page files + 16 component files moved, 60+ import paths rewritten, the layout component renamed (`GateLayout` → `AppLayout`). No code-level behavior changes — but third-party tooling that targets the old paths (linters, codemods, deploy hooks, IDE workspace roots) needs to update. Major version signals "your local references may need a refresh."
+
+### What changed for users
+Nothing visible. Phase 3 is structural cleanup that pays down the GATE-as-product naming debt accumulated since v1.
+
+### What changed for engineers
+- **Directory rename: `frontend/src/pages/gate/` → `frontend/src/pages/app/`.** 44 page files moved via `git mv` (history preserved). All 60+ `@/pages/gate/*` imports rewritten to `@/pages/app/*`.
+- **Directory rename: `frontend/src/components/gate/` → `frontend/src/components/app/`.** 16 component files moved (CompoundingCard, AnnouncementBanner, ExamCountdownChip, GiveawayBanner, MasteryRing, StreakBadge, etc.).
+- **`GateLayout` → `AppLayout`.** The shell layout component renamed; its file path moved alongside the components dir.
+- **`Home as GateHome` alias dropped from `App.tsx`.** The home page is now imported as `Home` directly — no compat shim left.
+- **`src/constants/topics.ts` deprecated to a re-export stub.** All consumers were already migrated to `getTopicsForExam(examId)` in v2.7's exam adapter rollout. The legacy `getGateMathTopicIds` / `getGateMathTopicLabels` / `getGateMathTopicIcons` / `getGateMathTopicKeywords` functions remain as `@deprecated` thin wrappers around `getTopicsForExam('gate-ma')` for one release of grace; **REMOVAL TARGET: v3.0** (this release marks them deprecated; deletion lands in a follow-up).
+- **CHANGELOG header rebranded** from "GATE Math" to "Vidhya" to match the rest of the product surface.
+
+### What we deliberately deferred (with rationale)
+
+These items were on the Phase 3 plan but were triaged "engineered enough" after audit. Rationale captured inline so future contributors don't re-litigate:
+
+- **PracticePage.tsx refactor** — the file is 600+ lines but each section has a clear single responsibility (problem rendering, answer input, verify flow, error diagnosis, next-step chip). Splitting now would create coupling overhead without reducing complexity. Refactor when a third major surface needs to share logic with it (currently only PracticePage + SmartPracticePage do, and they share via hooks).
+- **ExamSetupPage.tsx wizard split** — 1318 lines, but 70% is exam-specific copy + per-step validation that doesn't compress well. The wizard pattern is correct; the line count is the weight of correctness, not abstraction debt.
+- **Content admin consolidation** (ContentAdminPage / ContentStudioPage / ContentSettingsPage → one) — three pages serve three distinct workflows (review queue, generation studio, runtime config). Forcing them into one nav surface makes the consolidated page harder to use. Keep them separate; if discoverability is the issue, the fix is a sub-nav, not a merge.
+
+### Migration notes
+- If you have local branches with imports against `@/pages/gate/*` or `@/components/gate/*`, run a sed sweep on rebase:
+  ```bash
+  find frontend/src -type f \( -name "*.tsx" -o -name "*.ts" \) \
+    -exec sed -i 's|@/pages/gate/|@/pages/app/|g; s|@/components/gate/|@/components/app/|g; s|GateLayout|AppLayout|g' {} +
+  ```
+- If your editor/IDE shows broken imports after pull, restart the TS language server.
 
 ## [2.6.0] - 2026-04-30 — UX coherence + Compounding made daily-visible (Phase 2)
 

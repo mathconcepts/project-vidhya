@@ -20,7 +20,7 @@ import {
   VlogPublishConfig,
   ContentCalendar,
   CalendarEntry,
-} from './types';
+} from './blog-types';
 import { promptRepository } from '../prompts/repository';
 import { PromptCompileOptions, ModifierType } from '../prompts/types';
 

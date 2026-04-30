@@ -17,7 +17,7 @@ import {
   LayoutTemplate,
   LayoutStructure,
   LayoutStyles,
-} from './types';
+} from './blog-types';
 
 // ============================================================================
 // Landing Page Templates

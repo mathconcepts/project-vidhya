@@ -82,6 +82,8 @@ import { renderBlogIndex } from './templates/blog-index';
 import { renderExamLanding } from './templates/exam-landing';
 import { renderSitemap, buildSitemapEntries } from './templates/sitemap';
 import { renderRssFeed } from './templates/rss-feed';
+import { computeFeatureFlags } from './api/feature-flags';
+import { resolveDemoRole, buildDemoLoginHtml, type DemoTokens } from './api/demo-login';
 import path from 'path';
 import fs from 'fs';
 import pg from 'pg';
@@ -489,21 +491,7 @@ registerRoute('POST', '/api/auth/migrate-session', async (req, res) => {
 registerRoute('GET', '/health', async (_req, res) => {
   const info: Record<string, unknown> = { status: 'ok', service: 'gate-math-api' };
 
-  // Feature capability flags — tells operators what's configured
-  info.features = {
-    ai_chat: !!(
-      process.env.GEMINI_API_KEY ||
-      process.env.ANTHROPIC_API_KEY ||
-      process.env.OPENAI_API_KEY ||
-      process.env.VIDHYA_LLM_PRIMARY_KEY
-    ),
-    wolfram: !!process.env.WOLFRAM_APP_ID,
-    google_auth: !!process.env.GOOGLE_OAUTH_CLIENT_ID,
-    analytics: !!process.env.POSTHOG_HOST,
-    telegram: !!process.env.TELEGRAM_BOT_TOKEN,
-    whatsapp: !!(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID),
-    database: !!(process.env.DATABASE_URL || process.env.SUPABASE_DB_URL),
-  };
+  info.features = computeFeatureFlags();
 
   // DB ping (only if configured)
   if (process.env.DATABASE_URL) {
@@ -528,9 +516,8 @@ registerRoute('GET', '/health', async (_req, res) => {
 registerRoute('GET', '/demo-login', async (req, res) => {
   const role = (req.query?.role as string) || 'student-active';
 
-  let tokens: Record<string, { token: string; name: string; email: string; role: string }> = {};
+  let tokens: DemoTokens = {};
   try {
-    const fs = await import('fs');
     const raw = fs.readFileSync('demo/demo-tokens.json', 'utf8');
     tokens = JSON.parse(raw);
   } catch {
@@ -539,7 +526,7 @@ registerRoute('GET', '/demo-login', async (req, res) => {
     return;
   }
 
-  const key = role === 'student' ? 'student-active' : role;
+  const key = resolveDemoRole(role);
   const entry = tokens[key];
   if (!entry) {
     res.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -547,19 +534,8 @@ registerRoute('GET', '/demo-login', async (req, res) => {
     return;
   }
 
-  const TOKEN_KEY = 'vidhya.auth.token.v1';
-  const html = `<!doctype html>
-<html><head><title>Loading demo…</title></head>
-<body>
-<script>
-  localStorage.setItem(${JSON.stringify(TOKEN_KEY)}, ${JSON.stringify(entry.token)});
-  window.location.replace('/');
-</script>
-<p>Logging you in as ${entry.name} (${entry.role})…</p>
-</body></html>`;
-
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(html);
+  res.end(buildDemoLoginHtml(entry));
 });
 
 // ============================================================================
@@ -606,7 +582,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   const method = (req.method || 'GET').toUpperCase();
 
   // Try to serve static frontend files in production
-  if (method === 'GET' && !pathname.startsWith('/api') && !pathname.startsWith('/telegram') && !pathname.startsWith('/health') && !pathname.startsWith('/solutions') && !pathname.startsWith('/topics') && !pathname.startsWith('/blog') && !pathname.startsWith('/exams') && pathname !== '/sitemap.xml' && pathname !== '/rss.xml') {
+  if (method === 'GET' && !pathname.startsWith('/api') && !pathname.startsWith('/telegram') && !pathname.startsWith('/health') && !pathname.startsWith('/solutions') && !pathname.startsWith('/topics') && !pathname.startsWith('/blog') && !pathname.startsWith('/exams') && pathname !== '/sitemap.xml' && pathname !== '/rss.xml' && pathname !== '/demo-login') {
     const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
     if (fs.existsSync(frontendDist)) {
       const filePath = path.join(frontendDist, pathname === '/' ? 'index.html' : pathname);
@@ -838,6 +814,7 @@ Solve carefully:`;
 │                                              │
 │  Core:                                       │
 │    GET  /health                 Health        │
+│    GET  /demo-login             Demo Login    │
 │    GET  /api/topics             Topics        │
 │    GET  /api/problems/:topic    Problems      │
 │    POST /api/verify             Verify        │

@@ -12,6 +12,7 @@ import { useStorageMode } from '@/hooks/useStorageMode';
 import { CameraInput } from '@/components/gate/CameraInput';
 import NextStepChip, { type NextStepData } from '@/components/gate/NextStepChip';
 import { streamGroundedChat } from '@/lib/gbrain/client';
+import { extractErrorDetail } from '@/lib/api-error';
 
 interface ChatMessage {
   id: string;
@@ -165,12 +166,7 @@ export default function ChatPage() {
       });
 
       if (!response.ok) {
-        let detail = 'Chat request failed';
-        try {
-          const errBody = await response.json();
-          if (errBody?.detail) detail = errBody.detail;
-          else if (errBody?.error) detail = errBody.error;
-        } catch { /* not JSON — keep generic message */ }
+        const detail = await extractErrorDetail(response, 'Chat request failed');
         throw new Error(detail);
       }
 

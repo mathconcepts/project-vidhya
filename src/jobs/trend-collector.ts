@@ -34,12 +34,20 @@ interface TrendSignal {
 // ============================================================================
 
 // v2.5: silent 'gate-ma' fallback removed; resolves via exam-store.
+// v4.0.3: lazy-resolve at call time, not module-load time. Trend collector
+// is a job — only needs the id when it runs.
 import { resolveDefaultExamId } from '../exams/default-exam';
-const DEFAULT_EXAM_ID = resolveDefaultExamId();
+
+let _defaultExamId: string | null = null;
+function getDefaultExamId(): string {
+  if (_defaultExamId) return _defaultExamId;
+  _defaultExamId = resolveDefaultExamId();
+  return _defaultExamId;
+}
 
 function matchTopics(text: string): string[] {
   const lower = text.toLowerCase();
-  const keywords = getKeywordsForExam(DEFAULT_EXAM_ID);
+  const keywords = getKeywordsForExam(getDefaultExamId());
   const matches: string[] = [];
   for (const [topic, kws] of Object.entries(keywords)) {
     if (kws.some(kw => lower.includes(kw))) {

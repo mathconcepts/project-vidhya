@@ -48,8 +48,19 @@ interface GeneratedProblem {
 // v2.5: was `process.env.DEFAULT_EXAM_ID ?? 'gate-ma'` — silent GATE fallback
 // removed. Now resolves via the exam-store; throws clear error if no exam
 // configured (operator must configure one before flywheel can run).
+//
+// v4.0.3: lazy-resolve at call time, not module-load time. Top-level
+// resolveDefaultExamId() crashed server startup on deployments without
+// a configured exam. The flywheel is a job — it only needs the id when
+// it actually runs, so defer the lookup.
 import { resolveDefaultExamId } from '../exams/default-exam';
-const DEFAULT_EXAM_ID = resolveDefaultExamId();
+
+let _defaultExamId: string | null = null;
+function getDefaultExamId(): string {
+  if (_defaultExamId) return _defaultExamId;
+  _defaultExamId = resolveDefaultExamId();
+  return _defaultExamId;
+}
 
 const BATCH_SIZE = 5;
 const MIN_CONFIDENCE = 0.8;
@@ -111,7 +122,7 @@ async function selectTopic(): Promise<string> {
     }
 
     const maxCount = Math.max(...Object.values(counts), 1);
-    const topics = getTopicIdsForExam(DEFAULT_EXAM_ID);
+    const topics = getTopicIdsForExam(getDefaultExamId());
     const weighted = topics.map(t => ({
       topic: t,
       weight: maxCount - (counts[t] || 0) + 1,
@@ -126,7 +137,7 @@ async function selectTopic(): Promise<string> {
   } catch {
     // Fallback: first topic
   }
-  return getTopicIdsForExam(DEFAULT_EXAM_ID)[0] ?? 'linear-algebra';
+  return getTopicIdsForExam(getDefaultExamId())[0] ?? 'linear-algebra';
 }
 
 // ============================================================================

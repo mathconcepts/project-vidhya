@@ -33,10 +33,18 @@ Total CC effort: ~4-5 hr. Maximum customer-facing impact, low individual risk.
 | 7.3 | **Rename `src/gate-server.ts` → `src/server.ts`** + package.json scripts. ~10 import updates, low risk. | 15 min | 7 |
 | 7.4 | **Branding strings cleanup.** DESIGN-SYSTEM.md heading + body refs, App.tsx comment, README. (Defer Render hostname rename — operational risk.) | 20 min | 7 |
 | 1.5 | **Rename `GateHome.tsx` → `Home.tsx`** + fix App.tsx comment. Queue the bigger `frontend/src/pages/gate/` → `app/` rename as a separate scoped PR (50+ files, risky import churn). | 15 min | 1 |
-| 1.2+1.4+1.6 | **Small structural fixes bundle:** consolidate SignInPage + LoginPage to one canonical /sign-in; replace OnboardPage's algebra/calculus/geometry fallback with loading skeleton + error CTA; trace/fix anon `/` funnel. | 1 hr | 1 |
+| 1.2 | **Auth-system unification (RESCOPED per eng review).** SignInPage + LoginPage are not duplicate views — they're two competing auth systems. SignInPage uses Vidhya JWT (canonical, validates against backend's auth-middleware). LoginPage uses Supabase Auth (frontend-only, backend doesn't validate Supabase tokens). The `useAuth` Supabase hook is wired into 4 critical files: GateLayout, ContentAdminPage, GBrainAdminPage, LoginPage. Migration: delete LoginPage + `frontend/src/hooks/useAuth.ts` + `frontend/src/lib/supabase.ts` (auth client only — keep DB client if used); migrate all 4 callsites to AuthContext + `frontend/src/lib/auth/client`. Verify admin surface still loads after migration. | **2-3 hr** | 1 |
+| 1.4 | **OnboardPage fallback fix.** Replace algebra/calculus/geometry fallback with loading skeleton + error CTA. | 20 min | 1 |
+| 1.6 | **Anon home discoverability link (RESCOPED per eng review).** GateHome already handles anonymous users gracefully (topic grid + free-study fallback). Original plan assumed dead-end; it isn't. New scope: add subtle 'New here? See how it works →' link from anon GateHome to MarketingLanding. Discoverability win, no behavior change. | 15 min | 1 |
 | 4-6.D | **TurnsPage role-scoping audit.** Teachers see only their students' turns; admins see all. | 30 min | 4-6 |
 
-**Phase 1 total: ~4-5 hr CC. Customer-visible impact: HIGH.**
+**Phase 1 total: ~7-8 hr CC** (revised after eng review found item 1.2 is a 2-3 hr auth migration, not a 30-min cleanup). Customer-visible impact: HIGH.
+
+### Eng review decisions (recorded for traceability)
+
+- **D1 (auth):** User explicitly chose "decide now" rather than defer. Auth-system unification stays in Phase 1 with revised scope.
+- **D2 (auth depth):** User chose "stay the course" — full migration of 4 callsites, ~2-3 hr CC, accept the scope expansion.
+- **D3 (anon `/`):** User chose "reframe as discoverability link" rather than original "route to MarketingLanding" (which would have changed working behavior).
 
 ### PHASE 2 — Consolidations (~one day, separate PR)
 
@@ -104,9 +112,9 @@ These individually warrant their own /plan-eng-review before implementation. Don
 [ ] 7.3 src/gate-server.ts → src/server.ts + package.json scripts updated
 [ ] 7.4 DESIGN-SYSTEM.md heading, App.tsx comment, README branding strings
 [ ] 1.5 GateHome.tsx → Home.tsx (file rename + import updates) + queue gate/ dir TODO
-[ ] 1.2 SignInPage + LoginPage consolidated to one canonical /sign-in
+[ ] 1.2 [REVISED] Auth-system unification — delete LoginPage + Supabase auth hook; migrate 4 callsites (GateLayout, ContentAdminPage, GBrainAdminPage, LoginPage) to AuthContext
 [ ] 1.4 OnboardPage algebra/calculus/geometry fallback → loading skeleton + error CTA
-[ ] 1.6 Anon `/` funnel traced; routed to MarketingLanding if dead-ending
+[ ] 1.6 [REVISED] Add 'New here? See how it works →' link from anon GateHome to MarketingLanding (no routing change)
 [ ] 4-6.D TurnsPage role-scoping audit (teacher vs admin)
 [ ] CHANGELOG entry for v2.5.0
 [ ] Tests pass: npm run test:content (27/27 expected)
@@ -129,8 +137,8 @@ These individually warrant their own /plan-eng-review before implementation. Don
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAR | 23 picks + 2 principles, 3-phase triage |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | — | Required before Phase 3 items |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR | Phase 1 only; 3 substantive findings, all resolved (auth scope revision, anon funnel reframe) |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | Recommended after Phase 1+2 ship |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
 
-**VERDICT:** CEO review CLEAR. Phase 1 is shippable as-is; Phase 3 needs `/plan-eng-review` before implementation.
+**VERDICT:** CEO + ENG (Phase 1) CLEAR. Phase 1 is shippable today as v2.5.0. Phase 3 will need its own `/plan-eng-review` before implementation.

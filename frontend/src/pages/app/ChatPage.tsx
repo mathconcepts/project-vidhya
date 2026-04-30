@@ -1,12 +1,12 @@
 /**
- * ChatPage — AI Tutor chat interface with streaming responses.
- * Mobile-first, supports LaTeX rendering, suggested prompts.
+ * ChatPage — "Anytime Smart Tutor" chat surface.
+ * Mobile-first, streaming SSE, spring micro-interactions, Fraunces empty state.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Loader2, Sparkles, Trash2, BookOpen } from 'lucide-react';
+import { Send, Sparkles, Trash2, BookOpen } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useStorageMode } from '@/hooks/useStorageMode';
 import { CameraInput } from '@/components/app/CameraInput';
@@ -21,11 +21,34 @@ interface ChatMessage {
   created_at?: string;
 }
 
+// Categorized by intent so the user can orient quickly
 const SUGGESTIONS = [
   { text: 'Explain this concept with a worked example', dot: 'bg-violet-400' },
   { text: 'Where should I focus to maximise my score?', dot: 'bg-emerald-400' },
   { text: 'Check my answer — did I get this right?', dot: 'bg-amber-400' },
+  { text: 'Give me 3 practice problems on integration', dot: 'bg-sky-400' },
 ];
+
+// Three animated dots that bounce in sequence — replaces Loader2 "Thinking..."
+function ThinkingDots() {
+  return (
+    <span className="flex items-center gap-1 py-0.5" aria-label="Thinking">
+      {[0, 1, 2].map(i => (
+        <motion.span
+          key={i}
+          className="w-1.5 h-1.5 rounded-full bg-surface-500"
+          animate={{ y: [0, -4, 0] }}
+          transition={{
+            duration: 0.6,
+            repeat: Infinity,
+            ease: 'easeInOut',
+            delay: i * 0.15,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -39,7 +62,6 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [attachedImage, setAttachedImage] = useState<{ base64: string; mimeType: string } | null>(null);
-  // next_step offered after an image-inclusive message, keyed by assistant msg id.
   const [nextSteps, setNextSteps] = useState<Record<string, NextStepData>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -99,9 +121,7 @@ export default function ChatPage() {
     setAttachedImage(null);
     setIsStreaming(true);
 
-    // If the user attached an image, run multimodal analysis in the background.
-    // This does NOT block the chat response — it's purely for GBrain logging
-    // and to decide whether to offer a polite next-step chip after the answer.
+    // Multimodal background analysis — never blocks the chat UX
     if (currentImage) {
       const assistantId = assistantMsg.id;
       fetch(`${API_BASE}/api/multimodal/analyze`, {
@@ -121,11 +141,10 @@ export default function ChatPage() {
             setNextSteps(prev => ({ ...prev, [assistantId]: data.next_step }));
           }
         })
-        .catch(() => { /* silent — never disrupts the chat UX */ });
+        .catch(() => { /* silent */ });
     }
 
     try {
-      // IndexedDB mode: use client-side GBrain with material grounding.
       if (effectiveMode === 'indexeddb') {
         await streamGroundedChat(
           sessionId,
@@ -148,7 +167,6 @@ export default function ChatPage() {
         return;
       }
 
-      // DB mode: original server chat endpoint.
       const chatBody: any = {
         sessionId,
         message: text.trim(),
@@ -223,9 +241,7 @@ export default function ChatPage() {
     }
   };
 
-  const clearChat = () => {
-    setMessages([]);
-  };
+  const clearChat = () => setMessages([]);
 
   const isEmpty = messages.length === 0;
 
@@ -240,36 +256,47 @@ export default function ChatPage() {
           </p>
         </div>
       )}
-      {/* Messages or Welcome */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+
+      {/* Messages or empty state */}
+      <div
+        className="flex-1 overflow-y-auto px-4 py-4"
+        style={{ overscrollBehavior: 'contain' }}
+      >
         {isEmpty ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
             className="flex flex-col items-center justify-center h-full gap-6"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30">
-              <Sparkles className="w-6 h-6 text-white" />
+            {/* Icon */}
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/20 to-emerald-500/10 border border-violet-500/20 flex items-center justify-center shadow-xl shadow-violet-500/10">
+              <Sparkles className="w-6 h-6 text-violet-400" />
             </div>
-            <div className="text-center">
-              <h2 className="text-xl font-bold text-white mb-2">GBrain</h2>
-              <p className="text-surface-400 text-sm max-w-xs">
-                Your concepts. Your questions. Explained clearly, worked step-by-step.
+
+            {/* Heading: Fraunces per design system (violet = AI/Tutor signature) */}
+            <div className="text-center space-y-2">
+              <h2 className="font-display text-2xl font-bold text-white tracking-tight">
+                Your Anytime Tutor
+              </h2>
+              <p className="text-surface-400 text-sm max-w-xs leading-relaxed">
+                Concepts explained clearly. Problems solved step-by-step. Ask anything.
               </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2 w-full max-w-lg">
+            {/* Suggestion chips */}
+            <div className="flex flex-col gap-2 w-full max-w-sm">
               {SUGGESTIONS.map((s, i) => (
                 <motion.button
                   key={i}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.05 }}
+                  transition={{ delay: 0.15 + i * 0.07, duration: 0.3 }}
                   onClick={() => sendMessage(s.text)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full bg-surface-900/80 border border-surface-800 hover:border-surface-700 transition-all text-left group"
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-surface-900/80 border border-surface-800 hover:border-surface-700 hover:bg-surface-900 transition-all text-left group cursor-pointer"
                 >
-                  <div className={`w-2 h-2 rounded-full ${s.dot} shrink-0`} />
-                  <span className="text-xs text-surface-300 group-hover:text-white transition-colors">
+                  <div className={`w-1.5 h-1.5 rounded-full ${s.dot} shrink-0`} />
+                  <span className="text-xs text-surface-300 group-hover:text-white transition-colors leading-snug">
                     {s.text}
                   </span>
                 </motion.button>
@@ -279,28 +306,30 @@ export default function ChatPage() {
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
             <AnimatePresence mode="popLayout">
-              {messages.map((msg) => (
+              {messages.map((msg, idx) => (
                 <motion.div
                   key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 380,
+                    damping: 28,
+                    delay: idx === messages.length - 1 ? 0 : 0,
+                  }}
                   className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
                 >
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                       msg.role === 'user'
-                        ? 'bg-violet-600 text-white rounded-br-md'
-                        : 'bg-surface-800/80 text-surface-200 rounded-bl-md border border-surface-700/50'
+                        ? 'bg-gradient-to-br from-violet-600 to-violet-700 text-white rounded-br-md shadow-md shadow-violet-900/30'
+                        : 'bg-surface-800/80 text-surface-200 rounded-bl-md border border-surface-700/50 border-l-2 border-l-violet-500/30'
                     }`}
                   >
-                    {msg.content || (
-                      <span className="flex items-center gap-2 text-surface-400">
-                        <Loader2 size={14} className="animate-spin" />
-                        Thinking...
-                      </span>
-                    )}
+                    {msg.content || <ThinkingDots />}
                   </div>
+
                   {msg.role === 'assistant' && nextSteps[msg.id] && !isStreaming && (
                     <div className="max-w-[85%] w-full">
                       <NextStepChip
@@ -333,7 +362,6 @@ export default function ChatPage() {
 
       {/* Input bar */}
       <div className="border-t border-surface-800/80 bg-surface-950/95 backdrop-blur-md px-4 py-3">
-        {/* Image preview */}
         {attachedImage && (
           <div className="max-w-3xl mx-auto mb-2">
             <CameraInput
@@ -348,8 +376,9 @@ export default function ChatPage() {
           {messages.length > 0 && (
             <button
               onClick={clearChat}
-              className="p-2.5 rounded-xl text-surface-500 hover:text-surface-300 hover:bg-surface-800 transition-colors flex-shrink-0"
+              className="p-2.5 rounded-xl text-surface-500 hover:text-surface-300 hover:bg-surface-800 transition-colors flex-shrink-0 cursor-pointer"
               title="Clear chat"
+              aria-label="Clear chat"
             >
               <Trash2 size={18} />
             </button>
@@ -368,6 +397,8 @@ export default function ChatPage() {
               onKeyDown={handleKeyDown}
               placeholder="Ask anything about your exam..."
               rows={1}
+              inputMode="text"
+              enterKeyHint="send"
               className="w-full resize-none rounded-xl bg-surface-900 border border-surface-700 px-4 py-3 pr-12 text-sm text-white placeholder-surface-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all max-h-32"
               style={{ minHeight: '44px' }}
               onInput={(e) => {
@@ -376,17 +407,21 @@ export default function ChatPage() {
                 target.style.height = Math.min(target.scrollHeight, 128) + 'px';
               }}
             />
-            <button
+            {/* Send button with spring press deformation */}
+            <motion.button
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isStreaming}
-              className="absolute right-2 bottom-2 p-2 rounded-lg bg-violet-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-violet-500 transition-colors"
+              whileTap={input.trim() && !isStreaming ? { scale: 0.88 } : {}}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              className="absolute right-2 bottom-2 p-2 rounded-lg bg-violet-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-violet-500 transition-colors cursor-pointer"
+              aria-label="Send message"
             >
               {isStreaming ? (
-                <Loader2 size={16} className="animate-spin" />
+                <ThinkingDots />
               ) : (
                 <Send size={16} />
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * src/content/router.ts
  *
@@ -29,73 +28,19 @@ import { createHash } from 'crypto';
 import { findCommunityContent, getUserSubscriptions } from './community';
 import { findUploadsByConcept, userHasUploads } from './uploads';
 import { classifyByRules, classifyIntent as classifyIntentAsync } from './intent-classifier';
+import type { Intent } from './intent-classifier';
+import type { RouteRequest, RouteResult, Source } from './content-types';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// Re-export for backward compatibility — callers may import from this module.
+// New code should import from '@/content' (the index) for the consolidated surface.
+export type { Intent, RouteRequest, RouteResult, Source };
 
-export type Intent =
-  | 'explain-concept'       // "explain derivatives"
-  | 'walkthrough-problem'   // "walk me through this problem"
-  | 'verify-answer'         // "is my answer 7π correct?"
-  | 'solve-for-me'          // "solve this equation" (user opted-in)
-  | 'find-in-uploads'       // "what did I upload about calculus?"
-  | 'practice-problem';     // "give me a hard problem on limits"
+// ─── Source priority and types ────────────────────────────────────────
+//
+// Single source of truth for Intent lives in intent-classifier.ts.
+// Single source of truth for Source / RouteRequest / RouteResult lives in
+// content-types.ts. Both are re-exported above.
 
-export type Source =
-  | 'subscription'          // from a user-subscribed community bundle
-  | 'library'               // from the content-library module (seeds + additions)
-  | 'bundle'                // shipped default bundle (legacy)
-  | 'cache'                 // server-side cache
-  | 'uploads'               // user's own uploads
-  | 'community'             // community repo (unsubscribed)
-  | 'generated'             // LLM live generation
-  | 'wolfram'               // Wolfram live query
-  | 'declined';             // intentionally declined
-
-export interface RouteRequest {
-  user_id:     string;
-  text:        string;                 // raw student input
-  concept_id?: string;                 // if already known (e.g. from URL)
-  allow_generation?: boolean;          // per-request opt-in for LLM
-  allow_wolfram?:    boolean;          // per-request opt-in for Wolfram
-  /**
-   * Personalisation hints — caller computes from gbrain student
-   * model and passes in. Router stays decoupled from gbrain;
-   * if the caller has no model handy, omit and the library will
-   * rank by title alone.
-   *
-   *   preferred_difficulty   intro / intermediate / advanced — usually
-   *                          derived via masteryToDifficulty(mastery)
-   *
-   *   preferred_exam_id      The student's current exam (e.g.
-   *                          'EXM-BITSAT-MATH-SAMPLE') — used as a
-   *                          tiebreak so exam-relevant entries
-   *                          rank higher.
-   *
-   * Status: forward-looking scaffolding. Today the cascade does
-   * exact-match by concept_id, so these hints only matter when
-   * the library starts having multiple entries per concept (e.g.
-   * derivatives-intro + derivatives-advanced) — the router would
-   * then call findEntries() instead of getEntry() and rank using
-   * these hints. That selection-vs-resolution change is a separate
-   * PR; today the fields ride along for type compatibility.
-   */
-  preferred_difficulty?: 'intro' | 'intermediate' | 'advanced';
-  preferred_exam_id?: string;
-}
-
-export interface RouteResult {
-  ok:             boolean;
-  intent:         Intent;
-  source:         Source;
-  content:        string | null;
-  concept_id:     string | null;
-  source_ref:     string | null;
-  licence:        string | null;
-  disclosure:     string;              // always present — student sees this
-  considered:     Source[];
-  rejected_because: Record<string, string>;
-  reason?:        string;
-}
 
 // ─── Intent classification ───────────────────────────────────────────
 

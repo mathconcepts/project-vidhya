@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Wolfram Alpha Verifier
  * Verify mathematical and scientific content against Wolfram Alpha

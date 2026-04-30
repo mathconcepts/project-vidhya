@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * src/content/community.ts
  *

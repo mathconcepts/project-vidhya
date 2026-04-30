@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Landing Page Manager
  * Template-based landing page generation with A/B testing

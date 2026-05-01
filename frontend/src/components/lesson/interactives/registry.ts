@@ -35,11 +35,11 @@ export interface DirectiveProps {
 // Lazy-load every provider so the lesson page first paint stays small.
 const MathBox    = lazy(() => import('./MathBox'));
 const Desmos     = lazy(() => import('./Desmos'));
-// GeoGebra deferred — Tier 3 fallback, ~600KB. Author when first :::cas atom ships.
-// const GeoGebra   = lazy(() => import('./GeoGebra'));
+const GeoGebra   = lazy(() => import('./GeoGebra'));
 const Manim      = lazy(() => import('./Manim'));
 const Quiz       = lazy(() => import('./Quiz'));
 const Recall     = lazy(() => import('./Recall'));
+const Verify     = lazy(() => import('./Verify'));
 const Interactive = lazy(() => import('./Interactive'));
 const StaticFallback = lazy(() => import('./StaticFallback'));
 
@@ -59,16 +59,16 @@ export const PROVIDER_REGISTRY: Record<DirectiveType, ComponentType<DirectivePro
   slider:      [Desmos, StaticFallback],
   graph2d:     [Desmos, MathBox, StaticFallback],
 
-  // Tier 3 GeoGebra primary (deferred — until first :::cas atom ships)
-  cas:         [StaticFallback],
-  construct:   [StaticFallback],
+  // Tier 3 GeoGebra primary
+  cas:         [GeoGebra, StaticFallback],
+  construct:   [GeoGebra, StaticFallback],
 
   // Tier 0 pre-rendered video
   manim:       [Manim, StaticFallback],
 
-  // Server-side: no client-side fallback chain (handled in API)
-  verify:      [Recall],
-  'wolfram-tool': [Recall],
+  // Server-side verify (B5) — Wolfram-backed if env set, local fallback otherwise.
+  verify:      [Verify, StaticFallback],
+  'wolfram-tool': [Verify, StaticFallback],
 
   // Inline UI components
   quiz:        [Quiz],

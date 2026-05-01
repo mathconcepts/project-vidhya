@@ -18,9 +18,11 @@ import { MasteryParticle, shouldCelebrate, markCelebrated } from './MasteryParti
 import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
-  AlertTriangle, Sparkles, Eye, Clock,
+  AlertTriangle, Sparkles, Eye, Clock, EyeOff,
 } from 'lucide-react';
 import { clsx } from 'clsx';
+
+const VISUAL_PREF_KEY = 'vidhya.show_visually';
 
 // ─── Type mirror (server is source of truth) ──────────────────────────────
 
@@ -43,11 +45,19 @@ export interface ContentAtom {
   content: string;
   scaffold_fade?: boolean;
   animation_preset?: AnimationPreset;
+  modality?: 'visual' | 'text' | 'mnemonic' | 'drill';
   tested_by_atom?: string;
   engagement_count?: number;
   last_recall_correct?: boolean | null;
   cohort_error_pct?: number;
   cohort_n_seen?: number;
+  /** Strategy callout (E5) — present after engagement enrichment when an atom
+   * is mastered or has high cohort error. Server may return; client may also derive. */
+  strategy_hint?: {
+    exam_emphasis?: 'skip' | 'light' | 'standard' | 'deep';
+    exam_weight_pct?: number;
+    trap?: string;
+  };
 }
 
 // ─── ATOM_ANIMATION_MAP — declarative, single source of truth ─────────────
@@ -233,6 +243,57 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
   return <MarkdownAtomRenderer content={atom.content} atomId={atom.id} />;
 }
 
+/**
+ * Strategy callout (E5) — small, blue-tinted card shown above the atom body
+ * when an atom is mastered or has high cohort error. Surfaces exam emphasis
+ * + the canonical trap so the student walks away with one concrete takeaway.
+ */
+function StrategyCallout({ hint }: { hint: NonNullable<ContentAtom['strategy_hint']> }) {
+  const emphasisLabel: Record<NonNullable<typeof hint.exam_emphasis>, string> = {
+    skip: 'Not on this exam',
+    light: 'Lightly tested',
+    standard: 'Standard weight',
+    deep: 'Deep coverage expected',
+  };
+  return (
+    <div className="mb-3 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-100 text-xs space-y-1">
+      <div className="flex items-center gap-1.5 text-violet-300 uppercase tracking-wider text-[10px] font-semibold">
+        <Sparkles size={11} />
+        <span>Strategy</span>
+      </div>
+      {hint.exam_emphasis && (
+        <div>
+          <span className="text-violet-300">Exam:</span> {emphasisLabel[hint.exam_emphasis]}
+          {hint.exam_weight_pct != null && (
+            <span className="text-violet-400/70"> · {Math.round(hint.exam_weight_pct)}% weight</span>
+          )}
+        </div>
+      )}
+      {hint.trap && (
+        <div>
+          <span className="text-violet-300">Watch:</span> {hint.trap}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Derive a strategy hint client-side from existing enrichment fields when
+ * the server hasn't precomputed one. Cheap, deterministic, no extra fetch.
+ */
+function deriveStrategyHint(atom: ContentAtom): ContentAtom['strategy_hint'] | undefined {
+  if (atom.strategy_hint) return atom.strategy_hint;
+  const mastered = (atom.engagement_count ?? 0) >= 2 && atom.last_recall_correct === true;
+  const trapWorthy = atom.cohort_n_seen != null && atom.cohort_n_seen >= 10 && (atom.cohort_error_pct ?? 0) >= 0.4;
+  if (!mastered && !trapWorthy) return undefined;
+  const out: NonNullable<ContentAtom['strategy_hint']> = {};
+  if (trapWorthy) {
+    out.trap = `${Math.round((atom.cohort_error_pct ?? 0) * 100)}% of students at your level miss this.`;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 // ─── Main renderer ────────────────────────────────────────────────────────
 
 export interface AtomCardRendererProps {
@@ -242,11 +303,33 @@ export interface AtomCardRendererProps {
   onComplete?: () => void;
 }
 
-export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: AtomCardRendererProps) {
+export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete }: AtomCardRendererProps) {
   const [index, setIndex] = useState(0);
   const [errorStreak, setErrorStreak] = useState(0);
   const [celebrating, setCelebrating] = useState(false);
   const [completedIdx, setCompletedIdx] = useState<Set<number>>(() => new Set());
+  const [showVisually, setShowVisually] = useState<boolean>(() => {
+    try { return localStorage.getItem(VISUAL_PREF_KEY) === '1'; } catch { return false; }
+  });
+
+  // Show-me-visually (B4): when ON, reorder so visual-modality atoms come
+  // first, preserving relative order within each group. The original
+  // atoms[] is preserved in props — this is a view-time projection only.
+  const atoms = useMemo(() => {
+    if (!showVisually) return rawAtoms;
+    const visual = rawAtoms.filter((a) => a.modality === 'visual' || a.atom_type === 'visual_analogy');
+    const rest = rawAtoms.filter((a) => !(a.modality === 'visual' || a.atom_type === 'visual_analogy'));
+    return visual.length === 0 ? rawAtoms : [...visual, ...rest];
+  }, [rawAtoms, showVisually]);
+
+  const toggleVisual = () => {
+    setShowVisually((prev) => {
+      const next = !prev;
+      try { next ? localStorage.setItem(VISUAL_PREF_KEY, '1') : localStorage.removeItem(VISUAL_PREF_KEY); } catch { /* ignore */ }
+      return next;
+    });
+    setIndex(0); // Jump to the new front so the change is visible.
+  };
 
   const engagement = useEngagement(
     conceptId,
@@ -319,22 +402,39 @@ export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: At
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      {/* Mastery dots — emerald fills as atoms complete; violet marks the active one (E2). */}
-      <div className="flex items-center justify-center gap-1.5 mb-4">
-        {atoms.map((_, i) => {
-          const isActive = i === index;
-          const isComplete = completedIdx.has(i) || i < index;
-          return (
-            <motion.div
-              key={i}
-              layout
-              className={clsx(
-                'h-1.5 rounded-full transition-colors',
-                isActive ? 'w-6 bg-violet-500' : isComplete ? 'w-1.5 bg-emerald-500' : 'w-1.5 bg-surface-700',
-              )}
-            />
-          );
-        })}
+      {/* Mastery dots + show-me-visually toggle (E2 + B4). */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="w-9" /> {/* spacer to balance the toggle on the right */}
+        <div className="flex items-center justify-center gap-1.5">
+          {atoms.map((_, i) => {
+            const isActive = i === index;
+            const isComplete = completedIdx.has(i) || i < index;
+            return (
+              <motion.div
+                key={i}
+                layout
+                className={clsx(
+                  'h-1.5 rounded-full transition-colors',
+                  isActive ? 'w-6 bg-violet-500' : isComplete ? 'w-1.5 bg-emerald-500' : 'w-1.5 bg-surface-700',
+                )}
+              />
+            );
+          })}
+        </div>
+        <button
+          onClick={toggleVisual}
+          aria-label={showVisually ? 'Show all atoms' : 'Show visual atoms first'}
+          aria-pressed={showVisually}
+          className={clsx(
+            'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
+            showVisually
+              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+              : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-emerald-300',
+          )}
+          title={showVisually ? 'Visual mode on' : 'Show me visually'}
+        >
+          {showVisually ? <Eye size={14} /> : <EyeOff size={14} />}
+        </button>
       </div>
 
       <MasteryParticle active={celebrating} />
@@ -361,6 +461,8 @@ export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: At
               {formatReadingTime(readingSeconds)}
             </span>
           </div>
+
+          {(() => { const sh = deriveStrategyHint(current); return sh ? <StrategyCallout hint={sh} /> : null; })()}
 
           {current.atom_type === 'worked_example' ? (
             <WorkedExampleCard atom={current} />

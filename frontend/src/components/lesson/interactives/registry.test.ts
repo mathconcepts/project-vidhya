@@ -51,6 +51,11 @@ describe('PROVIDER_REGISTRY — chain shape', () => {
     expect(PROVIDER_REGISTRY.quiz.length).toBe(1);
     expect(PROVIDER_REGISTRY.recall.length).toBe(1);
   });
+
+  it('cas/construct route through GeoGebra before static (Tier 3)', () => {
+    expect(PROVIDER_REGISTRY.cas.length).toBe(2);
+    expect(PROVIDER_REGISTRY.construct.length).toBe(2);
+  });
 });
 
 describe('resolveInteractive — library reference resolution', () => {

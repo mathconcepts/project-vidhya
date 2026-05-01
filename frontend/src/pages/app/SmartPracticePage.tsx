@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
 import { useSession } from '@/hooks/useSession';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { resolve, warmContentBundle, getBundleStats, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
+import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
 import { recordAttempt } from '@/lib/gbrain/client';
 import {
   Sparkles, Zap, Database, Server, CheckCircle2, XCircle, Loader2, ArrowRight,
@@ -75,20 +75,17 @@ export default function SmartPracticePage() {
   const [examTopics, setExamTopics] = useState<string[]>(GATE_FALLBACK_TOPICS);
   const [topic, setTopic] = useState<string>(initialTopic);
   const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
-  const [requireWolfram, setRequireWolfram] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resolved, setResolved] = useState<ResolvedContent | null>(null);
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [wasCorrect, setWasCorrect] = useState<boolean | null>(null);
   const [startedAt, setStartedAt] = useState<number>(0);
-  const [bundleStats, setBundleStats] = useState<any>(null);
   const [sessionStats, setSessionStats] = useState({ problems_served: 0, total_cost_usd: 0, avg_latency_ms: 0 });
 
   useEffect(() => {
     trackEvent('page_view', { page: 'smart-practice' });
     warmContentBundle();
-    getBundleStats().then(setBundleStats).catch(() => {});
   }, []);
 
   // Load the student's exam topic list so the topic picker shows their
@@ -122,7 +119,7 @@ export default function SmartPracticePage() {
         concept_id: topic,
         topic,
         difficulty,
-        require_wolfram: requireWolfram,
+        require_wolfram: false,
         use_materials: true,
       });
       setResolved(result);
@@ -138,7 +135,7 @@ export default function SmartPracticePage() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, requireWolfram]);
+  }, [topic, difficulty]);
 
   const handleSubmit = async () => {
     if (!resolved?.problem) return;
@@ -177,21 +174,6 @@ export default function SmartPracticePage() {
         </p>
       </motion.div>
 
-      {/* Bundle stats mini-dash. v2.5: session-cost meter removed from
-          student view (admin telemetry). Kept the library-size context
-          because students benefit from knowing how much content is on tap. */}
-      {bundleStats && (
-        <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-2">
-          <div className="p-2.5 rounded-xl bg-surface-900 border border-surface-800 text-center">
-            <p className="text-lg font-bold text-surface-100">{bundleStats.total_problems}</p>
-            <p className="text-[10px] text-surface-500">bundled problems</p>
-          </div>
-          <div className="p-2.5 rounded-xl bg-surface-900 border border-surface-800 text-center">
-            <p className="text-lg font-bold text-surface-100">{bundleStats.total_explainers}</p>
-            <p className="text-[10px] text-surface-500">explainers</p>
-          </div>
-        </motion.div>
-      )}
 
       {/* Controls */}
       <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
@@ -224,22 +206,6 @@ export default function SmartPracticePage() {
               </button>
             ))}
           </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-surface-300">Require Wolfram verification</p>
-            <p className="text-[10px] text-surface-500">Slower + tiny cost, but fully verified</p>
-          </div>
-          <button
-            onClick={() => setRequireWolfram(v => !v)}
-            className={`w-10 h-6 rounded-full transition-colors ${requireWolfram ? 'bg-emerald-500' : 'bg-surface-700'}`}
-          >
-            <motion.div
-              className="w-4 h-4 rounded-full bg-white shadow"
-              animate={{ x: requireWolfram ? 18 : 2 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            />
-          </button>
         </div>
         <button
           onClick={nextProblem}

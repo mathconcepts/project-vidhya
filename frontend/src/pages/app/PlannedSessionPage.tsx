@@ -155,10 +155,11 @@ interface PlanTemplate {
 export default function PlannedSessionPage() {
   const navigate = useNavigate();
 
-  const [minutes, setMinutes] = useState<number>(8);
+  const [minutes, setMinutes] = useState<number>(15);
   const [plan, setPlan] = useState<SessionPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   // v2.32: profile + templates
   const [profile, setProfile] = useState<ExamProfile | null>(null);
@@ -201,7 +202,8 @@ export default function PlannedSessionPage() {
       .catch(() => { /* fail soft */ });
   }, []);
 
-  // Load profile + templates + trailing stats + presets on mount
+  // Load profile + templates + trailing stats + presets on mount.
+  // For returning users (has exams + prior sessions), auto-generate a 15-min plan.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -220,28 +222,65 @@ export default function PlannedSessionPage() {
           setError('session_expired');
           return;
         }
-        if (profResp.ok) setProfile(await profResp.json());
+        let loadedProfile: ExamProfile | null = null;
+        if (profResp.ok) {
+          loadedProfile = await profResp.json();
+          setProfile(loadedProfile);
+        }
+        let loadedTrailing: { trailing_7d_minutes: number; trailing_7d_sessions: number } | null = null;
         if (tplResp.ok) {
           const j = await tplResp.json();
           setTemplates(j.templates || []);
         }
         if (trailingResp.ok) {
           const j = await trailingResp.json();
-          setTrailingStats({
+          loadedTrailing = {
             trailing_7d_minutes: j.trailing_7d_minutes,
             trailing_7d_sessions: j.trailing_7d_sessions,
-          });
+          };
+          setTrailingStats(loadedTrailing);
         }
         if (presetsResp.ok) {
           const j = await presetsResp.json();
           setPresets(j.presets || []);
+        }
+
+        // Auto-generate for returning users — skip the time picker friction
+        const isReturning = loadedProfile && loadedProfile.exams.length > 0
+          && loadedTrailing && loadedTrailing.trailing_7d_sessions > 0;
+        if (isReturning && !cancelled) {
+          // fetchPlan reads `profile` from state which may not be set yet —
+          // call the API directly with the loaded profile.
+          setLoading(true);
+          try {
+            const hasMultiple = loadedProfile!.exams.length >= 2;
+            const e = loadedProfile!.exams[0];
+            const res = await authFetch(
+              hasMultiple ? '/api/student/session/plan/multi-exam' : '/api/student/session/plan',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(
+                  hasMultiple
+                    ? { minutes_available: 15, exams: loadedProfile!.exams.map(ex => ({ exam_id: ex.exam_id, exam_date: ex.exam_date })) }
+                    : { exam_id: e.exam_id, exam_date: e.exam_date, minutes_available: 15 }
+                ),
+              }
+            );
+            if (res.ok && !cancelled) {
+              const p: SessionPlan = await res.json();
+              setPlan(p);
+              setStartedAtMs(Date.now());
+            }
+          } catch { /* fall through — user sees picker */ }
+          finally { if (!cancelled) setLoading(false); }
         }
       } catch {
         // Non-fatal — fall through to default exam
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPlan = useCallback(async () => {
     setLoading(true);
@@ -621,7 +660,7 @@ export default function PlannedSessionPage() {
           </motion.section>
         )}
 
-        {/* Minutes picker — hidden once a plan is loaded, shown on reset */}
+        {/* Minutes picker — hidden once a plan is loaded */}
         {!plan && !loading && (
           <motion.section
             variants={staggerContainer}
@@ -776,6 +815,12 @@ export default function PlannedSessionPage() {
                   <span>{plan.budget.context} session</span>
                   <span>·</span>
                   <span>{plan.total_estimated_minutes} min total</span>
+                  <button
+                    onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
+                    className="ml-auto text-surface-600 hover:text-surface-400 transition-colors underline text-xs"
+                  >
+                    Change time
+                  </button>
                 </div>
               </div>
 

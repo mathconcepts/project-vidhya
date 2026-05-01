@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, BookOpen, Brain } from 'lucide-react';
+import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 // v2.5: migrated from @/hooks/useAuth (Supabase Auth) to @/contexts/AuthContext
 // (Vidhya JWT). Backend only validates Vidhya JWTs — the Supabase hook was
@@ -15,9 +15,9 @@ import { useSession } from '@/hooks/useSession';
 import { StreakBadge } from '@/components/app/StreakBadge';
 
 const NAV_ITEMS = [
-  { to: '/',          icon: Home,          label: 'Home',     end: true },
-  { to: '/notebook',  icon: BookOpen,      label: 'Notes' },
-  { to: '/progress',  icon: BarChart3,     label: 'Progress' },
+  { to: '/',         icon: Home,        label: 'Home',     end: true },
+  { to: '/planned',  icon: PlayCircle,  label: 'Practice' },
+  { to: '/progress', icon: BarChart3,   label: 'Progress' },
 ];
 
 export function AppLayout() {
@@ -82,28 +82,20 @@ export function AppLayout() {
                   >
                     <Settings size={14} /> Settings
                   </button>
-                  {(user.role === 'teacher' || user.role === 'admin') && (
+                  {user.role === 'teacher' && (
+                    <button
+                      onClick={() => navigate('/teaching')}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
+                    >
+                      <Shield size={14} /> Teaching Hub
+                    </button>
+                  )}
+                  {(user.role === 'admin' || user.role === 'owner') && (
                     <button
                       onClick={() => navigate('/admin/dashboard')}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
                     >
                       <Shield size={14} /> Admin
-                    </button>
-                  )}
-                  {(user.role === 'teacher' || user.role === 'admin') && (
-                    <button
-                      onClick={() => navigate('/admin/gbrain')}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
-                    >
-                      <Brain size={14} /> GBrain Admin
-                    </button>
-                  )}
-                  {(user.role === 'teacher' || user.role === 'admin') && (
-                    <button
-                      onClick={() => navigate('/admin/content')}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
-                    >
-                      <BookOpen size={14} /> Content Engine
                     </button>
                   )}
                   <button

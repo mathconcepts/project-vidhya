@@ -260,62 +260,43 @@ export function Home() {
 
   if (userState === 'A') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <motion.div
-          className="w-full max-w-md flex flex-col items-center gap-5 text-center"
-          initial="hidden" animate="visible" variants={staggerContainer}
-        >
-          {/* v2.5: discoverability link for anonymous visitors who landed
-              on /gate via a deep link or referral. Subtle, dismissible by
-              navigating elsewhere. Logged-in users never see it. */}
-          {isAnonymous && (
-            <Link
-              to="/gbrain"
-              className="inline-flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
-            >
-              New here? See how Vidhya works <ArrowRight size={11} />
-            </Link>
-          )}
-
-          {/* Welcome card on first visit — discovery over setup */}
-          {!hasSeenWelcome() && (
-            <motion.div variants={fadeInUp} className="w-full text-left">
-              <StudentWelcomeCard />
-            </motion.div>
-          )}
-
-          <motion.div variants={fadeInUp}>
-            <motion.div
-              animate={prefersReducedMotion ? {} : { opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <MasteryRing value={0} size={48} strokeWidth={3} className="text-emerald-500" />
-            </motion.div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-              Want a structured study plan?
-            </h2>
-            <p className="text-[15px] text-surface-500 leading-relaxed">
-              Takes 2 minutes. I'll figure out exactly what you should study first.
-            </p>
-          </motion.div>
-
+      <motion.div
+        className="space-y-6 pt-2"
+        initial="hidden" animate="visible" variants={staggerContainer}
+      >
+        {/* Welcome card on first visit */}
+        {!hasSeenWelcome() && (
           <motion.div variants={fadeInUp} className="w-full">
-            <motion.button
-              onClick={() => {
-                trackEvent('one_thing_onboard');
-                navigate(isAnonymous ? '/sign-in' : '/planned');
-              }}
-              className="w-full h-11 rounded-[10px] bg-emerald-500 text-white text-[15px] font-semibold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
-              whileTap={{ scale: 0.97 }}
-            >
-              {isAnonymous ? 'Sign in to get started' : 'Build my plan'}
-            </motion.button>
+            <StudentWelcomeCard />
           </motion.div>
+        )}
+
+        {/* Primary CTA — no sign-in required */}
+        <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto space-y-3">
+          <motion.button
+            onClick={() => {
+              trackEvent('one_thing_try_now');
+              navigate('/session');
+            }}
+            className="w-full h-12 rounded-[10px] bg-emerald-500 text-white text-[16px] font-bold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950 flex items-center justify-center gap-2"
+            whileTap={{ scale: 0.97 }}
+          >
+            Try a 15-minute session <ArrowRight size={17} />
+          </motion.button>
+          <p className="text-center text-[13px] text-surface-500">
+            No sign-in needed. Save your progress?{' '}
+            <button
+              onClick={() => { trackEvent('one_thing_sign_in'); navigate('/sign-in'); }}
+              className="text-violet-400 hover:text-violet-300 underline cursor-pointer"
+            >
+              Sign in
+            </button>
+          </p>
         </motion.div>
-      </div>
+
+        {/* Topic grid — let them browse immediately */}
+        <TopicGrid topics={topics} />
+      </motion.div>
     );
   }
 

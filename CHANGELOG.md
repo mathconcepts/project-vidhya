@@ -4,6 +4,36 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.2.0] - 2026-05-01 — Persona shells + pillar synergy
+
+**Operator action:** none required. Three new API endpoints added under `/api/knowledge/tracks/:id/` (progress, next-concept, concept-tree) — no migrations needed, they read from existing `student_models` flat-file store.
+
+### What changed for students
+
+- **Your home screen now matches your actual goal.** If you're studying a curriculum (CBSE, JEE, etc.), you land on a concept map showing exactly what you've mastered and what's next today. If you're exam-focused, you land directly on your session plan. No more wrong-persona home.
+- **Compounding evidence is visible every day.** The Compounding card (your progress proof) now appears on the session plan page — every returning student sees it, not just those who happened to reach State C of the old home screen.
+- **Strategy is one tap away.** "See your full strategy →" link lives next to the plan headline. The exam strategy page is no longer an orphan URL.
+- **"Why this order" on every action card.** Tap to expand the GBrain rationale for why this topic is prioritised right now. Collapsed by default so it doesn't clutter the plan.
+- **No more dead ends after a session.** Finishing a planned session now returns you to `/planned` instead of the anonymous landing page. Drop-in practice (StudymateSession) shows a "Continue your plan →" button for signed-in users.
+- **Knowledge-track home — new.** `/knowledge-home` shows: track progress bar (mastered/total), today's recommended concept with a why-next rationale, full concept map with mastery status (green/violet/dim), CompoundingCard, and a K→E bridge card that surfaces once when you hit ≥70% curriculum coverage.
+- **Ready to add an exam? The app tells you.** When knowledge-track students hit ≥70% mastery, a one-time "Set your exam date →" card appears pointing to the onboarding flow. Shown once, remembered in localStorage.
+
+### What changed for teachers
+
+- **Confidence picker before briefs.** When you open a teaching brief, you rate your confidence in the concept (1–5). Rating 1 or 2 prepends a "Your prep" section: canonical definition, two worked examples, and the top misconceptions in your cohort. Rating 3–5 opens the brief as-is — no extra friction for concepts you know cold.
+- **UX: reduced friction throughout.** Dismissible welcome banner on the Teaching Dashboard; teacher shell now shows `Teach | Students` nav instead of the exam-student nav.
+
+### What changed for engineers
+
+- `frontend/src/components/app/AppLayout.tsx` — persona detection on mount. Reads `/api/student/profile`, derives persona (knowledge / exam / teacher), renders shell-specific nav. Skeleton shown while profile resolves to prevent flash of wrong nav.
+- `frontend/src/pages/app/KnowledgeHomePage.tsx` — new page at `/knowledge-home` for knowledge-track students.
+- `frontend/src/pages/app/Home.tsx` — redirect updated: knowledge-track users go to `/knowledge-home`, exam users go to `/planned`.
+- `src/api/knowledge-routes.ts` — three new endpoints: `GET /api/knowledge/tracks/:id/progress`, `GET /api/knowledge/tracks/:id/next-concept`, `GET /api/knowledge/tracks/:id/concept-tree`. All require auth; mastery data from `student_models.mastery_vector`.
+- `src/api/me-routes.ts` — CompoundingCard threshold lowered from 5 problems to 1. Card now appears after a single practice problem, not after 5.
+- `frontend/src/pages/app/PlannedSessionPage.tsx` — CompoundingCard + DigestChip added; strategy link; "Why this order" accordion per action card; post-completion navigates to `/planned`.
+- `frontend/src/pages/app/StudymateSessionPage.tsx` — "Continue your plan →" CTA for auth'd users at session end.
+- `frontend/src/pages/app/TeachingDashboardPage.tsx` — confidence picker (1–5) + animated "Your prep" section at confidence ≤ 2.
+
 ## [4.1.0] - 2026-05-01 — KAG corpus + content infrastructure hardening
 
 **Operator action:** none required. New flat files created on first write: `.data/kag-corpus.jsonl` (KAG store), `.data/content-review.json` (teaching content-review queue). Both are gitignored by the existing `.data/` rule. Optional: set `WOLFRAM_APP_ID` to enable Wolfram grounding in the KAG generator. Run `npx tsx scripts/kag-corpus-builder.ts --all` to seed the KAG corpus from the concept graph.

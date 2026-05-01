@@ -283,6 +283,62 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 
 **Detail:** When content-router returns `source: "wolfram"`, the response has a `disclosure` field *"Computed live by Wolfram Alpha"*. No frontend reads this yet. Should show a badge next to Wolfram-sourced content to keep students clear on attribution.
 
+### 4.10 External best-practices KB (Approach C from concept-orchestrator CEO plan)
+
+**Status:** deferred from concept-orchestrator v1
+**Priority:** P2
+**Effort:** XL (human ~5-7 days / CC ~6 hours)
+
+**Detail:** Curate a separate "best practices" corpus (MIT OCW, OpenStax, GATE PYQ analysis, canonical pedagogy patterns) as a vector store. Every concept generation retrieves top-K best practices for (topic_family, atom_type) and grounds the LLM prompt in that. Cohort errors re-rank the corpus over time. Pros: most thorough — generated content is actually grounded in canonical pedagogy, cross-domain coverage. Cons: corpus curation is ongoing work, content licensing concerns, embedding pipeline + vector store ops cost. **Depends on:** concept-orchestrator v1 (4.11+) to be the consumer. Revisit when scaling past 50 concepts.
+
+### 4.11 Vector search over PYQ corpus
+
+**Status:** deferred from concept-orchestrator v1 (file lookup ships in v1)
+**Priority:** P2
+**Effort:** M (human ~2 days / CC ~1.5 hours)
+
+**Detail:** v1 of concept-orchestrator does PYQ grounding via file lookup keyed on `(topic_id, atom_type)`. Works fine up to ~5,000 PYQs. Beyond that, lookup falls behind and admin sees stale grounding. Migrate to vector search (pgvector or in-memory FAISS-style) keyed on the LO text + atom_type. Pros: scales past 50,000 PYQs, finds semantically similar exam questions even when topic_id is wrong. Cons: embedding cost + indexing pipeline. **Depends on:** concept-orchestrator v1 shipped + PYQ corpus past 5k.
+
+### 4.12 Auto A/B testing of regen variants
+
+**Status:** deferred from concept-orchestrator v1 (manual admin review ships in v1)
+**Priority:** P2
+**Effort:** M (human ~2 days / CC ~1.5 hours)
+
+**Detail:** When `regen-scanner` produces atom v2, ship 50/50 traffic split between v1 and v2 for 2 weeks, measure cohort_signals delta, auto-promote the winner, archive the loser. Pros: removes admin from the loop for low-stakes regens, learner sees better content faster. Cons: requires cohort large enough for statistical signal (50+ engagements per variant), can't catch quality regressions that don't show in metrics. **Depends on:** concept-orchestrator v1 + cohort_signals reliability + sufficient student volume.
+
+### 4.13 Self-improving prompts
+
+**Status:** deferred from concept-orchestrator v1
+**Priority:** P3
+**Effort:** L (human ~3-4 days / CC ~3 hours)
+
+**Detail:** When an atom regenerates and improves cohort metric (error_pct drops by >15% in 30d), log the prompt diff between v1 and v2 generation. Periodically promote winning prompt patterns to the YAML template DSL (E6) automatically. The system gets better at generating atoms over time without human prompt-engineering. Pros: compounding flywheel — content generation quality improves with usage. Cons: requires careful guardrails (a bad prompt that wins on one concept may lose on another), needs human review before promotion. **Depends on:** 4.12 (need A/B signal to identify winners).
+
+### 4.14 Bulk approve N atoms in admin dashboard
+
+**Status:** deferred from concept-orchestrator v1 (single-at-a-time review ships in v1)
+**Priority:** P2
+**Effort:** S (human ~half day / CC ~30 min)
+
+**Detail:** Admin's "Concepts needing content" dashboard shows 1 concept = 11 atoms = 11 review cards. Reviewing 50 concepts = 550 cards. Add a "Select all from concept X" + "Approve N selected" button. Already-rejected (LLM-judge < 7) items aren't selectable. **Depends on:** concept-orchestrator v1 admin dashboard shipped.
+
+### 4.15 Multi-modal content generation (auto-Manim + audio narration)
+
+**Status:** deferred — separate plan
+**Priority:** P3
+**Effort:** XL (human ~1-2 weeks / CC ~10 hours)
+
+**Detail:** Concept-orchestrator v1 generates text-mode atoms (markdown + math + interactive directives). Multi-modal extension: auto-generate Manim source for visual_analogy atoms (already have the authoring scaffold from v4.4.0), auto-generate audio narration for intuition atoms via TTS, auto-generate slide-style summaries. Pros: content reaches multi-modal learners; reading-disabled accessibility. Cons: Manim render cost + audio storage + significantly more complex review UX. **Depends on:** Manim authoring stable + TTS provider + storage.
+
+### 4.16 Lazy-load PYQ corpus when corpus exceeds 5k entries
+
+**Status:** flagged in concept-orchestrator perf review
+**Priority:** P2
+**Effort:** S (human ~half day / CC ~20 min)
+
+**Detail:** v1 loads the entire PYQ corpus at boot for fast file-lookup grounding. Memory footprint becomes a concern past ~5,000 entries. Switch to lazy load + LRU cache when corpus crosses threshold. Equivalent fallback path: 4.11 vector search supersedes this entirely. **Depends on:** PYQ corpus growing or 4.11 shipping (whichever first).
+
 ---
 
 ## 5. Customer lifecycle

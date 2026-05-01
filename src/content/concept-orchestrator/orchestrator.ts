@@ -29,7 +29,7 @@ import type {
   OrchestratorOptions,
 } from './types';
 import { getTemplate } from './template-loader';
-import { groundForLO, formatPyqContext } from './pyq-grounding';
+import { groundForLO, groundForLOWithEmbedding, formatPyqContext } from './pyq-grounding';
 import { canSpend, recordSpend, DEFAULT_MONTHLY_CAP_USD } from './concept-cost';
 import { scoreAtom, passesGate } from './llm-judge';
 import { compareMathAtoms, requiresConsensus } from './multi-llm-consensus';
@@ -231,10 +231,13 @@ interface GenerateOneArgs {
 
 async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
   const template = getTemplate(args.topic_family, args.atom_type);
-  const pyqGrounding = await groundForLO(
-    args.concept_id,    // topic_id == concept_id by convention; refine when topic taxonomy splits
-    args.atom_type,
-  );
+  // Try semantic vector search first when the corpus has embeddings (4.11),
+  // fall back to topic-keyword lookup. The grounding module handles the
+  // cascade internally — caller just supplies an optional embedding.
+  const queryEmbedding = await maybeEmbedQuery(args);
+  const pyqGrounding = queryEmbedding
+    ? await groundForLOWithEmbedding(args.concept_id, args.atom_type, queryEmbedding)
+    : await groundForLO(args.concept_id, args.atom_type);
 
   const prompt = buildPrompt({
     ...args,
@@ -313,6 +316,42 @@ Output ONLY the atom body in markdown. Use $inline$ and $$display$$ math.
 For interactive directives use :::name{attrs} blocks. For ${args.atom_type === 'worked_example' ? 'worked_example: separate steps with `\\n---\\n` and end with "Answer: <value>" so :::verify can confirm.' : 'other types: keep the body focused on a single learning beat.'}
 
 Do not include frontmatter — only the body. Keep total length under 400 words.`;
+}
+
+/**
+ * Best-effort embedding generation for the LO + atom_type pair. Used by
+ * the vector PYQ grounding path (4.11). When no embedding model is
+ * configured or the call fails, returns null and the orchestrator falls
+ * back to keyword grounding — never blocks generation on embed failure.
+ *
+ * Cost: one ~$0.00002 call per atom (text-embedding-3-small). Negligible.
+ *
+ * Disabled by default; opt-in via VIDHYA_ORCHESTRATOR_VECTOR_GROUNDING=on
+ * so existing deploys keep the keyword path until the operator backfills
+ * pyq_questions.embedding (no point paying for embeddings on the query
+ * side if there's nothing to search against).
+ */
+async function maybeEmbedQuery(args: GenerateOneArgs): Promise<number[] | null> {
+  if (process.env.VIDHYA_ORCHESTRATOR_VECTOR_GROUNDING !== 'on') return null;
+  const text = `${args.concept_id} ${args.atom_type} ${args.topic_family}`;
+  try {
+    const { LLMClient } = await import('../../llm/index');
+    const config = process.env.LLM_CONFIG_PATH
+      ? require(process.env.LLM_CONFIG_PATH)
+      : { providers: {}, defaultProvider: '' };
+    const client = new (LLMClient as any)(config);
+    const r = await client.embed({
+      model: process.env.VIDHYA_PYQ_EMBED_MODEL || 'text-embedding-3-small',
+      input: text,
+    });
+    // Adapter response shape varies; normalise.
+    const vec = r?.embedding ?? r?.data?.[0]?.embedding ?? r?.vector;
+    if (Array.isArray(vec) && vec.length > 0) return vec;
+    return null;
+  } catch (err) {
+    console.warn(`[orchestrator] embed query failed: ${(err as Error).message}`);
+    return null;
+  }
 }
 
 async function callLlm(prompt: string, model: 'claude' | 'gemini'): Promise<string> {

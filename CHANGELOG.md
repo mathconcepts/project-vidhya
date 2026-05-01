@@ -4,6 +4,26 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.8.0] - 2026-05-01 — Concept Orchestrator v2 (bulk approve + vector PYQ)
+
+**Operator action:** migration `015_pyq_embeddings.sql` runs automatically on server boot. Adds `embedding VECTOR(1536) + embedded_at TIMESTAMPTZ` to `pyq_questions` and an HNSW cosine index. Optional opt-in for vector grounding: set `VIDHYA_ORCHESTRATOR_VECTOR_GROUNDING=on` AND backfill embeddings via `tsx scripts/embed-pyq-corpus.ts` (~$0.10 per 5k rows at text-embedding-3-small). When the env flag is off, grounding stays on the v1 keyword path.
+
+### Added
+
+- **Bulk approve N atoms in admin dashboard (PENDING.md §4.14).** When the orchestrator generation modal completes, admin sees a checklist of accepted atoms (default all checked, with judge scores visible). One click activates all selected atoms via the new `POST /api/admin/atoms/bulk-activate` endpoint. Capped at 100 items per call. Closes the throughput bottleneck once the orchestrator goes live in production.
+- **Vector PYQ search (PENDING.md §4.11).** New `groundForLOWithEmbedding()` does pgvector cosine-similarity search over `pyq_questions.embedding`. The orchestrator generates a query embedding from `concept_id + atom_type + topic_family` per atom. Falls back to v1 keyword lookup when (a) no embedding is supplied, (b) no PYQ rows have embeddings, or (c) the vector query returns zero hits. Off by default; opt in with `VIDHYA_ORCHESTRATOR_VECTOR_GROUNDING=on`.
+- **PYQ corpus backfill script.** `scripts/embed-pyq-corpus.ts` reads `pyq_questions` rows with NULL embeddings, embeds via the configured LLM client (default `text-embedding-3-small`), writes to the new column. Idempotent and resumable (per-row `embedded_at` timestamp).
+
+### Changed
+
+- `pyq-grounding.ts` extended with the embedding cascade. Existing `groundForLO()` keyword-path callers unchanged.
+
+### Architecture notes
+
+- 1536-dim (text-embedding-3-small) chosen over 3072-dim (gemini-embedding-001) because pgvector's HNSW/IVFFlat caps at 2000 dims on Supabase. The marginal quality bump from 3072 isn't worth giving up the HNSW index for a corpus that grows to 10s of thousands of rows.
+- Backend: 839/839 (was 830, +9). Frontend: 107/107 (no new tests — the bulk approve panel is integration-tested manually). Typecheck clean.
+- `4.16 Lazy-load PYQ corpus` reviewed and **marked obsolete in PENDING.md** — the orchestrator's `pyq-grounding.ts` already does DB-query-per-lookup with `LIMIT 3`, no boot-time corpus load. The pre-emptive concern doesn't apply to the shipped architecture.
+
 ## [4.7.1] - 2026-05-01 — Concept Orchestrator v1 (Phase 5 + diff polish)
 
 **Operator action:** none. New npm dep: `diff-match-patch` (~12KB) for the admin diff viewer.

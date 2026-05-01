@@ -16,6 +16,7 @@ import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 import { MasteryParticle, shouldCelebrate, markCelebrated } from './MasteryParticle';
 import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
+import { ImprovedBadge } from './ImprovedBadge';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
@@ -58,6 +59,17 @@ export interface ContentAtom {
     exam_weight_pct?: number;
     trap?: string;
   };
+  // ── Concept-orchestrator v1 enrichment ────────────────────────────────
+  /** ISO timestamp from atom_versions.generated_at. The Improved badge
+   * shows when this is newer than the student's last_seen for the atom. */
+  improved_since?: string;
+  /** Plain-English reason for the Improved tooltip. */
+  improvement_reason?: string | null;
+  /** True when content is a per-student variant (E5). */
+  is_student_override?: boolean;
+  /** ISO timestamp from atom_engagements.last_seen for this student.
+   * Used by the Improved badge to detect "newer than last view". */
+  last_seen_at?: string;
 }
 
 // ─── ATOM_ANIMATION_MAP — declarative, single source of truth ─────────────
@@ -456,6 +468,11 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             {current.engagement_count != null && current.engagement_count > 0 && (
               <span className="text-surface-500">· revisit #{current.engagement_count + 1}</span>
             )}
+            <ImprovedBadge
+              improvedSince={current.improved_since}
+              lastSeenAt={current.last_seen_at}
+              reason={current.improvement_reason}
+            />
             <span className="ml-auto flex items-center gap-1 text-surface-500 normal-case tracking-normal">
               <Clock size={12} />
               {formatReadingTime(readingSeconds)}

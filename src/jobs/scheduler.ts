@@ -23,6 +23,7 @@
 
 import { finaliseExpiredDeletions } from '../data-rights/delete';
 import { runCohortAggregator } from './cohort-aggregator';
+import { runRegenScanner } from './regen-scanner';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -72,6 +73,19 @@ register('cohortAggregator', DAY_MS, async () => {
   // cards can render "X% miss this on the practice problem" callouts.
   // Idempotent — safe if it overlaps a prior run.
   const r = await runCohortAggregator();
+  return r;
+});
+
+register('regenScanner', DAY_MS, async () => {
+  // Nightly: read cohort_signals (populated by cohortAggregator above),
+  // pick atoms with error_pct > 0.5, regenerate them with the misconception
+  // baked into the prompt. Freshness-gates on cohort_signals to avoid
+  // regenerating on stale data when cohortAggregator runs late or fails.
+  // Gated behind VIDHYA_CONCEPT_ORCHESTRATOR — when off, skipped silently.
+  if (process.env.VIDHYA_CONCEPT_ORCHESTRATOR !== 'on') {
+    return { status: 'skipped', reason: 'concept orchestrator not enabled' };
+  }
+  const r = await runRegenScanner();
   return r;
 });
 

@@ -30,7 +30,8 @@ import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
-import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError } from '../content/atom-loader';
+import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince } from '../content/atom-loader';
+import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
 import { selectAtoms } from '../content/pedagogy-engine';
 import type { ContentAtom, SessionContext } from '../content/content-types';
 import type { LessonRequest, Lesson } from '../lessons/types';
@@ -283,6 +284,10 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
         },
       });
       atoms = await enrichAtomsWithEngagement(selected, lessonReq.session_id ?? null);
+      // Concept-orchestrator v1: apply per-student overrides + populate
+      // improved_since for the Improved badge. No-op without DB.
+      atoms = await applyStudentOverrides(atoms, lessonReq.session_id ?? null);
+      atoms = await applyImprovedSince(atoms);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
@@ -358,6 +363,9 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
         },
       });
       atoms = await enrichAtomsWithEngagement(selected, student_id);
+      // Concept-orchestrator v1 enrichment.
+      atoms = await applyStudentOverrides(atoms, student_id);
+      atoms = await applyImprovedSince(atoms);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);
@@ -404,6 +412,22 @@ async function handleAtomEngagement(req: ParsedRequest, res: ServerResponse): Pr
              last_recall_correct = COALESCE(EXCLUDED.last_recall_correct, atom_engagements.last_recall_correct)`,
       [student_id, atom_id, concept_id, recall_correct ?? null],
     );
+
+    // Concept-orchestrator v1 (E5): when the student fails, fire-and-forget
+    // a check on whether this is the 3rd failure in 7 days. If so, queue
+    // a personalized variant for next-render. Async — does not block the
+    // engagement response. Gated on VIDHYA_CONCEPT_ORCHESTRATOR=on.
+    if (
+      recall_correct === false &&
+      student_id &&
+      atom_id &&
+      process.env.VIDHYA_CONCEPT_ORCHESTRATOR === 'on'
+    ) {
+      maybeQueueRegenForStudent(student_id, atom_id).catch((err) => {
+        console.warn(`[lesson-routes] personalized regen check failed: ${(err as Error).message}`);
+      });
+    }
+
     res.statusCode = 204;
     res.end();
   } catch (err) {

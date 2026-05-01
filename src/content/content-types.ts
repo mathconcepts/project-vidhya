@@ -232,6 +232,18 @@ export interface ContentAtom {
   last_recall_correct?: boolean | null;
   cohort_error_pct?: number;
   cohort_n_seen?: number;
+
+  // ── Concept-orchestrator v1 enrichment (added by atom-loader extensions)
+  /** ISO timestamp of the active atom version's generated_at. The frontend
+   *  shows the "Improved" badge when this is newer than the student's
+   *  last_seen_at for the atom. Populated by applyImprovedSince(). */
+  improved_since?: string;
+  /** Plain-English reason copy for the Improved tooltip. From the
+   *  active version's atom_versions.improvement_reason field. */
+  improvement_reason?: string | null;
+  /** True when the served content is a per-student variant from
+   *  student_atom_overrides instead of the canonical atom. */
+  is_student_override?: boolean;
 }
 
 /**

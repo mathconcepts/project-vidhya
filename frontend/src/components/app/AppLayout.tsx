@@ -7,8 +7,9 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users } from 'lucide-react';
+import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Moon, Sun } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useCalmMode } from '@/hooks/useCalmMode';
 // v2.5: migrated from @/hooks/useAuth (Supabase Auth) to @/contexts/AuthContext
 // (Vidhya JWT). Backend only validates Vidhya JWTs — the Supabase hook was
 // frontend-only state that never matched what the API would accept.
@@ -46,6 +47,7 @@ export function AppLayout() {
   const [scrolled, setScrolled] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [persona, setPersona] = useState<Persona>('loading');
+  const [calmMode, , toggleCalm] = useCalmMode();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -90,10 +92,21 @@ export function AppLayout() {
 
   return (
     <div className="min-h-dvh bg-surface-950 text-white">
-      {/* Header — shadow on scroll */}
+      {/* Calm Mode floating toggle — always reachable, even when chrome is hidden */}
+      <button
+        onClick={toggleCalm}
+        aria-label={calmMode ? 'Exit Calm Mode' : 'Enter Calm Mode'}
+        title={calmMode ? 'Exit Calm Mode' : 'Calm Mode — hides chrome'}
+        className="fixed top-2 right-2 z-50 flex items-center justify-center w-9 h-9 rounded-full bg-surface-900/70 border border-surface-800 text-surface-400 hover:text-emerald-300 hover:border-emerald-500/50 backdrop-blur-md transition-colors"
+      >
+        {calmMode ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
+
+      {/* Header — shadow on scroll. Hidden in Calm Mode. */}
       <header className={clsx(
         'fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-12 bg-surface-950/95 border-b backdrop-blur-md transition-all duration-200',
         scrolled ? 'border-surface-800/80 shadow-lg shadow-black/20' : 'border-transparent',
+        calmMode && 'hidden',
       )}>
         <a href="/" className="flex items-center gap-2.5 min-w-[44px] min-h-[44px]">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
@@ -178,15 +191,18 @@ export function AppLayout() {
         </div>
       </header>
 
-      {/* Content */}
-      <main className="pt-12 pb-[calc(64px+env(safe-area-inset-bottom,0px))] min-h-dvh">
-        <div className="px-4 pt-2 pb-4 max-w-3xl mx-auto">
+      {/* Content — full-bleed in Calm Mode, otherwise padded for chrome */}
+      <main className={clsx(
+        'min-h-dvh',
+        calmMode ? 'pt-2 pb-2' : 'pt-12 pb-[calc(64px+env(safe-area-inset-bottom,0px))]',
+      )}>
+        <div className={clsx('px-4 pb-4 max-w-3xl mx-auto', calmMode ? 'pt-10' : 'pt-2')}>
           <Outlet />
         </div>
       </main>
 
-      {/* Floating Tutor FAB — hidden on /chat */}
-      {location.pathname !== '/chat' && (
+      {/* Floating Tutor FAB — hidden on /chat and in Calm Mode */}
+      {location.pathname !== '/chat' && !calmMode && (
         <motion.button
           onClick={() => navigate('/chat')}
           className="fixed z-50 right-4 w-14 h-14 rounded-full bg-violet-500 text-white shadow-lg shadow-violet-500/25 flex items-center justify-center hover:bg-violet-400 transition-colors cursor-pointer touch-manipulation"
@@ -198,9 +214,12 @@ export function AppLayout() {
         </motion.button>
       )}
 
-      {/* Bottom Nav — persona-aware tabs with animated active indicator */}
+      {/* Bottom Nav — persona-aware tabs with animated active indicator. Hidden in Calm Mode. */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-surface-950/95 border-t border-surface-800/80 backdrop-blur-md"
+        className={clsx(
+          'fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-surface-950/95 border-t border-surface-800/80 backdrop-blur-md',
+          calmMode && 'hidden',
+        )}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         {persona === 'loading' ? (

@@ -12,11 +12,13 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
+import { MasteryParticle, shouldCelebrate, markCelebrated } from './MasteryParticle';
+import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
-  AlertTriangle, Sparkles, Eye,
+  AlertTriangle, Sparkles, Eye, Clock,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -243,6 +245,8 @@ export interface AtomCardRendererProps {
 export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: AtomCardRendererProps) {
   const [index, setIndex] = useState(0);
   const [errorStreak, setErrorStreak] = useState(0);
+  const [celebrating, setCelebrating] = useState(false);
+  const [completedIdx, setCompletedIdx] = useState<Set<number>>(() => new Set());
 
   const engagement = useEngagement(
     conceptId,
@@ -252,6 +256,10 @@ export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: At
   );
 
   const current = atoms[index];
+  const readingSeconds = useMemo(
+    () => (current ? estimateReadingTime(current.content) : 0),
+    [current?.id, current?.content],
+  );
 
   useEffect(() => {
     if (!current) return;
@@ -264,7 +272,18 @@ export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: At
 
   const next = (recallCorrect?: boolean) => {
     if (current) engagement.onCardLeave(current, recallCorrect);
+    setCompletedIdx((prev) => {
+      const n = new Set(prev);
+      n.add(index);
+      return n;
+    });
     if (index >= atoms.length - 1) {
+      // Final atom — fire one mastery particle (gated per concept-per-day).
+      if (shouldCelebrate(conceptId)) {
+        markCelebrated(conceptId);
+        setCelebrating(true);
+        setTimeout(() => setCelebrating(false), 1600);
+      }
       onComplete?.();
     } else {
       setIndex((i) => i + 1);
@@ -272,6 +291,21 @@ export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: At
   };
 
   const prev = () => setIndex((i) => Math.max(0, i - 1));
+
+  // Swipe gestures (E3): left = next, right = prev, down = exit (back nav).
+  const handleDragEnd = (_e: unknown, info: PanInfo) => {
+    const { offset, velocity } = info;
+    const SWIPE_THRESHOLD = 60;
+    const VELOCITY_THRESHOLD = 400;
+    const horizontalDominant = Math.abs(offset.x) > Math.abs(offset.y);
+    if (horizontalDominant) {
+      if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) next();
+      else if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) prev();
+    } else if (offset.y > SWIPE_THRESHOLD * 1.5 && index === atoms.length - 1) {
+      // Down swipe on the last atom signals "I'm done with this concept."
+      onComplete?.();
+    }
+  };
 
   if (!current) {
     return (
@@ -285,25 +319,36 @@ export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: At
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      {/* Progress dots */}
+      {/* Mastery dots — emerald fills as atoms complete; violet marks the active one (E2). */}
       <div className="flex items-center justify-center gap-1.5 mb-4">
-        {atoms.map((_, i) => (
-          <div
-            key={i}
-            className={clsx(
-              'h-1.5 rounded-full transition-all',
-              i === index ? 'w-6 bg-violet-500' : i < index ? 'w-1.5 bg-violet-500/40' : 'w-1.5 bg-surface-700',
-            )}
-          />
-        ))}
+        {atoms.map((_, i) => {
+          const isActive = i === index;
+          const isComplete = completedIdx.has(i) || i < index;
+          return (
+            <motion.div
+              key={i}
+              layout
+              className={clsx(
+                'h-1.5 rounded-full transition-colors',
+                isActive ? 'w-6 bg-violet-500' : isComplete ? 'w-1.5 bg-emerald-500' : 'w-1.5 bg-surface-700',
+              )}
+            />
+          );
+        })}
       </div>
+
+      <MasteryParticle active={celebrating} />
 
       <AnimatePresence mode="wait">
         <motion.div
           key={current.id}
           {...variants}
           exit={{ opacity: 0, y: -10 }}
-          className="p-5 rounded-xl bg-surface-900 border border-surface-800"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={handleDragEnd}
+          className="p-5 rounded-xl bg-surface-900 border border-surface-800 touch-pan-y"
         >
           <div className="flex items-center gap-2 mb-3 text-xs uppercase tracking-wider text-violet-300/80">
             <Icon size={14} />
@@ -311,6 +356,10 @@ export function AtomCardRenderer({ atoms, conceptId, studentId, onComplete }: At
             {current.engagement_count != null && current.engagement_count > 0 && (
               <span className="text-surface-500">· revisit #{current.engagement_count + 1}</span>
             )}
+            <span className="ml-auto flex items-center gap-1 text-surface-500 normal-case tracking-normal">
+              <Clock size={12} />
+              {formatReadingTime(readingSeconds)}
+            </span>
           </div>
 
           {current.atom_type === 'worked_example' ? (

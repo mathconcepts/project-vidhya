@@ -12,6 +12,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from '@/hooks/useSession';
 import { apiFetch } from '@/hooks/useApi';
+import { useNavigate } from 'react-router-dom';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { Loader2, CheckCircle, XCircle, ChevronRight, BookOpen, Zap, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -78,6 +79,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 
 export default function StudymateSessionPage() {
   const sessionId = useSession();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const examId = searchParams.get('exam') ?? 'gate-ma';
 
@@ -316,6 +318,14 @@ export default function StudymateSessionPage() {
           >
             New Session
           </button>
+          {!isAnonymous && (
+            <button
+              onClick={() => navigate('/planned')}
+              className="w-full py-3 rounded-2xl bg-surface-800 border border-surface-700 text-surface-200 text-sm font-semibold hover:bg-surface-700 transition-colors inline-flex items-center justify-center gap-1.5"
+            >
+              Continue your plan <ChevronRight size={14} />
+            </button>
+          )}
           <a href="/" className="text-sm text-surface-400 hover:text-surface-300 transition-colors">
             Back to home
           </a>

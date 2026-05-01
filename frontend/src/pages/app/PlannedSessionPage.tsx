@@ -33,8 +33,10 @@ import { WelcomeBackCard } from '@/components/app/WelcomeBackCard';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
   Sparkles, RefreshCw, AlertCircle, ChevronRight,
-  Bookmark, Settings, Plus, Trash2,
+  Bookmark, Settings, Plus, Trash2, ChevronDown,
 } from 'lucide-react';
+import { CompoundingCard } from '@/components/app/CompoundingCard';
+import { DigestChip } from '@/components/app/DigestChip';
 import { clsx } from 'clsx';
 
 // ============================================================================
@@ -185,6 +187,7 @@ export default function PlannedSessionPage() {
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [closurePassed, setClosurePassed] = useState(false);
+  const [rationaleOpen, setRationaleOpen] = useState<Record<string, boolean>>({});
   // P5: gbrain summary for WelcomeBackCard lapse detection
   const [gbrainSummary, setGbrainSummary] = useState<any>(null);
   const [userMeta, setUserMeta] = useState<{ created_at?: string } | null>(null);
@@ -807,21 +810,31 @@ export default function PlannedSessionPage() {
               animate="visible"
               exit={{ opacity: 0 }}
             >
+              {/* CompoundingCard + DigestChip — north-star pillar surfaces daily */}
+              <CompoundingCard />
+              <DigestChip sessionId="" />
+
               {/* Headline */}
               <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">
                 <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-1">Your plan</div>
                 <div className="text-lg font-semibold text-surface-100 mb-2">{plan.headline}</div>
-                <div className="flex gap-3 text-xs text-surface-400">
+                <div className="flex gap-3 text-xs text-surface-400 flex-wrap">
                   <span>{plan.budget.context} session</span>
                   <span>·</span>
                   <span>{plan.total_estimated_minutes} min total</span>
-                  <button
-                    onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
-                    className="ml-auto text-surface-600 hover:text-surface-400 transition-colors underline text-xs"
+                  <Link
+                    to="/exam-strategy"
+                    className="ml-auto text-violet-400 hover:text-violet-300 transition-colors inline-flex items-center gap-0.5 text-xs"
                   >
-                    Change time
-                  </button>
+                    See your full strategy <ChevronRight className="w-3 h-3" />
+                  </Link>
                 </div>
+                <button
+                  onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
+                  className="mt-2 text-surface-600 hover:text-surface-400 transition-colors underline text-xs"
+                >
+                  Change time
+                </button>
               </div>
 
               {/* v2.6: Compounding progress ribbon. "completed N of M today"
@@ -894,7 +907,20 @@ export default function PlannedSessionPage() {
                             <span className="text-xs text-surface-500">~{action.estimated_minutes} min</span>
                           </div>
                           <div className="text-sm font-semibold text-surface-100 mb-1">{action.title}</div>
-                          <div className="text-xs text-surface-400 leading-relaxed">{action.rationale}</div>
+                          {action.rationale && (
+                            <div>
+                              <button
+                                onClick={() => setRationaleOpen(prev => ({ ...prev, [action.id]: !prev[action.id] }))}
+                                className="text-[11px] text-surface-500 hover:text-surface-400 transition-colors inline-flex items-center gap-0.5 mb-1"
+                              >
+                                Why this order
+                                <ChevronDown className={clsx('w-3 h-3 transition-transform', rationaleOpen[action.id] && 'rotate-180')} />
+                              </button>
+                              {rationaleOpen[action.id] && (
+                                <div className="text-xs text-surface-400 leading-relaxed mb-1">{action.rationale}</div>
+                              )}
+                            </div>
+                          )}
 
                           {/* Controls */}
                           {doneState === 'pending' && (
@@ -1036,7 +1062,7 @@ export default function PlannedSessionPage() {
           tomorrowPriority={plan.top_priorities?.[0]?.topic}
           onContinue={() => {
             setClosurePassed(true);
-            navigate('/');
+            navigate('/planned');
           }}
         />
       )}

@@ -250,10 +250,10 @@ async function handleCompounding(req: ParsedRequest, res: ServerResponse): Promi
   const problems30d = recentAttempts.length;
 
   // Cadence: show when there's something to celebrate. Either:
-  //   - 5+ problems in last 30 days (active student)
+  //   - 1+ problems in last 30 days (lowered from 5 so returning students see it immediately)
   //   - At least 1 concept mastered
   // Otherwise hide (no compounding-evidence to show).
-  const should_show = problems30d >= 5 || conceptsMastered >= 1;
+  const should_show = problems30d >= 1 || conceptsMastered >= 1;
 
   if (!should_show) {
     return sendJSON(res, { should_show: false, headline: '' });

@@ -23,6 +23,7 @@ export type Source =
   | 'uploads'             // user's own uploads (intent-gated)
   | 'uploads-blended'     // user's uploads, surfaced alongside primary source
   | 'community'           // community repo (unsubscribed)
+  | 'kag'                 // KAG corpus (pre-verified, Wolfram-grounded)
   | 'generated'           // LLM live generation
   | 'wolfram'             // Wolfram live query
   | 'declined';           // intentionally declined

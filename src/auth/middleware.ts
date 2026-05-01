@@ -56,6 +56,34 @@ export async function requireRole(
   return auth;
 }
 
+/**
+ * Require the user to have ANY of the listed roles (or a role ranked above any of them).
+ * Use this when an endpoint should be accessible by multiple distinct roles, e.g.
+ * ['teacher', 'admin'] — admin already passes requireRole('teacher') via roleGte,
+ * but the explicit list makes the intent self-documenting.
+ */
+export async function requireAnyRole(
+  req: ParsedRequest,
+  res: ServerResponse,
+  allowed_roles: Role[],
+): Promise<AuthResult | null> {
+  const auth = await getCurrentUser(req);
+  if (!auth) {
+    sendJSON(res, { error: 'authentication required' }, 401);
+    return null;
+  }
+  const ok = allowed_roles.some(r => roleGte(auth.user.role, r));
+  if (!ok) {
+    sendJSON(res, {
+      error: 'insufficient permissions',
+      allowed_roles,
+      current_role: auth.user.role,
+    }, 403);
+    return null;
+  }
+  return auth;
+}
+
 /** Same as requireRole but just requires *any* signed-in user */
 export async function requireAuth(req: ParsedRequest, res: ServerResponse): Promise<AuthResult | null> {
   const auth = await getCurrentUser(req);

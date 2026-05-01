@@ -160,7 +160,8 @@ export class InMemoryVectorStore implements VectorStore {
     const denominator = Math.sqrt(normA) * Math.sqrt(normB);
     if (denominator === 0) return 0;
 
-    return dotProduct / denominator;
+    const sim = dotProduct / denominator;
+    return Number.isFinite(sim) ? sim : 0;
   }
 
   private matchesFilter(doc: VectorDocument, filter: VectorFilter): boolean {
@@ -326,7 +327,8 @@ export class SemanticSearchService {
     const denominator = Math.sqrt(normA) * Math.sqrt(normB);
     if (denominator === 0) return 0;
 
-    return dotProduct / denominator;
+    const sim = dotProduct / denominator;
+    return Number.isFinite(sim) ? sim : 0;
   }
 }
 

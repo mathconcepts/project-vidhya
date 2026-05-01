@@ -91,6 +91,32 @@ async function _routeContentImpl(req: RouteRequest): Promise<RouteResult> {
   const rejected_because: Record<string, string> = {};
   const considered: Source[] = [];
 
+  // 0. KAG corpus (highest priority — pre-verified, Wolfram-grounded)
+  if (concept_id) {
+    considered.push('kag');
+    try {
+      const { getKagEntry } = await import('./kag-store');
+      const kag = getKagEntry(concept_id);
+      if (kag) {
+        return {
+          ok: true,
+          intent,
+          source: 'kag',
+          content: kag.content,
+          concept_id,
+          source_ref: `kag:${kag.generated_at}`,
+          licence: 'generated-wolfram-verified',
+          disclosure: 'From KAG corpus — generated and verified with Wolfram Alpha grounding.',
+          considered,
+          rejected_because,
+        };
+      }
+      rejected_because.kag = 'no KAG entry for concept_id';
+    } catch (e: any) {
+      rejected_because.kag = `kag-store error: ${e?.message ?? 'unknown'}`;
+    }
+  }
+
   // Intent-specific early routes first
   if (intent === 'find-in-uploads') {
     considered.push('uploads');

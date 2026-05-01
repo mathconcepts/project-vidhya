@@ -22,7 +22,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ServerResponse } from 'http';
 import { sendJSON, sendError, type ParsedRequest, type RouteHandler } from '../lib/route-helpers';
-import { requireRole, requireAuth } from '../auth/middleware';
+import { requireRole, requireAnyRole, requireAuth } from '../auth/middleware';
 import {
   listUsers,
   getUserById,
@@ -55,6 +55,26 @@ interface AnnouncementStore {
 const announcementStore = createFlatFileStore<AnnouncementStore>({
   path: '.data/teaching-announcements.json',
   defaultShape: () => ({ version: 1, by_teacher: {} }),
+});
+
+// ============================================================================
+// Content review store
+// ============================================================================
+
+interface ContentReviewItem {
+  id: string;
+  concept_id: string;
+  content_snippet: string;
+  flagged_by: string;
+  flagged_at: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by?: string;
+  reviewed_at?: string;
+}
+
+const contentReviewStore = createFlatFileStore<ContentReviewItem[]>({
+  path: '.data/content-review.json',
+  defaultShape: () => [],
 });
 
 // ============================================================================
@@ -619,6 +639,61 @@ async function handleDismissPushedReview(req: ParsedRequest, res: ServerResponse
 }
 
 // ============================================================================
+// Handlers: content review
+// ============================================================================
+
+async function handleListContentReview(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAnyRole(req, res, ['teacher', 'admin']);
+  if (!auth) return;
+
+  const items = contentReviewStore.read();
+  const pending = items.filter(item => item.status === 'pending');
+  sendJSON(res, { items: pending });
+}
+
+async function handleApproveContentReview(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAnyRole(req, res, ['teacher', 'admin']);
+  if (!auth) return;
+
+  const id = req.params.id;
+  if (!id) return sendError(res, 400, 'id required');
+
+  const items = contentReviewStore.read();
+  const idx = items.findIndex(item => item.id === id);
+  if (idx === -1) return sendError(res, 404, 'item not found');
+
+  items[idx] = {
+    ...items[idx],
+    status: 'approved',
+    reviewed_by: auth.user.id,
+    reviewed_at: new Date().toISOString(),
+  };
+  contentReviewStore.write(items);
+  sendJSON(res, { ok: true, item: items[idx] });
+}
+
+async function handleRejectContentReview(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAnyRole(req, res, ['teacher', 'admin']);
+  if (!auth) return;
+
+  const id = req.params.id;
+  if (!id) return sendError(res, 400, 'id required');
+
+  const items = contentReviewStore.read();
+  const idx = items.findIndex(item => item.id === id);
+  if (idx === -1) return sendError(res, 404, 'item not found');
+
+  items[idx] = {
+    ...items[idx],
+    status: 'rejected',
+    reviewed_by: auth.user.id,
+    reviewed_at: new Date().toISOString(),
+  };
+  contentReviewStore.write(items);
+  sendJSON(res, { ok: true, item: items[idx] });
+}
+
+// ============================================================================
 
 export const teachingRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   { method: 'GET',  path: '/api/teaching/weekly-brief',      handler: handleWeeklyBrief },
@@ -629,4 +704,7 @@ export const teachingRoutes: Array<{ method: string; path: string; handler: Rout
   { method: 'GET',  path: '/api/teaching/announcement',      handler: handleGetAnnouncement },
   { method: 'GET',  path: '/api/student/my-teacher',         handler: handleMyTeacher },
   { method: 'POST', path: '/api/student/dismiss-review',     handler: handleDismissPushedReview },
+  { method: 'GET',  path: '/api/teaching/content-review',              handler: handleListContentReview },
+  { method: 'POST', path: '/api/teaching/content-review/:id/approve',  handler: handleApproveContentReview },
+  { method: 'POST', path: '/api/teaching/content-review/:id/reject',   handler: handleRejectContentReview },
 ];

@@ -1,0 +1,93 @@
+# Best-practice authoring templates for calculus concepts.
+#
+# The Concept Orchestrator reads this file when generating atoms for a
+# concept whose meta.topic_family is "calculus". Each atom_type has a
+# scaffold name that the LLM prompt knows how to expand, plus optional
+# bloom_floor and exam_pattern_required hints.
+
+topic_family: calculus
+
+intuition:
+  scaffold: zoom-to-tangent
+  guidance: |
+    Open with a physical or geometric picture before any symbols. Ground in
+    motion (position → velocity), area (Riemann strips), or shape (slope of
+    curve). Avoid epsilon-delta until formal_definition.
+  exam_pattern_required: false
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: epsilon-delta
+  guidance: |
+    State the rule cleanly with display math. For derivatives use the limit
+    form. For integrals use Riemann sums. Two-sentence prose cap.
+  exam_pattern_required: false
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Six steps maximum. Each step labeled. Steps separated by `\n---\n` so
+    scaffold-fade can blank trailing steps on revisit. Final line "Answer: ..."
+    so :::verify can confirm via Wolfram.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two-three trap pairs. State the wrong move, the right move, and one-line
+    "why people do the wrong thing." Link to a tested_by_atom for cohort
+    error tracking.
+  exam_pattern_required: true
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    Single fast question matching the worked_example pattern but with
+    different numbers. Recall buttons appear automatically.
+  exam_pattern_required: false
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the rule statement; back gives it. Used by SM-2 spaced
+    repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: rate-as-slope
+  guidance: |
+    Use an embedded :::interactive{ref=...} or :::parametric directive.
+    Think slope-of-tangent, area-under-curve, or vector-field for multivar.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative GATE/JEE stem with a one-line "when you see this
+    phrasing, do X" cue. Gated by exam_ids.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    Two-line mnemonic for a memorizable rule (e.g., LIATE for parts).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two rules from this concept (e.g., chain + product).
+  bloom_floor: 4
+
+hook:
+  scaffold: motion-or-area
+  guidance: |
+    One sentence naming the problem this concept solves; one sentence
+    showing where it appears on the exam. Lead with the question, not
+    the formalism.
+  bloom_floor: 1

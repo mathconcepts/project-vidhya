@@ -1,0 +1,59 @@
+topic_family: discrete-math
+
+intuition:
+  scaffold: small-case-pattern
+  guidance: |
+    Enumerate the first 3-4 cases by hand. Spot the pattern. Then state
+    the rule.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: combinatorial-or-logical
+  guidance: |
+    Display math: combinatorial formula (C(n,k), permutations), or logical
+    rule (induction step, propositional equivalence).
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Plug numbers into the formula or apply the rule step by step.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: order vs no-order in counting, missing the empty case in
+    induction, confusing P → Q with Q → P.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: tree-or-table
+  guidance: |
+    Selection tree, truth table, or Pascal's triangle.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  bloom_floor: 4
+
+hook:
+  scaffold: counting-question
+  bloom_floor: 1

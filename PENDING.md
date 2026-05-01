@@ -331,13 +331,15 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 
 **Detail:** Concept-orchestrator v1 generates text-mode atoms (markdown + math + interactive directives). Multi-modal extension: auto-generate Manim source for visual_analogy atoms (already have the authoring scaffold from v4.4.0), auto-generate audio narration for intuition atoms via TTS, auto-generate slide-style summaries. Pros: content reaches multi-modal learners; reading-disabled accessibility. Cons: Manim render cost + audio storage + significantly more complex review UX. **Depends on:** Manim authoring stable + TTS provider + storage.
 
-### 4.16 Lazy-load PYQ corpus when corpus exceeds 5k entries
+### 4.16 Lazy-load PYQ corpus when corpus exceeds 5k entries — ✓ NOT NEEDED 2026-05-01
 
-**Status:** flagged in concept-orchestrator perf review
-**Priority:** P2
-**Effort:** S (human ~half day / CC ~20 min)
+**Status:** verified obsolete during v2 review
+**Priority:** —
+**Effort:** —
 
-**Detail:** v1 loads the entire PYQ corpus at boot for fast file-lookup grounding. Memory footprint becomes a concern past ~5,000 entries. Switch to lazy load + LRU cache when corpus crosses threshold. Equivalent fallback path: 4.11 vector search supersedes this entirely. **Depends on:** PYQ corpus growing or 4.11 shipping (whichever first).
+**Detail:** This entry was pre-emptive — written assuming v1's `pyq-grounding.ts` would do a boot-time file load. The shipped implementation actually queries the DB per-lookup with `LIMIT 3` and indexed `(topic, exam_id)` columns, so there's no in-memory corpus to lazy-load. The legacy `src/content/resolver.ts` does load a JSON bundle at boot for the non-orchestrator content path, but that's a separate concern unrelated to the orchestrator's grounding hot loop.
+
+If the live PYQ count grows past 50k AND grounding latency becomes a problem, the right move is 4.11 (vector search via pgvector) — no in-memory load required.
 
 ---
 

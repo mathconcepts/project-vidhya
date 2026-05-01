@@ -151,6 +151,79 @@ async function handleActivate(req: ParsedRequest, res: ServerResponse): Promise<
   sendJSON(res, { activated: ok });
 }
 
+interface BulkActivateBody {
+  /** [{atom_id, version_n}, ...]. version_n optional — when omitted,
+   *  the most recent (highest) version_n for that atom is activated. */
+  items?: Array<{ atom_id: string; version_n?: number }>;
+}
+
+interface BulkActivateResult {
+  total: number;
+  activated: number;
+  failed: number;
+  failures: Array<{ atom_id: string; reason: string }>;
+}
+
+async function handleBulkActivate(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!checkFeatureFlag(res)) return;
+  const role = await requireRole(req, res, ['admin', 'owner', 'institution']);
+  if (!role) return;
+  const body = (req.body || {}) as BulkActivateBody;
+  if (!Array.isArray(body.items) || body.items.length === 0) {
+    return sendError(res, 400, 'items array required (non-empty)');
+  }
+  if (body.items.length > 100) {
+    return sendError(res, 400, 'bulk-activate capped at 100 items per call');
+  }
+  for (const it of body.items) {
+    if (!it || typeof it.atom_id !== 'string') {
+      return sendError(res, 400, 'each item must be { atom_id: string, version_n?: number }');
+    }
+    if (it.version_n !== undefined && typeof it.version_n !== 'number') {
+      return sendError(res, 400, 'version_n must be a number when present');
+    }
+  }
+
+  const result: BulkActivateResult = {
+    total: body.items.length,
+    activated: 0,
+    failed: 0,
+    failures: [],
+  };
+
+  // Sequential activation — each call is a transaction in the DB layer
+  // and the partial-unique-index serializes per-atom anyway. ~10ms each;
+  // 100 items = ~1s total. Acceptable for an admin click action.
+  for (const it of body.items) {
+    try {
+      let target_version = it.version_n;
+      if (target_version === undefined) {
+        // Look up the latest version for this atom — the typical "approve
+        // newly generated batch" case where the admin doesn't know the
+        // version_n. listVersions returns DESC, so [0] is latest.
+        const versions = await listVersions(it.atom_id);
+        if (versions.length === 0) {
+          result.failed++;
+          result.failures.push({ atom_id: it.atom_id, reason: 'no versions exist' });
+          continue;
+        }
+        target_version = versions[0].version_n;
+      }
+      const ok = await activate(it.atom_id, target_version);
+      if (ok) result.activated++;
+      else {
+        result.failed++;
+        result.failures.push({ atom_id: it.atom_id, reason: 'activate returned false (no matching version?)' });
+      }
+    } catch (err) {
+      result.failed++;
+      result.failures.push({ atom_id: it.atom_id, reason: (err as Error).message });
+    }
+  }
+
+  sendJSON(res, result);
+}
+
 export const conceptOrchestratorRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   { method: 'POST', path: '/api/admin/concept-orchestrator/generate', handler: handleGenerate },
   { method: 'GET',  path: '/api/admin/concept-orchestrator/status/:job_id', handler: handleStatus },
@@ -158,4 +231,5 @@ export const conceptOrchestratorRoutes: Array<{ method: string; path: string; ha
   { method: 'GET',  path: '/api/admin/concept-orchestrator/cost/:concept_id', handler: handleCost },
   { method: 'GET',  path: '/api/admin/atoms/:atom_id/versions', handler: handleListVersions },
   { method: 'POST', path: '/api/admin/atoms/:atom_id/activate', handler: handleActivate },
+  { method: 'POST', path: '/api/admin/atoms/bulk-activate', handler: handleBulkActivate },
 ];

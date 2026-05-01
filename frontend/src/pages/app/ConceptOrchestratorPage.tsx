@@ -208,7 +208,7 @@ function GenerateProgressModal({
           </div>
         </div>
 
-        <div className="space-y-1 max-h-64 overflow-y-auto text-xs">
+        <div className="space-y-1 max-h-48 overflow-y-auto text-xs">
           {(job?.events ?? []).map((e, i) => (
             <EventRow key={i} event={e} />
           ))}
@@ -220,14 +220,153 @@ function GenerateProgressModal({
           )}
         </div>
 
-        <div className="mt-4 pt-3 border-t border-surface-800 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs text-surface-300 hover:bg-surface-800"
-          >
-            {job?.status === 'done' || job?.status === 'failed' ? 'Close' : 'Run in background'}
-          </button>
+        {job?.status === 'done' && job.result && (
+          <BulkApprovePanel job={job} onClose={onClose} />
+        )}
+
+        {job?.status !== 'done' && (
+          <div className="mt-4 pt-3 border-t border-surface-800 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg text-xs text-surface-300 hover:bg-surface-800"
+            >
+              {job?.status === 'failed' ? 'Close' : 'Run in background'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Bulk-approve panel — shown when the orchestrator job completes.
+ * Lists every accepted atom with a checkbox (default checked) so admin
+ * can deselect any they want to review individually before activation.
+ * One click activates all checked atoms via the bulk-activate endpoint.
+ */
+function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void }) {
+  const accepted = job.result?.atoms ?? [];
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(accepted.map((a) => a.atom_id)));
+  const [submitting, setSubmitting] = useState(false);
+  const [outcome, setOutcome] = useState<{ activated: number; failed: number } | null>(null);
+
+  if (accepted.length === 0) {
+    return (
+      <div className="mt-4 pt-3 border-t border-surface-800 flex items-center justify-between">
+        <span className="text-xs text-surface-500">No atoms to approve.</span>
+        <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-surface-300 hover:bg-surface-800">
+          Close
+        </button>
+      </div>
+    );
+  }
+
+  const toggle = (atom_id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(atom_id)) next.delete(atom_id);
+      else next.add(atom_id);
+      return next;
+    });
+  };
+
+  const allChecked = selected.size === accepted.length;
+  const toggleAll = () => {
+    setSelected(allChecked ? new Set() : new Set(accepted.map((a) => a.atom_id)));
+  };
+
+  const submit = async () => {
+    if (selected.size === 0) return;
+    setSubmitting(true);
+    setOutcome(null);
+    try {
+      const items = Array.from(selected).map((atom_id) => ({ atom_id }));
+      const r = await fetch('/api/admin/atoms/bulk-activate', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ items }),
+      });
+      if (!r.ok) {
+        setOutcome({ activated: 0, failed: items.length });
+        return;
+      }
+      const j = await r.json();
+      setOutcome({ activated: j.activated, failed: j.failed });
+    } catch {
+      setOutcome({ activated: 0, failed: selected.size });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 pt-3 border-t border-surface-800">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-white">
+          Approve {selected.size} of {accepted.length}
+        </span>
+        <button onClick={toggleAll} className="text-[10px] uppercase tracking-wider text-violet-400 hover:text-violet-300">
+          {allChecked ? 'Deselect all' : 'Select all'}
+        </button>
+      </div>
+
+      <div className="max-h-40 overflow-y-auto space-y-1 mb-3 text-xs">
+        {accepted.map((a: any) => {
+          const checked = selected.has(a.atom_id);
+          const score = a.meta?.llm_judge_score;
+          return (
+            <label
+              key={a.atom_id}
+              className="flex items-center gap-2 px-2 py-1 rounded hover:bg-surface-800 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => toggle(a.atom_id)}
+                className="accent-violet-400"
+              />
+              <span className="font-mono text-[10px] text-surface-500 w-20 truncate">
+                {a.atom_type}
+              </span>
+              <span className="flex-1 text-surface-300 truncate">{a.atom_id}</span>
+              {score != null && (
+                <span className="text-emerald-300 tabular-nums text-[10px]">judge {Number(score).toFixed(1)}</span>
+              )}
+            </label>
+          );
+        })}
+      </div>
+
+      {outcome && (
+        <div
+          className={clsx(
+            'mb-3 px-2.5 py-1.5 rounded text-xs',
+            outcome.failed > 0
+              ? 'bg-amber-500/10 text-amber-200'
+              : 'bg-emerald-500/10 text-emerald-200',
+          )}
+        >
+          {outcome.activated} activated{outcome.failed > 0 ? `, ${outcome.failed} failed` : ''}.
+          {outcome.failed === 0 && ' Atoms are now live.'}
         </div>
+      )}
+
+      <div className="flex items-center justify-end gap-2">
+        <button
+          onClick={onClose}
+          disabled={submitting}
+          className="px-3 py-1.5 rounded-lg text-xs text-surface-300 hover:bg-surface-800"
+        >
+          Close
+        </button>
+        <button
+          onClick={submit}
+          disabled={submitting || selected.size === 0 || outcome?.activated === selected.size}
+          className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs hover:bg-emerald-500/30 disabled:opacity-50"
+        >
+          {submitting ? 'Activating…' : outcome?.activated === selected.size ? 'Activated' : `Activate ${selected.size}`}
+        </button>
       </div>
     </div>
   );

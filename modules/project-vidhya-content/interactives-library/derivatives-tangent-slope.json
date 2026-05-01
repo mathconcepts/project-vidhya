@@ -1,0 +1,21 @@
+{
+  "id": "derivatives-tangent-slope",
+  "tier": "mathbox",
+  "title": "Tangent line as h → 0",
+  "description": "The derivative is the slope of the tangent line. Drag h to watch the secant collapse into the tangent at the anchor point.",
+  "config": {
+    "function": "x^2",
+    "x": "[-2, 3]",
+    "y": "[-1, 9]",
+    "color": "#10b981"
+  },
+  "fallback": {
+    "tier": "static",
+    "src": "/media/derivatives/tangent-slope.svg",
+    "alt_text": "Plot of y = x squared on x ∈ [-2, 3]. The tangent line at x = 1 has slope 2; secant lines drawn for h = 1, 0.5, 0.1 visibly converge to the tangent as h shrinks."
+  },
+  "atoms_using": [
+    "calculus-derivatives.intuition",
+    "calculus-derivatives.formal-definition"
+  ]
+}

@@ -9,7 +9,7 @@ Vidhya is a focused, mobile-first exam-prep platform. Exam-agnostic by design �
 - **Frontend:** `frontend/src/App.tsx` — React SPA (pages in `frontend/src/pages/app/`)
 - **Deploy:** Render (auto-deploys from `main` branch) — see `render.yaml`
 - **DB:** Supabase (PostgreSQL + pgvector) — migrations in `supabase/migrations/`
-- **Live:** https://gate-math-api.onrender.com
+- **Live:** https://vidhya-demo.onrender.com
 
 ### Running Locally
 ```bash
@@ -109,10 +109,10 @@ All MOAT skills have SKILL.md at `.claude/skills/<name>/` and backing TypeScript
 For `/land-and-deploy` to skip the dry-run on subsequent runs.
 
 - **Platform:** Render (auto-deploys backend from `main` branch via `render.yaml`)
-- **Production URL:** https://gate-math-api.onrender.com
+- **Production URL:** https://vidhya-demo.onrender.com
 - **Frontend platform:** Netlify (auto-deploys via `netlify.toml`, separate repo target)
 - **Deploy workflow:** none — Render watches the `main` branch directly. There is no GitHub Actions deploy step.
-- **Health check:** `curl -sI https://gate-math-api.onrender.com` — the API root returns HTTP 403 by design (auth-gated). Treat any non-5xx response as "deploy is live"; treat 502/503 as "Render is still spinning the service up."
+- **Health check:** `curl -sI https://vidhya-demo.onrender.com` — the API root returns HTTP 403 by design (auth-gated). Treat any non-5xx response as "deploy is live"; treat 502/503 as "Render is still spinning the service up."
 - **Typical deploy duration:** ~2-5 minutes after push to `main`.
 - **Staging:** none configured.
 - **Persistent state caveat:** Render free tier uses ephemeral disk; `.data/` resets on restart/sleep. Paid plans get `/app/.data` mount per `render.yaml` comments.

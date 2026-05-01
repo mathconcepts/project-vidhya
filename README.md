@@ -65,7 +65,7 @@ Thirteen modules: core, auth, content, rendering, channels, learning, exams, lif
 
 ## Try it live
 
-**[→ Open live demo](https://gate-math-api.onrender.com/demo-login)** — logs you in as a demo student instantly. No account needed.
+**[→ Open live demo](https://vidhya-demo.onrender.com/demo-login)** — logs you in as a demo student instantly. No account needed.
 
 ---
 

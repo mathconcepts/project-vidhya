@@ -4,6 +4,89 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.3.0] - 2026-05-01 — ContentAtom v2 + PedagogyEngine + Daily Cards
+
+**Operator action:** migration `013_atom_engagements_cohort_signals.sql` runs automatically on server startup (idempotent, `IF NOT EXISTS`). The new `cohort_signals` table is populated nightly by `cohortAggregator` registered in `src/jobs/scheduler.ts`. No env vars added.
+
+### What changed for students
+
+- **Lessons now adapt to where you actually are.** A new content engine reads your mastery and serves the right kind of explanation: a hook+intuition pair when you're cold, formal definitions and worked examples when building, common-traps drills when solidifying, and rapid recall when exam-ready. Each concept is broken into typed atoms (hook, intuition, formal definition, worked example, micro exercise, common traps) instead of one monolithic page.
+- **Worked examples fade as you re-visit them.** On a second pass, the last step blanks out and you fill it in. On a third pass, the last two steps blank. You do more of the work each time — proven retention boost from cognitive load research.
+- **Get three wrong in a row → the lesson switches modality.** The engine notices the streak, injects a common-traps card, and pivots from text to visual analogy (or mnemonic, or worked example) until you reset.
+- **Exam in under three weeks → automatic mode shift.** When `exam_proximity_days < 21`, lessons reorder to lead with exam patterns and common traps, then recall and quick exercises. No setting to flip.
+- **New /daily route.** A minimal flip-card surface that returns one recall card per concept currently due via SM-2 (filtered to mastery 0.6-0.95). Empty queue says "All caught up for today" — no clutter, no busywork.
+- **"X% miss this on the practice problem" callouts on common-traps cards.** A nightly job aggregates anonymous engagement to surface real cohort error rates. Callout only appears once 10+ peers have hit the linked exercise — no callout means not enough data yet, not a missing feature.
+
+### What changed for content authors
+
+- **New atom format under `concepts/{concept_id}/atoms/*.md`.** Each atom is a markdown file with YAML frontmatter (id, atom_type, bloom_level, difficulty, exam_ids, optional scaffold_fade and tested_by_atom). 18 seed atoms shipped across calculus-derivatives, complex-numbers, and linear-algebra-eigenvalues.
+- **`meta.yaml` is additive.** Existing fields (title, exams, tags, contributor) preserved; new optional fields are `learning_objectives` (Bloom-aligned with mastery criteria) and `exam_overlays` (per-exam customisation: required bloom levels, skip-types, emphasis).
+- **Atoms with `exam_ids: ["*"]` are universal** — they bypass `skip_atom_types` overlays but still respect `required_bloom_levels`.
+- **Hot-reload in dev.** `fs.watch` on `modules/project-vidhya-content/concepts/` clears the atom cache automatically. Production uses explicit `reloadAtoms()`.
+
+### What changed for engineers
+
+- **PedagogyEngine is synchronous and pure** — `selectAtoms(conceptId, studentModel, sessionContext, routeRequest)`. No DB reads, no I/O. Engagement enrichment (count, last_recall_correct, cohort signals) happens in `lesson-routes.ts` AFTER selection via a single SELECT.
+- **Existing `StudentModel` reused as-is** — `mastery_vector: Record<concept_id, MasteryEntry>` keyed by concept_id. The plan-doc's invented shape was rejected during eng review.
+- **Session-local error streak lives on a separate `SessionContext`** — never persisted to `student_models`.
+- **`POST /api/lesson/compose` now returns `atoms[]` alongside `components[]`** (additive). Frontend `AtomCardRenderer` activates whenever atoms is non-empty; older clients continue to render legacy components. `personalize()` is marked `@deprecated` for follow-up removal.
+- **`POST /api/daily-cards` mirrors the existing `/review-today` pattern** — accepts `last_lesson_visit` map in body. SM-2 state stays in client IndexedDB; server doesn't need to track it.
+- **51 new vitest tests** (810 total): tier classification, E5 fallback chain, E6 countdown, exam overlay filtering, wildcard atom rule, atom-loader fallback chain, REGRESSION test for legacy components[] shape, engagement upsert SQL, cohort aggregator GROUP BY + ON CONFLICT math.
+
+### Added
+
+- `src/content/content-types.ts` — `ContentAtom`, `AtomType`, `BloomLevel`, `AnimationPreset`, `SessionContext`
+- `src/curriculum/types.ts` — `LearningObjective`, `ExamOverlay`, `ConceptMeta` (additive)
+- `src/content/atom-loader.ts` — `loadConceptAtoms`, `loadConceptMeta`, `reloadAtoms` + dev fs.watch
+- `src/content/pedagogy-engine.ts` — synchronous `selectAtoms` with tier ordering + E5 + E6 + overlay filtering
+- `src/jobs/cohort-aggregator.ts` — nightly aggregator writing `cohort_signals` (idempotent upsert)
+- `supabase/migrations/013_atom_engagements_cohort_signals.sql`
+- `frontend/src/components/lesson/AtomCardRenderer.tsx` — declarative `ATOM_ANIMATION_MAP`, scaffolding fade, cohort callout, debounced engagement
+- `frontend/src/pages/app/DailyCardsPage.tsx` + `/daily` route
+- 18 atom files across 3 seed concepts
+- New endpoints: `GET /api/lesson/:concept_id` (now returns atoms[]), `POST /api/lesson/:concept_id/engagement`, `GET /api/knowledge/concepts/:id/objectives`, `POST /api/daily-cards`
+
+### Changed
+
+- `src/api/lesson-routes.ts` — `POST /compose` returns atoms[] alongside components[]; new engagement enrichment join
+- `frontend/src/pages/app/LessonPage.tsx` — atom path activates when `lesson.atoms[]` is non-empty
+- `src/jobs/scheduler.ts` — registers nightly `cohortAggregator`
+- `meta.yaml` for 3 seed concepts — augmented with learning_objectives + exam_overlays
+
+### Deprecated
+
+- `src/lessons/personalizer.ts` — superseded by PedagogyEngine; stays in place as backward-compat fallback until all concepts have full atoms/ coverage and frontend confirms the atom path renders correctly.
+
+## [4.2.0] - 2026-05-01 — Persona shells + pillar synergy
+
+**Operator action:** none required. Three new API endpoints added under `/api/knowledge/tracks/:id/` (progress, next-concept, concept-tree) — no migrations needed, they read from existing `student_models` flat-file store.
+
+### What changed for students
+
+- **Your home screen now matches your actual goal.** If you're studying a curriculum (CBSE, JEE, etc.), you land on a concept map showing exactly what you've mastered and what's next today. If you're exam-focused, you land directly on your session plan. No more wrong-persona home.
+- **Compounding evidence is visible every day.** The Compounding card (your progress proof) now appears on the session plan page — every returning student sees it, not just those who happened to reach State C of the old home screen.
+- **Strategy is one tap away.** "See your full strategy →" link lives next to the plan headline. The exam strategy page is no longer an orphan URL.
+- **"Why this order" on every action card.** Tap to expand the GBrain rationale for why this topic is prioritised right now. Collapsed by default so it doesn't clutter the plan.
+- **No more dead ends after a session.** Finishing a planned session now returns you to `/planned` instead of the anonymous landing page. Drop-in practice (StudymateSession) shows a "Continue your plan →" button for signed-in users.
+- **Knowledge-track home — new.** `/knowledge-home` shows: track progress bar (mastered/total), today's recommended concept with a why-next rationale, full concept map with mastery status (green/violet/dim), CompoundingCard, and a K→E bridge card that surfaces once when you hit ≥70% curriculum coverage.
+- **Ready to add an exam? The app tells you.** When knowledge-track students hit ≥70% mastery, a one-time "Set your exam date →" card appears pointing to the onboarding flow. Shown once, remembered in localStorage.
+
+### What changed for teachers
+
+- **Confidence picker before briefs.** When you open a teaching brief, you rate your confidence in the concept (1–5). Rating 1 or 2 prepends a "Your prep" section: canonical definition, two worked examples, and the top misconceptions in your cohort. Rating 3–5 opens the brief as-is — no extra friction for concepts you know cold.
+- **UX: reduced friction throughout.** Dismissible welcome banner on the Teaching Dashboard; teacher shell now shows `Teach | Students` nav instead of the exam-student nav.
+
+### What changed for engineers
+
+- `frontend/src/components/app/AppLayout.tsx` — persona detection on mount. Reads `/api/student/profile`, derives persona (knowledge / exam / teacher), renders shell-specific nav. Skeleton shown while profile resolves to prevent flash of wrong nav.
+- `frontend/src/pages/app/KnowledgeHomePage.tsx` — new page at `/knowledge-home` for knowledge-track students.
+- `frontend/src/pages/app/Home.tsx` — redirect updated: knowledge-track users go to `/knowledge-home`, exam users go to `/planned`.
+- `src/api/knowledge-routes.ts` — three new endpoints: `GET /api/knowledge/tracks/:id/progress`, `GET /api/knowledge/tracks/:id/next-concept`, `GET /api/knowledge/tracks/:id/concept-tree`. All require auth; mastery data from `student_models.mastery_vector`.
+- `src/api/me-routes.ts` — CompoundingCard threshold lowered from 5 problems to 1. Card now appears after a single practice problem, not after 5.
+- `frontend/src/pages/app/PlannedSessionPage.tsx` — CompoundingCard + DigestChip added; strategy link; "Why this order" accordion per action card; post-completion navigates to `/planned`.
+- `frontend/src/pages/app/StudymateSessionPage.tsx` — "Continue your plan →" CTA for auth'd users at session end.
+- `frontend/src/pages/app/TeachingDashboardPage.tsx` — confidence picker (1–5) + animated "Your prep" section at confidence ≤ 2.
+
 ## [4.1.0] - 2026-05-01 — KAG corpus + content infrastructure hardening
 
 **Operator action:** none required. New flat files created on first write: `.data/kag-corpus.jsonl` (KAG store), `.data/content-review.json` (teaching content-review queue). Both are gitignored by the existing `.data/` rule. Optional: set `WOLFRAM_APP_ID` to enable Wolfram grounding in the KAG generator. Run `npx tsx scripts/kag-corpus-builder.ts --all` to seed the KAG corpus from the concept graph.

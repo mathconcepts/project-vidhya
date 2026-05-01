@@ -18,6 +18,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
 import {
   ChevronLeft, ChevronRight, Loader2, CheckCircle2, XCircle, Eye,
   Lightbulb, BookOpen, Target, Zap, AlertTriangle, Hash, GitBranch,
@@ -47,6 +48,8 @@ interface Lesson {
   concept_label: string;
   topic: string;
   components: any[];
+  /** ContentAtom v2 — present when the concept has atoms/ authored. Empty → legacy path. */
+  atoms?: ContentAtom[];
   estimated_minutes: number;
   difficulty_base: number;
   quality_score: number;
@@ -553,6 +556,29 @@ export default function LessonPage() {
     return (
       <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-300">
         {error || 'Could not load lesson.'}
+      </div>
+    );
+  }
+
+  // ContentAtom v2 path: when atoms[] is non-empty, render the atom card stack.
+  // Falls through to the legacy components[] renderer below otherwise.
+  if (lesson.atoms && lesson.atoms.length > 0) {
+    return (
+      <div className="space-y-4 max-w-2xl mx-auto">
+        <div className="flex items-start justify-between gap-2 px-4 pt-2">
+          <div>
+            <button onClick={() => navigate(-1)} className="text-xs text-surface-500 hover:text-surface-300 mb-1">
+              ← Back
+            </button>
+            <h1 className="text-xl font-bold text-surface-100">{lesson.concept_label}</h1>
+          </div>
+        </div>
+        <AtomCardRenderer
+          atoms={lesson.atoms}
+          conceptId={concept_id}
+          studentId={sessionId}
+          onComplete={() => navigate('/')}
+        />
       </div>
     );
   }

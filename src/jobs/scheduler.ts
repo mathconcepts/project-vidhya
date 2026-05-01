@@ -22,9 +22,11 @@
  */
 
 import { finaliseExpiredDeletions } from '../data-rights/delete';
+import { runCohortAggregator } from './cohort-aggregator';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 type JobHandle = {
   name: string;
@@ -63,6 +65,14 @@ register('healthScan', FIVE_MIN_MS, async () => {
     console.error(`[scheduler] health scan degraded: ${r.summary.unavailable} unavailable, ${r.summary.degraded} degraded`);
   }
   return r.summary;
+});
+
+register('cohortAggregator', DAY_MS, async () => {
+  // Nightly: roll up atom_engagements into cohort_signals so common_traps
+  // cards can render "X% miss this on the practice problem" callouts.
+  // Idempotent — safe if it overlaps a prior run.
+  const r = await runCohortAggregator();
+  return r;
 });
 
 // ─── Lifecycle ───────────────────────────────────────────────────────

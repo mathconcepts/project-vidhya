@@ -133,3 +133,117 @@ export interface ResolvedContent {
    */
   pedagogy_score?: number;
 }
+
+// ─── ContentAtom v2 (typed atomic content units) ─────────────────────────
+
+/**
+ * Bloom's Taxonomy levels (numeric so comparisons work, e.g. `bloom_level >= 3`).
+ * 1 = remember, 2 = understand, 3 = apply, 4 = analyze, 5 = evaluate, 6 = create.
+ */
+export type BloomLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
+ * Pedagogical purpose of an atom — orthogonal to modality.
+ *
+ *   - hook              : grab attention; usually 1-2 sentences with a question or surprise
+ *   - intuition         : informal "why this works" before formalism
+ *   - formal_definition : the precise statement
+ *   - visual_analogy    : geometric/diagrammatic intuition
+ *   - worked_example    : step-by-step solution; supports scaffolding fade
+ *   - micro_exercise    : one-question check; produces recall_correct signal
+ *   - common_traps      : enumeration of mistakes students make; cohort callout target
+ *   - retrieval_prompt  : flashcard-style recall; produces recall_correct signal
+ *   - interleaved_drill : multi-concept drill; used in solidifying tier
+ *   - mnemonic          : memory device
+ *   - exam_pattern      : exam-specific cue/format; gated by preferred_exam_id
+ */
+export type AtomType =
+  | 'hook'
+  | 'intuition'
+  | 'formal_definition'
+  | 'visual_analogy'
+  | 'worked_example'
+  | 'micro_exercise'
+  | 'common_traps'
+  | 'retrieval_prompt'
+  | 'interleaved_drill'
+  | 'mnemonic'
+  | 'exam_pattern';
+
+/**
+ * Animation preset names — declarative mapping in LessonPage.
+ * Each AtomType gets a default in ATOM_ANIMATION_MAP; atoms can override
+ * via frontmatter `animation_preset`.
+ */
+export type AnimationPreset =
+  | 'fade-in'
+  | 'slide-up'
+  | 'reveal-highlight'
+  | 'step-unfold'
+  | 'scale-in'
+  | 'bounce-alert'
+  | 'shake-then-settle'
+  | 'flip-reveal';
+
+/**
+ * Encoding modality, orthogonal to AtomType. A worked_example can be visual
+ * or text; a hook can be mnemonic or drill. Phase 1 ignores this; Phase 2
+ * uses it for modality-profile personalisation.
+ */
+export type Modality = 'visual' | 'text' | 'mnemonic' | 'drill';
+
+/**
+ * One atomic unit of content. Authored as a markdown file under
+ * `concepts/{concept_id}/atoms/*.md` with YAML frontmatter.
+ *
+ * Loaded by atom-loader.ts; selected by PedagogyEngine; rendered by LessonPage.
+ *
+ * Engagement enrichment (engagement_count, last_recall_correct, cohort_error_pct)
+ * is added by lesson-routes.ts AFTER PedagogyEngine.selectAtoms() returns —
+ * the engine itself stays sync and pure.
+ */
+export interface ContentAtom {
+  // ── Required (frontmatter) ─────────────────────────────────────────────
+  id: string;                           // e.g. "calculus-derivatives.worked-example.product-rule"
+  concept_id: string;
+  atom_type: AtomType;
+  bloom_level: BloomLevel;
+  /** Serve when student mastery >= this value (0.0–1.0). */
+  difficulty: number;
+  /** ["*"] = universal eligibility; or ["EXM-GATE-CS"] for exam-specific. */
+  exam_ids: string[];
+  /** Markdown body (after frontmatter). */
+  content: string;
+
+  // ── Optional (frontmatter) ─────────────────────────────────────────────
+  /** Only honoured when atom_type === 'worked_example'. */
+  scaffold_fade?: boolean;
+  /** Override default ATOM_ANIMATION_MAP preset. */
+  animation_preset?: AnimationPreset;
+  modality?: Modality;
+  /** Only on common_traps atoms — links to a related micro_exercise for cohort signal. */
+  tested_by_atom?: string;
+  retention_tags?: string[];
+  estimated_minutes?: number;
+  depth_weight?: number;
+
+  // ── Server-side enrichment (added by lesson-routes.ts) ────────────────
+  engagement_count?: number;
+  last_recall_correct?: boolean | null;
+  cohort_error_pct?: number;
+  cohort_n_seen?: number;
+}
+
+/**
+ * Session-local context held in-memory per request. NEVER persisted to
+ * `student_models` table. Reset when a new session starts.
+ *
+ * E5 (Error Streak Modality Switch) reads error_streak; resets on correct answer.
+ */
+export interface SessionContext {
+  error_streak: number;
+  last_error_atom_type: AtomType | null;
+  /** Mirrored from RouteRequest.exam_proximity_days for E6 convenience. */
+  exam_proximity_days?: number;
+}
+

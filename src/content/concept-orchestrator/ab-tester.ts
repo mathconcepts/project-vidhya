@@ -31,6 +31,7 @@
 
 import pg from 'pg';
 import { activate, listVersions } from './atom-versions';
+import { recordOutcome, type PatternOutcome } from './prompt-patterns';
 
 const { Pool } = pg;
 let _pool: any = null;
@@ -308,6 +309,16 @@ async function evaluateOne(pool: any, exp: AbExperiment): Promise<ExperimentEval
   } catch (err) {
     console.warn(`[ab-tester] verdict update failed: ${(err as Error).message}`);
   }
+
+  // Self-improving prompts (§4.13): roll the verdict up to the candidate's
+  // pattern signature so admin can see which prompt patterns consistently
+  // produce winners. Best-effort — failure here doesn't undo the verdict.
+  let outcome: PatternOutcome;
+  if (verdict === 'promoted_candidate') outcome = 'promoted';
+  else if (verdict === 'promoted_control') outcome = 'reverted';
+  else if (verdict === 'tie') outcome = 'tie';
+  else outcome = 'insufficient_data';
+  recordOutcome(exp.atom_id, exp.candidate_version_n, outcome).catch(() => undefined);
 
   return {
     experiment_id: exp.id,

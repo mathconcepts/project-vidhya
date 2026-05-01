@@ -35,6 +35,7 @@ import {
   recordProgress,
   recordResult,
   recordFailure,
+  topPatterns,
 } from '../content/concept-orchestrator';
 import type { OrchestratorOptions, ConceptState } from '../content/concept-orchestrator';
 import { requireRole } from '../auth/middleware';
@@ -164,6 +165,24 @@ interface BulkActivateResult {
   failures: Array<{ atom_id: string; reason: string }>;
 }
 
+async function handlePromptPatterns(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!checkFeatureFlag(res)) return;
+  const role = await requireRole(req, res, ['admin', 'owner', 'institution']);
+  if (!role) return;
+  const q = (req.query as any) || {};
+  const limit = q.limit ? Number(q.limit) : 50;
+  const min_promoted = q.min_promoted ? Number(q.min_promoted) : 3;
+  const topic_family = typeof q.topic_family === 'string' ? q.topic_family : undefined;
+  const atom_type = typeof q.atom_type === 'string' ? q.atom_type : undefined;
+  const patterns = await topPatterns({
+    limit: Number.isFinite(limit) ? limit : 50,
+    min_promoted: Number.isFinite(min_promoted) ? min_promoted : 3,
+    topic_family,
+    atom_type,
+  });
+  sendJSON(res, { patterns });
+}
+
 async function handleBulkActivate(req: ParsedRequest, res: ServerResponse): Promise<void> {
   if (!checkFeatureFlag(res)) return;
   const role = await requireRole(req, res, ['admin', 'owner', 'institution']);
@@ -229,6 +248,7 @@ export const conceptOrchestratorRoutes: Array<{ method: string; path: string; ha
   { method: 'GET',  path: '/api/admin/concept-orchestrator/status/:job_id', handler: handleStatus },
   { method: 'GET',  path: '/api/admin/concept-orchestrator/queue', handler: handleQueue },
   { method: 'GET',  path: '/api/admin/concept-orchestrator/cost/:concept_id', handler: handleCost },
+  { method: 'GET',  path: '/api/admin/concept-orchestrator/prompt-patterns', handler: handlePromptPatterns },
   { method: 'GET',  path: '/api/admin/atoms/:atom_id/versions', handler: handleListVersions },
   { method: 'POST', path: '/api/admin/atoms/:atom_id/activate', handler: handleActivate },
   { method: 'POST', path: '/api/admin/atoms/bulk-activate', handler: handleBulkActivate },

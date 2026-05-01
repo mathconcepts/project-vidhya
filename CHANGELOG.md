@@ -4,6 +4,23 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.10.0] - 2026-05-01 — Concept Orchestrator v2 (self-improving prompts)
+
+**Operator action:** migration `017_prompt_pattern_stats.sql` runs automatically on server boot. No new env vars — the prompt-pattern roll-up activates whenever `VIDHYA_AB_TESTING=on` (no separate flag, since the data flows directly from A/B verdicts).
+
+### Added (PENDING.md §4.13)
+
+- **Prompt pattern signal mining.** When the nightly `ab-evaluator` finalizes a verdict, the candidate's prompt signature (`topic_family`, `atom_type`, `scaffold`, flags for consensus/pyq/wolfram/multi_source) gets a +1 against `prompt_pattern_stats` for that outcome (promoted / reverted / tie / insufficient_data). Over weeks, patterns that consistently produce winners separate from those that consistently lose.
+- **`prompt_pattern_stats` table.** Migration 017 with the canonical key `{topic_family}.{atom_type}.{scaffold}.{flags}` as the primary key. Index by `(promoted_count - reverted_count) DESC` so admin reads come back ranked. Per-pattern timestamps for first_seen, last_promoted, last_reverted.
+- **Admin readout.** New `GET /api/admin/concept-orchestrator/prompt-patterns?limit=N&min_promoted=M&topic_family=X&atom_type=Y`. Returns ranked list with promoted / reverted / tie / insufficient counts, computed `score = promoted - reverted` and `win_rate = promoted / (promoted + reverted)`. Defaults: top 50, min 3 promotions for inclusion.
+
+### Architecture notes
+
+- **No auto-promotion to YAML.** Per the original PENDING.md note "needs human review before promotion." The system surfaces the signal — admin reads, decides which patterns to bake into `modules/project-vidhya-content/templates/*.yaml`. A pattern with 5 promotions and 4 reversions is noisy and should not silently rewrite templates.
+- **Stateless signature derivation.** `signatureFromMeta(atom_id, generation_meta)` is a pure function on its inputs. Tested without DB. The DB layer just aggregates outcomes by canonical key.
+- **Backwards-compatible.** Existing experiments without recorded outcomes don't get retroactive credit, but new ones flow into the table from the next ab-evaluator run.
+- 11 new tests (signature derivation, key canonicalization including flag-order independence, DB-less graceful path). Backend 859/859 (was 848). Typecheck clean.
+
 ## [4.9.0] - 2026-05-01 — Concept Orchestrator v2 (auto A/B testing of regen variants)
 
 **Operator action:** migration `016_atom_ab_tests.sql` runs automatically on server boot. Opt-in with `VIDHYA_AB_TESTING=on` (in addition to the existing `VIDHYA_CONCEPT_ORCHESTRATOR=on`). Optional tuning: `VIDHYA_AB_WINDOW_DAYS` (default 14), `VIDHYA_AB_MIN_BUCKET_SIZE` (20), `VIDHYA_AB_MIN_DELTA` (0.10).

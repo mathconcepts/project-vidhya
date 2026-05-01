@@ -69,3 +69,11 @@ export {
   AB_MIN_DELTA,
 } from './ab-tester';
 export type { AbExperiment, AbStatus, AssignmentResult, ExperimentEvaluation } from './ab-tester';
+
+export {
+  buildPatternKey,
+  signatureFromMeta,
+  recordOutcome,
+  topPatterns,
+} from './prompt-patterns';
+export type { PatternSignature, PatternOutcome, PatternStats } from './prompt-patterns';

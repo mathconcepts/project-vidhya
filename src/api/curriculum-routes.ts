@@ -67,17 +67,33 @@ async function handleGetExam(req: ParsedRequest, res: ServerResponse): Promise<v
 }
 
 /**
- * GET /api/exam/active — single-exam summary for the demo welcome screen.
- * Returns the first (or only) exam loaded; used by WelcomePage to show
- * "This demo runs on {exam.name}" without forcing the frontend to know
- * the exam_id.
+ * GET /api/exam/active — the exam this deployment is configured to serve.
+ *
+ * Resolution order (admin-configurable):
+ *   1. process.env.DEFAULT_EXAM_ID — operator picks via Render dashboard
+ *      (env var declared in render.yaml as sync:false).
+ *   2. First entry from listExamIds() — the only exam loaded, when there's
+ *      only one in data/curriculum/.
+ *
+ * Returns:
+ *   - identity: exam_id, name, description
+ *   - shape: scope, total_marks, duration_minutes
+ *   - context: concept_count, section_count, loaded_count, all_exam_ids
+ *   - starter_prompts: 4 chat prompts grounded in this exam's syllabus
+ *     (frontend uses these directly so no exam name is hardcoded)
+ *
+ * Returns 503 when data/curriculum/ is empty — that surfaces as a clear
+ * "no exams loaded" message instead of the original "Failed to build session".
  */
 async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promise<void> {
   const ids = listExamIds();
   if (ids.length === 0) {
     return sendError(res, 503, 'no exams loaded — check data/curriculum/');
   }
-  const exam = getExam(ids[0])!;
+  const envExamId = (process.env.DEFAULT_EXAM_ID || '').trim();
+  const activeId = envExamId && ids.includes(envExamId) ? envExamId : ids[0];
+  const exam = getExam(activeId)!;
+
   sendJSON(res, {
     exam_id: exam.metadata.id,
     name: exam.metadata.name,
@@ -89,7 +105,49 @@ async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promi
     concept_count: exam.concept_links.length,
     section_count: exam.syllabus.length,
     loaded_count: ids.length,
+    all_exam_ids: ids,
+    starter_prompts: buildStarterPrompts(exam),
   });
+}
+
+/**
+ * Generate 4 chat starter prompts from the exam's syllabus.
+ * Picks one popular concept from the first 3 sections plus a strategy prompt.
+ * The frontend ChatPage uses these directly — no exam name hardcoded.
+ */
+function buildStarterPrompts(exam: any): Array<{ text: string; dot: string }> {
+  const dots = ['bg-violet-400', 'bg-emerald-400', 'bg-amber-400', 'bg-sky-400'];
+  const examShortName = exam.metadata.name.split(' ').slice(0, 3).join(' ');
+
+  const conceptToHumanLabel = (id: string): string =>
+    id.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+  // Pull the first non-empty concept from the first 3 syllabus sections
+  const sections = (exam.syllabus ?? []).filter((s: any) => (s.concept_ids?.length ?? 0) > 0).slice(0, 3);
+  const concepts = sections.map((s: any) => conceptToHumanLabel(s.concept_ids[0]));
+
+  const prompts: Array<{ text: string; dot: string }> = [];
+  if (concepts[0]) {
+    prompts.push({ text: `Explain ${concepts[0]} with a worked example`, dot: dots[0] });
+  }
+  prompts.push({
+    text: `Where should I focus to maximise my ${examShortName} score?`,
+    dot: dots[1],
+  });
+  if (concepts[1]) {
+    prompts.push({ text: `Walk me through ${concepts[1]} step-by-step`, dot: dots[2] });
+  }
+  if (concepts[2]) {
+    prompts.push({ text: `Give me 3 practice problems on ${concepts[2]}`, dot: dots[3] });
+  }
+  // Fill any remaining slot if the syllabus had fewer than 3 sections
+  while (prompts.length < 4) {
+    prompts.push({
+      text: `Give me a hard ${examShortName} practice problem`,
+      dot: dots[prompts.length] ?? dots[0],
+    });
+  }
+  return prompts;
 }
 
 // ============================================================================

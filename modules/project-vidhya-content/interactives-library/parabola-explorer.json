@@ -1,0 +1,20 @@
+{
+  "id": "parabola-explorer",
+  "tier": "desmos",
+  "title": "Quadratic parameter explorer",
+  "description": "Drag a, b, c to see how each coefficient shapes the parabola y = ax² + bx + c.",
+  "config": {
+    "equation": "a*x^2 + b*x + c",
+    "sliders": "a:-3,3,1; b:-3,3,0; c:-3,3,0",
+    "x": "[-5, 5]",
+    "y": "[-10, 10]"
+  },
+  "fallback": {
+    "tier": "static",
+    "src": "/media/quadratic/three-parabolas.svg",
+    "alt_text": "Three parabolas overlaid: y = x² (standard), y = 2x² + x (steeper, shifted left), and y = -x² + 1 (inverted, raised by 1)."
+  },
+  "atoms_using": [
+    "calculus-derivatives.intuition"
+  ]
+}

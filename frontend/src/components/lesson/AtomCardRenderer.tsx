@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye,
@@ -187,9 +188,7 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
           {Math.round((atom.cohort_error_pct ?? 0) * 100)}% of students at your level miss this on the practice problem.
         </div>
       )}
-      <div className="prose prose-invert max-w-none text-surface-100 text-sm leading-relaxed whitespace-pre-wrap">
-        {atom.content}
-      </div>
+      <MarkdownAtomRenderer content={atom.content} atomId={atom.id} />
     </div>
   );
 }
@@ -211,13 +210,17 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
           className={clsx(
-            'p-3 rounded-lg border whitespace-pre-wrap text-sm leading-relaxed',
+            'p-3 rounded-lg border text-sm leading-relaxed',
             i < visibleCount
               ? 'bg-surface-800 border-surface-700 text-surface-100'
               : 'bg-surface-900 border-dashed border-surface-700 text-surface-500 italic',
           )}
         >
-          {i < visibleCount ? step : '(work this step out yourself)'}
+          {i < visibleCount ? (
+            <MarkdownAtomRenderer content={step} atomId={`${atom.id}.step.${i}`} />
+          ) : (
+            '(work this step out yourself)'
+          )}
         </motion.div>
       ))}
     </div>
@@ -225,11 +228,7 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
 }
 
 function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
-  return (
-    <div className="prose prose-invert max-w-none text-surface-100 text-sm leading-relaxed whitespace-pre-wrap">
-      {atom.content}
-    </div>
-  );
+  return <MarkdownAtomRenderer content={atom.content} atomId={atom.id} />;
 }
 
 // ─── Main renderer ────────────────────────────────────────────────────────

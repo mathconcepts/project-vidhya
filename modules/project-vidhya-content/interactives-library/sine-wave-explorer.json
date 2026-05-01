@@ -1,0 +1,18 @@
+{
+  "id": "sine-wave-explorer",
+  "tier": "desmos",
+  "title": "Sine wave explorer",
+  "description": "Tune amplitude, frequency, and phase to see how each parameter shapes the sine wave.",
+  "config": {
+    "equation": "a*sin(b*x + c)",
+    "sliders": "a:0,3,1; b:1,5,1; c:-3,3,0",
+    "x": "[-6, 6]",
+    "y": "[-3, 3]"
+  },
+  "fallback": {
+    "tier": "static",
+    "src": "/media/trig/sine-wave.svg",
+    "alt_text": "A sine wave with amplitude 1, frequency 1, and zero phase shift over x from -6 to 6."
+  },
+  "atoms_using": []
+}

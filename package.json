@@ -26,6 +26,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
+    "lint:interactives": "node scripts/lint-interactives.mjs",
     "typecheck": "tsc --noEmit",
     "content:scrape": "tsx scripts/scrape-corpus.ts --source gate && tsx scripts/scrape-textbooks.ts --source openstax && tsx scripts/scrape-textbooks.ts --source ocw",
     "content:explainers": "tsx scripts/build-explainers.ts",

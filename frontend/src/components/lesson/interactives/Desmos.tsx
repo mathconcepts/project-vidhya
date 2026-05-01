@@ -1,26 +1,22 @@
 /**
  * Desmos — Tier 2 free embed.
  *
- * Used by directives: slider, graph2d (and as fallback for parametric).
+ * Strategy: try the official Desmos calculator from the CDN first. If the
+ * script fails to load (network blocked, metered connection, timeout) or
+ * the user has prefers-reduced-data, fall through to the built-in
+ * SVG-based DesmosLite renderer. Either way the directive renders.
  *
- * MVP shape: render an HTML5-canvas slider-driven plot using the same
- * lightweight evaluator as MathBox. The full Desmos calculator JS embed
- * is deferred to a follow-up that loads the official api/v1.10/calculator.js
- * via lazy <script> tag (loads only when this component mounts, ~250KB
- * lazy chunk). The directive props remain stable so the swap is internal.
- *
- * For the slider directive: parses `equation`, `sliders` from attrs, renders
- * a function plot + one slider per declared variable. Reduced-motion respected.
- *
- * Theme overrides (per design review):
+ * Theme overrides on the official calc:
  *   bg: surface-1 (#111827)
  *   curve: emerald (#10b981)
- *   slider track: surface-3 (#374151)
- *   slider thumb: violet (#a78bfa)
+ *
+ * The DesmosLite path uses the same theme tokens via SVG.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DirectiveProps } from './registry';
+import { DesmosLite } from './DesmosLite';
+import { loadScript } from '@/lib/loadScript';
 
 interface DesmosAttrs {
   equation?: string;
@@ -57,128 +53,85 @@ function parseSliders(s: string | undefined): SliderSpec[] {
     .filter((x): x is SliderSpec => x != null);
 }
 
-function evaluateWithVars(src: string, vars: Record<string, number>, x: number): number | null {
-  let expr = src.replace(/\^/g, '**');
-  // Substitute named slider vars first (longest-name first to avoid clobbering 'e' etc.)
-  const names = Object.keys(vars).sort((a, b) => b.length - a.length);
-  for (const name of names) {
-    const re = new RegExp(`\\b${name}\\b`, 'g');
-    expr = expr.replace(re, `(${vars[name]})`);
-  }
-  expr = expr
-    .replace(/\bsin\b/g, 'Math.sin')
-    .replace(/\bcos\b/g, 'Math.cos')
-    .replace(/\btan\b/g, 'Math.tan')
-    .replace(/\blog\b/g, 'Math.log')
-    .replace(/\bln\b/g, 'Math.log')
-    .replace(/\bexp\b/g, 'Math.exp')
-    .replace(/\bsqrt\b/g, 'Math.sqrt')
-    .replace(/\babs\b/g, 'Math.abs')
-    .replace(/\bpi\b/gi, 'Math.PI');
-  if (!/^[\d\s+\-*/().,xMath.PIE\sa-z\b]+$/i.test(expr)) return null;
-  try {
-    // eslint-disable-next-line no-new-func
-    const f = new Function('x', `return (${expr});`);
-    const v = f(x);
-    return Number.isFinite(v) ? v : null;
-  } catch {
-    return null;
-  }
-}
+const DESMOS_CDN = 'https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6';
 
-function parseRange(s: string | undefined, fallback: [number, number]): [number, number] {
-  if (!s) return fallback;
-  const m = s.match(/-?\d+(\.\d+)?/g);
-  if (!m || m.length < 2) return fallback;
-  return [Number(m[0]), Number(m[1])];
-}
+type LoadState = 'pending' | 'cdn' | 'lite';
 
 export default function Desmos({ attrs }: DirectiveProps) {
   const a = attrs as DesmosAttrs;
   const eqSrc = (a.equation || a.expression || 'x^2').trim();
   const sliderSpecs = useMemo(() => parseSliders(a.sliders), [a.sliders]);
-  const [xMin, xMax] = parseRange(a.x, [-5, 5]);
-  const [yMin, yMax] = parseRange(a.y, [-5, 25]);
+  const [state, setState] = useState<LoadState>('pending');
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const calcRef = useRef<any>(null);
 
-  const [vars, setVars] = useState<Record<string, number>>(() => {
-    const out: Record<string, number> = {};
-    for (const s of sliderSpecs) out[s.name] = s.default;
-    return out;
-  });
+  // Attempt CDN load on mount; fall through to lite renderer on any failure.
+  useEffect(() => {
+    let cancelled = false;
+    loadScript(DESMOS_CDN, {
+      globalProbe: () => (window as any).Desmos,
+      timeoutMs: 5000,
+    })
+      .then((Desmos) => {
+        if (cancelled) return;
+        if (!containerRef.current) {
+          setState('lite');
+          return;
+        }
+        try {
+          const calc = Desmos.GraphingCalculator(containerRef.current, {
+            keypad: false,
+            expressions: false,
+            settingsMenu: false,
+            zoomButtons: false,
+            border: false,
+            lockViewport: false,
+          });
+          // Set viewport explicitly for predictable presentation.
+          calc.setMathBounds({
+            left: -5, right: 5, bottom: -5, top: 25,
+          });
+          // Plug in sliders + the equation as Desmos expressions.
+          for (const s of sliderSpecs) {
+            calc.setExpression({ id: `slider-${s.name}`, latex: `${s.name}=${s.default}`, sliderBounds: { min: String(s.min), max: String(s.max) } });
+          }
+          calc.setExpression({ id: 'main', latex: `y=${eqSrc.replace(/\*\*/g, '^')}`, color: '#10b981', lineWidth: 3 });
+          calcRef.current = calc;
+          setState('cdn');
+        } catch {
+          setState('lite');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setState('lite');
+      });
+    return () => {
+      cancelled = true;
+      try { calcRef.current?.destroy?.(); } catch { /* ignore */ }
+      calcRef.current = null;
+    };
+  }, [eqSrc, sliderSpecs]);
 
-  const path = useMemo(() => {
-    const n = 80;
-    const W = 400;
-    const H = 300;
-    const samples: Array<[number, number]> = [];
-    for (let i = 0; i <= n; i++) {
-      const x = xMin + (i / n) * (xMax - xMin);
-      const y = evaluateWithVars(eqSrc, vars, x);
-      if (y == null) continue;
-      samples.push([x, y]);
-    }
-    if (samples.length === 0) return '';
-    const sx = (x: number) => ((x - xMin) / (xMax - xMin)) * W;
-    const sy = (y: number) => H - ((y - yMin) / (yMax - yMin)) * H;
-    return samples
-      .map(([x, y], i) => (i === 0 ? 'M' : 'L') + sx(x).toFixed(1) + ',' + sy(y).toFixed(1))
-      .join(' ');
-  }, [eqSrc, vars, xMin, xMax, yMin, yMax]);
-
-  if (!path) {
-    throw new Error(`Desmos: could not evaluate "${eqSrc}"`);
+  if (state === 'lite') {
+    return <DesmosLite attrs={a} />;
   }
 
-  const W = 400;
-  const H = 300;
-  const yZero = yMin <= 0 && yMax >= 0 ? H - ((-yMin) / (yMax - yMin)) * H : null;
-  const xZero = xMin <= 0 && xMax >= 0 ? ((-xMin) / (xMax - xMin)) * W : null;
-
+  // 'pending' or 'cdn' — render a host element. While pending, show a
+  // skeleton matching the eventual calculator height so the layout doesn't
+  // shift when the script lands.
   return (
     <figure
       className="my-3 rounded-md border border-surface-800 overflow-hidden bg-surface-900/50"
       role="img"
-      aria-label={`Plot of ${eqSrc} with ${sliderSpecs.length} parameter slider(s)`}
+      aria-label={`Interactive plot of ${eqSrc}`}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%" height="auto">
-        <g stroke="#374151" strokeOpacity="0.4" strokeWidth="0.5">
-          {Array.from({ length: 7 }, (_, i) => {
-            const sx = (i / 6) * W;
-            return <line key={`v${i}`} x1={sx} y1={0} x2={sx} y2={H} />;
-          })}
-          {Array.from({ length: 5 }, (_, i) => {
-            const sy = (i / 4) * H;
-            return <line key={`h${i}`} x1={0} y1={sy} x2={W} y2={sy} />;
-          })}
-        </g>
-        {yZero != null && <line x1={0} y1={yZero} x2={W} y2={yZero} stroke="#6b7280" strokeWidth="1" />}
-        {xZero != null && <line x1={xZero} y1={0} x2={xZero} y2={H} stroke="#6b7280" strokeWidth="1" />}
-        <path d={path} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      {sliderSpecs.length > 0 && (
-        <div className="px-3 py-2 border-t border-surface-800 space-y-1.5">
-          {sliderSpecs.map((s) => (
-            <div key={s.name} className="flex items-center gap-2 text-xs">
-              <span className="font-mono text-violet-300 w-4">{s.name}</span>
-              <input
-                type="range"
-                min={s.min}
-                max={s.max}
-                step={(s.max - s.min) / 100}
-                value={vars[s.name] ?? s.default}
-                onChange={(e) => setVars((v) => ({ ...v, [s.name]: Number(e.target.value) }))}
-                className="flex-1 accent-violet-400"
-                aria-label={`Slider for ${s.name}`}
-              />
-              <span className="font-mono text-surface-400 tabular-nums w-12 text-right">
-                {(vars[s.name] ?? s.default).toFixed(2)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <div
+        ref={containerRef}
+        style={{ height: 320 }}
+        className={state === 'pending' ? 'animate-pulse bg-surface-800/40' : ''}
+      />
       <figcaption className="sr-only">
-        Interactive plot of {eqSrc}. {sliderSpecs.length > 0 && `Adjust ${sliderSpecs.map((s) => s.name).join(', ')} to explore.`}
+        Interactive plot of {eqSrc}.
       </figcaption>
     </figure>
   );

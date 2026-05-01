@@ -17,3 +17,34 @@ exams:
   - EXM-BITSAT-MATH-SAMPLE
   - EXM-JEEMAIN-MATH-SAMPLE
   - EXM-UGEE-MATH-SAMPLE
+
+# ContentAtom v2 — additive fields
+learning_objectives:
+  - id: calculus-derivatives.lo.power-rule
+    text: Apply the power rule to differentiate polynomials.
+    bloom_level: 3
+    mastery_criteria:
+      min_correct_streak: 3
+      target_score: 0.8
+  - id: calculus-derivatives.lo.product-rule
+    text: Apply the product rule to compute (fg)'.
+    bloom_level: 3
+    mastery_criteria:
+      min_correct_streak: 3
+      target_score: 0.8
+  - id: calculus-derivatives.lo.chain-rule
+    text: Apply the chain rule to differentiate compositions.
+    bloom_level: 3
+    mastery_criteria:
+      min_correct_streak: 3
+      target_score: 0.8
+
+exam_overlays:
+  EXM-JEEMAIN-MATH-SAMPLE:
+    required_bloom_levels: [2, 3, 4]
+    emphasis: deep
+    skip_atom_types: []
+  EXM-BITSAT-MATH-SAMPLE:
+    required_bloom_levels: [2, 3]
+    emphasis: standard
+    skip_atom_types: [interleaved_drill]

@@ -16,3 +16,24 @@ tags:
 exams:
   - EXM-UGEE-MATH-SAMPLE
   - EXM-JEEMAIN-MATH-SAMPLE
+
+# ContentAtom v2 — additive fields
+learning_objectives:
+  - id: linear-algebra-eigenvalues.lo.characteristic-poly
+    text: Form and solve the characteristic polynomial det(A - λI) = 0.
+    bloom_level: 3
+    mastery_criteria:
+      min_correct_streak: 3
+      target_score: 0.8
+  - id: linear-algebra-eigenvalues.lo.eigenvector-solve
+    text: Compute eigenvectors by solving (A - λI)v = 0.
+    bloom_level: 3
+    mastery_criteria:
+      min_correct_streak: 3
+      target_score: 0.8
+
+exam_overlays:
+  EXM-JEEMAIN-MATH-SAMPLE:
+    required_bloom_levels: [2, 3, 4]
+    emphasis: deep
+    skip_atom_types: []

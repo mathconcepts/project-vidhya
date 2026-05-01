@@ -15,3 +15,24 @@ tags:
 exams:
   - EXM-BITSAT-MATH-SAMPLE
   - EXM-JEEMAIN-MATH-SAMPLE
+
+# ContentAtom v2 — additive fields
+learning_objectives:
+  - id: complex-numbers.lo.arithmetic
+    text: Add, subtract, multiply, and divide complex numbers in rectangular form.
+    bloom_level: 3
+    mastery_criteria:
+      min_correct_streak: 3
+      target_score: 0.8
+  - id: complex-numbers.lo.modulus-arg
+    text: Compute modulus and argument; convert between rectangular and polar form.
+    bloom_level: 3
+    mastery_criteria:
+      min_correct_streak: 3
+      target_score: 0.8
+
+exam_overlays:
+  EXM-JEEMAIN-MATH-SAMPLE:
+    required_bloom_levels: [2, 3, 4]
+    emphasis: deep
+    skip_atom_types: []

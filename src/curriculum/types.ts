@@ -246,3 +246,68 @@ export interface CurriculumContext {
   allowed_emphasis: string[];
   restrictions: string[];
 }
+
+// ============================================================================
+// Learning Objectives + Exam Overlays (ContentAtom v2)
+// ============================================================================
+
+import type { BloomLevel, AtomType } from '../content/content-types';
+
+/**
+ * Bloom-aligned learning objective. Authored in `meta.yaml` per concept.
+ * Each LO has explicit mastery criteria so progress can be measured.
+ */
+export interface LearningObjective {
+  id: string;                        // e.g. "calculus-derivatives.lo.product-rule"
+  text: string;                      // "Apply the product rule to compute (fg)'"
+  bloom_level: BloomLevel;
+  mastery_criteria: {
+    min_correct_streak: number;      // e.g. 3
+    target_score: number;            // 0.0–1.0, mastery threshold
+  };
+}
+
+/**
+ * Per-exam customisation layer on top of universal concept content.
+ * `meta.yaml` carries `exam_overlays: Record<exam_id, ExamOverlay>`.
+ *
+ * PedagogyEngine applies the overlay matching `preferred_exam_id` (if any)
+ * before serving atoms. Wildcard atoms (`exam_ids: ["*"]`) bypass
+ * `skip_atom_types` but still respect `required_bloom_levels`.
+ */
+export interface ExamOverlay {
+  /** Bloom levels the exam tests; atoms below this floor are filtered. */
+  required_bloom_levels: BloomLevel[];
+  emphasis: 'skip' | 'light' | 'standard' | 'deep';
+  /** Atom types to skip for this exam (e.g. exam doesn't test mnemonics). */
+  skip_atom_types: AtomType[];
+}
+
+/**
+ * Full concept metadata loaded from `meta.yaml`.
+ *
+ * **Additive schema:** existing fields (title, licence, contributor, tags, exams,
+ * difficulty, wolfram_checkable, etc.) are preserved unchanged. ContentAtom v2
+ * adds `learning_objectives[]` and `exam_overlays` as optional new fields.
+ *
+ * The existing `exams: string[]` array remains the universal-eligibility list;
+ * `exam_overlays` keyed by exam_id is the per-exam customisation layer on top.
+ */
+export interface ConceptMeta {
+  // ── Existing fields (preserved from v1 meta.yaml) ─────────────────────
+  concept_id: string;
+  title?: string;
+  licence?: string;
+  contributor?: string;
+  contributor_github?: string;
+  reviewed_at?: string;
+  difficulty?: 'intro' | 'intermediate' | 'advanced';
+  derived_from?: string | null;
+  wolfram_checkable?: boolean;
+  tags?: string[];
+  exams?: string[];
+
+  // ── New fields (ContentAtom v2) ───────────────────────────────────────
+  learning_objectives?: LearningObjective[];
+  exam_overlays?: Record<string, ExamOverlay>;
+}

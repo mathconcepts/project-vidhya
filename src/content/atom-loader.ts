@@ -293,3 +293,98 @@ export async function applyImprovedSince(atoms: ContentAtom[]): Promise<ContentA
   }
   return atoms;
 }
+
+/**
+ * Apply A/B test variant assignments (PENDING.md §4.12). For each atom
+ * with a running experiment, hash-buckets the student into control or
+ * candidate and swaps the served content to that version. Sets
+ * `is_ab_variant` for downstream observability.
+ *
+ * No-op when:
+ *   - student_id is null (anonymous traffic skips A/B — bucket assignment
+ *     requires a stable identifier; using session_id breaks consistency
+ *     across a student's multiple sessions)
+ *   - DB unavailable
+ *   - VIDHYA_AB_TESTING is not 'on' (experiments still ALLOWED in the DB,
+ *     but the loader serves the active version and ignores them)
+ *
+ * Single SELECT against atom_ab_tests for the requested atom_ids, then
+ * one bulk SELECT against atom_versions for the assigned version contents.
+ * No N+1.
+ */
+// @ts-ignore
+export async function applyAbVariants(
+  atoms: ContentAtom[],
+  student_id: string | null,
+): Promise<ContentAtom[]> {
+  if (!student_id || atoms.length === 0) return atoms;
+  if (process.env.VIDHYA_AB_TESTING !== 'on') return atoms;
+  const pool = getEnrichmentPool();
+  if (!pool) return atoms;
+
+  try {
+    const ids = atoms.map((a) => a.id);
+    const r = await pool.query(
+      `SELECT atom_id, control_version_n, candidate_version_n
+         FROM atom_ab_tests
+         WHERE atom_id = ANY($1) AND status = 'running' AND ends_at > NOW()`,
+      [ids],
+    );
+    if (r.rows.length === 0) return atoms;
+
+    // Inline FNV-1a so atom-loader doesn't import the orchestrator (keeps
+    // the dep graph clean — orchestrator imports atom-loader, not the other
+    // way around).
+    function fnv1a(input: string): number {
+      let hash = 0x811c9dc5;
+      for (let i = 0; i < input.length; i++) {
+        hash ^= input.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193);
+      }
+      return hash >>> 0;
+    }
+    function bucketFor(atom_id: string, sid: string): 'control' | 'candidate' {
+      return fnv1a(`${atom_id}::${sid}`) % 2 === 0 ? 'control' : 'candidate';
+    }
+
+    // Map atom_id → assigned version_n.
+    const assignedVersion: Map<string, number> = new Map();
+    for (const row of r.rows) {
+      const bucket = bucketFor(row.atom_id, student_id);
+      const v = bucket === 'control' ? row.control_version_n : row.candidate_version_n;
+      assignedVersion.set(row.atom_id, v);
+    }
+
+    // Bulk-fetch the assigned (atom_id, version_n) contents.
+    const pairs = Array.from(assignedVersion.entries()).map(([k, v]) => ({ atom_id: k, version_n: v }));
+    if (pairs.length === 0) return atoms;
+    const atomIds = pairs.map((p) => p.atom_id);
+    const versionNs = pairs.map((p) => p.version_n);
+    const r2 = await pool.query(
+      `SELECT atom_id, version_n, content
+         FROM atom_versions
+         WHERE (atom_id, version_n) IN (
+           SELECT * FROM unnest($1::text[], $2::int[])
+         )`,
+      [atomIds, versionNs],
+    );
+    const contentByPair: Map<string, string> = new Map();
+    for (const row of r2.rows) {
+      contentByPair.set(`${row.atom_id}::${row.version_n}`, row.content);
+    }
+
+    for (const atom of atoms) {
+      const v = assignedVersion.get(atom.id);
+      if (v == null) continue;
+      const content = contentByPair.get(`${atom.id}::${v}`);
+      if (content) {
+        atom.content = content;
+        (atom as any).is_ab_variant = true;
+        (atom as any).ab_version_n = v;
+      }
+    }
+  } catch (err) {
+    console.warn(`[atom-loader] applyAbVariants failed: ${(err as Error).message}`);
+  }
+  return atoms;
+}

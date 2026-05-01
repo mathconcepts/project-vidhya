@@ -1,7 +1,7 @@
-# Project Vidhya v2.0 — Documentation Index
+# Project Vidhya — Documentation Index
 
-> **Last updated:** 2026-04-24
-> **Total docs:** 26 files + 1 guide + infra/ + `agents/` org chart
+> **Last updated:** 2026-05-01
+> **Total docs:** 25 files + 1 guide + infra/ + `agents/` org chart
 
 This is the master index of all documentation in the `docs/` directory, organised hierarchically.
 
@@ -64,7 +64,6 @@ This is the master index of all documentation in the `docs/` directory, organise
 
 | # | File | Contents |
 |---|------|----------|
-| 11 | `11-multi-agent-setup.md` | Running multiple agents simultaneously |
 | 12 | `12-content-delivery.md` | Content delivery pipeline, sequencing |
 | 14 | `14-exam-configuration.md` | Per-exam setup: Wolfram, Telegram, Pinecone |
 | 15 | `15-frontend-preview.md` | Frontend routes, role views, UI overview |

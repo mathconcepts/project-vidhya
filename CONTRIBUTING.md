@@ -92,7 +92,7 @@ We'll happily link to subject-specific forks from the main README.
 
 ### 6. Improve the client UX
 
-Pages in `frontend/src/pages/gate/` are the UI surface. Submit PRs that:
+Pages in `frontend/src/pages/app/` are the UI surface. Submit PRs that:
 - Improve accessibility (keyboard nav, ARIA, contrast)
 - Reduce bundle size (code splitting, dynamic imports)
 - Add new visualizations to admin dashboards

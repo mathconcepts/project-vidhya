@@ -6,7 +6,7 @@ Vidhya is a focused, mobile-first exam-prep platform. Exam-agnostic by design �
 
 ### Key Entry Points
 - **Server:** `src/server.ts` (NOT `src/index.ts`) — standalone Vidhya API on port 8080
-- **Frontend:** `frontend/src/App.tsx` — 10-route React SPA
+- **Frontend:** `frontend/src/App.tsx` — React SPA (pages in `frontend/src/pages/app/`)
 - **Deploy:** Render (auto-deploys from `main` branch) — see `render.yaml`
 - **DB:** Supabase (PostgreSQL + pgvector) — migrations in `supabase/migrations/`
 - **Live:** https://gate-math-api.onrender.com
@@ -45,10 +45,10 @@ cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 - `src/jobs/trend-collector.ts` — External trend collection (Reddit, Stack Exchange, YouTube, NewsAPI)
 - `src/jobs/content-prioritizer.ts` — 5-signal weighted priority scoring
 - `src/jobs/feedback-scorer.ts` — Blog post scoring + auto-archive
-- `frontend/src/components/gate/GateLayout.tsx` — Layout with 5-tab bottom nav
+- `frontend/src/components/app/AppLayout.tsx` — Main app layout wrapper
 
 ### Database
-10 migrations (001–010) in `supabase/migrations/`. **Auto-applied on server startup** via `src/db/auto-migrate.ts`. Tracked in `_migrations` table. All migrations must be idempotent (`IF NOT EXISTS`). Key tables: pyq_questions, sr_sessions, chat_messages, user_profiles, social_content, verification_log, rag_cache, blog_posts, trend_signals, content_priorities.
+12 migrations (001–012) in `supabase/migrations/`. **Auto-applied on server startup** via `src/db/auto-migrate.ts`. Tracked in `_migrations` table. All migrations must be idempotent (`IF NOT EXISTS`). Key tables: pyq_questions, sr_sessions, chat_messages, user_profiles, social_content, verification_log, rag_cache, blog_posts, trend_signals, content_priorities.
 
 ### Design System
 Always read DESIGN-SYSTEM.md before making any visual or UI decisions.

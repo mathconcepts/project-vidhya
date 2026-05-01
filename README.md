@@ -57,7 +57,7 @@ The planner budgets for the time you actually have — three minutes at a bus st
 
 A React SPA backed by a stateless Node server. **Your student model and uploaded notes live in IndexedDB.** A 22 MB WASM embedding model ships once; from then on embeddings are computed locally. The server is mostly a thin LLM proxy. **Nothing is in Postgres. Nothing requires it.** A five-dollar VPS handles a class of fifty.
 
-Twelve modules: core, auth, content, rendering, channels, learning, exams, lifecycle, teaching, content-library, content-studio, orchestrator. Each declares its public surface in `src/modules/<n>/index.ts` and registers in `modules.yaml`. The orchestrator composes them per deployment profile.
+Thirteen modules: core, auth, content, rendering, channels, learning, exams, lifecycle, teaching, content-library, content-studio, operator, orchestrator. Each declares its public surface in `src/modules/<n>/index.ts` and registers in `modules.yaml`. The orchestrator composes them per deployment profile.
 
 📖 *Module map in [MODULARISATION.md](./MODULARISATION.md). Production-readiness in [PRODUCTION.md](./PRODUCTION.md).*
 

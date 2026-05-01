@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **PARTIALLY OUTDATED** — Agent orchestration references in this doc are not active. The content engine (four-tier delivery, flywheel jobs) is current. See `src/jobs/content-flywheel.ts` and `src/content/` for the live implementation.
+
 # 20 — Content Generation & Delivery System Architecture
 
 > **Project Vidhya v2.0 — Content System Upgrade**

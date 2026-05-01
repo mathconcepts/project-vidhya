@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **LEGACY DOCUMENT** — This file describes the v2.0 inter-agent event bus which is **no longer active**. The current server is stateless; events between modules are direct function calls, not a message bus.
+
 # Event System
 
 The event bus enables loose coupling between agents through typed, priority-aware message passing.

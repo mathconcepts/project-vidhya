@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from '@/hooks/useSession';
 import { apiFetch } from '@/hooks/useApi';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { Loader2, CheckCircle, XCircle, ChevronRight, BookOpen, Zap } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ChevronRight, BookOpen, Zap, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -80,6 +80,13 @@ export default function StudymateSessionPage() {
   const sessionId = useSession();
   const [searchParams] = useSearchParams();
   const examId = searchParams.get('exam') ?? 'gate-ma';
+
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  useEffect(() => {
+    import('@/lib/auth/client').then(({ getToken }) => {
+      setIsAnonymous(!getToken());
+    });
+  }, []);
 
   const [pageState, setPageState] = useState<PageState>('idle');
   const [session, setSession] = useState<StudymateSession | null>(null);
@@ -313,6 +320,25 @@ export default function StudymateSessionPage() {
             Back to home
           </a>
         </motion.div>
+
+        {isAnonymous && (
+          <motion.div
+            variants={fadeInUp}
+            className="w-full max-w-xs p-4 rounded-2xl bg-violet-500/10 border border-violet-500/25 space-y-3 text-center"
+          >
+            <p className="text-sm font-semibold text-surface-100">Save your progress</p>
+            <p className="text-xs text-surface-400 leading-relaxed">
+              Sign in to track your streak, unlock a personalized study plan, and pick up exactly where you left off.
+            </p>
+            <a
+              href="/sign-in"
+              className="w-full py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold hover:bg-violet-400 transition-colors flex items-center justify-center gap-1.5"
+            >
+              Create free account <ArrowRight size={14} />
+            </a>
+            <p className="text-[11px] text-surface-600">No credit card. Takes 30 seconds.</p>
+          </motion.div>
+        )}
       </motion.div>
     );
   }

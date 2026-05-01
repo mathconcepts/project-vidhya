@@ -29,12 +29,7 @@ interface ExamRegistration {
   added_at: string;
 }
 
-// Curated starter options — students can also type any exam_id.
-const KNOWN_EXAMS: Array<{ id: string; label: string }> = [
-  { id: 'EXM-UGEE-MATH-SAMPLE',     label: 'UGEE Mathematics' },
-  { id: 'EXM-BITSAT-MATH-SAMPLE',   label: 'BITSAT Mathematics' },
-  { id: 'EXM-JEEMAIN-MATH-SAMPLE',  label: 'JEE Main Mathematics' },
-];
+interface KnownExam { id: string; label: string }
 
 const MAX_EXAMS = 5;
 
@@ -46,6 +41,27 @@ export default function ExamProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [notAuthenticated, setNotAuthenticated] = useState(false);
+  // Known exams come from the backend — single source of truth is
+  // data/curriculum/*.yml (loaded by exam-loader). Previously this was a
+  // hardcoded array (UGEE / BITSAT / JEE Main) which never matched what
+  // the deploy actually had loaded; users could pick exams that didn't
+  // exist, then hit empty home pages.
+  const [knownExams, setKnownExams] = useState<KnownExam[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/curriculum/exams')
+      .then((r) => (r.ok ? r.json() : { exams: [] }))
+      .then((data) => {
+        if (cancelled) return;
+        const opts: KnownExam[] = (data.exams ?? []).map((e: any) => ({
+          id: e.id,
+          label: e.name ?? e.id,
+        }));
+        setKnownExams(opts);
+      })
+      .catch(() => { /* graceful degradation — picker shows just custom */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Load existing profile on mount
   useEffect(() => {
@@ -84,7 +100,7 @@ export default function ExamProfilePage() {
     const d = new Date();
     d.setMonth(d.getMonth() + 3);
     const defaultDate = d.toISOString().slice(0, 10);
-    const unusedKnown = KNOWN_EXAMS.find(e => !exams.some(x => x.exam_id === e.id));
+    const unusedKnown = knownExams.find(e => !exams.some(x => x.exam_id === e.id));
     setExams(cur => [...cur, {
       exam_id: unusedKnown?.id ?? '',
       exam_date: defaultDate,
@@ -193,7 +209,7 @@ export default function ExamProfilePage() {
                   <div className="flex-1 min-w-0 w-full">
                     <label className="block text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Exam</label>
                     <select
-                      value={KNOWN_EXAMS.some(k => k.id === exam.exam_id) ? exam.exam_id : '__custom'}
+                      value={knownExams.some(k => k.id === exam.exam_id) ? exam.exam_id : '__custom'}
                       onChange={(e) => {
                         if (e.target.value === '__custom') {
                           updateExam(i, { exam_id: '' });
@@ -203,12 +219,12 @@ export default function ExamProfilePage() {
                       }}
                       className="w-full px-3 py-2 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-100"
                     >
-                      {KNOWN_EXAMS.map(k => (
+                      {knownExams.map(k => (
                         <option key={k.id} value={k.id}>{k.label}</option>
                       ))}
                       <option value="__custom">Custom exam id…</option>
                     </select>
-                    {!KNOWN_EXAMS.some(k => k.id === exam.exam_id) && (
+                    {!knownExams.some(k => k.id === exam.exam_id) && (
                       <input
                         type="text"
                         placeholder="EXM-..."

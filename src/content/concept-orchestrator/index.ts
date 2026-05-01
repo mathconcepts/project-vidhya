@@ -49,3 +49,12 @@ export type { ProgressEvent } from './types';
 
 export { buildQueue } from './queue';
 export type { QueueRow, ConceptState, QueueOptions } from './queue';
+
+export {
+  maybeQueueRegenForStudent,
+  readStudentOverrides,
+  PERSONAL_FAILURE_THRESHOLD,
+  PERSONAL_FAILURE_WINDOW_DAYS,
+  PERSONAL_OVERRIDE_TTL_DAYS,
+} from './personalized-regen';
+export type { MaybeRegenResult } from './personalized-regen';

@@ -4,6 +4,26 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.7.0] - 2026-05-01 — Concept Orchestrator v1 (Phase 4 — closed loop)
+
+**Operator action:** none beyond `VIDHYA_CONCEPT_ORCHESTRATOR=on`. Optional env: `VIDHYA_REGEN_NIGHTLY_CAP` (default 20), `VIDHYA_REGEN_ERROR_THRESHOLD` (0.5), `VIDHYA_REGEN_FRESHNESS_HOURS` (24), `VIDHYA_PERSONAL_FAILURE_THRESHOLD` (3), `VIDHYA_PERSONAL_OVERRIDE_TTL_DAYS` (14).
+
+### Added
+
+- **Closed-loop nightly regen.** New `regen-scanner` job runs at 03:00 UTC (1h after `cohort-aggregator` populates `cohort_signals`). Reads atoms with `error_pct > 0.5 AND n_seen >= 10`, dedupes against atoms regenerated in the last 24h, calls the orchestrator with the misconception baked into the prompt, appends inactive `atom_versions` for admin review. Cap 20/night.
+- **Freshness-gate (eng-review decision A).** Scanner refuses to run when `cohort_signals.MAX(updated_at) > 24h ago` — better silent skip than regen on stale data. Loud warning surfaced for ops.
+- **Per-student personalized regen (E5).** When a student fails the same atom 3+ times in 7 days, the lesson engagement endpoint fires-and-forgets `maybeQueueRegenForStudent`. The orchestrator generates a custom variant and writes it to `student_atom_overrides` with a 14-day expiry. Cap 1/concept/student/week. Student sees the variant on their NEXT lesson load. Lesson submit unblocked.
+- **"Improved" student-facing badge (E7).** Atom card header shows an emerald `Sparkles` pill when `atom.improved_since > student.last_seen_at`. Tooltip surfaces the LLM-judge or scanner's `improvement_reason` (e.g., "Cohort error 52% — top miss: students confused tangent slope with secant"). Auto-dismisses on first engagement post-improvement (uses existing engagement endpoint, no new API). prefers-reduced-motion respected.
+- **Atom-loader enrichment.** New `applyStudentOverrides()` and `applyImprovedSince()` functions wired into `lesson-routes` after the existing engagement enrichment. Single SELECT each, no N+1, graceful no-op without DB.
+- **Improved badge on every lesson serving.** `ContentAtom` v2 schema gains optional fields `improved_since`, `improvement_reason`, `is_student_override`, `last_seen_at`. Server populates from `atom_versions` + `student_atom_overrides` per student.
+
+### Architecture notes
+
+- Scheduler order: `cohortAggregator` → `regenScanner` (both DAY_MS interval, scanner is gated on freshness so order matters but isn't strictly enforced).
+- Async fire-and-forget for E5 (eng-review decision A): lesson submit returns 204 immediately; the regen check + variant generation happens off-thread.
+- regen-scanner is gated behind `VIDHYA_CONCEPT_ORCHESTRATOR=on` — when off, the scheduler entry returns `{status: 'skipped'}` with no DB queries.
+- 15 new tests (8 backend + 7 frontend). Backend 818/818 (was 810). Frontend 92/92 (was 85). Typecheck clean.
+
 ## [4.6.0] - 2026-05-01 — Concept Orchestrator v1 (Phase 3 — admin dashboard)
 
 **Operator action:** none beyond the v4.5.0 setup (`VIDHYA_CONCEPT_ORCHESTRATOR=on`). The new admin route `/admin/concept-orchestrator` is feature-flagged with the same env var.

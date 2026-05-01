@@ -190,3 +190,106 @@ export async function loadConceptMeta(concept_id: string): Promise<ConceptMeta> 
   _metaCache!.set(concept_id, meta);
   return meta;
 }
+
+// ─── Concept-orchestrator v1 enrichment helpers ─────────────────────
+//
+// These functions enrich atoms with per-student state read from the DB.
+// Kept OUT of loadConceptAtoms() so the file cache stays student-agnostic.
+// Callers (lesson-routes) explicitly invoke them after loading the
+// canonical atoms.
+
+import pg from 'pg';
+
+let _enrichmentPool: any = null;
+function getEnrichmentPool() {
+  if (_enrichmentPool) return _enrichmentPool;
+  if (!process.env.DATABASE_URL) return null;
+  const { Pool } = pg;
+  _enrichmentPool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
+  return _enrichmentPool;
+}
+
+/**
+ * Apply student-specific atom_overrides to a list of atoms. For each
+ * atom whose (student_id, atom_id) pair has an active (non-expired)
+ * override, the canonical content is replaced with the override.
+ * Marks atom.is_student_override = true for downstream observability.
+ *
+ * Single SELECT per call (no N+1). Graceful no-op without DB.
+ * Returns the atoms list with content swapped in-place.
+ */
+// @ts-ignore — gray-matter typing varies
+export async function applyStudentOverrides(
+  atoms: ContentAtom[],
+  student_id: string | null,
+): Promise<ContentAtom[]> {
+  if (!student_id || atoms.length === 0) return atoms;
+  const pool = getEnrichmentPool();
+  if (!pool) return atoms;
+
+  try {
+    const ids = atoms.map((a) => a.id);
+    const r = await pool.query(
+      `SELECT atom_id, override_content
+         FROM student_atom_overrides
+         WHERE student_id = $1 AND atom_id = ANY($2) AND expires_at > NOW()`,
+      [student_id, ids],
+    );
+    const byId: Map<string, string> = new Map();
+    for (const row of r.rows) byId.set(row.atom_id, row.override_content);
+    for (const atom of atoms) {
+      const ov = byId.get(atom.id);
+      if (ov) {
+        atom.content = ov;
+        atom.is_student_override = true;
+      }
+    }
+  } catch (err) {
+    console.warn(`[atom-loader] applyStudentOverrides failed: ${(err as Error).message}`);
+  }
+  return atoms;
+}
+
+/**
+ * Populate atom.improved_since + atom.improvement_reason from the active
+ * atom_versions row. The frontend MarkdownAtomRenderer compares this
+ * timestamp against the student's last_seen_at for the atom and shows
+ * an emerald "Improved" pill when newer.
+ *
+ * Single SELECT per call. No-op when DB unavailable or no versions exist.
+ */
+// @ts-ignore
+export async function applyImprovedSince(atoms: ContentAtom[]): Promise<ContentAtom[]> {
+  if (atoms.length === 0) return atoms;
+  const pool = getEnrichmentPool();
+  if (!pool) return atoms;
+
+  try {
+    const ids = atoms.map((a) => a.id);
+    const r = await pool.query(
+      `SELECT atom_id, generated_at, improvement_reason
+         FROM atom_versions
+         WHERE atom_id = ANY($1) AND active = TRUE`,
+      [ids],
+    );
+    const byId: Map<string, { generated_at: string; reason: string | null }> = new Map();
+    for (const row of r.rows) {
+      byId.set(row.atom_id, {
+        generated_at: row.generated_at,
+        reason: row.improvement_reason,
+      });
+    }
+    for (const atom of atoms) {
+      const v = byId.get(atom.id);
+      if (v) {
+        atom.improved_since = typeof v.generated_at === 'string'
+          ? v.generated_at
+          : new Date(v.generated_at).toISOString();
+        atom.improvement_reason = v.reason;
+      }
+    }
+  } catch (err) {
+    console.warn(`[atom-loader] applyImprovedSince failed: ${(err as Error).message}`);
+  }
+  return atoms;
+}

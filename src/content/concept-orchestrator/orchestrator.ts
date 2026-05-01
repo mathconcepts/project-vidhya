@@ -118,8 +118,17 @@ export async function generateConcept(
   const accepted: GeneratedAtom[] = [];
   const rejected: GeneratedAtom[] = [];
   let total_cost = 0;
+  const total_steps = atom_types.length;
 
-  for (const atom_type of atom_types) {
+  opts.on_progress?.({ type: 'start', step_index: 0, total_steps });
+
+  for (const [idx, atom_type] of atom_types.entries()) {
+    opts.on_progress?.({
+      type: 'atom_started',
+      step_index: idx,
+      total_steps,
+      atom_type,
+    });
     // Re-check cost before every atom — multi-LLM consensus on math atoms
     // can blow the cap mid-batch.
     const state = await canSpend(opts.concept_id, cap);
@@ -161,10 +170,28 @@ export async function generateConcept(
         reason: judge.reason,
       };
       rejected.push(generated);
+      opts.on_progress?.({
+        type: 'atom_rejected',
+        step_index: idx,
+        total_steps,
+        atom_type,
+        atom_id: generated.atom_id,
+        judge_score: judge.score,
+        reason: judge.reason,
+      });
       continue;
     }
 
     accepted.push(generated);
+    opts.on_progress?.({
+      type: 'atom_finished',
+      step_index: idx,
+      total_steps,
+      atom_type,
+      atom_id: generated.atom_id,
+      sources: generated.meta.source_cascade,
+      judge_score: judge.score,
+    });
 
     if (!opts.dry_run) {
       const cost_meta = atom_type === 'worked_example' || atom_type === 'formal_definition'
@@ -174,6 +201,15 @@ export async function generateConcept(
       await appendVersion(generated.atom_id, generated.content, generated.meta);
     }
   }
+
+  opts.on_progress?.({
+    type: 'done',
+    step_index: total_steps,
+    total_steps,
+    total_cost_usd: total_cost,
+    total_accepted: accepted.length,
+    total_rejected: rejected.length,
+  });
 
   return {
     concept_id: opts.concept_id,

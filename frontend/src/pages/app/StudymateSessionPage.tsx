@@ -273,6 +273,9 @@ export default function StudymateSessionPage() {
           <p className="text-sm text-surface-400">
             15 min · 5 adaptive problems · calibrated to your weak spots
           </p>
+          <p className="text-xs text-violet-300/80 mt-1">
+            Demo: GATE Engineering Mathematics
+          </p>
         </motion.div>
 
         {error && (

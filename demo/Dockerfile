@@ -46,6 +46,12 @@ RUN npm ci --omit=dev
 # Copy application source
 COPY src/ src/
 COPY demo/ demo/
+# Curriculum YAMLs (gate-ma.yml etc.) — read at runtime by exam-loader.
+# Without this, getConceptsInExam('gate-ma') returns empty and Studymate /
+# session-engine fail with "No concepts found for exam 'gate-ma'".
+COPY data/ data/
+# Atom-based content modules (ContentAtom v2 lessons) and seed concepts.
+COPY modules/ modules/
 COPY --from=frontend-builder /build/frontend/dist frontend/dist
 COPY tsconfig*.json ./
 

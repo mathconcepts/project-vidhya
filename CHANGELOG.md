@@ -4,6 +4,26 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.6.0] - 2026-05-01 — Concept Orchestrator v1 (Phase 3 — admin dashboard)
+
+**Operator action:** none beyond the v4.5.0 setup (`VIDHYA_CONCEPT_ORCHESTRATOR=on`). The new admin route `/admin/concept-orchestrator` is feature-flagged with the same env var.
+
+### Added
+
+- **Admin "Concepts needing content" dashboard** at `/admin/concept-orchestrator`. Priority-sorted queue showing each concept's state (missing / partial / stale / current), atom counts, cohort error %, monthly spend with violet → amber → rose progress meter, and one-click Generate. Sort weight: `exam_weight × n_students × cohort_error_pct`.
+- **Live progress modal.** Click Generate → modal shows step-by-step progress (atom_type · sources · judge score) updated every 2s. Admin can close the modal — the job continues server-side. Done state shows total cost.
+- **Atom version diff viewer.** Side-by-side rendered markdown for two atom versions. "Models disagree" badge on math atoms where Claude + Gemini diverged. "Why better" tooltip from the LLM-judge `improvement_reason`. One-click Activate.
+- **Async generate endpoint.** `POST /api/admin/concept-orchestrator/generate` now returns a `job_id` immediately and runs generation in the background. Frontend polls `GET /api/admin/concept-orchestrator/status/:job_id` every 2s. Jobs auto-expire 5 min after completion.
+- **Queue endpoint.** `GET /api/admin/concept-orchestrator/queue?limit=N&topic_family=X&state=Y` returns the priority-sorted concept list. Supports filtering by topic family and state.
+
+### Architecture notes
+
+- New module `src/content/concept-orchestrator/jobs.ts` — in-memory job state map, GC sweeper every 60s, 5min TTL. Server restart loses in-flight jobs (admin can re-issue Generate, idempotent for atom drafts already persisted).
+- Orchestrator gets a new `on_progress` callback. Each progress event is pushed to the job's event log via `recordProgress(job_id, event)`. Frontend renders the event stream as the live progress modal.
+- New module `src/content/concept-orchestrator/queue.ts` — composes ALL_CONCEPTS (in-memory) + cohort_signals + atom_versions counts + per-concept spend in 2 SQL queries (no N+1).
+- 13 new tests (backend 810/810, was 797). Frontend 85/85 (no new tests on the admin page — manual verification once VIDHYA_CONCEPT_ORCHESTRATOR=on is set in production).
+- V0 diff viewer ships side-by-side rendered markdown without word-level highlighting. The `diff-match-patch` integration is in PENDING.md as a polish follow-up.
+
 ## [4.5.0] - 2026-05-01 — Concept Generation Framework v1 (Phases 1+2)
 
 **Operator action:** migration `014_concept_orchestrator.sql` runs automatically on server startup (idempotent, `IF NOT EXISTS`). Adds three tables: `atom_versions`, `student_atom_overrides`, `concept_cost_log`. To expose admin endpoints, set `VIDHYA_CONCEPT_ORCHESTRATOR=on` (default off — phased rollout per the CEO plan §9). Optional env: `VIDHYA_CONCEPT_MONTHLY_CAP_USD` (default 10), `VIDHYA_LLM_JUDGE_THRESHOLD` (default 7).

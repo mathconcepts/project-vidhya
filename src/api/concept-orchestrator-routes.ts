@@ -3,23 +3,24 @@
  * Concept Orchestrator HTTP routes (admin-only).
  *
  *   POST /api/admin/concept-orchestrator/generate
- *     Body: { concept_id, topic_family, lo_id?, atom_types?, dry_run?, force? }
- *     Returns: ConceptDraft (the 11-atom set + rejected list + total cost)
+ *     Starts a generation job asynchronously. Returns { job_id }.
+ *     Frontend polls GET /status/:job_id until status === 'done'.
+ *
+ *   GET  /api/admin/concept-orchestrator/status/:job_id
+ *     Returns the JobState including event history + final result.
+ *
+ *   GET  /api/admin/concept-orchestrator/queue
+ *     Returns the priority-sorted queue of concepts needing content.
+ *     Query params: limit, topic_family, state (repeatable filters)
  *
  *   GET  /api/admin/concept-orchestrator/cost/:concept_id
  *     Returns: CostState for the concept this month
  *
  *   GET  /api/admin/atoms/:atom_id/versions
- *     Returns: { versions: AtomVersion[] }
- *
  *   POST /api/admin/atoms/:atom_id/activate
- *     Body: { version_n }
- *     Returns: { activated: boolean }
  *
- * All endpoints gated to admin/owner/institution roles via existing
- * auth-middleware pattern. Feature-flagged behind VIDHYA_CONCEPT_ORCHESTRATOR
- * env var (default off) so the route is invisible until staged rollout
- * starts (see CEO plan §9 deploy phases).
+ * All endpoints gated to admin/owner/institution roles. Feature-flagged
+ * behind VIDHYA_CONCEPT_ORCHESTRATOR=on.
  */
 
 import { ServerResponse } from 'http';
@@ -28,8 +29,14 @@ import {
   readState,
   listVersions,
   activate,
+  buildQueue,
+  createJob,
+  getJob,
+  recordProgress,
+  recordResult,
+  recordFailure,
 } from '../content/concept-orchestrator';
-import type { OrchestratorOptions } from '../content/concept-orchestrator';
+import type { OrchestratorOptions, ConceptState } from '../content/concept-orchestrator';
 import { requireRole } from '../auth/middleware';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
@@ -54,21 +61,61 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
     return sendError(res, 400, 'concept_id and topic_family are required');
   }
 
-  try {
-    const draft = await generateConcept({
-      concept_id: body.concept_id,
-      lo_id: body.lo_id,
-      topic_family: body.topic_family,
-      atom_types: body.atom_types,
-      cost_cap_usd: body.cost_cap_usd,
-      dry_run: body.dry_run ?? false,
-      force: body.force ?? false,
+  // Start the job + return its id immediately. Generation runs async.
+  const job = createJob(body.concept_id, body.topic_family);
+  const opts: OrchestratorOptions = {
+    concept_id: body.concept_id,
+    lo_id: body.lo_id,
+    topic_family: body.topic_family,
+    atom_types: body.atom_types,
+    cost_cap_usd: body.cost_cap_usd,
+    dry_run: body.dry_run ?? false,
+    force: body.force ?? false,
+    on_progress: (event) => recordProgress(job.id, event),
+  };
+
+  // Fire-and-forget. Errors recorded into the job state for the poll endpoint.
+  generateConcept(opts)
+    .then((draft) => recordResult(job.id, draft))
+    .catch((err) => {
+      console.error(`[orchestrator job ${job.id}] failed: ${(err as Error).message}`);
+      recordFailure(job.id, (err as Error).message);
     });
-    sendJSON(res, draft);
-  } catch (err) {
-    console.error(`[concept-orchestrator] generate failed: ${(err as Error).message}`);
-    sendError(res, 500, `generation failed: ${(err as Error).message}`);
-  }
+
+  sendJSON(res, { job_id: job.id, status: 'queued' });
+}
+
+async function handleStatus(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!checkFeatureFlag(res)) return;
+  const role = await requireRole(req, res, ['admin', 'owner', 'institution']);
+  if (!role) return;
+  const job_id = (req.params as any)?.job_id;
+  if (!job_id) return sendError(res, 400, 'job_id required');
+  const job = getJob(job_id);
+  if (!job) return sendError(res, 404, `job ${job_id} not found (may have expired or server restarted)`);
+  sendJSON(res, job);
+}
+
+async function handleQueue(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!checkFeatureFlag(res)) return;
+  const role = await requireRole(req, res, ['admin', 'owner', 'institution']);
+  if (!role) return;
+
+  const q = (req.query as any) || {};
+  const limit = q.limit ? Number(q.limit) : 50;
+  const topic_families = q.topic_family
+    ? (Array.isArray(q.topic_family) ? q.topic_family : [q.topic_family])
+    : undefined;
+  const states = q.state
+    ? (Array.isArray(q.state) ? q.state : [q.state])
+    : undefined;
+
+  const rows = await buildQueue({
+    limit: Number.isFinite(limit) ? limit : 50,
+    topic_families,
+    states: states as ConceptState[] | undefined,
+  });
+  sendJSON(res, { rows });
 }
 
 async function handleCost(req: ParsedRequest, res: ServerResponse): Promise<void> {
@@ -106,6 +153,8 @@ async function handleActivate(req: ParsedRequest, res: ServerResponse): Promise<
 
 export const conceptOrchestratorRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   { method: 'POST', path: '/api/admin/concept-orchestrator/generate', handler: handleGenerate },
+  { method: 'GET',  path: '/api/admin/concept-orchestrator/status/:job_id', handler: handleStatus },
+  { method: 'GET',  path: '/api/admin/concept-orchestrator/queue', handler: handleQueue },
   { method: 'GET',  path: '/api/admin/concept-orchestrator/cost/:concept_id', handler: handleCost },
   { method: 'GET',  path: '/api/admin/atoms/:atom_id/versions', handler: handleListVersions },
   { method: 'POST', path: '/api/admin/atoms/:atom_id/activate', handler: handleActivate },

@@ -61,4 +61,25 @@ export interface OrchestratorOptions {
   dry_run?: boolean;
   /** Force regen even if a recent version exists. */
   force?: boolean;
+  /** Progress callback fired before/during/after each atom step. */
+  on_progress?: (event: ProgressEvent) => void;
+}
+
+export interface ProgressEvent {
+  /** 'start' fires once at the beginning, 'atom_*' per atom_type, 'done' once at end. */
+  type: 'start' | 'atom_started' | 'atom_finished' | 'atom_rejected' | 'done';
+  step_index: number;
+  total_steps: number;
+  atom_type?: AtomType;
+  atom_id?: string;
+  /** Source(s) used: ['claude'], ['claude','gemini'], etc. */
+  sources?: GenerationSource[];
+  /** Set on atom_finished. */
+  judge_score?: number;
+  /** Set on atom_rejected. */
+  reason?: string;
+  /** Set on done. */
+  total_cost_usd?: number;
+  total_accepted?: number;
+  total_rejected?: number;
 }

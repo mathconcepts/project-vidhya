@@ -67,6 +67,7 @@ const WeeklyTeacherBriefPage = lazy(() => import('@/pages/app/WeeklyTeacherBrief
 const ExamSetupPage = lazy(() => import('@/pages/app/ExamSetupPage'));
 const ExamGroupsPage = lazy(() => import('@/pages/app/ExamGroupsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/app/ContentAdminPage'));
+const ConceptOrchestratorPage = lazy(() => import('@/pages/app/ConceptOrchestratorPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage'));
 const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
 const StudymateSessionPage = lazy(() => import('@/pages/app/StudymateSessionPage'));
@@ -123,6 +124,7 @@ export default function App() {
           <Route path="digest" element={<WeeklyDigestPage />} />
           <Route path="mock-exam" element={<MockExamPage />} />
           <Route path="admin/gbrain" element={<GBrainAdminPage />} />
+          <Route path="admin/concept-orchestrator" element={<ConceptOrchestratorPage />} />
           <Route path="gbrain" element={<MarketingLanding />} />
           <Route path="materials" element={<MaterialsPage />} />
           <Route path="smart-practice" element={<SmartPracticePage />} />

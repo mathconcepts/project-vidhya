@@ -1,0 +1,59 @@
+topic_family: algorithms
+
+intuition:
+  scaffold: trace-on-small-input
+  guidance: |
+    Walk through the algorithm on a 3-4 element input by hand. Show what
+    state each step changes. Avoid Big-O until formal_definition.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: pseudocode
+  guidance: |
+    Pseudocode in fenced code block. State invariant + termination + Big-O.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: trace-table
+  guidance: |
+    Trace through with a table showing variables at each step. Six steps max.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: off-by-one in loop bounds, wrong recursion base case,
+    confusing time vs space complexity.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: state-diagram
+  guidance: |
+    For graph algos: ASCII graph + step-by-step coloring. For sorts:
+    array snapshots after each pass.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  bloom_floor: 4
+
+hook:
+  scaffold: when-naive-fails
+  bloom_floor: 1

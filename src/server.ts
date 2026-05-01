@@ -36,6 +36,7 @@ import { syllabusRoutes } from './api/syllabus-routes';
 import { multimodalRoutes } from './api/multimodal-routes';
 import { lessonRoutes } from './api/lesson-routes';
 import { verifyRoutes } from './api/verify-routes';
+import { conceptOrchestratorRoutes } from './api/concept-orchestrator-routes';
 import { curriculumRoutes } from './api/curriculum-routes';
 import { llmConfigRoutes } from './api/llm-config-routes';
 import { authRoutes } from './api/auth-routes';
@@ -207,6 +208,9 @@ for (const route of lessonRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of verifyRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of conceptOrchestratorRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of curriculumRoutes) {

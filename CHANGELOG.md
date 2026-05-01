@@ -4,6 +4,27 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.5.0] - 2026-05-01 — Concept Generation Framework v1 (Phases 1+2)
+
+**Operator action:** migration `014_concept_orchestrator.sql` runs automatically on server startup (idempotent, `IF NOT EXISTS`). Adds three tables: `atom_versions`, `student_atom_overrides`, `concept_cost_log`. To expose admin endpoints, set `VIDHYA_CONCEPT_ORCHESTRATOR=on` (default off — phased rollout per the CEO plan §9). Optional env: `VIDHYA_CONCEPT_MONTHLY_CAP_USD` (default 10), `VIDHYA_LLM_JUDGE_THRESHOLD` (default 7).
+
+### Added
+
+- **Concept generation orchestrator.** Given a concept_id + topic_family, generates a coherent atom draft set across 11 atom types in one batch via cascaded sources (Wolfram → Claude → Gemini → URL → uploads). New module at `src/content/concept-orchestrator/` with single entry point `generateConcept()`. Drafts persist into the existing content-studio JSONL audit log.
+- **Per-topic-family templates (E6 YAML DSL).** Six bundled topic families at `modules/project-vidhya-content/templates/{calculus,linear-algebra,probability,complex-numbers,algorithms,discrete-math}.yaml`. Each defines per-atom-type scaffold, guidance, bloom_floor, and exam_pattern_required. Template loader fail-fasts at boot on schema violations.
+- **PYQ-pattern grounding (E3).** Exam-relevant atom types are grounded in the top-3 past-year-questions for the topic. Generated atoms mirror real exam phrasing.
+- **LLM-judge eval gate (E1).** Every atom scored 1-10 on clarity / math_correctness / exam_alignment. Min of the three gates the atom (default threshold 7). Sub-threshold atoms auto-rejected with a human-readable reason.
+- **Multi-LLM consensus on math atoms (E2).** formal_definition + worked_example go through Claude AND Gemini in parallel. Disagreement doesn't block — both versions stored, surfaced to admin via diff UI flag.
+- **Atom versioning (E4 foundation).** Stable atom_id + version_n model preserves atom_engagements continuity across regens. Partial unique index enforces single active version per atom. Activation is transactional.
+- **Per-concept cost ceiling (E8).** Hard-stops generation mid-batch at $10/concept/month default cap. Admin sees per-concept LLM/Wolfram spend before clicking regen.
+- **Admin HTTP endpoints (gated).** `POST /api/admin/concept-orchestrator/generate`, `GET .../cost/:concept_id`, `GET /api/admin/atoms/:atom_id/versions`, `POST /api/admin/atoms/:atom_id/activate`. All admin/owner/institution-only. Feature-flagged behind `VIDHYA_CONCEPT_ORCHESTRATOR=on`.
+
+### Architecture notes
+
+- 22 new unit tests (797 total, was 775). Backend typecheck clean for the orchestrator code.
+- 1867 lines added across 21 files.
+- Admin frontend dashboard (Phase 3), regen-scanner nightly job + per-student override (Phase 4), and "Improved" student badge (E7) deferred to follow-up PRs.
+
 ## [4.4.1] - 2026-05-01 — Concept-orchestrator deferred items in PENDING.md
 
 **Operator action:** none. Documentation-only change.

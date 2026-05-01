@@ -1,0 +1,60 @@
+topic_family: complex-numbers
+
+intuition:
+  scaffold: rotation-in-plane
+  guidance: |
+    Lead with i as a 90° rotation operator. Argand plane = R^2 with
+    multiplication = rotation+scale. Avoid algebraic manipulation first.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: cartesian-and-polar
+  guidance: |
+    Define z = a + bi AND z = r e^{iθ} side by side. Conversion formulas
+    in display math.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Convert form → operate (add/multiply/conjugate) → convert back.
+    Six steps max.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: forgetting i^2 = -1 mid-computation, wrong arg quadrant,
+    confusing modulus with magnitude squared.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: argand-plane
+  guidance: |
+    Embed an interactive showing complex multiplication as rotation.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  bloom_floor: 4
+
+hook:
+  scaffold: rotation-question
+  bloom_floor: 1

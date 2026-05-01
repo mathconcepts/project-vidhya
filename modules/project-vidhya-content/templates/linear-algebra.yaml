@@ -1,0 +1,63 @@
+topic_family: linear-algebra
+
+intuition:
+  scaffold: geometric-transformation
+  guidance: |
+    Lead with what the matrix DOES geometrically (rotate, stretch, project).
+    Then connect to the algebraic representation.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: matrix-form
+  guidance: |
+    State the rule in matrix notation with display math. Include dimensions
+    explicitly (e.g., A is m×n).
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    For eigenvalues: write characteristic polynomial → solve → find
+    eigenvectors → verify Av = λv. Six steps max, separated by `\n---\n`.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: confusing eigenvalues with eigenvectors, wrong det formula,
+    missing the AB ≠ BA point.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    Small 2×2 or 3×3 matrix, one operation.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: vector-grid-transform
+  guidance: |
+    Embed :::math3d{...} or a static vector-field image showing how unit
+    vectors transform under the matrix.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  bloom_floor: 4
+
+hook:
+  scaffold: transformation-question
+  bloom_floor: 1

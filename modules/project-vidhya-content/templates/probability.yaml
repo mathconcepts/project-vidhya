@@ -1,0 +1,60 @@
+topic_family: probability
+
+intuition:
+  scaffold: counting-or-sample-space
+  guidance: |
+    Either count favorable / total outcomes, or describe the sample space
+    explicitly. Avoid Bayes-flavored language until formal_definition.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: axiom-or-distribution
+  guidance: |
+    State distribution PMF/PDF or the rule (Bayes, total probability,
+    expectation linearity). Display math.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Identify event → set up sample space or distribution → compute → answer.
+    Include unit check (probability ∈ [0,1]).
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: confusing P(A|B) vs P(B|A) (the prosecutor's fallacy),
+    forgetting independence, double-counting in sample space.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: tree-or-grid
+  guidance: |
+    Decision tree, Venn diagram, or 2x2 grid for joint distributions.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  bloom_floor: 4
+
+hook:
+  scaffold: surprise-result
+  bloom_floor: 1

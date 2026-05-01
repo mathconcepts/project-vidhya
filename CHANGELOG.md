@@ -4,6 +4,59 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.3.0] - 2026-05-01 — ContentAtom v2 + PedagogyEngine + Daily Cards
+
+**Operator action:** migration `013_atom_engagements_cohort_signals.sql` runs automatically on server startup (idempotent, `IF NOT EXISTS`). The new `cohort_signals` table is populated nightly by `cohortAggregator` registered in `src/jobs/scheduler.ts`. No env vars added.
+
+### What changed for students
+
+- **Lessons now adapt to where you actually are.** A new content engine reads your mastery and serves the right kind of explanation: a hook+intuition pair when you're cold, formal definitions and worked examples when building, common-traps drills when solidifying, and rapid recall when exam-ready. Each concept is broken into typed atoms (hook, intuition, formal definition, worked example, micro exercise, common traps) instead of one monolithic page.
+- **Worked examples fade as you re-visit them.** On a second pass, the last step blanks out and you fill it in. On a third pass, the last two steps blank. You do more of the work each time — proven retention boost from cognitive load research.
+- **Get three wrong in a row → the lesson switches modality.** The engine notices the streak, injects a common-traps card, and pivots from text to visual analogy (or mnemonic, or worked example) until you reset.
+- **Exam in under three weeks → automatic mode shift.** When `exam_proximity_days < 21`, lessons reorder to lead with exam patterns and common traps, then recall and quick exercises. No setting to flip.
+- **New /daily route.** A minimal flip-card surface that returns one recall card per concept currently due via SM-2 (filtered to mastery 0.6-0.95). Empty queue says "All caught up for today" — no clutter, no busywork.
+- **"X% miss this on the practice problem" callouts on common-traps cards.** A nightly job aggregates anonymous engagement to surface real cohort error rates. Callout only appears once 10+ peers have hit the linked exercise — no callout means not enough data yet, not a missing feature.
+
+### What changed for content authors
+
+- **New atom format under `concepts/{concept_id}/atoms/*.md`.** Each atom is a markdown file with YAML frontmatter (id, atom_type, bloom_level, difficulty, exam_ids, optional scaffold_fade and tested_by_atom). 18 seed atoms shipped across calculus-derivatives, complex-numbers, and linear-algebra-eigenvalues.
+- **`meta.yaml` is additive.** Existing fields (title, exams, tags, contributor) preserved; new optional fields are `learning_objectives` (Bloom-aligned with mastery criteria) and `exam_overlays` (per-exam customisation: required bloom levels, skip-types, emphasis).
+- **Atoms with `exam_ids: ["*"]` are universal** — they bypass `skip_atom_types` overlays but still respect `required_bloom_levels`.
+- **Hot-reload in dev.** `fs.watch` on `modules/project-vidhya-content/concepts/` clears the atom cache automatically. Production uses explicit `reloadAtoms()`.
+
+### What changed for engineers
+
+- **PedagogyEngine is synchronous and pure** — `selectAtoms(conceptId, studentModel, sessionContext, routeRequest)`. No DB reads, no I/O. Engagement enrichment (count, last_recall_correct, cohort signals) happens in `lesson-routes.ts` AFTER selection via a single SELECT.
+- **Existing `StudentModel` reused as-is** — `mastery_vector: Record<concept_id, MasteryEntry>` keyed by concept_id. The plan-doc's invented shape was rejected during eng review.
+- **Session-local error streak lives on a separate `SessionContext`** — never persisted to `student_models`.
+- **`POST /api/lesson/compose` now returns `atoms[]` alongside `components[]`** (additive). Frontend `AtomCardRenderer` activates whenever atoms is non-empty; older clients continue to render legacy components. `personalize()` is marked `@deprecated` for follow-up removal.
+- **`POST /api/daily-cards` mirrors the existing `/review-today` pattern** — accepts `last_lesson_visit` map in body. SM-2 state stays in client IndexedDB; server doesn't need to track it.
+- **51 new vitest tests** (810 total): tier classification, E5 fallback chain, E6 countdown, exam overlay filtering, wildcard atom rule, atom-loader fallback chain, REGRESSION test for legacy components[] shape, engagement upsert SQL, cohort aggregator GROUP BY + ON CONFLICT math.
+
+### Added
+
+- `src/content/content-types.ts` — `ContentAtom`, `AtomType`, `BloomLevel`, `AnimationPreset`, `SessionContext`
+- `src/curriculum/types.ts` — `LearningObjective`, `ExamOverlay`, `ConceptMeta` (additive)
+- `src/content/atom-loader.ts` — `loadConceptAtoms`, `loadConceptMeta`, `reloadAtoms` + dev fs.watch
+- `src/content/pedagogy-engine.ts` — synchronous `selectAtoms` with tier ordering + E5 + E6 + overlay filtering
+- `src/jobs/cohort-aggregator.ts` — nightly aggregator writing `cohort_signals` (idempotent upsert)
+- `supabase/migrations/013_atom_engagements_cohort_signals.sql`
+- `frontend/src/components/lesson/AtomCardRenderer.tsx` — declarative `ATOM_ANIMATION_MAP`, scaffolding fade, cohort callout, debounced engagement
+- `frontend/src/pages/app/DailyCardsPage.tsx` + `/daily` route
+- 18 atom files across 3 seed concepts
+- New endpoints: `GET /api/lesson/:concept_id` (now returns atoms[]), `POST /api/lesson/:concept_id/engagement`, `GET /api/knowledge/concepts/:id/objectives`, `POST /api/daily-cards`
+
+### Changed
+
+- `src/api/lesson-routes.ts` — `POST /compose` returns atoms[] alongside components[]; new engagement enrichment join
+- `frontend/src/pages/app/LessonPage.tsx` — atom path activates when `lesson.atoms[]` is non-empty
+- `src/jobs/scheduler.ts` — registers nightly `cohortAggregator`
+- `meta.yaml` for 3 seed concepts — augmented with learning_objectives + exam_overlays
+
+### Deprecated
+
+- `src/lessons/personalizer.ts` — superseded by PedagogyEngine; stays in place as backward-compat fallback until all concepts have full atoms/ coverage and frontend confirms the atom path renders correctly.
+
 ## [4.2.0] - 2026-05-01 — Persona shells + pillar synergy
 
 **Operator action:** none required. Three new API endpoints added under `/api/knowledge/tracks/:id/` (progress, next-concept, concept-tree) — no migrations needed, they read from existing `student_models` flat-file store.

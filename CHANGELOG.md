@@ -4,6 +4,14 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.4.1] - 2026-05-01 — Concept-orchestrator deferred items in PENDING.md
+
+**Operator action:** none. Documentation-only change.
+
+### Changed
+
+- **Roadmap visibility.** `PENDING.md` §4 (Content subsystem) gains seven entries (4.10–4.16) capturing the deferred scope from the concept-generation framework CEO plan: external best-practices KB, vector PYQ search, auto A/B testing of regen variants, self-improving prompts, bulk approve, multi-modal generation, lazy-load PYQ corpus. Each entry includes status, priority, effort, rationale, and dependencies so the work is pickable up by anyone without re-reading the full CEO plan.
+
 ## [4.4.0] - 2026-05-01 — Content Module v3: math, interactives, pillar UI
 
 **Operator action:** none. No DB migrations. Optional `WOLFRAM_APP_ID` env var for the new `:::verify` directive — when unset, the route falls back to a deterministic local equality check, so the demo grades correctly without Wolfram.

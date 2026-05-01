@@ -9,7 +9,7 @@ GSTACK_DIR="$PROJECT_ROOT/.claude/skills/gstack"
 if [ -d "$GSTACK_DIR" ]; then
   echo "gstack already vendored at $GSTACK_DIR"
   echo "Pulling latest..."
-  cd "$GSTACK_DIR" && git pull origin master && ./setup
+  cd "$GSTACK_DIR" && git pull origin main && ./setup
 else
   echo "Cloning gstack into $GSTACK_DIR..."
   git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git "$GSTACK_DIR"

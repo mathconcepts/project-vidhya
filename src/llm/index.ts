@@ -1,281 +1,247 @@
 // @ts-nocheck
-/**
- * Project Vidhya LLM Abstraction Layer - Main Entry Point
- * Provider-agnostic LLM client with intelligent routing and fallbacks
- */
-
 import { readFileSync } from 'fs';
-import { parse as parseYaml } from 'yaml';
 import { EventEmitter } from 'events';
 
-import type {
-  LLMConfig,
-  ProviderId,
-  GenerateRequest,
-  GenerateResponse,
-  StreamChunk,
-  EmbedRequest,
-  EmbedResponse,
-  LLMEvent,
-  BudgetStatus,
-  TokenUsage,
-} from './types';
+import { GeminiAdapter } from './adapters/gemini';
+import { AnthropicAdapter } from './adapters/anthropic';
+import { OpenAIAdapter } from './adapters/openai';
+import { OllamaAdapter } from './adapters/ollama';
 import { ModelRouter } from './router/model-router';
-import { getAdapter } from './adapters';
+
+const API_KEY_ENV: Record<string, string> = {
+  gemini: 'GEMINI_API_KEY',
+  anthropic: 'ANTHROPIC_API_KEY',
+  openai: 'OPENAI_API_KEY',
+  ollama: '',
+  learnlm: 'GEMINI_API_KEY',
+};
+
+const DEFAULT_BASE_URL: Record<string, string> = {
+  gemini: 'https://generativelanguage.googleapis.com',
+  anthropic: 'https://api.anthropic.com',
+  openai: 'https://api.openai.com/v1',
+  ollama: 'http://localhost:11434',
+  learnlm: 'https://generativelanguage.googleapis.com',
+};
 
 export class LLMClient extends EventEmitter {
-  private config: LLMConfig;
+  private config: any;
   private router: ModelRouter;
-  private budgetTracker: Map<string, { spent: number; limit: number }> = new Map();
-  
-  constructor(configPath: string) {
+  private providerAdapters = new Map<string, any>();
+
+  constructor(configOrPath: any) {
     super();
-    
-    // Load and parse config
-    const configFile = readFileSync(configPath, 'utf-8');
-    this.config = this.parseConfig(parseYaml(configFile));
-    
-    // Initialize router
+
+    if (typeof configOrPath === 'string') {
+      try {
+        const text = readFileSync(configOrPath, 'utf-8');
+        try { this.config = JSON.parse(text); } catch { this.config = {}; }
+      } catch { this.config = {}; }
+    } else {
+      this.config = configOrPath || {};
+    }
+
     this.router = new ModelRouter(this.config);
-    
-    // Initialize budget tracking
-    for (const [agentId, limit] of Object.entries(this.config.budget.perAgentLimits)) {
-      this.budgetTracker.set(agentId, { spent: 0, limit });
+
+    // Forward budget events from router
+    this.router.on('budget:warning', (data: any) => this.emit('budget:warning', data));
+    this.router.on('budget:exceeded', (data: any) => this.emit('budget:exceeded', data));
+
+    // Create adapters for enabled providers
+    for (const [pid, pconfig] of Object.entries(this.config.providers || {})) {
+      if (!(pconfig as any).enabled) continue;
+      try {
+        const pc = pconfig as any;
+        const apiKey = pc.apiKey || (API_KEY_ENV[pid] ? process.env[API_KEY_ENV[pid]] : '') || '';
+        const baseUrl = pc.baseUrl || DEFAULT_BASE_URL[pid] || '';
+        const models = pc.models || {};
+        const defaultModel = pc.fallbackOrder?.[0] || Object.keys(models)[0] || '';
+        const cfg = { apiKey, baseUrl, models, defaultModel };
+
+        let adapter: any;
+        switch (pid) {
+          case 'gemini':
+          case 'learnlm':
+            adapter = new GeminiAdapter(cfg);
+            break;
+          case 'anthropic':
+            adapter = new AnthropicAdapter(cfg);
+            break;
+          case 'openai':
+            adapter = new OpenAIAdapter(cfg as any);
+            break;
+          case 'ollama':
+            adapter = new OllamaAdapter(cfg);
+            break;
+        }
+        if (adapter) this.providerAdapters.set(pid, adapter);
+      } catch {
+        // provider unavailable
+      }
     }
   }
-  
-  /**
-   * Generate a response (with automatic routing and fallback)
-   */
-  async generate(request: GenerateRequest): Promise<GenerateResponse> {
-    const correlationId = request.metadata?.correlationId || this.generateId();
-    
-    // Check budget
-    if (request.agentId) {
-      const budgetStatus = this.getBudgetStatus(request.agentId);
-      if (budgetStatus.budgetExhausted) {
-        throw new Error(`Budget exhausted for agent ${request.agentId}`);
+
+  // Override on() to return cleanup function instead of this
+  on(event: string | symbol, listener: (...args: any[]) => void): () => void {
+    super.on(event, listener);
+    return () => this.removeListener(event, listener);
+  }
+
+  async initialize(): Promise<void> {
+    this.emit('ready');
+  }
+
+  async generate(request: any): Promise<any> {
+    const correlationId = request.metadata?.correlationId || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    // Budget enforcement
+    if (request.enforeBudget && request.agentId) {
+      const status = this.router.getBudgetStatus(request.agentId);
+      if (status.totalCost >= status.limit) {
+        throw new Error(`Budget exceeded for agent ${request.agentId}`);
       }
     }
-    
-    // Get routing decision
-    const route = this.router.route(request.taskType, request.agentId);
-    
-    this.emit('llm_event', {
-      type: 'generation_started',
-      correlationId,
-      provider: route.provider,
-      agentId: request.agentId,
-    } as LLMEvent);
-    
-    // Try primary route
-    let lastError: Error | undefined;
-    const triedProviders: ProviderId[] = [];
-    
-    for (let attempt = 0; attempt < this.config.fallback.maxRetries; attempt++) {
-      const currentProvider = attempt === 0 
-        ? route.provider 
-        : this.getNextFallback(triedProviders);
-      
-      if (!currentProvider) break;
-      triedProviders.push(currentProvider);
-      
-      try {
-        const adapter = this.router.getAdapter(currentProvider);
-        if (!adapter) continue;
-        
-        const response = await adapter.generate(request);
-        
-        // Track usage
-        this.trackUsage(request.agentId, response.usage);
-        
-        this.emit('llm_event', {
-          type: 'generation_completed',
-          correlationId,
-          usage: response.usage,
-          latencyMs: response.latencyMs,
-        } as LLMEvent);
-        
-        return response;
-        
-      } catch (error) {
-        lastError = error as Error;
-        
-        this.emit('llm_event', {
-          type: 'generation_failed',
-          correlationId,
-          error: lastError.message,
-          provider: currentProvider,
-        } as LLMEvent);
-        
-        // Emit fallback event if we're retrying
-        if (attempt < this.config.fallback.maxRetries - 1) {
-          const nextProvider = this.getNextFallback(triedProviders);
-          if (nextProvider) {
-            this.emit('llm_event', {
-              type: 'fallback_triggered',
-              from: currentProvider,
-              to: nextProvider,
-              reason: lastError.message,
-            } as LLMEvent);
+
+    this.emit('generate:start', { correlationId, agentId: request.agentId, taskType: request.taskType });
+
+    // Determine route
+    let route: any;
+    if (request.model) {
+      route = this.router.selectRoute({ preferredModel: request.model });
+      if (!route.provider) {
+        // Fallback: find by scanning providers
+        for (const [pid, pconfig] of Object.entries(this.config.providers || {})) {
+          for (const [, mc] of Object.entries((pconfig as any).models || {})) {
+            if ((mc as any).id === request.model) {
+              route = { provider: pid, model: request.model, reason: 'explicit model' };
+              break;
+            }
           }
+          if (route.provider) break;
         }
-        
-        // Wait before retry
-        await this.sleep(this.config.fallback.retryDelayMs * Math.pow(2, attempt));
+      }
+    } else {
+      route = this.router.selectRoute({ taskType: request.taskType, agentId: request.agentId });
+    }
+
+    const maxRetries: number = request.maxRetries ?? 1;
+    const fallbackChain = this.router.getFallbackChain(route);
+    const toTry = [route, ...fallbackChain.slice(0, maxRetries)];
+
+    let lastError: any;
+
+    for (let i = 0; i < toTry.length; i++) {
+      const current = toTry[i];
+      const adapter = this.providerAdapters.get(current.provider);
+      if (!adapter) {
+        lastError = new Error(`No adapter for provider: ${current.provider}`);
+        continue;
+      }
+
+      try {
+        const startTime = Date.now();
+        const response = await adapter.generate(request);
+
+        // Track usage
+        if (request.agentId && response.usage) {
+          this.router.recordUsage(
+            request.agentId,
+            response.usage.inputTokens || 0,
+            response.usage.outputTokens || 0,
+            response.usage.estimatedCostUsd || 0,
+            current.provider,
+          );
+        }
+
+        this.emit('generate:complete', {
+          correlationId,
+          provider: current.provider,
+          model: current.model,
+          latencyMs: response.latencyMs || (Date.now() - startTime),
+        });
+
+        return response;
+      } catch (error: any) {
+        lastError = error;
+        this.router.recordFailure(current.provider, current.model, error?.type || 'unknown');
+
+        if (i < toTry.length - 1) {
+          this.emit('fallback', {
+            fromProvider: current.provider,
+            toProvider: toTry[i + 1].provider,
+            reason: error?.message || 'provider error',
+          });
+        }
       }
     }
-    
+
     throw lastError || new Error('All providers failed');
   }
-  
-  /**
-   * Generate a streaming response
-   */
-  async *generateStream(request: GenerateRequest): AsyncGenerator<StreamChunk> {
-    const route = this.router.route(request.taskType, request.agentId);
-    const adapter = this.router.getAdapter(route.provider);
-    
-    if (!adapter) {
-      throw new Error(`No adapter available for provider: ${route.provider}`);
-    }
-    
-    let totalUsage: TokenUsage | undefined;
-    
+
+  async *stream(request: any): AsyncGenerator<any> {
+    const route = this.router.selectRoute({
+      taskType: request.taskType,
+      agentId: request.agentId,
+      preferredModel: request.model,
+    });
+    const adapter = this.providerAdapters.get(route.provider);
+    if (!adapter) throw new Error(`No adapter for provider: ${route.provider}`);
+
     for await (const chunk of adapter.generateStream(request)) {
-      if (chunk.usage) {
-        totalUsage = chunk.usage;
-      }
-      yield chunk;
-    }
-    
-    // Track usage after streaming completes
-    if (totalUsage && request.agentId) {
-      this.trackUsage(request.agentId, totalUsage);
-    }
-  }
-  
-  /**
-   * Generate embeddings
-   */
-  async embed(request: EmbedRequest): Promise<EmbedResponse> {
-    // Try providers with embedding support
-    const embeddingProviders: ProviderId[] = ['gemini', 'openai'];
-    
-    for (const providerId of embeddingProviders) {
-      const adapter = this.router.getAdapter(providerId);
-      if (!adapter) continue;
-      
-      try {
-        return await adapter.embed(request);
-      } catch {
-        // Try next provider
+      if (chunk.done) {
+        yield { type: 'done', totalTokens: chunk.usage?.totalTokens || 0 };
+      } else if (chunk.content) {
+        this.emit('stream:chunk', { content: chunk.content, provider: route.provider });
+        yield { type: 'content', content: chunk.content, tokenCount: Math.ceil(chunk.content.length / 4) };
       }
     }
-    
-    throw new Error('No embedding providers available');
   }
-  
-  /**
-   * Get budget status for an agent
-   */
-  getBudgetStatus(agentId: string): BudgetStatus {
-    const tracker = this.budgetTracker.get(agentId) || {
-      spent: 0,
-      limit: this.config.budget.dailyLimitUsd,
-    };
-    
-    const percentUsed = tracker.spent / tracker.limit;
-    
-    return {
-      agentId,
-      dailySpentUsd: tracker.spent,
-      dailyLimitUsd: tracker.limit,
-      remainingUsd: Math.max(0, tracker.limit - tracker.spent),
-      warningTriggered: percentUsed >= this.config.budget.warningThreshold,
-      budgetExhausted: tracker.spent >= tracker.limit,
-    };
+
+  // Backward-compat alias
+  async *generateStream(request: any): AsyncGenerator<any> {
+    yield* this.stream(request);
   }
-  
-  /**
-   * Track token usage and costs
-   */
-  private trackUsage(agentId: string | undefined, usage: TokenUsage): void {
-    if (!agentId) return;
-    
-    const tracker = this.budgetTracker.get(agentId) || {
-      spent: 0,
-      limit: this.config.budget.dailyLimitUsd,
-    };
-    
-    tracker.spent += usage.estimatedCostUsd;
-    this.budgetTracker.set(agentId, tracker);
-    
-    // Check for warnings
-    const status = this.getBudgetStatus(agentId);
-    
-    if (status.warningTriggered && !status.budgetExhausted) {
-      this.emit('llm_event', {
-        type: 'budget_warning',
-        agentId,
-        percentUsed: tracker.spent / tracker.limit,
-      } as LLMEvent);
+
+  async embed(request: any): Promise<any> {
+    const model = request.model || '';
+    // OpenAI embedding models
+    if (model.startsWith('text-embedding')) {
+      const adapter = this.providerAdapters.get('openai') || new OpenAIAdapter({
+        apiKey: process.env.OPENAI_API_KEY || '',
+        baseUrl: 'https://api.openai.com/v1',
+        models: {},
+        defaultModel: model,
+      } as any);
+      return adapter.embed(request);
     }
-    
-    if (status.budgetExhausted) {
-      this.emit('llm_event', {
-        type: 'budget_exhausted',
-        agentId,
-      } as LLMEvent);
+    // Try gemini
+    const gemini = this.providerAdapters.get('gemini');
+    if (gemini) return gemini.embed(request);
+    throw new Error('No embedding provider available');
+  }
+
+  async recordUsage(agentId: string, inputTokens: number, outputTokens: number, cost: number): Promise<void> {
+    this.router.recordUsage(agentId, inputTokens, outputTokens, cost);
+  }
+
+  getBudgetStatus(agentId: string): any {
+    return this.router.getBudgetStatus(agentId);
+  }
+
+  getProviderHealth(): Record<string, { available: boolean; recentFailures: number }> {
+    const result: Record<string, any> = {};
+    for (const pid of Object.keys(this.config.providers || {})) {
+      result[pid] = this.router.getProviderHealth(pid);
     }
+    return result;
   }
-  
-  /**
-   * Get next fallback provider
-   */
-  private getNextFallback(triedProviders: ProviderId[]): ProviderId | null {
-    const healthyProviders = this.router.getHealthyProviders();
-    const available = healthyProviders.filter(p => !triedProviders.includes(p));
-    return available[0] || null;
-  }
-  
-  /**
-   * Reset daily budgets (call at midnight)
-   */
+
   resetDailyBudgets(): void {
-    for (const [agentId, tracker] of this.budgetTracker.entries()) {
-      tracker.spent = 0;
-      this.budgetTracker.set(agentId, tracker);
-    }
+    this.router.resetDailyBudgets();
   }
-  
-  /**
-   * Check health of all providers
-   */
+
   async checkHealth(): Promise<void> {
     await this.router.checkAllHealth();
-  }
-  
-  /**
-   * Parse raw config to typed config
-   */
-  private parseConfig(raw: Record<string, unknown>): LLMConfig {
-    // Type coercion with defaults
-    return raw as unknown as LLMConfig;
-  }
-  
-  /**
-   * Generate a unique ID
-   */
-  private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-  }
-  
-  /**
-   * Sleep utility
-   */
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 

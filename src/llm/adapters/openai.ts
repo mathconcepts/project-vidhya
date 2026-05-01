@@ -245,10 +245,7 @@ export class OpenAIAdapter extends BaseLLMAdapter {
   private getHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.config.apiKey}`,
-      ...(this.config.organizationId && {
-        'OpenAI-Organization': this.config.organizationId,
-      }),
+      Authorization: `Bearer ${this.apiKey}`,
     };
   }
 

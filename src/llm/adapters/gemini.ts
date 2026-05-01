@@ -44,13 +44,14 @@ export class GeminiAdapter extends BaseLLMAdapter {
       );
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Gemini API error: ${error.error?.message || response.statusText}`);
+        const error = await response.json().catch(() => ({}));
+        const msg = `Gemini API error: ${error.error?.message || response.statusText}`;
+        throw Object.assign(new Error(msg), this.classifyError(Object.assign(new Error(msg), { status: response.status })));
       }
-      
+
       const data = await response.json();
       const candidate = data.candidates?.[0];
-      
+
       if (!candidate) {
         throw new Error('No response from Gemini');
       }

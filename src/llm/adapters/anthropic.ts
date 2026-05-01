@@ -44,17 +44,24 @@ export class AnthropicAdapter extends BaseLLMAdapter {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Anthropic API error: ${error.error?.message || response.statusText}`);
+        const errData = await response.json().catch(() => ({}));
+        const msg = `Anthropic API error: ${errData.error?.message || response.statusText}`;
+        throw Object.assign(new Error(msg), this.classifyError(Object.assign(new Error(msg), { status: response.status })));
       }
       
       const data = await response.json();
       
-      const content = data.content
-        ?.filter((c: { type: string }) => c.type === 'text')
+      const contentBlocks = data.content ?? [];
+      const content = contentBlocks
+        .filter((c: { type: string }) => c.type === 'text')
         .map((c: { text: string }) => c.text)
         .join('') || '';
-      
+
+      const toolUseBlocks = contentBlocks.filter((c: { type: string }) => c.type === 'tool_use');
+      const functionCalls = toolUseBlocks.length > 0
+        ? toolUseBlocks.map((c: { name: string; input: unknown }) => ({ name: c.name, arguments: c.input }))
+        : undefined;
+
       const usage: TokenUsage = {
         inputTokens: data.usage?.input_tokens || 0,
         outputTokens: data.usage?.output_tokens || 0,
@@ -65,7 +72,7 @@ export class AnthropicAdapter extends BaseLLMAdapter {
           this.defaultModel
         ),
       };
-      
+
       return {
         content,
         finishReason: this.mapFinishReason(data.stop_reason),
@@ -73,6 +80,7 @@ export class AnthropicAdapter extends BaseLLMAdapter {
         model: modelId,
         provider: this.providerId,
         latencyMs: Date.now() - startTime,
+        functionCalls,
       };
     });
   }
@@ -191,6 +199,8 @@ export class AnthropicAdapter extends BaseLLMAdapter {
         return 'stop';
       case 'max_tokens':
         return 'length';
+      case 'tool_use':
+        return 'function_call';
       default:
         return 'stop';
     }

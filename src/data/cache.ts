@@ -161,7 +161,7 @@ export class InMemoryCache implements CacheAdapter {
 
   async lpush<T>(key: string, ...values: T[]): Promise<number> {
     const list = (await this.get<T[]>(key)) || [];
-    list.unshift(...values);
+    list.unshift(...[...values].reverse());
     await this.set(key, list);
     return list.length;
   }

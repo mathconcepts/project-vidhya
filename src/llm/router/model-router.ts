@@ -1,267 +1,307 @@
 // @ts-nocheck
-/**
- * Project Vidhya LLM Abstraction Layer - Model Router
- * Intelligent routing based on task type, budget, and provider health
- */
+import { EventEmitter } from 'events';
 
-import type {
-  ProviderId,
-  TaskType,
-  ModelTier,
-  LLMConfig,
-  ProviderHealth,
-  BudgetStatus,
-  LLMAdapter,
-} from '../types';
-import { getAdapter } from '../adapters';
-
-interface RoutingDecision {
-  provider: ProviderId;
-  model: string;
-  reason: string;
+interface AgentBudget {
+  totalCost: number;
+  inputTokens: number;
+  outputTokens: number;
+  warningSent: boolean;
+  exceededSent: boolean;
 }
 
-interface RouterState {
-  providerHealth: Map<ProviderId, ProviderHealth>;
-  budgetStatus: Map<string, BudgetStatus>;
-  requestCounts: Map<ProviderId, number>;
+interface ProviderFailureState {
+  count: number;
+  available: boolean;
 }
 
-export class ModelRouter {
-  private config: LLMConfig;
-  private state: RouterState;
-  private adapters: Map<ProviderId, LLMAdapter> = new Map();
-  
-  constructor(config: LLMConfig) {
+export class ModelRouter extends EventEmitter {
+  private config: any;
+  private agentBudgets = new Map<string, AgentBudget>();
+  private providerFailures = new Map<string, ProviderFailureState>();
+
+  constructor(config: any) {
+    super();
     this.config = config;
-    this.state = {
-      providerHealth: new Map(),
-      budgetStatus: new Map(),
-      requestCounts: new Map(),
+  }
+
+  selectRoute(opts: {
+    taskType?: string;
+    agentId?: string;
+    preferredModel?: string;
+    preferredProvider?: string;
+  } = {}): { provider: string; model: string; reason: string } {
+    const { taskType, preferredModel, preferredProvider } = opts;
+
+    // Explicit model override — find which provider has it
+    if (preferredModel) {
+      for (const [pid, pconfig] of Object.entries(this.config.providers || {})) {
+        for (const [, mconfig] of Object.entries((pconfig as any).models || {})) {
+          if ((mconfig as any).id === preferredModel) {
+            return { provider: pid, model: preferredModel, reason: 'explicit model' };
+          }
+        }
+      }
+    }
+
+    // Explicit provider override — use its first model
+    if (preferredProvider) {
+      const pconfig = this.config.providers?.[preferredProvider];
+      if (pconfig) {
+        const models = Object.values(pconfig.models || {}) as any[];
+        return { provider: preferredProvider, model: models[0]?.id || '', reason: 'explicit provider' };
+      }
+    }
+
+    // Task-based routing
+    const rules = taskType ? this.config.routingRules?.taskTypes?.[taskType] : undefined;
+    const preferredProviders: string[] = rules?.preferredProviders || Object.keys(this.config.providers || {});
+    const preferredTiers: string[] = rules?.preferredTiers || [];
+    const preferredSpecs: string[] = rules?.preferredSpecializations || [];
+
+    for (const pid of preferredProviders) {
+      const pconfig = this.config.providers?.[pid];
+      if (!pconfig?.enabled) continue;
+
+      const health = this.providerFailures.get(pid);
+      if (health?.available === false) continue;
+
+      const models = Object.values(pconfig.models || {}) as any[];
+      let best: any = null;
+
+      // Try tier + spec match
+      if (preferredTiers.length && preferredSpecs.length) {
+        best = models.find(m =>
+          preferredTiers.includes(m.tier) &&
+          preferredSpecs.some(s => (Array.isArray(m.specialization) ? m.specialization : [m.specialization]).includes(s))
+        );
+      }
+
+      // Try tier-only match
+      if (!best && preferredTiers.length) {
+        best = models.find(m => preferredTiers.includes(m.tier));
+      }
+
+      // Try spec-only match
+      if (!best && preferredSpecs.length) {
+        best = models.find(m =>
+          preferredSpecs.some(s => (Array.isArray(m.specialization) ? m.specialization : [m.specialization]).includes(s))
+        );
+      }
+
+      // First available
+      if (!best) best = models[0];
+
+      if (best) {
+        return { provider: pid, model: best.id, reason: `routing for ${taskType || 'default'}` };
+      }
+    }
+
+    // Last resort: first enabled provider
+    for (const [pid, pconfig] of Object.entries(this.config.providers || {})) {
+      if (!(pconfig as any).enabled) continue;
+      const models = Object.values((pconfig as any).models || {}) as any[];
+      if (models[0]) return { provider: pid, model: (models[0] as any).id, reason: 'fallback' };
+    }
+
+    return { provider: this.config.defaultProvider || '', model: '', reason: 'default' };
+  }
+
+  // Backward-compat alias
+  route(taskType?: string, agentId?: string) {
+    return this.selectRoute({ taskType, agentId });
+  }
+
+  getFallbackChain(route: { provider: string; model: string }): Array<{ provider: string; model: string }> {
+    const fallbacks: Array<{ provider: string; model: string }> = [];
+    for (const [pid, pconfig] of Object.entries(this.config.providers || {})) {
+      if (!(pconfig as any).enabled) continue;
+      for (const [, mconfig] of Object.entries((pconfig as any).models || {})) {
+        const mid = (mconfig as any).id;
+        if (pid === route.provider && mid === route.model) continue;
+        fallbacks.push({ provider: pid, model: mid });
+      }
+    }
+    return fallbacks;
+  }
+
+  recordUsage(agentId: string, inputTokens: number, outputTokens: number, cost: number, provider?: string): void {
+    // Provider recovery
+    if (provider) {
+      const state = this.providerFailures.get(provider);
+      if (state) {
+        state.count = 0;
+        state.available = true;
+        this.providerFailures.set(provider, state);
+      }
+    }
+
+    const existing = this.agentBudgets.get(agentId) || {
+      totalCost: 0, inputTokens: 0, outputTokens: 0, warningSent: false, exceededSent: false,
     };
-    
-    // Initialize adapters for enabled providers
-    for (const [providerId, providerConfig] of Object.entries(config.providers)) {
-      if (providerConfig.enabled) {
-        try {
-          const adapter = getAdapter(providerId as ProviderId, providerConfig);
-          this.adapters.set(providerId as ProviderId, adapter);
-          
-          // Initialize health as healthy
-          this.state.providerHealth.set(providerId as ProviderId, {
-            provider: providerId as ProviderId,
-            healthy: true,
-            latencyMs: 0,
-            lastCheck: new Date(),
-            errorRate: 0,
-            consecutiveFailures: 0,
-          });
-        } catch {
-          // Provider initialization failed - mark as unhealthy
-          this.state.providerHealth.set(providerId as ProviderId, {
-            provider: providerId as ProviderId,
-            healthy: false,
-            latencyMs: 0,
-            lastCheck: new Date(),
-            errorRate: 1,
-            consecutiveFailures: 1,
-          });
-        }
-      }
+    existing.totalCost += cost;
+    existing.inputTokens += inputTokens;
+    existing.outputTokens += outputTokens;
+    this.agentBudgets.set(agentId, existing);
+
+    const limit = this._getBudgetLimit(agentId);
+    const threshold = this._getWarningThreshold(agentId);
+    const percentage = existing.totalCost / limit;
+
+    if (!existing.warningSent && percentage >= threshold) {
+      existing.warningSent = true;
+      this.emit('budget:warning', { agentId, percentage, totalCost: existing.totalCost });
+    }
+    if (!existing.exceededSent && existing.totalCost >= limit) {
+      existing.exceededSent = true;
+      this.emit('budget:exceeded', { agentId, totalCost: existing.totalCost });
     }
   }
-  
-  /**
-   * Route a request to the best provider/model
-   */
-  route(taskType?: TaskType, agentId?: string): RoutingDecision {
-    // Check budget first
-    if (agentId) {
-      const budget = this.state.budgetStatus.get(agentId);
-      if (budget?.budgetExhausted) {
-        return this.getEconomyRoute('Budget exhausted for agent');
-      }
-    }
-    
-    // Determine required tier based on task type
-    const requiredTier = this.getTierForTask(taskType);
-    
-    // Try primary providers first
-    for (const level of this.config.fallback.degradationLevels) {
-      for (const providerId of level.providers) {
-        const health = this.state.providerHealth.get(providerId);
-        const providerConfig = this.config.providers[providerId];
-        
-        if (!health?.healthy || !providerConfig?.enabled) continue;
-        
-        // Find a model that matches the required tier
-        const model = this.selectModelForTier(providerId, requiredTier);
-        if (model) {
-          return {
-            provider: providerId,
-            model: model.id,
-            reason: `Selected ${providerId}/${model.id} for ${taskType || 'general'} task (tier: ${requiredTier})`,
-          };
-        }
-      }
-    }
-    
-    // All providers failed - try economy mode
-    return this.getEconomyRoute('No healthy providers available');
-  }
-  
-  /**
-   * Get economy route for budget/fallback scenarios
-   */
-  private getEconomyRoute(reason: string): RoutingDecision {
-    // Try local models first
-    const ollama = this.config.providers.ollama;
-    if (ollama?.enabled) {
-      const ollamaHealth = this.state.providerHealth.get('ollama');
-      if (ollamaHealth?.healthy) {
-        const model = Object.values(ollama.models)[0];
-        return {
-          provider: 'ollama',
-          model: model?.id || 'llama3.2',
-          reason: `Economy mode: ${reason}`,
-        };
-      }
-    }
-    
-    // Fall back to cheapest cloud model
-    const cheapestRoute = this.findCheapestModel();
-    if (cheapestRoute) {
-      return {
-        ...cheapestRoute,
-        reason: `Economy mode: ${reason}`,
-      };
-    }
-    
-    // Last resort - return default
-    return {
-      provider: this.config.defaultProvider,
-      model: Object.values(this.config.providers[this.config.defaultProvider]?.models || {})[0]?.id || 'gemini-2.0-flash',
-      reason: `Fallback to default: ${reason}`,
+
+  getBudgetStatus(agentId: string): { totalCost: number; inputTokens: number; outputTokens: number; limit: number } {
+    const b = this.agentBudgets.get(agentId) || {
+      totalCost: 0, inputTokens: 0, outputTokens: 0, warningSent: false, exceededSent: false,
     };
+    return { totalCost: b.totalCost, inputTokens: b.inputTokens, outputTokens: b.outputTokens, limit: this._getBudgetLimit(agentId) };
   }
-  
-  /**
-   * Find the cheapest available model
-   */
-  private findCheapestModel(): RoutingDecision | null {
-    let cheapest: { provider: ProviderId; model: string; cost: number } | null = null;
-    
-    for (const [providerId, providerConfig] of Object.entries(this.config.providers)) {
-      if (!providerConfig.enabled) continue;
-      
-      const health = this.state.providerHealth.get(providerId as ProviderId);
-      if (!health?.healthy) continue;
-      
-      for (const [modelName, modelConfig] of Object.entries(providerConfig.models)) {
-        const avgCost = (modelConfig.costPer1kInput + modelConfig.costPer1kOutput) / 2;
-        if (!cheapest || avgCost < cheapest.cost) {
-          cheapest = {
-            provider: providerId as ProviderId,
-            model: modelConfig.id,
-            cost: avgCost,
-          };
+
+  resetDailyBudgets(): void {
+    for (const agentId of Array.from(this.agentBudgets.keys())) {
+      this.agentBudgets.set(agentId, { totalCost: 0, inputTokens: 0, outputTokens: 0, warningSent: false, exceededSent: false });
+    }
+  }
+
+  recordFailure(providerId: string, model: string, errorType: string): void {
+    const current = this.providerFailures.get(providerId) || { count: 0, available: true };
+    current.count++;
+    if (current.count >= 5) current.available = false;
+    this.providerFailures.set(providerId, current);
+  }
+
+  getProviderHealth(providerId: string): { recentFailures: number; available: boolean } {
+    const state = this.providerFailures.get(providerId) || { count: 0, available: true };
+    return { recentFailures: state.count, available: state.available };
+  }
+
+  estimateCost(opts: {
+    taskType?: string;
+    estimatedInputTokens: number;
+    estimatedOutputTokens: number;
+    includeLocalModels?: boolean;
+  }): { provider: string; model: string; estimatedCost: number; alternatives?: Array<{ provider: string; model: string; estimatedCost: number }> } {
+    const route = this.selectRoute({ taskType: opts.taskType });
+    const mc = this._findModelConfig(route.provider, route.model);
+    const cost = this._calcCost(mc, opts.estimatedInputTokens, opts.estimatedOutputTokens);
+    const result: any = { provider: route.provider, model: route.model, estimatedCost: cost };
+
+    if (opts.includeLocalModels) {
+      const alternatives: any[] = [];
+      for (const [pid, pconfig] of Object.entries(this.config.providers || {})) {
+        for (const [, mconfig] of Object.entries((pconfig as any).models || {})) {
+          const m = mconfig as any;
+          if ((m.costPer1kInput || 0) === 0 && (m.costPer1kOutput || 0) === 0) {
+            alternatives.push({ provider: pid, model: m.id, estimatedCost: 0 });
+          }
+        }
+      }
+      result.alternatives = alternatives;
+    }
+
+    return result;
+  }
+
+  findModelsBySpecialization(spec: string): any[] {
+    const result: any[] = [];
+    for (const [, pconfig] of Object.entries(this.config.providers || {})) {
+      for (const [, mconfig] of Object.entries((pconfig as any).models || {})) {
+        const m = mconfig as any;
+        const specs: string[] = Array.isArray(m.specialization) ? m.specialization : (m.specialization ? [m.specialization] : []);
+        if (specs.includes(spec)) result.push(m);
+      }
+    }
+    return result;
+  }
+
+  findModelsByTier(tier: string): any[] {
+    const result: any[] = [];
+    for (const [, pconfig] of Object.entries(this.config.providers || {})) {
+      for (const [, mconfig] of Object.entries((pconfig as any).models || {})) {
+        const m = mconfig as any;
+        if (m.tier === tier) result.push(m);
+      }
+    }
+    return result;
+  }
+
+  findCheapestModel(): any {
+    let cheapest: any = null;
+    for (const [, pconfig] of Object.entries(this.config.providers || {})) {
+      for (const [, mconfig] of Object.entries((pconfig as any).models || {})) {
+        const m = mconfig as any;
+        if (!cheapest || (m.costPer1kInput || 0) < (cheapest.costPer1kInput || 0)) {
+          cheapest = m;
         }
       }
     }
-    
-    return cheapest ? { provider: cheapest.provider, model: cheapest.model, reason: '' } : null;
+    return cheapest;
   }
-  
-  /**
-   * Get required tier for a task type
-   */
-  private getTierForTask(taskType?: TaskType): ModelTier {
-    if (!taskType) return 'routine';
-    
-    for (const [tier, tasks] of Object.entries(this.config.taskRouting)) {
-      if (tasks.includes(taskType)) {
-        return tier as ModelTier;
-      }
-    }
-    
-    return 'routine';
-  }
-  
-  /**
-   * Select a model for a specific tier from a provider
-   */
-  private selectModelForTier(providerId: ProviderId, tier: ModelTier) {
-    const providerConfig = this.config.providers[providerId];
-    if (!providerConfig) return null;
-    
-    // First try exact tier match
-    for (const [_, modelConfig] of Object.entries(providerConfig.models)) {
-      if (modelConfig.tier === tier) {
-        return modelConfig;
-      }
-    }
-    
-    // Fall back to any available model
-    const models = Object.values(providerConfig.models);
-    return models[0] || null;
-  }
-  
-  /**
-   * Update provider health status
-   */
-  updateHealth(providerId: ProviderId, health: ProviderHealth): void {
-    this.state.providerHealth.set(providerId, health);
-  }
-  
-  /**
-   * Update agent budget status
-   */
-  updateBudget(agentId: string, status: BudgetStatus): void {
-    this.state.budgetStatus.set(agentId, status);
-  }
-  
-  /**
-   * Get adapter for a provider
-   */
-  getAdapter(providerId: ProviderId): LLMAdapter | undefined {
-    return this.adapters.get(providerId);
-  }
-  
-  /**
-   * Get all healthy providers
-   */
-  getHealthyProviders(): ProviderId[] {
-    return Array.from(this.state.providerHealth.entries())
-      .filter(([_, health]) => health.healthy)
-      .map(([id]) => id);
-  }
-  
-  /**
-   * Check all provider health
-   */
-  async checkAllHealth(): Promise<Map<ProviderId, ProviderHealth>> {
-    const healthChecks = Array.from(this.adapters.entries()).map(
-      async ([providerId, adapter]) => {
-        try {
-          const health = await adapter.checkHealth();
-          this.state.providerHealth.set(providerId, health);
-          return [providerId, health] as const;
-        } catch (error) {
-          const failedHealth: ProviderHealth = {
-            provider: providerId,
-            healthy: false,
-            latencyMs: 0,
-            lastCheck: new Date(),
-            errorRate: 1,
-            consecutiveFailures: 99,
-          };
-          this.state.providerHealth.set(providerId, failedHealth);
-          return [providerId, failedHealth] as const;
+
+  findFastestModel(): any {
+    for (const tier of ['flash', 'mini', 'fast', 'local']) {
+      for (const [, pconfig] of Object.entries(this.config.providers || {})) {
+        for (const [, mconfig] of Object.entries((pconfig as any).models || {})) {
+          if ((mconfig as any).tier === tier) return mconfig;
         }
       }
+    }
+    const first = Object.values((Object.values(this.config.providers || {})[0] as any)?.models || {});
+    return first[0] || null;
+  }
+
+  // Backward-compat stubs
+  getAdapter(providerId: string): any | undefined {
+    return undefined;
+  }
+
+  getHealthyProviders(): string[] {
+    return Object.keys(this.config.providers || {}).filter(pid => {
+      const state = this.providerFailures.get(pid);
+      return !state || state.available !== false;
+    });
+  }
+
+  updateHealth(_providerId: string, _health: any): void {}
+  updateBudget(_agentId: string, _status: any): void {}
+  async checkAllHealth(): Promise<Map<string, any>> { return new Map(); }
+
+  private _getBudgetLimit(agentId: string): number {
+    return (
+      this.config.routingRules?.budgetLimits?.[agentId]?.dailyLimit ||
+      this.config.routingRules?.budgetLimits?.default?.dailyLimit ||
+      this.config.budget?.dailyLimitUsd ||
+      10
     );
-    
-    const results = await Promise.all(healthChecks);
-    return new Map(results);
+  }
+
+  private _getWarningThreshold(agentId: string): number {
+    return (
+      this.config.routingRules?.budgetLimits?.[agentId]?.warningThreshold ||
+      this.config.routingRules?.budgetLimits?.default?.warningThreshold ||
+      this.config.budget?.warningThreshold ||
+      0.8
+    );
+  }
+
+  private _findModelConfig(providerId: string, modelId: string): any {
+    const pconfig = this.config.providers?.[providerId];
+    if (!pconfig) return null;
+    for (const [, mconfig] of Object.entries(pconfig.models || {})) {
+      if ((mconfig as any).id === modelId) return mconfig;
+    }
+    return null;
+  }
+
+  private _calcCost(mc: any, inputTokens: number, outputTokens: number): number {
+    if (!mc) return 0;
+    return (inputTokens / 1000) * (mc.costPer1kInput || 0) + (outputTokens / 1000) * (mc.costPer1kOutput || 0);
   }
 }

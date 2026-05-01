@@ -46,6 +46,7 @@ const SmartPracticePage = lazy(() => import('@/pages/app/SmartPracticePage'));
 const PlannedSessionPage = lazy(() => import('@/pages/app/PlannedSessionPage'));
 const ExamProfilePage = lazy(() => import('@/pages/app/ExamProfilePage'));
 const KnowledgePickerPage = lazy(() => import('@/pages/app/KnowledgePickerPage'));
+const KnowledgeHomePage = lazy(() => import('@/pages/app/KnowledgeHomePage'));
 const SnapPage = lazy(() => import('@/pages/app/SnapPage'));
 const LessonPage = lazy(() => import('@/pages/app/LessonPage'));
 const LLMConfigPage = lazy(() => import('@/pages/app/LLMConfigPage'));
@@ -126,6 +127,7 @@ export default function App() {
           <Route path="planned" element={<PlannedSessionPage />} />
           <Route path="exam-profile" element={<ExamProfilePage />} />
           <Route path="knowledge" element={<KnowledgePickerPage />} />
+          <Route path="knowledge-home" element={<KnowledgeHomePage />} />
           <Route path="snap" element={<SnapPage />} />
           <Route path="lesson/:concept_id" element={<LessonPage />} />
           <Route path="llm-config" element={<LLMConfigPage />} />

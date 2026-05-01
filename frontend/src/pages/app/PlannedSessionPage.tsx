@@ -33,8 +33,10 @@ import { WelcomeBackCard } from '@/components/app/WelcomeBackCard';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
   Sparkles, RefreshCw, AlertCircle, ChevronRight,
-  Bookmark, Settings, Plus, Trash2,
+  Bookmark, Settings, Plus, Trash2, ChevronDown,
 } from 'lucide-react';
+import { CompoundingCard } from '@/components/app/CompoundingCard';
+import { DigestChip } from '@/components/app/DigestChip';
 import { clsx } from 'clsx';
 
 // ============================================================================
@@ -155,10 +157,11 @@ interface PlanTemplate {
 export default function PlannedSessionPage() {
   const navigate = useNavigate();
 
-  const [minutes, setMinutes] = useState<number>(8);
+  const [minutes, setMinutes] = useState<number>(15);
   const [plan, setPlan] = useState<SessionPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   // v2.32: profile + templates
   const [profile, setProfile] = useState<ExamProfile | null>(null);
@@ -184,6 +187,7 @@ export default function PlannedSessionPage() {
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [closurePassed, setClosurePassed] = useState(false);
+  const [rationaleOpen, setRationaleOpen] = useState<Record<string, boolean>>({});
   // P5: gbrain summary for WelcomeBackCard lapse detection
   const [gbrainSummary, setGbrainSummary] = useState<any>(null);
   const [userMeta, setUserMeta] = useState<{ created_at?: string } | null>(null);
@@ -201,7 +205,8 @@ export default function PlannedSessionPage() {
       .catch(() => { /* fail soft */ });
   }, []);
 
-  // Load profile + templates + trailing stats + presets on mount
+  // Load profile + templates + trailing stats + presets on mount.
+  // For returning users (has exams + prior sessions), auto-generate a 15-min plan.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -220,28 +225,65 @@ export default function PlannedSessionPage() {
           setError('session_expired');
           return;
         }
-        if (profResp.ok) setProfile(await profResp.json());
+        let loadedProfile: ExamProfile | null = null;
+        if (profResp.ok) {
+          loadedProfile = await profResp.json();
+          setProfile(loadedProfile);
+        }
+        let loadedTrailing: { trailing_7d_minutes: number; trailing_7d_sessions: number } | null = null;
         if (tplResp.ok) {
           const j = await tplResp.json();
           setTemplates(j.templates || []);
         }
         if (trailingResp.ok) {
           const j = await trailingResp.json();
-          setTrailingStats({
+          loadedTrailing = {
             trailing_7d_minutes: j.trailing_7d_minutes,
             trailing_7d_sessions: j.trailing_7d_sessions,
-          });
+          };
+          setTrailingStats(loadedTrailing);
         }
         if (presetsResp.ok) {
           const j = await presetsResp.json();
           setPresets(j.presets || []);
+        }
+
+        // Auto-generate for returning users — skip the time picker friction
+        const isReturning = loadedProfile && loadedProfile.exams.length > 0
+          && loadedTrailing && loadedTrailing.trailing_7d_sessions > 0;
+        if (isReturning && !cancelled) {
+          // fetchPlan reads `profile` from state which may not be set yet —
+          // call the API directly with the loaded profile.
+          setLoading(true);
+          try {
+            const hasMultiple = loadedProfile!.exams.length >= 2;
+            const e = loadedProfile!.exams[0];
+            const res = await authFetch(
+              hasMultiple ? '/api/student/session/plan/multi-exam' : '/api/student/session/plan',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(
+                  hasMultiple
+                    ? { minutes_available: 15, exams: loadedProfile!.exams.map(ex => ({ exam_id: ex.exam_id, exam_date: ex.exam_date })) }
+                    : { exam_id: e.exam_id, exam_date: e.exam_date, minutes_available: 15 }
+                ),
+              }
+            );
+            if (res.ok && !cancelled) {
+              const p: SessionPlan = await res.json();
+              setPlan(p);
+              setStartedAtMs(Date.now());
+            }
+          } catch { /* fall through — user sees picker */ }
+          finally { if (!cancelled) setLoading(false); }
         }
       } catch {
         // Non-fatal — fall through to default exam
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPlan = useCallback(async () => {
     setLoading(true);
@@ -524,11 +566,11 @@ export default function PlannedSessionPage() {
             </div>
           )}
           {profile && profile.exams.length === 0 && (
-            <div className="mt-3 text-xs text-amber-300/80 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 space-y-1">
+            <div className="mt-3 text-xs text-violet-300/80 bg-violet-500/5 border border-violet-500/20 rounded-lg px-3 py-2 space-y-1">
               <div>
                 Using a default exam. <Link to="/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
               </div>
-              <div className="text-amber-200/60">
+              <div className="text-violet-200/60">
                 Or <Link to="/knowledge" className="underline">tell us your school curriculum</Link> and we'll suggest the right exams.
               </div>
             </div>
@@ -621,7 +663,7 @@ export default function PlannedSessionPage() {
           </motion.section>
         )}
 
-        {/* Minutes picker — hidden once a plan is loaded, shown on reset */}
+        {/* Minutes picker — hidden once a plan is loaded */}
         {!plan && !loading && (
           <motion.section
             variants={staggerContainer}
@@ -768,15 +810,31 @@ export default function PlannedSessionPage() {
               animate="visible"
               exit={{ opacity: 0 }}
             >
+              {/* CompoundingCard + DigestChip — north-star pillar surfaces daily */}
+              <CompoundingCard />
+              <DigestChip sessionId="" />
+
               {/* Headline */}
               <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">
                 <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-1">Your plan</div>
                 <div className="text-lg font-semibold text-surface-100 mb-2">{plan.headline}</div>
-                <div className="flex gap-3 text-xs text-surface-400">
+                <div className="flex gap-3 text-xs text-surface-400 flex-wrap">
                   <span>{plan.budget.context} session</span>
                   <span>·</span>
                   <span>{plan.total_estimated_minutes} min total</span>
+                  <Link
+                    to="/exam-strategy"
+                    className="ml-auto text-violet-400 hover:text-violet-300 transition-colors inline-flex items-center gap-0.5 text-xs"
+                  >
+                    See your full strategy <ChevronRight className="w-3 h-3" />
+                  </Link>
                 </div>
+                <button
+                  onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
+                  className="mt-2 text-surface-600 hover:text-surface-400 transition-colors underline text-xs"
+                >
+                  Change time
+                </button>
               </div>
 
               {/* v2.6: Compounding progress ribbon. "completed N of M today"
@@ -849,7 +907,20 @@ export default function PlannedSessionPage() {
                             <span className="text-xs text-surface-500">~{action.estimated_minutes} min</span>
                           </div>
                           <div className="text-sm font-semibold text-surface-100 mb-1">{action.title}</div>
-                          <div className="text-xs text-surface-400 leading-relaxed">{action.rationale}</div>
+                          {action.rationale && (
+                            <div>
+                              <button
+                                onClick={() => setRationaleOpen(prev => ({ ...prev, [action.id]: !prev[action.id] }))}
+                                className="text-[11px] text-surface-500 hover:text-surface-400 transition-colors inline-flex items-center gap-0.5 mb-1"
+                              >
+                                Why this order
+                                <ChevronDown className={clsx('w-3 h-3 transition-transform', rationaleOpen[action.id] && 'rotate-180')} />
+                              </button>
+                              {rationaleOpen[action.id] && (
+                                <div className="text-xs text-surface-400 leading-relaxed mb-1">{action.rationale}</div>
+                              )}
+                            </div>
+                          )}
 
                           {/* Controls */}
                           {doneState === 'pending' && (
@@ -882,29 +953,35 @@ export default function PlannedSessionPage() {
                                 <span>Marked done</span>
                               </div>
                               {(action.kind === 'practice' || action.kind === 'micro-mock' || action.kind === 'spaced-review') && (
-                                <div className="flex gap-2 items-center text-xs">
-                                  <span className="text-surface-500">Attempts:</span>
-                                  <input
-                                    type="number" min={0} max={action.content_hint.count}
-                                    value={outcome?.attempts ?? 0}
-                                    onChange={(e) => setAttempts(
-                                      action.id,
-                                      parseInt(e.target.value, 10) || 0,
-                                      outcome?.correct ?? 0,
-                                    )}
-                                    className="w-14 px-2 py-1 rounded bg-surface-800 border border-surface-700 text-surface-100 font-mono"
-                                  />
-                                  <span className="text-surface-500">Correct:</span>
-                                  <input
-                                    type="number" min={0} max={outcome?.attempts ?? action.content_hint.count}
-                                    value={outcome?.correct ?? 0}
-                                    onChange={(e) => setAttempts(
-                                      action.id,
-                                      outcome?.attempts ?? 0,
-                                      parseInt(e.target.value, 10) || 0,
-                                    )}
-                                    className="w-14 px-2 py-1 rounded bg-surface-800 border border-surface-700 text-surface-100 font-mono"
-                                  />
+                                <div className="flex gap-3 items-center text-xs flex-wrap">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-surface-500">Attempts:</span>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => setAttempts(action.id, Math.max(0, (outcome?.attempts ?? 0) - 1), outcome?.correct ?? 0)}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >−</button>
+                                      <span className="w-8 text-center font-mono text-surface-100">{outcome?.attempts ?? 0}</span>
+                                      <button
+                                        onClick={() => setAttempts(action.id, (outcome?.attempts ?? 0) + 1, outcome?.correct ?? 0)}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >+</button>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-surface-500">Correct:</span>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.max(0, (outcome?.correct ?? 0) - 1))}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >−</button>
+                                      <span className="w-8 text-center font-mono text-surface-100">{outcome?.correct ?? 0}</span>
+                                      <button
+                                        onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.min(outcome?.attempts ?? action.content_hint.count, (outcome?.correct ?? 0) + 1))}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >+</button>
+                                    </div>
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -985,7 +1062,7 @@ export default function PlannedSessionPage() {
           tomorrowPriority={plan.top_priorities?.[0]?.topic}
           onContinue={() => {
             setClosurePassed(true);
-            navigate('/');
+            navigate('/planned');
           }}
         />
       )}

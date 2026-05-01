@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
 import { useSession } from '@/hooks/useSession';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { resolve, warmContentBundle, getBundleStats, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
+import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
 import { recordAttempt } from '@/lib/gbrain/client';
 import {
   Sparkles, Zap, Database, Server, CheckCircle2, XCircle, Loader2, ArrowRight,
@@ -75,20 +75,17 @@ export default function SmartPracticePage() {
   const [examTopics, setExamTopics] = useState<string[]>(GATE_FALLBACK_TOPICS);
   const [topic, setTopic] = useState<string>(initialTopic);
   const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
-  const [requireWolfram, setRequireWolfram] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resolved, setResolved] = useState<ResolvedContent | null>(null);
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [wasCorrect, setWasCorrect] = useState<boolean | null>(null);
   const [startedAt, setStartedAt] = useState<number>(0);
-  const [bundleStats, setBundleStats] = useState<any>(null);
   const [sessionStats, setSessionStats] = useState({ problems_served: 0, total_cost_usd: 0, avg_latency_ms: 0 });
 
   useEffect(() => {
     trackEvent('page_view', { page: 'smart-practice' });
     warmContentBundle();
-    getBundleStats().then(setBundleStats).catch(() => {});
   }, []);
 
   // Load the student's exam topic list so the topic picker shows their
@@ -122,7 +119,7 @@ export default function SmartPracticePage() {
         concept_id: topic,
         topic,
         difficulty,
-        require_wolfram: requireWolfram,
+        require_wolfram: false,
         use_materials: true,
       });
       setResolved(result);
@@ -138,7 +135,7 @@ export default function SmartPracticePage() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, requireWolfram]);
+  }, [topic, difficulty]);
 
   const handleSubmit = async () => {
     if (!resolved?.problem) return;
@@ -168,7 +165,7 @@ export default function SmartPracticePage() {
   return (
     <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
       <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
+        <h1 className="text-xl font-display font-bold text-surface-100 flex items-center gap-2">
           <Sparkles size={20} className="text-violet-400" />
           Smart Practice
         </h1>
@@ -177,21 +174,6 @@ export default function SmartPracticePage() {
         </p>
       </motion.div>
 
-      {/* Bundle stats mini-dash. v2.5: session-cost meter removed from
-          student view (admin telemetry). Kept the library-size context
-          because students benefit from knowing how much content is on tap. */}
-      {bundleStats && (
-        <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-2">
-          <div className="p-2.5 rounded-xl bg-surface-900 border border-surface-800 text-center">
-            <p className="text-lg font-bold text-surface-100">{bundleStats.total_problems}</p>
-            <p className="text-[10px] text-surface-500">bundled problems</p>
-          </div>
-          <div className="p-2.5 rounded-xl bg-surface-900 border border-surface-800 text-center">
-            <p className="text-lg font-bold text-surface-100">{bundleStats.total_explainers}</p>
-            <p className="text-[10px] text-surface-500">explainers</p>
-          </div>
-        </motion.div>
-      )}
 
       {/* Controls */}
       <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
@@ -225,22 +207,6 @@ export default function SmartPracticePage() {
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-surface-300">Require Wolfram verification</p>
-            <p className="text-[10px] text-surface-500">Slower + tiny cost, but fully verified</p>
-          </div>
-          <button
-            onClick={() => setRequireWolfram(v => !v)}
-            className={`w-10 h-6 rounded-full transition-colors ${requireWolfram ? 'bg-emerald-500' : 'bg-surface-700'}`}
-          >
-            <motion.div
-              className="w-4 h-4 rounded-full bg-white shadow"
-              animate={{ x: requireWolfram ? 18 : 2 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            />
-          </button>
-        </div>
         <button
           onClick={nextProblem}
           disabled={loading}
@@ -253,7 +219,26 @@ export default function SmartPracticePage() {
 
       {/* Resolved problem */}
       <AnimatePresence mode="wait">
-        {resolved && (
+        {loading && (
+          <motion.div
+            key="skeleton"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3"
+          >
+            <div className="h-3 w-24 rounded bg-surface-800 animate-pulse" />
+            <div className="h-5 w-full rounded bg-surface-800 animate-pulse" />
+            <div className="h-5 w-4/5 rounded bg-surface-800 animate-pulse" />
+            <div className="h-5 w-3/5 rounded bg-surface-800 animate-pulse" />
+            <div className="space-y-1.5 pt-1">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-10 rounded-lg bg-surface-800 animate-pulse" />
+              ))}
+            </div>
+          </motion.div>
+        )}
+        {!loading && resolved && (
           <motion.div
             key={resolved.problem?.id || resolved.source}
             initial={{ opacity: 0, y: 10 }}
@@ -275,9 +260,22 @@ export default function SmartPracticePage() {
             )}
 
             {resolved.source === 'miss' && (
-              <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-center text-sm text-surface-400">
-                No match for this topic at this difficulty. Try a different combination,
-                or upload study materials at <a href="/materials" className="text-violet-400 underline">/materials</a>.
+              <div className="p-5 rounded-xl bg-surface-900 border border-surface-800 space-y-3 text-center">
+                <div className="w-10 h-10 rounded-full bg-surface-800 flex items-center justify-center mx-auto">
+                  <XCircle size={20} className="text-surface-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-surface-200">No problems found here</p>
+                  <p className="text-xs text-surface-500 mt-1">Try a different topic or difficulty level.</p>
+                </div>
+                <div className="flex gap-2 justify-center">
+                  <a href="/materials" className="px-3 py-2 rounded-lg bg-violet-500/15 border border-violet-500/25 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-colors">
+                    Upload materials
+                  </a>
+                  <a href="/chat" className="px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-300 text-xs font-medium hover:bg-surface-700 transition-colors">
+                    Ask the tutor
+                  </a>
+                </div>
               </div>
             )}
 

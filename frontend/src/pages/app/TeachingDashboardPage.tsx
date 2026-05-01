@@ -42,6 +42,9 @@ interface Brief {
 
 export default function TeachingDashboardPage() {
   const { user, hasRole } = useAuth();
+  const [showTeacherWelcome, setShowTeacherWelcome] = useState(
+    () => !localStorage.getItem('teaching_welcome_dismissed')
+  );
   const [nextClass, setNextClass] = useState<NextClassResp | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +136,28 @@ export default function TeachingDashboardPage() {
   }
 
   return (
-    <motion.div className="space-y-5 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+    <motion.div className="space-y-5 max-w-3xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+      {/* First-time welcome banner */}
+      {showTeacherWelcome && (
+        <motion.div
+          variants={fadeInUp}
+          className="p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/25 flex items-start gap-3"
+        >
+          <BookOpen size={16} className="shrink-0 mt-0.5 text-emerald-400" />
+          <div className="flex-1 space-y-1 text-xs text-surface-300">
+            <p className="font-semibold text-surface-100">Welcome to Teaching Hub</p>
+            <p>The recommendation below is built from your cohort's real learning data — it tells you what to teach next and shows you a ready-made brief. Use "Push to review" to send practice problems directly to every student's queue.</p>
+          </div>
+          <button
+            onClick={() => { localStorage.setItem('teaching_welcome_dismissed', '1'); setShowTeacherWelcome(false); }}
+            className="shrink-0 p-1 rounded text-surface-500 hover:text-surface-300 transition-colors"
+            aria-label="Dismiss"
+          >
+            <X size={14} />
+          </button>
+        </motion.div>
+      )}
+
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>
@@ -358,6 +382,9 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
   onPushToReview: () => void;
   pushStatus: 'idle' | 'pushing' | 'done';
 }) {
+  const [confidence, setConfidence] = useState<number | null>(null);
+  const showPrep = confidence !== null && confidence <= 2;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -391,6 +418,76 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
             <p className="text-sm text-surface-500 text-center py-8">Brief unavailable.</p>
           ) : (
             <>
+              {/* Confidence picker — gates prep section. Always shown first so
+                  the teacher self-assesses before reading the brief. */}
+              <div className="p-3 rounded-xl bg-surface-900 border border-surface-800">
+                <p className="text-xs text-surface-400 mb-2">
+                  How confident are you teaching <span className="text-surface-200 font-medium capitalize">{brief.concept.label}</span>?
+                </p>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button
+                      key={n}
+                      onClick={() => setConfidence(n)}
+                      className={clsx(
+                        'flex-1 h-9 rounded-lg text-sm font-semibold transition-colors border',
+                        confidence === n
+                          ? n <= 2
+                            ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                            : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                          : 'bg-surface-800 border-surface-700 text-surface-400 hover:bg-surface-700',
+                      )}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                {confidence !== null && (
+                  <p className="text-[11px] mt-1.5 text-surface-500">
+                    {confidence <= 2 ? 'Prep section added below — review before class.' : 'You\'re set. Brief is ready.'}
+                  </p>
+                )}
+              </div>
+
+              {/* Your prep — only when confidence ≤ 2 */}
+              <AnimatePresence>
+                {showPrep && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <Section title="Your prep" icon={BookOpen} tone="amber">
+                      {brief.concept.canonical_definition && (
+                        <div className="mb-3">
+                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-1">Canonical definition</p>
+                          <p className="text-sm text-surface-300 leading-relaxed">{brief.concept.canonical_definition}</p>
+                        </div>
+                      )}
+                      {brief.teaching_brief.worked_examples.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-1">Worked examples (first 2)</p>
+                          {brief.teaching_brief.worked_examples.slice(0, 2).map((ex: any, i: number) => (
+                            <div key={i} className="text-xs text-surface-300 font-mono bg-surface-950 rounded p-2 mb-1">{typeof ex === 'string' ? ex : ex.problem || ex.text || JSON.stringify(ex)}</div>
+                          ))}
+                        </div>
+                      )}
+                      {brief.teaching_brief.common_misconceptions.length > 0 && (
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-1">Common misconceptions in your cohort</p>
+                          <ul className="space-y-1 text-sm text-surface-300">
+                            {brief.teaching_brief.common_misconceptions.slice(0, 3).map((m: any, i: number) => (
+                              <li key={i} className="leading-relaxed">{typeof m === 'string' ? m : m.text || m.description || JSON.stringify(m)}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </Section>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div>
                 <h2 className="text-lg font-bold text-surface-100 capitalize">{brief.concept.label}</h2>
                 {brief.concept.topic && (

@@ -96,9 +96,10 @@ export function Home() {
   // "New here?" discoverability link to MarketingLanding only for anon users.
   const [isAnonymous, setIsAnonymous] = useState(true);
 
-  // If the user is JWT-authenticated and has an exam profile, they belong on
-  // /planned — not on GateHome (which was built for anonymous/guest sessions).
-  // Redirect silently on mount so they always land on the right page.
+  // If the user is JWT-authenticated, route them to their persona home:
+  //   - knowledge_track_id present → /knowledge-home (Knowledge Shell)
+  //   - exams.length > 0, no track → /planned (Exam Shell)
+  //   - no profile yet → stay here (onboarding will fire)
   useEffect(() => {
     import('@/lib/auth/client').then(({ authFetch, getToken, clearToken }) => {
       if (!getToken()) { setIsAnonymous(true); return; } // anonymous — stay on GateHome
@@ -109,7 +110,10 @@ export function Home() {
           return r.ok ? r.json() : null;
         })
         .then((data: any) => {
-          if (data?.exams?.length > 0) {
+          const knowledgeTrackId = data?.exams?.[0]?.knowledge_track_id ?? null;
+          if (knowledgeTrackId) {
+            navigate('/knowledge-home', { replace: true });
+          } else if (data?.exams?.length > 0) {
             navigate('/planned', { replace: true });
           }
         })
@@ -260,103 +264,43 @@ export function Home() {
 
   if (userState === 'A') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <motion.div
-          className="w-full max-w-md flex flex-col items-center gap-5 text-center"
-          initial="hidden" animate="visible" variants={staggerContainer}
-        >
-          {/* v2.5: discoverability link for anonymous visitors who landed
-              on /gate via a deep link or referral. Subtle, dismissible by
-              navigating elsewhere. Logged-in users never see it. */}
-          {isAnonymous && (
-            <Link
-              to="/gbrain"
-              className="inline-flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
-            >
-              New here? See how Vidhya works <ArrowRight size={11} />
-            </Link>
-          )}
-
-          {/* Welcome card on first visit — discovery over setup */}
-          {!hasSeenWelcome() && (
-            <motion.div variants={fadeInUp} className="w-full text-left">
-              <StudentWelcomeCard />
-            </motion.div>
-          )}
-
-          <motion.div variants={fadeInUp}>
-            <motion.div
-              animate={prefersReducedMotion ? {} : { opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <MasteryRing value={0} size={48} strokeWidth={3} className="text-emerald-500" />
-            </motion.div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-              Want a structured study plan?
-            </h2>
-            <p className="text-[15px] text-surface-500 leading-relaxed">
-              Takes 2 minutes. I'll figure out exactly what you should study first.
-            </p>
-          </motion.div>
-
+      <motion.div
+        className="space-y-6 pt-2"
+        initial="hidden" animate="visible" variants={staggerContainer}
+      >
+        {/* Welcome card on first visit */}
+        {!hasSeenWelcome() && (
           <motion.div variants={fadeInUp} className="w-full">
-            <motion.button
-              onClick={() => {
-                trackEvent('one_thing_onboard');
-                navigate(isAnonymous ? '/sign-in' : '/planned');
-              }}
-              className="w-full h-11 rounded-[10px] bg-emerald-500 text-white text-[15px] font-semibold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
-              whileTap={{ scale: 0.97 }}
-            >
-              {isAnonymous ? 'Sign in to get started' : 'Build my plan'}
-            </motion.button>
+            <StudentWelcomeCard />
           </motion.div>
+        )}
+
+        {/* Primary CTA — no sign-in required */}
+        <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto space-y-3">
+          <motion.button
+            onClick={() => {
+              trackEvent('one_thing_try_now');
+              navigate('/session');
+            }}
+            className="w-full h-12 rounded-[10px] bg-emerald-500 text-white text-[16px] font-bold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950 flex items-center justify-center gap-2"
+            whileTap={{ scale: 0.97 }}
+          >
+            Try a 15-minute session <ArrowRight size={17} />
+          </motion.button>
+          <p className="text-center text-[13px] text-surface-500">
+            No sign-in needed. Save your progress?{' '}
+            <button
+              onClick={() => { trackEvent('one_thing_sign_in'); navigate('/sign-in'); }}
+              className="text-violet-400 hover:text-violet-300 underline cursor-pointer"
+            >
+              Sign in
+            </button>
+          </p>
         </motion.div>
-      </div>
-    );
-  }
 
-  // --- Render: State B — Profile, no diagnostic ---
-
-  if (userState === 'B') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <motion.div
-          className="w-full max-w-md flex flex-col items-center gap-5 text-center"
-          initial="hidden" animate="visible" variants={staggerContainer}
-        >
-          <motion.div variants={fadeInUp}>
-            <motion.div
-              animate={prefersReducedMotion ? {} : { opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <MasteryRing value={0} size={48} strokeWidth={3} className="text-violet-500" />
-            </motion.div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-              Almost there!
-            </h2>
-            <p className="text-[15px] text-surface-500 leading-relaxed">
-              Take the 5-minute diagnostic to unlock your personalized plan
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="w-full">
-            <motion.button
-              onClick={() => { trackEvent('one_thing_diagnostic'); navigate('/diagnostic'); }}
-              className="w-full h-11 rounded-[10px] bg-violet-500 text-white text-[15px] font-semibold hover:bg-violet-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
-              whileTap={{ scale: 0.97 }}
-            >
-              Start diagnostic
-            </motion.button>
-          </motion.div>
-        </motion.div>
-      </div>
+        {/* Topic grid — let them browse immediately */}
+        <TopicGrid topics={topics} />
+      </motion.div>
     );
   }
 
@@ -395,7 +339,7 @@ export function Home() {
             </motion.div>
 
             <motion.div variants={fadeInUp} className="space-y-2">
-              <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
+              <h2 className="text-[22px] font-display font-black text-surface-100 tracking-tight">
                 Done for today!
               </h2>
               <p className="text-[13px] text-surface-500">
@@ -439,7 +383,7 @@ export function Home() {
         initial="hidden" animate="visible" variants={staggerContainer}
       >
         <motion.div variants={fadeInUp} className="flex flex-col items-center gap-3 pt-8 pb-4 text-center">
-          <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
+          <h2 className="text-[22px] font-display font-black text-surface-100 tracking-tight">
             Free study day!
           </h2>
           <p className="text-[15px] text-surface-500">
@@ -503,7 +447,7 @@ export function Home() {
             </p>
 
             {/* Topic name */}
-            <h2 className="text-[32px] font-black text-surface-100 tracking-tight leading-none uppercase">
+            <h2 className="text-[32px] font-display font-black text-surface-100 tracking-tight leading-none uppercase">
               {currentTask.topic_name}
             </h2>
 

@@ -4,6 +4,40 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.4.0] - 2026-05-01 — Content Module v3: math, interactives, pillar UI
+
+**Operator action:** none. No DB migrations. Optional `WOLFRAM_APP_ID` env var for the new `:::verify` directive — when unset, the route falls back to a deterministic local equality check, so the demo grades correctly without Wolfram.
+
+### What changed for students
+
+- **Atoms render real math.** Inline `$f'(x) = 2x$` and display `$$\int_0^1 x^2\,dx$$` are typeset by KaTeX. No more `\frac{}{}` ASCII bleeding through prose.
+- **Interactive directives instead of monoliths.** Atoms now embed `:::interactive{ref=name}` blocks that resolve from a prefilled library — drag a slider, see the curve respond. Tier-disciplined cascade: real Desmos calculator from the CDN when reachable, falls through to a built-in SVG plotter on metered connections or CDN failure. 3D directives (`math3d`, `surface`, `vectorfield`) load mathbox.js + three.js on demand for atoms that actually need them; 2D atoms never pay the WebGL bundle cost.
+- **Calm Mode.** A Sun/Moon toggle in the header collapses chrome (header, bottom nav, tutor FAB) so one concept centers on the page. Persisted across sessions.
+- **Mastery dots fill emerald + a single particle on completion.** When you finish the last atom of a concept, one emerald particle floats up. Once per concept per day; honors `prefers-reduced-motion`.
+- **Reading-time estimate + swipe gestures.** Each card shows a Clock estimate (220 wpm + math/directive inflation). Swipe left for next, right for previous, down on the last atom to exit. Works on iOS Safari without scroll conflict.
+- **Show-me-visually toggle.** An Eye button reorders the atom sequence so visual-modality and visual_analogy atoms come first. localStorage-persisted.
+- **Strategy callout on mastered atoms.** A small violet card surfaces exam emphasis + the canonical cohort trap on atoms you've shown mastery of.
+- **`:::verify` directive.** Authors write `:::verify{expected="2*x*sin(x) + x^2*cos(x)"}` and the student types their answer; the server compares via `Simplify[(student) - (expected)] = 0` when Wolfram is configured, deterministic local check otherwise.
+
+### What changed for content authors
+
+- New authoring guide at `modules/project-vidhya-content/AUTHORING.md` with copyable frontmatter + body templates for all 11 atom types and the directive reference table.
+- Prefilled interactives library at `modules/project-vidhya-content/interactives-library/<name>.json`. Reference once, reuse across atoms. `npm run lint:interactives` catches broken refs and orphan entries at build time.
+- Manim authoring scaffold at `modules/project-vidhya-content/manim/` (Python, separate from the Node toolchain). `build.py` walks scenes, invokes the manim CLI at 720p30, flattens output into `media/manim/<basename>.mp4`, auto-emits the matching `.vtt` from each scene's `CAPTION_LINES`. `--check` mode for CI staleness gating. Includes `_template.py` and a real worked example: `calculus-derivatives-tangent.py`.
+
+### Architecture notes
+
+- 5-tier provider cascade per directive type (Static → MathBox → Desmos → GeoGebra → Wolfram). Free tiers are default; paid tiers (Wolfram) are NEVER fallback, only opt-in via env var.
+- `InteractiveBoundary` walks the chain on render error and honors `prefers-reduced-data` by jumping straight to the static fallback.
+- New shared `frontend/src/lib/loadScript.ts` — promise-based, deduplicated, timeout-bounded CDN loader used by Desmos and MathBox.
+- Atom body parse is memoized per atom_id in `MarkdownAtomRenderer`; on parse error, plain-text fallback so atoms NEVER fail to render.
+
+### Tests
+
+- 45 new frontend tests across renderer, registry, calm mode, mastery particle, reading-time, loadScript, plus regression on every existing seed atom (3 concepts × 6 atoms).
+- 8 new backend tests for the `:::verify` route (validation, local check, Wolfram success, numeric-residue failure, abort/timeout).
+- Frontend 85/85, backend 775/775, typecheck clean, lint:interactives 0 errors.
+
 ## [4.3.0] - 2026-05-01 — ContentAtom v2 + PedagogyEngine + Daily Cards
 
 **Operator action:** migration `013_atom_engagements_cohort_signals.sql` runs automatically on server startup (idempotent, `IF NOT EXISTS`). The new `cohort_signals` table is populated nightly by `cohortAggregator` registered in `src/jobs/scheduler.ts`. No env vars added.

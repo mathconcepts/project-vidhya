@@ -563,11 +563,11 @@ export default function PlannedSessionPage() {
             </div>
           )}
           {profile && profile.exams.length === 0 && (
-            <div className="mt-3 text-xs text-amber-300/80 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 space-y-1">
+            <div className="mt-3 text-xs text-violet-300/80 bg-violet-500/5 border border-violet-500/20 rounded-lg px-3 py-2 space-y-1">
               <div>
                 Using a default exam. <Link to="/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
               </div>
-              <div className="text-amber-200/60">
+              <div className="text-violet-200/60">
                 Or <Link to="/knowledge" className="underline">tell us your school curriculum</Link> and we'll suggest the right exams.
               </div>
             </div>
@@ -927,29 +927,35 @@ export default function PlannedSessionPage() {
                                 <span>Marked done</span>
                               </div>
                               {(action.kind === 'practice' || action.kind === 'micro-mock' || action.kind === 'spaced-review') && (
-                                <div className="flex gap-2 items-center text-xs">
-                                  <span className="text-surface-500">Attempts:</span>
-                                  <input
-                                    type="number" min={0} max={action.content_hint.count}
-                                    value={outcome?.attempts ?? 0}
-                                    onChange={(e) => setAttempts(
-                                      action.id,
-                                      parseInt(e.target.value, 10) || 0,
-                                      outcome?.correct ?? 0,
-                                    )}
-                                    className="w-14 px-2 py-1 rounded bg-surface-800 border border-surface-700 text-surface-100 font-mono"
-                                  />
-                                  <span className="text-surface-500">Correct:</span>
-                                  <input
-                                    type="number" min={0} max={outcome?.attempts ?? action.content_hint.count}
-                                    value={outcome?.correct ?? 0}
-                                    onChange={(e) => setAttempts(
-                                      action.id,
-                                      outcome?.attempts ?? 0,
-                                      parseInt(e.target.value, 10) || 0,
-                                    )}
-                                    className="w-14 px-2 py-1 rounded bg-surface-800 border border-surface-700 text-surface-100 font-mono"
-                                  />
+                                <div className="flex gap-3 items-center text-xs flex-wrap">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-surface-500">Attempts:</span>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => setAttempts(action.id, Math.max(0, (outcome?.attempts ?? 0) - 1), outcome?.correct ?? 0)}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >−</button>
+                                      <span className="w-8 text-center font-mono text-surface-100">{outcome?.attempts ?? 0}</span>
+                                      <button
+                                        onClick={() => setAttempts(action.id, (outcome?.attempts ?? 0) + 1, outcome?.correct ?? 0)}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >+</button>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-surface-500">Correct:</span>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.max(0, (outcome?.correct ?? 0) - 1))}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >−</button>
+                                      <span className="w-8 text-center font-mono text-surface-100">{outcome?.correct ?? 0}</span>
+                                      <button
+                                        onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.min(outcome?.attempts ?? action.content_hint.count, (outcome?.correct ?? 0) + 1))}
+                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
+                                      >+</button>
+                                    </div>
+                                  </div>
                                 </div>
                               )}
                             </div>

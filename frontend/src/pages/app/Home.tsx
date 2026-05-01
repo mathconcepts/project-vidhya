@@ -300,47 +300,6 @@ export function Home() {
     );
   }
 
-  // --- Render: State B — Profile, no diagnostic ---
-
-  if (userState === 'B') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <motion.div
-          className="w-full max-w-md flex flex-col items-center gap-5 text-center"
-          initial="hidden" animate="visible" variants={staggerContainer}
-        >
-          <motion.div variants={fadeInUp}>
-            <motion.div
-              animate={prefersReducedMotion ? {} : { opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <MasteryRing value={0} size={48} strokeWidth={3} className="text-violet-500" />
-            </motion.div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-              Almost there!
-            </h2>
-            <p className="text-[15px] text-surface-500 leading-relaxed">
-              Take the 5-minute diagnostic to unlock your personalized plan
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="w-full">
-            <motion.button
-              onClick={() => { trackEvent('one_thing_diagnostic'); navigate('/diagnostic'); }}
-              className="w-full h-11 rounded-[10px] bg-violet-500 text-white text-[15px] font-semibold hover:bg-violet-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
-              whileTap={{ scale: 0.97 }}
-            >
-              Start diagnostic
-            </motion.button>
-          </motion.div>
-        </motion.div>
-      </div>
-    );
-  }
-
   // --- Render: State C — Fully onboarded ---
 
   // All tasks completed → celebration
@@ -376,7 +335,7 @@ export function Home() {
             </motion.div>
 
             <motion.div variants={fadeInUp} className="space-y-2">
-              <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
+              <h2 className="text-[22px] font-display font-black text-surface-100 tracking-tight">
                 Done for today!
               </h2>
               <p className="text-[13px] text-surface-500">
@@ -420,7 +379,7 @@ export function Home() {
         initial="hidden" animate="visible" variants={staggerContainer}
       >
         <motion.div variants={fadeInUp} className="flex flex-col items-center gap-3 pt-8 pb-4 text-center">
-          <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
+          <h2 className="text-[22px] font-display font-black text-surface-100 tracking-tight">
             Free study day!
           </h2>
           <p className="text-[15px] text-surface-500">
@@ -484,7 +443,7 @@ export function Home() {
             </p>
 
             {/* Topic name */}
-            <h2 className="text-[32px] font-black text-surface-100 tracking-tight leading-none uppercase">
+            <h2 className="text-[32px] font-display font-black text-surface-100 tracking-tight leading-none uppercase">
               {currentTask.topic_name}
             </h2>
 

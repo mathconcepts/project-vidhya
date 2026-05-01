@@ -124,7 +124,7 @@ export default function OnboardPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <Calendar size={32} className="text-emerald-400 mx-auto" />
-          <h2 className="text-xl font-bold text-surface-100">When is your {examLabel} exam?</h2>
+          <h2 className="text-xl font-display font-bold text-surface-100">When is your {examLabel} exam?</h2>
           <p className="text-sm text-surface-400">Set your date and we'll build your plan</p>
         </div>
 

@@ -42,6 +42,9 @@ interface Brief {
 
 export default function TeachingDashboardPage() {
   const { user, hasRole } = useAuth();
+  const [showTeacherWelcome, setShowTeacherWelcome] = useState(
+    () => !localStorage.getItem('teaching_welcome_dismissed')
+  );
   const [nextClass, setNextClass] = useState<NextClassResp | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +136,28 @@ export default function TeachingDashboardPage() {
   }
 
   return (
-    <motion.div className="space-y-5 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+    <motion.div className="space-y-5 max-w-3xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+      {/* First-time welcome banner */}
+      {showTeacherWelcome && (
+        <motion.div
+          variants={fadeInUp}
+          className="p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/25 flex items-start gap-3"
+        >
+          <BookOpen size={16} className="shrink-0 mt-0.5 text-emerald-400" />
+          <div className="flex-1 space-y-1 text-xs text-surface-300">
+            <p className="font-semibold text-surface-100">Welcome to Teaching Hub</p>
+            <p>The recommendation below is built from your cohort's real learning data — it tells you what to teach next and shows you a ready-made brief. Use "Push to review" to send practice problems directly to every student's queue.</p>
+          </div>
+          <button
+            onClick={() => { localStorage.setItem('teaching_welcome_dismissed', '1'); setShowTeacherWelcome(false); }}
+            className="shrink-0 p-1 rounded text-surface-500 hover:text-surface-300 transition-colors"
+            aria-label="Dismiss"
+          >
+            <X size={14} />
+          </button>
+        </motion.div>
+      )}
+
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>

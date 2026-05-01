@@ -107,7 +107,7 @@ export default function ProgressPage() {
     >
       <Confetti trigger={allCaughtUp} />
 
-      <motion.h1 variants={fadeInUp} className="text-xl font-bold text-surface-100">
+      <motion.h1 variants={fadeInUp} className="text-xl font-display font-bold text-surface-100">
         Your Progress
       </motion.h1>
 
@@ -155,7 +155,7 @@ export default function ProgressPage() {
 
             let barColor = 'bg-red-500';
             if (masteryPct >= 70) barColor = 'bg-emerald-500';
-            else if (masteryPct >= 40) barColor = 'bg-amber-500';
+            else if (masteryPct >= 40) barColor = 'bg-surface-400';
 
             return (
               <motion.div key={topic.topic} variants={fadeInUp}>
@@ -164,7 +164,7 @@ export default function ProgressPage() {
                   className={clsx(
                     'flex items-center gap-3 p-3 rounded-xl transition-colors group',
                     isWeak
-                      ? 'bg-amber-500/5 border border-amber-500/20 hover:bg-amber-500/10'
+                      ? 'bg-violet-500/5 border border-violet-500/20 hover:bg-violet-500/10'
                       : 'bg-surface-900 border border-surface-800 hover:border-surface-700',
                   )}
                 >
@@ -184,7 +184,7 @@ export default function ProgressPage() {
                       />
                     </div>
                     {topic.due > 0 && (
-                      <span className="text-[10px] text-amber-500 mt-0.5 inline-flex items-center gap-1">
+                      <span className="text-[10px] text-surface-500 mt-0.5 inline-flex items-center gap-1">
                         <Clock size={10} /> {topic.due} due
                       </span>
                     )}

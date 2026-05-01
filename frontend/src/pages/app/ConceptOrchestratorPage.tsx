@@ -18,6 +18,7 @@ import { getToken } from '@/lib/auth/client';
 import { Sparkles, AlertTriangle, RefreshCw, Loader2, X, CheckCircle2, XCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
+import { wordDiff } from '@/lib/wordDiff';
 
 // ─── Types mirroring server-side ──────────────────────────────────
 
@@ -327,12 +328,71 @@ function VersionDiffModal({ atomId, onClose }: { atomId: string; onClose: () => 
             <SingleVersion v={versions[0]} onActivate={activate} />
           )}
           {versions.length > 1 && (
-            <div className="grid grid-cols-2 gap-4">
-              <VersionPane label="Active" v={active} onActivate={activate} />
-              <VersionPane label="Candidate" v={candidate} onActivate={activate} highlight />
-            </div>
+            <>
+              {active && candidate && (
+                <DiffHighlights before={active.content} after={candidate.content} />
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <VersionPane label="Active" v={active} onActivate={activate} />
+                <VersionPane label="Candidate" v={candidate} onActivate={activate} highlight />
+              </div>
+            </>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * DiffHighlights — inline word-level diff strip shown above the
+ * side-by-side rendered markdown panes. Diff-match-patch produces
+ * segments tagged equal/insert/delete; inserts highlight emerald,
+ * deletes rose with strikethrough.
+ *
+ * Strict text view (no markdown rendering) so the admin can quickly
+ * spot exactly which words changed. The rendered side-by-side panes
+ * below give the visual context (KaTeX, directives, etc.).
+ */
+function DiffHighlights({ before, after }: { before: string; after: string }) {
+  const segments = useMemo(() => wordDiff(before, after), [before, after]);
+
+  // Skip the strip when nothing actually differs — avoids a confusing
+  // "Diff highlights" header above two identical panes.
+  const hasChanges = segments.some((s) => s.op !== 'equal');
+  if (!hasChanges) return null;
+
+  return (
+    <div className="mb-4 rounded-lg border border-surface-800 bg-surface-950/70 p-3">
+      <div className="text-[10px] uppercase tracking-wider text-surface-500 mb-2">
+        Word-level changes
+      </div>
+      <div className="text-xs leading-relaxed text-surface-300 break-words">
+        {segments.map((s, i) => {
+          if (s.op === 'equal') {
+            return <span key={i}>{s.text}</span>;
+          }
+          if (s.op === 'insert') {
+            return (
+              <span
+                key={i}
+                className="bg-emerald-500/20 text-emerald-200 rounded px-0.5"
+                title="added"
+              >
+                {s.text}
+              </span>
+            );
+          }
+          return (
+            <span
+              key={i}
+              className="bg-rose-500/15 text-rose-200 line-through rounded px-0.5"
+              title="removed"
+            >
+              {s.text}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

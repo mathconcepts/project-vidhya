@@ -41,7 +41,14 @@ let _pool: any = null;
 function getPool() {
   if (_pool) return _pool;
   const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[chat-routes] DATABASE_URL not configured');
+  if (!connectionString) {
+    // Demo / free-tier deploys run without Postgres. Throwing here used to
+    // crash chat requests mid-stream when callers `await pool.query(...)`.
+    // Return null and require call-sites to null-check; the chat flow's
+    // grounding + history persist + notebook-auto-populate are all
+    // best-effort enrichment, never load-bearing.
+    return null;
+  }
   _pool = new Pool({ connectionString, max: 5, idleTimeoutMillis: 30_000 });
   return _pool;
 }
@@ -280,17 +287,23 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
         groundingContext = '\n\n## Relevant Verified Content\n' +
           relevant.map((r: any) => r.content || r.document?.content || '').filter(Boolean).join('\n---\n');
 
-        // Log to content_pipeline_log (fire-and-forget)
-        const { randomUUID } = await import('crypto');
-        pool.query(
-          `INSERT INTO content_pipeline_log (trace_id, session_id, source, topic, tier_used, latency_ms)
-           VALUES ($1, $2, 'chat_grounding', $3, 'rag_cache', 0)`,
-          [randomUUID(), sessionId, detectedTopic]
-        ).catch(() => {});
+        // Log to content_pipeline_log (fire-and-forget; needs DB)
+        if (pool) {
+          const { randomUUID } = await import('crypto');
+          pool.query(
+            `INSERT INTO content_pipeline_log (trace_id, session_id, source, topic, tier_used, latency_ms)
+             VALUES ($1, $2, 'chat_grounding', $3, 'rag_cache', 0)`,
+            [randomUUID(), sessionId, detectedTopic]
+          ).catch(() => {});
+        }
       }
     }
 
-    // Prompt modifiers: compose student context from study profile + SR data
+    // Prompt modifiers: compose student context from study profile + SR data.
+    // No DB → skip enrichment (best-effort), continue with plain prompt.
+    if (!pool) {
+      throw new Error('skip-context-enrichment-no-db');
+    }
     const profileResult = await pool.query(
       `SELECT exam_date, diagnostic_scores, topic_confidence FROM study_profiles WHERE session_id = $1`,
       [sessionId]
@@ -457,24 +470,26 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     // Send done event
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
 
-    // Persist messages to DB
+    // Persist messages to DB (best-effort; demo deploys without Postgres skip this)
     try {
       const pool = getPool();
-      await pool.query(
-        'INSERT INTO chat_messages (session_id, role, content) VALUES ($1, $2, $3), ($1, $4, $5)',
-        [sessionId, 'user', message, 'assistant', fullResponse]
-      );
-      // Auto-populate notebook from chat
-      const topic = detectTopic(message + ' ' + fullResponse);
-      if (topic !== 'general') {
-        try {
-          await pool.query(
-            `INSERT INTO notebook_entries (session_id, source, topic, query_text, answer_text, status, confidence)
-             VALUES ($1, 'chat', $2, $3, $4, 'to_review', 0.5)`,
-            [sessionId, topic, message.slice(0, 200), fullResponse.slice(0, 500)]
-          );
-        } catch (nbErr) {
-          console.error('[chat] Notebook persist error:', (nbErr as Error).message);
+      if (pool) {
+        await pool.query(
+          'INSERT INTO chat_messages (session_id, role, content) VALUES ($1, $2, $3), ($1, $4, $5)',
+          [sessionId, 'user', message, 'assistant', fullResponse]
+        );
+        // Auto-populate notebook from chat
+        const topic = detectTopic(message + ' ' + fullResponse);
+        if (topic !== 'general') {
+          try {
+            await pool.query(
+              `INSERT INTO notebook_entries (session_id, source, topic, query_text, answer_text, status, confidence)
+               VALUES ($1, 'chat', $2, $3, $4, 'to_review', 0.5)`,
+              [sessionId, topic, message.slice(0, 200), fullResponse.slice(0, 500)]
+            );
+          } catch (nbErr) {
+            console.error('[chat] Notebook persist error:', (nbErr as Error).message);
+          }
         }
       }
     } catch (dbErr) {
@@ -535,6 +550,11 @@ async function handleGetHistory(req: ParsedRequest, res: ServerResponse): Promis
 
   try {
     const pool = getPool();
+    if (!pool) {
+      // Demo / no-DB deploys: chat history isn't persisted. Return empty list
+      // rather than 500 so the chat UI starts with a clean slate.
+      return sendJSON(res, { messages: [] });
+    }
     const result = await pool.query(
       'SELECT id, role, content, metadata, created_at FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC LIMIT 100',
       [sessionId]

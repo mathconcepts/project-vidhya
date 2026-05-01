@@ -96,9 +96,10 @@ export function Home() {
   // "New here?" discoverability link to MarketingLanding only for anon users.
   const [isAnonymous, setIsAnonymous] = useState(true);
 
-  // If the user is JWT-authenticated and has an exam profile, they belong on
-  // /planned — not on GateHome (which was built for anonymous/guest sessions).
-  // Redirect silently on mount so they always land on the right page.
+  // If the user is JWT-authenticated, route them to their persona home:
+  //   - knowledge_track_id present → /knowledge-home (Knowledge Shell)
+  //   - exams.length > 0, no track → /planned (Exam Shell)
+  //   - no profile yet → stay here (onboarding will fire)
   useEffect(() => {
     import('@/lib/auth/client').then(({ authFetch, getToken, clearToken }) => {
       if (!getToken()) { setIsAnonymous(true); return; } // anonymous — stay on GateHome
@@ -109,7 +110,10 @@ export function Home() {
           return r.ok ? r.json() : null;
         })
         .then((data: any) => {
-          if (data?.exams?.length > 0) {
+          const knowledgeTrackId = data?.exams?.[0]?.knowledge_track_id ?? null;
+          if (knowledgeTrackId) {
+            navigate('/knowledge-home', { replace: true });
+          } else if (data?.exams?.length > 0) {
             navigate('/planned', { replace: true });
           }
         })

@@ -1,11 +1,13 @@
 /**
  * AppLayout — Mobile-first layout with animated bottom nav, scroll-aware header, auth.
+ * v5.0: persona-aware shell detection. Reads user.role + student profile to serve
+ * the right nav and home route for Knowledge / Exam / Teacher / Admin shells.
  */
 
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle } from 'lucide-react';
+import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users } from 'lucide-react';
 import { clsx } from 'clsx';
 // v2.5: migrated from @/hooks/useAuth (Supabase Auth) to @/contexts/AuthContext
 // (Vidhya JWT). Backend only validates Vidhya JWTs — the Supabase hook was
@@ -13,12 +15,28 @@ import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSession } from '@/hooks/useSession';
 import { StreakBadge } from '@/components/app/StreakBadge';
+import { authFetch } from '@/lib/auth/client';
 
-const NAV_ITEMS = [
-  { to: '/',         icon: Home,        label: 'Home',     end: true },
-  { to: '/planned',  icon: PlayCircle,  label: 'Practice' },
-  { to: '/progress', icon: BarChart3,   label: 'Progress' },
-];
+type Persona = 'knowledge' | 'exam' | 'teacher' | 'loading';
+
+// Per-persona nav configurations aligned with the shell spec.
+// Teacher/admin shell surfaces teaching tools; knowledge shell leads with Learn.
+const NAV_BY_PERSONA: Record<Exclude<Persona, 'loading'>, Array<{ to: string; icon: typeof Home; label: string; end?: boolean }>> = {
+  knowledge: [
+    { to: '/knowledge-home', icon: BookOpen,     label: 'Learn',    end: true },
+    { to: '/planned',        icon: PlayCircle,   label: 'Practice' },
+    { to: '/progress',       icon: BarChart3,    label: 'Progress' },
+  ],
+  exam: [
+    { to: '/planned',        icon: Home,         label: 'Home',     end: true },
+    { to: '/smart-practice', icon: BookOpen,     label: 'Practice' },
+    { to: '/progress',       icon: BarChart3,    label: 'Progress' },
+  ],
+  teacher: [
+    { to: '/teaching',       icon: GraduationCap, label: 'Teach',   end: true },
+    { to: '/progress',       icon: Users,         label: 'Students' },
+  ],
+};
 
 export function AppLayout() {
   const location = useLocation();
@@ -27,6 +45,7 @@ export function AppLayout() {
   const sessionId = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [persona, setPersona] = useState<Persona>('loading');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -36,6 +55,25 @@ export function AppLayout() {
 
   // Close menu on route change
   useEffect(() => setShowMenu(false), [location]);
+
+  // Persona detection: teacher/admin from JWT role; knowledge vs exam from profile.
+  // Resolves on mount so nav is stable before first paint. Falls back to 'exam'
+  // (default) for new users or when profile fetch fails.
+  useEffect(() => {
+    if (!user) { setPersona('exam'); return; }
+    if (user.role === 'teacher' || user.role === 'admin' || user.role === 'owner') {
+      setPersona('teacher');
+      return;
+    }
+    authFetch('/api/student/profile')
+      .then(r => (r.ok ? r.json() : null))
+      .then((data: any) => {
+        const knowledgeTrackId = data?.exams?.[0]?.knowledge_track_id ?? null;
+        if (knowledgeTrackId) { setPersona('knowledge'); return; }
+        setPersona('exam');
+      })
+      .catch(() => setPersona('exam'));
+  }, [user]);
 
   return (
     <div className="min-h-dvh bg-surface-950 text-white">
@@ -147,39 +185,49 @@ export function AppLayout() {
         </motion.button>
       )}
 
-      {/* Bottom Nav — 3 tabs with animated active indicator */}
+      {/* Bottom Nav — persona-aware tabs with animated active indicator */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-surface-950/95 border-t border-surface-800/80 backdrop-blur-md"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        {NAV_ITEMS.map(item => {
-          const isActive = item.end
-            ? location.pathname === item.to
-            : location.pathname.startsWith(item.to);
+        {persona === 'loading' ? (
+          // Skeleton while persona resolves — prevents flash of wrong nav
+          [1, 2, 3].map(i => (
+            <div key={i} className="flex-1 flex flex-col items-center justify-center py-2.5 gap-1.5">
+              <div className="w-5 h-5 rounded bg-surface-800 animate-pulse" />
+              <div className="w-8 h-2 rounded bg-surface-800 animate-pulse" />
+            </div>
+          ))
+        ) : (
+          NAV_BY_PERSONA[persona].map(item => {
+            const isActive = item.end
+              ? location.pathname === item.to
+              : location.pathname.startsWith(item.to);
 
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={clsx(
-                'relative flex-1 flex flex-col items-center justify-center py-2.5 gap-1',
-                'touch-manipulation transition-colors duration-150',
-                isActive ? 'text-violet-400' : 'text-surface-500',
-              )}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-violet-400"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-              <item.icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </NavLink>
-          );
-        })}
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={clsx(
+                  'relative flex-1 flex flex-col items-center justify-center py-2.5 gap-1',
+                  'touch-manipulation transition-colors duration-150',
+                  isActive ? 'text-violet-400' : 'text-surface-500',
+                )}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-violet-400"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <item.icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                <span className="text-[10px] font-medium">{item.label}</span>
+              </NavLink>
+            );
+          })
+        )}
       </nav>
 
       {/* Click-away for menu */}

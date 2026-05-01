@@ -260,6 +260,36 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       personalized.next_review_at = next.toISOString();
     }
 
+    // ContentAtom v2: also compute atoms[] for the same concept. Frontend
+    // prefers atoms[] when non-empty; otherwise falls through to components[].
+    let atoms: ContentAtom[] = [];
+    try {
+      const conceptAtoms = await loadConceptAtoms(lessonReq.concept_id);
+      const conceptMeta = await loadConceptMeta(lessonReq.concept_id);
+      const sessionContext: SessionContext = {
+        error_streak: 0,
+        last_error_atom_type: null,
+      };
+      const selected = selectAtoms({
+        conceptAtoms,
+        conceptMeta,
+        studentModel: null,
+        sessionContext,
+        routeRequest: {
+          user_id: lessonReq.session_id ?? 'anon',
+          text: '',
+          concept_id: lessonReq.concept_id,
+          preferred_exam_id: lessonReq.student?.preferred_exam_id,
+        },
+      });
+      atoms = await enrichAtomsWithEngagement(selected, lessonReq.session_id ?? null);
+    } catch (err) {
+      if (!(err instanceof ConceptNotFoundError)) {
+        console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
+      }
+    }
+    (personalized as any).atoms = atoms;
+
     // Record as a telemetry event so Content Admin dashboard sees lesson traffic
     recordTelemetry({
       source: 'tier-0-bundle-exact',

@@ -2,6 +2,15 @@
 /**
  * Personalizer
  *
+ * @deprecated Superseded by ContentAtom v2 PedagogyEngine in
+ *   src/content/pedagogy-engine.ts. Frontend now prefers `atoms[]` over
+ *   `components[]` when both are present in the lesson response.
+ *   This module remains in place as a backward-compat fallback for callers
+ *   that haven't migrated to atoms[]; it will be removed once all 3 seed
+ *   concepts have full atoms/ coverage and the frontend confirms the
+ *   atom path renders correctly across all lesson views.
+ *   Tracked: see follow-up under PENDING.md (content-system-v2 cleanup).
+ *
  * Takes a base Lesson (from the composer) and a StudentSnapshot, and
  * returns a new Lesson with student-aware adjustments. Idempotent:
  * missing student data = identity transform (returns base unchanged).

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **LEGACY DOCUMENT** — Agent-specific config keys described here (`agents.*`, `eventBus.*`) are not used in the current system. Current configuration is via `.env` variables listed in `DEPLOY.md` and `INSTALL.md`.
+
 # Configuration Reference
 
 Complete configuration options for Project Vidhya.

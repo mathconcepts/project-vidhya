@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **LEGACY DOCUMENT** — This file describes multi-agent workflows from the v2.0 system which is **no longer active**. Current request flows are: student → REST API → tiered verification → Gemini/Wolfram. No agent coordination layer exists.
+
 # Workflows
 
 End-to-end automated workflows that coordinate multiple agents.

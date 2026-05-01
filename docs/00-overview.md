@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **LEGACY DOCUMENT** — This file describes the v2.0 7-agent autonomous system which is **no longer active**. The current architecture is a stateless Node/React exam-prep platform. See [ARCHITECTURE.md](../ARCHITECTURE.md) for the current design.
+
 # Project Vidhya v2.0 — Complete Platform Documentation
 
 ## Executive Summary

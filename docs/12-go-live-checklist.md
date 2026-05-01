@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **PARTIALLY OUTDATED** — Some steps in this checklist reference agent configuration that no longer exists. For current deploy steps, use [DEPLOY.md](../DEPLOY.md) and [PRODUCTION.md](../PRODUCTION.md).
+
 # Project Vidhya — Go-Live Checklist
 
 *The single document Giri needs to flip from "demo" to "live". All pre-work is done. These are the ~30 minutes of configuration needed.*

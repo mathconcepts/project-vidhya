@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **LEGACY DOCUMENT** — Endpoint count and some routes described here reflect the v2.0 agent-era API. The current API is defined in `src/api/` (gate-routes, chat-routes, auth-middleware). Use the source as the authoritative reference.
+
 # API Reference
 
 Complete documentation of all 23 REST API endpoints.

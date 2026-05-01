@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **PARTIALLY OUTDATED** — Cost estimates and architecture descriptions reference the v2.0 multi-agent stack. Current deployment is a single stateless Node server + React SPA on Render. See [DEPLOY.md](../DEPLOY.md) for current options.
+
 # Project Vidhya v2.0 — Deployment Options Guide
 
 > **Decision guide for Giri (CEO):** Which deployment option to pick, at which stage, and what it costs.

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **LEGACY DOCUMENT** — This file describes the v2.0 agent-era LLM layer. The current LLM abstraction lives in `src/llm/` and is documented by the code itself. Agent-specific routing rules described here are not in use.
+
 # LLM Abstraction Layer
 
 The LLM layer provides provider-agnostic AI capabilities with intelligent routing, fallbacks, and budget management.

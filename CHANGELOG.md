@@ -4,6 +4,22 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.7.1] - 2026-05-01 — Concept Orchestrator v1 (Phase 5 + diff polish)
+
+**Operator action:** none. New npm dep: `diff-match-patch` (~12KB) for the admin diff viewer.
+
+### Added
+
+- **End-to-end integration test (Phase 5).** `e2e-flow.test.ts` walks the full pipeline (admin Generate → orchestrator → LLM-judge gate → multi-LLM consensus → queue ranking → cost tracking → regen-scanner → per-student E5 → atom-loader enrichment → frontend ImprovedBadge). 12 backend cases + 6 frontend AtomCardRenderer integration cases. Catches integration drift across module boundaries.
+- **Word-level diff in admin VersionDiffModal.** New `DiffHighlights` strip above the side-by-side rendered panes shows insert (emerald) and delete (rose strikethrough) highlighting at word granularity. Powered by `diff-match-patch` with markdown-aware tokenization that preserves whitespace and word boundaries. Skips silently when the two versions are identical.
+
+### Architecture notes
+
+- `frontend/src/lib/wordDiff.ts` — markdown-aware word tokenizer + diff-match-patch wrapper. Output is a flat segment list `{op: 'equal'|'insert'|'delete', text}[]`. Reconstructing equal+insert returns the new text exactly; equal+delete returns the original. Verified by 9 unit tests including round-trip reconstruction.
+- The diff strip renders plain-text segments (no markdown rendering). The rendered side-by-side panes below give visual context for KaTeX + interactive directives. Two views, one modal.
+- Phase 5 E2E exercises the DB-less paths exhaustively. Live DB integration is verified per-module in their own unit tests with mocked pg pools.
+- Backend: 830/830 (was 818, +12 E2E). Frontend: 107/107 (was 92, +15: 9 wordDiff + 6 atom-card integration).
+
 ## [4.7.0] - 2026-05-01 — Concept Orchestrator v1 (Phase 4 — closed loop)
 
 **Operator action:** none beyond `VIDHYA_CONCEPT_ORCHESTRATOR=on`. Optional env: `VIDHYA_REGEN_NIGHTLY_CAP` (default 20), `VIDHYA_REGEN_ERROR_THRESHOLD` (0.5), `VIDHYA_REGEN_FRESHNESS_HOURS` (24), `VIDHYA_PERSONAL_FAILURE_THRESHOLD` (3), `VIDHYA_PERSONAL_OVERRIDE_TTL_DAYS` (14).

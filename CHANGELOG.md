@@ -4,6 +4,23 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.9.0] - 2026-05-01 — Concept Orchestrator v2 (auto A/B testing of regen variants)
+
+**Operator action:** migration `016_atom_ab_tests.sql` runs automatically on server boot. Opt-in with `VIDHYA_AB_TESTING=on` (in addition to the existing `VIDHYA_CONCEPT_ORCHESTRATOR=on`). Optional tuning: `VIDHYA_AB_WINDOW_DAYS` (default 14), `VIDHYA_AB_MIN_BUCKET_SIZE` (20), `VIDHYA_AB_MIN_DELTA` (0.10).
+
+### Added (PENDING.md §4.12)
+
+- **Automatic A/B testing of regen variants.** When `regen-scanner` produces a candidate version (v2), it now auto-creates a 14-day experiment in `atom_ab_tests`. Half of students see the candidate, half see the prior version (deterministic FNV-1a hash on `atom_id::student_id`). Nightly `ab-evaluator` job compares cohort error rates per bucket; if the candidate's error rate is at least 10% lower (or 10% higher), the winner is auto-promoted (or the candidate is reverted). Ties or insufficient data (<20 students per bucket) leave the candidate active — it was generated based on misconception data, so it stays as the working hypothesis.
+- **`atom_ab_tests` table.** New schema in migration 016 with a partial unique index ensuring at most one running experiment per atom. Status lifecycle: `running → promoted_candidate | promoted_control | tie | insufficient_data | cancelled`.
+- **Bucket-aware atom serving.** New `applyAbVariants()` enricher in `atom-loader` runs after the per-student override + improved-since enrichers in lesson-routes. Reads `atom_ab_tests` for active experiments on the requested atoms, hash-buckets the student, swaps the served content to the assigned version (single SELECT for experiments, single SELECT for content — no N+1).
+- **Nightly ab-evaluator job.** Registered alongside `regenScanner` in the existing scheduler at DAY_MS interval. Reads experiments past `ends_at`, computes per-bucket aggregates from `atom_engagements` (re-hashing students at evaluation time so no per-student state is stored), persists the verdict + reason to `atom_ab_tests.verdict`.
+
+### Architecture notes
+
+- Per-student overrides (E5) take precedence over A/B variants — a student with an active personalized override sees that, not the experiment bucket. Order of enrichers in `lesson-routes`: engagement → student override → improved_since → A/B variant.
+- Bucket assignment is deterministic and stateless: `fnv1a("${atom_id}::${student_id}") % 2`. Salting with `atom_id` means a student is independently bucketed per experiment (one student doesn't always end up in "control" everywhere). The evaluator re-hashes when computing aggregates, so no per-student assignment row is ever stored.
+- 9 new tests covering bucket determinism, distribution uniformity, and DB-less graceful path. Backend 848/848 (was 839). Typecheck clean.
+
 ## [4.8.0] - 2026-05-01 — Concept Orchestrator v2 (bulk approve + vector PYQ)
 
 **Operator action:** migration `015_pyq_embeddings.sql` runs automatically on server boot. Adds `embedding VECTOR(1536) + embedded_at TIMESTAMPTZ` to `pyq_questions` and an HNSW cosine index. Optional opt-in for vector grounding: set `VIDHYA_ORCHESTRATOR_VECTOR_GROUNDING=on` AND backfill embeddings via `tsx scripts/embed-pyq-corpus.ts` (~$0.10 per 5k rows at text-embedding-3-small). When the env flag is off, grounding stays on the v1 keyword path.

@@ -58,3 +58,14 @@ export {
   PERSONAL_OVERRIDE_TTL_DAYS,
 } from './personalized-regen';
 export type { MaybeRegenResult } from './personalized-regen';
+
+export {
+  createExperiment,
+  getRunningExperiment,
+  assignBucket,
+  evaluateRipeExperiments,
+  AB_WINDOW_DAYS,
+  AB_MIN_BUCKET_SIZE,
+  AB_MIN_DELTA,
+} from './ab-tester';
+export type { AbExperiment, AbStatus, AssignmentResult, ExperimentEvaluation } from './ab-tester';

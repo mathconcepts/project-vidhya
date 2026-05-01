@@ -21,7 +21,7 @@
  */
 
 import pg from 'pg';
-import { generateConcept, type GeneratedAtom } from '../content/concept-orchestrator';
+import { generateConcept, type GeneratedAtom, createExperiment } from '../content/concept-orchestrator';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 
 const { Pool } = pg;
@@ -226,7 +226,16 @@ export async function runRegenScanner(): Promise<ScannerResult> {
       if (generated && misconceptions.length > 0) {
         await annotateImprovementReason(pool, c.atom_id, c.error_pct, misconceptions);
       }
-      if (generated) succeeded++;
+      if (generated) {
+        succeeded++;
+        // §4.12 auto A/B: spin up an experiment for the new candidate version.
+        // The candidate is already active; the control (prior version) stays
+        // in atom_versions and is served to half of students via hash bucket.
+        // Gated behind VIDHYA_AB_TESTING=on so deploys can opt out.
+        if (process.env.VIDHYA_AB_TESTING === 'on') {
+          await maybeStartExperiment(pool, c.atom_id);
+        }
+      }
       else failed++;
     } catch (err) {
       console.warn(`[regen-scanner] regen failed for ${c.atom_id}: ${(err as Error).message}`);
@@ -241,6 +250,32 @@ export async function runRegenScanner(): Promise<ScannerResult> {
     regen_succeeded: succeeded,
     regen_failed: failed,
   };
+}
+
+/**
+ * After a successful regen, look at atom_versions and decide whether
+ * an A/B experiment can start. Requires:
+ *   - The newest version (candidate) is the freshly-generated one
+ *   - There's a prior version to use as control (otherwise nothing to test)
+ *   - No experiment is already running (createExperiment is idempotent)
+ *
+ * The candidate is already active (the orchestrator activated it on
+ * append). atom-loader's A/B path serves both during the experiment
+ * window via hash bucketing.
+ */
+async function maybeStartExperiment(pool: any, atom_id: string): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT version_n FROM atom_versions WHERE atom_id = $1 ORDER BY version_n DESC LIMIT 2`,
+      [atom_id],
+    );
+    if (r.rows.length < 2) return;  // no prior version → no experiment
+    const candidate_version_n = r.rows[0].version_n;
+    const control_version_n = r.rows[1].version_n;
+    await createExperiment(atom_id, control_version_n, candidate_version_n);
+  } catch (err) {
+    console.warn(`[regen-scanner] maybeStartExperiment failed for ${atom_id}: ${(err as Error).message}`);
+  }
 }
 
 /**

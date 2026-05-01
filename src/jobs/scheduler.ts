@@ -24,6 +24,7 @@
 import { finaliseExpiredDeletions } from '../data-rights/delete';
 import { runCohortAggregator } from './cohort-aggregator';
 import { runRegenScanner } from './regen-scanner';
+import { evaluateRipeExperiments } from '../content/concept-orchestrator';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -87,6 +88,26 @@ register('regenScanner', DAY_MS, async () => {
   }
   const r = await runRegenScanner();
   return r;
+});
+
+register('abEvaluator', DAY_MS, async () => {
+  // Nightly: find A/B experiments past their ends_at and evaluate them.
+  // Compares cohort error rate between control and candidate buckets,
+  // promotes the winner if delta exceeds AB_MIN_DELTA. Gated behind
+  // VIDHYA_AB_TESTING — when off, returns immediately. The orchestrator
+  // flag must also be on (experiments only get created when both are on).
+  if (process.env.VIDHYA_AB_TESTING !== 'on') {
+    return { status: 'skipped', reason: 'A/B testing not enabled' };
+  }
+  const evaluations = await evaluateRipeExperiments();
+  return {
+    status: 'ran',
+    evaluations: evaluations.length,
+    promoted_candidate: evaluations.filter((e) => e.verdict === 'promoted_candidate').length,
+    promoted_control: evaluations.filter((e) => e.verdict === 'promoted_control').length,
+    tie: evaluations.filter((e) => e.verdict === 'tie').length,
+    insufficient_data: evaluations.filter((e) => e.verdict === 'insufficient_data').length,
+  };
 });
 
 // ─── Lifecycle ───────────────────────────────────────────────────────

@@ -30,7 +30,7 @@ import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
-import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince } from '../content/atom-loader';
+import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants } from '../content/atom-loader';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
 import { selectAtoms } from '../content/pedagogy-engine';
 import type { ContentAtom, SessionContext } from '../content/content-types';
@@ -288,6 +288,10 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       // improved_since for the Improved badge. No-op without DB.
       atoms = await applyStudentOverrides(atoms, lessonReq.session_id ?? null);
       atoms = await applyImprovedSince(atoms);
+      // §4.12: A/B test variant assignment runs AFTER overrides (per-student
+      // override always wins) but BEFORE the engagement enrichment fields
+      // are read by the client.
+      atoms = await applyAbVariants(atoms, lessonReq.session_id ?? null);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
@@ -366,6 +370,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       // Concept-orchestrator v1 enrichment.
       atoms = await applyStudentOverrides(atoms, student_id);
       atoms = await applyImprovedSince(atoms);
+      atoms = await applyAbVariants(atoms, student_id);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);

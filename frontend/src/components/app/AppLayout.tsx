@@ -53,6 +53,19 @@ export function AppLayout() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // First-visit demo welcome redirect. New visitors land at /welcome which
+  // sets exam expectations explicitly ("This demo runs on GATE Engineering
+  // Mathematics") so they're not surprised by the silent default. After
+  // dismissal, vidhya.demo_welcomed is set in localStorage and we never
+  // redirect again. /welcome and /sign-in are exempt from the redirect.
+  useEffect(() => {
+    const exempt = ['/welcome', '/sign-in'];
+    if (exempt.includes(location.pathname)) return;
+    let welcomed = false;
+    try { welcomed = localStorage.getItem('vidhya.demo_welcomed') === '1'; } catch { /* ignore */ }
+    if (!welcomed) navigate('/welcome', { replace: true });
+  }, [location.pathname, navigate]);
+
   // Close menu on route change
   useEffect(() => setShowMenu(false), [location]);
 

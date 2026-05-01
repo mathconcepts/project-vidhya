@@ -71,6 +71,7 @@ const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage')
 const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
 const StudymateSessionPage = lazy(() => import('@/pages/app/StudymateSessionPage'));
 const DailyCardsPage = lazy(() => import('@/pages/app/DailyCardsPage'));
+const WelcomePage = lazy(() => import('@/pages/app/WelcomePage'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -158,6 +159,10 @@ export default function App() {
           <Route path="admin/content" element={<ContentAdminPage />} />
           <Route path="session" element={<StudymateSessionPage />} />
           <Route path="daily" element={<DailyCardsPage />} />
+          {/* /welcome is the first-visit demo landing. AppLayout redirects
+              new visitors here once. After dismissal, localStorage flag
+              vidhya.demo_welcomed prevents re-prompting. */}
+          <Route path="welcome" element={<WelcomePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

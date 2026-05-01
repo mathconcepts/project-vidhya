@@ -22,11 +22,16 @@ interface ChatMessage {
 }
 
 // Categorized by intent so the user can orient quickly
+// Starter prompts grounded in the demo's loaded exam (GATE Engineering
+// Mathematics). The previous generic prompts ("Explain this concept...")
+// produced terrible LLM responses for new users with no concept context —
+// the model had to guess what "this" referred to. Naming concepts up front
+// gives the LLM something concrete to ground in.
 const SUGGESTIONS = [
-  { text: 'Explain this concept with a worked example', dot: 'bg-violet-400' },
-  { text: 'Where should I focus to maximise my score?', dot: 'bg-emerald-400' },
-  { text: 'Check my answer — did I get this right?', dot: 'bg-amber-400' },
-  { text: 'Give me 3 practice problems on integration', dot: 'bg-sky-400' },
+  { text: 'Explain matrix eigenvalues with a worked example', dot: 'bg-violet-400' },
+  { text: 'Where should I focus to maximise my GATE Math score?', dot: 'bg-emerald-400' },
+  { text: 'Walk me through the chain rule step-by-step', dot: 'bg-amber-400' },
+  { text: 'Give me 3 practice problems on complex numbers', dot: 'bg-sky-400' },
 ];
 
 // Three animated dots that bounce in sequence — replaces Loader2 "Thinking..."
@@ -281,6 +286,9 @@ export default function ChatPage() {
               </h2>
               <p className="text-surface-400 text-sm max-w-xs leading-relaxed">
                 Concepts explained clearly. Problems solved step-by-step. Ask anything.
+              </p>
+              <p className="text-violet-300/80 text-xs">
+                Demo: GATE Engineering Mathematics
               </p>
             </div>
 

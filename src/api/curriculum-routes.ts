@@ -66,6 +66,32 @@ async function handleGetExam(req: ParsedRequest, res: ServerResponse): Promise<v
   sendJSON(res, exam);
 }
 
+/**
+ * GET /api/exam/active — single-exam summary for the demo welcome screen.
+ * Returns the first (or only) exam loaded; used by WelcomePage to show
+ * "This demo runs on {exam.name}" without forcing the frontend to know
+ * the exam_id.
+ */
+async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const ids = listExamIds();
+  if (ids.length === 0) {
+    return sendError(res, 503, 'no exams loaded — check data/curriculum/');
+  }
+  const exam = getExam(ids[0])!;
+  sendJSON(res, {
+    exam_id: exam.metadata.id,
+    name: exam.metadata.name,
+    description: exam.metadata.description,
+    conducting_body: exam.metadata.conducting_body,
+    scope: exam.metadata.scope,
+    total_marks: exam.metadata.total_marks,
+    duration_minutes: exam.metadata.duration_minutes,
+    concept_count: exam.concept_links.length,
+    section_count: exam.syllabus.length,
+    loaded_count: ids.length,
+  });
+}
+
 // ============================================================================
 // Concept ↔ exam lookup
 // ============================================================================
@@ -163,6 +189,7 @@ async function handleReload(_req: ParsedRequest, res: ServerResponse): Promise<v
 export const curriculumRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
   { method: 'GET',  path: '/api/curriculum/exams',                      handler: handleListExams },
   { method: 'GET',  path: '/api/curriculum/exam/:id',                   handler: handleGetExam },
+  { method: 'GET',  path: '/api/exam/active',                           handler: handleActiveExam },
   { method: 'GET',  path: '/api/curriculum/concept/:id',                handler: handleGetConceptExams },
   { method: 'POST', path: '/api/curriculum/guardrail-check',            handler: handleGuardrailCheck },
   { method: 'GET',  path: '/api/curriculum/gaps/:exam_id',              handler: handleGaps },

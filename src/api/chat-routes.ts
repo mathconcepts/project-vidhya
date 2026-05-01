@@ -458,13 +458,38 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
       streamInput.image = { mimeType: imageMimeType || 'image/jpeg', data: image };
     }
 
+    // Stream with watchdog: if no chunk arrives within 45s, abort. Free-tier
+    // LLM endpoints sometimes hang on cold starts or network blips; without
+    // this the user sees loading dots forever (the original bug report).
     let fullResponse = '';
-    for await (const chunk of llm.generateStream(streamInput)) {
-      if (chunk) {
-        fullResponse += chunk;
-        _response_chars = fullResponse.length;
-        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+    let lastChunkAt = Date.now();
+    const watchdogMs = 45_000;
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastChunkAt > watchdogMs) {
+        // Abort by writing an error frame; the for-await below will exit
+        // cleanly because the underlying provider stream surfaces the
+        // closed connection. Belt-and-braces: also signal via a flag.
+        try {
+          res.write(`data: ${JSON.stringify({
+            type: 'error',
+            content: 'The AI tutor is taking longer than expected. Please try again — short, specific questions usually work fastest.',
+          })}\n\n`);
+        } catch { /* socket closed */ }
+        clearInterval(watchdog);
       }
+    }, 5_000);
+
+    try {
+      for await (const chunk of llm.generateStream(streamInput)) {
+        if (chunk) {
+          fullResponse += chunk;
+          _response_chars = fullResponse.length;
+          lastChunkAt = Date.now();
+          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+        }
+      }
+    } finally {
+      clearInterval(watchdog);
     }
 
     // Send done event

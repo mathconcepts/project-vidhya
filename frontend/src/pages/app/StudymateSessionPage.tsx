@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from '@/hooks/useSession';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { apiFetch } from '@/hooks/useApi';
 import { useNavigate } from 'react-router-dom';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
@@ -81,7 +82,12 @@ export default function StudymateSessionPage() {
   const sessionId = useSession();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const examId = searchParams.get('exam') ?? 'gate-ma';
+  // Active exam comes from /api/exam/active (admin-configurable via
+  // DEFAULT_EXAM_ID env var). The ?exam= URL param is still honoured as an
+  // override for power users / multi-exam deployments. No hardcoded
+  // 'gate-ma' fallback — if the API hasn't loaded yet, we wait for it.
+  const { exam: activeExam } = useActiveExam();
+  const examId = searchParams.get('exam') ?? activeExam?.exam_id ?? '';
 
   const [isAnonymous, setIsAnonymous] = useState(true);
   useEffect(() => {
@@ -273,9 +279,11 @@ export default function StudymateSessionPage() {
           <p className="text-sm text-surface-400">
             15 min · 5 adaptive problems · calibrated to your weak spots
           </p>
-          <p className="text-xs text-violet-300/80 mt-1">
-            Demo: GATE Engineering Mathematics
-          </p>
+          {activeExam && (
+            <p className="text-xs text-violet-300/80 mt-1">
+              {activeExam.name}
+            </p>
+          )}
         </motion.div>
 
         {error && (
@@ -287,7 +295,8 @@ export default function StudymateSessionPage() {
         <motion.button
           variants={fadeInUp}
           onClick={startSession}
-          className="w-full max-w-xs py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-base hover:bg-emerald-400 transition-colors"
+          disabled={!examId}
+          className="w-full max-w-xs py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-base hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           whileTap={{ scale: 0.97 }}
         >
           Start Session

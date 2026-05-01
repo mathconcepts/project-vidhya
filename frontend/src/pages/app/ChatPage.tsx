@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, Trash2, BookOpen } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useStorageMode } from '@/hooks/useStorageMode';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { CameraInput } from '@/components/app/CameraInput';
 import NextStepChip, { type NextStepData } from '@/components/app/NextStepChip';
 import { streamGroundedChat } from '@/lib/gbrain/client';
@@ -21,17 +22,14 @@ interface ChatMessage {
   created_at?: string;
 }
 
-// Categorized by intent so the user can orient quickly
-// Starter prompts grounded in the demo's loaded exam (GATE Engineering
-// Mathematics). The previous generic prompts ("Explain this concept...")
-// produced terrible LLM responses for new users with no concept context —
-// the model had to guess what "this" referred to. Naming concepts up front
-// gives the LLM something concrete to ground in.
-const SUGGESTIONS = [
-  { text: 'Explain matrix eigenvalues with a worked example', dot: 'bg-violet-400' },
-  { text: 'Where should I focus to maximise my GATE Math score?', dot: 'bg-emerald-400' },
-  { text: 'Walk me through the chain rule step-by-step', dot: 'bg-amber-400' },
-  { text: 'Give me 3 practice problems on complex numbers', dot: 'bg-sky-400' },
+// Fallback starter prompts used only if /api/exam/active hasn't loaded yet
+// or the deploy ships zero exams. Real prompts come from the API and are
+// concept-grounded by syllabus (see buildStarterPrompts in curriculum-routes).
+const FALLBACK_SUGGESTIONS = [
+  { text: 'Explain a key concept with a worked example', dot: 'bg-violet-400' },
+  { text: 'Where should I focus to maximise my exam score?', dot: 'bg-emerald-400' },
+  { text: 'Walk me through a tricky topic step-by-step', dot: 'bg-amber-400' },
+  { text: 'Give me 3 practice problems', dot: 'bg-sky-400' },
 ];
 
 // Three animated dots that bounce in sequence — replaces Loader2 "Thinking..."
@@ -62,6 +60,13 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const { effectiveMode, groundingCount } = useStorageMode();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { exam: activeExam } = useActiveExam();
+  // Starter prompts come from the backend grounded in the active exam's
+  // syllabus. If /api/exam/active hasn't returned yet (or returned no
+  // prompts), fall back to a generic set.
+  const suggestions = (activeExam?.starter_prompts?.length ?? 0) > 0
+    ? activeExam!.starter_prompts
+    : FALLBACK_SUGGESTIONS;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -287,14 +292,16 @@ export default function ChatPage() {
               <p className="text-surface-400 text-sm max-w-xs leading-relaxed">
                 Concepts explained clearly. Problems solved step-by-step. Ask anything.
               </p>
-              <p className="text-violet-300/80 text-xs">
-                Demo: GATE Engineering Mathematics
-              </p>
+              {activeExam && (
+                <p className="text-violet-300/80 text-xs">
+                  {activeExam.name}
+                </p>
+              )}
             </div>
 
             {/* Suggestion chips */}
             <div className="flex flex-col gap-2 w-full max-w-sm">
-              {SUGGESTIONS.map((s, i) => (
+              {suggestions.map((s, i) => (
                 <motion.button
                   key={i}
                   initial={{ opacity: 0, y: 8 }}

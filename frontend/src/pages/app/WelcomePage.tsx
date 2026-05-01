@@ -10,10 +10,10 @@
  * visitors skip straight to Home. AppLayout checks the flag on mount.
  */
 
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, BookOpen, Target, Brain } from 'lucide-react';
+import { useActiveExam } from '@/hooks/useActiveExam';
 
 const WELCOMED_KEY = 'vidhya.demo_welcomed';
 
@@ -25,27 +25,9 @@ export function hasSeenDemoWelcome(): boolean {
   try { return localStorage.getItem(WELCOMED_KEY) === '1'; } catch { return false; }
 }
 
-interface ExamMeta {
-  exam_id: string;
-  name: string;
-  description?: string;
-  total_marks?: number;
-  duration_minutes?: number;
-  scope?: string;
-}
-
 export default function WelcomePage() {
   const navigate = useNavigate();
-  const [exam, setExam] = useState<ExamMeta | null>(null);
-
-  useEffect(() => {
-    fetch('/api/exam/active')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.exam_id) setExam(data);
-      })
-      .catch(() => { /* graceful degradation */ });
-  }, []);
+  const { exam } = useActiveExam();
 
   const onContinue = () => {
     markDemoWelcomed();
@@ -85,14 +67,13 @@ export default function WelcomePage() {
         >
           <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-2">Loaded exam</div>
           <div className="text-lg font-semibold text-surface-100 mb-1">
-            {exam?.name ?? 'GATE Engineering Mathematics'}
+            {exam?.name ?? 'Loading…'}
           </div>
           {exam?.description ? (
             <p className="text-xs text-surface-400 leading-relaxed">{exam.description}</p>
           ) : (
             <p className="text-xs text-surface-400 leading-relaxed">
-              Tests undergraduate-level engineering mathematics — linear algebra, calculus,
-              differential equations, probability, complex variables.
+              Adaptive sessions, grounded explanations, and a live AI tutor.
             </p>
           )}
           {(exam?.duration_minutes || exam?.total_marks) && (

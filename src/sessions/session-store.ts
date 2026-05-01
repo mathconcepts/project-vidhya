@@ -261,6 +261,10 @@ let _bundleCache: any = null;
 function loadBundleProblems(): any[] {
   if (_bundleCache) return _bundleCache;
   const candidates = [
+    // Production (Vite-built): frontend/public/* gets emitted to frontend/dist/*
+    path.resolve(process.cwd(), 'frontend/dist/data/content-bundle.json'),
+    path.resolve(process.cwd(), 'frontend/dist/data/pyq-bank.json'),
+    // Dev (Vite serves from public/)
     path.resolve(process.cwd(), 'frontend/public/data/content-bundle.json'),
     path.resolve(process.cwd(), '../frontend/public/data/content-bundle.json'),
     path.resolve(process.cwd(), 'public/data/content-bundle.json'),

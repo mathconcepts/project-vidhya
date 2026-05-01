@@ -72,6 +72,9 @@ let _bundle: ContentBundle | null = null;
 function loadBundle(): ContentBundle {
   if (_bundle) return _bundle;
   const candidates = [
+    // Production (Vite-built): public/ → dist/ at build time
+    path.resolve(process.cwd(), 'frontend/dist/data/content-bundle.json'),
+    // Dev
     path.resolve(process.cwd(), 'frontend/public/data/content-bundle.json'),
     path.resolve(process.cwd(), '../frontend/public/data/content-bundle.json'),
     path.resolve(process.cwd(), 'public/data/content-bundle.json'),

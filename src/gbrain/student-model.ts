@@ -93,26 +93,64 @@ export interface StudentModel {
 // Core CRUD
 // ============================================================================
 
+/** Default empty model for cold-start / no-DB demo deploys. */
+function emptyStudentModel(sessionId: string): StudentModel {
+  return {
+    id: `mem-${sessionId}`,
+    session_id: sessionId,
+    user_id: null,
+    mastery_vector: {},
+    speed_profile: {},
+    prerequisite_alerts: [],
+    representation_mode: 'balanced',
+    abstraction_comfort: 0.5,
+    working_memory_est: 0.5,
+    motivation_state: 'steady',
+    confidence_calibration: {
+      overconfident_rate: 0,
+      underconfident_rate: 0,
+      calibration_score: 0.5,
+    },
+    frustration_threshold: 3,
+    consecutive_failures: 0,
+    exam_strategy: {},
+    updated_at: new Date().toISOString(),
+  } as StudentModel;
+}
+
 /** Get or create a student model for a session */
 export async function getOrCreateStudentModel(sessionId: string): Promise<StudentModel> {
-  const pool = getPool();
-
-  const existing = await pool.query(
-    'SELECT * FROM student_model WHERE session_id = $1',
-    [sessionId],
-  );
-
-  if (existing.rows.length > 0) {
-    return existing.rows[0] as StudentModel;
+  // Demo / no-DB deploys: return an in-memory cold-start model so callers
+  // (chat task-reasoner, studymate session-engine ranker, etc.) work
+  // without persistence. Mastery + history accumulate in-process only.
+  if (!process.env.DATABASE_URL) {
+    return emptyStudentModel(sessionId);
   }
 
-  // Create new model
-  const result = await pool.query(
-    `INSERT INTO student_model (session_id) VALUES ($1) RETURNING *`,
-    [sessionId],
-  );
+  try {
+    const pool = getPool();
+    const existing = await pool.query(
+      'SELECT * FROM student_model WHERE session_id = $1',
+      [sessionId],
+    );
 
-  return result.rows[0] as StudentModel;
+    if (existing.rows.length > 0) {
+      return existing.rows[0] as StudentModel;
+    }
+
+    // Create new model
+    const result = await pool.query(
+      `INSERT INTO student_model (session_id) VALUES ($1) RETURNING *`,
+      [sessionId],
+    );
+
+    return result.rows[0] as StudentModel;
+  } catch (err) {
+    // DB transient failure (connection refused, table missing on a partial
+    // migration) — degrade to in-memory rather than crash the request.
+    console.warn(`[student-model] degraded to in-memory cold-start: ${(err as Error).message}`);
+    return emptyStudentModel(sessionId);
+  }
 }
 
 /** Save student model updates */

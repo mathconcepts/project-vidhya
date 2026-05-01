@@ -25,6 +25,14 @@ All notable changes to Vidhya are documented here.
 - 1867 lines added across 21 files.
 - Admin frontend dashboard (Phase 3), regen-scanner nightly job + per-student override (Phase 4), and "Improved" student badge (E7) deferred to follow-up PRs.
 
+## [4.4.1] - 2026-05-01 — Concept-orchestrator deferred items in PENDING.md
+
+**Operator action:** none. Documentation-only change.
+
+### Changed
+
+- **Roadmap visibility.** `PENDING.md` §4 (Content subsystem) gains seven entries (4.10–4.16) capturing the deferred scope from the concept-generation framework CEO plan: external best-practices KB, vector PYQ search, auto A/B testing of regen variants, self-improving prompts, bulk approve, multi-modal generation, lazy-load PYQ corpus. Each entry includes status, priority, effort, rationale, and dependencies so the work is pickable up by anyone without re-reading the full CEO plan.
+
 ## [4.4.0] - 2026-05-01 — Content Module v3: math, interactives, pillar UI
 
 **Operator action:** none. No DB migrations. Optional `WOLFRAM_APP_ID` env var for the new `:::verify` directive — when unset, the route falls back to a deterministic local equality check, so the demo grades correctly without Wolfram.

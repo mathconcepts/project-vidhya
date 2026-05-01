@@ -1,14 +1,25 @@
 #!/usr/bin/env bash
 # Bootstrap gstack skills for this project.
-# Run once after cloning the repo. Teammates must have `bun` installed.
+# Run once after cloning the repo.
+#
+# Strategy:
+#   1. If gstack is already installed globally (~/.claude/skills/gstack), symlink it — fastest.
+#   2. If already vendored locally, pull latest.
+#   3. Otherwise clone fresh and run setup.
 
 set -e
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GSTACK_DIR="$PROJECT_ROOT/.claude/skills/gstack"
+GLOBAL_GSTACK="$HOME/.claude/skills/gstack"
 
-if [ -d "$GSTACK_DIR" ]; then
-  echo "gstack already vendored at $GSTACK_DIR"
-  echo "Pulling latest..."
+if [ -L "$GSTACK_DIR" ]; then
+  echo "✅ gstack symlink already in place at $GSTACK_DIR"
+elif [ -d "$GLOBAL_GSTACK" ]; then
+  echo "Found global gstack at $GLOBAL_GSTACK — symlinking..."
+  ln -s "$GLOBAL_GSTACK" "$GSTACK_DIR"
+  echo "✅ Symlinked. No clone needed."
+elif [ -d "$GSTACK_DIR" ]; then
+  echo "gstack already vendored at $GSTACK_DIR — pulling latest..."
   cd "$GSTACK_DIR" && git pull origin main && ./setup
 else
   echo "Cloning gstack into $GSTACK_DIR..."
@@ -23,13 +34,7 @@ else
 fi
 
 echo ""
-echo "✅ gstack installed. Skills available at:"
-ls "$PROJECT_ROOT/.claude/skills/" | grep -v gstack | head -10
-echo "  ... and more (run 'ls .claude/skills/' to see all)"
+echo "✅ gstack ready. Available skills:"
+ls "$PROJECT_ROOT/.claude/skills/" | grep -v gstack
 echo ""
-echo "✅ GBrain MOAT skills available:"
-for s in student-audit cohort-analysis content-gap gbrain-health daily-intelligence mock-exam weekly-digest misconception-miner seed-rag verify-sweep; do
-  echo "  /$s"
-done
-echo ""
-echo "Read $PROJECT_ROOT/CLAUDE.md for full skill documentation."
+echo "Read CLAUDE.md for full skill documentation and routing rules."

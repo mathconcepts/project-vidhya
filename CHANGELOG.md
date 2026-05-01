@@ -4,6 +4,30 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.1.0] - 2026-05-01 — KAG corpus + content infrastructure hardening
+
+**Operator action:** none required. New flat files created on first write: `.data/kag-corpus.jsonl` (KAG store), `.data/content-review.json` (teaching content-review queue). Both are gitignored by the existing `.data/` rule. Optional: set `WOLFRAM_APP_ID` to enable Wolfram grounding in the KAG generator. Run `npx tsx scripts/kag-corpus-builder.ts --all` to seed the KAG corpus from the concept graph.
+
+### What changed for students
+
+- **Content answers are now Wolfram-grounded before they reach you.** When a KAG corpus entry exists for a concept, the router serves it at priority 0 — before subscriptions, before the library, before anything. KAG entries are generated with Wolfram Alpha context in the LLM prompt AND the worked example answer is re-verified against Wolfram after generation. If you ask about eigenvalues and the KAG corpus has a verified entry, that's what you get.
+
+### What changed for teachers
+
+- **New content-review queue.** `GET /api/teaching/content-review` lists items flagged for review. `POST /api/teaching/content-review/:id/approve` and `POST /api/teaching/content-review/:id/reject` close the loop. All three endpoints require teacher or admin role.
+
+### What changed for engineers
+
+- New source `'kag'` in the `Source` union (`src/content/content-types.ts`). Router tier 0.
+- `src/content/kag-store.ts` — append-only JSONL store with in-memory cosine search (float[] embeddings). Upgrade to pgvector when corpus exceeds 2000 entries.
+- `src/gbrain/operations/kag-concept-generator.ts` — runtime generator. Wolfram plays two roles: (1) grounding context included verbatim in the Claude Opus prompt; (2) worked example answer re-queried for post-generation verification.
+- `scripts/kag-corpus-builder.ts` — CLI-only corpus builder. Never imported by `src/`. Acquires `.data/corpus-build.lock` to prevent cron + manual double-build. Run with `--all` to rebuild, `--concept <id>` for one concept, `--dry-run` to preview.
+- `src/jobs/content-refresh-queue.ts` — owns the `MAX_PER_NIGHT = 5` invariant. Single source of truth; midnight UTC auto-reset.
+- `src/data/vector-store.ts` — `Number.isFinite(sim)` guard on both `cosineSimilarity` methods. Blank/zero vectors previously returned NaN, which could bypass threshold checks.
+- `src/auth/middleware.ts` — `requireAnyRole(req, res, allowed_roles[])` for endpoints that need multiple distinct roles without a clean hierarchy expression.
+- `src/content-library/store.ts` — `SEED_DIR` exported (was private `const`). CLI scripts that need the seed path import it; no duplicate string.
+- Doc cleanup: 5 pure-legacy agent-system files deleted; legacy banners on 9 mixed-content docs/; 3 factual path fixes in CLAUDE.md, CONTRIBUTING.md, README.md.
+
 ## [4.0.0] - 2026-04-30 — Persona delight + retention architecture
 
 **Operator action:** none for runtime. Email surface is now branded "Vidhya" (was leaking "GATE Math" from `src/jobs/retention-engine.ts`); set `FROM_EMAIL` and `BASE_URL` env vars if you want to override the defaults in `src/lib/brand.ts`. Frontend test scripts added — run `cd frontend && npm install && npm test` to enable the new component test suite.

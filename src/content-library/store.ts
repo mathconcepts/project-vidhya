@@ -43,7 +43,7 @@ import type {
   LibraryDifficulty,
 } from './types';
 
-const SEED_DIR = 'data/content-library/seed';
+export const SEED_DIR = 'data/content-library/seed';
 const ADDITIONS_PATH = '.data/content-library-additions.jsonl';
 
 // ─── In-memory index ──────────────────────────────────────────────────

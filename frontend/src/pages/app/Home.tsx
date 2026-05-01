@@ -14,6 +14,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { setAnalyticsSession, trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { MasteryRing } from '@/components/app/MasteryRing';
@@ -537,6 +538,12 @@ export function Home() {
 // --- Topic Grid (fallback for empty tasks) ---
 
 function TopicGrid({ topics }: { topics: Topic[] }) {
+  // Show the loaded exam name + section count above the grid so users know
+  // the framing — these aren't generic "math topics", they're the syllabus
+  // sections of the demo's loaded exam (typically GATE Engineering Math).
+  // Without this, users assume they picked GATE and were given EM, which
+  // is technically the same paper but the mental model breaks down.
+  const { exam } = useActiveExam();
   return (
     <motion.div
       className="space-y-2"
@@ -544,6 +551,16 @@ function TopicGrid({ topics }: { topics: Topic[] }) {
       initial="hidden"
       animate="visible"
     >
+      {exam && topics.length > 0 && (
+        <motion.div variants={fadeInUp} className="pb-1 mb-1">
+          <p className="text-[11px] uppercase tracking-wider text-violet-300/80 font-medium">
+            {exam.name}
+          </p>
+          <p className="text-[11px] text-surface-500 mt-0.5">
+            {topics.length} {topics.length === 1 ? 'section' : 'sections'} · {exam.concept_count} concepts
+          </p>
+        </motion.div>
+      )}
       {topics.map(topic => {
         const Icon = ICON_MAP[topic.icon] || Grid3x3;
 

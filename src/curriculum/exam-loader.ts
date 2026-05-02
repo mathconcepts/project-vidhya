@@ -8,6 +8,15 @@
  *
  * Pure function of the filesystem — no DB, no network. Admins change exam
  * definitions by editing YAML files and rebuilding the bundle.
+ *
+ * Phase 1 of Curriculum R&D (PR #31) added the `exam_packs` table for
+ * operator-defined packs that live in the DB alongside YAML packs. The
+ * loader does NOT merge those rows yet — that wires in PR #32 once the
+ * unit generator needs to read them. For now the table is populated by
+ * /api/admin/exam-packs but consumed only by the admin UI's pack picker.
+ * Keeping the merge out of Phase 1 preserves the existing-behavior risk
+ * floor: every caller of `getExam()` continues to see exactly the same
+ * data it did pre-PR-#31.
  */
 
 import fs from 'fs';

@@ -323,6 +323,33 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 
 **Detail:** Admin's "Concepts needing content" dashboard shows 1 concept = 11 atoms = 11 review cards. Reviewing 50 concepts = 550 cards. Add a "Select all from concept X" + "Approve N selected" button. Already-rejected (LLM-judge < 7) items aren't selectable. **Depends on:** concept-orchestrator v1 admin dashboard shipped.
 
+### 4.17 Curriculum R&D — Phase 1 (schema + JEE pack + custom-pack scaffold) — ✓ DONE 2026-05-02 (PR #31)
+
+**Status:** Phase 1 of Curriculum R&D shipped — schema-only risk floor.
+**Priority:** P0 (CEO direct; reframes Content R&D into curriculum-unit-first generation).
+**Effort:** ~600 LOC, 9 files, 10 new unit tests. No existing-behavior change.
+
+**Delivered:**
+
+- Migration `023_curriculum_units.sql` — `curriculum_units` table (single concept per unit, eng-review D1; bundles 5–15 atoms; declares learning objectives + PYQ alignment + retrieval schedule; `pedagogy_score` slot for Tier 4 verifier in PR #32; supports the `canonical` promotion lifecycle from Sprint C).
+- Migration `024_pyq_holdout.sql` — `is_holdout BOOLEAN` + `taught_by_unit_id TEXT` on `pyq_questions`. Locked invariant: PYQs never move between practice and holdout post-seed.
+- Migration `025_exam_packs.sql` — operator-defined exam packs alongside YAML packs (eng-review D5).
+- `data/curriculum/jee-main.yml` — stub syllabus across PCM (~80 placeholder concept_ids).
+- `scripts/seed-pyq-holdout.ts` — stratified-by-(year, topic) sampler with deterministic SHA-256 seeding so the holdout is reproducible across machines. Refuses to re-seed without `--force` (and warns loudly when forced).
+- `src/api/admin-exam-packs-routes.ts` — 4 admin REST endpoints (list / get / create / patch). Reserved canonical slugs (`gate-ma`, `jee-main`, etc.) cannot be hijacked by operator packs.
+- `src/curriculum/exam-loader.ts` — docstring updated to capture Phase 2 merge intent. Loader behavior unchanged.
+
+**Locked invariants** (carry forward to Phase 2+):
+1. A PYQ is either practice or holdout — never both, never moves.
+2. A `curriculum_unit` covers exactly ONE concept.
+3. Operator-pack capability flags default to text+GIF only (interactives off) per scope.
+4. Exam-loader changes go through PR #32, not Phase 1.
+
+**Phase 2 follow-ups (PRs #32, #33, #34):**
+- PR #32 — Curriculum unit generator + Tier 4 PedagogyVerifier + dual-metric lift (`lift_v1` + `pyq_accuracy_delta_v1` against the holdout bank).
+- PR #33 — Interactive atom kinds (`manipulable`, `simulation`, `guided_walkthrough`) + React component library, gated to canonical packs only.
+- PR #34 — Admin UI for unit launches + holdout dashboard with PYQ accuracy delta column on the EffectivenessLedger.
+
 ### 4.16 Content R&D Loop (deployment framework + experiment spine + admin UI) — ✓ DONE 2026-05-02 (PR #28)
 
 **Status:** Sprints A → B3a shipped in PR #28

@@ -265,7 +265,7 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
  * §4.15 multi-modal sidecars: GIF (visual_analogy) + audio narration (intuition).
  * Renders nothing when atom has no media. Honors prefers-reduced-motion for the GIF.
  */
-function MediaSidecar({ atom }: { atom: ContentAtom }) {
+export function MediaSidecar({ atom }: { atom: ContentAtom }) {
   const media = atom.media;
   if (!media || (!media.gif_url && !media.audio_url)) return null;
   const reduceMotion =

@@ -38,10 +38,14 @@ COPY --from=builder /app/src ./src
 COPY --from=builder /app/frontend/dist ./frontend/dist
 COPY --from=builder /app/tsconfig.json ./
 
-# Copy migrations + curriculum YAML so runtime auto-migrator + exam-pack
-# loader work without depending on host bind-mounts. Production parity.
+# Copy migrations + curriculum YAML + demo seeder so runtime auto-migrator,
+# exam-pack loader, and /demo-login auto-seed work without host bind-mounts.
+# Production parity. The demo seed is tiny (one-shot generator) so including
+# it in production images is fine; it only runs when demo-tokens.json is
+# missing AND someone hits /demo-login (gated to local-dev mode by default).
 COPY --from=builder /app/supabase ./supabase
 COPY --from=builder /app/data ./data
+COPY --from=builder /app/demo ./demo
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

@@ -15,7 +15,8 @@
  * up its default daily run. A future iteration will let admin-launched
  * runs override the flywheel queue.
  *
- * Auth: CRON_SECRET bearer (matches existing admin pattern).
+ * Auth: requireRole('admin') — same gate as admin-experiments-routes.ts.
+ * JWT for browsers, CRON_SECRET backdoor for curl/CI.
  */
 
 import { ServerResponse } from 'http';
@@ -31,9 +32,10 @@ import type {
   GenerationRunConfig,
 } from '../experiments/types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { requireRole } from './auth-middleware';
 
 // ============================================================================
-// Auth + helpers (mirror admin-experiments-routes.ts)
+// Auth + helpers
 // ============================================================================
 
 interface RouteDefinition {
@@ -47,19 +49,9 @@ function sendJSON(res: ServerResponse, data: unknown, status = 200): void {
   res.end(JSON.stringify(data));
 }
 
-function checkAdminAuth(req: ParsedRequest, res: ServerResponse): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    sendJSON(res, { error: 'Admin not configured (CRON_SECRET missing)' }, 500);
-    return false;
-  }
-  const authHeader = (req.headers?.['authorization'] ||
-    req.headers?.['Authorization']) as string | undefined;
-  if (!authHeader || authHeader !== `Bearer ${secret}`) {
-    sendJSON(res, { error: 'Unauthorized' }, 401);
-    return false;
-  }
-  return true;
+async function checkAdminAuth(req: ParsedRequest, res: ServerResponse): Promise<boolean> {
+  const user = await requireRole(req, res, 'admin');
+  return user !== null;
 }
 
 function requireDb(res: ServerResponse): boolean {
@@ -181,7 +173,7 @@ function parseRunConfig(raw: unknown): GenerationRunConfig | string {
 // ============================================================================
 
 async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const examPackId = req.query.get('exam') ?? undefined;
@@ -205,7 +197,7 @@ async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void
 }
 
 async function handleGet(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const id = req.params.id;
@@ -220,7 +212,7 @@ async function handleGet(req: ParsedRequest, res: ServerResponse): Promise<void>
 }
 
 async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const body = (req.body ?? {}) as Record<string, unknown>;
@@ -248,7 +240,7 @@ async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<vo
 }
 
 async function handleDryRun(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   // Dry-run does NOT require DB — purely computational
 
   const body = (req.body ?? {}) as Record<string, unknown>;
@@ -260,7 +252,7 @@ async function handleDryRun(req: ParsedRequest, res: ServerResponse): Promise<vo
 }
 
 async function handleAbort(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const id = req.params.id;

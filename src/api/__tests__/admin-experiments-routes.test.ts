@@ -69,13 +69,12 @@ describe('admin-experiments-routes', () => {
     expect(paths).toContain('POST /api/admin/experiments/:id/assignments');
   });
 
-  it('GET /experiments returns 500 when CRON_SECRET is unset', async () => {
+  it('GET /experiments returns 401 when no auth header (whether or not CRON_SECRET is set)', async () => {
     delete process.env.CRON_SECRET;
     const route = findHandler(adminExperimentsRoutes, 'GET', '/api/admin/experiments')!;
     const res = new FakeRes();
     await route.handler(makeReq(), res as unknown as ServerResponse);
-    expect(res.statusCode).toBe(500);
-    expect(res.body).toContain('Admin not configured');
+    expect(res.statusCode).toBe(401);
   });
 
   it('GET /experiments returns 401 with wrong bearer', async () => {

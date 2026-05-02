@@ -12,8 +12,10 @@
  *   POST   /api/admin/experiments/:id/recompute-lift  → trigger lift_v1 recompute (sync)
  *   POST   /api/admin/experiments/:id/assignments  → batch assign targets
  *
- * Auth: CRON_SECRET bearer (matches src/api/admin-routes.ts pattern).
- * Will migrate to ADMIN_EMAILS + JWT when the wider admin auth lands.
+ * Auth: requireRole('admin') — accepts EITHER a Supabase JWT whose user
+ * has role='admin' in user_profiles, OR the CRON_SECRET bearer (backdoor
+ * for curl/CI). Browsers use JWT; automation uses CRON_SECRET. Single
+ * route surface, two principals, no embedded secrets in the frontend.
  */
 
 import { ServerResponse } from 'http';
@@ -28,6 +30,7 @@ import {
 import { computeLift } from '../experiments/lift';
 import type { ExperimentStatus, AssignmentTargetKind } from '../experiments/types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
+import { requireRole } from './auth-middleware';
 
 // ============================================================================
 // Auth + helpers
@@ -44,19 +47,15 @@ function sendJSON(res: ServerResponse, data: unknown, status = 200): void {
   res.end(JSON.stringify(data));
 }
 
-function checkAdminAuth(req: ParsedRequest, res: ServerResponse): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    sendJSON(res, { error: 'Admin not configured (CRON_SECRET missing)' }, 500);
-    return false;
-  }
-  const authHeader = (req.headers?.['authorization'] ||
-    req.headers?.['Authorization']) as string | undefined;
-  if (!authHeader || authHeader !== `Bearer ${secret}`) {
-    sendJSON(res, { error: 'Unauthorized' }, 401);
-    return false;
-  }
-  return true;
+/**
+ * Admin-gated. Accepts EITHER:
+ *   - A Supabase JWT whose user has role='admin' in user_profiles
+ *   - The CRON_SECRET bearer (backdoor for curl/CI; supported by requireRole)
+ * Returns null if rejected (response already sent).
+ */
+async function checkAdminAuth(req: ParsedRequest, res: ServerResponse): Promise<boolean> {
+  const user = await requireRole(req, res, 'admin');
+  return user !== null;
 }
 
 function requireDb(res: ServerResponse): boolean {
@@ -80,7 +79,7 @@ function isString(x: unknown): x is string {
 // ============================================================================
 
 async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const examPackId = req.query.get('exam') ?? undefined;
@@ -103,7 +102,7 @@ async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void
 }
 
 async function handleGet(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const id = req.params.id;
@@ -119,7 +118,7 @@ async function handleGet(req: ParsedRequest, res: ServerResponse): Promise<void>
 }
 
 async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const body = (req.body ?? {}) as Record<string, unknown>;
@@ -152,7 +151,7 @@ async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<vo
 }
 
 async function handleUpdate(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const id = req.params.id;
@@ -178,7 +177,7 @@ async function handleRecomputeLift(
   req: ParsedRequest,
   res: ServerResponse,
 ): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const id = req.params.id;
@@ -202,7 +201,7 @@ async function handleBatchAssign(
   req: ParsedRequest,
   res: ServerResponse,
 ): Promise<void> {
-  if (!checkAdminAuth(req, res)) return;
+  if (!(await checkAdminAuth(req, res))) return;
   if (!requireDb(res)) return;
 
   const id = req.params.id;

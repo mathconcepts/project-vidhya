@@ -26,6 +26,7 @@ import { runCohortAggregator } from './cohort-aggregator';
 import { runRegenScanner } from './regen-scanner';
 import { runNarrationExperimentScanner } from './narration-experiment-scanner';
 import { evaluateRipeExperiments } from '../content/concept-orchestrator';
+import { snapshotAllActiveSessions } from '../experiments/snapshotter';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -101,6 +102,15 @@ register('narrationExperimentScanner', DAY_MS, async () => {
   }
   const r = await runNarrationExperimentScanner();
   return { status: 'ran', ...r };
+});
+
+register('masterySnapshotter', DAY_MS, async () => {
+  // Nightly: append a mastery_snapshots row per (session × concept) for any
+  // student model touched in the last 24h. Powers lift_v1 computation in
+  // src/experiments/lift.ts. Idempotent on (session_id, concept_id, taken_at).
+  // No-ops cleanly when DATABASE_URL is unset.
+  const r = await snapshotAllActiveSessions({ windowHours: 24 });
+  return r;
 });
 
 register('abEvaluator', DAY_MS, async () => {

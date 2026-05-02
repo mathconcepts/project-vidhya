@@ -21,6 +21,13 @@ import { getTopicIdsForExam } from '../curriculum/topic-adapter';
 import { BLOG_CONTENT_TYPES } from '../constants/content-types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import {
+  createRun,
+  markRunStarted,
+  markRunComplete,
+  markRunFailed,
+  incrementRunArtifacts,
+} from '../generation';
 
 // ============================================================================
 // Types
@@ -574,24 +581,52 @@ function escapeHtml(str: string): string {
 // Main Pipeline
 // ============================================================================
 
-async function runFlywheel(): Promise<{ generated: number; verified: number; topics: string[] }> {
-  const results = { generated: 0, verified: 0, topics: [] as string[] };
+async function runFlywheel(): Promise<{ generated: number; verified: number; topics: string[]; run_id?: string }> {
+  const results = { generated: 0, verified: 0, topics: [] as string[], run_id: undefined as string | undefined };
 
-  for (let i = 0; i < BATCH_SIZE; i++) {
-    const topic = await selectTopic();
-    const problem = await generateProblem(topic);
-    if (!problem) continue;
-    results.generated++;
+  // Wrap every flywheel tick in a GenerationRun so the artifacts produced
+  // are traceable. Default config: gate-ma, BATCH_SIZE atoms, full-tier
+  // verification, $1 budget cap (cron-safe). Operator-launched runs use
+  // POST /api/admin/runs (Sprint B) which lets these knobs vary.
+  const run = await createRun({
+    exam_pack_id: 'gate-ma',
+    hypothesis: 'Daily flywheel — auto-launched by cron',
+    config: {
+      target: { difficulty_dist: { easy: 30, medium: 50, hard: 20 } },
+      pipeline: { llm_models: ['gemini-2.5-flash'] },
+      verification: { tier_ceiling: 'wolfram', gemini_dual_solve: true },
+      quota: { count: BATCH_SIZE, max_cost_usd: 1.0 },
+    },
+    auto_experiment: false, // cron runs aren't experiments by default
+  }).catch(() => null);
 
-    const { verified } = await verifyAndPublish(problem);
-    if (verified) {
-      results.verified++;
-      results.topics.push(topic);
-    }
+  if (run) {
+    results.run_id = run.id;
+    await markRunStarted(run.id).catch(() => undefined);
   }
 
-  console.log(`[flywheel] Batch complete: ${results.verified}/${results.generated} verified (${results.topics.join(', ')})`);
-  return results;
+  try {
+    for (let i = 0; i < BATCH_SIZE; i++) {
+      const topic = await selectTopic();
+      const problem = await generateProblem(topic);
+      if (!problem) continue;
+      results.generated++;
+
+      const { verified } = await verifyAndPublish(problem);
+      if (verified) {
+        results.verified++;
+        results.topics.push(topic);
+        if (run) await incrementRunArtifacts(run.id, 1).catch(() => undefined);
+      }
+    }
+
+    if (run) await markRunComplete(run.id).catch(() => undefined);
+    console.log(`[flywheel] Batch complete: ${results.verified}/${results.generated} verified (${results.topics.join(', ')})${run ? ` [run=${run.id}]` : ''}`);
+    return results;
+  } catch (err: any) {
+    if (run) await markRunFailed(run.id, err?.message ?? 'unknown error').catch(() => undefined);
+    throw err;
+  }
 }
 
 // ============================================================================

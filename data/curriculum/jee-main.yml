@@ -1,0 +1,137 @@
+metadata:
+  id: jee-main
+  name: JEE Main (PCM)
+  conducting_body: NTA (National Testing Agency)
+  year_effective_from: 2024
+  syllabus_source_url: https://jeemain.nta.nic.in/syllabus/
+  description: >
+    Joint Entrance Examination Main — Paper 1 (B.E./B.Tech.). Tests
+    Class 11 + 12 Physics, Chemistry, Mathematics. MCQ + numerical-answer
+    format; 90 questions total (30 per subject), 300 marks. Used as the
+    qualifier for JEE Advanced and as a direct entry exam for ~30 NITs,
+    IIITs, and CFTIs.
+
+    Phase 1 stub — operator fleshes out concept_ids via the curriculum
+    unit generator (PR #32+) rather than seeding all 150+ concepts at
+    once. This keeps the file truthful: only concepts that have at least
+    one generated curriculum_unit + at least one PYQ link are listed.
+  scope: mcq-and-numerical
+  total_marks: 300
+  duration_minutes: 180
+  language: en
+  paper: 1
+
+# ---------------------------------------------------------------------------
+# Capability flags (eng-review D5)
+# ---------------------------------------------------------------------------
+# interactives_enabled is true here because Phase 1 ships the interactive
+# atom kinds for the two canonical exam packs (gate-ma + jee-main). New
+# operator-defined packs created via /api/admin/exam-packs default to
+# false and can be flipped per-pack later.
+capabilities:
+  interactives_enabled: true
+
+# ---------------------------------------------------------------------------
+# Syllabus structure — three subjects, each with topic groups.
+# Concept IDs are placeholders for Phase 1; the generator + curriculum
+# unit launches will populate the real concept lists incrementally.
+# ---------------------------------------------------------------------------
+syllabus:
+  - id: jee-main-physics
+    title: Physics
+    weight_pct: 33.3
+    concept_ids:
+      # Class 11
+      - units-and-measurements
+      - kinematics-1d
+      - kinematics-2d
+      - newtons-laws
+      - work-energy-power
+      - rotational-mechanics
+      - gravitation
+      - oscillations-shm
+      - waves-mechanical
+      # Class 12
+      - electrostatics-coulomb
+      - capacitance
+      - current-electricity
+      - magnetic-effects
+      - electromagnetic-induction
+      - alternating-current
+      - ray-optics
+      - wave-optics
+      - dual-nature-matter
+      - atoms-and-nuclei
+      - semiconductor-electronics
+
+  - id: jee-main-chemistry
+    title: Chemistry
+    weight_pct: 33.3
+    concept_ids:
+      # Physical Chemistry
+      - mole-concept
+      - atomic-structure
+      - chemical-bonding
+      - thermodynamics-chemistry
+      - equilibrium-chemical
+      - equilibrium-ionic
+      - redox-and-electrochemistry
+      - chemical-kinetics
+      - solid-state
+      - solutions-and-colligative
+      # Organic Chemistry
+      - hydrocarbons
+      - haloalkanes-haloarenes
+      - alcohols-phenols-ethers
+      - aldehydes-ketones-acids
+      - amines-and-diazonium
+      - biomolecules
+      - polymers
+      # Inorganic Chemistry
+      - periodic-table-trends
+      - p-block-elements
+      - d-and-f-block
+      - coordination-compounds
+
+  - id: jee-main-mathematics
+    title: Mathematics
+    weight_pct: 33.3
+    concept_ids:
+      # Algebra
+      - sets-relations-functions
+      - complex-numbers-algebra
+      - quadratic-equations
+      - permutations-combinations
+      - binomial-theorem
+      - sequences-series
+      - matrices-and-determinants
+      # Calculus
+      - limits-jee
+      - continuity-differentiability-jee
+      - applications-of-derivatives
+      - indefinite-integration
+      - definite-integration
+      - differential-equations-jee
+      # Coordinate Geometry
+      - straight-lines
+      - circles-coordinate
+      - parabola-ellipse-hyperbola
+      # Trigonometry
+      - trigonometric-functions
+      - inverse-trigonometric
+      - heights-distances
+      # Vectors + 3D
+      - vectors-jee
+      - three-d-geometry
+      # Probability + Statistics
+      - probability-jee
+      - statistics-jee
+
+# ---------------------------------------------------------------------------
+# Score interpretation
+# ---------------------------------------------------------------------------
+scoring:
+  marks_per_correct: 4
+  marks_per_incorrect: -1
+  marks_per_unattempted: 0
+  pass_mark_estimate: 90  # rough cutoff for NIT eligibility; varies by category/year

@@ -265,6 +265,36 @@ Each snapshot writes `docs/snapshots/<tag>.md` with: git SHA, branch, package ve
 
 Why this exists: scaling content generation across exams + tiers means many parallel experiments. Without a snapshot pinning each experiment to a frozen artifact, learnings can't be reproduced or rolled back. The manifest is the contract between the team and the deploy.
 
+---
+
+### Curriculum R&D (§5.1, PR #31 — Phase 1 schema + JEE pack + custom-pack scaffold)
+
+Reframes "Content R&D" (which generated atoms) into "Curriculum R&D" (which generates **curriculum_units** — single-concept bundles of 5–15 atoms in pedagogical sequence, with declared learning objectives and explicit PYQ alignment).
+
+**Schema (migrations 023, 024, 025):**
+
+- `023_curriculum_units.sql` — new `curriculum_units` table. Each row keys on `(exam_pack_id, concept_id)` (one concept per unit, eng-review D1), declares `learning_objectives JSONB`, links `prepared_for_pyq_ids TEXT[]` (bidirectional with `pyq_questions.taught_by_unit_id`), enumerates `atom_ids TEXT[]` in pedagogical order, holds a `pedagogy_score NUMERIC` from the Tier 4 verifier (PR #32), and supports the `canonical` promotion lifecycle from Sprint C.
+- `024_pyq_holdout.sql` — adds `is_holdout BOOLEAN DEFAULT FALSE` and `taught_by_unit_id TEXT` to `pyq_questions`. Locked invariant (eng-review D3): a PYQ never moves between practice and holdout after `scripts/seed-pyq-holdout.ts` runs. The seed script samples ~30 PYQs/exam stratified by `(year, topic)` with deterministic SHA-256 seeding so the holdout is reproducible across machines.
+- `025_exam_packs.sql` — operator-defined exam packs alongside YAML packs (eng-review D5). Source enum: `'yaml' | 'operator'`. Capability flag `interactives_enabled BOOLEAN` defaults to `false` for operator packs (text+GIF only) and `true` for canonical packs (gate-ma, jee-main).
+
+**JEE Main pack:** `data/curriculum/jee-main.yml` — stub syllabus across PCM (~80 placeholder concept_ids; operators flesh out via the curriculum unit generator in PR #32 rather than seeding all at once).
+
+**Admin REST API (`requireRole('admin')`):**
+
+```
+GET    /api/admin/exam-packs            list operator + canonical packs (DB-only for now)
+GET    /api/admin/exam-packs/:id        single pack
+POST   /api/admin/exam-packs            create operator pack (validates config shape; reserves canonical slugs)
+PATCH  /api/admin/exam-packs/:id        update name / status / interactives_enabled
+```
+
+**Phase 1 risk floor:** the `exam_packs` table is populated but `src/curriculum/exam-loader.ts` does NOT yet merge those rows into the unified exam view. PR #32 wires the consumer side. This means PR #31 changes zero existing behavior — every caller of `getExam()` continues to see exactly the same data it did pre-PR-31.
+
+**Phases 2+ (next PRs):**
+- **PR #32** — Curriculum unit generator + Tier 4 PedagogyVerifier + dual-metric lift (`lift_v1` + `pyq_accuracy_delta_v1`).
+- **PR #33** — Interactive atom kinds (`manipulable`, `simulation`, `guided_walkthrough`) + React component library, gated to canonical packs only.
+- **PR #34** — Admin UI for unit launches + holdout dashboard.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

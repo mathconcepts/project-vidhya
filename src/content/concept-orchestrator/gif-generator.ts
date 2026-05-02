@@ -26,7 +26,12 @@
  *   accent = #a78bfa (violet — secondary)
  */
 
-import { GIFEncoder, quantize, applyPalette } from 'gifenc';
+// gifenc ships CJS-flavored dist that Node's ESM static-analyzer can't
+// crack for named imports. createRequire gives a stable runtime shape
+// across both `npx tsx` (Node ESM) and vitest's transformer.
+import { createRequire } from 'node:module';
+const _gifencRequire = createRequire(import.meta.url);
+const { GIFEncoder, quantize, applyPalette } = _gifencRequire('gifenc') as any;
 
 export type SceneDescription =
   | ParametricScene

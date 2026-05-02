@@ -642,9 +642,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
   }
 
-  // Match API routes
+  // Match API routes. HEAD requests fall back to GET routes — Node's http
+  // module automatically suppresses the response body for HEAD, so the same
+  // handler can serve both. Lets `curl -I`, monitors, and other HEAD-based
+  // health probes work against any GET endpoint.
+  const matchMethod = method === 'HEAD' ? 'GET' : method;
   for (const route of routes) {
-    if (route.method !== method) continue;
+    if (route.method !== matchMethod) continue;
     const match = pathname.match(route.pattern);
     if (!match) continue;
 

@@ -323,6 +323,38 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 
 **Detail:** Admin's "Concepts needing content" dashboard shows 1 concept = 11 atoms = 11 review cards. Reviewing 50 concepts = 550 cards. Add a "Select all from concept X" + "Approve N selected" button. Already-rejected (LLM-judge < 7) items aren't selectable. **Depends on:** concept-orchestrator v1 admin dashboard shipped.
 
+### 4.16 Content R&D Loop (deployment framework + experiment spine + admin UI) — ✓ DONE 2026-05-02 (PR #28)
+
+**Status:** Sprints A → B3a shipped in PR #28
+**Priority:** P0 (CEO direct request)
+**Effort:** delivered in ~6 hrs CC, 24 commits, +5285 / −50, 54 files
+
+**Delivered:**
+
+- **Deployment framework:** local Docker stack (`docker compose up`), snapshot mechanism (`npm run snapshot` produces git-tag + Docker-image + manifest triple), `docs/snapshots/INDEX.md` running log, `Dockerfile` copies `supabase/`/`data/`/`demo/` for cloud parity, `.dockerignore` for clean build context. Ten snapshots iteratively built and tagged during the session.
+- **Migrations 000 + 020:** `000_local_auth_stub.sql` is a Supabase-safe no-op (idempotent guards) that lets plain Postgres deploys apply migrations 005+ which reference `auth.users`. `020_experiments.sql` adds `experiments`, `experiment_assignments`, `mastery_snapshots`, `generation_runs` tables + `generation_run_id` columns on artifact tables.
+- **`src/experiments/`:** registry CRUD, append-only mastery snapshotter, `lift_v1` computation (Welch's t-test + Abramowitz–Stegun normal CDF, n≥30 + p<0.05 thresholds locked).
+- **`src/generation/`:** run-orchestrator (queued→running→complete lifecycle), cost-meter (per-call USD accumulator with `RunBudgetExceeded` cap), dry-run estimator (predicts cost + duration before launch).
+- **CLI:** `npx tsx src/gbrain/operations/experiment-lift.ts <id>` + `--list --exam`.
+- **Scheduler:** `masterySnapshotter` daily job. Content flywheel now wraps every tick in a GenerationRun (provenance only, no behavior change).
+- **Admin REST API** (auth via `requireRole('admin')`, accepts JWT or `CRON_SECRET`): 11 routes across `/api/admin/experiments` and `/api/admin/runs` including dry-run cost estimator that doesn't need the DB.
+- **Admin UI at `/admin/content-rd`:** RunLauncher (form + debounced 400ms live cost estimate + warnings), ActiveRunsPanel (last 10 runs with abort), EffectivenessLedger (sortable lift table, status badges, recompute). Wired into the admin dashboard QuickLink grid. DESIGN-SYSTEM.md compliant (violet signature, surface tokens).
+- **Local-dev quick-start:** SignInPage shows "Sign in as Admin/Teacher/Student" pill buttons when `GOOGLE_OAUTH_CLIENT_ID` is unset. `/demo-login` auto-seeds `demo/demo-tokens.json` on first hit. Admin role redirects directly to `/admin/content-rd`. `getAuth` falls back to JWT role claim when `user_profiles` row absent (so demo users seeded by flat-file store work).
+- **Misc fixes** uncovered along the way: scheduler ESM dynamic-import (was `eval('require')`), HEAD probe support on SPA + API routes, Calm Mode Sun/Moon → Eye/EyeOff icon swap (resolves "is this a theme toggle?" confusion).
+- **21 new backend unit tests** (lift stats, cost meter) + **7 new frontend unit tests** (ledger sort/format) + **12 new admin route tests**. 196 backend + 130 frontend tests pass. Backend typecheck baseline unchanged (3 pre-existing `knowledge-routes.ts` errors); frontend typecheck clean.
+- **Verified in motion:** synthetic 12 treatment + 15 control sessions yielded measured lift `+0.1776`, p `≈ 0.000`, demonstrating the spine works end-to-end.
+
+**Deferred (Sprint C, P1 follow-up, ~600 LOC):**
+- Auto-promote winners (`media_artifacts.canonical=true` + `generated_problems.canonical=true` for atoms in won experiments past the n≥30 + p<0.05 threshold).
+- Auto-demote losers (`media_artifacts.status='failed'`).
+- Suggester inbox: nightly job proposes follow-up runs based on lift trends (e.g. "PYQ-grounded hard linear-algebra showed +0.04 lift — run 150 more?").
+- Weekly `Learnings YYYY-Www` PR digest with ledger diff + canonical promotions, opened automatically via `mcp__github__create_pull_request`.
+
+**Deferred (out of CEO scope):**
+- Multi-cloud (AWS/GCP) Terraform — defer until first paying customer requires it.
+- Cross-exam transfer learning (use GATE mastery to bootstrap NEET) — year-2 territory.
+- Auto-launch of suggested runs within daily $ budget — manual launch is safer pre-PMF.
+
 ### 4.15 Multi-modal content generation (GIF render + TTS narration + A/B gate) — ✓ DONE 2026-05-02
 
 **Status:** shipped across v4.11.0 → v4.13.0

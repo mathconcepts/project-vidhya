@@ -1,6 +1,6 @@
 {
   "name": "project-vidhya",
-  "version": "4.10.0",
+  "version": "4.11.0",
   "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -75,6 +75,7 @@
     "@anthropic-ai/sdk": "^0.20.0",
     "@google/generative-ai": "^0.12.0",
     "@types/js-yaml": "^4.0.9",
+    "gifenc": "^1.0.3",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1",
     "katex": "^0.16.44",

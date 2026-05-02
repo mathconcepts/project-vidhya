@@ -77,3 +77,24 @@ export {
   topPatterns,
 } from './prompt-patterns';
 export type { PatternSignature, PatternOutcome, PatternStats } from './prompt-patterns';
+
+export {
+  writeArtifact,
+  markFailed as markMediaFailed,
+  getActiveArtifact,
+  listForAtom as listMediaForAtom,
+  pruneSuperseded as pruneSupersededMedia,
+  pathForArtifact,
+  MEDIA_STORAGE_DIR,
+} from './media-artifacts';
+export type { MediaArtifact, MediaKind, MediaStatus } from './media-artifacts';
+
+export { renderScene as renderGifScene } from './gif-generator';
+export type { SceneDescription, ParametricScene, FunctionTraceScene, RenderResult } from './gif-generator';
+
+export {
+  shouldNarrate,
+  extractNarrationScript,
+  generateNarration,
+} from './tts-generator';
+export type { TtsResult } from './tts-generator';

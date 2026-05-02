@@ -20,6 +20,7 @@ import { streakRoutes } from './api/streak-routes';
 import { adminRoutes } from './api/admin-routes';
 import { adminExperimentsRoutes } from './api/admin-experiments-routes';
 import { adminRunsRoutes } from './api/admin-runs-routes';
+import { adminLedgerRoutes } from './api/admin-ledger-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
 import { socialRoutes } from './api/social-routes';
 import { commanderRoutes } from './api/commander-routes';
@@ -160,6 +161,9 @@ for (const route of adminExperimentsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminRunsRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminLedgerRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of chatRoutes) {

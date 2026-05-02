@@ -27,6 +27,7 @@ import { runRegenScanner } from './regen-scanner';
 import { runNarrationExperimentScanner } from './narration-experiment-scanner';
 import { evaluateRipeExperiments } from '../content/concept-orchestrator';
 import { snapshotAllActiveSessions } from '../experiments/snapshotter';
+import { runLearningsLedger } from './learnings-ledger';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -110,6 +111,20 @@ register('masterySnapshotter', DAY_MS, async () => {
   // src/experiments/lift.ts. Idempotent on (session_id, concept_id, taken_at).
   // No-ops cleanly when DATABASE_URL is unset.
   const r = await snapshotAllActiveSessions({ windowHours: 24 });
+  return r;
+});
+
+register('learningsLedger', DAY_MS, async () => {
+  // Sprint C — closes the Content R&D Loop nightly.
+  //   1. Recompute lift_v1 for every active experiment
+  //   2. Promote winners (lift > 0.05, p < 0.05, n ≥ 30) — canonical=true
+  //   3. Demote losers (lift < -0.02, p < 0.05, n ≥ 30) — status=failed
+  //   4. Generate run suggestions into the operator inbox
+  //   5. Write docs/learnings/<YYYY-Www>.md digest
+  //   6. (Sundays only, gated by VIDHYA_LEDGER_PR=on) open a PR with the digest
+  //
+  // No-op when DATABASE_URL is unset.
+  const r = await runLearningsLedger();
   return r;
 });
 

@@ -344,11 +344,13 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 - **21 new backend unit tests** (lift stats, cost meter) + **7 new frontend unit tests** (ledger sort/format) + **12 new admin route tests**. 196 backend + 130 frontend tests pass. Backend typecheck baseline unchanged (3 pre-existing `knowledge-routes.ts` errors); frontend typecheck clean.
 - **Verified in motion:** synthetic 12 treatment + 15 control sessions yielded measured lift `+0.1776`, p `≈ 0.000`, demonstrating the spine works end-to-end.
 
-**Deferred (Sprint C, P1 follow-up, ~600 LOC):**
-- Auto-promote winners (`media_artifacts.canonical=true` + `generated_problems.canonical=true` for atoms in won experiments past the n≥30 + p<0.05 threshold).
-- Auto-demote losers (`media_artifacts.status='failed'`).
-- Suggester inbox: nightly job proposes follow-up runs based on lift trends (e.g. "PYQ-grounded hard linear-algebra showed +0.04 lift — run 150 more?").
-- Weekly `Learnings YYYY-Www` PR digest with ledger diff + canonical promotions, opened automatically via `mcp__github__create_pull_request`.
+**Sprint C — Closed Loop:** ✓ DONE 2026-05-02 (follow-up PR to #28).
+- Migration `022_canonical_flag.sql` — adds `canonical BOOLEAN`/`canonical_at`/`canonical_reason` to `generated_problems`, `media_artifacts`, `atom_versions` + `ledger_runs` audit table + `run_suggestions` operator inbox table.
+- `src/jobs/learnings-ledger.ts` (nightly): recomputes lift, promotes winners (`canonical=true` + `experiments.status='won'`), demotes losers (`media_artifacts.status='failed'` + `experiments.status='lost'`), generates suggestions, writes `docs/learnings/<YYYY-Www>.md` digest, and (Sundays only, behind `VIDHYA_LEDGER_PR=on`) opens a PR via `gh` CLI.
+- `src/generation/suggester.ts` — pure rules: CONFIRM_WIN (3× count for promising small-n), RIDE_WIN (5× volume for confirmed winners), RECOVER_LOSS (inverted flags for confirmed losers).
+- Admin REST API: `GET /api/admin/ledger/runs`, `POST /api/admin/ledger/run-now`, `GET /api/admin/suggestions`, `POST /api/admin/suggestions/:id` (launch | dismiss).
+- Frontend: `SuggestedRunsPanel` component renders above `RunLauncher` on `/admin/content-rd`. Hidden when empty.
+- 17 new tests (10 suggester rules + 7 digest builder). 196 backend + 123 frontend tests still pass.
 
 **Deferred (out of CEO scope):**
 - Multi-cloud (AWS/GCP) Terraform — defer until first paying customer requires it.

@@ -142,7 +142,32 @@ PATCH  /api/admin/runs/:id                       abort
 
 `lift = mean(post_window_mastery) − mean(pre_window_mastery)` for the treatment cohort, minus the same delta for matched control cohort (sessions in same exam pack, active during window, not assigned to the experiment). Significance via Welch's t-test with normal-CDF p-value approximation. **Never silently change the formula** — future versions land as `lift_v2` in a new column. Verified in motion: synthetic 12 treatment + 15 control sessions yielded measured lift `+0.1776`, p `≈ 0.000`.
 
-**Sprint C (deferred):** auto-promote winners (`media_artifacts.canonical=true`), auto-demote losers, weekly `Learnings YYYY-Www` PR digest with ledger diff, suggester inbox proposing follow-up runs. ~600 LOC follow-up.
+**Sprint C — Closed Loop:** ✓ shipped.
+
+Migration `022_canonical_flag.sql` adds `canonical BOOLEAN`/`canonical_at`/`canonical_reason` to `generated_problems`, `media_artifacts`, `atom_versions` plus `ledger_runs` (audit trail) and `run_suggestions` (operator inbox).
+
+`src/jobs/learnings-ledger.ts` runs nightly via the scheduler:
+
+1. Recompute `lift_v1` for every active experiment.
+2. **Promote winners** (`lift > 0.05 ∧ p < 0.05 ∧ n ≥ 30`): set `canonical=true` on assigned atom_versions, media_artifacts, generated_problems; update `experiments.status='won'`.
+3. **Demote losers** (`lift < -0.02 ∧ p < 0.05 ∧ n ≥ 30`): flip `media_artifacts.status='failed'` (so `applyMediaUrls` skips them); update `experiments.status='lost'`.
+4. **Suggest follow-ups** via `src/generation/suggester.ts` (pure-function rules: CONFIRM_WIN at small n, RIDE_WIN at higher volume, RECOVER_LOSS with inverted flags). Persists into `run_suggestions`.
+5. Write `docs/learnings/<YYYY-Www>.md` digest.
+6. Sundays only (and gated by `VIDHYA_LEDGER_PR=on`), open a PR via `gh` CLI committing the digest.
+
+**Admin REST API (`requireRole('admin')`):**
+
+```
+GET    /api/admin/ledger/runs           recent ledger runs
+POST   /api/admin/ledger/run-now        synchronous trigger (no_pr/force_pr/no_digest opts)
+GET    /api/admin/suggestions           operator inbox
+POST   /api/admin/suggestions/:id       action: 'launch' | 'dismiss'
+                                        (launch creates a real GenerationRun + auto-experiment)
+```
+
+**Admin UI:** `frontend/src/components/admin/SuggestedRunsPanel.tsx` renders above the RunLauncher on `/admin/content-rd`. Hidden when no pending suggestions. Each card shows hypothesis, reason, source experiment, expected lift/n, with Launch + Dismiss buttons.
+
+**Flags:** `VIDHYA_LEDGER_PR=on` enables the weekly PR digest (default off — local boots and dev environments don't spam the repo). The job still runs and writes the markdown locally regardless.
 
 ---
 

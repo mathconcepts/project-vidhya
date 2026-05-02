@@ -4,6 +4,33 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.13.0] - 2026-05-02 — Phase F: TTS A/B gate + demo audio path
+
+**Operator action:** migration `019_atom_ab_variant_kind.sql` runs automatically on server boot — adds a `variant_kind` column to `atom_ab_tests` with default `'content'` so existing experiments are unchanged. Phase F activates only when `VIDHYA_AB_TESTING=on` (same flag as v4.9.0). Optional cap: `VIDHYA_MAX_NARRATION_AB` (default 50) bounds concurrent narration experiments. To populate demo audio, run `npm run demo:generate-audio` once with `OPENAI_API_KEY` set; the resulting MP3s in `demo/seed-audio/` get served by the disk-fallback path on the demo deploy.
+
+### Added (PENDING.md §4.15 Phase F + Item A)
+
+- **TTS A/B gate.** New `narration-experiment-scanner` job (nightly, gated on `VIDHYA_AB_TESTING=on`) finds `intuition` atoms with `audio_narration` artifacts and no running narration experiment, then opens an A/B test using the existing v4.9.0 harness. Half of students get audio, half don't. Cohort error rates after the 14-day window decide whether narration wins (audio stays), loses (`media_artifacts.status` flipped to `failed`, audio disabled), or ties/insufficient (audio stays — bias toward shipping per CEO premise). Cost-capped at `VIDHYA_MAX_NARRATION_AB` concurrent experiments (default 50) so TTS spend can't run away.
+- **`getNarrationBucket(atom_id, student_id)`.** New helper in `ab-tester.ts` returns `'control' | 'candidate' | null`. `applyMediaUrls` now passes `student_id` through and suppresses `audio_url` when the student is in the control bucket of a running narration experiment. Anonymous users (no student_id) and atoms without a running experiment always get audio if the file exists — anonymous-first semantics preserved.
+- **Migration 019: `variant_kind` column on `atom_ab_tests`.** Backwards-compatible — existing rows default to `'content'`. Replaces the partial unique index with `(atom_id, variant_kind)` so an atom can have one content experiment AND one narration experiment running concurrently without collision.
+- **Demo audio path.** New `demo/seed-audio/` directory + `npm run demo:generate-audio` script. Operators run the script once with `OPENAI_API_KEY` set to generate MP3s for every `intuition` atom (~$0.005 each, ~$0.015 total for current 3 demo concepts). Resulting files commit into source. Boot-time `seed-media.ts` copies them into `MEDIA_DIR` so the demo serves audio without API keys at runtime.
+- **`VariantKind` type export** from `concept-orchestrator/index.ts`.
+- **12 new tests:** narration bucket helper (4), narration-experiment-scanner (4), applyMediaUrls × narration A/B integration (4). Backend 912/912.
+
+### Changed
+
+- `createExperiment` and `getRunningExperiment` now accept an optional `variant_kind` parameter (default `'content'`). Existing call sites unaffected.
+- `ab-evaluator` (`evaluateRipeExperiments`) reads `variant_kind` per experiment. For narration experiments where control beats candidate by ≥10%, disables the `audio_narration` artifact rather than swapping atom_versions (since both versions are identical for narration A/B).
+- `applyMediaUrls(atoms)` is now `applyMediaUrls(atoms, student_id?)`. Both lesson-routes call sites updated. Backwards-compatible: omitting `student_id` matches v4.12.0 behavior (no bucket check, audio always shipped).
+- Scheduler registers `narrationExperimentScanner` alongside the existing `regenScanner` and `abEvaluator`.
+
+### Architecture notes
+
+- **Reuses v4.9.0 A/B substrate.** No new tables. The `variant_kind` column extends what's tested, not the test mechanics. FNV-1a bucket assignment is identical.
+- **Narration variant cleanup on loss.** When narration loses, the audio file stays on disk but `media_artifacts.status='failed'` makes `applyMediaUrls` skip it. Reversible via direct SQL update if a future verdict changes.
+- **Demo audio is build-time, not runtime.** No API key needed at server boot. The cost is paid once by whoever generates the demo MP3s, then commits them. Production deploys with real users still call `generateNarration` at orchestrator-time per atom.
+- **Cost ceiling.** `MAX_ACTIVE_NARRATION=50` × $0.005/atom × every regen cycle = ~$0.25/day worst case. If real usage pushes higher, raise the cap explicitly.
+
 ## [4.12.0] - 2026-05-02 — Multi-modal polish (more demo GIFs + boot smoke test)
 
 **Operator action:** none. Demo deploy auto-renders the new GIFs at boot via `npm run demo:seed-media` (already in the Dockerfile CMD).

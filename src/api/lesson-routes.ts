@@ -292,7 +292,7 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       // override always wins) but BEFORE the engagement enrichment fields
       // are read by the client.
       atoms = await applyAbVariants(atoms, lessonReq.session_id ?? null);
-      atoms = await applyMediaUrls(atoms);
+      atoms = await applyMediaUrls(atoms, lessonReq.session_id ?? null);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
@@ -372,7 +372,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       atoms = await applyStudentOverrides(atoms, student_id);
       atoms = await applyImprovedSince(atoms);
       atoms = await applyAbVariants(atoms, student_id);
-      atoms = await applyMediaUrls(atoms);
+      atoms = await applyMediaUrls(atoms, student_id);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);

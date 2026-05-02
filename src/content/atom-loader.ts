@@ -401,10 +401,13 @@ export async function applyAbVariants(
  * active rows. No N+1.
  */
 // @ts-ignore
-export async function applyMediaUrls(atoms: ContentAtom[]): Promise<ContentAtom[]> {
+export async function applyMediaUrls(
+  atoms: ContentAtom[],
+  student_id?: string | null,
+): Promise<ContentAtom[]> {
   if (atoms.length === 0) return atoms;
   const pool = getEnrichmentPool();
-  if (!pool) return applyMediaUrlsFromDisk(atoms);
+  if (!pool) return applyMediaUrlsFromDisk(atoms, student_id);
 
   try {
     const ids = atoms.map((a) => a.id);
@@ -425,6 +428,22 @@ export async function applyMediaUrls(atoms: ContentAtom[]): Promise<ContentAtom[
       if (row.kind === 'audio_narration') cur.audio_url = `/api/lesson/media/${encodeURIComponent(row.atom_id)}/audio_narration`;
       byId.set(row.atom_id, cur);
     }
+    // Phase F (§4.15): if a narration A/B experiment is running for this
+    // atom and the student is in the control bucket, suppress audio_url so
+    // they get the no-narration variant. Anonymous (no student_id) and
+    // experiments-disabled paths fall through to default = narration on.
+    if (student_id) {
+      const { getNarrationBucket } = await import('./concept-orchestrator/ab-tester');
+      const ids = Array.from(byId.keys());
+      for (const id of ids) {
+        const cur = byId.get(id);
+        if (!cur?.audio_url) continue;
+        try {
+          const bucket = await getNarrationBucket(id, student_id);
+          if (bucket === 'control') delete cur.audio_url;
+        } catch { /* graceful — keep audio_url on lookup failure */ }
+      }
+    }
     for (const atom of atoms) {
       const m = byId.get(atom.id);
       if (m) (atom as any).media = m;
@@ -444,7 +463,10 @@ export async function applyMediaUrls(atoms: ContentAtom[]): Promise<ContentAtom[
  * Active-version semantics: when multiple `v*` files exist for the same
  * atom_id, the highest version_n wins (matches DB-side `active = TRUE`).
  */
-function applyMediaUrlsFromDisk(atoms: ContentAtom[]): ContentAtom[] {
+function applyMediaUrlsFromDisk(atoms: ContentAtom[], _student_id?: string | null): ContentAtom[] {
+  // student_id is ignored on the DB-less path: the disk fallback is used
+  // by the demo deploy where there's no narration experiment table to read,
+  // so every student gets the default (narration on if the file exists).
   try {
     const dir = process.env.MEDIA_STORAGE_DIR
       ?? path.join(process.cwd(), '.data', 'media');

@@ -63,12 +63,13 @@ export {
   createExperiment,
   getRunningExperiment,
   assignBucket,
+  getNarrationBucket,
   evaluateRipeExperiments,
   AB_WINDOW_DAYS,
   AB_MIN_BUCKET_SIZE,
   AB_MIN_DELTA,
 } from './ab-tester';
-export type { AbExperiment, AbStatus, AssignmentResult, ExperimentEvaluation } from './ab-tester';
+export type { AbExperiment, AbStatus, AssignmentResult, ExperimentEvaluation, VariantKind } from './ab-tester';
 
 export {
   buildPatternKey,

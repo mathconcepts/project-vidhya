@@ -51,6 +51,15 @@ export type AbStatus =
   | 'running' | 'promoted_candidate' | 'promoted_control'
   | 'tie' | 'insufficient_data' | 'cancelled';
 
+/**
+ * What's being A/B tested. 'content' = the v4.9.0 default — control_version_n
+ * vs candidate_version_n prose. 'narration' = same version_n (control == candidate),
+ * but the bucket assignment toggles whether audio_url ships in the lesson payload.
+ *
+ * Per migration 019, an atom can have one running experiment per variant_kind.
+ */
+export type VariantKind = 'content' | 'narration';
+
 export interface AbExperiment {
   id: string;
   atom_id: string;
@@ -61,6 +70,7 @@ export interface AbExperiment {
   status: AbStatus;
   evaluated_at: string | null;
   verdict: any;
+  variant_kind: VariantKind;
 }
 
 export interface AssignmentResult {
@@ -105,21 +115,22 @@ export async function createExperiment(
   atom_id: string,
   control_version_n: number,
   candidate_version_n: number,
+  variant_kind: VariantKind = 'content',
 ): Promise<AbExperiment | null> {
   const pool = getPool();
   if (!pool) return null;
   try {
     const r = await pool.query(
-      `INSERT INTO atom_ab_tests (atom_id, control_version_n, candidate_version_n, ends_at)
-         VALUES ($1, $2, $3, NOW() + ($4 || ' days')::interval)
-         ON CONFLICT (atom_id) WHERE status = 'running' DO NOTHING
-         RETURNING id, atom_id, control_version_n, candidate_version_n,
+      `INSERT INTO atom_ab_tests (atom_id, control_version_n, candidate_version_n, variant_kind, ends_at)
+         VALUES ($1, $2, $3, $4, NOW() + ($5 || ' days')::interval)
+         ON CONFLICT (atom_id, variant_kind) WHERE status = 'running' DO NOTHING
+         RETURNING id, atom_id, control_version_n, candidate_version_n, variant_kind,
                    started_at, ends_at, status, evaluated_at, verdict`,
-      [atom_id, control_version_n, candidate_version_n, String(AB_WINDOW_DAYS)],
+      [atom_id, control_version_n, candidate_version_n, variant_kind, String(AB_WINDOW_DAYS)],
     );
     if (r.rows[0]) return mapRow(r.rows[0]);
-    // ON CONFLICT triggered — return the existing running experiment.
-    const existing = await getRunningExperiment(atom_id);
+    // ON CONFLICT triggered — return the existing running experiment of this kind.
+    const existing = await getRunningExperiment(atom_id, variant_kind);
     return existing;
   } catch (err) {
     console.warn(`[ab-tester] createExperiment failed for ${atom_id}: ${(err as Error).message}`);
@@ -127,17 +138,20 @@ export async function createExperiment(
   }
 }
 
-export async function getRunningExperiment(atom_id: string): Promise<AbExperiment | null> {
+export async function getRunningExperiment(
+  atom_id: string,
+  variant_kind: VariantKind = 'content',
+): Promise<AbExperiment | null> {
   const pool = getPool();
   if (!pool) return null;
   try {
     const r = await pool.query(
-      `SELECT id, atom_id, control_version_n, candidate_version_n,
+      `SELECT id, atom_id, control_version_n, candidate_version_n, variant_kind,
               started_at, ends_at, status, evaluated_at, verdict
          FROM atom_ab_tests
-         WHERE atom_id = $1 AND status = 'running'
+         WHERE atom_id = $1 AND variant_kind = $2 AND status = 'running'
          LIMIT 1`,
-      [atom_id],
+      [atom_id, variant_kind],
     );
     return r.rows[0] ? mapRow(r.rows[0]) : null;
   } catch (err) {
@@ -192,7 +206,7 @@ export async function evaluateRipeExperiments(): Promise<ExperimentEvaluation[]>
   let ripe: AbExperiment[] = [];
   try {
     const r = await pool.query(
-      `SELECT id, atom_id, control_version_n, candidate_version_n,
+      `SELECT id, atom_id, control_version_n, candidate_version_n, variant_kind,
               started_at, ends_at, status, evaluated_at, verdict
          FROM atom_ab_tests
          WHERE status = 'running' AND ends_at <= NOW()
@@ -277,10 +291,28 @@ async function evaluateOne(pool: any, exp: AbExperiment): Promise<ExperimentEval
     // Control's error rate is meaningfully LOWER → revert.
     verdict = 'promoted_control';
     reason = `control beat candidate by ${(delta * 100).toFixed(1)}% — reverting`;
-    // Activate control. atom-versions.activate() handles the swap.
-    await activate(exp.atom_id, exp.control_version_n).catch((err) => {
-      console.warn(`[ab-tester] revert failed for ${exp.atom_id}: ${(err as Error).message}`);
-    });
+    if (exp.variant_kind === 'narration') {
+      // Narration A/B: control_version_n === candidate_version_n. The "revert"
+      // is to suppress the audio sidecar by marking the media_artifacts row
+      // disabled. applyMediaUrls won't attach audio_url once status != 'done'.
+      try {
+        await pool.query(
+          `UPDATE media_artifacts
+             SET status = 'failed',
+                 error_log = COALESCE(error_log, '') || ' [disabled by A/B verdict ' || $1 || ']'
+             WHERE atom_id = $2 AND version_n = $3 AND kind = 'audio_narration' AND status = 'done'`,
+          [exp.id, exp.atom_id, exp.control_version_n],
+        );
+        reason += ' (narration sidecar disabled)';
+      } catch (err) {
+        console.warn(`[ab-tester] narration disable failed for ${exp.atom_id}: ${(err as Error).message}`);
+      }
+    } else {
+      // Content A/B: activate the prior version. atom-versions.activate() swaps.
+      await activate(exp.atom_id, exp.control_version_n).catch((err) => {
+        console.warn(`[ab-tester] revert failed for ${exp.atom_id}: ${(err as Error).message}`);
+      });
+    }
   } else {
     verdict = 'tie';
     reason = `delta ${(delta * 100).toFixed(1)}% < min ${(AB_MIN_DELTA * 100).toFixed(1)}%. Candidate stays active.`;
@@ -346,7 +378,31 @@ function mapRow(row: any): AbExperiment {
     status: row.status,
     evaluated_at: row.evaluated_at,
     verdict: row.verdict,
+    variant_kind: (row.variant_kind ?? 'content') as VariantKind,
   };
+}
+
+/**
+ * Narration bucket assignment (Phase F). Returns:
+ *   - 'candidate' → student is in the narration-on bucket. audio_url ships.
+ *   - 'control'   → student is in the narration-off bucket. audio_url is suppressed.
+ *   - null        → no running narration experiment, OR no student_id provided
+ *                   (anonymous-first: fall through to default = narration on).
+ *
+ * Pure once the experiment row is loaded; the hash is local and deterministic.
+ * Reuses the v4.9.0 FNV-1a hasher with the `atom_id::student_id` salt, so a
+ * narration A/B and a content A/B on the same atom produce uncorrelated buckets
+ * (the salt is identical but `narration` rows have control_version_n equal to
+ * candidate_version_n, so version_n drift doesn't bias the assignment).
+ */
+export async function getNarrationBucket(
+  atom_id: string,
+  student_id: string | null,
+): Promise<'control' | 'candidate' | null> {
+  if (!student_id) return null;
+  const exp = await getRunningExperiment(atom_id, 'narration');
+  if (!exp) return null;
+  return bucketFor(atom_id, student_id);
 }
 
 // Exported for tests — expose the deterministic bucket function.

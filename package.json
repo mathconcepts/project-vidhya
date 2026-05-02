@@ -1,6 +1,6 @@
 {
   "name": "project-vidhya",
-  "version": "4.12.0",
+  "version": "4.13.0",
   "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,6 +42,7 @@
     "demo:setup": "npm ci && cd frontend && npm ci && cd .. && npm run demo:seed && echo '\\nDemo ready — run: npm run demo:start'",
     "demo:seed": "tsx demo/seed.ts",
     "demo:seed-media": "tsx demo/seed-media.ts",
+    "demo:generate-audio": "tsx demo/generate-demo-audio.ts",
     "demo:reset": "tsx demo/reset.ts",
     "demo:start": "bash demo/start.sh",
     "demo:verify": "tsx demo/verify.ts",

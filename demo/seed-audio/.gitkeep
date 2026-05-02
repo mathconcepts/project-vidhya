@@ -1,0 +1,7 @@
+# This dir holds pre-generated TTS MP3s for the demo deploy. Run:
+#
+#   OPENAI_API_KEY=sk-... npm run demo:generate-audio
+#
+# Once. Commit the resulting *.mp3 files so the demo ships audio without
+# needing API keys at boot. ~$0.015 one-time cost for the current 3 demo
+# concepts.

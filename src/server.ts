@@ -610,8 +610,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   const pathname = url.pathname;
   const method = (req.method || 'GET').toUpperCase();
 
-  // Try to serve static frontend files in production
-  if (method === 'GET' && !pathname.startsWith('/api') && !pathname.startsWith('/telegram') && !pathname.startsWith('/health') && !pathname.startsWith('/solutions') && !pathname.startsWith('/topics') && !pathname.startsWith('/blog') && !pathname.startsWith('/exams') && pathname !== '/sitemap.xml' && pathname !== '/rss.xml' && pathname !== '/demo-login') {
+  // Try to serve static frontend files in production. Accept GET *and* HEAD —
+  // HEAD probes from monitors / `curl -I` should also see the SPA index for
+  // any client-side route, otherwise they spuriously report 404 on /admin/*.
+  if ((method === 'GET' || method === 'HEAD') && !pathname.startsWith('/api') && !pathname.startsWith('/telegram') && !pathname.startsWith('/health') && !pathname.startsWith('/solutions') && !pathname.startsWith('/topics') && !pathname.startsWith('/blog') && !pathname.startsWith('/exams') && pathname !== '/sitemap.xml' && pathname !== '/rss.xml' && pathname !== '/demo-login') {
     const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
     if (fs.existsSync(frontendDist)) {
       const filePath = path.join(frontendDist, pathname === '/' ? 'index.html' : pathname);

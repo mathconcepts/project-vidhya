@@ -72,4 +72,4 @@ VOLUME ["/app/.data"]
 #
 # JWT_SECRET is required; Render's render.yaml sets it via generateValue.
 # Locally, pass it via -e or --env-file.
-CMD ["sh", "-c", "npm run demo:seed && npx tsx src/server.ts"]
+CMD ["sh", "-c", "npm run demo:seed && npm run demo:seed-media && npx tsx src/server.ts"]

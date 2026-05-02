@@ -404,7 +404,7 @@ export async function applyAbVariants(
 export async function applyMediaUrls(atoms: ContentAtom[]): Promise<ContentAtom[]> {
   if (atoms.length === 0) return atoms;
   const pool = getEnrichmentPool();
-  if (!pool) return atoms;
+  if (!pool) return applyMediaUrlsFromDisk(atoms);
 
   try {
     const ids = atoms.map((a) => a.id);
@@ -431,6 +431,53 @@ export async function applyMediaUrls(atoms: ContentAtom[]): Promise<ContentAtom[
     }
   } catch (err) {
     console.warn(`[atom-loader] applyMediaUrls failed: ${(err as Error).message}`);
+  }
+  return atoms;
+}
+
+/**
+ * DB-less fallback for applyMediaUrls. Used when DATABASE_URL isn't
+ * configured (demo deploys, free-tier Render without Supabase). Walks
+ * MEDIA_STORAGE_DIR for `{atom_id}.v*.gif` and `{atom_id}.v*.mp3` files
+ * pre-rendered by `demo/seed-media.ts` and attaches their URLs.
+ *
+ * Active-version semantics: when multiple `v*` files exist for the same
+ * atom_id, the highest version_n wins (matches DB-side `active = TRUE`).
+ */
+function applyMediaUrlsFromDisk(atoms: ContentAtom[]): ContentAtom[] {
+  try {
+    const dir = process.env.MEDIA_STORAGE_DIR
+      ?? path.join(process.cwd(), '.data', 'media');
+    if (!fs.existsSync(dir)) return atoms;
+    const files = fs.readdirSync(dir);
+    const ids = new Set(atoms.map((a) => a.id));
+    // Map atom_id → { kind → highest version seen }
+    const seen: Map<string, { gif?: number; audio?: number }> = new Map();
+    for (const f of files) {
+      const m = f.match(/^(.+?)\.v(\d+)\.(gif|mp3)$/);
+      if (!m) continue;
+      const [, atomId, vRaw, ext] = m;
+      if (!ids.has(atomId)) continue;
+      const v = parseInt(vRaw, 10);
+      const cur = seen.get(atomId) ?? {};
+      if (ext === 'gif' && (cur.gif ?? -1) < v) cur.gif = v;
+      if (ext === 'mp3' && (cur.audio ?? -1) < v) cur.audio = v;
+      seen.set(atomId, cur);
+    }
+    for (const atom of atoms) {
+      const s = seen.get(atom.id);
+      if (!s) continue;
+      const media: { gif_url?: string; audio_url?: string } = {};
+      if (s.gif !== undefined) {
+        media.gif_url = `/api/lesson/media/${encodeURIComponent(atom.id)}/gif`;
+      }
+      if (s.audio !== undefined) {
+        media.audio_url = `/api/lesson/media/${encodeURIComponent(atom.id)}/audio_narration`;
+      }
+      if (media.gif_url || media.audio_url) (atom as any).media = media;
+    }
+  } catch (err) {
+    console.warn(`[atom-loader] applyMediaUrlsFromDisk failed: ${(err as Error).message}`);
   }
   return atoms;
 }

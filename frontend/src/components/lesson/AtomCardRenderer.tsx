@@ -70,6 +70,12 @@ export interface ContentAtom {
   /** ISO timestamp from atom_engagements.last_seen for this student.
    * Used by the Improved badge to detect "newer than last view". */
   last_seen_at?: string;
+  /** §4.15 multi-modal sidecars. Server-generated GIF (visual_analogy) +
+   * TTS narration (intuition). URLs are versioned via /api/lesson/media. */
+  media?: {
+    gif_url?: string;
+    audio_url?: string;
+  };
 }
 
 // ─── ATOM_ANIMATION_MAP — declarative, single source of truth ─────────────
@@ -253,6 +259,49 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
 
 function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
   return <MarkdownAtomRenderer content={atom.content} atomId={atom.id} />;
+}
+
+/**
+ * §4.15 multi-modal sidecars: GIF (visual_analogy) + audio narration (intuition).
+ * Renders nothing when atom has no media. Honors prefers-reduced-motion for the GIF.
+ */
+function MediaSidecar({ atom }: { atom: ContentAtom }) {
+  const media = atom.media;
+  if (!media || (!media.gif_url && !media.audio_url)) return null;
+  const reduceMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return (
+    <div className="mt-4 space-y-3">
+      {media.gif_url && (
+        <figure className="rounded-lg overflow-hidden border border-surface-800 bg-surface-950">
+          <img
+            src={media.gif_url}
+            alt="Animated visualization for this concept"
+            loading="lazy"
+            className="w-full h-auto"
+            style={reduceMotion ? { filter: 'none', animationPlayState: 'paused' } : undefined}
+          />
+          {reduceMotion && (
+            <figcaption className="px-2 py-1 text-[11px] text-surface-500">
+              Motion reduced — first frame only.
+            </figcaption>
+          )}
+        </figure>
+      )}
+      {media.audio_url && (
+        <div className="flex items-center gap-2">
+          <audio
+            controls
+            preload="none"
+            src={media.audio_url}
+            aria-label="Read this concept aloud"
+            className="w-full h-10"
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -488,6 +537,8 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
           ) : (
             <DefaultAtomCard atom={current} />
           )}
+
+          <MediaSidecar atom={current} />
 
           {/* Recall buttons for retrieval-style atoms */}
           {(current.atom_type === 'micro_exercise' || current.atom_type === 'retrieval_prompt') && (

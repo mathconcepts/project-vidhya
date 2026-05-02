@@ -4,6 +4,27 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.11.0] - 2026-05-02 — Multi-modal generation v1 (GIF + TTS narration)
+
+**Operator action:** migration `018_media_artifacts.sql` runs automatically on server boot. To enable TTS narration, set `TTS_PROVIDER=openai` and `OPENAI_API_KEY=...`. Optional `MEDIA_STORAGE_DIR` (defaults to `.data/media/`). With `TTS_PROVIDER` unset, audio generation is skipped silently. GIFs render server-side with no extra config.
+
+### Added (PENDING.md §4.15)
+
+- **Server-side GIF render for `visual_analogy` atoms.** New `gif-generator.ts` renders parametric (`y = f(x, t)`) and function-trace (`y = f(x)` left-to-right) scenes synchronously via pure JS using `gifenc` (no native deps, no Cairo, no `canvas` package). Theme palette matches v4.4.0 design system (emerald curve, surface-950 bg). Atom authors embed a fenced ` ```gif-scene\n{...}\n``` ` JSON block in `visual_analogy` content; orchestrator renders it after `appendVersion`.
+- **TTS narration for `intuition` atoms.** New `tts-generator.ts` extracts a markdown-stripped narration script (math, directives, code fences, formatting all stripped to plain prose) and POSTs to OpenAI tts-1. Cost ~$0.005 per atom. Per-atom-type gating: `intuition` only in v1 (`formal_definition` dropped per CEO review as low-value vs editorial cost).
+- **Media artifacts substrate.** New `media_artifacts` table keyed on `(atom_id, version_n, kind)` with `kind ∈ {gif, audio_narration}` and lifecycle `queued → rendering → done | failed`. Files stored at `MEDIA_STORAGE_DIR` with deterministic names `{atom_id}.v{version_n}.{ext}`. Path-traversal defense at the route layer (`resolve` + `startsWith` guard).
+- **Public media route.** `GET /api/lesson/media/:atom_id/:kind` streams the active version's media file with appropriate Content-Type and 1-hour Cache-Control. 404 when no active artifact exists.
+- **Atom enrichment.** `applyMediaUrls(atoms)` joins `media_artifacts` to `atom_versions` (active only, status=done) and attaches `media: { gif_url?, audio_url? }` to the `ContentAtom` payload. Wired into both `compose` and GET base lesson handlers.
+- **Frontend audio + GIF rendering.** New `MediaSidecar` component in `AtomCardRenderer` renders an HTML5 `<audio controls preload="none">` + `<img>` for GIF below the atom body. Honors `prefers-reduced-motion` (caption shown when motion is reduced).
+
+### Architecture notes
+
+- **GIF-only path (no Manim).** CEO review challenged the original async Manim plan: render time, infra cost, and code path complexity all higher than the v1 value justified. Sync server-side GIF render via `gifenc` ships the same multi-modal value at ~3-5s per atom, no queue, no native deps.
+- **Prune on regen.** `pruneSuperseded(atom_id)` runs after `activate()` to delete superseded sidecars so old GIFs/MP3s don't accumulate.
+- **Free-tier ephemeral caveat.** Render free tier resets `.data/` on restart. Operators on paid plans get the persistent mount per `render.yaml`. Documented in plan; not blocking for v1.
+- **Graceful degradation.** All media functions are no-ops without DB; orchestrator hook catches and logs errors (atom ships without sidecar). Frontend renders nothing when `atom.media` is absent.
+- 21 new tests (gif-generator render + whitelist guard, tts-generator script extraction matrix + provider gating, media-artifacts DB-less paths). Content suite 177/177. Typecheck clean for new modules.
+
 ## [4.10.0] - 2026-05-01 — Concept Orchestrator v2 (self-improving prompts)
 
 **Operator action:** migration `017_prompt_pattern_stats.sql` runs automatically on server boot. No new env vars — the prompt-pattern roll-up activates whenever `VIDHYA_AB_TESTING=on` (no separate flag, since the data flows directly from A/B verdicts).

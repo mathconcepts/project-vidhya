@@ -30,7 +30,7 @@ import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
-import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants } from '../content/atom-loader';
+import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
 import { selectAtoms } from '../content/pedagogy-engine';
 import type { ContentAtom, SessionContext } from '../content/content-types';
@@ -292,6 +292,7 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       // override always wins) but BEFORE the engagement enrichment fields
       // are read by the client.
       atoms = await applyAbVariants(atoms, lessonReq.session_id ?? null);
+      atoms = await applyMediaUrls(atoms);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
@@ -371,6 +372,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       atoms = await applyStudentOverrides(atoms, student_id);
       atoms = await applyImprovedSince(atoms);
       atoms = await applyAbVariants(atoms, student_id);
+      atoms = await applyMediaUrls(atoms);
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);

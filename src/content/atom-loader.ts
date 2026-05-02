@@ -388,3 +388,49 @@ export async function applyAbVariants(
   }
   return atoms;
 }
+
+/**
+ * Attach media artifact URLs to atoms (§4.15). For each atom that has
+ * a 'done' artifact for the active version, sets atom.media.gif_url
+ * and/or atom.media.audio_url so the frontend can render them.
+ *
+ * The URL points to the media-routes endpoint, which serves the file by
+ * (atom_id, kind) — versioning is implicit (active version's artifact wins).
+ *
+ * Single SELECT against media_artifacts joined on atom_versions for the
+ * active rows. No N+1.
+ */
+// @ts-ignore
+export async function applyMediaUrls(atoms: ContentAtom[]): Promise<ContentAtom[]> {
+  if (atoms.length === 0) return atoms;
+  const pool = getEnrichmentPool();
+  if (!pool) return atoms;
+
+  try {
+    const ids = atoms.map((a) => a.id);
+    const r = await pool.query(
+      `SELECT m.atom_id, m.kind
+         FROM media_artifacts m
+         JOIN atom_versions v
+           ON m.atom_id = v.atom_id AND m.version_n = v.version_n
+         WHERE m.atom_id = ANY($1)
+           AND m.status = 'done'
+           AND v.active = TRUE`,
+      [ids],
+    );
+    const byId: Map<string, { gif_url?: string; audio_url?: string }> = new Map();
+    for (const row of r.rows) {
+      const cur = byId.get(row.atom_id) ?? {};
+      if (row.kind === 'gif') cur.gif_url = `/api/lesson/media/${encodeURIComponent(row.atom_id)}/gif`;
+      if (row.kind === 'audio_narration') cur.audio_url = `/api/lesson/media/${encodeURIComponent(row.atom_id)}/audio_narration`;
+      byId.set(row.atom_id, cur);
+    }
+    for (const atom of atoms) {
+      const m = byId.get(atom.id);
+      if (m) (atom as any).media = m;
+    }
+  } catch (err) {
+    console.warn(`[atom-loader] applyMediaUrls failed: ${(err as Error).message}`);
+  }
+  return atoms;
+}

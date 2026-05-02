@@ -34,6 +34,9 @@ import { canSpend, recordSpend, DEFAULT_MONTHLY_CAP_USD } from './concept-cost';
 import { scoreAtom, passesGate } from './llm-judge';
 import { compareMathAtoms, requiresConsensus } from './multi-llm-consensus';
 import { appendVersion } from './atom-versions';
+import { writeArtifact, markFailed as markMediaFailed } from './media-artifacts';
+import { renderScene, type SceneDescription } from './gif-generator';
+import { generateNarration, shouldNarrate } from './tts-generator';
 
 const ALL_ATOM_TYPES: AtomType[] = [
   'hook', 'intuition', 'formal_definition', 'visual_analogy',
@@ -198,7 +201,14 @@ export async function generateConcept(
         ? { llm_tokens: 4000, wolfram_calls: 1 }
         : { llm_tokens: 2000, wolfram_calls: 0 };
       await recordSpend(opts.concept_id, generated.meta.cost_usd, cost_meta);
-      await appendVersion(generated.atom_id, generated.content, generated.meta);
+      const versionRow = await appendVersion(generated.atom_id, generated.content, generated.meta);
+      // §4.15 multi-modal: generate media sidecars after the version is
+      // committed. Best-effort — failure here doesn't undo the atom.
+      if (versionRow) {
+        await maybeGenerateMedia(generated, versionRow.version_n).catch((err) => {
+          console.warn(`[orchestrator] media generation failed for ${generated.atom_id}: ${(err as Error).message}`);
+        });
+      }
     }
   }
 
@@ -316,6 +326,78 @@ Output ONLY the atom body in markdown. Use $inline$ and $$display$$ math.
 For interactive directives use :::name{attrs} blocks. For ${args.atom_type === 'worked_example' ? 'worked_example: separate steps with `\\n---\\n` and end with "Answer: <value>" so :::verify can confirm.' : 'other types: keep the body focused on a single learning beat.'}
 
 Do not include frontmatter — only the body. Keep total length under 400 words.`;
+}
+
+/**
+ * Multi-modal hook (§4.15). Generates GIF + audio sidecars based on
+ * atom_type. Each path is gated:
+ *
+ *   - GIF: only for visual_analogy atoms. The LLM optionally emits a
+ *     `gif_scene_description` in a fenced JSON block; if present, render
+ *     it. Otherwise skip — no auto-derived scene in v1 (avoids generating
+ *     misleading visuals from prose-only hints).
+ *
+ *   - Audio: only for `intuition` atoms. Gated behind TTS_PROVIDER env.
+ *     Strips markdown to a narration script and POSTs to the provider.
+ *
+ * Both paths are best-effort: failure leaves the atom shipping text-only.
+ */
+async function maybeGenerateMedia(
+  atom: GeneratedAtom,
+  version_n: number,
+): Promise<void> {
+  // Audio narration for eligible atoms.
+  if (shouldNarrate(atom.atom_type)) {
+    const tts = await generateNarration(atom.atom_type, atom.content);
+    if (tts) {
+      await writeArtifact(
+        atom.atom_id, version_n, 'audio_narration',
+        tts.buffer,
+        { duration_ms: tts.duration_ms },
+      );
+    }
+  }
+
+  // GIF rendering for visual_analogy atoms when scene_description present.
+  if (atom.atom_type === 'visual_analogy') {
+    const scene = extractGifSceneDescription(atom.content);
+    if (scene) {
+      try {
+        const result = renderScene(scene);
+        await writeArtifact(
+          atom.atom_id, version_n, 'gif',
+          result.buffer,
+          { duration_ms: result.duration_ms },
+        );
+      } catch (err) {
+        await markMediaFailed(atom.atom_id, version_n, 'gif', (err as Error).message);
+      }
+    }
+  }
+}
+
+/**
+ * Pull a fenced JSON block from atom body. The orchestrator's prompt for
+ * visual_analogy atoms (extension in v2) instructs the LLM to emit:
+ *
+ *   ```gif-scene
+ *   {"type": "parametric", "expression": "sin(x + t)", ...}
+ *   ```
+ *
+ * v1 ships the parser; the prompt change to actually request scenes from
+ * the LLM follows in a v2 polish PR. Until then, this returns null for
+ * all generated atoms and the GIF path stays dormant.
+ */
+function extractGifSceneDescription(content: string): SceneDescription | null {
+  const m = content.match(/```gif-scene\s*\n([\s\S]*?)\n```/);
+  if (!m) return null;
+  try {
+    const parsed = JSON.parse(m[1]);
+    if (parsed && typeof parsed === 'object' && (parsed.type === 'parametric' || parsed.type === 'function-trace')) {
+      return parsed as SceneDescription;
+    }
+  } catch { /* malformed — skip */ }
+  return null;
 }
 
 /**

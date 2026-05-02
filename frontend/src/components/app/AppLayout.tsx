@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Moon, Sun } from 'lucide-react';
+import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Eye, EyeOff } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCalmMode } from '@/hooks/useCalmMode';
 // v2.5: migrated from @/hooks/useAuth (Supabase Auth) to @/contexts/AuthContext
@@ -92,14 +92,17 @@ export function AppLayout() {
 
   return (
     <div className="min-h-dvh bg-surface-950 text-white">
-      {/* Calm Mode floating toggle — always reachable, even when chrome is hidden */}
+      {/* Calm Mode floating toggle — always reachable, even when chrome is hidden.
+          Uses Eye / EyeOff iconography (NOT Sun/Moon) to avoid being mistaken
+          for a light/dark theme toggle. The project is dark-mode-only by
+          design (DESIGN-SYSTEM.md). Calm mode = "hide chrome, focus on content". */}
       <button
         onClick={toggleCalm}
-        aria-label={calmMode ? 'Exit Calm Mode' : 'Enter Calm Mode'}
-        title={calmMode ? 'Exit Calm Mode' : 'Calm Mode — hides chrome'}
+        aria-label={calmMode ? 'Show chrome (exit calm mode)' : 'Hide chrome (enter calm mode)'}
+        title={calmMode ? 'Show chrome' : 'Calm mode — hides nav + header'}
         className="fixed top-2 right-2 z-50 flex items-center justify-center w-9 h-9 rounded-full bg-surface-900/70 border border-surface-800 text-surface-400 hover:text-emerald-300 hover:border-emerald-500/50 backdrop-blur-md transition-colors"
       >
-        {calmMode ? <Sun size={16} /> : <Moon size={16} />}
+        {calmMode ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
 
       {/* Header — shadow on scroll. Hidden in Calm Mode. */}

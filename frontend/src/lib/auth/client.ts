@@ -95,6 +95,9 @@ export async function authFetch(input: RequestInfo, init: AuthFetchInit = {}): P
 
 export interface AuthConfig {
   google_client_id: string | null;
+  /** True when GOOGLE_OAUTH_CLIENT_ID is unset on the server. Surfaces
+   *  demo-login quick-start buttons in the UI. */
+  local_dev?: boolean;
   channels: { web: boolean; telegram: boolean; whatsapp: boolean };
 }
 

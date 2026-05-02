@@ -542,8 +542,43 @@ registerRoute('GET', '/health', async (_req, res) => {
 
 // /demo-login?role=student|teacher|admin — sets localStorage token and redirects to /
 // Reads demo/demo-tokens.json written by npm run demo:seed (runs on every Render boot).
+// In local-dev mode (no GOOGLE_OAUTH_CLIENT_ID), auto-seeds on first hit so the
+// admin's first three minutes work without a separate `npm run demo:seed` step.
+let _demoSeedPromise: Promise<void> | null = null;
+async function ensureDemoSeeded(): Promise<void> {
+  if (_demoSeedPromise) return _demoSeedPromise;
+  if (fs.existsSync('demo/demo-tokens.json')) return;
+
+  _demoSeedPromise = (async () => {
+    console.log('[demo-login] demo/demo-tokens.json missing — auto-seeding…');
+    const { execFile } = await import('child_process');
+    await new Promise<void>((resolve, reject) => {
+      execFile('npx', ['tsx', 'demo/seed.ts'], { cwd: process.cwd() }, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    console.log('[demo-login] demo seed complete.');
+  })().catch((err) => {
+    _demoSeedPromise = null; // allow retry
+    throw err;
+  });
+  return _demoSeedPromise;
+}
+
 registerRoute('GET', '/demo-login', async (req, res) => {
   const role = (req.query?.role as string) || 'student-active';
+
+  // Auto-seed in local-dev mode if tokens haven't been generated yet.
+  if (!fs.existsSync('demo/demo-tokens.json')) {
+    try {
+      await ensureDemoSeeded();
+    } catch (e: any) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end(`Demo seed failed: ${e?.message ?? 'unknown'}\n\nRun manually: npm run demo:seed`);
+      return;
+    }
+  }
 
   let tokens: DemoTokens = {};
   try {

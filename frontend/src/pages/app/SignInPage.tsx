@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Key, Smartphone, MessageCircle, Loader2 } from 'lucide-react';
+import { Shield, Key, Smartphone, MessageCircle, Loader2, Crown, GraduationCap, BookOpen, FlaskConical } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   fetchAuthConfig, loadGoogleIdentityServices, completeGoogleSignIn,
@@ -107,13 +107,7 @@ export default function SignInPage() {
             Loading...
           </div>
         ) : !config.google_client_id ? (
-          <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/25 text-xs text-amber-200 text-center">
-            <p className="font-medium text-amber-300 mb-1">Sign-in not configured</p>
-            <p>
-              The server administrator needs to set <span className="font-mono">GOOGLE_OAUTH_CLIENT_ID</span> in the environment.
-              See <span className="font-mono">docs/ROLES-AND-ACCESS.md</span> for setup.
-            </p>
-          </div>
+          <LocalDevQuickStart />
         ) : pending ? (
           <div className="text-xs text-surface-400 flex items-center gap-2">
             <Loader2 size={12} className="animate-spin" />
@@ -166,5 +160,70 @@ export default function SignInPage() {
         </motion.div>
       )}
     </motion.div>
+  );
+}
+
+// ============================================================================
+// Local dev quick start
+// ============================================================================
+//
+// Rendered when GOOGLE_OAUTH_CLIENT_ID is unset on the server (i.e. fresh
+// `docker compose up` without a real OAuth client). Provides one-click
+// sign-in as admin / teacher / student via the `/demo-login` route, which
+// auto-seeds demo tokens on first hit. Hidden in production deploys
+// (where local_dev is false).
+//
+// The admin button is the primary action because the local dev's main
+// intent is to develop + generate content, which requires admin access
+// to /admin/content-rd.
+// ============================================================================
+
+function LocalDevQuickStart() {
+  return (
+    <div className="w-full p-4 rounded-xl bg-violet-500/5 border border-violet-500/25 space-y-3">
+      <div className="flex items-start gap-2">
+        <FlaskConical size={14} className="shrink-0 mt-0.5 text-violet-400" />
+        <div className="flex-1">
+          <p className="text-xs font-medium text-violet-300">Local dev quick start</p>
+          <p className="text-[11px] text-violet-200/80 mt-0.5">
+            Google OAuth isn&apos;t configured. Sign in with a pre-seeded demo account to start
+            generating content immediately.
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <a
+          href="/demo-login?role=admin"
+          className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium transition-colors"
+        >
+          <Crown size={14} />
+          <span className="flex-1 text-left">Sign in as Admin</span>
+          <span className="text-[10px] text-violet-100/80">recommended for dev</span>
+        </a>
+
+        <div className="grid grid-cols-2 gap-2">
+          <a
+            href="/demo-login?role=teacher"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-xs text-surface-300 hover:text-surface-100 transition-colors"
+          >
+            <GraduationCap size={12} className="text-emerald-400" />
+            <span>Teacher</span>
+          </a>
+          <a
+            href="/demo-login?role=student"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-xs text-surface-300 hover:text-surface-100 transition-colors"
+          >
+            <BookOpen size={12} className="text-emerald-400" />
+            <span>Student</span>
+          </a>
+        </div>
+      </div>
+
+      <p className="text-[10px] text-surface-600 leading-relaxed">
+        These accounts are seeded automatically on first click. To enable real Google sign-in,
+        set <span className="font-mono">GOOGLE_OAUTH_CLIENT_ID</span> in your <span className="font-mono">.env</span>.
+      </p>
+    </div>
   );
 }

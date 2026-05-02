@@ -4,6 +4,19 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.12.0] - 2026-05-02 — Multi-modal polish (more demo GIFs + boot smoke test)
+
+**Operator action:** none. Demo deploy auto-renders the new GIFs at boot via `npm run demo:seed-media` (already in the Dockerfile CMD).
+
+### Added
+
+- **Two more `visual_analogy` atoms with `gif-scene` blocks.** `complex-numbers` (parametric `cos(t)` tracing the real axis on the Argand plane) and `linear-algebra-eigenvalues` (function-trace `y = 2x` showing eigenvector direction). Demo now ships three animated GIFs across calculus, complex numbers, and linear algebra instead of one.
+- **Server-boot smoke test** at `src/__tests__/server-boot-smoke.test.ts`. Imports `server.ts` and the route modules with a stubbed `http.createServer`, catching ESM/CJS interop bugs before they reach prod. Filed as a direct response to the v4.11.0 gifenc named-import crash that vitest's transformer hid from the test suite. Catches: named imports from CJS-shaped packages, top-level throws, missing exports, type-only imports that vanish at runtime. Doesn't catch: runtime errors that need an actual request, listen-time errors.
+
+### Changed
+
+- `MarkdownAtomRenderer.regression.test.tsx` seed-atom count assertion bumped from 18 → 21 to track the new visual_analogy files.
+
 ## [4.11.0] - 2026-05-02 — Multi-modal generation v1 (GIF + TTS narration)
 
 **Operator action:** migration `018_media_artifacts.sql` runs automatically on server boot. To enable TTS narration, set `TTS_PROVIDER=openai` and `OPENAI_API_KEY=...`. Optional `MEDIA_STORAGE_DIR` (defaults to `.data/media/`). With `TTS_PROVIDER` unset, audio generation is skipped silently. GIFs render server-side with no extra config.

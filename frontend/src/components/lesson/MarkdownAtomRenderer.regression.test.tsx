@@ -1,5 +1,5 @@
 /**
- * REGRESSION — every existing seed atom (3 concepts × 6 atoms = 18 files)
+ * REGRESSION — every existing seed atom (3 concepts × 7 atoms = 21 files)
  * must render without throwing under the v3 markdown pipeline.
  *
  * The contract from the eng review: atoms NEVER fail to render. If a parser
@@ -44,8 +44,8 @@ function loadAtoms(): AtomFile[] {
 describe('MarkdownAtomRenderer — regression on seed atoms', () => {
   const atoms = loadAtoms();
 
-  it('loads all 18 seed atoms', () => {
-    expect(atoms.length).toBe(18);
+  it('loads all 21 seed atoms', () => {
+    expect(atoms.length).toBe(21);
   });
 
   it.each(atoms)('renders $concept/$file without throwing', ({ id, body }) => {

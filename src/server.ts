@@ -567,7 +567,11 @@ async function ensureDemoSeeded(): Promise<void> {
 }
 
 registerRoute('GET', '/demo-login', async (req, res) => {
-  const role = (req.query?.role as string) || 'student-active';
+  // req.query is URLSearchParams (parsed by handleRequest), not a plain
+  // object. Pre-fix this used `req.query?.role` which is always undefined,
+  // causing every demo login to fall back to 'student-active' (Priya)
+  // regardless of the requested role.
+  const role = req.query?.get('role') ?? 'student-active';
 
   // Auto-seed in local-dev mode if tokens haven't been generated yet.
   if (!fs.existsSync('demo/demo-tokens.json')) {

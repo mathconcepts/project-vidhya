@@ -72,6 +72,32 @@ function walkAtoms(): AtomFile[] {
   return out;
 }
 
+/**
+ * Copy any pre-generated MP3s from demo/seed-audio/ into MEDIA_DIR. The
+ * disk fallback in atom-loader picks them up by atom_id.v*.mp3 naming.
+ *
+ * Why pre-generated: TTS costs ~$0.005/atom and requires OPENAI_API_KEY at
+ * build time. Operators run `npm run demo:generate-audio` once with their
+ * key to populate demo/seed-audio/, then check the MP3s into source.
+ * Demo deploy boots without API keys and audio still ships.
+ */
+function copySeedAudio(): { copied: number; missing: boolean } {
+  const seedDir = path.join(REPO_ROOT, 'demo', 'seed-audio');
+  if (!fs.existsSync(seedDir)) return { copied: 0, missing: true };
+  let copied = 0;
+  for (const f of fs.readdirSync(seedDir)) {
+    if (!f.endsWith('.mp3')) continue;
+    // Source naming: {atom_id}.mp3. Destination naming: {atom_id}.v1.mp3
+    // (matches the disk-fallback regex in atom-loader + media-routes).
+    const atomId = f.replace(/\.mp3$/, '');
+    const dest = path.join(MEDIA_DIR, `${atomId}.v1.mp3`);
+    fs.copyFileSync(path.join(seedDir, f), dest);
+    console.log(`  copied audio ${atomId} → ${dest}`);
+    copied++;
+  }
+  return { copied, missing: false };
+}
+
 function main(): void {
   fs.mkdirSync(MEDIA_DIR, { recursive: true });
   const atoms = walkAtoms();
@@ -93,7 +119,10 @@ function main(): void {
       failed++;
     }
   }
-  console.log(`\nseed-media: ${rendered} rendered, ${skipped} skipped (no gif-scene block), ${failed} failed.`);
+  const audio = copySeedAudio();
+  console.log(
+    `\nseed-media: ${rendered} GIFs rendered, ${audio.copied} audio files copied${audio.missing ? ' (demo/seed-audio/ missing)' : ''}, ${skipped} GIFs skipped (no gif-scene block), ${failed} failed.`,
+  );
 }
 
 main();

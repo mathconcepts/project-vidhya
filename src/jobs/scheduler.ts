@@ -24,6 +24,7 @@
 import { finaliseExpiredDeletions } from '../data-rights/delete';
 import { runCohortAggregator } from './cohort-aggregator';
 import { runRegenScanner } from './regen-scanner';
+import { runNarrationExperimentScanner } from './narration-experiment-scanner';
 import { evaluateRipeExperiments } from '../content/concept-orchestrator';
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -88,6 +89,18 @@ register('regenScanner', DAY_MS, async () => {
   }
   const r = await runRegenScanner();
   return r;
+});
+
+register('narrationExperimentScanner', DAY_MS, async () => {
+  // Nightly: schedule narration A/B experiments on intuition atoms with
+  // TTS audio available (Phase F, §4.15). Cost-capped at MAX_ACTIVE_NARRATION
+  // running experiments. Gated behind VIDHYA_AB_TESTING (same flag as the
+  // existing ab-evaluator) — narration A/B is just another variant_kind.
+  if (process.env.VIDHYA_AB_TESTING !== 'on') {
+    return { status: 'skipped', reason: 'A/B testing not enabled' };
+  }
+  const r = await runNarrationExperimentScanner();
+  return { status: 'ran', ...r };
 });
 
 register('abEvaluator', DAY_MS, async () => {

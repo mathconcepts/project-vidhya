@@ -347,7 +347,7 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 
 **Phase 2 + 3 follow-ups:**
 - PR #32 — Curriculum unit generator + Tier 4 PedagogyVerifier + dual-metric lift (`lift_v1` + `pyq_accuracy_delta_v1`) — ✓ DONE 2026-05-02.
-- PR #33 — Interactive atom kinds (`manipulable`, `simulation`, `guided_walkthrough`) + React component library, gated to canonical packs only. Still deferred.
+- PR #33 — Interactive atom kinds (`manipulable`, `simulation`, `guided_walkthrough`) + React component library, gated to canonical packs only — ✓ DONE 2026-05-02.
 - PR #34 — Admin UI for unit launches + holdout dashboard with PYQ accuracy delta column on the EffectivenessLedger — ✓ DONE 2026-05-02.
 
 ### 4.18 Curriculum R&D — Phase 2 (unit generator + pedagogy verifier + dual-metric lift) — ✓ DONE 2026-05-02 (PR #32)
@@ -370,7 +370,7 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 3. Operator-pack capability flags default to text+GIF only.
 
 **Phase 2 follow-ups:**
-- PR #33 — Interactive atom kinds + React component library.
+- PR #33 — Interactive atom kinds + React component library — ✓ DONE 2026-05-02.
 - PR #34 — Admin UI for unit launches + holdout dashboard.
 
 ### 4.16 Content R&D Loop (deployment framework + experiment spine + admin UI) — ✓ DONE 2026-05-02 (PR #28)

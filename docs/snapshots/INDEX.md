@@ -4,6 +4,7 @@ Each row is a frozen, deployable artifact. Newest first.
 
 | Tag | Branch | SHA | Created (UTC) | Notes |
 |---|---|---|---|---|
+| [`snapshot-20260502-0740-local-dev-ux-fixes`](snapshot-20260502-0740-local-dev-ux-fixes.md) | `claude/deployment-framework-setup-94Pfr` | `51a3af6` | 2026-05-02 07:40 | _add notes_ |
 | [`snapshot-20260502-0721-sprint-b3a-content-rd-ui-final`](snapshot-20260502-0721-sprint-b3a-content-rd-ui-final.md) | `claude/deployment-framework-setup-94Pfr` | `29bc034` | 2026-05-02 07:22 | _add notes_ |
 | [`snapshot-20260502-0717-sprint-b3a-content-rd-ui`](snapshot-20260502-0717-sprint-b3a-content-rd-ui.md) | `claude/deployment-framework-setup-94Pfr` | `616999c` | 2026-05-02 07:17 | _add notes_ |
 | [`snapshot-20260502-0702-sprint-b3b-jwt-auth`](snapshot-20260502-0702-sprint-b3b-jwt-auth.md) | `claude/deployment-framework-setup-94Pfr` | `96e7f83` | 2026-05-02 07:02 | _add notes_ |

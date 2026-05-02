@@ -323,13 +323,28 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 
 **Detail:** Admin's "Concepts needing content" dashboard shows 1 concept = 11 atoms = 11 review cards. Reviewing 50 concepts = 550 cards. Add a "Select all from concept X" + "Approve N selected" button. Already-rejected (LLM-judge < 7) items aren't selectable. **Depends on:** concept-orchestrator v1 admin dashboard shipped.
 
-### 4.15 Multi-modal content generation (auto-Manim + audio narration)
+### 4.15 Multi-modal content generation (GIF render + TTS narration + A/B gate) — ✓ DONE 2026-05-02
 
-**Status:** deferred — separate plan
-**Priority:** P3
-**Effort:** XL (human ~1-2 weeks / CC ~10 hours)
+**Status:** shipped across v4.11.0 → v4.13.0
+**Priority:** P3 → P0 (priority elevated when GIF-only path made it ~1 week of work)
+**Effort:** delivered in ~15 hrs CC across 5 PRs (#22, #23, #24, #25, #26)
 
-**Detail:** Concept-orchestrator v1 generates text-mode atoms (markdown + math + interactive directives). Multi-modal extension: auto-generate Manim source for visual_analogy atoms (already have the authoring scaffold from v4.4.0), auto-generate audio narration for intuition atoms via TTS, auto-generate slide-style summaries. Pros: content reaches multi-modal learners; reading-disabled accessibility. Cons: Manim render cost + audio storage + significantly more complex review UX. **Depends on:** Manim authoring stable + TTS provider + storage.
+**Delivered:**
+- **Sync GIF render** via `gifenc` (pure JS, no Cairo, no Manim async pipeline). CEO review reframed the original async Manim plan to a GIF-only synchronous render — same multi-modal value at ~3-5s per atom. See `src/content/concept-orchestrator/gif-generator.ts`.
+- **TTS narration** for `intuition` atoms via OpenAI tts-1, gated on `TTS_PROVIDER=openai`. ~$0.005/atom. See `src/content/concept-orchestrator/tts-generator.ts`.
+- **`media_artifacts` substrate** (migration 018) keyed on `(atom_id, version_n, kind)`. Lifecycle: queued/rendering/done/failed. Prune-on-regen prevents orphaned sidecars.
+- **Public media route** `GET /api/lesson/media/:atom_id/:kind` with path-traversal defense, allowlist, 1-hour Cache-Control.
+- **Frontend** `MediaSidecar` in `AtomCardRenderer` renders `<audio controls>` + `<img>` below atom body, honors `prefers-reduced-motion`.
+- **Demo audio path** (v4.13.0): `npm run demo:generate-audio` lets operators pre-generate MP3s with their `OPENAI_API_KEY`, commit them into `demo/seed-audio/`, and the demo deploy serves them without runtime API keys.
+- **Phase F TTS A/B gate** (v4.13.0): `narration-experiment-scanner` job + `getNarrationBucket` helper extend the v4.9.0 A/B harness to test whether narration improves retention. Cost-capped at `MAX_ACTIVE_NARRATION` (50). Migration 019 adds `variant_kind` column.
+- **34 tests** across multi-modal stack (gif-generator, tts-generator, media-artifacts, media-routes, atom-loader-media, MediaSidecar, narration-bucket, narration-experiment-scanner, atom-loader-narration-bucket, server-boot smoke).
+
+**Deferred (per CEO premises in autoplan 2026-05-02):**
+- Item B: reduced-motion static first-frame swap (currently caption-only) — revisit post-Phase F if narration shows value
+- Item D: storage persistence (S3/R2 or paid Render mount) — defer until cost pain hits AND Phase F shows value
+- Item E: TTS eval harness (voice/model A/B) — premature without narration retention data
+
+**Operator action (post-deploy):** set `VIDHYA_AB_TESTING=on` to activate Phase F. Optional `OPENAI_API_KEY` + `npm run demo:generate-audio` once for demo MP3s.
 
 ### 4.16 Lazy-load PYQ corpus when corpus exceeds 5k entries — ✓ NOT NEEDED 2026-05-01
 

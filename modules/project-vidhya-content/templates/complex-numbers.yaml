@@ -40,6 +40,19 @@ visual_analogy:
   scaffold: argand-plane
   guidance: |
     Embed an interactive showing complex multiplication as rotation.
+
+    When the concept reduces to a 2D parametric plot (z(t) on the Argand
+    plane, modulus growth, phase rotation), ALSO emit a fenced gif-scene
+    block at the end of the body. Schema:
+
+    ```gif-scene
+    {"type":"parametric","expression":"cos(t)","x_range":[-1.5,1.5],"y_range":[-1.5,1.5],"t_range":[0,6.28],"frames":30,"fps":12}
+    ```
+
+    Allowed tokens: x, t, +, -, *, /, ^, parens, numbers, sin/cos/tan/log/
+    ln/exp/sqrt/abs/pi/e. OMIT the block when the concept is symbolic-only
+    (algebraic identities, polynomial roots without trajectory). Never
+    invent a misleading scene.
   bloom_floor: 2
 
 exam_pattern:

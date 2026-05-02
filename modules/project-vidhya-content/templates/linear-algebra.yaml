@@ -43,6 +43,19 @@ visual_analogy:
   guidance: |
     Embed :::math3d{...} or a static vector-field image showing how unit
     vectors transform under the matrix.
+
+    When the concept reduces to a 2D function plot (eigenvalue scaling
+    along an axis, rank-1 projections, parametric curves), ALSO emit a
+    fenced gif-scene block at the end of the body. Schema:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"2*x","x_range":[-2,2],"y_range":[-4,4],"frames":30,"fps":12}
+    ```
+
+    Allowed tokens: x, t, +, -, *, /, ^, parens, numbers, sin/cos/tan/log/
+    ln/exp/sqrt/abs/pi/e. OMIT the block for matrix algebra, dimension
+    arguments, or anything that doesn't reduce cleanly to a 2D plot.
+    Never invent a misleading scene.
   bloom_floor: 2
 
 exam_pattern:

@@ -62,6 +62,27 @@ visual_analogy:
   guidance: |
     Use an embedded :::interactive{ref=...} or :::parametric directive.
     Think slope-of-tangent, area-under-curve, or vector-field for multivar.
+
+    When the concept has a clean closed-form y=f(x) or y=f(x,t), ALSO emit a
+    fenced gif-scene block at the end of the body. The server renders it
+    into a sidecar GIF that plays alongside the atom. Schema:
+
+    ```gif-scene
+    {"type":"parametric","expression":"sin(x + t)","x_range":[-3,3],"y_range":[-2,2],"t_range":[0,6.28],"frames":30,"fps":12}
+    ```
+
+    or:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"x^2","x_range":[-2,2],"y_range":[0,4],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. NO function definitions, NO
+    semicolons, NO identifiers other than these. If the concept does not
+    have a clean function plot (e.g. abstract limits, discontinuities,
+    multivariable surfaces), OMIT the gif-scene block — the atom ships
+    text-only. Never invent a misleading scene.
   bloom_floor: 2
 
 exam_pattern:

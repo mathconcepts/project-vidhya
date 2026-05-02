@@ -5,7 +5,7 @@ import {
   Crown, Shield, Activity, Users, MessageCircle, Smartphone, Key,
   CheckCircle2, Circle, AlertTriangle, TrendingDown, Brain,
   ArrowRight, Loader2, RefreshCw, Sparkles, Settings, FileText, Server,
-  FlaskConical,
+  FlaskConical, Lock,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
@@ -273,6 +273,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/features" label="Feature flags" icon={Settings} />
               <QuickLink href="/admin/content-studio" label="Content studio" icon={FileText} />
               <QuickLink href="/admin/content-rd" label="Content R&D" icon={FlaskConical} />
+              <QuickLink href="/admin/holdout" label="Holdout PYQs" icon={Lock} />
               <QuickLink href="/admin/founder" label="Founder dashboard" icon={Server} />
               <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
               <QuickLink href="/llm-config" label="AI config" icon={Key} />

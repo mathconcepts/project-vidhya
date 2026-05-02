@@ -28,7 +28,7 @@ interface Props {
   onRecomputed?: (id: string) => void;
 }
 
-type SortKey = 'lift' | 'n' | 'p' | 'started' | 'name';
+type SortKey = 'lift' | 'pyq_delta' | 'n' | 'p' | 'started' | 'name';
 type SortDir = 'asc' | 'desc';
 
 export function EffectivenessLedger({ experiments, loading, onRefresh, onRecomputed }: Props) {
@@ -94,6 +94,7 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
                 <Th label="Experiment" sortKey="name" current={sortKey} dir={sortDir} onClick={clickHeader} />
                 <Th label="Status" />
                 <Th label="Lift" sortKey="lift" current={sortKey} dir={sortDir} onClick={clickHeader} align="right" />
+                <Th label="PYQ Δ" sortKey="pyq_delta" current={sortKey} dir={sortDir} onClick={clickHeader} align="right" />
                 <Th label="n" sortKey="n" current={sortKey} dir={sortDir} onClick={clickHeader} align="right" />
                 <Th label="p" sortKey="p" current={sortKey} dir={sortDir} onClick={clickHeader} align="right" />
                 <Th label="Started" sortKey="started" current={sortKey} dir={sortDir} onClick={clickHeader} />
@@ -103,7 +104,7 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
             <tbody>
               {sorted.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-surface-500">
+                  <td colSpan={8} className="px-3 py-8 text-center text-surface-500">
                     No experiments yet. Launch one from above.
                   </td>
                 </tr>
@@ -122,6 +123,9 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
                   </td>
                   <td className="px-3 py-2.5 align-top text-right font-mono">
                     {e.lift_v1 == null ? <span className="text-surface-600">—</span> : <LiftCell lift={Number(e.lift_v1)} />}
+                  </td>
+                  <td className="px-3 py-2.5 align-top text-right font-mono">
+                    <PyqDeltaCell delta={pyqDeltaOf(e)} />
                   </td>
                   <td className="px-3 py-2.5 align-top text-right font-mono text-surface-300">
                     {e.lift_n ?? <span className="text-surface-600">—</span>}
@@ -213,13 +217,45 @@ function LiftCell({ lift }: { lift: number }) {
   );
 }
 
+/**
+ * Renders the pyq_accuracy_delta_v1 cell. Color-coded against the same
+ * promotion thresholds used by the learnings-ledger (>+0.05 = win,
+ * < -0.02 = loss). null = no measurement yet (no holdout attempts in
+ * window).
+ */
+function PyqDeltaCell({ delta }: { delta: number | null }) {
+  if (delta == null) return <span className="text-surface-600">—</span>;
+  const positive = delta > 0;
+  const color = delta > 0.05 ? 'text-emerald-400' : delta < -0.02 ? 'text-red-400' : 'text-surface-300';
+  return (
+    <span className={clsx('inline-flex items-center justify-end gap-1', color)}>
+      {(positive ? '+' : '') + (delta * 100).toFixed(1) + '%'}
+    </span>
+  );
+}
+
 // ============================================================================
 // Sort helper
 // ============================================================================
 
+/**
+ * Pull the dual-metric pyq_accuracy_delta_v1 out of metadata. Persisted
+ * by computePyqAccuracyDelta() (PR #32). Returns null when not present
+ * (column-less experiments, or before the nightly job ran). Exported
+ * for tests.
+ */
+export function pyqDeltaOf(e: ExperimentRow): number | null {
+  const meta = (e.metadata ?? {}) as Record<string, any>;
+  const inner = meta.pyq_accuracy_delta_v1;
+  if (!inner || typeof inner !== 'object') return null;
+  const d = (inner as any).delta;
+  return typeof d === 'number' && Number.isFinite(d) ? d : null;
+}
+
 function compareBy(a: ExperimentRow, b: ExperimentRow, key: SortKey): number {
   switch (key) {
     case 'lift': return (a.lift_v1 ?? -Infinity) - (b.lift_v1 ?? -Infinity);
+    case 'pyq_delta': return (pyqDeltaOf(a) ?? -Infinity) - (pyqDeltaOf(b) ?? -Infinity);
     case 'n':    return (a.lift_n ?? -1) - (b.lift_n ?? -1);
     case 'p':    return (a.lift_p ?? Infinity) - (b.lift_p ?? Infinity);
     case 'started': return Date.parse(a.started_at) - Date.parse(b.started_at);

@@ -67,6 +67,7 @@ const WeeklyTeacherBriefPage = lazy(() => import('@/pages/app/WeeklyTeacherBrief
 const ExamSetupPage = lazy(() => import('@/pages/app/ExamSetupPage'));
 const ExamGroupsPage = lazy(() => import('@/pages/app/ExamGroupsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/app/ContentAdminPage'));
+const ContentRDPage = lazy(() => import('@/pages/app/ContentRDPage'));
 const ConceptOrchestratorPage = lazy(() => import('@/pages/app/ConceptOrchestratorPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage'));
 const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
@@ -142,6 +143,7 @@ export default function App() {
           <Route path="admin/users" element={<UserAdminPage />} />
           <Route path="admin/features" element={<FeaturesPage />} />
           <Route path="admin/content-studio" element={<ContentStudioPage />} />
+          <Route path="admin/content-rd" element={<ContentRDPage />} />
           <Route path="admin/founder" element={<FounderDashboardPage />} />
           <Route path="turns" element={<TurnsPage />} />
           <Route path="turns/:id" element={<TurnsPage />} />

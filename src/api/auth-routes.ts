@@ -53,8 +53,15 @@ export function consumeChannelLinkToken(token: string): ChannelLinkToken | null 
 // ============================================================================
 
 async function handleConfig(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+  // local_dev: surface a flag to the frontend so it can offer demo-login
+  // shortcuts in environments where Google OAuth isn't configured. The
+  // SignInPage uses this to render "Sign in as Admin / Teacher / Student"
+  // pill buttons (calls /demo-login?role=...) instead of a dead-end
+  // "not configured" warning. Production deploys (with a real OAuth
+  // client) get local_dev=false, so the buttons stay hidden there.
   sendJSON(res, {
     google_client_id: process.env.GOOGLE_OAUTH_CLIENT_ID || null,
+    local_dev: !process.env.GOOGLE_OAUTH_CLIENT_ID,
     channels: {
       web: true,
       telegram: !!process.env.TELEGRAM_BOT_TOKEN,

@@ -39,6 +39,8 @@
     "smoke:sdk-compat": "VIDHYA_LOG_STDERR=off npx tsx smoke/mcp-sdk-compatibility-smoke.ts",
     "smoke:live-llm": "npx tsx smoke/live-llm-smoke.ts",
     "smoke:all": "npm run smoke:stdio && npm run smoke:sdk-compat && npm run smoke:live-llm",
+    "snapshot": "bash scripts/snapshot.sh",
+    "snapshot:list": "bash scripts/snapshot-list.sh",
     "demo:setup": "npm ci && cd frontend && npm ci && cd .. && npm run demo:seed && echo '\\nDemo ready — run: npm run demo:start'",
     "demo:seed": "tsx demo/seed.ts",
     "demo:seed-media": "tsx demo/seed-media.ts",

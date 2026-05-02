@@ -155,6 +155,31 @@ cd frontend && npm test           # frontend (vitest + RTL, post-v4.0)
 
 `render.yaml` builds the same way: `npm install && npm run build && cd frontend && npm install && npm run build`. If your local `npm test` passes, the Render build will too.
 
+### Local stack with Docker (production parity)
+
+```bash
+docker compose up --build        # full stack: pgvector + auto-migrations + app
+# → http://localhost:8080
+```
+
+`docker-compose.yml` is the single-source local environment that mirrors production: real Postgres+pgvector, all migrations applied (including `000_local_auth_stub.sql` which provides Supabase's `auth.*` schema for plain Postgres), and the same `Dockerfile` Render builds. If host port 5432 is taken by your own Postgres, drop a `docker-compose.override.yml` in the repo root remapping `db.ports` to `"5433:5432"` (gitignored).
+
+## Snapshot mechanism
+
+Every state worth deploying gets a **snapshot** — a triple of (git tag, Docker image tag, markdown manifest). Snapshots are the unit of "deployable as-is on a given date" and the audit trail that connects code state to deploy outcomes.
+
+```bash
+npm run snapshot                              # auto-named: snapshot-YYYYMMDD-HHMM
+npm run snapshot -- "exam-pack-bitsat"        # named:      snapshot-YYYYMMDD-HHMM-exam-pack-bitsat
+npm run snapshot -- --push "..."              # also push git tag to origin
+npm run snapshot -- --no-docker "..."         # git tag + manifest only (skip image build)
+npm run snapshot:list                         # list all snapshots
+```
+
+Each snapshot writes `docs/snapshots/<tag>.md` with: git SHA, branch, package version, migration count, exam packs, recent commits, env-var requirements, and a "Notes" section for hypothesis/feedback. The index at `docs/snapshots/INDEX.md` is the running log. Both are committed.
+
+Why this exists: scaling content generation across exams + tiers means many parallel experiments. Without a snapshot pinning each experiment to a frozen artifact, learnings can't be reproduced or rolled back. The manifest is the contract between the team and the deploy.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

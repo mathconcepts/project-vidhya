@@ -18,6 +18,8 @@ import { flywheelRoutes, setFlywheelOrchestrator } from './jobs/content-flywheel
 import { topicPageRoutes } from './api/topic-pages';
 import { streakRoutes } from './api/streak-routes';
 import { adminRoutes } from './api/admin-routes';
+import { adminExperimentsRoutes } from './api/admin-experiments-routes';
+import { adminRunsRoutes } from './api/admin-runs-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
 import { socialRoutes } from './api/social-routes';
 import { commanderRoutes } from './api/commander-routes';
@@ -152,6 +154,12 @@ for (const route of streakRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminExperimentsRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminRunsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of chatRoutes) {
@@ -534,8 +542,47 @@ registerRoute('GET', '/health', async (_req, res) => {
 
 // /demo-login?role=student|teacher|admin — sets localStorage token and redirects to /
 // Reads demo/demo-tokens.json written by npm run demo:seed (runs on every Render boot).
+// In local-dev mode (no GOOGLE_OAUTH_CLIENT_ID), auto-seeds on first hit so the
+// admin's first three minutes work without a separate `npm run demo:seed` step.
+let _demoSeedPromise: Promise<void> | null = null;
+async function ensureDemoSeeded(): Promise<void> {
+  if (_demoSeedPromise) return _demoSeedPromise;
+  if (fs.existsSync('demo/demo-tokens.json')) return;
+
+  _demoSeedPromise = (async () => {
+    console.log('[demo-login] demo/demo-tokens.json missing — auto-seeding…');
+    const { execFile } = await import('child_process');
+    await new Promise<void>((resolve, reject) => {
+      execFile('npx', ['tsx', 'demo/seed.ts'], { cwd: process.cwd() }, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    console.log('[demo-login] demo seed complete.');
+  })().catch((err) => {
+    _demoSeedPromise = null; // allow retry
+    throw err;
+  });
+  return _demoSeedPromise;
+}
+
 registerRoute('GET', '/demo-login', async (req, res) => {
-  const role = (req.query?.role as string) || 'student-active';
+  // req.query is URLSearchParams (parsed by handleRequest), not a plain
+  // object. Pre-fix this used `req.query?.role` which is always undefined,
+  // causing every demo login to fall back to 'student-active' (Priya)
+  // regardless of the requested role.
+  const role = req.query?.get('role') ?? 'student-active';
+
+  // Auto-seed in local-dev mode if tokens haven't been generated yet.
+  if (!fs.existsSync('demo/demo-tokens.json')) {
+    try {
+      await ensureDemoSeeded();
+    } catch (e: any) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end(`Demo seed failed: ${e?.message ?? 'unknown'}\n\nRun manually: npm run demo:seed`);
+      return;
+    }
+  }
 
   let tokens: DemoTokens = {};
   try {
@@ -602,8 +649,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   const pathname = url.pathname;
   const method = (req.method || 'GET').toUpperCase();
 
-  // Try to serve static frontend files in production
-  if (method === 'GET' && !pathname.startsWith('/api') && !pathname.startsWith('/telegram') && !pathname.startsWith('/health') && !pathname.startsWith('/solutions') && !pathname.startsWith('/topics') && !pathname.startsWith('/blog') && !pathname.startsWith('/exams') && pathname !== '/sitemap.xml' && pathname !== '/rss.xml' && pathname !== '/demo-login') {
+  // Try to serve static frontend files in production. Accept GET *and* HEAD —
+  // HEAD probes from monitors / `curl -I` should also see the SPA index for
+  // any client-side route, otherwise they spuriously report 404 on /admin/*.
+  if ((method === 'GET' || method === 'HEAD') && !pathname.startsWith('/api') && !pathname.startsWith('/telegram') && !pathname.startsWith('/health') && !pathname.startsWith('/solutions') && !pathname.startsWith('/topics') && !pathname.startsWith('/blog') && !pathname.startsWith('/exams') && pathname !== '/sitemap.xml' && pathname !== '/rss.xml' && pathname !== '/demo-login') {
     const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
     if (fs.existsSync(frontendDist)) {
       const filePath = path.join(frontendDist, pathname === '/' ? 'index.html' : pathname);
@@ -642,9 +691,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     }
   }
 
-  // Match API routes
+  // Match API routes. HEAD requests fall back to GET routes — Node's http
+  // module automatically suppresses the response body for HEAD, so the same
+  // handler can serve both. Lets `curl -I`, monitors, and other HEAD-based
+  // health probes work against any GET endpoint.
+  const matchMethod = method === 'HEAD' ? 'GET' : method;
   for (const route of routes) {
-    if (route.method !== method) continue;
+    if (route.method !== matchMethod) continue;
     const match = pathname.match(route.pattern);
     if (!match) continue;
 
@@ -877,24 +930,27 @@ Solve carefully:`;
 
     // Start in-process periodic jobs (deletion cleanup, health scan)
     // — see src/jobs/scheduler.ts. Disable with VIDHYA_DISABLE_SCHEDULER=1.
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { startScheduler } = eval('require')('./jobs/scheduler');
-      startScheduler();
-    } catch (e: any) {
-      console.error(`[server] scheduler start failed: ${e?.message}`);
-    }
+    // Dynamic import: ESM-safe, defers heavy job-module init until after listen.
+    void (async () => {
+      try {
+        const { startScheduler } = await import('./jobs/scheduler.js');
+        startScheduler();
+      } catch (e: any) {
+        console.error(`[server] scheduler start failed: ${e?.message}`);
+      }
+    })();
   });
 
   // Graceful shutdown
   const shutdown = () => {
     console.log('\n[server] Shutting down...');
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { stopScheduler } = eval('require')('./jobs/scheduler');
-      stopScheduler();
-    } catch { /* noop */ }
-    server.close(() => process.exit(0));
+    void (async () => {
+      try {
+        const { stopScheduler } = await import('./jobs/scheduler.js');
+        stopScheduler();
+      } catch { /* noop */ }
+      server.close(() => process.exit(0));
+    })();
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

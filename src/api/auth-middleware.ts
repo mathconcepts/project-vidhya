@@ -56,7 +56,7 @@ function verifyJWT(token: string): { sub: string; email?: string } | null {
     // Check expiry
     if (payload.exp && Date.now() / 1000 > payload.exp) return null;
 
-    return { sub: payload.sub, email: payload.email };
+    return { sub: payload.sub, email: payload.email, role: payload.role };
   } catch {
     return null;
   }
@@ -64,6 +64,15 @@ function verifyJWT(token: string): { sub: string; email?: string } | null {
 
 /**
  * Extract auth info from request. Returns null if no valid auth.
+ *
+ * Role-resolution order (first match wins):
+ *   1. CRON_SECRET bearer        → role 'admin' (system)
+ *   2. user_profiles row in DB   → that role (canonical for OAuth users)
+ *   3. JWT 'role' claim          → demo/dev users seeded by demo/seed.ts
+ *      (their user_profiles row doesn't exist because they never went
+ *      through Supabase OAuth; the JWT minted by seed.ts carries the
+ *      authoritative role for these accounts)
+ *   4. 'student'                 → safe default
  */
 export async function getAuth(req: ParsedRequest): Promise<UserInfo | null> {
   const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -80,15 +89,28 @@ export async function getAuth(req: ParsedRequest): Promise<UserInfo | null> {
   const decoded = verifyJWT(token);
   if (!decoded) return null;
 
+  // Try the canonical DB lookup first
   try {
     const pool = getPool();
     const result = await pool.query(
       'SELECT role FROM user_profiles WHERE id = $1',
       [decoded.sub]
     );
-    const role = result.rows[0]?.role || 'student';
-    return { userId: decoded.sub, role, email: decoded.email };
+    if (result.rows.length > 0 && result.rows[0]?.role) {
+      return { userId: decoded.sub, role: result.rows[0].role, email: decoded.email };
+    }
+    // Row missing — fall back to JWT claim (demo/dev users)
+    const claimRole = (decoded as any).role;
+    if (claimRole === 'admin' || claimRole === 'teacher' || claimRole === 'student' || claimRole === 'owner') {
+      return { userId: decoded.sub, role: claimRole === 'owner' ? 'admin' : claimRole, email: decoded.email };
+    }
+    return { userId: decoded.sub, role: 'student', email: decoded.email };
   } catch {
+    // DB unreachable — still honour JWT claim if present
+    const claimRole = (decoded as any).role;
+    if (claimRole === 'admin' || claimRole === 'teacher' || claimRole === 'student' || claimRole === 'owner') {
+      return { userId: decoded.sub, role: claimRole === 'owner' ? 'admin' : claimRole, email: decoded.email };
+    }
     return { userId: decoded.sub, role: 'student', email: decoded.email };
   }
 }

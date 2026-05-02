@@ -17,6 +17,7 @@ import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 import { MasteryParticle, shouldCelebrate, markCelebrated } from './MasteryParticle';
 import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import { ImprovedBadge } from './ImprovedBadge';
+import { InteractiveSidecar } from './interactives/InteractiveSidecar';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
@@ -539,6 +540,12 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
           )}
 
           <MediaSidecar atom={current} />
+
+          {/* Phase 3 of Curriculum R&D — interactive widgets parsed from
+              the atom body's ```interactive-spec``` fenced block. Renders
+              nothing when no spec is present. Mirrors the MediaSidecar
+              authoring pattern (§4.15). */}
+          <InteractiveSidecar body={current.content} />
 
           {/* Recall buttons for retrieval-style atoms */}
           {(current.atom_type === 'micro_exercise' || current.atom_type === 'retrieval_prompt') && (

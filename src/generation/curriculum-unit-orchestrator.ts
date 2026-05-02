@@ -88,6 +88,80 @@ export interface UnitGenerationResult {
 }
 
 // ============================================================================
+// Capability gate
+// ============================================================================
+//
+// The three interactive atom kinds shipped by the interactives PR. The
+// unit orchestrator drops these from generation when the exam pack has
+// `interactives_enabled = false`. Canonical YAML packs (gate-ma,
+// jee-main) opt in; operator-defined packs default to off.
+
+export const INTERACTIVE_KINDS = new Set<string>([
+  'interactive_manipulable',
+  'interactive_simulation',
+  'interactive_walkthrough',
+]);
+
+/**
+ * Resolve interactives_enabled for an exam pack. Order:
+ *   1. exam_packs DB row → interactives_enabled column (operator packs)
+ *   2. data/curriculum/<id>.yml → capabilities.interactives_enabled
+ *   3. Default false (safer; explicit opt-in required)
+ *
+ * Cached briefly to keep the orchestrator's hot path fast (called once
+ * per unit during generation, which is a low-throughput admin path —
+ * a tiny per-process cache is fine).
+ */
+const _capCache = new Map<string, { enabled: boolean; expires_at: number }>();
+const CAP_CACHE_TTL_MS = 30_000;
+
+async function isInteractivesEnabled(pool: pg.Pool | null, examPackId: string): Promise<boolean> {
+  const cached = _capCache.get(examPackId);
+  if (cached && cached.expires_at > Date.now()) return cached.enabled;
+
+  let enabled = false;
+
+  // 1. DB row for operator pack
+  if (pool) {
+    try {
+      const { rows } = await pool.query<{ interactives_enabled: boolean }>(
+        `SELECT interactives_enabled FROM exam_packs WHERE id = $1`,
+        [examPackId],
+      );
+      if (rows.length > 0) {
+        enabled = !!rows[0].interactives_enabled;
+        _capCache.set(examPackId, { enabled, expires_at: Date.now() + CAP_CACHE_TTL_MS });
+        return enabled;
+      }
+    } catch {
+      // Table missing or DB error — fall through to YAML check
+    }
+  }
+
+  // 2. YAML pack via the merged loader (covers canonical packs)
+  try {
+    const { getExamWithDb } = await import('../curriculum/exam-loader');
+    const exam = await getExamWithDb(examPackId);
+    if (exam && (exam as any).capabilities?.interactives_enabled === true) {
+      enabled = true;
+    } else if (examPackId === 'gate-ma' || examPackId === 'jee-main') {
+      // Defensive default for canonical packs even if the YAML didn't
+      // surface the capabilities block. Phase 3 ships interactives
+      // for these two packs by design.
+      enabled = true;
+    }
+  } catch {
+    // Fall through to default
+  }
+
+  _capCache.set(examPackId, { enabled, expires_at: Date.now() + CAP_CACHE_TTL_MS });
+  return enabled;
+}
+
+// Exported for tests
+export const __resetCapCache = (): void => { _capCache.clear(); };
+
+// ============================================================================
 // Helpers
 // ============================================================================
 
@@ -199,13 +273,30 @@ export async function generateUnit(
     };
   }
 
+  // 2.5 Capability gate (Curriculum R&D Phase 3 / interactives PR):
+  // when the exam pack has interactives_enabled=false, drop interactive
+  // atom kinds from the spec. The shipped/canonical packs (gate-ma,
+  // jee-main) opt in via YAML; operator-defined packs default to false.
+  const interactivesEnabled = await isInteractivesEnabled(pool, spec.exam_pack_id);
+  const allowedKinds = spec.atom_kinds.filter((k) => {
+    if (interactivesEnabled) return true;
+    return !INTERACTIVE_KINDS.has(k);
+  });
+  const skippedInteractive = spec.atom_kinds.length - allowedKinds.length;
+  if (skippedInteractive > 0) {
+    console.warn(
+      `[unit-orchestrator] exam_pack=${spec.exam_pack_id} has interactives_enabled=false; ` +
+        `dropping ${skippedInteractive} interactive kind(s) from unit ${unitId}.`,
+    );
+  }
+
   // 3. Generate child atoms in pedagogical sequence
   const atomIds: string[] = [];
   const meter = ctx.cost_meter ?? new CostMeter({ max_cost_usd: 5.0 });
   let unitCost = 0;
 
   try {
-    for (const kind of spec.atom_kinds) {
+    for (const kind of allowedKinds) {
       const atomResult = await generateAtomForKind(pool, {
         unit_id: unitId,
         concept_id: spec.concept_id,

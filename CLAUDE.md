@@ -86,6 +86,66 @@ Atoms ship with optional sidecars (animated GIFs, TTS narration). Pipeline:
 
 ---
 
+### Content R&D Loop (§5.0, PR #28)
+
+Closes the loop from "generate content" → "measure if it worked" → "decide what to keep". Operator-facing, admin-gated, reads/writes through a thin REST surface.
+
+**Schema (migrations 000 + 020):**
+
+- `000_local_auth_stub.sql` — Supabase-safe stub (`auth` schema + `users` table + `role()`/`uid()`/`jwt()` functions). All `IF NOT EXISTS` / `pg_proc` guards make this a silent no-op on real Supabase. Required for plain Postgres deploys (e.g. local `docker compose`) where migrations 005+ reference `auth.users` FKs.
+- `020_experiments.sql` — four new tables:
+  - `experiments` — id, exam_pack_id, hypothesis, cached `lift_v1`/`lift_n`/`lift_p`, status (`active|won|lost|inconclusive|aborted`)
+  - `experiment_assignments` — `(experiment_id, target_kind, target_id, variant)`, target_kind ∈ {`atom`, `flag`, `gen_run`, `session`}
+  - `mastery_snapshots` — append-only (session × concept × time × mastery), the lift baseline
+  - `generation_runs` — every batch of generation with full config + cost + status
+
+  Plus `generation_run_id TEXT` columns on `generated_problems`, `atom_versions`, `media_artifacts` so artifacts trace back to the run that produced them.
+
+**Code:**
+
+- `src/experiments/` — registry CRUD, append-only mastery snapshotter, `lift.ts` (Welch's t-test + Abramowitz–Stegun normal CDF, `n ≥ 30` + `p < 0.05` thresholds for promotion). Exports a single barrel.
+- `src/generation/` — run-orchestrator (queued→running→complete lifecycle), cost-meter (per-call USD accumulator, throws `RunBudgetExceeded` at cap), dry-run estimator (predicts cost + duration before launch).
+- `src/gbrain/operations/experiment-lift.ts` — CLI: `npx tsx src/gbrain/operations/experiment-lift.ts <experiment-id> [--window 7] [--no-persist]` or `--list --exam gate-ma`.
+- `src/jobs/scheduler.ts` — registers `masterySnapshotter` (daily, `snapshotAllActiveSessions` from `src/experiments/snapshotter.ts`).
+- `src/jobs/content-flywheel.ts` — every flywheel tick now wraps in a `GenerationRun` (provenance only, no behavior change). Cron-driven runs use `auto_experiment: false`; operator-launched ones get an auto-wrapping experiment.
+
+**Admin REST API (`requireRole('admin')` — accepts JWT or `CRON_SECRET`):**
+
+```
+GET    /api/admin/experiments                    list + filters (?exam, ?status, ?limit)
+GET    /api/admin/experiments/:id                single + assignments
+POST   /api/admin/experiments                    create
+PATCH  /api/admin/experiments/:id                update status
+POST   /api/admin/experiments/:id/recompute-lift trigger lift (sync)
+POST   /api/admin/experiments/:id/assignments    batch assign targets
+GET    /api/admin/runs                           list + filters
+GET    /api/admin/runs/:id                       single
+POST   /api/admin/runs                           create + auto-experiment
+POST   /api/admin/runs/dry-run                   cost estimate, no DB write
+PATCH  /api/admin/runs/:id                       abort
+```
+
+**Admin UI at `/admin/content-rd`:**
+
+- `frontend/src/api/admin/content-rd.ts` — typed client over `authFetch` (no embedded secrets)
+- `frontend/src/components/admin/RunLauncher.tsx` — config form, debounced (400ms) live cost estimate, warning surface
+- `frontend/src/components/admin/ActiveRunsPanel.tsx` — last 10 runs with abort
+- `frontend/src/components/admin/EffectivenessLedger.tsx` — sortable lift table with status badges + recompute
+- `frontend/src/pages/app/ContentRDPage.tsx` — page shell + admin gate; linked from `AdminDashboardPage` QuickLink grid
+
+**Auth model:**
+
+- `src/api/auth-middleware.ts:getAuth` resolves role in order: CRON_SECRET → DB `user_profiles` row → JWT `role` claim → `'student'`. The JWT-claim fallback is what makes demo/dev users (Arjun the admin, Kavita the teacher, Priya the student) seeded by `demo/seed.ts` work without a Supabase user_profiles row.
+- Local-dev quick start: `/api/auth/config` returns `local_dev: true` when `GOOGLE_OAUTH_CLIENT_ID` is unset → `SignInPage` renders a "Local dev quick start" panel with three role buttons → `/demo-login?role=admin` auto-seeds `demo/demo-tokens.json` on first hit and redirects admin users to `/admin/content-rd` (other roles to `/`).
+
+**Lift computation contract (locked as `lift_v1`):**
+
+`lift = mean(post_window_mastery) − mean(pre_window_mastery)` for the treatment cohort, minus the same delta for matched control cohort (sessions in same exam pack, active during window, not assigned to the experiment). Significance via Welch's t-test with normal-CDF p-value approximation. **Never silently change the formula** — future versions land as `lift_v2` in a new column. Verified in motion: synthetic 12 treatment + 15 control sessions yielded measured lift `+0.1776`, p `≈ 0.000`.
+
+**Sprint C (deferred):** auto-promote winners (`media_artifacts.canonical=true`), auto-demote losers, weekly `Learnings YYYY-Www` PR digest with ledger diff, suggester inbox proposing follow-up runs. ~600 LOC follow-up.
+
+---
+
 ## gstack
 
 Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.

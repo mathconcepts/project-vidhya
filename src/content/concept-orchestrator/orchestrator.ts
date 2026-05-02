@@ -384,11 +384,14 @@ async function maybeGenerateMedia(
  *   {"type": "parametric", "expression": "sin(x + t)", ...}
  *   ```
  *
- * v1 ships the parser; the prompt change to actually request scenes from
- * the LLM follows in a v2 polish PR. Until then, this returns null for
- * all generated atoms and the GIF path stays dormant.
+ * v1 ships the parser; the v4.11.0 template update wires the LLM to
+ * actually emit `gif-scene` blocks for plot-friendly topics (calculus,
+ * complex-numbers, linear-algebra). Diagram-heavy topics (algorithms,
+ * discrete-math, probability) keep their text-only visuals.
+ *
+ * Exported for unit testing; production callers reach it via maybeGenerateMedia.
  */
-function extractGifSceneDescription(content: string): SceneDescription | null {
+export function extractGifSceneDescription(content: string): SceneDescription | null {
   const m = content.match(/```gif-scene\s*\n([\s\S]*?)\n```/);
   if (!m) return null;
   try {

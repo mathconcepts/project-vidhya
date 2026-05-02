@@ -4,6 +4,7 @@ Each row is a frozen, deployable artifact. Newest first.
 
 | Tag | Branch | SHA | Created (UTC) | Notes |
 |---|---|---|---|---|
+| [`snapshot-20260502-0837-shipped-to-main-pr28`](snapshot-20260502-0837-shipped-to-main-pr28.md) | `main` | `6ae8421` | 2026-05-02 08:38 | _add notes_ |
 | [`snapshot-20260502-0820-auth-jwt-claim-fallback`](snapshot-20260502-0820-auth-jwt-claim-fallback.md) | `claude/deployment-framework-setup-94Pfr` | `e35436c` | 2026-05-02 08:20 | _add notes_ |
 | [`snapshot-20260502-0751-local-dev-ux-fixes-truly-final`](snapshot-20260502-0751-local-dev-ux-fixes-truly-final.md) | `claude/deployment-framework-setup-94Pfr` | `a5bbb6a` | 2026-05-02 07:52 | _add notes_ |
 | [`snapshot-20260502-0745-local-dev-ux-fixes-final`](snapshot-20260502-0745-local-dev-ux-fixes-final.md) | `claude/deployment-framework-setup-94Pfr` | `bed3973` | 2026-05-02 07:46 | _add notes_ |

@@ -877,24 +877,27 @@ Solve carefully:`;
 
     // Start in-process periodic jobs (deletion cleanup, health scan)
     // — see src/jobs/scheduler.ts. Disable with VIDHYA_DISABLE_SCHEDULER=1.
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { startScheduler } = eval('require')('./jobs/scheduler');
-      startScheduler();
-    } catch (e: any) {
-      console.error(`[server] scheduler start failed: ${e?.message}`);
-    }
+    // Dynamic import: ESM-safe, defers heavy job-module init until after listen.
+    void (async () => {
+      try {
+        const { startScheduler } = await import('./jobs/scheduler.js');
+        startScheduler();
+      } catch (e: any) {
+        console.error(`[server] scheduler start failed: ${e?.message}`);
+      }
+    })();
   });
 
   // Graceful shutdown
   const shutdown = () => {
     console.log('\n[server] Shutting down...');
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { stopScheduler } = eval('require')('./jobs/scheduler');
-      stopScheduler();
-    } catch { /* noop */ }
-    server.close(() => process.exit(0));
+    void (async () => {
+      try {
+        const { stopScheduler } = await import('./jobs/scheduler.js');
+        stopScheduler();
+      } catch { /* noop */ }
+      server.close(() => process.exit(0));
+    })();
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

@@ -38,6 +38,11 @@ COPY --from=builder /app/src ./src
 COPY --from=builder /app/frontend/dist ./frontend/dist
 COPY --from=builder /app/tsconfig.json ./
 
+# Copy migrations + curriculum YAML so runtime auto-migrator + exam-pack
+# loader work without depending on host bind-mounts. Production parity.
+COPY --from=builder /app/supabase ./supabase
+COPY --from=builder /app/data ./data
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:${PORT:-8080}/health || exit 1

@@ -261,4 +261,65 @@ export async function abortRun(
   );
 }
 
+// ============================================================================
+// Sprint C: Ledger + Suggestions
+// ============================================================================
+
+export interface LedgerRunRow {
+  id: string;
+  ran_at: string;
+  experiments_evaluated: number;
+  promotions: number;
+  demotions: number;
+  suggestions: number;
+  pr_url: string | null;
+  status: 'running' | 'complete' | 'failed' | 'dry_run';
+}
+
+export interface RunSuggestionRow {
+  id: string;
+  exam_pack_id: string;
+  source_experiment_id: string | null;
+  hypothesis: string;
+  config: GenerationRunConfig;
+  reason: string;
+  expected_lift: number | null;
+  expected_n: number | null;
+  status: 'pending' | 'launched' | 'dismissed';
+  created_at: string;
+  acted_at: string | null;
+}
+
+export async function listLedgerRuns(limit = 20): Promise<{ runs: LedgerRunRow[]; count: number }> {
+  return jsonOrThrow(await authFetch(`/api/admin/ledger/runs?limit=${limit}`));
+}
+
+export async function runLedgerNow(opts: { force_pr?: boolean; no_pr?: boolean } = {}): Promise<{ result: unknown }> {
+  return jsonOrThrow(
+    await authFetch('/api/admin/ledger/run-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(opts),
+    }),
+  );
+}
+
+export async function listSuggestions(filter: { exam?: string; status?: string } = {}): Promise<{ suggestions: RunSuggestionRow[]; count: number }> {
+  const qs = new URLSearchParams();
+  if (filter.exam) qs.set('exam', filter.exam);
+  if (filter.status) qs.set('status', filter.status);
+  const path = `/api/admin/suggestions${qs.toString() ? `?${qs}` : ''}`;
+  return jsonOrThrow(await authFetch(path));
+}
+
+export async function actOnSuggestion(id: string, action: 'launch' | 'dismiss'): Promise<{ ok: boolean; run?: GenerationRunRow }> {
+  return jsonOrThrow(
+    await authFetch(`/api/admin/suggestions/${encodeURIComponent(id)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    }),
+  );
+}
+
 export { AdminApiError };

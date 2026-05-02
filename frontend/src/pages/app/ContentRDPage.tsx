@@ -18,11 +18,14 @@ import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { RunLauncher } from '@/components/admin/RunLauncher';
 import { ActiveRunsPanel } from '@/components/admin/ActiveRunsPanel';
 import { EffectivenessLedger } from '@/components/admin/EffectivenessLedger';
+import { SuggestedRunsPanel } from '@/components/admin/SuggestedRunsPanel';
 import {
   listExperiments,
   listRuns,
+  listSuggestions,
   type ExperimentRow,
   type GenerationRunRow,
+  type RunSuggestionRow,
 } from '@/api/admin/content-rd';
 
 export default function ContentRDPage() {
@@ -30,8 +33,10 @@ export default function ContentRDPage() {
 
   const [experiments, setExperiments] = useState<ExperimentRow[]>([]);
   const [runs, setRuns] = useState<GenerationRunRow[]>([]);
+  const [suggestions, setSuggestions] = useState<RunSuggestionRow[]>([]);
   const [loadingExperiments, setLoadingExperiments] = useState(false);
   const [loadingRuns, setLoadingRuns] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadExperiments = useCallback(async () => {
@@ -59,13 +64,26 @@ export default function ContentRDPage() {
     }
   }, []);
 
+  const loadSuggestions = useCallback(async () => {
+    setLoadingSuggestions(true);
+    try {
+      const r = await listSuggestions({ exam: 'gate-ma', status: 'pending' });
+      setSuggestions(r.suggestions);
+    } catch {
+      // silent — surfaced via empty state
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  }, []);
+
   useEffect(() => {
     trackEvent('page_view', { page: 'admin-content-rd' });
     if (authLoading || !user) return;
     if (user.role !== 'admin') return;
     void loadExperiments();
     void loadRuns();
-  }, [authLoading, user, loadExperiments, loadRuns]);
+    void loadSuggestions();
+  }, [authLoading, user, loadExperiments, loadRuns, loadSuggestions]);
 
   if (authLoading) {
     return (
@@ -121,6 +139,17 @@ export default function ContentRDPage() {
           {error}
         </motion.div>
       )}
+
+      <SuggestedRunsPanel
+        suggestions={suggestions}
+        loading={loadingSuggestions}
+        onRefresh={loadSuggestions}
+        onActed={() => {
+          void loadSuggestions();
+          void loadRuns();
+          void loadExperiments();
+        }}
+      />
 
       <RunLauncher
         defaultExam="gate-ma"

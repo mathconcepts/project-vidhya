@@ -288,12 +288,19 @@ POST   /api/admin/exam-packs            create operator pack (validates config s
 PATCH  /api/admin/exam-packs/:id        update name / status / interactives_enabled
 ```
 
-**Phase 1 risk floor:** the `exam_packs` table is populated but `src/curriculum/exam-loader.ts` does NOT yet merge those rows into the unified exam view. PR #32 wires the consumer side. This means PR #31 changes zero existing behavior — every caller of `getExam()` continues to see exactly the same data it did pre-PR-31.
+**Phase 1 risk floor:** the `exam_packs` table is populated but `src/curriculum/exam-loader.ts` did NOT initially merge those rows into the unified exam view. PR #32 wires the consumer side via `loadAllExamsWithDb()` / `getExamWithDb()` (async, 60s cache). The original sync `getExam()` is unchanged — legacy callers stay YAML-only.
 
-**Phases 2+ (next PRs):**
-- **PR #32** — Curriculum unit generator + Tier 4 PedagogyVerifier + dual-metric lift (`lift_v1` + `pyq_accuracy_delta_v1`).
+**Phase 2 — PR #32 (shipped):** Curriculum unit generator + Tier 4 PedagogyVerifier + dual-metric lift.
+
+- `src/curriculum/exam-loader.ts` — extended with `loadAllExamsWithDb()` async helper that merges YAML + `exam_packs` DB rows. YAML wins on id collision (defensive). 60s TTL cache. Sync API untouched.
+- `src/content/verifiers/pedagogy-verifier.ts` — Tier 4 ContentVerifier; LLM-judge with 5-criterion rubric (concept_fidelity 0.30, pedagogical_sequence 0.20, learning_objective_coverage 0.20, interactive_correctness 0.15, distractor_quality 0.15). Shadow mode by default; `VIDHYA_PEDAGOGY_GATE=on` enables gating. Threshold tuneable via `VIDHYA_PEDAGOGY_THRESHOLD` (default 0.65).
+- `src/experiments/lift.ts` — adds `computePyqAccuracyDelta(experiment_id)` alongside `computeLift()`. Uses the holdout PYQ bank (`is_holdout=TRUE`) as the cohort filter. Persists to `experiments.metadata.pyq_accuracy_delta_v1` (additive — no schema change). Two-proportion z-test, two-sided.
+- `src/generation/curriculum-unit-orchestrator.ts` — wraps existing atom generation in a unit-level transaction. Lifecycle: queued → generating → ready | failed | aborted. Idempotent on `unit.id` re-call. Cost-metered per unit (inherits the run's cap; aborts the unit, not the run, when hit). Bidirectional PYQ links: `curriculum_units.prepared_for_pyq_ids` ↔ `pyq_questions.taught_by_unit_id`.
+- `src/api/admin-runs-routes.ts` — `POST /api/admin/runs` now accepts `config.target.curriculum_unit_specs[]`; when present, the run dispatches into the unit orchestrator instead of the atom-only flywheel. When absent, behavior unchanged.
+
+**Phase 2 follow-ups (next PRs):**
 - **PR #33** — Interactive atom kinds (`manipulable`, `simulation`, `guided_walkthrough`) + React component library, gated to canonical packs only.
-- **PR #34** — Admin UI for unit launches + holdout dashboard.
+- **PR #34** — Admin UI for unit launches + holdout dashboard with PYQ accuracy delta column on the EffectivenessLedger.
 
 ## Skill routing
 

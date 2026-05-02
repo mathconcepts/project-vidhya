@@ -345,10 +345,33 @@ Candidate exams per [`EXAMS.md`](./EXAMS.md):
 3. Operator-pack capability flags default to text+GIF only (interactives off) per scope.
 4. Exam-loader changes go through PR #32, not Phase 1.
 
-**Phase 2 follow-ups (PRs #32, #33, #34):**
-- PR #32 — Curriculum unit generator + Tier 4 PedagogyVerifier + dual-metric lift (`lift_v1` + `pyq_accuracy_delta_v1` against the holdout bank).
+**Phase 2 follow-ups:**
+- PR #32 — Curriculum unit generator + Tier 4 PedagogyVerifier + dual-metric lift (`lift_v1` + `pyq_accuracy_delta_v1`) — ✓ DONE 2026-05-02.
 - PR #33 — Interactive atom kinds (`manipulable`, `simulation`, `guided_walkthrough`) + React component library, gated to canonical packs only.
 - PR #34 — Admin UI for unit launches + holdout dashboard with PYQ accuracy delta column on the EffectivenessLedger.
+
+### 4.18 Curriculum R&D — Phase 2 (unit generator + pedagogy verifier + dual-metric lift) — ✓ DONE 2026-05-02 (PR #32)
+
+**Status:** Phase 2 of Curriculum R&D shipped — wires the consumer side of the Phase 1 schema.
+**Priority:** P0.
+**Effort:** ~1500 LOC, 26 new tests, 0 regressions (206 backend tests pass; baseline typecheck unchanged).
+
+**Delivered:**
+
+- `src/curriculum/exam-loader.ts` extended with `loadAllExamsWithDb()` async API that merges YAML + `exam_packs` DB rows. YAML wins on id collision. 60s TTL cache. Original sync `getExam()` API unchanged.
+- `src/content/verifiers/pedagogy-verifier.ts` — Tier 4 ContentVerifier. Five-criterion rubric (concept_fidelity 0.30, pedagogical_sequence 0.20, learning_objective_coverage 0.20, interactive_correctness 0.15, distractor_quality 0.15). LLM-judge via `getLlmForRole('json' | 'chat')`. Shadow mode by default; `VIDHYA_PEDAGOGY_GATE=on` enables real gating. Markdown code-fence tolerance + JSON parsing fail-closed.
+- `src/experiments/lift.ts` — `computePyqAccuracyDelta(experiment_id)` lands the lagging metric. 2-proportion z-test (normal approx). Stores result in `experiments.metadata.pyq_accuracy_delta_v1` (additive — no migration needed). Promotion key: a learnings-ledger Phase 3 will consider both `lift_v1` (mastery delta) AND `pyq_accuracy_delta_v1`; whichever is stricter wins.
+- `src/generation/curriculum-unit-orchestrator.ts` — full unit lifecycle (queued → generating → ready | failed | aborted). Per-unit cost meter inheriting from the parent GenerationRun's cap. Bidirectional PYQ link maintenance. Stamps generation_run_id on child atoms (Sprint A provenance). DB-less safe (returns `failed` with clear error rather than throwing).
+- `src/api/admin-runs-routes.ts` — `POST /api/admin/runs` accepts `config.target.curriculum_unit_specs[]`. Dispatches into `generateUnitsForRun()` when present; falls back to existing atom-only flywheel when absent.
+
+**Locked invariants** (from PR #31, still hold):
+1. PYQs never move between practice and holdout post-seed.
+2. A `curriculum_unit` covers exactly ONE concept.
+3. Operator-pack capability flags default to text+GIF only.
+
+**Phase 2 follow-ups:**
+- PR #33 — Interactive atom kinds + React component library.
+- PR #34 — Admin UI for unit launches + holdout dashboard.
 
 ### 4.16 Content R&D Loop (deployment framework + experiment spine + admin UI) — ✓ DONE 2026-05-02 (PR #28)
 

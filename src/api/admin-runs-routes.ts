@@ -109,6 +109,51 @@ function parseRunConfig(raw: unknown): GenerationRunConfig | string {
     return 'config.quota.max_cost_usd must be (0, 1000]';
   }
 
+  // Phase 2 of Curriculum R&D — accept curriculum_unit_specs[] when the
+  // operator wants to generate at the unit level instead of atom-only.
+  // Schema validated permissively (admin-only surface); runtime errors
+  // surface back via the run's status='failed'.
+  let unitSpecs: GenerationRunConfig['target']['curriculum_unit_specs'] | undefined;
+  if (Array.isArray(target.curriculum_unit_specs)) {
+    unitSpecs = (target.curriculum_unit_specs as unknown[])
+      .map((u) => {
+        if (!u || typeof u !== 'object') return null;
+        const s = u as Record<string, unknown>;
+        if (!isString(s.exam_pack_id)) return null;
+        if (!isString(s.concept_id)) return null;
+        if (!isString(s.name)) return null;
+        const lo = Array.isArray(s.learning_objectives) ? s.learning_objectives : [];
+        const objectives = lo
+          .map((o: any) => ({
+            id: typeof o?.id === 'string' ? o.id : '',
+            statement: typeof o?.statement === 'string' ? o.statement : '',
+            blooms_level: typeof o?.blooms_level === 'string' ? o.blooms_level : undefined,
+          }))
+          .filter((o) => o.id && o.statement);
+        const pyqs = Array.isArray(s.prepared_for_pyq_ids)
+          ? (s.prepared_for_pyq_ids as unknown[]).filter(isString)
+          : [];
+        const kinds = Array.isArray(s.atom_kinds)
+          ? (s.atom_kinds as unknown[]).filter(isString)
+          : ['intuition', 'formal_definition', 'worked_example', 'practice'];
+        const days = Array.isArray(s.retrieval_days)
+          ? (s.retrieval_days as unknown[]).filter((d): d is number => typeof d === 'number')
+          : undefined;
+        return {
+          id: typeof s.id === 'string' ? s.id : undefined,
+          exam_pack_id: s.exam_pack_id as string,
+          concept_id: s.concept_id as string,
+          name: s.name as string,
+          hypothesis: typeof s.hypothesis === 'string' ? s.hypothesis : undefined,
+          learning_objectives: objectives,
+          prepared_for_pyq_ids: pyqs,
+          atom_kinds: kinds,
+          retrieval_days: days,
+        };
+      })
+      .filter((s): s is NonNullable<typeof s> => s != null);
+  }
+
   return {
     target: {
       topic_id: typeof target.topic_id === 'string' ? target.topic_id : undefined,
@@ -119,6 +164,7 @@ function parseRunConfig(raw: unknown): GenerationRunConfig | string {
         target.difficulty_dist && typeof target.difficulty_dist === 'object'
           ? (target.difficulty_dist as { easy: number; medium: number; hard: number })
           : undefined,
+      curriculum_unit_specs: unitSpecs,
     },
     pipeline: {
       template_id:

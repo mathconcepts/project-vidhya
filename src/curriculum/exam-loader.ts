@@ -192,3 +192,148 @@ export function totalLinkedWeight(exam_id: string): number {
   if (!exam) return 0;
   return exam.concept_links.reduce((s, l) => s + l.weight, 0);
 }
+
+// ============================================================================
+// DB-pack merge (Curriculum R&D Phase 2, PR #32)
+// ============================================================================
+//
+// PR #31 introduced the `exam_packs` table for operator-defined packs.
+// PR #32 wires the consumer side: the unit generator and admin pack picker
+// need a unified view across YAML packs and DB packs.
+//
+// Design:
+//   - The sync `loadAllExams()` / `getExam()` API stays YAML-only and
+//     remains the safe default for legacy callers (they never block on a
+//     DB roundtrip and never see operator packs).
+//   - The async `loadAllExamsWithDb()` / `getExamWithDb()` API merges
+//     YAML + DB. New callers (curriculum-unit-orchestrator, the unit
+//     generator) opt in by using the async variants.
+//   - Conflicts are resolved YAML-wins. A row in `exam_packs` whose id
+//     duplicates a YAML pack is treated as inert (logged + skipped) so
+//     operators can't override canonical packs by accident.
+//
+// Cache: short-lived (60 seconds). Rebuilds the merged map on demand;
+// keeps DB load low while still surfacing newly-created operator packs
+// within a minute.
+
+import pg from 'pg';
+
+let _mergedCache: { map: Map<string, ExamDefinition>; expires_at: number } | null = null;
+const MERGE_TTL_MS = 60_000;
+let _dbPool: pg.Pool | null = null;
+
+function getMergePool(): pg.Pool | null {
+  if (_dbPool) return _dbPool;
+  if (!process.env.DATABASE_URL) return null;
+  _dbPool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
+  return _dbPool;
+}
+
+interface ExamPackDbRow {
+  id: string;
+  name: string;
+  source: 'yaml' | 'operator';
+  config: any;
+  interactives_enabled: boolean;
+  status: 'active' | 'archived';
+}
+
+/**
+ * Convert a DB exam_packs row into the same `ExamDefinition` shape that
+ * the YAML loader produces. Best-effort: missing fields fall back to
+ * sensible defaults so a half-filled operator pack still loads.
+ */
+function dbPackToDefinition(row: ExamPackDbRow): ExamDefinition | null {
+  const config = (row.config && typeof row.config === 'object') ? row.config : {};
+  const metadataRaw = (config.metadata && typeof config.metadata === 'object') ? config.metadata : {};
+  const syllabusRaw = Array.isArray(config.syllabus) ? config.syllabus : [];
+
+  const metadata: ExamMetadata = {
+    id: row.id,
+    name: row.name,
+    description: typeof metadataRaw.description === 'string' ? metadataRaw.description : '',
+    conducting_body: typeof metadataRaw.conducting_body === 'string' ? metadataRaw.conducting_body : 'Operator-defined',
+    scope: (metadataRaw.scope as CurriculumScope) ?? 'mcq-rigorous',
+    total_marks: typeof metadataRaw.total_marks === 'number' ? metadataRaw.total_marks : 0,
+    duration_minutes: typeof metadataRaw.duration_minutes === 'number' ? metadataRaw.duration_minutes : 0,
+    language: typeof metadataRaw.language === 'string' ? metadataRaw.language : 'en',
+    year_effective_from: typeof metadataRaw.year_effective_from === 'number' ? metadataRaw.year_effective_from : new Date().getFullYear(),
+  };
+
+  const syllabus: SyllabusSection[] = [];
+  for (const s of syllabusRaw) {
+    if (!s || typeof s !== 'object') continue;
+    const id = typeof s.id === 'string' ? s.id : null;
+    if (!id) continue;
+    syllabus.push({
+      id,
+      title: typeof s.title === 'string' ? s.title : id,
+      weight_pct: typeof s.weight_pct === 'number' ? s.weight_pct : 0,
+      description: typeof s.description === 'string' ? s.description : undefined,
+      concept_ids: Array.isArray(s.concept_ids) ? s.concept_ids.filter((c: any) => typeof c === 'string') : [],
+    });
+  }
+
+  return {
+    metadata,
+    syllabus,
+    concept_links: [], // operator packs don't seed concept_links yet — they grow via the unit generator
+  };
+}
+
+/**
+ * Async: merged view across YAML packs and DB-sourced operator packs.
+ * Cached for ~60s; force a rebuild via the second arg.
+ */
+export async function loadAllExamsWithDb(forceReload = false): Promise<Map<string, ExamDefinition>> {
+  const now = Date.now();
+  if (!forceReload && _mergedCache && _mergedCache.expires_at > now) {
+    return _mergedCache.map;
+  }
+
+  // Start with the YAML view (sync, fast)
+  const merged = new Map<string, ExamDefinition>(loadAllExams(forceReload));
+
+  const pool = getMergePool();
+  if (pool) {
+    try {
+      const { rows } = await pool.query<ExamPackDbRow>(
+        `SELECT id, name, source, config, interactives_enabled, status
+           FROM exam_packs
+          WHERE source = 'operator' AND status = 'active'`,
+      );
+      for (const row of rows) {
+        if (merged.has(row.id)) {
+          // YAML wins — operator pack with a duplicate id is inert (defensive).
+          // Reserved-slug check at /api/admin/exam-packs catches this on create,
+          // so this branch is for the "race" case (someone migrates a YAML pack
+          // and forgets to archive the DB row).
+          console.warn(`[exam-loader] DB pack '${row.id}' shadowed by YAML; skipping`);
+          continue;
+        }
+        const def = dbPackToDefinition(row);
+        if (def) merged.set(row.id, def);
+      }
+    } catch (err) {
+      // DB unreachable shouldn't crash callers — log + return YAML-only view.
+      console.error('[exam-loader] DB merge failed; YAML-only view returned:', (err as Error).message);
+    }
+  }
+
+  _mergedCache = { map: merged, expires_at: now + MERGE_TTL_MS };
+  return merged;
+}
+
+/**
+ * Async sibling of `getExam(id)` — sees both YAML and DB packs.
+ * Returns null when the exam doesn't exist anywhere.
+ */
+export async function getExamWithDb(exam_id: string): Promise<ExamDefinition | null> {
+  const m = await loadAllExamsWithDb();
+  return m.get(exam_id) ?? null;
+}
+
+/** Test-only: clear merged cache. */
+export function __resetMergedCache(): void {
+  _mergedCache = null;
+}

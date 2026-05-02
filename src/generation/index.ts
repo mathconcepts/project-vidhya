@@ -33,3 +33,14 @@ export type { CostMeterOptions } from './cost-meter';
 
 export { estimateRunCost } from './dry-run';
 export type { CostEstimate } from './dry-run';
+
+// Phase 2 of Curriculum R&D — unit-level generation
+export {
+  generateUnit,
+  generateUnitsForRun,
+} from './curriculum-unit-orchestrator';
+export type {
+  CurriculumUnitSpec,
+  UnitGenerationContext,
+  UnitGenerationResult,
+} from './curriculum-unit-orchestrator';

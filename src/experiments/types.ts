@@ -87,6 +87,22 @@ export interface GenerationRunConfig {
     topic_id?: string;
     concept_ids?: string[];
     difficulty_dist?: { easy: number; medium: number; hard: number };
+    /**
+     * Phase 2 of Curriculum R&D — when present, the run dispatches into
+     * the curriculum-unit-orchestrator instead of the atom-only flywheel.
+     * Each spec produces one curriculum_unit + 5-15 child atoms.
+     */
+    curriculum_unit_specs?: Array<{
+      id?: string;
+      exam_pack_id: string;
+      concept_id: string;
+      name: string;
+      hypothesis?: string;
+      learning_objectives: Array<{ id: string; statement: string; blooms_level?: string }>;
+      prepared_for_pyq_ids: string[];
+      atom_kinds: string[];
+      retrieval_days?: number[];
+    }>;
   };
   pipeline: {
     template_id?: string;
@@ -120,4 +136,30 @@ export interface LiftResult {
   /** Raw means, useful for debugging */
   mean_treatment: number;
   mean_control: number;
+}
+
+/**
+ * Phase 2 of Curriculum R&D — direct measurement of "did the experiment
+ * make students better at the actual exam questions?". Uses the holdout
+ * PYQ bank (pyq_questions WHERE is_holdout = TRUE) so practice runs don't
+ * pollute the measurement.
+ *
+ * This is the lagging metric (north-star). lift_v1 (mastery delta) is the
+ * leading metric. Both are tracked; the learnings ledger keys promotions
+ * off whichever is stricter when both are available.
+ */
+export interface PyqAccuracyDeltaResult {
+  experiment_id: string;
+  /** Treatment minus control accuracy on the holdout bank, in [-1, 1]. */
+  delta: number;
+  n_treatment_attempts: number;
+  n_control_attempts: number;
+  /** P-value from a 2-proportion z-test (normal approximation). */
+  p_value: number;
+  computed_at: string;
+  /** Raw accuracy figures, useful for debugging. */
+  accuracy_treatment: number;
+  accuracy_control: number;
+  /** How many holdout PYQs in the exam pack were touched by either cohort. */
+  holdout_pyqs_observed: number;
 }

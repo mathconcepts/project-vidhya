@@ -32,5 +32,5 @@ export type {
   SnapshotOneInput,
   SnapshotSessionResult,
 } from './snapshotter';
-export { computeLift } from './lift';
-export type { ComputeLiftOptions } from './lift';
+export { computeLift, computePyqAccuracyDelta } from './lift';
+export type { ComputeLiftOptions, ComputePyqDeltaOptions } from './lift';

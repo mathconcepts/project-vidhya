@@ -50,7 +50,18 @@ interface FormState {
   difficulty_easy: number;
   difficulty_medium: number;
   difficulty_hard: number;
+  /** Phase 3 of Curriculum R&D — when true, the run produces curriculum_units. */
+  unit_mode: boolean;
+  unit_concept_id: string;
+  unit_name: string;
+  /** Newline-delimited "id|statement" lines, parsed at submit. */
+  unit_objectives_text: string;
+  /** Newline-delimited PYQ ids. */
+  unit_pyqs_text: string;
+  unit_atom_kinds: string[];
 }
+
+const DEFAULT_ATOM_KINDS = ['intuition', 'formal_definition', 'worked_example', 'practice'];
 
 const DEFAULT_FORM: FormState = {
   hypothesis: '',
@@ -67,7 +78,41 @@ const DEFAULT_FORM: FormState = {
   difficulty_easy: 30,
   difficulty_medium: 50,
   difficulty_hard: 20,
+  unit_mode: false,
+  unit_concept_id: '',
+  unit_name: '',
+  unit_objectives_text: '',
+  unit_pyqs_text: '',
+  unit_atom_kinds: DEFAULT_ATOM_KINDS,
 };
+
+/** Parse "id|statement" lines into structured objectives. Skips blanks. */
+function parseObjectives(text: string): Array<{ id: string; statement: string }> {
+  return text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line, i) => {
+      const idx = line.indexOf('|');
+      if (idx < 0) return { id: `obj_${i + 1}`, statement: line };
+      const id = line.slice(0, idx).trim() || `obj_${i + 1}`;
+      const statement = line.slice(idx + 1).trim();
+      return { id, statement };
+    })
+    .filter((o) => o.statement.length > 0);
+}
+
+/** Parse newline-delimited list, dropping blanks + dedup. */
+function parseLines(text: string): string[] {
+  return Array.from(
+    new Set(
+      text
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean),
+    ),
+  );
+}
 
 function buildConfig(form: FormState): GenerationRunConfig {
   return {
@@ -78,6 +123,22 @@ function buildConfig(form: FormState): GenerationRunConfig {
         medium: form.difficulty_medium,
         hard: form.difficulty_hard,
       },
+      // When unit_mode is on, emit a single curriculum_unit_spec built from
+      // the unit fields. Backend dispatches into the unit orchestrator
+      // (PR #32) when this array is non-empty.
+      curriculum_unit_specs: form.unit_mode && form.unit_concept_id && form.unit_name
+        ? [
+            {
+              exam_pack_id: form.exam_pack_id,
+              concept_id: form.unit_concept_id,
+              name: form.unit_name,
+              hypothesis: form.hypothesis || undefined,
+              learning_objectives: parseObjectives(form.unit_objectives_text),
+              prepared_for_pyq_ids: parseLines(form.unit_pyqs_text),
+              atom_kinds: form.unit_atom_kinds.length > 0 ? form.unit_atom_kinds : DEFAULT_ATOM_KINDS,
+            },
+          ]
+        : undefined,
     },
     pipeline: {
       llm_models: [form.llm_model],
@@ -174,6 +235,36 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
       </header>
 
       <div className="rounded-xl border border-surface-800 bg-surface-950 p-4 space-y-3">
+        {/* Generation mode toggle — atom (default) vs curriculum unit (Phase 2/3) */}
+        <Field label="Generation mode" hint="Atoms = legacy single-problem generation. Curriculum unit = PR #32+: bundles multiple atoms in pedagogical sequence with declared learning objectives + PYQ alignment.">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, unit_mode: false })}
+              className={clsx(
+                'px-3 py-2 rounded-md text-xs font-medium border transition-colors',
+                !form.unit_mode
+                  ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
+                  : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-surface-300',
+              )}
+            >
+              Atoms
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, unit_mode: true })}
+              className={clsx(
+                'px-3 py-2 rounded-md text-xs font-medium border transition-colors',
+                form.unit_mode
+                  ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
+                  : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-surface-300',
+              )}
+            >
+              Curriculum unit
+            </button>
+          </div>
+        </Field>
+
         {/* Hypothesis */}
         <Field label="Hypothesis" hint="Why are you running this? Becomes the experiment name.">
           <input
@@ -205,6 +296,86 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
             />
           </Field>
         </div>
+
+        {/* Curriculum unit fields — only shown in unit_mode */}
+        {form.unit_mode && (
+          <div className="rounded-lg border border-violet-500/25 bg-violet-500/5 p-3 space-y-3">
+            <div className="text-[10px] uppercase tracking-wide text-violet-300 font-medium">
+              Curriculum unit spec
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Concept ID" hint="Single concept this unit covers (eng-review D1).">
+                <input
+                  type="text"
+                  value={form.unit_concept_id}
+                  onChange={(e) => setForm({ ...form, unit_concept_id: e.target.value })}
+                  placeholder="eigenvalues"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Unit name">
+                <input
+                  type="text"
+                  value={form.unit_name}
+                  onChange={(e) => setForm({ ...form, unit_name: e.target.value })}
+                  placeholder="Eigenvalues — intro"
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+            <Field
+              label="Learning objectives"
+              hint='One per line, "id|statement". e.g. obj_1|Define eigenvalue for a 2×2 matrix'
+            >
+              <textarea
+                value={form.unit_objectives_text}
+                onChange={(e) => setForm({ ...form, unit_objectives_text: e.target.value })}
+                rows={4}
+                placeholder={'obj_1|Define eigenvalue for a 2×2 matrix\nobj_2|Compute via characteristic polynomial'}
+                className={inputCls + ' font-mono'}
+              />
+            </Field>
+            <Field
+              label="Prepared-for PYQ IDs"
+              hint="One PYQ id per line. The unit promises to prepare the student for these (uses holdout PYQs for lift)."
+            >
+              <textarea
+                value={form.unit_pyqs_text}
+                onChange={(e) => setForm({ ...form, unit_pyqs_text: e.target.value })}
+                rows={3}
+                placeholder={'pyq_2018_q42\npyq_2020_q31'}
+                className={inputCls + ' font-mono'}
+              />
+            </Field>
+            <Field label="Atom kinds (in pedagogical sequence)">
+              <div className="flex flex-wrap gap-1.5">
+                {['intuition', 'formal_definition', 'visual_analogy', 'worked_example', 'practice'].map((k) => {
+                  const active = form.unit_atom_kinds.includes(k);
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => {
+                        const next = active
+                          ? form.unit_atom_kinds.filter((x) => x !== k)
+                          : [...form.unit_atom_kinds, k];
+                        setForm({ ...form, unit_atom_kinds: next });
+                      }}
+                      className={clsx(
+                        'px-2 py-1 rounded-md text-[11px] font-medium border transition-colors',
+                        active
+                          ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
+                          : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-surface-300',
+                      )}
+                    >
+                      {k}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          </div>
+        )}
 
         {/* Pipeline + Verification */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -442,3 +613,6 @@ function NumberInput({
     </div>
   );
 }
+
+// Exported for tests (do not import outside test files)
+export const __testing = { parseObjectives, parseLines };

@@ -48,11 +48,25 @@ export interface ExperimentRow {
   metadata: Record<string, unknown>;
 }
 
+export interface CurriculumUnitSpec {
+  id?: string;
+  exam_pack_id: string;
+  concept_id: string;
+  name: string;
+  hypothesis?: string;
+  learning_objectives: Array<{ id: string; statement: string; blooms_level?: string }>;
+  prepared_for_pyq_ids: string[];
+  atom_kinds: string[];
+  retrieval_days?: number[];
+}
+
 export interface GenerationRunConfig {
   target: {
     topic_id?: string;
     concept_ids?: string[];
     difficulty_dist?: { easy: number; medium: number; hard: number };
+    /** Phase 2 of Curriculum R&D — when present, the run produces curriculum_units, not raw atoms. */
+    curriculum_unit_specs?: CurriculumUnitSpec[];
   };
   pipeline: {
     template_id?: string;
@@ -310,6 +324,55 @@ export async function listSuggestions(filter: { exam?: string; status?: string }
   if (filter.status) qs.set('status', filter.status);
   const path = `/api/admin/suggestions${qs.toString() ? `?${qs}` : ''}`;
   return jsonOrThrow(await authFetch(path));
+}
+
+// ============================================================================
+// Curriculum R&D Phase 3 — holdout dashboard
+// ============================================================================
+
+export interface HoldoutSummary {
+  exam_pack_id: string;
+  total_holdout: number;
+  stratification: Array<{ year: number; topic: string; count: number }>;
+  timeline_28d: Array<{ day: string; attempts: number; correct: number; accuracy: number }>;
+}
+
+export interface HoldoutPyqRow {
+  id: string;
+  year: number;
+  topic: string;
+  difficulty: 'easy' | 'medium' | 'hard' | null;
+  taught_by_unit_id: string | null;
+  attempts: number;
+  correct: number;
+  accuracy: number | null;
+}
+
+export async function getHoldoutSummary(exam: string): Promise<HoldoutSummary> {
+  return jsonOrThrow(await authFetch(`/api/admin/holdout/summary?exam=${encodeURIComponent(exam)}`));
+}
+
+export async function listHoldoutPyqs(exam: string): Promise<{ exam_pack_id: string; count: number; pyqs: HoldoutPyqRow[] }> {
+  return jsonOrThrow(await authFetch(`/api/admin/holdout/pyqs?exam=${encodeURIComponent(exam)}`));
+}
+
+/**
+ * The Phase 2 dual-metric lift result, persisted into experiments.metadata
+ * by the nightly learnings-ledger. Frontend reads it from
+ * `experiment.metadata.pyq_accuracy_delta_v1` (the listExperiments
+ * endpoint already SELECTs *, so the field is wired without a backend
+ * change).
+ */
+export interface PyqAccuracyDeltaResult {
+  experiment_id: string;
+  delta: number;
+  n_treatment_attempts: number;
+  n_control_attempts: number;
+  p_value: number;
+  computed_at: string;
+  accuracy_treatment: number;
+  accuracy_control: number;
+  holdout_pyqs_observed: number;
 }
 
 export async function actOnSuggestion(id: string, action: 'launch' | 'dismiss'): Promise<{ ok: boolean; run?: GenerationRunRow }> {

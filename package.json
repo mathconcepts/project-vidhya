@@ -41,6 +41,7 @@
     "smoke:all": "npm run smoke:stdio && npm run smoke:sdk-compat && npm run smoke:live-llm",
     "demo:setup": "npm ci && cd frontend && npm ci && cd .. && npm run demo:seed && echo '\\nDemo ready — run: npm run demo:start'",
     "demo:seed": "tsx demo/seed.ts",
+    "demo:seed-media": "tsx demo/seed-media.ts",
     "demo:reset": "tsx demo/reset.ts",
     "demo:start": "bash demo/start.sh",
     "demo:verify": "tsx demo/verify.ts",

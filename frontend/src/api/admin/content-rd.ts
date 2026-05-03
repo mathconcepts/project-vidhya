@@ -103,6 +103,13 @@ export interface GenerationRunRow {
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+  // Batch generation lifecycle (PR-A1+; null on legacy sync runs).
+  batch_provider?: string | null;
+  batch_id?: string | null;
+  batch_state?: 'queued' | 'prepared' | 'submitted' | 'downloading' | 'processing' | 'complete' | 'failed' | 'aborted' | null;
+  submitted_at?: string | null;
+  last_polled_at?: string | null;
+  budget_locked_usd?: number | null;
 }
 
 export interface CostEstimate {

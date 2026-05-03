@@ -98,6 +98,14 @@ function RunRow({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-mono text-[10px] text-surface-500">{run.id}</span>
           <RunStatusBadge status={run.status} />
+          {run.batch_state && (
+            <span
+              className="inline-block px-1.5 py-0.5 rounded border border-violet-500/30 bg-violet-500/10 text-violet-300 text-[10px] font-medium"
+              title={`Batch via ${run.batch_provider ?? 'provider'} — ~50% cost, 24h SLA`}
+            >
+              batch:{run.batch_state}
+            </span>
+          )}
         </div>
         <div className="text-xs text-surface-300 mt-1.5 truncate">
           {run.hypothesis ?? '(no hypothesis)'}

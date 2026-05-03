@@ -28,6 +28,7 @@ import { runNarrationExperimentScanner } from './narration-experiment-scanner';
 import { evaluateRipeExperiments } from '../content/concept-orchestrator';
 import { snapshotAllActiveSessions } from '../experiments/snapshotter';
 import { runLearningsLedger } from './learnings-ledger';
+import { pollAllInFlightBatches } from '../generation/batch/poller';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -126,6 +127,22 @@ register('learningsLedger', DAY_MS, async () => {
   // No-op when DATABASE_URL is unset.
   const r = await runLearningsLedger();
   return r;
+});
+
+register('batchPoller', FIVE_MIN_MS, async () => {
+  // Drives every in-flight batch generation run forward by one step.
+  // Same code path used at server boot for resume-after-restart.
+  // No-op when DATABASE_URL is unset.
+  if (!process.env.DATABASE_URL) {
+    return { status: 'skipped', reason: 'no_db' };
+  }
+  const out = await pollAllInFlightBatches();
+  return {
+    status: 'ran',
+    runs_polled: out.length,
+    transitions: out.filter((r) => r.result.kind === 'transitioned').length,
+    still_pending: out.filter((r) => r.result.kind === 'still_pending').length,
+  };
 });
 
 register('abEvaluator', DAY_MS, async () => {

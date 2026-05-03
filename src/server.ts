@@ -959,6 +959,19 @@ Solve carefully:`;
         console.error(`[server] scheduler start failed: ${e?.message}`);
       }
     })();
+
+    // Resume any batch-generation runs that were in flight when this
+    // process last died (DB-backed state machine — see src/generation/
+    // batch/poller.ts). One pass on boot; the cron scheduler picks up
+    // from there. No-op when DATABASE_URL is unset.
+    void (async () => {
+      try {
+        const { resumeAllInFlightBatches } = await import('./generation/batch/poller.js');
+        await resumeAllInFlightBatches();
+      } catch (e: any) {
+        console.error(`[server] batch resume failed: ${e?.message}`);
+      }
+    })();
   });
 
   // Graceful shutdown

@@ -74,6 +74,7 @@ const BlueprintsPage = lazy(() => import('@/pages/app/BlueprintsPage'));
 const RulesetsPage = lazy(() => import('@/pages/app/RulesetsPage'));
 const AdminJourneyPage = lazy(() => import('@/pages/app/AdminJourneyPage'));
 const AdminDecisionsPage = lazy(() => import('@/pages/app/AdminDecisionsPage'));
+const AdminCohortPage = lazy(() => import('@/pages/app/AdminCohortPage'));
 const ConceptOrchestratorPage = lazy(() => import('@/pages/app/ConceptOrchestratorPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage'));
 const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
@@ -158,6 +159,7 @@ export default function App() {
           <Route path="admin/rulesets" element={<RulesetsPage />} />
           <Route path="admin/journey" element={<AdminJourneyPage />} />
           <Route path="admin/decisions" element={<AdminDecisionsPage />} />
+          <Route path="admin/cohort" element={<AdminCohortPage />} />
           <Route path="admin/founder" element={<FounderDashboardPage />} />
           <Route path="turns" element={<TurnsPage />} />
           <Route path="turns/:id" element={<TurnsPage />} />

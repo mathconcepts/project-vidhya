@@ -297,6 +297,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/blueprints" label="Content blueprints" icon={FileText} />
               <QuickLink href="/admin/rulesets" label="Blueprint rulesets" icon={Settings} />
               <QuickLink href="/admin/decisions" label="Decision log" icon={FileText} />
+              <QuickLink href="/admin/cohort" label="Cohort attention" icon={Users} />
               <QuickLink href="/admin/founder" label="Founder dashboard" icon={Server} />
               <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
               <QuickLink href="/llm-config" label="AI config" icon={Key} />

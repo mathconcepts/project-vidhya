@@ -388,6 +388,42 @@ describe('surveillance invariant 8: blueprints describe content choices, never s
   });
 });
 
+describe('surveillance invariant 10: cohort attention surface stays narrow', () => {
+  it('admin-cohort-routes.ts caps the response shape and forbids names/emails', () => {
+    const file = path.join(REPO_ROOT, 'src', 'api', 'admin-cohort-routes.ts');
+    if (!fs.existsSync(file)) return;
+    const src = fs.readFileSync(file, 'utf8');
+    // Strip comments before checking — comments may legitimately mention these tokens
+    // to explain WHY they're forbidden.
+    const stripped = src
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split('\n')
+      .map((l) => {
+        const idx = l.indexOf('//');
+        return idx === -1 ? l : l.slice(0, idx);
+      })
+      .join('\n');
+
+    // ATTENTION_CAP must exist + be a small constant. Surfacing 200 students
+    // would defeat the surveillance-discipline goal.
+    expect(/ATTENTION_CAP\s*=\s*\d{1,2}\b/.test(stripped),
+      'ATTENTION_CAP must be a 1-2 digit literal (cap of 10 today). Surveilling more than ~20 students at once defeats the purpose.',
+    ).toBe(true);
+
+    // Must NOT echo names / emails from any table.
+    const FORBIDDEN_FIELDS = [
+      /\bemail\s*:/,
+      /\bstudent_name\s*:/,
+      /\bdisplay_name\s*:/,
+      /\bfull_name\s*:/,
+    ];
+    const found = FORBIDDEN_FIELDS.filter((re) => re.test(stripped));
+    expect(found,
+      'admin-cohort-routes.ts must not echo personally-identifying fields. Use session_id only.',
+    ).toEqual([]);
+  });
+});
+
 describe('surveillance invariant 7: /admin/scenarios is admin-gated', () => {
   it('admin-scenarios-routes.ts (when present) requires the admin role', () => {
     const file = path.join(REPO_ROOT, 'src', 'api', 'admin-scenarios-routes.ts');

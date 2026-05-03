@@ -8,6 +8,29 @@ import {
 } from '../arbitrator';
 import { buildTemplateBlueprint } from '../template-engine';
 
+describe('proposeBlueprint — operator rulesets', () => {
+  it('threads inline rulesets into the blueprint constraints with source=ruleset', async () => {
+    const r = await proposeBlueprint({
+      concept_id: 'limits-jee',
+      exam_pack_id: 'jee-main',
+      target_difficulty: 'medium',
+      rulesets: [
+        { id: 'rs_1', source: 'ruleset', note: 'Always include geometric framing first.' },
+      ],
+    });
+    expect(r.decisions.constraints.some((c) => c.id === 'rs_1' && c.source === 'ruleset')).toBe(true);
+    // template's own constraints survive too
+    expect(r.decisions.constraints.some((c) => c.source === 'template')).toBe(true);
+  });
+
+  it('still ships unchanged when rulesets is empty', async () => {
+    const r = await proposeBlueprint({
+      concept_id: 'limits-jee', exam_pack_id: 'jee-main', target_difficulty: 'medium', rulesets: [],
+    });
+    expect(r.decisions.constraints.every((c) => c.source !== 'ruleset')).toBe(true);
+  });
+});
+
 describe('proposeBlueprint — judge disabled', () => {
   let prev: string | undefined;
   beforeEach(() => { prev = process.env.VIDHYA_BLUEPRINT_LLM_JUDGE; delete process.env.VIDHYA_BLUEPRINT_LLM_JUDGE; });

@@ -28,6 +28,7 @@ Navigation by subsystem:
 11. [Further use cases identified](#11-further-use-cases-identified)
 12. [Frontend UI gaps](#12-frontend-ui-gaps)
 13. [Runtime integration gaps](#13-runtime-integration-gaps)
+14. [Content blueprints — deferred PRs](#14-content-blueprints--deferred-prs)
 14. [Documentation gaps](#14-documentation-gaps)
 
 ---
@@ -782,6 +783,105 @@ All endpoints work today via curl. These are React component additions.
 **Depends on:** a live URL
 
 **Detail:** A 90-second video walking through the demo landing page → planned session → admin view would be a much better sales tool than text. Requires §1.1 first.
+
+---
+
+## 14. Content blueprints — deferred PRs
+
+Blueprints land in PR #51 (PR-1 of the locked plan). The LLM arbitrator landed in #53 (PR-2). Operator rulesets land in #54 (PR-3). The remaining items from the locked 4-PR plan + adjacent follow-ups all live here.
+
+### 14.1 Lift-ledger blueprint section (originally PR-4)
+
+**Priority:** P2
+**Effort:** S (~200 LOC)
+**Status:** deferred
+
+The join columns exist (`generation_runs.blueprint_id` + `content_blueprints.template_version`), but the weekly digest in `src/jobs/learnings-ledger.ts` doesn't yet aggregate lift by `(template_version, stage shape)`.
+
+**What it unlocks:** the feedback loop the CEO ask called for — operators see which blueprint patterns (e.g. "geometric concept + manipulable discovery stage") actually move mastery, then write rulesets that bake those wins in.
+
+**Depends on:** at least 30 `generation_runs` with `blueprint_id` set so the lift math has signal. Land after the first ~100 blueprints have shipped through real runs.
+
+### 14.2 Curriculum-unit-orchestrator reads `blueprint_id`
+
+**Priority:** P1 (blocks blueprints from actually steering generation)
+**Effort:** M (~250 LOC)
+**Status:** planned
+
+Today the orchestrator's `generateUnitsForRun(specs, ctx)` is callable with a blueprint via `blueprintToUnitSpec()`, but `admin-runs-routes.ts` doesn't yet route runs through the translator when `run.blueprint_id` is set.
+
+**What it unlocks:** an operator-approved blueprint actually controls the generation. Until this lands, blueprints are advisory.
+
+**Failure mode to handle:** validator-rejected blueprint → fall through to legacy `quota.atom_kinds` path with a warning log + run-row error annotation. Backward-compat must hold.
+
+### 14.3 RunLauncher "Use blueprint" picker
+
+**Priority:** P2
+**Effort:** S (~150 LOC frontend)
+**Status:** deferred (waits on §14.2)
+
+RunLauncher has the run config form but no surface to pick an existing blueprint or open the BlueprintsPage. Operators currently create the blueprint, then create the run separately.
+
+**What it unlocks:** single-page workflow from "build blueprint" → "launch run against blueprint" → "watch lift land in ledger".
+
+### 14.4 User-uploaded reference materials (PDFs, syllabus, past papers)
+
+**Priority:** P2
+**Effort:** L (~3 weeks; bottomless if scope creeps)
+**Status:** deferred per CEO recommendation
+
+The original ask conflated "uploaded materials" (PDFs → embeddings → retrieval-augmented blueprint) with "rulesets" (text → blueprint constraint). PR-3 shipped rulesets; materials are the separate, harder problem.
+
+**What it unlocks:** the arbitrator can read e.g. a Class 12 NCERT PDF and pull domain-specific framing into the blueprint.
+
+**Revisit only after** lift-ledger digests show "blueprints lacking topic-specific framing underperform" — i.e. the data tells us this is the gap. Building before the data justifies it is speculative.
+
+### 14.5 Auto-generated rulesets from lift data
+
+**Priority:** P3
+**Effort:** M (~400 LOC + heavy review)
+**Status:** deferred for at least 90 days
+
+Tempting — once §14.1 ships and we see "blueprints with `manipulable` discovery stage win for limits", a job could write a ruleset automatically.
+
+**Why we're holding:** surveillance-adjacent + easy to get wrong (the system writes a rule, the next blueprint inherits it, the whole population shifts off a small lift signal). Wait for ≥6 months of human-curated rulesets first; the human-in-the-loop is the right default for this kind of compounding effect.
+
+### 14.6 Multi-blueprint A/B for the same concept
+
+**Priority:** P3
+**Effort:** M
+**Status:** deferred
+
+The existing experiment framework + `experiment_assignments` table can do this if `blueprint_id` is included in the assignment shape — but no operator has asked yet, and the data we'd learn from one blueprint at a time is already the bottleneck.
+
+### 14.7 Real-time blueprint editing during a running generation
+
+**Priority:** P3
+**Status:** explicit no
+
+The whole design assumes the blueprint is locked when generation starts. Editing mid-flight breaks the audit trail and the per-run lift attribution. If a blueprint needs to change, it's a new blueprint + a new run.
+
+### 14.8 Surveillance invariant for `blueprint_rulesets.rule_text`
+
+**Priority:** P2
+**Effort:** S (~30 LOC)
+**Status:** planned
+
+Today the validator covers the JSON `decisions` shape but rulesets are free-text — an operator could in principle paste a ruleset that asks for student-tracking framing. Add a CI test that greps `blueprint_rulesets.rule_text` in the seed/test fixtures for the same forbidden patterns the validator already covers.
+
+### 14.9 PR-A4: RunLauncher batch toggle + atom_specs translation
+
+**Priority:** P1 (only outstanding piece of the batch-generation plan)
+**Effort:** M (~400 LOC)
+**Status:** planned (deferred from PR-A3 by deliberate scope cut)
+
+PR-A3 (#49) shipped the batch infrastructure: poller, boot resume, advisory locks, the orchestrator state machine. What's missing is the operator-facing toggle that actually launches a run via the batch path:
+
+1. RunLauncher form: "Submit as batch" toggle (default ON when `count > 5 ∧ mode === curriculum_unit`)
+2. The `curriculum_unit_specs` → `AtomSpec[]` translation so the orchestrator's `step()` has something to drive
+3. The downstream `onJobProcessed` hook that ingests results into `atom_versions` / canonical-flag pipeline
+
+Until this lands, `batch_state` columns + the poller exist but no run actually goes through the batch path in production.
 
 ---
 

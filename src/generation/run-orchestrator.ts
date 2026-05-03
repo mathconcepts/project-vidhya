@@ -70,6 +70,10 @@ export interface CreateRunInput {
   /** If true and experiment_id is null, auto-create a wrapping experiment. */
   auto_experiment?: boolean;
   id?: string;
+  /** Optional content blueprint that produced this run's config. Persisted
+   *  for the lift ledger groupby; the config itself is already populated
+   *  by the API handler from blueprintToUnitSpec(). */
+  blueprint_id?: string;
 }
 
 export async function createRun(
@@ -97,8 +101,8 @@ export async function createRun(
 
   const { rows } = await pool.query<GenerationRunRow>(
     `INSERT INTO generation_runs
-       (id, exam_pack_id, experiment_id, hypothesis, config, git_sha, status)
-     VALUES ($1, $2, $3, $4, $5, $6, 'queued')
+       (id, exam_pack_id, experiment_id, hypothesis, config, git_sha, status, blueprint_id)
+     VALUES ($1, $2, $3, $4, $5, $6, 'queued', $7)
      RETURNING *`,
     [
       id,
@@ -107,6 +111,7 @@ export async function createRun(
       input.hypothesis ?? null,
       JSON.stringify(input.config),
       sha,
+      input.blueprint_id ?? null,
     ],
   );
 

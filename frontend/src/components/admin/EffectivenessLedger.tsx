@@ -20,6 +20,9 @@ import {
   type ExperimentStatus,
 } from '@/api/admin/content-rd';
 import { fadeInUp } from '@/lib/animations';
+import { suggestForExperiment, type LedgerSuggestion } from '@/lib/ledger-suggestions';
+import { Link } from 'react-router-dom';
+import { Lightbulb } from 'lucide-react';
 
 interface Props {
   experiments: ExperimentRow[];
@@ -109,8 +112,8 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
                   </td>
                 </tr>
               )}
-              {sorted.map((e) => (
-                <tr key={e.id} className="border-b border-surface-800 last:border-0 hover:bg-surface-900/50 transition-colors">
+              {sorted.map((e) => [
+                <tr key={`${e.id}-row`} className="border-b border-surface-800/50 hover:bg-surface-900/50 transition-colors">
                   <td className="px-3 py-2.5 align-top">
                     <div className="font-medium text-surface-200">{e.name}</div>
                     <div className="text-[10px] font-mono text-surface-600 mt-0.5">{e.id}</div>
@@ -145,8 +148,9 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
                       {recomputing === e.id ? '…' : 'Recompute'}
                     </button>
                   </td>
-                </tr>
-              ))}
+                </tr>,
+                <SuggestionRow key={`${e.id}-suggestion`} experiment={e} />,
+              ])}
             </tbody>
           </table>
         </div>
@@ -158,6 +162,51 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
 // ============================================================================
 // Subcomponents
 // ============================================================================
+
+function SuggestionRow({ experiment }: { experiment: ExperimentRow }) {
+  const suggestion: LedgerSuggestion = suggestForExperiment({
+    id: experiment.id,
+    status: experiment.status as any,
+    hypothesis: experiment.hypothesis,
+    lift_v1: experiment.lift_v1 == null ? null : Number(experiment.lift_v1),
+    lift_n: experiment.lift_n,
+    lift_p: experiment.lift_p == null ? null : Number(experiment.lift_p),
+    variant_kind: experiment.variant_kind,
+    ended_at: experiment.ended_at,
+  });
+  if (suggestion.kind === 'no_action' && !suggestion.message) return null;
+
+  const tone = suggestion.kind === 'bake_in_winner' ? 'emerald'
+    : suggestion.kind === 'celebrate' ? 'emerald'
+    : suggestion.kind === 'investigate_loser' ? 'amber'
+    : suggestion.kind === 'fund_resume' ? 'amber'
+    : suggestion.kind === 'expand_run_count' ? 'amber'
+    : 'surface';
+
+  return (
+    <tr className="border-b border-surface-800 last:border-0">
+      <td colSpan={8} className={clsx(
+        'px-3 py-2 text-[11px]',
+        tone === 'emerald' && 'bg-emerald-500/5 text-emerald-200',
+        tone === 'amber' && 'bg-amber-500/5 text-amber-200',
+        tone === 'surface' && 'bg-surface-900/30 text-surface-400',
+      )}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Lightbulb size={11} className="shrink-0" />
+          <span className="flex-1">{suggestion.message}</span>
+          {suggestion.cta && (
+            <Link
+              to={suggestion.cta.href}
+              className="inline-flex items-center px-2 py-0.5 rounded border border-current/30 hover:bg-current/10 whitespace-nowrap"
+            >
+              {suggestion.cta.label} →
+            </Link>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 function Th({
   label, sortKey, current, dir, onClick, align,

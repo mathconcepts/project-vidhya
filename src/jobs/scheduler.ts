@@ -29,6 +29,7 @@ import { evaluateRipeExperiments } from '../content/concept-orchestrator';
 import { snapshotAllActiveSessions } from '../experiments/snapshotter';
 import { runLearningsLedger } from './learnings-ledger';
 import { pollAllInFlightBatches } from '../generation/batch/poller';
+import { flushToDisk as flushRateLimits } from '../llm/rate-limit-tracker';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -127,6 +128,18 @@ register('learningsLedger', DAY_MS, async () => {
   // No-op when DATABASE_URL is unset.
   const r = await runLearningsLedger();
   return r;
+});
+
+register('rateLimitCheckpoint', HOUR_MS, () => {
+  // Flush in-memory rate-limit counters to .data/rate-limits.json so the
+  // weekly learnings-ledger digest can render the per-bucket table. Pure
+  // I/O, no provider calls. No-op cleanly on read-only filesystems.
+  try {
+    const file = flushRateLimits();
+    return { status: 'ran', file };
+  } catch (err) {
+    return { status: 'errored', error: (err as Error).message };
+  }
 });
 
 register('batchPoller', FIVE_MIN_MS, async () => {

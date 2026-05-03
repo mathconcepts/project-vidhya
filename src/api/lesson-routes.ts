@@ -31,6 +31,7 @@ import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
+import { rankAtomsForLesson } from '../personalization/lesson-wire';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
 import { selectAtoms } from '../content/pedagogy-engine';
 import type { ContentAtom, SessionContext } from '../content/content-types';
@@ -293,6 +294,15 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       // are read by the client.
       atoms = await applyAbVariants(atoms, lessonReq.session_id ?? null);
       atoms = await applyMediaUrls(atoms, lessonReq.session_id ?? null);
+      // Phase A wire-in (PR following #36): re-rank within the already-
+      // selected set per the PersonalizedSelector. Returns atoms unchanged
+      // when the session is anonymous or in the control bucket.
+      atoms = await rankAtomsForLesson(atoms, {
+        session_id: lessonReq.session_id ?? null,
+        student_id: null, // resolved from session_id inside the helper
+        concept_id: lessonReq.concept_id,
+        exam_pack_id: lessonReq.preferred_exam_id ?? undefined,
+      });
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
@@ -373,6 +383,15 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       atoms = await applyImprovedSince(atoms);
       atoms = await applyAbVariants(atoms, student_id);
       atoms = await applyMediaUrls(atoms, student_id);
+      // Phase A wire-in (PR following #36): re-rank within the already-
+      // selected set per the PersonalizedSelector. Returns atoms unchanged
+      // when the session is anonymous or in the control bucket.
+      atoms = await rankAtomsForLesson(atoms, {
+        session_id: student_id ?? session_id ?? null,
+        student_id: null, // resolved from session_id inside the helper
+        concept_id,
+        exam_pack_id: preferred_exam_id ?? undefined,
+      });
     } catch (err) {
       if (!(err instanceof ConceptNotFoundError)) {
         console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);

@@ -54,3 +54,16 @@ export {
   blueprintToUnitSpec,
   type BlueprintDerivedSpec,
 } from './to-unit-spec';
+
+export {
+  proposeBlueprint,
+  applyOverlay,
+  buildJudgePrompt,
+  parseJudgeOutput,
+  ARBITRATOR_VERSION,
+  type ArbitratorInput,
+  type ArbitratorResult,
+  type LlmJudgeFn,
+  type LlmJudgeInput,
+  type LlmJudgeOutput,
+} from './arbitrator';

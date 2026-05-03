@@ -802,17 +802,15 @@ The join columns exist (`generation_runs.blueprint_id` + `content_blueprints.tem
 
 **Depends on:** at least 30 `generation_runs` with `blueprint_id` set so the lift math has signal. Land after the first ~100 blueprints have shipped through real runs.
 
-### 14.2 Curriculum-unit-orchestrator reads `blueprint_id`
+### 14.2 Curriculum-unit-orchestrator reads `blueprint_id` ✓ shipped
 
-**Priority:** P1 (blocks blueprints from actually steering generation)
-**Effort:** M (~250 LOC)
-**Status:** planned
+**Status:** done — landed in PR #55.
 
-Today the orchestrator's `generateUnitsForRun(specs, ctx)` is callable with a blueprint via `blueprintToUnitSpec()`, but `admin-runs-routes.ts` doesn't yet route runs through the translator when `run.blueprint_id` is set.
+`admin-runs-routes.ts:handleCreate` now accepts `blueprint_id` in the request body. When set: loads the blueprint via `getBlueprint()`, translates via `blueprintToUnitSpec()`, replaces `config.target.curriculum_unit_specs[]` with the blueprint-derived spec, and persists `blueprint_id` on the `generation_runs` row. The orchestrator's existing unit-mode dispatch (PR #32) drives generation off the blueprint's explicit stages.
 
-**What it unlocks:** an operator-approved blueprint actually controls the generation. Until this lands, blueprints are advisory.
+**Failure mode handled:** missing or malformed blueprint → fall through silently to legacy `curriculum_unit_specs` (or `atom_kinds`) path with a warning log + `blueprint_warning` field on the response. Run row's `error` column reserved for true failures.
 
-**Failure mode to handle:** validator-rejected blueprint → fall through to legacy `quota.atom_kinds` path with a warning log + run-row error annotation. Backward-compat must hold.
+Blueprints are now load-bearing rather than advisory.
 
 ### 14.3 RunLauncher "Use blueprint" picker
 

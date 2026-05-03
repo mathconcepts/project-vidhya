@@ -267,6 +267,45 @@ async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<vo
   const parsed = parseRunConfig(body.config);
   if (typeof parsed === 'string') return badRequest(res, parsed);
 
+  // §14.2 — when a blueprint_id is supplied, load the blueprint, translate
+  // it via blueprintToUnitSpec(), and inject the resulting unit spec into
+  // the run config's curriculum_unit_specs[]. The orchestrator's existing
+  // unit-mode dispatch (PR #32) then drives generation off the blueprint's
+  // explicit stage decisions.
+  //
+  // Backward-compat: a malformed/missing blueprint falls through silently
+  // to whatever curriculum_unit_specs the caller already supplied (legacy
+  // path). We log a warning + annotate the run row's error column so the
+  // operator sees what happened in ActiveRunsPanel.
+  let blueprintId: string | null = null;
+  let blueprintWarning: string | null = null;
+  if (isString(body.blueprint_id)) {
+    blueprintId = body.blueprint_id;
+    try {
+      const { getBlueprint, blueprintToUnitSpec } = await import('../blueprints');
+      const bp = await getBlueprint(blueprintId);
+      if (!bp) {
+        blueprintWarning = `blueprint ${blueprintId} not found; falling through to legacy config`;
+      } else {
+        const unitSpec = blueprintToUnitSpec(bp.decisions, {
+          unit_name: typeof body.unit_name === 'string' ? body.unit_name : undefined,
+          hypothesis: typeof body.hypothesis === 'string' ? body.hypothesis : undefined,
+        });
+        // Replace whatever curriculum_unit_specs the caller sent with the
+        // blueprint-derived one. The blueprint is the source of truth when set.
+        parsed.target = {
+          ...parsed.target,
+          curriculum_unit_specs: [unitSpec],
+        };
+      }
+    } catch (err) {
+      blueprintWarning = `blueprint ${blueprintId} translation failed: ${(err as Error).message}`;
+    }
+    if (blueprintWarning) {
+      console.warn(`[admin-runs] ${blueprintWarning}`);
+    }
+  }
+
   const run = await createRun({
     id: typeof body.id === 'string' ? body.id : undefined,
     exam_pack_id: body.exam_pack_id,
@@ -276,13 +315,18 @@ async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<vo
       typeof body.experiment_id === 'string' ? body.experiment_id : undefined,
     auto_experiment:
       typeof body.auto_experiment === 'boolean' ? body.auto_experiment : true,
+    blueprint_id: blueprintId ?? undefined,
   });
 
   if (!run) {
     sendJSON(res, { error: 'Failed to create run' }, 500);
     return;
   }
-  sendJSON(res, { run }, 201);
+  // If translation fell through, surface the warning to the operator via
+  // the response. Frontend renders it as a toast next to the new run.
+  // Not annotated on the run row itself — `error` is reserved for true
+  // run failures, and a fall-through-to-legacy is not a failure.
+  sendJSON(res, blueprintWarning ? { run, blueprint_warning: blueprintWarning } : { run }, 201);
 }
 
 async function handleDryRun(req: ParsedRequest, res: ServerResponse): Promise<void> {

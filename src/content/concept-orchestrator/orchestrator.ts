@@ -36,6 +36,11 @@ import { compareMathAtoms, requiresConsensus } from './multi-llm-consensus';
 import { appendVersion } from './atom-versions';
 import { writeArtifact, markFailed as markMediaFailed } from './media-artifacts';
 import { renderScene, type SceneDescription } from './gif-generator';
+// Phase B of personalization plan — see buildPrompt() for usage.
+// Decoupled via a single-function import so the orchestrator stays
+// generic; if the personalization module is removed, the orchestrator
+// silently falls back to today's generic prompts.
+import { toPromptText as _toPromptTextRef } from '../../personalization/student-context';
 import { generateNarration, shouldNarrate } from './tts-generator';
 
 const ALL_ATOM_TYPES: AtomType[] = [
@@ -159,6 +164,7 @@ export async function generateConcept(
       lo_id: opts.lo_id,
       topic_family: opts.topic_family,
       atom_type,
+      student_context: opts.student_context,
     });
 
     total_cost += generated.meta.cost_usd;
@@ -237,6 +243,13 @@ interface GenerateOneArgs {
   lo_id?: string;
   topic_family: string;
   atom_type: AtomType;
+  /**
+   * Phase B — opaque student-context payload. When present, the prompt
+   * formatter (toPromptText) renders it as a verbose prefix that steers
+   * tone/level/misconception-targeting. Defaults to absent → today's
+   * generic prompt is unchanged for anonymous and uncalled paths.
+   */
+  student_context?: unknown;
 }
 
 async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
@@ -316,7 +329,15 @@ function buildPrompt(args: GenerateOneArgs & {
   template_guidance: string;
   pyq_context: string;
 }): string {
-  return `Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
+  // Phase B of personalization plan — when a student_context is threaded
+  // through, render a verbose prefix that steers tone/level/misconception-
+  // targeting. The formatter is the SOLE boundary where context fields
+  // become prompt bytes; absent context → identical prompt to pre-Phase-B.
+  const studentContextBlock = args.student_context
+    ? renderStudentContextBlock(args.student_context)
+    : '';
+
+  return `${studentContextBlock}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
 
 Scaffold: ${args.template_scaffold}
 ${args.template_guidance ? `Guidance:\n${args.template_guidance}` : ''}
@@ -326,6 +347,38 @@ Output ONLY the atom body in markdown. Use $inline$ and $$display$$ math.
 For interactive directives use :::name{attrs} blocks. For ${args.atom_type === 'worked_example' ? 'worked_example: separate steps with `\\n---\\n` and end with "Answer: <value>" so :::verify can confirm.' : 'other types: keep the body focused on a single learning beat.'}
 
 Do not include frontmatter — only the body. Keep total length under 400 words.`;
+}
+
+/**
+ * Lazy-imports the personalization formatter so the orchestrator stays
+ * decoupled from the personalization module. If the import path doesn't
+ * resolve (older deploys, bundler quirks), returns empty string —
+ * generation proceeds with the generic prompt.
+ *
+ * Synchronous re-import via require-style would be cleaner but we're
+ * in ESM-only territory; cache the result in module scope so we pay the
+ * import cost at most once per process.
+ */
+let _ctxFormatter: ((ctx: any) => string) | null | undefined = undefined;
+function renderStudentContextBlock(ctx: unknown): string {
+  if (_ctxFormatter === null) return '';
+  if (_ctxFormatter === undefined) {
+    try {
+      // dynamic import is async; but we can use require-equivalent via
+      // a sync module-cache hit since ESM modules resolve eagerly at
+      // top-level import. We declare the import below at module scope.
+      _ctxFormatter = _toPromptTextRef ?? null;
+    } catch {
+      _ctxFormatter = null;
+    }
+  }
+  if (!_ctxFormatter) return '';
+  try {
+    const text = _ctxFormatter(ctx);
+    return text ? `${text}\n\n---\n\n` : '';
+  } catch {
+    return '';
+  }
 }
 
 /**

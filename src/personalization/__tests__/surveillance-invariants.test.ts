@@ -47,7 +47,7 @@ function readAllTextFiles(dir: string, filterExt: string[]): string[] {
 // ----------------------------------------------------------------------------
 
 describe('surveillance invariant 1: no new schema columns', () => {
-  it('no migration in this PR introduces a column named personalized_*, tracked_*, or behavior_*', () => {
+  it('no migration in this PR introduces a column named personalized_*, tracked_*, behavior_*, or student_context_*', () => {
     const migrationsDir = path.join(REPO_ROOT, 'supabase', 'migrations');
     const files = fs.existsSync(migrationsDir)
       ? fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql'))
@@ -57,6 +57,7 @@ describe('surveillance invariant 1: no new schema columns', () => {
       /personalized_\w+/i,
       /\btracked_\w+/i,
       /\bbehavior_\w+/i,
+      /\bstudent_context_\w+/i,  // Phase B: student-context lives in-memory only
     ];
 
     const offenders: Array<{ file: string; line: number; text: string; pattern: string }> = [];
@@ -84,6 +85,36 @@ describe('surveillance invariant 1: no new schema columns', () => {
 });
 
 // ----------------------------------------------------------------------------
+
+describe('surveillance invariant 2b (Phase B): student-context.ts only READS, never WRITES', () => {
+  it('student-context.ts contains no INSERT INTO / UPDATE — only SELECT', () => {
+    const file = path.join(REPO_ROOT, 'src', 'personalization', 'student-context.ts');
+    expect(fs.existsSync(file), 'student-context.ts must exist').toBe(true);
+    const src = fs.readFileSync(file, 'utf8');
+
+    // Strip comments
+    const stripped = src
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split('\n')
+      .map((l) => {
+        const idx = l.indexOf('//');
+        return idx === -1 ? l : l.slice(0, idx);
+      })
+      .join('\n');
+
+    const FORBIDDEN = [
+      /INSERT\s+INTO/i,
+      /UPDATE\s+\w+\s+SET/i,
+      /DELETE\s+FROM/i,
+    ];
+    const found = FORBIDDEN.filter((re) => re.test(stripped));
+    expect(
+      found,
+      'student-context.ts MUST NOT mutate the database. ' +
+        'It assembles a payload from existing tables; persistence is forbidden.',
+    ).toEqual([]);
+  });
+});
 
 describe('surveillance invariant 2: realtime-nudge has no DB writes', () => {
   it('realtime-nudge.ts contains no INSERT INTO / UPDATE / pool.query / pg import', () => {

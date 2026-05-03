@@ -275,6 +275,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/content-rd" label="Content R&D" icon={FlaskConical} />
               <QuickLink href="/admin/holdout" label="Holdout PYQs" icon={Lock} />
               <QuickLink href="/admin/scenarios" label="Persona scenarios" icon={Sparkles} />
+              <QuickLink href="/admin/blueprints" label="Content blueprints" icon={FileText} />
               <QuickLink href="/admin/founder" label="Founder dashboard" icon={Server} />
               <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
               <QuickLink href="/llm-config" label="AI config" icon={Key} />

@@ -293,3 +293,69 @@ describe('surveillance invariant 4: no frontend imports the personalization modu
     expect(hits, 'Frontend must not access personalization debug fields.').toEqual([]);
   });
 });
+
+// ----------------------------------------------------------------------------
+
+describe('surveillance invariant 5: persona files contain no real PII / UUIDs', () => {
+  it('data/personas/*.yaml contain no UUIDs, session ids, or email-shaped strings', () => {
+    const dir = path.join(REPO_ROOT, 'data', 'personas');
+    if (!fs.existsSync(dir)) return; // no personas yet — vacuously fine
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.yaml'));
+
+    // Real UUID v1-5 shape — 32 hex chars + 4 dashes.
+    const UUID_RE = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
+    const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
+    const SESSION_RE = /\bsession[_-]?id\s*:/i;
+
+    const offenders: Array<{ file: string; line: number; text: string }> = [];
+    for (const f of files) {
+      const content = fs.readFileSync(path.join(dir, f), 'utf8');
+      const lines = content.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.trim().startsWith('#')) continue; // skip comments
+        if (UUID_RE.test(line) || EMAIL_RE.test(line) || SESSION_RE.test(line)) {
+          offenders.push({ file: f, line: i + 1, text: line.trim() });
+        }
+      }
+    }
+    expect(
+      offenders,
+      'Persona YAML files must not contain real UUIDs, emails, or session_ids. ' +
+        'Personas are scripted demo data; never paste real student rows here.\n' +
+        offenders.map((o) => `  ${o.file}:${o.line}  ${o.text}`).join('\n'),
+    ).toEqual([]);
+  });
+});
+
+describe('surveillance invariant 6: scenario routes never expose scorer internals', () => {
+  it('any future src/api/admin-scenarios-routes.ts may not echo layers/scores/weights', () => {
+    const file = path.join(REPO_ROOT, 'src', 'api', 'admin-scenarios-routes.ts');
+    if (!fs.existsSync(file)) return; // route doesn't exist yet — invariant is forward-looking
+    const src = fs.readFileSync(file, 'utf8');
+    const FORBIDDEN_FIELDS = [
+      /\blayers\s*:/,
+      /\bscore\s*:/,
+      /\blayer_weights\s*:/,
+      /\bScoredAtom\b/,
+    ];
+    const found = FORBIDDEN_FIELDS.filter((re) => re.test(src));
+    expect(
+      found,
+      'admin-scenarios-routes.ts must not surface scorer internals to the wire.',
+    ).toEqual([]);
+  });
+});
+
+describe('surveillance invariant 7: /admin/scenarios is admin-gated', () => {
+  it('admin-scenarios-routes.ts (when present) requires the admin role', () => {
+    const file = path.join(REPO_ROOT, 'src', 'api', 'admin-scenarios-routes.ts');
+    if (!fs.existsSync(file)) return;
+    const src = fs.readFileSync(file, 'utf8');
+    expect(
+      /requireRole\s*\(\s*['"]admin['"]\s*\)/.test(src),
+      'admin-scenarios-routes.ts must call requireRole("admin"). ' +
+        'Persona trial output is operator-only debug data.',
+    ).toBe(true);
+  });
+});

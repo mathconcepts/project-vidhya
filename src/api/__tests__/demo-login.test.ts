@@ -27,9 +27,17 @@ describe('buildDemoLoginHtml', () => {
     expect(html).toContain(JSON.stringify(entry.token));
   });
 
-  it('redirects to /', () => {
+  it('students redirect to /', () => {
     const html = buildDemoLoginHtml(TOKENS['student-active']);
-    expect(html).toContain("window.location.replace('/')");
+    // PR #28 changed buildDemoLoginHtml to JSON.stringify the path so
+    // double-quotes wrap the literal. Admins go to /admin/content-rd;
+    // students still go to /.
+    expect(html).toContain('window.location.replace("/")');
+  });
+
+  it('admins redirect to /admin/content-rd (PR #28)', () => {
+    const html = buildDemoLoginHtml(TOKENS.admin);
+    expect(html).toContain('window.location.replace("/admin/content-rd")');
   });
 
   it('shows the user name and role in the page', () => {

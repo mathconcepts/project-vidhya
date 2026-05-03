@@ -25,8 +25,12 @@ import { clsx } from 'clsx';
 import {
   dryRun,
   createRun,
+  getLastRunConfig,
+  searchConcepts,
+  generateObjectivesStub,
   type CostEstimate,
   type GenerationRunConfig,
+  type ConceptSearchHit,
 } from '@/api/admin/content-rd';
 import { fadeInUp } from '@/lib/animations';
 
@@ -170,6 +174,80 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // PR-A — Prefilled defaults: pre-fill the form from the exam's most
+  // recent COMPLETE run when the operator changes exam_pack_id. Best-
+  // effort, never blocking. If no last config exists or it fails to
+  // validate, leaves the current form values alone.
+  const [prefilledFromRunId, setPrefilledFromRunId] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const r = await getLastRunConfig(form.exam_pack_id);
+        if (cancelled || !r.config) return;
+        // Map server-shape config → FormState fields. Only fields we
+        // own are touched; user-typed values like hypothesis are NOT
+        // overwritten.
+        setForm((prev) => ({
+          ...prev,
+          llm_model: r.config!.pipeline?.llm_models?.[0] ?? prev.llm_model,
+          pyq_grounding: r.config!.pipeline?.pyq_grounding ?? prev.pyq_grounding,
+          multi_llm_consensus: r.config!.pipeline?.multi_llm_consensus ?? prev.multi_llm_consensus,
+          tier_ceiling: r.config!.verification?.tier_ceiling ?? prev.tier_ceiling,
+          gemini_dual_solve: r.config!.verification?.gemini_dual_solve ?? prev.gemini_dual_solve,
+          reviewer_strictness: r.config!.pedagogy?.reviewer_strictness ?? prev.reviewer_strictness,
+          count: r.config!.quota?.count ?? prev.count,
+          max_cost_usd: r.config!.quota?.max_cost_usd ?? prev.max_cost_usd,
+          difficulty_easy: r.config!.target?.difficulty_dist?.easy ?? prev.difficulty_easy,
+          difficulty_medium: r.config!.target?.difficulty_dist?.medium ?? prev.difficulty_medium,
+          difficulty_hard: r.config!.target?.difficulty_dist?.hard ?? prev.difficulty_hard,
+        }));
+        setPrefilledFromRunId(r.source_run_id ?? null);
+      } catch {
+        // silent — pre-fill is best-effort, never blocks operator
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.exam_pack_id]);
+
+  // Concept autocomplete (debounced)
+  const [conceptHits, setConceptHits] = useState<ConceptSearchHit[]>([]);
+  const [showConceptHits, setShowConceptHits] = useState(false);
+  const conceptDebounceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!form.unit_mode) return;
+    if (conceptDebounceRef.current) window.clearTimeout(conceptDebounceRef.current);
+    conceptDebounceRef.current = window.setTimeout(async () => {
+      try {
+        const r = await searchConcepts(form.exam_pack_id, form.unit_concept_id, 8);
+        setConceptHits(r.hits);
+      } catch {
+        setConceptHits([]);
+      }
+    }, 200);
+    return () => {
+      if (conceptDebounceRef.current) window.clearTimeout(conceptDebounceRef.current);
+    };
+  }, [form.exam_pack_id, form.unit_concept_id, form.unit_mode]);
+
+  const [generatingObjectives, setGeneratingObjectives] = useState(false);
+  async function handleGenerateObjectives() {
+    if (!form.unit_concept_id) return;
+    setGeneratingObjectives(true);
+    try {
+      const r = await generateObjectivesStub(form.unit_concept_id, form.unit_atom_kinds);
+      const text = r.objectives.map((o) => `${o.id}|${o.statement}`).join('\n');
+      setForm((prev) => ({ ...prev, unit_objectives_text: text }));
+    } catch {
+      // silent — operator can type manually
+    } finally {
+      setGeneratingObjectives(false);
+    }
+  }
+
   const config = useMemo(() => buildConfig(form), [form]);
 
   // Debounced live dry-run as form changes
@@ -232,6 +310,11 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
         <p className="text-[11px] text-surface-500 mt-0.5">
           Every run auto-creates a wrapping experiment so lift can be measured.
         </p>
+        {prefilledFromRunId && (
+          <p className="text-[10px] text-surface-600 mt-1 font-mono">
+            ⤺ pre-filled from run <span className="text-violet-400">{prefilledFromRunId}</span>
+          </p>
+        )}
       </header>
 
       <div className="rounded-xl border border-surface-800 bg-surface-950 p-4 space-y-3">
@@ -305,13 +388,38 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Concept ID" hint="Single concept this unit covers (eng-review D1).">
-                <input
-                  type="text"
-                  value={form.unit_concept_id}
-                  onChange={(e) => setForm({ ...form, unit_concept_id: e.target.value })}
-                  placeholder="eigenvalues"
-                  className={inputCls}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={form.unit_concept_id}
+                    onChange={(e) => setForm({ ...form, unit_concept_id: e.target.value })}
+                    onFocus={() => setShowConceptHits(true)}
+                    onBlur={() => setTimeout(() => setShowConceptHits(false), 150)}
+                    placeholder="eigenvalues"
+                    className={inputCls}
+                    autoComplete="off"
+                  />
+                  {showConceptHits && conceptHits.length > 0 && (
+                    <ul className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-md border border-violet-500/30 bg-surface-950 shadow-lg">
+                      {conceptHits.map((h) => (
+                        <li key={h.concept_id}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()} // keeps focus during click
+                            onClick={() => {
+                              setForm((p) => ({ ...p, unit_concept_id: h.concept_id }));
+                              setShowConceptHits(false);
+                            }}
+                            className="block w-full text-left px-2.5 py-1.5 text-xs hover:bg-violet-500/10"
+                          >
+                            <span className="font-mono text-violet-200">{h.concept_id}</span>
+                            <span className="text-surface-500 ml-2">· {h.topic_title}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </Field>
               <Field label="Unit name">
                 <input
@@ -324,7 +432,19 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
               </Field>
             </div>
             <Field
-              label="Learning objectives"
+              label={
+                <span className="flex items-center justify-between gap-2 w-full">
+                  <span>Learning objectives</span>
+                  <button
+                    type="button"
+                    onClick={handleGenerateObjectives}
+                    disabled={!form.unit_concept_id || generatingObjectives}
+                    className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/30 text-violet-300 hover:bg-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {generatingObjectives ? '…' : 'Generate from concept'}
+                  </button>
+                </span>
+              }
               hint='One per line, "id|statement". e.g. obj_1|Define eigenvalue for a 2×2 matrix'
             >
               <textarea
@@ -536,7 +656,7 @@ function Field({
   hint,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
   hint?: string;
   children: React.ReactNode;
 }) {

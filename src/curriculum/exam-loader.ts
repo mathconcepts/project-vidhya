@@ -34,7 +34,7 @@ import type {
 
 const CURRICULUM_DIR = path.resolve(process.cwd(), 'data/curriculum');
 const VALID_SCOPES: CurriculumScope[] = [
-  'mcq-fast', 'mcq-rigorous', 'subjective-short', 'subjective-long', 'oral-viva', 'practical',
+  'mcq-fast', 'mcq-rigorous', 'mcq-and-numerical', 'subjective-short', 'subjective-long', 'oral-viva', 'practical',
 ];
 const VALID_DEPTHS: ConceptDepth[] = ['introductory', 'standard', 'advanced'];
 

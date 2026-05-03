@@ -313,14 +313,59 @@ async function handleAbort(req: ParsedRequest, res: ServerResponse): Promise<voi
   sendJSON(res, { ok: true });
 }
 
+/**
+ * GET /api/admin/runs/last-config?exam=gate-ma
+ *
+ * Returns the most recent COMPLETE run's config for the given exam pack.
+ * RunLauncher uses this to pre-fill the form when an operator opens it.
+ *
+ * Best-effort: returns `{ config: null }` if no completed run exists for
+ * this exam, or if the stored config fails the parser. Never blocks the
+ * launcher.
+ */
+async function handleLastConfig(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!(await checkAdminAuth(req, res))) return;
+  if (!requireDb(res)) return;
+
+  const exam = req.query.get('exam');
+  if (!isString(exam)) return badRequest(res, 'exam query param required');
+
+  // Direct query (avoids the listRuns sort-then-pull-first roundtrip).
+  // Mirrors the existing pool-acquisition pattern from src/generation/db.ts;
+  // we do a lightweight inline lookup here to avoid a new module.
+  const runs = await listRuns({ exam_pack_id: exam, status: 'complete', limit: 1 });
+  const last = runs[0];
+  if (!last) {
+    sendJSON(res, { config: null, source: 'none' });
+    return;
+  }
+
+  // Validate the stored config against the current parser. If it drifted
+  // (e.g. an old field shape), treat as no-last-config rather than feeding
+  // the form a malformed value.
+  const parsed = parseRunConfig(last.config);
+  if (typeof parsed === 'string') {
+    sendJSON(res, { config: null, source: 'none', validation_error: parsed });
+    return;
+  }
+
+  sendJSON(res, {
+    config: parsed,
+    source: 'last_complete_run',
+    source_run_id: last.id,
+    source_completed_at: last.completed_at,
+  });
+}
+
 // ============================================================================
 // Route table
 // ============================================================================
 
 export const adminRunsRoutes: RouteDefinition[] = [
   { method: 'GET', path: '/api/admin/runs', handler: handleList },
-  // Note: dry-run path before :id to avoid the param matcher capturing it
+  // Note: literal paths come BEFORE :id matcher to avoid param capture.
   { method: 'POST', path: '/api/admin/runs/dry-run', handler: handleDryRun },
+  { method: 'GET', path: '/api/admin/runs/last-config', handler: handleLastConfig },
   { method: 'GET', path: '/api/admin/runs/:id', handler: handleGet },
   { method: 'POST', path: '/api/admin/runs', handler: handleCreate },
   { method: 'PATCH', path: '/api/admin/runs/:id', handler: handleAbort },

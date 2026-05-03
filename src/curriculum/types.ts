@@ -30,6 +30,7 @@ export type ConceptDepth = 'introductory' | 'standard' | 'advanced';
 export type CurriculumScope =
   | 'mcq-fast'
   | 'mcq-rigorous'
+  | 'mcq-and-numerical'      // JEE Main + similar: MCQ + numerical-answer mix
   | 'subjective-short'
   | 'subjective-long'
   | 'oral-viva'

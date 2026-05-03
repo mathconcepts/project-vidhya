@@ -356,6 +356,54 @@ export async function listHoldoutPyqs(exam: string): Promise<{ exam_pack_id: str
   return jsonOrThrow(await authFetch(`/api/admin/holdout/pyqs?exam=${encodeURIComponent(exam)}`));
 }
 
+// ============================================================================
+// PR-A — Prefilled defaults helpers
+// ============================================================================
+
+export interface ConceptSearchHit {
+  concept_id: string;
+  topic_id: string;
+  topic_title: string;
+  score: number;
+}
+
+export async function getLastRunConfig(exam: string): Promise<{
+  config: GenerationRunConfig | null;
+  source: string;
+  source_run_id?: string;
+  source_completed_at?: string;
+  validation_error?: string;
+}> {
+  return jsonOrThrow(
+    await authFetch(`/api/admin/runs/last-config?exam=${encodeURIComponent(exam)}`),
+  );
+}
+
+export async function searchConcepts(
+  exam: string,
+  q: string,
+  limit = 20,
+): Promise<{ exam_pack_id: string; query: string; hits: ConceptSearchHit[]; count: number }> {
+  const qs = new URLSearchParams();
+  qs.set('exam', exam);
+  if (q) qs.set('q', q);
+  qs.set('limit', String(limit));
+  return jsonOrThrow(await authFetch(`/api/admin/concepts/search?${qs}`));
+}
+
+export async function generateObjectivesStub(
+  concept_id: string,
+  kinds: string[],
+): Promise<{
+  concept_id: string;
+  objectives: Array<{ id: string; statement: string; blooms_level: string }>;
+}> {
+  const qs = new URLSearchParams();
+  qs.set('concept_id', concept_id);
+  if (kinds.length > 0) qs.set('kinds', kinds.join(','));
+  return jsonOrThrow(await authFetch(`/api/admin/concepts/objectives-stub?${qs}`));
+}
+
 /**
  * The Phase 2 dual-metric lift result, persisted into experiments.metadata
  * by the nightly learnings-ledger. Frontend reads it from

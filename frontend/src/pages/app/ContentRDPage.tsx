@@ -11,7 +11,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Loader2, FlaskConical } from 'lucide-react';
+import { Shield, Loader2, FlaskConical, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
@@ -131,16 +131,42 @@ export default function ContentRDPage() {
         </p>
       </motion.header>
 
-      {error && (
+      {error && /DATABASE_URL/i.test(error) ? (
         <motion.div
           variants={fadeInUp}
-          className="rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-300 p-3"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-2"
         >
-          {error}
+          <div className="flex items-center gap-2 text-amber-300 text-sm font-medium">
+            <Database size={14} /> Content R&D needs a database
+          </div>
+          <p className="text-xs text-surface-300 leading-relaxed">
+            This deploy is running without <code>DATABASE_URL</code>. Generation
+            runs, experiments, and the lift ledger all persist to Postgres, so
+            the launcher is hidden until a DB is configured.
+          </p>
+          <p className="text-xs text-surface-400 leading-relaxed">
+            <strong>Local:</strong> run <code>docker compose up</code> for the
+            full stack with Postgres + pgvector. <strong>Cloud:</strong> set
+            the <code>DATABASE_URL</code> env var (a Supabase or Render Postgres
+            connection string) and redeploy. See{' '}
+            <a href="/admin/scenarios" className="text-violet-300 underline">
+              /admin/scenarios
+            </a>{' '}
+            for the demo path that runs without a DB.
+          </p>
         </motion.div>
-      )}
+      ) : (
+        <>
+          {error && (
+            <motion.div
+              variants={fadeInUp}
+              className="rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-300 p-3"
+            >
+              {error}
+            </motion.div>
+          )}
 
-      <SuggestedRunsPanel
+          <SuggestedRunsPanel
         suggestions={suggestions}
         loading={loadingSuggestions}
         onRefresh={loadSuggestions}
@@ -166,12 +192,14 @@ export default function ContentRDPage() {
         onAborted={() => void loadRuns()}
       />
 
-      <EffectivenessLedger
-        experiments={experiments}
-        loading={loadingExperiments}
-        onRefresh={loadExperiments}
-        onRecomputed={loadExperiments}
-      />
+          <EffectivenessLedger
+            experiments={experiments}
+            loading={loadingExperiments}
+            onRefresh={loadExperiments}
+            onRecomputed={loadExperiments}
+          />
+        </>
+      )}
     </motion.div>
   );
 }

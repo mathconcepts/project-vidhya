@@ -101,7 +101,7 @@ export default function LLMConfigPage() {
   const [keyDraft, setKeyDraft] = useState<string>('');
   const [endpointDraft, setEndpointDraft] = useState<string>('');
   const [validating, setValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<null | { ok: boolean; reason?: string; latency_ms?: number }>(null);
+  const [validationResult, setValidationResult] = useState<null | { ok: boolean; stage?: string; reason?: string; latency_ms?: number }>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Load providers once
@@ -179,7 +179,7 @@ export default function LLMConfigPage() {
         }),
       });
       const d = await res.json();
-      setValidationResult({ ok: !!d.valid, reason: d.reason, latency_ms: d.latency_ms });
+      setValidationResult({ ok: !!d.valid, stage: d.stage, reason: d.reason, latency_ms: d.latency_ms });
       if (d.valid) {
         update({
           primary_key: keyDraft,
@@ -377,38 +377,46 @@ export default function LLMConfigPage() {
 
           {/* Validation result */}
           <AnimatePresence mode="wait">
-            {validationResult && (
-              <motion.div
-                key={validationResult.ok ? 'ok' : 'fail'}
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className={clsx(
-                  'p-3 rounded-xl border flex items-start gap-2',
-                  validationResult.ok
-                    ? 'bg-emerald-500/10 border-emerald-500/25'
-                    : 'bg-rose-500/10 border-rose-500/25',
-                )}
-              >
-                {validationResult.ok
-                  ? <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                  : <X size={14} className="text-rose-400 shrink-0 mt-0.5" />}
-                <div className="flex-1 min-w-0">
-                  <p className={clsx(
-                    'text-xs font-medium',
-                    validationResult.ok ? 'text-emerald-300' : 'text-rose-300',
-                  )}>
-                    {validationResult.ok ? 'Key works — saved' : 'Key didn\'t validate'}
-                  </p>
-                  {validationResult.reason && (
-                    <p className="text-[11px] text-surface-400 mt-0.5 break-words">{validationResult.reason}</p>
+            {validationResult && (() => {
+              const skipped = !validationResult.ok && validationResult.stage === 'skipped';
+              const variant = validationResult.ok ? 'ok' : skipped ? 'skipped' : 'fail';
+              return (
+                <motion.div
+                  key={variant}
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className={clsx(
+                    'p-3 rounded-xl border flex items-start gap-2',
+                    variant === 'ok' && 'bg-emerald-500/10 border-emerald-500/25',
+                    variant === 'skipped' && 'bg-amber-500/10 border-amber-500/25',
+                    variant === 'fail' && 'bg-rose-500/10 border-rose-500/25',
                   )}
-                  {validationResult.ok && validationResult.latency_ms !== undefined && (
-                    <p className="text-[10px] text-surface-500 mt-0.5">Roundtrip: {validationResult.latency_ms}ms</p>
-                  )}
-                </div>
-              </motion.div>
-            )}
+                >
+                  {variant === 'ok' && <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />}
+                  {variant === 'skipped' && <Info size={14} className="text-amber-400 shrink-0 mt-0.5" />}
+                  {variant === 'fail' && <X size={14} className="text-rose-400 shrink-0 mt-0.5" />}
+                  <div className="flex-1 min-w-0">
+                    <p className={clsx(
+                      'text-xs font-medium',
+                      variant === 'ok' && 'text-emerald-300',
+                      variant === 'skipped' && 'text-amber-300',
+                      variant === 'fail' && 'text-rose-300',
+                    )}>
+                      {variant === 'ok' && 'Key works — saved'}
+                      {variant === 'skipped' && 'Test skipped — local endpoint'}
+                      {variant === 'fail' && 'Key didn\'t validate'}
+                    </p>
+                    {validationResult.reason && (
+                      <p className="text-[11px] text-surface-400 mt-0.5 break-words">{validationResult.reason}</p>
+                    )}
+                    {validationResult.ok && validationResult.latency_ms !== undefined && (
+                      <p className="text-[10px] text-surface-500 mt-0.5">Roundtrip: {validationResult.latency_ms}ms</p>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })()}
           </AnimatePresence>
         </motion.div>
       )}

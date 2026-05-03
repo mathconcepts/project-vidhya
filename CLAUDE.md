@@ -318,6 +318,58 @@ PATCH  /api/admin/exam-packs/:id        update name / status / interactives_enab
 
 **All locked-plan PRs shipped.** Curriculum R&D Phases 1–4 complete.
 
+---
+
+### Personalization (§5.2, PRs #36–#40)
+
+5-layer weighted selector + Phase B prompt steering, all surveillance-disciplined.
+
+- `src/personalization/selector.ts` — `applyPersonalizedRanking()` re-ranks atoms within an already-selected set. Layer weights frozen (sum to 1.0): syllabus 0.10, exam 0.05, cohort 0.30, user_mastery 0.30, user_error 0.15, realtime 0.10. Dedup hard-floor with progressive backoff (7d → 3d → 1d → 0d).
+- `src/personalization/lesson-wire.ts` — single integration point into both `/api/lesson/compose` and `/api/lesson/:concept_id`. Anonymous + control-bucket sessions short-circuit unchanged. Activated by creating an `experiments` row with id `personalized_selector_v1_gate_ma` (deliberately out-of-band, NOT a migration).
+- `src/personalization/student-context.ts` — Phase B payload threaded into the LLM prompt: `representation_mode`, `motivation_state`, `current_concept_mastery`, `recent_misconceptions`, `shaky_prerequisites`, `prior_curriculum`. Built on demand from `student_model` + `error_log` + `exam_profile_store` + `knowledge/tracks`. Never persisted.
+- `src/personalization/__tests__/surveillance-invariants.test.ts` — 7 CI invariants. Schema can't sprout `personalized_*` / `tracked_*` / `behavior_*` / `student_context_*` columns; `realtime-nudge.ts` can't write to the DB; `src/api/*` can't import `personalization/` (except the allowlisted `lesson-wire`); frontend can't import `personalization/` or access scorer fields; persona YAML can't contain real PII; admin scenario routes can't echo scorer internals; `/admin/scenarios` must be admin-gated.
+
+CompoundingCard data flow audited end-to-end (#40): `PlannedSessionPage` and `KnowledgeHomePage` now pass `useSession()` through to `<CompoundingCard sessionId={…} />` so the streak row renders. `/api/student/compounding` payload allowlisted to block peer/percentile/rank/comparison fields.
+
+---
+
+### Demo-as-Moat — Persona Scenarios (PRs #41–#43)
+
+A 3-minute on-screen demo that proves "personalization is real, not theatre". The loop:
+
+```
+data/personas/<id>.yaml
+  → npm run demo:scenario <persona> <concept>
+  → .data/scenarios/<run-id>/{trial.json, digest.md, pending.json?}
+  → /admin/scenarios in the UI
+  → click "Show neutral version" → side-by-side panel
+```
+
+**Key files:**
+
+- `data/personas/*.yaml` — versioned (`schema_version: 1`). Two locked personas: `priya-cbse-12-anxious` (geometric, anxious) and `arjun-iit-driven` (algebraic, driven).
+- `src/scenarios/persona-loader.ts` — strict YAML validation; rejects unknown schema versions, bad slugs, out-of-range mastery, non-scripted policies.
+- `src/scenarios/policy-runner.ts` — deterministic mulberry32 PRNG seeded by `SHA-256(persona.id + ':' + concept_id + ':' + atom_idx)`. No `Math.random` anywhere; output is reproducible.
+- `src/scenarios/persona-seeder.ts` — writes a `student_model` row + `exam_profile_store` entry under the namespaced UUID prefix `0aded0a0-` so persona rows never collide with real users. Seeder refuses to overwrite a non-persona row.
+- `src/scenarios/trial-runner.ts` + `src/scenarios/trial-storage.ts` — pure-function loop over a JSON-serialisable `TrialState`. Pauses on the first interactive / unanswerable atom, records a `resume_token`, 24h timeout.
+- `scripts/run-scenario.ts` + `scripts/run-scenario-resume.ts` — `npm run demo:scenario` and `npm run demo:scenario:resume`.
+- `src/api/admin-scenarios-routes.ts` — `GET /api/admin/scenarios`, `GET /api/admin/scenarios/:id`, `POST /api/admin/scenarios/:id/neutral-render`. Per-admin 10/hour rate limit on neutral-render; disk cache short-circuits before consuming a token.
+- `frontend/src/pages/app/ScenariosPage.tsx` at `/admin/scenarios` — list + detail UI. Each event row exposes a "Show neutral version" button that fetches the on-demand render and shows the side-by-side panel.
+
+**Storage layout:**
+
+```
+.data/scenarios/<run-id>/
+  trial.json     — source of truth (TrialState)
+  pending.json   — present iff status === 'paused'
+  digest.md      — markdown view, regenerated from trial.json
+  _neutral_cache/<concept>__<atom_id>.txt   — disk cache for neutral renders
+```
+
+`VIDHYA_SCENARIO_ROOT` and `VIDHYA_SCENARIO_NEUTRAL_CACHE` env vars override defaults (used by tests + CI).
+
+**Demo runbook:** see `docs/moat-demo.md` for the guided 3-minute path.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

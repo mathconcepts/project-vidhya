@@ -11,6 +11,7 @@
 | File | Contents |
 |------|----------|
 | [`moat-demo.md`](./moat-demo.md) | **3-minute persona-scenarios demo** — setup, side-by-side moat surface, talking points, troubleshooting |
+| [`admin-guide-jee-tn.md`](./admin-guide-jee-tn.md) | **End-to-end admin guide** — launching JEE prep for Tamil-Nadu-board, anxious students. Step-by-step through rulesets → blueprints → persona validation → batch generation → effectiveness ledger |
 | [`01-quick-start.md`](./01-quick-start.md) | 5-minute local setup |
 | [`admin-dashboard-quickstart.md`](./admin-dashboard-quickstart.md) | Admin dashboard tour |
 

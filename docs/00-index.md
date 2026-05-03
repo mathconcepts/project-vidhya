@@ -1,103 +1,89 @@
 # Project Vidhya — Documentation Index
 
-> **Last updated:** 2026-05-01
-> **Total docs:** 25 files + 1 guide + infra/ + `agents/` org chart
-
-This is the master index of all documentation in the `docs/` directory, organised hierarchically.
-
-> [!IMPORTANT]
-> **Agent organisation has been restructured.** The product is now
-> designed as a one-person company run by 48 agents under a single
-> CEO (1 CEO + 6 C-suite + 17 managers + 24 specialists). This
-> supersedes the original 7-agent persona architecture described in
-> `02-agent-architecture.md`. The authoritative current reference is
-> [`../agents/ORG-CHART.md`](../agents/ORG-CHART.md). GBrain is the
-> cognitive spine — every cognitively-dependent agent declares its
-> GBrain dependency in its YAML manifest, and the validator
-> (`python3 agents/validate-graph.py`) enforces it. See
-> [`../agents/_shared/gbrain-integration.md`](../agents/_shared/gbrain-integration.md)
-> for the contract.
+> The canonical map of `/docs/`. Repo-root master docs (architecture,
+> deploy, modules, plans) live one level up — see `../README.md` for
+> the full doc tree.
 
 ---
 
-## 🏗️ Foundation
+## 🎬 Demos & quick paths
 
-| # | File | Contents |
-|---|------|----------|
-| 00 | `00-overview.md` | Product overview, mission, agent roster |
-| 01 | `01-quick-start.md` | 5-minute local setup guide |
-| 02 | `02-agent-architecture.md` | *Legacy 7-agent persona architecture — superseded by [`agents/ORG-CHART.md`](../agents/ORG-CHART.md)* |
-| — | [`../agents/ORG-CHART.md`](../agents/ORG-CHART.md) | **Current** 48-agent C-suite organisation chart |
-| — | [`../agents/CUSTOMER-LIFECYCLE.md`](../agents/CUSTOMER-LIFECYCLE.md) | Customer journey (acquisition → retention → win-back) mapped onto the agent org, with demo→paid conversion and content add/remove worked scenarios |
-| — | [`../agents/_shared/constitution.md`](../agents/_shared/constitution.md) | The four core promises + non-negotiable invariants |
-| — | [`../agents/_shared/gbrain-integration.md`](../agents/_shared/gbrain-integration.md) | GBrain cognitive-spine contract |
-| 03 | `03-llm-abstraction.md` | LLM service layer, model fallback chain |
-| 04 | `04-event-system.md` | Typed signal bus, event catalogue |
-| 05 | `05-data-layer.md` | localStorage schema, IndexedDB, Supabase |
+| File | Contents |
+|------|----------|
+| [`moat-demo.md`](./moat-demo.md) | **3-minute persona-scenarios demo** — setup, side-by-side moat surface, talking points, troubleshooting |
+| [`01-quick-start.md`](./01-quick-start.md) | 5-minute local setup |
+| [`admin-dashboard-quickstart.md`](./admin-dashboard-quickstart.md) | Admin dashboard tour |
 
 ---
 
-## 🔌 Integration & API
+## 🧠 Frameworks (the "why" behind the systems)
 
-| # | File | Contents |
-|---|------|----------|
-| 06 | `06-api-reference.md` | All service APIs, function signatures |
-| 07 | `07-workflows.md` | Multi-step agent workflow diagrams |
-| 10 | `10-configuration.md` | All env vars, connection keys, feature flags |
-| — | `CEO-INTEGRATIONS-GUIDE.md` | CEO-facing guide to all API connections |
-
----
-
-## 🚀 Deployment & Infrastructure
-
-| # | File | Contents |
-|---|------|----------|
-| 09 | `09-deployment.md` | Deployment overview + strategies |
-| 12 | `12-go-live-checklist.md` | Pre-launch checklist |
-| 13 | `13-deployment-modes.md` | Local / Hybrid / PaaS / AWS / GCP modes |
-| 19 | `19-deployment-options.md` | Deployment options comparison matrix |
-| — | `infra/` | Infrastructure configuration files |
+| File | Contents |
+|------|----------|
+| [`COMPOUNDING-MASTERY-FRAMEWORK.md`](./COMPOUNDING-MASTERY-FRAMEWORK.md) | The mastery + compounding model that the student-facing surface defends |
+| [`CURRICULUM-FRAMEWORK.md`](./CURRICULUM-FRAMEWORK.md) | Curriculum units, learning objectives, PYQ alignment |
+| [`EXAM-FRAMEWORK.md`](./EXAM-FRAMEWORK.md) | Exam packs, scope, sections, weights |
+| [`LESSON-FRAMEWORK.md`](./LESSON-FRAMEWORK.md) | Lesson composition + atom selection |
+| [`RENDERING-FRAMEWORK.md`](./RENDERING-FRAMEWORK.md) | Frontend rendering + multi-modal sidecars |
 
 ---
 
-## 🎓 Feature Guides
+## 🚪 Roles & journeys
 
-| # | File | Contents |
-|---|------|----------|
-| 12 | `12-content-delivery.md` | Content delivery pipeline, sequencing |
-| 14 | `14-exam-configuration.md` | Per-exam setup: Wolfram, Telegram, Pinecone |
-| 15 | `15-frontend-preview.md` | Frontend routes, role views, UI overview |
-| 16 | `16-website-portal-architecture.md` | Public website + app portal architecture |
-
----
-
-## 🧭 Master Design & Audits
-
-| # | File | Contents |
-|---|------|----------|
-| 17 | `17-master-design-documentation.md` | Complete system design, data flows |
-| 18 | `18-agent-connection-map.md` | Bidirectional signal reference for all 8 agents (updated 2026-03-11: Prism + FUNNEL_INSIGHT + inbox processors) |
-| 19 | `19-audit-report.md` | Full dual-direction audit (2026-03-10) — findings + fixes |
-| 20 | `20-content-system.md` | Content generation & delivery system architecture (2026-03-10; updated 2026-03-13: two-layer architecture, new services, new CEO pages) |
-| 21 | `21-course-summary-outline.md` | Pre-approval hierarchical course outline — data model, API, UI, Atlas integration (2026-03-11) |
-| 22 | `22-help-manual.md` | **Complete help manual** — scratch-to-deploy all options, every agent + sub-agent, all connections, full student journey to course content (updated 2026-03-13: content personalization + course playbook) |
-| 23 | `23-two-layer-content-architecture.md` | Mandatory + personalized two-layer content system — 16 SlotIds, 18 ContentModules, 9 resolution scenarios, layer-aware generation pipeline, ContentLayerService orchestration (2026-03-13) |
-| 24 | `24-course-playbook.md` | Course Playbook — universal knowledge graph, 10-section schema, agent ownership map, progressive update hooks, CEO page guide, localStorage schema, Supabase migration path, 10 seeded GATE EM subtopics, full API reference (2026-03-13) |
-| 25 | `25-course-material-generator.md` | Course Material Generator — 8 templates, 34 personalization variables (5-dimension table), free-form request parsing, generateCourseMaterial() flow, autoPersonalize(), CourseMaterialStudio CEO + student modes, Sage integration (2026-03-13) |
+| File | Contents |
+|------|----------|
+| [`ROLES-AND-ACCESS.md`](./ROLES-AND-ACCESS.md) | Auth model + role-based access |
+| [`USER-JOURNEY.md`](./USER-JOURNEY.md) | Student journey: anonymous → identified → engaged |
+| [`TEACHER-JOURNEY.md`](./TEACHER-JOURNEY.md) | Teacher journey: roster → assignment → review |
+| [`session-planner.md`](./session-planner.md) | Session planner internals |
 
 ---
 
-## 🧪 Testing
+## 🔌 Integration & ops
 
-| # | File | Contents |
-|---|------|----------|
-| 08 | `08-testing-guide.md` | Test setup, unit + integration test patterns |
+| File | Contents |
+|------|----------|
+| [`LLM-CONFIGURATION.md`](./LLM-CONFIGURATION.md) | LLM provider config + fallback chain |
+| [`MULTI-CHANNEL-SETUP.md`](./MULTI-CHANNEL-SETUP.md) | Telegram + WhatsApp channel wiring |
+| [`mcp-integration.md`](./mcp-integration.md) | MCP server integration |
+| [`14-exam-configuration.md`](./14-exam-configuration.md) | Per-exam configuration: Wolfram, channels, vector store |
+| [`12-go-live-checklist.md`](./12-go-live-checklist.md) | Pre-launch checklist |
+| [`infra/`](./infra/) | Infrastructure configuration files |
 
 ---
 
-## Notes
+## 📚 Content system
 
-- `00-overview.md` was previously the closest to an index — this file supersedes it as master index
-- `12-content-delivery.md` and `12-go-live-checklist.md` share the `12-` prefix (renaming deferred)
-- `19-deployment-options.md` and `19-audit-report.md` share the `19-` prefix (audit report added 2026-03-10)
-- `infra/` contains infrastructure-specific configs (docker-compose, nginx, etc.)
+| File | Contents |
+|------|----------|
+| [`12-content-delivery.md`](./12-content-delivery.md) | Content delivery pipeline + sequencing |
+| [`20-content-system.md`](./20-content-system.md) | Content generation + delivery architecture |
+| [`23-two-layer-content-architecture.md`](./23-two-layer-content-architecture.md) | Mandatory + personalised two-layer content |
+| [`24-course-playbook.md`](./24-course-playbook.md) | Course Playbook: knowledge graph + 10-section schema |
+| [`25-course-material-generator.md`](./25-course-material-generator.md) | Course Material Generator: templates + personalisation variables |
+| [`21-course-summary-outline.md`](./21-course-summary-outline.md) | Pre-approval hierarchical course outline |
+| [`22-help-manual.md`](./22-help-manual.md) | Long-form help manual |
+
+---
+
+## 🏗 Engineering reference
+
+| File | Contents |
+|------|----------|
+| [`05-data-layer.md`](./05-data-layer.md) | localStorage + IndexedDB + Supabase data layer |
+| [`08-testing-guide.md`](./08-testing-guide.md) | Test setup, unit + integration patterns |
+| [`15-frontend-preview.md`](./15-frontend-preview.md) | Frontend routes, role views, UI overview |
+| [`16-website-portal-architecture.md`](./16-website-portal-architecture.md) | Public website + app portal architecture |
+| [`operator-snippets/`](./operator-snippets/) | Curl recipes for ops |
+
+---
+
+## 📦 Snapshots
+
+`snapshots/` — manifests for every shipped state. Each entry pins git SHA + Docker image + env. See `../scripts/snapshot.sh`.
+
+---
+
+## Notes on the numbered files
+
+The numeric prefixes (`05-`, `12-`, etc.) are historical and don't imply a reading order. Prefer the categories above. Several earlier numbered files described the v2.0 7-agent architecture; those have been pruned. The current architecture is documented in [`../ARCHITECTURE.md`](../ARCHITECTURE.md) and [`../CLAUDE.md`](../CLAUDE.md).

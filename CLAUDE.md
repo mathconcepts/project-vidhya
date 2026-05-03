@@ -370,6 +370,86 @@ data/personas/<id>.yaml
 
 **Demo runbook:** see `docs/moat-demo.md` for the guided 3-minute path.
 
+---
+
+### Batch Generation (PRs #47–#50)
+
+Moves content generation off sync LLM calls onto provider Batch APIs (~50% cheaper, no rate-limit pain). Five-state machine with mid-flight resume:
+
+```
+queued → prepared → submitted → downloading → processing → complete
+             ↑           ↑                                       │
+             └─ rebuild from batch_jobs if JSONL gone ─┐         │
+                                       any state ─────┴─── failed | aborted
+```
+
+**Key files:**
+
+- `src/generation/batch/types.ts` — `BatchAdapter` interface + state machine. Locked `BatchState` enum + `IN_FLIGHT_STATES` / `TERMINAL_STATES`.
+- `src/generation/batch/jsonl-builder.ts` — deterministic `customIdFor(run_id, spec)` (SHA-256 over canonical-stringified spec). Same input → byte-identical JSONL → provider de-dupes by `display_name=run_id`.
+- `src/generation/batch/gemini-adapter.ts` — pure HTTP layer over Gemini Batch. 5xx retries with exponential backoff; 4xx surfaces immediately.
+- `src/generation/batch/orchestrator.ts` — five idempotent state handlers. Every transition writes to DB BEFORE the next side-effect; crash mid-step is recoverable from persisted state alone.
+- `src/generation/batch/pg-persistence.ts` — Postgres impl of `BatchPersistence` with `pg_try_advisory_lock` keyed by `FNV-1a(run_id)` so two pollers can't race.
+- `src/generation/batch/poller.ts` — `pollAllInFlightBatches()` shared by boot resume (`resumeAllInFlightBatches`) + 5-min cron poller.
+
+**Schema (migration 026):** `generation_runs` gains `batch_provider` / `batch_id` / `batch_state` / `submitted_at` / `jsonl_path` / `last_polled_at` / `budget_locked_usd`. New `batch_jobs` table (per-atom durable ledger) keyed by `(run_id, custom_id)` with `processed_at` as the per-row idempotency keystone.
+
+**Resume guarantees** (every failure mode covered by tests):
+- JSONL on disk lost → rebuilt deterministically from `batch_jobs.atom_spec` rows
+- `submitted` polling crashes → boot poller resumes; provider de-dupes on re-submit
+- `processing` half-done → `processed_at IS NULL` filter, only re-processes what's left
+- Per-job hook failure → marks that job's error, continues with the rest
+- Operator Abort → calls `cancelBatch` on provider before flipping state
+- 24h provider timeout → `failed:provider_timeout` with operator Resubmit
+- Cost cap exceeded → rejected BEFORE any provider call
+
+**Rate-limit telemetry (PR #50):** `src/llm/rate-limit-tracker.ts` records outcome + latency on every `callChat`. Hourly checkpoint to `.data/rate-limits.json`. Weekly learnings-ledger digest gains a "Rate limits hit this week" section with 🔥 hot-bucket callout for >5% 429s. Tracks PROVIDER outcomes, not student behaviour.
+
+---
+
+### Content Blueprints (PR #51)
+
+The "spec layer" between `RunLauncher` and the `curriculum-unit-orchestrator`. Each blueprint is a human-editable plan that explicitly names stages, atom kinds, and constraints — plus the `rationale_id` for every choice — so the lift ledger can correlate spec shape with measured outcomes.
+
+**Locked v1 contract (mutating in place forbidden — future shape changes ship as `decisions_v2 JSONB`):**
+
+```ts
+{
+  version: 1,
+  metadata: { concept_id, exam_pack_id, target_difficulty },
+  stages: [
+    { id: 'intuition', atom_kind: 'visual_analogy', rationale_id: 'concept_is_geometric' },
+    { id: 'practice', atom_kind: 'mcq', count: 3, difficulty_mix: { easy: 50, medium: 30, hard: 20 }, rationale_id: 'default_practice_mix' },
+  ],
+  constraints: [{ id: 'no_jargon_first_definition', source: 'template' }],
+}
+```
+
+- `StageKind ∈ {intuition, discovery, formalism, worked_example, practice, pyq_anchor}`
+- `AtomKind` reuses the existing 8 kinds
+- `rationale_id` is a closed-enum string (the join key for the eventual lift-ledger groupby)
+- `practice` stages must declare `count` + `difficulty_mix` summing to 100
+- `constraints` carry `source ∈ {template, arbitrator, operator, ruleset}`
+
+**Schema (migration 027):** `content_blueprints` table with `superseded_by` chains for non-destructive history. `generation_runs.blueprint_id` FK column (nullable; legacy runs untouched).
+
+**Code:**
+
+- `src/blueprints/types.ts` — locked v1 types + closed enums
+- `src/blueprints/validator.ts` — runtime validation; refuses invalid shape AND any field name matching `/user_id|session_id|behavior|tracked|surveillance/i` at any depth (defense-in-depth)
+- `src/blueprints/template-engine.ts` — deterministic blueprint producer. Picks atom kinds by topic family (geometric → `visual_analogy`, algebraic → `worked_example`, computational → `manipulable` for discovery). No LLM, no DB, no clocks.
+- `src/blueprints/persistence.ts` — pg-backed CRUD with optimistic concurrency via `updated_at` ETag + cycle-safe `supersedeBlueprint`
+- `src/blueprints/to-unit-spec.ts` — pure translator from blueprint to the orchestrator's existing `CurriculumUnitSpec` shape
+- `src/api/admin-blueprints-routes.ts` — admin REST: `GET/POST /api/admin/blueprints`, `GET/PATCH /api/admin/blueprints/:id` (requires `If-Match`), `POST /api/admin/blueprints/:id/approve`. 409 Conflict on ETag mismatch.
+- `frontend/src/pages/app/BlueprintsPage.tsx` at `/admin/blueprints[/:id]` — sidebar + per-stage rationale + JSON edit-in-place with conflict recovery
+
+**Surveillance invariant 8:** migration grepped + validator runtime check both refuse behavioural / per-student field names.
+
+**What's deferred** (per locked CEO recommendation — ship blueprint, observe, then iterate):
+- LLM arbitrator (PR-2): override template baseline when context warrants
+- Operator-uploaded rulesets (PR-3): plain-text constraints scoped by `(exam_pack_id, concept_pattern)`
+- Lift-ledger blueprint section (PR-4): weekly digest groups lift by `(template_version, stage shape)`
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

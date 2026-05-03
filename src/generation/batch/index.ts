@@ -20,3 +20,6 @@ export { TERMINAL_STATES, IN_FLIGHT_STATES } from './types';
 export { customIdFor, buildJobs, buildJsonl, renderPrompt, stableStringify } from './jsonl-builder';
 
 export { createGeminiBatchAdapter } from './gemini-adapter';
+
+export type { BatchPersistence, RunRow, JobRow } from './persistence';
+export { createBatchOrchestrator, type StepResult, type OrchestratorOpts } from './orchestrator';

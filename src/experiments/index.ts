@@ -34,3 +34,6 @@ export type {
 } from './snapshotter';
 export { computeLift, computePyqAccuracyDelta } from './lift';
 export type { ComputeLiftOptions, ComputePyqDeltaOptions } from './lift';
+
+export { suggestForExperiment } from './ledger-suggestions';
+export type { LedgerSuggestion, SuggestionKind, ExperimentSummary } from './ledger-suggestions';

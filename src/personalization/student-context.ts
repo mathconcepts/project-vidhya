@@ -76,6 +76,16 @@ export interface StudentContext {
    * below 0.4 — drives "scaffold from this lower concept" hints.
    */
   shaky_prerequisites: string[];
+  /**
+   * Short human label of the student's school curriculum context, e.g.
+   * "CBSE Class 12 Mathematics". Sourced from the registered knowledge
+   * track on the student's exam profile. null when no track registered
+   * → prompt falls back to today's generic framing.
+   *
+   * Drives "delta from school syllabus" framing — the prompt can lean
+   * on what the student already covered there instead of re-teaching it.
+   */
+  prior_curriculum: string | null;
   /** True when payload is the all-defaults neutral shape (unknown student). */
   is_neutral: boolean;
 }
@@ -86,6 +96,7 @@ export const NEUTRAL_CONTEXT: StudentContext = Object.freeze({
   current_concept_mastery: 0.3,
   recent_misconceptions: [],
   shaky_prerequisites: [],
+  prior_curriculum: null,
   is_neutral: true,
 });
 
@@ -183,8 +194,32 @@ export async function buildStudentContext(input: BuildContextInput): Promise<Stu
     current_concept_mastery,
     recent_misconceptions,
     shaky_prerequisites: shaky_prerequisites.slice(0, 3),
+    prior_curriculum: await resolvePriorCurriculum(student_id),
     is_neutral: false,
   };
+}
+
+/**
+ * Resolves the student's school-curriculum label from their registered
+ * exam profile (first exam's knowledge_track_id). Returns null when no
+ * profile / no track / unknown track id — prompt then falls back to
+ * today's generic framing.
+ *
+ * Read-only: never writes to the profile or track tables. The profile
+ * store is a flat-file by design (existing module — we just read it).
+ */
+async function resolvePriorCurriculum(student_id: string): Promise<string | null> {
+  try {
+    const { getProfile } = await import('../session-planner/exam-profile-store');
+    const { getTrack } = await import('../knowledge/tracks');
+    const profile = getProfile(student_id);
+    const trackId = profile?.exams?.[0]?.knowledge_track_id;
+    if (!trackId) return null;
+    const track = getTrack(trackId);
+    return track?.display_name ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // ============================================================================
@@ -232,6 +267,13 @@ export function toPromptText(ctx: StudentContext): string {
   if (ctx.recent_misconceptions.length > 0) {
     parts.push(
       `- They have recently tripped on these misconceptions for this concept: ${ctx.recent_misconceptions.join(', ')}. Address one of them DIRECTLY in this atom (do not say "you got X wrong" — model the correct reasoning so the misconception becomes visibly wrong).`,
+    );
+  }
+
+  // Prior curriculum — school syllabus context
+  if (ctx.prior_curriculum) {
+    parts.push(
+      `- Coming from: ${ctx.prior_curriculum}. Where this concept overlaps with that syllabus, build ON that prior coverage rather than re-teaching it from scratch; lean on familiar notation when natural.`,
     );
   }
 

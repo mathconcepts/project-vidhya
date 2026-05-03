@@ -27,16 +27,21 @@ Vidhya separates **what you ask for** from **what gets generated**. There's a de
                   Persona scenarios validate the blueprint before it ships
 ```
 
-You'll touch six screens. Bookmark them now:
+You'll touch nine screens. Bookmark them now:
 
 | URL | Purpose |
 |---|---|
+| `/admin/journey` | **Your home base.** 8-milestone progress timeline; always shows the next high-leverage move |
 | `/admin/exam-packs` | Define or pick the exam (e.g. `jee-main`) |
 | `/admin/rulesets` | Cohort-wide constraints ("always lead geometric for vectors") |
 | `/admin/blueprints` | The spec layer for a single concept |
 | `/admin/scenarios` | Validate a blueprint against a persona before generating |
-| `/admin/content-rd` | Launch generation runs + watch the effectiveness ledger |
+| `/admin/content-rd` | Launch generation runs + watch the effectiveness ledger (now with inline action suggestions per row) |
+| `/admin/cohort` | Surfaces only the (max 10) students who need attention this week |
+| `/admin/decisions` | Chronological feed of everything you've done — answers "what did I change last week?" |
 | `/admin/holdout` | The honest accuracy signal against frozen past-paper PYQs |
+
+**New here?** Start at `/admin/journey`. The other pages are linked from each milestone's CTA, plus a `JourneyNudge` banner at the top of every page reminds you of the current next move.
 
 ---
 

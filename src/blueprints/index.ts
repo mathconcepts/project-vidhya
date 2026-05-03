@@ -79,3 +79,13 @@ export {
   type BlueprintRuleset,
   type CreateRulesetInput,
 } from './rulesets';
+
+export {
+  listPresets,
+  getPreset,
+  installPreset,
+  type PresetDescriptor,
+  type PresetRulesetSpec,
+  type PresetBlueprintSpec,
+  type InstallResult,
+} from './presets';

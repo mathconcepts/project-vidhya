@@ -14,6 +14,7 @@ export interface BlueprintRuleset {
 export async function listRulesets(exam?: string): Promise<BlueprintRuleset[]> {
   const q = exam ? `?exam=${encodeURIComponent(exam)}` : '';
   const r = await authFetch(`/api/admin/rulesets${q}`);
+  if (r.status === 503) throw new Error('DATABASE_URL not configured');
   if (!r.ok) throw new Error(`list failed: ${r.status}`);
   const body = (await r.json()) as { rulesets: BlueprintRuleset[] };
   return body.rulesets;

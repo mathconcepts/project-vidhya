@@ -30,6 +30,7 @@ import { adminRulesetsRoutes } from './api/admin-rulesets-routes';
 import { adminJourneyRoutes } from './api/admin-journey-routes';
 import { adminDecisionsRoutes } from './api/admin-decisions-routes';
 import { adminCohortRoutes } from './api/admin-cohort-routes';
+import { adminPresetsRoutes } from './api/admin-presets-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
 import { socialRoutes } from './api/social-routes';
 import { commanderRoutes } from './api/commander-routes';
@@ -200,6 +201,9 @@ for (const route of adminDecisionsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminCohortRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminPresetsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of chatRoutes) {

@@ -7,13 +7,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Loader2, Lock, Plus, Trash2, Sparkles } from 'lucide-react';
+import { Loader2, Lock, Plus, Trash2, Sparkles, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   listRulesets, createRuleset, setRulesetEnabled, deleteRuleset,
   type BlueprintRuleset,
 } from '@/api/admin/rulesets';
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
+import { PresetsPanel } from '@/components/admin/PresetsPanel';
 
 export default function RulesetsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -73,9 +74,26 @@ export default function RulesetsPage() {
         </p>
       </header>
 
-      {error && (
+      {error && /503|DATABASE_URL/i.test(error) ? (
+        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-amber-300 text-sm font-medium">
+            <Database size={14} /> Rulesets need a database
+          </div>
+          <p className="text-xs text-surface-300 leading-relaxed">
+            This deploy is running without <code>DATABASE_URL</code>. Rulesets, blueprints, and the
+            generation pipeline all persist to Postgres. Set the env var on Render and redeploy, or
+            run <code>docker compose up</code> locally.
+          </p>
+          <p className="text-xs text-surface-400">
+            Until then, you can still browse the <code>/admin/scenarios</code> demo path which works
+            without a DB.
+          </p>
+        </div>
+      ) : error ? (
         <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">{error}</div>
-      )}
+      ) : null}
+
+      <PresetsPanel onInstalled={() => refresh()} />
 
       <button
         onClick={() => setCreating((c) => !c)}

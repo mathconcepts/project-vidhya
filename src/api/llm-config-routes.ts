@@ -78,6 +78,27 @@ async function handleValidate(req: ParsedRequest, res: ServerResponse): Promise<
   // Live validation — make a minimal, cheap call to the provider's list/models
   // or a 1-token chat, depending on api_shape.
   const usedEndpoint = endpoint || provider.default_endpoint;
+
+  // If the endpoint points at the user's own machine (Ollama, LM Studio,
+  // local custom proxy) and THIS server isn't running locally, the fetch
+  // will always fail — Render can't reach the user's localhost. Surface
+  // a friendly skip rather than a confusing "fetch failed".
+  if (isLocalEndpoint(usedEndpoint) && !isLocalServer(req.headers.host)) {
+    return sendJSON(
+      res,
+      {
+        valid: false,
+        stage: 'skipped',
+        reason:
+          'This endpoint points at localhost on your machine. The hosted ' +
+          'server can\'t reach it. If you\'re running it locally, click ' +
+          '"Save without testing" — your browser will reach it directly ' +
+          'when you actually use the app.',
+      },
+      200,
+    );
+  }
+
   try {
     const result = await performLiveValidation({
       provider_id,
@@ -88,6 +109,27 @@ async function handleValidate(req: ParsedRequest, res: ServerResponse): Promise<
   } catch (err) {
     sendJSON(res, { valid: false, stage: 'live', reason: (err as Error).message }, 200);
   }
+}
+
+export const __testing = { isLocalEndpoint: (e: string | undefined) => isLocalEndpoint(e), isLocalServer: (h: string | string[] | undefined) => isLocalServer(h) };
+
+function isLocalEndpoint(endpoint: string | undefined): boolean {
+  if (!endpoint) return false;
+  try {
+    const u = new URL(endpoint);
+    // URL parser preserves brackets around IPv6 addresses (e.g. "[::1]") —
+    // strip them before comparing.
+    const h = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    return h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '0.0.0.0';
+  } catch {
+    return false;
+  }
+}
+
+function isLocalServer(host: string | string[] | undefined): boolean {
+  const h = (Array.isArray(host) ? host[0] : host) ?? '';
+  const bare = h.split(':')[0].toLowerCase();
+  return bare === 'localhost' || bare === '127.0.0.1' || bare === '0.0.0.0';
 }
 
 // ============================================================================

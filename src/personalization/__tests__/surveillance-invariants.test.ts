@@ -348,8 +348,11 @@ describe('surveillance invariant 6: scenario routes never expose scorer internal
 });
 
 describe('surveillance invariant 8: blueprints describe content choices, never student behaviour', () => {
-  it('migration 027 contains no behavioural column names', () => {
-    const file = path.join(REPO_ROOT, 'supabase', 'migrations', '027_content_blueprints.sql');
+  it.each([
+    ['027_content_blueprints.sql'],
+    ['028_blueprint_rulesets.sql'],
+  ])('migration %s contains no behavioural column names', (filename) => {
+    const file = path.join(REPO_ROOT, 'supabase', 'migrations', filename);
     if (!fs.existsSync(file)) return; // forward-looking until migration lands
     // Strip comments so explanations like "-- no user_id here" don't trip the grep.
     const sql = fs
@@ -370,7 +373,7 @@ describe('surveillance invariant 8: blueprints describe content choices, never s
     }
     expect(
       offenders,
-      'migration 027 must not introduce behavioural / per-student columns. Blueprints describe content only.',
+      `${filename} must not introduce behavioural / per-student columns. Blueprints describe content only.`,
     ).toEqual([]);
   });
 

@@ -58,6 +58,8 @@ export interface LlmJudgeOutput {
 export interface ArbitratorInput extends TemplateInput {
   /** Pass an injected LLM judge for tests; default = real Gemini call when gate is on. */
   llmJudge?: LlmJudgeFn;
+  /** Optional inline rulesets for tests; default = DB lookup via applicableRulesets. */
+  rulesets?: import('./types').BlueprintConstraint[];
 }
 
 export interface ArbitratorResult {
@@ -71,7 +73,12 @@ export interface ArbitratorResult {
 }
 
 export async function proposeBlueprint(input: ArbitratorInput): Promise<ArbitratorResult> {
-  const baseline = buildTemplateBlueprint(input);
+  let baseline = buildTemplateBlueprint(input);
+
+  // Layer in operator rulesets BEFORE the LLM judge runs. Rulesets
+  // surface as constraints so the judge can read them in the prompt
+  // and respect them in its overrides.
+  baseline = await overlayRulesets(baseline, input);
 
   const judgeEnabled = process.env.VIDHYA_BLUEPRINT_LLM_JUDGE === 'on';
   const judge = input.llmJudge ?? (judgeEnabled ? defaultGeminiJudge : null);
@@ -111,6 +118,31 @@ export async function proposeBlueprint(input: ArbitratorInput): Promise<Arbitrat
 }
 
 // ----------------------------------------------------------------------------
+
+async function overlayRulesets(
+  baseline: BlueprintDecisionsV1,
+  input: ArbitratorInput,
+): Promise<BlueprintDecisionsV1> {
+  // Test seam: callers can pass a synchronous ruleset list to bypass DB.
+  let constraints: import('./types').BlueprintConstraint[] = [];
+  if (input.rulesets) {
+    constraints = input.rulesets;
+  } else {
+    try {
+      const { applicableRulesets, rulesetsToConstraints } = await import('./rulesets');
+      const rs = await applicableRulesets(input.exam_pack_id, input.concept_id);
+      constraints = rulesetsToConstraints(rs);
+    } catch (err) {
+      console.warn(`[arbitrator] ruleset lookup failed: ${(err as Error).message}`);
+      return baseline;
+    }
+  }
+  if (constraints.length === 0) return baseline;
+  return {
+    ...baseline,
+    constraints: [...baseline.constraints, ...constraints],
+  };
+}
 
 function finalize(
   decisions: BlueprintDecisionsV1,

@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
 import { DigestChip } from '@/components/app/DigestChip';
+import { useSession } from '@/hooks/useSession';
 import { clsx } from 'clsx';
 
 // ============================================================================
@@ -156,6 +157,7 @@ interface PlanTemplate {
 
 export default function PlannedSessionPage() {
   const navigate = useNavigate();
+  const sessionId = useSession();
 
   const [minutes, setMinutes] = useState<number>(15);
   const [plan, setPlan] = useState<SessionPlan | null>(null);
@@ -811,8 +813,8 @@ export default function PlannedSessionPage() {
               exit={{ opacity: 0 }}
             >
               {/* CompoundingCard + DigestChip — north-star pillar surfaces daily */}
-              <CompoundingCard />
-              <DigestChip sessionId="" />
+              <CompoundingCard sessionId={sessionId} />
+              <DigestChip sessionId={sessionId} />
 
               {/* Headline */}
               <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">

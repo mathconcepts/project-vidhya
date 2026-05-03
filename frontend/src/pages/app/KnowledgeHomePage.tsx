@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
+import { useSession } from '@/hooks/useSession';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { BookOpen, ChevronRight, Lock, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -20,6 +21,7 @@ interface ConceptTree { nodes: ConceptNode[]; edges: Array<{ from: string; to: s
 
 export default function KnowledgeHomePage() {
   const navigate = useNavigate();
+  const sessionId = useSession();
   const [trackId, setTrackId] = useState<string | null>(null);
   const [trackName, setTrackName] = useState('');
   const [progress, setProgress] = useState<TrackProgress | null>(null);
@@ -138,7 +140,7 @@ export default function KnowledgeHomePage() {
       )}
 
       {/* CompoundingCard */}
-      <CompoundingCard />
+      <CompoundingCard sessionId={sessionId} />
 
       {/* K→E bridge card — once only at ≥70% coverage */}
       <AnimatePresence>

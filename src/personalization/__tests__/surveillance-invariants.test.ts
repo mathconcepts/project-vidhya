@@ -222,6 +222,54 @@ describe('surveillance invariant 4: no frontend imports the personalization modu
     ).toEqual([]);
   });
 
+  it('CompoundingCard.tsx never references comparison/leaderboard/peer data', () => {
+    // Locked plan invariant: the CompoundingCard surfaces personal
+    // trajectory ("you cracked X in October"), NOT social comparison
+    // ("you ranked above 80% of peers"). A future PR that adds peer
+    // data here triggers a "calm/no-comparisons" review.
+    const file = path.join(REPO_ROOT, 'frontend', 'src', 'components', 'app', 'CompoundingCard.tsx');
+    expect(fs.existsSync(file)).toBe(true);
+    const src = fs.readFileSync(file, 'utf8');
+    const FORBIDDEN = [
+      /\bpeer_\w+/i,
+      /\bleaderboard/i,
+      /\bpercentile\b/i,
+      /\branked above\b/i,
+      /\bcompared to\b/i,
+      /\bother students\b/i,
+    ];
+    const found = FORBIDDEN.filter((re) => re.test(src));
+    expect(
+      found,
+      'CompoundingCard.tsx must surface personal trajectory only — no peer/comparison framing.',
+    ).toEqual([]);
+  });
+
+  it('/api/student/compounding response shape is allowlisted (server side)', () => {
+    // The compounding endpoint's payload is the bridge from gbrain →
+    // student-visible bytes. Tighten the allowlist so a future PR can't
+    // sneak comparison/peer fields through without a review.
+    const file = path.join(REPO_ROOT, 'src', 'api', 'me-routes.ts');
+    const src = fs.readFileSync(file, 'utf8');
+    const FORBIDDEN_FIELDS = [
+      /percentile\s*:/i,
+      /peer_\w+\s*:/i,
+      /leaderboard\s*:/i,
+      /vs_average\s*:/i,
+      /rank\s*:/i,
+    ];
+    // Restrict the scan to the handleCompounding function block.
+    const startIdx = src.indexOf('async function handleCompounding');
+    const endIdx = src.indexOf('export const meRoutes', startIdx);
+    expect(startIdx, 'handleCompounding handler must exist').toBeGreaterThan(-1);
+    const block = src.slice(startIdx, endIdx === -1 ? undefined : endIdx);
+    const found = FORBIDDEN_FIELDS.filter((re) => re.test(block));
+    expect(
+      found,
+      'handleCompounding must not emit peer/comparison fields to the client.',
+    ).toEqual([]);
+  });
+
   it('frontend has no `personalized_score` / `ranking_layer` / `selector_score` field accessor anywhere', () => {
     // Catches the slip where someone wires a debug shape into a frontend
     // component without importing the module (e.g. via fetch + raw object).

@@ -450,6 +450,55 @@ The "spec layer" between `RunLauncher` and the `curriculum-unit-orchestrator`. E
 - Operator-uploaded rulesets (PR-3): plain-text constraints scoped by `(exam_pack_id, concept_pattern)`
 - Lift-ledger blueprint section (PR-4): weekly digest groups lift by `(template_version, stage shape)`
 
+---
+
+### Admin Journey UX (PRs #58–#61)
+
+A guided assist layer over the existing admin pages so operators land on a clear "next move" instead of a wall of tools. Four pieces, each surfacing existing data without new schema:
+
+**PR #58 — Journey dashboard at `/admin/journey`**
+
+8-milestone progress timeline (Vercel-style vertical stages, never gates navigation). Every milestone is derivable from one indexed query:
+
+| # | Milestone | Done when |
+|---|---|---|
+| 1 | exam_pack | always (jee-main + gate-ma ship) |
+| 2 | rulesets | ≥3 enabled rulesets |
+| 3 | blueprint | ≥1 non-superseded |
+| 4 | approve_blueprint | ≥1 approved |
+| 5 | persona_scenario | ≥1 `.data/scenarios/<id>/trial.json` |
+| 6 | generation_run | ≥1 generation run |
+| 7 | first_student | ≥1 user_profiles role='student' |
+| 8 | first_signal | ≥1 mastery_snapshots |
+
+`GET /api/admin/journey/progress` runs a single `Promise.all` of indexed queries; 30s in-process cache; `?refresh=1` bypasses. First-time admin redirected to `/admin/journey` once via `localStorage.vidhya.admin.first_landing`.
+
+**PR #59 — Decision log + JourneyNudge**
+
+`/admin/decisions` is a chronological feed of admin actions across blueprint + ruleset + run surfaces. Sourced from existing `created_at`/`created_by` columns. Filterable by kind, grouped by day. Backend uses `Promise.allSettled` over 4 queries; merged + sorted DESC.
+
+`<JourneyNudge currentHref="..." />` is a self-fetching banner mounted at the top of `BlueprintsPage`, `RulesetsPage`, `ContentRDPage`, and `DecisionsPage`. Surfaces the current `next` milestone with a one-click CTA. Hides on the page it would point to + on session-dismiss (`sessionStorage.vidhya.admin.nudge.dismissed`).
+
+**PR #60 — Cohort attention surface at `/admin/cohort`**
+
+The deliberately-narrow alternative to "show me every student". Returns at most **10 cards** of students who need attention; everyone else rolls up into a single counter line. Hard caps + thresholds locked:
+
+```ts
+ATTENTION_CAP = 10
+REGEN_WEEK_THRESHOLD = 3
+MASTERY_DECLINE_THRESHOLD = -0.05
+```
+
+Cards triggered by ≥1 of: `≥3 personalised regens in 7d`, `mastery delta < -0.05 over 14d`, `motivation_state ∈ {'frustrated','flagging'}`. Each card surfaces the `student-audit` CLI command for one-click drill-in. Surveillance invariant 10 enforces: `ATTENTION_CAP` is a small literal + no `email`/`student_name`/`display_name`/`full_name` fields ever leak.
+
+**PR #61 — Lift-ledger suggested actions**
+
+`src/experiments/ledger-suggestions.ts` — pure-function `suggestForExperiment()` returns one of 7 suggestion kinds (`bake_in_winner`, `investigate_loser`, `wait_for_signal`, `expand_run_count`, `fund_resume`, `celebrate`, `no_action`) deterministically from `(status, lift_v1, lift_n, lift_p, variant_kind, ended_at)`. Same input → same output forever; backend tests lock the rules.
+
+Frontend mirror at `frontend/src/lib/ledger-suggestions.ts` (manual-sync). `EffectivenessLedger.tsx` renders a tone-coded inline second row beneath each experiment row with the suggestion + a one-click CTA link to `/admin/rulesets`, `/admin/decisions`, or `/admin/content-rd`. **Suggestions are advice, never auto-applied** — the human stays in the loop on compounding decisions.
+
+**Surveillance invariants added:** 9 (`admin-journey-routes.ts` returns counts only) and 10 (`admin-cohort-routes.ts` caps + forbids PII). Combined with invariants 1–8 the count stands at 10 CI-enforced rules.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

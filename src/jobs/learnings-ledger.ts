@@ -467,6 +467,18 @@ function buildDigest(d: DigestInput): string {
     md += `_No state changes this run. Loop is healthy; experiments still need more cohort time._\n`;
   }
 
+  // PR-B: append the rate-limit table from the most recent on-disk
+  // checkpoint. Hourly rateLimitCheckpoint job writes it; we just
+  // append. Soft-fail if the file is missing (telemetry never blocks
+  // the digest).
+  try {
+    // Lazy import keeps the digest module light + avoids cycles.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { readCheckpoint, renderDigestSection } = require('../llm/rate-limit-tracker');
+    const snap = readCheckpoint();
+    if (snap) md += '\n' + renderDigestSection(snap);
+  } catch { /* ignore — telemetry never blocks the digest */ }
+
   return md;
 }
 

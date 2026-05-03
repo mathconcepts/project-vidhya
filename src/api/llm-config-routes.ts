@@ -240,6 +240,20 @@ async function callChat(params: {
   const provider = getProvider(params.provider_id);
   if (!provider) throw new Error('unknown provider');
   const max_tokens = params.max_tokens ?? 32;
+  const startedAt = Date.now();
+  const recordOutcome = (status: number) => {
+    // Fire-and-forget telemetry; never throws.
+    try {
+      const { recordCall, outcomeFromStatus } = require('../llm/rate-limit-tracker');
+      recordCall({
+        provider: params.provider_id,
+        model: params.model_id,
+        outcome: outcomeFromStatus(status),
+        latency_ms: Date.now() - startedAt,
+        ts: new Date().toISOString(),
+      });
+    } catch { /* swallow — telemetry must never break a real call */ }
+  };
 
   switch (provider.api_shape) {
     case 'google-gemini': {
@@ -256,6 +270,7 @@ async function callChat(params: {
           generationConfig: { maxOutputTokens: max_tokens, temperature: 0 },
         }),
       });
+      recordOutcome(res.status);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
       const json = await res.json();
       return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -276,6 +291,7 @@ async function callChat(params: {
           messages: [{ role: 'user', content: params.prompt }],
         }),
       });
+      recordOutcome(res.status);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
       const json = await res.json();
       return json.content?.[0]?.text || '';
@@ -298,6 +314,7 @@ async function callChat(params: {
           temperature: 0,
         }),
       });
+      recordOutcome(res.status);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
       const json = await res.json();
       return json.choices?.[0]?.message?.content || '';

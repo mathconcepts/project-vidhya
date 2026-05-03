@@ -144,12 +144,24 @@ async function generatePersonalVariant(
   const atom_type = atom_id.slice(dot_idx + 1).replace(/-/g, '_');
   const topic_family = concept.topic_family ?? concept.topic ?? 'generic';
 
+  // Phase B of personalization plan — assemble the student-context payload
+  // from gbrain (representation_mode + recent misconceptions for THIS concept
+  // + motivation_state + shaky prereqs) and thread it into the generation
+  // prompt. Falls back to neutral context (today's generic prompt) when
+  // gbrain has no row for the student.
+  const { buildStudentContext } = await import('../../personalization/student-context');
+  const student_context = await buildStudentContext({
+    student_id,
+    concept_id: concept.id,
+  });
+
   const draft = await generateConcept({
     concept_id: concept.id,
     topic_family,
     atom_types: [atom_type as any],
     force: true,
     dry_run: true,  // we write to student_atom_overrides, not atom_versions
+    student_context,
   });
 
   const generated = draft.atoms[0];

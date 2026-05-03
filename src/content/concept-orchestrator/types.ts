@@ -63,6 +63,22 @@ export interface OrchestratorOptions {
   force?: boolean;
   /** Progress callback fired before/during/after each atom step. */
   on_progress?: (event: ProgressEvent) => void;
+  /**
+   * Phase B of personalization plan — when present, the orchestrator threads
+   * the student-context block into LLM prompts. Built via
+   * src/personalization/student-context.ts:buildStudentContext().
+   *
+   * The shape is intentionally `unknown` here to keep the orchestrator
+   * decoupled from the personalization module's internal types — the
+   * caller passes the exact StudentContext payload, the orchestrator
+   * forwards it untyped to the prompt formatter.
+   *
+   * Surveillance discipline: even with this set, the orchestrator NEVER
+   * surfaces context values to the student via atom output. The atom
+   * body the LLM produces should READ as if generically authored; the
+   * context only steers tone/level/misconception-targeting.
+   */
+  student_context?: unknown;
 }
 
 export interface ProgressEvent {

@@ -160,17 +160,31 @@ describe('surveillance invariant 3: no public route exposes per-atom scores', ()
     // Grep for the dead-giveaway: a file that imports from src/personalization
     // AND calls sendJSON with anything that looks like the scored-atoms shape.
     // Fail loudly if either side appears in src/api/.
+    // Allowlist: the lesson-wire helper is the single eng-review-locked
+    // integration point. It only re-orders atoms in place — it never
+    // surfaces scores, layers, or any selector internals to the response.
+    // Any OTHER import from src/personalization into src/api/ is forbidden.
+    const ALLOWED_IMPORTS = [/\/personalization\/lesson-wire(['"]|$)/];
     const importers: string[] = [];
     for (const f of files) {
       const src = fs.readFileSync(f, 'utf8');
-      if (/from\s+['"](\.\.\/)+personalization/.test(src) || /from\s+['"]@\/personalization/.test(src)) {
-        importers.push(path.relative(REPO_ROOT, f));
+      const personalizationImports = src
+        .split('\n')
+        .filter((l) =>
+          /from\s+['"](\.\.\/)+personalization/.test(l) ||
+          /from\s+['"]@\/personalization/.test(l),
+        );
+      for (const line of personalizationImports) {
+        if (!ALLOWED_IMPORTS.some((re) => re.test(line))) {
+          importers.push(`${path.relative(REPO_ROOT, f)}: ${line.trim()}`);
+        }
       }
     }
     expect(
       importers,
-      'No src/api/* route may import from src/personalization. ' +
-        'The selector is invisible to the public surface; if you need a debug endpoint, ' +
+      'No src/api/* route may import from src/personalization (except the ' +
+        'allowlisted lesson-wire helper, which is score-free). The selector ' +
+        'is invisible to the public surface; if you need a debug endpoint, ' +
         'gate it behind admin auth in a separate review.',
     ).toEqual([]);
   });

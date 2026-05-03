@@ -75,6 +75,25 @@ export default function AdminDashboardPage() {
 
   return (
     <motion.div className="space-y-5 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+      {/* Journey nudge — soft pointer at the new guided view. Always visible
+          for now; once we have data on uptake, can be conditionally hidden. */}
+      <motion.div variants={fadeInUp}>
+        <a
+          href="/admin/journey"
+          className="block p-3 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-500/10 to-emerald-500/5 hover:from-violet-500/15 transition-colors"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-violet-300 mb-0.5">Try the new guided view</div>
+              <div className="text-sm text-surface-200">
+                See your setup progress + the next high-leverage move at a glance.
+              </div>
+            </div>
+            <span className="text-xs text-violet-300 whitespace-nowrap">Open →</span>
+          </div>
+        </a>
+      </motion.div>
+
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>

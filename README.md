@@ -129,6 +129,8 @@ For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPL
 
 **Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md)
 
+**Demo** — [docs/moat-demo.md](./docs/moat-demo.md) (guided 3-minute persona-scenarios path)
+
 **Plans** — [PLAN-content-engine.md](./PLAN-content-engine.md), [PLAN-dbless-gbrain.md](./PLAN-dbless-gbrain.md), [PLAN-gbrain-mvp.md](./PLAN-gbrain-mvp.md)
 
 **Project meta** — [CONTRIBUTING.md](./CONTRIBUTING.md), [EXTENDING.md](./EXTENDING.md), [CHANGELOG.md](./CHANGELOG.md), [FEATURES.md](./FEATURES.md), [PENDING.md](./PENDING.md)

@@ -25,6 +25,7 @@ import {
   type DifficultyLabel,
 } from '@/api/admin/blueprints';
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
+import { PresetsPanel } from '@/components/admin/PresetsPanel';
 
 export default function BlueprintsPage() {
   const { id } = useParams<{ id?: string }>();
@@ -80,6 +81,11 @@ export default function BlueprintsPage() {
           {error}
         </div>
       )}
+
+      <PresetsPanel onInstalled={() => {
+        // Refresh the blueprint list after install — the preset adds rows.
+        listBlueprints({}).then(setBlueprints).catch(() => { /* ignore */ });
+      }} />
 
       <div className="grid md:grid-cols-[280px_1fr] gap-6">
         <Sidebar blueprints={blueprints} activeId={id ?? null} onCreated={(bp) => {

@@ -13,6 +13,7 @@ import {
   listRulesets, createRuleset, setRulesetEnabled, deleteRuleset,
   type BlueprintRuleset,
 } from '@/api/admin/rulesets';
+import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
 export default function RulesetsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -57,6 +58,7 @@ export default function RulesetsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <JourneyNudge currentHref="/admin/rulesets" />
       <header className="mb-6">
         <div className="flex items-center gap-2 text-violet-400 text-xs uppercase tracking-wider mb-2">
           <Sparkles size={14} /> Blueprint rulesets

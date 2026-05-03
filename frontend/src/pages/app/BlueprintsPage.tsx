@@ -24,6 +24,7 @@ import {
   type ContentBlueprint,
   type DifficultyLabel,
 } from '@/api/admin/blueprints';
+import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
 export default function BlueprintsPage() {
   const { id } = useParams<{ id?: string }>();
@@ -59,6 +60,7 @@ export default function BlueprintsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <JourneyNudge currentHref="/admin/blueprints" />
       <header className="mb-8">
         <div className="flex items-center gap-2 text-violet-400 text-xs uppercase tracking-wider mb-2">
           <BookOpen size={14} /> Content Blueprints

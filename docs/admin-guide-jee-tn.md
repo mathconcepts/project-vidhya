@@ -5,6 +5,8 @@
 > **What you'll build by the end:** a generation-and-measurement loop that produces lessons calibrated to *these* students (state-board prior knowledge, anxiety-aware tone, geometric framing where the syllabus allows it), measures whether the lessons actually move mastery, and auto-promotes the winners.
 >
 > **Time:** ~30 minutes for setup, then everything compounds.
+>
+> **Companion (read this first if you're starting from scratch):** [admin-getting-started.md](./admin-getting-started.md) — clones the repo, runs locally, snapshots, deploys to Render. **This guide picks up after you have the cloud deploy live.**
 
 ---
 

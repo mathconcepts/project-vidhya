@@ -23,3 +23,10 @@ export { createGeminiBatchAdapter } from './gemini-adapter';
 
 export type { BatchPersistence, RunRow, JobRow } from './persistence';
 export { createBatchOrchestrator, type StepResult, type OrchestratorOpts } from './orchestrator';
+
+export { createPgPersistence } from './pg-persistence';
+export {
+  pollAllInFlightBatches,
+  resumeAllInFlightBatches,
+  abortBatchRun,
+} from './poller';

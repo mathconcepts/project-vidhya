@@ -309,6 +309,16 @@ async function handleAbort(req: ParsedRequest, res: ServerResponse): Promise<voi
     return badRequest(res, "only action='abort' supported on this endpoint");
   }
   const reason = isString(body.reason) ? body.reason : 'aborted by admin';
+
+  // If this is a batch-generation run, route through the batch poller's
+  // abort which cancels at the provider before flipping state. Otherwise
+  // fall through to the legacy sync abort.
+  try {
+    const { abortBatchRun } = await import('../generation/batch/poller');
+    await abortBatchRun(id, reason);
+  } catch (err) {
+    console.warn(`[admin-runs] batch abort path failed for ${id}: ${(err as Error).message}`);
+  }
   await markRunFailed(id, reason, 'aborted');
   sendJSON(res, { ok: true });
 }

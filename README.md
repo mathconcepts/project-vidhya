@@ -134,6 +134,7 @@ docker compose up --build        # http://localhost:8080
 | 📚 Evaluating exams | [EXAMS.md](./EXAMS.md) — three bundled, adapter pattern for new ones |
 | 📖 Designing content | [CONTENT.md](./CONTENT.md) + [LIBRARY.md](./LIBRARY.md) + [STUDIO.md](./STUDIO.md) |
 | 🎬 Pitching the moat | [docs/moat-demo.md](./docs/moat-demo.md) — guided 3-minute persona-scenarios path |
+| 🛠 Setting up from scratch | [docs/admin-getting-started.md](./docs/admin-getting-started.md) — day-0 to cloud deploy, local-first |
 | 🧑‍🏫 Running real students | [docs/admin-guide-jee-tn.md](./docs/admin-guide-jee-tn.md) — end-to-end admin runbook with concrete TN-board / IIT-JEE / anxious-cohort scenario |
 | 🔬 Technical evaluator | [OVERVIEW.md](./OVERVIEW.md) → [ARCHITECTURE.md](./ARCHITECTURE.md) → [CLAUDE.md](./CLAUDE.md) |
 | 🧱 Extending the platform | [EXTENDING.md](./EXTENDING.md) — four extension contracts, &lt;20 min to first extension |
@@ -160,7 +161,7 @@ docker compose up --build        # http://localhost:8080
 
 **Demo** — [docs/moat-demo.md](./docs/moat-demo.md) (guided 3-minute persona-scenarios path)
 
-**Admin runbook** — [docs/admin-guide-jee-tn.md](./docs/admin-guide-jee-tn.md) (end-to-end: launching JEE prep for a Tamil-Nadu-board, anxious cohort)
+**Admin runbooks** — [docs/admin-getting-started.md](./docs/admin-getting-started.md) (day-0 to live deploy) → [docs/admin-guide-jee-tn.md](./docs/admin-guide-jee-tn.md) (end-to-end ops for a TN-board, anxious JEE cohort)
 
 **Project meta** — [CONTRIBUTING.md](./CONTRIBUTING.md), [EXTENDING.md](./EXTENDING.md), [CHANGELOG.md](./CHANGELOG.md), [FEATURES.md](./FEATURES.md), [PENDING.md](./PENDING.md)
 

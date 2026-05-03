@@ -27,6 +27,7 @@ import {
   type GenerationRunRow,
   type RunSuggestionRow,
 } from '@/api/admin/content-rd';
+import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
 export default function ContentRDPage() {
   const { user, loading: authLoading } = useAuth();
@@ -120,6 +121,9 @@ export default function ContentRDPage() {
       animate="visible"
       variants={staggerContainer}
     >
+      <motion.div variants={fadeInUp}>
+        <JourneyNudge currentHref="/admin/content-rd" />
+      </motion.div>
       <motion.header variants={fadeInUp}>
         <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
           <FlaskConical size={20} className="text-violet-400" />

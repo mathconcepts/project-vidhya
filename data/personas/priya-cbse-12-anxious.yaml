@@ -1,0 +1,40 @@
+schema_version: 1
+
+# Priya — CBSE Class 12 Maths student preparing for JEE Main.
+# School-strong on calculation, exam-anxious, prefers diagrams over symbols.
+#
+# This file describes a SCRIPTED demo persona. The id is a slug, not a UUID.
+# Real student data MUST NOT be pasted here — CI invariant blocks UUIDs.
+
+id: priya-cbse-12-anxious
+display_name: "Priya — CBSE Class 12, exam-anxious"
+description: |
+  Strong on routine calculation from her school syllabus, but freezes on
+  unfamiliar framings during timed practice. Prefers geometric/visual
+  intuition. Tripped on chain-rule sign errors recently.
+
+seed:
+  representation_mode: geometric
+  motivation_state: anxious
+  knowledge_track_id: CBSE-12-MATH
+  exam_id: jee-main
+  initial_mastery:
+    limits-jee: 0.45
+    derivatives-basic: 0.62
+    continuity-differentiability-jee: 0.40
+  recent_misconceptions:
+    - m_inverts_chain_rule
+    - m_drops_negatives
+
+answer_policy:
+  type: scripted
+  rules:
+    # First exposure: 60% chance of picking the algebraic-trap distractor.
+    - on: first_exposure
+      action: pick_distractor_kind
+      kind: algebraic_trap
+      probability: 0.6
+    # Default: pick correct with probability = clamp(mastery + 0.2, 0, 1).
+    - on: default
+      action: pick_correct
+      probability_fn: mastery_plus_0_2

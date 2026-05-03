@@ -1,0 +1,36 @@
+schema_version: 1
+
+# Arjun — driven IIT-aspirant, treats the syllabus as a stack to crush.
+# Algebraic-first, low-anxiety, wants edge cases and rigour.
+
+id: arjun-iit-driven
+display_name: "Arjun — IIT-aspirant, driven"
+description: |
+  High-confidence, algebraic reasoner. Bored by introductory framing;
+  responds well to crisp, rigorous explanations. Solid prerequisite mastery
+  but occasionally drops cases.
+
+seed:
+  representation_mode: algebraic
+  motivation_state: driven
+  knowledge_track_id: CBSE-12-MATH
+  exam_id: jee-main
+  initial_mastery:
+    limits-jee: 0.78
+    derivatives-basic: 0.86
+    continuity-differentiability-jee: 0.72
+  recent_misconceptions:
+    - m_misses_edge_case
+
+answer_policy:
+  type: scripted
+  rules:
+    # First exposure: 15% chance of an algebraic-trap distractor (he's confident
+    # and usually right, but rushes).
+    - on: first_exposure
+      action: pick_distractor_kind
+      kind: algebraic_trap
+      probability: 0.15
+    - on: default
+      action: pick_correct
+      probability_fn: mastery_plus_0_2

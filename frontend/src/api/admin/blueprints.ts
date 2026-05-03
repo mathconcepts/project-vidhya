@@ -82,6 +82,7 @@ export async function createBlueprintFromTemplate(input: {
   target_difficulty: DifficultyLabel;
   topic_family?: string;
   requires_pyq_anchor?: boolean;
+  use_arbitrator?: boolean;
 }): Promise<ContentBlueprint> {
   const r = await authFetch('/api/admin/blueprints', {
     method: 'POST',

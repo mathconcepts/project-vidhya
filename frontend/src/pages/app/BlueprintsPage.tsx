@@ -112,6 +112,7 @@ function Sidebar({
   const [conceptId, setConceptId] = useState('');
   const [examPack, setExamPack] = useState('jee-main');
   const [difficulty, setDifficulty] = useState<DifficultyLabel>('medium');
+  const [useArbitrator, setUseArbitrator] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -123,6 +124,7 @@ function Sidebar({
         concept_id: conceptId,
         exam_pack_id: examPack,
         target_difficulty: difficulty,
+        use_arbitrator: useArbitrator,
       });
       onCreated(bp);
       setCreating(false);
@@ -165,6 +167,15 @@ function Sidebar({
             <option value="medium">medium</option>
             <option value="hard">hard</option>
           </select>
+          <label className="flex items-center gap-2 text-[11px] text-surface-400">
+            <input
+              type="checkbox"
+              checked={useArbitrator}
+              onChange={(e) => setUseArbitrator(e.target.checked)}
+              className="rounded border-surface-700"
+            />
+            <span>Run arbitrator (LLM may override template)</span>
+          </label>
           {err && <div className="text-[11px] text-rose-400">{err}</div>}
           <button
             onClick={handleCreate}

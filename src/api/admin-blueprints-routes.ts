@@ -23,6 +23,7 @@ import {
   updateBlueprint,
   buildTemplateBlueprint,
   TEMPLATE_VERSION,
+  proposeBlueprint,
   type BlueprintDecisionsV1,
   type CreatedBy,
   type DifficultyLabel,
@@ -92,18 +93,42 @@ async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<vo
   let template_version: string | null = null;
   let created_by: CreatedBy = 'operator';
 
+  // Optional confidence + requires_review derived by the arbitrator path.
+  let arbitrator_version: string | null = null;
+  let confidence: number | undefined = typeof body.confidence === 'number' ? body.confidence : undefined;
+  let requires_review = body.requires_review === true;
+
   if (body.decisions) {
     decisions = body.decisions as BlueprintDecisionsV1;
   } else if (body.concept_id && body.exam_pack_id && body.target_difficulty) {
-    decisions = buildTemplateBlueprint({
-      concept_id: String(body.concept_id),
-      exam_pack_id: String(body.exam_pack_id),
-      target_difficulty: body.target_difficulty as DifficultyLabel,
-      topic_family: body.topic_family ? String(body.topic_family) : undefined,
-      requires_pyq_anchor: body.requires_pyq_anchor === true,
-    });
-    template_version = TEMPLATE_VERSION;
-    created_by = 'template';
+    const useArbitrator = body.use_arbitrator === true;
+    if (useArbitrator) {
+      const r = await proposeBlueprint({
+        concept_id: String(body.concept_id),
+        exam_pack_id: String(body.exam_pack_id),
+        target_difficulty: body.target_difficulty as DifficultyLabel,
+        topic_family: body.topic_family ? String(body.topic_family) : undefined,
+        requires_pyq_anchor: body.requires_pyq_anchor === true,
+      });
+      decisions = r.decisions;
+      template_version = r.template_version;
+      arbitrator_version = r.arbitrator_version;
+      // Caller's explicit confidence wins; otherwise use arbitrator's.
+      if (confidence === undefined) confidence = r.confidence;
+      // Caller's explicit requires_review wins; otherwise use arbitrator's.
+      if (body.requires_review === undefined) requires_review = r.requires_review;
+      created_by = 'arbitrator';
+    } else {
+      decisions = buildTemplateBlueprint({
+        concept_id: String(body.concept_id),
+        exam_pack_id: String(body.exam_pack_id),
+        target_difficulty: body.target_difficulty as DifficultyLabel,
+        topic_family: body.topic_family ? String(body.topic_family) : undefined,
+        requires_pyq_anchor: body.requires_pyq_anchor === true,
+      });
+      template_version = TEMPLATE_VERSION;
+      created_by = 'template';
+    }
   } else {
     return sendError(
       res,
@@ -118,9 +143,10 @@ async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<vo
       concept_id: decisions.metadata.concept_id,
       decisions,
       template_version,
+      arbitrator_version,
       created_by,
-      confidence: typeof body.confidence === 'number' ? body.confidence : undefined,
-      requires_review: body.requires_review === true,
+      confidence,
+      requires_review,
     });
     sendJSON(res, { blueprint: bp }, 201);
   } catch (err) {

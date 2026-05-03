@@ -25,6 +25,7 @@ import { adminExamPacksRoutes } from './api/admin-exam-packs-routes';
 import { adminHoldoutRoutes } from './api/admin-holdout-routes';
 import { adminConceptsRoutes } from './api/admin-concepts-routes';
 import { adminScenariosRoutes } from './api/admin-scenarios-routes';
+import { adminBlueprintsRoutes } from './api/admin-blueprints-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
 import { socialRoutes } from './api/social-routes';
 import { commanderRoutes } from './api/commander-routes';
@@ -180,6 +181,9 @@ for (const route of adminConceptsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminScenariosRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminBlueprintsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of chatRoutes) {

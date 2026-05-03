@@ -70,6 +70,7 @@ const ContentAdminPage = lazy(() => import('@/pages/app/ContentAdminPage'));
 const ContentRDPage = lazy(() => import('@/pages/app/ContentRDPage'));
 const HoldoutPage = lazy(() => import('@/pages/app/HoldoutPage'));
 const ScenariosPage = lazy(() => import('@/pages/app/ScenariosPage'));
+const BlueprintsPage = lazy(() => import('@/pages/app/BlueprintsPage'));
 const ConceptOrchestratorPage = lazy(() => import('@/pages/app/ConceptOrchestratorPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage'));
 const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
@@ -149,6 +150,8 @@ export default function App() {
           <Route path="admin/holdout" element={<HoldoutPage />} />
           <Route path="admin/scenarios" element={<ScenariosPage />} />
           <Route path="admin/scenarios/:id" element={<ScenariosPage />} />
+          <Route path="admin/blueprints" element={<BlueprintsPage />} />
+          <Route path="admin/blueprints/:id" element={<BlueprintsPage />} />
           <Route path="admin/founder" element={<FounderDashboardPage />} />
           <Route path="turns" element={<TurnsPage />} />
           <Route path="turns/:id" element={<TurnsPage />} />

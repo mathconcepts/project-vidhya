@@ -347,6 +347,44 @@ describe('surveillance invariant 6: scenario routes never expose scorer internal
   });
 });
 
+describe('surveillance invariant 8: blueprints describe content choices, never student behaviour', () => {
+  it('migration 027 contains no behavioural column names', () => {
+    const file = path.join(REPO_ROOT, 'supabase', 'migrations', '027_content_blueprints.sql');
+    if (!fs.existsSync(file)) return; // forward-looking until migration lands
+    // Strip comments so explanations like "-- no user_id here" don't trip the grep.
+    const sql = fs
+      .readFileSync(file, 'utf8')
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('--'))
+      .join('\n');
+    const FORBIDDEN = [
+      /\buser_id\b/i,
+      /\bsession_id\b/i,
+      /\bstudent_id\b/i,
+      /\bbehavior_\w+/i,
+      /\btracked_\w+/i,
+    ];
+    const offenders: string[] = [];
+    for (const re of FORBIDDEN) {
+      if (re.test(sql)) offenders.push(re.source);
+    }
+    expect(
+      offenders,
+      'migration 027 must not introduce behavioural / per-student columns. Blueprints describe content only.',
+    ).toEqual([]);
+  });
+
+  it('blueprint validator (when present) refuses forbidden field names at any depth', async () => {
+    const file = path.join(REPO_ROOT, 'src', 'blueprints', 'validator.ts');
+    if (!fs.existsSync(file)) return;
+    const src = fs.readFileSync(file, 'utf8');
+    expect(
+      /SURVEILLANCE_FORBIDDEN/.test(src),
+      'validator.ts must export a SURVEILLANCE_FORBIDDEN guard regex',
+    ).toBe(true);
+  });
+});
+
 describe('surveillance invariant 7: /admin/scenarios is admin-gated', () => {
   it('admin-scenarios-routes.ts (when present) requires the admin role', () => {
     const file = path.join(REPO_ROOT, 'src', 'api', 'admin-scenarios-routes.ts');

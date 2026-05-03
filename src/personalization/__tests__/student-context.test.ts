@@ -17,6 +17,7 @@ const FULL_CTX: StudentContext = {
   current_concept_mastery: 0.18,
   recent_misconceptions: ['m_inverts_chain_rule', 'm_drops_negatives'],
   shaky_prerequisites: ['derivatives-basic'],
+  prior_curriculum: 'CBSE Class 12 Mathematics',
   is_neutral: false,
 };
 
@@ -76,7 +77,7 @@ describe('toPromptText', () => {
     expect(out).toContain('the student should not feel observed');
   });
 
-  it('full context renders all 5 sections (mastery+motivation+misconceptions+prereqs+representation)', () => {
+  it('full context renders all 6 sections (mastery+motivation+misconceptions+prereqs+representation+prior_curriculum)', () => {
     const out = toPromptText(FULL_CTX);
     // representation
     expect(out).toContain('think visually');
@@ -88,6 +89,24 @@ describe('toPromptText', () => {
     expect(out).toContain('m_inverts_chain_rule');
     // prereqs
     expect(out).toContain('derivatives-basic');
+    // prior curriculum
+    expect(out).toContain('CBSE Class 12 Mathematics');
+    expect(out).toContain('Coming from');
+  });
+
+  it('omits the prior-curriculum line when prior_curriculum is null', () => {
+    const out = toPromptText({ ...FULL_CTX, prior_curriculum: null });
+    expect(out).not.toContain('Coming from');
+  });
+
+  it('renders the prior-curriculum line in isolation', () => {
+    const out = toPromptText({
+      ...NEUTRAL_CONTEXT,
+      is_neutral: false,
+      prior_curriculum: 'NCERT Class 11 Physics',
+    });
+    expect(out).toContain('Coming from: NCERT Class 11 Physics');
+    expect(out).toContain('build ON that prior coverage');
   });
 });
 
@@ -111,6 +130,10 @@ describe('buildStudentContext (DB-less safety)', () => {
     process.env.DATABASE_URL = 'postgres://nowhere';
     const ctx = await buildStudentContext({ student_id: null, concept_id: 'eigenvalues' });
     expect(ctx.is_neutral).toBe(true);
+  });
+
+  it('NEUTRAL_CONTEXT.prior_curriculum is null', () => {
+    expect(NEUTRAL_CONTEXT.prior_curriculum).toBeNull();
   });
 
   it('NEUTRAL_CONTEXT is frozen (immutable)', () => {

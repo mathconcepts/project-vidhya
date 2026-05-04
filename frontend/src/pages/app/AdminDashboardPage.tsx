@@ -5,7 +5,7 @@ import {
   Crown, Shield, Activity, Users, MessageCircle, Smartphone, Key,
   CheckCircle2, Circle, AlertTriangle, TrendingDown, Brain,
   ArrowRight, Loader2, RefreshCw, Sparkles, Settings, FileText, Server,
-  FlaskConical, Lock,
+  FlaskConical, Lock, BookOpen,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
@@ -298,6 +298,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/rulesets" label="Blueprint rulesets" icon={Settings} />
               <QuickLink href="/admin/decisions" label="Decision log" icon={FileText} />
               <QuickLink href="/admin/cohort" label="Cohort attention" icon={Users} />
+              <QuickLink href="/admin/exam-packs" label="Exam packs" icon={BookOpen} />
               <QuickLink href="/admin/founder" label="Founder dashboard" icon={Server} />
               <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
               <QuickLink href="/llm-config" label="AI config" icon={Key} />

@@ -299,6 +299,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/decisions" label="Decision log" icon={FileText} />
               <QuickLink href="/admin/cohort" label="Cohort attention" icon={Users} />
               <QuickLink href="/admin/exam-packs" label="Exam packs" icon={BookOpen} />
+              <QuickLink href="/admin/syllabus-bridge" label="Syllabus bridge" icon={BookOpen} />
               <QuickLink href="/admin/founder" label="Founder dashboard" icon={Server} />
               <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
               <QuickLink href="/llm-config" label="AI config" icon={Key} />

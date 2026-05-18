@@ -82,6 +82,7 @@ import { adminAgentRoutes } from './api/admin-agent-routes';
 import { sessionPlannerRoutes } from './api/session-planner-routes';
 import { studymateRoutes } from './api/studymate-routes';
 import { knowledgeRoutes } from './api/knowledge-routes';
+import { syllabusBridgeRoutes } from './api/syllabus-bridge-routes';
 import { lifecycleRoutes } from './api/lifecycle-routes';
 import { contentLifecycleRoutes } from './api/content-lifecycle-routes';
 import { orchestratorRoutes } from './api/orchestrator-routes';
@@ -349,6 +350,9 @@ for (const route of studymateRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of knowledgeRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of syllabusBridgeRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of lifecycleRoutes) {

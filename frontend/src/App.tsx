@@ -76,6 +76,7 @@ const AdminJourneyPage = lazy(() => import('@/pages/app/AdminJourneyPage'));
 const AdminDecisionsPage = lazy(() => import('@/pages/app/AdminDecisionsPage'));
 const AdminCohortPage = lazy(() => import('@/pages/app/AdminCohortPage'));
 const ExamPacksPage = lazy(() => import('@/pages/app/ExamPacksPage'));
+const SyllabusBridgePage = lazy(() => import('@/pages/app/SyllabusBridgePage'));
 const ConceptOrchestratorPage = lazy(() => import('@/pages/app/ConceptOrchestratorPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage'));
 const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
@@ -162,6 +163,7 @@ export default function App() {
           <Route path="admin/decisions" element={<AdminDecisionsPage />} />
           <Route path="admin/cohort" element={<AdminCohortPage />} />
           <Route path="admin/exam-packs" element={<ExamPacksPage />} />
+          <Route path="admin/syllabus-bridge" element={<SyllabusBridgePage />} />
           <Route path="admin/founder" element={<FounderDashboardPage />} />
           <Route path="turns" element={<TurnsPage />} />
           <Route path="turns/:id" element={<TurnsPage />} />

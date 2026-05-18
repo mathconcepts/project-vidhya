@@ -31,8 +31,45 @@ export interface ExamRegistration {
    * See src/knowledge/tracks.ts.
    */
   knowledge_track_id?: string;
+  /**
+   * Preparation intent — shapes content scoping across the whole stack
+   * (system prompts, bridge recommendations, scraping/generation prompts).
+   *
+   *   'board-focused'    — student's primary goal is the school board exam.
+   *                        Don't bring in entrance-exam references unless
+   *                        the student explicitly asks for them.
+   *   'bridge'           — preparing for both board AND entrance.
+   *                        Surface bridge content proactively. (Default
+   *                        when knowledge_track_id is set alongside an
+   *                        entrance exam.)
+   *   'entrance-focused' — primary goal is entrance exam. School syllabus
+   *                        only matters as a foundation reference. Generate
+   *                        and surface depth-gap / breadth-gap content.
+   *
+   * When omitted, the system infers from context (see derivePrepIntent).
+   */
+  prep_intent?: 'board-focused' | 'bridge' | 'entrance-focused';
   /** When the student added this exam — informational */
   added_at: string;
+}
+
+/**
+ * Derive a sensible prep_intent when one wasn't explicitly chosen.
+ *
+ * Rules:
+ *   - knowledge_track_id present (school student) AND exam is a major
+ *     entrance exam (JEE/BITSAT/UGEE/NEET) -> 'bridge'
+ *   - knowledge_track_id present but no entrance-exam-like target ->
+ *     'board-focused' (they're in school, no entrance signal)
+ *   - no knowledge_track_id at all -> 'entrance-focused' (they came in
+ *     through the exam picker; assume they want entrance-level)
+ */
+export function derivePrepIntent(reg: ExamRegistration): 'board-focused' | 'bridge' | 'entrance-focused' {
+  if (reg.prep_intent) return reg.prep_intent;
+  const isEntranceExam = /JEE|BITSAT|UGEE|NEET|GATE/i.test(reg.exam_id);
+  if (reg.knowledge_track_id && isEntranceExam) return 'bridge';
+  if (reg.knowledge_track_id) return 'board-focused';
+  return 'entrance-focused';
 }
 
 export interface StudentExamProfile {

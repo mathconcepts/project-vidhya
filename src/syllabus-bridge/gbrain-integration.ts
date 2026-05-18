@@ -31,6 +31,40 @@ import type {
 import { getMapping, getConcept } from './registry';
 import { listGeneratedContentForMapping } from './store';
 
+export type PrepIntent = 'board-focused' | 'bridge' | 'entrance-focused';
+
+/**
+ * Per-intent multipliers applied to need_score by gap_class. These shape
+ * which entries surface to whom:
+ *
+ *   board-focused    — aligned + foundation matter (textbook level).
+ *                      Don't push entrance-only depth-gap stuff at them.
+ *   bridge           — depth-gap and breadth-gap matter most (the actual
+ *                      bridge); aligned still useful, foundation neutral.
+ *   entrance-focused — depth-gap and stretch are the whole point; aligned
+ *                      content is mostly noise (they know it).
+ */
+const INTENT_GAP_WEIGHTS: Record<PrepIntent, Record<BridgeMappingEntry['gap_class'], number>> = {
+  'board-focused': {
+    'aligned':     1.10,   // boost board-level reinforcement
+    'depth-gap':   0.40,   // de-prioritise but don't hide
+    'breadth-gap': 0.60,
+    'foundation':  1.20,   // foundation explainers help anyone
+  },
+  'bridge': {
+    'aligned':     0.90,
+    'depth-gap':   1.20,   // the headline gap class for bridge mode
+    'breadth-gap': 1.30,
+    'foundation':  1.15,
+  },
+  'entrance-focused': {
+    'aligned':     0.50,   // they know the basics, skip ahead
+    'depth-gap':   1.30,
+    'breadth-gap': 1.30,
+    'foundation':  1.00,
+  },
+};
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -80,10 +114,15 @@ export interface PersonalizedRecommendation {
  * Returns the original prompt with a GBrain-derived student-context block
  * prepended. If the student model is unavailable (anonymous run, missing
  * gbrain key, store error), returns the prompt unchanged.
+ *
+ * Pass `mapping_target_exam_id` when calling from the bridge runner — this
+ * lets the function look up the matching exam registration to read prep_intent
+ * and add intent-specific authoring guidance to the prompt.
  */
 export async function personalizePromptForStudent(
   prompt: string,
   student_id: string | null,
+  options: { mapping_target_exam_id?: string } = {},
 ): Promise<string> {
   if (!student_id) return prompt;
   try {
@@ -93,10 +132,36 @@ export async function personalizePromptForStudent(
     const summary = serializeForPrompt(model);
     if (!summary.trim()) return prompt;
 
+    // Resolve prep intent so the generated body respects the student's goal:
+    // board-focused students should NOT see entrance-exam framing unless they
+    // asked for it; entrance-focused students should not be drilled on
+    // textbook basics they already know.
+    let intent: PrepIntent = 'bridge';
+    try {
+      const { getProfile, derivePrepIntent } = await import('../session-planner/exam-profile-store');
+      const profile = getProfile(student_id);
+      const reg = options.mapping_target_exam_id
+        ? profile?.exams?.find(r => r.exam_id === options.mapping_target_exam_id)
+        : profile?.exams?.[0];
+      if (reg) intent = derivePrepIntent(reg);
+    } catch { /* keep default */ }
+
+    const intentGuidance: Record<PrepIntent, string> = {
+      'board-focused':
+        '- Primary goal is the school BOARD EXAM. Stay at textbook depth. Do NOT introduce entrance-exam shortcuts, tricks, or "this comes up in JEE" framing unless the student explicitly asked for it. Examples should match textbook style.',
+      'bridge':
+        '- Student is preparing for BOTH board and entrance exam. Anchor the explanation in the textbook first, then expand into the entrance-exam technique. Always make the connection explicit ("you know X from your chapter Y; the entrance version of the same idea is Z").',
+      'entrance-focused':
+        '- Primary goal is the ENTRANCE EXAM. Skip remedial textbook coverage of basics they already know. Lead with the exam-level technique; reference textbook only as a foundation note if it materially helps.',
+    };
+
     return `Student context (from GBrain — calibrate level + tone to match):
 ${summary}
 
-When you generate the content below, keep these student signals in mind:
+Preparation intent: ${intent}
+${intentGuidance[intent]}
+
+When you generate the content below, also keep these student signals in mind:
 - If motivation is 'flagging' or 'frustrated', open with the easiest version and build confidence.
 - If working memory is low, prefer 2-3 short steps over one long derivation.
 - If they have prerequisite gaps, name them and bridge before introducing the new technique.
@@ -117,16 +182,27 @@ ${prompt}`;
  * Given a mapping, return entries sorted by how much the student needs each
  * one right now. The scoring blend:
  *
- *   need_score = 0.50 * (1 - avg_target_topic_mastery)   // weakness signal
+ *   raw_score  = 0.50 * (1 - avg_target_topic_mastery)   // weakness signal
  *              + 0.30 * (difficulty_jump / 5)             // gap-size signal
  *              + 0.15 * gap_class_weight                  // depth/foundation > aligned
  *              + 0.05 * motivation_modifier               // small nudge
+ *
+ *   need_score = raw_score * intent_multiplier_for_gap_class
+ *
+ * The intent multiplier is what makes the framework respect the student's
+ * goal: board-focused students see aligned + foundation; entrance-focused
+ * see depth + breadth; bridge mode amplifies everything bridge-related.
+ *
+ * Pass `intent_override` when the student explicitly switched (e.g. "show
+ * me JEE-level even though I'm board-focused"); otherwise the function
+ * looks up their profile.
  *
  * Returns ALL entries (not just top-N) so the caller can pick its own cutoff.
  */
 export async function rankEntriesForStudent(
   mapping: BridgeMapping,
   student_id: string,
+  options: { intent_override?: PrepIntent } = {},
 ): Promise<RankedEntry[]> {
   let mastery: Record<string, number> = {};
   let motivationBoost = 0;
@@ -143,6 +219,22 @@ export async function rankEntriesForStudent(
   } catch {
     // No GBrain model — score from mapping structure alone
   }
+
+  // Resolve the student's prep intent (override > profile > default 'bridge')
+  let intent: PrepIntent = options.intent_override ?? 'bridge';
+  if (!options.intent_override) {
+    try {
+      const { getProfile } = await import('../session-planner/exam-profile-store');
+      const { derivePrepIntent } = await import('../session-planner/exam-profile-store');
+      const profile = getProfile(student_id);
+      // Find the registration whose target exam matches this mapping
+      const reg = profile?.exams?.find(r => r.exam_id === mapping.target_exam_id) ?? profile?.exams?.[0];
+      if (reg) intent = derivePrepIntent(reg);
+    } catch {
+      // Keep default
+    }
+  }
+  const intentMultipliers = INTENT_GAP_WEIGHTS[intent];
 
   const gapWeight: Record<BridgeMappingEntry['gap_class'], number> = {
     'aligned':     0.20,
@@ -168,18 +260,23 @@ export async function rankEntriesForStudent(
     }
     const avgMastery = masteryN > 0 ? masterySum / masteryN : 0;
 
-    const need_score =
+    const raw_score =
       0.50 * (1 - avgMastery) +
       0.30 * (entry.difficulty_jump / 5) +
       0.15 * gapWeight[entry.gap_class] +
       0.05 * motivationBoost;
+
+    // Clamp to [0, 1] after intent multiplier
+    const need_score = Math.min(1, Math.max(0, raw_score * intentMultipliers[entry.gap_class]));
 
     const reasonParts: string[] = [];
     if (avgMastery < 0.4) reasonParts.push(`low mastery on ${entry.target_topic_ids.join('+')} (${Math.round(avgMastery*100)}%)`);
     else if (avgMastery < 0.7) reasonParts.push(`partial mastery on ${entry.target_topic_ids.join('+')} (${Math.round(avgMastery*100)}%)`);
     if (entry.gap_class === 'depth-gap' || entry.gap_class === 'breadth-gap') reasonParts.push(`${entry.gap_class}`);
     if (entry.difficulty_jump >= 4) reasonParts.push(`major difficulty jump`);
-    const reason = reasonParts.length ? reasonParts.join(' · ') : 'aligned with current pace';
+    // Surface the intent in the reason so the caller can show it in UI
+    reasonParts.push(`${intent}`);
+    const reason = reasonParts.join(' · ');
 
     ranked.push({ entry, need_score, target_mastery, reason });
   }
@@ -268,16 +365,24 @@ export async function cohortGapReport(
  * student needs most, paired with the content units already generated for
  * them. Caller can decide whether to render `ready_content` or ask the admin
  * to generate first.
+ *
+ * `intent_override` flows down to rankEntriesForStudent. When unset, the
+ * student's profile decides — board-focused students get aligned/foundation
+ * heavy recs, entrance-focused get depth/breadth. When the student wants to
+ * temporarily switch ("show me JEE-level even though I'm board"), pass the
+ * override here.
  */
 export async function recommendBridgeContent(
   student_id: string,
   mapping_id: string,
-  options: { limit?: number; min_score?: number } = {},
+  options: { limit?: number; min_score?: number; intent_override?: PrepIntent } = {},
 ): Promise<PersonalizedRecommendation[]> {
   const mapping = getMapping(mapping_id);
   if (!mapping) return [];
 
-  const ranked = await rankEntriesForStudent(mapping, student_id);
+  const ranked = await rankEntriesForStudent(mapping, student_id, {
+    intent_override: options.intent_override,
+  });
   const minScore = options.min_score ?? 0.35;
   const limit = options.limit ?? 5;
 

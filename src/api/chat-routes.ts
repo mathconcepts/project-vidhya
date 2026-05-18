@@ -91,15 +91,18 @@ export function setChatEmbedder(fn: (text: string) => Promise<number[]>): void {
 // ============================================================================
 
 // Build an exam-aware system prompt for the student.
-// Reads the student's exam from JWT profile; falls back to a generic tutor.
+// Reads the student's exam + prep_intent from JWT profile; falls back to a
+// generic tutor.
 async function buildSystemPrompt(req: any): Promise<string> {
   let examName = 'competitive exam';
   let topicList = '';
   let knowledgeContext = ''; // e.g. " (a CBSE Class 12 student)"
+  let prepIntent: 'board-focused' | 'bridge' | 'entrance-focused' = 'bridge';
+  let isEntranceExam = false;
   try {
     const auth = await getCurrentUser(req);
     if (auth) {
-      const { getProfile } = await import('../session-planner/exam-profile-store');
+      const { getProfile, derivePrepIntent } = await import('../session-planner/exam-profile-store');
       const profile = getProfile(auth.user.id);
       const primaryExam = profile?.exams?.[0];
       if (primaryExam?.exam_id) {
@@ -122,6 +125,9 @@ async function buildSystemPrompt(req: any): Promise<string> {
             knowledgeContext = ` (currently in ${track.display_name})`;
           }
         }
+        // Prep intent shapes how we cross-reference
+        prepIntent = derivePrepIntent(primaryExam);
+        isEntranceExam = /JEE|BITSAT|UGEE|NEET|GATE/i.test(primaryExam.exam_id);
       }
     }
   } catch { /* non-blocking — use generic fallback */ }
@@ -129,8 +135,47 @@ async function buildSystemPrompt(req: any): Promise<string> {
   // School-curriculum addendum: align explanations with the student's textbook
   // (NCERT for CBSE, etc.) before pushing into exam-level depth.
   const curriculumGuidance = knowledgeContext
-    ? `\n## School Curriculum Alignment\nThis student is also studying the standard school curriculum${knowledgeContext}. When explaining concepts, anchor them to the chapters and notation they encounter in their textbook (NCERT for CBSE, ICSE textbooks for ICSE, state board books otherwise). Bridge from school syllabus to exam-level depth — don't assume they have already gone past their current grade.\n`
+    ? `\n## School Curriculum Alignment\nThis student is studying the standard school curriculum${knowledgeContext}. Anchor explanations to the chapters and notation they encounter in their textbook (NCERT for CBSE, ICSE textbooks for ICSE, state board books otherwise).\n`
     : '';
+
+  // Intent-specific cross-reference policy — the key change.
+  // - board-focused: DON'T proactively bring in entrance-exam content
+  // - bridge:        DO connect textbook to entrance explicitly
+  // - entrance-focused: skip textbook recap unless explicitly asked
+  //
+  // ALL intents respect explicit asks — if a board-focused student says
+  // "how would this look in JEE?", honour the question with full depth.
+  const intentPolicy = (() => {
+    if (prepIntent === 'board-focused') {
+      return `\n## Goal Awareness — BOARD-FOCUSED student
+This student's primary goal is the school BOARD EXAM. Stay at textbook depth.
+- Do NOT mention IIT JEE, NEET, BITSAT, or any entrance exam techniques unprompted.
+- Do NOT add "this also comes up in JEE" framing.
+- Examples and notation should match the board textbook style.
+- IF (and only if) the student explicitly asks how a concept appears in an entrance exam,
+  THEN provide the entrance-exam treatment honestly and fully — never refuse, never gate.
+`;
+    }
+    if (prepIntent === 'entrance-focused') {
+      return `\n## Goal Awareness — ENTRANCE-FOCUSED student
+This student's primary goal is ${examName}. They have likely already covered the school basics.
+- Lead with the entrance-exam-level technique, formula, or trick.
+- Skip remedial textbook coverage unless the student says they're confused on the basics.
+- Reference school textbook only as a foundation note if it materially helps recall.
+`;
+    }
+    // bridge mode — only meaningful when both board context AND an entrance exam are present
+    if (isEntranceExam && knowledgeContext) {
+      return `\n## Goal Awareness — BRIDGE preparation (board + entrance)
+This student is preparing for BOTH their school board AND ${examName}.
+- For every concept, ANCHOR in the textbook first (what they already know from school),
+  THEN expand into the entrance-exam technique.
+- Always make the connection explicit: "you know X from your chapter Y; the entrance version is Z."
+- Don't choose between the two registers — they want both, sequenced.
+`;
+    }
+    return ''; // generic / unknown — no extra guidance
+  })();
 
   return `You are GBrain, an expert AI tutor helping students prepare for the ${examName}${knowledgeContext}.
 
@@ -141,7 +186,7 @@ async function buildSystemPrompt(req: any): Promise<string> {
 - **Doubt Clearing**: Answer any question about the syllabus
 - **Motivation**: Encourage students and celebrate progress
 
-${topicList ? `## ${examName} Topics\n${topicList}\n` : ''}${curriculumGuidance}
+${topicList ? `## ${examName} Topics\n${topicList}\n` : ''}${curriculumGuidance}${intentPolicy}
 ## Response Guidelines
 - Use LaTeX for math: inline $...$ and display $$...$$
 - Be concise but thorough — students are preparing for a competitive exam

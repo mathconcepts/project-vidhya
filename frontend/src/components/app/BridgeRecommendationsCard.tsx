@@ -57,6 +57,10 @@ export function BridgeRecommendationsCard() {
   // Track which content_ids the student has already rated, so we don't
   // show the rate buttons again post-feedback (less noisy UI).
   const [ratedContent, setRatedContent] = useState<Set<string>>(new Set());
+  // Active prep intent — null means "use the one on my profile". A user
+  // can temporarily switch view without mutating their stored profile.
+  const [profileIntent, setProfileIntent] = useState<string | null>(null);
+  const [intentOverride, setIntentOverride] = useState<'board-focused' | 'bridge' | 'entrance-focused' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +75,7 @@ export function BridgeRecommendationsCard() {
         const track = meta.knowledge_track as KnowledgeTrack | null;
         if (!track) { setLoading(false); return; }   // student has no track -> hide card
         setKnowledgeTrack(track);
+        setProfileIntent(meta.prep_intent ?? null);
 
         // 2. Find a mapping whose source_curriculum_id matches this track
         //    (or whose target_exam_id matches their primary exam).
@@ -95,8 +100,10 @@ export function BridgeRecommendationsCard() {
         if (!target) { setLoading(false); return; }
         setMapping(target);
 
-        // 3. Fetch top-3 recommendations
-        const recRes = await authFetch(`/api/syllabus-bridge/mappings/${target.id}/recommendations?limit=3`);
+        // 3. Fetch top-3 recommendations, honouring the intent override
+        const qs = new URLSearchParams({ limit: '3' });
+        if (intentOverride) qs.set('intent', intentOverride);
+        const recRes = await authFetch(`/api/syllabus-bridge/mappings/${target.id}/recommendations?${qs.toString()}`);
         if (!recRes.ok) return;
         const { recommendations } = await recRes.json();
         if (cancelled) return;
@@ -110,7 +117,7 @@ export function BridgeRecommendationsCard() {
 
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [intentOverride]);
 
   async function rateContent(content_id: string, rating: 'helpful' | 'not-helpful') {
     try {
@@ -129,6 +136,9 @@ export function BridgeRecommendationsCard() {
   if (!mapping || !knowledgeTrack) return null;
   if (recs.length === 0) return null;
 
+  // Resolve effective intent for display
+  const effectiveIntent = intentOverride ?? profileIntent ?? 'bridge';
+
   return (
     <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-emerald-500/5 border border-sky-500/30 p-4">
       <div className="flex items-center gap-2 mb-2">
@@ -137,10 +147,40 @@ export function BridgeRecommendationsCard() {
           Bridge content for {knowledgeTrack.display_name}
         </h3>
       </div>
-      <p className="text-xs text-zinc-400 mb-3">
+      <p className="text-xs text-zinc-400 mb-2">
         GBrain picked these topics based on where you are right now — they connect what you know
         from school to what your exam expects.
       </p>
+
+      {/* Intent toggle — explicit override, doesn't mutate the profile. */}
+      <div className="flex items-center gap-1.5 mb-3 text-[11px]">
+        <span className="text-zinc-500">View as:</span>
+        {(['board-focused', 'bridge', 'entrance-focused'] as const).map(opt => {
+          const active = effectiveIntent === opt;
+          const labels: Record<typeof opt, string> = {
+            'board-focused': 'Board',
+            'bridge': 'Bridge',
+            'entrance-focused': 'Entrance',
+          };
+          return (
+            <button
+              key={opt}
+              onClick={() => setIntentOverride(opt === profileIntent ? null : opt)}
+              className={clsx(
+                'px-2 py-0.5 rounded-full transition-colors',
+                active
+                  ? 'bg-sky-500/30 text-sky-100 border border-sky-500/50'
+                  : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700',
+              )}
+            >
+              {labels[opt]}
+            </button>
+          );
+        })}
+        {intentOverride && intentOverride !== profileIntent && (
+          <span className="ml-auto text-zinc-500 italic">temporary view</span>
+        )}
+      </div>
 
       <div className="space-y-2">
         {recs.map(r => {

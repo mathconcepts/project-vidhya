@@ -105,7 +105,9 @@ async function generateUnit(
   let prompt = buildPrompt(unit, entry, conceptDetails);
   if (for_student_id) {
     const { personalizePromptForStudent } = await import('./gbrain-integration');
-    prompt = await personalizePromptForStudent(prompt, for_student_id);
+    prompt = await personalizePromptForStudent(prompt, for_student_id, {
+      mapping_target_exam_id: mapping.target_exam_id,
+    });
   }
 
   // Try real LLM first; fall back to mock on any error

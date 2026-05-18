@@ -8,6 +8,7 @@ Students see material that ramps from their textbook level to entrance-exam leve
 
 - [Why this exists](#why-this-exists)
 - [Core concepts](#core-concepts)
+- [Goal awareness — `prep_intent`](#goal-awareness--prep_intent)
 - [The 5-step admin wizard](#the-5-step-admin-wizard)
 - [The student experience](#the-student-experience)
 - [The teacher experience](#the-teacher-experience)
@@ -69,6 +70,57 @@ A request to generate one or more content units. Submitted from the admin UI; ru
 - **Generic pack** — same content for everyone (no `for_student_id`)
 - **Solo prep** — `for_student_id` set; GBrain personalises every prompt
 - **Smart priority** — `for_student_id` + `smart_priority`; only generates the top-N gaps that student needs
+
+## Goal awareness — `prep_intent`
+
+Not every student studying CBSE Class 12 wants to take JEE. A board-only student should not be drilled with entrance-exam tricks she didn't ask for. A student who has already moved past school basics shouldn't be sent back to remedial chapters. The framework respects this with a single field on every exam registration: **`prep_intent`**.
+
+| Intent | Meaning | What the system does |
+|---|---|---|
+| `board-focused` | School board is the priority. | System prompt suppresses entrance-exam framing. Bridge recommendations up-weight aligned + foundation entries; down-weight depth-gap. Content generated under this intent stays at textbook depth. |
+| `bridge` | Preparing for both — board AND entrance. | The default for school students with an entrance-exam target. Surface bridge content actively. Anchor in textbook, expand to exam. |
+| `entrance-focused` | Entrance exam is the goal. | Skip remedial textbook coverage. Lead with exam technique. Foundation explainers de-emphasised. |
+
+### Implicit handling (always on)
+
+The student picks their goal at `/knowledge` step 4, or it's inferred from context:
+
+- `knowledge_track_id` + entrance exam → `bridge` (default for school-to-exam students)
+- `knowledge_track_id` only → `board-focused` (they're in school, no entrance signal)
+- No `knowledge_track_id` → `entrance-focused` (came through the exam picker)
+
+The inference function `derivePrepIntent()` is the single source of truth — used by:
+- `chat-routes.ts buildSystemPrompt` — adds explicit "do not bring in JEE references unless asked" guidance for board-focused students
+- `gbrain-integration rankEntriesForStudent` — applies per-intent gap-class weight multipliers
+- `gbrain-integration personalizePromptForStudent` — adds intent-specific authoring guidance to every generation prompt
+
+The system prompt for a board-focused student explicitly says:
+
+> Do NOT mention IIT JEE, NEET, BITSAT, or any entrance exam techniques unprompted.  
+> Do NOT add "this also comes up in JEE" framing.  
+> Examples and notation should match the board textbook style.  
+> IF (and only if) the student explicitly asks how a concept appears in an entrance exam, THEN provide the entrance-exam treatment honestly and fully — never refuse, never gate.
+
+### Explicit override (UI + API)
+
+Students can temporarily switch view without mutating their profile:
+
+- **UI:** The `BridgeRecommendationsCard` on the planner has a "View as: Board / Bridge / Entrance" toggle. Tapping `Entrance` while board-focused fetches recommendations as if the student were entrance-focused — for this session only.
+- **API:** `GET /api/syllabus-bridge/mappings/:id/recommendations?intent=entrance-focused` overrides the profile intent. Recommendations API is stateless, no profile mutation.
+- **Chat:** A board-focused student can simply ask "how would JEE expect me to solve this?" — the system prompt explicitly instructs GBrain to honour that ask in full.
+
+### Per-intent gap-class multipliers
+
+The `rankEntriesForStudent` scoring formula multiplies the raw need-score by a per-intent weight on the entry's gap class:
+
+```
+                aligned   depth-gap   breadth-gap   foundation
+board-focused    1.10       0.40         0.60          1.20
+bridge           0.90       1.20         1.30          1.15
+entrance-focused 0.50       1.30         1.30          1.00
+```
+
+Numbers were chosen so that the same student model produces visibly different top-3 recommendations under each intent — without ever zeroing out an entire gap class (the override should never feel like a content cliff).
 
 ## The 5-step admin wizard
 

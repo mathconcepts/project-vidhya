@@ -164,18 +164,23 @@ async function handleGetOnboardMeta(req: ParsedRequest, res: ServerResponse): Pr
   // If the authenticated student has a knowledge track registered, surface it
   // so OnboardPage / ExamProfilePage can display "CBSE Class 12" alongside.
   let knowledgeTrack: any = null;
+  let prepIntent: string | null = null;
   if (auth) {
-    const { getProfile } = await import('../session-planner/exam-profile-store');
+    const { getProfile, derivePrepIntent } = await import('../session-planner/exam-profile-store');
     const profile = getProfile(auth.user.id);
-    const trackId = profile?.exams?.[0]?.knowledge_track_id;
-    if (trackId) {
-      const { getTrack } = await import('../knowledge/tracks');
-      const t = getTrack(trackId);
-      if (t) {
-        knowledgeTrack = {
-          id: t.id, display_name: t.display_name,
-          board_name: t.board_name, grade_name: t.grade_name, subject_name: t.subject_name,
-        };
+    const reg = profile?.exams?.[0];
+    if (reg) {
+      prepIntent = derivePrepIntent(reg);
+      const trackId = reg.knowledge_track_id;
+      if (trackId) {
+        const { getTrack } = await import('../knowledge/tracks');
+        const t = getTrack(trackId);
+        if (t) {
+          knowledgeTrack = {
+            id: t.id, display_name: t.display_name,
+            board_name: t.board_name, grade_name: t.grade_name, subject_name: t.subject_name,
+          };
+        }
       }
     }
   }
@@ -186,13 +191,17 @@ async function handleGetOnboardMeta(req: ParsedRequest, res: ServerResponse): Pr
     exam_short_name: examShortName,
     topics,
     knowledge_track: knowledgeTrack,
+    prep_intent: prepIntent,
   });
 }
 
 /** POST /api/onboard — Save study profile to the flat-file store (no Postgres) */
 async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const body = req.body as any;
-  const { session_id, exam_date, exam_id, weekly_hours, topic_confidence, knowledge_track_id } = body;
+  const {
+    session_id, exam_date, exam_id, weekly_hours, topic_confidence,
+    knowledge_track_id, prep_intent,
+  } = body;
 
   if (!exam_date || isNaN(new Date(exam_date).getTime())) {
     return sendError(res, 400, 'exam_date (ISO date string) is required');
@@ -233,12 +242,22 @@ async function handlePostOnboard(req: ParsedRequest, res: ServerResponse): Promi
       validatedTrackId = knowledge_track_id;
     }
 
+    // Validate prep_intent if provided
+    let validatedIntent: 'board-focused' | 'bridge' | 'entrance-focused' | undefined;
+    if (prep_intent) {
+      if (prep_intent !== 'board-focused' && prep_intent !== 'bridge' && prep_intent !== 'entrance-focused') {
+        return sendError(res, 400, "prep_intent must be one of: 'board-focused', 'bridge', 'entrance-focused'");
+      }
+      validatedIntent = prep_intent;
+    }
+
     const profile = upsertProfile(auth.user.id, [{
       exam_id: effectiveExamId,
       exam_date,
       weekly_hours: typeof weekly_hours === 'number' ? weekly_hours : 10,
       topic_confidence: topic_confidence ?? {},
       knowledge_track_id: validatedTrackId,
+      prep_intent: validatedIntent,
       added_at: new Date().toISOString(),
     }]);
     // Seed mastery_vector from 3-bucket onboarding async — don't block response

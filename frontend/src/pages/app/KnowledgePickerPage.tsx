@@ -61,6 +61,8 @@ export default function KnowledgePickerPage() {
     const d = new Date(); d.setMonth(d.getMonth() + 3);
     return d.toISOString().slice(0, 10);
   });
+  // Goal — shapes content generation + chat tone + bridge recommendations.
+  const [prepIntent, setPrepIntent] = useState<'board-focused' | 'bridge' | 'entrance-focused'>('bridge');
   const [saving, setSaving] = useState(false);
 
   // Load all knowledge tracks on mount
@@ -109,11 +111,13 @@ export default function KnowledgePickerPage() {
     setSaving(true);
     setError(null);
     try {
-      // Each picked exam becomes one ExamRegistration carrying the track id.
+      // Each picked exam becomes one ExamRegistration carrying the track id
+      // and prep_intent so backend personalisation knows the student's goal.
       const exams = [...pickedExamIds].map(exam_id => ({
         exam_id,
         exam_date: examDate,
         knowledge_track_id: selectedTrack.id,
+        prep_intent: prepIntent,
         added_at: new Date().toISOString(),
       }));
       const res = await authFetch('/api/student/profile', {
@@ -261,6 +265,36 @@ export default function KnowledgePickerPage() {
                 </button>
               );
             })}
+          </div>
+          <div>
+            <label className="text-xs text-zinc-500 uppercase tracking-wide">What's your goal?</label>
+            <p className="text-[11px] text-zinc-500 mt-1 mb-2">
+              Shapes how content is written for you. You can switch any time.
+            </p>
+            <div className="space-y-1.5">
+              {[
+                { v: 'board-focused' as const, t: 'Board exam first', d: 'School board exam is the priority. No entrance-exam references unless I ask.' },
+                { v: 'bridge'         as const, t: 'Both — bridge me', d: "I'm preparing for both. Show me how each board concept extends to the entrance exam." },
+                { v: 'entrance-focused' as const, t: 'Entrance exam first', d: 'I have school down. Push me straight to entrance-exam depth and tricks.' },
+              ].map(opt => (
+                <label key={opt.v} className={clsx(
+                  'block p-3 rounded-xl border-2 cursor-pointer transition-all',
+                  prepIntent === opt.v ? 'bg-violet-500/10 border-violet-500/50' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700',
+                )}>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="prep-intent"
+                      checked={prepIntent === opt.v}
+                      onChange={() => setPrepIntent(opt.v)}
+                      className="accent-violet-500"
+                    />
+                    <div className="font-medium text-zinc-100 text-sm">{opt.t}</div>
+                  </div>
+                  <div className="text-[11px] text-zinc-500 mt-1 ml-5">{opt.d}</div>
+                </label>
+              ))}
+            </div>
           </div>
           <div>
             <label className="text-xs text-zinc-500 uppercase tracking-wide">Exam date</label>

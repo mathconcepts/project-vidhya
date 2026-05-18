@@ -200,8 +200,18 @@ async function handleGetRecommendations(req: ParsedRequest, res: ServerResponse)
   const { id } = req.params;
   const limitStr = req.query?.get('limit');
   const limit = limitStr ? parseInt(limitStr, 10) : 5;
-  const recs = await recommendBridgeContent(auth.user.id, id, { limit });
-  sendJSON(res, { mapping_id: id, recommendations: recs });
+
+  // Optional ?intent= override — lets a board-focused student temporarily
+  // see entrance-level recommendations (or vice versa) without mutating
+  // their profile. Recommendations API stays stateless.
+  const intentParam = req.query?.get('intent');
+  const validIntents = new Set(['board-focused', 'bridge', 'entrance-focused']);
+  const intent_override = intentParam && validIntents.has(intentParam)
+    ? (intentParam as 'board-focused' | 'bridge' | 'entrance-focused')
+    : undefined;
+
+  const recs = await recommendBridgeContent(auth.user.id, id, { limit, intent_override });
+  sendJSON(res, { mapping_id: id, recommendations: recs, intent: intent_override ?? 'from-profile' });
 }
 
 /**

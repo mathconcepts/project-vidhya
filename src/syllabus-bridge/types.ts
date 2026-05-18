@@ -121,6 +121,13 @@ export interface BatchRequest {
   unit_ids: string[];
   /** Who submitted (user id or 'system') */
   submitted_by: string;
+  /**
+   * Optional student id. When set, the batch generates content
+   * personalized for this student — GBrain's student model is injected
+   * into each prompt so the body matches their mastery + motivation.
+   * Leave unset for generic 'pack' content shown to everyone.
+   */
+  for_student_id?: string;
   submitted_at: string;
   status: BatchStatus;
   started_at?: string;

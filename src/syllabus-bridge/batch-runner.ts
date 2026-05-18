@@ -53,7 +53,7 @@ export async function runBatch(batch: BatchRequest, planUnits: ContentUnit[]): P
     }
 
     try {
-      const generated = await generateUnit(unit, mapping);
+      const generated = await generateUnit(unit, mapping, batch.for_student_id);
       saveGeneratedContent(generated);
 
       result.status = 'success';
@@ -83,7 +83,11 @@ export async function runBatch(batch: BatchRequest, planUnits: ContentUnit[]): P
 // Generation — one unit at a time
 // ============================================================================
 
-async function generateUnit(unit: ContentUnit, mapping: BridgeMapping): Promise<GeneratedContent> {
+async function generateUnit(
+  unit: ContentUnit,
+  mapping: BridgeMapping,
+  for_student_id?: string,
+): Promise<GeneratedContent> {
   // Look up the mapping entry + the underlying curriculum concepts
   const entry = mapping.entries.find(e => e.id === unit.mapping_entry_id);
   if (!entry) throw new Error(`Mapping entry not found for unit ${unit.unit_id}`);
@@ -96,8 +100,13 @@ async function generateUnit(unit: ContentUnit, mapping: BridgeMapping): Promise<
     throw new Error(`No concepts found for entry ${entry.id}`);
   }
 
-  // Build the prompt — same shape regardless of mock vs real LLM
-  const prompt = buildPrompt(unit, entry, conceptDetails);
+  // Build the base prompt, then enrich with GBrain student context if we
+  // have a target student. Same template, calibrated body.
+  let prompt = buildPrompt(unit, entry, conceptDetails);
+  if (for_student_id) {
+    const { personalizePromptForStudent } = await import('./gbrain-integration');
+    prompt = await personalizePromptForStudent(prompt, for_student_id);
+  }
 
   // Try real LLM first; fall back to mock on any error
   const llmResult = await tryRealLLM(prompt, unit).catch(() => null);

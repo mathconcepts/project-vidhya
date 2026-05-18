@@ -87,6 +87,25 @@ interface GeneratedContentItem {
   generated_at: string;
 }
 
+interface RankedEntryItem {
+  entry_id: string;
+  gap_class: MappingEntry['gap_class'];
+  difficulty_jump: number;
+  target_topic_ids: string[];
+  need_score: number;
+  target_mastery: Record<string, number>;
+  reason: string;
+}
+
+interface CohortStat {
+  entry_id: string;
+  gap_class: MappingEntry['gap_class'];
+  students_struggling: number;
+  cohort_size: number;
+  cohort_avg_mastery: number;
+  recommended_action: string;
+}
+
 const GAP_COLOR: Record<MappingEntry['gap_class'], string> = {
   'aligned':     'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
   'depth-gap':   'bg-amber-500/10  border-amber-500/30  text-amber-300',
@@ -113,6 +132,13 @@ export default function SyllabusBridgePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ----- GBrain-powered controls -----
+  const [studentId, setStudentId] = useState<string>('');           // admin types a student id
+  const [smartPriority, setSmartPriority] = useState<boolean>(false);
+  const [rankedEntries, setRankedEntries] = useState<RankedEntryItem[] | null>(null);
+  const [cohortStats, setCohortStats] = useState<CohortStat[] | null>(null);
+  const [gbrainLoading, setGbrainLoading] = useState(false);
 
   // ----- Initial load: list of mappings -----
   useEffect(() => {
@@ -173,10 +199,13 @@ export default function SyllabusBridgePage() {
     setSubmitting(true);
     setError(null);
     try {
+      const payload: any = { mapping_id: selectedMappingId };
+      if (studentId.trim()) payload.for_student_id = studentId.trim();
+      if (smartPriority) payload.smart_priority = true;
       const r = await authFetch('/api/syllabus-bridge/batches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mapping_id: selectedMappingId }),
+        body: JSON.stringify(payload),
       });
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
@@ -190,6 +219,53 @@ export default function SyllabusBridgePage() {
       setError(err.message || 'Submit failed');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const previewRankedForStudent = async () => {
+    if (!selectedMappingId || !studentId.trim()) return;
+    setGbrainLoading(true);
+    setError(null);
+    try {
+      const url = `/api/syllabus-bridge/mappings/${selectedMappingId}/ranked-entries?student_id=${encodeURIComponent(studentId.trim())}`;
+      const r = await authFetch(url);
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(body.error || `Rank preview failed: ${r.status}`);
+      }
+      const { ranked } = await r.json();
+      setRankedEntries(ranked);
+      setCohortStats(null);
+    } catch (err: any) {
+      setError(err.message || 'Preview failed');
+    } finally {
+      setGbrainLoading(false);
+    }
+  };
+
+  const runCohortReport = async (idsCSV: string) => {
+    if (!selectedMappingId) return;
+    const ids = idsCSV.split(',').map(s => s.trim()).filter(Boolean);
+    if (ids.length === 0) { setError('Paste at least one student id'); return; }
+    setGbrainLoading(true);
+    setError(null);
+    try {
+      const r = await authFetch(`/api/syllabus-bridge/mappings/${selectedMappingId}/cohort-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_ids: ids }),
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(body.error || `Cohort report failed: ${r.status}`);
+      }
+      const { stats } = await r.json();
+      setCohortStats(stats);
+      setRankedEntries(null);
+    } catch (err: any) {
+      setError(err.message || 'Cohort report failed');
+    } finally {
+      setGbrainLoading(false);
     }
   };
 
@@ -280,6 +356,118 @@ export default function SyllabusBridgePage() {
             Without an LLM key, units are generated as mock placeholders (free, instant).
             Set GEMINI_API_KEY / ANTHROPIC_API_KEY in your env for real generation.
           </p>
+        </section>
+      )}
+
+      {/* GBrain controls — personalisation + cohort report */}
+      {selectedMappingId && (
+        <section className="mb-8 p-5 rounded-xl bg-zinc-900 border border-sky-500/30">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-xs uppercase tracking-wide text-sky-400">GBrain personalisation</h2>
+            <span className="text-[10px] text-zinc-500">student model + mastery vector</span>
+          </div>
+          <p className="text-xs text-zinc-400 mb-3">
+            Type a student id to personalise the batch: GBrain ranks bridge entries by what this student
+            needs most (low mastery on the target topics, motivation signals, prerequisite gaps),
+            then generation prompts are enriched with their student-model summary.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <input
+              type="text"
+              value={studentId}
+              onChange={e => setStudentId(e.target.value)}
+              placeholder="student id (e.g. user_xxxxx)"
+              className="flex-1 min-w-[200px] px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-100 focus:border-sky-500 focus:outline-none font-mono"
+            />
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={smartPriority}
+                onChange={e => setSmartPriority(e.target.checked)}
+                className="accent-sky-500"
+              />
+              Smart priority (top 10)
+            </label>
+            <button
+              onClick={previewRankedForStudent}
+              disabled={!studentId.trim() || gbrainLoading}
+              className={clsx(
+                'px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                studentId.trim() && !gbrainLoading
+                  ? 'bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/40'
+                  : 'bg-zinc-800 text-zinc-600 cursor-not-allowed',
+              )}
+            >
+              Preview rank
+            </button>
+          </div>
+
+          {/* Cohort report input */}
+          <details className="mb-2">
+            <summary className="text-xs text-zinc-400 cursor-pointer hover:text-zinc-200">
+              Teacher: cohort gap report ↓
+            </summary>
+            <div className="mt-2">
+              <textarea
+                id="cohort-input"
+                placeholder="Comma-separated student ids (paste your roster)"
+                rows={2}
+                className="w-full px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 font-mono"
+              />
+              <button
+                onClick={() => {
+                  const el = document.getElementById('cohort-input') as HTMLTextAreaElement | null;
+                  if (el) runCohortReport(el.value);
+                }}
+                disabled={gbrainLoading}
+                className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/40 transition-colors disabled:opacity-50"
+              >
+                Run cohort report
+              </button>
+            </div>
+          </details>
+
+          {/* Ranked-entries preview for a single student */}
+          {rankedEntries && (
+            <div className="mt-3 max-h-80 overflow-y-auto">
+              <div className="text-[11px] text-zinc-500 mb-1.5 uppercase tracking-wide">
+                Top entries this student needs (top 12 of {rankedEntries.length})
+              </div>
+              <div className="space-y-1.5">
+                {rankedEntries.slice(0, 12).map(r => (
+                  <div key={r.entry_id} className={clsx('p-2 rounded-md border text-xs', GAP_COLOR[r.gap_class])}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono">{r.entry_id}</span>
+                      <span className="text-zinc-300">need {(r.need_score * 100).toFixed(0)}</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">{r.reason}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cohort report */}
+          {cohortStats && (
+            <div className="mt-3 max-h-80 overflow-y-auto">
+              <div className="text-[11px] text-zinc-500 mb-1.5 uppercase tracking-wide">
+                Cohort gap report — top {cohortStats.length} entries by struggle count
+              </div>
+              <div className="space-y-1.5">
+                {cohortStats.map(s => (
+                  <div key={s.entry_id} className={clsx('p-2 rounded-md border text-xs', GAP_COLOR[s.gap_class])}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono">{s.entry_id}</span>
+                      <span className="text-zinc-300">
+                        {s.students_struggling}/{s.cohort_size} struggling · avg {(s.cohort_avg_mastery * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-zinc-300 mt-0.5 italic">{s.recommended_action}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 

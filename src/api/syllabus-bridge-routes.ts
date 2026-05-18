@@ -31,6 +31,9 @@ import {
   listGeneratedContentForMapping, getGeneratedContent,
 } from '../syllabus-bridge/store';
 import { runBatch } from '../syllabus-bridge/batch-runner';
+import {
+  rankEntriesForStudent, cohortGapReport, recommendBridgeContent,
+} from '../syllabus-bridge/gbrain-integration';
 import { requireAuth, requireRole } from '../auth/middleware';
 import type { BatchRequest } from '../syllabus-bridge/types';
 
@@ -122,6 +125,9 @@ async function handleCreateBatch(req: ParsedRequest, res: ServerResponse) {
   const body = req.body as any;
   const mapping_id = body?.mapping_id;
   const requested_unit_ids: string[] | undefined = body?.unit_ids;
+  const for_student_id: string | undefined = body?.for_student_id;
+  const smart_priority: boolean = !!body?.smart_priority;
+  const top_n: number = typeof body?.top_n === 'number' ? body.top_n : 10;
 
   if (!mapping_id || typeof mapping_id !== 'string') {
     return sendError(res, 400, 'mapping_id (string) required');
@@ -130,13 +136,20 @@ async function handleCreateBatch(req: ParsedRequest, res: ServerResponse) {
   if (!m) return sendError(res, 404, `Mapping '${mapping_id}' not found`);
 
   const plan = buildContentPlan(m);
-  // If no specific units requested, run the full plan
-  const unitsToRun = requested_unit_ids?.length
-    ? plan.units.filter(u => requested_unit_ids.includes(u.unit_id))
-    : plan.units;
+  let unitsToRun = plan.units;
+
+  // Smart priority: when a target student is named, rank entries by need
+  // (via GBrain) and keep only units belonging to the top-N entries.
+  if (smart_priority && for_student_id) {
+    const ranked = await rankEntriesForStudent(m, for_student_id);
+    const topEntryIds = new Set(ranked.slice(0, top_n).map(r => r.entry.id));
+    unitsToRun = plan.units.filter(u => topEntryIds.has(u.mapping_entry_id));
+  } else if (requested_unit_ids?.length) {
+    unitsToRun = plan.units.filter(u => requested_unit_ids.includes(u.unit_id));
+  }
 
   if (unitsToRun.length === 0) {
-    return sendError(res, 400, 'No units to run (either plan is empty or unit_ids did not match any unit)');
+    return sendError(res, 400, 'No units to run (either plan is empty, smart-priority returned nothing, or unit_ids did not match)');
   }
 
   const batch: BatchRequest = {
@@ -144,6 +157,7 @@ async function handleCreateBatch(req: ParsedRequest, res: ServerResponse) {
     mapping_id,
     unit_ids: unitsToRun.map(u => u.unit_id),
     submitted_by: auth.user.id,
+    for_student_id,
     submitted_at: new Date().toISOString(),
     status: 'queued',
     results: unitsToRun.map(u => ({ unit_id: u.unit_id, status: 'pending' as const })),
@@ -166,6 +180,77 @@ async function handleCreateBatch(req: ParsedRequest, res: ServerResponse) {
   });
 
   sendJSON(res, { batch }, 201);
+}
+
+/**
+ * GET /api/syllabus-bridge/mappings/:id/recommendations
+ *
+ * For the authenticated student: return the top-N bridge entries they need
+ * most right now, plus any already-generated content units the planner can
+ * serve. Used by SmartPracticePage / PlannedSessionPage to weave bridge
+ * content into the student's session.
+ */
+async function handleGetRecommendations(req: ParsedRequest, res: ServerResponse) {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const { id } = req.params;
+  const limitStr = req.query?.get('limit');
+  const limit = limitStr ? parseInt(limitStr, 10) : 5;
+  const recs = await recommendBridgeContent(auth.user.id, id, { limit });
+  sendJSON(res, { mapping_id: id, recommendations: recs });
+}
+
+/**
+ * POST /api/syllabus-bridge/mappings/:id/cohort-report
+ *
+ * Body: { student_ids: string[] }  (typically a teacher's roster ids)
+ * Admin or teacher only. Returns the top-15 entries by struggle volume
+ * with recommended teacher action per entry.
+ */
+async function handleCohortReport(req: ParsedRequest, res: ServerResponse) {
+  const auth = await requireRole(req, res, 'teacher');
+  if (!auth) return;
+  const { id } = req.params;
+  const m = getMapping(id);
+  if (!m) return sendError(res, 404, `Mapping '${id}' not found`);
+  const body = req.body as any;
+  const ids: string[] = Array.isArray(body?.student_ids) ? body.student_ids : [];
+  if (ids.length === 0) return sendError(res, 400, 'student_ids (string[]) required');
+  const stats = await cohortGapReport(ids, m);
+  sendJSON(res, { mapping_id: id, cohort_size: ids.length, stats });
+}
+
+/**
+ * GET /api/syllabus-bridge/mappings/:id/ranked-entries
+ *
+ * Admin-only diagnostic — returns the GBrain-ranked list for any student.
+ * Used by the Syllabus Bridge admin page to power its "smart priority"
+ * preview before submitting a batch.
+ */
+async function handleRankedEntries(req: ParsedRequest, res: ServerResponse) {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+  const { id } = req.params;
+  const m = getMapping(id);
+  if (!m) return sendError(res, 404, `Mapping '${id}' not found`);
+  const studentId = req.query?.get('student_id');
+  if (!studentId) return sendError(res, 400, 'student_id query param required');
+  const ranked = await rankEntriesForStudent(m, studentId);
+  // Strip the entry object in the response to a compact summary so the UI
+  // doesn't get the editorial bridge_note twice (it already has the mapping).
+  sendJSON(res, {
+    mapping_id: id,
+    student_id: studentId,
+    ranked: ranked.map(r => ({
+      entry_id: r.entry.id,
+      gap_class: r.entry.gap_class,
+      difficulty_jump: r.entry.difficulty_jump,
+      target_topic_ids: r.entry.target_topic_ids,
+      need_score: Number(r.need_score.toFixed(3)),
+      target_mastery: r.target_mastery,
+      reason: r.reason,
+    })),
+  });
 }
 
 async function handleListBatches(req: ParsedRequest, res: ServerResponse) {
@@ -201,14 +286,17 @@ async function handleGetContent(req: ParsedRequest, res: ServerResponse) {
 }
 
 export const syllabusBridgeRoutes: RouteDefinition[] = [
-  { method: 'GET',  path: '/api/syllabus-bridge/curricula',                handler: handleListCurricula },
-  { method: 'GET',  path: '/api/syllabus-bridge/curricula/:id',            handler: handleGetCurriculum },
-  { method: 'GET',  path: '/api/syllabus-bridge/mappings',                 handler: handleListMappings },
-  { method: 'GET',  path: '/api/syllabus-bridge/mappings/:id',             handler: handleGetMapping },
-  { method: 'GET',  path: '/api/syllabus-bridge/mappings/:id/plan',        handler: handleGetMappingPlan },
-  { method: 'POST', path: '/api/syllabus-bridge/batches',                  handler: handleCreateBatch },
-  { method: 'GET',  path: '/api/syllabus-bridge/batches',                  handler: handleListBatches },
-  { method: 'GET',  path: '/api/syllabus-bridge/batches/:id',              handler: handleGetBatch },
-  { method: 'GET',  path: '/api/syllabus-bridge/content/by-mapping/:id',   handler: handleListContentForMapping },
-  { method: 'GET',  path: '/api/syllabus-bridge/content/:id',              handler: handleGetContent },
+  { method: 'GET',  path: '/api/syllabus-bridge/curricula',                  handler: handleListCurricula },
+  { method: 'GET',  path: '/api/syllabus-bridge/curricula/:id',              handler: handleGetCurriculum },
+  { method: 'GET',  path: '/api/syllabus-bridge/mappings',                   handler: handleListMappings },
+  { method: 'GET',  path: '/api/syllabus-bridge/mappings/:id',               handler: handleGetMapping },
+  { method: 'GET',  path: '/api/syllabus-bridge/mappings/:id/plan',          handler: handleGetMappingPlan },
+  { method: 'GET',  path: '/api/syllabus-bridge/mappings/:id/recommendations', handler: handleGetRecommendations },
+  { method: 'POST', path: '/api/syllabus-bridge/mappings/:id/cohort-report', handler: handleCohortReport },
+  { method: 'GET',  path: '/api/syllabus-bridge/mappings/:id/ranked-entries', handler: handleRankedEntries },
+  { method: 'POST', path: '/api/syllabus-bridge/batches',                    handler: handleCreateBatch },
+  { method: 'GET',  path: '/api/syllabus-bridge/batches',                    handler: handleListBatches },
+  { method: 'GET',  path: '/api/syllabus-bridge/batches/:id',                handler: handleGetBatch },
+  { method: 'GET',  path: '/api/syllabus-bridge/content/by-mapping/:id',     handler: handleListContentForMapping },
+  { method: 'GET',  path: '/api/syllabus-bridge/content/:id',                handler: handleGetContent },
 ];

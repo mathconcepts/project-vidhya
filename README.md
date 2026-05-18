@@ -12,6 +12,8 @@ It's 2 a.m. She's stuck on an eigenvalue problem. Her exam is in four weeks. **T
 
 She opens her phone, takes a photo of the problem, and gets her answer — not just the number, but the method, the intuition, the trap she would have fallen into, the specific concept she's weak on, and three calibrated problems that will fix it. **Ten minutes later she's moved on.**
 
+The next problem she tries is a JEE 2023 conics question. She freezes. *Pole–polar duality?* It's not in her Tamil Nadu State Board textbook — she's never seen the technique. Vidhya already knows she's a **TN Class 12 student preparing for JEE Main**, so the planner has surfaced a bridge explainer that opens with what she does know from chapter 5 — eccentricity, focus, directrix — and then steps her, in two short pages, into the exam-level technique. **The gap she didn't know existed is the gap that just closed.**
+
 The next morning the app doesn't guilt-ping her about a broken streak. It just remembers where she stopped, and picks up when she's ready. **On exam day she walks in like a champion who has trained right.**
 
 That's Vidhya.
@@ -49,7 +51,9 @@ Ask a question in chat. Upload a PDF of your class notes. Snap a photo of a prob
 
 The lesson you see isn't a one-size-fits-all atom. It's been **re-ranked for your mastery state, your representation preference, and the misconception you tripped on last week** — and if a generic prompt would have produced a different version, an admin can show the side-by-side proof. The planner budgets for the time you actually have — three minutes at a bus stop, sixty on a weekend. When your exam is three days out, the app stops telling you to rest; it switches to revision. Everything reaches you through web, Telegram, or WhatsApp — same account, same progress, three surfaces.
 
-📖 *Forty-eight-release feature ledger: [FEATURES.md](./FEATURES.md). Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md). Demo runbook: [docs/moat-demo.md](./docs/moat-demo.md).*
+**If you came in through school — CBSE, ICSE, Tamil Nadu State Board, Karnataka PUE, Maharashtra HSC — the app knows that too.** Pick your board, grade, and subject at `/knowledge`; we map it to the entrance exams it leads into (JEE Main, BITSAT, UGEE, NEET) and surface **bridge content** that connects what you already know from your textbook to what the exam expects. The bridge isn't a separate course you have to take — it's three cards on your planner that GBrain ranked from where *you* are right now.
+
+📖 *Forty-eight-release feature ledger: [FEATURES.md](./FEATURES.md). Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md). Syllabus bridge framework: [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md). Demo runbook: [docs/moat-demo.md](./docs/moat-demo.md).*
 
 ---
 
@@ -60,6 +64,34 @@ A React SPA backed by a stateless Node server. **Your student model and uploaded
 Thirteen modules: core, auth, content, rendering, channels, learning, exams, lifecycle, teaching, content-library, content-studio, operator, orchestrator. Each declares its public surface in `src/modules/<name>/index.ts` and registers in `modules.yaml`. The orchestrator composes them per deployment profile.
 
 📖 *Production-readiness in [PRODUCTION.md](./PRODUCTION.md).*
+
+---
+
+## Life with Vidhya — three vignettes
+
+The features only matter if they change what happens when you sit down to study. Three concrete scenes:
+
+#### 🎓 The TN Board student on her own at 11 p.m.
+
+She's halfway through a JEE practice paper. Question 14: "Find the equation of the chord of contact from (3, 4) to the parabola y² = 8x." Her TN textbook taught her about chords and tangents — but never *chord of contact*. Twenty minutes ago she would have closed the book.
+
+She opens Vidhya. The planner is already showing **TN → JEE bridge cards** ranked by what GBrain says she needs most — pole-polar duality is #2 because she's at 0% mastery on JEE coordinate geometry and the difficulty jump from her textbook is 4 out of 5. She taps **Read**. The card opens in place. First paragraph: "From your TN textbook chapter 5 you already know the tangent equation T = 0. JEE's chord of contact is *exactly that equation applied at an external point* — same formula, new framing." Three lines of working, one bridge example, done. She closes the card. Question 14 takes her five minutes.
+
+She taps 👍 on the way out. **GBrain notes the helpful rating. The content stays.**
+
+#### 🧑‍🏫 The teacher who finally knows where the class is stuck
+
+Monday morning, Mr. Selvam pulls up `/teacher/syllabus-coverage`. His roster of 18 Class-12 students loads automatically. He picks TN-12-MATH → JEE Main, hits **Run gap report**.
+
+Twelve seconds later he has the answer he's been guessing at all term: **15 of 18 are stuck at parabola/ellipse JEE depth.** Eleven are stuck at de Moivre's theorem applied to roots of unity. Six are still wobbly on Cramer's rule consistency cases. Each row tells him what to do — *"Run a class session — most students need this"* on the first one, *"Assign as homework — about a third of the class is stuck"* on the third. **The framework already knows where the editorial bridge note lives**, so he can grab the talking points for class without writing his lesson plan from scratch.
+
+For the second-most-stuck topic, there's no generated content yet. He clicks **Generate material for this gap**. By his next free period the bridge explainer, two worked examples, and a graduated practice set are ready. Cost: about three cents. **He never opened the admin panel.**
+
+#### 👨‍💼 The admin who used to burn tokens on the wrong content
+
+Last month, the admin generated the full TN → JEE pack — 77 units, $0.017. Two weeks in, the framework's feedback inbox tells a story: nine students rated `conics.parabola-ellipse-hyperbola — bridge explainer` "unclear", three rated it "wrong". The content is **auto-flagged for regeneration**.
+
+Today the admin opens the wizard, jumps to step 5, sees the amber banner: *3 content pieces flagged for regeneration*. One click on **Regenerate flagged**. A targeted batch runs — only the bad units, not the whole pack. Better content arrives in two minutes. Cost: under a cent. **Token spend follows real student signal, not a hunch.**
 
 ---
 
@@ -79,6 +111,9 @@ The ingredients are the promise. These are the systems that defend it.
 | ⚡ **Batch generation** | Content generation runs through provider Batch APIs (Gemini Batch first; OpenAI/Anthropic adapter-ready) — **~50% cheaper, no rate-limit pain.** Five-state machine (`queued → prepared → submitted → downloading → processing → complete`) with mid-flight resume: every transition writes to DB before the next side-effect, so a crash mid-anything is recoverable from the persisted state alone. Per-job idempotency via deterministic `custom_id`. Cost cap rejects over-budget batches BEFORE provider call. Boot poller + 5-min cron driving the same code path. | `src/generation/batch/`, `src/jobs/scheduler.ts:batchPoller` |
 | 📐 **Content blueprints** | The spec layer between intent and generation. Each blueprint is a human-editable plan that explicitly names stages, atom kinds, and constraints — plus the `rationale_id` for every choice — so the lift ledger can correlate spec shape with measured outcomes. Locked v1 contract; deterministic template engine produces sane defaults; operator overrides via JSON edit + ETag concurrency. The "explicit decisions before generation" surface that makes the personalization moat legible to operators. | `src/blueprints/`, `/admin/blueprints` |
 | 🧭 **Admin journey UX** | A guided-assist layer over the admin pages. `/admin/journey` shows an 8-milestone progress timeline derived from existing DB state — admin always sees where they are + the next high-leverage move, never gated. `/admin/decisions` is a chronological feed of admin actions (rulesets, blueprints, runs); `/admin/cohort` surfaces only the (max 10) students who need attention with one-click `student-audit` drill-in; lift ledger rows render an inline action sentence ("won — write a ruleset" / "trending toward loss — investigate") with one-click CTAs. **Suggestions are advice, never auto-applied** — humans stay in the loop on compounding decisions. | `src/api/admin-journey-routes.ts`, `src/api/admin-decisions-routes.ts`, `src/api/admin-cohort-routes.ts`, `src/experiments/ledger-suggestions.ts` |
+| 🌉 **Syllabus Bridge** | A framework that maps a school curriculum (Tamil Nadu Class 12 Maths today; CBSE/ICSE/KAR-PUE/MAH-HSC structurally ready) to an entrance exam (JEE Main today) and generates **intuitive bridge content** that ramps from textbook level to exam level. 23 mapping entries × 4 gap classes (aligned / depth-gap / breadth-gap / foundation) → 77 content units, **~58k tokens, ~$0.017** for the full TN → JEE pack at Gemini Flash pricing. Admin walks a **5-step wizard** (`/admin/syllabus-bridge`): pick mapping → review gap → personalise → generate → review & feedback. Each bridge entry carries an **editorial `bridge_note`** that flows straight into the LLM prompt, so generated content explicitly says "from your TN chapter 5 you already know X; JEE adds Y" instead of producing generic exam practice. Extending to a new board = two files. | `src/syllabus-bridge/`, `src/api/syllabus-bridge-routes.ts`, `frontend/src/pages/app/SyllabusBridgePage.tsx`, [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md) |
+| 🧠 **GBrain × Bridge** | The student-model engine connects to the bridge framework so the same pack adapts per student and per cohort. **Implicit** (always on): `personalizePromptForStudent` injects motivation, working memory, weak topics, prerequisite gaps into every generation prompt — same template, calibrated body. `recommendBridgeContent` ranks entries on the student's planner — `need_score = 0.50·(1−mastery) + 0.30·(jump/5) + 0.15·gap_class_weight + 0.05·motivation`. **Explicit**: `rankEntriesForStudent` powers the admin **Preview Rank** button and **Smart Priority** batches (top-10 gaps only — saves cost for solo prep). `cohortGapReport` powers the teacher's class view at `/teacher/syllabus-coverage` with per-entry recommended action ("Run a class session" / "Assign as homework" / "Light-touch follow-up"). | `src/syllabus-bridge/gbrain-integration.ts`, `frontend/src/components/app/BridgeRecommendationsCard.tsx`, `frontend/src/pages/app/TeacherSyllabusCoveragePage.tsx` |
+| 👍 **Feedback-driven regeneration** | Students and teachers rate generated content with **6 ratings** (helpful / not-helpful / wrong / unclear / too-easy / too-hard). The framework auto-flips `flagged_for_regen` when thresholds cross — **3+ wrong → factual error**; **4+ not-helpful with <25% helpful → wrong angle**; **3+ unclear with <33% helpful → re-write**. The admin sees an amber banner with one-click **Regenerate flagged** — runs a targeted batch on just the flagged unit_ids, no others. Token spend follows real signal. | `src/syllabus-bridge/feedback-store.ts`, 9 tests in `feedback-store.test.ts` |
 
 📖 *Full development context lives in [CLAUDE.md](./CLAUDE.md). Detailed personalisation + R&D pipelines documented inline.*
 
@@ -130,10 +165,13 @@ docker compose up --build        # http://localhost:8080
 | You are | Read |
 |---|---|
 | 🎓 A student | [PITCH.md](./PITCH.md) → [INSTALL.md](./INSTALL.md) |
+| 🏫 A school student preparing for JEE / NEET / BITSAT | [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md) — pick your board at `/knowledge`, see bridge content on your planner |
 | 🧪 A tester wanting it live now | [DEMO.md](./DEMO.md) — one command, six demo users seeded |
 | 🚀 Spinning up a public URL | The Deploy button above → [DEPLOY.md](./DEPLOY.md) |
 | 📚 Evaluating exams | [EXAMS.md](./EXAMS.md) — three bundled, adapter pattern for new ones |
 | 📖 Designing content | [CONTENT.md](./CONTENT.md) + [LIBRARY.md](./LIBRARY.md) + [STUDIO.md](./STUDIO.md) |
+| 🌉 Generating a school → exam bridge course | [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md) — 5-step wizard at `/admin/syllabus-bridge`, two-file extension story for new boards |
+| 🧑‍🏫 A teacher who wants to know where the class is stuck | `/teacher/syllabus-coverage` — gap report against your roster, one-click "Generate material for this gap" |
 | 🎬 Pitching the moat | [docs/moat-demo.md](./docs/moat-demo.md) — guided 3-minute persona-scenarios path |
 | 🛠 Setting up from scratch | [docs/admin-getting-started.md](./docs/admin-getting-started.md) — day-0 to cloud deploy, local-first |
 | 🧑‍🏫 Running real students | [docs/admin-guide-jee-tn.md](./docs/admin-guide-jee-tn.md) — end-to-end admin runbook with concrete TN-board / IIT-JEE / anxious-cohort scenario |

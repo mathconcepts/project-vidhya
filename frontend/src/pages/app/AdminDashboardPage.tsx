@@ -302,6 +302,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/syllabus-bridge" label="Syllabus bridge" icon={BookOpen} />
               <QuickLink href="/admin/founder" label="Founder dashboard" icon={Server} />
               <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
+              <QuickLink href="/teacher/syllabus-coverage" label="Class syllabus coverage" icon={Brain} />
               <QuickLink href="/llm-config" label="AI config" icon={Key} />
               {isOwner && <QuickLink href="/owner/settings" label="Owner settings" icon={Crown} />}
             </div>

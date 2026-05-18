@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
 import { DigestChip } from '@/components/app/DigestChip';
+import { BridgeRecommendationsCard } from '@/components/app/BridgeRecommendationsCard';
 import { useSession } from '@/hooks/useSession';
 import { clsx } from 'clsx';
 
@@ -815,6 +816,9 @@ export default function PlannedSessionPage() {
               {/* CompoundingCard + DigestChip — north-star pillar surfaces daily */}
               <CompoundingCard sessionId={sessionId} />
               <DigestChip sessionId={sessionId} />
+
+              {/* Curriculum bridge — only renders when the student has a knowledge_track set */}
+              <div className="mb-4"><BridgeRecommendationsCard /></div>
 
               {/* Headline */}
               <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">

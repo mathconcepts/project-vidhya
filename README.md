@@ -158,7 +158,7 @@ docker compose up --build        # http://localhost:8080
 
 **Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [PRODUCTION.md](./PRODUCTION.md), [FOUNDER.md](./FOUNDER.md), [SECURITY.md](./SECURITY.md)
 
-**Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/CURRICULUM-FRAMEWORK.md](./docs/CURRICULUM-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/LESSON-FRAMEWORK.md](./docs/LESSON-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md)
+**Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/CURRICULUM-FRAMEWORK.md](./docs/CURRICULUM-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/LESSON-FRAMEWORK.md](./docs/LESSON-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md), [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md)
 
 **Demo** — [docs/moat-demo.md](./docs/moat-demo.md) (guided 3-minute persona-scenarios path)
 

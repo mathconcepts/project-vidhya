@@ -77,6 +77,7 @@ const AdminDecisionsPage = lazy(() => import('@/pages/app/AdminDecisionsPage'));
 const AdminCohortPage = lazy(() => import('@/pages/app/AdminCohortPage'));
 const ExamPacksPage = lazy(() => import('@/pages/app/ExamPacksPage'));
 const SyllabusBridgePage = lazy(() => import('@/pages/app/SyllabusBridgePage'));
+const TeacherSyllabusCoveragePage = lazy(() => import('@/pages/app/TeacherSyllabusCoveragePage'));
 const ConceptOrchestratorPage = lazy(() => import('@/pages/app/ConceptOrchestratorPage'));
 const ContentSettingsPage = lazy(() => import('@/pages/app/ContentSettingsPage'));
 const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
@@ -169,6 +170,7 @@ export default function App() {
           <Route path="turns/:id" element={<TurnsPage />} />
           <Route path="owner/settings" element={<OwnerSettingsPage />} />
           <Route path="teacher/roster" element={<TeacherRosterPage />} />
+          <Route path="teacher/syllabus-coverage" element={<TeacherSyllabusCoveragePage />} />
           <Route path="owner/dashboard" element={<AdminDashboardPage />} />
           <Route path="admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="teaching" element={<TeachingDashboardPage />} />

@@ -34,8 +34,12 @@ import { runBatch } from '../syllabus-bridge/batch-runner';
 import {
   rankEntriesForStudent, cohortGapReport, recommendBridgeContent,
 } from '../syllabus-bridge/gbrain-integration';
+import {
+  saveFeedback, computeSummary, mappingFeedbackOverview,
+  listFeedbackForContent,
+} from '../syllabus-bridge/feedback-store';
 import { requireAuth, requireRole } from '../auth/middleware';
-import type { BatchRequest } from '../syllabus-bridge/types';
+import type { BatchRequest, ContentFeedback, FeedbackRating } from '../syllabus-bridge/types';
 
 interface RouteDefinition {
   method: string;
@@ -285,6 +289,134 @@ async function handleGetContent(req: ParsedRequest, res: ServerResponse) {
   sendJSON(res, { content: c });
 }
 
+// ---------------------------------------------------------------------------
+// Feedback endpoints
+// ---------------------------------------------------------------------------
+
+const VALID_RATINGS = new Set<FeedbackRating>([
+  'helpful', 'not-helpful', 'wrong', 'unclear', 'too-easy', 'too-hard',
+]);
+
+/**
+ * POST /api/syllabus-bridge/content/:id/feedback
+ *
+ * Body: { rating: FeedbackRating, comment?: string }
+ * Any authenticated user can leave feedback; admins use it to monitor
+ * quality, students/teachers use it to flag problems.
+ *
+ * When 3+ 'wrong' or specific thresholds are hit, the underlying content
+ * is auto-flagged for regeneration (see feedback-store.computeSummary).
+ */
+async function handlePostFeedback(req: ParsedRequest, res: ServerResponse) {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const { id } = req.params;
+  const content = getGeneratedContent(id);
+  if (!content) return sendError(res, 404, `Content '${id}' not found`);
+
+  const body = req.body as any;
+  const rating = body?.rating as FeedbackRating;
+  if (!rating || !VALID_RATINGS.has(rating)) {
+    return sendError(res, 400, `rating must be one of: ${[...VALID_RATINGS].join(', ')}`);
+  }
+  const comment: string | undefined =
+    typeof body?.comment === 'string' && body.comment.trim()
+      ? body.comment.trim().slice(0, 500)
+      : undefined;
+
+  const entry: ContentFeedback = {
+    feedback_id: `FB-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    content_id: id,
+    unit_id: content.unit_id,
+    mapping_id: content.mapping_id,
+    user_id: auth.user.id,
+    role: (auth.user.role as 'student' | 'teacher' | 'admin') ?? 'student',
+    rating,
+    comment,
+    created_at: new Date().toISOString(),
+  };
+  saveFeedback(entry);
+
+  const summary = computeSummary(id);
+  sendJSON(res, { feedback: entry, summary }, 201);
+}
+
+/** GET /api/syllabus-bridge/content/:id/feedback — list + summary for one piece */
+async function handleGetContentFeedback(req: ParsedRequest, res: ServerResponse) {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const { id } = req.params;
+  const content = getGeneratedContent(id);
+  if (!content) return sendError(res, 404, `Content '${id}' not found`);
+  sendJSON(res, {
+    content_id: id,
+    summary: computeSummary(id),
+    entries: listFeedbackForContent(id),
+  });
+}
+
+/** GET /api/syllabus-bridge/mappings/:id/feedback-overview — mapping-wide stats */
+async function handleMappingFeedbackOverview(req: ParsedRequest, res: ServerResponse) {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+  const { id } = req.params;
+  const m = getMapping(id);
+  if (!m) return sendError(res, 404, `Mapping '${id}' not found`);
+  sendJSON(res, { mapping_id: id, ...mappingFeedbackOverview(id) });
+}
+
+/**
+ * POST /api/syllabus-bridge/mappings/:id/regenerate-flagged
+ *
+ * Admin action. Finds every content unit in the mapping that has been
+ * auto-flagged-for-regen by accumulated feedback, then submits a batch
+ * to regenerate them. Cheap, focused, feedback-driven.
+ */
+async function handleRegenerateFlagged(req: ParsedRequest, res: ServerResponse) {
+  const auth = await requireRole(req, res, 'admin');
+  if (!auth) return;
+  const { id } = req.params;
+  const m = getMapping(id);
+  if (!m) return sendError(res, 404, `Mapping '${id}' not found`);
+
+  // Find flagged units in this mapping
+  const allContent = (await import('../syllabus-bridge/store')).listGeneratedContentForMapping(id);
+  const flaggedUnitIds = allContent.filter(c => c.flagged_for_regen).map(c => c.unit_id);
+  if (flaggedUnitIds.length === 0) {
+    return sendJSON(res, { regenerated: 0, message: 'No content currently flagged for regeneration' });
+  }
+
+  const plan = buildContentPlan(m);
+  const unitsToRun = plan.units.filter(u => flaggedUnitIds.includes(u.unit_id));
+  if (unitsToRun.length === 0) {
+    return sendJSON(res, { regenerated: 0, message: 'Flagged content not found in current plan' });
+  }
+
+  const batch: BatchRequest = {
+    batch_id: `BATCH-regen-${Date.now().toString(36)}`,
+    mapping_id: id,
+    unit_ids: unitsToRun.map(u => u.unit_id),
+    submitted_by: auth.user.id,
+    submitted_at: new Date().toISOString(),
+    status: 'queued',
+    results: unitsToRun.map(u => ({ unit_id: u.unit_id, status: 'pending' as const })),
+    total_units: unitsToRun.length,
+    completed_units: 0,
+    failed_units: 0,
+    total_cost_estimate_usd: 0,
+  };
+  saveBatch(batch);
+  setImmediate(() => {
+    runBatch(batch, plan.units).catch(err => {
+      batch.status = 'failed';
+      batch.error = err?.message ?? String(err);
+      batch.completed_at = new Date().toISOString();
+      saveBatch(batch);
+    });
+  });
+  sendJSON(res, { regenerated: unitsToRun.length, batch }, 201);
+}
+
 export const syllabusBridgeRoutes: RouteDefinition[] = [
   { method: 'GET',  path: '/api/syllabus-bridge/curricula',                  handler: handleListCurricula },
   { method: 'GET',  path: '/api/syllabus-bridge/curricula/:id',              handler: handleGetCurriculum },
@@ -299,4 +431,8 @@ export const syllabusBridgeRoutes: RouteDefinition[] = [
   { method: 'GET',  path: '/api/syllabus-bridge/batches/:id',                handler: handleGetBatch },
   { method: 'GET',  path: '/api/syllabus-bridge/content/by-mapping/:id',     handler: handleListContentForMapping },
   { method: 'GET',  path: '/api/syllabus-bridge/content/:id',                handler: handleGetContent },
+  { method: 'POST', path: '/api/syllabus-bridge/content/:id/feedback',       handler: handlePostFeedback },
+  { method: 'GET',  path: '/api/syllabus-bridge/content/:id/feedback',       handler: handleGetContentFeedback },
+  { method: 'GET',  path: '/api/syllabus-bridge/mappings/:id/feedback-overview', handler: handleMappingFeedbackOverview },
+  { method: 'POST', path: '/api/syllabus-bridge/mappings/:id/regenerate-flagged', handler: handleRegenerateFlagged },
 ];

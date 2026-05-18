@@ -176,4 +176,43 @@ export interface GeneratedContent {
   generated_at: string;
   /** For tracking quality/feedback later */
   quality_score?: number;
+  /**
+   * Set to true when explicit-feedback aggregation flags this content
+   * as needing regeneration (mostly downvotes, or specific issue
+   * categories like 'wrong-answer' / 'unclear').
+   */
+  flagged_for_regen?: boolean;
+}
+
+// ============================================================================
+// Explicit feedback — students + teachers signal content quality
+// ============================================================================
+
+export type FeedbackRating = 'helpful' | 'not-helpful' | 'wrong' | 'unclear' | 'too-easy' | 'too-hard';
+
+export interface ContentFeedback {
+  feedback_id: string;
+  content_id: string;
+  unit_id: string;
+  mapping_id: string;
+  /** Who gave the feedback */
+  user_id: string;
+  role: 'student' | 'teacher' | 'admin';
+  rating: FeedbackRating;
+  /** Optional free-form comment, capped at ~500 chars at the API boundary */
+  comment?: string;
+  created_at: string;
+}
+
+/** Aggregated stats for one piece of content. Read-side projection. */
+export interface FeedbackSummary {
+  content_id: string;
+  total: number;
+  by_rating: Record<FeedbackRating, number>;
+  /** Latest 5 comments for the admin to scan */
+  recent_comments: Array<{ user_id: string; role: string; rating: FeedbackRating; comment: string; created_at: string }>;
+  /** Derived: should this content be regenerated? */
+  needs_regen: boolean;
+  /** Reason needs_regen is true (or "ok" if false) */
+  regen_reason: string;
 }

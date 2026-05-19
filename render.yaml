@@ -17,23 +17,46 @@
 #     UI prompts the operator to paste them (or skip -- the demo works
 #     without any of them at baseline)
 #
-# PERSISTENCE NOTE (free tier):
-#   Render's free tier does not support persistent disks. This means
-#   .data/ (user store, analytics, teaching turns) lives in the
-#   container's ephemeral filesystem and resets when the service restarts
-#   or spins down after inactivity. The Dockerfile CMD runs
-#   "npm run demo:seed" on every boot, so the 6 demo users are always
-#   recreated fresh.
+# WHAT'S NEW SINCE THE LAST DEPLOY (deploy fresh to get):
+#   - Syllabus Bridge framework: school curricula -> entrance exams,
+#     /admin/syllabus-bridge wizard, /teacher/syllabus-coverage page,
+#     bridge content card on /planned. NO new env vars required.
+#   - Knowledge tracks at /knowledge: students pick board+grade+subject
+#     and we map to suggested exams. NO new env vars.
+#   - prep_intent (board-focused / bridge / entrance-focused) shapes
+#     content scoping; explicit goal picker at /knowledge step 4. NO new
+#     env vars.
+#   - GBrain retention scheduler (SM-2 spaced repetition) and performance
+#     trajectory tracker. Auto-wired into after-each-attempt. Write to
+#     .data/gbrain-retention.json and .data/gbrain-trajectory.json --
+#     ephemeral on free tier. NO new env vars.
 #
-#   For a demo this is fine -- each restart gives a clean slate.
-#   For persistent state (user data survives restarts, real signups
-#   accumulate over time), upgrade to the Starter plan ($7/month)
-#   and add this block back under the service:
+# PERSISTENCE NOTE (free tier):
+#   Render's free tier does not support persistent disks. .data/ lives in
+#   the container's ephemeral filesystem and resets when the service
+#   restarts or spins down after inactivity. Flat-file stores affected:
+#
+#     .data/users.json
+#     .data/exam-profiles.json
+#     .data/syllabus-bridge-content.json     -- generated bridge content
+#     .data/syllabus-bridge-batches.json     -- batch history
+#     .data/syllabus-bridge-feedback.json    -- student/teacher ratings
+#     .data/gbrain-retention.json            -- SM-2 schedule per student
+#     .data/gbrain-trajectory.json           -- mastery point log
+#     .data/student-models.json              -- GBrain student state
+#
+#   The Dockerfile CMD runs "npm run demo:seed" on every boot so the 6
+#   demo users are always recreated fresh. For a demo this is fine -- each
+#   restart gives a clean slate. For persistent state (bridge content
+#   persists across restarts, retention scheduler memory survives, real
+#   sign-ups accumulate), upgrade to the Starter plan ($7/month) and add:
 #
 #     disk:
 #       name: vidhya-demo-data
 #       mountPath: /app/.data
 #       sizeGB: 1
+#
+#   under the service block. .data/ is the only path that needs to persist.
 #
 # First boot: npm run demo:seed && tsx src/server.ts
 #   Seeds 6 demo users (Nisha/Arjun/Kavita/Priya/Rahul/Aditya).

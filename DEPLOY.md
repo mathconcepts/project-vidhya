@@ -116,9 +116,16 @@ Every one of these works without a single API key:
   `/api/admin/lifecycle/retention`)
 - Account deletion + data export (`/api/me/delete*`, `/api/me/export`)
 - Demo → paid conversion (`/gate/convert-demo`)
+- **Knowledge picker** at `/knowledge` — pick board + grade + subject, get suggested exams, set prep goal (board / bridge / entrance)
+- **Syllabus bridge admin wizard** at `/admin/syllabus-bridge` — 5-step flow to generate TN-State-Board → IIT-JEE bridge content (mock generator runs when no LLM key is set, so the wizard is fully demoable cost-free)
+- **Teacher syllabus coverage** at `/teacher/syllabus-coverage` — auto-loaded roster gap report, per-entry "Generate material" button
+- **Student bridge recommendations** on `/planned` — GBrain ranks the top-3 bridge topics by need; "View as: Board / Bridge / Entrance" pill lets students temporarily override their intent
+- **Spaced-repetition review queue** on `/planned` — SM-2 schedule of concepts due now / next 24h / next 7 days, plus fragility callouts when recent attempts were weak
+- **Performance trajectory signal** on `/planned` — top breakthrough / plateau / decline / steady patterns from the last 30 days, with action-shaped insights
 
-This is the **baseline demo**. Students can experience the planner,
-the compounding badge, the strategy surface, and the calm UI entirely
+This is the **baseline demo**. Students experience the planner, the
+compounding badge, the strategy surface, the calm UI, the syllabus
+bridge layer, AND the retention + trajectory analytics — entirely
 without any LLM provider.
 
 ---
@@ -141,6 +148,22 @@ You can add all three if you want fallback. The router prefers the
 one named in `VIDHYA_LLM_PRIMARY_PROVIDER` and falls back to
 whichever others are present.
 
+> **Note on bridge content generation.** The syllabus-bridge admin
+> wizard at `/admin/syllabus-bridge` produces content in two modes
+> depending on whether an LLM key is set:
+>
+> - **No key:** the wizard generates *mock* content units (free,
+>   instant — useful to demo the full UX flow and the feedback +
+>   regeneration loop without spending tokens). Each unit is clearly
+>   labeled `source: 'mock'` in the admin Review step.
+> - **Key present:** the wizard calls Gemini / Anthropic / OpenAI per
+>   `VIDHYA_LLM_PRIMARY_PROVIDER` with the personalised prompt (GBrain
+>   student model + intent + retention + trajectory context injected).
+>   A full TN-12-MATH → JEE Main pack runs ~58k tokens at
+>   ~$0.017 on Gemini Flash.
+>
+> Either way: the framework works end-to-end on a fresh deploy.
+
 ---
 
 ## Optional extras
@@ -154,6 +177,14 @@ whichever others are present.
 
 Render lets you set these per-service via the Environment tab. Every
 paste triggers a redeploy (~30 s).
+
+> **None of the latest feature drops require any new env var.** Syllabus
+> bridge, knowledge tracks, prep_intent goal awareness, retention scheduler,
+> trajectory tracker, and feedback loop all work with the baseline
+> `JWT_SECRET` + `PORT` + `NODE_ENV` already in `render.yaml`. The flat-file
+> stores they write (`.data/syllabus-bridge-*.json`, `.data/gbrain-*.json`)
+> are auto-created at runtime. See [render.yaml](./render.yaml) for the
+> full list and the disk block to add if you upgrade to Starter.
 
 ---
 
@@ -180,6 +211,55 @@ curl https://<YOUR-URL>/
 ```
 
 If all four return as expected, the deployment is confirmed healthy.
+
+### Verifying the latest features
+
+These calls confirm every feature added in the recent releases is live.
+Use a *student* JWT (sign in as Priya / Kavita / Rahul on `/demo.html` and
+copy `localStorage.token`) where the snippets say `<STUDENT-JWT>`.
+
+```bash
+# Knowledge tracks framework — list curricula -> exams mapping
+curl https://<YOUR-URL>/api/knowledge/tracks | jq '.boards | length'
+# Expected: 5  (CBSE, ICSE, TN-HSE, Karnataka PUE, Maharashtra HSC)
+
+# Syllabus-bridge framework — list mappings
+curl https://<YOUR-URL>/api/syllabus-bridge/mappings | jq '.mappings[0].id'
+# Expected: "TN-12-MATH--EXM-JEEMAIN-MATH-SAMPLE"
+
+# Cost preview for a full bridge pack (no LLM call — pure plan math)
+curl https://<YOUR-URL>/api/syllabus-bridge/mappings/TN-12-MATH--EXM-JEEMAIN-MATH-SAMPLE/plan \
+  | jq '{total_units, estimated_cost_usd}'
+# Expected: { total_units: 77, estimated_cost_usd: ~0.017 }
+
+# prep_intent surfaced on onboard meta (requires student JWT)
+curl -H "Authorization: Bearer <STUDENT-JWT>" \
+     https://<YOUR-URL>/api/onboard/meta | jq '{exam_short_name, prep_intent, knowledge_track}'
+
+# Bridge recommendations for the student, intent-overridable
+curl -H "Authorization: Bearer <STUDENT-JWT>" \
+     "https://<YOUR-URL>/api/syllabus-bridge/mappings/TN-12-MATH--EXM-JEEMAIN-MATH-SAMPLE/recommendations?limit=3&intent=board-focused" \
+  | jq '.recommendations | length'
+# Expected: up to 3 entries
+
+# GBrain spaced-repetition snapshot
+curl -H "Authorization: Bearer <STUDENT-JWT>" \
+     https://<YOUR-URL>/api/gbrain/retention/<STUDENT-USER-ID> \
+  | jq '.snapshot'
+# Expected: { total_concepts_tracked, due_now, due_in_24h, due_in_7d, ... }
+
+# GBrain performance trajectory
+curl -H "Authorization: Bearer <STUDENT-JWT>" \
+     https://<YOUR-URL>/api/gbrain/trajectory/<STUDENT-USER-ID> \
+  | jq '{trajectories: .trajectories | length, insights: .insights | length}'
+# Expected: both >= 0 (0 for fresh demo students with no attempts yet)
+```
+
+Browser surfaces to spot-check:
+- `/knowledge` — board / grade / subject picker with goal radio in step 4
+- `/admin/syllabus-bridge` — 5-step admin wizard
+- `/teacher/syllabus-coverage` — cohort gap report
+- `/planned` — Bridge Recommendations + Review Queue cards visible for students with a knowledge track
 
 ---
 

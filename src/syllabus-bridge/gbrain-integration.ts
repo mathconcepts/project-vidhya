@@ -161,16 +161,64 @@ ${summary}
 Preparation intent: ${intent}
 ${intentGuidance[intent]}
 
-When you generate the content below, also keep these student signals in mind:
+${await buildRetentionContext(student_id)}${await buildPerformanceContext(student_id)}When you generate the content below, also keep these student signals in mind:
 - If motivation is 'flagging' or 'frustrated', open with the easiest version and build confidence.
 - If working memory is low, prefer 2-3 short steps over one long derivation.
 - If they have prerequisite gaps, name them and bridge before introducing the new technique.
+- If a concept is due for spaced review, surface it briefly before introducing new material.
+- If the trajectory shows a plateau, vary the representation mode from prior content.
 
 ---
 
 ${prompt}`;
   } catch {
     return prompt;
+  }
+}
+
+/**
+ * Build a retention-context block for the prompt. Reports concepts that
+ * are due for review (or will be soon) so the LLM can fold them into the
+ * generated material — turning every generation into a retention moment.
+ *
+ * Empty string when the student has no tracked retention yet (cold-start),
+ * so we don't pollute new-user prompts with irrelevant scaffolding.
+ */
+async function buildRetentionContext(student_id: string): Promise<string> {
+  try {
+    const { retentionSnapshot, getDueReviews } = await import('../gbrain/retention-scheduler');
+    const snap = retentionSnapshot(student_id);
+    if (snap.total_concepts_tracked === 0) return '';
+
+    const dueNow = getDueReviews(student_id).slice(0, 4);
+    const dueLines = dueNow.length
+      ? dueNow.map(d => `  - ${d.concept_id} (${d.repetitions} prior reviews, ease ${d.ease_factor.toFixed(1)})`).join('\n')
+      : '  - none right this moment';
+
+    return `Retention status (from spaced-repetition scheduler):
+  Tracked: ${snap.total_concepts_tracked} concepts · stable: ${snap.stable_concepts} · fragile: ${snap.fragile_concepts}
+  Due for review now: ${snap.due_now} · within 24h: ${snap.due_in_24h} · within 7d: ${snap.due_in_7d}
+  Top concepts due for review:
+${dueLines}
+
+`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Build a performance-trajectory block for the prompt. Surfaces patterns
+ * (decline/plateau/breakthrough) so the LLM can adapt: re-encounter
+ * declines, vary approach on plateaus, push forward on breakthroughs.
+ */
+async function buildPerformanceContext(student_id: string): Promise<string> {
+  try {
+    const { performanceSummary } = await import('../gbrain/performance-tracker');
+    const summary = performanceSummary(student_id);
+    return summary ? `${summary}\n\n` : '';
+  } catch {
+    return '';
   }
 }
 

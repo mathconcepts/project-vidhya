@@ -38,6 +38,7 @@ import {
 import { CompoundingCard } from '@/components/app/CompoundingCard';
 import { DigestChip } from '@/components/app/DigestChip';
 import { BridgeRecommendationsCard } from '@/components/app/BridgeRecommendationsCard';
+import { ReviewQueueCard } from '@/components/app/ReviewQueueCard';
 import { useSession } from '@/hooks/useSession';
 import { clsx } from 'clsx';
 
@@ -819,6 +820,7 @@ export default function PlannedSessionPage() {
 
               {/* Curriculum bridge — only renders when the student has a knowledge_track set */}
               <div className="mb-4"><BridgeRecommendationsCard /></div>
+              <div className="mb-4"><ReviewQueueCard /></div>
 
               {/* Headline */}
               <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">

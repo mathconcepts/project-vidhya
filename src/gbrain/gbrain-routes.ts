@@ -489,6 +489,46 @@ async function handleVerifySweep(req: ParsedRequest, res: ServerResponse): Promi
 // Route Export
 // ============================================================================
 
+// ----- Retention + Performance handlers (added below export, then wired in) -----
+
+async function handleGetRetention(req: any, res: ServerResponse): Promise<void> {
+  const sid = req.params.sessionId;
+  if (!sid) return sendError(res, 400, 'sessionId required');
+  try {
+    const ret = await import('./retention-scheduler');
+    const snapshot = ret.retentionSnapshot(sid);
+    const due = ret.getDueReviews(sid).slice(0, 20);
+    const upcoming = ret.getUpcomingReviews(sid, 7);
+    sendJSON(res, { sessionId: sid, snapshot, due, upcoming });
+  } catch (e: any) { sendError(res, 500, e.message); }
+}
+
+async function handlePostRetention(req: any, res: ServerResponse): Promise<void> {
+  const body = req.body as any;
+  const { sessionId, concept_id, quality, correct, time_seconds, felt_close } = body ?? {};
+  if (!sessionId || !concept_id) return sendError(res, 400, 'sessionId + concept_id required');
+  try {
+    const ret = await import('./retention-scheduler');
+    // Accept either an explicit quality (0-5) or attempt outcome + timing
+    const q = typeof quality === 'number'
+      ? quality
+      : ret.qualityFromAttempt(Boolean(correct), time_seconds, Boolean(felt_close));
+    const item = ret.recordEncounter(sessionId, concept_id, q);
+    sendJSON(res, { item }, 201);
+  } catch (e: any) { sendError(res, 500, e.message); }
+}
+
+async function handleGetTrajectory(req: any, res: ServerResponse): Promise<void> {
+  const sid = req.params.sessionId;
+  if (!sid) return sendError(res, 400, 'sessionId required');
+  try {
+    const tracker = await import('./performance-tracker');
+    const trajectories = tracker.allTrajectories(sid, 30);
+    const insights = tracker.topInsights(sid, 5);
+    sendJSON(res, { sessionId: sid, trajectories, insights });
+  } catch (e: any) { sendError(res, 500, e.message); }
+}
+
 export const gbrainRoutes: RouteDefinition[] = [
   // Core GBrain
   { method: 'GET', path: '/api/gbrain/model/:sessionId', handler: handleGetModel },
@@ -500,6 +540,11 @@ export const gbrainRoutes: RouteDefinition[] = [
   { method: 'GET', path: '/api/gbrain/score-plan/:sessionId', handler: handleGetScorePlan },
   { method: 'GET', path: '/api/gbrain/concepts/:topic', handler: handleGetConcepts },
   { method: 'POST', path: '/api/gbrain/confidence', handler: handleConfidence },
+
+  // Retention + Performance
+  { method: 'GET',  path: '/api/gbrain/retention/:sessionId',  handler: handleGetRetention },
+  { method: 'POST', path: '/api/gbrain/retention',             handler: handlePostRetention },
+  { method: 'GET',  path: '/api/gbrain/trajectory/:sessionId', handler: handleGetTrajectory },
 
   // MOAT Operations
   { method: 'GET', path: '/api/gbrain/audit/:sessionId', handler: handleAudit },

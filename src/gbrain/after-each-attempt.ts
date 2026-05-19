@@ -149,6 +149,27 @@ export function computeInsight(ctx: AttemptContext): AttemptInsight {
   const afterScore = after?.score ?? (ctx.correct ? 0.1 : 0);
   const attempts = after?.attempts ?? 1;
 
+  // Retention + trajectory side-effects — record this attempt's encounter
+  // for the spaced-repetition scheduler, and log a mastery point for the
+  // performance trajectory tracker. Both stores are flat-file and side-
+  // effects are fire-and-forget; failures must NOT crash the insight path.
+  const studentId = ctx.model_after?.session_id ?? ctx.model_before?.session_id;
+  if (studentId) {
+    try {
+      // Dynamic-import keeps this hook lazy + tree-shakeable
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const ret = require('./retention-scheduler') as typeof import('./retention-scheduler');
+      const time_s = ctx.time_ms ? Math.round(ctx.time_ms / 1000) : undefined;
+      const quality = ret.qualityFromAttempt(ctx.correct, time_s, /* felt_close */ false);
+      ret.recordEncounter(studentId, ctx.concept_id, quality);
+    } catch { /* non-fatal */ }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const traj = require('./performance-tracker') as typeof import('./performance-tracker');
+      traj.logMasteryPoint(studentId, ctx.concept_id, afterScore, 'attempt');
+    } catch { /* non-fatal */ }
+  }
+
   // Mastery delta
   const mastery_delta = {
     before: beforeScore,

@@ -185,6 +185,8 @@ Feedback storage: `.data/syllabus-bridge-feedback.json`. Append-only. Aggregatio
 
 GBrain — the student-model engine in `src/gbrain/` — connects to the Syllabus Bridge through `src/syllabus-bridge/gbrain-integration.ts`. Four entry points. Two are **implicit** (run automatically), two are **explicit** (UI surfaces).
 
+The implicit layer also includes two newer capabilities for long-term performance + retention — see [Retention + performance trajectory](#retention--performance-trajectory) below.
+
 ### Implicit uses — always on
 
 #### `personalizePromptForStudent(prompt, student_id)`
@@ -239,6 +241,58 @@ src/syllabus-bridge/registry.ts           # import + push to the arrays
 ```
 
 Bridge notes are the editorial soul of the system. Write them as if you were briefing a tutor: what does the source teach, what does the exam add, what's the specific trick the LLM should emphasise? Those notes flow straight into every prompt for that entry.
+
+## Retention + performance trajectory
+
+Two GBrain modules turn one-time mastery into durable learning:
+
+### `src/gbrain/retention-scheduler.ts` — spaced repetition (SM-2)
+
+Every time the student attempts a problem, the `after-each-attempt` hook silently records an encounter on that concept with a quality score (0–5) derived from correctness + time-to-answer. The scheduler then computes the optimal next review date using a SuperMemo-2 (SM-2) interval expansion:
+
+- 1st successful review → revisit in 1 day
+- 2nd successful review → 6 days
+- 3rd+ → previous interval × ease factor (~2.5 by default, never below 1.3)
+- Failure (quality < 3) → reset to 1 day, decay the ease factor
+
+The student sees a **Review queue** on their planner: concepts due now, in the next 24 hours, in the next 7 days. Counterweights the Ebbinghaus forgetting curve.
+
+API:
+```
+GET  /api/gbrain/retention/:sessionId  — snapshot + due list + upcoming
+POST /api/gbrain/retention             — log an encounter explicitly
+                                          body { sessionId, concept_id,
+                                                 quality? | correct + time_seconds + felt_close? }
+```
+
+### `src/gbrain/performance-tracker.ts` — mastery trajectory
+
+Every mastery update appends a `MasteryPoint` to a flat-file log. A daily window analysis classifies each concept into one of five patterns:
+
+| Pattern | When | What GBrain does |
+|---|---|---|
+| `breakthrough` | +20% in 30 days | Push to harder content while momentum is high |
+| `steady` | gentle climb | Stay the course |
+| `plateau` | <3% change over 5+ points | Vary representation mode — try worked examples instead of practice, or vice versa |
+| `decline` | last 3 strictly decreasing AND total <-10% | Re-encounter via spaced review before harder problems |
+| `cold-start` | <2 points | Not enough data — needs more attempts |
+
+The planner card surfaces these signals; the bridge-content prompt enricher folds them into the LLM context so each generation responds appropriately.
+
+API:
+```
+GET  /api/gbrain/trajectory/:sessionId — trajectories + top insights
+```
+
+### How they compound
+
+These two modules are designed to work together with the bridge framework:
+
+- When a student rates a bridge unit **helpful** *and* gets the follow-up problem right → retention scheduler logs a high-quality encounter → the concept gets a long review interval → it doesn't surface again until forgetting risk is real.
+- When a student gets a bridge concept wrong twice in a row → trajectory tracker flips to **decline** → next prompt generation includes "this student's mastery on X has slipped — re-encounter via spaced review before harder problems" → GBrain naturally opens the next response with a recap.
+- When a student plateaus on a topic → next bridge generation flips representation mode (worked-example instead of explainer, or vice versa) without an admin lifting a finger.
+
+The student never sees the machinery. They see a planner card showing what's due, what's moving, what's stuck.
 
 ## API reference
 

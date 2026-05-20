@@ -260,59 +260,63 @@ export function Home() {
 
   if (userState === 'A') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+      <div className="flex flex-col justify-center min-h-[70vh] px-4 py-8">
         <motion.div
-          className="w-full max-w-md flex flex-col items-center gap-5 text-center"
+          className="w-full max-w-md mx-auto flex flex-col gap-6"
           initial="hidden" animate="visible" variants={staggerContainer}
         >
-          {/* v2.5: discoverability link for anonymous visitors who landed
-              on /gate via a deep link or referral. Subtle, dismissible by
-              navigating elsewhere. Logged-in users never see it. */}
-          {isAnonymous && (
-            <Link
-              to="/gbrain"
-              className="inline-flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
-            >
-              New here? See how Vidhya works <ArrowRight size={11} />
-            </Link>
-          )}
-
           {/* Welcome card on first visit — discovery over setup */}
           {!hasSeenWelcome() && (
-            <motion.div variants={fadeInUp} className="w-full text-left">
+            <motion.div variants={fadeInUp} className="w-full">
               <StudentWelcomeCard />
             </motion.div>
           )}
 
-          <motion.div variants={fadeInUp}>
-            <motion.div
-              animate={prefersReducedMotion ? {} : { opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <MasteryRing value={0} size={48} strokeWidth={3} className="text-emerald-500" />
-            </motion.div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-              Want a structured study plan?
-            </h2>
-            <p className="text-[15px] text-surface-500 leading-relaxed">
-              Takes 2 minutes. I'll figure out exactly what you should study first.
+          {/* Hero copy — Fraunces gives the editorial weight the DS calls for */}
+          <motion.div variants={fadeInUp} className="space-y-3">
+            <h1 className="text-3xl font-display font-bold text-surface-50 tracking-tight leading-tight">
+              Your exam. Your gaps.<br />
+              Your plan — every day.
+            </h1>
+            <p className="text-[15px] text-surface-400 leading-relaxed max-w-sm">
+              Tell us your exam. We score your weak spots, rank what moves your marks most, and give you one clear task each morning.
             </p>
           </motion.div>
 
-          <motion.div variants={fadeInUp} className="w-full">
+          {/* Proof points — 3 micro-promises */}
+          <motion.div variants={fadeInUp} className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { stat: '< 2 min', desc: 'to set up' },
+              { stat: 'Daily', desc: 'ranked plan' },
+              { stat: 'Any exam', desc: 'GATE · NEET · etc.' },
+            ].map(({ stat, desc }) => (
+              <div key={stat} className="rounded-xl bg-surface-900 border border-surface-800 px-2 py-3">
+                <p className="text-sm font-display font-semibold text-emerald-400">{stat}</p>
+                <p className="text-[11px] text-surface-500 mt-0.5 leading-tight">{desc}</p>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Primary + secondary CTA */}
+          <motion.div variants={fadeInUp} className="flex flex-col gap-3">
             <motion.button
               onClick={() => {
                 trackEvent('one_thing_onboard');
                 navigate(isAnonymous ? '/sign-in' : '/planned');
               }}
-              className="w-full h-11 rounded-[10px] bg-emerald-500 text-white text-[15px] font-semibold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
+              className="w-full h-12 rounded-xl bg-emerald-500 text-white text-[15px] font-semibold hover:bg-emerald-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
               whileTap={{ scale: 0.97 }}
             >
-              {isAnonymous ? 'Sign in to get started' : 'Build my plan'}
+              {isAnonymous ? 'Get started — it\'s free' : 'Build my plan'}
             </motion.button>
+            {isAnonymous && (
+              <Link
+                to="/gbrain"
+                className="text-center text-sm text-violet-400 hover:text-violet-300 transition-colors py-1"
+              >
+                See how Vidhya works <ArrowRight size={13} className="inline -mt-0.5" />
+              </Link>
+            )}
           </motion.div>
         </motion.div>
       </div>
@@ -338,21 +342,21 @@ export function Home() {
           </motion.div>
 
           <motion.div variants={fadeInUp} className="space-y-2">
-            <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-              Almost there!
+            <h2 className="text-2xl font-display font-bold text-surface-100 tracking-tight">
+              One quick diagnostic
             </h2>
             <p className="text-[15px] text-surface-500 leading-relaxed">
-              Take the 5-minute diagnostic to unlock your personalized plan
+              10 questions, 45 s each. We find your weak spots and build your first plan.
             </p>
           </motion.div>
 
           <motion.div variants={fadeInUp} className="w-full">
             <motion.button
               onClick={() => { trackEvent('one_thing_diagnostic'); navigate('/diagnostic'); }}
-              className="w-full h-11 rounded-[10px] bg-violet-500 text-white text-[15px] font-semibold hover:bg-violet-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
+              className="w-full h-12 rounded-xl bg-violet-500 text-white text-[15px] font-semibold hover:bg-violet-400 active:scale-[0.97] transition-all cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950"
               whileTap={{ scale: 0.97 }}
             >
-              Start diagnostic
+              Start 10-question diagnostic
             </motion.button>
           </motion.div>
         </motion.div>
@@ -395,8 +399,8 @@ export function Home() {
             </motion.div>
 
             <motion.div variants={fadeInUp} className="space-y-2">
-              <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-                Done for today!
+              <h2 className="text-2xl font-display font-bold text-surface-50 tracking-tight">
+                Done for today.
               </h2>
               <p className="text-[13px] text-surface-500">
                 {totalTasks}/{totalTasks} tasks completed
@@ -439,8 +443,8 @@ export function Home() {
         initial="hidden" animate="visible" variants={staggerContainer}
       >
         <motion.div variants={fadeInUp} className="flex flex-col items-center gap-3 pt-8 pb-4 text-center">
-          <h2 className="text-[22px] font-black text-surface-100 tracking-tight">
-            Free study day!
+          <h2 className="text-2xl font-display font-bold text-surface-50 tracking-tight">
+            Free study day
           </h2>
           <p className="text-[15px] text-surface-500">
             No tasks scheduled. Pick any topic to practice.
@@ -478,11 +482,10 @@ export function Home() {
           home stack. AnnouncementBanner kept (operator-driven). ExamCountdown
           kept (Compounding-relevant). CompoundingCard added (the v2.4 promise
           made daily-visible). */}
+      {/* Only contextual meta above the task — digest/compounding go below */}
       <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto mb-3 space-y-2">
         <AnnouncementBanner />
         <ExamCountdownChip />
-        <DigestChip sessionId={sessionId} />
-        <CompoundingCard sessionId={sessionId} />
       </motion.div>
 
       <AnimatePresence mode="wait">
@@ -502,8 +505,8 @@ export function Home() {
               Your #{currentTaskIdx + 1} priority
             </p>
 
-            {/* Topic name */}
-            <h2 className="text-[32px] font-black text-surface-100 tracking-tight leading-none uppercase">
+            {/* Topic name — Fraunces for editorial weight per DESIGN-SYSTEM.md */}
+            <h2 className="text-[32px] font-display font-bold text-surface-50 tracking-tight leading-none">
               {currentTask.topic_name}
             </h2>
 
@@ -586,6 +589,12 @@ export function Home() {
           </div>
         </motion.div>
       </AnimatePresence>
+
+      {/* Supplementary content below the action card — visible after user sees their task */}
+      <motion.div variants={fadeInUp} className="w-full max-w-md mx-auto mt-3 space-y-2">
+        <DigestChip sessionId={sessionId} />
+        <CompoundingCard sessionId={sessionId} />
+      </motion.div>
     </motion.div>
   );
 }

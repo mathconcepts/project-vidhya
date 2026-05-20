@@ -137,7 +137,7 @@ export default function OnboardPage() {
           <Calendar size={20} className="text-amber-400" />
         </div>
         <div>
-          <h1 className="text-xl font-display font-bold text-surface-100">Pick your exam first</h1>
+          <h1 className="text-2xl font-display font-bold text-surface-50">Pick your exam first</h1>
           <p className="text-sm text-surface-400 mt-2 max-w-sm">
             We couldn't load your exam profile. Choose your exam so the topics, dates, and study plan
             calibrate to you — not to a generic placeholder.
@@ -184,7 +184,7 @@ export default function OnboardPage() {
               <div className="space-y-6 px-1">
                 <div className="text-center space-y-2">
                   <Calendar size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">When is your {examLabel} exam?</h2>
+                  <h2 className="text-2xl font-display font-bold text-surface-50">When is your {examLabel} exam?</h2>
                   <p className="text-sm text-surface-400">Set your date — we'll make every day count</p>
                 </div>
                 <input
@@ -213,7 +213,7 @@ export default function OnboardPage() {
               <div className="space-y-6 px-1">
                 <div className="text-center space-y-2">
                   <Clock size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">Hours per week to study?</h2>
+                  <h2 className="text-2xl font-display font-bold text-surface-50">Hours per week to study?</h2>
                   <p className="text-sm text-surface-400">Be realistic — we'll plan around this</p>
                 </div>
                 <div className="text-center">
@@ -239,10 +239,11 @@ export default function OnboardPage() {
               <div className="space-y-4 px-1">
                 <div className="text-center space-y-2">
                   <Brain size={32} className="text-emerald-400 mx-auto" />
-                  <h2 className="text-xl font-bold text-surface-100">Rate your topics</h2>
+                  <h2 className="text-2xl font-display font-bold text-surface-50">Rate your topics</h2>
                   <p className="text-sm text-surface-400">Tap a topic to cycle: Weak → Okay → Strong</p>
                 </div>
-                <div className="space-y-3 max-h-[50vh] overflow-y-auto pb-4">
+                {/* No overflow constraint — page scrolls naturally; nested scroll steals iOS focus */}
+                <div className="space-y-3 pb-4">
                   {BUCKETS.map(bucket => {
                     const topicsInBucket = topics.filter(t => (confidence[t.id] ?? 3) === bucket.value);
                     return (

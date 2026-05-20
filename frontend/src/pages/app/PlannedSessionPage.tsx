@@ -167,6 +167,9 @@ export default function PlannedSessionPage() {
   const [templateName, setTemplateName] = useState('');
   const [savingTemplate, setSavingTemplate] = useState(false);
 
+  // UX: templates + presets are secondary — collapsed by default
+  const [showQuickPicks, setShowQuickPicks] = useState(false);
+
   // v2.33: trailing stats + preset catalog
   const [trailingStats, setTrailingStats] = useState<{
     trailing_7d_minutes: number; trailing_7d_sessions: number;
@@ -496,7 +499,7 @@ export default function PlannedSessionPage() {
         <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-display font-semibold tracking-tight mb-1">Today's plan</h1>
+              <h1 className="text-2xl font-display font-bold tracking-tight mb-1 text-surface-50">Today's plan</h1>
               <p className="text-sm text-surface-400">
                 Tell us how long you have. We'll give you the three things that move
                 your score most — in order. Show up, follow it, get better.
@@ -540,88 +543,7 @@ export default function PlannedSessionPage() {
           )}
         </motion.header>
 
-        {/* Template bar — saved recurring patterns, one-tap recall */}
-        {!plan && !loading && templates.length > 0 && (
-          <motion.section
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            className="mb-6"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500">
-                <Bookmark className="inline w-3 h-3 mr-1 -mt-0.5" />
-                Your templates
-              </label>
-              <span className="text-[10px] text-surface-600">tap to recall</span>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {templates.map((tpl) => (
-                <div key={tpl.id} className="group flex items-stretch bg-surface-900 border border-surface-800 rounded-lg overflow-hidden hover:border-purple-500/30 transition-colors">
-                  <button
-                    onClick={() => useTemplate(tpl)}
-                    className="px-3 py-2 text-left hover:bg-purple-500/5 transition-colors"
-                  >
-                    <div className="text-sm font-semibold text-surface-100">{tpl.name}</div>
-                    <div className="text-[10px] text-surface-500 font-mono mt-0.5">
-                      {tpl.minutes_available}min · {
-                        tpl.exam_selection === 'all' ? 'all exams' :
-                        tpl.exam_selection === 'primary' ? 'primary' :
-                        Array.isArray(tpl.exam_selection) ? `${tpl.exam_selection.length} exam${tpl.exam_selection.length === 1 ? '' : 's'}` :
-                        ''
-                      }{tpl.use_count > 0 ? ` · used ${tpl.use_count}×` : ''}
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => deleteTemplateFn(tpl.id)}
-                    className="px-2 border-l border-surface-800 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400 text-surface-600 transition-all"
-                    title="Delete template"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {/* Preset suggestions — curated starter templates (v2.33) */}
-        {!plan && !loading && presets.filter(p => !p.adopted).length > 0 && (
-          <motion.section
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            className="mb-6"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500">
-                <Sparkles className="inline w-3 h-3 mr-1 -mt-0.5" />
-                {templates.length === 0 ? 'Try a starter template' : 'More presets'}
-              </label>
-              <span className="text-[10px] text-surface-600">tap to adopt + run</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {presets.filter(p => !p.adopted).slice(0, 6).map((preset) => (
-                <button
-                  key={preset.slug}
-                  onClick={() => adoptPreset(preset)}
-                  disabled={loading}
-                  className="px-3 py-2 rounded-lg bg-surface-900/40 border border-dashed border-surface-700 hover:border-violet-500/40 hover:bg-violet-500/5 text-left transition-colors disabled:opacity-50"
-                >
-                  <div className="text-sm font-semibold text-surface-100">{preset.name}</div>
-                  <div className="text-[10px] text-surface-500 font-mono mt-0.5">
-                    {preset.minutes_available}min · {
-                      preset.exam_selection === 'all' ? 'all exams' : 'primary'
-                    }
-                  </div>
-                  <div className="text-[10px] text-surface-600 mt-1 leading-tight">{preset.description}</div>
-                </button>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {/* Minutes picker — hidden once a plan is loaded, shown on reset */}
+        {/* ── Minutes picker — primary flow ── */}
         {!plan && !loading && (
           <motion.section
             variants={staggerContainer}
@@ -629,8 +551,79 @@ export default function PlannedSessionPage() {
             animate="visible"
             className="mb-8"
           >
+            {/* Quick picks: saved templates + preset suggestions behind a toggle */}
+            {(templates.length > 0 || presets.filter(p => !p.adopted).length > 0) && (
+              <div className="mb-5">
+                <button
+                  onClick={() => setShowQuickPicks(v => !v)}
+                  className="flex items-center gap-1.5 text-xs text-surface-400 hover:text-surface-200 transition-colors cursor-pointer touch-manipulation mb-2"
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                  Quick picks
+                  <ChevronRight className={clsx('w-3.5 h-3.5 transition-transform duration-150', showQuickPicks && 'rotate-90')} />
+                </button>
+
+                {showQuickPicks && (
+                  <motion.div
+                    variants={fadeInUp}
+                    initial="hidden"
+                    animate="visible"
+                    className="space-y-3"
+                  >
+                    {/* Saved templates */}
+                    {templates.length > 0 && (
+                      <div className="flex gap-2 flex-wrap">
+                        {templates.map((tpl) => (
+                          <div key={tpl.id} className="group flex items-stretch bg-surface-900 border border-surface-800 rounded-lg overflow-hidden hover:border-violet-500/30 transition-colors">
+                            <button
+                              onClick={() => useTemplate(tpl)}
+                              className="px-3 py-2 text-left hover:bg-violet-500/5 transition-colors cursor-pointer touch-manipulation"
+                            >
+                              <div className="text-sm font-semibold text-surface-100">{tpl.name}</div>
+                              <div className="text-[10px] text-surface-500 font-mono mt-0.5">
+                                {tpl.minutes_available}min{tpl.use_count > 0 ? ` · used ${tpl.use_count}×` : ''}
+                              </div>
+                            </button>
+                            <button
+                              onClick={() => deleteTemplateFn(tpl.id)}
+                              className="px-2 border-l border-surface-800 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400 text-surface-600 transition-all cursor-pointer"
+                              title="Delete template"
+                              aria-label={`Delete ${tpl.name} template`}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Preset suggestions */}
+                    {presets.filter(p => !p.adopted).length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {presets.filter(p => !p.adopted).slice(0, 6).map((preset) => (
+                          <button
+                            key={preset.slug}
+                            onClick={() => adoptPreset(preset)}
+                            disabled={loading}
+                            className="px-3 py-2 rounded-lg bg-surface-900/40 border border-dashed border-surface-700 hover:border-violet-500/40 hover:bg-violet-500/5 text-left transition-colors disabled:opacity-50 cursor-pointer touch-manipulation"
+                          >
+                            <div className="text-sm font-semibold text-surface-100">{preset.name}</div>
+                            <div className="text-[10px] text-surface-500 font-mono mt-0.5">
+                              {preset.minutes_available}min
+                            </div>
+                            <div className="text-[10px] text-surface-600 mt-1 leading-tight">{preset.description}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </div>
+            )}
+
+            {/* Primary: time picker */}
             <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 mb-3">
-              How many minutes do you have?
+              How long do you have?
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
               {PRESETS.map((p) => (
@@ -638,7 +631,7 @@ export default function PlannedSessionPage() {
                   key={p.minutes}
                   onClick={() => setMinutes(p.minutes)}
                   className={clsx(
-                    'px-4 py-3 rounded-lg border text-left transition-colors',
+                    'px-4 py-3 rounded-xl border text-left transition-colors cursor-pointer touch-manipulation',
                     minutes === p.minutes
                       ? 'bg-violet-500/15 border-violet-500/40 text-violet-100'
                       : 'bg-surface-900 border-surface-800 text-surface-300 hover:border-surface-700',
@@ -652,32 +645,24 @@ export default function PlannedSessionPage() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-3 mb-6">
-              <input
-                type="range"
-                min={1}
-                max={120}
-                value={minutes}
-                onChange={(e) => setMinutes(parseInt(e.target.value, 10))}
-                className="flex-1 accent-violet-500"
-              />
-              <span className="text-sm font-mono w-20 text-right">{minutes} min</span>
-            </div>
 
-            <div className="flex gap-2">
+            {/* Generate CTA — full width, primary action */}
+            <div className="space-y-2">
               <button
                 onClick={fetchPlan}
                 disabled={loading}
-                className="flex-1 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-white font-semibold transition-colors disabled:opacity-50"
+                className="w-full h-12 rounded-xl bg-violet-500 hover:bg-violet-400 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
               >
-                {loading ? 'Planning…' : 'Generate my plan'}
+                {loading ? 'Planning…' : `Get my ${minutes}-minute plan`}
               </button>
+
+              {/* Save template — secondary, not competing with primary CTA */}
               <button
                 onClick={() => setShowSaveTemplate(v => !v)}
-                className="px-4 py-3 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-surface-300 text-sm transition-colors"
-                title="Save these settings as a template"
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-surface-600 hover:text-surface-400 transition-colors cursor-pointer touch-manipulation"
               >
-                <Bookmark className="w-4 h-4 inline" />
+                <Bookmark className="w-3 h-3" />
+                {showSaveTemplate ? 'Cancel' : 'Save as template'}
               </button>
             </div>
 
@@ -687,12 +672,10 @@ export default function PlannedSessionPage() {
                 variants={fadeInUp}
                 initial="hidden"
                 animate="visible"
-                className="mt-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/20"
+                className="mt-2 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20"
               >
                 <label className="block text-xs text-surface-400 mb-2">
-                  Name this template ({minutes} min
-                  {profile && profile.exams.length >= 2 ? ', all exams' :
-                   profile && profile.exams.length === 1 ? ', primary exam' : ''})
+                  Name this template ({minutes} min)
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -702,13 +685,13 @@ export default function PlannedSessionPage() {
                     onChange={(e) => setTemplateName(e.target.value)}
                     placeholder="e.g. Morning commute"
                     maxLength={60}
-                    className="flex-1 px-3 py-2 rounded bg-surface-900 border border-surface-800 text-surface-100 text-sm"
+                    className="flex-1 px-3 py-2 rounded-lg bg-surface-900 border border-surface-800 text-surface-100 text-sm focus:border-violet-500/50 focus:outline-none"
                     onKeyDown={(e) => { if (e.key === 'Enter') saveTemplate(); }}
                   />
                   <button
                     onClick={saveTemplate}
                     disabled={!templateName.trim() || savingTemplate}
-                    className="px-3 py-2 rounded bg-purple-500 hover:bg-purple-400 text-white text-sm font-semibold disabled:opacity-50"
+                    className="px-3 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
                   >
                     {savingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   </button>

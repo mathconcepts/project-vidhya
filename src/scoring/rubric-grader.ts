@@ -44,6 +44,15 @@ export const TEACHER_QUEUE_CONFIDENCE_THRESHOLD = 0.75;
 /** Optional cap on rubric size — keeps prompt tokens bounded. */
 export const MAX_RUBRIC_CRITERIA = 12;
 
+/**
+ * Hard cap on student response length. A 10MB string would blow LLM
+ * prompt tokens AND cost. Set generously (a long descriptive answer is
+ * a few KB at most); responses past this are rejected, not truncated —
+ * silent truncation would lose the student's work. Caller can pre-trim
+ * deliberately if they want to grade an excerpt.
+ */
+export const MAX_RESPONSE_LENGTH = 50_000;
+
 // ────────────────────────────────────────────────────────────────────
 // Types
 // ────────────────────────────────────────────────────────────────────
@@ -107,6 +116,11 @@ export class RubricGrader implements Scorer {
     }
     if (item.rubric.length > MAX_RUBRIC_CRITERIA) {
       throw new Error(`Rubric exceeds MAX_RUBRIC_CRITERIA (${MAX_RUBRIC_CRITERIA}).`);
+    }
+    if (studentResponse && studentResponse.length > MAX_RESPONSE_LENGTH) {
+      throw new Error(
+        `Student response exceeds MAX_RESPONSE_LENGTH (${MAX_RESPONSE_LENGTH}). Pre-trim deliberately.`,
+      );
     }
 
     // 1. LLM judges per criterion (method + partial credit only).

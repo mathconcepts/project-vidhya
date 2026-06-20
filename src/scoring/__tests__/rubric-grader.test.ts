@@ -122,6 +122,15 @@ describe('RubricGrader.grade', () => {
     expect(onLowConfidence).not.toHaveBeenCalled();
   });
 
+  it('rejects oversized responses rather than silently truncating (phase-2 cap)', async () => {
+    const grader = makeRubricGrader({
+      judge: judgeWith({ given: 1, method: 3, final: 2 }),
+      cas: casWith(true),
+    });
+    const huge = 'x'.repeat(50_001);
+    await expect(grader.grade(huge, ITEM)).rejects.toThrow(/MAX_RESPONSE_LENGTH/);
+  });
+
   it('throws on missing rubric — caller must use a different Scorer', async () => {
     const grader = makeRubricGrader({
       judge: judgeWith({}),

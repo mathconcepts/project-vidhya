@@ -116,6 +116,16 @@ describe('DefaultReadinessEngine.nextBestAction', () => {
     expect(action.estMinutes).toBeLessThanOrEqual(5);
   });
 
+  it('expectedScore throws until Phase 2 wires it (eng-review fix)', async () => {
+    const engine = makeReadinessEngine({
+      studentModel: makeStudentModel(),
+      curriculum: makeRepo(makeNode(), []),
+      selector: { async selectNext() { return null; } },
+      policy: { async selectObject() { return null; } },
+    });
+    await expect(engine.expectedScore('alice')).rejects.toThrow(/not yet implemented/);
+  });
+
   it('honors a tight time budget', async () => {
     const selector: ItemSelector = { async selectNext() { return null; } };
     const policy: TeachingPolicy = { async selectObject() { return null; } };

@@ -53,6 +53,15 @@ describe('extractFinalAnswer', () => {
   it('returns null on prose with no obvious answer', () => {
     expect(extractFinalAnswer('I think the answer is somewhere around there')).toBe(null);
   });
+
+  it('handles nested braces inside \\boxed{} (eng-review fix)', () => {
+    expect(extractFinalAnswer('… \\boxed{\\frac{1}{2}}')).toBe('\\frac{1}{2}');
+    expect(extractFinalAnswer('… \\boxed{f(x) = \\frac{1}{2}}')).toBe('f(x) = \\frac{1}{2}');
+  });
+
+  it('returns null on an unterminated \\boxed{', () => {
+    expect(extractFinalAnswer('… \\boxed{\\frac{1}{2}')).toBe(null);
+  });
 });
 
 describe('RubricGrader.grade', () => {

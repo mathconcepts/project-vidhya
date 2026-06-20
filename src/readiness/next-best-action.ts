@@ -84,9 +84,12 @@ export class DefaultReadinessEngine implements ReadinessEngine {
 
   async expectedScore(_studentId: StudentId): Promise<{ realized: number; potential: number }> {
     // Phase-1 placeholder. Real implementation aggregates per-skill
-    // ability × exam-relevance weights — landed in Phase 2 alongside
-    // the mocks→marks report.
-    return { realized: 0, potential: 0 };
+    // ability × exam-relevance weights — landed alongside the
+    // mocks→marks report in the Phase 2 wiring PR.
+    //
+    // Throw rather than return zeros so callers don't silently divide
+    // by zero or render "0%" as if it were a measurement.
+    throw new Error('ReadinessEngine.expectedScore: not yet implemented (Phase 2 wiring).');
   }
 
   // ────────────────────────────────────────────────────────────────

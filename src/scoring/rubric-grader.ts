@@ -172,9 +172,14 @@ export class RubricGrader implements Scorer {
  */
 export function extractFinalAnswer(response: string): string | null {
   if (!response) return null;
-  // \boxed{...} (LaTeX convention)
-  const boxed = /\\boxed\{([^}]+)\}/.exec(response);
-  if (boxed) return boxed[1].trim();
+  // \boxed{...} (LaTeX convention) with brace-balanced parsing so nested
+  // groups like \boxed{f(x) = \frac{1}{2}} are captured whole.
+  const boxed = extractBalancedBoxed(response);
+  if (boxed !== null) return boxed.trim();
+  // If the student opened \boxed{ but didn't close it, treat as "they
+  // tried to box an answer but the LaTeX is malformed" — don't fall back
+  // to the last-line heuristic and silently extract the wrong thing.
+  if (response.includes('\\boxed{')) return null;
   // Answer: ... at the end of the response
   const answerLine = /\banswer\s*[:=]\s*([^\n]+)$/im.exec(response);
   if (answerLine) return answerLine[1].trim();
@@ -195,4 +200,25 @@ export function extractFinalAnswer(response: string): string | null {
 
 export function makeRubricGrader(deps: RubricGraderDeps): RubricGrader {
   return new RubricGrader(deps);
+}
+
+/**
+ * Brace-balanced extractor for `\boxed{...}`. Walks the response once,
+ * tracking depth so `\boxed{\frac{1}{2}}` returns `\frac{1}{2}` rather
+ * than the truncated `\frac{1`. Returns null if no `\boxed{` opens.
+ */
+function extractBalancedBoxed(response: string): string | null {
+  const start = response.indexOf('\\boxed{');
+  if (start === -1) return null;
+  let depth = 1;
+  const bodyStart = start + '\\boxed{'.length;
+  for (let i = bodyStart; i < response.length; i++) {
+    const ch = response[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return response.slice(bodyStart, i);
+    }
+  }
+  return null;   // unterminated \boxed
 }

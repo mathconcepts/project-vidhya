@@ -499,6 +499,58 @@ Frontend mirror at `frontend/src/lib/ledger-suggestions.ts` (manual-sync). `Effe
 
 **Surveillance invariants added:** 9 (`admin-journey-routes.ts` returns counts only) and 10 (`admin-cohort-routes.ts` caps + forbids PII). Combined with invariants 1–8 the count stands at 10 CI-enforced rules.
 
+---
+
+### 100x Blueprint Foundation (v4.14.0, PR #65)
+
+Architectural foundation for the 100x Blueprint (`886f0351-ProjectVidhya100xBlueprint.md`, full doc at `docs/100x-blueprint.md`). Locks interface contracts for every layer in §5 and ships real Phase 1 implementations (Elo + FSRS + `nextBestAction`) plus a Phase 2 descriptive-grading scaffold with the CAS guardrail wired. Approvals from §9 baked into code: Extraction vs Acquisition split (premise gate), right-modality manim (Challenge C1).
+
+**Phase 0 — seams** (`src/core/interfaces.ts`):
+
+Single barrel for the seven layer contracts. `[seam]` markers have one impl today; `[plugin]` are multi-impl from day one.
+
+| Layer | Interface | Marker | Status |
+|---|---|---|---|
+| L1 Platform | `LLMGateway` | [seam] | Honored by existing `src/llm/index.ts` |
+| L1.5 Eval & Guardrails | `VerificationGate` | [seam] | Wraps existing `src/verification/` cascade |
+| L2 Curriculum | `CurriculumRepo` | [plugin] | Per-course graph |
+| L3 Student Model | `StudentModel` | [plugin] | Elo+FSRS now, AKT later |
+| L4 Assessment | `Scorer`, `ItemSelector` | [plugin] | MCQ vs descriptive vs proto-CAT |
+| L5 Teaching Policy | `TeachingPolicy` | [plugin] | A/B-able strategies |
+| L6 Readiness Engine | `ReadinessEngine` | [plugin] | `nextBestAction()` |
+
+**Phase 1 — real working implementations** (pure functions, no DB / network):
+
+- `src/gbrain/elo.ts` — joint student-ability / item-difficulty online ratings (§3.1). `K_STUDENT=32` (students move fast), `K_ITEM=8` (items move slow by design). `itemDifficultyTrustworthy()` returns false until `n≥100` per blueprint guardrail. Caller persists.
+- `src/gbrain/fsrs.ts` — FSRS-6 memory model with locked default weights (§3.4). Replaces SM-2 over time; the existing `retention-scheduler.ts` stays online during the dual-write window. Per-user weight re-fit deferred to Phase 4 behind a flag.
+- `src/readiness/next-best-action.ts` — `DefaultReadinessEngine` encoding the four-arm core loop (Retain → Practice → Teach → Diagnose). **Extraction-first tie-breaking:** an overdue card with recall < `RETAIN_RECALL_THRESHOLD` (0.7) gets `expectedGain = 1.0 + (1 - recall)`, guaranteeing it outranks fresh practice (baseline 1.0). `expectedScore()` throws `not yet implemented` (Phase 2 wires it; never returns silent zeros).
+
+**Phase 2 — descriptive grading scaffold** (§3.5):
+
+- `src/scoring/rubric-grader.ts` — `RubricGrader` implements `Scorer`. Six non-negotiables enforced: rubric JSON, RAG grounding, **CAS final-answer check is the source of truth on the number** (LLM never decides correctness), reason-then-score, calibration store, low-confidence → teacher queue. `LLMJudge` + `CASChecker` are abstract contracts; concrete adapters wrapping `LLMClient` and the existing `AnswerVerifier` cascade land in a follow-up wiring PR (kept separate so pure-logic tests stay DB-free).
+- `src/scoring/teacher-queue.ts` — `TeacherQueueRepo` contract + pure aggregators (`summarizeQueue` returns ICC proxy, mean adjustment marks, oldest-pending hours for the cockpit). `extractFinalAnswer` uses brace-balanced parsing — `\boxed{f(x) = \frac{1}{2}}` is captured whole, not truncated.
+
+**Migration 029** (`supabase/migrations/029_blueprint_100x.sql`):
+
+Four idempotent tables, auto-applied on boot by `src/db/auto-migrate.ts`:
+- `student_skill_elo` keyed `(student_id, skill_id)`
+- `item_difficulty_elo` keyed `(object_id, skill_id)`
+- `fsrs_cards` keyed `(student_id, object_id)` with `due_at` index
+- `grading_reviews` (pending/confirmed/corrected/dismissed) feeds the calibration set
+
+**Tests:** 55 new pure-function tests across `elo.test.ts` (14), `fsrs.test.ts` (16), `next-best-action.test.ts` (6), `rubric-grader.test.ts` (13), `teacher-queue.test.ts` (6). Full suite 1372/1372 passing.
+
+**Deferred (called out in `docs/100x-blueprint.md`, not silently dropped):**
+
+- `LLMJudge` + `CASChecker` adapters wiring → `LLMClient` and `AnswerVerifier` cascade
+- `expectedScore()` real impl + mock-to-marks report (Phase 2 polish)
+- Telemetry events on every attempt (§5.8) — interfaces don't fire today
+- Idempotency dedup on `StudentModel.update` (Elo is not commutative on duplicate attempts; concrete impl needs a `(studentId, objectId, ts)` dedup table)
+- Response-length cap on `RubricGrader.grade` to bound prompt tokens
+- Phase 4 swaps: DKT/AKT behind `StudentModel`, IRT/true-CAT behind `ItemSelector`
+
+**No runtime callers wired yet** — the new modules sit behind their seams ready for the Phase 2 wiring PR. Existing GBrain routes, content flywheel, batch generation, lift ledger, and operator cockpit are untouched.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -4,6 +4,39 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.14.0] - 2026-06-20 — 100x Blueprint Foundation: Phase 0 seams + Elo + FSRS + rubric grader
+
+**Operator action:** migration `029_blueprint_100x.sql` runs automatically on server boot — adds `student_skill_elo`, `item_difficulty_elo`, `fsrs_cards`, `grading_reviews` tables. Idempotent (`IF NOT EXISTS`), no breaking changes to existing rows. No new env vars. No runtime callers wired yet — the new modules sit behind their seams ready for the Phase 2 wiring PR; existing routes and jobs are untouched.
+
+### Added (PR #65, blueprint §3–§5)
+
+- **`src/core/interfaces.ts` — the seven layer contracts.** Single barrel for `StudentModel`, `Scorer`, `ItemSelector`, `CurriculumRepo`, `TeachingPolicy`, `ReadinessEngine`, `VerificationGate`, `LLMGateway`. Marks `[seam]` (one impl, swap insurance) vs `[plugin]` (multi-impl from day one). Future Phase 4 swaps (DKT/AKT, IRT, true-CAT) become drop-ins behind the same contracts.
+- **`src/gbrain/elo.ts` — joint student/item rating.** Online Elo with `K_STUDENT=32` (fast) and `K_ITEM=8` (slow, per §3.1). `itemDifficultyTrustworthy()` returns false until n≥100. Pure functions; caller persists.
+- **`src/gbrain/fsrs.ts` — FSRS-6 memory model.** Locked default weights from the open spaced-repetition benchmark. ~20–30% fewer reviews than SM-2 at equal retention. SM-2 stays online during the dual-write window; per-user weight re-fit deferred to Phase 4.
+- **`src/readiness/next-best-action.ts` — the L6 orchestrator.** `DefaultReadinessEngine` runs the four-arm core loop (Retain → Practice → Teach → Diagnose) with **Extraction-first tie-breaking**: an overdue card with recall < 0.7 gets `expectedGain = 1.0 + (1 − recall)`, guaranteeing it outranks fresh practice. `expectedScore()` throws `not yet implemented` rather than returning `{0,0}` (prevents the cockpit silently rendering 0% as a measurement).
+- **`src/scoring/rubric-grader.ts` — descriptive-grade Scorer scaffold.** `RubricGrader` enforces the §3.5 non-negotiables: rubric JSON, RAG grounding, **CAS final-answer check is the source of truth on the number** (LLM never decides correctness), reason-then-score, calibration store, low-confidence → teacher queue. `extractFinalAnswer` uses brace-balanced parsing — `\boxed{f(x) = \frac{1}{2}}` is captured whole.
+- **`src/scoring/teacher-queue.ts` — review queue contract + cockpit aggregators.** `TeacherQueueRepo` interface; pure-function `summarizeQueue` returns pending count, oldest-pending hours, ICC proxy (`agreementRate`), and `meanAdjustmentMarks` for the operator cockpit.
+- **Migration 029** — four idempotent tables: `student_skill_elo`, `item_difficulty_elo`, `fsrs_cards` (with `due_at` index), `grading_reviews` (pending/confirmed/corrected/dismissed lifecycle feeds the calibration set).
+- **`docs/100x-blueprint.md`** — layer map, approval log (Extraction split + right-modality manim per §9), deferred follow-ups.
+- **55 new tests:** `elo.test.ts` (14), `fsrs.test.ts` (16), `next-best-action.test.ts` (6), `rubric-grader.test.ts` (13), `teacher-queue.test.ts` (6). Full suite **1372/1372 passing.**
+
+### Decisions locked
+
+- **§9 premise gate:** Extraction vs Acquisition split adopted as the spine. Encoded in `nextBestAction()` retain-priority arithmetic.
+- **§9 Challenge C1:** right-modality manim — captured in the `TeachingPolicy` contract (policy picks the modality; curriculum repo doesn't force one). No on-demand runtime animation generation.
+- **§3.1 D1:** Elo before deep knowledge tracing. AKT/SAKT/DKT deferred to Phase 4 behind the same `StudentModel` interface.
+- **§3.5 D5:** descriptive grading goes live with a human queue, not fully autonomous. `TEACHER_QUEUE_CONFIDENCE_THRESHOLD = 0.75`.
+
+### Deferred follow-ups (listed in `docs/100x-blueprint.md`)
+
+- `LLMJudge` + `CASChecker` adapter wiring to existing `LLMClient` + `AnswerVerifier` cascade
+- `expectedScore()` real impl + mock-to-marks report
+- Telemetry events on every attempt (§5.8)
+- Idempotency dedup table for `StudentModel.update` (Elo is not commutative on duplicates)
+- Phase 4: DKT/AKT swap, IRT calibration + true CAT
+
+---
+
 ## [4.13.0] - 2026-05-02 — Phase F: TTS A/B gate + demo audio path
 
 **Operator action:** migration `019_atom_ab_variant_kind.sql` runs automatically on server boot — adds a `variant_kind` column to `atom_ab_tests` with default `'content'` so existing experiments are unchanged. Phase F activates only when `VIDHYA_AB_TESTING=on` (same flag as v4.9.0). Optional cap: `VIDHYA_MAX_NARRATION_AB` (default 50) bounds concurrent narration experiments. To populate demo audio, run `npm run demo:generate-audio` once with `OPENAI_API_KEY` set; the resulting MP3s in `demo/seed-audio/` get served by the disk-fallback path on the demo deploy.

@@ -549,7 +549,28 @@ Four idempotent tables, auto-applied on boot by `src/db/auto-migrate.ts`:
 - Response-length cap on `RubricGrader.grade` to bound prompt tokens
 - Phase 4 swaps: DKT/AKT behind `StudentModel`, IRT/true-CAT behind `ItemSelector`
 
-**No runtime callers wired yet** — the new modules sit behind their seams ready for the Phase 2 wiring PR. Existing GBrain routes, content flywheel, batch generation, lift ledger, and operator cockpit are untouched.
+**Phase 2 wiring (v4.15.0):** the foundation seams are now reachable from the public API:
+
+- `src/scoring/adapters/llm-judge.ts` — `RuntimeLLMJudge` wraps `getLlmForRole` from `src/llm/runtime.ts`. Strict JSON parsing rejects malformed responses (caller routes to teacher queue rather than guess). System prompt enforces "LLM never judges the final answer — the CAS does." `MAX_RESPONSE_CHARS=20_000`, `MAX_SOLUTION_CHARS=8_000` keep prompt tokens bounded.
+- `src/scoring/adapters/cas-checker.ts` — `TieredCASChecker` wraps `TieredVerificationOrchestrator` (the existing 3-tier RAG → SymPy → Wolfram cascade). Returns true only when `status === 'verified' && confidence >= CAS_TRUST_THRESHOLD (0.7)` — cascade failures default to false (safer than guessing).
+- `src/scoring/teacher-queue-pg.ts` — `PgTeacherQueueRepo` implements `TeacherQueueRepo` against migration 029's `grading_reviews`. Single lazy pool, JSONB columns for proposed/final grade, optimistic-state `WHERE status='pending'` on resolve (idempotent).
+- `src/scoring/attempt-dedup.ts` — `attemptKey()` + `InMemoryDedupRepo` + migration 030 `attempt_dedup` table for Postgres impls. Closes the §3.1 idempotency hole on `StudentModel.update`.
+- `src/scoring/rubric-grader.ts` — added `MAX_RESPONSE_LENGTH=50_000` cap; oversized responses throw rather than truncate (silent truncation loses the student's work).
+- `src/api/scoring-routes.ts` — three endpoints wired into `src/server.ts`:
+  - `POST /api/scoring/grade` — open; runs the full RubricGrader pipeline; returns `{grade, queued_for_review, review_id}`. Validates `student_response` (length cap), `item.rubric` (non-empty), `item.maxMarks` (positive).
+  - `GET /api/admin/grading/queue?status=pending&limit=50` — admin; returns rows + `summarizeQueue` health (pending count, oldest hours, ICC proxy, mean adjustment).
+  - `POST /api/admin/grading/queue/:id/resolve` — admin; `{status, final_grade?, reviewer_notes?}`. Reviewer id pulled from JWT auth context.
+
+**19 new tests** (`llm-judge.test.ts` 12 — prompt + strict parser; `attempt-dedup.test.ts` 6 — key determinism + LRU cap; `rubric-grader.test.ts` +1 — length cap). Full suite **1391/1391 passing.**
+
+**Migration 030** (`supabase/migrations/030_attempt_dedup.sql`): `attempt_dedup(student_id, object_id, ts_ms)` PRIMARY KEY for idempotent attempt persistence; `recorded_at` index for cheap pruning of dedup keys older than ~30 days.
+
+**Still deferred to Phase 3+:**
+
+- Concrete `StudentModelPg` impl using Elo + FSRS + the dedup repo (the route accepts grades but doesn't yet update student/item ratings; the gbrain student-model.ts continues to own the Bayesian mastery model)
+- Telemetry events on every attempt (§5.8)
+- `expectedScore()` real impl + mock-to-marks report
+- Phase 4: DKT/AKT, IRT/true-CAT
 
 ## Skill routing
 

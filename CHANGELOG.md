@@ -4,6 +4,34 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.15.0] - 2026-06-20 — 100x Phase 2 wiring: LLMJudge + CASChecker adapters + grading API
+
+**Operator action:** migration `030_attempt_dedup.sql` runs automatically on server boot — adds an `attempt_dedup(student_id, object_id, ts_ms) PRIMARY KEY` table for idempotent `StudentModel.update`. Idempotent. New endpoints:
+- `POST /api/scoring/grade` — open. Calls the rubric grader pipeline.
+- `GET /api/admin/grading/queue` — admin.
+- `POST /api/admin/grading/queue/:id/resolve` — admin.
+
+Grading requires `GEMINI_API_KEY` (or `X-Vidhya-Llm-Config` header per the existing runtime LLM cascade) and `DATABASE_URL` for the queue. Without them, input still validates but the grader returns 500.
+
+### Added (Phase 2 deferred items from 4.14.0)
+
+- **`src/scoring/adapters/llm-judge.ts`** — `RuntimeLLMJudge` wraps `getLlmForRole` (`src/llm/runtime.ts`). System prompt enforces "LLM never judges the final answer." Strict JSON parser rejects malformed responses (no coercion). `MAX_RESPONSE_CHARS=20_000`, `MAX_SOLUTION_CHARS=8_000`.
+- **`src/scoring/adapters/cas-checker.ts`** — `TieredCASChecker` wraps `TieredVerificationOrchestrator` (the existing RAG → SymPy → Wolfram cascade). Returns true only on `verified` + confidence ≥ `CAS_TRUST_THRESHOLD (0.7)`.
+- **`src/scoring/teacher-queue-pg.ts`** — `PgTeacherQueueRepo` against migration 029's `grading_reviews`. Optimistic-state `WHERE status='pending'` on resolve.
+- **`src/scoring/attempt-dedup.ts`** — closes the §3.1 idempotency hole on `StudentModel.update`. `attemptKey()` pure helper + `InMemoryDedupRepo` for tests; Postgres impls use migration 030's PRIMARY-KEY constraint.
+- **`src/api/scoring-routes.ts`** — 3 endpoints, wired into `src/server.ts`.
+- **Response length cap** on `RubricGrader.grade`: `MAX_RESPONSE_LENGTH=50_000`. Throws rather than truncating.
+- **19 new tests** (parser strictness, dedup key, length cap). Full suite **1391/1391 passing.**
+
+### Still deferred (tracked in `docs/100x-blueprint.md`)
+
+- Concrete `StudentModelPg` (Elo + FSRS persistence) — the grading endpoint accepts grades but doesn't yet update Elo ratings.
+- Telemetry events on every attempt (§5.8).
+- `expectedScore()` real impl + mock-to-marks report.
+- Phase 4: DKT/AKT, IRT/true-CAT.
+
+---
+
 ## [4.14.0] - 2026-06-20 — 100x Blueprint Foundation: Phase 0 seams + Elo + FSRS + rubric grader
 
 **Operator action:** migration `029_blueprint_100x.sql` runs automatically on server boot — adds `student_skill_elo`, `item_difficulty_elo`, `fsrs_cards`, `grading_reviews` tables. Idempotent (`IF NOT EXISTS`), no breaking changes to existing rows. No new env vars. No runtime callers wired yet — the new modules sit behind their seams ready for the Phase 2 wiring PR; existing routes and jobs are untouched.

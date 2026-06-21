@@ -267,8 +267,16 @@ export interface ReadinessEngine {
   /**
    * Expected exam-score estimate right now. The honest north-star;
    * surfaced in the cockpit and on the student dashboard.
+   *
+   * `allowedNodes` scopes the assessment to a subset (e.g. just the
+   * skills tested on a specific exam pack). Without it, the impl
+   * returns {0, 0} — the caller is responsible for naming what
+   * "current expected score" means.
    */
-  expectedScore(studentId: StudentId): Promise<{ realized: number; potential: number }>;
+  expectedScore(
+    studentId: StudentId,
+    opts?: { allowedNodes?: ConceptId[]; course?: string },
+  ): Promise<{ realized: number; potential: number }>;
 }
 
 // ────────────────────────────────────────────────────────────────────

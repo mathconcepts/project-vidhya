@@ -27,7 +27,8 @@ import { makeRubricGrader, MAX_RESPONSE_LENGTH } from '../scoring/rubric-grader'
 import { makeRuntimeJudge, makeCASChecker } from '../scoring/adapters';
 import { getTeacherQueueRepo } from '../scoring/teacher-queue-pg';
 import { summarizeQueue } from '../scoring/teacher-queue';
-import type { ItemContext, GradeResult } from '../core/interfaces';
+import { getStudentModel } from '../gbrain/student-model-pg';
+import type { ItemContext, GradeResult, Attempt } from '../core/interfaces';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -85,6 +86,31 @@ async function handleGrade(req: ParsedRequest, res: ServerResponse): Promise<voi
     result = await grader.grade(studentResponse, item, { studentId });
   } catch (err) {
     return sendJSON(res, { error: (err as Error).message }, 500);
+  }
+
+  // Phase 3: update the student model from this attempt. Fire-and-forget
+  // — Elo + FSRS persistence shouldn't block the grade response. The
+  // student model deduplicates on (studentId, objectId, ts) so a retried
+  // POST is safe.
+  if (studentId && body.skill_id) {
+    const attempt: Attempt = {
+      studentId,
+      objectId: String(body.item_id ?? 'unknown'),
+      skillId: String(body.skill_id),
+      correct: result.casFinalAnswerCorrect,
+      partialMarks: {
+        earned: result.earned,
+        max: result.max,
+        perCriterion: result.perCriterion,
+      },
+      errorTags: Array.isArray(body.error_tags) ? body.error_tags : undefined,
+      latencyMs: Number.isFinite(Number(body.latency_ms)) ? Number(body.latency_ms) : 0,
+      ts: Date.now(),
+    };
+    getStudentModel().update(attempt).catch(err => {
+      // log but don't fail the response — grade is the user-visible thing
+      console.error('[scoring] student model update failed:', err.message);
+    });
   }
 
   // Give the enqueue a moment to land before sending — the id is useful

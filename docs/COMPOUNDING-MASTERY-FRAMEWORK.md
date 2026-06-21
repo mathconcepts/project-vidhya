@@ -403,7 +403,7 @@ New:
 Modified:
 - `src/gate-server.ts` — register notebook routes
 - `frontend/src/App.tsx` — `/smart-notebook` route
-- `FEATURES.md` — new moat slide (see §12)
+- `CHANGELOG.md` — release entries reference this framework
 
 Zero new npm dependencies. Zero breaking changes.
 

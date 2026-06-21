@@ -338,7 +338,7 @@ The obvious follow-up is sharding the additions log by month, and adding a light
 
 ## Where this doc fits
 
-- [OVERVIEW.md](./OVERVIEW.md) — what Vidhya is and who for
+- [README.md](./README.md) — what Vidhya is and who for
 - [DESIGN.md](./DESIGN.md) — why the architecture is shaped this way
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — modules + topology + data flow
 - [LAYOUT.md](./LAYOUT.md) — file map

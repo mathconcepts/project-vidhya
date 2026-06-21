@@ -5,7 +5,7 @@
 > **Related:**
 > - [`DEMO.md`](./DEMO.md) — running the product locally
 > - [`agents/ORG-CHART.md`](./agents/ORG-CHART.md) — `curriculum-manager` owns this surface
-> - [`FEATURES.md`](./FEATURES.md) — shipping ledger
+> - [`CHANGELOG.md`](./CHANGELOG.md) — shipping ledger
 
 This document answers: **"which examinations does Vidhya support today,
 and what are their characteristics?"**
@@ -228,7 +228,7 @@ For historical reference only — not currently loaded at startup:
 
 | Id | Name | Location | Status |
 |---|---|---|---|
-| GATE MA | GATE Mathematics | *legacy content, not registered as adapter* | Referenced in FEATURES.md |
+| GATE MA | GATE Mathematics | *legacy content, not registered as adapter* | Historical |
 
 Re-enabling it requires writing an adapter file like the three above.
 Nothing in production code depends on GATE MA; mentioning it is for

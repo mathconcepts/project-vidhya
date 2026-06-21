@@ -110,7 +110,7 @@ The other six brainstormed scenarios (mastery drift, regression, cross-exam tran
 
 **Plateau detection** needs to look at the last N turns and notice that mastery deltas are clustering near zero. The `summariseStudent` helper computes a `trend` field that approximates this, but per-turn flagging would require a separate pass over recent turns at open time. Defer until there's a UX consumer that needs the flag.
 
-**Stale content detection** needs the content registry to carry a `syllabus_version` parallel to the existing `content_version`. The schema field on the turn (`generated_content.content_version`) is ready; the comparison logic isn't. Tied to PENDING.md §4 (content engine evolution).
+**Stale content detection** needs the content registry to carry a `syllabus_version` parallel to the existing `content_version`. The schema field on the turn (`generated_content.content_version`) is ready; the comparison logic isn't. Deferred — tied to content engine evolution.
 
 **Verification failure** is the most concrete of the deferred set. Wolfram cross-check is wired through rendering-routes; instrumenting it to label turns `degraded.reason='verification-failed'` is a clean ~20-line PR. Not done in this commit because rendering-routes wasn't part of this PR's instrumentation pass; commit chain stayed focused on chat + notebook-insight.
 
@@ -226,7 +226,7 @@ Three concerns the turn log creates and how they're addressed:
 
 - **Anonymous session traceability.** Anonymous chat traffic uses `anon_<sessionId>`. The sessionId is browser-generated, not a stable identity, so `/api/turns/me` can't reach an anon's history without a JWT. Anon turns are visible only to admins via `/api/turns` firehose, for ops debugging — not for browsing student data.
 
-Per-user data deletion (PENDING.md §5 data-rights flow) does **not** currently clear that user's turn log. Open follow-up — when `finaliseExpiredDeletions` runs, it should also remove turns where `student_id === user_id`.
+Per-user data deletion (deferred data-rights flow) does **not** currently clear that user's turn log. Open follow-up — when `finaliseExpiredDeletions` runs, it should also remove turns where `student_id === user_id`.
 
 ## Append-only log: durability properties
 
@@ -252,7 +252,7 @@ The read API would need to know which files to scan based on a date range query 
 
 ## Where this doc fits
 
-- [OVERVIEW.md](./OVERVIEW.md) — what Vidhya is and who for
+- [README.md](./README.md) — what Vidhya is and who for
 - [DESIGN.md](./DESIGN.md) — why the architecture is shaped this way
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — modules + topology + data flow
 - [LAYOUT.md](./LAYOUT.md) — file map

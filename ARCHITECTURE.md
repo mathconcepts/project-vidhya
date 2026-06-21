@@ -1,6 +1,6 @@
 # Project Vidhya — Architecture
 
-> The *how*: modules, deployment topology, data flow at runtime. Read [DESIGN.md](./DESIGN.md) first for the *why*. The module registry is canonical at [`modules.yaml`](./modules.yaml); this doc is the human-readable companion.
+> The *how*: modules, deployment topology, data flow at runtime. The module registry is canonical at [`modules.yaml`](./modules.yaml); this doc is the human-readable companion. For the 100x architectural roadmap, see [`docs/100x-blueprint.md`](./docs/100x-blueprint.md).
 
 ---
 
@@ -21,7 +21,7 @@ Every directory under `src/` belongs to exactly one module. Modules can depend o
 | **teaching** | `src/teaching`, `src/modules/teaching` | no | no | Legibility layer for the content-generation-and-delivery loop. Records every interaction as a TeachingTurn with pre-state, what got served, what happened, mastery delta. Append-only JSONL log. See [TEACHING.md](./TEACHING.md). |
 | **content-library** | `src/content-library`, `src/modules/content-library`, `data/content-library` | no | no | Runtime-augmentable, DB-free store of teaching materials keyed by concept_id. Two sources: seeds (committed in `data/content-library/seed/`) and additions (`.data/content-library-additions.jsonl`). Plugged into the router cascade between `subscription` and `bundle`. See [LIBRARY.md](./LIBRARY.md). |
 | **content-studio** | `src/content-studio`, `src/modules/content-studio` | no | no | Admin-driven content authoring with four sources (uploads, wolfram, url-extract, llm) cascading in priority order. Drafts go through review → approve before promotion to library. Persistence: `.data/content-drafts.jsonl`. See module barrel at `src/modules/content-studio/index.ts`. |
-| **operator** | `src/operator`, `src/api/operator-routes.ts` | no | no | Solo-founder business surface — payments adapter, analytics adapter, founder dashboard. Local-JSONL defaults; external tools (Stripe, Plausible) plug in via webhook + adapter swap. See [FOUNDER.md](./FOUNDER.md) for the runbook. |
+| **operator** | `src/operator`, `src/api/operator-routes.ts` | no | no | Solo-founder business surface — payments adapter, analytics adapter, founder dashboard. Local-JSONL defaults; external tools (Stripe, Plausible) plug in via webhook + adapter swap. |
 | **orchestrator** | `src/orchestrator` | no | no | Module registry, profile composer, health probes, feature aggregation. |
 
 `core` and `auth` are **foundation modules** (`foundation: true` in `modules.yaml`). They're implicit dependencies of every other module — a tier doesn't need to list them in `modules:`, the composer auto-includes them.
@@ -216,7 +216,7 @@ Two adapters with local-JSONL defaults so a fresh deployment tracks revenue and 
 
 Webhook auth uses a shared secret (`OPERATOR_WEBHOOK_SECRET` env var) because the caller is an external provider, not a logged-in user. Default 503 if the secret is unset — operators must opt in.
 
-The runbook for the founder side of running this product (marketing, acquisition, strategy, revenue, ops) lives in [FOUNDER.md](./FOUNDER.md), not in code.
+Operator-side runbook concerns (marketing, acquisition, revenue, ops) live outside this repo.
 
 ## Persistence layout
 
@@ -256,9 +256,9 @@ For the demo URL, the practical ceiling is whatever the host's free-tier hours a
 ## What's deliberately not in this doc
 
 - **Visual design.** See [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md).
-- **File-tree map.** See [LAYOUT.md](./LAYOUT.md).
-- **Why we made these choices.** See [DESIGN.md](./DESIGN.md).
-- **What's planned.** See [PENDING.md](./PENDING.md).
+- **File-tree map.** Per-module source dirs listed in the table above and in [`modules.yaml`](./modules.yaml).
+- **Why we made these choices.** Major architectural decisions live in [`docs/100x-blueprint.md`](./docs/100x-blueprint.md) and [`CHANGELOG.md`](./CHANGELOG.md) release notes.
+- **What's planned.** See [CHANGELOG.md](./CHANGELOG.md) for shipped and [docs/100x-blueprint.md](./docs/100x-blueprint.md) for the active roadmap.
 - **Auth surface specifically.** See [AUTH.md](./AUTH.md).
 - **Content engine internals.** See [CONTENT.md](./CONTENT.md).
 

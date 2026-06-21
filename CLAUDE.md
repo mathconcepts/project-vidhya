@@ -565,12 +565,22 @@ Four idempotent tables, auto-applied on boot by `src/db/auto-migrate.ts`:
 
 **Migration 030** (`supabase/migrations/030_attempt_dedup.sql`): `attempt_dedup(student_id, object_id, ts_ms)` PRIMARY KEY for idempotent attempt persistence; `recorded_at` index for cheap pruning of dedup keys older than ~30 days.
 
-**Still deferred to Phase 3+:**
+**Wave 3 (v4.16.0):** the writer side is now live and the headline metrics work.
 
-- Concrete `StudentModelPg` impl using Elo + FSRS + the dedup repo (the route accepts grades but doesn't yet update student/item ratings; the gbrain student-model.ts continues to own the Bayesian mastery model)
-- Telemetry events on every attempt (§5.8)
-- `expectedScore()` real impl + mock-to-marks report
-- Phase 4: DKT/AKT, IRT/true-CAT
+- `src/gbrain/student-model-pg.ts` — `PgStudentModel implements StudentModel`. Single transaction does dedup-check → Elo joint update → FSRS card review → error-tag persist. Idempotent on `(studentId, objectId, ts)` via migration 030's PRIMARY KEY. Publishes `attempt.recorded` on the in-process bus post-commit.
+- `src/events/attempts-bus.ts` — type-safe channel for attempt events (§5.8). Synchronous delivery, exception-isolated subscribers, `onAttemptRecorded(fn)` returns a cleanup function.
+- `src/readiness/expected-score.ts` — `computeExpectedScore()` aggregates `sigmoid((rating-1500)/200) × examRelevance × maxMarks` across scoped nodes. `DefaultReadinessEngine.expectedScore()` wraps it; the v4.14.0 throw is gone.
+- `src/readiness/mock-to-marks.ts` — `summarizeMock(attempts)` returns the Extraction report: `earned / knewIt / leftOnTable / lossByErrorType / topDrillRecommendation`. A `method` tag means "didn't know it"; careless tags (`sign`/`unit`/`misread`/`transcription`/`careless`) on attempts with partial credit mean "knew it but slipped."
+- `/api/scoring/grade` calls `getStudentModel().update()` fire-and-forget when `student_id` + `skill_id` are supplied. Failures log but don't break the grade response.
+- Migration 031 — `attempt_error_tags(student_id, object_id, ts_ms, error_tag) PK`. CHECK constraint locks the `ErrorTag` union.
+
+**22 new tests** (mock-to-marks 8 + expected-score 8 + attempts-bus 4 + next-best-action +2). Full suite **1413/1413 passing.**
+
+**Still deferred:**
+
+- Phase 4 swaps behind interfaces — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
+- Cockpit UI surface for `expectedScore` + mock-to-marks.
+- Production wiring of the `objects_for_skill(skill_id)` SQL function `PgStudentModel.masteryState` calls (tolerated when missing; falls back to ability-only mastery).
 
 ## Skill routing
 

@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> **PARTIALLY OUTDATED** — Some steps in this checklist reference agent configuration that no longer exists. For current deploy steps, use [DEPLOY.md](../DEPLOY.md) and [PRODUCTION.md](../PRODUCTION.md).
+> **PARTIALLY OUTDATED** — Some steps in this checklist reference agent configuration that no longer exists. For current deploy steps, use [DEPLOY.md](../DEPLOY.md).
 
 # Project Vidhya — Go-Live Checklist
 

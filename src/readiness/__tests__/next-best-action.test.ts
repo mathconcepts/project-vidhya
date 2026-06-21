@@ -116,14 +116,29 @@ describe('DefaultReadinessEngine.nextBestAction', () => {
     expect(action.estMinutes).toBeLessThanOrEqual(5);
   });
 
-  it('expectedScore throws until Phase 2 wires it (eng-review fix)', async () => {
+  it('expectedScore returns honest zeros with no allowedNodes scope', async () => {
     const engine = makeReadinessEngine({
       studentModel: makeStudentModel(),
       curriculum: makeRepo(makeNode(), []),
       selector: { async selectNext() { return null; } },
       policy: { async selectObject() { return null; } },
     });
-    await expect(engine.expectedScore('alice')).rejects.toThrow(/not yet implemented/);
+    const r = await engine.expectedScore('alice');
+    expect(r.realized).toBe(0);
+    expect(r.potential).toBe(0);
+  });
+
+  it('expectedScore aggregates across allowedNodes when scoped', async () => {
+    const node = makeNode({ id: 'algebra', examRelevance: 1.0 });
+    const engine = makeReadinessEngine({
+      studentModel: makeStudentModel(),
+      curriculum: makeRepo(node, []),
+      selector: { async selectNext() { return null; } },
+      policy: { async selectObject() { return null; } },
+    });
+    const r = await engine.expectedScore('alice', { allowedNodes: ['algebra'] });
+    expect(r.potential).toBeGreaterThan(0);
+    expect(r.realized).toBeGreaterThan(0);
   });
 
   it('honors a tight time budget', async () => {

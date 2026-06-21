@@ -23,7 +23,7 @@
 | `teacher` | 2 | Yes | always | Manages a roster of students (`teacher_of[]` on the teacher's User; `taught_by` on students). |
 | `admin` | 3 | Yes | always | Manages users, content, channels. |
 | `owner` | 4 | Yes | always | The deployment owner — exactly one per deployment. Can transfer ownership. |
-| `institution` | 5 | Yes (above owner) | `auth.institution_role` (default off) | **Scaffolding only.** Multi-tenant B2B (PENDING.md §9). The type stays in the union so code referencing it compiles, but `setRole` rejects assignment unless the flag is flipped on. |
+| `institution` | 5 | Yes (above owner) | `auth.institution_role` (default off) | **Scaffolding only.** Multi-tenant B2B (deferred B2B work). The type stays in the union so code referencing it compiles, but `setRole` rejects assignment unless the flag is flipped on. |
 
 The `roleGte(actual, min)` helper in `src/auth/types.ts` does the rank comparison. **`parent` is intentionally rank 0** — its access is per-student, not site-wide. Code checking "can read student X's progress" must use `hasGuardianOf()`, not `roleGte(...'student')`.
 
@@ -79,7 +79,7 @@ The parent role exists in production-ready form. Default is on. The flag exists 
 | Default | `false` |
 | Effect when on | `setRole(... 'institution')` is accepted by user-store. **Other infrastructure (tenancy isolation, institution-admin UI) does not yet exist.** |
 
-Scaffolding for PENDING.md §9. Flipping on unlocks the scaffold; full B2B isn't shipped yet.
+Scaffolding for deferred B2B work. Flipping on unlocks the scaffold; full B2B isn't shipped yet.
 
 ## HTTP routes
 

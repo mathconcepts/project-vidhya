@@ -189,7 +189,7 @@ Both files are committed to the repo; treat them as derived artifacts.
 ## Next steps
 
 - Dive into the full **[MCP Integration Guide](./mcp-integration.md)** — covers all three clients (Claude Desktop, Cursor, OpenAI) plus the HTTP surface, environment variables, and troubleshooting.
-- Read the **[feature ledger](../FEATURES.md)** for the v2.22 → v2.27 arc.
+- Read the **[CHANGELOG](../CHANGELOG.md)** for the v2.22 → v2.27 arc.
 - Check the **server source**:
   - `src/admin-orchestrator/mcp-server.ts` — protocol dispatch
   - `src/admin-orchestrator/mcp-resources.ts` — resource catalog

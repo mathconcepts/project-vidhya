@@ -199,7 +199,7 @@ Examples from the repo:
 feat(v2.2.0): Content Engine — cost-minimal four-tier delivery
 fix(wolfram): strip f(x)-style function-of-variable notation
 content: Wolfram-verify 6 bundle problems end-to-end
-docs: add FEATURES.md — 18-slide pitch deck with every moat
+docs: update CHANGELOG with v4.15.0 release notes
 ```
 
 ---

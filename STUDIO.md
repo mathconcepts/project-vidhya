@@ -304,18 +304,14 @@ Same as `src/lib/append-log.ts` everywhere it's used:
 - Corrupt lines (e.g. a torn write at the tail) are skipped silently on read
 - The append is single-line atomic (one `fs.appendFileSync`), so concurrent appends don't interleave
 
-A multi-process deployment would need a different mechanism. Same caveat as the rest of `.data/`; documented in PRODUCTION.md.
+A multi-process deployment would need a different mechanism. Same caveat as the rest of `.data/`.
 
 ## Where this doc fits
 
-- [OVERVIEW.md](./OVERVIEW.md) — what Vidhya is and who for
-- [DESIGN.md](./DESIGN.md) — why the architecture is shaped this way
+- [README.md](./README.md) — what Vidhya is and who for
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — modules + topology + data flow
-- [LAYOUT.md](./LAYOUT.md) — file map
 - [LIBRARY.md](./LIBRARY.md) — the content library's contract (read first)
 - **STUDIO.md (this file)** — the content studio's contract
-- [TEACHING.md](./TEACHING.md) — the teaching loop's contract (the underperforming endpoint reads from this loop)
-- [PRODUCTION.md](./PRODUCTION.md) — production-readiness checklist (the LLM source's protections come from gaps documented here)
-- [FOUNDER.md](./FOUNDER.md) — solo-founder runbook (no studio-specific section yet; could add one when content authoring becomes a daily founder task)
+- [TEACHING.md](./TEACHING.md) — the teaching loop's contract
 
 If a code change makes this doc inconsistent with the running system, the running system wins; this doc has a bug.

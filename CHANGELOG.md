@@ -4,6 +4,42 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.16.0] - 2026-06-20 — 100x Wave 3: StudentModelPg + telemetry + expectedScore + mock-to-marks + doc rehaul
+
+**Operator action:** migration `031_attempt_error_tags.sql` runs automatically on server boot — adds an `attempt_error_tags` table feeding the Extraction error-profile aggregator and the mock-to-marks drill recommender. Idempotent.
+
+### Added (Phase 3 deferred items from 4.15.0)
+
+- **`src/gbrain/student-model-pg.ts` — concrete StudentModel against Postgres.** Implements the §3.1 + §3.4 contract: Elo joint update + FSRS card review + dedup guard, all in a single transaction. `update()` is idempotent on `(studentId, objectId, ts)` via the migration 030 PRIMARY KEY — duplicate POSTs never double-count. `masteryState()` derives `not-started → learning → practicing → mastered → at-risk` from the Elo rating + per-card recall probability. Published as an `attempt.recorded` event post-commit so the cockpit / calibration store / future surfaces can subscribe.
+- **`src/events/attempts-bus.ts` — in-process attempts telemetry channel (§5.8).** Type-safe; closed contract — only `Attempt` events. Subscribers receive synchronous delivery with exception isolation (one bad subscriber doesn't break the chain). Cleanup returns from `onAttemptRecorded` as a function. Wired into `PgStudentModel.update()`.
+- **`src/readiness/expected-score.ts` — the headline north-star metric (§8).** Pure `computeExpectedScore(studentId, nodeIds, deps)` produces `{ realized, potential, ratio, byNode }`. Sigmoid maps Elo rating to expected mark share (0.5 at the midpoint, 0.88 at 1900). Reads per-node `examRelevance` from the curriculum and `maxMarks` from a representative practice object. `DefaultReadinessEngine.expectedScore()` now wraps this — Phase 1's "throws" placeholder is gone.
+- **`src/readiness/mock-to-marks.ts` — the Extraction-half deliverable (§2.5).** `summarizeMock(attempts)` returns `{ earned, knewIt, leftOnTable, lossByErrorType, byNode, topDrillRecommendation, headline }`. Operationalises the "you knew 8 of these and scored 5" promise: any attempt with `partialMarks > 0` AND a careless tag (`sign`/`unit`/`misread`/`transcription`/`careless`) means the student knew it but slipped. `method` tags don't count as knew-it. Top drill recommendation is the error tag with the largest reclaimable marks.
+- **Migration 031** — `attempt_error_tags(student_id, object_id, ts_ms, error_tag) PRIMARY KEY` with CHECK constraint enforcing the `ErrorTag` union. Indexed on `(student_id, recorded_at DESC)` for the 30-day error-profile window.
+- **`/api/scoring/grade` now updates the student model.** When the caller provides `student_id` and `skill_id`, the rubric grader's output drives a fire-and-forget `StudentModel.update()` — Elo + FSRS + error-tag persistence. Idempotent on retry.
+- **22 new tests** (8 mock-to-marks, 8 expected-score, 4 attempts-bus, 2 next-best-action wiring). Full suite **1413/1413 passing.**
+
+### Documentation rehaul
+
+Deleted 7 redundant top-level docs (~4900 lines):
+- `OVERVIEW.md` — referenced missing DESIGN.md/LAYOUT.md; README opening covers
+- `PITCH.md`, `POSITIONING.md` — marketing duplicates of README opening
+- `FEATURES.md` (2373 lines) — 47-slide pitch deck; ARCHITECTURE + CHANGELOG cover
+- `PRODUCTION.md` — duplicated DEPLOY.md
+- `PENDING.md` (903 lines, last reviewed 2026-04-24) — superseded by CHANGELOG + `docs/100x-blueprint.md`
+- `FOUNDER.md` — business runbook, not code documentation
+
+Patched 11 referring docs (README, ARCHITECTURE, AUTH, INSTALL, CONTRIBUTING, LIBRARY, STUDIO, TEACHING, EXAMS, plus 5 in `docs/`). Fixed the dead links to `DESIGN.md` / `LAYOUT.md` in ARCHITECTURE that had been broken since pre-4.0.
+
+Docs count: **26 → 19 top-level .md** (the canonical set: README, CLAUDE, ARCHITECTURE, CHANGELOG, CONTRIBUTING, DEPLOY, DEPLOY-NETLIFY, INSTALL, DESIGN-SYSTEM, EXTENDING, DEPENDENCIES, SECURITY, AUTH, CONTENT, LIBRARY, STUDIO, TEACHING, EXAMS, DEMO).
+
+### Still deferred (`docs/100x-blueprint.md`)
+
+- Phase 4: DKT/AKT (replaces Elo behind `StudentModel`), IRT calibration + true CAT (replaces Elo-band selection behind `ItemSelector`)
+- Cockpit UI surface for the `expectedScore` north-star metric + mock-to-marks reports
+- Production wiring of `objects_for_skill(skill_id)` SQL function used by `PgStudentModel.masteryState`
+
+---
+
 ## [4.15.0] - 2026-06-20 — 100x Phase 2 wiring: LLMJudge + CASChecker adapters + grading API
 
 **Operator action:** migration `030_attempt_dedup.sql` runs automatically on server boot — adds an `attempt_dedup(student_id, object_id, ts_ms) PRIMARY KEY` table for idempotent `StudentModel.update`. Idempotent. New endpoints:

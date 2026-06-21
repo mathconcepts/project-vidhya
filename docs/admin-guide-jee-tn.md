@@ -322,7 +322,7 @@ This guide deliberately doesn't cover:
 
 ## Surveillance discipline (don't skip this)
 
-Vidhya's positioning (`POSITIONING.md`) explicitly refuses streaks, comparisons, leaderboards, and surveillance language. Seven CI invariants enforce this in code. As an admin, the practical implications:
+Vidhya's product positioning explicitly refuses streaks, comparisons, leaderboards, and surveillance language. Seven CI invariants enforce this in code. As an admin, the practical implications:
 
 1. **Don't author rulesets that name students or reference their behaviour.** "Lead with intuition" is correct. "Help anxious students" is correct (cohort-level). "Help Priya with limits" is wrong (student-level).
 2. **Don't expose blueprint internals to students.** The `/admin/*` pages are admin-only and gated by `requireRole('admin')`. Surveillance invariants 6 + 7 enforce this.
@@ -367,4 +367,4 @@ Everything else is depth on those seven steps.
 | Holdout PYQs | `src/api/admin-holdout-routes.ts`, `scripts/seed-pyq-holdout.ts` |
 | Surveillance invariants | `src/personalization/__tests__/surveillance-invariants.test.ts` |
 
-The pending ledger (`PENDING.md` §14) lists what's deferred — read it before starting any new feature.
+The deferred items in `docs/100x-blueprint.md` list what's pending — read them before starting any new feature.

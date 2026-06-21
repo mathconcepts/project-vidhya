@@ -41,7 +41,6 @@ Every existing exam-prep product makes the same bargain: to get personalised pre
 
 Vidhya makes a different trade. Sessions compound; your provider key stays yours; the price of the AI is whatever the provider charges you directly. A student logging in from a small town gets the same lesson as a student in the most expensive coaching centre anywhere. **Geography stops being the limit.**
 
-📖 *Full positioning in [POSITIONING.md](./POSITIONING.md). Thirty-second version in [PITCH.md](./PITCH.md).*
 
 ---
 
@@ -53,7 +52,7 @@ The lesson you see isn't a one-size-fits-all atom. It's been **re-ranked for you
 
 **If you came in through school — CBSE, ICSE, Tamil Nadu State Board, Karnataka PUE, Maharashtra HSC — the app knows that too.** Pick your board, grade, and subject at `/knowledge`; we map it to the entrance exams it leads into (JEE Main, BITSAT, UGEE, NEET) and surface **bridge content** that connects what you already know from your textbook to what the exam expects. The bridge isn't a separate course you have to take — it's three cards on your planner that GBrain ranked from where *you* are right now.
 
-📖 *Forty-eight-release feature ledger: [FEATURES.md](./FEATURES.md). Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md). Syllabus bridge framework: [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md). Demo runbook: [docs/moat-demo.md](./docs/moat-demo.md).*
+📖 *Release log: [CHANGELOG.md](./CHANGELOG.md). Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md). Syllabus bridge framework: [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md). Demo runbook: [docs/moat-demo.md](./docs/moat-demo.md). 100x roadmap: [docs/100x-blueprint.md](./docs/100x-blueprint.md).*
 
 ---
 
@@ -63,7 +62,7 @@ A React SPA backed by a stateless Node server. **Your student model and uploaded
 
 Thirteen modules: core, auth, content, rendering, channels, learning, exams, lifecycle, teaching, content-library, content-studio, operator, orchestrator. Each declares its public surface in `src/modules/<name>/index.ts` and registers in `modules.yaml`. The orchestrator composes them per deployment profile.
 
-📖 *Production-readiness in [PRODUCTION.md](./PRODUCTION.md).*
+📖 *Production-readiness checklist lives in [DEPLOY.md](./DEPLOY.md#production-readiness).*
 
 ---
 
@@ -156,7 +155,7 @@ docker compose up --build        # http://localhost:8080
 | Setup time | 5 min | 5 min | 10 min | 5 min |
 | Cost | $0 | $0 (free tier) | $0 (both free tiers) | $0 |
 
-📖 *[DEMO.md](./DEMO.md) for the local walkthrough. [DEPLOY.md](./DEPLOY.md) for Render. [PRODUCTION.md](./PRODUCTION.md) before any real-user deployment. [docs/moat-demo.md](./docs/moat-demo.md) for the 3-minute persona-scenarios demo.*
+📖 *[DEMO.md](./DEMO.md) for the local walkthrough. [DEPLOY.md](./DEPLOY.md) for Render + production readiness. [docs/moat-demo.md](./docs/moat-demo.md) for the 3-minute persona-scenarios demo.*
 
 ---
 
@@ -164,7 +163,7 @@ docker compose up --build        # http://localhost:8080
 
 | You are | Read |
 |---|---|
-| 🎓 A student | [PITCH.md](./PITCH.md) → [INSTALL.md](./INSTALL.md) |
+| 🎓 A student | [INSTALL.md](./INSTALL.md) |
 | 🏫 A school student preparing for JEE / NEET / BITSAT | [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md) — pick your board at `/knowledge`, see bridge content on your planner |
 | 🧪 A tester wanting it live now | [DEMO.md](./DEMO.md) — one command, six demo users seeded |
 | 🚀 Spinning up a public URL | The Deploy button above → [DEPLOY.md](./DEPLOY.md) |
@@ -175,11 +174,10 @@ docker compose up --build        # http://localhost:8080
 | 🎬 Pitching the moat | [docs/moat-demo.md](./docs/moat-demo.md) — guided 3-minute persona-scenarios path |
 | 🛠 Setting up from scratch | [docs/admin-getting-started.md](./docs/admin-getting-started.md) — day-0 to cloud deploy, local-first |
 | 🧑‍🏫 Running real students | [docs/admin-guide-jee-tn.md](./docs/admin-guide-jee-tn.md) — end-to-end admin runbook with concrete TN-board / IIT-JEE / anxious-cohort scenario |
-| 🔬 Technical evaluator | [OVERVIEW.md](./OVERVIEW.md) → [ARCHITECTURE.md](./ARCHITECTURE.md) → [CLAUDE.md](./CLAUDE.md) |
+| 🔬 Technical evaluator | [ARCHITECTURE.md](./ARCHITECTURE.md) → [CLAUDE.md](./CLAUDE.md) → [docs/100x-blueprint.md](./docs/100x-blueprint.md) |
 | 🧱 Extending the platform | [EXTENDING.md](./EXTENDING.md) — four extension contracts, &lt;20 min to first extension |
-| 🛡 Production deployer | [PRODUCTION.md](./PRODUCTION.md) — honest readiness checklist |
-| 🚀 Solo founder | [FOUNDER.md](./FOUNDER.md) — running the business: stack, day-1 checklist, revenue, ops |
-| 📋 Wanting to know what's NOT done | [PENDING.md](./PENDING.md) — the full ledger |
+| 🛡 Production deployer | [DEPLOY.md](./DEPLOY.md) — Render deploy + production readiness |
+| 📋 Wanting to know what's NOT done | [CHANGELOG.md](./CHANGELOG.md) + [docs/100x-blueprint.md](./docs/100x-blueprint.md) — released vs deferred |
 
 ---
 
@@ -188,13 +186,11 @@ docker compose up --build        # http://localhost:8080
 <details>
 <summary>All master docs at the repo root</summary>
 
-**Pitch** — [PITCH.md](./PITCH.md), [POSITIONING.md](./POSITIONING.md)
-
-**Architecture** — [OVERVIEW.md](./OVERVIEW.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [CLAUDE.md](./CLAUDE.md)
+**Architecture** — [ARCHITECTURE.md](./ARCHITECTURE.md), [CLAUDE.md](./CLAUDE.md), [docs/100x-blueprint.md](./docs/100x-blueprint.md)
 
 **Modules** — [AUTH.md](./AUTH.md), [TEACHING.md](./TEACHING.md), [LIBRARY.md](./LIBRARY.md), [STUDIO.md](./STUDIO.md), [CONTENT.md](./CONTENT.md), [EXAMS.md](./EXAMS.md)
 
-**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [PRODUCTION.md](./PRODUCTION.md), [FOUNDER.md](./FOUNDER.md), [SECURITY.md](./SECURITY.md)
+**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [SECURITY.md](./SECURITY.md)
 
 **Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/CURRICULUM-FRAMEWORK.md](./docs/CURRICULUM-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/LESSON-FRAMEWORK.md](./docs/LESSON-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md), [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md)
 
@@ -202,7 +198,7 @@ docker compose up --build        # http://localhost:8080
 
 **Admin runbooks** — [docs/admin-getting-started.md](./docs/admin-getting-started.md) (day-0 to live deploy) → [docs/admin-guide-jee-tn.md](./docs/admin-guide-jee-tn.md) (end-to-end ops for a TN-board, anxious JEE cohort)
 
-**Project meta** — [CONTRIBUTING.md](./CONTRIBUTING.md), [EXTENDING.md](./EXTENDING.md), [CHANGELOG.md](./CHANGELOG.md), [FEATURES.md](./FEATURES.md), [PENDING.md](./PENDING.md)
+**Project meta** — [CONTRIBUTING.md](./CONTRIBUTING.md), [EXTENDING.md](./EXTENDING.md), [CHANGELOG.md](./CHANGELOG.md)
 
 **Hierarchical reference** — [docs/00-index.md](./docs/00-index.md)
 

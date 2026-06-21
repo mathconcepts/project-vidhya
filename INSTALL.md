@@ -193,7 +193,7 @@ The auth module ships with 4 flags. Defaults preserve existing behaviour, so a f
 | `auth.google_oidc` | `VIDHYA_AUTH_GOOGLE_OIDC` | `on` | Google sign-in disabled. Unless another auth path is implemented, **nobody can log in.** |
 | `auth.demo_seed` | `VIDHYA_AUTH_DEMO_SEED` | `on` | `npm run demo:seed` exits cleanly without creating users. Use for production deployments where the 6 demo personas would confuse real users. |
 | `auth.parent_role` | `VIDHYA_AUTH_PARENT_ROLE` | `on` | Assigning the `parent` role is rejected. Existing parent users keep their record but lose access until re-enabled. |
-| `auth.institution_role` | `VIDHYA_AUTH_INSTITUTION_ROLE` | `off` | Scaffolding for the multi-tenant B2B role (PENDING.md §9). Default off until tenancy isolation lands. |
+| `auth.institution_role` | `VIDHYA_AUTH_INSTITUTION_ROLE` | `off` | Scaffolding for the multi-tenant B2B role (deferred). Default off until tenancy isolation lands. |
 
 Flag values accept `1`/`true`/`yes`/`on` (case-insensitive) for true and `0`/`false`/`no`/`off`/empty for false.
 
@@ -334,4 +334,4 @@ Another process is on 8080. Change with `PORT=8081 npx tsx src/server.ts`.
 - **Adding an exam?** → [`EXAMS.md`](./EXAMS.md) — the two-file adapter pattern
 - **Contributing content?** → [`CONTENT.md`](./CONTENT.md) + [`modules/project-vidhya-content/CONTRIBUTING.md`](./modules/project-vidhya-content/CONTRIBUTING.md)
 - **Architecture / modules?** → [`MODULARISATION.md`](./MODULARISATION.md)
-- **What's not done yet?** → [`PENDING.md`](./PENDING.md) — the full honest ledger
+- **What's not done yet?** → [`CHANGELOG.md`](./CHANGELOG.md) (shipped) + [`docs/100x-blueprint.md`](./docs/100x-blueprint.md) (in-flight roadmap)

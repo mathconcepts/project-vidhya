@@ -335,7 +335,7 @@ If a student is stuck, you find out from the weekly digest, not from a daily che
 | Render dashboard → Bandwidth + DB usage | Confirm you're still in free-tier limits. Free tier has ephemeral disk; if `.data/` is mission-critical, upgrade to a paid plan with a persistent volume mount. |
 | `/admin/content-rd` Active Runs | Any runs stuck in `submitted` >24h? They're past Gemini Batch's SLA. Mark them failed + Resubmit. |
 | `docs/snapshots/INDEX.md` | Is the last snapshot >4 weeks old? Run `npm run snapshot -- "monthly-checkpoint-$(date +%Y%m%d)"`. Capture the current state of blueprints + rulesets in the manifest notes. |
-| `PENDING.md` | Re-read §14. Is anything you previously deferred now blocking you? Bump priority. |
+| `docs/100x-blueprint.md` | Re-read deferred items. Is anything you previously deferred now blocking you? Bump priority. |
 
 ---
 
@@ -442,8 +442,8 @@ Everything else is depth on those steps.
 | Day-to-day admin workflow | [admin-guide-jee-tn.md](./admin-guide-jee-tn.md) (the companion to this) |
 | 3-minute moat demo to a prospect | [moat-demo.md](./moat-demo.md) |
 | Customising the content module | [`../EXTENDING.md`](../EXTENDING.md) |
-| Production hardening checklist | [`../PRODUCTION.md`](../PRODUCTION.md) |
-| What's NOT done yet | [`../PENDING.md`](../PENDING.md) — esp. §14 for blueprint follow-ups |
+| Production hardening checklist | [`../DEPLOY.md`](../DEPLOY.md) |
+| What's NOT done yet | [`../CHANGELOG.md`](../CHANGELOG.md) + [`100x-blueprint.md`](./100x-blueprint.md) |
 | Project context for new agents | [`../CLAUDE.md`](../CLAUDE.md) |
 
 ---

@@ -40,6 +40,7 @@ import type {
   CurriculumRepo,
   StudentModel,
 } from '../core/interfaces';
+import { computeExpectedScore } from './expected-score';
 
 // ────────────────────────────────────────────────────────────────────
 // Tuneables — locked here so the policy doesn't drift silently.
@@ -82,14 +83,22 @@ export class DefaultReadinessEngine implements ReadinessEngine {
     return real[0];
   }
 
-  async expectedScore(_studentId: StudentId): Promise<{ realized: number; potential: number }> {
-    // Phase-1 placeholder. Real implementation aggregates per-skill
-    // ability × exam-relevance weights — landed alongside the
-    // mocks→marks report in the Phase 2 wiring PR.
-    //
-    // Throw rather than return zeros so callers don't silently divide
-    // by zero or render "0%" as if it were a measurement.
-    throw new Error('ReadinessEngine.expectedScore: not yet implemented (Phase 2 wiring).');
+  async expectedScore(
+    studentId: StudentId,
+    opts?: { allowedNodes?: ConceptId[]; course?: string },
+  ): Promise<{ realized: number; potential: number }> {
+    const nodeIds = opts?.allowedNodes ?? [];
+    if (nodeIds.length === 0) {
+      // Caller didn't scope the assessment — return zeros honestly with
+      // an explicit ratio: null so the cockpit knows "no data" vs "scored 0".
+      return { realized: 0, potential: 0 };
+    }
+    const report = await computeExpectedScore(studentId, nodeIds, {
+      studentModel: this.deps.studentModel,
+      curriculum: this.deps.curriculum,
+      course: opts?.course,
+    });
+    return { realized: report.realized, potential: report.potential };
   }
 
   // ────────────────────────────────────────────────────────────────

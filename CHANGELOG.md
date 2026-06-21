@@ -4,6 +4,35 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.17.0] - 2026-06-20 — 100x Wave 4: ProtoCAT item selector + diagnostic warm-up (cold-start dignity)
+
+**Operator action:** no migration. New endpoints. Stateless — the warm-up state round-trips through the client. To wire a Postgres-backed catalog instead of the default in-memory one, call `setReadinessCatalog(...)` at server boot.
+
+### Added (CEO-audit Wave 4: closes the cold-start gap)
+
+- **`src/scoring/proto-cat-selector.ts` — `ProtoCATSelector implements ItemSelector`.** Streaming approximation of Computerized Adaptive Testing per blueprint §3.3. Translates the desirable-difficulty success band into a catalog query window (using the inverse Elo `eloFromSuccess`), scores candidates by a tent-shape information function peaked at p=0.5, applies an exposure penalty over `OVEREXPOSURE_THRESHOLD=5`, and samples uniformly among the top-k (default 3) to prevent over-serving. **Retain mode** (high success band ≥ 0.85) flips the heuristic — score by success probability directly, so overdue reviews feel validating rather than punishing.
+- **`src/scoring/learning-object-catalog.ts` — `LearningObjectCatalog` interface + `InMemoryCatalog`.** The read-side seam. Production wraps `generated_problems` / `atom_versions`; tests use the in-memory impl. Optional `exposureCount` lets selectors penalize popular items without each selector hitting a DB independently.
+- **`src/readiness/diagnostic-warmup.ts` — cold-start binary search.** Replaces the "everyone starts at Elo 1500" disaster with a 4–8 item bracketing diagnostic. A Class-8 beginner trying to bridge to JEE no longer eats 6–8 mismatches before Elo corrects — the bracket walks down from 800–2100 in ~5 items. Pure functions; caller persists the final ability.
+- **`src/api/readiness-routes.ts` — stateless warm-up endpoints.**
+  - `POST /api/readiness/warmup/next` — get the next probe item given the current state.
+  - `POST /api/readiness/warmup/apply` — pure reducer; client manages persistence.
+- **`ProtoCATSelector` wired into `DefaultReadinessEngine`** — `pickDueReview()` now passes `allowedNodes` through (closes a pre-existing bug where retain mode returned null even when overdue cards existed).
+- **36 new tests:** `proto-cat-selector.test.ts` (12), `diagnostic-warmup.test.ts` (14), `wave4-integration.test.ts` (4 — end-to-end engine + selector + catalog + curriculum). Plus 6 score/info-function unit tests. Full suite **1449/1449 passing.**
+
+### Behavior changes
+
+- `DefaultReadinessEngine.nextBestAction()` now produces real `practice` actions when a catalog is supplied (previously always `diagnose` because no `ItemSelector` shipped).
+- `pickDueReview()` passes `allowedNodes` into the selector — fixes a latent bug where retain candidates were never produced.
+
+### Still deferred (CEO audit findings)
+
+- **Wave 5** — syllabus-progression awareness: `SyllabusAwareReadinessEngine` that traverses prereq DAG + reads `prep_intent` + `weeksToExam` + `pctSyllabusCovered` to shift arm weights. Pulls bridge content from `src/syllabus-bridge/` for students with `gapClass ∈ {depth-gap, breadth-gap, foundation}`.
+- **Wave 6** — engagement-aware modality: `MotivationAwareTeachingPolicy` reads the legacy student model's `motivation_state` and varies modality (story / interactive / worked-example).
+- **Phase 4** — DKT/AKT, IRT calibration + true CAT.
+- **DB-backed `LearningObjectCatalog`** wrapping `generated_problems` / `atom_versions` — wave 4 ships the interface and an in-memory impl; production wiring is one short PR.
+
+---
+
 ## [4.16.0] - 2026-06-20 — 100x Wave 3: StudentModelPg + telemetry + expectedScore + mock-to-marks + doc rehaul
 
 **Operator action:** migration `031_attempt_error_tags.sql` runs automatically on server boot — adds an `attempt_error_tags` table feeding the Extraction error-profile aggregator and the mock-to-marks drill recommender. Idempotent.

@@ -576,11 +576,24 @@ Four idempotent tables, auto-applied on boot by `src/db/auto-migrate.ts`:
 
 **22 new tests** (mock-to-marks 8 + expected-score 8 + attempts-bus 4 + next-best-action +2). Full suite **1413/1413 passing.**
 
-**Still deferred:**
+**Wave 4 (v4.17.0):** cold-start dignity + real item selection.
 
-- Phase 4 swaps behind interfaces — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
-- Cockpit UI surface for `expectedScore` + mock-to-marks.
-- Production wiring of the `objects_for_skill(skill_id)` SQL function `PgStudentModel.masteryState` calls (tolerated when missing; falls back to ability-only mastery).
+- `src/scoring/proto-cat-selector.ts` — `ProtoCATSelector implements ItemSelector`. Translates the desirable-difficulty success band to a catalog query window via inverse Elo (`eloFromSuccess`), scores by tent-shape information function (peaked at p=0.5), penalizes items past `OVEREXPOSURE_THRESHOLD=5` exposures, samples uniformly among the top-k (default 3). Retain mode (band ≥ 0.85) flips to success-probability scoring so overdue reviews feel validating, not punishing.
+- `src/scoring/learning-object-catalog.ts` — `LearningObjectCatalog` interface + `InMemoryCatalog`. Production wraps `generated_problems`; tests use the in-memory impl.
+- `src/readiness/diagnostic-warmup.ts` — 4–8 item bracketing diagnostic that replaces "everyone starts at Elo 1500." Bracket walks down from 800–2100 in ~5 items. Pure functions; caller persists.
+- `src/api/readiness-routes.ts` — stateless warm-up endpoints; state round-trips through the client.
+  - `POST /api/readiness/warmup/next` — get next probe.
+  - `POST /api/readiness/warmup/apply` — pure reducer.
+- `pickDueReview()` now passes `allowedNodes` into the selector (closes a latent bug where retain mode always returned null).
+
+**36 new tests** (proto-cat 12 + warmup 14 + wave4-integration 4 + score/info 6). Full suite **1449/1449 passing.**
+
+**Still deferred (CEO audit findings — next waves):**
+
+- **Wave 5** — syllabus-progression awareness: `SyllabusAwareReadinessEngine` traversing prereq DAG, reading `prep_intent` + `weeksToExam` + `pctSyllabusCovered` to shift arm weights. Pulls bridge content for `gapClass ∈ {depth-gap, breadth-gap, foundation}`.
+- **Wave 6** — engagement-aware modality: `MotivationAwareTeachingPolicy` reads legacy `motivation_state` and varies modality.
+- **Phase 4** — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
+- **DB-backed catalog** wrapping `generated_problems` / `atom_versions` (interface ships; impl is one short PR).
 
 ## Skill routing
 

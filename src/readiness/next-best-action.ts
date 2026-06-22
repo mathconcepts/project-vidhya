@@ -201,12 +201,13 @@ interface DueReview {
 async function pickDueReview(
   deps: ReadinessEngineDeps,
   studentId: StudentId,
-  opts: { timeBudgetMin: number }
+  opts: { timeBudgetMin: number; allowedNodes?: ConceptId[] }
 ): Promise<DueReview | null> {
   // Phase 1: defer to the selector's "retain" mode if it has one.
   // Phase 2 wires the FSRS-backed lookup directly.
   const obj = await deps.selector.selectNext(studentId, {
     successBand: [0.85, 1.0],         // overdue cards predicted easy
+    allowedNodes: opts.allowedNodes,
     timeBudgetMin: opts.timeBudgetMin,
     exposureK: 1,
   });

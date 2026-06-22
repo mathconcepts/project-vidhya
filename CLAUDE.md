@@ -588,12 +588,29 @@ Four idempotent tables, auto-applied on boot by `src/db/auto-migrate.ts`:
 
 **36 new tests** (proto-cat 12 + warmup 14 + wave4-integration 4 + score/info 6). Full suite **1449/1449 passing.**
 
-**Still deferred (CEO audit findings — next waves):**
+**Waves 5 + 6 (v4.18.0):** syllabus-progression awareness + motivation-aware modality. Closes the CEO-audit trilogy.
 
-- **Wave 5** — syllabus-progression awareness: `SyllabusAwareReadinessEngine` traversing prereq DAG, reading `prep_intent` + `weeksToExam` + `pctSyllabusCovered` to shift arm weights. Pulls bridge content for `gapClass ∈ {depth-gap, breadth-gap, foundation}`.
-- **Wave 6** — engagement-aware modality: `MotivationAwareTeachingPolicy` reads legacy `motivation_state` and varies modality.
-- **Phase 4** — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
-- **DB-backed catalog** wrapping `generated_problems` / `atom_versions` (interface ships; impl is one short PR).
+- `src/readiness/syllabus-context.ts` — pure helpers: `weeksToExam`, `pctSyllabusCovered`, `inferPhase` ({`early` | `mid` | `crunch` | `final-week`}), `armWeightsForPhase`, `eligibleNodes` (prereq-DAG filter).
+- `src/readiness/syllabus-aware-engine.ts` — `SyllabusAwareReadinessEngine implements ReadinessEngine`. Filters `allowedNodes` by prereq mastery, scales `expectedGain` by phase weights, attaches a phase label to the rationale ("Crunch time — …"). Defensive: empty eligible-set falls back to the original set rather than deadlock in diagnose.
+- `src/teaching/motivation-source.ts` — `MotivationSource` interface + `InMemoryMotivationSource`. Bridges legacy `student_models.motivation_state` into the 100x layer without coupling.
+- `src/teaching/motivation-aware-policy.ts` — `MotivationAwareTeachingPolicy implements TeachingPolicy`. Locked modality preference table per motivation state. Anxious students get **practice last** (paranoid: wrong-answer spikes anxiety).
+
+**35 new tests** (syllabus-context 19 + syllabus-aware-engine 6 + motivation-aware-policy 10). Full suite **1484/1484 passing.**
+
+**CEO audit scoreboard:**
+
+| Dimension | Status |
+|---|---|
+| Any competence level | ✅ Wave 4 — ProtoCATSelector + warm-up |
+| Any syllabus position | ✅ Wave 5 — `SyllabusAwareReadinessEngine` |
+| Any engagement level | ✅ Wave 6 — `MotivationAwareTeachingPolicy` |
+
+**Still deferred:**
+
+- DB-backed `LearningObjectCatalog` wrapping `generated_problems` (one short PR).
+- Production `PgMotivationSource` wrapping `student_models.motivation_state` (20-line adapter).
+- Wiring `SyllabusAwareReadinessEngine` + `MotivationAwareTeachingPolicy` into the live grading + lesson routes — the contracts are stable, so it's a swap not a rewrite.
+- Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 
 ## Skill routing
 

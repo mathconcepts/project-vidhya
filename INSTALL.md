@@ -278,7 +278,7 @@ In local mode (current default), this is a no-op. In live mode (after the operat
 
 ```bash
 npm run typecheck                     # backend typecheck
-(cd frontend && npm run typecheck)    # frontend typecheck
+(cd frontend && npx tsc --noEmit)     # frontend typecheck
 npm test                              # vitest unit tests (107)
 npm run smoke:stdio                   # MCP stdio smoke (49 checks)
 npm run smoke:sdk-compat              # SDK compat smoke (65 checks)

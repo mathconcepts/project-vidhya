@@ -15,6 +15,12 @@ metadata:
     unit generator (PR #32+) rather than seeding all 150+ concepts at
     once. This keeps the file truthful: only concepts that have at least
     one generated curriculum_unit + at least one PYQ link are listed.
+
+    Note: server startup will log "[exam-loader] syllabus: unknown concepts"
+    warnings for every concept_id listed here that has no matching entry in
+    src/constants/concept-graph.ts (which currently only covers GATE). These
+    warnings are expected and harmless — they mean the concept exists in this
+    syllabus stub but hasn't yet had a curriculum unit generated for it.
   scope: mcq-and-numerical
   total_marks: 300
   duration_minutes: 180

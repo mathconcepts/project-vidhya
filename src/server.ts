@@ -566,7 +566,7 @@ registerRoute('POST', '/api/auth/migrate-session', async (req, res) => {
 
 // Health check
 registerRoute('GET', '/health', async (_req, res) => {
-  const info: Record<string, unknown> = { status: 'ok', service: 'gate-math-api' };
+  const info: Record<string, unknown> = { status: 'ok', service: 'vidhya-api' };
 
   info.features = computeFeatureFlags();
 
@@ -945,7 +945,7 @@ Solve carefully:`;
   server.listen(port, '0.0.0.0', () => {
     console.log(`
 ┌──────────────────────────────────────────────┐
-│  GATE Math API                               │
+│  Vidhya API                                  │
 │  http://localhost:${port}                         │
 │                                              │
 │  Core:                                       │

@@ -14,9 +14,12 @@ Vidhya is a focused, mobile-first exam-prep platform. Exam-agnostic by design �
 ### Running Locally
 ```bash
 npm install && cd frontend && npm install && cd ..
+export JWT_SECRET=$(openssl rand -hex 16)   # required for auth to work
 npx tsx src/server.ts        # backend on :8080
 cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 ```
+
+> **Tip:** `npm run demo:start` handles `JWT_SECRET` automatically and also seeds demo users. Use it for first-run or demo mode.
 
 ### Architecture
 - **3-tier verification:** RAG cache → Gemini 2.5-flash dual-solve → Wolfram Alpha

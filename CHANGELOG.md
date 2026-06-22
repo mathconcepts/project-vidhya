@@ -4,6 +4,63 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.18.0] - 2026-06-20 — 100x Waves 5 + 6: syllabus-progression + motivation-aware modality
+
+**Operator action:** no migration. No new endpoints. Two new `ReadinessEngine` and `TeachingPolicy` implementations behind the existing interfaces — apps opt in by passing the new impls into the engine deps.
+
+### Added — Wave 5: SyllabusAwareReadinessEngine
+
+Closes CEO-audit Dimension 3 ("any syllabus position"). Decorates `DefaultReadinessEngine` with three pieces of reasoning the engine previously ignored:
+
+- **`src/readiness/syllabus-context.ts` — pure helpers.**
+  - `weeksToExam(date, now)` — rounds up so 8 days reads as 2 weeks.
+  - `pctSyllabusCovered({states})` — credits `mastered=1`, `practicing=0.5`, `at-risk=0.3`.
+  - `inferPhase({weeksToExam, pctSyllabusCovered}) → 'early' | 'mid' | 'crunch' | 'final-week'`. A well-prepared student >8 weeks out reads as `mid`, not `early`.
+  - `armWeightsForPhase(phase)` — locked multipliers per phase. `early` favors teach (1.4×); `final-week` favors retain (1.5×) and demotes teach (0.4×).
+  - `eligibleNodes(candidates, studentId, deps)` — filters by prereq DAG. A node is teachable only when all prereqs are at least `practicing`.
+- **`src/readiness/syllabus-aware-engine.ts` — `SyllabusAwareReadinessEngine implements ReadinessEngine`.** Same interface as `DefaultReadinessEngine`; swaps in via dep injection. Filters `allowedNodes` by prereq mastery before delegating; multiplies `expectedGain` by the phase-specific arm weight; prefixes the rationale with a phase label ("Crunch time — …"). Defensive fallback: if every node is blocked by prereqs, falls back to the original set rather than deadlock in diagnose.
+- **`SyllabusContextProvider`** — single integration seam to the existing `exam-profile-store` (which already tracks exam_date + prep_intent). Tests pass inline providers.
+
+**25 new tests** (`syllabus-context.test.ts` 19 + `syllabus-aware-engine.test.ts` 6).
+
+### Added — Wave 6: MotivationAwareTeachingPolicy
+
+Closes CEO-audit Dimension 2 ("any engagement level"). Bridges the legacy `student_models.motivation_state` (driven / steady / flagging / frustrated / anxious) into the 100x `TeachingPolicy` contract.
+
+- **`src/teaching/motivation-source.ts` — `MotivationSource` interface + `InMemoryMotivationSource`.** Closed contract: returns `MotivationState | null`. Production wraps the legacy `student_models` table (table read; no schema change).
+- **`src/teaching/motivation-aware-policy.ts` — `MotivationAwareTeachingPolicy implements TeachingPolicy`.** Locked modality preference table:
+  - `driven` → worked_example → practice → manim → interactive → story
+  - `steady` → worked_example → practice → interactive → manim → story
+  - `flagging` → story → interactive → manim → worked_example → practice
+  - `frustrated` → manim → interactive → worked_example → story → practice
+  - `anxious` → worked_example → interactive → story → manim → **practice last** (the engagement-paranoid case — practice items spike anxiety on a wrong answer)
+  - `null` (cold start) → defaults to `steady`'s ranking
+- Honors `hasSeenWorkedExample` (worked-example fading) and `timeBudgetMin` (over-budget candidates filtered out). Within a chosen modality, picks the lowest-difficulty candidate.
+
+**10 new tests** (`motivation-aware-policy.test.ts`).
+
+### Total
+
+**35 new tests** across waves 5+6. Full suite **1484/1484 passing.**
+
+### CEO audit scoreboard
+
+| Dimension | Status |
+|---|---|
+| Any competence level | ✅ Wave 4 (v4.17.0) — ProtoCATSelector + warm-up |
+| Any syllabus position | ✅ Wave 5 (this release) — `SyllabusAwareReadinessEngine` |
+| Any engagement level | ✅ Wave 6 (this release) — `MotivationAwareTeachingPolicy` |
+
+The trilogy is complete behind the interfaces. Wiring the new impls into the live grading + lesson routes is a follow-up PR — the contracts are stable so it's a swap, not a rewrite.
+
+### Still deferred
+
+- DB-backed `LearningObjectCatalog` (one short PR — wraps `generated_problems`).
+- Production `PgMotivationSource` wrapping `student_models.motivation_state` (the interface lands here; the Pg adapter is a 20-line follow-up).
+- Phase 4 — DKT/AKT for `StudentModel`, IRT calibration + true CAT for `ItemSelector`.
+
+---
+
 ## [4.17.0] - 2026-06-20 — 100x Wave 4: ProtoCAT item selector + diagnostic warm-up (cold-start dignity)
 
 **Operator action:** no migration. New endpoints. Stateless — the warm-up state round-trips through the client. To wire a Postgres-backed catalog instead of the default in-memory one, call `setReadinessCatalog(...)` at server boot.

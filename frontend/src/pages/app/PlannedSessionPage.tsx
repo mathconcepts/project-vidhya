@@ -30,6 +30,7 @@ import { DemoBanner } from '@/components/DemoBanner';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { SessionEndScreen } from '@/components/app/SessionEndScreen';
 import { WelcomeBackCard } from '@/components/app/WelcomeBackCard';
+import { NextBestActionCard } from '@/components/app/NextBestActionCard';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
   Sparkles, RefreshCw, AlertCircle, ChevronRight,
@@ -532,6 +533,12 @@ export default function PlannedSessionPage() {
     <div className="min-h-screen text-surface-100 pb-20">
       <DemoBanner />
       <div className="max-w-3xl mx-auto px-4 pt-8">
+
+        {/* Wave 7: NextBestActionCard is the dominant top-of-page surface —
+            "what should I do right now," backed by the readiness engine. */}
+        <div className="mb-6">
+          <NextBestActionCard />
+        </div>
 
         {/* P5: WelcomeBackCard self-gates on lapse + account-age. No-op
             for active users or new accounts. */}

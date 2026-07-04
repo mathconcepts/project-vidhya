@@ -31,7 +31,8 @@ import { adminJourneyRoutes } from './api/admin-journey-routes';
 import { adminDecisionsRoutes } from './api/admin-decisions-routes';
 import { adminCohortRoutes } from './api/admin-cohort-routes';
 import { scoringRoutes } from './api/scoring-routes';
-import { readinessRoutes } from './api/readiness-routes';
+import { readinessRoutes, setReadinessCatalog } from './api/readiness-routes';
+import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
 import { adminPresetsRoutes } from './api/admin-presets-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
 import { socialRoutes } from './api/social-routes';
@@ -916,6 +917,12 @@ Solve carefully:`;
   setChatVectorStore(vectorStore);
   setChatEmbedder(embedder);
   console.log(`[server] Content pipeline: chat grounding enabled`);
+
+  // Wave 7: Postgres-backed LearningObjectCatalog over generated_problems.
+  // DB-less deploys still get a valid (empty) catalog — see
+  // src/scoring/learning-object-catalog-pg.ts's header for the exact
+  // DB-less contract this satisfies.
+  setReadinessCatalog(getLearningObjectCatalog());
 
   // Probe whether any LLM provider is reachable at boot time, for the
   // diagnostic banner. Does not block startup; just informational.

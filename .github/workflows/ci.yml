@@ -1,0 +1,57 @@
+name: CI
+
+# Wave 7 deliverable 6 — first CI workflow for this repo (no .github/
+# directory existed before). Backend: Node 22, npm ci, typecheck, test
+# (exact script names confirmed from package.json's "scripts" block:
+# "typecheck": "tsc --noEmit", "test": "vitest run"). Frontend: npm ci +
+# `npx tsc --noEmit` directly, since frontend/package.json has no
+# "typecheck" script of its own; frontend unit tests are intentionally
+# skipped — there are zero *.test.ts(x) files under frontend/src today
+# (confirmed via glob), so `npm test` there would be a no-op test runner
+# invocation, not real coverage. Add a frontend `npm test` step here once
+# frontend tests exist.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit

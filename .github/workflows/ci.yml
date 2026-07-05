@@ -6,10 +6,9 @@ name: CI
 # "typecheck": "tsc --noEmit", "test": "vitest run"). Frontend: npm ci +
 # `npx tsc --noEmit` directly, since frontend/package.json has no
 # "typecheck" script of its own; frontend unit tests are intentionally
-# skipped — there are zero *.test.ts(x) files under frontend/src today
-# (confirmed via glob), so `npm test` there would be a no-op test runner
-# invocation, not real coverage. Add a frontend `npm test` step here once
-# frontend tests exist.
+# skipped — the lone frontend test file (MarkdownAtomRenderer.regression
+# .test.tsx) has no configured runner under frontend/ yet. Add a frontend
+# `npm test` step here once a frontend test runner is wired up.
 
 on:
   push:

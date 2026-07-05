@@ -87,8 +87,8 @@ export class MotivationAwareTeachingPolicy implements TeachingPolicy {
 
     // Worked-example fading: if the student has already seen one, drop
     // it down the ranking so a different modality gets a chance.
-    const effective = ctx.hasSeenWorkedExample
-      ? ranking.filter(t => t !== 'worked_example').concat('worked_example')
+    const effective: ReadonlyArray<ObjectType> = ctx.hasSeenWorkedExample
+      ? [...ranking.filter(t => t !== 'worked_example'), 'worked_example']
       : ranking;
 
     // Time-budget gate: if the budget is tight (≤ 3 min), prefer a

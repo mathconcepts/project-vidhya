@@ -608,11 +608,19 @@ Four idempotent tables, auto-applied on boot by `src/db/auto-migrate.ts`:
 | Any syllabus position | ✅ Wave 5 — `SyllabusAwareReadinessEngine` |
 | Any engagement level | ✅ Wave 6 — `MotivationAwareTeachingPolicy` |
 
+**Wave 7 (v4.19.0):** wire the engine — the Wave 4–6 stack reachable by real users, repo under CI.
+
+- `GET /api/readiness/next-action` + `GET /api/readiness/expected-score` — `SyllabusAwareReadinessEngine` composed with the Pg student model, `ProtoCATSelector` over the new `PgLearningObjectCatalog` (`src/scoring/learning-object-catalog-pg.ts`, wired at boot), `MotivationAwareTeachingPolicy`, and `ConceptGraphCurriculumRepo` (`src/curriculum/curriculum-repo.ts`). DB-less deploys degrade honestly: `{ action: null, reason: "building your baseline" }` — never fabricated.
+- `src/scoring/deterministic-scorer.ts` — executing GATE marking (MCQ −1/3|−2/3, MSQ conservative, NAT epsilon) + full marking-matrix tests. Awaits a `question_type`/answer-column migration on `generated_problems` before a live route consumes it.
+- `frontend/src/components/app/NextBestActionCard.tsx` — dominant action card on `PlannedSessionPage`, conservative expected-marks band, honest empty state.
+- `.github/workflows/ci.yml` — typecheck + vitest + frontend tsc on every push/PR. The 10 pre-existing type errors on main (knowledge-routes, cas-checker, llm-judge, motivation-aware-policy) were fixed in this release; typecheck is clean — keep it that way.
+
+Full suite **1541/1541 across 135 files.**
+
 **Still deferred:**
 
-- DB-backed `LearningObjectCatalog` wrapping `generated_problems` (one short PR).
-- Production `PgMotivationSource` wrapping `student_models.motivation_state` (20-line adapter).
-- Wiring `SyllabusAwareReadinessEngine` + `MotivationAwareTeachingPolicy` into the live grading + lesson routes — the contracts are stable, so it's a swap not a rewrite.
+- `question_type` + answer-index columns on `generated_problems`, then make `attachMarking()` in `src/api/readiness-routes.ts` real (deterministic per-item marks on next-action).
+- Production `PgMotivationSource` wrapping `student_models.motivation_state` (20-line adapter; readiness routes currently use `InMemoryMotivationSource`).
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 
 ## Skill routing

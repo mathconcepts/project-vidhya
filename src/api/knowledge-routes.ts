@@ -158,7 +158,7 @@ async function handleTrackProgress(req: ParsedRequest, res: ServerResponse): Pro
   const concepts = await getTrackConcepts(id);
   if (!concepts) return sendError(res, 404, `Track '${id}' not found or has no exam`);
 
-  const model = await getOrCreateStudentModel(auth.session_id);
+  const model = await getOrCreateStudentModel(auth.user.id);
   const mv = model.mastery_vector;
 
   let mastered = 0;
@@ -178,7 +178,7 @@ async function handleNextConcept(req: ParsedRequest, res: ServerResponse): Promi
   const concepts = await getTrackConcepts(id);
   if (!concepts) return sendError(res, 404, `Track '${id}' not found or has no exam`);
 
-  const model = await getOrCreateStudentModel(auth.session_id);
+  const model = await getOrCreateStudentModel(auth.user.id);
   const mv = model.mastery_vector;
 
   // Pick the first in-progress concept (0.3–0.7), then first unstarted (<0.3).
@@ -211,7 +211,7 @@ async function handleConceptTree(req: ParsedRequest, res: ServerResponse): Promi
   const concepts = await getTrackConcepts(id);
   if (!concepts) return sendError(res, 404, `Track '${id}' not found or has no exam`);
 
-  const model = await getOrCreateStudentModel(auth.session_id);
+  const model = await getOrCreateStudentModel(auth.user.id);
   const mv = model.mastery_vector;
   const alerts = new Set(model.prerequisite_alerts?.map(a => a.concept) ?? []);
 

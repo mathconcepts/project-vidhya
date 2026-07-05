@@ -8,7 +8,7 @@
  * the thin bridge from the rubric grader's contract to that cascade.
  *
  * Decision rule:
- *   - cascade returns `status === 'verified'` AND `confidence >= 0.7` → CORRECT
+ *   - cascade returns `overallStatus === 'verified'` AND `overallConfidence >= 0.7` → CORRECT
  *   - everything else → INCORRECT
  *
  * 0.7 confidence is the same threshold used elsewhere in the codebase
@@ -30,10 +30,17 @@ export interface CASCheckerOpts {
 }
 
 export class TieredCASChecker implements CASChecker {
-  private orchestrator: TieredVerificationOrchestrator;
+  /**
+   * The orchestrator requires its verifier stack (vector store, dual-solve
+   * LLMs, Wolfram) injected — there is no zero-config construction. When
+   * none is provided we treat the cascade as unavailable and answer
+   * "cannot verify" (false), which is exactly what the previous
+   * always-throwing default instance did at runtime, minus the throw.
+   */
+  private orchestrator: TieredVerificationOrchestrator | null;
 
   constructor(private opts: CASCheckerOpts = {}) {
-    this.orchestrator = opts.orchestrator ?? new TieredVerificationOrchestrator();
+    this.orchestrator = opts.orchestrator ?? null;
   }
 
   async isFinalAnswerCorrect(
@@ -42,6 +49,7 @@ export class TieredCASChecker implements CASChecker {
     studentFinalAnswer: string
   ): Promise<boolean> {
     if (!studentFinalAnswer || !expectedAnswer) return false;
+    if (!this.orchestrator) return false; // no cascade wired — never guess
 
     // We verify (problemContext, studentFinalAnswer). The cascade's tier-1
     // RAG lookup and tier-3 Wolfram both handle symbolic equality against
@@ -61,7 +69,7 @@ export class TieredCASChecker implements CASChecker {
         topic: this.opts.topic,
         subject: this.opts.subject,
       } as any);
-      return result.status === 'verified' && (result.confidence ?? 0) >= CAS_TRUST_THRESHOLD;
+      return result.overallStatus === 'verified' && (result.overallConfidence ?? 0) >= CAS_TRUST_THRESHOLD;
     } catch {
       // Cascade failure means "we don't know" — treat as incorrect rather
       // than risk awarding marks for an answer we couldn't verify. The

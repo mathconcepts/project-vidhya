@@ -4,6 +4,31 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.19.0] - 2026-07-05 — 100x Wave 7: wire the engine + type-clean main
+
+**Operator action:** no migration, no new ENV vars. Two new student-authenticated endpoints. First CI workflow lands — pushes/PRs now run backend typecheck + vitest + frontend tsc. `npm run typecheck` is clean as of this release; keep it that way.
+
+### Added — Wave 7: the Wave 4–6 engine, reachable
+
+- **`GET /api/readiness/next-action?time_budget_min=N`** — composes `SyllabusAwareReadinessEngine` from the Pg-backed student model, `ProtoCATSelector` over the new Pg-backed `LearningObjectCatalog`, `MotivationAwareTeachingPolicy` (`InMemoryMotivationSource` — `PgMotivationSource` still pending), `ConceptGraphCurriculumRepo`, and a `SyllabusContextProvider` over the flat-file exam-profile store. DB-less / cold-start returns `{ action: null, expected_score: null, reason: "building your baseline" }` — never a fabricated action.
+- **`GET /api/readiness/expected-score`** — `{ realized, potential, ratio }` from the same engine; `ratio: null` when `potential` is 0 ("no data yet").
+- **`src/scoring/learning-object-catalog-pg.ts`** — `PgLearningObjectCatalog` over `generated_problems` (parameterized SQL; empty-catalog DB-less fallback), wired at boot. Closes the "DB-backed catalog" deferred item from v4.18.0.
+- **`src/curriculum/curriculum-repo.ts`** — `ConceptGraphCurriculumRepo` over `constants/concept-graph.ts` (real prereq edges; `topics.ts` was dead code).
+- **`src/scoring/deterministic-scorer.ts`** — executing GATE marking matrix (MCQ −1/3|−2/3, MSQ conservative no-partial, NAT epsilon compare) with full test suite. Not yet consumed by a live route: `generated_problems` has no `question_type`/answer columns — that schema migration is the natural next PR, at which point `attachMarking()` in readiness-routes becomes real.
+- **`frontend/src/components/app/NextBestActionCard.tsx`** — one dominant action card at the top of `PlannedSessionPage` (exam-shell home) with a conservative expected-marks band and a "building your baseline" empty state.
+- **`.github/workflows/ci.yml`** — first CI: backend `tsc --noEmit` + `vitest run` + frontend `tsc --noEmit` on every push/PR.
+
+### Fixed — the 10 type errors that predated CI
+
+`npm run typecheck` on main had 10 long-standing errors; CI would have been born red. All fixed with behavior preserved:
+
+- `src/api/knowledge-routes.ts` — three handlers read `auth.session_id`, which doesn't exist on `AuthResult`; student models were being keyed off `undefined`. Now `auth.user.id`, matching every other route.
+- `src/scoring/adapters/cas-checker.ts` — constructed `TieredVerificationOrchestrator` with zero args (needs 5–8) and read `status`/`confidence` instead of `overallStatus`/`overallConfidence`. Orchestrator is now nullable-when-uninjected: no cascade → "cannot verify" → `false`, which is what the always-throwing default did at runtime anyway.
+- `src/scoring/adapters/llm-judge.ts` — `role` widened to `string` (now `LLMRole`), `generate()` called with a nonexistent `{ user }` field (now `{ text, system }` per `GenerateInput`), and a `.text` read on a `string | null` return (now `raw ?? ''`).
+- `src/teaching/motivation-aware-policy.ts` — TS 5.5 infers a type predicate for `.filter(t => t !== 'worked_example')`, so `.concat('worked_example')` no longer type-checks. Explicit `ReadonlyArray<ObjectType>` annotation + spread.
+
+**4 new test files** (readiness-routes, curriculum-repo, deterministic-scorer marking matrix, catalog-pg). Full suite **1541/1541 passing across 135 files**, backend + frontend typecheck clean.
+
 ## [4.18.0] - 2026-06-20 — 100x Waves 5 + 6: syllabus-progression + motivation-aware modality
 
 **Operator action:** no migration. No new endpoints. Two new `ReadinessEngine` and `TeachingPolicy` implementations behind the existing interfaces — apps opt in by passing the new impls into the engine deps.

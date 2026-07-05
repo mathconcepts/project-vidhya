@@ -19,6 +19,7 @@
  */
 
 import { getLlmForRole } from '../../llm/runtime';
+import type { LLMRole } from '../../llm/provider-registry';
 import type { LLMJudge } from '../rubric-grader';
 import type { ItemContext } from '../../core/interfaces';
 
@@ -58,7 +59,7 @@ const JUDGE_SYSTEM = [
 
 export interface RuntimeJudgeOpts {
   /** Optional override role passed through to getLlmForRole. */
-  role?: string;
+  role?: LLMRole;
   /** Optional per-request headers (for the X-Vidhya-Llm-Config cascade). */
   headers?: Record<string, string>;
 }
@@ -85,8 +86,8 @@ export class RuntimeLLMJudge implements LLMJudge {
     }
 
     const prompt = buildPrompt(args.studentResponse, args.item);
-    const raw = await llm.generate({ system: JUDGE_SYSTEM, user: prompt });
-    return parseJudgeResponse(typeof raw === 'string' ? raw : raw?.text ?? '', args.item);
+    const raw = await llm.generate({ text: prompt, system: JUDGE_SYSTEM });
+    return parseJudgeResponse(raw ?? '', args.item);
   }
 }
 

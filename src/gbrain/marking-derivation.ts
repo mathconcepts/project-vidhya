@@ -9,6 +9,10 @@
  * can't stand behind:
  *
  *   - mcq: needs the LLM's correct_answer AND ≥2 distinct distractors.
+ *   - msq (Wave 11): needs ≥2 distinct correct answers AND ≥1 distractor
+ *     disjoint from them (a "select all" where everything is correct
+ *     teaches nothing and grades trivially). Same shuffle-once rule;
+ *     answer_indices point into the stored canonical order.
  *     Options = shuffle([correct, ...distractors]) ONCE, here; the
  *     shuffled order is the canonical order stored in `options`, and
  *     `answer_index` points into it. (Shuffling at serve time would
@@ -30,10 +34,11 @@
  */
 
 export interface DerivedMarking {
-  question_type: 'mcq' | 'nat';
+  question_type: 'mcq' | 'msq' | 'nat';
   marks: number;
   options?: string[];
   answer_index?: number;
+  answer_indices?: number[];
   answer_range?: [number, number];
 }
 
@@ -84,8 +89,10 @@ export function shuffle<T>(items: readonly T[], rng: () => number = Math.random)
  * material can't honestly back a deterministic key.
  */
 export function deriveMarking(args: {
-  format: string;                    // ProblemRequest['format']: 'mcq' | 'numerical' | 'open'
+  format: string;                    // ProblemRequest['format']: 'mcq' | 'msq' | 'numerical' | 'open'
   correctAnswer: string;
+  /** msq only: the full set of correct answers (correctAnswer is ignored for msq). */
+  correctAnswers?: string[];
   distractors: string[];
   difficulty: number;
   rng?: () => number;
@@ -106,6 +113,24 @@ export function deriveMarking(args: {
       marks,
       options,
       answer_index: options.indexOf(correct),
+    };
+  }
+
+  if (format === 'msq') {
+    const correct = [...new Set((args.correctAnswers ?? []).map(c => c?.trim()).filter(Boolean))];
+    if (correct.length < 2) return null;   // <2 correct is an mcq, not an msq — refuse mislabeled marking
+    const correctSet = new Set(correct);
+    const distractors = [...new Set((args.distractors ?? []).map(d => d?.trim()).filter(Boolean))]
+      .filter(d => !correctSet.has(d));
+    if (distractors.length < 1) return null;   // all-correct "select all" grades trivially
+    const options = shuffle([...correct, ...distractors], args.rng);
+    return {
+      question_type: 'msq',
+      marks,
+      options,
+      answer_indices: options
+        .map((opt, i) => (correctSet.has(opt) ? i : -1))
+        .filter(i => i >= 0),
     };
   }
 

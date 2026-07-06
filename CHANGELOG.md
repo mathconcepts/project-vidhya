@@ -4,6 +4,30 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.23.0] - 2026-07-06 — 100x Wave 11: MSQ generation + SmartPracticePage self-check honesty
+
+**Operator action:** none — no migration, no ENV. `POST /api/gbrain/generate-problems` accepts `format: "msq"`.
+
+### Added — Wave 11a: the generator authors MSQ
+
+- **`deriveMarking()` msq branch** — requires ≥2 distinct correct answers (fewer is a mislabeled MCQ → refuse) and ≥1 distractor disjoint from them (an all-correct "select all" grades trivially → refuse). Same shuffle-once canonical-order rule as MCQ; `answer_indices` point into the stored order.
+- **`problem-generator`** — `format: 'msq'` end-to-end: prompt override asking for a `correct_answers` array (2–3) + 1–2 wrong distractors; the `correct_answer` TEXT column stores the canonical JSON of the set; self-verification compares the LLM's independent solve as a normalized SET (order-free, exact membership); `answer_indices` persisted via the existing 032 column. Unusable msq material is dropped outright — a display-only "select all that apply" with no key can't even be self-checked.
+- The scorer, attempt endpoint, and attempt UI already handled msq (Waves 7–10) — generation was the last gap.
+
+### Changed — Wave 11b: SmartPracticePage stops pretending
+
+- After the four-tier resolve, a problem whose id is a **server-gradable item** hands off to `/attempt/:id` — deterministic grading, student-model update, answer key never in the browser.
+- Everything else keeps the legacy flow, now labeled honestly: "Self-check: matches/differs — text comparison against the revealed answer, not exam grading, no marks recorded." The dishonest part was never the reveal; it was calling a lowercase string compare a grade.
+
+Full suite **1586/1586 passing across 139 files** (4 new msq-derivation tests), backend + frontend typecheck clean.
+
+### Still deferred (the bigger roadmap)
+
+- FSRS/SM-2 swap — blueprint amendment A7 requires the FSRS mapping spec agreed first.
+- E1 runtime LLM budget ladder (<₹10/student/month, routing ladder, semantic help-cache).
+- Cockpit drill-downs.
+- Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
+
 ## [4.22.0] - 2026-07-06 — 100x Wave 10: the loop closes — authored marking + practice UI
 
 **Operator action:** none — no migration, no ENV. New rows from the problem generator now arrive marked; one new read endpoint; one new page.

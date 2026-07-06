@@ -103,3 +103,47 @@ describe('shuffle', () => {
     expect(shuffle([1, 2, 3], () => 0)).toEqual(shuffle([1, 2, 3], () => 0));
   });
 });
+
+
+describe('deriveMarking — msq (Wave 11)', () => {
+  const rng = () => 0.999999;
+
+  it('builds canonical options with answer_indices covering exactly the correct set', () => {
+    const m = deriveMarking({
+      format: 'msq', correctAnswer: '', correctAnswers: ['A1', 'A2'],
+      distractors: ['D1', 'D2'], difficulty: 0.7, rng,
+    })!;
+    expect(m.question_type).toBe('msq');
+    expect(m.marks).toBe(2);
+    expect(m.options).toHaveLength(4);
+    const picked = m.answer_indices!.map(i => m.options![i]);
+    expect(new Set(picked)).toEqual(new Set(['A1', 'A2']));
+  });
+
+  it('refuses <2 correct answers (mislabeled mcq)', () => {
+    expect(deriveMarking({
+      format: 'msq', correctAnswer: '', correctAnswers: ['A1'],
+      distractors: ['D1', 'D2'], difficulty: 0.5,
+    })).toBeNull();
+  });
+
+  it('refuses when no distractor survives dedup (all-correct grades trivially)', () => {
+    expect(deriveMarking({
+      format: 'msq', correctAnswer: '', correctAnswers: ['A1', 'A2'],
+      distractors: ['A1', 'A2'], difficulty: 0.5,
+    })).toBeNull();
+    expect(deriveMarking({
+      format: 'msq', correctAnswer: '', correctAnswers: ['A1', 'A2'],
+      distractors: [], difficulty: 0.5,
+    })).toBeNull();
+  });
+
+  it('dedups correct answers and drops distractors that equal a correct answer', () => {
+    const m = deriveMarking({
+      format: 'msq', correctAnswer: '', correctAnswers: ['A1', 'A1', 'A2'],
+      distractors: ['A2', 'D1'], difficulty: 0.3, rng,
+    })!;
+    expect(m.options).toHaveLength(3);
+    expect(m.answer_indices).toHaveLength(2);
+  });
+});

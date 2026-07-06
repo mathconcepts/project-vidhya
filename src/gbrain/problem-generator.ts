@@ -49,11 +49,14 @@ export interface GeneratedProblem {
   target_misconception: string | null;
   verified: boolean;
   /** Wave 10 — migrations 032/033 marking, authored at generation time (see marking-derivation.ts). */
-  question_type?: 'mcq' | 'nat' | null;
+  question_type?: 'mcq' | 'msq' | 'nat' | null;
   marks?: number | null;
   options?: string[] | null;
   answer_index?: number | null;
+  answer_indices?: number[] | null;
   answer_range?: [number, number] | null;
+  /** msq only (Wave 11): the full correct set; correct_answer column stores its JSON. */
+  correct_answers?: string[] | null;
 }
 
 export interface ProblemRequest {
@@ -64,7 +67,7 @@ export interface ProblemRequest {
   targetErrorType?: ErrorType;
   targetMisconception?: string;
   count?: number;             // default 1
-  format?: 'mcq' | 'numerical' | 'open'; // default 'numerical' (GATE style)
+  format?: 'mcq' | 'msq' | 'numerical' | 'open'; // default 'numerical' (GATE style)
 }
 
 // ============================================================================
@@ -243,9 +246,18 @@ async function generateSingleProblem(
     targeting += `\nTarget misconception: "${target.misconception}" — the problem should distinguish correct understanding from this misconception.`;
   }
 
-  const prompt = `${PROBLEM_GEN_PROMPT}
+  const formatLabel = format === 'mcq' ? 'multiple choice (exactly ONE correct option)'
+    : format === 'msq' ? 'multiple select (TWO OR THREE correct options)'
+    : 'numerical answer';
+  const msqSchemaOverride = format === 'msq' ? `
 
-Generate a ${difficultyLabel} difficulty ${format === 'mcq' ? 'multiple choice' : 'numerical answer'} problem on:
+For this MULTIPLE SELECT problem, replace "correct_answer" in the JSON with:
+  "correct_answers": ["correct option 1", "correct option 2", ...]   // 2-3 entries, each independently correct
+and make "distractors" 1-2 plausible WRONG options, distinct from every correct answer.` : '';
+
+  const prompt = `${PROBLEM_GEN_PROMPT}${msqSchemaOverride}
+
+Generate a ${difficultyLabel} difficulty ${formatLabel} problem on:
 Topic: ${concept?.label || target.conceptId}
 Description: ${concept?.description || ''}
 Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${targeting}`;
@@ -260,12 +272,24 @@ Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${target
     // deriveMarking() returns null when the material can't honestly back
     // a key (symbolic NAT answer, <2 usable distractors, 'open' format) —
     // the row is then cached unmarked and serves as display-only practice.
+    const correctAnswers: string[] | null = format === 'msq' && Array.isArray(parsed.correct_answers)
+      ? parsed.correct_answers.map((c: unknown) => String(c))
+      : null;
+
     const marking: DerivedMarking | null = deriveMarking({
       format,
       correctAnswer: parsed.correct_answer,
+      correctAnswers: correctAnswers ?? undefined,
       distractors: parsed.distractors || [],
       difficulty: target.difficulty,
     });
+
+    // msq with unusable material (deriveMarking refused) is worthless as a
+    // display-only row too — the student can't even self-check a set. Drop it.
+    if (format === 'msq' && !marking) {
+      console.error('[gbrain/problem-gen] msq generation produced unusable marking material, dropping');
+      return null;
+    }
 
     return {
       id: '',
@@ -273,7 +297,8 @@ Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${target
       topic: target.topic,
       difficulty: target.difficulty,
       question_text: parsed.question_text,
-      correct_answer: parsed.correct_answer,
+      // msq: the TEXT NOT NULL column stores the canonical JSON of the set.
+      correct_answer: correctAnswers ? JSON.stringify(correctAnswers) : parsed.correct_answer,
       solution_steps: parsed.solution_steps || [],
       distractors: parsed.distractors || [],
       target_error_type: target.errorType,
@@ -283,7 +308,9 @@ Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${target
       marks: marking?.marks ?? null,
       options: marking?.options ?? null,
       answer_index: marking?.answer_index ?? null,
+      answer_indices: marking?.answer_indices ?? null,
       answer_range: marking?.answer_range ?? null,
+      correct_answers: correctAnswers,
     };
   } catch (err) {
     console.error('[gbrain/problem-gen] Bad JSON from LLM:', (err as Error).message);
@@ -296,7 +323,19 @@ async function selfVerifyProblem(problem: GeneratedProblem): Promise<boolean> {
   const llm = await getLlmForRole('chat');
   if (!llm) return true; // skip verification if no LLM provider
 
-  const prompt = `Solve this math problem independently. Do NOT look at any provided answer.
+  const isMsq = problem.question_type === 'msq' && Array.isArray(problem.correct_answers);
+
+  const prompt = isMsq
+    ? `Solve this multiple-select problem independently. Do NOT look at any provided answer.
+
+Problem: ${problem.question_text}
+
+Candidate options:
+${(problem.options ?? []).map((o, i) => `${i + 1}. ${o}`).join('\n')}
+
+Decide independently which options are correct (there may be several).
+At the end, respond with EXACTLY one line: ANSWER: <the correct options, verbatim, separated by " | ">`
+    : `Solve this math problem independently. Do NOT look at any provided answer.
 
 Problem: ${problem.question_text}
 
@@ -311,6 +350,14 @@ At the end, respond with EXACTLY one line: ANSWER: <your answer>`;
     if (!answerMatch) return false;
 
     const verifiedAnswer = answerMatch[1].trim();
+
+    // msq: compare as normalized SETS — order-free, exact membership.
+    if (isMsq) {
+      const norm = (x: string) => x.replace(/\s+/g, ' ').replace(/\$/g, '').trim().toLowerCase();
+      const want = new Set((problem.correct_answers as string[]).map(norm));
+      const got = new Set(verifiedAnswer.split('|').map(norm).filter(Boolean));
+      return want.size === got.size && [...want].every(w => got.has(w));
+    }
 
     // Compare (fuzzy: normalize whitespace, trim, compare numerically if possible)
     const expected = problem.correct_answer.trim();
@@ -346,9 +393,9 @@ async function cacheProblem(problem: GeneratedProblem): Promise<GeneratedProblem
      (concept_id, topic, difficulty, question_text, correct_answer,
       solution_steps, distractors, target_error_type, target_misconception,
       verified, verification_method, verification_confidence,
-      question_type, marks, options, answer_index, answer_range)
+      question_type, marks, options, answer_index, answer_indices, answer_range)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'gemini-self-check', 0.85,
-             $11, $12, $13, $14, $15)
+             $11, $12, $13, $14, $15, $16)
      RETURNING *`,
     [
       problem.concept_id, problem.topic, problem.difficulty,
@@ -360,6 +407,7 @@ async function cacheProblem(problem: GeneratedProblem): Promise<GeneratedProblem
       problem.marks ?? null,
       problem.options ? JSON.stringify(problem.options) : null,
       problem.answer_index ?? null,
+      problem.answer_indices ? JSON.stringify(problem.answer_indices) : null,
       problem.answer_range ? JSON.stringify(problem.answer_range) : null,
     ],
   );

@@ -641,10 +641,18 @@ Full suite **1567/1567 across 138 files.**
 
 Full suite **1582/1582 across 139 files.**
 
-**Still deferred:**
+**Wave 11 (v4.23.0):** MSQ generation + SmartPracticePage self-check honesty.
 
-- MSQ generation (scorer + UI already handle msq for hand-marked rows).
-- Retire SmartPracticePage's client-side string grading in favor of this loop.
+- `deriveMarking()` msq branch: ≥2 distinct correct answers + ≥1 disjoint distractor or refuse; shuffle-once canonical order, `answer_indices` into it. Generator `format: 'msq'`: prompt emits a `correct_answers` array, `correct_answer` column stores its JSON, self-verify compares normalized SETS, unusable msq material is dropped (not even cached display-only).
+- SmartPracticePage: server-gradable resolves hand off to `/attempt/:id`; the remaining legacy path is labeled "Self-check … not exam grading, no marks recorded."
+
+Full suite **1586/1586 across 139 files.**
+
+**Still deferred (the bigger roadmap, in order):**
+
+- FSRS/SM-2 swap — A7 mapping spec first, then swap the live review scheduler.
+- E1 runtime LLM budget ladder (<₹10/student/month, routing ladder, semantic help-cache).
+- Cockpit drill-downs.
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 
 ## Skill routing

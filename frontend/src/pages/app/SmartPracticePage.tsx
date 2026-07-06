@@ -9,9 +9,13 @@
  * Flow:
  *   User picks topic + difficulty
  *   → resolve() walks tiers
- *   → problem renders with provenance badge
- *   → user answers, GBrain updates locally
- *   → next problem via same resolver
+ *   → Wave 11: if the resolved problem is a server-gradable item
+ *     (generated_problems row with real 032/033 marking), hand off to
+ *     /attempt/:id — deterministic GATE grading, student model update,
+ *     answer key never in the browser.
+ *   → otherwise the problem renders here with a provenance badge and the
+ *     legacy SELF-CHECK flow (client string compare against a revealed
+ *     answer). Self-check is labeled as such and never awards marks.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -22,6 +26,7 @@ import { useSession } from '@/hooks/useSession';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
 import { recordAttempt } from '@/lib/gbrain/client';
+import { authFetch } from '@/lib/auth/client';
 import {
   Sparkles, Zap, Database, Server, CheckCircle2, XCircle, Loader2, ArrowRight,
   BookOpen, Target, GraduationCap,
@@ -122,6 +127,19 @@ export default function SmartPracticePage() {
         require_wolfram: false,
         use_materials: true,
       });
+      // Wave 11: server-gradable items belong on the server-graded page.
+      // One cheap lookup; any failure (404 for non-DB tiers, DB-less
+      // deploys, network) falls through to the legacy self-check flow.
+      if (result.problem?.id) {
+        try {
+          const r = await authFetch(`/api/practice/item/${encodeURIComponent(result.problem.id)}`);
+          if (r.ok && (await r.json())?.gradable) {
+            navigate(`/attempt/${encodeURIComponent(result.problem.id)}`);
+            return;
+          }
+        } catch {}
+      }
+
       setResolved(result);
       setStartedAt(Date.now());
       setSessionStats(s => ({
@@ -352,7 +370,8 @@ export default function SmartPracticePage() {
                   )}>
                     {wasCorrect ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" /> : <XCircle size={14} className="text-red-400 shrink-0 mt-0.5" />}
                     <div className="text-xs text-surface-300">
-                      <p className="font-semibold">{wasCorrect ? 'Correct!' : 'Not quite.'}</p>
+                      <p className="font-semibold">{wasCorrect ? 'Self-check: matches.' : 'Self-check: differs.'}</p>
+                      <p className="mt-0.5 text-[10px] opacity-60">Text comparison against the revealed answer — not exam grading, no marks recorded.</p>
                       <p className="mt-0.5">Answer: <span className="font-mono">{resolved.problem.correct_answer}</span></p>
                       {resolved.problem.explanation && <p className="mt-1 opacity-80">{resolved.problem.explanation}</p>}
                     </div>

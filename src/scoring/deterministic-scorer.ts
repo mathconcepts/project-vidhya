@@ -65,10 +65,12 @@
  * `describeMarking()` for rows that carry real marking (and attaches
  * nothing for rows that don't — marking is never fabricated).
  *
- * Still open: a `POST /api/practice/attempt` endpoint that collects a
- * structured GateResponse, calls `grade()` server-side, and feeds the
- * result into `StudentModel.update()` as `Attempt.partialMarks`. grade()
- * itself remains exercised only by unit tests until that lands.
+ * Wave 9 closed the loop: `POST /api/practice/attempt`
+ * (src/api/practice-routes.ts) collects a structured GateResponse,
+ * calls `grade()` server-side, and feeds the result into
+ * `StudentModel.update()` as `Attempt.partialMarks`. Items are gradable
+ * iff migrations 032/033 gave their row real marking + a canonical
+ * options list; everything else is refused (422), never guessed.
  */
 
 import type { GradeResult } from '../core/interfaces';

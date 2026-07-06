@@ -17,7 +17,9 @@
  *
  * Wave 8 (migration 032) added NULLABLE marking columns: `question_type`
  * ('mcq'|'msq'|'nat'), `marks`, `answer_index`, `answer_indices`,
- * `answer_range`. When present and valid they are threaded through
+ * `answer_range` (033 added `options` — the canonical ordered option
+ * list the answer indices refer to). When present and valid they are
+ * threaded through
  * `payload` (questionType / marks / answerIndex / answerIndices /
  * answerRange) so readiness-routes' attachMarking() can resolve real GATE
  * marking via deterministic-scorer's describeMarking(). When NULL (all
@@ -102,6 +104,8 @@ interface GeneratedProblemRow {
   answer_index?: number | null;
   answer_indices?: unknown;
   answer_range?: unknown;
+  /** Migration 033: canonical ordered option list for mcq/msq. */
+  options?: unknown;
 }
 
 const GATE_KINDS = new Set(['mcq', 'msq', 'nat']);
@@ -117,6 +121,9 @@ export function markingPayloadFromRow(r: GeneratedProblemRow): Record<string, un
   const marks = r.marks;
   if (!kind || !GATE_KINDS.has(kind) || typeof marks !== 'number' || !(marks > 0)) return {};
   const out: Record<string, unknown> = { questionType: kind, marks };
+  if ((kind === 'mcq' || kind === 'msq') && Array.isArray(r.options) && r.options.length > 0) {
+    out.options = r.options;
+  }
   if (kind === 'mcq' && typeof r.answer_index === 'number' && r.answer_index >= 0) {
     out.answerIndex = r.answer_index;
   }

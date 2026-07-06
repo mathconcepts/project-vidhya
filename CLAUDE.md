@@ -625,10 +625,18 @@ Full suite **1541/1541 across 135 files.**
 
 Full suite **1556/1556 across 137 files.**
 
+**Wave 9 (v4.21.0):** `POST /api/practice/attempt` — deterministic grading live end-to-end.
+
+- Structured `GateResponse` in, server-side `GateDeterministicScorer.grade()`, result into `StudentModel.update()` as `Attempt.partialMarks` (Elo + FSRS + dedup + attempts-bus; idempotent on (student, object, ts) — retries must resend the same `ts`). Non-skipped recorded attempts recalibrate `empirical_difficulty`.
+- Migration `033_generated_problems_options.sql`: canonical ordered `options` JSONB — 032's answer indices are indices into THIS list; mcq/msq rows without it are refused (422), never guessed. Precise refusal reasons name the missing column.
+- DB-less: grades honestly, responds `recorded: false`.
+
+Full suite **1567/1567 across 138 files.**
+
 **Still deferred:**
 
-- `POST /api/practice/attempt` — collect a structured GateResponse, call `grade()` server-side, feed `StudentModel.update()` as `Attempt.partialMarks` (grade() itself is still only unit-tested).
-- Content generator emitting the migration-032 marking columns on newly generated rows.
+- Content generator emitting the 032/033 marking columns (`question_type`/`marks`/answer key/`options`) on new rows — until then only hand-marked rows are gradable.
+- Frontend practice UI collecting structured answers for the new endpoint.
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 
 ## Skill routing

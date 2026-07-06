@@ -4,6 +4,24 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.21.0] - 2026-07-06 — 100x Wave 9: the attempt endpoint — deterministic grading goes live
+
+**Operator action:** none beyond deploy — migration `033_generated_problems_options.sql` (nullable `options` JSONB) is applied by auto-migrate at boot. One new endpoint.
+
+### Added — Wave 9: POST /api/practice/attempt
+
+- **`POST /api/practice/attempt`** (student-authenticated) — collects a structured `GateResponse` (`selectedIndex` / `selectedIndices` / `value` / `skipped`; never free text), resolves the item through the catalog, grades it server-side with the Wave 7 `GateDeterministicScorer` (MCQ −1/3|−2/3, MSQ conservative exact-set, NAT inclusive-range epsilon), and feeds the result into `StudentModel.update()` as `Attempt.partialMarks` — Elo + FSRS + attempt-dedup + attempts-bus, all idempotent on (student, object, ts). Non-skipped recorded attempts also recalibrate the item's `empirical_difficulty` via `recordProblemAttempt()`.
+- **Migration 033** — `options` JSONB on `generated_problems`: the canonical ORDERED option list that 032's `answer_index`/`answer_indices` index into. Without a stored order those indices are meaningless, so mcq/msq items without `options` are refused rather than guessed. Catalog threads it as `payload.options`.
+- **Honest refusals, precise reasons** — unmarked item → 422 naming exactly which column is missing; malformed response for the item's kind → 400; unknown item → 404. A DB-less deploy still grades correctly and answers `recorded: false` instead of pretending.
+
+**1 new test file** (11 cases: grading matrix per kind, skip semantics, refusal reasons, DB-less recorded:false, malformed-response rejection). Full suite **1567/1567 passing across 138 files**, backend + frontend typecheck clean.
+
+### Still deferred
+
+- Content generator emitting the 032/033 marking columns (`question_type`/`marks`/answer key/`options`) on newly generated rows — until then only hand-marked rows are gradable.
+- Frontend: practice UI collecting structured answers and posting to the new endpoint.
+- Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
+
 ## [4.20.0] - 2026-07-06 — 100x Wave 8: honest GATE marking on next-action + production motivation source
 
 **Operator action:** none beyond deploy — migration `032_generated_problems_marking.sql` is applied by auto-migrate at boot. New columns are nullable; existing rows are simply "unmarked" and nothing changes for them. To light up per-item marking, the content generator must start emitting `question_type`/`marks`/answer columns (follow-up).

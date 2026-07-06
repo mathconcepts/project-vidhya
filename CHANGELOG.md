@@ -4,6 +4,25 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.20.0] - 2026-07-06 — 100x Wave 8: honest GATE marking on next-action + production motivation source
+
+**Operator action:** none beyond deploy — migration `032_generated_problems_marking.sql` is applied by auto-migrate at boot. New columns are nullable; existing rows are simply "unmarked" and nothing changes for them. To light up per-item marking, the content generator must start emitting `question_type`/`marks`/answer columns (follow-up).
+
+### Added — Wave 8: closing the Wave 7 deferred list
+
+- **Migration 032** — nullable `question_type` ('mcq'|'msq'|'nat'), `marks`, `answer_index`, `answer_indices`, `answer_range` on `generated_problems`. Nullable by design: no fabricated marking, ever (blueprint D4/D8).
+- **`PgLearningObjectCatalog`** — threads valid migration-032 marking through `payload` (`questionType`/`marks`/`answerIndex`/`answerIndices`/`answerRange`); half-marked or ill-shaped rows are treated as unmarked (`markingPayloadFromRow()` validation gate, exported for tests). New `getById()` on the catalog seam (optional method, implemented by both Pg and InMemory catalogs). Queries now `SELECT *` so pre-032 deploys keep their catalog instead of dying on "column does not exist".
+- **`attachMarking()` is real** — `GET /api/readiness/next-action` now resolves a practice action's `objectId` back through the catalog and attaches `{ marking: { marks_correct, marks_wrong } }` via deterministic-scorer's `describeMarking()` (MCQ −1/3|−2/3; MSQ/NAT no negative marking). Non-practice actions, missing objects, unmarked rows, lookup failures → action unchanged.
+- **`PgMotivationSource`** (`src/teaching/motivation-source-pg.ts`) — the production `MotivationSource` the Wave 6 docs promised: reads the legacy `student_model.motivation_state` (inferred from session patterns since v2.x, keyed by `session_id`). Readiness routes now use it instead of an empty `InMemoryMotivationSource`, so motivation-aware modality ranking runs on real signal. DB-less / query failure → null (cold start), handled by the policy's default ranking.
+
+**2 new test files** (motivation-source-pg, marking-payload covering the validation gate + attachMarking matrix) + a `getById` DB-less case. Full suite **1556/1556 passing across 137 files**, backend + frontend typecheck clean.
+
+### Still deferred
+
+- `POST /api/practice/attempt` — collect a structured GateResponse, `grade()` server-side, feed `StudentModel.update()` as `Attempt.partialMarks`.
+- Content generator emitting marking columns on new `generated_problems` rows.
+- Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
+
 ## [4.19.0] - 2026-07-05 — 100x Wave 7: wire the engine + type-clean main
 
 **Operator action:** no migration, no new ENV vars. Two new student-authenticated endpoints. First CI workflow lands — pushes/PRs now run backend typecheck + vitest + frontend tsc. `npm run typecheck` is clean as of this release; keep it that way.

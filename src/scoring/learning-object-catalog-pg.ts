@@ -15,12 +15,21 @@
  *   created_at TIMESTAMPTZ, generation_run_id TEXT,
  *   canonical BOOLEAN, canonical_at TIMESTAMPTZ, canonical_reason TEXT
  *
- * Honest gaps in this table vs. what `LearningObject` / `CatalogQuery` want:
- *   - No `question_type` (mcq/msq/nat) column               → every row is
- *     surfaced as ObjectType 'practice' (the only type this table can back).
- *   - No `marks` / `max_marks` column                        → payload.maxMarks
- *     defaults to `DEFAULT_MAX_MARKS` (see below); a real value should come
- *     from a future column once the GATE marking scheme is attached per-item.
+ * Wave 8 (migration 032) added NULLABLE marking columns: `question_type`
+ * ('mcq'|'msq'|'nat'), `marks`, `answer_index`, `answer_indices`,
+ * `answer_range`. When present and valid they are threaded through
+ * `payload` (questionType / marks / answerIndex / answerIndices /
+ * answerRange) so readiness-routes' attachMarking() can resolve real GATE
+ * marking via deterministic-scorer's describeMarking(). When NULL (all
+ * pre-032 rows, and any generator not yet emitting marking) nothing is
+ * threaded — the API attaches no marking rather than a fabricated guess.
+ *
+ * Honest gaps remaining in this table vs. `LearningObject` / `CatalogQuery`:
+ *   - `question_type` does not change ObjectType: every row is still
+ *     surfaced as 'practice' (the only teaching modality this table backs;
+ *     mcq/msq/nat are marking shapes, not modalities).
+ *   - `marks` is threaded as payload.marks; payload.maxMarks keeps its
+ *     `DEFAULT_MAX_MARKS` fallback when `marks` is NULL.
  *   - No `estimated_time` / minutes column                    → defaults to
  *     `DEFAULT_EST_MINUTES`.
  *   - No `exam_relevance` column                              → defaults to
@@ -87,6 +96,39 @@ interface GeneratedProblemRow {
   verified: boolean;
   verification_method: string | null;
   times_served: number;
+  /** Migration 032 marking columns — absent (undefined) on pre-032 deploys, NULL on unmarked rows. */
+  question_type?: string | null;
+  marks?: number | null;
+  answer_index?: number | null;
+  answer_indices?: unknown;
+  answer_range?: unknown;
+}
+
+const GATE_KINDS = new Set(['mcq', 'msq', 'nat']);
+
+/**
+ * Extract the migration-032 marking fields from a row, validating shape.
+ * Returns {} unless BOTH question_type and marks are present and valid —
+ * a half-marked row is treated as unmarked (never guess the other half).
+ * Exported for tests.
+ */
+export function markingPayloadFromRow(r: GeneratedProblemRow): Record<string, unknown> {
+  const kind = r.question_type;
+  const marks = r.marks;
+  if (!kind || !GATE_KINDS.has(kind) || typeof marks !== 'number' || !(marks > 0)) return {};
+  const out: Record<string, unknown> = { questionType: kind, marks };
+  if (kind === 'mcq' && typeof r.answer_index === 'number' && r.answer_index >= 0) {
+    out.answerIndex = r.answer_index;
+  }
+  if (kind === 'msq' && Array.isArray(r.answer_indices)
+      && r.answer_indices.every(i => typeof i === 'number' && i >= 0)) {
+    out.answerIndices = r.answer_indices;
+  }
+  if (kind === 'nat' && Array.isArray(r.answer_range) && r.answer_range.length === 2
+      && r.answer_range.every(n => typeof n === 'number')) {
+    out.answerRange = r.answer_range;
+  }
+  return out;
 }
 
 function rowToLearningObject(r: GeneratedProblemRow): LearningObject {
@@ -105,10 +147,11 @@ function rowToLearningObject(r: GeneratedProblemRow): LearningObject {
       correctAnswer: r.correct_answer,
       solutionSteps: r.solution_steps,
       distractors: r.distractors,
-      maxMarks: DEFAULT_MAX_MARKS,
+      maxMarks: typeof r.marks === 'number' && r.marks > 0 ? r.marks : DEFAULT_MAX_MARKS,
       examRelevance: DEFAULT_EXAM_RELEVANCE,
       verificationMethod: r.verification_method,
       timesServed: r.times_served,
+      ...markingPayloadFromRow(r),
     },
   };
 }
@@ -136,9 +179,12 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
     const limit = Math.max(1, Math.min(500, q.limit ?? 50));
 
     try {
+      // SELECT * on purpose: the migration-032 marking columns are read
+      // when present, but a deploy that hasn't run 032 yet must NOT lose
+      // the whole catalog to a "column does not exist" error. Unknown
+      // extra columns are ignored by rowToLearningObject.
       const { rows } = await this.pool.query<GeneratedProblemRow>(
-        `SELECT id, concept_id, topic, difficulty, question_text, correct_answer,
-                solution_steps, distractors, verified, verification_method, times_served
+        `SELECT *
            FROM generated_problems
           WHERE concept_id = $1
             AND difficulty >= $2
@@ -155,6 +201,20 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
       // repo's DB-less demo-mode contract for every other new endpoint.
       console.error('[learning-object-catalog-pg] query failed, returning empty:', (err as Error).message);
       return [];
+    }
+  }
+
+  async getById(objectId: string): Promise<LearningObject | null> {
+    if (!this.pool) return null;
+    try {
+      const { rows } = await this.pool.query<GeneratedProblemRow>(
+        'SELECT * FROM generated_problems WHERE id = $1',
+        [objectId],
+      );
+      return rows.length > 0 ? rowToLearningObject(rows[0]) : null;
+    } catch (err) {
+      console.error('[learning-object-catalog-pg] getById failed, returning null:', (err as Error).message);
+      return null;
     }
   }
 

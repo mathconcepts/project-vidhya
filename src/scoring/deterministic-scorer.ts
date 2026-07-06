@@ -58,19 +58,17 @@
  * (`src/api/readiness-routes.ts`'s `GET /api/readiness/next-action`),
  * attaching a `marking` block (via `describeMarking()` below) onto a
  * practice action's item so a client could score a response with
- * `GateDeterministicScorer.grade()` once collected. That wiring turned
- * out to be a documented no-op (see `attachMarking()` in
- * readiness-routes.ts): `generated_problems` — the only table
- * `PgLearningObjectCatalog` reads — has no `question_type` or
- * answer-index columns, so there is no honest per-item `kind`/`marks` to
- * pass `describeMarking()` without fabricating it. This module (and its
- * exported `describeMarking()` helper) is therefore currently exercised
- * only by its own unit tests (`src/scoring/__tests__/deterministic-scorer.test.ts`)
- * — genuinely unconsumed in production code, flagged rather than hidden.
- * The natural follow-up is a `question_type`/marks/answer-shape migration
- * on `generated_problems` (or a new table) plus a real
- * `POST /api/practice/attempt` endpoint that calls `grade()` server-side
- * and feeds the result into `StudentModel.update()` as `Attempt.partialMarks`.
+ * `GateDeterministicScorer.grade()` once collected. Since Wave 8 that
+ * wiring is real: migration 032 gave `generated_problems` nullable
+ * `question_type`/`marks`/answer-shape columns, the Pg catalog threads
+ * them through `payload`, and readiness-routes' `attachMarking()` calls
+ * `describeMarking()` for rows that carry real marking (and attaches
+ * nothing for rows that don't — marking is never fabricated).
+ *
+ * Still open: a `POST /api/practice/attempt` endpoint that collects a
+ * structured GateResponse, calls `grade()` server-side, and feeds the
+ * result into `StudentModel.update()` as `Attempt.partialMarks`. grade()
+ * itself remains exercised only by unit tests until that lands.
  */
 
 import type { GradeResult } from '../core/interfaces';

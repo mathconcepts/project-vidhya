@@ -44,6 +44,15 @@ export interface LearningObjectCatalog {
    * loses the over-exposure penalty.
    */
   exposureCount?(objectId: string): Promise<number>;
+
+  /**
+   * Optional: fetch a single object by id. Wave 8 addition — used by
+   * readiness-routes' attachMarking() to resolve an Action's objectId
+   * back to its payload (question type / marks) for deterministic GATE
+   * marking display. Catalogs that can't look up by id may omit this;
+   * callers must treat a missing method the same as a null result.
+   */
+  getById?(objectId: string): Promise<LearningObject | null>;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -75,6 +84,10 @@ export class InMemoryCatalog implements LearningObjectCatalog {
 
   async exposureCount(objectId: string): Promise<number> {
     return this.exposures.get(objectId) ?? 0;
+  }
+
+  async getById(objectId: string): Promise<LearningObject | null> {
+    return this.objects.find(o => o.id === objectId) ?? null;
   }
 
   /** Test helper. Increments the exposure counter; not part of the contract. */

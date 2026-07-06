@@ -28,14 +28,13 @@
  *     throws when the file doesn't exist yet, so this works with or
  *     without DATABASE_URL).
  *     Returns: { action, expected_score } — action is the engine's `Action`
- *     (src/core/interfaces.ts). `attachMarking()` below is a documented
- *     no-op today: `generated_problems` (what `PgLearningObjectCatalog`
- *     reads) has no `question_type`/answer-index columns (see that file's
- *     header for the confirmed schema), so there is no honest per-item
- *     `kind`/`marks` to hand `src/scoring/deterministic-scorer.ts`'s
- *     `describeMarking()` without fabricating it. The hook is left in
- *     place — wiring a real `question_type` column is the natural
- *     follow-up, at which point `attachMarking()` becomes real.
+ *     (src/core/interfaces.ts). Since Wave 8 (migration 032 gave
+ *     `generated_problems` nullable question_type/marks/answer columns),
+ *     `attachMarking()` below resolves a practice action's objectId back
+ *     through the catalog and attaches deterministic-scorer's
+ *     `describeMarking()` block ({ marks_correct, marks_wrong }) when —
+ *     and only when — the row carries real marking. Unmarked rows and
+ *     pre-032 deploys attach nothing; marking is never fabricated.
  *     DB-less / cold-start (engine falls back to 'diagnose' with no
  *     objectId, or any dependency throws) → { action, expected_score: null,
  *     reason: "building your baseline" }.
@@ -72,7 +71,8 @@ import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg'
 import { getStudentModel } from '../gbrain/student-model-pg';
 import { ProtoCATSelector } from '../scoring/proto-cat-selector';
 import { makeMotivationAwarePolicy } from '../teaching/motivation-aware-policy';
-import { InMemoryMotivationSource } from '../teaching/motivation-source';
+import { getMotivationSource } from '../teaching/motivation-source-pg';
+import { describeMarking, type GateItemKind } from '../scoring/deterministic-scorer';
 import { ConceptGraphCurriculumRepo } from '../curriculum/curriculum-repo';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import {
@@ -263,7 +263,7 @@ function resolveAllowedNodes(): string[] {
  *   studentModel → getStudentModel()               (Pg-backed, DB-less falls back per that module)
  *   curriculum   → ConceptGraphCurriculumRepo       (static concept graph + Pg-backed catalog)
  *   selector     → ProtoCATSelector                (over the Pg-backed LearningObjectCatalog)
- *   policy       → MotivationAwareTeachingPolicy    (InMemoryMotivationSource — no PgMotivationSource exists yet)
+ *   policy       → MotivationAwareTeachingPolicy    (PgMotivationSource — Wave 8; null/cold-start DB-less)
  *   syllabus     → ExamProfileSyllabusContext        (flat-file exam-profile-store adapter)
  *
  * Rebuilt per-request (cheap — every dep here is either a cached
@@ -276,7 +276,7 @@ function buildReadinessEngine() {
   const studentModel = getStudentModel();
   const curriculum = new ConceptGraphCurriculumRepo({ catalog });
   const selector = new ProtoCATSelector({ studentModel, catalog });
-  const policy = makeMotivationAwarePolicy({ motivation: new InMemoryMotivationSource() });
+  const policy = makeMotivationAwarePolicy({ motivation: getMotivationSource() });
   const syllabus = new ExamProfileSyllabusContext();
 
   return makeSyllabusAwareReadinessEngine({
@@ -289,21 +289,40 @@ function buildReadinessEngine() {
 }
 
 /**
- * Intended hook for attaching a `marking` block (via
- * `describeMarking()` from deterministic-scorer.ts) onto a `practice`
- * Action's item, so a client could show "correct: +1, wrong: -1/3"
- * before the student answers. Currently a documented no-op: the
- * engine's `Action` only carries `objectId`/`nodeId`, not the full
- * `LearningObject`, and `generated_problems` (the only table
- * `PgLearningObjectCatalog` reads) has no `question_type`/answer-index
- * columns to resolve real GATE marking from even with a second
- * catalog round-trip by id. Fabricating a `kind`/`marks` guess here
- * would be dishonest, so this stays a pass-through until a real
- * question-type column exists — see this file's top comment and
- * deterministic-scorer.ts's header for the full trail.
+ * Wave 8 — real at last. Resolves a practice Action's objectId back
+ * through the catalog (migration 032 gave `generated_problems` nullable
+ * `question_type`/`marks`/answer columns; the Pg catalog threads them as
+ * payload.questionType/payload.marks) and attaches the deterministic
+ * GATE marking block via describeMarking(), so a client can show
+ * "correct: +2, wrong: −2/3" before the student answers.
+ *
+ * Stays honest at every hole: non-practice actions, catalogs without
+ * getById, missing objects, and unmarked rows (all pre-032 rows, or a
+ * generator not yet emitting marking) all return the action UNCHANGED —
+ * no marking block is ever fabricated (blueprint D4/D8).
+ *
+ * Exported for tests; `catalog` is injectable for the same reason.
  */
-function attachMarking(action: Action): Action & { marking?: { marks_correct: number; marks_wrong: number } } {
-  return action;
+export async function attachMarking(
+  action: Action,
+  catalog: LearningObjectCatalog = getLearningObjectCatalog(),
+): Promise<Action & { marking?: { marks_correct: number; marks_wrong: number } }> {
+  if (action.kind !== 'practice' || !action.objectId || !catalog.getById) return action;
+
+  try {
+    const obj = await catalog.getById(action.objectId);
+    const payload = obj?.payload as { questionType?: unknown; marks?: unknown } | undefined;
+    const kind = payload?.questionType;
+    const marks = payload?.marks;
+    if ((kind === 'mcq' || kind === 'msq' || kind === 'nat') && typeof marks === 'number' && marks > 0) {
+      return { ...action, marking: describeMarking({ kind: kind as GateItemKind, marks }) };
+    }
+    return action;
+  } catch (err) {
+    // A marking lookup failure must never break next-action.
+    console.error('[readiness] attachMarking lookup failed, returning unmarked action:', (err as Error).message);
+    return action;
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -337,7 +356,7 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
     }
 
     return sendJSON(res, {
-      action: attachMarking(action),
+      action: await attachMarking(action),
       expected_score: null,
     });
   } catch (err) {

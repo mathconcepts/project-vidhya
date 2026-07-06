@@ -617,10 +617,18 @@ Four idempotent tables, auto-applied on boot by `src/db/auto-migrate.ts`:
 
 Full suite **1541/1541 across 135 files.**
 
+**Wave 8 (v4.20.0):** the Wave 7 deferred list, closed.
+
+- Migration `032_generated_problems_marking.sql` — nullable `question_type`/`marks`/`answer_index`/`answer_indices`/`answer_range` on `generated_problems`; auto-migrate applies it at boot. `PgLearningObjectCatalog` threads valid marking through `payload` (validation gate `markingPayloadFromRow()` — half-marked rows count as unmarked), gained `getById()` (now on the catalog seam, optional), and `SELECT *`s so pre-032 deploys keep an intact catalog.
+- `attachMarking()` in `src/api/readiness-routes.ts` is real: practice actions with a marked object get `{ marking: { marks_correct, marks_wrong } }` from deterministic-scorer's `describeMarking()`; everything else passes through unchanged. Marking is never fabricated.
+- `PgMotivationSource` (`src/teaching/motivation-source-pg.ts`) reads legacy `student_model.motivation_state` by `session_id`; readiness routes now rank modalities on real motivation signal. DB-less → null → policy default ranking.
+
+Full suite **1556/1556 across 137 files.**
+
 **Still deferred:**
 
-- `question_type` + answer-index columns on `generated_problems`, then make `attachMarking()` in `src/api/readiness-routes.ts` real (deterministic per-item marks on next-action).
-- Production `PgMotivationSource` wrapping `student_models.motivation_state` (20-line adapter; readiness routes currently use `InMemoryMotivationSource`).
+- `POST /api/practice/attempt` — collect a structured GateResponse, call `grade()` server-side, feed `StudentModel.update()` as `Attempt.partialMarks` (grade() itself is still only unit-tested).
+- Content generator emitting the migration-032 marking columns on newly generated rows.
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 
 ## Skill routing

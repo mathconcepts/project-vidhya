@@ -44,6 +44,11 @@ describe('PgLearningObjectCatalog — DB-less', () => {
     expect(rows).toEqual([]);
   });
 
+  it('getById() returns null without a DATABASE_URL (Wave 8)', async () => {
+    const catalog = new PgLearningObjectCatalog();
+    await expect(catalog.getById('some-object-id')).resolves.toBeNull();
+  });
+
   it('exposureCount() returns 0 without a DATABASE_URL', async () => {
     const catalog = new PgLearningObjectCatalog();
     const n = await catalog.exposureCount('some-object-id');

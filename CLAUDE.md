@@ -633,10 +633,18 @@ Full suite **1556/1556 across 137 files.**
 
 Full suite **1567/1567 across 138 files.**
 
+**Wave 10 (v4.22.0):** the loop closes — authored marking + practice UI.
+
+- `src/gbrain/marking-derivation.ts` — the generator authors 032/033 marking at creation: mcq canonical options shuffled ONCE (≥2 usable distractors or refuse), nat strict-numeric-only with authored tolerance max(0.01, 0.5%·|v|), marks 2 iff difficulty ≥ 0.66, 'open' never marked. Unmarkable material → honest unmarked row.
+- `GET /api/practice/item/:id` — render-safe item view (question/kind/marks/options/marking + gradable/not_gradable_reason). Answer key NEVER leaves the server here; a test asserts the serialized response leaks nothing.
+- `frontend /attempt/:objectId` (PracticeAttemptPage) — MCQ/MSQ/NAT inputs, marking chip, skip, server-graded result, idempotent retry (fixed per-load ts). NextBestActionCard routes practice/retain actions with an objectId here.
+
+Full suite **1582/1582 across 139 files.**
+
 **Still deferred:**
 
-- Content generator emitting the 032/033 marking columns (`question_type`/`marks`/answer key/`options`) on new rows — until then only hand-marked rows are gradable.
-- Frontend practice UI collecting structured answers for the new endpoint.
+- MSQ generation (scorer + UI already handle msq for hand-marked rows).
+- Retire SmartPracticePage's client-side string grading in favor of this loop.
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 
 ## Skill routing

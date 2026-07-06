@@ -43,6 +43,7 @@ const GBrainAdminPage = lazy(() => import('@/pages/app/GBrainAdminPage'));
 const MarketingLanding = lazy(() => import('@/pages/app/MarketingLanding'));
 const MaterialsPage = lazy(() => import('@/pages/app/MaterialsPage'));
 const SmartPracticePage = lazy(() => import('@/pages/app/SmartPracticePage'));
+const PracticeAttemptPage = lazy(() => import('@/pages/app/PracticeAttemptPage'));
 const PlannedSessionPage = lazy(() => import('@/pages/app/PlannedSessionPage'));
 const ExamProfilePage = lazy(() => import('@/pages/app/ExamProfilePage'));
 const KnowledgePickerPage = lazy(() => import('@/pages/app/KnowledgePickerPage'));
@@ -110,6 +111,7 @@ export default function App() {
               /practice              → /planned (canonical entry, Study Commander)
               /practice/:problemId   → PracticePage (deep-link to specific problem)
               /smart-practice        → SmartPracticePage (topic + difficulty picker)
+              /attempt/:objectId     → PracticeAttemptPage (server-graded attempt — Wave 10)
               /planned               → PlannedSessionPage (time-bounded session — DEFAULT)
               /session               → StudymateSessionPage (15-min anytime drop-in)
               The 4 surfaces serve distinct entry needs; the canonical /practice
@@ -139,6 +141,7 @@ export default function App() {
           <Route path="gbrain" element={<MarketingLanding />} />
           <Route path="materials" element={<MaterialsPage />} />
           <Route path="smart-practice" element={<SmartPracticePage />} />
+          <Route path="attempt/:objectId" element={<PracticeAttemptPage />} />
           <Route path="planned" element={<PlannedSessionPage />} />
           <Route path="exam-profile" element={<ExamProfilePage />} />
           <Route path="knowledge" element={<KnowledgePickerPage />} />

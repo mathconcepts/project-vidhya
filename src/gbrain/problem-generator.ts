@@ -21,6 +21,7 @@ import { CONCEPT_MAP, getConceptsForTopic } from '../constants/concept-graph';
 import type { StudentModel } from './student-model';
 import { getZPDConcept, getTopicMastery } from './student-model';
 import type { ErrorType } from './error-taxonomy';
+import { deriveMarking, type DerivedMarking } from './marking-derivation';
 
 const { Pool } = pg;
 
@@ -47,6 +48,12 @@ export interface GeneratedProblem {
   target_error_type: string | null;
   target_misconception: string | null;
   verified: boolean;
+  /** Wave 10 — migrations 032/033 marking, authored at generation time (see marking-derivation.ts). */
+  question_type?: 'mcq' | 'nat' | null;
+  marks?: number | null;
+  options?: string[] | null;
+  answer_index?: number | null;
+  answer_range?: [number, number] | null;
 }
 
 export interface ProblemRequest {
@@ -249,6 +256,17 @@ Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${target
     const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
+    // Wave 10: author the deterministic marking alongside the content.
+    // deriveMarking() returns null when the material can't honestly back
+    // a key (symbolic NAT answer, <2 usable distractors, 'open' format) —
+    // the row is then cached unmarked and serves as display-only practice.
+    const marking: DerivedMarking | null = deriveMarking({
+      format,
+      correctAnswer: parsed.correct_answer,
+      distractors: parsed.distractors || [],
+      difficulty: target.difficulty,
+    });
+
     return {
       id: '',
       concept_id: target.conceptId,
@@ -261,6 +279,11 @@ Difficulty: ${difficultyLabel} (${Math.round(target.difficulty * 100)}%)${target
       target_error_type: target.errorType,
       target_misconception: target.misconception,
       verified: false,
+      question_type: marking?.question_type ?? null,
+      marks: marking?.marks ?? null,
+      options: marking?.options ?? null,
+      answer_index: marking?.answer_index ?? null,
+      answer_range: marking?.answer_range ?? null,
     };
   } catch (err) {
     console.error('[gbrain/problem-gen] Bad JSON from LLM:', (err as Error).message);
@@ -316,12 +339,16 @@ At the end, respond with EXACTLY one line: ANSWER: <your answer>`;
 async function cacheProblem(problem: GeneratedProblem): Promise<GeneratedProblem> {
   const pool = getPool();
 
+  // Marking columns exist from migrations 032/033 (applied by
+  // auto-migrate at boot); NULLs are the honest "unmarked" state.
   const result = await pool.query(
     `INSERT INTO generated_problems
      (concept_id, topic, difficulty, question_text, correct_answer,
       solution_steps, distractors, target_error_type, target_misconception,
-      verified, verification_method, verification_confidence)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'gemini-self-check', 0.85)
+      verified, verification_method, verification_confidence,
+      question_type, marks, options, answer_index, answer_range)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'gemini-self-check', 0.85,
+             $11, $12, $13, $14, $15)
      RETURNING *`,
     [
       problem.concept_id, problem.topic, problem.difficulty,
@@ -329,6 +356,11 @@ async function cacheProblem(problem: GeneratedProblem): Promise<GeneratedProblem
       JSON.stringify(problem.solution_steps), JSON.stringify(problem.distractors),
       problem.target_error_type, problem.target_misconception,
       problem.verified,
+      problem.question_type ?? null,
+      problem.marks ?? null,
+      problem.options ? JSON.stringify(problem.options) : null,
+      problem.answer_index ?? null,
+      problem.answer_range ? JSON.stringify(problem.answer_range) : null,
     ],
   );
 

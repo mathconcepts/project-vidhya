@@ -16,7 +16,9 @@
  *
  * CTA routing by Action.kind (src/core/interfaces.ts):
  *   'teach'              → /lesson/:concept_id            (action.nodeId)
- *   'practice' | 'retain' → /smart-practice?topic=:nodeId  (action.nodeId)
+ *   'practice' | 'retain' → /attempt/:objectId (Wave 10, when the action
+ *                           carries a concrete objectId — server-graded)
+ *                           else /smart-practice?topic=:nodeId
  *   'diagnose'           → /smart-practice                 (no node scoped yet)
  *
  * Styling follows WelcomeBackCard/ReviewQueueCard conventions on this same
@@ -68,6 +70,10 @@ const KIND_META: Record<ActionKind, { icon: typeof Sparkles; label: string; colo
 function ctaFor(action: Action): { to: string; label: string } {
   if (action.kind === 'teach' && action.nodeId) {
     return { to: `/lesson/${encodeURIComponent(action.nodeId)}`, label: 'Start learning' };
+  }
+  if ((action.kind === 'practice' || action.kind === 'retain') && action.objectId) {
+    // Wave 10: a concrete item → the server-graded attempt page.
+    return { to: `/attempt/${encodeURIComponent(action.objectId)}`, label: 'Start now' };
   }
   if ((action.kind === 'practice' || action.kind === 'retain') && action.nodeId) {
     return { to: `/smart-practice?topic=${encodeURIComponent(action.nodeId)}`, label: 'Start now' };

@@ -21,6 +21,8 @@ vi.mock('../auth-middleware', () => ({
 
 const { practiceRoutes, setPracticeDepsForTests, gateItemFromPayload } = await import('../practice-routes');
 
+const itemHandler = practiceRoutes.find(r => r.method === 'GET' && r.path === '/api/practice/item/:id')!.handler;
+
 const handler = practiceRoutes.find(r => r.method === 'POST' && r.path === '/api/practice/attempt')!.handler;
 
 function makeReq(body: unknown) {
@@ -210,5 +212,80 @@ describe('gateItemFromPayload — refusal reasons', () => {
       questionType: 'mcq', marks: 2, options: ['a', 'b', 'c'], answerIndex: 1,
     });
     expect(item).toMatchObject({ id: 'x', kind: 'mcq', marks: 2, answerIndex: 1 });
+  });
+});
+
+
+describe('GET /api/practice/item/:id — render-safe view', () => {
+  beforeEach(() => {
+    mockRequireRole.mockReset();
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+    setPracticeDepsForTests({
+      catalog: () => new InMemoryCatalog([
+        obj('mcq-1', {
+          questionType: 'mcq', marks: 2, options: ['a', 'b', 'c', 'd'], answerIndex: 2,
+          questionText: 'What is $2+2$?', topic: 'arithmetic',
+          correctAnswer: '4', solutionSteps: ['add'], distractors: ['3', '5'],
+        }),
+        obj('plain-1', { questionText: 'Ponder this.', correctAnswer: 'secret' }),
+      ]),
+    });
+  });
+
+  afterEach(() => setPracticeDepsForTests(null));
+
+  function makeItemReq(id: string) {
+    return {
+      pathname: `/api/practice/item/${id}`,
+      query: new URLSearchParams(),
+      params: { id },
+      body: null,
+      headers: {},
+    } as any;
+  }
+
+  it('returns the render-safe fields for a gradable item', async () => {
+    const r = makeRes();
+    await itemHandler(makeItemReq('mcq-1'), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload).toMatchObject({
+      id: 'mcq-1', gradable: true, question_type: 'mcq', marks: 2,
+      question_text: 'What is $2+2$?', topic: 'arithmetic',
+      options: ['a', 'b', 'c', 'd'],
+      marking: { marks_correct: 2, marks_wrong: -2 / 3 },
+    });
+  });
+
+  it('NEVER leaks the answer key, correct answer, solution, or distractors', async () => {
+    const r = makeRes();
+    await itemHandler(makeItemReq('mcq-1'), r.res);
+    const raw = JSON.stringify(r.payload);
+    expect(raw).not.toContain('answerIndex');
+    expect(raw).not.toContain('answer_index');
+    expect(raw).not.toContain('correctAnswer');
+    expect(raw).not.toContain('correct_answer');
+    expect(raw).not.toContain('solutionSteps');
+    expect(raw).not.toContain('distractors');
+    expect(raw).not.toContain('answerRange');
+    // and the actual values
+    expect(raw).not.toContain('"4"');
+  });
+
+  it('serves unmarked items as display-only with a precise reason', async () => {
+    const r = makeRes();
+    await itemHandler(makeItemReq('plain-1'), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload).toMatchObject({
+      gradable: false, question_type: null, marks: null, options: null, marking: null,
+      question_text: 'Ponder this.',
+    });
+    expect(r.payload.not_gradable_reason).toMatch(/question_type/);
+    expect(JSON.stringify(r.payload)).not.toContain('secret');
+  });
+
+  it('404s unknown items', async () => {
+    const r = makeRes();
+    await itemHandler(makeItemReq('nope'), r.res);
+    expect(r.status).toBe(404);
   });
 });

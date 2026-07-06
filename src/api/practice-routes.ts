@@ -39,6 +39,15 @@
  *
  * Idempotency: `StudentModel.update()` dedups on (studentId, objectId,
  * ts), so a client retrying with the same `ts` can't double-move Elo.
+ *
+ *   GET /api/practice/item/:id — student-authenticated (Wave 10)
+ *     The RENDER-SAFE view of an item for the practice UI: question
+ *     text, kind, marks, canonical options, and the marking display
+ *     block. The answer key (answer_index / answer_indices /
+ *     answer_range), correct_answer, solution_steps, and distractors
+ *     NEVER leave the server through this endpoint — grading happens
+ *     only via POST /api/practice/attempt. `gradable: false` items
+ *     still return their question text (display-only practice).
  */
 
 import { ServerResponse } from 'http';
@@ -246,6 +255,48 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
   });
 }
 
+// ────────────────────────────────────────────────────────────────────
+// GET /api/practice/item/:id — render-safe item view
+// ────────────────────────────────────────────────────────────────────
+
+async function handleGetItem(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const user = await requireRole(req, res, 'student', 'teacher', 'admin');
+  if (!user) return;
+
+  const objectId = req.params.id;
+  if (!objectId) return sendError(res, 400, 'item id is required');
+
+  const catalog = deps.catalog();
+  if (!catalog.getById) {
+    return sendError(res, 422, 'catalog cannot resolve items by id');
+  }
+  const obj = await catalog.getById(objectId);
+  if (!obj) return sendError(res, 404, `unknown item: ${objectId}`);
+
+  const payload = (obj.payload ?? {}) as Record<string, unknown>;
+  const itemOrReason = gateItemFromPayload(objectId, payload);
+  const gradable = typeof itemOrReason !== 'string';
+
+  // Render-safe by construction: fields are copied onto a fresh object,
+  // never spread from payload — the answer key cannot leak by accident.
+  return sendJSON(res, {
+    id: obj.id,
+    node_id: obj.nodeId,
+    topic: typeof payload.topic === 'string' ? payload.topic : null,
+    question_text: typeof payload.questionText === 'string' ? payload.questionText : null,
+    est_minutes: obj.estMinutes,
+    gradable,
+    question_type: gradable ? itemOrReason.kind : null,
+    marks: gradable ? itemOrReason.marks : null,
+    options: gradable && (itemOrReason.kind === 'mcq' || itemOrReason.kind === 'msq')
+      ? itemOrReason.options
+      : null,
+    marking: gradable ? describeMarking(itemOrReason) : null,
+    not_gradable_reason: gradable ? null : itemOrReason,
+  });
+}
+
 export const practiceRoutes: RouteDefinition[] = [
   { method: 'POST', path: '/api/practice/attempt', handler: handleAttempt },
+  { method: 'GET', path: '/api/practice/item/:id', handler: handleGetItem },
 ];

@@ -4,6 +4,29 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.22.0] - 2026-07-06 — 100x Wave 10: the loop closes — authored marking + practice UI
+
+**Operator action:** none — no migration, no ENV. New rows from the problem generator now arrive marked; one new read endpoint; one new page.
+
+### Added — Wave 10a: the generator authors its own marking
+
+- **`src/gbrain/marking-derivation.ts`** — `deriveMarking()`: the authoring gate between generated content and the 032/033 columns. mcq: canonical options = shuffle([correct, …distractors]) ONCE at generation (deduped, ≥2 usable distractors or refuse — a 2-option "MCQ" is a coin flip); `answer_index` points into that stored order. nat: strict numeric parse (plain numbers and simple a/b fractions only; symbolic answers like π/4 are refused → display-only row) with an authored tolerance of max(0.01, 0.5%·|v|). Marks policy: difficulty ≥ 0.66 authors 2-mark, else 1-mark. `'open'` format: never marked.
+- **`problem-generator.ts`** — `generateSingleProblem()` derives marking alongside content; `cacheProblem()` persists `question_type`/`marks`/`options`/`answer_index`/`answer_range`. Rows whose material can't back a key are cached unmarked — honest display-only practice, never a guessed key.
+
+### Added — Wave 10b: the practice UI
+
+- **`GET /api/practice/item/:id`** — the render-safe item view: question text, kind, marks, canonical options, marking display block, `gradable` flag with a precise `not_gradable_reason`. The answer key, `correct_answer`, `solution_steps`, and `distractors` never leave the server on this endpoint — enforced by constructing the response field-by-field, and by a test that asserts the serialized payload contains none of them.
+- **`frontend /attempt/:objectId`** (`PracticeAttemptPage`) — MCQ radio / MSQ exact-set checkboxes / NAT numeric input, marking chip ("correct +2 · wrong −0.67"), skip (0 marks, no penalty, no recalibration), server-graded result with marks earned and a `recorded: false` notice when the model couldn't persist. `ts` is fixed per item load so a retried submit is idempotent. Unlike SmartPracticePage, the client never receives the correct answer.
+- **`NextBestActionCard`** — practice/retain actions carrying a concrete `objectId` now route to `/attempt/:objectId`; node-only actions keep the `/smart-practice` fallback.
+
+**26 new tests** (marking-derivation 11 + item-endpoint render-safety 4 + existing attempt suite). Full suite **1582/1582 passing across 139 files**, backend + frontend typecheck clean.
+
+### Still deferred
+
+- MSQ generation (the generator authors mcq/nat only; the scorer + UI already handle msq for hand-marked rows).
+- Retiring SmartPracticePage's client-side string grading in favor of this loop.
+- Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
+
 ## [4.21.0] - 2026-07-06 — 100x Wave 9: the attempt endpoint — deterministic grading goes live
 
 **Operator action:** none beyond deploy — migration `033_generated_problems_options.sql` (nullable `options` JSONB) is applied by auto-migrate at boot. One new endpoint.

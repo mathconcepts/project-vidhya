@@ -25,6 +25,7 @@ import {
   inferQualityFromEngagement,
 } from '../lessons/spaced-scheduler';
 import { resolveContent } from '../content/resolver';
+import { recordShadow } from '../gbrain/fsrs-shadow';
 import { recordTelemetry } from '../content/telemetry';
 import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
@@ -592,6 +593,30 @@ async function handleAdvanceSM2(req: ParsedRequest, res: ServerResponse): Promis
       });
 
   const nextState = updateVisitState(body.prev_state || null, { quality });
+
+  // Wave 12 / A7 shadow mode: log what FSRS would have scheduled.
+  // Fire-and-forget; SM-2 behavior above is UNCHANGED.
+  {
+    const now = new Date();
+    const sm2Due = new Date(now);
+    sm2Due.setDate(sm2Due.getDate() + nextState.sm2_interval_days);
+    const prev = body.prev_state;
+    recordShadow({
+      site: 'lessons',
+      studentId: String(body.session_id || 'anonymous'),
+      itemKey: String(body.concept_id),
+      prior: prev && prev.sm2_interval_days > 0 ? {
+        intervalDays: Number(prev.sm2_interval_days) || 0,
+        easeFactor: Number(prev.sm2_ease_factor) || 2.5,
+        lastReviewedAt: prev.last_visited_at || now.toISOString(),
+        reps: Number(prev.visit_count) || 0,
+      } : null,
+      quality,
+      sm2DueAt: sm2Due.toISOString(),
+      now,
+    });
+  }
+
   sendJSON(res, { concept_id: body.concept_id, state: nextState, inferred_quality: quality });
 }
 

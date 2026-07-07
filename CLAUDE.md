@@ -648,9 +648,17 @@ Full suite **1582/1582 across 139 files.**
 
 Full suite **1586/1586 across 139 files.**
 
+**Wave 12 (v4.24.0):** FSRS shadow mode — A7 spec SIGNED OFF, §4 step 1 live.
+
+- `src/gbrain/fsrs-shadow.ts` implements the A7 mappings (quality→rating both scales; stability←interval floor 0.5; difficulty←clamp(11−2.8·ease)); both live SM-2 sites (`POST /api/lesson/advance-sm2`, `retention-scheduler.recordEncounter`) log what FSRS-6 would have scheduled to `fsrs_shadow_log` (migration 034) while SM-2 behavior stays byte-identical. Fire-and-forget; DB-less no-op.
+- `GET /api/admin/fsrs-shadow` (admin) reads the exit criterion: median |delta| ≤ 1 day over ≥ 200 events → unblocks Wave 13 (the swap, with `VIDHYA_SCHEDULER=sm2` rollback for one release).
+- Acceptance property tested: migrated cards due within ±1 day of their SM-2 due date (stability←interval + intervalForRetention(s, 0.9) ≡ s).
+
+Full suite **1595/1595 across 140 files.**
+
 **Still deferred (the bigger roadmap, in order):**
 
-- FSRS/SM-2 swap — A7 mapping spec first, then swap the live review scheduler.
+- Wave 13: FSRS/SM-2 swap — gated on the shadow exit criterion at `GET /api/admin/fsrs-shadow`, not on code.
 - E1 runtime LLM budget ladder (<₹10/student/month, routing ladder, semantic help-cache).
 - Cockpit drill-downs.
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.

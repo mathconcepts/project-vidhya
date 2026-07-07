@@ -33,6 +33,7 @@ import { adminCohortRoutes } from './api/admin-cohort-routes';
 import { scoringRoutes } from './api/scoring-routes';
 import { readinessRoutes, setReadinessCatalog } from './api/readiness-routes';
 import { practiceRoutes } from './api/practice-routes';
+import { fsrsShadowRoutes } from './api/fsrs-shadow-routes';
 import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
 import { adminPresetsRoutes } from './api/admin-presets-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
@@ -215,6 +216,9 @@ for (const route of readinessRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of practiceRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of fsrsShadowRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminPresetsRoutes) {

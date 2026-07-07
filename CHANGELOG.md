@@ -4,6 +4,25 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.24.0] - 2026-07-06 — 100x Wave 12: FSRS shadow mode (A7 §4 step 1)
+
+**Operator action:** none — migration `034_fsrs_shadow_log.sql` auto-applies; the table is diagnostic-only and freely truncatable. **Student-visible scheduling is UNCHANGED** — that is the whole point of shadow mode.
+
+### Added
+
+- **A7 spec signed off** (docs/A7-fsrs-mapping-spec.md) — quality→rating table, (interval, ease) → (stability, difficulty) migration, shadow-then-swap rollout.
+- **`src/gbrain/fsrs-shadow.ts`** — the A7 mappings as code: `ratingFromQuality` (both scales; lessons keeps its no-easy conservatism), `stabilityFromInterval` (floor 0.5), `difficultyFromEase` (clamp(11 − 2.8·ease)), `cardFromSm2`, `shadowNextDue` (initCard for first encounters, migrate-then-review for existing state), fire-and-forget `recordShadow`/`logShadowEvent` (DB-less → silent no-op; a shadow failure can never break a lesson or retention write).
+- **Both live SM-2 sites now log shadows**: `POST /api/lesson/advance-sm2` (lessons scale) and `retention-scheduler.recordEncounter()` (retention scale) each record what FSRS-6 would have scheduled next to `fsrs_shadow_log`, alongside the unchanged SM-2 write.
+- **`GET /api/admin/fsrs-shadow`** (admin) — the §4 exit-criterion readout: `{ events, median_abs_delta_days, p90_abs_delta_days, by_site, exit_criterion_met }` (true iff median ≤ 1 day over ≥ 200 events). When it flips true, Wave 13 executes the swap (§4 step 2: migrate per §3, `VIDHYA_SCHEDULER=sm2` rollback flag for one release).
+- **Acceptance property, tested**: because stability ← interval and `intervalForRetention(s, 0.9) ≡ s` under the FSRS_FACTOR normalization, a migrated card is due within ±1 day of its SM-2 due date across the realistic (interval × ease) state space — no student's review queue jumps on migration day.
+
+**9 new tests** (mapping tables, migration formulas + acceptance sweep, shadow review ordering, DB-less contract). Full suite **1595/1595 passing across 140 files**, backend + frontend typecheck clean.
+
+### Still deferred
+
+- Wave 13: the swap itself — gated on the shadow exit criterion, not on code.
+- E1 runtime LLM budget ladder; cockpit drill-downs; Phase 4 (DKT/AKT, IRT/CAT).
+
 ## [4.23.0] - 2026-07-06 — 100x Wave 11: MSQ generation + SmartPracticePage self-check honesty
 
 **Operator action:** none — no migration, no ENV. `POST /api/gbrain/generate-problems` accepts `format: "msq"`.

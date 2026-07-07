@@ -36,6 +36,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { recordShadow } from './fsrs-shadow';
 
 // ============================================================================
 // Types
@@ -181,16 +182,37 @@ export function recordEncounter(
   };
 
   let result: RetentionItem = initial;
+  let prior: RetentionItem | null = null;
   _store.update(s => {
     const i = s.items.findIndex(
       x => x.student_id === student_id && x.concept_id === concept_id,
     );
     const current = i >= 0 ? s.items[i] : initial;
+    prior = i >= 0 ? current : null;
     result = applySM2(current, quality, now);
     if (i >= 0) s.items[i] = result;
     else s.items.push(result);
     return s;
   });
+
+  // Wave 12 / A7 shadow mode: log what FSRS would have scheduled.
+  // Fire-and-forget; the SM-2 write above is UNCHANGED.
+  const priorItem = prior as RetentionItem | null;
+  recordShadow({
+    site: 'retention',
+    studentId: student_id,
+    itemKey: concept_id,
+    prior: priorItem && priorItem.interval_days > 0 ? {
+      intervalDays: priorItem.interval_days,
+      easeFactor: priorItem.ease_factor,
+      lastReviewedAt: priorItem.last_reviewed_at,
+      reps: priorItem.repetitions,
+    } : null,
+    quality,
+    sm2DueAt: result.due_for_review_at,
+    now,
+  });
+
   return result;
 }
 

@@ -2,8 +2,10 @@
 
 > Blueprint amendment A7 (v2.1, 2026-07-04 design review) requires this
 > mapping spec to be agreed **before** the live review scheduler moves
-> off SM-2. This document is that spec. Status: **DRAFT — awaiting
-> Giri's sign-off.** Nothing in this doc changes runtime behavior.
+> off SM-2. This document is that spec. Status: **SIGNED OFF by Giri,
+> 2026-07-06 (by commissioning Wave 12).** Shadow mode (§4 step 1) is
+> live as of v4.24.0; the swap (§4 step 2) is gated on the exit
+> criterion at `GET /api/admin/fsrs-shadow`.
 
 ## 1. Where SM-2 is live today (audit, 2026-07-06, v4.23.0)
 
@@ -80,6 +82,8 @@ site's granularity), and any UI change.
 
 ## 6. Sign-off
 
-- [ ] Giri — mapping table (§2), migration formulas (§3), rollout (§4)
+- [x] Giri — mapping table (§2), migration formulas (§3), rollout (§4) — 2026-07-06
 
-Once checked, implementation is Wave 12: shadow mode first, exactly as §4.
+Wave 12 (v4.24.0) implemented §4 step 1 (shadow mode): `src/gbrain/fsrs-shadow.ts`,
+migration 034, both SM-2 call sites logging, `GET /api/admin/fsrs-shadow` readout.
+Wave 13 executes the swap once the exit criterion reads true.

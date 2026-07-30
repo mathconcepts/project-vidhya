@@ -1,14 +1,19 @@
 name: CI
 
 # Wave 7 deliverable 6 — first CI workflow for this repo (no .github/
-# directory existed before). Backend: Node 22, npm ci, typecheck, test
+# directory existed before). Backend: Node 20 (matches package.json
+# "engines" and the production Dockerfiles), npm ci, typecheck, test
 # (exact script names confirmed from package.json's "scripts" block:
 # "typecheck": "tsc --noEmit", "test": "vitest run"). Frontend: npm ci +
 # `npx tsc --noEmit` directly, since frontend/package.json has no
-# "typecheck" script of its own; frontend unit tests are intentionally
-# skipped — the lone frontend test file (MarkdownAtomRenderer.regression
-# .test.tsx) has no configured runner under frontend/ yet. Add a frontend
-# `npm test` step here once a frontend test runner is wired up.
+# "typecheck" script of its own, plus `npm test` (frontend/vitest.config.ts
+# + @testing-library are already wired — the repo has 40+ frontend test
+# files under frontend/src/**/*.test.{ts,tsx}, so there's no reason to
+# skip running them in CI). Frontend lint is intentionally NOT run here:
+# both package.json "lint" scripts invoke eslint, but eslint isn't listed
+# in either package's devDependencies, so `npm run lint` would fail on a
+# clean install — that's a separate fix (add + configure eslint) from
+# aligning CI to what's already working.
 
 on:
   push:
@@ -24,7 +29,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
@@ -43,7 +48,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -54,3 +59,7 @@ jobs:
       - name: Typecheck
         working-directory: frontend
         run: npx tsc --noEmit
+
+      - name: Test
+        working-directory: frontend
+        run: npm test

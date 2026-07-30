@@ -58,6 +58,7 @@ import {
   resolveConfig,
   type ResolvedRoleConfig,
 } from './config-resolver';
+import { resolveBudgetModelId } from './chat-cost-router';
 
 // ─── Public API ────────────────────────────────────────────────────
 
@@ -115,6 +116,20 @@ export interface GenerateOptions {
   topP?:        number;        // default 0.95
 }
 
+export interface GetLlmForRoleOptions {
+  /**
+   * Cost-tiered routing (E1, src/llm/chat-cost-router.ts). When true, and
+   * the resolved provider has a mapped cheaper chat-capable model that is
+   * actually present in its registry entry for this role, use that model
+   * instead of the role's normal default/override. When there is no
+   * mapping, or the mapped model isn't valid for this provider+role,
+   * this is a silent no-op — identical behavior to omitting opts
+   * entirely. Every existing call site that doesn't pass this option is
+   * completely unaffected.
+   */
+  preferBudgetTier?: boolean;
+}
+
 /**
  * Resolve an LLM for a role, given request headers.
  *
@@ -127,6 +142,7 @@ export interface GenerateOptions {
 export async function getLlmForRole(
   role: LLMRole,
   headers?: Record<string, any>,
+  opts?: GetLlmForRoleOptions,
 ): Promise<RuntimeLLM | null> {
   const config = headers ? getConfigFromRequest(headers) : (await import('./config-resolver')).loadConfigFromEnv();
   if (!config) return null;
@@ -135,7 +151,31 @@ export async function getLlmForRole(
   const roleConfig = resolved[role];
   if (!roleConfig) return null;
 
-  return new RuntimeLLMImpl(roleConfig);
+  const effectiveRoleConfig = opts?.preferBudgetTier
+    ? applyBudgetTierOverride(roleConfig, role)
+    : roleConfig;
+
+  return new RuntimeLLMImpl(effectiveRoleConfig);
+}
+
+/**
+ * Swap in a cheaper chat-capable model for this provider, if one is
+ * mapped and actually valid for this role. Returns the original
+ * roleConfig unchanged otherwise (no mapping, or the mapped model id
+ * isn't in this provider's registry entry for this role) — a stale or
+ * missing mapping degrades to today's default behavior rather than
+ * sending an unrecognized model id upstream.
+ */
+function applyBudgetTierOverride(roleConfig: ResolvedRoleConfig, role: LLMRole): ResolvedRoleConfig {
+  const budgetModelId = resolveBudgetModelId(roleConfig.provider_id);
+  if (!budgetModelId) return roleConfig;
+
+  const modelEntry = roleConfig.provider.models.find(
+    (m) => m.id === budgetModelId && m.roles.includes(role),
+  );
+  if (!modelEntry) return roleConfig;
+
+  return { ...roleConfig, model_id: budgetModelId };
 }
 
 /**

@@ -4,6 +4,31 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [Unreleased] — 2026-07-30 (100x: E1 cost-tiered chat routing — routing ladder)
+
+**Operator action:** none by default (opt-in, off). To enable: set `VIDHYA_COST_TIER_ROUTING=on`. No migration, no schema change, no new required ENV var.
+
+Per `docs/100x-blueprint.md`'s deferred list: "E1 runtime LLM budget ladder (<₹10/student/month, routing ladder, semantic help-cache)." This slice ships the **routing-ladder** half. The semantic-help-cache half was considered and deliberately not built this round — see "Rejected approach" below.
+
+### Added
+
+- **`src/llm/chat-cost-router.ts`** — pure decision logic for cost-tiered chat routing: `isSimpleIntent()` reuses the existing rule-based intent classifier (no new classification cost) to split intents into simple (explain-concept, verify-answer, find-in-uploads, practice-problem) vs. complex (walkthrough-problem, solve-for-me, which need real multi-step reasoning depth). `BUDGET_MODEL_BY_PROVIDER` maps four providers (google-gemini, anthropic, openai, groq) to a genuinely cheaper chat-capable model already present in `provider-registry.ts`; providers without a clear cheaper option (mistral, openrouter, deepseek, ollama) resolve to `undefined` — a deliberate no-op. (An earlier draft of this map included `mistral: 'mistral-small-latest'`, which is already that provider's chat *default* — a same-model no-op with zero savings. Caught in review before merge; left out entirely, and the accompanying test now asserts a mapped budget model can never equal the provider's own default, not just "cost_tier no worse.") `isCostTierRoutingEnabled()` is the feature gate (default off). Usage telemetry (`recordChatModelUsage` / `getChatModelUsageStats`) is in-memory only, same documented caveat as `src/lib/llm-budget.ts` and `src/lib/rate-limit.ts`, and records the LLM object's *actual* resolved `provider_id`/`model_id` rather than "did we ask for budget tier" — so a stale/invalid mapping can never silently overstate savings in the stats. The complexity label recorded alongside it reflects the *true* intent classification regardless of whether routing is enabled, so `getChatModelUsageStats()` is useful as a pre-rollout traffic preview ("how much of our chat traffic would qualify?"), not just a post-rollout count.
+- **`src/llm/runtime.ts`** — `getLlmForRole(role, headers, opts?)` gains an optional third parameter, `{ preferBudgetTier?: boolean }`. When true, and the resolved provider has a mapped budget model that is actually present (and chat-capable, or capable for whichever role was requested) in that provider's live registry entry, the cheaper model is used instead. Every existing call site across the codebase that doesn't pass `opts` is byte-for-byte unaffected — this was verified by keeping the pre-existing config-resolution test suite green and adding six new tests specifically for the override (regression guard for the no-opts / `preferBudgetTier: false` cases, both mapped providers, an unmapped-provider no-op case, and a non-chat role).
+- **`src/api/chat-routes.ts`** — computes intent classification once (previously called twice, redundantly, at two different `openTurn()` sites) and, when `VIDHYA_COST_TIER_ROUTING=on`, passes `preferBudgetTier: true` for simple-intent, non-image chat turns. Vision calls (image attached) are never routed to the budget tier in this slice.
+
+### Rejected approach: semantic help-cache for chat
+
+The blueprint's E1 item also calls for a semantic help-cache (dedupe near-identical questions, skip the LLM call entirely). Investigated and rejected for the chat endpoint specifically: `src/api/chat-routes.ts` builds each response via `buildContentGeneratorPrompt(reasonerInstructions, studentModel)` — genuinely personalized per student (motivation state, mastery, right-modality selection per `MotivationAwareTeachingPolicy`). Caching and replaying one student's answer to another would silently regress that personalization, which is exactly the thing the last several Waves invested in. A semantic cache over *non-personalized* surfaces (e.g. the concept-explainer content factory, which already has `src/data/vector-store.ts` + `rag_cache` semantic-search infra sitting unused for this purpose) remains a legitimate follow-up, but is a different, larger piece of work and is left for a future PR rather than folded in here.
+
+### Not in this slice
+
+- Escalation-on-failure (retry on the standard model if the budget model errors or times out mid-stream) — the chat call is a live SSE stream; cleanly restarting a partially-streamed response is separate, riskier work.
+- A numeric cost-rank finer than the registry's coarse `cost_tier` enum (e.g. distinguishing `gemini-2.5-flash` from `gemini-2.5-flash-lite`, both tagged `'cheap'`) — the budget-model mapping is a hand-picked, tested-against-the-registry constant instead; a numeric rank would be needed if this grows past a handful of providers.
+- An admin-facing stats endpoint/page for `getChatModelUsageStats()` — the counters exist and are unit-tested, but wiring a new admin route + frontend panel was scoped out to keep this diff reviewable; natural next step for whoever picks up the cockpit-drill-downs deferred item.
+- Semantic help-cache (see "Rejected approach" above).
+
+**17 new tests** (`chat-cost-router.test.ts` 11 + `runtime.test.ts` +6). Full suite **1612/1612 passing across 141 files**, backend `tsc --noEmit` clean.
+
 ## [Unreleased] — 2026-07-30 (tiered content strategy + Linear Algebra full-chapter demo)
 
 **Operator action:** none — docs + a standalone demo folder, no code in `src/` touched, no migration, no version bump. Produced from a Cowork cloud session with no scraper, Wolfram, or multi-model-router infra reachable — which is exactly the scenario `CONTENT-TIERS.md` below documents.

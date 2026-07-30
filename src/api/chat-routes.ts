@@ -21,6 +21,7 @@ import { classifyIntent } from '../content/router';
 import { checkRateLimit } from '../lib/rate-limit';
 import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
 import { getLlmForRole } from '../llm/runtime';
+import { isCostTierRoutingEnabled, isSimpleIntent, recordChatModelUsage } from '../llm/chat-cost-router';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 
@@ -262,8 +263,34 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     return;
   }
 
+  // Cost-tiered routing (E1, opt-in via VIDHYA_COST_TIER_ROUTING=on): route
+  // simple-intent chat turns (explain-concept, verify-answer, etc.) to a
+  // cheaper chat-capable model where the provider has one mapped; complex
+  // intents (walkthrough-problem, solve-for-me) and vision calls are
+  // untouched. See src/llm/chat-cost-router.ts for the full rationale —
+  // this only changes which model answers, never what the (still fully
+  // personalized) answer says.
+  const _intent = classifyIntent(message);
+  const _useCostTierRouting = !image && isCostTierRoutingEnabled() && isSimpleIntent(_intent);
+
   // Resolve LLM via runtime helper (respects per-request config or env)
-  const llm = await getLlmForRole(image ? 'vision' : 'chat', req.headers);
+  const llm = await getLlmForRole(image ? 'vision' : 'chat', req.headers, {
+    preferBudgetTier: _useCostTierRouting,
+  });
+  if (llm) {
+    try {
+      // Record the true intent classification here — NOT `_useCostTierRouting`
+      // — so getChatModelUsageStats() stays meaningful even while the
+      // feature is off: an operator can see how much traffic *would*
+      // qualify for budget routing before ever setting the env var.
+      // `model_id` (already ground-truth from the resolved llm, not from
+      // our own request flag) is what shows whether routing actually fired.
+      recordChatModelUsage(llm.provider_id, llm.model_id, isSimpleIntent(_intent) ? 'simple' : 'complex');
+    } catch (telemetryErr) {
+      // Telemetry must never break chat.
+      console.error('[chat] cost-tier telemetry failed (non-fatal):', (telemetryErr as Error).message);
+    }
+  }
   if (!llm) {
     // LLM unavailable — record a degraded-mode turn so the failure is
     // legible in the turn log. (Without this, an admin debugging
@@ -276,7 +303,7 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
       const student_id = auth ? auth.user.id : `anon_${sessionId}`;
       const degraded_turn_id = openTurn({
         student_id,
-        intent: classifyIntent(message),
+        intent: _intent,
         delivery_channel: 'web',
         routed_source: null,
         generated_content: {
@@ -458,7 +485,7 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     };
     _turn_id = openTurn({
       student_id,
-      intent: classifyIntent(message),
+      intent: _intent,
       student_intent: _reasonerInstructions?.intent,
       pedagogical_action: _reasonerInstructions?.action,
       delivery_channel: 'web',

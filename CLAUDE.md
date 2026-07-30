@@ -656,10 +656,12 @@ Full suite **1586/1586 across 139 files.**
 
 Full suite **1595/1595 across 140 files.**
 
+**E1 (partial, unreleased):** cost-tiered chat routing — the "routing ladder" half of the E1 deferred item. `src/llm/chat-cost-router.ts` + a `preferBudgetTier` option on `getLlmForRole()` (`src/llm/runtime.ts`) route simple-intent chat turns (explain-concept, verify-answer, find-in-uploads, practice-problem) to a mapped cheaper chat-capable model per provider; complex intents (walkthrough-problem, solve-for-me) and vision calls stay on the default model. Opt-in via `VIDHYA_COST_TIER_ROUTING=on`; every existing `getLlmForRole()` call site is unaffected when the new `opts` param is omitted. The semantic-help-cache half of E1 was investigated and rejected for the chat endpoint specifically — chat responses are personalized per student via `buildContentGeneratorPrompt(reasonerInstructions, studentModel)`, and caching/replaying an answer across students would regress that personalization. See CHANGELOG.md's "Rejected approach" note for the full reasoning; a semantic cache over non-personalized surfaces (e.g. the concept-explainer factory, which already has unused `vector-store.ts` + `rag_cache` infra fit for this) remains a legitimate separate follow-up. 17 new tests, full suite 1612/1612.
+
 **Still deferred (the bigger roadmap, in order):**
 
 - Wave 13: FSRS/SM-2 swap — gated on the shadow exit criterion at `GET /api/admin/fsrs-shadow`, not on code.
-- E1 runtime LLM budget ladder (<₹10/student/month, routing ladder, semantic help-cache).
+- E1 remainder: semantic help-cache (over non-personalized content surfaces, not chat — see above), admin stats endpoint for `getChatModelUsageStats()`, escalation-on-failure for the budget tier.
 - Cockpit drill-downs.
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 

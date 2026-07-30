@@ -114,6 +114,65 @@ describe('runtime — configuration resolution', () => {
   });
 });
 
+describe('runtime — cost-tier routing override (E1)', () => {
+  it('omitting opts entirely resolves the normal default model (regression guard)', async () => {
+    process.env.GEMINI_API_KEY = 'test-key-1234567890abc';
+    const { getLlmForRole } = await import('../../../llm/runtime');
+    const llm = await getLlmForRole('chat');
+    expect(llm).not.toBeNull();
+    expect(llm!.model_id).toBe('gemini-2.5-flash');
+  });
+
+  it('preferBudgetTier: false behaves identically to omitting opts', async () => {
+    process.env.GEMINI_API_KEY = 'test-key-1234567890abc';
+    const { getLlmForRole } = await import('../../../llm/runtime');
+    const llm = await getLlmForRole('chat', undefined, { preferBudgetTier: false });
+    expect(llm).not.toBeNull();
+    expect(llm!.model_id).toBe('gemini-2.5-flash');
+  });
+
+  it('preferBudgetTier: true swaps in the mapped cheaper Gemini model', async () => {
+    process.env.GEMINI_API_KEY = 'test-key-1234567890abc';
+    const { getLlmForRole } = await import('../../../llm/runtime');
+    const llm = await getLlmForRole('chat', undefined, { preferBudgetTier: true });
+    expect(llm).not.toBeNull();
+    expect(llm!.provider_id).toBe('google-gemini');
+    expect(llm!.model_id).toBe('gemini-2.5-flash-lite');
+  });
+
+  it('preferBudgetTier: true swaps in the mapped cheaper Anthropic model', async () => {
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-test-key';
+    const { getLlmForRole } = await import('../../../llm/runtime');
+    const llm = await getLlmForRole('chat', undefined, { preferBudgetTier: true });
+    expect(llm).not.toBeNull();
+    expect(llm!.provider_id).toBe('anthropic');
+    expect(llm!.model_id).toBe('claude-haiku-4-5');
+  });
+
+  it('preferBudgetTier: true is a no-op for a provider with no mapped budget model', async () => {
+    // OpenRouter has no entry in BUDGET_MODEL_BY_PROVIDER.
+    process.env.VIDHYA_LLM_PRIMARY_PROVIDER = 'openrouter';
+    process.env.VIDHYA_LLM_PRIMARY_KEY = 'sk-or-test';
+    const { getLlmForRole } = await import('../../../llm/runtime');
+    const withBudget = await getLlmForRole('chat', undefined, { preferBudgetTier: true });
+    const withoutBudget = await getLlmForRole('chat');
+    expect(withBudget).not.toBeNull();
+    expect(withBudget!.model_id).toBe(withoutBudget!.model_id);
+  });
+
+  it('preferBudgetTier: true still resolves correctly for the vision role', async () => {
+    process.env.GEMINI_API_KEY = 'test-key-1234567890abc';
+    const { getLlmForRole } = await import('../../../llm/runtime');
+    const llm = await getLlmForRole('vision', undefined, { preferBudgetTier: true });
+    expect(llm).not.toBeNull();
+    // gemini-2.5-flash-lite is vision-capable per the registry, so the
+    // override still applies for vision too — chat-routes.ts happens to
+    // never request this combination (it gates preferBudgetTier off for
+    // image messages), but runtime.ts's own contract doesn't assume that.
+    expect(llm!.model_id).toBe('gemini-2.5-flash-lite');
+  });
+});
+
 describe('runtime — provider dispatch (mocked fetch)', () => {
   it('Gemini generate() builds the right URL and body', async () => {
     process.env.GEMINI_API_KEY = 'test-key';

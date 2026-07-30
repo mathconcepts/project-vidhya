@@ -23,12 +23,6 @@ export const staggerContainer: Variants = {
   },
 };
 
-/** Card hover: subtle scale + shadow elevation */
-export const cardHover = {
-  scale: 1.02,
-  transition: { duration: 0.2, ease: 'easeOut' },
-};
-
 /** Celebration bounce for correct answers */
 export const celebration: Variants = {
   hidden: { opacity: 0, scale: 0.8 },
@@ -36,21 +30,6 @@ export const celebration: Variants = {
     opacity: 1,
     scale: 1,
     transition: { type: 'spring', stiffness: 300, damping: 20 },
-  },
-};
-
-/** Page slide-in transition */
-export const slideIn: Variants = {
-  initial: { opacity: 0, x: 20 },
-  animate: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.3, ease: 'easeOut' },
-  },
-  exit: {
-    opacity: 0,
-    x: -20,
-    transition: { duration: 0.2, ease: 'easeIn' },
   },
 };
 

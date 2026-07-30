@@ -327,15 +327,3 @@ export async function resolve(req: ResolveRequest): Promise<ResolvedContent> {
   return missResult;
 }
 
-/**
- * Quick bundle stats for dev tooling / the admin dashboard.
- */
-export async function getBundleStats() {
-  const bundle = await getBundle();
-  return {
-    version: bundle.version,
-    total_problems: bundle.problems.length,
-    total_explainers: Object.keys(bundle.explainers).length,
-    stats: bundle.stats,
-  };
-}

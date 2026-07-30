@@ -1,4 +1,3 @@
-// @ts-nocheck — drift from upstream type changes; see TODOS for cleanup
 /**
  * Wolfram Alpha Verifier
  * Verify mathematical and scientific content against Wolfram Alpha
@@ -172,12 +171,12 @@ export class WolframVerifier implements Verifier {
         throw new Error(`Wolfram API error: ${response.status}`);
       }
       
-      return await response.json();
+      return await response.json() as WolframResponse;
     } finally {
       clearTimeout(timeout);
     }
   }
-  
+
   private buildQuery(
     content: string,
     contentType: ContentType,

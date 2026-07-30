@@ -8,7 +8,6 @@
  * module's public surface.
  *
  * For Intent (the closed enum of student request types), see intent-classifier.ts.
- * For blog/marketing types, see blog-types.ts.
  */
 
 import type { Intent } from './intent-classifier';

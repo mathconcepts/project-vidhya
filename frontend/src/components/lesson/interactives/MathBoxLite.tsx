@@ -13,6 +13,7 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import type { DirectiveType } from './registry';
+import { parseRange } from './plot-utils';
 
 interface MathBoxLiteAttrs {
   function?: string;
@@ -21,13 +22,6 @@ interface MathBoxLiteAttrs {
   y?: string;
   color?: string;
   aspect?: string;
-}
-
-function parseRange(s: string | undefined, fallback: [number, number]): [number, number] {
-  if (!s) return fallback;
-  const m = s.match(/-?\d+(\.\d+)?/g);
-  if (!m || m.length < 2) return fallback;
-  return [Number(m[0]), Number(m[1])];
 }
 
 function evaluateFn(fnSrc: string, x: number): number | null {

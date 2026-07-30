@@ -2,7 +2,7 @@
 
 ## Project: Vidhya
 
-Vidhya is a focused, mobile-first exam-prep platform. Exam-agnostic by design — GATE, BITSAT, NEET, civil services, or any competitive exam configured via the exam adapter system. This is the active project — the legacy 7-agent system (src/index.ts, agents/) is NOT in use.
+Vidhya is a focused, mobile-first exam-prep platform. Exam-agnostic by design — GATE, BITSAT, NEET, civil services, or any competitive exam configured via the exam adapter system.
 
 ### Key Entry Points
 - **Server:** `src/server.ts` (NOT `src/index.ts`) — standalone Vidhya API on port 8080
@@ -30,7 +30,6 @@ cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 - **Content Intelligence:** Trend collection → priority scoring → smart flywheel → feedback scoring (self-improving loop)
 
 ### Important Files
-- `src/constants/topics.ts` — Single source of truth for 10 GATE topics (labels, icons, keywords)
 - `src/constants/content-types.ts` — Single source of truth for blog content types (labels, accents)
 - `src/db/auto-migrate.ts` — Applies pending SQL migrations on server startup
 - `src/api/gate-routes.ts` — Core API (topics, problems, verify, SR)
@@ -38,9 +37,7 @@ cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 - `src/api/auth-middleware.ts` — JWT verification + role-based access
 - `src/verification/tiered-orchestrator.ts` — 3-tier verification engine + `registerVerifier()` for Tier 4+ extensions
 - `src/verification/verifiers/types.ts` — `AnswerVerifier` interface (math correctness)
-- `src/verification/verifiers/example.ts` — `AlwaysTrueVerifier` live reference; copy this when adding new verifiers
 - `src/content/content-types.ts` — Content module domain types (RouteRequest, ResolvedContent, SessionMode, DeclinedReason)
-- `src/content/blog-types.ts` — Blog/marketing types (renamed from content/types.ts in v2.3.0)
 - `src/content/cadence.ts` — `CadenceStrategy` interface (knowledge vs exam-prep post-filter)
 - `src/content/pedagogy.ts` — `PedagogyReviewer` interface (async post-delivery quality gate)
 - `src/content/verifiers/types.ts` — `ContentVerifier` interface (content quality, distinct from AnswerVerifier)

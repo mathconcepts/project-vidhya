@@ -27,7 +27,7 @@ import {
   markRunComplete,
   markRunFailed,
   incrementRunArtifacts,
-} from '../generation';
+} from '../generation/run-orchestrator';
 
 // ============================================================================
 // Types

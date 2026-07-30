@@ -4,6 +4,26 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [Unreleased] — 2026-07-30 (tiered content strategy + Linear Algebra full-chapter demo)
+
+**Operator action:** none — docs + a standalone demo folder, no code in `src/` touched, no migration, no version bump. Produced from a Cowork cloud session with no scraper, Wolfram, or multi-model-router infra reachable — which is exactly the scenario `CONTENT-TIERS.md` below documents.
+
+### Added
+
+- **`CONTENT-TIERS.md`** — the content *acquisition* priority ladder that was missing alongside `CONTENT.md`'s Layer 1/2: Tier 0 (shipped bundle) → Tier 1 (scrape open-licence/official sources, existing `acquisition-manager` + `scraper-operator` + `licence-checker`) → Tier 2 (multi-model generation + Wolfram verification, the E1 budget ladder) → **Tier 3, the Claude-only fallback** (draft → independent self-check → deterministic SymPy verification → `machine_verified` tagged, queued for priority human review). Includes a decision table for which tier fires when, and states plainly that Tier 3 output is a permanent, auditable part of the ladder, not a throwaway workaround.
+- **`GATE-EM-Chapter-LinearAlgebra/`** (sibling to `GATE-EM-Sample/`, outside `src/`) — a full-chapter live demo built entirely through the new Tier 3 pipeline: 8 subtopics (Matrix Algebra, Determinants, Rank & Linear Systems, Eigenvalues & Eigenvectors, Cayley–Hamilton, Special Matrices, LU Decomposition, Vector Spaces/Rank–Nullity), 24 items (up from the pilot's 6 per topic), each with a concept explainer plus a worked solution. Every computable claim (determinants, eigenvalues, LU multipliers, Cayley–Hamilton derivations) was independently checked with SymPy before being written into the item bank — cross-verification transcript reproducible from the item set. Same engine as `GATE-EM-Sample/` (Elo ability tracking, FSRS-lite spaced review, mastery states, GATE negative marking, marks-saved v1), smoke-tested end to end in Node/jsdom (diagnose → practice → mock, both all-correct and all-wrong paths, readiness banding) before shipping.
+- Source-disclosure badges (`Tier 3 · Claude-generated · SymPy-verified`) shown per item in the new demo, applying CONTENT.md's Layer 6 "source disclosure" principle to a generated-content sample for the first time.
+
+### Changed
+
+- `CONTENT.md` header now links `CONTENT-TIERS.md` as a companion doc.
+- `GATE-EM-Sample/README.md` points to the new chapter demo as the depth counterpart to its breadth pilot.
+
+### Still open
+
+- Tier 1/2 infra (scraper network access, licence-checker against a live source, Wolfram credential, multi-model router) is designed but not yet exercised end-to-end from a running deploy.
+- `concept-reviewer`'s human-review queue doesn't yet prioritize Tier-3-sourced items ahead of Tier 1/2 items, as `CONTENT-TIERS.md` recommends — small scope item for whoever wires the review queue next.
+
 ## [4.24.0] - 2026-07-06 — 100x Wave 12: FSRS shadow mode (A7 §4 step 1)
 
 **Operator action:** none — migration `034_fsrs_shadow_log.sql` auto-applies; the table is diagnostic-only and freely truncatable. **Student-visible scheduling is UNCHANGED** — that is the whole point of shadow mode.

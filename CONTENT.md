@@ -1,11 +1,15 @@
 # Content subsystem — architecture
 
-> **Status:** canonical reference · last reviewed 2026-04-24
+> **Status:** canonical reference · last reviewed 2026-07-30
 > **Relationship to other docs:**
 > - [`agents/ORG-CHART.md`](./agents/ORG-CHART.md) — structural org
 > - [`agents/CUSTOMER-LIFECYCLE.md`](./agents/CUSTOMER-LIFECYCLE.md) — dynamic lifecycle
 > - [`EXAMS.md`](./EXAMS.md) — exam adapters that drive curriculum shape
 > - [`agents/_shared/constitution.md`](./agents/_shared/constitution.md) — the four promises
+> - [`CONTENT-TIERS.md`](./CONTENT-TIERS.md) — **new 2026-07-30** — the tiered
+>   acquisition priority order (scrape → multi-model generate → Claude-only
+>   fallback) that fills the wells this file's Layer 1/2 describe; read it
+>   alongside this file, not instead of it
 > - **this file** — how content is sourced, stored, routed, and delivered
 
 Content is the substance of Vidhya — every explainer a student reads,

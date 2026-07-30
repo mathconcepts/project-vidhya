@@ -113,6 +113,7 @@ import path from 'path';
 import fs from 'fs';
 import pg from 'pg';
 import { autoMigrate } from './db/auto-migrate';
+import { seedStaticPyqQuestions } from './db/seed-static-pyqs';
 
 const ssrPool = new pg.Pool({ connectionString: process.env.SUPABASE_DB_URL || process.env.DATABASE_URL });
 
@@ -813,6 +814,15 @@ async function main() {
       await autoMigrate(migratePool);
     } catch (err) {
       console.error('[server] Auto-migrate error (non-fatal):', (err as Error).message);
+    }
+    // Seed real PYQs from the static topic files (see src/db/seed-static-pyqs.ts
+    // for why this needs to run every boot, not just once ever — it's what
+    // keeps DB-mode question counts from regressing below what the
+    // no-DB static-file fallback in gate-routes.ts already shows).
+    try {
+      await seedStaticPyqQuestions(migratePool);
+    } catch (err) {
+      console.error('[server] Static PYQ seed error (non-fatal):', (err as Error).message);
     }
     await migratePool.end();
   }

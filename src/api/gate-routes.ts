@@ -13,6 +13,12 @@
  *   POST /api/sr/:sessionId    — Update SR state after answer
  *   GET  /api/progress/:sessionId — Get progress + weak topics
  *   GET  /solutions/:slug      — SEO page (pre-rendered HTML)
+ *
+ * /api/topics and /api/problems/* are DB-first with a static-file fallback
+ * (data/courses/gate-em/topics/*\/mcqs.json) — see "Static PYQ fallback"
+ * below. Content shows regardless of whether DATABASE_URL is configured;
+ * src/db/seed-static-pyqs.ts seeds the same files into Postgres once it is,
+ * so DB-mode is always a superset of what fallback-mode already shows.
  */
 
 import { ServerResponse } from 'http';
@@ -24,6 +30,7 @@ import { getTopicsForExam } from '../curriculum/topic-adapter';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { checkRateLimit } from '../lib/rate-limit';
+import { TOPIC_DIR_ALIAS } from '../db/seed-static-pyqs';
 const { Pool } = pg;
 
 // ============================================================================
@@ -93,7 +100,9 @@ async function handleGetTopics(_req: ParsedRequest, res: ServerResponse): Promis
 
   const topics = GATE_TOPIC_OBJECTS.map(t => ({
     ...t,
-    problemCount: countMap[t.id] || 0,
+    // Same DB-first-with-static-fallback rule as handleGetProblems, so the
+    // home page's counts match what clicking into a topic actually shows.
+    problemCount: countMap[t.id] || staticProblemsForTopic(t.id).length,
   }));
 
   sendJSON(res, { topics });
@@ -107,10 +116,12 @@ async function handleGetProblems(req: ParsedRequest, res: ServerResponse): Promi
   const topic = req.params.topic;
   if (!topic) return sendError(res, 400, 'Topic required');
 
-  // Honest degradation: if Postgres isn't reachable (DATABASE_URL unset,
-  // connection refused, migration not yet applied, etc.), serve an empty
-  // list instead of an uncaught 500 — same pattern as handleGetTopics
-  // above. TopicPage.tsx already has a "Coming soon!" empty state for this.
+  // DB-first with static-file fallback: try Postgres; if it's unreachable
+  // OR simply has no rows yet for this topic, serve the same static
+  // mcqs.json content the file-fallback and seed-static-pyqs.ts both use,
+  // so a topic's question count never regresses just because the DB
+  // happens to be configured-but-empty. TopicPage.tsx's "Coming soon!"
+  // empty state now only fires when NEITHER source has content.
   try {
     const pool = getPool();
     const result = await pool.query(
@@ -121,10 +132,13 @@ async function handleGetProblems(req: ParsedRequest, res: ServerResponse): Promi
        ORDER BY year DESC NULLS LAST, difficulty`,
       [topic],
     );
-    sendJSON(res, { problems: result.rows });
+    if (result.rows.length > 0) {
+      return sendJSON(res, { problems: result.rows });
+    }
+    return sendJSON(res, { problems: staticProblemsForTopic(topic) });
   } catch (err) {
-    console.error('[gate-routes] handleGetProblems DB error:', (err as Error).message);
-    sendJSON(res, { problems: [] });
+    console.error('[gate-routes] handleGetProblems DB error, falling back to static file:', (err as Error).message);
+    sendJSON(res, { problems: staticProblemsForTopic(topic) });
   }
 }
 
@@ -132,21 +146,34 @@ async function handleGetProblemById(req: ParsedRequest, res: ServerResponse): Pr
   const id = req.params.id;
   if (!id) return sendError(res, 400, 'Problem ID required');
 
-  try {
-    const pool = getPool();
-    const result = await pool.query(
-      `SELECT id, exam_id, year, question_text, options, correct_answer,
-              explanation, topic, difficulty, marks, negative_marks, source
-       FROM pyq_questions WHERE id = $1 LIMIT 1`,
-      [id],
-    );
+  // Static-file ids (e.g. "la-001") are never valid UUIDs, so a non-UUID id
+  // goes straight to the file fallback without a wasted DB round-trip. A
+  // UUID id tries the DB first and only falls back if that specific lookup
+  // comes up empty (shouldn't normally happen, but keeps this handler
+  // resilient the same way handleGetProblems is).
+  const looksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-    if (result.rows.length === 0) return sendError(res, 404, 'Problem not found');
-    sendJSON(res, { problem: result.rows[0] });
-  } catch (err) {
-    console.error('[gate-routes] handleGetProblemById DB error:', (err as Error).message);
-    sendError(res, 503, 'Content service temporarily unavailable');
+  if (looksLikeUuid) {
+    try {
+      const pool = getPool();
+      const result = await pool.query(
+        `SELECT id, exam_id, year, question_text, options, correct_answer,
+                explanation, topic, difficulty, marks, negative_marks, source
+         FROM pyq_questions WHERE id = $1 LIMIT 1`,
+        [id],
+      );
+      if (result.rows.length > 0) {
+        return sendJSON(res, { problem: result.rows[0] });
+      }
+    } catch (err) {
+      console.error('[gate-routes] handleGetProblemById DB error, falling back to static file:', (err as Error).message);
+    }
   }
+
+  const staticMatch = findStaticProblemById(id);
+  if (staticMatch) return sendJSON(res, { problem: staticMatch });
+
+  return sendError(res, 404, 'Problem not found');
 }
 
 // ============================================================================
@@ -161,11 +188,80 @@ function findTopicContentDir(topicSlug: string): string | null {
   try {
     if (!fs.existsSync(TOPICS_CONTENT_DIR)) return null;
     const dirs = fs.readdirSync(TOPICS_CONTENT_DIR);
-    const match = dirs.find(d => d === topicSlug || d.endsWith(`-${topicSlug}`));
+    // TOPIC_DIR_ALIAS covers app topic ids whose content directory uses a
+    // different slug (e.g. 'transforms' -> dir '07-transform-theory').
+    const dirSlug = TOPIC_DIR_ALIAS[topicSlug] || topicSlug;
+    const match = dirs.find(d => d === dirSlug || d.endsWith(`-${dirSlug}`));
     return match ? path.join(TOPICS_CONTENT_DIR, match) : null;
   } catch {
     return null;
   }
+}
+
+// ── Static PYQ fallback (data/courses/gate-em/topics/*/mcqs.json) ─────────
+// Used when Postgres is unreachable OR has no rows yet for a topic. These
+// are real, human-authored past-year questions (not generated), already
+// committed and otherwise unused. src/db/seed-static-pyqs.ts seeds the same
+// files into pyq_questions once DATABASE_URL is configured, so DB-mode and
+// fallback-mode converge on the same content instead of DB-mode silently
+// showing fewer questions than fallback-mode did.
+
+function loadStaticTopicFile(topicSlug: string): { examId: string; questions: any[] } | null {
+  const dir = findTopicContentDir(topicSlug);
+  if (!dir) return null;
+  const mcqsPath = path.join(dir, 'mcqs.json');
+  if (!fs.existsSync(mcqsPath)) return null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(mcqsPath, 'utf-8'));
+    return {
+      examId: parsed.exam_id || 'gate-engineering-maths',
+      questions: Array.isArray(parsed.questions) ? parsed.questions : [],
+    };
+  } catch (err) {
+    console.error('[gate-routes] Failed to parse static mcqs.json:', (err as Error).message);
+    return null;
+  }
+}
+
+function staticProblemsForTopic(topicSlug: string): any[] {
+  const file = loadStaticTopicFile(topicSlug);
+  if (!file) return [];
+  return file.questions.map((q: any) => ({
+    id: q.id,
+    exam_id: file.examId,
+    year: q.year ?? null,
+    question_text: q.question,
+    options: q.options || {},
+    correct_answer: q.correct_answer,
+    explanation: q.explanation,
+    topic: topicSlug,
+    difficulty: q.difficulty || 'medium',
+    marks: q.marks ?? 1,
+    negative_marks: q.negative_marks ?? -0.33,
+    source: 'official_pyq',
+  }));
+}
+
+const DIR_TO_CANONICAL_TOPIC: Record<string, string> = Object.fromEntries(
+  Object.entries(TOPIC_DIR_ALIAS).map(([canonical, dirSlug]) => [dirSlug, canonical]),
+);
+
+function findStaticProblemById(id: string): any | null {
+  try {
+    if (!fs.existsSync(TOPICS_CONTENT_DIR)) return null;
+    for (const dirName of fs.readdirSync(TOPICS_CONTENT_DIR)) {
+      const fileSlug = dirName.replace(/^\d+-/, '');
+      // Resolve to the app's canonical topic id so the returned problem's
+      // `topic` field matches what /topic/:topicId routes expect (e.g.
+      // 'transforms', not the directory's 'transform-theory').
+      const topicSlug = DIR_TO_CANONICAL_TOPIC[fileSlug] || fileSlug;
+      const match = staticProblemsForTopic(topicSlug).find(p => p.id === id);
+      if (match) return match;
+    }
+  } catch (err) {
+    console.error('[gate-routes] findStaticProblemById error:', (err as Error).message);
+  }
+  return null;
 }
 
 async function handleGetTopicNotes(req: ParsedRequest, res: ServerResponse): Promise<void> {

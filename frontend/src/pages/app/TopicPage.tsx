@@ -4,22 +4,28 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { MasteryRing } from '@/components/app/MasteryRing';
-import { ChevronLeft, ChevronRight, CheckCircle, BookOpen } from 'lucide-react';
+import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
+import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle, BookOpen, GraduationCap } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface Problem {
   id: string;
-  year: number;
+  year: number | null;
   question_text: string;
   difficulty: string;
   marks: number;
   topic: string;
+  /** 'official_pyq' (default, real past-year question) or a generated-content
+   *  tier tag, e.g. 'generated_tier3' — Claude-drafted, SymPy-verified, no
+   *  official year. Undefined on older rows/API responses before this field
+   *  existed; treated the same as 'official_pyq'. */
+  source?: string;
 }
 
 interface TopicMastery {
@@ -35,6 +41,8 @@ export default function TopicPage() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [mastery, setMastery] = useState<TopicMastery | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState<string | null>(null);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   const topicName = (topicId || '')
     .replace(/-/g, ' ')
@@ -47,10 +55,14 @@ export default function TopicPage() {
     Promise.all([
       apiFetch<{ problems: Problem[] }>(`/api/problems/${topicId}`),
       apiFetch<{ topics: TopicMastery[] }>(`/api/progress/${sessionId}`).catch(() => ({ topics: [] as TopicMastery[] })),
-    ]).then(([problemRes, progressRes]) => {
+      // Static, file-based — works even when the DB-backed problem list is
+      // still degraded/empty. Never blocks the rest of the page on failure.
+      apiFetch<{ notes: string | null }>(`/api/topics/${topicId}/notes`).catch(() => ({ notes: null })),
+    ]).then(([problemRes, progressRes, notesRes]) => {
       setProblems(problemRes.problems);
       const topicProgress = (progressRes.topics || []).find(t => t.topic === topicId);
       if (topicProgress) setMastery(topicProgress);
+      setNotes(notesRes.notes);
     }).finally(() => setLoading(false));
   }, [topicId, sessionId]);
 
@@ -87,6 +99,42 @@ export default function TopicPage() {
           </MasteryRing>
         )}
       </motion.div>
+
+      {/* Concept Notes — static, file-based lecture notes (works even with no DB) */}
+      {notes && (
+        <motion.div variants={fadeInUp} className="rounded-xl border border-surface-800 bg-surface-900 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setNotesOpen(o => !o);
+              trackEvent('topic_notes_toggle', { topic: topicId, open: !notesOpen });
+            }}
+            className="w-full flex items-center gap-2.5 p-4 text-left hover:bg-surface-800/60 transition-colors"
+          >
+            <GraduationCap size={18} className="text-violet-400 shrink-0" />
+            <span className="flex-1 text-sm font-medium text-surface-200">Concept notes</span>
+            <ChevronDown
+              size={16}
+              className={clsx('text-surface-500 transition-transform', notesOpen && 'rotate-180')}
+            />
+          </button>
+          <AnimatePresence initial={false}>
+            {notesOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 pt-1 border-t border-surface-800 prose prose-invert prose-sm max-w-none">
+                  <MarkdownAtomRenderer content={notes} atomId={`topic-notes-${topicId}`} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
 
       {/* Problem List */}
       {loading ? (
@@ -126,7 +174,9 @@ export default function TopicPage() {
                     {problem.question_text.length > 120 ? '...' : ''}
                   </p>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-xs text-surface-500">GATE {problem.year}</span>
+                    <span className="text-xs text-surface-500">
+                      {problem.year ? `GATE ${problem.year}` : 'Generated · verified'}
+                    </span>
                     <span className="text-surface-700">|</span>
                     <span className={clsx(
                       'text-xs px-1.5 py-0.5 rounded-full',

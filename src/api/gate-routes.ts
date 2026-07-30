@@ -8,6 +8,7 @@
  *   GET  /api/topics           — List all GATE math topics
  *   GET  /api/problems/:topic  — Get problems for a topic
  *   GET  /api/problems/id/:id  — Get a single problem by ID
+ *   GET  /api/topics/:topic/notes — Get concept/lecture notes for a topic (static, no DB)
  *   GET  /api/sr/:sessionId    — Get SR state for a session
  *   POST /api/sr/:sessionId    — Update SR state after answer
  *   GET  /api/progress/:sessionId — Get progress + weak topics
@@ -15,6 +16,8 @@
  */
 
 import { ServerResponse } from 'http';
+import fs from 'fs';
+import path from 'path';
 import pg from 'pg';
 import { detectTopic } from '../utils/topic-detection';
 import { getTopicsForExam } from '../curriculum/topic-adapter';
@@ -104,33 +107,83 @@ async function handleGetProblems(req: ParsedRequest, res: ServerResponse): Promi
   const topic = req.params.topic;
   if (!topic) return sendError(res, 400, 'Topic required');
 
-  const pool = getPool();
-  const result = await pool.query(
-    `SELECT id, exam_id, year, question_text, options, correct_answer,
-            topic, difficulty, marks, negative_marks
-     FROM pyq_questions
-     WHERE topic = $1
-     ORDER BY year DESC, difficulty`,
-    [topic],
-  );
-
-  sendJSON(res, { problems: result.rows });
+  // Honest degradation: if Postgres isn't reachable (DATABASE_URL unset,
+  // connection refused, migration not yet applied, etc.), serve an empty
+  // list instead of an uncaught 500 — same pattern as handleGetTopics
+  // above. TopicPage.tsx already has a "Coming soon!" empty state for this.
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT id, exam_id, year, question_text, options, correct_answer,
+              topic, difficulty, marks, negative_marks, source
+       FROM pyq_questions
+       WHERE topic = $1
+       ORDER BY year DESC NULLS LAST, difficulty`,
+      [topic],
+    );
+    sendJSON(res, { problems: result.rows });
+  } catch (err) {
+    console.error('[gate-routes] handleGetProblems DB error:', (err as Error).message);
+    sendJSON(res, { problems: [] });
+  }
 }
 
 async function handleGetProblemById(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const id = req.params.id;
   if (!id) return sendError(res, 400, 'Problem ID required');
 
-  const pool = getPool();
-  const result = await pool.query(
-    `SELECT id, exam_id, year, question_text, options, correct_answer,
-            explanation, topic, difficulty, marks, negative_marks
-     FROM pyq_questions WHERE id = $1 LIMIT 1`,
-    [id],
-  );
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT id, exam_id, year, question_text, options, correct_answer,
+              explanation, topic, difficulty, marks, negative_marks, source
+       FROM pyq_questions WHERE id = $1 LIMIT 1`,
+      [id],
+    );
 
-  if (result.rows.length === 0) return sendError(res, 404, 'Problem not found');
-  sendJSON(res, { problem: result.rows[0] });
+    if (result.rows.length === 0) return sendError(res, 404, 'Problem not found');
+    sendJSON(res, { problem: result.rows[0] });
+  } catch (err) {
+    console.error('[gate-routes] handleGetProblemById DB error:', (err as Error).message);
+    sendError(res, 503, 'Content service temporarily unavailable');
+  }
+}
+
+// ============================================================================
+// Topic Notes (static — reads data/courses/gate-em/topics/*/lecture-notes.md)
+// No database dependency: works even while the Postgres-backed problem list
+// above is degraded/empty.
+// ============================================================================
+
+const TOPICS_CONTENT_DIR = path.resolve(process.cwd(), 'data/courses/gate-em/topics');
+
+function findTopicContentDir(topicSlug: string): string | null {
+  try {
+    if (!fs.existsSync(TOPICS_CONTENT_DIR)) return null;
+    const dirs = fs.readdirSync(TOPICS_CONTENT_DIR);
+    const match = dirs.find(d => d === topicSlug || d.endsWith(`-${topicSlug}`));
+    return match ? path.join(TOPICS_CONTENT_DIR, match) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function handleGetTopicNotes(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const topic = req.params.topic;
+  if (!topic) return sendError(res, 400, 'Topic required');
+
+  try {
+    const dir = findTopicContentDir(topic);
+    const notesPath = dir ? path.join(dir, 'lecture-notes.md') : null;
+    if (!notesPath || !fs.existsSync(notesPath)) {
+      return sendJSON(res, { notes: null });
+    }
+    const notes = fs.readFileSync(notesPath, 'utf-8');
+    sendJSON(res, { notes });
+  } catch (err) {
+    console.error('[gate-routes] handleGetTopicNotes error:', (err as Error).message);
+    sendJSON(res, { notes: null });
+  }
 }
 
 // ============================================================================
@@ -488,9 +541,12 @@ async function handleExamReadiness(req: ParsedRequest, res: ServerResponse): Pro
   const sessionId = req.params.sessionId;
   if (!sessionId) return sendError(res, 400, 'Session ID required');
 
-  const pool = getPool();
-
   try {
+    // getPool() throws when DATABASE_URL isn't configured — moved inside
+    // this try block (was previously called before it, so a missing DB
+    // config threw past the catch below and surfaced as an uncaught 500).
+    const pool = getPool();
+
     // Topic coverage + accuracy from sr_sessions
     const srStats = await pool.query(
       `SELECT
@@ -636,6 +692,9 @@ export const gateRoutes: RouteDefinition[] = [
   // Problems
   { method: 'GET', path: '/api/problems/:topic', handler: handleGetProblems },
   { method: 'GET', path: '/api/problems/id/:id', handler: handleGetProblemById },
+
+  // Topic Notes (static, no DB dependency)
+  { method: 'GET', path: '/api/topics/:topic/notes', handler: handleGetTopicNotes },
 
   // Verification
   { method: 'POST', path: '/api/verify', handler: handleVerify },

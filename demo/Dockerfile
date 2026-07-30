@@ -52,6 +52,12 @@ COPY demo/ demo/
 COPY data/ data/
 # Atom-based content modules (ContentAtom v2 lessons) and seed concepts.
 COPY modules/ modules/
+# SQL migrations — read at boot by src/db/auto-migrate.ts (server.ts calls
+# it before serving traffic, gated on DATABASE_URL being set). Without this,
+# autoMigrate() finds no supabase/migrations directory and silently skips,
+# so pyq_questions/generated_problems/etc. never get created even once a
+# real DATABASE_URL is configured.
+COPY supabase/ supabase/
 COPY --from=frontend-builder /build/frontend/dist frontend/dist
 COPY tsconfig*.json ./
 

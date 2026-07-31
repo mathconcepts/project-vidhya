@@ -12,6 +12,7 @@ import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CountUp } from '@/components/app/CountUp';
 import { Confetti } from '@/components/app/Confetti';
 import { ExamReadinessBreakdown } from '@/components/app/ExamReadiness';
+import { ExamCountdownChip } from '@/components/app/ExamCountdownChip';
 import { BarChart3, Clock, ChevronRight, PartyPopper, Target, Brain, Sparkles, Calendar, FileText, BookOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -110,6 +111,14 @@ export default function ProgressPage() {
       <motion.h1 variants={fadeInUp} className="text-xl font-display font-bold text-surface-100">
         Your Progress
       </motion.h1>
+
+      {/* T-minus line (UX doc §9.15) — self-gating: renders nothing when the
+          student has no registered exam_date. Never shown on practice/attempt
+          screens (exam anxiety mid-practice violates the honesty/hooks laws);
+          Home + Progress are the only two surfaces that carry it. */}
+      <motion.div variants={fadeInUp}>
+        <ExamCountdownChip />
+      </motion.div>
 
       {/* Overall Stats — animated counters */}
       <motion.div variants={fadeInUp} className="grid grid-cols-3 gap-3">

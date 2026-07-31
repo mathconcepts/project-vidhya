@@ -28,13 +28,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import { DemoBanner } from '@/components/DemoBanner';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { SessionEndScreen } from '@/components/app/SessionEndScreen';
 import { WelcomeBackCard } from '@/components/app/WelcomeBackCard';
 import { NextBestActionCard } from '@/components/app/NextBestActionCard';
+import { trackPageView, trackAction } from '@/lib/beacon';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
   Sparkles, RefreshCw, AlertCircle, ChevronRight,
-  Bookmark, Settings, Plus, Trash2, ChevronDown,
+  Bookmark, Settings, Plus, Trash2, ChevronDown, ArrowRight,
 } from 'lucide-react';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
 import { DigestChip } from '@/components/app/DigestChip';
@@ -191,11 +191,34 @@ export default function PlannedSessionPage() {
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [closurePassed, setClosurePassed] = useState(false);
   const [rationaleOpen, setRationaleOpen] = useState<Record<string, boolean>>({});
+  // Wave U1: static end-of-session summary. Snapshotted at the moment
+  // completion is confirmed by the server so the numbers on the closure
+  // screen don't silently drift upward if the student lingers on it
+  // (elapsed-minutes would otherwise keep counting from Date.now()).
+  // Only real, already-tracked data lives here — never a fabricated
+  // "marks saved" figure. See SessionSummary comment below.
+  const [sessionSummary, setSessionSummary] = useState<{
+    doneCount: number;
+    totalCount: number;
+    elapsedMin: number;
+    concepts: string[];
+    totalAttempts: number;
+    totalCorrect: number;
+    tomorrowPriority?: string;
+  } | null>(null);
   // P5: gbrain summary for WelcomeBackCard lapse detection
   const [gbrainSummary, setGbrainSummary] = useState<any>(null);
   const [userMeta, setUserMeta] = useState<{ created_at?: string } | null>(null);
+
+  useEffect(() => {
+    trackPageView('/planned');
+  }, []);
+
+  // Wave U1: fire once when the static end-of-session screen renders.
+  useEffect(() => {
+    if (completed) trackAction('session_complete', '/planned');
+  }, [completed]);
 
   useEffect(() => {
     authFetch('/api/me/gbrain-summary')
@@ -519,6 +542,26 @@ export default function PlannedSessionPage() {
         const body = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(body.error || `Completion failed: ${res.status}`);
       }
+      // Snapshot the real, already-tracked numbers at the moment the server
+      // confirms completion — this is what the static end screen reads, so
+      // it never fabricates a figure and never silently drifts while shown.
+      const completedActions = plan.actions.filter(a => outcomes[a.id]?.completed === true);
+      let totalAttempts = 0;
+      let totalCorrect = 0;
+      for (const a of plan.actions) {
+        const o = outcomes[a.id];
+        if (o?.attempts) totalAttempts += o.attempts;
+        if (o?.correct) totalCorrect += o.correct;
+      }
+      setSessionSummary({
+        doneCount: completedActions.length,
+        totalCount: plan.actions.length,
+        elapsedMin,
+        concepts: Array.from(new Set(completedActions.map(a => a.title))),
+        totalAttempts,
+        totalCorrect,
+        tomorrowPriority: plan.top_priorities?.[0]?.topic,
+      });
       setCompleted(true);
     } catch (err: any) {
       setError(err.message || 'Completion failed');
@@ -1034,53 +1077,77 @@ export default function PlannedSessionPage() {
               </div>
             </motion.section>
           )}
-
-          {completed && plan && (
-            <motion.section
-              key="done"
-              variants={fadeInUp}
-              initial="hidden"
-              animate="visible"
-              className="text-center py-12"
-            >
-              <div className="inline-flex w-16 h-16 items-center justify-center rounded-full bg-emerald-500/20 mb-4">
-                <CheckCircle2 className="w-9 h-9 text-emerald-400" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">Session logged</h2>
-              <p className="text-sm text-surface-400 max-w-md mx-auto mb-6">
-                Your outcomes feed into the next plan — so the more sessions you complete,
-                the better your recommendations get.
-              </p>
-              <button
-                onClick={() => { setPlan(null); setCompleted(false); setOutcomes({}); }}
-                className="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white font-semibold text-sm transition-colors"
-              >
-                Plan another session
-              </button>
-            </motion.section>
-          )}
         </AnimatePresence>
 
-      </div>
+        {/* Wave U1: static end-of-session screen (Ecstasy/Hooks/Craft §1.2).
+            Deliberately the LEAST animated moment in the app — no motion
+            wrapper, no confetti, no count-up. Every number here is read
+            straight from `sessionSummary`, snapshotted at the instant the
+            server confirmed completion (see finishSession). Nothing on
+            this screen is fabricated:
+              - "marks saved" is NOT shown — the frontend has no per-session
+                marks/expected-marks field today (mock-to-marks.ts operates
+                on rich Attempt[] with partial credit + error tags that
+                this page never receives). We show real structural data
+                instead (blocks done + minutes), and — only when the
+                student actually logged attempts/correct counts via the
+                stepper controls above — a self-logged accuracy line.
+              - "what firmed up" is the real list of completed action
+                titles (topics actually touched this session).
+              - a numeric readiness delta ("+N marks" / band change) is
+                intentionally omitted: this page never captures a
+                pre-session baseline to diff against, so any such number
+                would be invented. See PlannedSessionPage.tsx header notes
+                if wiring a real baseline later (e.g. via
+                /api/readiness/expected-score at plan-generation time).
+              - one forward action only — back to Home. */}
+        {completed && plan && (
+          <div className="py-10">
+            <div className="max-w-md mx-auto">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-lg font-display font-semibold text-surface-100">Session complete</h2>
+              </div>
+              <p className="text-sm text-surface-400 mb-6">
+                {(sessionSummary?.doneCount ?? 0)} of {(sessionSummary?.totalCount ?? plan.actions.length)} blocks done · {(sessionSummary?.elapsedMin ?? 0)} min
+                {sessionSummary && sessionSummary.totalAttempts > 0 && (
+                  <> · {sessionSummary.totalCorrect}/{sessionSummary.totalAttempts} correct (self-logged)</>
+                )}
+              </p>
 
-      {/* P3 SessionEndScreen — overlay shown on session completion before
-          the inline "Session logged" view becomes reachable. Auto-navigates
-          to Home after 5s (or stays open with prefers-reduced-motion). */}
-      {completed && plan && !closurePassed && (
-        <SessionEndScreen
-          completedCount={plan.actions.filter(a => outcomes[a.id]?.completed === true).length}
-          totalCount={plan.actions.length}
-          elapsedMin={startedAtMs ? Math.max(1, Math.round((Date.now() - startedAtMs) / 60000)) : 0}
-          coveredConcepts={plan.actions
-            .filter(a => outcomes[a.id]?.completed === true)
-            .map(a => a.title)}
-          tomorrowPriority={plan.top_priorities?.[0]?.topic}
-          onContinue={() => {
-            setClosurePassed(true);
-            navigate('/planned');
-          }}
-        />
-      )}
+              {sessionSummary && sessionSummary.concepts.length > 0 && (
+                <div className="mb-6">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-surface-500 mb-2">
+                    What firmed up
+                  </div>
+                  <ul className="space-y-1.5">
+                    {sessionSummary.concepts.map((c, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-surface-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {sessionSummary?.tomorrowPriority && (
+                <p className="text-xs text-surface-500 mb-6">
+                  Next up: <span className="text-surface-300">{sessionSummary.tomorrowPriority}</span>
+                </p>
+              )}
+
+              <Link
+                to="/"
+                className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold transition-colors"
+              >
+                Back to Home <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

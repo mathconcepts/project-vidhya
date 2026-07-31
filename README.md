@@ -1,5 +1,7 @@
 # Project Vidhya
 
+**[→ Try the live demo](https://vidhya-demo.onrender.com)** — no account needed. Math answers are checked by a tiered verification pipeline — a cache of prior verifications, then two LLMs solving independently and checking they agree, escalating to Wolfram Alpha when they don't — not just trusted because one LLM said so. **We show our work.**
+
 > # **The ingredients every champion needs — for your exam, your goals, your breakthrough.**
 >
 > *Calm. Strategy. Focus. Compounding. Vidhya builds all four in you, every time you practise.*

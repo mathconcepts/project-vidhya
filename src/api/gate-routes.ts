@@ -31,6 +31,7 @@ import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { checkRateLimit } from '../lib/rate-limit';
 import { TOPIC_DIR_ALIAS } from '../db/seed-static-pyqs';
+import { gateMcqNegativeMarksFallback } from '../syllabus/exam-catalog';
 const { Pool } = pg;
 
 // ============================================================================
@@ -237,7 +238,11 @@ function staticProblemsForTopic(topicSlug: string): any[] {
     topic: topicSlug,
     difficulty: q.difficulty || 'medium',
     marks: q.marks ?? 1,
-    negative_marks: q.negative_marks ?? -0.33,
+    // U1-13: was a hardcoded `-0.33` literal — now reads GATE's canonical
+    // marking_table row (src/syllabus/exam-catalog.ts) so the fallback
+    // stays correct if the marking scheme ever changes, instead of a
+    // second magic number to keep in sync with deterministic-scorer.ts.
+    negative_marks: q.negative_marks ?? gateMcqNegativeMarksFallback(q.marks ?? 1),
     source: 'official_pyq',
   }));
 }

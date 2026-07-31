@@ -1,0 +1,15 @@
+[
+  "src/gbrain/error-taxonomy.ts::For concept_id, use these GATE math concept identifiers where applicable:",
+  "src/gbrain/error-taxonomy.ts::const ERROR_CLASSIFIER_PROMPT = `You are an expert mathematics error diagnostician for GATE Engineering Mathematics.",
+  "src/gbrain/error-taxonomy.ts::const MISCONCEPTION_PROMPT = `You are an expert GATE math tutor. Given an error diagnosis, generate:",
+  "src/gbrain/exam-strategy.ts::'jee-main': {",
+  "src/gbrain/exam-strategy.ts::name: 'BITSAT Mathematics',",
+  "src/gbrain/exam-strategy.ts::name: 'GATE Engineering Mathematics',",
+  "src/gbrain/exam-strategy.ts::name: 'JEE Main Mathematics',",
+  "src/gbrain/problem-generator.ts::- GATE Engineering Mathematics level",
+  "src/gbrain/problem-generator.ts::const PROBLEM_GEN_PROMPT = `You are a GATE Engineering Mathematics problem generator.",
+  "src/gbrain/task-reasoner.ts::- Exam-aware: everything connects back to maximizing GATE score",
+  "src/gbrain/task-reasoner.ts::const REASONER_PROMPT = `You are the Task Reasoner for a GATE Engineering Mathematics tutoring system.",
+  "src/gbrain/task-reasoner.ts::parts.push(`You are GBrain, an expert GATE Engineering Mathematics tutor.",
+  "src/scoring/deterministic-scorer.ts::'current-year GATE partial-credit rule against the official brochure before enabling',"
+]

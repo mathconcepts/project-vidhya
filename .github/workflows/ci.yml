@@ -14,6 +14,15 @@ name: CI
 # in either package's devDependencies, so `npm run lint` would fail on a
 # clean install — that's a separate fix (add + configure eslint) from
 # aligning CI to what's already working.
+#
+# U1-14 added a `lint:fork-test` step between typecheck and test: fails
+# the build on a NEW literal exam-name string (GATE/BITSAT/JEE/NEET/CSIR/
+# UGEE or their kebab-case exam-catalog ids) inside src/core, src/gbrain,
+# src/readiness, or src/scoring — the engine dirs that must stay
+# exam-agnostic per the Fork Test v2 architecture law. Pre-existing
+# violations are frozen in scripts/fork-test-lint-baseline.json so this
+# ratchets forward without blocking on debt this change didn't introduce;
+# see scripts/fork-test-lint.mjs's header for the full rationale.
 
 on:
   push:
@@ -37,6 +46,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Fork-test lint (no exam-name literals in engine modules)
+        run: npm run lint:fork-test
 
       - name: Test
         run: npm test

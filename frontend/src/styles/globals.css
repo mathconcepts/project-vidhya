@@ -41,6 +41,12 @@
     --streak-fire: 38 92% 50%;            /* amber-500 — kept for true warnings only */
     --progress-fill: 158 64% 36%;         /* emerald-600 (was sky) */
     --encourage-text: 158 64% 28%;        /* emerald-700 */
+    /* Receipt border (verification marker) — DESIGN-SYSTEM.md "Receipt Border" section.
+       Surfaces backed by a receipt object only; never decorative. Same HSL-triplet
+       format as the other variables above — consume via hsl(var(--receipt-border))
+       for the glyph, or hsl(var(--receipt-border) / 0.4) for the ~40%-alpha border. */
+    --receipt-border: 158 64% 36%;               /* emerald-600 — border uses this at ~40% alpha */
+    --receipt-border-strong: 158 64% 36%;        /* emerald-600 — ✓ glyph at full opacity */
   }
 
   .dark {
@@ -69,6 +75,10 @@
     --streak-fire: 38 92% 55%;
     --progress-fill: 158 84% 39%;         /* emerald-500 (was sky) */
     --encourage-text: 158 60% 55%;
+    /* Receipt border (verification marker) — dark mode uses the canonical
+       emerald-500 #10b981 signature shade, matching --primary above. */
+    --receipt-border: 158 84% 39%;               /* emerald-500 — border uses this at ~40% alpha */
+    --receipt-border-strong: 158 84% 39%;        /* emerald-500 — ✓ glyph at full opacity */
   }
 
   * {

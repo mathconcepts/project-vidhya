@@ -26,6 +26,7 @@
 import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
+import { gateMcqNegativeMarksFallback } from '../syllabus/exam-catalog';
 
 const TOPICS_DIR = path.resolve(process.cwd(), 'data/courses/gate-em/topics');
 
@@ -114,7 +115,10 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
             topic,
             q.difficulty || 'medium',
             q.marks ?? 1,
-            q.negative_marks ?? -0.33,
+            // U1-13: reads GATE's canonical marking_table row instead of a
+            // hardcoded `-0.33` literal (was duplicated with the identical
+            // fallback in src/api/gate-routes.ts's staticProblemsForTopic()).
+            q.negative_marks ?? gateMcqNegativeMarksFallback(q.marks ?? 1),
           ],
         );
         seededCount++;

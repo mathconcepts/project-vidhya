@@ -6,6 +6,7 @@
  * investors/partners who want to see the tech depth.
  */
 
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -13,8 +14,18 @@ import {
   Microscope, BarChart3, Shield, CheckCircle2,
 } from 'lucide-react';
 import { StaticSampleProblem } from '@/components/app/StaticSampleProblem';
+import { trackPageView } from '@/lib/beacon';
 
 export default function MarketingLanding() {
+  const mountedAt = useRef(typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  useEffect(() => {
+    const msToContent = Math.round(
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - mountedAt.current,
+    );
+    trackPageView('/gbrain', msToContent);
+  }, []);
+
   return (
     <div className="-mx-4">
       {/* === HERO === */}
@@ -30,19 +41,16 @@ export default function MarketingLanding() {
             <span className="text-xs font-semibold text-violet-300 uppercase tracking-wide">Daily study plan, calibrated to you</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-display font-black text-surface-100 leading-tight">
-            Know exactly the <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">three things</span> to study tomorrow.
+            The most marks achievable in your hours — <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">honestly stated</span>.
           </h1>
           <p className="text-base text-surface-400 leading-relaxed">
-            Stop guessing what to revise. Vidhya tells you the three problems that move the needle most for
-            your exam, today. Tomorrow it tells you what's next. Every wrong answer makes the next session smarter for you.
-            Show up, follow the plan, get better. That's it.
+            Learn it, practice it, prove it in mocks, keep it until exam day — every answer machine-verified.
+            No inflated promises about how far you'll get. Just an honest read on where you stand, and the next
+            thing that moves it.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <Link to="/" className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/25 inline-flex items-center justify-center gap-1.5">
-              Start Free — No Card <ArrowRight size={14} />
-            </Link>
-            <Link to="/mock-exam" className="px-6 py-3 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm font-semibold">
-              Try a Mock Exam
+          <div className="flex flex-col items-center gap-3">
+            <Link to="/diagnostic" className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/25 inline-flex items-center justify-center gap-1.5">
+              Take the 10-question diagnostic — no signup <ArrowRight size={14} />
             </Link>
           </div>
         </motion.div>
@@ -159,7 +167,7 @@ export default function MarketingLanding() {
             <div className="p-4 rounded-xl bg-surface-950 border border-surface-800">
               <p className="text-xs font-semibold text-surface-500 uppercase tracking-wide mb-3">Most apps</p>
               <ul className="space-y-2 text-sm text-surface-400">
-                <li>• Static question bank (500-2000 problems)</li>
+                <li>• Fixed static problem set (500-2000 problems)</li>
                 <li>• "Accuracy: 60%" — tells you nothing</li>
                 <li>• Random practice selection</li>
                 <li>• Generic "study harder" advice</li>
@@ -243,16 +251,19 @@ export default function MarketingLanding() {
         </div>
       </section>
 
-      {/* === FINAL CTA === */}
+      {/* === FINAL CTA ===
+          v4.25 copy law: one primary CTA on the page. This below-the-fold
+          repeat points at the same action (the diagnostic) rather than a
+          second, competing destination. */}
       <section className="px-4 py-12 text-center max-w-2xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-4">
-          <h2 className="text-2xl font-black text-surface-100">Start learning with a tutor that actually learns you</h2>
-          <p className="text-sm text-surface-400">Free to start. No signup to try a problem.</p>
+          <h2 className="text-2xl font-black text-surface-100">See exactly where you stand, in under 10 minutes</h2>
+          <p className="text-sm text-surface-400">No signup required to take the diagnostic.</p>
           <Link
-            to="/"
+            to="/diagnostic"
             className="inline-flex items-center gap-1.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white font-bold shadow-lg shadow-emerald-500/25"
           >
-            Practice Now <ArrowRight size={15} />
+            Take the 10-question diagnostic <ArrowRight size={15} />
           </Link>
         </motion.div>
       </section>

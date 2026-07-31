@@ -41,6 +41,13 @@ Every typographic, color, and spacing decision below traces back to "does this f
 - **Light mode (deferred — see TODO):** Light mode currently swaps backgrounds only (#f8fafc, #ffffff, #f1f5f9). Needs its own design pass: Fraunces and violet read differently on light surfaces; accent saturation likely needs reduction. Tracked as a follow-up.
 - **Blog/public pages:** Same dark theme as app, AND now same typography (Fraunces + DM Sans) and same palette (emerald + violet, no Space Grotesk neubrutalist palette). Unified brand for real this time — see Blog section below.
 
+## Receipt Border (verification marker)
+- **What it is:** The one visual cue that teaches "bordered = backed." A 1px emerald border at ~40% opacity on a surface-1 background, radius `md` (10px), with a small ✓ glyph in full-opacity emerald. Nothing else about the surface changes — no glow, no gradient, no shadow. Restraint is the point.
+- **When it appears:** ONLY on content backed by a receipt object — a verified answer, a verified item count, a verified session summary. Anything the system can point to a verification record for.
+- **When it never appears:** Estimates, unverified content, decoration. If there's no receipt object, there's no border. This is the trust-aesthetic law: the border is a promise, not a style choice.
+- **Enforcement:** By convention today — the `<ReceiptBorder receipt={...}>` component (`frontend/src/components/ui/ReceiptBorder.tsx`) only renders the bordered classes when a non-null `receipt` prop is passed, so "no receipt, no border" is true by construction at the call site. A lint rule that catches misuse at the component-authoring level (e.g. flags a border class applied outside `ReceiptBorder`) is a separate future item, not in scope now.
+- **Tokens:** `--receipt-border` (emerald ~40% alpha, the border itself) and `--receipt-border-strong` (full-opacity emerald, the ✓ glyph only) — see `frontend/src/styles/globals.css`.
+
 ## Spacing
 - **Base unit:** 4px
 - **Density:** Comfortable — cards breathe, touch targets 44px minimum
@@ -148,3 +155,4 @@ Every typographic, color, and spacing decision below traces back to "does this f
 | 2026-04-30 | Color: 3 accents → 2 + signature | Emerald + violet (#a78bfa, signature for AI/Tutor/Plan). Amber/sky demoted (sky removed; amber kept ONLY for system warnings, not decoration). Reason: streaks were already removed in v2.3 declutter, amber's job shrunk. Three accents was visual noise on 375px screens. |
 | 2026-04-30 | Blog: Dark Neubrutalism → Editorial-Confident | Pulls blog typography (Fraunces + DM Sans) and palette (emerald + violet) into alignment with app. Bordered card structure preserved (good IA), but borders soften (1.5px), corners round (8-12px), shadow-shift hover replaced with border-color shift. The "unified brand" claim from 2026-04-04 wasn't true; it is now. |
 | 2026-04-30 | Aesthetic: Playful-Serious → Editorial-Confident | Playful was inherited from Duolingo benchmarking; doesn't fit Compounding. Editorial-Confident centres the journal/textbook tradition without losing dark-theme warmth. Decoration level moves intentional → restrained. |
+| 2026-07-31 | Receipt border added — verified facts get a bordered surface; unverified content never does (trust-aesthetic law) | Closes the one gap in the token system: the eye needs a consistent, restrained cue that separates "backed by a receipt object" from "estimate." Enforced by the `<ReceiptBorder receipt={...}>` component contract, not by a lint rule (deferred). |

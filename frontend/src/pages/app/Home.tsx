@@ -16,6 +16,7 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { useActiveExam } from '@/hooks/useActiveExam';
 import { setAnalyticsSession, trackEvent } from '@/lib/analytics';
+import { trackPageView } from '@/lib/beacon';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { MasteryRing } from '@/components/app/MasteryRing';
 import { Confetti } from '@/components/app/Confetti';
@@ -166,7 +167,10 @@ export function Home() {
     setProfileChecked(false);
 
     setAnalyticsSession(sessionId);
-    trackEvent('page_view', { page: 'home' });
+    // page_view is tracked once via the beacon (below) — trackEvent's own
+    // 'page_view' type is intentionally not also fired here to avoid a
+    // duplicate event for the same view.
+    trackPageView('/');
 
     Promise.all([
       apiFetch<{ profile: StudyProfile | null }>(`/api/onboard/${sessionId}`).catch(() => ({ profile: null })),
@@ -442,9 +446,12 @@ export function Home() {
           aria-label="Today's priority task"
         >
           <div className="rounded-2xl bg-surface-900 border border-surface-800 p-6 space-y-4">
-            {/* Label */}
+            {/* Label — v4.25: "your hours → your next action" grammar (Home's
+                narrative role is "your state + your next action", per the
+                narrative design doc). Ordinal position still shown below in
+                the "X of Y tasks today" line, so no information is lost. */}
             <p className="text-[13px] font-medium text-surface-500">
-              Your #{currentTaskIdx + 1} priority
+              Your next move
             </p>
 
             {/* Topic name */}

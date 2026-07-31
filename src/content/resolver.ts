@@ -392,3 +392,48 @@ export function bundleStats() {
     wolfram_verified_count: bundle.problems.filter(p => p.wolfram_verified).length,
   };
 }
+
+// ============================================================================
+// Learn-depth introspection (spine screen, U1-4)
+// ============================================================================
+
+/**
+ * An explainer counts as "curated" (human-patched, not a thin auto-generated
+ * stub) once it carries at least this many `common_misconceptions` entries.
+ * See scripts/build-explainers.ts's note field: "Curated misconceptions
+ * patched offline (no LLM) for top 22 concepts" — everything else is a
+ * generic stub with the same shape but empty/near-empty misconception lists.
+ */
+const CURATED_MISCONCEPTION_THRESHOLD = 3;
+
+export interface TopicLearnCoverage {
+  topic: string;
+  total_concepts: number;
+  curated_concepts: number;
+}
+
+/**
+ * Per-topic breakdown of explainer depth: how many of a topic's bundled
+ * concept explainers are curated versus thin. Pure introspection of the
+ * already-loaded bundle (no new generation, no LLM/DB calls) — the spine
+ * screen (U1-4, Vidhya Master Design & Backlog) uses this as its one real
+ * "Learn" signal, so a topic never claims chapter depth it doesn't have.
+ */
+export function explainerCoverageByTopic(): TopicLearnCoverage[] {
+  const bundle = loadBundle();
+  const byTopic: Record<string, { total: number; curated: number }> = {};
+  for (const explainer of Object.values(bundle.explainers || {})) {
+    const topic = (explainer as any)?.topic || 'unknown';
+    if (!byTopic[topic]) byTopic[topic] = { total: 0, curated: 0 };
+    byTopic[topic].total += 1;
+    const misconceptions = (explainer as any)?.common_misconceptions;
+    if (Array.isArray(misconceptions) && misconceptions.length >= CURATED_MISCONCEPTION_THRESHOLD) {
+      byTopic[topic].curated += 1;
+    }
+  }
+  return Object.entries(byTopic).map(([topic, v]) => ({
+    topic,
+    total_concepts: v.total,
+    curated_concepts: v.curated,
+  }));
+}

@@ -37,6 +37,7 @@ import {
   type ArmWeights,
   type PrepPhase,
 } from './syllabus-context';
+import { findFirstPrereqRedirect, type ContentExistenceChecker, type PrereqRedirect } from './content-gate';
 import { DefaultReadinessEngine } from './next-best-action';
 
 // ────────────────────────────────────────────────────────────────────
@@ -54,6 +55,15 @@ export interface SyllabusAwareReadinessDeps extends ReadinessEngineDeps {
   syllabus: SyllabusContextProvider;
   /** Override clock for deterministic tests. */
   now?: () => Date;
+  /**
+   * U1-5 seam: when provided, an all-blocked `allowedNodes` set is given
+   * one more chance before the pre-U1-5 rescue (fall back to the
+   * original set) — a content-backed prerequisite redirect, per
+   * `src/readiness/content-gate.ts`. Omitting this dep preserves the
+   * exact pre-U1-5 behavior (no redirect ever fires); production wires
+   * `getAtomContentChecker()` from `atom-content-checker.ts`.
+   */
+  content?: ContentExistenceChecker;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -78,17 +88,35 @@ export class SyllabusAwareReadinessEngine implements ReadinessEngine {
     // any, we don't synthesise — the inner engine handles "no nodes →
     // diagnose" already.
     let scopedNodes: ConceptId[] | undefined = opts.allowedNodes;
+    let redirect: PrereqRedirect | null = null;
     if (scopedNodes && scopedNodes.length > 0) {
       const eligible = await eligibleNodes(scopedNodes, studentId, {
         curriculum: this.deps.curriculum,
         studentModel: this.deps.studentModel,
       });
-      // Defensive: if ALL nodes are blocked by prereqs (rare — fresh
-      // student on a course with strict DAG), fall back to the original
-      // set so the engine doesn't get stuck in diagnose forever. A
-      // smarter fallback would pull the prereqs themselves; ship that
-      // in a follow-up.
-      scopedNodes = eligible.length > 0 ? eligible : scopedNodes;
+      if (eligible.length > 0) {
+        scopedNodes = eligible;
+      } else if (this.deps.content) {
+        // U1-5: every candidate is prereq-blocked. Before the pre-U1-5
+        // rescue (fall back to the original, still-blocked set), see
+        // whether any of them has a FULLY content-backed prerequisite
+        // chain — the "LA-chain on-ramp." findFirstPrereqRedirect only
+        // returns non-null when every single node in that chain has
+        // real explainer content; a single missing link means null,
+        // never a partial redirect.
+        redirect = await findFirstPrereqRedirect(scopedNodes, studentId, {
+          curriculum: this.deps.curriculum,
+          studentModel: this.deps.studentModel,
+          content: this.deps.content,
+        });
+        if (redirect) scopedNodes = [redirect.redirectTo];
+        // else: no candidate's chain is fully content-backed — fall
+        // through to the unchanged rescue-to-original-set behavior below.
+      }
+      // Defensive: if ALL nodes are blocked by prereqs and no
+      // content-backed redirect exists (or no content checker is
+      // wired), fall back to the original set so the engine doesn't get
+      // stuck in diagnose forever.
     }
 
     const innerAction = await this.inner.nextBestAction(studentId, {
@@ -102,10 +130,13 @@ export class SyllabusAwareReadinessEngine implements ReadinessEngine {
     // without recomputing, but we CAN scale the surfaced gain so the
     // cockpit sees an honest phase-adjusted value.
     const scale = weightFor(innerAction.kind, weights);
+    const rationale = redirect
+      ? prefixPhase(phase, redirectRationale(redirect))
+      : prefixPhase(phase, innerAction.rationale);
     return {
       ...innerAction,
       expectedGain: innerAction.expectedGain * scale,
-      rationale: prefixPhase(phase, innerAction.rationale),
+      rationale,
     };
   }
 
@@ -136,6 +167,15 @@ function weightFor(kind: Action['kind'], w: ArmWeights): number {
     case 'teach': return w.teach;
     case 'diagnose': return w.diagnose;
   }
+}
+
+/**
+ * U1-5 rationale: honest about WHY the student is being routed to a
+ * prerequisite instead of the concept they were scoped to. Never hides
+ * the redirect — "labels never lie" applies to rationale copy too.
+ */
+function redirectRationale(r: PrereqRedirect): string {
+  return `Not ready for ${r.originalNodeId} yet — ${r.redirectTo} first.`;
 }
 
 function prefixPhase(phase: PrepPhase, rationale: string): string {

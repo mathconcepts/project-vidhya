@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { makeSyllabusAwareReadinessEngine } from '../syllabus-aware-engine';
+import type { ContentExistenceChecker } from '../content-gate';
 import type {
   CurriculumNode, CurriculumRepo, ItemSelector, LearningObject,
   MasteryState, StudentModel, TeachingPolicy,
@@ -68,6 +69,104 @@ describe('SyllabusAwareReadinessEngine', () => {
     // The rescue fallback means we DON'T deadlock in diagnose; the
     // teach candidate runs against calc2 since rescue kept it.
     expect(['teach', 'diagnose']).toContain(action.kind);
+  });
+
+  // ── U1-5: LA-chain on-ramp ──────────────────────────────────────
+  // next-best-action fires a prerequisite redirect ONLY when explainer
+  // content exists behind every door in the unmet-prereq chain.
+
+  const contentAllowing = (ids: string[]): ContentExistenceChecker => ({
+    async hasContent(id) { return ids.includes(id); },
+  });
+
+  it('U1-5: redirects to the content-backed prerequisite when the whole chain is content-backed', async () => {
+    const eigen = NODE('eigenvalues', ['determinants']);
+    const det = NODE('determinants');
+    const wexDet = OBJ('wex_det', 'determinants', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: model({ determinants: 'not-started' }),
+      curriculum: repo([eigen, det], [wexDet]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+      content: contentAllowing(['determinants']),
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['eigenvalues'],
+    });
+    // Redirected: the teach candidate should run against 'determinants',
+    // not the original blocked 'eigenvalues'.
+    expect(action.kind).toBe('teach');
+    expect(action.nodeId).toBe('determinants');
+    expect(action.rationale).toMatch(/Not ready for eigenvalues yet — determinants first/);
+  });
+
+  it('U1-5: suppresses the redirect (falls back to rescue) when one link in the chain has no content', async () => {
+    const eigen = NODE('eigenvalues', ['determinants']);
+    const det = NODE('determinants', ['matrix-operations']);
+    const matrixOps = NODE('matrix-operations');
+    const wexEigen = OBJ('wex_eigen', 'eigenvalues', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: model({ determinants: 'not-started', 'matrix-operations': 'not-started' }),
+      curriculum: repo([eigen, det, matrixOps], [wexEigen]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+      // 'matrix-operations' (the foundational link) has NO content —
+      // the whole redirect must be suppressed, never fired partially.
+      content: contentAllowing(['determinants']),
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['eigenvalues'],
+    });
+    // Same pre-U1-5 rescue behavior: falls back to the original
+    // (still-blocked) node set, never redirects to a stub.
+    expect(['teach', 'diagnose']).toContain(action.kind);
+    expect(action.rationale).not.toMatch(/Not ready for/);
+    if (action.kind === 'teach') {
+      expect(action.nodeId).toBe('eigenvalues');
+    }
+  });
+
+  it('U1-5: never redirects when no content checker is wired (safe default)', async () => {
+    const eigen = NODE('eigenvalues', ['determinants']);
+    const det = NODE('determinants');
+    const wexEigen = OBJ('wex_eigen', 'eigenvalues', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: model({ determinants: 'not-started' }),
+      curriculum: repo([eigen, det], [wexEigen]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+      // no `content` dep at all
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['eigenvalues'],
+    });
+    expect(action.rationale).not.toMatch(/Not ready for/);
+  });
+
+  it('U1-5: no redirect fires when there is no prerequisite gap (normal behavior unaffected)', async () => {
+    const calc2 = NODE('calc2', ['calc1']);
+    const wex = OBJ('wex_c2', 'calc2', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: model({ calc1: 'practicing' }),
+      curriculum: repo([NODE('calc1'), calc2], [wex]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+      content: contentAllowing(['calc1']), // content exists, but irrelevant — no gap to redirect for
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['calc2'],
+    });
+    expect(action.kind).toBe('teach');
+    expect(action.nodeId).toBe('calc2');
+    expect(action.rationale).not.toMatch(/Not ready for/);
   });
 
   it('allows the teach action when prereqs are practicing', async () => {

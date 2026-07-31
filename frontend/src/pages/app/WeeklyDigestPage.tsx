@@ -11,6 +11,8 @@ import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CountUp } from '@/components/app/CountUp';
 import { Calendar, Flame, TrendingUp, Target, AlertCircle, Sparkles } from 'lucide-react';
+import { isDemoMode, isSeededRole, getDemoRole } from '@/lib/demoMode';
+import { SampleDataChip } from '@/components/app/SampleDataChip';
 
 interface Digest {
   session_id: string;
@@ -68,7 +70,12 @@ export default function WeeklyDigestPage() {
     <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100">This Week</h1>
+        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
+          This Week
+          {/* Parent demo lens (see frontend/src/lib/demoMode.ts) reuses this
+              page directly — the sample-data marker must live here too. */}
+          {isDemoMode() && isSeededRole(getDemoRole()) && <SampleDataChip />}
+        </h1>
         <p className="text-xs text-surface-500 mt-1">
           {new Date(digest.generated_at).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
         </p>

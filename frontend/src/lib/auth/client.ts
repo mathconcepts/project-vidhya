@@ -7,6 +7,8 @@
  * - Wraps Google Identity Services client-side script loading
  */
 
+import { exitDemoModeOnRealSignIn } from '@/lib/demoMode';
+
 const TOKEN_KEY = 'vidhya.auth.token.v1';
 
 export type Role = 'owner' | 'admin' | 'teacher' | 'student' | 'parent' | 'institution';
@@ -43,6 +45,12 @@ export function setToken(token: string): void {
     localStorage.setItem(TOKEN_KEY, token);
     window.dispatchEvent(new StorageEvent('storage', { key: TOKEN_KEY, newValue: token }));
   } catch {}
+  // A real sign-in (this is the only call site — completeGoogleSignIn)
+  // always exits demo theater mode, so a tab left in ?demo mode never
+  // shows the demo role-switcher over a genuinely logged-in session.
+  // /demo-login writes the token via its own inline script and never
+  // calls this function, so demo role switches are unaffected.
+  exitDemoModeOnRealSignIn();
 }
 
 export function clearToken(): void {

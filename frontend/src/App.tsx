@@ -85,6 +85,10 @@ const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
 const StudymateSessionPage = lazy(() => import('@/pages/app/StudymateSessionPage'));
 const DailyCardsPage = lazy(() => import('@/pages/app/DailyCardsPage'));
 const WelcomePage = lazy(() => import('@/pages/app/WelcomePage'));
+// Wave U1
+const SpinePage = lazy(() => import('@/pages/app/SpinePage'));
+const InstitutePage = lazy(() => import('@/pages/app/InstitutePage'));
+const SellYourCoursePage = lazy(() => import('@/pages/app/SellYourCoursePage'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -139,6 +143,9 @@ export default function App() {
           <Route path="admin/gbrain" element={<GBrainAdminPage />} />
           <Route path="admin/concept-orchestrator" element={<ConceptOrchestratorPage />} />
           <Route path="gbrain" element={<MarketingLanding />} />
+          <Route path="spine" element={<SpinePage />} />
+          <Route path="institute" element={<InstitutePage />} />
+          <Route path="sell-your-course" element={<SellYourCoursePage />} />
           <Route path="materials" element={<MaterialsPage />} />
           <Route path="smart-practice" element={<SmartPracticePage />} />
           <Route path="attempt/:objectId" element={<PracticeAttemptPage />} />

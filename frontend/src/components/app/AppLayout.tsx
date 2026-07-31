@@ -10,6 +10,8 @@ import { motion } from 'framer-motion';
 import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Eye, EyeOff } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCalmMode } from '@/hooks/useCalmMode';
+import { isDemoMode } from '@/lib/demoMode';
+import { DemoRoleSwitcher } from '@/components/app/DemoRoleSwitcher';
 // v2.5: migrated from @/hooks/useAuth (Supabase Auth) to @/contexts/AuthContext
 // (Vidhya JWT). Backend only validates Vidhya JWTs — the Supabase hook was
 // frontend-only state that never matched what the API would accept.
@@ -104,6 +106,12 @@ export function AppLayout() {
       >
         {calmMode ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
+
+      {/* Demo theater (U1-9) — floating role switcher, ONLY when ?demo is
+          active this session (see frontend/src/lib/demoMode.ts). Never
+          rendered for real users; sessionStorage-scoped so it can't leak
+          into a normal session via stale state. */}
+      {isDemoMode() && <DemoRoleSwitcher />}
 
       {/* Header — shadow on scroll. Hidden in Calm Mode. */}
       <header className={clsx(

@@ -16,6 +16,7 @@ import { telegramWebhookRoutes } from './jobs/telegram-webhook';
 import { flywheelRoutes, setFlywheelOrchestrator } from './jobs/content-flywheel';
 import { topicPageRoutes } from './api/topic-pages';
 import { streakRoutes } from './api/streak-routes';
+import { spineRoutes } from './api/spine-routes';
 import { adminRoutes } from './api/admin-routes';
 import { adminExperimentsRoutes } from './api/admin-experiments-routes';
 import { adminRunsRoutes } from './api/admin-runs-routes';
@@ -78,6 +79,7 @@ import { courseRoutes } from './api/course-routes';
 import { examBuilderRoutes } from './api/exam-builder-routes';
 import { attentionRoutes } from './api/attention-routes';
 import { marketingRoutes } from './api/marketing-routes';
+import { interestRoutes } from './api/interest-routes';
 import { adminAgentRoutes } from './api/admin-agent-routes';
 import { sessionPlannerRoutes } from './api/session-planner-routes';
 import { studymateRoutes } from './api/studymate-routes';
@@ -164,6 +166,9 @@ for (const route of topicPageRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of streakRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of spineRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminRoutes) {
@@ -350,6 +355,9 @@ for (const route of attentionRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of marketingRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of interestRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminAgentRoutes) {

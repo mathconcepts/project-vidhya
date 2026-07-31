@@ -2,6 +2,15 @@
  * DiagnosticPage — Quick 10-question diagnostic (1 per topic, 45s timer each).
  * Per-question save with local queue retry on network error.
  *
+ * U1-1 funnel-ize (partial): progress (current question + answers so far)
+ * persists to localStorage and resumes if the student leaves mid-diagnostic
+ * and comes back to the SAME question set (see loadDiagnosticProgress /
+ * saveDiagnosticProgress below). Honesty note: this is fixed-length
+ * (10 questions, 1/topic), not the "20-min adaptive" diagnostic the backlog
+ * doc describes — adaptive item selection isn't built, so marketing copy
+ * says "10-question diagnostic," not "adaptive" or "20-minute" (see
+ * docs/capability-register.md for the open items this defers).
+ *
  * Results moment (Wave U1, UX-100x doc §3.2 "Results moment"): agency before
  * diagnosis. The default post-submit screen leads with focus areas — what
  * the student should DO next — with the honest per-concept band/score map
@@ -45,6 +54,49 @@ const MAX_FOCUS_CONCEPTS = 6;
 /** Which secondary screen is showing behind the agency-first results view. */
 type ResultsView = 'plan' | 'map';
 
+// U1-1 funnel-ize: resumability. Keyed by session so switching anonymous
+// sessions never leaks one student's in-progress answers into another's.
+// Storing `questionIds` alongside progress lets a resume attempt verify the
+// saved state actually belongs to the CURRENT question set fetched from the
+// backend — if the backend ever returns a different set (new day, different
+// exam), the stale progress is discarded rather than silently misapplied to
+// the wrong questions.
+const diagnosticStorageKey = (sessionId: string) => `vidhya_diagnostic_progress_${sessionId}`;
+
+interface DiagnosticProgress {
+  questionIds: string[];
+  currentIdx: number;
+  answers: Record<string, { selected: string | null; correct: boolean }>;
+}
+
+function loadDiagnosticProgress(sessionId: string): DiagnosticProgress | null {
+  try {
+    const raw = localStorage.getItem(diagnosticStorageKey(sessionId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.questionIds)) return null;
+    return parsed as DiagnosticProgress;
+  } catch {
+    return null;
+  }
+}
+
+function saveDiagnosticProgress(sessionId: string, progress: DiagnosticProgress): void {
+  try {
+    localStorage.setItem(diagnosticStorageKey(sessionId), JSON.stringify(progress));
+  } catch {
+    // best-effort — private mode / full storage
+  }
+}
+
+function clearDiagnosticProgress(sessionId: string): void {
+  try {
+    localStorage.removeItem(diagnosticStorageKey(sessionId));
+  } catch {
+    // best-effort
+  }
+}
+
 export default function DiagnosticPage() {
   const sessionId = useSession();
   const navigate = useNavigate();
@@ -73,6 +125,29 @@ export default function DiagnosticPage() {
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then((data: { questions: DiagnosticQuestion[] }) => {
         setQuestions(data.questions);
+        // Resume: only trust saved progress if it was recorded against this
+        // EXACT question set (same ids, same order) — otherwise a stale
+        // localStorage entry from a previous day's diagnostic could resume
+        // into the wrong question at the wrong index.
+        const saved = loadDiagnosticProgress(sessionId);
+        // A corrupted or hand-edited localStorage value must never crash the
+        // page — validate currentIdx is a real in-bounds index (not negative,
+        // not a float, not NaN from a tampered string) and answers is a
+        // plain object before trusting either.
+        const validIdx = saved && Number.isInteger(saved.currentIdx)
+          && saved.currentIdx >= 0 && saved.currentIdx < data.questions.length;
+        const validAnswers = saved && saved.answers !== null && typeof saved.answers === 'object'
+          && !Array.isArray(saved.answers);
+        const sameQuestionSet = saved
+          && saved.questionIds.length === data.questions.length
+          && saved.questionIds.every((id, i) => id === data.questions[i]?.id);
+        if (sameQuestionSet && validIdx && validAnswers) {
+          setAnswers(saved.answers);
+          setCurrentIdx(saved.currentIdx);
+        } else if (saved) {
+          // Belongs to a different question set — don't let it linger.
+          clearDiagnosticProgress(sessionId);
+        }
       })
       .catch(() => {
         // Genuine failure — go home (GateHome will redirect to /planned for
@@ -81,6 +156,26 @@ export default function DiagnosticPage() {
       })
       .finally(() => setLoading(false));
   }, [sessionId, navigate, checking]);
+
+  // Persist progress after every answer so a closed tab / lost connection /
+  // app kill resumes to the exact question rather than restarting the
+  // diagnostic (U1-1). Skipped once results are showing — a finished
+  // diagnostic has nothing left to resume into.
+  useEffect(() => {
+    if (loading || showResult || questions.length === 0) return;
+    saveDiagnosticProgress(sessionId, {
+      questionIds: questions.map(q => q.id),
+      currentIdx,
+      answers,
+    });
+  }, [sessionId, loading, showResult, questions, currentIdx, answers]);
+
+  // Once the diagnostic completes, the saved progress has served its
+  // purpose — clear it so a later fresh diagnostic (new questions) doesn't
+  // find stale state.
+  useEffect(() => {
+    if (showResult) clearDiagnosticProgress(sessionId);
+  }, [showResult, sessionId]);
 
   // Timer countdown
   useEffect(() => {
@@ -339,8 +434,12 @@ export default function DiagnosticPage() {
     );
   }
 
-  // Question screen
+  // Question screen. Defense in depth: currentIdx is validated on resume
+  // (see the loadDiagnosticProgress guard above), but this render path
+  // dereferences `q` unconditionally right below — a corrupted/out-of-range
+  // index must degrade to a loading state, never a hard crash.
   const q = questions[currentIdx];
+  if (!q) return <Loader2 className="w-6 h-6 animate-spin text-violet-400 mx-auto mt-12" />;
   const options = Array.isArray(q.options?.choices) ? q.options.choices :
     typeof q.options === 'object' && q.options !== null ?
       Object.entries(q.options).filter(([k]) => !['correct_answer', 'answer', 'explanation'].includes(k)).map(([k, v]) => ({ key: k, text: v })) :

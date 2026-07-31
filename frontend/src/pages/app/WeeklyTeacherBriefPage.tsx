@@ -15,6 +15,8 @@ import { TrendingUp, TrendingDown, Users, AlertTriangle, Sparkles, ArrowRight } 
 import { authFetch } from '@/lib/auth/client';
 import { fadeInUp } from '@/lib/animations';
 import { trackEvent } from '@/lib/analytics';
+import { isDemoMode, isSeededRole, getDemoRole } from '@/lib/demoMode';
+import { SampleDataChip } from '@/components/app/SampleDataChip';
 
 interface WeeklyBrief {
   should_show: boolean;
@@ -132,8 +134,9 @@ export default function WeeklyTeacherBriefPage() {
         <p className="text-xs font-medium uppercase tracking-wider text-surface-500">
           Week {brief.week}
         </p>
-        <h1 className="font-display text-3xl font-bold text-white">
+        <h1 className="font-display text-3xl font-bold text-white flex items-center gap-2">
           This week with your cohort
+          {isDemoMode() && isSeededRole(getDemoRole()) && <SampleDataChip />}
         </h1>
         <p className="text-sm text-surface-300 leading-relaxed">{brief.opening}</p>
       </header>

@@ -8,6 +8,8 @@ import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
+import { isDemoMode, isSeededRole, getDemoRole } from '@/lib/demoMode';
+import { SampleDataChip } from '@/components/app/SampleDataChip';
 
 interface RosterStudent {
   student_id: string;
@@ -71,6 +73,11 @@ export default function TeacherRosterPage() {
           <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
             <Brain size={20} className="text-emerald-400" />
             Your Students
+            {/* Design-review finding: the seeded-data signal must sit ON the
+                data it describes, not just in a floating toolbar elsewhere
+                on screen — a screenshot cropped to this roster must still
+                carry the "not real" marker. */}
+            {isDemoMode() && isSeededRole(getDemoRole()) && <SampleDataChip />}
           </h1>
           <p className="text-xs text-surface-500 mt-1">
             {data ? `${data.student_count} students` : 'Loading...'}

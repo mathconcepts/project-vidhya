@@ -24,18 +24,23 @@ export function DemoBanner() {
   if (!user || !isDemoEmail(user.email)) return null;
 
   return (
-    <div className="bg-violet-900/40 border-b border-violet-800 px-4 py-2 text-xs">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-violet-200">
-          <Sparkles size={14} className="flex-shrink-0" />
+    <div style={{
+      background: 'rgba(88,86,214,.06)',
+      borderBottom: '1px solid rgba(88,86,214,.22)',
+      padding: '8px 16px',
+      fontSize: 'var(--text-caption)',
+    }}>
+      <div style={{ maxWidth: 1152, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)' }}>
+          <Sparkles size={14} style={{ flexShrink: 0, color: 'var(--indigo-ink)' }} />
           <span>
-            <strong>Demo mode</strong> — you're signed in as {user.name}. Your work
+            <strong style={{ color: 'var(--text-primary)' }}>Demo mode</strong> — you're signed in as {user.name}. Your work
             here can be carried onto a real account at any time.
           </span>
         </div>
         <Link
           to="/convert-demo"
-          className="text-violet-300 hover:text-white font-medium whitespace-nowrap"
+          style={{ color: 'var(--indigo-ink)', fontWeight: 'var(--weight-medium)', whiteSpace: 'nowrap', textDecoration: 'none' }}
         >
           Make this real →
         </Link>

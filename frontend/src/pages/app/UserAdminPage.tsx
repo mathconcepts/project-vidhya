@@ -4,10 +4,8 @@ import {
   Users, Crown, Shield, GraduationCap, UserCircle, Heart, Building2,
   Search, Loader2, RefreshCw, AlertCircle,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch, type Role } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface AdminUser {
   id: string;
@@ -23,12 +21,12 @@ interface AdminUser {
 }
 
 const ROLE_META: Record<Role, { icon: typeof Crown; color: string; label: string }> = {
-  owner:       { icon: Crown,         color: 'text-amber-400',   label: 'Owner' },
-  admin:       { icon: Shield,        color: 'text-violet-400',     label: 'Admin' },
-  teacher:     { icon: GraduationCap, color: 'text-emerald-400', label: 'Teacher' },
-  student:     { icon: UserCircle,    color: 'text-surface-400', label: 'Student' },
-  parent:      { icon: Heart,         color: 'text-rose-400',    label: 'Parent' },
-  institution: { icon: Building2,     color: 'text-violet-400',  label: 'Institution' },
+  owner:       { icon: Crown,         color: 'var(--orange)',     label: 'Owner' },
+  admin:       { icon: Shield,        color: 'var(--indigo-ink)', label: 'Admin' },
+  teacher:     { icon: GraduationCap, color: 'var(--green-ink)',  label: 'Teacher' },
+  student:     { icon: UserCircle,    color: 'var(--text-tertiary)', label: 'Student' },
+  parent:      { icon: Heart,         color: 'var(--red)',        label: 'Parent' },
+  institution: { icon: Building2,     color: 'var(--indigo-ink)', label: 'Institution' },
 };
 
 export default function UserAdminPage() {
@@ -94,10 +92,10 @@ export default function UserAdminPage() {
 
   if (!hasRole('admin')) {
     return (
-      <div className="max-w-md mx-auto p-6 text-center space-y-2">
-        <AlertCircle size={24} className="text-amber-400 mx-auto" />
-        <p className="text-sm text-surface-300">Admin role required to view this page.</p>
-        <p className="text-xs text-surface-500">
+      <div style={{ maxWidth: 448, margin: '0 auto', padding: 24, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <AlertCircle size={24} style={{ color: 'var(--orange)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>Admin role required to view this page.</p>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
           Your current role: {currentUser?.role || 'not signed in'}
         </p>
       </div>
@@ -112,53 +110,57 @@ export default function UserAdminPage() {
   const teachers = (users || []).filter(u => u.role === 'teacher');
 
   return (
-    <motion.div className="space-y-5 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ maxWidth: 896, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}
+    >
       {/* Header */}
-      <motion.div variants={fadeInUp} className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            <Users size={20} className="text-violet-400" />
+          <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Users size={20} style={{ color: 'var(--indigo-ink)' }} />
             User Management
           </h1>
-          <p className="text-xs text-surface-500 mt-1">
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
             {counts.total || 0} users — {counts.owner || 0} owner · {counts.admin || 0} admin · {counts.teacher || 0} teacher · {counts.student || 0} student
           </p>
         </div>
         <button
           onClick={refresh}
           disabled={loading}
-          className="p-2 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200"
+          style={{ padding: 8, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)', cursor: loading ? 'not-allowed' : 'pointer' }}
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
         </button>
-      </motion.div>
+      </div>
 
       {/* Search */}
-      <motion.div variants={fadeInUp} className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" />
+      <div style={{ position: 'relative' }}>
+        <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or email"
-          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
+          style={{ width: '100%', paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-caption)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
         />
-      </motion.div>
+      </div>
 
       {/* Error */}
       {error && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-300">
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 11, color: 'var(--red)' }}>
           {error}
-        </motion.div>
+        </div>
       )}
 
       {/* User cards */}
       {loading && !users ? (
-        <div className="text-center py-8 text-surface-500 text-sm">
-          <Loader2 size={14} className="inline animate-spin mr-2" />
+        <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)' }}>
+          <Loader2 size={14} className="animate-spin" style={{ display: 'inline', marginRight: 8 }} />
           Loading users...
         </div>
       ) : (
-        <motion.div variants={fadeInUp} className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {filtered.map(u => {
             const RoleIcon = ROLE_META[u.role].icon;
             const isMe = u.id === currentUser?.id;
@@ -169,30 +171,30 @@ export default function UserAdminPage() {
             const teacherName = u.taught_by ? (users?.find(x => x.id === u.taught_by)?.name || u.taught_by) : null;
 
             return (
-              <div key={u.id} className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+              <div key={u.id} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {/* Top row: avatar, name, role */}
-                <div className="flex items-center gap-3">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {u.picture ? (
-                    <img src={u.picture} alt="" className="w-8 h-8 rounded-full" />
+                    <img src={u.picture} alt="" style={{ width: 32, height: 32, borderRadius: '50%' }} />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-surface-800 flex items-center justify-center">
-                      <UserCircle size={18} className="text-surface-500" />
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--surface-fill)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <UserCircle size={18} style={{ color: 'var(--text-tertiary)' }} />
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-surface-100 truncate">
-                      {u.name} {isMe && <span className="text-[10px] text-violet-400">(you)</span>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: '0 0 2px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {u.name} {isMe && <span style={{ fontSize: 10, color: 'var(--indigo-ink)' }}>(you)</span>}
                     </p>
-                    <p className="text-[11px] text-surface-500 truncate">{u.email}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</p>
                   </div>
-                  <div className={clsx('inline-flex items-center gap-1 text-xs', ROLE_META[u.role].color)}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: ROLE_META[u.role].color }}>
                     <RoleIcon size={12} />
                     {ROLE_META[u.role].label}
                   </div>
                 </div>
 
                 {/* Details row */}
-                <div className="flex items-center gap-3 text-[10px] text-surface-500">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 10, color: 'var(--text-tertiary)' }}>
                   {u.role === 'teacher' && (
                     <span>{u.teacher_of.length} students</span>
                   )}
@@ -206,13 +208,13 @@ export default function UserAdminPage() {
                 </div>
 
                 {/* Actions row */}
-                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   {canChangeRole && (
                     <select
                       value={u.role}
                       onChange={e => changeRole(u.id, e.target.value as Role)}
                       disabled={busyId === u.id}
-                      className="px-2 py-1 rounded-lg bg-surface-950 border border-surface-800 text-[11px] text-surface-200"
+                      style={{ padding: '4px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', fontSize: 11, color: 'var(--text-primary)' }}
                     >
                       <option value="student">Student</option>
                       <option value="teacher">Teacher</option>
@@ -224,7 +226,7 @@ export default function UserAdminPage() {
                       value={u.taught_by || ''}
                       onChange={e => assignTeacher(u.id, e.target.value || null)}
                       disabled={busyId === u.id}
-                      className="px-2 py-1 rounded-lg bg-surface-950 border border-surface-800 text-[11px] text-surface-200"
+                      style={{ padding: '4px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', fontSize: 11, color: 'var(--text-primary)' }}
                     >
                       <option value="">No teacher</option>
                       {teachers.map(t => (
@@ -237,11 +239,11 @@ export default function UserAdminPage() {
             );
           })}
           {filtered.length === 0 && (
-            <div className="text-center py-8 text-xs text-surface-500">
+            <div style={{ textAlign: 'center', padding: '32px 0', fontSize: 11, color: 'var(--text-tertiary)' }}>
               {search ? 'No users match your search.' : 'No users yet — first sign-in will create the owner.'}
             </div>
           )}
-        </motion.div>
+        </div>
       )}
     </motion.div>
   );

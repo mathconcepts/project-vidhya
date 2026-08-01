@@ -22,13 +22,11 @@ import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart, Hash, Repeat, Layers, Share2, Navigation,
   BookOpen, Target, CheckCircle2, RotateCcw, ChevronDown, ChevronRight,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   'grid': Grid3x3, 'activity': Activity, 'git-branch': GitBranch,
@@ -93,8 +91,6 @@ export default function SpinePage() {
     Promise.all([
       apiFetch<{ learn: SpineLearnTopic[] }>('/api/spine'),
       apiFetch<{ topics: TopicListEntry[] }>('/api/topics'),
-      // Session-scoped and can legitimately be empty (anonymous, no
-      // attempts yet) — never blocks the rest of the screen.
       apiFetch<{ topics: ProgressTopic[] }>(`/api/progress/${sessionId}`).catch(() => ({ topics: [] as ProgressTopic[] })),
     ])
       .then(([spine, topicsRes, progressRes]) => {
@@ -118,11 +114,11 @@ export default function SpinePage() {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <div className="h-7 w-48 rounded bg-surface-800/60 animate-pulse" />
-        <div className="h-4 w-64 rounded bg-surface-800/60 animate-pulse" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ height: 28, width: 192, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)' }} className="animate-pulse" />
+        <div style={{ height: 16, width: 256, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)' }} className="animate-pulse" />
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-28 rounded-xl bg-surface-800/60 animate-pulse" />
+          <div key={i} style={{ height: 112, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} className="animate-pulse" />
         ))}
       </div>
     );
@@ -130,50 +126,50 @@ export default function SpinePage() {
 
   if (!rows || rows.length === 0) {
     return (
-      <div className="text-center py-16 space-y-3">
-        <BookOpen size={40} className="text-surface-700 mx-auto" />
-        <h2 className="font-display text-xl font-semibold text-surface-300">Can't load the spine right now</h2>
-        <p className="text-sm text-surface-500">Topic data is temporarily unavailable — try again shortly.</p>
+      <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <BookOpen size={40} style={{ color: 'var(--text-tertiary)' }} />
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Can't load the spine right now</h2>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Topic data is temporarily unavailable — try again shortly.</p>
       </div>
     );
   }
 
   return (
-    <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp}>
-        <h1 className="font-display text-xl font-semibold text-surface-100">
-          Learn &rarr; Practice &rarr; Prove &rarr; Retain
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
+          Learn → Practice → Prove → Retain
         </h1>
-        <p className="text-sm text-surface-400 mt-1">
+        <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
           What's real for each topic today — expanding is an honest label, not a delay.
         </p>
-      </motion.div>
+      </div>
 
-      <motion.div variants={fadeInUp}>
+      <div>
         <button
           onClick={() => setLegendOpen(o => !o)}
           aria-expanded={legendOpen}
-          className="flex items-center gap-1.5 text-xs text-surface-500 hover:text-surface-300 transition-colors cursor-pointer touch-manipulation"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {legendOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
           What do these mean?
         </button>
         {legendOpen && (
-          <dl className="mt-2 grid grid-cols-1 gap-2 text-xs text-surface-400 bg-surface-900 border border-surface-800 rounded-lg p-3">
-            <div><dt className="inline font-semibold text-surface-300">Learn — </dt><dd className="inline">understand the concept, with a real explainer behind it.</dd></div>
-            <div><dt className="inline font-semibold text-surface-300">Practice — </dt><dd className="inline">work real, marked problems on this topic.</dd></div>
-            <div><dt className="inline font-semibold text-surface-300">Prove — </dt><dd className="inline">your verified accuracy from actual attempts, not an estimate.</dd></div>
-            <div><dt className="inline font-semibold text-surface-300">Retain — </dt><dd className="inline">spaced review keeping marks you've already earned.</dd></div>
+          <dl style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11, color: 'var(--text-tertiary)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
+            <div><dt style={{ display: 'inline', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Learn — </dt><dd style={{ display: 'inline', margin: 0 }}>understand the concept, with a real explainer behind it.</dd></div>
+            <div><dt style={{ display: 'inline', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Practice — </dt><dd style={{ display: 'inline', margin: 0 }}>work real, marked problems on this topic.</dd></div>
+            <div><dt style={{ display: 'inline', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Prove — </dt><dd style={{ display: 'inline', margin: 0 }}>your verified accuracy from actual attempts, not an estimate.</dd></div>
+            <div><dt style={{ display: 'inline', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Retain — </dt><dd style={{ display: 'inline', margin: 0 }}>spaced review keeping marks you've already earned.</dd></div>
           </dl>
         )}
-      </motion.div>
+      </div>
 
-      <motion.div className="space-y-3" variants={staggerContainer}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {rows.map(row => (
           <SpineRow key={row.id} row={row} />
         ))}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -185,20 +181,24 @@ function SpineRow({ row }: { row: Row }) {
   const Icon = ICON_MAP[row.icon] || Grid3x3;
 
   return (
-    <motion.div variants={fadeInUp} className="rounded-xl bg-surface-900 border border-surface-800 p-3">
-      <Link to={`/topic/${row.id}`} className="flex items-center gap-2.5 mb-3 group">
-        <div className="w-8 h-8 rounded-lg bg-surface-800 flex items-center justify-center shrink-0 group-hover:bg-surface-700 transition-colors">
-          <Icon size={16} className="text-surface-300" />
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', padding: 12 }}
+    >
+      <Link to={`/topic/${row.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, textDecoration: 'none' }}>
+        <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon size={16} style={{ color: 'var(--text-secondary)' }} />
         </div>
-        <span className="font-display text-[18px] font-medium text-surface-100 group-hover:text-emerald-300 transition-colors truncate">
+        <span style={{ fontSize: 17, fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
           {row.name}
         </span>
         {row.weightPct > 0 && (
-          <span className="ml-auto text-[10px] font-mono text-surface-500 shrink-0">{row.weightPct}% marks</span>
+          <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', flexShrink: 0 }}>{row.weightPct}% marks</span>
         )}
       </Link>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <LearnSegment learn={row.learn} />
         <PracticeSegment problemCount={row.problemCount} topicId={row.id} />
         <ProveSegment progress={row.progress} topicId={row.id} />
@@ -229,23 +229,41 @@ function SegmentShell({
   secondary: string;
   verified?: boolean;
 }) {
-  const toneClasses =
-    tone === 'lit'
-      ? 'border-emerald-500/25 bg-emerald-500/5'
+  const containerStyle: React.CSSProperties = {
+    borderRadius: 'var(--radius-sm)',
+    border: tone === 'lit'
+      ? '1px solid rgba(52,199,89,.25)'
       : tone === 'partial'
-      ? 'border-surface-700 bg-surface-800/40'
-      : 'border-surface-800 bg-surface-950/40';
+      ? 'var(--hairline) solid var(--separator)'
+      : 'var(--hairline) solid var(--separator)',
+    background: tone === 'lit'
+      ? 'rgba(52,199,89,.05)'
+      : tone === 'partial'
+      ? 'var(--surface-fill)'
+      : 'var(--surface-fill)',
+    padding: 10,
+    height: '100%',
+    boxSizing: 'border-box' as const,
+    opacity: tone === 'muted' ? 0.7 : 1,
+  };
 
   const content = (
-    <div className={clsx('rounded-lg border p-2.5 h-full', toneClasses)}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <SegIcon size={11} className={tone === 'lit' ? 'text-emerald-400' : 'text-surface-500'} />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-surface-500">{label}</span>
+    <div style={containerStyle}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <SegIcon size={11} style={{ color: tone === 'lit' ? 'var(--green-ink)' : 'var(--text-tertiary)' }} />
+        <span style={{ fontSize: 10, fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>{label}</span>
       </div>
-      <p className={clsx('text-[13px] font-mono leading-tight', tone === 'lit' ? 'text-emerald-300' : tone === 'partial' ? 'text-surface-300' : 'text-surface-500 italic font-sans')}>
+      <p style={{
+        margin: '0 0 2px',
+        fontSize: 13,
+        fontFamily: tone === 'muted' ? 'var(--font-sans)' : 'var(--font-mono)',
+        fontStyle: tone === 'muted' ? 'italic' : 'normal',
+        lineHeight: 1.3,
+        color: tone === 'lit' ? 'var(--green-ink)' : tone === 'partial' ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+      }}>
         {primary}
       </p>
-      <p className="text-[10px] text-surface-500 mt-0.5 leading-tight">{secondary}</p>
+      <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', lineHeight: 1.3 }}>{secondary}</p>
     </div>
   );
 
@@ -256,34 +274,20 @@ function SegmentShell({
 }
 
 // ============================================================================
-// Learn — bundle-metadata signal (src/content/resolver.ts explainerCoverageByTopic)
+// Learn
 // ============================================================================
 
 function LearnSegment({ learn }: { learn: SpineLearnTopic | null }) {
   if (!learn || learn.total_concepts === 0) {
     return (
-      <SegmentShell
-        icon={BookOpen}
-        label="Learn"
-        tone="muted"
-        primary="Expanding"
-        secondary="No explainers yet"
-      />
+      <SegmentShell icon={BookOpen} label="Learn" tone="muted" primary="Expanding" secondary="No explainers yet" />
     );
   }
-
   if (learn.status === 'expanding') {
     return (
-      <SegmentShell
-        icon={BookOpen}
-        label="Learn"
-        tone="muted"
-        primary="Expanding"
-        secondary={`0/${learn.total_concepts} concepts explained`}
-      />
+      <SegmentShell icon={BookOpen} label="Learn" tone="muted" primary="Expanding" secondary={`0/${learn.total_concepts} concepts explained`} />
     );
   }
-
   return (
     <SegmentShell
       icon={BookOpen}
@@ -296,49 +300,25 @@ function LearnSegment({ learn }: { learn: SpineLearnTopic | null }) {
 }
 
 // ============================================================================
-// Practice — GET /api/topics problemCount (DB-first, static-fallback; same
-// number TopicPage already shows)
+// Practice
 // ============================================================================
 
 function PracticeSegment({ problemCount, topicId: _topicId }: { problemCount: number; topicId: string }) {
   if (problemCount <= 0) {
-    return (
-      <SegmentShell
-        icon={Target}
-        label="Practice"
-        tone="muted"
-        primary="Expanding"
-        secondary="No problems yet"
-      />
-    );
+    return <SegmentShell icon={Target} label="Practice" tone="muted" primary="Expanding" secondary="No problems yet" />;
   }
   return (
-    <SegmentShell
-      icon={Target}
-      label="Practice"
-      tone="lit"
-      primary={`${problemCount} problems`}
-      secondary="Real, marked questions"
-    />
+    <SegmentShell icon={Target} label="Practice" tone="lit" primary={`${problemCount} problems`} secondary="Real, marked questions" />
   );
 }
 
 // ============================================================================
-// Prove — GET /api/progress/:sessionId (real attempts only; no attempts,
-// no percentage)
+// Prove
 // ============================================================================
 
 function ProveSegment({ progress, topicId: _topicId }: { progress: ProgressTopic | null; topicId: string }) {
   if (!progress || progress.attempts === 0) {
-    return (
-      <SegmentShell
-        icon={CheckCircle2}
-        label="Prove"
-        tone="muted"
-        primary="Not started"
-        secondary="No attempts yet"
-      />
-    );
+    return <SegmentShell icon={CheckCircle2} label="Prove" tone="muted" primary="Not started" secondary="No attempts yet" />;
   }
   const masteryPct = Math.round(progress.mastery * 100);
   return (
@@ -354,40 +334,15 @@ function ProveSegment({ progress, topicId: _topicId }: { progress: ProgressTopic
 }
 
 // ============================================================================
-// Retain — GET /api/progress/:sessionId's `due` (spaced-review scheduling
-// only exists once real attempts have been recorded for the topic)
+// Retain
 // ============================================================================
 
 function RetainSegment({ progress }: { progress: ProgressTopic | null }) {
   if (!progress || progress.attempts === 0) {
-    return (
-      <SegmentShell
-        icon={RotateCcw}
-        label="Retain"
-        tone="muted"
-        primary="Not scheduled"
-        secondary="Starts after practice"
-      />
-    );
+    return <SegmentShell icon={RotateCcw} label="Retain" tone="muted" primary="Not scheduled" secondary="Starts after practice" />;
   }
   if (progress.due === 0) {
-    return (
-      <SegmentShell
-        icon={RotateCcw}
-        label="Retain"
-        tone="lit"
-        primary="All caught up"
-        secondary="Nothing due right now"
-      />
-    );
+    return <SegmentShell icon={RotateCcw} label="Retain" tone="lit" primary="All caught up" secondary="Nothing due right now" />;
   }
-  return (
-    <SegmentShell
-      icon={RotateCcw}
-      label="Retain"
-      tone="lit"
-      primary={`${progress.due} due`}
-      secondary="Scheduled for review"
-    />
-  );
+  return <SegmentShell icon={RotateCcw} label="Retain" tone="lit" primary={`${progress.due} due`} secondary="Scheduled for review" />;
 }

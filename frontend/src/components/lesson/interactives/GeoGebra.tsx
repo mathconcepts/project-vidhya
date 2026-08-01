@@ -67,14 +67,15 @@ export default function GeoGebra({ attrs }: DirectiveProps) {
     }
     return (
       <figure
-        className="my-3 rounded-md border border-surface-800 bg-surface-900/50 px-4 py-3"
+        className="my-3 rounded-md border px-4 py-3"
+        style={{ borderColor: 'var(--separator)', background: 'var(--surface-card)' }}
         role="img"
         aria-label={a.alt_text || `Computer algebra: ${text}`}
       >
-        <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-1">CAS</div>
-        <code className="block text-sm text-emerald-300 font-mono break-all">{text}</code>
+        <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'rgba(88,86,214,.8)' }}>CAS</div>
+        <code className="block text-sm font-mono break-all" style={{ color: 'var(--green-ink)' }}>{text}</code>
         {a.caption && (
-          <figcaption className="text-xs text-surface-500 mt-2">{a.caption}</figcaption>
+          <figcaption className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>{a.caption}</figcaption>
         )}
       </figure>
     );
@@ -89,7 +90,8 @@ export default function GeoGebra({ attrs }: DirectiveProps) {
 
   return (
     <figure
-      className="my-3 rounded-md border border-surface-800 overflow-hidden bg-surface-900/50"
+      className="my-3 rounded-md border overflow-hidden"
+      style={{ borderColor: 'var(--separator)', background: 'var(--surface-card)' }}
       role="img"
       aria-label={a.alt_text || `GeoGebra interactive ${a.material_id}`}
     >
@@ -104,7 +106,10 @@ export default function GeoGebra({ attrs }: DirectiveProps) {
         sandbox="allow-scripts allow-same-origin"
       />
       {a.caption && (
-        <figcaption className="px-3 py-2 text-xs text-surface-500 border-t border-surface-800">
+        <figcaption
+          className="px-3 py-2 text-xs border-t"
+          style={{ color: 'var(--text-tertiary)', borderColor: 'var(--separator)' }}
+        >
           {a.caption}
         </figcaption>
       )}

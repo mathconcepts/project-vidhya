@@ -106,15 +106,20 @@ export default function MathBox({ directive, attrs }: DirectiveProps) {
 
   return (
     <figure
-      className="my-3 rounded-md border border-surface-800 overflow-hidden bg-transparent"
+      className="my-3 rounded-md border overflow-hidden bg-transparent"
+      style={{ borderColor: 'var(--separator)', aspectRatio: a.aspect || '4 / 3' }}
       role="img"
       aria-label={`3D plot of ${a.function || a.fn || 'surface'}`}
-      style={{ aspectRatio: a.aspect || '4 / 3' }}
     >
       <div
         ref={containerRef}
-        className={state === 'pending' ? 'animate-pulse bg-surface-800/40' : ''}
-        style={{ width: '100%', height: '100%', minHeight: 280 }}
+        className={state === 'pending' ? 'animate-pulse' : ''}
+        style={{
+          width: '100%',
+          height: '100%',
+          minHeight: 280,
+          ...(state === 'pending' ? { background: 'var(--surface-fill)' } : {}),
+        }}
       />
       <figcaption className="sr-only">
         {`Interactive 3D plot of ${a.function || a.fn || 'surface'} (${directive}).`}

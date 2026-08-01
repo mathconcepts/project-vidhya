@@ -90,7 +90,8 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
 
   return (
     <figure
-      className="my-3 rounded-md border border-surface-800 overflow-hidden bg-surface-900/50"
+      className="my-3 rounded-md border overflow-hidden"
+      style={{ borderColor: 'var(--separator)', background: 'var(--surface-card)' }}
       role="img"
       aria-label={`Plot of ${eqSrc} with ${sliderSpecs.length} parameter slider(s)`}
     >
@@ -110,10 +111,10 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
         <path d={path} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       {sliderSpecs.length > 0 && (
-        <div className="px-3 py-2 border-t border-surface-800 space-y-1.5">
+        <div className="px-3 py-2 border-t space-y-1.5" style={{ borderColor: 'var(--separator)' }}>
           {sliderSpecs.map((s) => (
             <div key={s.name} className="flex items-center gap-2 text-xs">
-              <span className="font-mono text-violet-300 w-4">{s.name}</span>
+              <span className="font-mono w-4" style={{ color: 'var(--indigo-ink)' }}>{s.name}</span>
               <input
                 type="range"
                 min={s.min}
@@ -121,10 +122,11 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
                 step={(s.max - s.min) / 100}
                 value={vars[s.name] ?? s.default}
                 onChange={(e) => setVars((v) => ({ ...v, [s.name]: Number(e.target.value) }))}
-                className="flex-1 accent-violet-400"
+                className="flex-1"
+                style={{ accentColor: 'var(--indigo)' }}
                 aria-label={`Slider for ${s.name}`}
               />
-              <span className="font-mono text-surface-400 tabular-nums w-12 text-right">
+              <span className="font-mono tabular-nums w-12 text-right" style={{ color: 'var(--text-secondary)' }}>
                 {(vars[s.name] ?? s.default).toFixed(2)}
               </span>
             </div>

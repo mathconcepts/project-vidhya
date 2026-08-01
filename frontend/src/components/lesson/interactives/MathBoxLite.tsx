@@ -96,10 +96,10 @@ export function MathBoxLite({ directive, attrs }: { directive: DirectiveType; at
 
   return (
     <figure
-      className="my-3 rounded-md border border-surface-800 overflow-hidden bg-transparent"
+      className="my-3 rounded-md border overflow-hidden bg-transparent"
       role="img"
       aria-label={`Plot of ${fnSrc} on x ∈ [${xMin}, ${xMax}]`}
-      style={{ aspectRatio: aspect }}
+      style={{ aspectRatio: aspect, borderColor: 'var(--separator)' }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
         <g stroke="#374151" strokeOpacity="0.4" strokeWidth="0.5">

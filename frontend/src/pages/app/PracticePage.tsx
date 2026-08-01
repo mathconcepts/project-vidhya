@@ -14,7 +14,6 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { fadeInUp, celebration, tapScale, getRandomMessage } from '@/lib/animations';
-import { Confetti } from '@/components/app/Confetti';
 import { ErrorDiagnosis } from '@/components/app/ErrorDiagnosis';
 import { ChevronLeft, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -58,7 +57,6 @@ export default function PracticePage() {
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [showVerifyShimmer, setShowVerifyShimmer] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   const [message, setMessage] = useState('');
   const [nextProblemId, setNextProblemId] = useState<string | null>(null);
   const [errorDiagnosis, setErrorDiagnosis] = useState<any>(null);
@@ -70,7 +68,6 @@ export default function PracticePage() {
     setPhase('answering');
     setSelected(null);
     setVerifyResult(null);
-    setShowConfetti(false);
     setErrorDiagnosis(null);
     setShowVerifyShimmer(false);
     setLoading(true);
@@ -141,7 +138,6 @@ export default function PracticePage() {
       const isCorrect = selected === problem.correct_answer;
       setMessage(getRandomMessage(isCorrect));
       if (isCorrect) {
-        setShowConfetti(true);
       }
 
       trackEvent('problem_complete', {
@@ -224,8 +220,6 @@ export default function PracticePage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Confetti trigger={showConfetti} />
-
       {/* Back + Meta */}
       <div className="flex items-center gap-3">
         <Link to={`/topic/${problem.topic}`} className="p-2 -ml-2 rounded-lg hover:bg-surface-800 transition-colors">

@@ -115,11 +115,16 @@ const PRESETS: Array<{ minutes: number; label: string; subtitle: string }> = [
 // Action kind → UI meta
 // ============================================================================
 
-const KIND_META: Record<ActionKind, { icon: typeof Sparkles; color: string; label: string }> = {
-  'practice':      { icon: BookOpen, color: 'text-violet-400 bg-violet-500/10 border-violet-500/25', label: 'Practice' },
-  'review':        { icon: RefreshCw, color: 'text-purple-400 bg-purple-500/10 border-purple-500/25', label: 'Review' },
-  'spaced-review': { icon: AlertCircle, color: 'text-amber-400 bg-amber-500/10 border-amber-500/25', label: 'Spaced review' },
-  'micro-mock':    { icon: Sparkles, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', label: 'Micro-mock' },
+// Reduction pass (U1-8): the four action kinds used to carry four different
+// decorative hues (violet/purple/amber/emerald) on the same badge — pure
+// color-coding that didn't map to a user action and burned through the
+// app's whole accent budget on one small label. The icon + label already
+// distinguish the kinds; the badge itself is now a single neutral treatment.
+const KIND_META: Record<ActionKind, { icon: typeof Sparkles; label: string }> = {
+  'practice':      { icon: BookOpen, label: 'Practice' },
+  'review':        { icon: RefreshCw, label: 'Review' },
+  'spaced-review': { icon: AlertCircle, label: 'Spaced review' },
+  'micro-mock':    { icon: Sparkles, label: 'Micro-mock' },
 };
 
 // ============================================================================
@@ -653,10 +658,10 @@ export default function PlannedSessionPage() {
             </div>
             <div className="flex gap-2 flex-wrap">
               {templates.map((tpl) => (
-                <div key={tpl.id} className="group flex items-stretch bg-surface-900 border border-surface-800 rounded-lg overflow-hidden hover:border-purple-500/30 transition-colors">
+                <div key={tpl.id} className="group flex items-stretch bg-surface-900 border border-surface-800 rounded-lg overflow-hidden hover:border-violet-500/30 transition-colors">
                   <button
                     onClick={() => useTemplate(tpl)}
-                    className="px-3 py-2 text-left hover:bg-purple-500/5 transition-colors"
+                    className="px-3 py-2 text-left hover:bg-violet-500/5 transition-colors"
                   >
                     <div className="text-sm font-semibold text-surface-100">{tpl.name}</div>
                     <div className="text-[10px] text-surface-500 font-mono mt-0.5">
@@ -783,7 +788,7 @@ export default function PlannedSessionPage() {
                 variants={fadeInUp}
                 initial="hidden"
                 animate="visible"
-                className="mt-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/20"
+                className="mt-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20"
               >
                 <label className="block text-xs text-surface-400 mb-2">
                   Name this template ({minutes} min
@@ -804,7 +809,7 @@ export default function PlannedSessionPage() {
                   <button
                     onClick={saveTemplate}
                     disabled={!templateName.trim() || savingTemplate}
-                    className="px-3 py-2 rounded bg-purple-500 hover:bg-purple-400 text-white text-sm font-semibold disabled:opacity-50"
+                    className="px-3 py-2 rounded bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold disabled:opacity-50"
                   >
                     {savingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   </button>
@@ -958,7 +963,7 @@ export default function PlannedSessionPage() {
                         <div className="text-xs text-surface-500 font-mono w-6 pt-1">{i + 1}</div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className={clsx('inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border', meta.color)}>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border border-surface-700 bg-surface-800/60 text-surface-300">
                               <Icon className="w-3 h-3" />
                               {meta.label}
                             </span>

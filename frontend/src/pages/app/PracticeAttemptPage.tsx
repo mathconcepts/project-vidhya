@@ -27,6 +27,7 @@ import {
   Target, AlertTriangle, Compass,
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 
 interface PracticeItem {
   id: string;
@@ -165,7 +166,7 @@ export default function PracticeAttemptPage() {
           <div>
             <p className="font-semibold">Couldn't load this item</p>
             <p className="mt-0.5 opacity-80">{loadError}</p>
-            <Link to="/smart-practice" className="mt-2 inline-block text-violet-400 hover:text-violet-300">Practice something else →</Link>
+            <Link to="/smart-practice" className="mt-2 inline-block text-emerald-400 hover:text-emerald-300">Practice something else →</Link>
           </div>
         </div>
       )}
@@ -177,7 +178,7 @@ export default function PracticeAttemptPage() {
           className="rounded-2xl bg-surface-900 border border-surface-800 p-5 space-y-4"
         >
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-violet-400">
+            <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-surface-400">
               <Target size={12} />
               {item.topic ?? item.node_id}
               {item.question_type && <span className="text-surface-500 normal-case">· {item.question_type.toUpperCase()}</span>}
@@ -200,7 +201,7 @@ export default function PracticeAttemptPage() {
                 <p className="font-semibold">Display-only practice</p>
                 <p className="mt-0.5 opacity-80">
                   This item isn't deterministically gradable yet — work it on paper, then
-                  {' '}<Link to="/smart-practice" className="text-violet-400 hover:text-violet-300">practice a graded set →</Link>
+                  {' '}<Link to="/smart-practice" className="text-emerald-400 hover:text-emerald-300">practice a graded set →</Link>
                 </p>
               </div>
             </div>
@@ -221,7 +222,7 @@ export default function PracticeAttemptPage() {
                   className={clsx(
                     'w-full text-left p-2.5 rounded-lg border transition-colors text-sm',
                     isPicked(i)
-                      ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
+                      ? 'bg-surface-700 border-surface-400 text-surface-100'
                       : 'bg-surface-800 border-surface-700 text-surface-300 hover:border-surface-500',
                     (result || submitting) && 'opacity-70 cursor-default',
                   )}
@@ -242,7 +243,7 @@ export default function PracticeAttemptPage() {
               disabled={!!result || submitting}
               onChange={e => setNatValue(e.target.value)}
               placeholder="Numeric answer…"
-              className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 text-sm focus:outline-none focus:border-violet-500/50"
+              className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 text-sm focus:outline-none focus:border-emerald-500/50"
             />
           )}
 
@@ -251,7 +252,7 @@ export default function PracticeAttemptPage() {
               <button
                 onClick={() => submit(false)}
                 disabled={!canSubmit}
-                className="flex-1 py-2.5 rounded-lg bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2"
               >
                 {submitting && <Loader2 size={14} className="animate-spin" />}
                 Submit
@@ -275,25 +276,40 @@ export default function PracticeAttemptPage() {
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className={clsx(
-                'p-3 rounded-lg border flex items-start gap-2',
-                result.grade.correct ? 'bg-emerald-500/10 border-emerald-500/25' : 'bg-red-500/10 border-red-500/25',
-              )}
             >
-              {result.grade.correct
-                ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
-                : <XCircle size={15} className="text-red-400 shrink-0 mt-0.5" />}
-              <div className="text-xs text-surface-300 space-y-1">
-                <p className="font-semibold">
-                  {result.grade.correct ? 'Correct' : 'Not this time'} — {fmt(result.grade.earned)} / {fmt(result.grade.max)} marks
-                </p>
-                <p className="opacity-80">{result.grade.feedback}</p>
-                {!result.recorded && (
-                  <p className="text-amber-400/90">Graded, but not recorded to your model (server storage unavailable).</p>
+              <div
+                className={clsx(
+                  'p-3 rounded-lg border flex items-start gap-2',
+                  result.grade.correct ? 'bg-emerald-500/10 border-emerald-500/25' : 'bg-red-500/10 border-red-500/25',
                 )}
-                <Link to="/planned" className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 pt-1">
-                  <Compass size={12} /> What's next for me?
-                </Link>
+              >
+                {result.grade.correct
+                  ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+                  : <XCircle size={15} className="text-red-400 shrink-0 mt-0.5" />}
+                <div className="text-xs text-surface-300 space-y-1 w-full">
+                  {/* Server-graded: GateDeterministicScorer computed this on the
+                      server from the canonical answer key, which the client
+                      never sees (see file header). That's a real backing
+                      verification, not a client-side string match — earns the
+                      receipt border regardless of `recorded` (recording to the
+                      student model can fail independently of whether the grade
+                      itself is correct). Scoped to ONLY the grade+feedback line:
+                      the "not recorded" caveat and the nav link below are real
+                      but NOT themselves backed by the grading receipt, so they
+                      sit outside the border rather than borrowing its promise. */}
+                  <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }}>
+                    <p className="font-semibold">
+                      {result.grade.correct ? 'Correct' : 'Not this time'} — {fmt(result.grade.earned)} / {fmt(result.grade.max)} marks
+                    </p>
+                    <p className="opacity-80">{result.grade.feedback}</p>
+                  </ReceiptBorder>
+                  {!result.recorded && (
+                    <p className="text-amber-400/90 pt-1">Graded, but not recorded to your model (server storage unavailable).</p>
+                  )}
+                  <Link to="/planned" className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 pt-1">
+                    <Compass size={12} /> What's next for me?
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}

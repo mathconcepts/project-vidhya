@@ -13,6 +13,7 @@
 import type { StudentModel, SpeedEntry } from './student-model';
 import { getTopicMastery, getMasterySummary } from './student-model';
 import { MARKS_WEIGHTS, TOPIC_NAMES } from '../engine/priority-engine';
+import { GATE_EM_MCQ_2MARK_NEGATIVE_ROUNDED } from '../exams/exam-profile';
 
 // ============================================================================
 // Types
@@ -86,7 +87,9 @@ export const EXAM_CONFIGS: Record<string, ExamConfig> = {
     total_time_minutes: 180,
     total_questions: 65, // approx
     marks_per_correct: 2, // weighted average
-    marks_per_wrong: -0.67, // 1/3 negative marking
+    // Sourced from the exam-profile row instead of an inline literal (was: -0.67).
+    // See src/exams/exam-profile.ts for the fact-sourced -2/3 this rounds from.
+    marks_per_wrong: GATE_EM_MCQ_2MARK_NEGATIVE_ROUNDED,
   },
   'bitsat': {
     name: 'BITSAT Mathematics',

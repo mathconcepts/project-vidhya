@@ -253,7 +253,7 @@ export default function DiagnosticPage() {
   if (loading || checking) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 size={32} className="text-violet-400 animate-spin" />
+        <Loader2 size={32} className="text-emerald-400 animate-spin" />
       </div>
     );
   }
@@ -262,7 +262,7 @@ export default function DiagnosticPage() {
     return (
       <div className="text-center py-16 space-y-4">
         <p className="text-surface-400">No diagnostic questions available.</p>
-        <button onClick={() => navigate('/')} className="text-violet-400 underline">Go home</button>
+        <button onClick={() => navigate('/')} className="text-emerald-400 underline">Go home</button>
       </div>
     );
   }
@@ -340,7 +340,7 @@ export default function DiagnosticPage() {
             <div className="flex flex-col gap-2">
               <button
                 onClick={handleStartHour1}
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg shadow-emerald-500/20 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors flex items-center justify-center gap-2"
               >
                 Start hour 1 now
                 <ChevronRight size={18} />
@@ -439,7 +439,7 @@ export default function DiagnosticPage() {
   // dereferences `q` unconditionally right below — a corrupted/out-of-range
   // index must degrade to a loading state, never a hard crash.
   const q = questions[currentIdx];
-  if (!q) return <Loader2 className="w-6 h-6 animate-spin text-violet-400 mx-auto mt-12" />;
+  if (!q) return <Loader2 className="w-6 h-6 animate-spin text-emerald-400 mx-auto mt-12" />;
   const options = Array.isArray(q.options?.choices) ? q.options.choices :
     typeof q.options === 'object' && q.options !== null ?
       Object.entries(q.options).filter(([k]) => !['correct_answer', 'answer', 'explanation'].includes(k)).map(([k, v]) => ({ key: k, text: v })) :
@@ -454,7 +454,7 @@ export default function DiagnosticPage() {
         </span>
         <div className={clsx(
           'flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-sm font-semibold',
-          timer > 30 ? 'text-violet-400 bg-violet-500/10' :
+          timer > 30 ? 'text-emerald-400 bg-emerald-500/10' :
           timer > 10 ? 'text-amber-400 bg-amber-500/10' :
           'text-red-400 bg-red-500/10'
         )}>
@@ -466,7 +466,7 @@ export default function DiagnosticPage() {
       {/* Progress bar */}
       <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
         <motion.div
-          className="h-full bg-violet-500 rounded-full"
+          className="h-full bg-emerald-500 rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${((currentIdx) / questions.length) * 100}%` }}
           transition={{ duration: 0.3 }}
@@ -474,7 +474,7 @@ export default function DiagnosticPage() {
       </div>
 
       {/* Topic tag */}
-      <span className="inline-block text-xs font-mono px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400">
+      <span className="inline-block text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
         {q.topic_name}
       </span>
 
@@ -501,9 +501,9 @@ export default function DiagnosticPage() {
                 <button
                   key={i}
                   onClick={() => handleAnswer(optKey)}
-                  className="w-full text-left p-3 rounded-xl border border-surface-700 bg-surface-900 hover:border-violet-500/50 hover:bg-surface-800 transition-all active:scale-[0.98]"
+                  className="w-full text-left p-3 rounded-xl border border-surface-700 bg-surface-900 hover:border-emerald-500/50 hover:bg-surface-800 transition-all active:scale-[0.98]"
                 >
-                  <span className="text-xs font-mono text-violet-400 mr-2">{optKey}.</span>
+                  <span className="text-xs font-mono text-emerald-400 mr-2">{optKey}.</span>
                   <span className="text-sm text-surface-200">{optText}</span>
                 </button>
               );

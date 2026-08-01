@@ -1,0 +1,329 @@
+<!-- @dsCard group="Student app" viewport="1100x700" subtitle="Six touchpoints across the student journey — click through" name="Student app" -->
+<!-- @startingPoint section="Student app" subtitle="Journey-mapped mobile shell: discovery to mastery" viewport="1100x700" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vidhya — student journey</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<style>
+  body { padding: 24px; display: flex; gap: 32px; align-items: flex-start; justify-content: center; }
+
+  /* ---- device ---- */
+  .phone {
+    width: 390px; height: 844px; border-radius: 44px; background: var(--surface-canvas);
+    box-shadow: 0 0 0 10px #1d1d1f, 0 30px 70px -20px rgba(0,0,0,.45);
+    overflow: hidden; position: relative; display: flex; flex-direction: column; flex: none;
+  }
+  .status { height: 50px; display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 26px 6px; font: 600 14px var(--font-sans); letter-spacing: -.01em; flex: none; }
+  .nav { display: flex; align-items: center; justify-content: space-between; padding: 2px 20px 6px; flex: none; }
+  .scroll { flex: 1; overflow-y: auto; padding: 0 20px 28px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  .tabbar { display: flex; background: var(--material-thick); backdrop-filter: var(--blur-nav);
+    -webkit-backdrop-filter: var(--blur-nav); border-top: .5px solid var(--separator); flex: none; }
+  .tabbar button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 9px 0 22px; border: none; background: none; cursor: pointer;
+    font: 500 11px var(--font-sans); color: var(--text-secondary);
+    transition: color var(--dur-fast) var(--ease-standard); }
+  .tabbar button[aria-current] { color: var(--indigo-ink); font-weight: 600; }
+  .fab { position: absolute; right: 20px; bottom: 94px; width: 56px; height: 56px; border: none;
+    border-radius: 999px; background: var(--indigo); color: #fff; box-shadow: var(--shadow-fab);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease-standard); }
+  .fab:active { transform: scale(.94); }
+
+  /* ---- type: readability first ---- */
+  .title { font: 700 34px var(--font-sans); letter-spacing: -.022em; margin: 4px 0 0; }
+  .lede { font: 400 17px var(--font-sans); color: var(--text-secondary); line-height: 1.5; margin: 8px 0 0; }
+  .h2 { font: 600 15px var(--font-sans); color: var(--text-secondary); letter-spacing: -.01em;
+    margin: 30px 0 8px; }
+  .rowtitle { font: 400 17px var(--font-sans); letter-spacing: -.01em; }
+  .sub { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.45; }
+
+  /* ---- the single focal block ---- */
+  .focal { background: var(--surface-card); border-radius: var(--radius-xl); padding: 24px;
+    box-shadow: var(--shadow-card); }
+
+  /* ---- lists live on the canvas, not in cards ---- */
+  .list { display: flex; flex-direction: column; }
+  .list > * { padding: 14px 0; border-bottom: .5px solid var(--separator); }
+  .list > *:last-child { border-bottom: none; }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .plainbtn { width: 100%; background: none; border: none; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+
+  .btn-primary { width: 100%; height: 52px; border: none; border-radius: var(--radius-md);
+    background: var(--green); color: #fff; font: 600 17px var(--font-sans); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard); }
+  .btn-primary:active { transform: scale(.97); background: var(--green-press); }
+  .btn-quiet { height: 44px; padding: 0 4px; border: none; background: none; cursor: pointer;
+    font: 600 17px var(--font-sans); color: var(--indigo-ink); }
+  .chip { flex: none; height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px;
+    border: none; border-radius: 999px; background: var(--surface-fill); color: var(--text-secondary);
+    font: 500 15px var(--font-sans); cursor: pointer; white-space: nowrap; }
+  .chip[data-active] { background: var(--ink); color: var(--surface-card); }
+  .rate { min-height: 36px; padding: 0 14px; border: none; border-radius: var(--radius-xs);
+    background: var(--surface-fill); color: var(--text-primary); font: 600 14px var(--font-sans); cursor: pointer; }
+  .hstack { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .hstack::-webkit-scrollbar { display: none; }
+  .dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
+  .receipt { border-radius: var(--radius-sm); padding: 14px; background: var(--surface-card);
+    box-shadow: inset 0 0 0 1px var(--receipt-line); }
+  .vtag { display: inline-flex; align-items: center; gap: 5px; font: 600 13px var(--font-sans);
+    color: var(--green-ink); margin-bottom: 8px; }
+  .vtick { width: 16px; height: 16px; border-radius: 999px; background: var(--green); color: #fff;
+    font-size: 10px; display: inline-flex; align-items: center; justify-content: center; }
+  .bubble { max-width: 84%; padding: 11px 15px; font: 400 17px var(--font-sans); line-height: 1.5; }
+  .me { margin-left: auto; background: var(--indigo); color: #fff; border-radius: 20px 20px 6px 20px; }
+  .them { background: var(--surface-card); border-radius: 20px 20px 20px 6px; box-shadow: var(--shadow-raise); }
+
+  .screen { display: none; animation: enter var(--dur-base) var(--ease-standard); }
+  .screen[data-on] { display: block; }
+  @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ---- journey rail ---- */
+  .rail { width: 330px; }
+  .rail h1 { font: 600 28px var(--font-sans); letter-spacing: -.018em; margin: 0 0 10px; }
+  .rail p { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.55; margin: 0 0 18px; }
+  .stage { display: block; width: 100%; text-align: left; background: none; cursor: pointer;
+    border: none; border-top: .5px solid var(--separator); padding: 13px 0; }
+  .stage:last-of-type { border-bottom: .5px solid var(--separator); }
+  .stage b { display: block; font: 600 15px var(--font-sans); letter-spacing: -.01em; }
+  .stage span { display: block; font: 400 14px var(--font-sans); color: var(--text-secondary); margin-top: 2px; line-height: 1.45; }
+  .stage[data-active] b { color: var(--indigo-ink); }
+</style>
+</head>
+<body>
+
+<div class="rail">
+  <h1>One screen, one job</h1>
+  <p>Six touchpoints, in the order a student meets them. Each screen carries a single focal block; everything else is plain text on the canvas, so there is one thing to read and one thing to do.</p>
+  <button class="stage" data-stage="discover" onclick="go('discover')" data-active><b>1 · Discovery</b><span>Value before setup. Three things to try, no sign-in wall.</span></button>
+  <button class="stage" data-stage="tutor" onclick="go('tutor')"><b>2 · First answer</b><span>The answer, then the receipt. One next step offered, never two.</span></button>
+  <button class="stage" data-stage="home" onclick="go('home')"><b>3 · Daily return</b><span>What to study next and why. Rate it and it advances.</span></button>
+  <button class="stage" data-stage="notes" onclick="go('notes')"><b>4 · The trail</b><span>Every question logged, grouped by topic, filtered by one row of pills.</span></button>
+  <button class="stage" data-stage="progress" onclick="go('progress')"><b>5 · Readiness</b><span>One number, one sentence, the weak topics underneath.</span></button>
+  <button class="stage" data-stage="done" onclick="go('done')"><b>6 · Day complete</b><span>A specific win, quietly. No streaks, no confetti, no dead end.</span></button>
+</div>
+
+<div class="phone">
+  <div class="status"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><i data-lucide="signal" style="width:15px"></i><i data-lucide="wifi" style="width:15px"></i><i data-lucide="battery-full" style="width:19px"></i></span></div>
+
+  <div class="nav">
+    <div class="row" style="gap:10px">
+      <div style="width:30px;height:30px;border-radius:9px;background:var(--ink);color:var(--surface-card);display:flex;align-items:center;justify-content:center;font:600 15px var(--font-sans);letter-spacing:-.03em">V</div>
+    </div>
+    <div class="row" style="gap:10px">
+      <span id="countdown" class="sub" style="font-size:14px">34 days to GATE</span>
+      <div style="width:30px;height:30px;border-radius:999px;background:var(--surface-fill);display:flex;align-items:center;justify-content:center;font:600 13px var(--font-sans);color:var(--text-secondary)">PR</div>
+    </div>
+  </div>
+
+  <div class="scroll">
+
+    <!-- 1 · DISCOVERY -->
+    <section class="screen" data-screen="discover" data-on>
+      <h1 class="title">Stuck on something?</h1>
+      <p class="lede">Try it now. No account, nothing to set up.</p>
+
+      <div class="list" style="margin-top:22px">
+        <button class="plainbtn row" onclick="go('tutor')">
+          <i data-lucide="message-circle" style="width:22px;color:var(--indigo-ink)"></i>
+          <span style="flex:1"><span class="rowtitle">Ask a question</span><span class="sub" style="display:block">Type it the way you'd say it out loud.</span></span>
+          <span style="color:var(--text-tertiary);font-size:19px">›</span>
+        </button>
+        <button class="plainbtn row" onclick="go('tutor')">
+          <i data-lucide="camera" style="width:22px;color:var(--indigo-ink)"></i>
+          <span style="flex:1"><span class="rowtitle">Snap a problem</span><span class="sub" style="display:block">Handwriting is fine.</span></span>
+          <span style="color:var(--text-tertiary);font-size:19px">›</span>
+        </button>
+        <button class="plainbtn row" onclick="go('tutor')">
+          <i data-lucide="file-text" style="width:22px;color:var(--indigo-ink)"></i>
+          <span style="flex:1"><span class="rowtitle">Upload your notes</span><span class="sub" style="display:block">Lessons get built around what you already have.</span></span>
+          <span style="color:var(--text-tertiary);font-size:19px">›</span>
+        </button>
+      </div>
+
+      <p class="sub" style="margin-top:26px">Want a plan that tells you what to study each day?
+        <a href="#" onclick="go('home');return false">Build my plan</a></p>
+    </section>
+
+    <!-- 2 · FIRST ANSWER / TUTOR -->
+    <section class="screen" data-screen="tutor">
+      <p class="sub" style="margin:6px 0 14px">Linear Algebra · anytime</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="bubble me">Why does row reduction not change the solutions?</div>
+        <div class="bubble them">Because every elementary row operation is reversible. Run it backwards and you recover the original system — so no solution can be gained or lost.</div>
+        <div class="receipt">
+          <div class="vtag"><span class="vtick">✓</span> Verified · Wolfram</div>
+          <div style="font:400 17px var(--font-sans);line-height:1.5">det(EA) = det(E)·det(A), and det(E) ≠ 0 for every elementary matrix E.</div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:20px">Want to try one yourself?
+        <a href="#" onclick="go('home');return false">Yes, give me a problem</a></p>
+      <div class="row" style="margin-top:20px;height:46px;padding:0 6px 0 16px;border-radius:999px;background:var(--surface-fill);gap:8px">
+        <span class="sub" style="flex:1;font-size:17px">Ask anything</span>
+        <span style="width:34px;height:34px;border-radius:999px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center"><i data-lucide="arrow-up" style="width:18px"></i></span>
+      </div>
+    </section>
+
+    <!-- 3 · DAILY RETURN -->
+    <section class="screen" data-screen="home">
+      <p class="sub" style="margin:6px 0 0">Wednesday, 12 August</p>
+      <h1 class="title">Today</h1>
+
+      <div class="focal" style="margin-top:20px">
+        <p class="sub" style="margin:0;font-size:15px">Your next move</p>
+        <h2 id="taskTopic" style="margin:6px 0 0;font:700 34px var(--font-sans);letter-spacing:-.022em;line-height:1.08">Linear Algebra</h2>
+        <p id="taskWhy" class="sub" style="margin:10px 0 0;font-size:17px">Biggest area to grow. Twenty minutes.</p>
+        <button class="btn-primary" style="margin-top:20px" onclick="go('tutor')">Start practising <i data-lucide="arrow-right" style="width:18px"></i></button>
+        <div class="row" style="justify-content:space-between;margin-top:20px;padding-top:16px;border-top:.5px solid var(--separator)">
+          <span id="taskProgress" class="sub" style="font-size:14px">2 of 4 today</span>
+          <span class="row" style="gap:6px">
+            <button class="rate" onclick="rate()">Done</button>
+            <button class="rate" onclick="rate()">Okay</button>
+            <button class="rate" onclick="rate()">Hard</button>
+          </span>
+        </div>
+      </div>
+
+      <p class="h2">Later today</p>
+      <div class="list">
+        <div class="row"><span class="dot" style="background:var(--orange)"></span><span style="flex:1" class="rowtitle">Calculus</span><span class="sub" style="font-size:14px">15 min</span></div>
+        <div class="row"><span class="dot" style="background:var(--red)"></span><span style="flex:1" class="rowtitle">Probability</span><span class="sub" style="font-size:14px">10 min</span></div>
+      </div>
+    </section>
+
+    <!-- 4 · THE TRAIL -->
+    <section class="screen" data-screen="notes">
+      <h1 class="title">Notes</h1>
+      <p class="lede">Twenty-four questions, kept for you.</p>
+
+      <div class="hstack" style="margin-top:18px;padding-bottom:2px">
+        <button class="chip" data-active onclick="pill(this)">All</button>
+        <button class="chip" onclick="pill(this)">Linear Algebra</button>
+        <button class="chip" onclick="pill(this)">Calculus</button>
+        <button class="chip" onclick="pill(this)">Probability</button>
+      </div>
+
+      <div class="list" style="margin-top:10px">
+        <div>
+          <button class="plainbtn row" onclick="expand(this)">
+            <span class="dot" style="background:var(--green)"></span>
+            <span style="flex:1" class="rowtitle">Why does row reduction preserve the solution set?</span>
+            <span class="sub" style="font-size:13px">2h</span>
+          </button>
+          <div hidden style="padding:12px 0 2px 23px">
+            <div class="receipt">
+              <div class="vtag"><span class="vtick">✓</span> Verified · Wolfram</div>
+              <div class="sub" style="color:var(--text-primary);font-size:16px">Elementary row operations are invertible, so they map the solution set onto itself.</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button class="plainbtn row" onclick="expand(this)">
+            <span class="dot" style="background:var(--orange)"></span>
+            <span style="flex:1" class="rowtitle">Convergence test for alternating series</span>
+            <span class="sub" style="font-size:13px">Yesterday</span>
+          </button>
+          <div hidden class="sub" style="padding:10px 0 2px 23px">Leibniz test — terms decreasing and tending to zero.</div>
+        </div>
+        <div>
+          <button class="plainbtn row" onclick="expand(this)">
+            <span class="dot" style="background:var(--grey-5)"></span>
+            <span style="flex:1" class="rowtitle">Bayes' rule with three priors</span>
+            <span class="sub" style="font-size:13px">3d</span>
+          </button>
+          <div hidden class="sub" style="padding:10px 0 2px 23px">Marked to review — you asked to see this again before the mock.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · READINESS -->
+    <section class="screen" data-screen="progress">
+      <h1 class="title">Progress</h1>
+
+      <div class="focal" style="margin-top:20px;display:flex;align-items:center;gap:20px">
+        <svg width="88" height="88" style="transform:rotate(-90deg);flex:none"><circle cx="44" cy="44" r="39" fill="none" stroke="var(--surface-fill)" stroke-width="6"/><circle cx="44" cy="44" r="39" fill="none" stroke="var(--green)" stroke-width="6" stroke-linecap="round" stroke-dasharray="245" stroke-dashoffset="69"/></svg>
+        <div>
+          <div style="font:600 34px var(--font-sans);letter-spacing:-.022em;font-variant-numeric:tabular-nums;line-height:1.1">72%</div>
+          <div class="sub" style="margin-top:4px">Ready for GATE. Up six points this week, mostly from Linear Algebra.</div>
+        </div>
+      </div>
+
+      <p class="h2">Where you stand</p>
+      <div class="list">
+        <div class="row"><span class="dot" style="background:var(--red)"></span><span style="flex:1" class="rowtitle">Probability</span><span class="sub" style="font-variant-numeric:tabular-nums">24%</span></div>
+        <div class="row"><span class="dot" style="background:var(--orange)"></span><span style="flex:1" class="rowtitle">Calculus</span><span class="sub" style="font-variant-numeric:tabular-nums">51%</span></div>
+        <div class="row"><span class="dot" style="background:var(--green)"></span><span style="flex:1" class="rowtitle">Linear Algebra</span><span class="sub" style="font-variant-numeric:tabular-nums">68%</span></div>
+        <div class="row"><span class="dot" style="background:var(--green)"></span><span style="flex:1" class="rowtitle">Differential Equations</span><span class="sub" style="font-variant-numeric:tabular-nums">74%</span></div>
+      </div>
+
+      <p class="sub" style="margin-top:22px">Reviews are slipping behind.
+        <a href="#" onclick="go('home');return false">Catch up — 10 minutes</a></p>
+    </section>
+
+    <!-- 6 · DAY COMPLETE -->
+    <section class="screen" data-screen="done">
+      <div style="padding-top:72px;text-align:center">
+        <svg width="72" height="72" style="transform:rotate(-90deg)"><circle cx="36" cy="36" r="32" fill="none" stroke="var(--surface-fill)" stroke-width="5"/><circle cx="36" cy="36" r="32" fill="none" stroke="var(--green)" stroke-width="5" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="0"/></svg>
+        <h1 class="title" style="margin-top:20px">You cracked eigenvalues</h1>
+        <p class="lede" style="max-width:290px;margin:10px auto 0">Four for four today — including the one you called hard in June.</p>
+        <div style="margin-top:32px;display:flex;flex-direction:column;gap:4px;align-items:center">
+          <button class="btn-quiet" onclick="go('progress')">See what moved</button>
+          <button class="btn-quiet" onclick="go('tutor')">Ask the tutor something</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <button class="fab" id="fab" onclick="go('tutor')" aria-label="Ask the tutor"><i data-lucide="message-circle" style="width:22px"></i></button>
+
+  <nav class="tabbar">
+    <button data-tab="home" onclick="go('home')"><i data-lucide="circle-dot" style="width:21px"></i>Today</button>
+    <button data-tab="notes" onclick="go('notes')"><i data-lucide="book-open" style="width:21px"></i>Notes</button>
+    <button data-tab="progress" onclick="go('progress')"><i data-lucide="bar-chart-3" style="width:21px"></i>Progress</button>
+  </nav>
+</div>
+
+<script>
+  const TAB_OF = { discover: 'home', tutor: null, home: 'home', notes: 'notes', progress: 'progress', done: 'home' };
+  function go(name) {
+    document.querySelectorAll('.screen').forEach(s => s.toggleAttribute('data-on', s.dataset.screen === name));
+    document.querySelectorAll('.stage').forEach(s => s.toggleAttribute('data-active', s.dataset.stage === name));
+    const tab = TAB_OF[name];
+    document.querySelectorAll('.tabbar button').forEach(b => {
+      if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    document.getElementById('fab').style.display = name === 'tutor' ? 'none' : 'flex';
+    document.getElementById('countdown').style.visibility = name === 'discover' ? 'hidden' : 'visible';
+    document.querySelector('.scroll').scrollTop = 0;
+  }
+  const QUEUE = [
+    ['Linear Algebra', 'Biggest area to grow. Twenty minutes.', '2 of 4 today'],
+    ['Probability', 'Due for review before it fades.', '3 of 4 today'],
+    ['Calculus', 'Last one — you were close on this in June.', '4 of 4 today'],
+  ];
+  let i = 0;
+  function rate() {
+    i += 1;
+    if (i >= QUEUE.length) { i = 0; go('done'); return; }
+    const [t, w, p] = QUEUE[i];
+    document.getElementById('taskTopic').textContent = t;
+    document.getElementById('taskWhy').textContent = w;
+    document.getElementById('taskProgress').textContent = p;
+  }
+  function pill(el) {
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.removeAttribute('data-active'));
+    el.setAttribute('data-active', '');
+  }
+  function expand(btn) { const p = btn.nextElementSibling; if (p) p.hidden = !p.hidden; }
+  lucide.createIcons();
+  go('discover');
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!-- @dsCard group="Type" viewport="700x240" subtitle="17px body and the UI sizes below it" name="Body & UI text" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Body and UI text</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:20px;background:var(--surface-canvas)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:var(--text-caption);color:var(--text-secondary);letter-spacing:var(--tracking-body)}
+.mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+
+</style></head><body>
+<div class="col" style="gap:8px">
+  <div style="font-size:17px">Body 17 — the default reading size. Everything a student must actually read sits here.</div>
+  <div style="font-size:16px">Callout 16 — list rows, inputs, chat bubbles.</div>
+  <div style="font-size:15px;color:var(--text-secondary)">Subheadline 15 — supporting lines under a title.</div>
+  <div style="font-size:13px;color:var(--text-secondary)">Footnote 13 — captions, metadata, the smallest interactive text.</div>
+  <div style="font-size:11px;color:var(--text-tertiary)">Caption 11 — tab labels only.</div>
+</div>
+</body></html>

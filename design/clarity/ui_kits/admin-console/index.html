@@ -1,0 +1,147 @@
+<!-- @dsCard group="Owner console" viewport="1120x880" subtitle="Setup, deployment health, and the first cohort insight" name="Owner console" -->
+<!-- @startingPoint section="Owner console" subtitle="Admin dashboard: checklist, status, cohort insight" viewport="1120x880" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vidhya — owner console</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<style>
+  body { padding: 24px; display: flex; justify-content: center; }
+  .win { width: 1060px; flex: none; border-radius: 16px; overflow: hidden; background: var(--surface-canvas);
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,.3), 0 0 0 .5px rgba(0,0,0,.1); position: relative; }
+  .chrome { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px;
+    background: var(--material-thick); backdrop-filter: var(--blur-nav); border-bottom: .5px solid var(--separator); }
+  .light { width: 12px; height: 12px; border-radius: 999px; }
+  .chrome .addr { flex: 1; text-align: center; font: 400 13px var(--font-sans); color: var(--text-secondary); }
+
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 22px 32px 0; }
+  .mark { width: 30px; height: 30px; border-radius: 9px; background: var(--ink); color: var(--surface-card);
+    display: flex; align-items: center; justify-content: center; font: 600 15px var(--font-sans); letter-spacing: -.03em; }
+
+  main { display: grid; grid-template-columns: 1.35fr 1fr; gap: 40px; padding: 10px 32px 34px; }
+  h1 { font: 700 34px var(--font-sans); letter-spacing: -.022em; margin: 12px 0 0; }
+  .lede { font: 400 17px var(--font-sans); color: var(--text-secondary); line-height: 1.5; margin: 8px 0 0; }
+  .h2 { font: 600 15px var(--font-sans); color: var(--text-secondary); margin: 30px 0 6px; }
+  .sub { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.45; }
+  .rowtitle { font: 400 17px var(--font-sans); letter-spacing: -.01em; }
+  .focal { background: var(--surface-card); border-radius: var(--radius-xl); padding: 26px; box-shadow: var(--shadow-card); }
+  .list > * { padding: 14px 0; border-bottom: .5px solid var(--separator); display: flex; align-items: center; gap: 14px; }
+  .list > *:last-child { border-bottom: none; }
+  .dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
+  .btn-quiet { border: none; background: none; cursor: pointer; font: 600 15px var(--font-sans); color: var(--indigo-ink); padding: 8px 0; }
+  .check { width: 22px; height: 22px; border-radius: 999px; flex: none; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; color: #fff; background: var(--green); }
+  .check[data-todo] { background: none; box-shadow: inset 0 0 0 1.5px var(--separator-opaque); }
+  .num { font: 600 34px var(--font-sans); letter-spacing: -.022em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .toast { position: absolute; left: 50%; top: 56px; transform: translate(-50%, -12px); opacity: 0; z-index: 20;
+    background: var(--ink); color: var(--surface-card); padding: 12px 18px; border-radius: 999px;
+    font: 500 15px var(--font-sans); transition: all var(--dur-base) var(--ease-standard); pointer-events: none; }
+  .toast[data-on] { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="chrome">
+    <span class="light" style="background:#ff5f57"></span><span class="light" style="background:#febc2e"></span><span class="light" style="background:#28c840"></span>
+    <span class="addr">vidhya.app/owner/dashboard</span>
+  </div>
+
+  <div class="top">
+    <div style="display:flex;align-items:center;gap:12px"><div class="mark">V</div><span class="sub" style="color:var(--indigo-ink);font-weight:500">Owner</span></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="sub">Raj M. · Sunrise Academy</span>
+      <div style="width:30px;height:30px;border-radius:999px;background:var(--surface-fill);display:flex;align-items:center;justify-content:center;font:600 13px var(--font-sans);color:var(--text-secondary)">RM</div>
+    </div>
+  </div>
+
+  <main>
+    <section>
+      <h1>Your cohort is struggling with eigenvalues</h1>
+      <p class="lede">Fifty students, three weeks in. This is the first thing worth telling your teachers.</p>
+
+      <div class="focal" style="margin-top:22px">
+        <div style="display:flex;gap:48px">
+          <div><div class="num">54%</div><div class="sub" style="margin-top:4px">average mastery</div></div>
+          <div><div class="num">7</div><div class="sub" style="margin-top:4px">students to look at</div></div>
+          <div><div class="num">38</div><div class="sub" style="margin-top:4px">active this week</div></div>
+        </div>
+        <p class="h2" style="margin:24px 0 0">Where the cohort is losing marks</p>
+        <div class="list">
+          <div><span class="dot" style="background:var(--red)"></span><span style="flex:1" class="rowtitle">Eigenvalues</span><span class="sub" style="font-family:var(--font-mono)">38%</span></div>
+          <div><span class="dot" style="background:var(--red)"></span><span style="flex:1" class="rowtitle">Bayes' rule</span><span class="sub" style="font-family:var(--font-mono)">41%</span></div>
+          <div><span class="dot" style="background:var(--orange)"></span><span style="flex:1" class="rowtitle">Improper integrals</span><span class="sub" style="font-family:var(--font-mono)">49%</span></div>
+        </div>
+        <button class="btn-quiet" style="margin-top:8px" onclick="toast('Opens Ramya\u2019s teaching brief for eigenvalues')">Send this to Ramya's class</button>
+      </div>
+
+      <p class="h2">Finish setting up</p>
+      <div class="list" id="setup">
+        <div><span class="check">✓</span><span style="flex:1" class="rowtitle">Configure your AI provider</span></div>
+        <div><span class="check">✓</span><span style="flex:1" class="rowtitle">Invite students</span></div>
+        <div><span class="check">✓</span><span style="flex:1" class="rowtitle">Promote a teacher</span></div>
+        <div><span class="check" data-todo></span><span style="flex:1" class="rowtitle">Enable a messaging channel</span><button class="btn-quiet" onclick="tick(this)">Set up</button></div>
+        <div><span class="check" data-todo></span><span style="flex:1" class="rowtitle">Review the cohort</span><button class="btn-quiet" onclick="tick(this)">Review</button></div>
+      </div>
+      <p class="sub" style="font-size:14px;margin-top:8px" id="setupcount">3 of 5 — this list disappears when it's done.</p>
+    </section>
+
+    <section>
+      <p class="h2" style="margin-top:16px">Everything running</p>
+      <div class="list">
+        <div><span class="dot" style="background:var(--green)"></span><span style="flex:1" class="rowtitle">AI provider</span><span class="sub">Gemini Flash</span></div>
+        <div><span class="dot" style="background:var(--green)"></span><span style="flex:1" class="rowtitle">Web app</span><span class="sub">Live</span></div>
+        <div><span class="dot" style="background:var(--green)"></span><span style="flex:1" class="rowtitle">Telegram</span><span class="sub">Connected</span></div>
+        <div><span class="dot" style="background:var(--grey-5)"></span><span style="flex:1" class="rowtitle">WhatsApp</span><span class="sub">Not set up</span></div>
+      </div>
+
+      <p class="h2">People</p>
+      <div class="list">
+        <div><span style="flex:1" class="rowtitle">Students</span><span class="sub" style="font-family:var(--font-mono)">50</span></div>
+        <div><span style="flex:1" class="rowtitle">Teachers</span><span class="sub" style="font-family:var(--font-mono)">3</span></div>
+        <div><span style="flex:1" class="rowtitle">New this week</span><span class="sub" style="font-family:var(--font-mono)">6</span></div>
+      </div>
+
+      <p class="h2">Go to</p>
+      <div class="list">
+        <div><span style="flex:1" class="rowtitle">Users and roles</span><span style="color:var(--text-tertiary);font-size:19px">›</span></div>
+        <div><span style="flex:1" class="rowtitle">Teacher roster</span><span style="color:var(--text-tertiary);font-size:19px">›</span></div>
+        <div><span style="flex:1" class="rowtitle">Curriculum and exams</span><span style="color:var(--text-tertiary);font-size:19px">›</span></div>
+        <div><span style="flex:1" class="rowtitle">Model and spend</span><span style="color:var(--text-tertiary);font-size:19px">›</span></div>
+      </div>
+
+      <p class="sub" style="font-size:14px;margin-top:26px">Seven days of activity data is needed before the trend chart appears. Four days to go.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  function tick(btn) {
+    const row = btn.parentElement;
+    row.querySelector('.check').removeAttribute('data-todo');
+    row.querySelector('.check').textContent = '✓';
+    btn.remove();
+    const left = document.querySelectorAll('#setup .check[data-todo]').length;
+    const label = document.getElementById('setupcount');
+    if (left === 0) {
+      document.getElementById('setup').previousElementSibling.remove();
+      document.getElementById('setup').remove();
+      label.remove();
+      toast('Setup complete — the checklist is gone for good');
+    } else {
+      label.textContent = (5 - left) + ' of 5 — this list disappears when it\u2019s done.';
+    }
+  }
+  let t;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.setAttribute('data-on','');
+    clearTimeout(t); t = setTimeout(() => el.removeAttribute('data-on'), 2400);
+  }
+  lucide.createIcons();
+</script>
+</body>
+</html>

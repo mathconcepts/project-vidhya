@@ -1,0 +1,196 @@
+<!-- @dsCard group="Content studio" viewport="1120x880" subtitle="Draft queue, provenance chain, approve or reject" name="Content studio" -->
+<!-- @startingPoint section="Content studio" subtitle="Admin review queue with source provenance" viewport="1120x880" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vidhya — content studio</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<style>
+  body { padding: 24px; display: flex; justify-content: center; }
+  .win { width: 1060px; flex: none; border-radius: 16px; overflow: hidden; background: var(--surface-canvas);
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,.3), 0 0 0 .5px rgba(0,0,0,.1); position: relative; }
+  .chrome { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px;
+    background: var(--material-thick); backdrop-filter: var(--blur-nav); border-bottom: .5px solid var(--separator); }
+  .light { width: 12px; height: 12px; border-radius: 999px; }
+  .chrome .addr { flex: 1; text-align: center; font: 400 13px var(--font-sans); color: var(--text-secondary); }
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 22px 32px 0; }
+  .mark { width: 30px; height: 30px; border-radius: 9px; background: var(--ink); color: var(--surface-card);
+    display: flex; align-items: center; justify-content: center; font: 600 15px var(--font-sans); letter-spacing: -.03em; }
+
+  main { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; padding: 10px 32px 34px; }
+  h1 { font: 700 34px var(--font-sans); letter-spacing: -.022em; margin: 12px 0 0; }
+  .lede { font: 400 17px var(--font-sans); color: var(--text-secondary); line-height: 1.5; margin: 8px 0 0; }
+  .h2 { font: 600 15px var(--font-sans); color: var(--text-secondary); margin: 28px 0 6px; }
+  .sub { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.45; }
+  .rowtitle { font: 400 17px var(--font-sans); letter-spacing: -.01em; }
+  .focal { background: var(--surface-card); border-radius: var(--radius-xl); padding: 26px; box-shadow: var(--shadow-card); }
+  .list > * { padding: 13px 0; border-bottom: .5px solid var(--separator); display: flex; align-items: center; gap: 14px; }
+  .list > *:last-child { border-bottom: none; }
+  .queue button { width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: .5px solid var(--separator); }
+  .queue button[data-sel] .rowtitle { color: var(--indigo-ink); font-weight: 500; }
+  .src { font: 500 13px var(--font-mono); color: var(--text-secondary); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
+  .btn-primary { height: 48px; padding: 0 22px; border: none; border-radius: var(--radius-md); background: var(--green);
+    color: #fff; font: 600 17px var(--font-sans); cursor: pointer; transition: transform var(--dur-fast) var(--ease-standard); }
+  .btn-primary:active { transform: scale(.97); }
+  .btn-grey { height: 48px; padding: 0 20px; border: none; border-radius: var(--radius-md);
+    background: var(--surface-fill); color: var(--text-primary); font: 600 17px var(--font-sans); cursor: pointer; }
+  .btn-quiet { border: none; background: none; cursor: pointer; font: 600 15px var(--font-sans); color: var(--indigo-ink); padding: 8px 0; }
+  .receipt { border-radius: var(--radius-sm); padding: 16px; background: var(--surface-card);
+    box-shadow: inset 0 0 0 1px var(--receipt-line); }
+  .vtag { display: inline-flex; align-items: center; gap: 5px; font: 600 13px var(--font-sans); color: var(--green-ink); margin-bottom: 8px; }
+  .vtick { width: 16px; height: 16px; border-radius: 999px; background: var(--green); color: #fff; font-size: 10px;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .body { font: 400 17px var(--font-sans); line-height: 1.6; max-width: 58ch; }
+  .toast { position: absolute; left: 50%; top: 56px; transform: translate(-50%, -12px); opacity: 0; z-index: 20;
+    background: var(--ink); color: var(--surface-card); padding: 12px 18px; border-radius: 999px;
+    font: 500 15px var(--font-sans); transition: all var(--dur-base) var(--ease-standard); pointer-events: none; }
+  .toast[data-on] { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="chrome">
+    <span class="light" style="background:#ff5f57"></span><span class="light" style="background:#febc2e"></span><span class="light" style="background:#28c840"></span>
+    <span class="addr">vidhya.app/admin/content-studio</span>
+  </div>
+
+  <div class="top">
+    <div style="display:flex;align-items:center;gap:12px"><div class="mark">V</div><span class="sub" style="color:var(--indigo-ink);font-weight:500">Content studio</span></div>
+    <span class="sub">Seven drafts waiting</span>
+  </div>
+
+  <main>
+    <section>
+      <h1>Review</h1>
+      <p class="lede">Oldest first. Where a draft came from decides how hard you read it.</p>
+      <div class="queue" style="margin-top:18px">
+        <button data-sel onclick="sel(this,'wolfram')">
+          <span class="dot" style="background:var(--green)"></span>
+          <span style="flex:1"><span class="rowtitle">Eigenvalues — intro</span><span class="sub" style="display:block">wolfram · 4 days ago</span></span>
+        </button>
+        <button onclick="sel(this,'llm')">
+          <span class="dot" style="background:var(--orange)"></span>
+          <span style="flex:1"><span class="rowtitle">Bayes' rule — intermediate</span><span class="sub" style="display:block">llm · 3 days ago</span></span>
+        </button>
+        <button onclick="sel(this,'uploads')">
+          <span class="dot" style="background:var(--green)"></span>
+          <span style="flex:1"><span class="rowtitle">Improper integrals — advanced</span><span class="sub" style="display:block">uploads · 2 days ago</span></span>
+        </button>
+        <button onclick="sel(this,'url')">
+          <span class="dot" style="background:var(--grey-5)"></span>
+          <span style="flex:1"><span class="rowtitle">Laplace transforms — intro</span><span class="sub" style="display:block">url-extract · yesterday</span></span>
+        </button>
+      </div>
+
+      <p class="h2">Recently decided</p>
+      <div class="list">
+        <div><span style="flex:1" class="rowtitle">Matrix rank — intro</span><span class="sub">Approved</span></div>
+        <div><span style="flex:1" class="rowtitle">Green's theorem — intro</span><span class="sub">Replaced by a newer draft</span></div>
+      </div>
+    </section>
+
+    <section>
+      <p class="h2" style="margin-top:16px">Draft · <span id="draftid">eigenvalues-intro</span></p>
+      <div class="focal">
+        <div class="receipt" id="trustbox">
+          <div class="vtag" id="trusttag"><span class="vtick">✓</span> Verified · Wolfram</div>
+          <div class="body" id="bodyLead">An eigenvalue of a square matrix A is a scalar λ for which there exists a non-zero vector v with Av = λv. Geometrically, v is a direction that A only stretches — it never turns it.</div>
+        </div>
+        <p class="body" id="bodyRest" style="margin-top:18px">To find them, solve det(A − λI) = 0. The left-hand side is a polynomial in λ of the same degree as the matrix, so a 3×3 matrix has three eigenvalues counted with multiplicity.</p>
+        <p class="sub" id="bodyMeta" style="margin-top:14px">Worked example attached · 2 tags · GATE, BITSAT</p>
+      </div>
+
+      <p class="h2">How it was made</p>
+      <div class="list" id="chain"></div>
+      <p class="sub" style="margin-top:10px" id="trustline">Verified symbolically, so it carries the receipt into the library.</p>
+
+      <div style="display:flex;gap:12px;margin-top:22px;align-items:center">
+        <button class="btn-primary" onclick="toast('Promoted to the library as ' + current.id)">Approve</button>
+        <button class="btn-grey" onclick="toast('Rejected — a reason is required and kept in the log')">Reject</button>
+        <button class="btn-quiet" style="margin-left:auto" onclick="toast('Opens the body for editing before approval')">Edit first</button>
+      </div>
+      <p class="sub" style="font-size:14px;margin-top:12px">Every decision writes one line to the audit log. Rejections keep the draft.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  const DRAFTS = {
+    wolfram: {
+      id: 'eigenvalues-intro', receipt: true, tag: 'Verified · Wolfram',
+      lead: 'An eigenvalue of a square matrix A is a scalar λ for which there exists a non-zero vector v with Av = λv. Geometrically, v is a direction that A only stretches — it never turns it.',
+      rest: 'To find them, solve det(A − λI) = 0. The left-hand side is a polynomial in λ of the same degree as the matrix, so a 3×3 matrix has three eigenvalues counted with multiplicity.',
+      meta: 'Worked example attached · 2 tags · GATE, BITSAT',
+      line: 'Verified symbolically, so it carries the receipt into the library.',
+      chain: [['wolfram','used','1,240ms'],['uploads','empty','80ms'],['url-extract','skipped','—'],['llm','skipped','—']],
+    },
+    llm: {
+      id: 'bayes-rule-intermediate', receipt: false, tag: '',
+      lead: 'Bayes\u2019 rule updates a belief when evidence arrives: P(A|B) = P(B|A)·P(A) / P(B). The prior is what you thought before, the posterior is what you think after.',
+      rest: 'The usual trap is treating P(A|B) and P(B|A) as interchangeable. They are equal only when the two priors are equal, which is almost never the case in exam questions.',
+      meta: 'No worked example · 3 tags · GATE',
+      line: 'Generated by the model with no verified source. Lowest trust — read every line before approving.',
+      chain: [['uploads','empty','64ms'],['wolfram','empty','910ms'],['url-extract','errored','2,300ms'],['llm','used','3,480ms']],
+    },
+    uploads: {
+      id: 'improper-integrals-advanced', receipt: false, tag: '',
+      lead: 'An improper integral is one where either a limit of integration is infinite, or the integrand is unbounded somewhere on the interval. Both cases are handled the same way — take a limit.',
+      rest: 'Convergence is decided by the limit, not by the shape of the curve. Comparison against a known convergent integral is usually faster than evaluating directly.',
+      meta: 'Worked example attached · 2 tags · GATE',
+      line: 'Taken from your own uploaded material. No receipt — read it as you would your own notes.',
+      chain: [['uploads','used','120ms'],['wolfram','skipped','—'],['url-extract','skipped','—'],['llm','skipped','—']],
+    },
+    url: {
+      id: 'laplace-transforms-intro', receipt: false, tag: '',
+      lead: 'The Laplace transform turns a differential equation in t into an algebraic equation in s. Solve the easy one, then transform back.',
+      rest: 'Most exam questions only need the standard table plus linearity and the shift theorem. Deriving transforms from the integral is rarely the fastest route.',
+      meta: 'No worked example · 1 tag · GATE',
+      line: 'Extracted from a URL you supplied. No receipt — check the source page before approving.',
+      chain: [['uploads','empty','58ms'],['wolfram','empty','870ms'],['url-extract','used','1,610ms'],['llm','skipped','—']],
+    },
+  };
+  let current = DRAFTS.wolfram;
+
+  function render(d) {
+    current = d;
+    const box = document.getElementById('trustbox');
+    const tag = document.getElementById('trusttag');
+    box.style.boxShadow = d.receipt ? 'inset 0 0 0 1px var(--receipt-line)' : 'none';
+    box.style.padding = d.receipt ? '16px' : '0';
+    tag.style.display = d.receipt ? 'inline-flex' : 'none';
+    document.getElementById('draftid').textContent = d.id;
+    document.getElementById('bodyLead').textContent = d.lead;
+    document.getElementById('bodyRest').textContent = d.rest;
+    document.getElementById('bodyMeta').textContent = d.meta;
+    document.getElementById('trustline').textContent = d.line;
+    document.getElementById('chain').innerHTML = d.chain.map(([src, outcome, ms]) => {
+      const colour = outcome === 'used' ? 'var(--green)' : outcome === 'errored' ? 'var(--red)' : 'var(--grey-5)';
+      return '<div><span class="dot" style="background:' + colour + '"></span>' +
+        '<span style="flex:1" class="rowtitle">' + src + '</span>' +
+        '<span class="sub">' + outcome + '</span><span class="sub mono">' + ms + '</span></div>';
+    }).join('');
+  }
+
+  function sel(btn, kind) {
+    btn.parentElement.querySelectorAll('button').forEach(b => b.removeAttribute('data-sel'));
+    btn.setAttribute('data-sel', '');
+    render(DRAFTS[kind]);
+  }
+  let tm;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.setAttribute('data-on','');
+    clearTimeout(tm); tm = setTimeout(() => el.removeAttribute('data-on'), 2400);
+  }
+  render(DRAFTS.wolfram);
+  lucide.createIcons();
+</script>
+</body>
+</html>

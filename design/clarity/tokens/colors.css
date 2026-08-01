@@ -1,0 +1,96 @@
+/* Colors — Apple system palette, retuned to Vidhya's two semantic accents.
+   Mastery = green (correct, mastered, primary CTA).
+   Tutor   = indigo (AI, study plan, guidance). Nothing else uses indigo.
+   Red / orange are system states only — never decoration. */
+:root {
+  /* Base greys (Apple system grouped backgrounds) */
+  --grey-1: #f5f5f7;
+  --grey-2: #ffffff;
+  --grey-3: #efeff4;
+  --grey-4: #e5e5ea;
+  --grey-5: #d1d1d6;
+  --grey-6: #8e8e93;
+  --ink: #1d1d1f;
+
+  /* Accents */
+  --green: #34c759;
+  --green-press: #2fb350;
+  --green-ink: #248a3d;          /* accessible green on white */
+  --green-tint: rgba(52, 199, 89, 0.12);
+  --indigo: #5856d6;
+  --indigo-press: #4b49bf;
+  --indigo-ink: #4340b5;
+  --indigo-tint: rgba(88, 86, 214, 0.12);
+  --red: #ff3b30;
+  --red-ink: #d70015;
+  --red-tint: rgba(255, 59, 48, 0.12);
+  --orange: #ff9f0a;
+  --orange-ink: #b25000;
+  --orange-tint: rgba(255, 159, 10, 0.14);
+
+  /* Semantic surfaces */
+  --surface-canvas: var(--grey-1);
+  --surface-card: var(--grey-2);
+  --surface-sunken: var(--grey-3);
+  --surface-fill: rgba(120, 120, 128, 0.12);   /* Apple secondarySystemFill */
+  --surface-fill-strong: rgba(120, 120, 128, 0.2);
+  --material-thick: rgba(255, 255, 255, 0.72); /* pair with --blur-nav */
+
+  /* Semantic text */
+  --text-primary: var(--ink);
+  --text-secondary: rgba(60, 60, 67, 0.6);
+  --text-tertiary: rgba(60, 60, 67, 0.35);
+  --text-on-accent: #ffffff;
+  --text-link: var(--indigo-ink);
+
+  /* Lines */
+  --separator: rgba(60, 60, 67, 0.16);
+  --separator-opaque: var(--grey-4);
+  --hairline: 0.5px;
+
+  /* Roles */
+  --accent-mastery: var(--green);
+  --accent-tutor: var(--indigo);
+  --focus-ring: rgba(88, 86, 214, 0.45);
+  --receipt-line: rgba(52, 199, 89, 0.45);
+  --receipt-mark: var(--green);
+}
+
+[data-theme="dark"] {
+  --grey-1: #000000;
+  --grey-2: #1c1c1e;
+  --grey-3: #2c2c2e;
+  --grey-4: #3a3a3c;
+  --grey-5: #48484a;
+  --grey-6: #98989d;
+  --ink: #f5f5f7;
+
+  --green: #30d158;
+  --green-press: #28b74c;
+  --green-ink: #30d158;
+  --green-tint: rgba(48, 209, 88, 0.16);
+  --indigo: #7d7aff;
+  --indigo-press: #6a67f0;
+  --indigo-ink: #a5a3ff;
+  --indigo-tint: rgba(125, 122, 255, 0.18);
+  --red: #ff453a;
+  --red-ink: #ff6961;
+  --orange: #ffd60a;
+  --orange-ink: #ffd426;
+
+  --surface-canvas: #000000;
+  --surface-card: #1c1c1e;
+  --surface-sunken: #111113;
+  --surface-fill: rgba(120, 120, 128, 0.24);
+  --surface-fill-strong: rgba(120, 120, 128, 0.36);
+  --material-thick: rgba(28, 28, 30, 0.72);
+
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(235, 235, 245, 0.6);
+  --text-tertiary: rgba(235, 235, 245, 0.3);
+  --text-link: var(--indigo-ink);
+  --separator: rgba(84, 84, 88, 0.6);
+  --separator-opaque: #38383a;
+  --receipt-line: rgba(48, 209, 88, 0.5);
+  --receipt-mark: var(--green);
+}

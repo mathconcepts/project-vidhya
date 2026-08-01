@@ -1,0 +1,172 @@
+<!-- @dsCard group="Student app" viewport="1100x700" subtitle="No deadline, no urgency — position in a curriculum" name="Knowledge track" -->
+<!-- @startingPoint section="Student app" subtitle="Knowledge-track shell: progress, next concept, concept map" viewport="1100x700" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vidhya — knowledge track</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<style>
+  body { padding: 24px; display: flex; gap: 32px; align-items: flex-start; justify-content: center; }
+  .phone { width: 390px; height: 844px; border-radius: 44px; background: var(--surface-canvas);
+    box-shadow: 0 0 0 10px #1d1d1f, 0 30px 70px -20px rgba(0,0,0,.45);
+    overflow: hidden; position: relative; display: flex; flex-direction: column; flex: none; }
+  .status { height: 50px; display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 26px 6px; font: 600 14px var(--font-sans); letter-spacing: -.01em; flex: none; }
+  .nav { display: flex; align-items: center; justify-content: space-between; padding: 2px 20px 6px; flex: none; }
+  .mark { width: 30px; height: 30px; border-radius: 9px; background: var(--ink); color: var(--surface-card);
+    display: flex; align-items: center; justify-content: center; font: 600 15px var(--font-sans); letter-spacing: -.03em; }
+  .scroll { flex: 1; overflow-y: auto; padding: 0 20px 28px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .tabbar { display: flex; background: var(--material-thick); backdrop-filter: var(--blur-nav);
+    border-top: .5px solid var(--separator); flex: none; }
+  .tabbar button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 9px 0 22px; border: none; background: none; cursor: pointer;
+    font: 500 11px var(--font-sans); color: var(--text-secondary); }
+  .tabbar button[aria-current] { color: var(--indigo-ink); font-weight: 600; }
+  .fab { position: absolute; right: 20px; bottom: 94px; width: 56px; height: 56px; border: none;
+    border-radius: 999px; background: var(--indigo); color: #fff; box-shadow: var(--shadow-fab);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  .title { font: 700 34px var(--font-sans); letter-spacing: -.022em; margin: 4px 0 0; }
+  .lede { font: 400 17px var(--font-sans); color: var(--text-secondary); line-height: 1.5; margin: 8px 0 0; }
+  .h2 { font: 600 15px var(--font-sans); color: var(--text-secondary); margin: 30px 0 8px; }
+  .sub { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.45; }
+  .rowtitle { font: 400 17px var(--font-sans); letter-spacing: -.01em; }
+  .focal { background: var(--surface-card); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-card); }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .list > * { padding: 14px 0; border-bottom: .5px solid var(--separator); }
+  .list > *:last-child { border-bottom: none; }
+  .btn-primary { width: 100%; height: 52px; border: none; border-radius: var(--radius-md); background: var(--indigo);
+    color: #fff; font: 600 17px var(--font-sans); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 8px; transition: transform var(--dur-fast) var(--ease-standard); }
+  .btn-primary:active { transform: scale(.97); }
+  .btn-quiet { height: 44px; border: none; background: none; cursor: pointer; font: 600 17px var(--font-sans); color: var(--indigo-ink); padding: 0; }
+  .bar { height: 6px; border-radius: 999px; background: var(--surface-fill); overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--green); border-radius: 999px; }
+  .node { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
+    font: 500 15px var(--font-sans); }
+  .node[data-s="done"] { background: var(--green-tint); color: var(--green-ink); }
+  .node[data-s="now"] { background: var(--indigo); color: #fff; }
+  .node[data-s="open"] { background: var(--surface-card); color: var(--text-primary); box-shadow: var(--shadow-raise); }
+  .node[data-s="locked"] { background: var(--surface-fill); color: var(--text-tertiary); }
+  .screen { display: none; animation: enter var(--dur-base) var(--ease-standard); }
+  .screen[data-on] { display: block; }
+  @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .rail { width: 330px; }
+  .rail h1 { font: 600 28px var(--font-sans); letter-spacing: -.018em; margin: 0 0 10px; }
+  .rail p { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.55; margin: 0 0 18px; }
+  .stage { display: block; width: 100%; text-align: left; background: none; cursor: pointer; border: none;
+    border-top: .5px solid var(--separator); padding: 13px 0; }
+  .stage:last-of-type { border-bottom: .5px solid var(--separator); }
+  .stage b { display: block; font: 600 15px var(--font-sans); letter-spacing: -.01em; }
+  .stage span { display: block; font: 400 14px var(--font-sans); color: var(--text-secondary); margin-top: 2px; line-height: 1.45; }
+  .stage[data-active] b { color: var(--indigo-ink); }
+</style>
+</head>
+<body>
+
+<div class="rail">
+  <h1>Learning without a deadline</h1>
+  <p>The same student, no exam date. Nothing on this shell may manufacture urgency — no countdown, no days left, no red. Position in the curriculum is the story.</p>
+  <button class="stage" data-stage="track" onclick="go('track')" data-active><b>K1 · Where you are</b><span>"23 of 40 concepts" as a sentence. The bar is detail, not headline.</span></button>
+  <button class="stage" data-stage="map" onclick="go('map')"><b>K3 · The shape of it</b><span>Mastered, open, locked — and locked explains itself quietly.</span></button>
+  <button class="stage" data-stage="bridge" onclick="go('bridge')"><b>K6 · The bridge</b><span>At 70%, the exam is offered once. Decline and it never asks again.</span></button>
+</div>
+
+<div class="phone">
+  <div class="status"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><i data-lucide="signal" style="width:15px"></i><i data-lucide="wifi" style="width:15px"></i><i data-lucide="battery-full" style="width:19px"></i></span></div>
+  <div class="nav">
+    <div class="mark">V</div>
+    <div style="width:30px;height:30px;border-radius:999px;background:var(--surface-fill);display:flex;align-items:center;justify-content:center;font:600 13px var(--font-sans);color:var(--text-secondary)">AS</div>
+  </div>
+
+  <div class="scroll">
+    <!-- K1 -->
+    <section class="screen" data-screen="track" data-on>
+      <p class="sub" style="margin:6px 0 0">Engineering Mathematics</p>
+      <h1 class="title">23 of 40 concepts</h1>
+      <div class="bar" style="margin-top:14px"><i style="width:58%"></i></div>
+
+      <div class="focal" style="margin-top:22px">
+        <p class="sub" style="margin:0;font-size:15px">Next</p>
+        <h2 style="margin:6px 0 0;font:700 28px var(--font-sans);letter-spacing:-.018em;line-height:1.15">Eigenvalues</h2>
+        <p class="sub" style="margin:10px 0 0;font-size:17px">You finished determinants last week, which is everything this needs.</p>
+        <button class="btn-primary" style="margin-top:20px" onclick="go('map')">Study eigenvalues</button>
+      </div>
+
+      <p class="h2">Lately</p>
+      <div class="list">
+        <div class="row"><span style="flex:1" class="rowtitle">Determinants</span><span class="sub" style="font-size:14px">Mastered Tuesday</span></div>
+        <div class="row"><span style="flex:1" class="rowtitle">Matrix rank</span><span class="sub" style="font-size:14px">Mastered last week</span></div>
+      </div>
+      <p class="sub" style="margin-top:22px">Eleven of the concepts you learned in spring came back correct this month.</p>
+    </section>
+
+    <!-- K3 -->
+    <section class="screen" data-screen="map">
+      <h1 class="title">The map</h1>
+      <p class="lede">Forty concepts. Green is yours, grey opens later.</p>
+
+      <p class="h2">Linear algebra</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span class="node" data-s="done">Vectors</span>
+        <span class="node" data-s="done">Matrices</span>
+        <span class="node" data-s="done">Rank</span>
+        <span class="node" data-s="done">Determinants</span>
+        <span class="node" data-s="now">Eigenvalues</span>
+        <span class="node" data-s="open">Diagonalisation</span>
+      </div>
+
+      <p class="h2">Calculus</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span class="node" data-s="done">Limits</span>
+        <span class="node" data-s="open">Continuity</span>
+        <span class="node" data-s="open">Derivatives</span>
+        <span class="node" data-s="locked">Series</span>
+      </div>
+
+      <div class="list" style="margin-top:24px">
+        <div class="row"><span style="flex:1"><span class="rowtitle">Series</span><span class="sub" style="display:block">Opens once you've done derivatives.</span></span></div>
+      </div>
+      <p class="sub" style="margin-top:20px">No order is forced. Anything open can be studied today.</p>
+    </section>
+
+    <!-- K6 -->
+    <section class="screen" data-screen="bridge">
+      <div style="padding-top:64px">
+        <p class="sub" style="margin:0">Milestone</p>
+        <h1 class="title" style="margin-top:6px">You've covered 70% of Engineering Mathematics</h1>
+        <p class="lede">Enough of it that a full paper would tell you something useful. Only if you want one.</p>
+        <button class="btn-primary" style="margin-top:26px" onclick="go('track')">Set an exam date</button>
+        <div style="display:flex;justify-content:center;margin-top:8px"><button class="btn-quiet" onclick="go('track')">Not now</button></div>
+        <p class="sub" style="margin-top:22px;font-size:14px">Asked once. Say no and the shell goes back to being deadline-free.</p>
+      </div>
+    </section>
+  </div>
+
+  <button class="fab" aria-label="Ask the tutor"><i data-lucide="message-circle" style="width:22px"></i></button>
+
+  <nav class="tabbar">
+    <button data-tab="track" aria-current="page" onclick="go('track')"><i data-lucide="book-open" style="width:21px"></i>Learn</button>
+    <button data-tab="map" onclick="go('map')"><i data-lucide="git-branch" style="width:21px"></i>Map</button>
+    <button data-tab="progress" onclick="go('bridge')"><i data-lucide="bar-chart-3" style="width:21px"></i>Progress</button>
+  </nav>
+</div>
+
+<script>
+  const TAB = { track: 'track', map: 'map', bridge: 'progress' };
+  function go(name) {
+    document.querySelectorAll('.screen').forEach(s => s.toggleAttribute('data-on', s.dataset.screen === name));
+    document.querySelectorAll('.stage').forEach(s => s.toggleAttribute('data-active', s.dataset.stage === name));
+    document.querySelectorAll('.tabbar button').forEach(b => {
+      if (b.dataset.tab === TAB[name]) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    document.querySelector('.scroll').scrollTop = 0;
+  }
+  lucide.createIcons();
+</script>
+</body>
+</html>

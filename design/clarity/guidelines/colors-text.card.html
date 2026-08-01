@@ -1,0 +1,22 @@
+<!-- @dsCard group="Colors" viewport="700x200" subtitle="Label hierarchy and hairline separators" name="Text & lines" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Text and lines</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:20px;background:var(--surface-canvas)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:var(--text-caption);color:var(--text-secondary);letter-spacing:var(--tracking-body)}
+.mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+
+</style></head><body>
+<div class="col" style="gap:2px">
+  <div style="font-size:var(--text-body);color:var(--text-primary)">Primary label — #1d1d1f</div>
+  <div style="font-size:var(--text-body);color:var(--text-secondary)">Secondary label — rgba(60,60,67,.60)</div>
+  <div style="font-size:var(--text-body);color:var(--text-tertiary)">Tertiary label — rgba(60,60,67,.35)</div>
+</div>
+<div style="margin-top:18px;background:var(--surface-card);border-radius:var(--radius-sm);padding:0 16px">
+  <div style="padding:12px 0;border-bottom:0.5px solid var(--separator);font-size:var(--text-subhead)">Hairline separator, inset by row padding</div>
+  <div style="padding:12px 0;font-size:var(--text-subhead)">Last row carries no line</div>
+</div>
+</body></html>

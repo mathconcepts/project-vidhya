@@ -1,0 +1,250 @@
+<!-- @dsCard group="Student app" viewport="1100x700" subtitle="Camera scan and the mock exam runner" name="Scan & mock exam" -->
+<!-- @startingPoint section="Student app" subtitle="Scan capture, read-back, and the timed mock exam" viewport="1100x700" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vidhya — scan & mock exam</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<style>
+  body { padding: 24px; display: flex; gap: 32px; align-items: flex-start; justify-content: center; }
+  .phone { width: 390px; height: 844px; border-radius: 44px; background: var(--surface-canvas);
+    box-shadow: 0 0 0 10px #1d1d1f, 0 30px 70px -20px rgba(0,0,0,.45);
+    overflow: hidden; position: relative; display: flex; flex-direction: column; flex: none; }
+  .status { height: 50px; display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 26px 6px; font: 600 14px var(--font-sans); letter-spacing: -.01em; flex: none; }
+  .scroll { flex: 1; overflow-y: auto; padding: 8px 20px 28px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .title { font: 700 34px var(--font-sans); letter-spacing: -.022em; margin: 4px 0 0; }
+  .lede { font: 400 17px var(--font-sans); color: var(--text-secondary); line-height: 1.5; margin: 8px 0 0; }
+  .sub { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.45; }
+  .h2 { font: 600 15px var(--font-sans); color: var(--text-secondary); margin: 28px 0 8px; }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .list > * { padding: 14px 0; border-bottom: .5px solid var(--separator); }
+  .list > *:last-child { border-bottom: none; }
+  .focal { background: var(--surface-card); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-card); }
+  .btn-primary { width: 100%; height: 52px; border: none; border-radius: var(--radius-md);
+    background: var(--green); color: #fff; font: 600 17px var(--font-sans); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform var(--dur-fast) var(--ease-standard); }
+  .btn-primary:active { transform: scale(.97); }
+  .btn-quiet { height: 44px; padding: 0 4px; border: none; background: none; cursor: pointer;
+    font: 600 17px var(--font-sans); color: var(--indigo-ink); }
+  .opt { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border: none; border-radius: var(--radius-sm); background: var(--surface-card); box-shadow: var(--shadow-raise);
+    font: 400 17px var(--font-sans); color: var(--text-primary); text-align: left; cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-standard); }
+  .opt[data-sel] { background: var(--indigo); color: #fff; box-shadow: none; }
+  .opt b { font: 600 15px var(--font-mono); opacity: .55; }
+  .opt[data-sel] b { opacity: .8; }
+  .receipt { border-radius: var(--radius-sm); padding: 14px; background: var(--surface-card);
+    box-shadow: inset 0 0 0 1px var(--receipt-line); }
+  .vtag { display: inline-flex; align-items: center; gap: 5px; font: 600 13px var(--font-sans); color: var(--green-ink); margin-bottom: 8px; }
+  .vtick { width: 16px; height: 16px; border-radius: 999px; background: var(--green); color: #fff; font-size: 10px;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .screen { display: none; animation: enter var(--dur-base) var(--ease-standard); }
+  .screen[data-on] { display: block; }
+  @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* viewfinder */
+  .finder { position: absolute; inset: 0; background: #0b0b0c; display: none; flex-direction: column; }
+  .finder[data-on] { display: flex; }
+  .finder .frame { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+  .corner { position: absolute; width: 26px; height: 26px; border: 3px solid var(--green); }
+  .paper { width: 268px; height: 176px; border-radius: 4px; background: #f6f4ef;
+    display: flex; align-items: center; justify-content: center; color: #2b2b2b;
+    font: 400 21px var(--font-serif); transform: rotate(-1.2deg); box-shadow: 0 20px 40px rgba(0,0,0,.5); }
+  .scanline { position: absolute; left: 62px; right: 62px; height: 2px; background: var(--green); opacity: .8;
+    animation: sweep 2.6s var(--ease-standard) infinite alternate; }
+  @keyframes sweep { from { top: 42%; } to { top: 58%; } }
+  .shutterbar { padding: 24px 24px 46px; display: flex; align-items: center; justify-content: space-between; }
+  .shutter { width: 72px; height: 72px; border-radius: 999px; background: #fff; border: 5px solid rgba(255,255,255,.35);
+    cursor: pointer; transition: transform var(--dur-fast) var(--ease-standard); }
+  .shutter:active { transform: scale(.94); }
+  .finder .hint { text-align: center; color: rgba(255,255,255,.72); font: 400 15px var(--font-sans); padding-bottom: 8px; }
+  .ghost { width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,.14); color: #fff;
+    display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+
+  /* exam chrome */
+  .examtop { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0 12px; background: var(--surface-canvas); }
+  .timer { font: 600 17px var(--font-mono); font-variant-numeric: tabular-nums; padding: 4px 10px; border-radius: 8px;
+    background: var(--surface-fill); }
+  .timer[data-low] { background: var(--red-tint); color: var(--red-ink); }
+  .palette { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 14px; }
+  .palette span { height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font: 600 13px var(--font-mono); background: var(--surface-fill); color: var(--text-secondary); }
+  .palette span[data-done] { background: var(--green-tint); color: var(--green-ink); }
+  .palette span[data-now] { background: var(--ink); color: var(--surface-card); }
+
+  .rail { width: 330px; }
+  .rail h1 { font: 600 28px var(--font-sans); letter-spacing: -.018em; margin: 0 0 10px; }
+  .rail p { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.55; margin: 0 0 18px; }
+  .stage { display: block; width: 100%; text-align: left; background: none; cursor: pointer; border: none;
+    border-top: .5px solid var(--separator); padding: 13px 0; }
+  .stage:last-of-type { border-bottom: .5px solid var(--separator); }
+  .stage b { display: block; font: 600 15px var(--font-sans); letter-spacing: -.01em; }
+  .stage span { display: block; font: 400 14px var(--font-sans); color: var(--text-secondary); margin-top: 2px; line-height: 1.45; }
+  .stage[data-active] b { color: var(--indigo-ink); }
+</style>
+</head>
+<body>
+
+<div class="rail">
+  <h1>Scan, then sit the mock</h1>
+  <p>Two surfaces outside the daily loop. The camera is the one place the theme goes dark — the viewfinder is the content. The exam is the one place nothing may interrupt.</p>
+  <button class="stage" data-stage="finder" onclick="go('finder')" data-active><b>S1 · Viewfinder</b><span>Corner marks and a shutter. No toolbar, no filters, no grid.</span></button>
+  <button class="stage" data-stage="readback" onclick="go('readback')"><b>S3 · Read-back</b><span>Correct the machine before it answers. Editable text, not a claim.</span></button>
+  <button class="stage" data-stage="answer" onclick="go('answer')"><b>S4 · Answer</b><span>Solved, verified, and quietly saved to notes.</span></button>
+  <button class="stage" data-stage="brief" onclick="go('brief')"><b>M1 · Exam brief</b><span>Two numbers, four rules, one button.</span></button>
+  <button class="stage" data-stage="question" onclick="go('question')"><b>M2 · Question</b><span>Timer and position only. The palette opens on tap.</span></button>
+  <button class="stage" data-stage="result" onclick="go('result')"><b>M6 · Result</b><span>One number, then the honest breakdown. No celebration.</span></button>
+</div>
+
+<div class="phone">
+  <!-- viewfinder lives outside the light chrome -->
+  <div class="finder" id="finder" data-on>
+    <div class="status" style="color:#fff"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><i data-lucide="signal" style="width:15px"></i><i data-lucide="wifi" style="width:15px"></i><i data-lucide="battery-full" style="width:19px"></i></span></div>
+    <div class="frame">
+      <div class="paper">∫ x·e<sup>x</sup> dx = ?</div>
+      <div class="corner" style="top:150px;left:52px;border-right:none;border-bottom:none;border-radius:6px 0 0 0"></div>
+      <div class="corner" style="top:150px;right:52px;border-left:none;border-bottom:none;border-radius:0 6px 0 0"></div>
+      <div class="corner" style="bottom:150px;left:52px;border-right:none;border-top:none;border-radius:0 0 0 6px"></div>
+      <div class="corner" style="bottom:150px;right:52px;border-left:none;border-top:none;border-radius:0 0 6px 0"></div>
+      <div class="scanline"></div>
+    </div>
+    <p class="hint">Fill the frame with one problem</p>
+    <div class="shutterbar">
+      <button class="ghost" aria-label="From gallery"><i data-lucide="image" style="width:22px"></i></button>
+      <button class="shutter" aria-label="Capture" onclick="go('readback')"></button>
+      <button class="ghost" aria-label="Type it instead" onclick="go('readback')"><i data-lucide="keyboard" style="width:22px"></i></button>
+    </div>
+  </div>
+
+  <div class="status" id="lightstatus" style="display:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><i data-lucide="signal" style="width:15px"></i><i data-lucide="wifi" style="width:15px"></i><i data-lucide="battery-full" style="width:19px"></i></span></div>
+
+  <div class="scroll" id="lightscroll" style="display:none">
+
+    <!-- S3 read-back -->
+    <section class="screen" data-screen="readback">
+      <h1 class="title">Is this right?</h1>
+      <p class="lede">Fix anything I misread before I solve it.</p>
+      <div class="focal" style="margin-top:20px">
+        <p style="margin:0;font:400 22px var(--font-serif);line-height:1.5">∫ x·e<sup>x</sup> dx</p>
+        <p class="sub" style="margin-top:10px;font-size:14px">Integration by parts · read from your photo</p>
+      </div>
+      <button class="btn-primary" style="margin-top:20px" onclick="go('answer')">Looks right — solve it</button>
+      <div style="display:flex;justify-content:center;margin-top:6px"><button class="btn-quiet" onclick="go('finder')">Edit the question</button></div>
+    </section>
+
+    <!-- S4 answer -->
+    <section class="screen" data-screen="answer">
+      <p class="sub" style="margin:6px 0 14px">From your photo · Calculus</p>
+      <div class="receipt">
+        <div class="vtag"><span class="vtick">✓</span> Verified · Wolfram</div>
+        <div style="font:400 20px var(--font-serif);line-height:1.5">∫ x·e<sup>x</sup> dx = e<sup>x</sup>(x − 1) + C</div>
+      </div>
+      <p class="lede" style="margin-top:18px">Take u = x and dv = e<sup>x</sup> dx. One round of parts is enough — the x disappears and you are left with an integral you already know.</p>
+      <p class="sub" style="margin-top:20px">Saved to your notes.</p>
+      <p class="sub" style="margin-top:16px">Want one more like it? <a href="#" onclick="go('brief');return false">Yes, give me one</a></p>
+    </section>
+
+    <!-- M1 brief -->
+    <section class="screen" data-screen="brief">
+      <h1 class="title">Mock exam</h1>
+      <p class="lede">Full length, weighted to your syllabus and pitched just above where you are now.</p>
+      <div class="focal" style="margin-top:20px;display:flex;gap:32px;align-items:center">
+        <div><div style="font:600 40px var(--font-sans);letter-spacing:-.022em;font-variant-numeric:tabular-nums">180</div><div class="sub" style="font-size:14px">minutes</div></div>
+        <div style="width:.5px;height:44px;background:var(--separator)"></div>
+        <div><div style="font:600 40px var(--font-sans);letter-spacing:-.022em;font-variant-numeric:tabular-nums">65</div><div class="sub" style="font-size:14px">questions</div></div>
+      </div>
+      <p class="h2">Before you start</p>
+      <div class="list">
+        <div class="sub" style="color:var(--text-primary);font-size:17px">The marks scheme matches your real exam, negative marking included.</div>
+        <div class="sub" style="color:var(--text-primary);font-size:17px">The timer runs continuously once you begin.</div>
+        <div class="sub" style="color:var(--text-primary);font-size:17px">You can skip and come back.</div>
+      </div>
+      <button class="btn-primary" style="margin-top:24px" onclick="go('question')">Start</button>
+    </section>
+
+    <!-- M2 question -->
+    <section class="screen" data-screen="question">
+      <div class="examtop">
+        <span class="timer" id="timer">42:18</span>
+        <span class="sub" style="font-size:14px">12 of 65 · 9 answered</span>
+      </div>
+      <p class="sub" style="font-size:14px;margin:0 0 6px">Linear Algebra · 2 marks</p>
+      <p style="font:400 19px var(--font-sans);line-height:1.5;margin:0 0 18px">If A is a 3×3 matrix with eigenvalues 1, 2 and 3, what is det(A)?</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="opt" onclick="pick(this)"><b>A</b> 3</button>
+        <button class="opt" data-sel onclick="pick(this)"><b>B</b> 6</button>
+        <button class="opt" onclick="pick(this)"><b>C</b> 9</button>
+        <button class="opt" onclick="pick(this)"><b>D</b> 11</button>
+      </div>
+      <div class="row" style="gap:10px;margin-top:20px">
+        <button class="btn-quiet" style="flex:1;text-align:left">Previous</button>
+        <button class="btn-primary" style="flex:2;height:48px" onclick="go('result')">Next</button>
+      </div>
+      <button class="btn-quiet" style="margin-top:8px;font-size:15px" onclick="togglePalette()">Jump to a question</button>
+      <div class="palette" id="palette" hidden>
+        <span data-done>9</span><span data-done>10</span><span data-done>11</span><span data-now>12</span>
+        <span>13</span><span>14</span><span>15</span><span>16</span>
+      </div>
+    </section>
+
+    <!-- M6 result -->
+    <section class="screen" data-screen="result">
+      <h1 class="title">Mock complete</h1>
+      <div class="focal" style="margin-top:20px">
+        <div style="font:600 48px var(--font-sans);letter-spacing:-.022em;font-variant-numeric:tabular-nums;line-height:1">86</div>
+        <p class="sub" style="margin-top:6px;font-size:17px">out of 130 marks · 66%. Your best mock so far, and eleven marks of it came back from Linear Algebra.</p>
+      </div>
+      <div class="list" style="margin-top:6px">
+        <div class="row"><span style="flex:1;font-size:17px">Correct</span><span style="font:600 17px var(--font-mono);color:var(--green-ink);font-variant-numeric:tabular-nums">48</span></div>
+        <div class="row"><span style="flex:1;font-size:17px">Wrong</span><span style="font:600 17px var(--font-mono);color:var(--red-ink);font-variant-numeric:tabular-nums">14</span></div>
+        <div class="row"><span style="flex:1;font-size:17px">Skipped</span><span style="font:600 17px var(--font-mono);color:var(--text-secondary);font-variant-numeric:tabular-nums">3</span></div>
+      </div>
+      <p class="h2">By topic</p>
+      <div class="list">
+        <div class="row"><span style="flex:1;font-size:17px">Linear Algebra</span><span class="sub" style="font-family:var(--font-mono);color:var(--green-ink)">18/20 &nbsp;+34</span></div>
+        <div class="row"><span style="flex:1;font-size:17px">Calculus</span><span class="sub" style="font-family:var(--font-mono);color:var(--green-ink)">15/22 &nbsp;+22</span></div>
+        <div class="row"><span style="flex:1;font-size:17px">Probability</span><span class="sub" style="font-family:var(--font-mono);color:var(--red-ink)">6/18 &nbsp;−4</span></div>
+      </div>
+      <p class="lede" style="margin-top:22px">Probability cost you more than it scored. That is where tomorrow's plan starts.</p>
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+        <button class="btn-quiet" onclick="go('brief')">See the questions you lost</button>
+        <button class="btn-quiet" onclick="go('brief')">Take another mock</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const DARK = ['finder'];
+  function go(name) {
+    const dark = DARK.includes(name);
+    document.getElementById('finder').toggleAttribute('data-on', dark);
+    document.getElementById('lightstatus').style.display = dark ? 'none' : 'flex';
+    document.getElementById('lightscroll').style.display = dark ? 'none' : 'block';
+    document.querySelectorAll('.screen').forEach(s => s.toggleAttribute('data-on', s.dataset.screen === name));
+    document.querySelectorAll('.stage').forEach(s => s.toggleAttribute('data-active', s.dataset.stage === name));
+    document.getElementById('lightscroll').scrollTop = 0;
+  }
+  function pick(el) {
+    el.parentElement.querySelectorAll('.opt').forEach(o => o.removeAttribute('data-sel'));
+    el.setAttribute('data-sel', '');
+  }
+  function togglePalette() { const p = document.getElementById('palette'); p.hidden = !p.hidden; }
+  let left = 42 * 60 + 18;
+  setInterval(() => {
+    left = left > 0 ? left - 1 : 0;
+    const t = document.getElementById('timer');
+    if (!t) return;
+    t.textContent = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
+    t.toggleAttribute('data-low', left <= 600);
+  }, 1000);
+  lucide.createIcons();
+</script>
+</body>
+</html>

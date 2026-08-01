@@ -1,0 +1,50 @@
+<!-- @dsCard group="Components" viewport="700x360" subtitle="Buttons, pills, rows, fields, badges" name="Core" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Core components</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+body{padding:20px;background:var(--surface-canvas)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:var(--text-caption);color:var(--text-secondary);letter-spacing:var(--tracking-body)}
+.mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+body{padding:20px}
+</style></head><body>
+<div class="col" style="gap:16px">
+  <div class="row">
+    <button style="height:44px;padding:0 18px;border:none;border-radius:12px;background:var(--green);color:#fff;font:600 15px var(--font-sans);cursor:pointer">Start practising</button>
+    <button style="height:44px;padding:0 18px;border:none;border-radius:12px;background:var(--indigo-tint);color:var(--indigo-ink);font:600 15px var(--font-sans);cursor:pointer">Ask the tutor</button>
+    <button style="height:44px;padding:0 18px;border:none;border-radius:12px;background:var(--surface-fill);color:var(--text-primary);font:600 15px var(--font-sans);cursor:pointer">Review</button>
+    <button style="height:44px;padding:0 12px;border:none;background:none;color:var(--indigo-ink);font:600 15px var(--font-sans);cursor:pointer">Skip</button>
+    <button disabled style="height:44px;padding:0 18px;border:none;border-radius:12px;background:var(--green);color:#fff;font:600 15px var(--font-sans);opacity:.35">Disabled</button>
+  </div>
+  <div class="row">
+    <span style="height:34px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-radius:999px;background:var(--ink);color:var(--surface-card);font:500 13px var(--font-sans)">All <span style="opacity:.55">24</span></span>
+    <span style="height:34px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-radius:999px;background:var(--surface-fill);color:var(--text-secondary);font:500 13px var(--font-sans)">Calculus <span style="opacity:.55">8</span></span>
+    <span style="display:inline-grid;grid-auto-flow:column;gap:2px;padding:2px;border-radius:12px;background:var(--surface-fill)">
+      <span style="height:34px;padding:0 14px;display:flex;align-items:center;border-radius:10px;background:var(--surface-card);box-shadow:var(--shadow-raise);font:600 13px var(--font-sans)">Week</span>
+      <span style="height:34px;padding:0 14px;display:flex;align-items:center;border-radius:10px;color:var(--text-secondary);font:500 13px var(--font-sans)">Month</span>
+    </span>
+    <span style="padding:3px 8px;border-radius:8px;background:var(--green-tint);color:var(--green-ink);font:600 12px var(--font-sans)">Mastered</span>
+    <span style="padding:3px 8px;border-radius:8px;background:var(--orange-tint);color:var(--orange-ink);font:600 12px var(--font-sans)">In progress</span>
+    <span style="padding:3px 8px;border-radius:8px;background:var(--surface-fill);color:var(--text-secondary);font:600 12px var(--font-mono)">PYQ-2019-14</span>
+  </div>
+  <div class="row" style="align-items:stretch;gap:12px">
+    <div style="flex:1;min-width:280px;background:var(--surface-card);border-radius:16px;box-shadow:var(--shadow-raise);padding:0 16px">
+      <div style="display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 0;border-bottom:0.5px solid var(--separator)">
+        <span style="flex:1"><span style="display:block;font:500 16px var(--font-sans)">Linear Algebra</span><span style="display:block;font:400 13px var(--font-sans);color:var(--text-secondary)">42 problems</span></span>
+        <span style="color:var(--text-tertiary)">›</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 0">
+        <span style="flex:1"><span style="display:block;font:500 16px var(--font-sans)">Calculus</span><span style="display:block;font:400 13px var(--font-sans);color:var(--text-secondary)">38 problems</span></span>
+        <span style="color:var(--text-tertiary)">›</span>
+      </div>
+    </div>
+    <div style="flex:1;min-width:240px">
+      <div class="lbl" style="margin-bottom:6px">Exam date</div>
+      <div style="display:flex;align-items:center;height:44px;padding:0 14px;border-radius:12px;background:var(--surface-fill);box-shadow:inset 0 0 0 2px var(--indigo);font:400 16px var(--font-sans)">12 Feb 2027</div>
+      <div class="lbl" style="margin-top:8px">Focused field</div>
+    </div>
+  </div>
+</div>
+</body></html>

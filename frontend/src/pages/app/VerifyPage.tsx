@@ -8,9 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer, tapScale, celebration } from '@/lib/animations';
-import { CheckCircle, XCircle, Loader2, AlertTriangle, Zap, Clock, Camera } from 'lucide-react';
-import { clsx } from 'clsx';
+import { CheckCircle, XCircle, Loader2, AlertTriangle, Zap, Clock } from 'lucide-react';
 import { CameraInput } from '@/components/app/CameraInput';
 
 interface VerifyResult {
@@ -41,7 +39,6 @@ export default function VerifyPage() {
     trackEvent('page_view', { page: 'verify' });
   }, []);
 
-  // Auto-resize textarea
   const handleProblemChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setProblem(e.target.value);
     const ta = textareaRef.current;
@@ -60,7 +57,7 @@ export default function VerifyPage() {
     trackEvent('verify_submit', { problemLength: problem.length, hasImage: !!image });
 
     try {
-      const payload: any = { answer: answer.trim(), sessionId };
+      const payload: Record<string, unknown> = { answer: answer.trim(), sessionId };
       if (problem.trim()) payload.problem = problem.trim();
       if (image) {
         payload.image = image.base64;
@@ -79,15 +76,15 @@ export default function VerifyPage() {
   };
 
   const statusIcon = (status: string) => {
-    if (status === 'verified') return <CheckCircle size={20} className="text-emerald-400" />;
-    if (status === 'failed') return <XCircle size={20} className="text-red-400" />;
-    return <AlertTriangle size={20} className="text-amber-400" />;
+    if (status === 'verified') return <CheckCircle size={20} style={{ color: 'var(--green-ink)' }} />;
+    if (status === 'failed') return <XCircle size={20} style={{ color: 'var(--red)' }} />;
+    return <AlertTriangle size={20} style={{ color: 'var(--orange)' }} />;
   };
 
-  const statusColor = (status: string) => {
-    if (status === 'verified') return 'border-emerald-500/30 bg-emerald-500/10';
-    if (status === 'failed') return 'border-red-500/30 bg-red-500/10';
-    return 'border-amber-500/30 bg-amber-500/10';
+  const statusColor = (status: string): React.CSSProperties => {
+    if (status === 'verified') return { border: '1px solid rgba(52,199,89,.25)', background: 'rgba(52,199,89,.06)' };
+    if (status === 'failed') return { border: '1px solid rgba(255,59,48,.25)', background: 'rgba(255,59,48,.06)' };
+    return { border: '1px solid rgba(255,149,0,.25)', background: 'rgba(255,149,0,.06)' };
   };
 
   const statusLabel = (status: string) => {
@@ -100,80 +97,99 @@ export default function VerifyPage() {
   const canSubmit = (problem.trim() || image) && answer.trim() && !loading;
 
   return (
-    <motion.div
-      className="space-y-5"
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-    >
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100">Scan & Verify</h1>
-        <p className="text-sm text-surface-500 mt-1">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Scan & Verify</h1>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
           Snap a photo of any math problem or type it in. We'll verify your answer through our 3-tier pipeline.
         </p>
-      </motion.div>
-
-      {/* Camera Input */}
-      <motion.div variants={fadeInUp}>
-        <CameraInput
-          onCapture={(b, m) => setImage({ base64: b, mimeType: m })}
-          onClear={() => setImage(null)}
-          preview={image?.base64 || null}
-        />
-      </motion.div>
-
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-surface-800" />
-        <span className="text-xs text-surface-500">or type manually</span>
-        <div className="flex-1 h-px bg-surface-800" />
       </div>
 
-      {/* Problem Input */}
-      <motion.div variants={fadeInUp} className="space-y-3">
+      {/* Camera Input */}
+      <CameraInput
+        onCapture={(b, m) => setImage({ base64: b, mimeType: m })}
+        onClear={() => setImage(null)}
+        preview={image?.base64 || null}
+      />
+
+      {/* Divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--separator)' }} />
+        <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>or type manually</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--separator)' }} />
+      </div>
+
+      {/* Problem + Answer inputs */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
-          <label className="text-xs font-medium text-surface-400 mb-1 block">Problem</label>
+          <label style={{ display: 'block', marginBottom: 4, fontSize: 11, fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Problem</label>
           <textarea
             ref={textareaRef}
             value={problem}
             onChange={handleProblemChange}
             placeholder="e.g. Find the eigenvalues of the matrix [[2,1],[1,2]]"
             rows={3}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 resize-none transition-[border-color] duration-200"
-            style={{ minHeight: '5rem', overflow: 'hidden' }}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--surface-card)',
+              border: 'var(--hairline) solid var(--separator)',
+              fontSize: 'var(--text-caption)',
+              color: 'var(--text-primary)',
+              outline: 'none',
+              resize: 'none',
+              minHeight: '5rem',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              fontFamily: 'inherit',
+            }}
           />
         </div>
 
         <div>
-          <label className="text-xs font-medium text-surface-400 mb-1 block">Your Answer</label>
+          <label style={{ display: 'block', marginBottom: 4, fontSize: 11, fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Your Answer</label>
           <input
             value={answer}
             onChange={e => setAnswer(e.target.value)}
             placeholder="e.g. 1 and 3"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-surface-200 text-sm placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 transition-[border-color] duration-200"
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--surface-card)',
+              border: 'var(--hairline) solid var(--separator)',
+              fontSize: 'var(--text-caption)',
+              color: 'var(--text-primary)',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
           />
         </div>
 
-        <motion.button
-          whileTap={canSubmit ? tapScale : undefined}
+        <button
           onClick={handleVerify}
           disabled={!canSubmit}
-          className={clsx(
-            'w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200',
-            canSubmit
-              ? 'bg-gradient-to-r from-emerald-500 to-violet-500 text-white shadow-lg shadow-emerald-500/25 active:scale-[0.98]'
-              : 'bg-surface-800 text-surface-500 cursor-not-allowed',
-            canSubmit && !loading && 'animate-pulse',
-          )}
+          style={{
+            width: '100%',
+            padding: '14px',
+            borderRadius: 'var(--radius-md)',
+            border: 'none',
+            fontSize: 'var(--text-caption)',
+            fontWeight: 'var(--weight-semibold)',
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
+            background: canSubmit ? 'var(--indigo)' : 'var(--surface-fill)',
+            color: canSubmit ? '#fff' : 'var(--text-tertiary)',
+          }}
         >
           {loading ? (
-            <span className="flex items-center justify-center gap-2">
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <Loader2 className="animate-spin" size={16} />
               Verifying...
             </span>
           ) : 'Verify Answer'}
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
 
       {/* Error */}
       <AnimatePresence>
@@ -182,7 +198,7 @@ export default function VerifyPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-300"
+            style={{ padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,59,48,.25)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}
           >
             {error}
           </motion.div>
@@ -196,15 +212,16 @@ export default function VerifyPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="space-y-3"
+            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
           >
-            <motion.div
-              variants={celebration}
-              initial="hidden"
-              animate="visible"
-              className={clsx('p-4 rounded-xl border', statusColor(result.status))}
+            <div
+              style={{
+                padding: 16,
+                borderRadius: 'var(--radius-md)',
+                ...statusColor(result.status),
+              }}
             >
-              <div className="flex items-center gap-2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {result.status === 'verified' ? (
                   <motion.div
                     initial={{ rotate: -180, scale: 0 }}
@@ -224,50 +241,57 @@ export default function VerifyPage() {
                 ) : (
                   statusIcon(result.status)
                 )}
-                <span className="font-semibold text-sm text-surface-200">{statusLabel(result.status)}</span>
+                <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{statusLabel(result.status)}</span>
               </div>
-              <div className="flex items-center gap-3 mt-2 text-xs text-surface-500">
-                <span className="flex items-center gap-1">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Zap size={12} />
                   {result.tierUsed.replace('tier1_', 'Tier 1: ').replace('tier2_', 'Tier 2: ').replace('tier3_', 'Tier 3: ')}
                 </span>
-                <span className="flex items-center gap-1">
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Clock size={12} />
                   {result.durationMs}ms
                 </span>
                 <span>{Math.round(result.confidence * 100)}% confidence</span>
               </div>
-            </motion.div>
+            </div>
 
             {/* Verification Steps */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="p-4 rounded-xl bg-surface-900 border border-surface-800"
+              style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}
             >
-              <h3 className="text-xs font-semibold text-surface-400 mb-2 uppercase tracking-wider">Verification Steps</h3>
-              <div className="space-y-2">
+              <h3 style={{ margin: '0 0 8px', fontSize: 10, fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Verification Steps</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {result.checks.map((check, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + i * 0.1 }}
-                    className="flex items-start gap-2 text-sm"
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 'var(--text-caption)' }}
                   >
-                    <span className={clsx(
-                      'mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0',
-                      check.status === 'verified' ? 'bg-emerald-500/20 text-emerald-400' :
-                      check.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                      'bg-surface-700 text-surface-400'
-                    )}>
+                    <span style={{
+                      marginTop: 2,
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 10,
+                      flexShrink: 0,
+                      background: check.status === 'verified' ? 'rgba(52,199,89,.15)' : check.status === 'failed' ? 'rgba(255,59,48,.15)' : 'var(--surface-fill)',
+                      color: check.status === 'verified' ? 'var(--green-ink)' : check.status === 'failed' ? 'var(--red)' : 'var(--text-secondary)',
+                    }}>
                       {i + 1}
                     </span>
                     <div>
-                      <span className="text-surface-300">{check.verifier}</span>
-                      <span className="text-surface-600 mx-1">—</span>
-                      <span className="text-surface-500">{check.details}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{check.verifier}</span>
+                      <span style={{ color: 'var(--text-tertiary)', margin: '0 4px' }}>—</span>
+                      <span style={{ color: 'var(--text-tertiary)' }}>{check.details}</span>
                     </div>
                   </motion.div>
                 ))}
@@ -278,9 +302,9 @@ export default function VerifyPage() {
       </AnimatePresence>
 
       {/* Rate Limit Notice */}
-      <motion.p variants={fadeInUp} className="text-xs text-surface-600 text-center">
+      <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>
         10 verifications per hour. Powered by RAG + LLM + Wolfram Alpha.
-      </motion.p>
-    </motion.div>
+      </p>
+    </div>
   );
 }

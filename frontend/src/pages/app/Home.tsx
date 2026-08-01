@@ -17,7 +17,6 @@ import { useSession } from '@/hooks/useSession';
 import { useActiveExam } from '@/hooks/useActiveExam';
 import { setAnalyticsSession, trackEvent } from '@/lib/analytics';
 import { trackPageView } from '@/lib/beacon';
-import { StudentWelcomeCard, hasSeenWelcome } from '@/components/app/StudentWelcomeCard';
 import { AnnouncementBanner } from '@/components/app/AnnouncementBanner';
 import { ExamCountdownChip } from '@/components/app/ExamCountdownChip';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
@@ -28,7 +27,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart,
   Hash, Repeat, Layers, Share2, Navigation,
-  ArrowRight, SkipForward, RefreshCw, MessageCircle, Camera, FileText,
+  ArrowRight, RefreshCw, MessageCircle, Camera, FileText,
 } from 'lucide-react';
 
 // --- Types ---
@@ -235,42 +234,38 @@ export function Home() {
     );
   }
 
-  // --- Render: State A — No profile ---
+  // --- Render: State A — Discovery (no profile) ---
 
   if (userState === 'A') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 8 }}>
-        {!hasSeenWelcome() && <StudentWelcomeCard />}
+      <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 4 }}>
+        {/* Hero */}
+        <h1 style={{
+          margin: '4px 0 0',
+          fontSize: 'var(--text-large)',
+          fontWeight: 'var(--weight-bold)',
+          color: 'var(--text-primary)',
+          letterSpacing: 'var(--tracking-display)',
+          lineHeight: 'var(--leading-tight)',
+        }}>
+          Stuck on something?
+        </h1>
+        <p style={{
+          margin: '8px 0 0',
+          fontSize: 'var(--text-body)',
+          color: 'var(--text-secondary)',
+          lineHeight: 1.5,
+        }}>
+          Try it now. No account, nothing to set up.
+        </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 400, margin: '0 auto', width: '100%' }}>
-          <Button
-            size="lg"
-            tone="mastery"
-            onClick={() => {
-              trackEvent('one_thing_try_now');
-              navigate('/session');
-            }}
-          >
-            Try a 15-minute session <ArrowRight size={17} style={{ marginLeft: 6 }} />
-          </Button>
-          <p style={{ textAlign: 'center', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', margin: 0 }}>
-            No sign-in needed. Save your progress?{' '}
-            <button
-              onClick={() => { trackEvent('one_thing_sign_in'); navigate('/sign-in'); }}
-              style={{ color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}
-            >
-              Sign in
-            </button>
-          </p>
-        </div>
-
-        {/* Discovery list */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Discovery rows */}
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 22 }}>
           {[
             { icon: <MessageCircle size={22} style={{ color: 'var(--indigo-ink)' }} />, label: 'Ask a question', sub: "Type it the way you'd say it out loud." },
             { icon: <Camera size={22} style={{ color: 'var(--indigo-ink)' }} />, label: 'Snap a problem', sub: 'Handwriting is fine.' },
             { icon: <FileText size={22} style={{ color: 'var(--indigo-ink)' }} />, label: 'Upload your notes', sub: 'Lessons get built around what you already have.' },
-          ].map((row, i) => (
+          ].map((row, i, arr) => (
             <button
               key={i}
               onClick={() => navigate('/chat')}
@@ -279,8 +274,8 @@ export function Home() {
                 alignItems: 'center',
                 gap: 14,
                 padding: '14px 0',
-                borderBottom: 'var(--hairline) solid var(--separator)',
                 border: 'none',
+                borderBottom: i < arr.length - 1 ? 'var(--hairline) solid var(--separator)' : 'none',
                 background: 'none',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-sans)',
@@ -298,7 +293,22 @@ export function Home() {
           ))}
         </div>
 
-        <TopicGrid topics={topics} />
+        {/* Plan CTA */}
+        <p style={{ margin: '26px 0 0', fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+          Want a plan that tells you what to study each day?{' '}
+          <button
+            onClick={() => { trackEvent('one_thing_try_now'); navigate('/session'); }}
+            style={{ color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}
+          >
+            Build my plan
+          </button>
+        </p>
+
+        {topics.length > 0 && (
+          <div style={{ marginTop: 30 }}>
+            <TopicGrid topics={topics} />
+          </div>
+        )}
       </div>
     );
   }

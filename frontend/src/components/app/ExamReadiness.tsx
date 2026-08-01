@@ -70,11 +70,16 @@ export function ExamReadinessBadge({ sessionId }: { sessionId: string }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <MasteryRing value={data.score} size={56} strokeWidth={4}>
-          <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)' }}>
-            <AnimatedNumber value={data.score} />
-          </span>
-        </MasteryRing>
+        <MasteryRing
+          value={data.score}
+          size={56}
+          stroke={4}
+          label={
+            <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)' }}>
+              <AnimatedNumber value={data.score} />
+            </span>
+          }
+        />
         <div>
           <p style={{ margin: 0, fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Exam Readiness</p>
           <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{data.topicsAttempted}/10 topics started</p>

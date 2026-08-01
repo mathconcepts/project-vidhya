@@ -80,6 +80,7 @@ export default function ProgressPage() {
   if (!data || data.topics.length === 0) {
     return (
       <EmptyState
+        title="No progress yet"
         glyph={<BarChart3 size={28} style={{ color: 'var(--text-tertiary)' }} />}
         body="Start practising to see your progress here."
         action={<Button size="md" tone="mastery" onClick={() => window.location.href = '/'}>Start Practising</Button>}

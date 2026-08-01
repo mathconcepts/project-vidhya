@@ -158,8 +158,9 @@ export default function NotebookPage() {
       {/* Entries list */}
       {entries.length === 0 ? (
         <EmptyState
+          title="Your notebook is empty"
           glyph={<BookOpen size={28} style={{ color: 'var(--text-tertiary)' }} />}
-          body="Your notebook is empty. Start chatting with the AI tutor or practising problems — your learning trail will appear here automatically."
+          body="Start chatting with the AI tutor or practising problems — your learning trail will appear here automatically."
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import React, { useState, type ReactNode } from 'react';
 
 const SIZES = {
   sm: { height: 34, padding: '0 14px', font: 'var(--text-footnote)', radius: 'var(--radius-xs)' },
@@ -23,6 +23,7 @@ export interface ButtonProps {
   onClick?: () => void;
   children?: ReactNode;
   type?: 'button' | 'submit' | 'reset';
+  style?: React.CSSProperties;
 }
 
 export function Button({
@@ -36,6 +37,7 @@ export function Button({
   onClick,
   children,
   type = 'button',
+  style,
 }: ButtonProps) {
   const s = SIZES[size] ?? SIZES.md;
   const t = TONE[tone] ?? TONE.mastery;
@@ -77,6 +79,7 @@ export function Button({
         transition:
           'transform var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard)',
         ...skin,
+        ...style,
       }}
     >
       {icon}

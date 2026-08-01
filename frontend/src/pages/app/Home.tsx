@@ -223,6 +223,7 @@ export function Home() {
   if (error) {
     return (
       <EmptyState
+        title="Something went wrong"
         glyph={<RefreshCw size={28} style={{ color: 'var(--text-tertiary)' }} />}
         body="Couldn't load your plan"
         action={

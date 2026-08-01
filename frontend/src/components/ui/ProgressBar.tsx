@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface ProgressBarProps {
   value: number;
-  tone?: 'mastery' | 'tutor' | 'warning';
+  tone?: 'mastery' | 'tutor' | 'warning' | 'neutral';
   height?: number;
   label?: string;
   trailing?: ReactNode;
@@ -20,6 +20,8 @@ export function ProgressBar({
       ? 'var(--indigo)'
       : tone === 'warning'
       ? 'var(--orange)'
+      : tone === 'neutral'
+      ? 'var(--text-tertiary)'
       : 'var(--green)';
 
   return (

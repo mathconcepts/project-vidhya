@@ -13,13 +13,11 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw, Loader2, TrendingUp, TrendingDown, Minus, Clock, CheckCircle2, XCircle } from 'lucide-react';
-import { clsx } from 'clsx';
 import {
   recomputeLift,
   type ExperimentRow,
   type ExperimentStatus,
 } from '@/api/admin/content-rd';
-import { fadeInUp } from '@/lib/animations';
 import { suggestForExperiment, type LedgerSuggestion } from '@/lib/ledger-suggestions';
 import { Link } from 'react-router-dom';
 import { Lightbulb } from 'lucide-react';
@@ -66,14 +64,19 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
   }
 
   return (
-    <motion.section variants={fadeInUp} className="space-y-3">
-      <header className="flex items-center justify-between gap-3">
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+    >
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
         <div>
-          <h2 className="text-sm font-semibold text-surface-100 flex items-center gap-2">
-            <TrendingUp size={14} className="text-violet-400" />
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <TrendingUp size={14} style={{ color: 'var(--indigo-ink)' }} />
             Effectiveness ledger
           </h2>
-          <p className="text-[11px] text-surface-500 mt-0.5">
+          <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
             Lift = mean mastery delta vs matched control over a 7-day window
           </p>
         </div>
@@ -81,7 +84,7 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-1.5 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200 disabled:opacity-50"
+            style={{ padding: '6px', borderRadius: '8px', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
             aria-label="Refresh ledger"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
@@ -89,11 +92,11 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
         )}
       </header>
 
-      <div className="rounded-xl border border-surface-800 bg-surface-950 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="bg-surface-900 border-b border-surface-800">
-              <tr className="text-left text-surface-500">
+      <div style={{ borderRadius: '12px', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+            <thead style={{ background: 'var(--surface-fill)', borderBottom: 'var(--hairline) solid var(--separator)' }}>
+              <tr style={{ textAlign: 'left', color: 'var(--text-tertiary)' }}>
                 <Th label="Experiment" sortKey="name" current={sortKey} dir={sortDir} onClick={clickHeader} />
                 <Th label="Status" />
                 <Th label="Lift" sortKey="lift" current={sortKey} dir={sortDir} onClick={clickHeader} align="right" />
@@ -107,43 +110,43 @@ export function EffectivenessLedger({ experiments, loading, onRefresh, onRecompu
             <tbody>
               {sorted.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={8} className="px-3 py-8 text-center text-surface-500">
+                  <td colSpan={8} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
                     No experiments yet. Launch one from above.
                   </td>
                 </tr>
               )}
               {sorted.map((e) => [
-                <tr key={`${e.id}-row`} className="border-b border-surface-800/50 hover:bg-surface-900/50 transition-colors">
-                  <td className="px-3 py-2.5 align-top">
-                    <div className="font-medium text-surface-200">{e.name}</div>
-                    <div className="text-[10px] font-mono text-surface-600 mt-0.5">{e.id}</div>
+                <tr key={`${e.id}-row`} style={{ borderBottom: 'var(--hairline) solid var(--separator)' }}>
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{e.name}</div>
+                    <div style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', marginTop: '2px' }}>{e.id}</div>
                     {e.hypothesis && (
-                      <div className="text-[11px] text-surface-500 mt-1 italic line-clamp-2">{e.hypothesis}</div>
+                      <div className="line-clamp-2" style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', fontStyle: 'italic' }}>{e.hypothesis}</div>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 align-top">
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
                     <StatusBadge status={e.status} />
                   </td>
-                  <td className="px-3 py-2.5 align-top text-right font-mono">
-                    {e.lift_v1 == null ? <span className="text-surface-600">—</span> : <LiftCell lift={Number(e.lift_v1)} />}
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
+                    {e.lift_v1 == null ? <span style={{ color: 'var(--text-tertiary)' }}>—</span> : <LiftCell lift={Number(e.lift_v1)} />}
                   </td>
-                  <td className="px-3 py-2.5 align-top text-right font-mono">
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
                     <PyqDeltaCell delta={pyqDeltaOf(e)} />
                   </td>
-                  <td className="px-3 py-2.5 align-top text-right font-mono text-surface-300">
-                    {e.lift_n ?? <span className="text-surface-600">—</span>}
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top', textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                    {e.lift_n ?? <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
                   </td>
-                  <td className="px-3 py-2.5 align-top text-right font-mono text-surface-400">
-                    {e.lift_p == null ? <span className="text-surface-600">—</span> : Number(e.lift_p).toFixed(3)}
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top', textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                    {e.lift_p == null ? <span style={{ color: 'var(--text-tertiary)' }}>—</span> : Number(e.lift_p).toFixed(3)}
                   </td>
-                  <td className="px-3 py-2.5 align-top text-surface-400 whitespace-nowrap">
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                     {formatDate(e.started_at)}
                   </td>
-                  <td className="px-3 py-2.5 align-top text-right">
+                  <td style={{ padding: '10px 12px', verticalAlign: 'top', textAlign: 'right' }}>
                     <button
                       onClick={() => handleRecompute(e.id)}
                       disabled={recomputing === e.id}
-                      className="text-[11px] px-2 py-1 rounded-md bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 disabled:opacity-50"
+                      style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.3)', color: 'var(--indigo-ink)', cursor: recomputing === e.id ? 'not-allowed' : 'pointer', opacity: recomputing === e.id ? 0.5 : 1 }}
                     >
                       {recomputing === e.id ? '…' : 'Recompute'}
                     </button>
@@ -183,21 +186,21 @@ function SuggestionRow({ experiment }: { experiment: ExperimentRow }) {
     : suggestion.kind === 'expand_run_count' ? 'amber'
     : 'surface';
 
+  const tonedStyle: React.CSSProperties =
+    tone === 'emerald' ? { background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' } :
+    tone === 'amber'   ? { background: 'rgba(255,149,0,.05)', color: 'var(--orange)' } :
+                         { background: 'var(--surface-fill)', color: 'var(--text-secondary)' };
+
   return (
-    <tr className="border-b border-surface-800 last:border-0">
-      <td colSpan={8} className={clsx(
-        'px-3 py-2 text-[11px]',
-        tone === 'emerald' && 'bg-emerald-500/5 text-emerald-200',
-        tone === 'amber' && 'bg-amber-500/5 text-amber-200',
-        tone === 'surface' && 'bg-surface-900/30 text-surface-400',
-      )}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Lightbulb size={11} className="shrink-0" />
-          <span className="flex-1">{suggestion.message}</span>
+    <tr style={{ borderBottom: 'var(--hairline) solid var(--separator)' }}>
+      <td colSpan={8} style={{ padding: '8px 12px', fontSize: '11px', ...tonedStyle }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <Lightbulb size={11} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{suggestion.message}</span>
           {suggestion.cta && (
             <Link
               to={suggestion.cta.href}
-              className="inline-flex items-center px-2 py-0.5 rounded border border-current/30 hover:bg-current/10 whitespace-nowrap"
+              style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '4px', border: '1px solid currentColor', whiteSpace: 'nowrap', color: 'inherit', textDecoration: 'none', opacity: 0.85 }}
             >
               {suggestion.cta.label} →
             </Link>
@@ -222,44 +225,63 @@ function Th({
   const active = sortable && sortKey === current;
   return (
     <th
-      className={clsx(
-        'px-3 py-2 font-medium text-[10px] uppercase tracking-wide select-none',
-        align === 'right' ? 'text-right' : 'text-left',
-        sortable ? 'cursor-pointer hover:text-surface-300' : '',
-        active ? 'text-violet-400' : '',
-      )}
+      style={{
+        padding: '8px 12px',
+        fontWeight: 500,
+        fontSize: '10px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        userSelect: 'none',
+        textAlign: align === 'right' ? 'right' : 'left',
+        cursor: sortable ? 'pointer' : 'default',
+        color: active ? 'var(--indigo-ink)' : 'var(--text-tertiary)',
+        whiteSpace: 'nowrap',
+      }}
       onClick={sortable ? () => onClick!(sortKey!) : undefined}
     >
       <span>{label}</span>
-      {active && <span className="ml-1">{dir === 'asc' ? '↑' : '↓'}</span>}
+      {active && <span style={{ marginLeft: '4px' }}>{dir === 'asc' ? '↑' : '↓'}</span>}
     </th>
   );
 }
 
 function StatusBadge({ status }: { status: ExperimentStatus }) {
-  const map: Record<ExperimentStatus, { color: string; icon: any; label: string }> = {
-    active:        { color: 'bg-violet-500/10 text-violet-300 border-violet-500/30', icon: Clock,        label: 'Active' },
-    won:           { color: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30', icon: CheckCircle2, label: 'Won' },
-    lost:          { color: 'bg-red-500/10 text-red-300 border-red-500/30', icon: XCircle,      label: 'Lost' },
-    inconclusive:  { color: 'bg-surface-800 text-surface-400 border-surface-700', icon: Minus,        label: 'Inconc.' },
-    aborted:       { color: 'bg-surface-800 text-surface-500 border-surface-700', icon: Minus,        label: 'Aborted' },
+  const styleMap: Record<ExperimentStatus, React.CSSProperties> = {
+    active:       { background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', border: '1px solid rgba(88,86,214,.3)' },
+    won:          { background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.22)' },
+    lost:         { background: 'rgba(255,59,48,.06)', color: 'var(--red)', border: '1px solid rgba(255,59,48,.22)' },
+    inconclusive: { background: 'var(--surface-fill)', color: 'var(--text-secondary)', border: 'var(--hairline) solid var(--separator)' },
+    aborted:      { background: 'var(--surface-fill)', color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' },
   };
-  const m = map[status];
-  const Icon = m.icon;
+  const iconMap: Record<ExperimentStatus, any> = {
+    active: Clock,
+    won: CheckCircle2,
+    lost: XCircle,
+    inconclusive: Minus,
+    aborted: Minus,
+  };
+  const labelMap: Record<ExperimentStatus, string> = {
+    active: 'Active',
+    won: 'Won',
+    lost: 'Lost',
+    inconclusive: 'Inconc.',
+    aborted: 'Aborted',
+  };
+  const Icon = iconMap[status];
   return (
-    <span className={clsx('inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-medium', m.color)}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 500, ...styleMap[status] }}>
       <Icon size={10} />
-      {m.label}
+      {labelMap[status]}
     </span>
   );
 }
 
 function LiftCell({ lift }: { lift: number }) {
   const positive = lift > 0;
-  const color = lift > 0.05 ? 'text-emerald-400' : lift < -0.02 ? 'text-red-400' : 'text-surface-300';
+  const color = lift > 0.05 ? 'var(--green-ink)' : lift < -0.02 ? 'var(--red)' : 'var(--text-secondary)';
   const Icon = lift > 0.05 ? TrendingUp : lift < -0.02 ? TrendingDown : Minus;
   return (
-    <span className={clsx('inline-flex items-center justify-end gap-1', color)}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', color }}>
       <Icon size={11} />
       {(positive ? '+' : '') + lift.toFixed(4)}
     </span>
@@ -273,11 +295,11 @@ function LiftCell({ lift }: { lift: number }) {
  * window).
  */
 function PyqDeltaCell({ delta }: { delta: number | null }) {
-  if (delta == null) return <span className="text-surface-600">—</span>;
+  if (delta == null) return <span style={{ color: 'var(--text-tertiary)' }}>—</span>;
   const positive = delta > 0;
-  const color = delta > 0.05 ? 'text-emerald-400' : delta < -0.02 ? 'text-red-400' : 'text-surface-300';
+  const color = delta > 0.05 ? 'var(--green-ink)' : delta < -0.02 ? 'var(--red)' : 'var(--text-secondary)';
   return (
-    <span className={clsx('inline-flex items-center justify-end gap-1', color)}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', color }}>
       {(positive ? '+' : '') + (delta * 100).toFixed(1) + '%'}
     </span>
   );

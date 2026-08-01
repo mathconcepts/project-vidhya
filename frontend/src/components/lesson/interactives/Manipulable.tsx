@@ -42,10 +42,13 @@ export function Manipulable({ spec }: Props) {
   }, [spec.outputs, vars]);
 
   return (
-    <div className="rounded-xl border border-violet-500/25 bg-violet-500/5 p-4 space-y-3">
+    <div
+      className="rounded-xl border p-4 space-y-3"
+      style={{ borderColor: 'rgba(88,86,214,.25)', background: 'rgba(88,86,214,.05)' }}
+    >
       <header className="flex items-center gap-2">
-        <Sliders size={14} className="text-violet-400" aria-hidden />
-        <h4 className="text-sm font-semibold text-surface-100">{spec.title}</h4>
+        <Sliders size={14} style={{ color: 'var(--indigo-ink)' }} aria-hidden />
+        <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
       </header>
 
       <div className="space-y-3">
@@ -54,11 +57,12 @@ export function Manipulable({ spec }: Props) {
             <div className="flex items-baseline justify-between gap-2">
               <label
                 htmlFor={`manip-${inp.id}`}
-                className="text-xs font-medium text-surface-300"
+                className="text-xs font-medium"
+                style={{ color: 'var(--text-secondary)' }}
               >
                 {inp.label}
               </label>
-              <span className="font-mono text-xs text-violet-300 tabular-nums">
+              <span className="font-mono text-xs tabular-nums" style={{ color: 'var(--indigo-ink)' }}>
                 {vars[inp.id]?.toFixed(2)}
               </span>
             </div>
@@ -72,12 +76,13 @@ export function Manipulable({ spec }: Props) {
               onChange={(e) =>
                 setVars({ ...vars, [inp.id]: parseFloat(e.target.value) })
               }
-              className="w-full accent-violet-500"
+              className="w-full"
+              style={{ accentColor: 'var(--indigo)' }}
               aria-valuemin={inp.min}
               aria-valuemax={inp.max}
               aria-valuenow={vars[inp.id]}
             />
-            <div className="flex justify-between text-[10px] text-surface-600 font-mono">
+            <div className="flex justify-between text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
               <span>{inp.min}</span>
               <span>{inp.max}</span>
             </div>
@@ -85,19 +90,20 @@ export function Manipulable({ spec }: Props) {
         ))}
       </div>
 
-      <div className="rounded-lg bg-surface-900/60 border border-surface-800 p-3 space-y-1">
+      <div
+        className="rounded-lg border p-3 space-y-1"
+        style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)' }}
+      >
         {evaluatedOutputs.map((o, i) => (
           <div
             key={i}
             className="flex items-baseline justify-between gap-2 text-xs"
             title={o.error ?? undefined}
           >
-            <span className="text-surface-400">{o.label}</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{o.label}</span>
             <span
-              className={
-                'font-mono tabular-nums ' +
-                (o.error ? 'text-red-400' : 'text-surface-100')
-              }
+              className="font-mono tabular-nums"
+              style={{ color: o.error ? 'var(--red)' : 'var(--text-primary)' }}
             >
               {o.value}
             </span>
@@ -106,7 +112,7 @@ export function Manipulable({ spec }: Props) {
       </div>
 
       {spec.caption && (
-        <p className="text-[11px] text-surface-500 leading-relaxed">{spec.caption}</p>
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
       )}
     </div>
   );

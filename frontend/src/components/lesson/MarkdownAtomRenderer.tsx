@@ -80,8 +80,8 @@ function remarkDirectiveTransform() {
           // Unknown directive — render as inline placeholder (don't throw)
           data.hName = 'span';
           data.hProperties = {
-            className: 'text-xs text-amber-400',
             'data-unknown-directive': name,
+            style: 'font-size:12px;color:var(--orange)',
           };
           node.children = [{ type: 'text', value: `(unsupported directive: ${name})` }];
           return;
@@ -116,7 +116,10 @@ function VidhyaInteractive({ 'data-directive': directive, 'data-attrs': attrsJso
   return (
     <Suspense
       fallback={
-        <div className="my-3 h-32 w-full rounded-md bg-surface-900 border border-surface-800 animate-pulse" />
+        <div
+          className="my-3 h-32 w-full rounded-md border animate-pulse"
+          style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)' }}
+        />
       }
     >
       <InteractiveBoundary directive={directive as DirectiveType} attrs={attrs} />
@@ -159,11 +162,15 @@ export function MarkdownAtomRenderer({ content, atomId }: MarkdownAtomRendererPr
     } catch (err) {
       console.warn(`[MarkdownAtomRenderer] parse failed for ${atomId}: ${(err as Error).message}`);
       // Plain-text fallback — atom always renders.
-      return <div className="whitespace-pre-wrap text-sm text-surface-300">{content}</div>;
+      return (
+        <div className="whitespace-pre-wrap text-sm" style={{ color: 'var(--text-secondary)' }}>
+          {content}
+        </div>
+      );
     }
   }, [content, atomId]);
 
-  return <div className="prose prose-invert prose-sm max-w-none vidhya-atom-body">{tree}</div>;
+  return <div className="prose prose-sm max-w-none vidhya-atom-body">{tree}</div>;
 }
 
 // ─── Helper for `:::interactive{ref=name}` library references

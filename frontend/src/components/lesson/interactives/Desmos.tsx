@@ -96,14 +96,18 @@ export default function Desmos({ attrs }: DirectiveProps) {
   // shift when the script lands.
   return (
     <figure
-      className="my-3 rounded-md border border-surface-800 overflow-hidden bg-surface-900/50"
+      className="my-3 rounded-md border overflow-hidden"
+      style={{ borderColor: 'var(--separator)', background: 'var(--surface-card)' }}
       role="img"
       aria-label={`Interactive plot of ${eqSrc}`}
     >
       <div
         ref={containerRef}
-        style={{ height: 320 }}
-        className={state === 'pending' ? 'animate-pulse bg-surface-800/40' : ''}
+        style={{
+          height: 320,
+          ...(state === 'pending' ? { background: 'var(--surface-fill)' } : {}),
+        }}
+        className={state === 'pending' ? 'animate-pulse' : ''}
       />
       <figcaption className="sr-only">
         Interactive plot of {eqSrc}.

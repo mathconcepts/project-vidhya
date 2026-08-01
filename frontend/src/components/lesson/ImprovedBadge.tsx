@@ -81,7 +81,8 @@ export function ImprovedBadge({ improvedSince, lastSeenAt, reason }: ImprovedBad
   return (
     <span
       ref={ref}
-      className="relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium"
+      className="relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[10px] font-medium"
+      style={{ background: 'rgba(52,199,89,.12)', color: 'var(--green-ink)', borderColor: 'rgba(52,199,89,.3)' }}
       onMouseEnter={() => !reduced && setOpen(true)}
       onMouseLeave={() => !reduced && setOpen(false)}
       onFocus={() => setOpen(true)}
@@ -99,9 +100,10 @@ export function ImprovedBadge({ improvedSince, lastSeenAt, reason }: ImprovedBad
       {open && (
         <span
           role="tooltip"
-          className="absolute z-30 right-0 top-full mt-1 w-64 rounded-lg bg-surface-900 border border-emerald-500/30 p-2.5 shadow-xl text-[11px] font-normal text-emerald-100/90 normal-case tracking-normal"
+          className="absolute z-30 right-0 top-full mt-1 w-64 rounded-lg border p-2.5 shadow-xl text-[11px] font-normal normal-case tracking-normal"
+          style={{ background: 'var(--surface-card)', borderColor: 'rgba(52,199,89,.3)', color: 'var(--green-ink)' }}
         >
-          <span className="block text-emerald-300 font-semibold mb-1">What changed</span>
+          <span className="block font-semibold mb-1" style={{ color: 'var(--green-ink)' }}>What changed</span>
           <span className="block">{tooltipBody}</span>
         </span>
       )}

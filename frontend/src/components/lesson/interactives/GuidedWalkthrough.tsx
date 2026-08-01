@@ -59,10 +59,16 @@ export function GuidedWalkthrough({ spec }: Props) {
   const buttonDisabled = phase === 'answer' && isLastStep;
 
   return (
-    <div className="rounded-xl border border-violet-500/25 bg-violet-500/5 p-4 space-y-3">
+    <div
+      className="rounded-xl border p-4 space-y-3"
+      style={{ borderColor: 'rgba(88,86,214,.25)', background: 'rgba(88,86,214,.05)' }}
+    >
       <header className="flex items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-surface-100">{spec.title}</h4>
-        <span className="text-[10px] uppercase tracking-wide text-surface-500 font-medium">
+        <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
+        <span
+          className="text-[10px] uppercase tracking-wide font-medium"
+          style={{ color: 'var(--text-tertiary)' }}
+        >
           Step {stepIdx + 1} / {spec.steps.length}
         </span>
       </header>
@@ -70,17 +76,19 @@ export function GuidedWalkthrough({ spec }: Props) {
       {/* Progress dots */}
       <div className="flex items-center gap-1">
         {spec.steps.map((_, i) => {
-          let cls = 'bg-surface-800 border-surface-700';
-          if (i < stepIdx) cls = 'bg-emerald-500/30 border-emerald-500/40';
-          else if (i === stepIdx)
-            cls =
-              phase === 'answer'
-                ? 'bg-emerald-500/30 border-emerald-500/40'
-                : 'bg-violet-500/30 border-violet-500/40';
+          const dotStyle =
+            i < stepIdx
+              ? { background: 'rgba(52,199,89,.3)', borderColor: 'rgba(52,199,89,.4)' }
+              : i === stepIdx && phase === 'answer'
+              ? { background: 'rgba(52,199,89,.3)', borderColor: 'rgba(52,199,89,.4)' }
+              : i === stepIdx
+              ? { background: 'rgba(88,86,214,.3)', borderColor: 'rgba(88,86,214,.4)' }
+              : { background: 'var(--surface-fill)', borderColor: 'var(--separator)' };
           return (
             <div
               key={i}
-              className={`flex-1 h-1 rounded-full border ${cls}`}
+              className="flex-1 h-1 rounded-full border"
+              style={dotStyle}
               aria-hidden
             />
           );
@@ -88,14 +96,20 @@ export function GuidedWalkthrough({ spec }: Props) {
       </div>
 
       {/* Current step */}
-      <div className="rounded-lg bg-surface-900/60 border border-surface-800 p-3 space-y-2 min-h-[80px]">
+      <div
+        className="rounded-lg border p-3 space-y-2 min-h-[80px]"
+        style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)' }}
+      >
         <div className="flex items-start gap-2">
-          <BookOpen size={13} className="mt-0.5 flex-shrink-0 text-violet-400" />
-          <p className="text-sm text-surface-200 leading-relaxed">{currentStep.prompt}</p>
+          <BookOpen size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--indigo-ink)' }} />
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{currentStep.prompt}</p>
         </div>
 
         {currentStep.eqn && (
-          <pre className="font-mono text-xs text-surface-300 bg-surface-950 p-2 rounded border border-surface-800 overflow-x-auto">
+          <pre
+            className="font-mono text-xs p-2 rounded border overflow-x-auto"
+            style={{ color: 'var(--text-secondary)', background: 'var(--canvas)', borderColor: 'var(--separator)' }}
+          >
             {currentStep.eqn}
           </pre>
         )}
@@ -107,10 +121,11 @@ export function GuidedWalkthrough({ spec }: Props) {
               initial={{ opacity: 0, y: -2 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-start gap-2 pt-2 border-t border-surface-800"
+              className="flex items-start gap-2 pt-2 border-t"
+              style={{ borderColor: 'var(--separator)' }}
             >
-              <Lightbulb size={13} className="mt-0.5 flex-shrink-0 text-amber-400" />
-              <p className="text-xs text-amber-200/90 italic leading-relaxed">{currentStep.hint}</p>
+              <Lightbulb size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--orange)' }} />
+              <p className="text-xs italic leading-relaxed" style={{ color: 'var(--orange)', opacity: 0.9 }}>{currentStep.hint}</p>
             </motion.div>
           )}
           {phase === 'answer' && (
@@ -119,10 +134,11 @@ export function GuidedWalkthrough({ spec }: Props) {
               initial={{ opacity: 0, y: -2 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-start gap-2 pt-2 border-t border-surface-800"
+              className="flex items-start gap-2 pt-2 border-t"
+              style={{ borderColor: 'var(--separator)' }}
             >
-              <CheckCircle2 size={13} className="mt-0.5 flex-shrink-0 text-emerald-400" />
-              <p className="text-xs text-emerald-200/95 leading-relaxed">{currentStep.answer}</p>
+              <CheckCircle2 size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--green-ink)' }} />
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--green-ink)' }}>{currentStep.answer}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -133,7 +149,8 @@ export function GuidedWalkthrough({ spec }: Props) {
           type="button"
           onClick={advance}
           disabled={buttonDisabled}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: 'var(--indigo)', color: '#fff' }}
         >
           {buttonLabel}
           {!buttonDisabled && <ChevronRight size={12} />}
@@ -141,7 +158,7 @@ export function GuidedWalkthrough({ spec }: Props) {
       </div>
 
       {spec.caption && (
-        <p className="text-[11px] text-surface-500 leading-relaxed">{spec.caption}</p>
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
       )}
     </div>
   );

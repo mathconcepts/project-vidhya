@@ -71,7 +71,10 @@ export function Simulation({ spec }: Props) {
 
   if (samples.error) {
     return (
-      <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-3 text-xs text-red-300">
+      <div
+        className="rounded-xl border p-3 text-xs"
+        style={{ borderColor: 'rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', color: 'var(--red)' }}
+      >
         Simulation error: {samples.error}
       </div>
     );
@@ -89,15 +92,19 @@ export function Simulation({ spec }: Props) {
     .join(' ');
 
   return (
-    <div className="rounded-xl border border-violet-500/25 bg-violet-500/5 p-4 space-y-3">
+    <div
+      className="rounded-xl border p-4 space-y-3"
+      style={{ borderColor: 'rgba(88,86,214,.25)', background: 'rgba(88,86,214,.05)' }}
+    >
       <header className="flex items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-surface-100">{spec.title}</h4>
+        <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => (playing ? setPlaying(false) : play())}
             disabled={reducedMotion}
-            className="p-1.5 rounded-md bg-surface-900 border border-surface-800 text-surface-300 hover:text-violet-300 disabled:opacity-50"
+            className="p-1.5 rounded-md border disabled:opacity-50"
+            style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
             aria-label={playing ? 'Pause simulation' : 'Play simulation'}
           >
             {playing ? <Pause size={12} /> : <Play size={12} />}
@@ -106,7 +113,8 @@ export function Simulation({ spec }: Props) {
             type="button"
             onClick={reset}
             disabled={reducedMotion}
-            className="p-1.5 rounded-md bg-surface-900 border border-surface-800 text-surface-300 hover:text-violet-300 disabled:opacity-50"
+            className="p-1.5 rounded-md border disabled:opacity-50"
+            style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
             aria-label="Reset simulation"
           >
             <RotateCcw size={12} />
@@ -117,31 +125,34 @@ export function Simulation({ spec }: Props) {
       <svg
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         width="100%"
-        className="rounded-md bg-surface-900/40 border border-surface-800"
+        className="rounded-md border"
+        style={{ background: 'var(--surface-fill)', borderColor: 'var(--separator)' }}
         preserveAspectRatio="xMidYMid meet"
         aria-label={`Animated trace: ${spec.title}`}
       >
         <Axes viewBox={viewBox} projector={projector} />
         {pathD && (
-          <path d={pathD} stroke="currentColor" strokeWidth={2} fill="none" className="text-violet-400" />
+          <path d={pathD} stroke="var(--indigo-ink)" strokeWidth={2} fill="none" />
         )}
         {head && (
           <circle
             cx={projector(head.x, head.y)[0]}
             cy={projector(head.x, head.y)[1]}
             r={4}
-            className="fill-emerald-400"
+            fill="var(--green)"
           />
         )}
       </svg>
 
       {reducedMotion && (
-        <p className="text-[10px] text-surface-600">
+        <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
           Reduced-motion enabled — showing the final trace instead of animation.
         </p>
       )}
 
-      {spec.caption && <p className="text-[11px] text-surface-500 leading-relaxed">{spec.caption}</p>}
+      {spec.caption && (
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
+      )}
     </div>
   );
 }
@@ -208,8 +219,8 @@ function Axes({
   const showX = v.y_min < 0 && v.y_max > 0;
   const showY = v.x_min < 0 && v.x_max > 0;
   return (
-    <g className="text-surface-700 stroke-current" strokeWidth={1} fill="none">
-      <rect x={0} y={0} width={SVG_W} height={SVG_H} className="fill-transparent" />
+    <g stroke="var(--separator)" strokeWidth={1} fill="none">
+      <rect x={0} y={0} width={SVG_W} height={SVG_H} fill="transparent" />
       {showX && (() => {
         const [x1, y1] = projector(v.x_min, 0);
         const [x2, y2] = projector(v.x_max, 0);

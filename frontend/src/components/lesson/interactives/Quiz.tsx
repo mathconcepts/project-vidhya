@@ -36,28 +36,31 @@ export default function Quiz({ attrs }: DirectiveProps) {
   }
 
   return (
-    <div className="my-3 p-3 rounded-md bg-surface-900/60 border border-surface-800">
-      <p className="text-sm font-medium text-surface-200 mb-2">{question}</p>
+    <div
+      className="my-3 p-3 rounded-md border"
+      style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)' }}
+    >
+      <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>{question}</p>
       <ul className="space-y-1.5">
         {options.map((opt) => {
           const isSelected = selected === opt;
           const isCorrect = isSelected && opt === answer;
           const isWrong = isSelected && opt !== answer;
+          const optStyle = isCorrect
+            ? { background: 'rgba(52,199,89,.08)', borderColor: 'rgba(52,199,89,.22)', color: 'var(--green-ink)' }
+            : isWrong
+            ? { background: 'rgba(255,149,0,.08)', borderColor: 'rgba(255,149,0,.22)', color: 'var(--orange)' }
+            : { background: 'var(--surface-fill)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' };
           return (
             <li key={opt}>
               <button
                 onClick={() => setSelected(opt)}
                 aria-pressed={isSelected}
-                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                  isCorrect
-                    ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-200'
-                    : isWrong
-                      ? 'bg-amber-500/15 border border-amber-500/30 text-amber-200'
-                      : 'bg-surface-800 border border-surface-700 text-surface-300 hover:border-surface-600'
-                } ${selected != null && !isSelected ? 'opacity-50' : ''}`}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors border${selected != null && !isSelected ? ' opacity-50' : ''}`}
+                style={optStyle}
               >
                 {opt}
-                {isCorrect && <span className="ml-2 text-xs">✓ correct</span>}
+                {isCorrect && <span className="ml-2 text-xs">&#x2713; correct</span>}
                 {isWrong && <span className="ml-2 text-xs">try again</span>}
               </button>
             </li>

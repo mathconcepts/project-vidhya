@@ -11,7 +11,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Sparkles, Rocket, X, RefreshCw, TrendingUp } from 'lucide-react';
 import { actOnSuggestion, type RunSuggestionRow } from '@/api/admin/content-rd';
-import { fadeInUp } from '@/lib/animations';
 
 interface Props {
   suggestions: RunSuggestionRow[];
@@ -38,14 +37,19 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
   }
 
   return (
-    <motion.section variants={fadeInUp} className="space-y-3">
-      <header className="flex items-center justify-between gap-3">
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+    >
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
         <div>
-          <h2 className="text-sm font-semibold text-surface-100 flex items-center gap-2">
-            <Sparkles size={14} className="text-violet-400" />
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={14} style={{ color: 'var(--indigo-ink)' }} />
             Suggested follow-up runs
           </h2>
-          <p className="text-[11px] text-surface-500 mt-0.5">
+          <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
             Proposed by the nightly learnings-ledger based on lift trends. Launching opens a wrapping experiment automatically.
           </p>
         </div>
@@ -53,7 +57,7 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-1.5 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200 disabled:opacity-50"
+            style={{ padding: '6px', borderRadius: '8px', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
             aria-label="Refresh suggestions"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
@@ -61,7 +65,7 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
         )}
       </header>
 
-      <div className="space-y-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <AnimatePresence>
           {suggestions.map((s) => (
             <motion.div
@@ -70,12 +74,12 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: 8 }}
-              className="rounded-xl border border-violet-500/25 bg-violet-500/5 p-3 flex items-start gap-3"
+              style={{ borderRadius: '12px', border: '1px solid rgba(88,86,214,.25)', background: 'rgba(88,86,214,.05)', padding: '12px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}
             >
-              <div className="flex-1 min-w-0 space-y-1.5">
-                <div className="text-xs font-medium text-violet-200">{s.hypothesis}</div>
-                <div className="text-[11px] text-surface-400 leading-relaxed">{s.reason}</div>
-                <div className="text-[10px] text-surface-500 flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono">
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--indigo-ink)' }}>{s.hypothesis}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{s.reason}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '12px', rowGap: '2px', fontFamily: 'var(--font-mono)' }}>
                   <span>{s.exam_pack_id}</span>
                   <span>·</span>
                   <span>count: {s.config.quota?.count ?? '?'}</span>
@@ -84,7 +88,7 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
                   {s.expected_lift != null && (
                     <>
                       <span>·</span>
-                      <span className="text-emerald-400 inline-flex items-center gap-0.5">
+                      <span style={{ color: 'var(--green-ink)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                         <TrendingUp size={9} />
                         +{s.expected_lift.toFixed(3)}
                       </span>
@@ -98,11 +102,11 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
                   )}
                 </div>
               </div>
-              <div className="flex flex-col gap-1 shrink-0">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0 }}>
                 <button
                   onClick={() => act(s.id, 'launch')}
                   disabled={acting === s.id}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-[11px] font-medium disabled:opacity-50"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '8px', background: 'var(--indigo)', color: '#fff', fontSize: '11px', fontWeight: 500, border: 'none', cursor: acting === s.id ? 'not-allowed' : 'pointer', opacity: acting === s.id ? 0.5 : 1 }}
                 >
                   {acting === s.id ? <Loader2 size={11} className="animate-spin" /> : <Rocket size={11} />}
                   Launch
@@ -110,7 +114,7 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
                 <button
                   onClick={() => act(s.id, 'dismiss')}
                   disabled={acting === s.id}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-surface-400 hover:text-surface-200 text-[11px] disabled:opacity-50"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '8px', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: '11px', cursor: acting === s.id ? 'not-allowed' : 'pointer', opacity: acting === s.id ? 0.5 : 1 }}
                 >
                   <X size={11} />
                   Dismiss

@@ -62,7 +62,10 @@ export default function Interactive({ attrs }: DirectiveProps) {
   return (
     <Suspense
       fallback={
-        <div className="my-3 h-32 rounded-md bg-surface-900 border border-surface-800 animate-pulse" />
+        <div
+          className="my-3 h-32 rounded-md border animate-pulse"
+          style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)' }}
+        />
       }
     >
       <Provider {...passthrough} />

@@ -8,9 +8,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Activity, RefreshCw, Square } from 'lucide-react';
-import { clsx } from 'clsx';
 import { abortRun, type GenerationRunRow, type GenerationRunStatus } from '@/api/admin/content-rd';
-import { fadeInUp } from '@/lib/animations';
 
 interface Props {
   runs: GenerationRunRow[];
@@ -37,14 +35,19 @@ export function ActiveRunsPanel({ runs, loading, onRefresh, onAborted }: Props) 
   }
 
   return (
-    <motion.section variants={fadeInUp} className="space-y-3">
-      <header className="flex items-center justify-between gap-3">
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+    >
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
         <div>
-          <h2 className="text-sm font-semibold text-surface-100 flex items-center gap-2">
-            <Activity size={14} className="text-violet-400" />
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Activity size={14} style={{ color: 'var(--indigo-ink)' }} />
             Recent runs
           </h2>
-          <p className="text-[11px] text-surface-500 mt-0.5">
+          <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
             Last 10 generation runs. Abort cancels in-flight LLM calls.
           </p>
         </div>
@@ -52,7 +55,7 @@ export function ActiveRunsPanel({ runs, loading, onRefresh, onAborted }: Props) 
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-1.5 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200 disabled:opacity-50"
+            style={{ padding: '6px', borderRadius: '8px', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
             aria-label="Refresh runs"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
@@ -60,9 +63,9 @@ export function ActiveRunsPanel({ runs, loading, onRefresh, onAborted }: Props) 
         )}
       </header>
 
-      <div className="rounded-xl border border-surface-800 bg-surface-950 divide-y divide-surface-800">
+      <div style={{ borderRadius: '12px', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', overflow: 'hidden' }}>
         {visible.length === 0 && !loading && (
-          <div className="p-6 text-center text-xs text-surface-500">
+          <div style={{ padding: '24px', textAlign: 'center', fontSize: '12px', color: 'var(--text-tertiary)' }}>
             No runs yet. Configure one in the launcher above.
           </div>
         )}
@@ -93,33 +96,33 @@ function RunRow({
   const ratio = `${run.artifacts_count}/${run.config.quota?.count ?? '?'}`;
 
   return (
-    <div className="p-3 flex items-start gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-[10px] text-surface-500">{run.id}</span>
+    <div style={{ padding: '12px', display: 'flex', alignItems: 'flex-start', gap: '12px', borderBottom: 'var(--hairline) solid var(--separator)' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-tertiary)' }}>{run.id}</span>
           <RunStatusBadge status={run.status} />
           {run.batch_state && (
             <span
-              className="inline-block px-1.5 py-0.5 rounded border border-violet-500/30 bg-violet-500/10 text-violet-300 text-[10px] font-medium"
+              style={{ display: 'inline-block', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(88,86,214,.3)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: '10px', fontWeight: 500 }}
               title={`Batch via ${run.batch_provider ?? 'provider'} — ~50% cost, 24h SLA`}
             >
               batch:{run.batch_state}
             </span>
           )}
         </div>
-        <div className="text-xs text-surface-300 mt-1.5 truncate">
+        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {run.hypothesis ?? '(no hypothesis)'}
         </div>
-        <div className="text-[11px] text-surface-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '12px', rowGap: '4px' }}>
           <span>{run.exam_pack_id}</span>
           <span>·</span>
-          <span>tier: <span className="text-surface-400">{run.config.verification?.tier_ceiling}</span></span>
+          <span>tier: <span style={{ color: 'var(--text-secondary)' }}>{run.config.verification?.tier_ceiling}</span></span>
           <span>·</span>
-          <span>artifacts: <span className="text-surface-400">{ratio}</span></span>
+          <span>artifacts: <span style={{ color: 'var(--text-secondary)' }}>{ratio}</span></span>
           <span>·</span>
           <span>${(Number.isFinite(cost) ? cost : 0).toFixed(3)}</span>
           {run.config.quota?.max_cost_usd && (
-            <span className="text-surface-600">/ ${run.config.quota.max_cost_usd.toFixed(2)} cap</span>
+            <span style={{ color: 'var(--text-tertiary)' }}>/ ${run.config.quota.max_cost_usd.toFixed(2)} cap</span>
           )}
         </div>
       </div>
@@ -127,7 +130,7 @@ function RunRow({
         <button
           onClick={onAbort}
           disabled={aborting}
-          className="p-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 disabled:opacity-50"
+          style={{ padding: '6px', borderRadius: '6px', background: 'rgba(255,59,48,.08)', border: '1px solid rgba(255,59,48,.22)', color: 'var(--red)', cursor: aborting ? 'not-allowed' : 'pointer', opacity: aborting ? 0.5 : 1 }}
           aria-label={`Abort run ${run.id}`}
         >
           {aborting ? <Loader2 size={12} className="animate-spin" /> : <Square size={12} />}
@@ -138,15 +141,15 @@ function RunRow({
 }
 
 function RunStatusBadge({ status }: { status: GenerationRunStatus }) {
-  const map: Record<GenerationRunStatus, string> = {
-    queued:   'bg-violet-500/10 text-violet-300 border-violet-500/30',
-    running:  'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-    complete: 'bg-surface-800 text-surface-300 border-surface-700',
-    aborted:  'bg-surface-800 text-surface-500 border-surface-700',
-    failed:   'bg-red-500/10 text-red-300 border-red-500/30',
+  const styleMap: Record<GenerationRunStatus, React.CSSProperties> = {
+    queued:   { background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', border: '1px solid rgba(88,86,214,.3)' },
+    running:  { background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.22)' },
+    complete: { background: 'var(--surface-fill)', color: 'var(--text-secondary)', border: 'var(--hairline) solid var(--separator)' },
+    aborted:  { background: 'var(--surface-fill)', color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' },
+    failed:   { background: 'rgba(255,59,48,.06)', color: 'var(--red)', border: '1px solid rgba(255,59,48,.22)' },
   };
   return (
-    <span className={clsx('inline-block px-1.5 py-0.5 rounded border text-[10px] font-medium', map[status])}>
+    <span style={{ display: 'inline-block', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 500, ...styleMap[status] }}>
       {status}
     </span>
   );

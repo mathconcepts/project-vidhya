@@ -1,0 +1,17 @@
+<!-- @dsCard group="Spacing" viewport="700x180" subtitle="4px base; 16/20/24 do most layout work" name="Spacing scale" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Spacing scale</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:20px;background:var(--surface-canvas)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:var(--text-caption);color:var(--text-secondary);letter-spacing:var(--tracking-body)}
+.mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+
+</style></head><body>
+<div class="row" style="align-items:flex-end">
+<div class="col" style="gap:6px;align-items:center"><div style="width:4px;height:4px;background:var(--indigo);border-radius:2px"></div><div class="mono">4</div></div><div class="col" style="gap:6px;align-items:center"><div style="width:8px;height:8px;background:var(--indigo);border-radius:2px"></div><div class="mono">8</div></div><div class="col" style="gap:6px;align-items:center"><div style="width:12px;height:12px;background:var(--indigo);border-radius:2px"></div><div class="mono">12</div></div><div class="col" style="gap:6px;align-items:center"><div style="width:16px;height:16px;background:var(--indigo);border-radius:2px"></div><div class="mono">16</div></div><div class="col" style="gap:6px;align-items:center"><div style="width:20px;height:20px;background:var(--indigo);border-radius:2px"></div><div class="mono">20</div></div><div class="col" style="gap:6px;align-items:center"><div style="width:24px;height:24px;background:var(--indigo);border-radius:2px"></div><div class="mono">24</div></div><div class="col" style="gap:6px;align-items:center"><div style="width:32px;height:32px;background:var(--indigo);border-radius:2px"></div><div class="mono">32</div></div><div class="col" style="gap:6px;align-items:center"><div style="width:48px;height:48px;background:var(--indigo);border-radius:2px"></div><div class="mono">48</div></div>
+</div>
+<p class="lbl" style="margin-top:16px">Screen gutter 20px. Card padding 20–24px. Gap between stacked cards 12px.</p>
+</body></html>

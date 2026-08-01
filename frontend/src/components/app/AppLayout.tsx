@@ -1,43 +1,38 @@
 /**
- * AppLayout — Mobile-first layout with animated bottom nav, scroll-aware header, auth.
- * v5.0: persona-aware shell detection. Reads user.role + student profile to serve
+ * AppLayout — Mobile-first layout with bottom nav, header, auth.
+ * Persona-aware shell detection. Reads user.role + student profile to serve
  * the right nav and home route for Knowledge / Exam / Teacher / Admin shells.
  */
 
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Eye, EyeOff } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCalmMode } from '@/hooks/useCalmMode';
 import { isDemoMode } from '@/lib/demoMode';
 import { DemoRoleSwitcher } from '@/components/app/DemoRoleSwitcher';
-// v2.5: migrated from @/hooks/useAuth (Supabase Auth) to @/contexts/AuthContext
-// (Vidhya JWT). Backend only validates Vidhya JWTs — the Supabase hook was
-// frontend-only state that never matched what the API would accept.
 import { useAuth } from '@/contexts/AuthContext';
 import { useSession } from '@/hooks/useSession';
-import { StreakBadge } from '@/components/app/StreakBadge';
 import { authFetch } from '@/lib/auth/client';
+import { TabBar } from '@/components/ui/TabBar';
+import { TutorFab } from '@/components/ui/TutorFab';
 
 type Persona = 'knowledge' | 'exam' | 'teacher' | 'loading';
 
-// Per-persona nav configurations aligned with the shell spec.
-// Teacher/admin shell surfaces teaching tools; knowledge shell leads with Learn.
-const NAV_BY_PERSONA: Record<Exclude<Persona, 'loading'>, Array<{ to: string; icon: typeof Home; label: string; end?: boolean }>> = {
+const NAV_BY_PERSONA: Record<Exclude<Persona, 'loading'>, Array<{ value: string; label: string; icon?: React.ReactNode }>> = {
   knowledge: [
-    { to: '/knowledge-home', icon: BookOpen,     label: 'Learn',    end: true },
-    { to: '/planned',        icon: PlayCircle,   label: 'Practice' },
-    { to: '/progress',       icon: BarChart3,    label: 'Progress' },
+    { value: '/knowledge-home', label: 'Learn',    icon: <BookOpen size={20} /> },
+    { value: '/planned',        label: 'Practice', icon: <PlayCircle size={20} /> },
+    { value: '/progress',       label: 'Progress', icon: <BarChart3 size={20} /> },
   ],
   exam: [
-    { to: '/planned',        icon: Home,         label: 'Home',     end: true },
-    { to: '/smart-practice', icon: BookOpen,     label: 'Practice' },
-    { to: '/progress',       icon: BarChart3,    label: 'Progress' },
+    { value: '/planned',        label: 'Home',     icon: <Home size={20} /> },
+    { value: '/smart-practice', label: 'Practice', icon: <BookOpen size={20} /> },
+    { value: '/progress',       label: 'Progress', icon: <BarChart3 size={20} /> },
   ],
   teacher: [
-    { to: '/teaching',       icon: GraduationCap, label: 'Teach',   end: true },
-    { to: '/progress',       icon: Users,         label: 'Students' },
+    { value: '/teaching',       label: 'Teach',    icon: <GraduationCap size={20} /> },
+    { value: '/progress',       label: 'Students', icon: <Users size={20} /> },
   ],
 };
 
@@ -57,11 +52,6 @@ export function AppLayout() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // First-visit demo welcome redirect. New visitors land at /welcome which
-  // sets exam expectations explicitly ("This demo runs on GATE Engineering
-  // Mathematics") so they're not surprised by the silent default. After
-  // dismissal, vidhya.demo_welcomed is set in localStorage and we never
-  // redirect again. /welcome and /sign-in are exempt from the redirect.
   useEffect(() => {
     const exempt = ['/welcome', '/sign-in'];
     if (exempt.includes(location.pathname)) return;
@@ -70,12 +60,8 @@ export function AppLayout() {
     if (!welcomed) navigate('/welcome', { replace: true });
   }, [location.pathname, navigate]);
 
-  // Close menu on route change
   useEffect(() => setShowMenu(false), [location]);
 
-  // Persona detection: teacher/admin from JWT role; knowledge vs exam from profile.
-  // Resolves on mount so nav is stable before first paint. Falls back to 'exam'
-  // (default) for new users or when profile fetch fails.
   useEffect(() => {
     if (!user) { setPersona('exam'); return; }
     if (user.role === 'teacher' || user.role === 'admin' || user.role === 'owner') {
@@ -92,190 +78,299 @@ export function AppLayout() {
       .catch(() => setPersona('exam'));
   }, [user]);
 
+  const navItems = persona !== 'loading' ? NAV_BY_PERSONA[persona] : [];
+  const activeTab = navItems.find(it => location.pathname.startsWith(it.value))?.value ?? '';
+
+  const onTabChange = (value: string) => navigate(value);
+
   return (
-    <div className="min-h-dvh bg-surface-950 text-white">
-      {/* Calm Mode floating toggle — always reachable, even when chrome is hidden.
-          Uses Eye / EyeOff iconography (NOT Sun/Moon) to avoid being mistaken
-          for a light/dark theme toggle. The project is dark-mode-only by
-          design (DESIGN-SYSTEM.md). Calm mode = "hide chrome, focus on content". */}
+    <div
+      style={{
+        minHeight: '100dvh',
+        background: 'var(--surface-canvas)',
+        color: 'var(--text-primary)',
+        fontFamily: 'var(--font-sans)',
+      }}
+    >
+      {/* Calm Mode toggle */}
       <button
         onClick={toggleCalm}
         aria-label={calmMode ? 'Show chrome (exit calm mode)' : 'Hide chrome (enter calm mode)'}
-        title={calmMode ? 'Show chrome' : 'Calm mode — hides nav + header'}
-        className="fixed top-2 right-2 z-50 flex items-center justify-center w-9 h-9 rounded-full bg-surface-900/70 border border-surface-800 text-surface-400 hover:text-emerald-300 hover:border-emerald-500/50 backdrop-blur-md transition-colors"
+        style={{
+          position: 'fixed',
+          top: 8,
+          right: 8,
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 36,
+          height: 36,
+          borderRadius: 'var(--radius-capsule)',
+          border: 'var(--hairline) solid var(--separator)',
+          background: 'var(--material-regular)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+        }}
       >
-        {calmMode ? <Eye size={16} /> : <EyeOff size={16} />}
+        {calmMode ? <Eye size={15} /> : <EyeOff size={15} />}
       </button>
 
-      {/* Demo theater (U1-9) — floating role switcher, ONLY when ?demo is
-          active this session (see frontend/src/lib/demoMode.ts). Never
-          rendered for real users; sessionStorage-scoped so it can't leak
-          into a normal session via stale state. */}
       {isDemoMode() && <DemoRoleSwitcher />}
 
-      {/* Header — shadow on scroll. Hidden in Calm Mode. */}
-      <header className={clsx(
-        'fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-12 bg-surface-950/95 border-b backdrop-blur-md transition-all duration-200',
-        scrolled ? 'border-surface-800/80 shadow-lg shadow-black/20' : 'border-transparent',
-        calmMode && 'hidden',
-      )}>
-        <a href="/" className="flex items-center gap-2.5 min-w-[44px] min-h-[44px]">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-violet-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-            <span className="text-white font-black text-sm">V</span>
-          </div>
-          <span className="font-bold text-white text-base tracking-tight sr-only">Vidhya</span>
-        </a>
-        <div className="flex items-center gap-2">
-          <StreakBadge sessionId={sessionId} />
-          {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-800 transition-colors"
-              >
-                {user.picture ? (
-                  <img src={user.picture} alt="" className="w-7 h-7 rounded-full" />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-emerald-500 flex items-center justify-center text-xs font-bold">
-                    {(user.name || user.email)?.[0]?.toUpperCase() || 'U'}
+      {/* Header */}
+      {!calmMode && (
+        <header
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 20px',
+            height: 50,
+            background: scrolled ? 'var(--material-thick)' : 'var(--surface-canvas)',
+            backdropFilter: scrolled ? 'var(--blur-nav)' : undefined,
+            WebkitBackdropFilter: scrolled ? 'var(--blur-nav)' : undefined,
+            borderBottom: scrolled ? 'var(--hairline) solid var(--separator)' : 'none',
+            transition: 'background var(--dur-fast) var(--ease-standard)',
+          }}
+        >
+          {/* Wordmark */}
+          <a
+            href="/"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              minWidth: 44,
+              minHeight: 44,
+              textDecoration: 'none',
+            }}
+          >
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 9,
+                background: 'var(--ink)',
+                color: 'var(--surface-card)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 15,
+                fontWeight: 600,
+                letterSpacing: '-0.03em',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              V
+            </div>
+          </a>
+
+          {/* Right side */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {user ? (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 'var(--radius-capsule)',
+                    border: 'none',
+                    background: 'var(--surface-fill)',
+                    color: 'var(--text-secondary)',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-sans)',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-label="Account menu"
+                >
+                  {user.picture ? (
+                    <img src={user.picture} alt="" style={{ width: 30, height: 30 }} />
+                  ) : (
+                    <span>{(user.name || user.email)?.[0]?.toUpperCase() || 'U'}</span>
+                  )}
+                </button>
+                {showMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: '100%',
+                      marginTop: 8,
+                      width: 200,
+                      borderRadius: 'var(--radius-lg)',
+                      background: 'var(--surface-card)',
+                      boxShadow: 'var(--shadow-card)',
+                      border: 'var(--hairline) solid var(--separator)',
+                      overflow: 'hidden',
+                      zIndex: 50,
+                    }}
+                  >
+                    <div style={{ padding: '10px 14px', borderBottom: 'var(--hairline) solid var(--separator)' }}>
+                      <p style={{ margin: 0, fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name || user.email}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{user.role}</p>
+                    </div>
+                    {[
+                      { label: 'Settings', icon: <Settings size={14} />, action: () => navigate('/settings') },
+                      ...(user.role === 'teacher' ? [{ label: 'Teaching Hub', icon: <Shield size={14} />, action: () => navigate('/teaching') }] : []),
+                      ...((user.role === 'admin' || user.role === 'owner') ? [{ label: 'Admin', icon: <Shield size={14} />, action: () => navigate('/admin/dashboard') }] : []),
+                    ].map(item => (
+                      <button
+                        key={item.label}
+                        onClick={item.action}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '10px 14px',
+                          border: 'none',
+                          background: 'none',
+                          fontSize: 'var(--text-footnote)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-sans)',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {item.icon} {item.label}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => { signOut(); setShowMenu(false); }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '10px 14px',
+                        border: 'none',
+                        borderTop: 'var(--hairline) solid var(--separator)',
+                        background: 'none',
+                        fontSize: 'var(--text-footnote)',
+                        color: 'var(--red)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-sans)',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <LogOut size={14} /> Sign Out
+                    </button>
                   </div>
                 )}
-              </button>
-              {showMenu && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-900 border border-surface-700 shadow-xl py-1 z-50"
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/settings')}
+                  style={{ padding: 6, borderRadius: 'var(--radius-xs)', border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
                 >
-                  <div className="px-3 py-2 border-b border-surface-800">
-                    <p className="text-xs font-medium text-white truncate">{user.name || user.email}</p>
-                    <p className="text-xs text-surface-500 capitalize">{user.role}</p>
-                  </div>
-                  <button
-                    onClick={() => navigate('/settings')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
-                  >
-                    <Settings size={14} /> Settings
-                  </button>
-                  {user.role === 'teacher' && (
-                    <button
-                      onClick={() => navigate('/teaching')}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
-                    >
-                      <Shield size={14} /> Teaching Hub
-                    </button>
-                  )}
-                  {(user.role === 'admin' || user.role === 'owner') && (
-                    <button
-                      onClick={() => navigate('/admin/dashboard')}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 transition-colors"
-                    >
-                      <Shield size={14} /> Admin
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { signOut(); setShowMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-surface-800 transition-colors"
-                  >
-                    <LogOut size={14} /> Sign Out
-                  </button>
-                </motion.div>
-              )}
-            </div>
-          ) : (
-            <>
-              <button
-                onClick={() => navigate('/settings')}
-                className="p-1.5 rounded-lg hover:bg-surface-800 transition-colors"
-              >
-                <Settings size={16} className="text-surface-400" />
-              </button>
-              <button
-                onClick={() => navigate('/sign-in')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 text-sm transition-colors"
-              >
-                <User size={14} />
-                <span className="hidden sm:inline">Sign In</span>
-              </button>
-            </>
-          )}
-        </div>
-      </header>
+                  <Settings size={16} />
+                </button>
+                <button
+                  onClick={() => navigate('/sign-in')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-xs)',
+                    border: 'var(--hairline) solid var(--separator)',
+                    background: 'var(--surface-fill)',
+                    color: 'var(--text-primary)',
+                    fontSize: 'var(--text-footnote)',
+                    fontWeight: 'var(--weight-medium)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  <User size={14} /> Sign In
+                </button>
+              </>
+            )}
+          </div>
+        </header>
+      )}
 
-      {/* Content — full-bleed in Calm Mode, otherwise padded for chrome */}
-      <main className={clsx(
-        'min-h-dvh',
-        calmMode ? 'pt-2 pb-2' : 'pt-12 pb-[calc(64px+env(safe-area-inset-bottom,0px))]',
-      )}>
-        <div className={clsx('px-4 pb-4 max-w-3xl mx-auto', calmMode ? 'pt-10' : 'pt-2')}>
+      {/* Main content */}
+      <main
+        style={{
+          minHeight: '100dvh',
+          paddingTop: calmMode ? 8 : 50,
+          paddingBottom: calmMode ? 8 : 'calc(64px + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
+        <div
+          style={{
+            padding: calmMode ? '10px 20px 20px' : '8px 20px 20px',
+            maxWidth: 720,
+            margin: '0 auto',
+          }}
+        >
           <Outlet />
         </div>
       </main>
 
-      {/* Floating Tutor FAB — hidden on /chat and in Calm Mode */}
+      {/* Tutor FAB — hidden on /chat and in Calm Mode */}
       {location.pathname !== '/chat' && !calmMode && (
-        <motion.button
-          onClick={() => navigate('/chat')}
-          className="fixed z-50 right-4 w-14 h-14 rounded-full bg-violet-500 text-white shadow-lg shadow-violet-500/25 flex items-center justify-center hover:bg-violet-400 transition-colors cursor-pointer touch-manipulation"
-          style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)' }}
-          whileTap={{ scale: 0.9 }}
-          aria-label="Ask the tutor"
+        <div
+          style={{
+            position: 'fixed',
+            right: 20,
+            bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)',
+            zIndex: 50,
+          }}
         >
-          <MessageCircle size={20} />
-        </motion.button>
+          <TutorFab onClick={() => navigate('/chat')}>
+            <MessageCircle size={20} />
+          </TutorFab>
+        </div>
       )}
 
-      {/* Bottom Nav — persona-aware tabs with animated active indicator. Hidden in Calm Mode. */}
-      <nav
-        className={clsx(
-          'fixed bottom-0 left-0 right-0 z-40 flex items-stretch bg-surface-950/95 border-t border-surface-800/80 backdrop-blur-md',
-          calmMode && 'hidden',
-        )}
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
-        {persona === 'loading' ? (
-          // Skeleton while persona resolves — prevents flash of wrong nav
-          [1, 2, 3].map(i => (
-            <div key={i} className="flex-1 flex flex-col items-center justify-center py-2.5 gap-1.5">
-              <div className="w-5 h-5 rounded bg-surface-800 animate-pulse" />
-              <div className="w-8 h-2 rounded bg-surface-800 animate-pulse" />
-            </div>
-          ))
-        ) : (
-          NAV_BY_PERSONA[persona].map(item => {
-            const isActive = item.end
-              ? location.pathname === item.to
-              : location.pathname.startsWith(item.to);
-
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={clsx(
-                  'relative flex-1 flex flex-col items-center justify-center py-2.5 gap-1',
-                  'touch-manipulation transition-colors duration-150',
-                  isActive ? 'text-violet-400' : 'text-surface-500',
-                )}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-violet-400"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <item.icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </NavLink>
-            );
-          })
-        )}
-      </nav>
+      {/* Bottom Tab Bar */}
+      {!calmMode && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40 }}>
+          {persona === 'loading' ? (
+            <nav
+              style={{
+                display: 'flex',
+                alignItems: 'stretch',
+                background: 'var(--material-thick)',
+                backdropFilter: 'var(--blur-nav)',
+                WebkitBackdropFilter: 'var(--blur-nav)',
+                borderTop: 'var(--hairline) solid var(--separator)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              }}
+            >
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px 0 10px', gap: 4 }}>
+                  <div style={{ width: 20, height: 20, borderRadius: 4, background: 'var(--surface-fill)' }} />
+                  <div style={{ width: 28, height: 8, borderRadius: 4, background: 'var(--surface-fill)' }} />
+                </div>
+              ))}
+            </nav>
+          ) : (
+            <TabBar items={navItems} value={activeTab} onChange={onTabChange} />
+          )}
+        </div>
+      )}
 
       {/* Click-away for menu */}
       {showMenu && (
-        <div className="fixed inset-0 z-30" onClick={() => setShowMenu(false)} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 30 }} onClick={() => setShowMenu(false)} />
       )}
     </div>
   );

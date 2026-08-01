@@ -1,0 +1,211 @@
+<!-- @dsCard group="Public site" viewport="1120x880" subtitle="Landing page and the blog, one visual system" name="Marketing & blog" -->
+<!-- @startingPoint section="Public site" subtitle="Landing hero, live sample problem, blog feed and post" viewport="1120x880" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vidhya — public site</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<style>
+  body { padding: 24px; display: flex; justify-content: center; }
+  .win { width: 1060px; flex: none; border-radius: 16px; overflow: hidden; background: var(--surface-canvas);
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,.3), 0 0 0 .5px rgba(0,0,0,.1); position: relative; }
+  .chrome { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px;
+    background: var(--material-thick); backdrop-filter: var(--blur-nav); border-bottom: .5px solid var(--separator); }
+  .light { width: 12px; height: 12px; border-radius: 999px; }
+  .chrome .addr { flex: 1; text-align: center; font: 400 13px var(--font-sans); color: var(--text-secondary); }
+
+  .site { display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; }
+  .mark { display: flex; align-items: center; gap: 10px; font: 600 19px var(--font-sans); letter-spacing: -.03em; }
+  .mark i { width: 30px; height: 30px; border-radius: 9px; background: var(--ink); color: var(--surface-card);
+    display: flex; align-items: center; justify-content: center; font: 600 15px var(--font-sans); font-style: normal; }
+  .siteav { display: flex; gap: 26px; align-items: center; }
+  .siteav button { border: none; background: none; cursor: pointer; font: 500 15px var(--font-sans); color: var(--text-secondary); padding: 8px 0; }
+  .siteav button[data-on] { color: var(--text-primary); font-weight: 600; }
+
+  .page { padding: 0 40px 44px; }
+  .page:has(.screen[data-screen="post"][data-on]) { padding-bottom: 120px; }
+  h1 { font: 700 48px var(--font-sans); letter-spacing: -.022em; line-height: 1.06; margin: 24px 0 0; max-width: 15ch; }
+  .lede { font: 400 19px var(--font-sans); color: var(--text-secondary); line-height: 1.55; margin: 16px 0 0; max-width: 58ch; }
+  .h2 { font: 600 15px var(--font-sans); color: var(--text-secondary); margin: 40px 0 8px; }
+  .sub { font: 400 15px var(--font-sans); color: var(--text-secondary); line-height: 1.5; }
+  .rowtitle { font: 400 17px var(--font-sans); letter-spacing: -.01em; }
+  .focal { background: var(--surface-card); border-radius: var(--radius-xl); padding: 28px; box-shadow: var(--shadow-card); }
+  .list > * { padding: 14px 0; border-bottom: .5px solid var(--separator); }
+  .list > *:last-child { border-bottom: none; }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .cta { height: 54px; padding: 0 26px; border: none; border-radius: var(--radius-md); background: var(--green);
+    color: #fff; font: 600 17px var(--font-sans); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    transition: transform var(--dur-fast) var(--ease-standard); }
+  .cta:active { transform: scale(.97); }
+  .cta.tutor { background: var(--indigo-tint); color: var(--indigo-ink); }
+  .btn-quiet { border: none; background: none; cursor: pointer; font: 600 15px var(--font-sans); color: var(--indigo-ink); padding: 8px 0; }
+  .opt { width: 100%; min-height: 50px; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: none;
+    border-radius: var(--radius-sm); background: var(--surface-canvas); font: 400 17px var(--font-sans);
+    color: var(--text-primary); text-align: left; cursor: pointer; transition: background var(--dur-fast) var(--ease-standard); }
+  .opt b { font: 600 15px var(--font-mono); opacity: .5; }
+  .opt[data-right] { background: var(--green-tint); color: var(--green-ink); }
+  .opt[data-wrong] { background: var(--red-tint); color: var(--red-ink); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; }
+  .receipt { border-radius: var(--radius-sm); padding: 16px; background: var(--surface-card);
+    box-shadow: inset 0 0 0 1px var(--receipt-line); }
+  .vtag { display: inline-flex; align-items: center; gap: 5px; font: 600 13px var(--font-sans); color: var(--green-ink); margin-bottom: 8px; }
+  .vtick { width: 16px; height: 16px; border-radius: 999px; background: var(--green); color: #fff; font-size: 10px;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .chip { height: 34px; padding: 0 14px; display: inline-flex; align-items: center; border: none; border-radius: 999px;
+    background: var(--surface-fill); color: var(--text-secondary); font: 500 14px var(--font-sans); cursor: pointer; }
+  .chip[data-on] { background: var(--ink); color: var(--surface-card); }
+  .prose { font: 400 19px var(--font-sans); line-height: 1.65; max-width: 68ch; }
+  .screen { display: none; animation: enter var(--dur-base) var(--ease-standard); }
+  .screen[data-on] { display: block; }
+  @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .sticky { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 12px;
+    align-items: center; padding: 10px 12px 10px 22px; border-radius: 999px; background: var(--material-thick);
+    backdrop-filter: var(--blur-nav); box-shadow: 0 8px 30px -8px rgba(0,0,0,.28); }
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="chrome">
+    <span class="light" style="background:#ff5f57"></span><span class="light" style="background:#febc2e"></span><span class="light" style="background:#28c840"></span>
+    <span class="addr" id="addr">vidhya.app</span>
+  </div>
+
+  <div class="site">
+    <div class="mark"><i>V</i>Vidhya</div>
+    <div class="siteav">
+      <button data-nav="home" data-on onclick="go('home')">Home</button>
+      <button data-nav="feed" onclick="go('feed')">Writing</button>
+      <button data-nav="post" onclick="go('post')">A post</button>
+      <button class="btn-quiet">Sign in</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <!-- LANDING -->
+    <section class="screen" data-screen="home" data-on>
+      <h1>The most marks achievable in your hours, honestly stated.</h1>
+      <p class="lede">Learn it, practise it, prove it in mocks, keep it until exam day — every answer machine-checked. No promises about how far you'll get. Just an honest read on where you stand and the next thing that moves it.</p>
+
+      <div class="cols" style="margin-top:36px;align-items:start">
+        <div class="focal">
+          <p class="sub" style="margin:0 0 4px">Try one, right now</p>
+          <p style="font:400 19px var(--font-sans);line-height:1.5;margin:0 0 16px">A 3×3 matrix has eigenvalues 1, 2 and 3. What is its determinant?</p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="opt" onclick="answer(this,false)"><b>A</b> 3</button>
+            <button class="opt" onclick="answer(this,true)"><b>B</b> 6</button>
+            <button class="opt" onclick="answer(this,false)"><b>C</b> 9</button>
+            <button class="opt" onclick="answer(this,false)"><b>D</b> 11</button>
+          </div>
+          <p class="sub" id="verdict" style="margin-top:14px">One real question from a past paper. No sign-up to try it.</p>
+        </div>
+
+        <div>
+          <p class="h2" style="margin-top:0">What you actually get</p>
+          <div class="list">
+            <div class="row"><span style="flex:1" class="rowtitle">Three tasks a day, not thirty</span></div>
+            <div class="row"><span style="flex:1" class="rowtitle">No streaks, no guilt, ever</span></div>
+            <div class="row"><span style="flex:1" class="rowtitle">Questions on demand, any hour</span></div>
+            <div class="row"><span style="flex:1" class="rowtitle">One plan you'll actually follow</span></div>
+          </div>
+
+          <p class="h2">Different from most apps</p>
+          <div class="list">
+            <div class="row"><span style="flex:1" class="rowtitle">Practice is generated for your gaps</span><span class="sub">not a fixed set of 2,000</span></div>
+            <div class="row"><span style="flex:1" class="rowtitle">"Your chain rule is really limits"</span><span class="sub">not "accuracy 60%"</span></div>
+            <div class="row"><span style="flex:1" class="rowtitle">Every mistake changes tomorrow's plan</span><span class="sub">not forgotten</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:20px;margin-top:40px">
+        <button class="cta">Take the 10-question diagnostic <i data-lucide="arrow-right" style="width:18px"></i></button>
+        <span class="sub">Ten minutes. No sign-up.</span>
+      </div>
+
+      <details style="margin-top:36px">
+        <summary style="cursor:pointer;font:600 17px var(--font-sans);color:var(--indigo-ink)">For builders — what's under the hood</summary>
+        <p class="sub" style="margin-top:12px;max-width:68ch">A live student model, a seven-type error taxonomy, a prerequisite graph per exam, generated-and-verified practice, an exam strategy optimiser, and a task reasoner that runs before every tutor reply. Collapsed on purpose: students never need to read it.</p>
+      </details>
+    </section>
+
+    <!-- BLOG FEED -->
+    <section class="screen" data-screen="feed">
+      <h1 style="font-size:34px;max-width:none">Writing</h1>
+      <p class="lede">Worked problems, exam strategy, and the occasional note on how the thing is built.</p>
+      <div style="display:flex;gap:8px;margin-top:22px">
+        <button class="chip" data-on onclick="pill(this)">All</button>
+        <button class="chip" onclick="pill(this)">Worked problems</button>
+        <button class="chip" onclick="pill(this)">Exam strategy</button>
+        <button class="chip" onclick="pill(this)">Engineering</button>
+      </div>
+      <div class="list" style="margin-top:14px">
+        <div style="cursor:pointer" onclick="go('post')">
+          <p style="font:600 22px var(--font-sans);letter-spacing:-.018em;margin:0">Why row reduction never changes your answers</p>
+          <p class="sub" style="margin:6px 0 0;max-width:70ch">The reason is one line long, and once you see it you stop second-guessing every elimination step under exam pressure.</p>
+          <p class="sub" style="margin:8px 0 0;font-size:14px">Worked problem · 4 min · Verified</p>
+        </div>
+        <div style="cursor:pointer" onclick="go('post')">
+          <p style="font:600 22px var(--font-sans);letter-spacing:-.018em;margin:0">The skip threshold nobody teaches you</p>
+          <p class="sub" style="margin:6px 0 0;max-width:70ch">Negative marking makes attempting everything a losing strategy. Here is how to find your own cut-off from your own accuracy.</p>
+          <p class="sub" style="margin:8px 0 0;font-size:14px">Exam strategy · 6 min</p>
+        </div>
+        <div style="cursor:pointer" onclick="go('post')">
+          <p style="font:600 22px var(--font-sans);letter-spacing:-.018em;margin:0">Three hundred concepts, one prerequisite graph</p>
+          <p class="sub" style="margin:6px 0 0;max-width:70ch">How we work out that your chain-rule problem is actually a limits problem.</p>
+          <p class="sub" style="margin:8px 0 0;font-size:14px">Engineering · 9 min</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOG POST -->
+    <section class="screen" data-screen="post">
+      <p class="sub" style="margin:22px 0 0">Worked problem · 4 min</p>
+      <h1 style="font-size:40px;max-width:20ch">Why row reduction never changes your answers</h1>
+      <div class="prose" style="margin-top:20px">
+        <p>Under exam pressure, the doubt always arrives at the same moment: you have eliminated three rows, the matrix looks nothing like the one you started with, and some part of you wonders whether the answer survived the surgery.</p>
+        <p>It did, and the reason takes one line.</p>
+      </div>
+      <div class="receipt" style="margin-top:20px;max-width:68ch">
+        <div class="vtag"><span class="vtick">✓</span> Verified · Wolfram</div>
+        <div style="font:400 19px var(--font-sans);line-height:1.6">det(EA) = det(E)·det(A), and det(E) ≠ 0 for every elementary matrix E — so every row operation is invertible.</div>
+      </div>
+      <div class="prose" style="margin-top:20px">
+        <p>Run the operations backwards and you recover the original system exactly. A solution cannot be created by a reversible step, and it cannot be destroyed by one either. The set you end with is the set you started with, written more usefully.</p>
+      </div>
+      <p class="sub" style="margin-top:26px;max-width:68ch">Opinion and explanation carry no border. Only the line a verification record backs does — the same rule the app follows.</p>
+
+      <div class="sticky">
+        <span class="sub" style="color:var(--text-primary)">Practise this now?</span>
+        <button class="cta" style="height:44px;padding:0 18px;font-size:15px">Linear algebra</button>
+        <button class="cta tutor" style="height:44px;padding:0 18px;font-size:15px">Ask the tutor</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const ADDR = { home: 'vidhya.app', feed: 'vidhya.app/writing', post: 'vidhya.app/writing/row-reduction' };
+  function go(name) {
+    document.querySelectorAll('.screen').forEach(s => s.toggleAttribute('data-on', s.dataset.screen === name));
+    document.querySelectorAll('.siteav button[data-nav]').forEach(b => {
+      if (b.dataset.nav === name) b.setAttribute('data-on', ''); else b.removeAttribute('data-on');
+    });
+    document.getElementById('addr').textContent = ADDR[name];
+  }
+  function answer(el, right) {
+    el.parentElement.querySelectorAll('.opt').forEach(o => { o.removeAttribute('data-right'); o.removeAttribute('data-wrong'); });
+    el.setAttribute(right ? 'data-right' : 'data-wrong', '');
+    document.getElementById('verdict').textContent = right
+      ? 'Right — the determinant is the product of the eigenvalues. That took you eleven seconds.'
+      : 'Not quite. The determinant is the product of the eigenvalues, so 1 × 2 × 3.';
+  }
+  function pill(el) {
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.removeAttribute('data-on'));
+    el.setAttribute('data-on', '');
+  }
+  lucide.createIcons();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+/* Type scale — Apple HIG text styles, in px. Line heights are unitless.
+   Rule: 17px is body. Nothing interactive below 13px. Optical tracking tightens
+   as size grows; that negative tracking is what makes the stack read "system". */
+:root {
+  --text-caption2: 11px;
+  --text-caption: 12px;
+  --text-footnote: 13px;
+  --text-subhead: 15px;
+  --text-callout: 16px;
+  --text-body: 17px;
+  --text-title3: 20px;
+  --text-title2: 22px;
+  --text-title1: 28px;
+  --text-large: 34px;
+  --text-display: 48px;
+  --text-display-xl: 64px;
+
+  --leading-tight: 1.08;
+  --leading-snug: 1.25;
+  --leading-normal: 1.45;
+  --leading-relaxed: 1.6;
+
+  --tracking-display: -0.022em;
+  --tracking-title: -0.018em;
+  --tracking-body: -0.01em;
+  --tracking-caps: 0.06em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+}

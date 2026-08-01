@@ -1,0 +1,19 @@
+<!-- @dsCard group="Spacing" viewport="700x200" subtitle="44px minimum, always" name="Touch targets" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Touch targets</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:20px;background:var(--surface-canvas)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:var(--text-caption);color:var(--text-secondary);letter-spacing:var(--tracking-body)}
+.mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+
+</style></head><body>
+<div class="row">
+  <div style="height:44px;padding:0 18px;display:flex;align-items:center;border-radius:var(--radius-sm);background:var(--green);color:#fff;font-weight:600;font-size:15px">44px primary</div>
+  <div style="height:34px;padding:0 14px;display:flex;align-items:center;border-radius:var(--radius-capsule);background:var(--surface-fill);font-size:13px">34px chip</div>
+  <div style="width:44px;height:44px;border-radius:50%;background:var(--surface-fill);display:flex;align-items:center;justify-content:center">􀍟</div>
+</div>
+<p class="lbl" style="margin-top:16px">A 34px chip is legal only inside a row where the whole row is tappable. Anything that is the point of the screen is 44px or taller.</p>
+</body></html>

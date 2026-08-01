@@ -1,0 +1,17 @@
+/* 4px base. Layout uses 16/20/24 almost everywhere; 8 and 12 for component internals. */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --touch-min: 44px;          /* HIG minimum hit target */
+  --gutter: 20px;             /* phone screen edge padding */
+  --content-max: 720px;
+}

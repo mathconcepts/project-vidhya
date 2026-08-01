@@ -1,0 +1,20 @@
+<!-- @dsCard group="Motion" viewport="700x220" subtitle="One curve, four durations, a press scale" name="Motion" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Motion</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:20px;background:var(--surface-canvas)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:var(--text-caption);color:var(--text-secondary);letter-spacing:var(--tracking-body)}
+.mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+.bar{height:8px;border-radius:999px;background:var(--indigo);animation:slide 2.4s var(--ease-standard) infinite alternate}@keyframes slide{from{width:12%}to{width:100%}}.press{transition:transform var(--dur-fast) var(--ease-standard)}.press:active{transform:scale(.96)}
+</style></head><body>
+<div class="col" style="gap:14px">
+  <div><div class="lbl" style="margin-bottom:6px">--ease-standard · cubic-bezier(0.32, 0.72, 0, 1)</div><div class="bar"></div></div>
+  <div class="row">
+    <div class="mono">instant 100</div><div class="mono">fast 180</div><div class="mono">base 280</div><div class="mono">slow 420</div>
+  </div>
+  <button class="press" style="height:44px;padding:0 18px;border:none;border-radius:var(--radius-sm);background:var(--green);color:#fff;font-family:var(--font-sans);font-weight:600;font-size:15px;cursor:pointer">Press me — scale 0.96</button>
+</div>
+</body></html>

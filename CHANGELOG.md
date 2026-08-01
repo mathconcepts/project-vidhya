@@ -4,6 +4,47 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## v3.0.0 — Clarity UI (2026-08-01)
+
+Full replacement of the frontend visual system. No API, engine or data changes.
+
+**Theme**
+- Dark navy "Editorial-Confident" retired. New light-first Apple-HIG system: grey canvas,
+  white cards, hairline separators, translucent chrome, two semantic accents.
+- Typography moves to the platform system sans; Fraunces, DM Sans and Inter removed.
+  Body floor raised from 13px to 17px, and the `!important` mobile size overrides that
+  propped up the old scale are gone.
+- Emerald/violet become system green (`#34c759`) and indigo (`#5856d6`) with accessible
+  `-ink` variants for text on white. Meanings unchanged: green = mastery, indigo =
+  tutor/AI and nothing else.
+- Every gradient removed (hero wash, gradient headline text, gradient buttons, gradient
+  logo badge).
+
+**Density**
+- One focal block per screen. Home loses the streak badge, announcement strip, digest
+  chip and syllabus grid; Progress collapses five factor bars and two stat tiles into one
+  number and one sentence.
+- Lists render on the canvas with 0.5px separators instead of stacked cards.
+
+**Components**
+- New `frontend/src/components/ui/` layer: Button, IconButton, Card, ListRow, Badge,
+  FilterPill, SegmentedControl, TextField, EmptyState, MasteryRing, ReceiptBadge,
+  ProgressBar, StatTile, TabBar, TutorFab, ChatBubble, TaskCard.
+- `ReceiptBorder` keeps its name, props and enforcement; only its material changed.
+- Removed: StreakBadge, Confetti, MasteryParticle, and the entire `@layer components` /
+  `@layer utilities` blocks of `globals.css`.
+
+**Journey**
+- Every surface documented with a touchpoint pass under `design/clarity/guidelines/`:
+  student, camera scan & mock exam, teacher & owner consoles, knowledge track, content
+  studio, founder portal, marketing site, blog, and the messaging channels.
+- Addresses open pains 2.1 (verified signal), 2.2 (one next step), 4.2 (readiness meter)
+  and 4.3 (milestone) from `docs/USER-JOURNEY.md` in the theme's own terms.
+
+**Docs**
+- `DESIGN-SYSTEM.md` replaced. `CLAUDE.md` design section, `README.md`,
+  `docs/15-frontend-preview.md` and the `.claude/commands/design-*` prompts updated.
+
 ## [Unreleased] — 2026-07-30 (tiered content strategy + Linear Algebra full-chapter demo)
 
 **Operator action:** none — docs + a standalone demo folder, no code in `src/` touched, no migration, no version bump. Produced from a Cowork cloud session with no scraper, Wolfram, or multi-model-router infra reachable — which is exactly the scenario `CONTENT-TIERS.md` below documents.

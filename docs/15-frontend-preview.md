@@ -195,15 +195,28 @@ colors: {
 }
 ```
 
-### CSS Classes
+### Components (`frontend/src/components/ui/`)
 
-```css
-.card       /* Glass-morphism card */
-.btn        /* Button base */
-.btn-primary /* Primary button */
-.btn-sm     /* Small button */
-.input      /* Text input */
-.glass      /* Glass effect */
+Clarity UI ships a set of typed primitives. Use these instead of ad-hoc Tailwind:
+
+```
+Button       — primary / secondary / ghost; tones: default, tutor, danger
+IconButton   — 44px touch target with icon
+Card         — white card with shadow-card
+ListRow      — hairline-separated canvas row
+Badge        — inline status pill
+FilterPill   — toggleable filter chip
+SegmentedControl — tab-style toggle
+TextField    — 17px-floor input with label
+EmptyState   — zero-state block
+MasteryRing  — circular progress arc (green)
+ProgressBar  — linear bar (green / neutral)
+StatTile     — KPI number + label
+TabBar       — bottom nav shell
+TutorFab     — floating action button (indigo)
+ChatBubble   — user / ai conversation bubbles
+TaskCard     — "One Thing" focal block
+ReceiptBorder — trust-law enforcement wrapper (receipt prop required)
 ```
 
 ## Building for Production

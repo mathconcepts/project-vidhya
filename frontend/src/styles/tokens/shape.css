@@ -1,0 +1,18 @@
+/* Radii follow Apple's nested-corner logic: a child inside a 20px container
+   gets 20 - padding. Shadows are almost absent — hairlines carry structure. */
+:root {
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-capsule: 999px;
+
+  --shadow-none: none;
+  --shadow-raise: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px -12px rgba(0, 0, 0, 0.12);
+  --shadow-sheet: 0 -1px 0 rgba(0, 0, 0, 0.06), 0 -20px 60px rgba(0, 0, 0, 0.18);
+  --shadow-fab: 0 6px 20px -6px rgba(88, 86, 214, 0.55);
+
+  --blur-nav: saturate(180%) blur(20px);
+}

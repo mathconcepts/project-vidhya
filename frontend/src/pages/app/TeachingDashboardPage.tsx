@@ -5,10 +5,8 @@ import {
   Send, MessageCircle, X, Check, Loader2, RefreshCw, ChevronRight,
   ArrowRight, Target, BookMarked,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface Recommendation {
   concept_id: string;
@@ -128,58 +126,81 @@ export default function TeachingDashboardPage() {
   if (!hasRole('teacher')) {
     return (
       <div className="max-w-md mx-auto p-6 text-center space-y-2">
-        <AlertTriangle size={24} className="text-amber-400 mx-auto" />
-        <p className="text-sm text-surface-300">Teacher role required.</p>
-        <p className="text-xs text-surface-500">Your role: {user?.role || 'not signed in'}</p>
+        <AlertTriangle size={24} className="mx-auto" style={{ color: 'var(--orange)' }} />
+        <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>Teacher role required.</p>
+        <p style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>Your role: {user?.role || 'not signed in'}</p>
       </div>
     );
   }
 
   return (
-    <motion.div className="space-y-5 max-w-3xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+    <div className="space-y-5 max-w-3xl mx-auto">
       {/* First-time welcome banner */}
       {showTeacherWelcome && (
-        <motion.div
-          variants={fadeInUp}
-          className="p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/25 flex items-start gap-3"
+        <div
+          className="p-4 flex items-start gap-3"
+          style={{
+            background: 'rgba(52,199,89,.08)',
+            border: '1px solid rgba(52,199,89,.25)',
+            borderRadius: 'var(--radius-sm)',
+          }}
         >
-          <BookOpen size={16} className="shrink-0 mt-0.5 text-emerald-400" />
-          <div className="flex-1 space-y-1 text-xs text-surface-300">
-            <p className="font-semibold text-surface-100">Welcome to Teaching Hub</p>
+          <BookOpen size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--green)' }} />
+          <div className="flex-1 space-y-1" style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)' }}>
+            <p style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Welcome to Teaching Hub</p>
             <p>The recommendation below is built from your cohort's real learning data — it tells you what to teach next and shows you a ready-made brief. Use "Push to review" to send practice problems directly to every student's queue.</p>
           </div>
           <button
             onClick={() => { localStorage.setItem('teaching_welcome_dismissed', '1'); setShowTeacherWelcome(false); }}
-            className="shrink-0 p-1 rounded text-surface-500 hover:text-surface-300 transition-colors"
+            className="shrink-0 p-1"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-xs)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)' }}
             aria-label="Dismiss"
           >
             <X size={14} />
           </button>
-        </motion.div>
+        </div>
       )}
 
       {/* Header */}
-      <motion.div variants={fadeInUp} className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-display font-bold text-surface-100 flex items-center gap-2">
-            <BookOpen size={20} className="text-emerald-400" />
+          <h1
+            className="flex items-center gap-2"
+            style={{ fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.018em' }}
+          >
+            <BookOpen size={20} style={{ color: 'var(--green)' }} />
             Teaching
           </h1>
-          <p className="text-xs text-surface-500 mt-1">
+          <p className="mt-1" style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
             What to teach next, based on your cohort.
           </p>
           {/* v2.6: cohort-mastery stat surfaced at the top — this IS the
               teacher-progress signal ("are my students learning what I teach?").
               Was previously buried in a stats-bar at the bottom. */}
           {nextClass && nextClass.cohort_size > 0 && typeof nextClass.cohort_avg_mastery === 'number' && (
-            <p className="text-[11px] text-emerald-400 uppercase tracking-wide font-medium mt-2">
+            <p
+              className="mt-2"
+              style={{
+                fontSize: 'var(--text-caption2)',
+                color: 'var(--green-ink)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                fontWeight: 'var(--weight-medium)',
+              }}
+            >
               Cohort mastery: {Math.round(nextClass.cohort_avg_mastery * 100)}% across {nextClass.cohort_size} students
             </p>
           )}
           {/* v4.0 P7: link to weekly cohort brief */}
           <a
             href="/teaching/brief"
-            className="inline-flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300 mt-1 font-medium"
+            className="inline-flex items-center gap-1 mt-1"
+            style={{
+              fontSize: 'var(--text-caption2)',
+              color: 'var(--indigo)',
+              fontWeight: 'var(--weight-medium)',
+              textDecoration: 'none',
+            }}
           >
             This week's brief →
           </a>
@@ -187,34 +208,58 @@ export default function TeachingDashboardPage() {
         <button
           onClick={refresh}
           disabled={loading}
-          className="p-2 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200"
+          className="p-2"
+          style={{
+            borderRadius: 'var(--radius-xs)',
+            background: 'var(--surface-fill)',
+            border: 'var(--hairline) solid var(--separator)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+          }}
           aria-label="refresh"
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
         </button>
-      </motion.div>
+      </div>
 
       {error && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-300">
+        <div
+          className="p-3"
+          style={{
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(255,59,48,.1)',
+            border: '1px solid rgba(255,59,48,.25)',
+            fontSize: 'var(--text-footnote)',
+            color: 'var(--red)',
+          }}
+        >
           {error}
-        </motion.div>
+        </div>
       )}
 
       {loading && !nextClass ? (
-        <div className="text-center py-8 text-surface-500 text-sm">
+        <div className="text-center py-8" style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-body)' }}>
           <Loader2 size={14} className="inline animate-spin mr-2" />
           Loading...
         </div>
       ) : nextClass && !nextClass.recommendation ? (
-        <motion.div variants={fadeInUp} className="p-6 rounded-xl bg-surface-900 border border-surface-800 text-center space-y-2">
-          <Target size={24} className="text-surface-600 mx-auto" />
-          <p className="text-sm text-surface-300">{nextClass.message}</p>
+        <div
+          className="p-6 text-center space-y-2"
+          style={{
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--surface-fill)',
+            border: 'var(--hairline) solid var(--separator)',
+          }}
+        >
+          <Target size={24} className="mx-auto" style={{ color: 'var(--text-tertiary)' }} />
+          <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{nextClass.message}</p>
           {nextClass.cohort_size > 0 && typeof nextClass.cohort_avg_mastery === 'number' && (
-            <p className="text-xs text-surface-500">
+            <p style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>
               Cohort size: {nextClass.cohort_size} · avg mastery: {Math.round(nextClass.cohort_avg_mastery * 100)}%
             </p>
           )}
-        </motion.div>
+        </div>
       ) : nextClass?.recommendation ? (
         <>
           {/* v2.6: flagged-students alert promoted to a prominent card when
@@ -222,54 +267,96 @@ export default function TeachingDashboardPage() {
               stats bar. Teachers care most about students at risk; this
               should be immediate, not buried. */}
           {(nextClass.flagged_students ?? 0) > 0 && (
-            <motion.a
-              variants={fadeInUp}
+            <a
               href="/teacher/roster"
-              className="block p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/15 transition-colors"
+              className="block p-3"
+              style={{
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(255,149,0,.1)',
+                border: '1px solid rgba(255,149,0,.3)',
+                color: 'var(--orange)',
+                textDecoration: 'none',
+              }}
             >
               <div className="flex items-center gap-2">
                 <AlertTriangle size={16} className="shrink-0" />
-                <p className="text-sm font-medium">
+                <p style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)' }}>
                   {nextClass.flagged_students} {nextClass.flagged_students === 1 ? 'student needs' : 'students need'} attention
                 </p>
-                <span className="ml-auto text-xs">View roster →</span>
+                <span className="ml-auto" style={{ fontSize: 'var(--text-caption2)' }}>View roster →</span>
               </div>
-            </motion.a>
+            </a>
           )}
 
           {/* Primary: next-class recommendation */}
-          <motion.div variants={fadeInUp} className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/8 via-surface-900 to-violet-500/8 border border-emerald-500/25 space-y-3">
+          <div
+            className="p-4 space-y-3"
+            style={{
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(52,199,89,.06)',
+              border: '1px solid rgba(52,199,89,.2)',
+            }}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
-                <p className="text-[10px] text-emerald-400 uppercase tracking-wide font-medium">
+                <p
+                  style={{
+                    fontSize: 'var(--text-caption2)',
+                    color: 'var(--green-ink)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    fontWeight: 'var(--weight-medium)',
+                  }}
+                >
                   Teach next
                 </p>
-                <h2 className="text-lg font-bold text-surface-100 mt-1 capitalize">
+                <h2
+                  className="mt-1"
+                  style={{
+                    fontSize: 'var(--text-title3)',
+                    fontWeight: 'var(--weight-bold)',
+                    color: 'var(--text-primary)',
+                    textTransform: 'capitalize',
+                  }}
+                >
                   {nextClass.recommendation.concept_label}
                 </h2>
-                <p className="text-xs text-surface-400 mt-1.5 leading-relaxed">
+                <p
+                  className="mt-1.5"
+                  style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: '1.5' }}
+                >
                   {nextClass.recommendation.reason}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-2xl font-bold text-amber-400">
+                <p style={{ fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: 'var(--orange)' }}>
                   {Math.round(nextClass.recommendation.cohort_avg_mastery * 100)}%
                 </p>
-                <p className="text-[10px] text-surface-500">cohort mastery</p>
+                <p style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>cohort mastery</p>
               </div>
             </div>
 
             <button
               onClick={() => openBrief(nextClass.recommendation!.concept_id)}
-              className="w-full h-10 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 active:scale-[0.98] inline-flex items-center justify-center gap-2 transition-all"
+              className="w-full h-10 inline-flex items-center justify-center gap-2 active:scale-[0.98]"
+              style={{
+                borderRadius: 'var(--radius-xs)',
+                background: 'var(--green)',
+                color: '#fff',
+                fontSize: 'var(--text-body)',
+                fontWeight: 'var(--weight-medium)',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              }}
             >
               <BookMarked size={14} />
               Open teaching brief
             </button>
-          </motion.div>
+          </div>
 
           {/* Cohort stats bar */}
-          <motion.div variants={fadeInUp} className="flex items-center gap-3 text-xs text-surface-400">
+          <div className="flex items-center gap-3" style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
             <span className="inline-flex items-center gap-1">
               <UsersIcon size={11} />
               {nextClass.cohort_size} students
@@ -279,71 +366,135 @@ export default function TeachingDashboardPage() {
             )}
             {(nextClass.flagged_students ?? 0) > 0 && (
               <>
-                <span className="text-surface-600">·</span>
-                <a href="/teacher/roster" className="text-amber-400 hover:text-amber-300 inline-flex items-center gap-1">
+                <span style={{ color: 'var(--separator)' }}>·</span>
+                <a
+                  href="/teacher/roster"
+                  className="inline-flex items-center gap-1"
+                  style={{ color: 'var(--orange)', textDecoration: 'none' }}
+                >
                   <AlertTriangle size={11} />
                   {nextClass.flagged_students} need attention
                 </a>
               </>
             )}
-          </motion.div>
+          </div>
 
           {/* Other struggling concepts */}
           {nextClass.other_struggling && nextClass.other_struggling.length > 0 && (
-            <motion.div variants={fadeInUp} className="space-y-2">
-              <p className="text-[10px] text-surface-500 uppercase tracking-wide">Other concepts worth attention</p>
+            <div className="space-y-2">
+              <p
+                style={{
+                  fontSize: 'var(--text-caption2)',
+                  color: 'var(--text-tertiary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Other concepts worth attention
+              </p>
               <div className="space-y-1.5">
                 {nextClass.other_struggling.map(c => (
                   <button
                     key={c.concept_id}
                     onClick={() => openBrief(c.concept_id)}
-                    className="w-full p-3 rounded-lg bg-surface-900 border border-surface-800 hover:border-surface-700 flex items-center gap-3 text-left group transition-colors"
+                    className="w-full p-3 flex items-center gap-3 text-left"
+                    style={{
+                      borderRadius: 'var(--radius-xs)',
+                      background: 'var(--surface-fill)',
+                      border: 'var(--hairline) solid var(--separator)',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-sans)',
+                    }}
                   >
-                    <TrendingDown size={12} className="shrink-0 text-amber-400" />
+                    <TrendingDown size={12} className="shrink-0" style={{ color: 'var(--orange)' }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-surface-200 capitalize truncate">{c.concept_label}</p>
-                      <p className="text-[10px] text-surface-500">{c.students_affected} students · {Math.round(c.cohort_avg_mastery * 100)}% avg</p>
+                      <p
+                        className="truncate"
+                        style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', textTransform: 'capitalize' }}
+                      >
+                        {c.concept_label}
+                      </p>
+                      <p style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
+                        {c.students_affected} students · {Math.round(c.cohort_avg_mastery * 100)}% avg
+                      </p>
                     </div>
-                    <ChevronRight size={12} className="text-surface-600 group-hover:text-surface-400" />
+                    <ChevronRight size={12} style={{ color: 'var(--text-tertiary)' }} />
                   </button>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Announcement composer */}
-          <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide flex items-center gap-1.5">
+          <div
+            className="p-4 space-y-2"
+            style={{
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--surface-fill)',
+              border: 'var(--hairline) solid var(--separator)',
+            }}
+          >
+            <p
+              className="flex items-center gap-1.5"
+              style={{
+                fontSize: 'var(--text-caption2)',
+                color: 'var(--text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
               <MessageCircle size={10} />
               Class announcement
             </p>
-            <p className="text-[11px] text-surface-500">
+            <p style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
               Appears on each of your students' home screens. Latest announcement replaces any previous one.
             </p>
             <textarea
               value={announcementText}
               onChange={e => setAnnouncementText(e.target.value.slice(0, 280))}
               placeholder="e.g., We'll continue eigenvalues tomorrow. Please review problem 3 before class."
-              className="w-full min-h-[60px] p-2.5 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50 resize-none"
+              className="w-full min-h-[60px] p-2.5 resize-none"
+              style={{
+                borderRadius: 'var(--radius-xs)',
+                background: 'var(--surface-card)',
+                border: 'var(--hairline) solid var(--separator)',
+                fontSize: 'var(--text-body)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-sans)',
+                outline: 'none',
+              }}
             />
             <div className="flex items-center justify-between">
-              <span className={clsx(
-                'text-[10px]',
-                announcementText.length > 260 ? 'text-amber-400' : 'text-surface-500'
-              )}>
+              <span
+                style={{
+                  fontSize: 'var(--text-caption2)',
+                  color: announcementText.length > 260 ? 'var(--orange)' : 'var(--text-tertiary)',
+                }}
+              >
                 {announcementText.length} / 280
               </span>
               <button
                 onClick={postAnnouncement}
                 disabled={!announcementText.trim() || announcementPosting}
-                className="px-3 h-8 rounded-lg bg-violet-500 text-white text-xs font-medium hover:bg-violet-400 disabled:opacity-40 inline-flex items-center gap-1.5 transition-all"
+                className="px-3 h-8 inline-flex items-center gap-1.5"
+                style={{
+                  borderRadius: 'var(--radius-xs)',
+                  background: 'var(--indigo)',
+                  color: '#fff',
+                  fontSize: 'var(--text-caption)',
+                  fontWeight: 'var(--weight-medium)',
+                  border: 'none',
+                  cursor: !announcementText.trim() || announcementPosting ? 'not-allowed' : 'pointer',
+                  opacity: !announcementText.trim() || announcementPosting ? 0.4 : 1,
+                  fontFamily: 'var(--font-sans)',
+                }}
               >
                 {announcementPosting ? <Loader2 size={11} className="animate-spin" />
                   : announcementPosted ? <><Check size={11} /> Posted</>
                   : <><Send size={11} /> Post</>}
               </button>
             </div>
-          </motion.div>
+          </div>
         </>
       ) : null}
 
@@ -361,15 +512,22 @@ export default function TeachingDashboardPage() {
       </AnimatePresence>
 
       {/* Design-principle note */}
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
-        <Lightbulb size={13} className="shrink-0 mt-0.5 text-violet-400" />
-        <div className="text-[11px] text-violet-200/80 leading-relaxed">
-          <span className="font-medium text-violet-300">Why this works.</span>{' '}
+      <div
+        className="p-3 flex items-start gap-2.5"
+        style={{
+          borderRadius: 'var(--radius-sm)',
+          background: 'rgba(88,86,214,.06)',
+          border: '1px solid rgba(88,86,214,.2)',
+        }}
+      >
+        <Lightbulb size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--indigo)' }} />
+        <div style={{ fontSize: 'var(--text-caption2)', color: 'var(--indigo-ink)', lineHeight: '1.6' }}>
+          <span style={{ fontWeight: 'var(--weight-medium)', color: 'var(--indigo-ink)' }}>Why this works.</span>{' '}
           Every recommendation and brief is composed from your cohort's actual learning data.
           No guessing, no generic content. The app tells you what your students need; you bring the teaching.
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -390,7 +548,8 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50"
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <motion.div
@@ -399,51 +558,92 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={e => e.stopPropagation()}
-        className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-surface-950 border-t border-surface-800 rounded-t-2xl overflow-y-auto"
+        className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto"
+        style={{
+          background: 'var(--surface-card)',
+          borderTop: 'var(--hairline) solid var(--separator)',
+          borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
+        }}
       >
-        <div className="sticky top-0 bg-surface-950/95 backdrop-blur-sm border-b border-surface-800 px-4 py-3 flex items-center justify-between z-10">
-          <p className="text-sm font-medium text-surface-100">Teaching brief</p>
-          <button onClick={onClose} className="p-1 rounded text-surface-500 hover:text-surface-200">
+        <div
+          className="sticky top-0 px-4 py-3 flex items-center justify-between z-10"
+          style={{
+            background: 'var(--surface-card)',
+            borderBottom: 'var(--hairline) solid var(--separator)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <p style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Teaching brief</p>
+          <button
+            onClick={onClose}
+            className="p-1"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-sans)' }}
+          >
             <X size={14} />
           </button>
         </div>
 
         <div className="p-4 space-y-4 max-w-3xl mx-auto">
           {loading ? (
-            <div className="text-center py-12 text-surface-500 text-sm">
+            <div className="text-center py-12" style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-body)' }}>
               <Loader2 size={14} className="inline animate-spin mr-2" />
               Composing brief...
             </div>
           ) : !brief ? (
-            <p className="text-sm text-surface-500 text-center py-8">Brief unavailable.</p>
+            <p className="text-center py-8" style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>Brief unavailable.</p>
           ) : (
             <>
               {/* Confidence picker — gates prep section. Always shown first so
                   the teacher self-assesses before reading the brief. */}
-              <div className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-                <p className="text-xs text-surface-400 mb-2">
-                  How confident are you teaching <span className="text-surface-200 font-medium capitalize">{brief.concept.label}</span>?
+              <div
+                className="p-3"
+                style={{
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--surface-fill)',
+                  border: 'var(--hairline) solid var(--separator)',
+                }}
+              >
+                <p className="mb-2" style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+                  How confident are you teaching{' '}
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)', textTransform: 'capitalize' }}>
+                    {brief.concept.label}
+                  </span>?
                 </p>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map(n => (
                     <button
                       key={n}
                       onClick={() => setConfidence(n)}
-                      className={clsx(
-                        'flex-1 h-9 rounded-lg text-sm font-semibold transition-colors border',
-                        confidence === n
+                      className="flex-1 h-9"
+                      style={{
+                        borderRadius: 'var(--radius-xs)',
+                        fontSize: 'var(--text-body)',
+                        fontWeight: 'var(--weight-semibold)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-sans)',
+                        border: confidence === n
                           ? n <= 2
-                            ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-                            : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                          : 'bg-surface-800 border-surface-700 text-surface-400 hover:bg-surface-700',
-                      )}
+                            ? '1px solid rgba(255,149,0,.4)'
+                            : '1px solid rgba(52,199,89,.4)'
+                          : 'var(--hairline) solid var(--separator)',
+                        background: confidence === n
+                          ? n <= 2
+                            ? 'rgba(255,149,0,.2)'
+                            : 'rgba(52,199,89,.2)'
+                          : 'var(--surface-card)',
+                        color: confidence === n
+                          ? n <= 2
+                            ? 'var(--orange)'
+                            : 'var(--green-ink)'
+                          : 'var(--text-secondary)',
+                      }}
                     >
                       {n}
                     </button>
                   ))}
                 </div>
                 {confidence !== null && (
-                  <p className="text-[11px] mt-1.5 text-surface-500">
+                  <p className="mt-1.5" style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
                     {confidence <= 2 ? 'Prep section added below — review before class.' : 'You\'re set. Brief is ready.'}
                   </p>
                 )}
@@ -461,24 +661,55 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                     <Section title="Your prep" icon={BookOpen} tone="amber">
                       {brief.concept.canonical_definition && (
                         <div className="mb-3">
-                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-1">Canonical definition</p>
-                          <p className="text-sm text-surface-300 leading-relaxed">{brief.concept.canonical_definition}</p>
+                          <p
+                            className="mb-1"
+                            style={{ fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}
+                          >
+                            Canonical definition
+                          </p>
+                          <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                            {brief.concept.canonical_definition}
+                          </p>
                         </div>
                       )}
                       {brief.teaching_brief.worked_examples.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-1">Worked examples (first 2)</p>
+                          <p
+                            className="mb-1"
+                            style={{ fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}
+                          >
+                            Worked examples (first 2)
+                          </p>
                           {brief.teaching_brief.worked_examples.slice(0, 2).map((ex: any, i: number) => (
-                            <div key={i} className="text-xs text-surface-300 font-mono bg-surface-950 rounded p-2 mb-1">{typeof ex === 'string' ? ex : ex.problem || ex.text || JSON.stringify(ex)}</div>
+                            <div
+                              key={i}
+                              className="mb-1 p-2"
+                              style={{
+                                fontSize: 'var(--text-caption)',
+                                color: 'var(--text-secondary)',
+                                fontFamily: 'var(--font-mono)',
+                                background: 'var(--surface-card)',
+                                borderRadius: 'var(--radius-xs)',
+                              }}
+                            >
+                              {typeof ex === 'string' ? ex : ex.problem || ex.text || JSON.stringify(ex)}
+                            </div>
                           ))}
                         </div>
                       )}
                       {brief.teaching_brief.common_misconceptions.length > 0 && (
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-surface-500 mb-1">Common misconceptions in your cohort</p>
-                          <ul className="space-y-1 text-sm text-surface-300">
+                          <p
+                            className="mb-1"
+                            style={{ fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}
+                          >
+                            Common misconceptions in your cohort
+                          </p>
+                          <ul className="space-y-1" style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>
                             {brief.teaching_brief.common_misconceptions.slice(0, 3).map((m: any, i: number) => (
-                              <li key={i} className="leading-relaxed">{typeof m === 'string' ? m : m.text || m.description || JSON.stringify(m)}</li>
+                              <li key={i} style={{ lineHeight: '1.5' }}>
+                                {typeof m === 'string' ? m : m.text || m.description || JSON.stringify(m)}
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -489,40 +720,69 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
               </AnimatePresence>
 
               <div>
-                <h2 className="text-lg font-bold text-surface-100 capitalize">{brief.concept.label}</h2>
+                <h2
+                  style={{
+                    fontSize: 'var(--text-title3)',
+                    fontWeight: 'var(--weight-bold)',
+                    color: 'var(--text-primary)',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {brief.concept.label}
+                </h2>
                 {brief.concept.topic && (
-                  <p className="text-[10px] text-surface-500 uppercase tracking-wide mt-1">
+                  <p
+                    className="mt-1"
+                    style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                  >
                     {brief.concept.topic}
                   </p>
                 )}
                 {brief.concept.canonical_definition && (
-                  <p className="text-sm text-surface-300 mt-2 leading-relaxed">
+                  <p className="mt-2" style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                     {brief.concept.canonical_definition}
                   </p>
                 )}
               </div>
 
               {/* Cohort snapshot */}
-              <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 grid grid-cols-3 gap-3 text-center">
+              <div
+                className="p-3 grid grid-cols-3 gap-3 text-center"
+                style={{
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--surface-fill)',
+                  border: 'var(--hairline) solid var(--separator)',
+                }}
+              >
                 <div>
-                  <p className="text-lg font-bold text-surface-100">{brief.cohort.size}</p>
-                  <p className="text-[10px] text-surface-500">in cohort</p>
+                  <p style={{ fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>
+                    {brief.cohort.size}
+                  </p>
+                  <p style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>in cohort</p>
                 </div>
                 <div>
-                  <p className={clsx(
-                    'text-lg font-bold',
-                    brief.cohort.avg_mastery === null ? 'text-surface-500'
-                    : brief.cohort.avg_mastery < 0.4 ? 'text-amber-400'
-                    : brief.cohort.avg_mastery < 0.7 ? 'text-violet-400'
-                    : 'text-emerald-400',
-                  )}>
+                  <p
+                    style={{
+                      fontSize: 'var(--text-title3)',
+                      fontWeight: 'var(--weight-bold)',
+                      color: brief.cohort.avg_mastery === null
+                        ? 'var(--text-tertiary)'
+                        : brief.cohort.avg_mastery < 0.4
+                          ? 'var(--orange)'
+                          : brief.cohort.avg_mastery < 0.7
+                            ? 'var(--indigo)'
+                            : 'var(--green)',
+                    }}
+                  >
                     {brief.cohort.avg_mastery === null ? '—' : Math.round(brief.cohort.avg_mastery * 100) + '%'}
                   </p>
-                  <p className="text-[10px] text-surface-500">cohort mastery</p>
+                  <p style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>cohort mastery</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-amber-400">{brief.cohort.students_below_mastery}</p>
-                  <p className="text-[10px] text-surface-500">below threshold</p>
+                  <p style={{ fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--orange)' }}>
+                    {brief.cohort.students_below_mastery}
+                  </p>
+                  <p style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>below threshold</p>
                 </div>
               </div>
 
@@ -530,12 +790,17 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
               <button
                 onClick={onPushToReview}
                 disabled={pushStatus !== 'idle'}
-                className={clsx(
-                  'w-full h-10 rounded-lg font-medium text-sm inline-flex items-center justify-center gap-2 transition-all',
-                  pushStatus === 'done'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-violet-500 text-white hover:bg-violet-400 active:scale-[0.98]',
-                )}
+                className="w-full h-10 inline-flex items-center justify-center gap-2 active:scale-[0.98]"
+                style={{
+                  borderRadius: 'var(--radius-xs)',
+                  fontSize: 'var(--text-body)',
+                  fontWeight: 'var(--weight-medium)',
+                  fontFamily: 'var(--font-sans)',
+                  border: pushStatus === 'done' ? '1px solid rgba(52,199,89,.4)' : 'none',
+                  background: pushStatus === 'done' ? 'rgba(52,199,89,.2)' : 'var(--indigo)',
+                  color: pushStatus === 'done' ? 'var(--green-ink)' : '#fff',
+                  cursor: pushStatus !== 'idle' ? 'not-allowed' : 'pointer',
+                }}
               >
                 {pushStatus === 'pushing' ? <Loader2 size={13} className="animate-spin" />
                   : pushStatus === 'done' ? <><Check size={13} /> Pushed to all students</>
@@ -545,9 +810,9 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
               {/* Talking points — the MOST actionable section */}
               {brief.teaching_brief.talking_points.length > 0 && (
                 <Section title="Talking points" icon={Lightbulb} tone="amber">
-                  <ul className="space-y-2 text-sm text-surface-300">
+                  <ul className="space-y-2" style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>
                     {brief.teaching_brief.talking_points.map((tp, i) => (
-                      <li key={i} className="leading-relaxed">{tp}</li>
+                      <li key={i} style={{ lineHeight: '1.5' }}>{tp}</li>
                     ))}
                   </ul>
                 </Section>
@@ -556,9 +821,9 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
               {/* Misconceptions */}
               {brief.teaching_brief.common_misconceptions.length > 0 && (
                 <Section title="Common misconceptions to address" icon={AlertTriangle} tone="rose">
-                  <ul className="space-y-2 text-sm text-surface-300">
+                  <ul className="space-y-2" style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>
                     {brief.teaching_brief.common_misconceptions.map((m, i) => (
-                      <li key={i} className="leading-relaxed">
+                      <li key={i} style={{ lineHeight: '1.5' }}>
                         {typeof m === 'string' ? m : (m.text || m.description || JSON.stringify(m))}
                       </li>
                     ))}
@@ -571,7 +836,18 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                 <Section title="Worked examples for class" icon={BookMarked} tone="violet">
                   <div className="space-y-2">
                     {brief.teaching_brief.worked_examples.map((ex, i) => (
-                      <div key={i} className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-300 leading-relaxed">
+                      <div
+                        key={i}
+                        className="p-2.5"
+                        style={{
+                          borderRadius: 'var(--radius-xs)',
+                          background: 'var(--surface-fill)',
+                          border: 'var(--hairline) solid var(--separator)',
+                          fontSize: 'var(--text-body)',
+                          color: 'var(--text-secondary)',
+                          lineHeight: '1.5',
+                        }}
+                      >
                         {typeof ex === 'string' ? ex : (ex.problem || ex.statement || JSON.stringify(ex))}
                       </div>
                     ))}
@@ -584,9 +860,17 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                 <Section title="Problems to discuss" icon={Target} tone="emerald">
                   <div className="space-y-2">
                     {brief.teaching_brief.suggested_problems.map(p => (
-                      <div key={p.id} className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 space-y-1">
-                        <p className="text-sm text-surface-300 leading-relaxed">{p.statement}</p>
-                        <div className="flex items-center gap-2 text-[10px] text-surface-500">
+                      <div
+                        key={p.id}
+                        className="p-2.5 space-y-1"
+                        style={{
+                          borderRadius: 'var(--radius-xs)',
+                          background: 'var(--surface-fill)',
+                          border: 'var(--hairline) solid var(--separator)',
+                        }}
+                      >
+                        <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{p.statement}</p>
+                        <div className="flex items-center gap-2" style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
                           {p.year && <span>GATE {p.year}</span>}
                           {p.difficulty && <span>· {p.difficulty}</span>}
                         </div>
@@ -599,7 +883,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
               {/* Prereq reminders */}
               {brief.teaching_brief.prerequisite_reminders.length > 0 && (
                 <Section title="Prerequisites to review first" icon={Brain} tone="neutral">
-                  <ul className="space-y-1 text-xs text-surface-400">
+                  <ul className="space-y-1" style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
                     {brief.teaching_brief.prerequisite_reminders.map((pr, i) => (
                       <li key={i}>{pr}</li>
                     ))}
@@ -609,7 +893,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
 
               {brief.concept.exam_tip && (
                 <Section title="Exam tip" icon={Target} tone="amber">
-                  <p className="text-sm text-surface-300 leading-relaxed">{brief.concept.exam_tip}</p>
+                  <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{brief.concept.exam_tip}</p>
                 </Section>
               )}
             </>
@@ -626,16 +910,25 @@ function Section({ title, icon: Icon, tone, children }: {
   tone: 'amber' | 'rose' | 'violet' | 'emerald' | 'neutral';
   children: React.ReactNode;
 }) {
-  const toneAccent =
-    tone === 'amber' ? 'text-amber-400'
-    : tone === 'rose' ? 'text-rose-400'
-    : tone === 'violet' ? 'text-violet-400'
-    : tone === 'emerald' ? 'text-emerald-400'
-    : 'text-surface-400';
+  const iconColor =
+    tone === 'amber' ? 'var(--orange)'
+    : tone === 'rose' ? 'var(--red)'
+    : tone === 'violet' ? 'var(--indigo)'
+    : tone === 'emerald' ? 'var(--green)'
+    : 'var(--text-tertiary)';
   return (
     <div className="space-y-2">
-      <p className="text-[11px] uppercase tracking-wide flex items-center gap-1.5 font-medium text-surface-200">
-        <Icon size={11} className={toneAccent} />
+      <p
+        className="flex items-center gap-1.5"
+        style={{
+          fontSize: 'var(--text-caption2)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          fontWeight: 'var(--weight-medium)',
+          color: 'var(--text-primary)',
+        }}
+      >
+        <Icon size={11} style={{ color: iconColor }} />
         {title}
       </p>
       <div className="pl-5">{children}</div>

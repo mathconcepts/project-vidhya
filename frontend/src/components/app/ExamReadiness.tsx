@@ -1,12 +1,13 @@
 /**
- * ExamReadiness — Composite exam readiness score badge + breakdown.
+ * ExamReadiness — Composite exam readiness score + breakdown.
  */
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Target, TrendingUp, Brain, AlertTriangle, Flame, ChevronDown, ChevronUp } from 'lucide-react';
 import { apiFetch } from '@/hooks/useApi';
-import { fadeInUp } from '@/lib/animations';
+import { MasteryRing } from '@/components/ui/MasteryRing';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface ReadinessData {
   score: number;
@@ -39,11 +40,11 @@ function AnimatedNumber({ value }: { value: number }) {
 }
 
 const BREAKDOWN_ITEMS = [
-  { key: 'coverage', label: 'Topic Coverage', icon: Target, color: 'emerald' },
-  { key: 'accuracy', label: 'Accuracy', icon: TrendingUp, color: 'violet' },
-  { key: 'srHealth', label: 'Review Health', icon: Brain, color: 'amber' },
-  { key: 'weakSpots', label: 'Weak Spots', icon: AlertTriangle, color: 'emerald' },
-  { key: 'consistency', label: 'Consistency', icon: Flame, color: 'amber' },
+  { key: 'coverage',    label: 'Topic Coverage', icon: Target },
+  { key: 'accuracy',   label: 'Accuracy',       icon: TrendingUp },
+  { key: 'srHealth',   label: 'Review Health',  icon: Brain },
+  { key: 'weakSpots',  label: 'Weak Spots',     icon: AlertTriangle },
+  { key: 'consistency', label: 'Consistency',   icon: Flame },
 ] as const;
 
 /** Compact badge for GateHome hero */
@@ -56,37 +57,39 @@ export function ExamReadinessBadge({ sessionId }: { sessionId: string }) {
 
   if (!data) return null;
 
-  const scoreColor = data.score >= 70 ? 'text-emerald-400' : data.score >= 40 ? 'text-amber-400' : 'text-red-400';
-  const borderColor = data.score >= 70 ? 'border-emerald-500/30' : data.score >= 40 ? 'border-amber-500/30' : 'border-red-500/30';
-  const bgColor = data.score >= 70 ? 'bg-emerald-500/10' : data.score >= 40 ? 'bg-amber-500/10' : 'bg-red-500/10';
-
   return (
-    <motion.div variants={fadeInUp} className={`flex items-center justify-between p-4 rounded-xl border ${borderColor} ${bgColor}`}>
-      <div className="flex items-center gap-3">
-        <div className="relative w-14 h-14">
-          <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
-            <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-surface-800" />
-            <circle
-              cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4"
-              strokeDasharray={`${(data.score / 100) * 150.8} 150.8`}
-              strokeLinecap="round"
-              className={scoreColor}
-            />
-          </svg>
-          <span className={`absolute inset-0 flex items-center justify-center text-sm font-black ${scoreColor}`}>
-            <AnimatedNumber value={data.score} />
-          </span>
-        </div>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '14px 16px',
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--surface-card)',
+        boxShadow: 'var(--shadow-raise)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <MasteryRing
+          value={data.score}
+          size={56}
+          stroke={4}
+          label={
+            <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)' }}>
+              <AnimatedNumber value={data.score} />
+            </span>
+          }
+        />
         <div>
-          <p className="text-sm font-semibold text-white">Exam Readiness</p>
-          <p className="text-xs text-surface-400">{data.topicsAttempted}/10 topics started</p>
+          <p style={{ margin: 0, fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Exam Readiness</p>
+          <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{data.topicsAttempted}/10 topics started</p>
         </div>
       </div>
-      <div className="text-right">
-        <p className="text-lg font-bold text-surface-300">{data.daysLeft}</p>
-        <p className="text-xs text-surface-500">days left</p>
+      <div style={{ textAlign: 'right' }}>
+        <p style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{data.daysLeft}</p>
+        <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>days left</p>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -101,57 +104,74 @@ export function ExamReadinessBreakdown({ sessionId }: { sessionId: string }) {
 
   if (!data) return null;
 
-  const scoreColor = data.score >= 70 ? 'text-emerald-400' : data.score >= 40 ? 'text-amber-400' : 'text-red-400';
+  const tone = data.score >= 70 ? 'mastery' : 'neutral';
+  const scoreColor = data.score >= 70 ? 'var(--green-ink)' : data.score >= 40 ? 'var(--orange)' : 'var(--red)';
 
   return (
-    <motion.div variants={fadeInUp} className="bg-surface-900 border border-surface-800 rounded-xl overflow-hidden">
+    <div
+      style={{
+        background: 'var(--surface-card)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-raise)',
+        overflow: 'hidden',
+      }}
+    >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-surface-800/50 transition-colors"
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 16px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-sans)',
+        }}
       >
-        <div className="flex items-center gap-3">
-          <span className={`text-2xl font-black ${scoreColor}`}>{data.score}%</span>
-          <span className="text-sm font-medium text-surface-300">Exam Readiness Score</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: scoreColor, fontVariantNumeric: 'tabular-nums' }}>
+            {data.score}%
+          </span>
+          <span style={{ fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>
+            Exam Readiness Score
+          </span>
         </div>
-        {expanded ? <ChevronUp size={18} className="text-surface-500" /> : <ChevronDown size={18} className="text-surface-500" />}
+        {expanded
+          ? <ChevronUp size={18} style={{ color: 'var(--text-tertiary)' }} />
+          : <ChevronDown size={18} style={{ color: 'var(--text-tertiary)' }} />}
       </button>
 
       {expanded && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
-          className="px-4 pb-4 space-y-3"
+          transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
+          style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}
         >
-          {BREAKDOWN_ITEMS.map(({ key, label, icon: Icon, color }) => {
+          {BREAKDOWN_ITEMS.map(({ key, label, icon: Icon }) => {
             const value = data.breakdown[key];
-            const barColor = color === 'emerald' ? 'bg-emerald-500' : color === 'violet' ? 'bg-violet-500' : 'bg-amber-500';
             return (
               <div key={key}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <Icon size={14} className="text-surface-400" />
-                    <span className="text-xs text-surface-400">{label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Icon size={14} style={{ color: 'var(--text-secondary)' }} />
+                    <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{label}</span>
                   </div>
-                  <span className="text-xs font-semibold text-surface-300">{value}%</span>
+                  <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{value}%</span>
                 </div>
-                <div className="h-1.5 bg-surface-800 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${value}%` }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                    className={`h-full rounded-full ${barColor}`}
-                  />
-                </div>
+                <ProgressBar value={value} tone={value >= 70 ? 'mastery' : value >= 40 ? 'neutral' : 'warning'} />
               </div>
             );
           })}
           {data.weakTopicCount > 0 && (
-            <p className="text-xs text-amber-400 mt-2">
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--orange)' }}>
               {data.weakTopicCount} weak topic{data.weakTopicCount > 1 ? 's' : ''} need attention
             </p>
           )}
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }

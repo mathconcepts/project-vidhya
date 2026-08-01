@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Crown, Shield, Activity, Users, MessageCircle, Smartphone, Key,
@@ -7,10 +6,8 @@ import {
   ArrowRight, Loader2, RefreshCw, Sparkles, Settings, FileText, Server,
   FlaskConical, Lock, BookOpen,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface DashboardSummary {
   deployment: {
@@ -63,9 +60,9 @@ export default function AdminDashboardPage() {
   if (!hasRole('admin')) {
     return (
       <div className="max-w-md mx-auto p-6 text-center space-y-2">
-        <AlertTriangle size={24} className="text-amber-400 mx-auto" />
-        <p className="text-sm text-surface-300">Admin role required.</p>
-        <p className="text-xs text-surface-500">Your role: {user?.role || 'not signed in'}</p>
+        <AlertTriangle size={24} style={{ color: 'var(--orange)' }} className="mx-auto" />
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Admin role required.</p>
+        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Your role: {user?.role || 'not signed in'}</p>
       </div>
     );
   }
@@ -74,55 +71,90 @@ export default function AdminDashboardPage() {
   const incompleteChecklist = data?.checklist.filter(c => !c.done) || [];
 
   return (
-    <motion.div className="space-y-5 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+    <div className="space-y-5 max-w-4xl mx-auto">
       {/* Journey nudge — soft pointer at the new guided view. Always visible
           for now; once we have data on uptake, can be conditionally hidden. */}
-      <motion.div variants={fadeInUp}>
+      <div>
         <a
           href="/admin/journey"
-          className="block p-3 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-500/10 to-emerald-500/5 hover:from-violet-500/15 transition-colors"
+          className="block p-3"
+          style={{
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid rgba(88,86,214,.3)',
+            background: 'rgba(88,86,214,.08)',
+            textDecoration: 'none',
+          }}
         >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-xs uppercase tracking-wider text-violet-300 mb-0.5">Try the new guided view</div>
-              <div className="text-sm text-surface-200">
+              <div className="text-xs uppercase tracking-wider mb-0.5" style={{ color: 'var(--indigo-ink)' }}>
+                Try the new guided view
+              </div>
+              <div className="text-sm" style={{ color: 'var(--text-primary)' }}>
                 See your setup progress + the next high-leverage move at a glance.
               </div>
             </div>
-            <span className="text-xs text-violet-300 whitespace-nowrap">Open →</span>
+            <span className="text-xs whitespace-nowrap" style={{ color: 'var(--indigo-ink)' }}>Open →</span>
           </div>
         </a>
-      </motion.div>
+      </div>
 
       {/* Header */}
-      <motion.div variants={fadeInUp} className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            {isOwner ? <Crown size={20} className="text-amber-400" /> : <Shield size={20} className="text-violet-400" />}
+          <h1
+            className="flex items-center gap-2"
+            style={{
+              fontSize: 'var(--text-title2)',
+              fontWeight: 'var(--weight-bold)',
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.018em',
+            }}
+          >
+            {isOwner
+              ? <Crown size={20} style={{ color: 'var(--orange)' }} />
+              : <Shield size={20} style={{ color: 'var(--indigo-ink)' }} />}
             {isOwner ? 'Owner' : 'Admin'} Dashboard
           </h1>
-          <p className="text-xs text-surface-500 mt-1">
+          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
             Welcome back, {user?.name?.split(' ')[0] || 'there'}. Here's what's happening.
           </p>
         </div>
         <button
           onClick={refresh}
           disabled={loading}
-          className="p-2 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200"
+          className="p-2"
+          style={{
+            borderRadius: 'var(--radius-xs)',
+            background: 'var(--surface-fill)',
+            border: 'var(--hairline) solid var(--separator)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+            lineHeight: 0,
+          }}
           aria-label="refresh"
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
         </button>
-      </motion.div>
+      </div>
 
       {error && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-300">
+        <div
+          className="p-3 text-xs"
+          style={{
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(255,59,48,.1)',
+            border: 'var(--hairline) solid rgba(255,59,48,.25)',
+            color: 'var(--red)',
+          }}
+        >
           {error}
-        </motion.div>
+        </div>
       )}
 
       {loading && !data ? (
-        <div className="text-center py-12 text-surface-500 text-sm">
+        <div className="text-center py-12 text-sm" style={{ color: 'var(--text-tertiary)' }}>
           <Loader2 size={14} className="inline animate-spin mr-2" />
           Loading dashboard...
         </div>
@@ -130,10 +162,17 @@ export default function AdminDashboardPage() {
         <>
           {/* Setup checklist — only shown if there are incomplete items */}
           {incompleteChecklist.length > 0 && (
-            <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-gradient-to-br from-violet-500/5 to-emerald-500/5 border border-violet-500/20 space-y-3">
+            <div
+              className="p-4 space-y-3"
+              style={{
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(88,86,214,.06)',
+                border: 'var(--hairline) solid rgba(88,86,214,.2)',
+              }}
+            >
               <div className="flex items-center gap-2">
-                <Sparkles size={14} className="text-violet-400" />
-                <p className="text-sm font-medium text-violet-200">
+                <Sparkles size={14} style={{ color: 'var(--indigo-ink)' }} />
+                <p className="text-sm font-medium" style={{ color: 'var(--indigo-ink)' }}>
                   Get started — {data.checklist.filter(c => c.done).length} of {data.checklist.length} done
                 </p>
               </div>
@@ -142,29 +181,33 @@ export default function AdminDashboardPage() {
                   <Link
                     key={item.id}
                     to={item.href}
-                    className="flex items-center gap-2.5 px-2 py-1.5 -mx-1 rounded-lg hover:bg-surface-900/60 transition-colors group"
+                    className="flex items-center gap-2.5 px-2 py-1.5 -mx-1"
+                    style={{ borderRadius: 'var(--radius-xs)', textDecoration: 'none' }}
                   >
                     {item.done
-                      ? <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
-                      : <Circle size={14} className="shrink-0 text-surface-600 group-hover:text-violet-400" />}
-                    <span className={clsx(
-                      'text-xs flex-1',
-                      item.done ? 'text-surface-500 line-through' : 'text-surface-200 group-hover:text-violet-200'
-                    )}>
+                      ? <CheckCircle2 size={14} className="shrink-0" style={{ color: 'var(--green-ink)' }} />
+                      : <Circle size={14} className="shrink-0" style={{ color: 'var(--text-tertiary)' }} />}
+                    <span
+                      className="text-xs flex-1"
+                      style={item.done
+                        ? { color: 'var(--text-tertiary)', textDecoration: 'line-through' }
+                        : { color: 'var(--text-primary)' }
+                      }
+                    >
                       {item.label}
                     </span>
                     {!item.done && (
-                      <ArrowRight size={11} className="text-surface-600 group-hover:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight size={11} style={{ color: 'var(--text-tertiary)' }} />
                     )}
                   </Link>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Deployment status grid */}
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide">Deployment</p>
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Deployment</p>
             <div className="grid grid-cols-2 gap-2">
               <StatusCard
                 icon={Key}
@@ -194,11 +237,11 @@ export default function AdminDashboardPage() {
                 href="/owner/settings"
               />
             </div>
-          </motion.div>
+          </div>
 
           {/* User metrics */}
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide flex items-center gap-1.5">
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
               <Users size={10} />
               Users — {data.users.total} total
             </p>
@@ -216,28 +259,42 @@ export default function AdminDashboardPage() {
 
             {/* 7-day sparkline */}
             <Sparkline points={data.active_users_sparkline} />
-          </motion.div>
+          </div>
 
           {/* Cohort insight — the WOW moment for admins per USER-JOURNEY */}
           {data.cohort.total_students > 0 && (
-            <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
+            <div
+              className="p-4 space-y-3"
+              style={{
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--surface-card)',
+                boxShadow: 'var(--shadow-raise)',
+              }}
+            >
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-surface-500 uppercase tracking-wide flex items-center gap-1.5">
+                <p className="text-[10px] uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
                   <Brain size={10} />
                   Cohort insight
                 </p>
-                <span className="text-[10px] text-surface-600">{data.cohort.total_students} students</span>
+                <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{data.cohort.total_students} students</span>
               </div>
 
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <p className="text-[10px] text-surface-500">Average mastery</p>
-                  <p className="text-2xl font-bold text-violet-300">{Math.round(data.cohort.avg_mastery * 100)}%</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>Average mastery</p>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--indigo-ink)' }}>{Math.round(data.cohort.avg_mastery * 100)}%</p>
                 </div>
                 {data.cohort.flagged_for_teacher_attention > 0 && (
                   <Link
                     to="/teacher/roster"
-                    className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 hover:text-amber-200 inline-flex items-center gap-1.5 text-xs"
+                    className="px-3 py-2 inline-flex items-center gap-1.5 text-xs"
+                    style={{
+                      borderRadius: 'var(--radius-xs)',
+                      background: 'rgba(255,149,0,.1)',
+                      border: 'var(--hairline) solid rgba(255,149,0,.25)',
+                      color: 'var(--orange)',
+                      textDecoration: 'none',
+                    }}
                   >
                     <AlertTriangle size={11} />
                     {data.cohort.flagged_for_teacher_attention} need attention
@@ -246,16 +303,16 @@ export default function AdminDashboardPage() {
               </div>
 
               {data.cohort.struggling_concepts.length > 0 && (
-                <div className="pt-2 border-t border-surface-800">
-                  <p className="text-[10px] text-surface-500 mb-2">Top struggling concepts</p>
+                <div className="pt-2" style={{ borderTop: 'var(--hairline) solid var(--separator)' }}>
+                  <p className="text-[10px] mb-2" style={{ color: 'var(--text-tertiary)' }}>Top struggling concepts</p>
                   <div className="space-y-1">
                     {data.cohort.struggling_concepts.slice(0, 5).map(c => (
                       <div key={c.concept_id} className="flex items-center gap-2 text-xs">
-                        <TrendingDown size={10} className="shrink-0 text-amber-400" />
-                        <span className="flex-1 text-surface-300 truncate">
+                        <TrendingDown size={10} className="shrink-0" style={{ color: 'var(--orange)' }} />
+                        <span className="flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>
                           {c.concept_id.replace(/-/g, ' ')}
                         </span>
-                        <span className="text-surface-500 text-[10px]">
+                        <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                           {c.students_affected} students · {Math.round(c.avg_mastery * 100)}% avg
                         </span>
                       </div>
@@ -265,28 +322,38 @@ export default function AdminDashboardPage() {
               )}
 
               {(data.cohort.frustrated_count > 0 || data.cohort.anxious_count > 0) && (
-                <div className="pt-2 border-t border-surface-800 text-[11px] text-surface-400">
+                <div
+                  className="pt-2 text-[11px]"
+                  style={{ borderTop: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)' }}
+                >
                   {data.cohort.frustrated_count > 0 && <span className="mr-3">{data.cohort.frustrated_count} frustrated</span>}
                   {data.cohort.anxious_count > 0 && <span>{data.cohort.anxious_count} anxious</span>}
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {/* Empty cohort — show gentle encouragement instead */}
           {data.cohort.total_students === 0 && data.users.by_role.student === 0 && (
-            <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-center space-y-2">
-              <Brain size={24} className="text-surface-600 mx-auto" />
-              <p className="text-sm text-surface-300">No student data yet</p>
-              <p className="text-xs text-surface-500">
+            <div
+              className="p-4 text-center space-y-2"
+              style={{
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--surface-card)',
+                boxShadow: 'var(--shadow-raise)',
+              }}
+            >
+              <Brain size={24} className="mx-auto" style={{ color: 'var(--text-tertiary)' }} />
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>No student data yet</p>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                 Cohort insights will appear here once students start using the app.
               </p>
-            </motion.div>
+            </div>
           )}
 
           {/* Quick links */}
-          <motion.div variants={fadeInUp} className="space-y-2">
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide">Admin pages</p>
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Admin pages</p>
             <div className="grid grid-cols-2 gap-2">
               <QuickLink href="/admin/users" label="User management" icon={Users} />
               <QuickLink href="/admin/features" label="Feature flags" icon={Settings} />
@@ -306,10 +373,10 @@ export default function AdminDashboardPage() {
               <QuickLink href="/llm-config" label="AI config" icon={Key} />
               {isOwner && <QuickLink href="/owner/settings" label="Owner settings" icon={Crown} />}
             </div>
-          </motion.div>
+          </div>
         </>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -318,41 +385,59 @@ export default function AdminDashboardPage() {
 function StatusCard({ icon: Icon, label, value, good, href }: {
   icon: typeof Key; label: string; value: string; good: boolean; href?: string;
 }) {
+  const cardStyle = {
+    padding: '0.625rem',
+    borderRadius: 'var(--radius-xs)',
+    background: 'var(--surface-card)',
+    boxShadow: 'var(--shadow-raise)',
+    display: 'block',
+  };
   const body = (
     <>
       <div className="flex items-center justify-between">
-        <Icon size={12} className={good ? 'text-emerald-400' : 'text-surface-600'} />
-        <span className={clsx(
-          'w-1.5 h-1.5 rounded-full',
-          good ? 'bg-emerald-400' : 'bg-surface-700'
-        )} />
+        <Icon size={12} style={{ color: good ? 'var(--green-ink)' : 'var(--text-tertiary)' }} />
+        <span
+          className="w-1.5 h-1.5"
+          style={{
+            display: 'inline-block',
+            borderRadius: '50%',
+            background: good ? 'var(--green)' : 'var(--separator)',
+          }}
+        />
       </div>
-      <p className="text-[10px] text-surface-500 mt-1">{label}</p>
-      <p className={clsx('text-xs font-medium', good ? 'text-surface-200' : 'text-surface-500')}>{value}</p>
+      <p className="text-[10px] mt-1" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
+      <p className="text-xs font-medium" style={{ color: good ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>{value}</p>
     </>
   );
   if (href) {
     return (
-      <Link to={href} className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 hover:border-surface-700 transition-colors block">
+      <Link to={href} style={{ ...cardStyle, textDecoration: 'none' }}>
         {body}
       </Link>
     );
   }
-  return <div className="p-2.5 rounded-lg bg-surface-900 border border-surface-800">{body}</div>;
+  return <div style={cardStyle}>{body}</div>;
 }
 
 function MetricCard({ label, value, tone }: {
   label: string; value: number; tone: 'amber' | 'violet' | 'emerald' | 'neutral';
 }) {
-  const toneClass =
-    tone === 'amber' ? 'text-amber-300'
-    : tone === 'violet' ? 'text-violet-300'
-    : tone === 'emerald' ? 'text-emerald-300'
-    : 'text-surface-200';
+  const valueColor =
+    tone === 'amber' ? 'var(--orange)'
+    : tone === 'violet' ? 'var(--indigo-ink)'
+    : tone === 'emerald' ? 'var(--green-ink)'
+    : 'var(--text-primary)';
   return (
-    <div className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 text-center">
-      <p className={clsx('text-xl font-bold', toneClass)}>{value}</p>
-      <p className="text-[10px] text-surface-500">{label}</p>
+    <div
+      className="p-2.5 text-center"
+      style={{
+        borderRadius: 'var(--radius-xs)',
+        background: 'var(--surface-card)',
+        boxShadow: 'var(--shadow-raise)',
+      }}
+    >
+      <p className="text-xl font-bold" style={{ color: valueColor }}>{value}</p>
+      <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
     </div>
   );
 }
@@ -365,8 +450,12 @@ function Sparkline({ points }: { points: number[] }) {
       {points.map((p, i) => (
         <div
           key={i}
-          className="flex-1 bg-violet-500/30 rounded-sm min-h-[2px] transition-all"
-          style={{ height: `${Math.max(8, (p / max) * 100)}%` }}
+          className="flex-1 min-h-[2px] transition-all"
+          style={{
+            height: `${Math.max(8, (p / max) * 100)}%`,
+            background: 'rgba(88,86,214,.3)',
+            borderRadius: '2px',
+          }}
           title={`${p} active ${i === 6 ? 'today' : `${6 - i} day${6 - i !== 1 ? 's' : ''} ago`}`}
         />
       ))}
@@ -378,10 +467,20 @@ function QuickLink({ href, label, icon: Icon }: {
   href: string; label: string; icon: typeof Key;
 }) {
   return (
-    <Link to={href} className="p-3 rounded-lg bg-surface-900 border border-surface-800 hover:border-violet-500/40 flex items-center gap-2 text-xs text-surface-200 transition-colors group">
-      <Icon size={12} className="text-surface-500 group-hover:text-violet-400" />
+    <Link
+      to={href}
+      className="p-3 flex items-center gap-2 text-xs"
+      style={{
+        borderRadius: 'var(--radius-xs)',
+        background: 'var(--surface-card)',
+        boxShadow: 'var(--shadow-raise)',
+        color: 'var(--text-primary)',
+        textDecoration: 'none',
+      }}
+    >
+      <Icon size={12} style={{ color: 'var(--text-tertiary)' }} />
       <span className="flex-1">{label}</span>
-      <ArrowRight size={11} className="text-surface-600 group-hover:text-violet-400" />
+      <ArrowRight size={11} style={{ color: 'var(--text-tertiary)' }} />
     </Link>
   );
 }

@@ -3,13 +3,14 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpen, MessageCircle, CheckCircle, Pen, ChevronDown, ChevronRight } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { apiFetch } from '@/hooks/useApi';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { clsx } from 'clsx';
+import { FilterPill } from '@/components/ui/FilterPill';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Badge } from '@/components/ui/Badge';
 
 interface NotebookEntry {
   id: string;
@@ -37,16 +38,23 @@ const SOURCE_ICONS = {
   manual: BookOpen,
 };
 
-const STATUS_COLORS = {
-  mastered: 'bg-emerald-500',
-  in_progress: 'bg-amber-500',
-  to_review: 'bg-surface-500',
+const STATUS_TONE: Record<string, 'mastery' | 'warning' | 'neutral'> = {
+  mastered: 'mastery',
+  in_progress: 'warning',
+  to_review: 'neutral',
 };
 
 const STATUS_LABELS = {
   mastered: 'Mastered',
   in_progress: 'In Progress',
   to_review: 'To Review',
+};
+
+// Dot colours matching Clarity status semantics
+const STATUS_DOT: Record<string, string> = {
+  mastered: 'var(--green)',
+  in_progress: 'var(--orange)',
+  to_review: 'var(--text-tertiary)',
 };
 
 function formatTopicName(id: string): string {
@@ -111,82 +119,106 @@ export default function NotebookPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-surface-800 rounded-lg w-48" />
-        <div className="h-12 bg-surface-800 rounded-xl" />
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-surface-800 rounded-xl" />)}
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ height: 32, width: 120, borderRadius: 8, background: 'var(--surface-fill)' }} />
+        <div style={{ height: 48, borderRadius: 'var(--radius-capsule)', background: 'var(--surface-fill)' }} />
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{ height: 72, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} />
+        ))}
       </div>
     );
   }
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-white">Notes</h1>
-      </motion.div>
+      <h1 style={{ margin: 0, fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.018em' }}>
+        Notes
+      </h1>
 
       {/* Topic filter pills */}
-      <motion.div variants={fadeInUp} className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
-        <button
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+        <FilterPill
+          active={selectedTopic === 'all'}
           onClick={() => setSelectedTopic('all')}
-          className={clsx(
-            'px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all',
-            selectedTopic === 'all'
-              ? 'bg-emerald-500 text-white'
-              : 'bg-surface-800 text-surface-400 hover:bg-surface-700',
-          )}
         >
           All ({totalEntries})
-        </button>
+        </FilterPill>
         {summary.map(t => (
-          <button
+          <FilterPill
             key={t.topic}
+            active={selectedTopic === t.topic}
             onClick={() => setSelectedTopic(t.topic)}
-            className={clsx(
-              'px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all',
-              selectedTopic === t.topic
-                ? 'bg-emerald-500 text-white'
-                : 'bg-surface-800 text-surface-400 hover:bg-surface-700',
-            )}
           >
             {formatTopicName(t.topic)} ({t.total})
-          </button>
+          </FilterPill>
         ))}
-      </motion.div>
+      </div>
 
       {/* Entries list */}
       {entries.length === 0 ? (
-        <motion.div variants={fadeInUp} className="text-center py-16">
-          <BookOpen size={48} className="mx-auto text-surface-700 mb-4" />
-          <h3 className="text-lg font-semibold text-surface-400 mb-2">Your notebook is empty</h3>
-          <p className="text-sm text-surface-500 max-w-xs mx-auto">
-            Start chatting with the AI tutor or practicing problems. Your learning trail will appear here automatically.
-          </p>
-        </motion.div>
+        <EmptyState
+          title="Your notebook is empty"
+          glyph={<BookOpen size={28} style={{ color: 'var(--text-tertiary)' }} />}
+          body="Start chatting with the AI tutor or practising problems — your learning trail will appear here automatically."
+        />
       ) : (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          {entries.map(entry => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {entries.map((entry, i) => {
             const SourceIcon = SOURCE_ICONS[entry.source] || BookOpen;
             const isExpanded = expandedId === entry.id;
             return (
-              <motion.div
+              <div
                 key={entry.id}
-                layout
-                className="bg-surface-900 border border-surface-800 rounded-xl overflow-hidden"
+                style={{
+                  borderBottom: i < entries.length - 1 ? 'var(--hairline) solid var(--separator)' : 'none',
+                }}
               >
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-800/50 transition-colors"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '14px 0',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    textAlign: 'left',
+                  }}
                 >
-                  <div className={clsx('w-2 h-2 rounded-full flex-shrink-0', STATUS_COLORS[entry.status])} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white line-clamp-2">{entry.query_text}</p>
+                  {/* Status dot */}
+                  <span
+                    style={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: '50%',
+                      background: STATUS_DOT[entry.status],
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 'var(--text-body)',
+                        color: 'var(--text-primary)',
+                        letterSpacing: '-0.01em',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {entry.query_text}
+                    </p>
                   </div>
-                  <span className="text-[10px] text-surface-500 shrink-0">{timeAgo(entry.created_at)}</span>
-                  {isExpanded ? <ChevronDown size={14} className="text-surface-500" /> : <ChevronRight size={14} className="text-surface-500" />}
+                  <span style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', flexShrink: 0 }}>{timeAgo(entry.created_at)}</span>
+                  {isExpanded
+                    ? <ChevronDown size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                    : <ChevronRight size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />}
                 </button>
 
                 <AnimatePresence>
@@ -195,44 +227,57 @@ export default function NotebookPage() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-surface-800"
+                      transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
+                      style={{ overflow: 'hidden' }}
                     >
-                      <div className="flex items-center gap-2 px-3 pt-2">
-                        <span className="text-[10px] font-mono text-violet-400">{formatTopicName(entry.topic)}</span>
-                        <SourceIcon size={10} className="text-surface-500" />
-                      </div>
-                      {entry.answer_text && (
-                        <div className="px-3 py-3 text-xs text-surface-300 leading-relaxed whitespace-pre-wrap">
-                          {entry.answer_text}
+                      <div style={{ paddingBottom: 14 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span style={{ fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)', color: 'var(--indigo-ink)' }}>
+                            {formatTopicName(entry.topic)}
+                          </span>
+                          <SourceIcon size={10} style={{ color: 'var(--text-tertiary)' }} />
                         </div>
-                      )}
-                      <div className="flex gap-2 px-3 pb-3">
-                        {(['mastered', 'in_progress', 'to_review'] as const).map(s => (
-                          <button
-                            key={s}
-                            onClick={(e) => { e.stopPropagation(); updateStatus(entry.id, s); }}
-                            className={clsx(
-                              'px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all',
-                              entry.status === s
-                                ? s === 'mastered' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : s === 'in_progress' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                : 'bg-surface-700 text-surface-300 border border-surface-600'
-                                : 'bg-surface-800 text-surface-500 hover:bg-surface-700',
-                            )}
-                          >
-                            {STATUS_LABELS[s]}
-                          </button>
-                        ))}
+                        {entry.answer_text && (
+                          <p style={{ margin: '0 0 12px', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-normal)', whiteSpace: 'pre-wrap' }}>
+                            {entry.answer_text}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {(['mastered', 'in_progress', 'to_review'] as const).map(s => (
+                            <button
+                              key={s}
+                              onClick={(e) => { e.stopPropagation(); updateStatus(entry.id, s); }}
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: 'var(--radius-xs)',
+                                border: entry.status === s
+                                  ? `1px solid ${s === 'mastered' ? 'var(--green)' : s === 'in_progress' ? 'var(--orange)' : 'var(--separator)'}`
+                                  : '1px solid var(--separator)',
+                                background: entry.status === s
+                                  ? s === 'mastered' ? 'rgba(52,199,89,.12)' : s === 'in_progress' ? 'rgba(255,149,0,.12)' : 'var(--surface-fill)'
+                                  : 'var(--surface-fill)',
+                                color: entry.status === s
+                                  ? s === 'mastered' ? 'var(--green-ink)' : s === 'in_progress' ? 'var(--orange)' : 'var(--text-secondary)'
+                                  : 'var(--text-tertiary)',
+                                fontSize: 'var(--text-caption)',
+                                fontWeight: 'var(--weight-semibold)',
+                                cursor: 'pointer',
+                                fontFamily: 'var(--font-sans)',
+                              }}
+                            >
+                              {STATUS_LABELS[s]}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </div>
             );
           })}
-        </motion.div>
+        </div>
       )}
-
-    </motion.div>
+    </div>
   );
 }

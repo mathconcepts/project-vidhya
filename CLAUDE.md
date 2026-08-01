@@ -61,10 +61,21 @@ cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 ### Database
 12 migrations (001–012) in `supabase/migrations/`. **Auto-applied on server startup** via `src/db/auto-migrate.ts`. Tracked in `_migrations` table. All migrations must be idempotent (`IF NOT EXISTS`). Key tables: pyq_questions, sr_sessions, chat_messages, user_profiles, social_content, verification_log, rag_cache, blog_posts, trend_signals, content_priorities.
 
-### Design System
-Always read DESIGN-SYSTEM.md before making any visual or UI decisions.
-All font choices, colors, spacing, and aesthetic direction are defined there.
-Do not deviate without explicit user approval.
+### Design system
+The UI is **Vidhya Clarity** — an Apple-HIG light theme. The full system lives at `design/clarity/`. Always read `DESIGN-SYSTEM.md` before making any visual or UI decisions.
+
+Non-negotiables when writing frontend code:
+- Two accents, both semantic. Green (`--green` / `--green-ink`) = mastery, correctness, primary action. Indigo (`--indigo` / `--indigo-ink`) = AI, tutor, study plan, and nothing else.
+- Never hard-code a colour. Use the custom properties in `frontend/src/styles/tokens/`.
+- 17px is the body floor for anything a student reads. 15px supporting, 13px only for timestamps and metadata.
+- One focal card per screen. Everything else is plain text or hairline-separated rows on the canvas.
+- 44px minimum touch targets, except chips inside an already-tappable row.
+- The receipt border is a promise, not a style. Only `<ReceiptBorder receipt={...}>` may render it, and only with a real receipt object.
+- One motion curve (`--ease-standard`) and four durations. Press is `scale(0.96)`. No confetti, no shimmer, no pulse. Honour `prefers-reduced-motion`.
+- No gradients, no glass, no emoji, no invented logo.
+
+Retired and must not reappear: Fraunces, DM Sans, the `surface-*` navy palette, `.glass*`, `.btn-primary` gradient buttons, `.hero-gradient`, `.confidence-card`, `.streak-badge`, Confetti, MasteryParticle.
+
 In QA mode, flag any code that doesn't match DESIGN-SYSTEM.md.
 
 ### Extending the Content Module

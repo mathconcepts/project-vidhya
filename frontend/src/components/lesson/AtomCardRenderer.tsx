@@ -14,7 +14,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
-import { MasteryParticle, shouldCelebrate, markCelebrated } from './MasteryParticle';
 import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import { ImprovedBadge } from './ImprovedBadge';
 import { InteractiveSidecar } from './interactives/InteractiveSidecar';
@@ -368,7 +367,6 @@ export interface AtomCardRendererProps {
 export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete }: AtomCardRendererProps) {
   const [index, setIndex] = useState(0);
   const [errorStreak, setErrorStreak] = useState(0);
-  const [celebrating, setCelebrating] = useState(false);
   const [completedIdx, setCompletedIdx] = useState<Set<number>>(() => new Set());
   const [showVisually, setShowVisually] = useState<boolean>(() => {
     try { return localStorage.getItem(VISUAL_PREF_KEY) === '1'; } catch { return false; }
@@ -423,12 +421,6 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
       return n;
     });
     if (index >= atoms.length - 1) {
-      // Final atom — fire one mastery particle (gated per concept-per-day).
-      if (shouldCelebrate(conceptId)) {
-        markCelebrated(conceptId);
-        setCelebrating(true);
-        setTimeout(() => setCelebrating(false), 1600);
-      }
       onComplete?.();
     } else {
       setIndex((i) => i + 1);
@@ -498,8 +490,6 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
           {showVisually ? <Eye size={14} /> : <EyeOff size={14} />}
         </button>
       </div>
-
-      <MasteryParticle active={celebrating} />
 
       <AnimatePresence mode="wait">
         <motion.div

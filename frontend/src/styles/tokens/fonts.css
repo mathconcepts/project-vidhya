@@ -1,0 +1,13 @@
+/* Type stack.
+   SF Pro / New York are Apple system faces and are NOT redistributable, so no
+   @font-face rules ship here — we resolve them through the platform stack and
+   fall back to a webfont on non-Apple devices.
+   JetBrains Mono is the product's existing math/code face (frontend/index.html). */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap");
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Inter Tight", "Segoe UI", system-ui, sans-serif;
+  --font-serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}

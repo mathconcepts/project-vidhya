@@ -45,8 +45,19 @@ function isDemoUser(email: string | undefined): boolean {
   return email.toLowerCase().endsWith('@vidhya.local');
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '8px 12px',
+  borderRadius: 'var(--radius-sm)',
+  background: 'var(--surface-fill)',
+  border: 'var(--hairline) solid var(--separator)',
+  fontSize: 'var(--text-caption)',
+  color: 'var(--text-primary)',
+  boxSizing: 'border-box',
+};
+
 export default function ConvertDemoPage() {
-  const { user, refresh } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [realEmail, setRealEmail] = useState('');
@@ -55,19 +66,18 @@ export default function ConvertDemoPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ConvertResponse | null>(null);
 
-  // Guard — only demo users convert. Non-demo users see an explanation.
   if (user && !isDemoUser(user.email)) {
     return (
-      <div className="max-w-2xl mx-auto p-8">
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-          <h1 className="text-xl font-bold text-white mb-2">This page is for demo conversion</h1>
-          <p className="text-slate-300 mb-4">
+      <div style={{ maxWidth: 608, margin: '0 auto', padding: '32px 0' }}>
+        <div style={{ padding: 24, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+          <h1 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>This page is for demo conversion</h1>
+          <p style={{ margin: '0 0 16px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
             You're signed in as <strong>{user.name}</strong> ({user.email}) — a real account,
             not a demo user. Nothing to convert.
           </p>
           <button
             onClick={() => navigate('/planned')}
-            className="text-violet-400 hover:text-violet-300"
+            style={{ background: 'none', border: 'none', color: 'var(--indigo-ink)', fontSize: 'var(--text-caption)', cursor: 'pointer', padding: 0 }}
           >
             Back to planned session →
           </button>
@@ -87,9 +97,6 @@ export default function ConvertDemoPage() {
     setError(null);
 
     try {
-      // In production this endpoint would be reached after a client-side
-      // Google sign-in; google_sub would come from the verified id_token.
-      // For the demo we synthesise a stable sub from the email.
       const google_sub = `demo-convert-${realEmail.replace(/[^a-zA-Z0-9]/g, '')}`;
       const res = await authFetch('/api/demo/convert', {
         method: 'POST',
@@ -110,14 +117,9 @@ export default function ConvertDemoPage() {
       }
 
       setResult(body);
-      // In a production deployment, after conversion the client would
-      // initiate Google sign-in flow for the new account, which would
-      // mint a real JWT via the existing sign-in route. For the demo
-      // we leave the user signed in as the (now-converted) demo user;
-      // the next page load can re-auth via Google.
       setSubmitting(false);
-    } catch (err: any) {
-      setError(err?.message ?? 'Network error');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : null) ?? 'Network error');
       setSubmitting(false);
     }
   }
@@ -126,60 +128,55 @@ export default function ConvertDemoPage() {
 
   if (result && result.ok && result.carried_over) {
     const co = result.carried_over;
-    const total =
-      co.exam_profiles + co.session_plans + co.plan_templates + co.practice_sessions;
 
     return (
-      <div className="max-w-2xl mx-auto p-8">
-        <div className="bg-emerald-900/20 border border-emerald-700 rounded-lg p-6">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="text-emerald-400 flex-shrink-0 mt-1" size={24} />
+      <div style={{ maxWidth: 608, margin: '0 auto', padding: '32px 0' }}>
+        <div style={{ padding: 24, borderRadius: 'var(--radius-md)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <CheckCircle2 size={24} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
             <div>
-              <h1 className="text-xl font-bold text-white mb-1">Your demo is now real</h1>
-              <p className="text-slate-300 text-sm">
+              <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Your demo is now real</h1>
+              <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
                 An account has been created for <strong>{result.real_user?.email}</strong>.
               </p>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-slate-800/50 rounded p-3">
-              <div className="text-slate-400 text-xs">Exam profiles carried over</div>
-              <div className="text-white text-lg font-semibold">{co.exam_profiles}</div>
-            </div>
-            <div className="bg-slate-800/50 rounded p-3">
-              <div className="text-slate-400 text-xs">Session plans</div>
-              <div className="text-white text-lg font-semibold">{co.session_plans}</div>
-            </div>
-            <div className="bg-slate-800/50 rounded p-3">
-              <div className="text-slate-400 text-xs">Templates</div>
-              <div className="text-white text-lg font-semibold">{co.plan_templates}</div>
-            </div>
-            <div className="bg-slate-800/50 rounded p-3">
-              <div className="text-slate-400 text-xs">Practice sessions</div>
-              <div className="text-white text-lg font-semibold">{co.practice_sessions}</div>
-            </div>
+          <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 'var(--text-caption)' }}>
+            {[
+              { label: 'Exam profiles carried over', value: co.exam_profiles },
+              { label: 'Session plans', value: co.session_plans },
+              { label: 'Templates', value: co.plan_templates },
+              { label: 'Practice sessions', value: co.practice_sessions },
+            ].map(item => (
+              <div key={item.label} style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)' }}>
+                <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{item.label}</div>
+                <div style={{ fontSize: 18, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)', marginTop: 2 }}>{item.value}</div>
+              </div>
+            ))}
           </div>
 
           {result.anonymised?.demo_log_entries !== undefined && (
-            <div className="mt-4 text-xs text-slate-400">
+            <div style={{ marginTop: 16, fontSize: 10, color: 'var(--text-tertiary)' }}>
               {result.anonymised.demo_log_entries} demo-usage-log entries anonymised —
               the owner can see cohort conversion patterns but not your per-user activity.
             </div>
           )}
 
-          <div className="mt-6 bg-amber-900/20 border border-amber-700 rounded p-3 text-xs text-amber-100">
-            <strong className="block mb-1">Next step — sign in with Google</strong>
-            In production, the next step is to complete Google sign-in with the real
-            email address so a full JWT is issued for your real account. For this demo
-            environment, you can continue using the product; your work has been copied
-            onto the real account behind the scenes.
+          <div style={{ marginTop: 16, padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}>
+            <strong style={{ display: 'block', marginBottom: 4, fontSize: 11, color: 'var(--orange)' }}>Next step — sign in with Google</strong>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>
+              In production, the next step is to complete Google sign-in with the real
+              email address so a full JWT is issued for your real account. For this demo
+              environment, you can continue using the product; your work has been copied
+              onto the real account behind the scenes.
+            </p>
           </div>
 
-          <div className="mt-6 flex gap-3">
+          <div style={{ marginTop: 24 }}>
             <button
               onClick={() => navigate('/planned')}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded px-4 py-2 text-sm font-medium transition"
+              style={{ width: '100%', padding: '10px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-caption)', border: 'none', cursor: 'pointer' }}
             >
               Back to planned session
             </button>
@@ -192,16 +189,16 @@ export default function ConvertDemoPage() {
   // ─── Form state ────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <div className="flex items-center gap-2 text-violet-400 mb-2">
-        <Sparkles size={18} />
-        <span className="text-xs uppercase tracking-wider font-semibold">Make this real</span>
+    <div style={{ maxWidth: 608, margin: '0 auto', padding: '32px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--indigo-ink)', marginBottom: 8 }}>
+        <Sparkles size={16} />
+        <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'var(--weight-semibold)' }}>Make this real</span>
       </div>
 
-      <h1 className="text-2xl font-bold text-white mb-3">Keep what you've practiced</h1>
+      <h1 style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Keep what you've practiced</h1>
 
       {user && (
-        <p className="text-slate-400 text-sm mb-6">
+        <p style={{ margin: '0 0 24px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
           You're currently signed in as <strong>{user.name}</strong>, a demo account.
           Signing up will copy your exam profile, plan history, templates, and practice
           log onto a real account. Your trailing-stats badge doesn't reset — your work
@@ -209,9 +206,9 @@ export default function ConvertDemoPage() {
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label className="block text-sm text-slate-300 mb-1" htmlFor="real-name">
+          <label style={{ display: 'block', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6 }} htmlFor="real-name">
             Your name
           </label>
           <input
@@ -220,13 +217,13 @@ export default function ConvertDemoPage() {
             value={realName}
             onChange={e => setRealName(e.target.value)}
             placeholder="Priya Sharma"
-            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-violet-500"
+            style={inputStyle}
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm text-slate-300 mb-1" htmlFor="real-email">
+          <label style={{ display: 'block', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6 }} htmlFor="real-email">
             Your real email
           </label>
           <input
@@ -235,28 +232,28 @@ export default function ConvertDemoPage() {
             value={realEmail}
             onChange={e => setRealEmail(e.target.value)}
             placeholder="priya@example.com"
-            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:outline-none focus:border-violet-500"
+            style={inputStyle}
             required
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-tertiary)' }}>
             In production this step is handled via Google sign-in. For the demo, we create
             a stub account bound to this email.
           </p>
         </div>
 
         {error && (
-          <div className="flex items-start gap-2 bg-red-900/20 border border-red-800 rounded p-3 text-sm text-red-200">
-            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
+            <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="bg-slate-800/50 border border-slate-700 rounded p-3 text-xs text-slate-400">
-          <strong className="text-slate-300 block mb-1">What gets copied:</strong>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', fontSize: 11, color: 'var(--text-tertiary)' }}>
+          <strong style={{ display: 'block', marginBottom: 4, color: 'var(--text-secondary)' }}>What gets copied:</strong>
           Registered exams, session plan history, saved templates, practice log entries.
           Trailing-stats badge stays at its current value.
           <br /><br />
-          <strong className="text-slate-300 block mb-1">What doesn't:</strong>
+          <strong style={{ display: 'block', marginBottom: 4, color: 'var(--text-secondary)' }}>What doesn't:</strong>
           Attention-store entries (ephemeral by design). Demo-usage-log entries tied to
           the converting demo user are anonymised — the owner keeps the cohort aggregate
           but loses the per-user link.
@@ -265,7 +262,21 @@ export default function ConvertDemoPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded px-4 py-2.5 text-sm font-medium transition flex items-center justify-center gap-2"
+          style={{
+            width: '100%',
+            padding: '10px 16px',
+            borderRadius: 'var(--radius-md)',
+            background: submitting ? 'var(--surface-fill)' : 'var(--indigo)',
+            color: submitting ? 'var(--text-tertiary)' : '#fff',
+            fontWeight: 'var(--weight-semibold)',
+            fontSize: 'var(--text-caption)',
+            border: 'none',
+            cursor: submitting ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+          }}
         >
           {submitting ? (
             <>

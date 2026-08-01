@@ -211,18 +211,23 @@ export function ShareCard({ planHeadline, planSubtext, examName, shareUrl, onClo
       aria-label="Share your report card"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 bg-[#0a0f1a]/95 backdrop-blur-sm flex flex-col items-center justify-center px-4 py-8"
+      className="fixed inset-0 z-50 backdrop-blur-sm flex flex-col items-center justify-center px-4 py-8"
+      style={{ background: 'rgba(10,15,26,.95)' }}
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 p-2 text-surface-400 hover:text-surface-200 transition-colors"
+        className="absolute top-4 right-4 p-2 transition-colors"
+        style={{ color: 'var(--text-secondary)' }}
         aria-label="Close"
       >
         <X size={20} />
       </button>
 
       <div className="w-full max-w-md space-y-4">
-        <div className="rounded-xl overflow-hidden border border-emerald-500/20 bg-surface-900">
+        <div
+          className="rounded-xl overflow-hidden border"
+          style={{ borderColor: 'rgba(52,199,89,.2)', background: 'var(--surface-card)' }}
+        >
           <canvas ref={canvasRef} className="w-full h-auto block" aria-label="Report card preview" />
         </div>
 
@@ -230,22 +235,26 @@ export function ShareCard({ planHeadline, planSubtext, examName, shareUrl, onClo
           <button
             onClick={handleShare}
             disabled={!ready || shareState === 'sharing'}
-            className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors"
+            className="w-full py-3 rounded-xl disabled:opacity-50 text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors"
+            style={{ background: 'var(--green)', color: '#fff' }}
           >
             {supportsShare ? <Share2 size={16} /> : <Download size={16} />}
             {supportsShare ? 'Share report card' : 'Download report card'}
           </button>
           <button
             onClick={handleCopyLink}
-            className="w-full py-2.5 rounded-xl border border-surface-700 text-surface-300 text-sm font-medium inline-flex items-center justify-center gap-2 hover:border-surface-600 transition-colors"
+            className="w-full py-2.5 rounded-xl border text-sm font-medium inline-flex items-center justify-center gap-2 transition-colors"
+            style={{ borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
           >
-            {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+            {copied
+              ? <Check size={14} style={{ color: 'var(--green-ink)' }} />
+              : <Copy size={14} />}
             {copied ? 'Link copied' : 'Copy link'}
           </button>
         </div>
 
         {shareState === 'error' && (
-          <p className="text-xs text-red-400 text-center">
+          <p className="text-xs text-center" style={{ color: 'var(--red)' }}>
             Couldn't open the share sheet — try downloading instead.
           </p>
         )}

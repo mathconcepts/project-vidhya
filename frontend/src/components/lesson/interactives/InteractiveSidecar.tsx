@@ -33,7 +33,10 @@ export function InteractiveSidecar({ body, showAuthoringErrors }: Props) {
     }
     if (showAuthoringErrors) {
       return (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+        <div
+          className="rounded-xl border p-3 text-xs"
+          style={{ borderColor: 'rgba(255,149,0,.3)', background: 'rgba(255,149,0,.05)', color: 'var(--orange)' }}
+        >
           <span className="font-medium">interactive-spec parse error:</span> {result.reason}
         </div>
       );

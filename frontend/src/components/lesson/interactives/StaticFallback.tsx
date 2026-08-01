@@ -28,10 +28,16 @@ export default function StaticFallback({ directive, attrs }: DirectiveProps) {
 
   if (src) {
     return (
-      <figure className="my-3 rounded-md border border-surface-800 overflow-hidden bg-surface-900">
+      <figure
+        className="my-3 rounded-md border overflow-hidden"
+        style={{ borderColor: 'var(--separator)', background: 'var(--surface-card)' }}
+      >
         <img src={src} alt={alt} loading="lazy" className="w-full h-auto" />
         {a.caption && (
-          <figcaption className="px-3 py-2 text-xs text-surface-400 border-t border-surface-800">
+          <figcaption
+            className="px-3 py-2 text-xs border-t"
+            style={{ color: 'var(--text-secondary)', borderColor: 'var(--separator)' }}
+          >
             {a.caption}
           </figcaption>
         )}
@@ -42,7 +48,8 @@ export default function StaticFallback({ directive, attrs }: DirectiveProps) {
   // Quiet text-only — atom remains readable per the upfront-baseline contract.
   return (
     <div
-      className="my-3 p-3 rounded-md bg-surface-900/40 border border-surface-800/60 text-xs text-surface-500 italic"
+      className="my-3 p-3 rounded-md border text-xs italic"
+      style={{ background: 'var(--surface-fill)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)' }}
       role="note"
     >
       Interactive visualization unavailable on this connection — see the explanation above.

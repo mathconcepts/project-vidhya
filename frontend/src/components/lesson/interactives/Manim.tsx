@@ -47,7 +47,10 @@ export default function Manim({ attrs }: DirectiveProps) {
   const captionsSrc = src.replace(/\.(mp4|webm|ogg)$/i, '.vtt');
 
   return (
-    <figure className="my-3 rounded-md border border-surface-800 overflow-hidden bg-surface-900">
+    <figure
+      className="my-3 rounded-md border overflow-hidden"
+      style={{ borderColor: 'var(--separator)', background: 'var(--surface-card)' }}
+    >
       <video
         src={src}
         poster={a.poster}
@@ -63,7 +66,10 @@ export default function Manim({ attrs }: DirectiveProps) {
         Your browser does not support video playback.
       </video>
       {a.caption && (
-        <figcaption className="px-3 py-2 text-xs text-surface-400 border-t border-surface-800">
+        <figcaption
+          className="px-3 py-2 text-xs border-t"
+          style={{ color: 'var(--text-secondary)', borderColor: 'var(--separator)' }}
+        >
           {a.caption}
         </figcaption>
       )}

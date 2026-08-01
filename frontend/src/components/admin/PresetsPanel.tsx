@@ -42,43 +42,46 @@ export function PresetsPanel({ onInstalled }: Props) {
   };
 
   return (
-    <div className="mb-4 rounded-xl border border-emerald-500/25 bg-emerald-500/5 overflow-hidden">
+    <div style={{ marginBottom: '16px', borderRadius: '12px', border: '1px solid rgba(52,199,89,.25)', background: 'rgba(52,199,89,.06)', overflow: 'hidden' }}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-emerald-500/10 transition-colors"
+        style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer' }}
       >
-        <Package size={16} className="text-emerald-300 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <div className="text-xs uppercase tracking-wider text-emerald-300 mb-0.5">Starter packs</div>
-          <div className="text-sm text-surface-200">
+        <Package size={16} style={{ color: 'var(--green-ink)', flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.075em', color: 'var(--green-ink)', marginBottom: '2px' }}>Starter packs</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
             One-click install of curated rulesets + blueprints for known cohorts
           </div>
         </div>
-        <ChevronDown size={14} className={`text-surface-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          size={14}
+          style={{ color: 'var(--text-secondary)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+        />
       </button>
       {open && (
-        <div className="border-t border-emerald-500/15 px-4 py-3 space-y-2">
+        <div style={{ borderTop: '1px solid rgba(52,199,89,.15)', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {error && (
-            <div className="text-xs text-rose-300 p-2 rounded bg-rose-500/10 border border-rose-500/20">{error}</div>
+            <div style={{ fontSize: '12px', color: 'var(--red)', padding: '8px', borderRadius: '6px', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' }}>{error}</div>
           )}
           {presets === null && !error && (
-            <div className="text-xs text-surface-500 flex items-center gap-2">
+            <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Loader2 size={11} className="animate-spin" /> Loading presets…
             </div>
           )}
           {presets?.map((p) => {
             const installed = doneIds.has(p.id);
             return (
-              <div key={p.id} className="p-3 rounded-lg border border-surface-800 bg-surface-900">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-surface-100 flex items-center gap-2">
-                      <Sparkles size={11} className="text-violet-300" />
+              <div key={p.id} style={{ padding: '12px', borderRadius: '8px', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '8px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Sparkles size={11} style={{ color: 'var(--indigo-ink)' }} />
                       {p.name}
                     </div>
-                    <div className="text-[11px] text-surface-400 mt-1">{p.description}</div>
-                    <div className="text-[10px] text-surface-500 mt-1">{p.cohort_hint}</div>
-                    <div className="text-[10px] text-surface-500 mt-1.5 font-mono">
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>{p.description}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '4px' }}>{p.cohort_hint}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '6px', fontFamily: 'var(--font-mono)' }}>
                       {p.ruleset_count} ruleset{p.ruleset_count === 1 ? '' : 's'} ·{' '}
                       {p.blueprint_count} blueprint{p.blueprint_count === 1 ? '' : 's'} ·{' '}
                       exam: {p.exam_pack_id}
@@ -87,16 +90,20 @@ export function PresetsPanel({ onInstalled }: Props) {
                   <button
                     onClick={() => handleInstall(p.id)}
                     disabled={busyId === p.id || installed}
-                    className={`text-xs px-3 py-1.5 rounded font-medium whitespace-nowrap shrink-0 ${
-                      installed
-                        ? 'bg-emerald-500/20 text-emerald-300'
-                        : 'bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50'
-                    }`}
+                    style={installed ? {
+                      fontSize: '12px', padding: '6px 12px', borderRadius: '6px', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0, cursor: 'default',
+                      background: 'rgba(52,199,89,.08)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.22)',
+                    } : {
+                      fontSize: '12px', padding: '6px 12px', borderRadius: '6px', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0,
+                      cursor: busyId === p.id ? 'not-allowed' : 'pointer',
+                      background: 'var(--green)', color: '#fff', border: 'none',
+                      opacity: busyId === p.id ? 0.5 : 1,
+                    }}
                   >
                     {busyId === p.id ? (
-                      <span className="inline-flex items-center gap-1"><Loader2 size={11} className="animate-spin" /> Installing</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Loader2 size={11} className="animate-spin" /> Installing</span>
                     ) : installed ? (
-                      <span className="inline-flex items-center gap-1"><Check size={11} /> Installed</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Check size={11} /> Installed</span>
                     ) : (
                       'Install'
                     )}
@@ -105,7 +112,7 @@ export function PresetsPanel({ onInstalled }: Props) {
               </div>
             );
           })}
-          <p className="text-[10px] text-surface-500 pt-1">
+          <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', paddingTop: '4px' }}>
             Install is idempotent — re-running skips rulesets/blueprints that already exist for the same exam pack + concept.
           </p>
         </div>

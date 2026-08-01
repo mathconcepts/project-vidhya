@@ -39,7 +39,6 @@ export function JourneyNudge({ currentHref }: Props) {
   }, []);
 
   if (dismissed || !next) return null;
-  // Don't nudge to the page the admin is already on.
   if (currentHref && next.cta_href === currentHref) return null;
 
   const handleDismiss = () => {
@@ -48,18 +47,32 @@ export function JourneyNudge({ currentHref }: Props) {
   };
 
   return (
-    <div className="mb-4 rounded-lg border border-violet-500/30 bg-violet-500/5 px-3 py-2 flex items-center gap-3 text-xs">
-      <span className="text-violet-300 font-medium uppercase tracking-wider">Next move</span>
-      <span className="text-surface-300 flex-1 truncate">{next.label}</span>
+    <div style={{
+      marginBottom: 16,
+      borderRadius: 'var(--radius-md)',
+      border: '1px solid rgba(88,86,214,.22)',
+      background: 'rgba(88,86,214,.06)',
+      padding: '8px 12px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      fontSize: 'var(--text-caption)',
+    }}>
+      <span style={{ color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 10, flexShrink: 0 }}>
+        Next move
+      </span>
+      <span style={{ color: 'var(--text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {next.label}
+      </span>
       <Link
         to={next.cta_href}
-        className="inline-flex items-center gap-1 text-violet-300 hover:text-violet-200 whitespace-nowrap"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--indigo-ink)', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
       >
         {next.cta_label} <ArrowRight size={11} />
       </Link>
       <button
         onClick={handleDismiss}
-        className="text-surface-500 hover:text-surface-300"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-tertiary)', display: 'flex' }}
         aria-label="Dismiss nudge"
       >
         <X size={12} />

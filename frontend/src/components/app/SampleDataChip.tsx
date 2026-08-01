@@ -19,12 +19,21 @@ export function SampleDataChip({ className = '' }: { className?: string }) {
     <span
       role="status"
       aria-label="Sample data — seeded demo content, not a real account"
-      className={[
-        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full',
-        'border border-amber-500/40 bg-amber-500/15 text-amber-300',
-        'text-xs font-semibold tracking-wide whitespace-nowrap',
-        className,
-      ].join(' ')}
+      className={className}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '4px 10px',
+        borderRadius: 9999,
+        border: '1px solid rgba(255,149,0,.3)',
+        background: 'rgba(255,149,0,.08)',
+        color: 'var(--orange-ink)',
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        whiteSpace: 'nowrap',
+      }}
     >
       <FlaskConical size={12} strokeWidth={2.5} aria-hidden="true" />
       Sample data

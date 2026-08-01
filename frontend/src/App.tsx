@@ -16,6 +16,7 @@
 
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/app/AppLayout';
 
 // Eager load home (fast first paint)
@@ -91,16 +92,16 @@ const InstitutePage = lazy(() => import('@/pages/app/InstitutePage'));
 const SellYourCoursePage = lazy(() => import('@/pages/app/SellYourCoursePage'));
 
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500"></div>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+    <Loader2 size={24} className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />
   </div>
 );
 
 const NotFound = () => (
-  <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-    <h1 className="text-4xl font-bold text-surface-400">404</h1>
-    <p className="text-surface-500">Page not found</p>
-    <a href="/" className="text-violet-400 hover:text-violet-300 underline">Back to Home</a>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', gap: 16 }}>
+    <h1 style={{ fontSize: 36, fontWeight: 700, color: 'var(--text-tertiary)', margin: 0 }}>404</h1>
+    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Page not found</p>
+    <a href="/" style={{ color: 'var(--indigo-ink)', textDecoration: 'underline' }}>Back to Home</a>
   </div>
 );
 

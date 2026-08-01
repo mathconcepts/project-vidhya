@@ -21,7 +21,6 @@ import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 const VISUAL_PREF_KEY = 'vidhya.show_visually';
 
@@ -97,7 +96,7 @@ const ATOM_ANIMATION_MAP: Record<AtomType, AnimationPreset> = {
 const PRESET_VARIANTS: Record<AnimationPreset, any> = {
   'fade-in':           { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.4 } },
   'slide-up':          { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.35 } },
-  'reveal-highlight':  { initial: { backgroundColor: 'rgba(139,92,246,0.2)' }, animate: { backgroundColor: 'rgba(139,92,246,0)' }, transition: { duration: 1.2 } },
+  'reveal-highlight':  { initial: { backgroundColor: 'rgba(88,86,214,0.2)' }, animate: { backgroundColor: 'rgba(88,86,214,0)' }, transition: { duration: 1.2 } },
   'step-unfold':       { initial: { y: 12, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.3, staggerChildren: 0.15 } },
   'scale-in':          { initial: { scale: 0.92, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: 0.35 } },
   'bounce-alert':      { initial: { scale: 0.8, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { type: 'spring', stiffness: 260, damping: 18 } },
@@ -214,7 +213,10 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
   return (
     <div className="space-y-3">
       {showCallout && (
-        <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+        <div
+          className="px-3 py-2 rounded-lg border text-xs"
+          style={{ background: 'rgba(255,149,0,.08)', borderColor: 'rgba(255,149,0,.3)', color: 'var(--orange)' }}
+        >
           {Math.round((atom.cohort_error_pct ?? 0) * 100)}% of students at your level miss this on the practice problem.
         </div>
       )}
@@ -229,7 +231,7 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   return (
     <div className="space-y-3">
       {atom.scaffold_fade && (atom.engagement_count ?? 0) > 0 && (
-        <div className="text-xs text-violet-300/70">
+        <div className="text-xs" style={{ color: 'rgba(88,86,214,.7)' }}>
           You've seen this {atom.engagement_count} time(s). Try the last {blanked} step{blanked === 1 ? '' : 's'} yourself.
         </div>
       )}
@@ -239,12 +241,11 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
-          className={clsx(
-            'p-3 rounded-lg border text-sm leading-relaxed',
-            i < visibleCount
-              ? 'bg-surface-800 border-surface-700 text-surface-100'
-              : 'bg-surface-900 border-dashed border-surface-700 text-surface-500 italic',
-          )}
+          className={`p-3 rounded-lg border text-sm leading-relaxed${i >= visibleCount ? ' border-dashed' : ''}`}
+          style={i < visibleCount
+            ? { background: 'var(--surface-fill)', borderColor: 'var(--separator)', color: 'var(--text-primary)' }
+            : { background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)', fontStyle: 'italic' }
+          }
         >
           {i < visibleCount ? (
             <MarkdownAtomRenderer content={step} atomId={`${atom.id}.step.${i}`} />
@@ -274,7 +275,10 @@ export function MediaSidecar({ atom }: { atom: ContentAtom }) {
   return (
     <div className="mt-4 space-y-3">
       {media.gif_url && (
-        <figure className="rounded-lg overflow-hidden border border-surface-800 bg-surface-950">
+        <figure
+          className="rounded-lg overflow-hidden border"
+          style={{ borderColor: 'var(--separator)', background: 'var(--canvas)' }}
+        >
           <img
             src={media.gif_url}
             alt="Animated visualization for this concept"
@@ -283,7 +287,7 @@ export function MediaSidecar({ atom }: { atom: ContentAtom }) {
             style={reduceMotion ? { filter: 'none', animationPlayState: 'paused' } : undefined}
           />
           {reduceMotion && (
-            <figcaption className="px-2 py-1 text-[11px] text-surface-500">
+            <figcaption className="px-2 py-1 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
               Motion reduced — first frame only.
             </figcaption>
           )}
@@ -317,22 +321,28 @@ function StrategyCallout({ hint }: { hint: NonNullable<ContentAtom['strategy_hin
     deep: 'Deep coverage expected',
   };
   return (
-    <div className="mb-3 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-100 text-xs space-y-1">
-      <div className="flex items-center gap-1.5 text-violet-300 uppercase tracking-wider text-[10px] font-semibold">
+    <div
+      className="mb-3 px-3 py-2 rounded-lg border text-xs space-y-1"
+      style={{ background: 'rgba(88,86,214,.08)', borderColor: 'rgba(88,86,214,.3)', color: 'var(--indigo-ink)' }}
+    >
+      <div
+        className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] font-semibold"
+        style={{ color: 'var(--indigo-ink)' }}
+      >
         <Sparkles size={11} />
         <span>Strategy</span>
       </div>
       {hint.exam_emphasis && (
         <div>
-          <span className="text-violet-300">Exam:</span> {emphasisLabel[hint.exam_emphasis]}
+          <span style={{ color: 'var(--indigo-ink)' }}>Exam:</span> {emphasisLabel[hint.exam_emphasis]}
           {hint.exam_weight_pct != null && (
-            <span className="text-violet-400/70"> · {Math.round(hint.exam_weight_pct)}% weight</span>
+            <span style={{ color: 'var(--indigo-ink)', opacity: 0.7 }}> · {Math.round(hint.exam_weight_pct)}% weight</span>
           )}
         </div>
       )}
       {hint.trap && (
         <div>
-          <span className="text-violet-300">Watch:</span> {hint.trap}
+          <span style={{ color: 'var(--indigo-ink)' }}>Watch:</span> {hint.trap}
         </div>
       )}
     </div>
@@ -446,7 +456,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
 
   if (!current) {
     return (
-      <div className="text-center text-surface-500 text-sm py-8">No atoms to display.</div>
+      <div className="text-center text-sm py-8" style={{ color: 'var(--text-tertiary)' }}>No atoms to display.</div>
     );
   }
 
@@ -467,10 +477,11 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               <motion.div
                 key={i}
                 layout
-                className={clsx(
-                  'h-1.5 rounded-full transition-colors',
-                  isActive ? 'w-6 bg-violet-500' : isComplete ? 'w-1.5 bg-emerald-500' : 'w-1.5 bg-surface-700',
-                )}
+                className="h-1.5 rounded-full transition-all"
+                style={{
+                  width: isActive ? 24 : 6,
+                  background: isActive ? 'var(--indigo)' : isComplete ? 'var(--green)' : 'var(--separator)',
+                }}
               />
             );
           })}
@@ -479,12 +490,11 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
           onClick={toggleVisual}
           aria-label={showVisually ? 'Show all atoms' : 'Show visual atoms first'}
           aria-pressed={showVisually}
-          className={clsx(
-            'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
-            showVisually
-              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-              : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-emerald-300',
-          )}
+          className="flex items-center justify-center w-9 h-9 rounded-full border transition-colors"
+          style={showVisually
+            ? { background: 'rgba(52,199,89,.12)', borderColor: 'rgba(52,199,89,.4)', color: 'var(--green-ink)' }
+            : { background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)' }
+          }
           title={showVisually ? 'Visual mode on' : 'Show me visually'}
         >
           {showVisually ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -500,20 +510,27 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.2}
           onDragEnd={handleDragEnd}
-          className="p-5 rounded-xl bg-surface-900 border border-surface-800 touch-pan-y"
+          className="p-5 rounded-xl border touch-pan-y"
+          style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)' }}
         >
-          <div className="flex items-center gap-2 mb-3 text-xs uppercase tracking-wider text-violet-300/80">
+          <div
+            className="flex items-center gap-2 mb-3 text-xs uppercase tracking-wider"
+            style={{ color: 'rgba(88,86,214,.8)' }}
+          >
             <Icon size={14} />
             <span>{ATOM_LABEL[current.atom_type]}</span>
             {current.engagement_count != null && current.engagement_count > 0 && (
-              <span className="text-surface-500">· revisit #{current.engagement_count + 1}</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>· revisit #{current.engagement_count + 1}</span>
             )}
             <ImprovedBadge
               improvedSince={current.improved_since}
               lastSeenAt={current.last_seen_at}
               reason={current.improvement_reason}
             />
-            <span className="ml-auto flex items-center gap-1 text-surface-500 normal-case tracking-normal">
+            <span
+              className="ml-auto flex items-center gap-1 normal-case tracking-normal"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
               <Clock size={12} />
               {formatReadingTime(readingSeconds)}
             </span>
@@ -539,16 +556,18 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
 
           {/* Recall buttons for retrieval-style atoms */}
           {(current.atom_type === 'micro_exercise' || current.atom_type === 'retrieval_prompt') && (
-            <div className="flex gap-2 mt-4 pt-3 border-t border-surface-800">
+            <div className="flex gap-2 mt-4 pt-3 border-t" style={{ borderColor: 'var(--separator)' }}>
               <button
                 onClick={() => next(false)}
-                className="flex-1 px-3 py-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 text-sm"
+                className="flex-1 px-3 py-2 rounded-lg text-sm"
+                style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
               >
                 Not yet
               </button>
               <button
                 onClick={() => next(true)}
-                className="flex-1 px-3 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold"
+                className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold"
+                style={{ background: 'var(--indigo)', color: '#fff' }}
               >
                 Got it
               </button>
@@ -562,20 +581,22 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
         <button
           onClick={prev}
           disabled={index === 0}
-          className="p-2 rounded-lg text-surface-400 hover:text-surface-200 disabled:opacity-30"
+          className="p-2 rounded-lg disabled:opacity-30"
+          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
           aria-label="Previous"
         >
           <ChevronLeft size={20} />
         </button>
-        <div className="text-xs text-surface-500">
+        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {index + 1} of {atoms.length}
           {errorStreak >= 3 && (
-            <span className="ml-2 text-amber-400">· streak switched modality</span>
+            <span className="ml-2" style={{ color: 'var(--orange)' }}>· streak switched modality</span>
           )}
         </div>
         <button
           onClick={() => next()}
-          className="p-2 rounded-lg text-surface-400 hover:text-surface-200"
+          className="p-2 rounded-lg"
+          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
           aria-label="Next"
         >
           <ChevronRight size={20} />

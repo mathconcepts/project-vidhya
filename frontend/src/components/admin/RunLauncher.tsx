@@ -21,7 +21,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Rocket, Loader2, AlertTriangle, Info } from 'lucide-react';
-import { clsx } from 'clsx';
 import {
   dryRun,
   createRun,
@@ -32,7 +31,6 @@ import {
   type GenerationRunConfig,
   type ConceptSearchHit,
 } from '@/api/admin/content-rd';
-import { fadeInUp } from '@/lib/animations';
 
 interface Props {
   defaultExam?: string;
@@ -162,6 +160,42 @@ function buildConfig(form: FormState): GenerationRunConfig {
     },
   };
 }
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '6px 10px',
+  borderRadius: 'var(--radius-sm)',
+  fontSize: 'var(--text-caption)',
+  background: 'var(--surface-fill)',
+  border: 'var(--hairline) solid var(--separator)',
+  color: 'var(--text-primary)',
+  outline: 'none',
+  fontFamily: 'var(--font-sans)',
+};
+
+const toggleActiveStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '6px 10px',
+  borderRadius: '6px',
+  fontSize: '12px',
+  fontWeight: 500,
+  cursor: 'pointer',
+  background: 'rgba(88,86,214,.08)',
+  border: '1px solid rgba(88,86,214,.3)',
+  color: 'var(--indigo-ink)',
+};
+
+const toggleInactiveStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '6px 10px',
+  borderRadius: '6px',
+  fontSize: '12px',
+  fontWeight: 500,
+  cursor: 'pointer',
+  background: 'var(--surface-fill)',
+  border: 'var(--hairline) solid var(--separator)',
+  color: 'var(--text-tertiary)',
+};
 
 export function RunLauncher({ defaultExam, onLaunched }: Props) {
   const [form, setForm] = useState<FormState>({
@@ -301,47 +335,42 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
   const diffSum = form.difficulty_easy + form.difficulty_medium + form.difficulty_hard;
 
   return (
-    <motion.section variants={fadeInUp} className="space-y-3">
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+    >
       <header>
-        <h2 className="text-sm font-semibold text-surface-100 flex items-center gap-2">
-          <Rocket size={14} className="text-violet-400" />
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Rocket size={14} style={{ color: 'var(--indigo-ink)' }} />
           Launch a generation run
         </h2>
-        <p className="text-[11px] text-surface-500 mt-0.5">
+        <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
           Every run auto-creates a wrapping experiment so lift can be measured.
         </p>
         {prefilledFromRunId && (
-          <p className="text-[10px] text-surface-600 mt-1 font-mono">
-            ⤺ pre-filled from run <span className="text-violet-400">{prefilledFromRunId}</span>
+          <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
+            ⤺ pre-filled from run <span style={{ color: 'var(--indigo-ink)' }}>{prefilledFromRunId}</span>
           </p>
         )}
       </header>
 
-      <div className="rounded-xl border border-surface-800 bg-surface-950 p-4 space-y-3">
+      <div style={{ borderRadius: '12px', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Generation mode toggle — atom (default) vs curriculum unit (Phase 2/3) */}
         <Field label="Generation mode" hint="Atoms = legacy single-problem generation. Curriculum unit = PR #32+: bundles multiple atoms in pedagogical sequence with declared learning objectives + PYQ alignment.">
-          <div className="grid grid-cols-2 gap-2">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             <button
               type="button"
               onClick={() => setForm({ ...form, unit_mode: false })}
-              className={clsx(
-                'px-3 py-2 rounded-md text-xs font-medium border transition-colors',
-                !form.unit_mode
-                  ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
-                  : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-surface-300',
-              )}
+              style={!form.unit_mode ? toggleActiveStyle : toggleInactiveStyle}
             >
               Atoms
             </button>
             <button
               type="button"
               onClick={() => setForm({ ...form, unit_mode: true })}
-              className={clsx(
-                'px-3 py-2 rounded-md text-xs font-medium border transition-colors',
-                form.unit_mode
-                  ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
-                  : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-surface-300',
-              )}
+              style={form.unit_mode ? toggleActiveStyle : toggleInactiveStyle}
             >
               Curriculum unit
             </button>
@@ -355,16 +384,16 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
             value={form.hypothesis}
             onChange={(e) => setForm({ ...form, hypothesis: e.target.value })}
             placeholder="e.g. Hard PYQ-grounded LA atoms lift mastery"
-            className={inputCls}
+            style={inputStyle}
           />
         </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           <Field label="Exam pack">
             <select
               value={form.exam_pack_id}
               onChange={(e) => setForm({ ...form, exam_pack_id: e.target.value })}
-              className={inputCls}
+              style={inputStyle}
             >
               <option value="gate-ma">gate-ma</option>
             </select>
@@ -375,20 +404,20 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
               value={form.topic_id}
               onChange={(e) => setForm({ ...form, topic_id: e.target.value })}
               placeholder="linear-algebra"
-              className={inputCls}
+              style={inputStyle}
             />
           </Field>
         </div>
 
         {/* Curriculum unit fields — only shown in unit_mode */}
         {form.unit_mode && (
-          <div className="rounded-lg border border-violet-500/25 bg-violet-500/5 p-3 space-y-3">
-            <div className="text-[10px] uppercase tracking-wide text-violet-300 font-medium">
+          <div style={{ borderRadius: '8px', border: '1px solid rgba(88,86,214,.25)', background: 'rgba(88,86,214,.05)', padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--indigo-ink)', fontWeight: 500 }}>
               Curriculum unit spec
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
               <Field label="Concept ID" hint="Single concept this unit covers (eng-review D1).">
-                <div className="relative">
+                <div style={{ position: 'relative' }}>
                   <input
                     type="text"
                     value={form.unit_concept_id}
@@ -396,11 +425,11 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
                     onFocus={() => setShowConceptHits(true)}
                     onBlur={() => setTimeout(() => setShowConceptHits(false), 150)}
                     placeholder="eigenvalues"
-                    className={inputCls}
+                    style={inputStyle}
                     autoComplete="off"
                   />
                   {showConceptHits && conceptHits.length > 0 && (
-                    <ul className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-md border border-violet-500/30 bg-surface-950 shadow-lg">
+                    <ul style={{ position: 'absolute', zIndex: 20, marginTop: '4px', width: '100%', maxHeight: '192px', overflowY: 'auto', borderRadius: '6px', border: '1px solid rgba(88,86,214,.3)', background: 'var(--surface-card)', boxShadow: '0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05)', listStyle: 'none', padding: 0, margin: 0 }}>
                       {conceptHits.map((h) => (
                         <li key={h.concept_id}>
                           <button
@@ -410,10 +439,10 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
                               setForm((p) => ({ ...p, unit_concept_id: h.concept_id }));
                               setShowConceptHits(false);
                             }}
-                            className="block w-full text-left px-2.5 py-1.5 text-xs hover:bg-violet-500/10"
+                            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: '12px', background: 'transparent', border: 'none', cursor: 'pointer' }}
                           >
-                            <span className="font-mono text-violet-200">{h.concept_id}</span>
-                            <span className="text-surface-500 ml-2">· {h.topic_title}</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--indigo-ink)' }}>{h.concept_id}</span>
+                            <span style={{ color: 'var(--text-tertiary)', marginLeft: '8px' }}>· {h.topic_title}</span>
                           </button>
                         </li>
                       ))}
@@ -427,19 +456,19 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
                   value={form.unit_name}
                   onChange={(e) => setForm({ ...form, unit_name: e.target.value })}
                   placeholder="Eigenvalues — intro"
-                  className={inputCls}
+                  style={inputStyle}
                 />
               </Field>
             </div>
             <Field
               label={
-                <span className="flex items-center justify-between gap-2 w-full">
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%' }}>
                   <span>Learning objectives</span>
                   <button
                     type="button"
                     onClick={handleGenerateObjectives}
                     disabled={!form.unit_concept_id || generatingObjectives}
-                    className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/30 text-violet-300 hover:bg-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ fontSize: '10px', fontWeight: 500, padding: '2px 6px', borderRadius: '4px', background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.3)', color: 'var(--indigo-ink)', cursor: (!form.unit_concept_id || generatingObjectives) ? 'not-allowed' : 'pointer', opacity: (!form.unit_concept_id || generatingObjectives) ? 0.4 : 1 }}
                   >
                     {generatingObjectives ? '…' : 'Generate from concept'}
                   </button>
@@ -452,7 +481,7 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
                 onChange={(e) => setForm({ ...form, unit_objectives_text: e.target.value })}
                 rows={4}
                 placeholder={'obj_1|Define eigenvalue for a 2×2 matrix\nobj_2|Compute via characteristic polynomial'}
-                className={inputCls + ' font-mono'}
+                style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
               />
             </Field>
             <Field
@@ -464,11 +493,11 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
                 onChange={(e) => setForm({ ...form, unit_pyqs_text: e.target.value })}
                 rows={3}
                 placeholder={'pyq_2018_q42\npyq_2020_q31'}
-                className={inputCls + ' font-mono'}
+                style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
               />
             </Field>
             <Field label="Atom kinds (in pedagogical sequence)">
-              <div className="flex flex-wrap gap-1.5">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {['intuition', 'formal_definition', 'visual_analogy', 'worked_example', 'practice'].map((k) => {
                   const active = form.unit_atom_kinds.includes(k);
                   return (
@@ -481,12 +510,13 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
                           : [...form.unit_atom_kinds, k];
                         setForm({ ...form, unit_atom_kinds: next });
                       }}
-                      className={clsx(
-                        'px-2 py-1 rounded-md text-[11px] font-medium border transition-colors',
-                        active
-                          ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
-                          : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-surface-300',
-                      )}
+                      style={active ? {
+                        padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, cursor: 'pointer',
+                        background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.3)', color: 'var(--indigo-ink)',
+                      } : {
+                        padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, cursor: 'pointer',
+                        background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)',
+                      }}
                     >
                       {k}
                     </button>
@@ -498,12 +528,12 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
         )}
 
         {/* Pipeline + Verification */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           <Field label="LLM">
             <select
               value={form.llm_model}
               onChange={(e) => setForm({ ...form, llm_model: e.target.value })}
-              className={inputCls}
+              style={inputStyle}
             >
               <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
               <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
@@ -518,7 +548,7 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
               onChange={(e) =>
                 setForm({ ...form, tier_ceiling: e.target.value as FormState['tier_ceiling'] })
               }
-              className={inputCls}
+              style={inputStyle}
             >
               <option value="rag">RAG only (cheapest)</option>
               <option value="gemini">RAG + Gemini dual-solve</option>
@@ -527,7 +557,7 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
           <Toggle
             checked={form.pyq_grounding}
             onChange={(v) => setForm({ ...form, pyq_grounding: v })}
@@ -548,7 +578,7 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
             <select
               value={form.reviewer_strictness}
               onChange={(e) => setForm({ ...form, reviewer_strictness: e.target.value as FormState['reviewer_strictness'] })}
-              className={inputCls}
+              style={inputStyle}
             >
               <option value="lenient">Lenient</option>
               <option value="standard">Standard</option>
@@ -559,7 +589,7 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
 
         {/* Difficulty mix */}
         <Field label={`Difficulty mix (sums to ${diffSum})`} hint="Percent split across easy / medium / hard.">
-          <div className="grid grid-cols-3 gap-2">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
             <NumberInput value={form.difficulty_easy} onChange={(v) => setForm({ ...form, difficulty_easy: v })} prefix="Easy %" />
             <NumberInput value={form.difficulty_medium} onChange={(v) => setForm({ ...form, difficulty_medium: v })} prefix="Med %" />
             <NumberInput value={form.difficulty_hard} onChange={(v) => setForm({ ...form, difficulty_hard: v })} prefix="Hard %" />
@@ -567,7 +597,7 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
         </Field>
 
         {/* Quota */}
-        <div className="grid grid-cols-2 gap-3">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <Field label="Count">
             <NumberInput value={form.count} onChange={(v) => setForm({ ...form, count: v })} min={1} max={10000} />
           </Field>
@@ -577,27 +607,27 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
         </div>
 
         {/* Estimate */}
-        <div className="rounded-lg border border-surface-800 bg-surface-900/50 p-3 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-surface-400">
+        <div style={{ borderRadius: '8px', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
               <Info size={12} />
               <span>Estimate</span>
             </div>
-            {estimating && <Loader2 size={12} className="animate-spin text-violet-400" />}
+            {estimating && <Loader2 size={12} className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />}
           </div>
           {estimate ? (
             <>
-              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-xs">
-                <span className="text-surface-100 text-base font-semibold">${estimate.estimated_cost_usd.toFixed(3)}</span>
-                <span className="text-surface-500">{estimate.estimated_duration_minutes.toFixed(1)} min</span>
-                <span className="text-surface-500">{estimate.call_count} LLM calls</span>
-                <span className="text-surface-500">${estimate.per_artifact_usd.toFixed(4)}/atom</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: '16px', rowGap: '4px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                <span style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 600 }}>${estimate.estimated_cost_usd.toFixed(3)}</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>{estimate.estimated_duration_minutes.toFixed(1)} min</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>{estimate.call_count} LLM calls</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>${estimate.per_artifact_usd.toFixed(4)}/atom</span>
               </div>
               {estimate.warnings.length > 0 && (
-                <ul className="space-y-1 mt-1.5">
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px', listStyle: 'none', padding: 0 }}>
                   {estimate.warnings.map((w, i) => (
-                    <li key={i} className="flex items-start gap-1.5 text-[11px] text-amber-300">
-                      <AlertTriangle size={11} className="mt-0.5 flex-shrink-0" />
+                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '11px', color: 'var(--orange)' }}>
+                      <AlertTriangle size={11} style={{ marginTop: '2px', flexShrink: 0 }} />
                       <span>{w}</span>
                     </li>
                   ))}
@@ -605,35 +635,35 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
               )}
             </>
           ) : (
-            <div className="text-[11px] text-surface-500">Adjusting…</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Adjusting…</div>
           )}
         </div>
 
         {/* Errors / success */}
         {error && (
-          <div className="rounded-lg p-2 text-xs bg-red-500/10 border border-red-500/30 text-red-300">
+          <div style={{ borderRadius: '8px', padding: '8px', fontSize: '12px', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', color: 'var(--red)' }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="rounded-lg p-2 text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono">
+          <div style={{ borderRadius: '8px', padding: '8px', fontSize: '12px', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)', fontFamily: 'var(--font-mono)' }}>
             {success}
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 pt-1">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '4px' }}>
           <button
             onClick={runEstimate}
             disabled={estimating}
-            className="px-3 py-2 rounded-lg text-xs bg-surface-900 border border-surface-800 text-surface-300 hover:text-surface-100 disabled:opacity-50"
+            style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: estimating ? 'not-allowed' : 'pointer', opacity: estimating ? 0.5 : 1 }}
           >
             Re-estimate
           </button>
           <button
             onClick={handleLaunch}
             disabled={launching || estimating || diffSum === 0}
-            className="px-4 py-2 rounded-lg text-xs font-medium bg-violet-500 hover:bg-violet-400 text-white inline-flex items-center gap-2 disabled:opacity-50"
+            style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, background: 'var(--indigo)', color: '#fff', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: (launching || estimating || diffSum === 0) ? 'not-allowed' : 'pointer', opacity: (launching || estimating || diffSum === 0) ? 0.5 : 1 }}
           >
             {launching ? <Loader2 size={12} className="animate-spin" /> : <Rocket size={12} />}
             {launching ? 'Launching…' : 'Launch'}
@@ -648,9 +678,6 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
 // Form bits
 // ============================================================================
 
-const inputCls =
-  'w-full px-2.5 py-1.5 rounded-md text-xs bg-surface-900 border border-surface-800 text-surface-100 focus:outline-none focus:border-violet-500/50 placeholder:text-surface-600';
-
 function Field({
   label,
   hint,
@@ -661,10 +688,10 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-1">
-      <div className="text-[10px] uppercase tracking-wide text-surface-500 font-medium">{label}</div>
+    <label style={{ display: 'block' }}>
+      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 500, marginBottom: '4px' }}>{label}</div>
       {children}
-      {hint && <div className="text-[10px] text-surface-600">{hint}</div>}
+      {hint && <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '4px' }}>{hint}</div>}
     </label>
   );
 }
@@ -681,18 +708,13 @@ function Toggle({
   disabled?: boolean;
 }) {
   return (
-    <label className={clsx('block space-y-1', disabled && 'opacity-40')}>
-      <div className="text-[10px] uppercase tracking-wide text-surface-500 font-medium">{label}</div>
+    <label style={{ display: 'block', opacity: disabled ? 0.4 : 1 }}>
+      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)', fontWeight: 500, marginBottom: '4px' }}>{label}</div>
       <button
         type="button"
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={clsx(
-          'w-full px-2.5 py-1.5 rounded-md text-xs font-medium border',
-          checked
-            ? 'bg-violet-500/15 border-violet-500/40 text-violet-200'
-            : 'bg-surface-900 border-surface-800 text-surface-500 hover:text-surface-300',
-        )}
+        style={checked ? toggleActiveStyle : toggleInactiveStyle}
       >
         {checked ? 'On' : 'Off'}
       </button>
@@ -716,8 +738,8 @@ function NumberInput({
   prefix?: string;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
-      {prefix && <span className="text-[10px] text-surface-600 whitespace-nowrap">{prefix}</span>}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {prefix && <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{prefix}</span>}
       <input
         type="number"
         value={value}
@@ -728,7 +750,7 @@ function NumberInput({
           const v = parseFloat(e.target.value);
           onChange(Number.isFinite(v) ? v : 0);
         }}
-        className={inputCls + ' font-mono'}
+        style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
       />
     </div>
   );

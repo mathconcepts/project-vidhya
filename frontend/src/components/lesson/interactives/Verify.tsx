@@ -59,28 +59,28 @@ export default function Verify({ attrs }: DirectiveProps) {
   const StatusBadge = () => {
     if (status === 'verified') {
       return (
-        <span className="inline-flex items-center gap-1 text-emerald-300 text-xs">
+        <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--green-ink)' }}>
           <CheckCircle2 size={14} /> Verified
         </span>
       );
     }
     if (status === 'failed') {
       return (
-        <span className="inline-flex items-center gap-1 text-rose-300 text-xs">
+        <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--red)' }}>
           <XCircle size={14} /> Not equivalent
         </span>
       );
     }
     if (status === 'inconclusive') {
       return (
-        <span className="inline-flex items-center gap-1 text-amber-300 text-xs">
+        <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--orange)' }}>
           <HelpCircle size={14} /> Couldn't verify
         </span>
       );
     }
     if (status === 'pending') {
       return (
-        <span className="inline-flex items-center gap-1 text-violet-300 text-xs">
+        <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--indigo-ink)' }}>
           <Loader2 size={14} className="animate-spin" /> Checking…
         </span>
       );
@@ -91,29 +91,40 @@ export default function Verify({ attrs }: DirectiveProps) {
   return (
     <form
       onSubmit={onSubmit}
-      className="my-3 rounded-md border border-surface-800 bg-surface-900/50 p-3 space-y-2"
+      className="my-3 rounded-md border p-3 space-y-2"
+      style={{ borderColor: 'var(--separator)', background: 'var(--surface-card)' }}
     >
-      {a.prompt && <div className="text-sm text-surface-200">{a.prompt}</div>}
+      {a.prompt && (
+        <div className="text-sm" style={{ color: 'var(--text-primary)' }}>{a.prompt}</div>
+      )}
       <div className="flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Your answer (e.g. 2*x)"
-          className="flex-1 rounded bg-surface-950 border border-surface-700 px-2 py-1.5 text-sm font-mono text-emerald-200 focus:border-emerald-500/50 focus:outline-none"
+          className="flex-1 rounded border px-2 py-1.5 text-sm font-mono focus:outline-none"
+          style={{
+            background: 'var(--surface-fill)',
+            borderColor: 'var(--separator)',
+            color: 'var(--green-ink)',
+          }}
           aria-label="Your answer"
         />
         <button
           type="submit"
           disabled={status === 'pending' || !input.trim()}
-          className="px-3 py-1.5 rounded bg-violet-500 hover:bg-violet-400 disabled:opacity-40 text-white text-sm font-semibold"
+          className="px-3 py-1.5 rounded text-sm font-semibold disabled:opacity-40"
+          style={{ background: 'var(--indigo)', color: '#fff' }}
         >
           Check
         </button>
       </div>
       <div className="flex items-center justify-between min-h-[18px]">
         <StatusBadge />
-        {detail && <span className="text-[10px] text-surface-500">{detail}</span>}
+        {detail && (
+          <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{detail}</span>
+        )}
       </div>
     </form>
   );

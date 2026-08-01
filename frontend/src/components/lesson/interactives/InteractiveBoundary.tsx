@@ -75,7 +75,10 @@ export function InteractiveBoundary({ directive, attrs }: Props) {
 
   if (chain.length === 0) {
     return (
-      <div className="my-3 p-3 rounded-md bg-surface-900 border border-surface-800 text-xs text-surface-500">
+      <div
+        className="my-3 p-3 rounded-md border text-xs"
+        style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)' }}
+      >
         (interactive type "{directive}" is not yet wired)
       </div>
     );
@@ -85,7 +88,10 @@ export function InteractiveBoundary({ directive, attrs }: Props) {
   if (!Provider) {
     // Exhausted the chain — quiet placeholder, atom text remains readable.
     return (
-      <div className="my-3 p-3 rounded-md bg-surface-900 border border-surface-800 text-xs text-surface-500">
+      <div
+        className="my-3 p-3 rounded-md border text-xs"
+        style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)' }}
+      >
         (interactive could not load — see explanation above)
       </div>
     );

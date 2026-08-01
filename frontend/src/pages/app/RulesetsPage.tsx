@@ -34,13 +34,17 @@ export default function RulesetsPage() {
   }, [authLoading, user]);
 
   if (authLoading) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-violet-400" /></div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <Loader2 className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
   }
   if (!user || user.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto mt-20 p-6 rounded-xl border border-surface-800 bg-surface-900 text-center">
-        <Lock size={28} className="mx-auto text-surface-500 mb-3" />
-        <p className="text-surface-200 font-medium mb-1">Admin only</p>
+      <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
+        <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Admin only</p>
       </div>
     );
   }
@@ -58,16 +62,16 @@ export default function RulesetsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div style={{ maxWidth: 896, margin: '0 auto', padding: '32px 16px' }}>
       <JourneyNudge currentHref="/admin/rulesets" />
-      <header className="mb-6">
-        <div className="flex items-center gap-2 text-violet-400 text-xs uppercase tracking-wider mb-2">
+      <header style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--indigo-ink)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
           <Sparkles size={14} /> Blueprint rulesets
         </div>
-        <h1 className="text-2xl font-display font-semibold text-surface-100">
+        <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
           Operator constraints, scoped per exam + concept pattern
         </h1>
-        <p className="text-sm text-surface-400 mt-1">
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
           Each enabled ruleset attaches as a constraint to every blueprint produced by the arbitrator
           for the matching <code>exam_pack_id × concept_pattern</code>. Use SQL <code>LIKE</code>{' '}
           patterns: <code>%</code> for whole pack, <code>vectors-%</code> for a prefix.
@@ -75,51 +79,51 @@ export default function RulesetsPage() {
       </header>
 
       {error && /503|DATABASE_URL/i.test(error) ? (
-        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-amber-300 text-sm font-medium">
+        <div style={{ marginBottom: 16, padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,149,0,.22)', background: 'rgba(255,149,0,.06)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--orange)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)' }}>
             <Database size={14} /> Rulesets need a database
           </div>
-          <p className="text-xs text-surface-300 leading-relaxed">
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             This deploy is running without <code>DATABASE_URL</code>. Rulesets, blueprints, and the
             generation pipeline all persist to Postgres. Set the env var on Render and redeploy, or
             run <code>docker compose up</code> locally.
           </p>
-          <p className="text-xs text-surface-400">
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
             Until then, you can still browse the <code>/admin/scenarios</code> demo path which works
             without a DB.
           </p>
         </div>
       ) : error ? (
-        <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">{error}</div>
+        <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>{error}</div>
       ) : null}
 
       <PresetsPanel onInstalled={() => refresh()} />
 
       <button
         onClick={() => setCreating((c) => !c)}
-        className="mb-4 px-3 py-2 rounded-lg border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-medium inline-flex items-center gap-1 hover:bg-violet-500/20"
+        style={{ marginBottom: 16, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.3)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
       >
         <Plus size={12} /> {creating ? 'Cancel' : 'New ruleset'}
       </button>
 
       {creating && (
-        <div className="mb-4 p-4 rounded-xl border border-surface-800 bg-surface-900 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <label className="text-xs text-surface-400 space-y-1">
+        <div style={{ marginBottom: 16, padding: 16, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span>Exam pack</span>
               <input
                 value={examPack}
                 onChange={(e) => setExamPack(e.target.value)}
-                className="w-full px-2 py-1.5 text-xs rounded border border-surface-700 bg-surface-950 text-surface-200"
+                style={{ width: '100%', padding: '6px 8px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
               />
             </label>
-            <label className="text-xs text-surface-400 space-y-1">
+            <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span>Concept pattern (LIKE)</span>
               <input
                 value={pattern}
                 onChange={(e) => setPattern(e.target.value)}
                 placeholder="%"
-                className="w-full px-2 py-1.5 text-xs rounded border border-surface-700 bg-surface-950 text-surface-200 font-mono"
+                style={{ width: '100%', padding: '6px 8px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', boxSizing: 'border-box' }}
               />
             </label>
           </div>
@@ -128,22 +132,22 @@ export default function RulesetsPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={4}
-            className="w-full px-2 py-1.5 text-sm rounded border border-surface-700 bg-surface-950 text-surface-200"
+            style={{ width: '100%', padding: '6px 8px', fontSize: 'var(--text-caption)', borderRadius: 'var(--radius-sm)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', color: 'var(--text-primary)', boxSizing: 'border-box', resize: 'vertical' }}
           />
           <button
             onClick={handleCreate}
             disabled={busy || !text.trim()}
-            className="px-3 py-1.5 rounded text-xs bg-violet-500 text-white disabled:opacity-50"
+            style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontSize: 11, background: busy || !text.trim() ? 'var(--surface-fill)' : 'var(--indigo)', color: busy || !text.trim() ? 'var(--text-tertiary)' : '#fff', border: 'none', cursor: busy || !text.trim() ? 'not-allowed' : 'pointer', opacity: busy || !text.trim() ? 0.5 : 1 }}
           >
             {busy ? 'Saving…' : 'Create'}
           </button>
         </div>
       )}
 
-      <div className="space-y-2">
-        {rulesets === null && <div className="text-sm text-surface-500">Loading…</div>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {rulesets === null && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Loading…</div>}
         {rulesets && rulesets.length === 0 && (
-          <div className="text-sm text-surface-500 text-center py-12">
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', textAlign: 'center', padding: '48px 0' }}>
             No rulesets yet. Create one above.
           </div>
         )}
@@ -182,26 +186,40 @@ function RulesetRow({
   };
 
   return (
-    <div className={`p-3 rounded-xl border bg-surface-900 ${ruleset.enabled ? 'border-violet-500/25' : 'border-surface-800 opacity-60'}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-surface-500 mb-1">
-            {ruleset.exam_pack_id} <span className="text-surface-700">·</span> <code className="text-violet-400">{ruleset.concept_pattern}</code>
+    <div style={{
+      padding: 12,
+      borderRadius: 'var(--radius-md)',
+      border: ruleset.enabled ? '1px solid rgba(88,86,214,.25)' : 'var(--hairline) solid var(--separator)',
+      background: 'var(--surface-card)',
+      opacity: ruleset.enabled ? 1 : 0.6,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-tertiary)', marginBottom: 4 }}>
+            {ruleset.exam_pack_id} <span style={{ color: 'var(--separator)' }}>·</span> <code style={{ color: 'var(--indigo-ink)', fontFamily: 'var(--font-mono)' }}>{ruleset.concept_pattern}</code>
           </div>
-          <div className="text-sm text-surface-200 whitespace-pre-wrap">{ruleset.rule_text}</div>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{ruleset.rule_text}</div>
         </div>
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={toggle}
             disabled={busy}
-            className={`text-xs px-2 py-1 rounded border ${ruleset.enabled ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-surface-700 text-surface-400'}`}
+            style={{
+              fontSize: 11,
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: ruleset.enabled ? '1px solid rgba(52,199,89,.25)' : 'var(--hairline) solid var(--separator)',
+              background: ruleset.enabled ? 'rgba(52,199,89,.08)' : 'transparent',
+              color: ruleset.enabled ? 'var(--green-ink)' : 'var(--text-tertiary)',
+              cursor: busy ? 'not-allowed' : 'pointer',
+            }}
           >
             {ruleset.enabled ? 'enabled' : 'disabled'}
           </button>
           <button
             onClick={handleDelete}
             disabled={busy}
-            className="p-1.5 rounded text-surface-400 hover:text-red-400 hover:bg-red-500/10"
+            style={{ padding: 6, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: 'var(--text-tertiary)', cursor: busy ? 'not-allowed' : 'pointer' }}
           >
             <Trash2 size={12} />
           </button>

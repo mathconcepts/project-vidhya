@@ -1,10 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, ToggleLeft, ToggleRight, Loader2, RefreshCw, AlertCircle, Info } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 /**
  * /gate/admin/features — operator-facing feature flag matrix.
@@ -59,8 +57,8 @@ export default function FeaturesPage() {
         return;
       }
       setData(await r.json());
-    } catch (e: any) {
-      setError(`Network error: ${e?.message ?? 'unknown'}`);
+    } catch (e: unknown) {
+      setError(`Network error: ${e instanceof Error ? e.message : 'unknown'}`);
       setData(null);
     } finally {
       setLoading(false);
@@ -69,12 +67,11 @@ export default function FeaturesPage() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Admin-only access (matches UserAdminPage pattern)
   if (!hasRole('admin')) {
     return (
-      <div className="p-6">
-        <div className="flex items-center gap-2 text-rose-400">
-          <AlertCircle className="w-5 h-5" />
+      <div style={{ padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--red)' }}>
+          <AlertCircle style={{ width: 20, height: 20 }} />
           <span>Admin role required to view feature flags.</span>
         </div>
       </div>
@@ -82,115 +79,132 @@ export default function FeaturesPage() {
   }
 
   return (
-    <motion.div
-      className="p-6 max-w-5xl mx-auto"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
-    >
-      <motion.div variants={fadeInUp} className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Settings className="w-6 h-6 text-violet-400" />
-          <h1 className="text-2xl font-semibold text-surface-50">Feature flags</h1>
+    <div style={{ padding: 24, maxWidth: 960, margin: '0 auto' }}>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Settings style={{ width: 24, height: 24, color: 'var(--indigo-ink)' }} />
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Feature flags</h1>
         </div>
         <button
           onClick={refresh}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-200 disabled:opacity-50"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {loading ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <RefreshCw style={{ width: 16, height: 16 }} />}
           <span>Refresh</span>
         </button>
       </motion.div>
 
-      <motion.div variants={fadeInUp} className="mb-6 p-4 rounded-lg bg-surface-900 border border-surface-700 flex gap-3">
-        <Info className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
-        <div className="text-sm text-surface-300 leading-relaxed">
-          <p className="mb-2">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ marginBottom: 24, padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.22)', display: 'flex', gap: 12 }}
+      >
+        <Info style={{ width: 20, height: 20, color: 'var(--indigo-ink)', flexShrink: 0, marginTop: 2 }} />
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          <p style={{ margin: '0 0 8px' }}>
             This page shows feature-flag state for the running deployment. Flags are read from
             environment variables at server boot and cannot be flipped from the UI — change the
             env var on your host (Render, Netlify, etc.) and redeploy.
           </p>
-          <p>
-            <span className="text-amber-400">Overridden</span> means the value differs from the
-            default; <span className="text-emerald-400">enabled</span> /
-            <span className="text-rose-400"> disabled</span> is the current runtime state.
+          <p style={{ margin: 0 }}>
+            <span style={{ color: 'var(--orange)' }}>Overridden</span> means the value differs from the
+            default; <span style={{ color: 'var(--green-ink)' }}>enabled</span> /
+            <span style={{ color: 'var(--red)' }}> disabled</span> is the current runtime state.
           </p>
         </div>
       </motion.div>
 
       {error && (
-        <motion.div variants={fadeInUp} className="mb-6 p-4 rounded-lg bg-rose-950/30 border border-rose-800/50 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-          <div className="text-rose-300 text-sm">{error}</div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ marginBottom: 24, padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', display: 'flex', alignItems: 'flex-start', gap: 12 }}
+        >
+          <AlertCircle style={{ width: 20, height: 20, color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />
+          <div style={{ color: 'var(--red)', fontSize: 'var(--text-caption)' }}>{error}</div>
         </motion.div>
       )}
 
       {loading && !data && (
-        <motion.div variants={fadeInUp} className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-surface-500" />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}
+        >
+          <Loader2 style={{ width: 24, height: 24, color: 'var(--text-tertiary)' }} className="animate-spin" />
         </motion.div>
       )}
 
       {data && data.modules.length === 0 && (
-        <motion.div variants={fadeInUp} className="text-center py-12 text-surface-500">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)' }}
+        >
           No modules with feature flags. Check the auth module is loaded.
         </motion.div>
       )}
 
       {data && data.modules.map(mod => (
-        <motion.div key={mod.module} variants={fadeInUp} className="mb-8">
-          <h2 className="text-lg font-medium text-surface-100 mb-3 capitalize">
+        <motion.div
+          key={mod.module}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ marginBottom: 32 }}
+        >
+          <h2 style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)', textTransform: 'capitalize' }}>
             {mod.module} module
-            <span className="ml-2 text-sm text-surface-500">({mod.flags.length} flag{mod.flags.length === 1 ? '' : 's'})</span>
+            <span style={{ marginLeft: 8, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>({mod.flags.length} flag{mod.flags.length === 1 ? '' : 's'})</span>
           </h2>
 
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {mod.flags.map(flag => (
               <div
                 key={flag.flag}
-                className={clsx(
-                  'p-4 rounded-lg border',
-                  flag.overridden
-                    ? 'bg-amber-950/20 border-amber-800/50'
-                    : 'bg-surface-900 border-surface-700',
-                )}
+                style={{
+                  padding: 16,
+                  borderRadius: 'var(--radius-md)',
+                  background: flag.overridden ? 'rgba(255,149,0,.06)' : 'var(--surface-card)',
+                  border: flag.overridden ? '1px solid rgba(255,149,0,.3)' : 'var(--hairline) solid var(--separator)',
+                }}
               >
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <code className="text-violet-300 font-mono text-sm">{flag.flag}</code>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <code style={{ color: 'var(--indigo-ink)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-caption)' }}>{flag.flag}</code>
                       {flag.overridden && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-300 border border-amber-700/50">
+                        <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,149,0,.12)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }}>
                           overridden
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-surface-300 leading-relaxed">{flag.description}</p>
+                    <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{flag.description}</p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                     {flag.enabled ? (
-                      <ToggleRight className="w-6 h-6 text-emerald-400" />
+                      <ToggleRight style={{ width: 24, height: 24, color: 'var(--green-ink)' }} />
                     ) : (
-                      <ToggleLeft className="w-6 h-6 text-rose-400" />
+                      <ToggleLeft style={{ width: 24, height: 24, color: 'var(--red)' }} />
                     )}
-                    <span className={clsx(
-                      'text-sm font-medium',
-                      flag.enabled ? 'text-emerald-400' : 'text-rose-400',
-                    )}>
+                    <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: flag.enabled ? 'var(--green-ink)' : 'var(--red)' }}>
                       {flag.enabled ? 'enabled' : 'disabled'}
                     </span>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-surface-700/50 flex items-center justify-between gap-4 text-xs text-surface-400">
-                  <div className="flex items-center gap-4">
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: 'var(--hairline) solid var(--separator)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <span>
-                      env: <code className="text-surface-300 font-mono">{flag.env_var}</code>
+                      env: <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{flag.env_var}</code>
                     </span>
                     <span>
-                      default: <code className="text-surface-300 font-mono">{String(flag.default)}</code>
+                      default: <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{String(flag.default)}</code>
                     </span>
                   </div>
                 </div>
@@ -199,6 +213,6 @@ export default function FeaturesPage() {
           </div>
         </motion.div>
       ))}
-    </motion.div>
+    </div>
   );
 }

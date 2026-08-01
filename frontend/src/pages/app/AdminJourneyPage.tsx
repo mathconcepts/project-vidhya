@@ -44,13 +44,17 @@ export default function AdminJourneyPage() {
   }, [authLoading, user]);
 
   if (authLoading) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-violet-400" /></div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <Loader2 className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
   }
   if (!user || user.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto mt-20 p-6 rounded-xl border border-surface-800 bg-surface-900 text-center">
-        <Lock size={28} className="mx-auto text-surface-500 mb-3" />
-        <p className="text-surface-200 font-medium mb-1">Admin only</p>
+      <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
+        <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Admin only</p>
       </div>
     );
   }
@@ -58,25 +62,25 @@ export default function AdminJourneyPage() {
   const next = progress?.milestones.find((m) => m.status === 'next');
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <header className="mb-8">
-        <div className="text-xs uppercase tracking-wider text-violet-400 mb-2">Admin journey</div>
-        <h1 className="text-2xl font-display font-semibold text-surface-100">
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 0' }}>
+      <header style={{ marginBottom: 32 }}>
+        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--indigo-ink)', marginBottom: 8 }}>Admin journey</div>
+        <h1 style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
           Welcome — let's get your cohort live.
         </h1>
         {progress && (
-          <div className="mt-3 flex items-center gap-3 text-sm text-surface-400">
-            <span className="text-surface-200 font-medium">{progress.done_count} of {progress.milestones.length} done</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 'var(--weight-medium)' }}>{progress.done_count} of {progress.milestones.length} done</span>
             {next && (
               <>
-                <span className="text-surface-600">·</span>
-                <span>Next: <span className="text-violet-300">{next.label.toLowerCase()}</span></span>
+                <span>·</span>
+                <span>Next: <span style={{ color: 'var(--indigo-ink)' }}>{next.label.toLowerCase()}</span></span>
               </>
             )}
             <button
               onClick={() => load(true)}
               disabled={refreshing}
-              className="ml-auto inline-flex items-center gap-1 text-xs text-surface-500 hover:text-surface-300 disabled:opacity-50"
+              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.5 : 1, padding: 0 }}
             >
               <RefreshCw size={11} className={refreshing ? 'animate-spin' : ''} />
               Refresh
@@ -86,15 +90,15 @@ export default function AdminJourneyPage() {
       </header>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">
+        <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
           {error}
         </div>
       )}
 
       {progress && (
-        <ol className="relative">
-          {/* The vertical connector line */}
-          <div className="absolute left-3 top-2 bottom-2 w-px bg-surface-800" aria-hidden="true" />
+        <ol style={{ listStyle: 'none', padding: 0, margin: 0, position: 'relative' }}>
+          {/* Vertical connector line */}
+          <div style={{ position: 'absolute', left: 12, top: 8, bottom: 8, width: 1, background: 'var(--separator)' }} aria-hidden="true" />
 
           {progress.milestones.map((m, idx) => (
             <MilestoneRow key={m.id} milestone={m} isLast={idx === progress.milestones.length - 1} />
@@ -106,11 +110,11 @@ export default function AdminJourneyPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-8 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-200 text-sm"
+          style={{ marginTop: 32, padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(52,199,89,.22)', background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)', fontSize: 'var(--text-caption)' }}
         >
-          🎉 You've completed every milestone in the setup journey. From here on, the loop is weekly:
+          You've completed every milestone in the setup journey. From here on, the loop is weekly:
           read the digest, write 1 ruleset based on what won, watch the holdout timeline. See the{' '}
-          <a className="text-emerald-300 underline" href="/docs/admin-guide-jee-tn.md#step-9--iterate" target="_blank" rel="noreferrer">
+          <a style={{ color: 'var(--green-ink)', textDecoration: 'underline' }} href="/docs/admin-guide-jee-tn.md#step-9--iterate" target="_blank" rel="noreferrer">
             iteration guide
           </a>.
         </motion.div>
@@ -123,47 +127,59 @@ function MilestoneRow({ milestone, isLast }: { milestone: Milestone; isLast: boo
   const isDone = milestone.status === 'done';
   const isNext = milestone.status === 'next';
 
+  const bodyStyle: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    padding: 16,
+    borderRadius: 'var(--radius-md)',
+    border: isNext
+      ? '1px solid rgba(88,86,214,.3)'
+      : 'var(--hairline) solid var(--separator)',
+    background: isNext
+      ? 'rgba(88,86,214,.05)'
+      : isDone
+      ? 'var(--surface-card)'
+      : 'var(--surface-fill)',
+    opacity: !isDone && !isNext ? 0.7 : 1,
+  };
+
   return (
     <motion.li
       initial={{ opacity: 0, x: -4 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`relative flex items-start gap-4 pl-0 pb-${isLast ? '0' : '6'}`}
+      style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 16, paddingBottom: isLast ? 0 : 24, listStyle: 'none' }}
     >
-      {/* Status icon (sits on top of the connector line) */}
-      <div className="relative z-10 mt-0.5 shrink-0">
+      {/* Status icon */}
+      <div style={{ position: 'relative', zIndex: 1, marginTop: 2, flexShrink: 0 }}>
         {isDone ? (
-          <CheckCircle2 size={24} className="text-emerald-400 fill-emerald-500/15" />
+          <CheckCircle2 size={24} style={{ color: 'var(--green-ink)' }} />
         ) : isNext ? (
-          <div className="w-6 h-6 rounded-full bg-violet-500/15 border-2 border-violet-400 flex items-center justify-center">
-            <ArrowRight size={12} className="text-violet-300" />
+          <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(88,86,214,.12)', border: '2px solid var(--indigo-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ArrowRight size={12} style={{ color: 'var(--indigo-ink)' }} />
           </div>
         ) : (
-          <Circle size={24} className="text-surface-700" />
+          <Circle size={24} style={{ color: 'var(--separator)' }} />
         )}
       </div>
 
       {/* Body */}
-      <div className={`flex-1 min-w-0 p-4 rounded-xl border ${
-        isNext ? 'border-violet-500/30 bg-violet-500/5'
-          : isDone ? 'border-surface-800 bg-surface-900/50'
-          : 'border-surface-800 bg-surface-900/30 opacity-70'
-      }`}>
-        <div className="flex items-start justify-between gap-3 mb-1">
-          <h3 className={`text-sm font-medium ${isDone ? 'text-surface-200' : 'text-surface-100'}`}>
+      <div style={bodyStyle}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
+          <h3 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: isDone ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
             {milestone.label}
           </h3>
           {isDone && milestone.count > milestone.threshold && (
-            <span className="text-[10px] text-emerald-400 font-mono">{milestone.count}</span>
+            <span style={{ fontSize: 10, color: 'var(--green-ink)', fontFamily: 'var(--font-mono)' }}>{milestone.count}</span>
           )}
         </div>
-        <p className={`text-xs ${isDone ? 'text-surface-500' : 'text-surface-400'} leading-relaxed mb-3`}>
+        <p style={{ margin: '0 0 12px', fontSize: 11, color: isDone ? 'var(--text-tertiary)' : 'var(--text-secondary)', lineHeight: 1.5 }}>
           {milestone.description}
         </p>
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {isNext ? (
             <Link
               to={milestone.cta_href}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium bg-violet-500 text-white hover:bg-violet-600"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontSize: 11, fontWeight: 'var(--weight-medium)', background: 'var(--indigo)', color: '#fff', textDecoration: 'none' }}
             >
               {milestone.cta_label}
               <ArrowRight size={11} />
@@ -171,7 +187,7 @@ function MilestoneRow({ milestone, isLast }: { milestone: Milestone; isLast: boo
           ) : (
             <Link
               to={milestone.cta_href}
-              className="text-xs text-surface-400 hover:text-surface-200"
+              style={{ fontSize: 11, color: 'var(--text-tertiary)', textDecoration: 'none' }}
             >
               {milestone.cta_label}
             </Link>
@@ -180,7 +196,7 @@ function MilestoneRow({ milestone, isLast }: { milestone: Milestone; isLast: boo
             href={milestone.doc_link}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-surface-500 hover:text-violet-300"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)', textDecoration: 'none' }}
           >
             <BookOpen size={11} /> What is this?
           </a>

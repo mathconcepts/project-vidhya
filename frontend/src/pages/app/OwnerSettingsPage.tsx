@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch, fetchAuthConfig, type Role, type AuthConfig } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface AdminUser {
   id: string;
@@ -28,7 +27,7 @@ export default function OwnerSettingsPage() {
       const r = await authFetch('/api/admin/users');
       if (!r.ok) return;
       const d = await r.json();
-      setAdmins((d.users || []).filter((u: any) => u.role === 'admin'));
+      setAdmins((d.users || []).filter((u: { role: string }) => u.role === 'admin'));
     } catch {}
   }, []);
 
@@ -60,73 +59,63 @@ export default function OwnerSettingsPage() {
 
   if (!hasRole('owner')) {
     return (
-      <div className="max-w-md mx-auto p-6 text-center space-y-2">
-        <AlertCircle size={24} className="text-amber-400 mx-auto" />
-        <p className="text-sm text-surface-300">Owner role required.</p>
-        <p className="text-xs text-surface-500">Your role: {user?.role || 'not signed in'}</p>
+      <div style={{ maxWidth: 448, margin: '0 auto', padding: 24, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <AlertCircle size={24} style={{ color: 'var(--orange)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>Owner role required.</p>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>Your role: {user?.role || 'not signed in'}</p>
       </div>
     );
   }
 
   return (
-    <motion.div className="space-y-5 max-w-2xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Crown size={20} className="text-amber-400" />
+    <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Crown size={20} style={{ color: 'var(--orange)' }} />
           Owner Settings
         </h1>
-        <p className="text-xs text-surface-500 mt-1">
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
           You are the owner of this Vidhya deployment. You have full control.
         </p>
       </motion.div>
 
       {/* Channel integration status */}
       {authConfig && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide">Channel integrations</p>
-          <div className="space-y-1.5">
-            <ChannelStatusRow
-              icon={Smartphone}
-              name="Web app"
-              enabled={authConfig.channels.web}
-              hint=""
-            />
-            <ChannelStatusRow
-              icon={Smartphone}
-              name="Telegram bot"
-              enabled={authConfig.channels.telegram}
-              hint="Set TELEGRAM_BOT_TOKEN in .env to enable"
-            />
-            <ChannelStatusRow
-              icon={MessageCircle}
-              name="WhatsApp"
-              enabled={authConfig.channels.whatsapp}
-              hint="Set WHATSAPP_ACCESS_TOKEN in .env to enable"
-            />
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Channel integrations</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <ChannelStatusRow icon={Smartphone} name="Web app" enabled={authConfig.channels.web} hint="" />
+            <ChannelStatusRow icon={Smartphone} name="Telegram bot" enabled={authConfig.channels.telegram} hint="Set TELEGRAM_BOT_TOKEN in .env to enable" />
+            <ChannelStatusRow icon={MessageCircle} name="WhatsApp" enabled={authConfig.channels.whatsapp} hint="Set WHATSAPP_ACCESS_TOKEN in .env to enable" />
           </div>
-          <p className="text-[10px] text-surface-600 mt-1">
-            See <span className="font-mono">docs/MULTI-CHANNEL-SETUP.md</span> for setup instructions.
+          <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--text-tertiary)' }}>
+            See <span style={{ fontFamily: 'var(--font-mono)' }}>docs/MULTI-CHANNEL-SETUP.md</span> for setup instructions.
           </p>
         </motion.div>
       )}
 
       {/* Transfer ownership */}
-      <motion.div variants={fadeInUp} className="space-y-2 pt-4 border-t border-surface-800">
-        <p className="text-[10px] text-surface-500 uppercase tracking-wide flex items-center gap-1.5">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ paddingTop: 16, borderTop: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 8 }}
+      >
+        <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
           <ArrowRightLeft size={11} />
           Transfer ownership
         </p>
 
         {admins.length === 0 ? (
-          <p className="text-xs text-surface-500">
-            No admins to transfer to. Promote a user to admin first on the <a href="/admin/users" className="text-violet-400 hover:text-violet-300">User Management</a> page.
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
+            No admins to transfer to. Promote a user to admin first on the{' '}
+            <a href="/admin/users" style={{ color: 'var(--indigo-ink)' }}>User Management</a> page.
           </p>
         ) : (
-          <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+          <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <select
               value={selectedNewOwner}
               onChange={e => setSelectedNewOwner(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200"
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-caption)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
             >
               <option value="">Choose an admin to become the new owner...</option>
               {admins.map(a => (
@@ -138,42 +127,49 @@ export default function OwnerSettingsPage() {
             <button
               onClick={transferOwnership}
               disabled={!selectedNewOwner || busy}
-              className="w-full py-2 rounded-lg bg-gradient-to-r from-amber-500/80 to-rose-500/80 text-white text-sm font-medium disabled:opacity-40 inline-flex items-center justify-center gap-2"
+              style={{ width: '100%', padding: '8px 16px', borderRadius: 'var(--radius-sm)', background: !selectedNewOwner || busy ? 'var(--surface-fill)' : 'var(--orange)', color: !selectedNewOwner || busy ? 'var(--text-tertiary)' : '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', border: 'none', cursor: !selectedNewOwner || busy ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               {busy ? <Loader2 size={14} className="animate-spin" /> : <ArrowRightLeft size={14} />}
               Transfer ownership
             </button>
-            <p className="text-[10px] text-surface-500">
+            <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>
               You will be demoted to admin. The new owner gains full control.
             </p>
           </div>
         )}
 
         {msg && (
-          <div className={
-            msg.type === 'ok'
-              ? 'p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-300'
-              : 'p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-300'
-          }>
+          <div style={{
+            padding: 12,
+            borderRadius: 'var(--radius-sm)',
+            background: msg.type === 'ok' ? 'rgba(52,199,89,.06)' : 'rgba(255,59,48,.06)',
+            border: msg.type === 'ok' ? '1px solid rgba(52,199,89,.22)' : '1px solid rgba(255,59,48,.22)',
+            fontSize: 11,
+            color: msg.type === 'ok' ? 'var(--green-ink)' : 'var(--red)',
+          }}>
             {msg.text}
           </div>
         )}
       </motion.div>
 
-      {/* Owner CLI info */}
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-1.5">
-        <p className="text-[10px] text-surface-500 uppercase tracking-wide">Escape hatch</p>
-        <p className="text-xs text-surface-300">
+      {/* Escape hatch */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 6 }}
+      >
+        <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Escape hatch</p>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>
           Lost access? Admins with shell access to the deployment can run:
         </p>
-        <code className="block text-[11px] bg-surface-950 px-2 py-1.5 rounded text-amber-300 font-mono">
+        <code style={{ display: 'block', fontSize: 11, background: 'var(--surface-fill)', padding: '6px 8px', borderRadius: 'var(--radius-sm)', color: 'var(--orange)', fontFamily: 'var(--font-mono)' }}>
           npx tsx scripts/admin/assign-owner.ts --email new-owner@example.com
         </code>
-        <p className="text-[10px] text-surface-500">
+        <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>
           Requires shell access to the server. This is intentional — filesystem control is the ultimate ownership proof.
         </p>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -184,15 +180,15 @@ function ChannelStatusRow({ icon: Icon, name, enabled, hint }: {
   hint: string;
 }) {
   return (
-    <div className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 flex items-center gap-3">
-      <Icon size={14} className={enabled ? 'text-emerald-400' : 'text-surface-600'} />
-      <div className="flex-1">
-        <p className="text-xs text-surface-200">{name}</p>
-        {!enabled && hint && <p className="text-[10px] text-surface-500">{hint}</p>}
+    <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <Icon size={14} style={{ color: enabled ? 'var(--green-ink)' : 'var(--text-tertiary)' }} />
+      <div style={{ flex: 1 }}>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>{name}</p>
+        {!enabled && hint && <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>{hint}</p>}
       </div>
       {enabled
-        ? <Check size={13} className="text-emerald-400" />
-        : <X size={13} className="text-surface-600" />}
+        ? <Check size={13} style={{ color: 'var(--green-ink)' }} />
+        : <X size={13} style={{ color: 'var(--text-tertiary)' }} />}
     </div>
   );
 }

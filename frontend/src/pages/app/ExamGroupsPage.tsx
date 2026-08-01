@@ -1,14 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Layers, Plus, CheckCircle, Loader2, RefreshCw, ChevronRight, X,
   AlertCircle, Gift, Archive as ArchiveIcon, Hash, XCircle, Eye,
   Trash2, ListPlus,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface GroupSummary {
   id: string;
@@ -76,9 +74,9 @@ export default function ExamGroupsPage() {
 
   if (!hasRole('admin')) {
     return (
-      <div className="max-w-md mx-auto p-6 text-center space-y-2">
-        <AlertCircle size={24} className="text-amber-400 mx-auto" />
-        <p className="text-sm text-surface-300">Admin role required.</p>
+      <div style={{ maxWidth: 448, margin: '0 auto', padding: '1.5rem', textAlign: 'center' }}>
+        <AlertCircle size={24} style={{ color: 'var(--orange)', margin: '0 auto 8px' }} />
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Admin role required.</p>
       </div>
     );
   }
@@ -93,21 +91,30 @@ export default function ExamGroupsPage() {
   }
 
   return (
-    <motion.div className="space-y-4 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp} className="flex items-center justify-between gap-3">
+    <motion.div
+      style={{ maxWidth: 896, margin: '0 auto' }}
+      className="space-y-4"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between gap-3"
+      >
         <div>
-          <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            <Layers size={20} className="text-violet-400" />
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }} className="flex items-center gap-2">
+            <Layers size={20} style={{ color: 'var(--indigo-ink)' }} />
             Exam Groups
           </h1>
-          <p className="text-xs text-surface-500 mt-1">
+          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
             Master list of bundled exams. Approved groups trigger the student giveaway banner.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCreate(true)}
-            className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
+            style={{ background: 'var(--indigo)', color: 'var(--text-on-fill)', height: 36, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
             <Plus size={13} />
             New group
@@ -115,75 +122,91 @@ export default function ExamGroupsPage() {
           <button
             onClick={refresh}
             disabled={loading}
-            className="p-2 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200"
+            style={{ padding: 8, borderRadius: 8, background: 'var(--surface-card)', border: '1px solid var(--separator)', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           </button>
         </div>
       </motion.div>
 
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
-        <Gift size={13} className="shrink-0 mt-0.5 text-violet-400" />
-        <div className="text-[11px] text-violet-200/80 leading-relaxed">
-          <span className="font-medium text-violet-300">How groups work.</span>{' '}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: 12, borderRadius: 12, background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.22)', display: 'flex', alignItems: 'flex-start', gap: 10 }}
+      >
+        <Gift size={13} className="shrink-0" style={{ marginTop: 2, color: 'var(--indigo-ink)' }} />
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          <span style={{ fontWeight: 500, color: 'var(--indigo-ink)' }}>How groups work.</span>{' '}
           A group bundles related exams. When a student is assigned to any exam in an approved group, they see a "giveaway" banner listing the other exams included — positioning the bundle as one subscription, multiple exams. Drafts are admin-only; approval gates student visibility.
         </div>
       </motion.div>
 
       {error && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-300">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: 12, borderRadius: 12, background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', fontSize: 12, color: 'var(--red)' }}
+        >
           {error}
         </motion.div>
       )}
 
       {loading && groups.length === 0 ? (
-        <div className="text-center py-12 text-surface-500 text-sm">
-          <Loader2 size={14} className="inline animate-spin mr-2" />Loading...
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-tertiary)', fontSize: 14 }}>
+          <Loader2 size={14} className="inline animate-spin" style={{ marginRight: 8 }} />Loading...
         </div>
       ) : groups.length === 0 ? (
-        <motion.div variants={fadeInUp} className="p-8 rounded-xl bg-surface-900 border border-surface-800 text-center space-y-3">
-          <Layers size={28} className="text-surface-600 mx-auto" />
-          <p className="text-sm text-surface-300">No exam groups yet.</p>
-          <p className="text-xs text-surface-500 max-w-sm mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: 32, borderRadius: 12, background: 'var(--surface-card)', border: '1px solid var(--separator)', textAlign: 'center' }}
+        >
+          <Layers size={28} style={{ color: 'var(--text-tertiary)', margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 8 }}>No exam groups yet.</p>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', maxWidth: 320, margin: '0 auto 16px' }}>
             Create a group to bundle related exams. Approved groups trigger the giveaway banner for students.
           </p>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
+            style={{ background: 'var(--indigo)', color: 'var(--text-on-fill)', height: 36, padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
             <Plus size={13} />
             Create first group
           </button>
         </motion.div>
       ) : (
-        <motion.div variants={fadeInUp} className="space-y-2">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-2"
+        >
           {groups.map(g => (
             <button
               key={g.id}
               onClick={() => setSelectedId(g.id)}
-              className="w-full p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-surface-700 flex items-center gap-3 text-left transition-colors group"
+              style={{ width: '100%', padding: 12, borderRadius: 12, background: 'var(--surface-card)', border: '1px solid var(--separator)', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', cursor: 'pointer' }}
             >
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-medium text-surface-200 truncate">{g.name}</p>
+                <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
+                  <p className="truncate" style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>{g.name}</p>
                   {g.is_approved ? (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium uppercase tracking-wide inline-flex items-center gap-1">
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                       <CheckCircle size={8} />
                       Approved
                     </span>
                   ) : (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium uppercase tracking-wide">
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', color: 'var(--orange)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Draft
                     </span>
                   )}
                 </div>
-                {g.tagline && <p className="text-[11px] text-violet-300/80">{g.tagline}</p>}
-                <p className="text-[10px] text-surface-500 mt-0.5">
-                  <code className="text-violet-400">{g.code}</code>
+                {g.tagline && <p style={{ fontSize: 11, color: 'var(--indigo-ink)' }}>{g.tagline}</p>}
+                <p style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                  <code style={{ color: 'var(--indigo-ink)' }}>{g.code}</code>
                   {' · '}{g.member_count} exam{g.member_count !== 1 ? 's' : ''}
                 </p>
               </div>
-              <ChevronRight size={14} className="text-surface-600 group-hover:text-surface-400 shrink-0" />
+              <ChevronRight size={14} className="shrink-0" style={{ color: 'var(--text-tertiary)' }} />
             </button>
           ))}
         </motion.div>
@@ -269,51 +292,60 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
   };
 
   if (loading && !group) {
-    return <div className="text-center py-12 text-surface-500 text-sm"><Loader2 size={14} className="inline animate-spin mr-2" />Loading...</div>;
+    return (
+      <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-tertiary)', fontSize: 14 }}>
+        <Loader2 size={14} className="inline animate-spin" style={{ marginRight: 8 }} />Loading...
+      </div>
+    );
   }
   if (!group) {
-    return <div className="text-center py-12 text-sm text-surface-500">Group not found.</div>;
+    return <div style={{ textAlign: 'center', padding: '48px 0', fontSize: 14, color: 'var(--text-tertiary)' }}>Group not found.</div>;
   }
 
   const totalMembers = (members?.dynamic.length || 0) + (members?.static.length || 0);
 
   return (
-    <motion.div className="space-y-4 max-w-4xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp}>
-        <button onClick={onBack} className="text-[11px] text-violet-400 hover:text-violet-300 mb-1">
+    <motion.div
+      style={{ maxWidth: 896, margin: '0 auto' }}
+      className="space-y-4"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <button onClick={onBack} style={{ fontSize: 11, color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 4 }}>
           ← All groups
         </button>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-surface-100 flex items-center gap-2 flex-wrap">
-              <Layers size={18} className="text-violet-400 shrink-0" />
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <Layers size={18} className="shrink-0" style={{ color: 'var(--indigo-ink)' }} />
               {group.name}
               {group.is_approved ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium uppercase tracking-wide inline-flex items-center gap-1">
+                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                   <CheckCircle size={8} />Approved
                 </span>
               ) : (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium uppercase tracking-wide">
+                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', color: 'var(--orange)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Draft
                 </span>
               )}
             </h1>
-            <p className="text-[11px] text-surface-500 mt-0.5 font-mono flex items-center gap-1.5">
+            <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 6 }}>
               <Hash size={10} />{group.id}
             </p>
-            {group.tagline && <p className="text-xs text-violet-300/80 mt-1">{group.tagline}</p>}
+            {group.tagline && <p style={{ fontSize: 12, color: 'var(--indigo-ink)', marginTop: 4 }}>{group.tagline}</p>}
           </div>
         </div>
       </motion.div>
 
       {/* Admin actions */}
-      <motion.div variants={fadeInUp} className="flex flex-wrap gap-2">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2">
         {!group.is_approved ? (
           <button
             onClick={approve}
             disabled={working || totalMembers < 2}
-            className="px-3 h-9 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
             title={totalMembers < 2 ? 'Need at least 2 exams to approve' : ''}
+            style={{ background: 'var(--green)', color: 'var(--text-on-fill)', height: 36, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: (working || totalMembers < 2) ? 0.5 : 1 }}
           >
             {working ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
             Approve for students
@@ -322,7 +354,7 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
           <button
             onClick={unapprove}
             disabled={working}
-            className="px-3 h-9 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+            style={{ background: 'var(--orange)', color: 'var(--text-on-fill)', height: 36, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: working ? 0.5 : 1 }}
           >
             <XCircle size={12} />
             Unapprove
@@ -330,14 +362,14 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
         )}
         <button
           onClick={() => setShowAddMember(true)}
-          className="px-3 h-9 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium inline-flex items-center gap-1.5"
+          style={{ background: 'var(--indigo)', color: 'var(--text-on-fill)', height: 36, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           <ListPlus size={12} />
           Add exam
         </button>
         <button
           onClick={archive}
-          className="px-3 h-9 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200 text-xs inline-flex items-center gap-1.5"
+          style={{ height: 36, padding: '0 12px', borderRadius: 8, background: 'var(--surface-card)', border: '1px solid var(--separator)', color: 'var(--text-tertiary)', fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           <ArchiveIcon size={12} />
           Archive
@@ -345,41 +377,58 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
       </motion.div>
 
       {totalMembers < 2 && !group.is_approved && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2.5">
-          <AlertCircle size={13} className="shrink-0 mt-0.5 text-amber-400" />
-          <div className="text-[11px] text-amber-200/80 leading-relaxed">
-            <span className="font-medium text-amber-300">Add at least 2 exams to approve.</span>{' '}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: 12, borderRadius: 12, background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', display: 'flex', alignItems: 'flex-start', gap: 10 }}
+        >
+          <AlertCircle size={13} className="shrink-0" style={{ marginTop: 2, color: 'var(--orange)' }} />
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            <span style={{ fontWeight: 500, color: 'var(--orange)' }}>Add at least 2 exams to approve.</span>{' '}
             A group of one exam doesn't make sense as a giveaway.
           </div>
         </motion.div>
       )}
 
       {group.description && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide font-medium mb-1">Description</p>
-          <p className="text-xs text-surface-300 leading-relaxed">{group.description}</p>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: 12, borderRadius: 12, background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+        >
+          <p style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500, marginBottom: 4 }}>Description</p>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{group.description}</p>
         </motion.div>
       )}
 
       {group.benefits && group.benefits.length > 0 && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide font-medium mb-1">Benefits (shown on giveaway banner)</p>
-          <ul className="space-y-0.5">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: 12, borderRadius: 12, background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+        >
+          <p style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500, marginBottom: 4 }}>Benefits (shown on giveaway banner)</p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {group.benefits.map((b, i) => (
-              <li key={i} className="text-xs text-surface-300">• {b}</li>
+              <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>• {b}</li>
             ))}
           </ul>
         </motion.div>
       )}
 
       {/* Members */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
-        <p className="text-[10px] text-surface-500 uppercase tracking-wide font-medium flex items-center gap-1.5">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: 16, borderRadius: 12, background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+        className="space-y-3"
+      >
+        <p style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Layers size={10} />
           Member exams ({totalMembers})
         </p>
         {totalMembers === 0 ? (
-          <p className="text-xs text-surface-500">No exams added yet.</p>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No exams added yet.</p>
         ) : (
           <div className="space-y-1.5">
             {members?.dynamic.map(e => (
@@ -408,32 +457,39 @@ function MemberRow({ entry, isStatic, onRemove, working }: {
   entry: MemberEntry; isStatic: boolean; onRemove: () => void; working: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-950/60 border border-surface-800">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10, borderRadius: 8, background: 'var(--surface-fill)', border: '1px solid var(--separator)' }}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-sm text-surface-200 truncate">{entry.name}</p>
-          <span className={clsx(
-            'text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
-            isStatic ? 'bg-violet-500/15 text-violet-300' : 'bg-emerald-500/15 text-emerald-300',
-          )}>
+          <p className="truncate" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{entry.name}</p>
+          <span style={{
+            fontSize: 9,
+            padding: '2px 6px',
+            borderRadius: 4,
+            fontWeight: 500,
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+            ...(isStatic
+              ? { background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.22)', color: 'var(--indigo-ink)' }
+              : { background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)' }),
+          }}>
             {isStatic ? 'static' : 'dynamic'}
           </span>
         </div>
-        <p className="text-[10px] text-surface-500 font-mono mt-0.5">{entry.id}</p>
+        <p style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'monospace', marginTop: 2 }}>{entry.id}</p>
         {typeof entry.completeness === 'number' && (
-          <p className="text-[10px] text-surface-500">
+          <p style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
             {Math.round(entry.completeness * 100)}% complete
             {entry.is_draft && ' · draft'}
           </p>
         )}
         {isStatic && entry.authority && (
-          <p className="text-[10px] text-surface-500">{entry.authority}</p>
+          <p style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{entry.authority}</p>
         )}
       </div>
       <button
         onClick={onRemove}
         disabled={working}
-        className="p-1.5 rounded text-surface-500 hover:text-rose-400 disabled:opacity-50"
+        style={{ padding: 6, borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', opacity: working ? 0.5 : 1 }}
         aria-label="remove"
       >
         <Trash2 size={12} />
@@ -481,41 +537,68 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    height: 36,
+    marginTop: 4,
+    padding: '0 12px',
+    borderRadius: 8,
+    background: 'var(--surface-fill)',
+    border: '1px solid var(--separator)',
+    fontSize: 14,
+    color: 'var(--text-secondary)',
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4" onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} className="bg-surface-950 border border-surface-800 rounded-t-2xl md:rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-surface-950 border-b border-surface-800 px-4 py-3 flex items-center justify-between">
-          <p className="text-sm font-medium text-surface-100">New exam group</p>
-          <button onClick={onClose} className="p-1 rounded text-surface-500 hover:text-surface-200"><X size={14} /></button>
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ background: 'var(--surface-fill)', border: '1px solid var(--separator)', borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 448, maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        <div style={{ position: 'sticky', top: 0, background: 'var(--surface-fill)', borderBottom: '1px solid var(--separator)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>New exam group</p>
+          <button onClick={onClose} style={{ padding: 4, borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}><X size={14} /></button>
         </div>
-        <div className="p-4 space-y-3">
-          <p className="text-[11px] text-surface-500 leading-relaxed">
+        <div style={{ padding: 16 }} className="space-y-3">
+          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
             Create the group as a draft first. Add member exams on the next screen. Approve when ready — only approved groups are visible to students.
           </p>
           <div>
-            <label className="text-[11px] text-surface-400">Short code *</label>
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Short code *</label>
             <input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. ENG-ENTRANCE-2027"
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50 font-mono" />
+              style={{ ...inputStyle, fontFamily: 'monospace' }} />
           </div>
           <div>
-            <label className="text-[11px] text-surface-400">Display name *</label>
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Display name *</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Engineering Entrance Exams 2027"
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50" />
+              style={inputStyle} />
           </div>
           <div>
-            <label className="text-[11px] text-surface-400">Tagline (shown on student banner)</label>
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Tagline (shown on student banner)</label>
             <input value={tagline} onChange={e => setTagline(e.target.value)} placeholder="e.g. One subscription, 4 exams"
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50" />
+              style={inputStyle} />
           </div>
           <div>
-            <label className="text-[11px] text-surface-400">Description (optional)</label>
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Description (optional)</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
               placeholder="What makes these exams belong together."
-              className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50 resize-none" />
+              style={{ ...inputStyle, height: 'auto', padding: '8px 12px', resize: 'none' }} />
           </div>
-          {error && <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-[11px] text-rose-300">{error}</div>}
-          <button onClick={submit} disabled={!code.trim() || !name.trim() || creating}
-            className="w-full h-10 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50">
+          {error && (
+            <div style={{ padding: 8, borderRadius: 8, background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', fontSize: 11, color: 'var(--red)' }}>
+              {error}
+            </div>
+          )}
+          <button
+            onClick={submit}
+            disabled={!code.trim() || !name.trim() || creating}
+            style={{ width: '100%', height: 40, borderRadius: 8, background: 'var(--indigo)', color: 'var(--text-on-fill)', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: (!code.trim() || !name.trim() || creating) ? 0.5 : 1 }}
+          >
             {creating ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
             Create draft group
           </button>
@@ -566,28 +649,37 @@ function AddMemberModal({ groupId, existingIds, onClose, onAdded }: {
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4" onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} className="bg-surface-950 border border-surface-800 rounded-t-2xl md:rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto">
-        <div className="sticky top-0 bg-surface-950 border-b border-surface-800 px-4 py-3 flex items-center justify-between">
-          <p className="text-sm font-medium text-surface-100">Add exam to group</p>
-          <button onClick={onClose} className="p-1 rounded text-surface-500 hover:text-surface-200"><X size={14} /></button>
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ background: 'var(--surface-fill)', border: '1px solid var(--separator)', borderRadius: '16px 16px 0 0', width: '100%', maxWidth: 448, maxHeight: '85vh', overflowY: 'auto' }}
+      >
+        <div style={{ position: 'sticky', top: 0, background: 'var(--surface-fill)', borderBottom: '1px solid var(--separator)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Add exam to group</p>
+          <button onClick={onClose} style={{ padding: 4, borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}><X size={14} /></button>
         </div>
-        <div className="p-4 space-y-3">
+        <div style={{ padding: 16 }} className="space-y-3">
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search exams..."
-            className="w-full h-9 px-3 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50" />
+            style={{ width: '100%', height: 36, padding: '0 12px', borderRadius: 8, background: 'var(--surface-fill)', border: '1px solid var(--separator)', fontSize: 14, color: 'var(--text-secondary)', outline: 'none', boxSizing: 'border-box' }} />
           <div className="space-y-1">
             {filtered.length === 0 ? (
-              <p className="text-xs text-surface-500 text-center py-6">
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', padding: '24px 0' }}>
                 {available.length === 0 ? 'No exams in registry yet.' : 'No exams match your search or all are already in this group.'}
               </p>
             ) : filtered.map(e => (
               <button key={e.id} onClick={() => add(e.id, false)} disabled={working !== null}
-                className="w-full p-2.5 rounded-lg bg-surface-900 border border-surface-800 hover:border-surface-700 flex items-center gap-3 text-left">
+                style={{ width: '100%', padding: 10, borderRadius: 8, background: 'var(--surface-card)', border: '1px solid var(--separator)', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', cursor: 'pointer' }}
+              >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-surface-200 truncate">{e.name}</p>
-                  <p className="text-[10px] text-surface-500 font-mono">{e.code}</p>
+                  <p className="truncate" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{e.name}</p>
+                  <p style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>{e.code}</p>
                 </div>
-                {working === e.id ? <Loader2 size={12} className="animate-spin text-surface-400" /> : <Plus size={12} className="text-surface-400" />}
+                {working === e.id
+                  ? <Loader2 size={12} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+                  : <Plus size={12} style={{ color: 'var(--text-tertiary)' }} />}
               </button>
             ))}
           </div>

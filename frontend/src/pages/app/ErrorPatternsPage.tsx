@@ -8,13 +8,11 @@ import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CountUp } from '@/components/app/CountUp';
 import {
   Brain, TrendingDown, TrendingUp, Minus, AlertTriangle, Lightbulb,
   Target, GitBranch, Calculator, Clock, Eye, SkipForward,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface ErrorReport {
   session_id: string;
@@ -36,14 +34,14 @@ const ERROR_ICONS: Record<string, typeof Brain> = {
   overconfidence_skip: SkipForward,
 };
 
-const ERROR_COLORS: Record<string, string> = {
-  conceptual: 'bg-red-500',
-  procedural: 'bg-amber-500',
-  notation: 'bg-violet-500',
-  misread: 'bg-purple-500',
-  time_pressure: 'bg-orange-500',
-  arithmetic: 'bg-emerald-500',
-  overconfidence_skip: 'bg-yellow-500',
+const ERROR_BAR_COLORS: Record<string, string> = {
+  conceptual: 'var(--red)',
+  procedural: 'var(--orange)',
+  notation: 'var(--indigo)',
+  misread: 'var(--indigo)',
+  time_pressure: 'var(--orange)',
+  arithmetic: 'var(--green)',
+  overconfidence_skip: 'var(--orange)',
 };
 
 const ERROR_LABELS: Record<string, string> = {
@@ -76,9 +74,9 @@ export default function ErrorPatternsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-20 rounded-xl bg-surface-800/60 animate-pulse" />
+          <div key={i} style={{ height: 80, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} className="animate-pulse" />
         ))}
       </div>
     );
@@ -86,31 +84,29 @@ export default function ErrorPatternsPage() {
 
   if (!report || report.total_errors === 0) {
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16 space-y-4">
-        <Brain size={48} className="text-surface-700 mx-auto" />
-        <h2 className="text-xl font-bold text-surface-300">No errors to analyze</h2>
-        <p className="text-sm text-surface-500">Practice more problems to see your error patterns here.</p>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
+        <Brain size={48} style={{ color: 'var(--text-tertiary)' }} />
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)' }}>No errors to analyze</h2>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Practice more problems to see your error patterns here.</p>
       </motion.div>
     );
   }
 
   const TrendIcon = report.trend === 'improving' ? TrendingDown : report.trend === 'declining' ? TrendingUp : Minus;
-  const trendColor = report.trend === 'improving' ? 'text-emerald-400' : report.trend === 'declining' ? 'text-red-400' : 'text-surface-400';
+  const trendColor = report.trend === 'improving' ? 'var(--green-ink)' : report.trend === 'declining' ? 'var(--red)' : 'var(--text-tertiary)';
   const trendLabel = report.trend === 'improving' ? 'Fewer errors than last week' : report.trend === 'declining' ? 'More errors than last week' : 'Similar to last week';
 
-  // Compute type percentages
-  const typeEntries = Object.entries(report.by_type)
-    .sort(([, a], [, b]) => b - a);
+  const typeEntries = Object.entries(report.by_type).sort(([, a], [, b]) => b - a);
 
   return (
-    <motion.div className="space-y-6" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100">Error Patterns</h1>
-        <p className="text-xs text-surface-500 mt-1">Understand your mistakes to eliminate them</p>
-      </motion.div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Error Patterns</h1>
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>Understand your mistakes to eliminate them</p>
+      </div>
 
       {/* Period Selector */}
-      <motion.div variants={fadeInUp} className="flex gap-1 p-1 rounded-xl bg-surface-900 border border-surface-800">
+      <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
         {[
           { d: 7, label: '7 days' },
           { d: 14, label: '14 days' },
@@ -119,53 +115,53 @@ export default function ErrorPatternsPage() {
           <button
             key={opt.d}
             onClick={() => setDays(opt.d)}
-            className={clsx(
-              'flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
-              days === opt.d ? 'bg-surface-800 text-surface-100' : 'text-surface-500 hover:text-surface-400',
-            )}
+            style={{
+              flex: 1, padding: '6px 0', borderRadius: 'var(--radius-sm)', fontSize: 11, fontWeight: 'var(--weight-semibold)', cursor: 'pointer', border: 'none', transition: 'all 0.15s',
+              background: days === opt.d ? 'var(--surface-card)' : 'transparent',
+              color: days === opt.d ? 'var(--text-primary)' : 'var(--text-tertiary)',
+            }}
           >
             {opt.label}
           </button>
         ))}
-      </motion.div>
+      </div>
 
       {/* Summary */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <CountUp target={report.total_errors} className="text-lg font-bold text-surface-200" />
-          <p className="text-xs text-surface-500">total errors</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+          <CountUp target={report.total_errors} style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)' }} />
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>total errors</p>
         </div>
-        <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <div className="flex items-center justify-center gap-1.5">
-            <TrendIcon size={16} className={trendColor} />
-            <span className={clsx('text-sm font-bold', trendColor)}>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <TrendIcon size={16} style={{ color: trendColor }} />
+            <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', color: trendColor }}>
               {report.trend.charAt(0).toUpperCase() + report.trend.slice(1)}
             </span>
           </div>
-          <p className="text-xs text-surface-500 mt-0.5">{trendLabel}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>{trendLabel}</p>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Error Type Breakdown — visual bar chart */}
-      <motion.div variants={fadeInUp} className="space-y-2">
-        <h2 className="text-sm font-semibold text-surface-300">Error Type Breakdown</h2>
-        <div className="space-y-2">
+      {/* Error Type Breakdown */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Error Type Breakdown</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {typeEntries.map(([type, count]) => {
             const pct = Math.round((count / report.total_errors) * 100);
             const Icon = ERROR_ICONS[type] || Brain;
-
             return (
-              <div key={type} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <Icon size={13} className="text-surface-400" />
-                    <span className="text-sm text-surface-200">{ERROR_LABELS[type] || type}</span>
+              <div key={type} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Icon size={13} style={{ color: 'var(--text-tertiary)' }} />
+                    <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{ERROR_LABELS[type] || type}</span>
                   </div>
-                  <span className="text-xs text-surface-500">{count} ({pct}%)</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{count} ({pct}%)</span>
                 </div>
-                <div className="h-2 rounded-full bg-surface-800 overflow-hidden">
+                <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-fill)', overflow: 'hidden' }}>
                   <motion.div
-                    className={clsx('h-full rounded-full', ERROR_COLORS[type] || 'bg-surface-600')}
+                    style={{ height: '100%', borderRadius: 999, background: ERROR_BAR_COLORS[type] || 'var(--text-tertiary)' }}
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
@@ -175,41 +171,41 @@ export default function ErrorPatternsPage() {
             );
           })}
         </div>
-      </motion.div>
+      </div>
 
       {/* Top Misconceptions */}
       {report.top_misconceptions.length > 0 && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-            <Target size={13} className="text-red-400" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Target size={13} style={{ color: 'var(--red)' }} />
             Top Misconceptions
           </h2>
           {report.top_misconceptions.map((m, i) => (
-            <div key={i} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-mono text-violet-400">{m.id.replace(/-/g, ' ')}</span>
-                <span className="text-xs text-surface-500">{m.count}×</span>
+            <div key={i} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--indigo-ink)' }}>{m.id.replace(/-/g, ' ')}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{m.count}×</span>
               </div>
-              <p className="text-sm text-surface-400">{m.description}</p>
+              <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{m.description}</p>
             </div>
           ))}
-        </motion.div>
+        </div>
       )}
 
       {/* Recommendations */}
       {report.recommendations.length > 0 && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-            <Lightbulb size={13} className="text-emerald-400" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Lightbulb size={13} style={{ color: 'var(--green-ink)' }} />
             Recommendations
           </h2>
           {report.recommendations.map((rec, i) => (
-            <div key={i} className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
-              <p className="text-sm text-surface-300 leading-relaxed">{rec}</p>
+            <div key={i} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}>
+              <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>{rec}</p>
             </div>
           ))}
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

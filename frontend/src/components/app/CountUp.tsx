@@ -9,9 +9,10 @@ interface CountUpProps {
   duration?: number;
   suffix?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function CountUp({ target, duration = 800, suffix = '', className = '' }: CountUpProps) {
+export function CountUp({ target, duration = 800, suffix = '', className = '', style }: CountUpProps) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
@@ -39,5 +40,5 @@ export function CountUp({ target, duration = 800, suffix = '', className = '' }:
     return () => cancelAnimationFrame(raf);
   }, [target, duration]);
 
-  return <span className={className}>{value}{suffix}</span>;
+  return <span className={className} style={style}>{value}{suffix}</span>;
 }

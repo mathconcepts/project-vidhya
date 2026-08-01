@@ -12,15 +12,13 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authFetch, getToken, clearToken } from '@/lib/auth/client';
-import { fadeInUp } from '@/lib/animations';
 import {
   Plus, Trash2, Loader2, CheckCircle2, ChevronLeft, Save,
   AlertCircle, Calendar,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface ExamRegistration {
   exam_id: string;
@@ -33,20 +31,26 @@ interface KnownExam { id: string; label: string }
 
 const MAX_EXAMS = 5;
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '8px 12px',
+  borderRadius: 'var(--radius-sm)',
+  background: 'var(--surface-fill)',
+  border: 'var(--hairline) solid var(--separator)',
+  fontSize: 'var(--text-caption)',
+  color: 'var(--text-primary)',
+  boxSizing: 'border-box',
+};
+
 export default function ExamProfilePage() {
-  const navigate = useNavigate();
   const [exams, setExams] = useState<ExamRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [notAuthenticated, setNotAuthenticated] = useState(false);
-  // Known exams come from the backend — single source of truth is
-  // data/curriculum/*.yml (loaded by exam-loader). Previously this was a
-  // hardcoded array (UGEE / BITSAT / JEE Main) which never matched what
-  // the deploy actually had loaded; users could pick exams that didn't
-  // exist, then hit empty home pages.
   const [knownExams, setKnownExams] = useState<KnownExam[]>([]);
+
   useEffect(() => {
     let cancelled = false;
     fetch('/api/curriculum/exams')
@@ -59,14 +63,12 @@ export default function ExamProfilePage() {
         }));
         setKnownExams(opts);
       })
-      .catch(() => { /* graceful degradation — picker shows just custom */ });
+      .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
-  // Load existing profile on mount
   useEffect(() => {
     let cancelled = false;
-    // No token at all → show not-authenticated state immediately
     if (!getToken()) {
       setNotAuthenticated(true);
       setLoading(false);
@@ -77,7 +79,6 @@ export default function ExamProfilePage() {
         const res = await authFetch('/api/student/profile');
         if (cancelled) return;
         if (res.status === 401) {
-          // Stale token (e.g. after demo:reset) — clear it and show friendly message
           clearToken();
           setNotAuthenticated(true);
           return;
@@ -106,7 +107,7 @@ export default function ExamProfilePage() {
       exam_date: defaultDate,
       added_at: new Date().toISOString(),
     }]);
-  }, [exams]);
+  }, [exams, knownExams]);
 
   const updateExam = useCallback((idx: number, patch: Partial<ExamRegistration>) => {
     setExams(cur => cur.map((e, i) => i === idx ? { ...e, ...patch } : e));
@@ -120,7 +121,6 @@ export default function ExamProfilePage() {
     setSaving(true);
     setError(null);
     try {
-      // Validate before sending — surface problems inline
       for (const [i, e] of exams.entries()) {
         if (!e.exam_id?.trim()) throw new Error(`Row ${i + 1}: exam id is empty`);
         if (!e.exam_date || isNaN(new Date(e.exam_date).getTime())) {
@@ -141,9 +141,9 @@ export default function ExamProfilePage() {
         const body = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(body.error || `Save failed: ${res.status}`);
       }
-      setSavedAt(Date.now());
-      // Auto-clear the "saved" indicator after a moment
-      setTimeout(() => setSavedAt(prev => prev === Date.now() ? null : prev), 2500);
+      const now = Date.now();
+      setSavedAt(now);
+      setTimeout(() => setSavedAt(prev => prev === now ? null : prev), 2500);
     } catch (err: any) {
       setError(err.message || 'Save failed');
     } finally {
@@ -153,15 +153,15 @@ export default function ExamProfilePage() {
 
   if (notAuthenticated) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
-        <p className="text-surface-300 font-medium">Session expired</p>
-        <p className="text-sm text-surface-500 max-w-xs">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16, padding: '0 16px', textAlign: 'center' }}>
+        <p style={{ margin: 0, color: 'var(--text-secondary)', fontWeight: 'var(--weight-medium)' }}>Session expired</p>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', maxWidth: 280 }}>
           Your session has expired or you're not signed in.
           Go back to the demo and select a role to continue.
         </p>
         <a
           href="/demo.html"
-          className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
+          style={{ padding: '10px 20px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}
         >
           Back to demo sign-in
         </a>
@@ -170,136 +170,137 @@ export default function ExamProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20">
-      <div className="max-w-2xl mx-auto px-4 pt-8">
+    <div style={{ maxWidth: 672, margin: '0 auto', padding: '32px 16px 80px' }}>
+      <motion.header initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 32 }}>
+        <Link to="/planned" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)', textDecoration: 'none', marginBottom: 12 }}>
+          <ChevronLeft size={14} />
+          Back to Planner
+        </Link>
+        <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Exam profile</h1>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+          Register up to {MAX_EXAMS} exams you're preparing for concurrently. The planner
+          allocates time across them weighted by how close each exam is.
+        </p>
+      </motion.header>
 
-        <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
-          <Link to="/planned" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 mb-3">
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Back to Planner
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight mb-1">Exam profile</h1>
-          <p className="text-sm text-zinc-400">
-            Register up to {MAX_EXAMS} exams you're preparing for concurrently. The planner
-            allocates time across them weighted by how close each exam is.
-          </p>
-        </motion.header>
+      {loading && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-tertiary)', padding: '48px 0', justifyContent: 'center' }}>
+          <Loader2 size={16} className="animate-spin" />
+          <span style={{ fontSize: 'var(--text-caption)' }}>Loading your profile…</span>
+        </div>
+      )}
 
-        {loading && (
-          <div className="flex items-center gap-2 text-zinc-400 py-12 justify-center">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Loading your profile…</span>
-          </div>
-        )}
+      {!loading && (
+        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          {exams.length === 0 && (
+            <div style={{ marginBottom: 16, padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+              No exams yet. Add your first one below.
+            </div>
+          )}
 
-        {!loading && (
-          <motion.section variants={fadeInUp} initial="hidden" animate="visible">
-            {exams.length === 0 && (
-              <div className="mb-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-zinc-400 text-center">
-                No exams yet. Add your first one below.
-              </div>
-            )}
-
-            <div className="space-y-3 mb-4">
-              {exams.map((exam, i) => (
-                <div
-                  key={i}
-                  className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row gap-3 items-start sm:items-center"
-                >
-                  <div className="flex-1 min-w-0 w-full">
-                    <label className="block text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Exam</label>
-                    <select
-                      value={knownExams.some(k => k.id === exam.exam_id) ? exam.exam_id : '__custom'}
-                      onChange={(e) => {
-                        if (e.target.value === '__custom') {
-                          updateExam(i, { exam_id: '' });
-                        } else {
-                          updateExam(i, { exam_id: e.target.value });
-                        }
-                      }}
-                      className="w-full px-3 py-2 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-100"
-                    >
-                      {knownExams.map(k => (
-                        <option key={k.id} value={k.id}>{k.label}</option>
-                      ))}
-                      <option value="__custom">Custom exam id…</option>
-                    </select>
-                    {!knownExams.some(k => k.id === exam.exam_id) && (
-                      <input
-                        type="text"
-                        placeholder="EXM-..."
-                        value={exam.exam_id}
-                        onChange={(e) => updateExam(i, { exam_id: e.target.value })}
-                        className="mt-2 w-full px-3 py-2 rounded bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-100"
-                      />
-                    )}
-                  </div>
-                  <div className="w-full sm:w-44 shrink-0">
-                    <label className="block text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
-                      <Calendar className="inline w-3 h-3 mr-0.5 -mt-0.5" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+            {exams.map((exam, i) => (
+              <div
+                key={i}
+                style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 12 }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ display: 'block', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 4 }}>Exam</label>
+                  <select
+                    value={knownExams.some(k => k.id === exam.exam_id) ? exam.exam_id : '__custom'}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom') {
+                        updateExam(i, { exam_id: '' });
+                      } else {
+                        updateExam(i, { exam_id: e.target.value });
+                      }
+                    }}
+                    style={inputStyle}
+                  >
+                    {knownExams.map(k => (
+                      <option key={k.id} value={k.id}>{k.label}</option>
+                    ))}
+                    <option value="__custom">Custom exam id…</option>
+                  </select>
+                  {!knownExams.some(k => k.id === exam.exam_id) && (
+                    <input
+                      type="text"
+                      placeholder="EXM-..."
+                      value={exam.exam_id}
+                      onChange={(e) => updateExam(i, { exam_id: e.target.value })}
+                      style={{ ...inputStyle, marginTop: 8, fontFamily: 'var(--font-mono)' }}
+                    />
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 4 }}>
+                      <Calendar size={12} style={{ display: 'inline', marginRight: 2, verticalAlign: 'middle' }} />
                       Date
                     </label>
                     <input
                       type="date"
                       value={exam.exam_date}
                       onChange={(e) => updateExam(i, { exam_date: e.target.value })}
-                      className="w-full px-3 py-2 rounded bg-zinc-950 border border-zinc-800 text-sm text-zinc-100 font-mono"
+                      style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
                     />
                   </div>
                   <button
                     onClick={() => removeExam(i)}
-                    className="shrink-0 self-end sm:self-center p-2 rounded text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    style={{ flexShrink: 0, padding: 8, borderRadius: 'var(--radius-sm)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}
                     title="Remove this exam"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 size={16} />
                   </button>
                 </div>
-              ))}
-            </div>
-
-            <button
-              onClick={addExam}
-              disabled={exams.length >= MAX_EXAMS}
-              className={clsx(
-                'w-full px-4 py-3 rounded-lg border border-dashed text-sm font-semibold transition-colors',
-                exams.length >= MAX_EXAMS
-                  ? 'border-zinc-800 text-zinc-600 cursor-not-allowed'
-                  : 'border-zinc-700 text-zinc-300 hover:border-violet-500/40 hover:text-violet-300'
-              )}
-            >
-              <Plus className="w-4 h-4 inline mr-1" />
-              {exams.length >= MAX_EXAMS
-                ? `Maximum of ${MAX_EXAMS} exams`
-                : `Add exam (${exams.length}/${MAX_EXAMS})`
-              }
-            </button>
-
-            {error && (
-              <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-200 text-sm flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{error}</span>
               </div>
-            )}
+            ))}
+          </div>
 
-            <div className="mt-6 flex items-center gap-3">
-              <button
-                onClick={save}
-                disabled={saving}
-                className="flex-1 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save profile
-              </button>
-              {savedAt && (
-                <span className="text-xs text-emerald-400 inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Saved
-                </span>
-              )}
+          <button
+            onClick={addExam}
+            disabled={exams.length >= MAX_EXAMS}
+            style={{
+              width: '100%', padding: '12px 16px', borderRadius: 'var(--radius-md)',
+              border: `${exams.length >= MAX_EXAMS ? 'var(--hairline)' : 'var(--hairline)'} dashed var(--separator)`,
+              fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
+              color: exams.length >= MAX_EXAMS ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+              background: 'transparent',
+              cursor: exams.length >= MAX_EXAMS ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <Plus size={16} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+            {exams.length >= MAX_EXAMS
+              ? `Maximum of ${MAX_EXAMS} exams`
+              : `Add exam (${exams.length}/${MAX_EXAMS})`
+            }
+          </button>
+
+          {error && (
+            <div style={{ marginTop: 16, padding: 12, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', color: 'var(--red)', fontSize: 'var(--text-caption)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
-          </motion.section>
-        )}
-      </div>
+          )}
+
+          <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={save}
+              disabled={saving}
+              style={{ flex: 1, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-body)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              Save profile
+            </button>
+            {savedAt && (
+              <span style={{ fontSize: 11, color: 'var(--green-ink)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <CheckCircle2 size={14} />
+                Saved
+              </span>
+            )}
+          </div>
+        </motion.section>
+      )}
     </div>
   );
 }

@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   Loader2, AlertCircle, RefreshCw, Plus, FileText, Search,
   Check, X, Edit3, ArrowLeft, Save, AlertTriangle,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
-import { fadeInUp } from '@/lib/animations';
 
 /**
  * /gate/admin/content-studio — admin-driven content authoring UI.
@@ -129,7 +126,7 @@ export default function ContentStudioPage() {
   if (!hasRole('admin')) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-center gap-2 text-rose-400">
+        <div className="flex items-center gap-2" style={{ color: 'var(--red)' }}>
           <AlertCircle className="w-5 h-5" />
           <span>Admin role required to access content-studio.</span>
         </div>
@@ -138,24 +135,19 @@ export default function ContentStudioPage() {
   }
 
   return (
-    <motion.div
-      variants={fadeInUp}
-      initial="hidden"
-      animate="visible"
-      className="p-6 max-w-6xl mx-auto"
-    >
+    <div className="p-6 max-w-6xl mx-auto">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold text-surface-100 flex items-center gap-2">
+        <h1 className="text-2xl font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
           <FileText className="w-6 h-6" />
           Content Studio
         </h1>
-        <p className="text-sm text-surface-400 mt-1">
+        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
           Generate teaching content from uploads, Wolfram, URLs, or an LLM. Review drafts and approve them into the content library.
         </p>
       </header>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-surface-800 mb-6">
+      <div className="flex gap-1 mb-6" style={{ borderBottom: 'var(--hairline) solid var(--separator)' }}>
         <TabButton active={tab === 'generate'} onClick={() => setTab('generate')}>
           <Plus className="w-4 h-4" /> Generate
         </TabButton>
@@ -198,7 +190,7 @@ export default function ContentStudioPage() {
           onChanged={(d) => setReviewing(d)}
         />
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -208,12 +200,17 @@ function TabButton({ active, onClick, children }: any) {
   return (
     <button
       onClick={onClick}
-      className={clsx(
-        'flex items-center gap-1.5 px-4 py-2 text-sm transition-colors border-b-2',
-        active
-          ? 'text-violet-400 border-violet-500'
-          : 'text-surface-400 border-transparent hover:text-surface-200',
-      )}
+      className="flex items-center gap-1.5 px-4 py-2 text-sm"
+      style={{
+        color: active ? 'var(--indigo-ink)' : 'var(--text-tertiary)',
+        background: 'none',
+        borderTop: 'none',
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderBottom: active ? '2px solid var(--indigo)' : '2px solid transparent',
+        cursor: 'pointer',
+        fontFamily: 'var(--font-sans)',
+      }}
     >
       {children}
     </button>
@@ -280,42 +277,54 @@ function GenerateTab({ onCreated }: { onCreated: (d: Draft) => void }) {
     setSources(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   };
 
+  const isDisabled = busy || !conceptOk || !title.trim() || sources.length === 0;
+
+  const inputStyle: React.CSSProperties = {
+    background: 'var(--surface-fill)',
+    border: 'var(--hairline) solid var(--separator)',
+    color: 'var(--text-primary)',
+    fontFamily: 'var(--font-sans)',
+  };
+
   return (
     <div className="space-y-4 max-w-2xl">
       <div>
-        <label className="text-sm text-surface-300 block mb-1">concept_id</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>concept_id</label>
         <input
           type="text"
           value={conceptId}
           onChange={(e) => setConceptId(e.target.value)}
           placeholder="e.g. integration-by-parts"
-          className={clsx(
-            'w-full bg-surface-900 border rounded px-3 py-2 text-sm text-surface-100',
-            conceptId && !conceptOk ? 'border-rose-500' : 'border-surface-800',
-          )}
+          className="w-full rounded px-3 py-2 text-sm"
+          style={{
+            ...inputStyle,
+            border: `var(--hairline) solid ${conceptId && !conceptOk ? 'var(--red)' : 'var(--separator)'}`,
+          }}
         />
         {conceptId && !conceptOk && (
-          <p className="text-xs text-rose-400 mt-1">must be lowercase kebab-case</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>must be lowercase kebab-case</p>
         )}
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-1">title</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>title</label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Integration by Parts"
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100"
+          className="w-full rounded px-3 py-2 text-sm"
+          style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-1">difficulty</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>difficulty</label>
         <select
           value={difficulty}
           onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100"
+          className="w-full rounded px-3 py-2 text-sm"
+          style={inputStyle}
         >
           <option value="intro">intro</option>
           <option value="intermediate">intermediate</option>
@@ -324,32 +333,34 @@ function GenerateTab({ onCreated }: { onCreated: (d: Draft) => void }) {
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-1">tags (comma-separated)</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>tags (comma-separated)</label>
         <input
           type="text"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           placeholder="calculus, integration"
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100"
+          className="w-full rounded px-3 py-2 text-sm"
+          style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-1">exam IDs (comma-separated)</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>exam IDs (comma-separated)</label>
         <input
           type="text"
           value={exams}
           onChange={(e) => setExams(e.target.value)}
           placeholder="EXM-JEEMAIN-MATH-SAMPLE"
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100"
+          className="w-full rounded px-3 py-2 text-sm"
+          style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-2">sources to try (in priority order)</label>
+        <label className="text-sm block mb-2" style={{ color: 'var(--text-secondary)' }}>sources to try (in priority order)</label>
         <div className="space-y-1">
           {(['uploads', 'wolfram', 'url-extract', 'llm'] as SourceKind[]).map(s => (
-            <label key={s} className="flex items-center gap-2 text-sm text-surface-200 cursor-pointer">
+            <label key={s} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
               <input
                 type="checkbox"
                 checked={sources.includes(s)}
@@ -357,7 +368,7 @@ function GenerateTab({ onCreated }: { onCreated: (d: Draft) => void }) {
                 className="rounded"
               />
               <span className="font-mono text-xs">{s}</span>
-              <span className="text-surface-500 text-xs">— {sourceHelp(s)}</span>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>— {sourceHelp(s)}</span>
             </label>
           ))}
         </div>
@@ -365,32 +376,34 @@ function GenerateTab({ onCreated }: { onCreated: (d: Draft) => void }) {
 
       {sources.includes('url-extract') && (
         <div>
-          <label className="text-sm text-surface-300 block mb-1">source URL (for url-extract)</label>
+          <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>source URL (for url-extract)</label>
           <input
             type="text"
             value={sourceUrl}
             onChange={(e) => setSourceUrl(e.target.value)}
             placeholder="https://en.wikipedia.org/wiki/Integration_by_parts"
-            className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100"
+            className="w-full rounded px-3 py-2 text-sm"
+            style={inputStyle}
           />
         </div>
       )}
 
       {sources.includes('llm') && (
         <div>
-          <label className="text-sm text-surface-300 block mb-1">extra prompt for LLM (optional)</label>
+          <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>extra prompt for LLM (optional)</label>
           <textarea
             value={llmExtra}
             onChange={(e) => setLlmExtra(e.target.value)}
             placeholder="Make the worked examples cover both definite and indefinite integrals."
             rows={3}
-            className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100 font-mono"
+            className="w-full rounded px-3 py-2 text-sm font-mono"
+            style={inputStyle}
           />
         </div>
       )}
 
       {error && (
-        <div className="text-sm text-rose-400 flex items-center gap-2">
+        <div className="text-sm flex items-center gap-2" style={{ color: 'var(--red)' }}>
           <AlertCircle className="w-4 h-4" />
           {error}
         </div>
@@ -398,24 +411,28 @@ function GenerateTab({ onCreated }: { onCreated: (d: Draft) => void }) {
 
       <button
         onClick={submit}
-        disabled={busy || !conceptOk || !title.trim() || sources.length === 0}
-        className={clsx(
-          'px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2',
-          busy ? 'bg-violet-600/50 text-violet-100 cursor-wait'
-               : 'bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-30 disabled:cursor-not-allowed',
-        )}
+        disabled={isDisabled}
+        className="px-4 py-2 rounded text-sm font-medium flex items-center gap-2"
+        style={{
+          background: busy ? 'rgba(88,86,214,.5)' : 'var(--indigo)',
+          color: 'white',
+          cursor: busy ? 'wait' : isDisabled ? 'not-allowed' : 'pointer',
+          opacity: isDisabled ? 0.3 : 1,
+          border: 'none',
+          fontFamily: 'var(--font-sans)',
+        }}
       >
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
         Generate draft
       </button>
 
-      <div className="text-xs text-surface-500 mt-4 p-3 bg-surface-900/40 rounded border border-surface-800">
-        <p className="font-medium mb-1">how this works</p>
-        <p>
+      <div className="text-xs mt-4 p-3 rounded" style={{ background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+        <p className="font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>how this works</p>
+        <p style={{ color: 'var(--text-tertiary)' }}>
           The orchestrator walks the sources you select, in order. The first one to return content wins;
           earlier failures and later skips are recorded in the draft's audit log. The draft starts in
           'draft' status — you can edit the body before approving. Approving promotes the entry to the
-          content library at <code className="text-surface-400">/api/content-library/concept/&lt;concept_id&gt;</code>.
+          content library at <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>/api/content-library/concept/&lt;concept_id&gt;</code>.
         </p>
       </div>
     </div>
@@ -444,12 +461,20 @@ function DraftsTab({
             <button
               key={s}
               onClick={() => onStatusFilter(s)}
-              className={clsx(
-                'px-3 py-1 rounded text-xs transition-colors',
-                statusFilter === s
-                  ? 'bg-violet-600/30 text-violet-300 border border-violet-700'
-                  : 'bg-surface-900 text-surface-400 border border-surface-800 hover:text-surface-200',
-              )}
+              className="px-3 py-1 rounded text-xs"
+              style={statusFilter === s ? {
+                background: 'rgba(88,86,214,.3)',
+                color: 'var(--indigo-ink)',
+                border: '1px solid var(--indigo)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              } : {
+                background: 'var(--surface-fill)',
+                color: 'var(--text-secondary)',
+                border: 'var(--hairline) solid var(--separator)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              }}
             >
               {s}
             </button>
@@ -457,7 +482,7 @@ function DraftsTab({
         </div>
         <button
           onClick={onRefresh}
-          className="text-surface-400 hover:text-surface-200"
+          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
           aria-label="refresh"
         >
           <RefreshCw className="w-4 h-4" />
@@ -469,19 +494,19 @@ function DraftsTab({
       )}
 
       {loading && (
-        <div className="flex items-center gap-2 text-surface-400">
+        <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
           <Loader2 className="w-4 h-4 animate-spin" /> loading…
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-2 text-rose-400">
+        <div className="flex items-center gap-2" style={{ color: 'var(--red)' }}>
           <AlertCircle className="w-4 h-4" /> {error}
         </div>
       )}
 
       {!loading && !error && drafts.length === 0 && (
-        <div className="text-center text-surface-500 py-12">
+        <div className="text-center py-12" style={{ color: 'var(--text-tertiary)' }}>
           <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">no drafts {statusFilter !== 'all' && `with status='${statusFilter}'`}</p>
         </div>
@@ -491,24 +516,31 @@ function DraftsTab({
         <button
           key={d.draft_id}
           onClick={() => onSelect(d)}
-          className="w-full text-left bg-surface-900 border border-surface-800 rounded p-4 hover:border-surface-700 transition-colors"
+          className="w-full text-left rounded p-4"
+          style={{
+            background: 'var(--surface-card)',
+            boxShadow: 'var(--shadow-raise)',
+            border: 'var(--hairline) solid var(--separator)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+          }}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-medium text-surface-100">{d.title}</h3>
+                <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>{d.title}</h3>
                 <StatusBadge status={d.status} />
               </div>
-              <p className="text-xs text-surface-500 font-mono">{d.concept_id}</p>
-              <p className="text-xs text-surface-400 mt-2 line-clamp-2">
+              <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{d.concept_id}</p>
+              <p className="text-xs mt-2 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
                 {d.explainer_md.replace(/[#*]/g, '').slice(0, 200)}
               </p>
             </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-xs text-surface-500">
+            <div className="text-right shrink-0">
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                 {d.generation.used_source ?? 'no source'}
               </p>
-              <p className="text-xs text-surface-600 mt-1">
+              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                 {new Date(d.generation.generated_at).toLocaleString()}
               </p>
             </div>
@@ -520,14 +552,15 @@ function DraftsTab({
 }
 
 function StatusBadge({ status }: { status: DraftStatus }) {
-  const styles: Record<DraftStatus, string> = {
-    draft:    'bg-amber-900/30 text-amber-300 border-amber-800/50',
-    approved: 'bg-emerald-900/30 text-emerald-300 border-emerald-800/50',
-    rejected: 'bg-rose-900/30 text-rose-300 border-rose-800/50',
-    archived: 'bg-surface-800 text-surface-400 border-surface-700',
-  };
+  const style: React.CSSProperties = status === 'draft'
+    ? { background: 'rgba(255,149,0,.1)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }
+    : status === 'approved'
+    ? { background: 'rgba(52,199,89,.1)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.3)' }
+    : status === 'rejected'
+    ? { background: 'rgba(255,59,48,.1)', color: 'var(--red)', border: '1px solid rgba(255,59,48,.3)' }
+    : { background: 'var(--surface-fill)', color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' };
   return (
-    <span className={clsx('text-xs px-2 py-0.5 rounded border', styles[status])}>
+    <span className="text-xs px-2 py-0.5 rounded" style={style}>
       {status}
     </span>
   );
@@ -535,23 +568,23 @@ function StatusBadge({ status }: { status: DraftStatus }) {
 
 function UnderperformerCallout({ items }: { items: Underperformer[] }) {
   return (
-    <div className="bg-amber-900/20 border border-amber-800/40 rounded p-4">
+    <div className="rounded p-4" style={{ background: 'rgba(255,149,0,.1)', border: 'var(--hairline) solid rgba(255,149,0,.3)' }}>
       <div className="flex items-start gap-2">
-        <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--orange)' }} />
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-amber-200">
+          <h3 className="text-sm font-medium" style={{ color: 'var(--orange)' }}>
             {items.length} library {items.length === 1 ? 'concept is' : 'concepts are'} underperforming
           </h3>
-          <p className="text-xs text-amber-300/80 mt-1">
+          <p className="text-xs mt-1" style={{ color: 'rgba(255,149,0,.8)' }}>
             Students using these library entries are not improving. Consider regenerating drafts with different sources.
           </p>
-          <ul className="text-xs text-amber-200/80 mt-2 space-y-0.5 font-mono">
+          <ul className="text-xs mt-2 space-y-0.5 font-mono" style={{ color: 'rgba(255,149,0,.8)' }}>
             {items.slice(0, 5).map(u => (
               <li key={u.concept_id}>
                 {u.concept_id} — avg Δmastery {u.avg_mastery_delta_pct?.toFixed(1)}% over {u.turn_count} turns
               </li>
             ))}
-            {items.length > 5 && <li className="text-amber-300/60">…and {items.length - 5} more</li>}
+            {items.length > 5 && <li style={{ color: 'rgba(255,149,0,.6)' }}>…and {items.length - 5} more</li>}
           </ul>
         </div>
       </div>
@@ -653,41 +686,49 @@ function ReviewTab({
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    background: 'var(--surface-fill)',
+    border: 'var(--hairline) solid var(--separator)',
+    color: 'var(--text-primary)',
+    fontFamily: 'var(--font-sans)',
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-1 text-sm text-surface-400 hover:text-surface-200"
+          className="flex items-center gap-1 text-sm"
+          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
         >
           <ArrowLeft className="w-4 h-4" /> back to drafts
         </button>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-surface-500">{draft.draft_id}</span>
+          <span className="font-mono text-xs" style={{ color: 'var(--text-tertiary)' }}>{draft.draft_id}</span>
           <StatusBadge status={draft.status} />
         </div>
       </div>
 
       {/* Provenance card */}
-      <div className="bg-surface-900/60 border border-surface-800 rounded p-3 text-xs text-surface-400 space-y-1">
-        <div><span className="text-surface-500">concept_id:</span> <code className="text-surface-300">{draft.concept_id}</code></div>
-        <div><span className="text-surface-500">used_source:</span> <code className="text-surface-300">{draft.generation.used_source ?? 'none'}</code></div>
-        <div><span className="text-surface-500">generated_at:</span> {new Date(draft.generation.generated_at).toLocaleString()}</div>
+      <div className="rounded p-3 text-xs space-y-1" style={{ background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)' }}>
+        <div><span style={{ color: 'var(--text-tertiary)' }}>concept_id:</span> <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{draft.concept_id}</code></div>
+        <div><span style={{ color: 'var(--text-tertiary)' }}>used_source:</span> <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{draft.generation.used_source ?? 'none'}</code></div>
+        <div><span style={{ color: 'var(--text-tertiary)' }}>generated_at:</span> {new Date(draft.generation.generated_at).toLocaleString()}</div>
         {draft.edited_at && (
-          <div><span className="text-surface-500">edited_at:</span> {new Date(draft.edited_at).toLocaleString()} by {draft.edited_by}</div>
+          <div><span style={{ color: 'var(--text-tertiary)' }}>edited_at:</span> {new Date(draft.edited_at).toLocaleString()} by {draft.edited_by}</div>
         )}
         {draft.resolved_at && (
           <div>
-            <span className="text-surface-500">{draft.status}:</span> {new Date(draft.resolved_at).toLocaleString()} by {draft.resolved_by}
-            {draft.rejection_reason && <span className="text-rose-400"> — {draft.rejection_reason}</span>}
+            <span style={{ color: 'var(--text-tertiary)' }}>{draft.status}:</span> {new Date(draft.resolved_at).toLocaleString()} by {draft.resolved_by}
+            {draft.rejection_reason && <span style={{ color: 'var(--red)' }}> — {draft.rejection_reason}</span>}
           </div>
         )}
         <details className="mt-2">
-          <summary className="cursor-pointer text-surface-500 hover:text-surface-300">source attempts ({draft.generation.attempts.length})</summary>
+          <summary className="cursor-pointer" style={{ color: 'var(--text-tertiary)' }}>source attempts ({draft.generation.attempts.length})</summary>
           <ul className="mt-1 space-y-0.5">
             {draft.generation.attempts.map((a, i) => (
-              <li key={i} className="font-mono text-surface-500">
-                {a.source}: <span className={a.outcome === 'used' ? 'text-emerald-400' : 'text-surface-600'}>{a.outcome}</span> — {a.detail}
+              <li key={i} className="font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                {a.source}: <span style={{ color: a.outcome === 'used' ? 'var(--green-ink)' : 'var(--text-tertiary)' }}>{a.outcome}</span> — {a.detail}
               </li>
             ))}
           </ul>
@@ -696,71 +737,91 @@ function ReviewTab({
 
       {/* Editable fields */}
       <div>
-        <label className="text-sm text-surface-300 block mb-1">title</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>title</label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={!editable}
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100 disabled:opacity-50"
+          className="w-full rounded px-3 py-2 text-sm"
+          style={{ ...inputStyle, opacity: !editable ? 0.5 : 1 }}
         />
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-1">explainer (markdown)</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>explainer (markdown)</label>
         <textarea
           value={explainer}
           onChange={(e) => setExplainer(e.target.value)}
           disabled={!editable}
           rows={20}
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100 font-mono disabled:opacity-50"
+          className="w-full rounded px-3 py-2 text-sm font-mono"
+          style={{ ...inputStyle, opacity: !editable ? 0.5 : 1 }}
         />
-        <p className="text-xs text-surface-500 mt-1">{explainer.length} chars</p>
+        <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{explainer.length} chars</p>
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-1">worked example (markdown, optional)</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>worked example (markdown, optional)</label>
         <textarea
           value={workedExample}
           onChange={(e) => setWorkedExample(e.target.value)}
           disabled={!editable}
           rows={8}
           placeholder="Optional worked example body. Used for practice-problem and walkthrough-problem intents."
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100 font-mono disabled:opacity-50"
+          className="w-full rounded px-3 py-2 text-sm font-mono"
+          style={{ ...inputStyle, opacity: !editable ? 0.5 : 1 }}
         />
       </div>
 
       <div>
-        <label className="text-sm text-surface-300 block mb-1">tags (comma-separated)</label>
+        <label className="text-sm block mb-1" style={{ color: 'var(--text-secondary)' }}>tags (comma-separated)</label>
         <input
           type="text"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           disabled={!editable}
-          className="w-full bg-surface-900 border border-surface-800 rounded px-3 py-2 text-sm text-surface-100 disabled:opacity-50"
+          className="w-full rounded px-3 py-2 text-sm"
+          style={{ ...inputStyle, opacity: !editable ? 0.5 : 1 }}
         />
       </div>
 
       {error && (
-        <div className="text-sm text-rose-400 flex items-center gap-2">
+        <div className="text-sm flex items-center gap-2" style={{ color: 'var(--red)' }}>
           <AlertCircle className="w-4 h-4" /> {error}
         </div>
       )}
 
       {/* Action buttons */}
       {editable && (
-        <div className="flex items-center gap-2 pt-3 border-t border-surface-800">
+        <div className="flex items-center gap-2 pt-3" style={{ borderTop: 'var(--hairline) solid var(--separator)' }}>
           <button
             onClick={save}
             disabled={busy || !isDirty}
-            className="px-3 py-1.5 rounded text-sm bg-surface-800 hover:bg-surface-700 text-surface-200 disabled:opacity-30 flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded text-sm flex items-center gap-1.5"
+            style={{
+              background: 'var(--surface-fill)',
+              color: 'var(--text-secondary)',
+              border: 'var(--hairline) solid var(--separator)',
+              cursor: busy || !isDirty ? 'not-allowed' : 'pointer',
+              opacity: busy || !isDirty ? 0.3 : 1,
+              fontFamily: 'var(--font-sans)',
+            }}
           >
             <Save className="w-4 h-4" /> Save edits
           </button>
           <button
             onClick={approve}
             disabled={busy}
-            className="px-3 py-1.5 rounded text-sm bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-30 flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded text-sm flex items-center gap-1.5"
+            style={{
+              background: 'var(--green)',
+              color: 'white',
+              border: 'none',
+              cursor: busy ? 'not-allowed' : 'pointer',
+              opacity: busy ? 0.3 : 1,
+              fontFamily: 'var(--font-sans)',
+            }}
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             Approve & promote to library
@@ -769,7 +830,15 @@ function ReviewTab({
             <button
               onClick={() => setShowRejectInput(true)}
               disabled={busy}
-              className="px-3 py-1.5 rounded text-sm bg-rose-900/50 hover:bg-rose-900 text-rose-100 disabled:opacity-30 flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded text-sm flex items-center gap-1.5"
+              style={{
+                background: 'rgba(255,59,48,.15)',
+                color: 'var(--red)',
+                border: 'none',
+                cursor: busy ? 'not-allowed' : 'pointer',
+                opacity: busy ? 0.3 : 1,
+                fontFamily: 'var(--font-sans)',
+              }}
             >
               <X className="w-4 h-4" /> Reject
             </button>
@@ -780,20 +849,41 @@ function ReviewTab({
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="reason"
-                className="flex-1 bg-surface-900 border border-surface-800 rounded px-2 py-1 text-sm"
+                className="flex-1 rounded px-2 py-1 text-sm"
+                style={{
+                  background: 'var(--surface-fill)',
+                  border: 'var(--hairline) solid var(--separator)',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-sans)',
+                }}
                 autoFocus
               />
               <button
                 onClick={reject}
                 disabled={busy || !rejectReason.trim()}
-                className="px-3 py-1.5 rounded text-sm bg-rose-600 hover:bg-rose-500 text-white disabled:opacity-30"
+                className="px-3 py-1.5 rounded text-sm"
+                style={{
+                  background: 'var(--red)',
+                  color: 'white',
+                  border: 'none',
+                  cursor: busy || !rejectReason.trim() ? 'not-allowed' : 'pointer',
+                  opacity: busy || !rejectReason.trim() ? 0.3 : 1,
+                  fontFamily: 'var(--font-sans)',
+                }}
               >
                 Confirm reject
               </button>
               <button
                 onClick={() => { setShowRejectInput(false); setRejectReason(''); }}
                 disabled={busy}
-                className="px-2 py-1.5 text-surface-400 hover:text-surface-200"
+                className="px-2 py-1.5"
+                style={{
+                  color: 'var(--text-secondary)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: busy ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                }}
               >
                 cancel
               </button>
@@ -803,10 +893,10 @@ function ReviewTab({
       )}
 
       {!editable && (
-        <div className="text-sm text-surface-500 pt-3 border-t border-surface-800">
-          This draft is in <code className="text-surface-400">{draft.status}</code> status. No further edits possible.
+        <div className="text-sm pt-3" style={{ color: 'var(--text-tertiary)', borderTop: 'var(--hairline) solid var(--separator)' }}>
+          This draft is in <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{draft.status}</code> status. No further edits possible.
           {draft.promoted_as && (
-            <span> The library now serves <code className="text-surface-400">{draft.promoted_as}</code>.</span>
+            <span> The library now serves <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{draft.promoted_as}</code>.</span>
           )}
         </div>
       )}

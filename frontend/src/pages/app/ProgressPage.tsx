@@ -1,20 +1,20 @@
 /**
- * ProgressPage — Animated progress overview with mastery rings, count-up stats, and celebration state.
+ * ProgressPage — Progress overview with mastery rings, stats, and topic list.
  */
 
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CountUp } from '@/components/app/CountUp';
-import { Confetti } from '@/components/app/Confetti';
 import { ExamReadinessBreakdown } from '@/components/app/ExamReadiness';
 import { ExamCountdownChip } from '@/components/app/ExamCountdownChip';
-import { BarChart3, Clock, ChevronRight, PartyPopper, Target, Brain, Sparkles, Calendar, FileText, BookOpen } from 'lucide-react';
-import { clsx } from 'clsx';
+import { StatTile } from '@/components/ui/StatTile';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/Button';
+import { BarChart3, Clock, ChevronRight, Sparkles, Calendar, FileText, BookOpen, Brain, Target } from 'lucide-react';
 
 interface TopicStat {
   topic: string;
@@ -44,6 +44,15 @@ interface ProgressData {
   weakTopics: WeakTopic[];
 }
 
+const gbLinks = [
+  { to: '/materials',    icon: <BookOpen size={18} style={{ color: 'var(--green-ink)' }} />,   label: 'Your Materials',   sub: 'Upload notes, textbooks — GBrain learns from them' },
+  { to: '/smart-practice', icon: <Sparkles size={18} style={{ color: 'var(--indigo-ink)' }} />, label: 'Smart Practice',   sub: 'Adaptive problems matched to your weak areas' },
+  { to: '/audit',        icon: <FileText size={18} style={{ color: 'var(--green-ink)' }} />,   label: 'Your Audit',       sub: '360° analysis: mastery, cognition, action plan' },
+  { to: '/digest',       icon: <Calendar size={18} style={{ color: 'var(--indigo-ink)' }} />,  label: 'Weekly Digest',    sub: 'This week\'s progress, growth proof, one action' },
+  { to: '/mock-exam',    icon: <Target size={18} style={{ color: 'var(--red)' }} />,            label: 'Mock Exam',        sub: 'Full-length, timed, GBrain-calibrated' },
+  { to: '/error-patterns', icon: <Brain size={18} style={{ color: 'var(--orange)' }} />,        label: 'Error Patterns',   sub: 'Weekly error digest, misconceptions, recommendations' },
+];
+
 export default function ProgressPage() {
   const sessionId = useSession();
   const [data, setData] = useState<ProgressData | null>(null);
@@ -59,30 +68,22 @@ export default function ProgressPage() {
   }, [sessionId]);
 
   if (loading) {
-    return <div className="space-y-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-16 rounded-xl bg-surface-800/60 animate-pulse" />
-      ))}
-    </div>;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} style={{ height: 64, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} />
+        ))}
+      </div>
+    );
   }
 
   if (!data || data.topics.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center py-16 space-y-4"
-      >
-        <BarChart3 size={48} className="text-surface-700 mx-auto" />
-        <h2 className="text-xl font-bold text-surface-300">No progress yet</h2>
-        <p className="text-sm text-surface-500">Start practicing to see your progress here.</p>
-        <Link
-          to="/"
-          className="inline-block mt-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white text-sm font-medium shadow-lg shadow-violet-500/25"
-        >
-          Start Practicing
-        </Link>
-      </motion.div>
+      <EmptyState
+        glyph={<BarChart3 size={28} style={{ color: 'var(--text-tertiary)' }} />}
+        body="Start practising to see your progress here."
+        action={<Button size="md" tone="mastery" onClick={() => window.location.href = '/'}>Start Practising</Button>}
+      />
     );
   }
 
@@ -100,216 +101,144 @@ export default function ProgressPage() {
   const hasMoreTopics = sortedTopics.length > WEAK_LIMIT;
 
   return (
-    <motion.div
-      className="space-y-6"
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-    >
-      <Confetti trigger={allCaughtUp} />
-
-      <motion.h1 variants={fadeInUp} className="text-xl font-display font-bold text-surface-100">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <h1 style={{ margin: 0, fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.018em' }}>
         Your Progress
-      </motion.h1>
+      </h1>
 
-      {/* T-minus line (UX doc §9.15) — self-gating: renders nothing when the
-          student has no registered exam_date. Never shown on practice/attempt
-          screens (exam anxiety mid-practice violates the honesty/hooks laws);
-          Home + Progress are the only two surfaces that carry it. */}
-      <motion.div variants={fadeInUp}>
-        <ExamCountdownChip />
-      </motion.div>
+      <ExamCountdownChip />
 
-      {/* Overall Stats — animated counters */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Problems', value: parseInt(overall.problems_attempted) || 0, suffix: '' },
-          { label: 'Accuracy', value: accuracy, suffix: '%' },
-          { label: 'Due Today', value: dueToday, suffix: '' },
-        ].map(stat => (
-          <div key={stat.label} className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-            <CountUp
-              target={stat.value}
-              suffix={stat.suffix}
-              className="text-lg font-bold text-surface-200"
-            />
-            <p className="text-xs text-surface-500">{stat.label}</p>
-          </div>
-        ))}
-      </motion.div>
+      {/* Stat tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <StatTile
+          value={<CountUp target={parseInt(overall.problems_attempted) || 0} className="" />}
+          label="Problems"
+        />
+        <StatTile
+          value={<><CountUp target={accuracy} className="" />%</>}
+          label="Accuracy"
+          tone={accuracy >= 70 ? 'mastery' : 'neutral'}
+        />
+        <StatTile
+          value={<CountUp target={dueToday} className="" />}
+          label="Due Today"
+          tone={dueToday === 0 ? 'mastery' : 'neutral'}
+        />
+      </div>
 
-      {/* Exam Readiness Breakdown */}
+      {/* Exam Readiness */}
       <ExamReadinessBreakdown sessionId={sessionId} />
 
-      {/* All Caught Up celebration */}
+      {/* All caught up */}
       {allCaughtUp && (
-        <motion.div
-          variants={fadeInUp}
-          className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-violet-500/10 border border-emerald-500/25 text-center"
+        <div
+          style={{
+            padding: '14px 18px',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(52,199,89,.08)',
+            border: '1px solid rgba(52,199,89,.2)',
+          }}
         >
-          <PartyPopper size={24} className="text-emerald-400 mx-auto mb-2" />
-          <p className="text-sm font-semibold text-emerald-300">You're all caught up!</p>
-          <p className="text-xs text-surface-400 mt-0.5">Come back tomorrow for more reviews.</p>
-        </motion.div>
+          <p style={{ margin: 0, fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)', color: 'var(--green-ink)' }}>
+            You're all caught up!
+          </p>
+          <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+            Come back tomorrow for more reviews.
+          </p>
+        </div>
       )}
 
-      {/* Topics — sorted by mastery (weakest first), weak topics get amber accent */}
-      <motion.div variants={fadeInUp} className="space-y-2">
-        <h2 className="text-sm font-semibold text-surface-300">Topics</h2>
-        <motion.div className="space-y-2" variants={staggerContainer}>
-          {visibleTopics.map(topic => {
+      {/* Topics — weakest first */}
+      <div>
+        <p style={{ margin: '0 0 10px', fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', letterSpacing: '-0.01em' }}>
+          Topics
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {visibleTopics.map((topic, i) => {
             const name = topic.topic.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
             const masteryPct = Math.round(topic.mastery * 100);
-            const isWeak = weakSet.has(topic.topic);
-
-            let barColor = 'bg-red-500';
-            if (masteryPct >= 70) barColor = 'bg-emerald-500';
-            else if (masteryPct >= 40) barColor = 'bg-surface-400';
+            const tone = masteryPct >= 70 ? 'mastery' : masteryPct >= 40 ? 'neutral' : 'warning';
 
             return (
-              <motion.div key={topic.topic} variants={fadeInUp}>
-                <Link
-                  to={`/topic/${topic.topic}`}
-                  className={clsx(
-                    'flex items-center gap-3 p-3 rounded-xl transition-colors group',
-                    isWeak
-                      ? 'bg-violet-500/5 border border-violet-500/20 hover:bg-violet-500/10'
-                      : 'bg-surface-900 border border-surface-800 hover:border-surface-700',
-                  )}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-surface-200 truncate">{name}</span>
-                      <span className="text-xs text-surface-500 shrink-0 ml-2">
-                        {masteryPct}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-surface-800 overflow-hidden">
-                      <motion.div
-                        className={clsx('h-full rounded-full', barColor)}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${masteryPct}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-                      />
-                    </div>
-                    {topic.due > 0 && (
-                      <span className="text-[10px] text-surface-500 mt-0.5 inline-flex items-center gap-1">
-                        <Clock size={10} /> {topic.due} due
-                      </span>
-                    )}
+              <Link
+                key={topic.topic}
+                to={`/topic/${topic.topic}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '14px 0',
+                  borderBottom: i < visibleTopics.length - 1 ? 'var(--hairline) solid var(--separator)' : 'none',
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                    <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', flexShrink: 0, marginLeft: 8 }}>{masteryPct}%</span>
                   </div>
-                  <ChevronRight size={14} className="text-surface-600 shrink-0 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" />
-                </Link>
-              </motion.div>
+                  <ProgressBar value={masteryPct} tone={tone as any} />
+                  {topic.due > 0 && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', marginTop: 4 }}>
+                      <Clock size={10} /> {topic.due} due
+                    </span>
+                  )}
+                </div>
+                <ChevronRight size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+              </Link>
             );
           })}
-        </motion.div>
+        </div>
         {hasMoreTopics && !showAllTopics && (
           <button
             onClick={() => setShowAllTopics(true)}
-            aria-expanded={showAllTopics}
-            className="w-full py-2 text-xs text-surface-400 hover:text-surface-300 transition-colors cursor-pointer touch-manipulation"
+            style={{
+              width: '100%',
+              padding: '10px 0',
+              fontSize: 'var(--text-footnote)',
+              color: 'var(--text-secondary)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+            }}
           >
             Show all {sortedTopics.length} topics
           </button>
         )}
-      </motion.div>
+      </div>
 
-      {/* GBrain Intelligence */}
-      <motion.div variants={fadeInUp} className="space-y-2">
-        <h2 className="text-sm font-semibold text-surface-300">GBrain Intelligence</h2>
-        <Link
-          to="/materials"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-emerald-500/30 transition-colors group"
-        >
-          <div className="p-2 rounded-lg bg-emerald-500/10">
-            <BookOpen size={16} className="text-emerald-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-surface-200">Your Materials</p>
-            <p className="text-xs text-surface-500">Upload notes, textbooks — GBrain learns from them</p>
-          </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-emerald-400 transition-colors" />
-        </Link>
-        <Link
-          to="/smart-practice"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/30 transition-colors group"
-        >
-          <div className="p-2 rounded-lg bg-violet-500/10">
-            <Sparkles size={16} className="text-violet-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-surface-200">Smart Practice</p>
-            <p className="text-xs text-surface-500">Adaptive problems matched to your weak areas</p>
-          </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-violet-400 transition-colors" />
-        </Link>
-        <Link
-          to="/audit"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-emerald-500/30 transition-colors group"
-        >
-          <div className="p-2 rounded-lg bg-emerald-500/10">
-            <FileText size={16} className="text-emerald-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-surface-200">Your Audit</p>
-            <p className="text-xs text-surface-500">360° analysis: mastery, cognition, action plan</p>
-          </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-emerald-400 transition-colors" />
-        </Link>
-        <Link
-          to="/digest"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-purple-500/30 transition-colors group"
-        >
-          <div className="p-2 rounded-lg bg-purple-500/10">
-            <Calendar size={16} className="text-purple-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-surface-200">Weekly Digest</p>
-            <p className="text-xs text-surface-500">This week's progress, growth proof, one action</p>
-          </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-purple-400 transition-colors" />
-        </Link>
-        <Link
-          to="/mock-exam"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-red-500/30 transition-colors group"
-        >
-          <div className="p-2 rounded-lg bg-red-500/10">
-            <Sparkles size={16} className="text-red-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-surface-200">Mock Exam</p>
-            <p className="text-xs text-surface-500">Full-length, timed, GBrain-calibrated</p>
-          </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-red-400 transition-colors" />
-        </Link>
-        <Link
-          to="/exam-strategy"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/30 transition-colors group"
-        >
-          <div className="p-2 rounded-lg bg-violet-500/10">
-            <Target size={16} className="text-violet-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-surface-200">Exam Strategy</p>
-            <p className="text-xs text-surface-500">Personalized playbook, time budgets, skip thresholds</p>
-          </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-violet-400 transition-colors" />
-        </Link>
-        <Link
-          to="/error-patterns"
-          className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800 hover:border-amber-500/30 transition-colors group"
-        >
-          <div className="p-2 rounded-lg bg-amber-500/10">
-            <Brain size={16} className="text-amber-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-surface-200">Error Patterns</p>
-            <p className="text-xs text-surface-500">Weekly error digest, misconceptions, recommendations</p>
-          </div>
-          <ChevronRight size={14} className="text-surface-600 group-hover:text-amber-400 transition-colors" />
-        </Link>
-      </motion.div>
-    </motion.div>
+      {/* GBrain links — plain list on canvas */}
+      <div>
+        <p style={{ margin: '0 0 10px', fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', letterSpacing: '-0.01em' }}>
+          GBrain Intelligence
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {gbLinks.map((row, i) => (
+            <Link
+              key={row.to}
+              to={row.to}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                padding: '14px 0',
+                borderBottom: i < gbLinks.length - 1 ? 'var(--hairline) solid var(--separator)' : 'none',
+                textDecoration: 'none',
+              }}
+            >
+              <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-xs)', background: 'var(--surface-fill)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {row.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', letterSpacing: '-0.01em', fontWeight: 'var(--weight-medium)' }}>{row.label}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{row.sub}</p>
+              </div>
+              <ChevronRight size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,14 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   Loader2, RefreshCw, AlertCircle, AlertTriangle,
   Users, DollarSign, Activity, Coins, Server, FileText,
   UserPlus,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
-import { fadeInUp } from '@/lib/animations';
 
 /**
  * /gate/admin/founder — solo-founder dashboard.
@@ -105,7 +102,7 @@ export default function FounderDashboardPage() {
   if (!hasRole('admin')) {
     return (
       <div className="p-6">
-        <div className="flex items-center gap-2 text-rose-400">
+        <div className="flex items-center gap-2" style={{ color: 'var(--red)' }}>
           <AlertCircle className="w-5 h-5" />
           <span>Admin role required to view the founder dashboard.</span>
         </div>
@@ -114,27 +111,22 @@ export default function FounderDashboardPage() {
   }
 
   return (
-    <motion.div
-      variants={fadeInUp}
-      initial="hidden"
-      animate="visible"
-      className="p-6 max-w-6xl mx-auto"
-    >
+    <div className="p-6 max-w-6xl mx-auto">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-surface-100 flex items-center gap-2">
+          <h1 className="text-2xl font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <Server className="w-6 h-6" />
             Founder dashboard
           </h1>
-          <p className="text-sm text-surface-400 mt-1">
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
             Single-screen view of users, revenue, activity, cost, and module health.
-            See <code className="text-surface-300">FOUNDER.md</code> for the operations runbook.
+            See <code style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>FOUNDER.md</code> for the operations runbook.
           </p>
         </div>
         <button
           onClick={refresh}
           disabled={loading}
-          className="text-surface-400 hover:text-surface-200 disabled:opacity-50"
+          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
           aria-label="refresh"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
@@ -142,19 +134,20 @@ export default function FounderDashboardPage() {
       </header>
 
       {loading && !data && (
-        <div className="flex items-center gap-2 text-surface-400 py-12 justify-center">
+        <div className="flex items-center gap-2 py-12 justify-center" style={{ color: 'var(--text-secondary)' }}>
           <Loader2 className="w-5 h-5 animate-spin" /> loading dashboard…
         </div>
       )}
 
       {error && (
-        <div className="bg-rose-900/20 border border-rose-800/50 rounded p-4 flex items-start gap-2">
-          <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+        <div className="rounded p-4 flex items-start gap-2" style={{ background: 'rgba(255,59,48,.1)', border: 'var(--hairline) solid rgba(255,59,48,.3)' }}>
+          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--red)' }} />
           <div>
-            <p className="text-rose-200 text-sm">{error}</p>
+            <p className="text-sm" style={{ color: 'var(--red)' }}>{error}</p>
             <button
               onClick={refresh}
-              className="text-xs text-rose-300 underline mt-1 hover:text-rose-200"
+              className="text-xs underline mt-1"
+              style={{ color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
             >
               try again
             </button>
@@ -187,12 +180,12 @@ export default function FounderDashboardPage() {
           />
 
           {/* Footer with generated_at */}
-          <p className="text-xs text-surface-500 text-right">
+          <p className="text-xs text-right" style={{ color: 'var(--text-tertiary)' }}>
             Generated at {new Date(data.generated_at).toLocaleString()}
           </p>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -207,8 +200,8 @@ function Card({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="bg-surface-900 border border-surface-800 rounded p-4 flex flex-col">
-      <div className="flex items-center gap-2 text-xs text-surface-400 mb-3">
+    <div className="rounded p-4 flex flex-col" style={{ background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', border: 'var(--hairline) solid var(--separator)' }}>
+      <div className="flex items-center gap-2 text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
         <Icon className="w-4 h-4" />
         <span className="font-medium uppercase tracking-wider">{title}</span>
       </div>
@@ -216,7 +209,7 @@ function Card({
         {children}
       </div>
       {footer && (
-        <div className="text-xs text-surface-500 mt-3 pt-2 border-t border-surface-800">
+        <div className="text-xs mt-3 pt-2" style={{ color: 'var(--text-tertiary)', borderTop: 'var(--hairline) solid var(--separator)' }}>
           {footer}
         </div>
       )}
@@ -228,11 +221,11 @@ function UsersCard({ users }: { users: FounderDashboard['users'] }) {
   const roles = Object.entries(users.by_role).filter(([_, n]) => n > 0);
   return (
     <Card icon={Users} title="Users">
-      <div className="text-3xl font-semibold text-surface-100">{users.total}</div>
-      <div className="text-xs text-surface-400 mt-1">
+      <div className="text-3xl font-semibold" style={{ color: 'var(--text-primary)' }}>{users.total}</div>
+      <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
         {users.active_7d} active in last 7 days
       </div>
-      <div className="text-xs text-surface-400">
+      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
         {users.new_30d} new in last 30 days
       </div>
       {roles.length > 0 && (
@@ -240,7 +233,8 @@ function UsersCard({ users }: { users: FounderDashboard['users'] }) {
           {roles.map(([role, n]) => (
             <span
               key={role}
-              className="text-xs bg-surface-800 text-surface-300 px-2 py-0.5 rounded font-mono"
+              className="text-xs px-2 py-0.5 rounded font-mono"
+              style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
             >
               {role}:{n}
             </span>
@@ -255,11 +249,11 @@ function RevenueCard({ revenue }: { revenue?: FounderDashboard['revenue'] }) {
   if (!revenue || Object.keys(revenue.total_30d).length === 0) {
     return (
       <Card icon={DollarSign} title="Revenue (30d)">
-        <div className="text-2xl font-semibold text-surface-500">—</div>
-        <div className="text-xs text-surface-500 mt-1">
+        <div className="text-2xl font-semibold" style={{ color: 'var(--text-tertiary)' }}>—</div>
+        <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
           No payments recorded yet.
         </div>
-        <div className="text-xs text-surface-500 mt-1">
+        <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
           Configure Stripe webhook or POST manual payments to start tracking.
         </div>
       </Card>
@@ -270,17 +264,17 @@ function RevenueCard({ revenue }: { revenue?: FounderDashboard['revenue'] }) {
     <Card icon={DollarSign} title="Revenue (30d)">
       {currencies.map(([currency, minor]) => (
         <div key={currency} className="flex items-baseline justify-between">
-          <span className="text-3xl font-semibold text-surface-100">
+          <span className="text-3xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             {formatMoney(minor, currency)}
           </span>
-          <span className="text-xs text-surface-500 ml-1">{currency}</span>
+          <span className="text-xs ml-1" style={{ color: 'var(--text-tertiary)' }}>{currency}</span>
         </div>
       ))}
-      <div className="text-xs text-surface-400 mt-2">
+      <div className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
         {revenue.paid_users_30d} paid {revenue.paid_users_30d === 1 ? 'user' : 'users'}
       </div>
       {revenue.paid_users_30d > 0 && Object.entries(revenue.arpu_30d).map(([currency, minor]) => (
-        <div key={currency} className="text-xs text-surface-400">
+        <div key={currency} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
           ARPU {formatMoney(minor, currency)} {currency}
         </div>
       ))}
@@ -304,8 +298,8 @@ function ActivityCard({ activity }: { activity: FounderDashboard['activity'] }) 
 function ActivityRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-baseline justify-between">
-      <span className="text-xs text-surface-400">{label}</span>
-      <span className="text-sm font-mono text-surface-200">{value.toLocaleString()}</span>
+      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+      <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>{value.toLocaleString()}</span>
     </div>
   );
 }
@@ -313,17 +307,17 @@ function ActivityRow({ label, value }: { label: string; value: number }) {
 function CostCard({ cost }: { cost: FounderDashboard['cost'] }) {
   return (
     <Card icon={Coins} title="LLM Cost (7d)">
-      <div className="text-3xl font-semibold text-surface-100">
+      <div className="text-3xl font-semibold" style={{ color: 'var(--text-primary)' }}>
         {(cost.llm_tokens_7d / 1000).toFixed(1)}k
       </div>
-      <div className="text-xs text-surface-400 mt-1">tokens estimated</div>
-      <div className="mt-2 text-xs text-surface-400">
+      <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>tokens estimated</div>
+      <div className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
         {cost.llm_estimated_usd_7d !== null
           ? `~$${cost.llm_estimated_usd_7d.toFixed(2)} USD`
           : 'No pricing model configured'}
       </div>
       {cost.budget_used_today > 0 && (
-        <div className="mt-2 text-xs text-surface-400">
+        <div className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
           {cost.budget_used_today.toLocaleString()} tokens used today
         </div>
       )}
@@ -342,17 +336,17 @@ function CostCard({ cost }: { cost: FounderDashboard['cost'] }) {
 function LifecycleCard({ lifecycle }: { lifecycle: FounderDashboard['lifecycle'] }) {
   const total = lifecycle.signups_30d + lifecycle.channels_linked_30d + lifecycle.role_changes_30d;
   return (
-    <div className="bg-surface-900 border border-surface-800 rounded p-4">
-      <div className="flex items-center gap-2 text-xs text-surface-400 mb-3">
+    <div className="rounded p-4" style={{ background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', border: 'var(--hairline) solid var(--separator)' }}>
+      <div className="flex items-center gap-2 text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
         <UserPlus className="w-4 h-4" />
         <span className="font-medium uppercase tracking-wider">
           Lifecycle events (30d)
         </span>
       </div>
       {total === 0 ? (
-        <div className="text-xs text-surface-500">
+        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           No lifecycle events recorded in the last 30 days.{' '}
-          <span className="text-surface-600">
+          <span style={{ color: 'var(--text-tertiary)' }}>
             Events fire on signup, channel-link, and role-change. New activity will populate this section over time.
           </span>
         </div>
@@ -382,9 +376,9 @@ function LifecycleCard({ lifecycle }: { lifecycle: FounderDashboard['lifecycle']
 function LifecycleStat({ label, value, hint }: { label: string; value: number; hint: string }) {
   return (
     <div>
-      <div className="text-2xl font-semibold text-surface-100">{value.toLocaleString()}</div>
-      <div className="text-xs text-surface-300 mt-0.5">{label}</div>
-      <div className="text-xs text-surface-500">{hint}</div>
+      <div className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>{value.toLocaleString()}</div>
+      <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{label}</div>
+      <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{hint}</div>
     </div>
   );
 }
@@ -398,29 +392,29 @@ function HealthTable({
   tests_status: string;
 }) {
   return (
-    <div className="bg-surface-900 border border-surface-800 rounded">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-surface-800">
-        <div className="flex items-center gap-2 text-xs text-surface-400">
+    <div className="rounded" style={{ background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', border: 'var(--hairline) solid var(--separator)' }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: 'var(--hairline) solid var(--separator)' }}>
+        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
           <Server className="w-4 h-4" />
           <span className="font-medium uppercase tracking-wider">
             Module health ({modules.length})
           </span>
         </div>
-        <span className="text-xs text-surface-500 font-mono">
+        <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
           tests: {tests_status}
         </span>
       </div>
       <table className="w-full text-sm">
         <tbody>
           {modules.map(m => (
-            <tr key={m.name} className="border-t border-surface-800/50">
-              <td className="px-4 py-2 font-mono text-xs text-surface-300 w-40">
+            <tr key={m.name} style={{ borderTop: 'var(--hairline) solid var(--separator)' }}>
+              <td className="px-4 py-2 font-mono text-xs w-40" style={{ color: 'var(--text-secondary)' }}>
                 {m.name}
               </td>
               <td className="px-2 py-2 w-24">
                 <HealthBadge status={m.status} />
               </td>
-              <td className="px-4 py-2 text-xs text-surface-400">
+              <td className="px-4 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                 {m.detail}
               </td>
             </tr>
@@ -432,14 +426,15 @@ function HealthTable({
 }
 
 function HealthBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    healthy:     'bg-emerald-900/30 text-emerald-300 border-emerald-800/50',
-    degraded:    'bg-amber-900/30 text-amber-300 border-amber-800/50',
-    unavailable: 'bg-rose-900/30 text-rose-300 border-rose-800/50',
-  };
-  const cls = styles[status] || 'bg-surface-800 text-surface-400 border-surface-700';
+  const style: React.CSSProperties = status === 'healthy'
+    ? { background: 'rgba(52,199,89,.1)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.3)' }
+    : status === 'degraded'
+    ? { background: 'rgba(255,149,0,.1)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }
+    : status === 'unavailable'
+    ? { background: 'rgba(255,59,48,.1)', color: 'var(--red)', border: '1px solid rgba(255,59,48,.3)' }
+    : { background: 'var(--surface-fill)', color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' };
   return (
-    <span className={clsx('text-xs px-2 py-0.5 rounded border', cls)}>
+    <span className="text-xs px-2 py-0.5 rounded" style={style}>
       {status}
     </span>
   );
@@ -449,17 +444,17 @@ function HealthBadge({ status }: { status: string }) {
 
 function CaveatsBanner({ caveats }: { caveats: string[] }) {
   return (
-    <div className="bg-amber-900/15 border border-amber-800/40 rounded p-4">
+    <div className="rounded p-4" style={{ background: 'rgba(255,149,0,.1)', border: 'var(--hairline) solid rgba(255,149,0,.3)' }}>
       <div className="flex items-start gap-2">
-        <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--orange)' }} />
         <div>
-          <h3 className="text-sm font-medium text-amber-200 mb-1">
+          <h3 className="text-sm font-medium mb-1" style={{ color: 'var(--orange)' }}>
             What this view does NOT yet show
           </h3>
-          <p className="text-xs text-amber-300/80 mb-2">
+          <p className="text-xs mb-2" style={{ color: 'rgba(255,149,0,.8)' }}>
             The dashboard is honest about its gaps. Each item below is something the operator module isn't yet tracking.
           </p>
-          <ul className="text-xs text-amber-200/80 space-y-0.5">
+          <ul className="text-xs space-y-0.5" style={{ color: 'rgba(255,149,0,.8)' }}>
             {caveats.map((c, i) => <li key={i}>• {c}</li>)}
           </ul>
         </div>

@@ -6,18 +6,24 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
 import { useSession } from '@/hooks/useSession';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Button } from '@/components/ui/Button';
 import { BookOpen, ChevronRight, Lock, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface TrackProgress { mastered: number; total: number; pct: number; track_id: string }
 interface NextConcept { concept_id: string; concept_name: string; why_next: string; lesson_url: string }
 interface ConceptNode { id: string; name: string; status: 'mastered' | 'in-progress' | 'locked'; score: number; has_prerequisite_alert: boolean }
 interface ConceptTree { nodes: ConceptNode[]; edges: Array<{ from: string; to: string }> }
+
+const NODE_STYLES: Record<string, { bg: string; border: string; color: string }> = {
+  mastered:    { bg: 'rgba(52,199,89,.1)',  border: 'rgba(52,199,89,.3)',  color: 'var(--green-ink)' },
+  'in-progress': { bg: 'rgba(88,86,214,.1)', border: 'rgba(88,86,214,.3)', color: 'var(--indigo-ink)' },
+  locked:      { bg: 'var(--surface-fill)', border: 'var(--separator)',    color: 'var(--text-tertiary)' },
+};
 
 export default function KnowledgeHomePage() {
   const navigate = useNavigate();
@@ -60,8 +66,10 @@ export default function KnowledgeHomePage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 pt-2">
-        {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-xl bg-surface-900 animate-pulse" />)}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{ height: 80, borderRadius: 'var(--radius-lg)', background: 'var(--surface-fill)' }} />
+        ))}
       </div>
     );
   }
@@ -69,74 +77,93 @@ export default function KnowledgeHomePage() {
   const showBridge = !bridgeShown && progress && progress.pct >= 70 && noExams;
 
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
-      className="space-y-4 pt-2"
-    >
-      {/* Track progress header */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 via-violet-500/5 to-transparent border border-emerald-500/20">
-        <div className="text-xs uppercase tracking-wider text-emerald-300/80 mb-1">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
+      {/* Track progress card */}
+      <div style={{
+        padding: '16px',
+        borderRadius: 'var(--radius-lg)',
+        background: 'var(--surface-card)',
+        boxShadow: 'var(--shadow-card)',
+      }}>
+        <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--green-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           {trackName || 'Your curriculum'}
-        </div>
+        </p>
         {progress ? (
           <>
-            <div className="text-2xl font-display font-black text-surface-100 mb-1">
-              {progress.mastered} <span className="text-base font-normal text-surface-400">of {progress.total} concepts mastered</span>
-            </div>
-            <div className="w-full h-1.5 rounded-full bg-surface-800 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-violet-500 transition-all"
-                style={{ width: `${progress.pct}%` }}
-              />
-            </div>
-            <div className="text-xs text-surface-500 mt-1">{progress.pct}% complete</div>
+            <p style={{ margin: '0 0 10px', fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.018em' }}>
+              {progress.mastered}{' '}
+              <span style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-regular)', color: 'var(--text-secondary)' }}>
+                of {progress.total} concepts mastered
+              </span>
+            </p>
+            <ProgressBar value={progress.pct} tone={progress.pct >= 70 ? 'mastery' : 'neutral'} />
+            <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+              {progress.pct}% complete
+            </p>
           </>
         ) : (
-          <div className="text-sm text-surface-400">Loading progress…</div>
+          <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)' }}>Loading progress…</p>
         )}
-      </motion.div>
+      </div>
 
       {/* Today's concept card */}
       {nextConcept && (
-        <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-violet-500/20">
-          <div className="text-xs text-violet-300/80 uppercase tracking-wider mb-2">Today</div>
-          <div className="text-base font-semibold text-surface-100 mb-1">{nextConcept.concept_name}</div>
-          <div className="text-xs text-surface-400 leading-relaxed mb-3">{nextConcept.why_next}</div>
-          <button
-            onClick={() => navigate(nextConcept.lesson_url)}
-            className="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold transition-colors inline-flex items-center gap-1.5"
-          >
+        <div style={{
+          padding: '16px',
+          borderRadius: 'var(--radius-lg)',
+          background: 'var(--surface-card)',
+          boxShadow: 'var(--shadow-card)',
+        }}>
+          <p style={{ margin: '0 0 6px', fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Today
+          </p>
+          <p style={{ margin: '0 0 4px', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
+            {nextConcept.concept_name}
+          </p>
+          <p style={{ margin: '0 0 14px', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-normal)' }}>
+            {nextConcept.why_next}
+          </p>
+          <Button size="sm" tone="tutor" onClick={() => navigate(nextConcept.lesson_url)}>
             <BookOpen size={14} /> Study {nextConcept.concept_name} <ChevronRight size={14} />
-          </button>
-        </motion.div>
+          </Button>
+        </div>
       )}
 
       {/* Concept map */}
       {tree && tree.nodes.length > 0 && (
-        <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-          <div className="text-xs text-surface-500 uppercase tracking-wider mb-3">Concept map</div>
-          <div className="flex flex-wrap gap-2">
-            {tree.nodes.map(node => (
-              <div
-                key={node.id}
-                className={clsx(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors',
-                  node.status === 'mastered'   && 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
-                  node.status === 'in-progress' && 'bg-violet-500/10 border-violet-500/30 text-violet-300',
-                  node.status === 'locked'      && 'bg-surface-800 border-surface-700 text-surface-500',
-                )}
-              >
-                {node.status === 'mastered' && <CheckCircle2 size={11} />}
-                {node.status === 'in-progress' && <Circle size={11} className="fill-violet-500" />}
-                {node.status === 'locked' && <Lock size={11} />}
-                {node.has_prerequisite_alert && <AlertCircle size={11} className="text-amber-400" />}
-                {node.name}
-              </div>
-            ))}
+        <div style={{ padding: '14px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--weight-semibold)' }}>
+            Concept map
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {tree.nodes.map(node => {
+              const st = NODE_STYLES[node.status] || NODE_STYLES.locked;
+              return (
+                <div
+                  key={node.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 10px',
+                    borderRadius: 'var(--radius-xs)',
+                    background: st.bg,
+                    border: `1px solid ${st.border}`,
+                    color: st.color,
+                    fontSize: 'var(--text-caption)',
+                    fontWeight: 'var(--weight-medium)',
+                  }}
+                >
+                  {node.status === 'mastered' && <CheckCircle2 size={11} />}
+                  {node.status === 'in-progress' && <Circle size={11} />}
+                  {node.status === 'locked' && <Lock size={11} />}
+                  {node.has_prerequisite_alert && <AlertCircle size={11} style={{ color: 'var(--orange)' }} />}
+                  {node.name}
+                </div>
+              );
+            })}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* CompoundingCard */}
@@ -147,29 +174,34 @@ export default function KnowledgeHomePage() {
         {showBridge && (
           <motion.div
             key="bridge"
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="p-4 rounded-xl bg-gradient-to-br from-violet-500/10 to-emerald-500/5 border border-violet-500/25"
+            transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
+            style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-card)',
+              boxShadow: 'var(--shadow-card)',
+              border: '1px solid rgba(88,86,214,.2)',
+            }}
             onAnimationComplete={() => localStorage.setItem('vidhya.ke_bridge_shown', '1')}
           >
-            <div className="text-xs text-violet-300/80 uppercase tracking-wider mb-2">Milestone</div>
-            <div className="text-base font-semibold text-surface-100 mb-1">
+            <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Milestone
+            </p>
+            <p style={{ margin: '0 0 4px', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
               You've mastered {progress!.pct}% of {trackName || 'your curriculum'}
-            </div>
-            <div className="text-xs text-surface-400 leading-relaxed mb-3">
+            </p>
+            <p style={{ margin: '0 0 14px', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-normal)' }}>
               Ready to test yourself on the full exam?
-            </div>
-            <button
-              onClick={() => navigate('/onboard')}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-violet-500 text-white text-sm font-semibold inline-flex items-center gap-1.5"
-            >
+            </p>
+            <Button size="sm" tone="tutor" onClick={() => navigate('/onboard')}>
               Set your exam date <ChevronRight size={14} />
-            </button>
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }

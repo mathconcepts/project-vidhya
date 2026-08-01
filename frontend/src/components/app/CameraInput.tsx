@@ -4,7 +4,6 @@
  */
 
 import { useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Image, X } from 'lucide-react';
 
 interface CameraInputProps {
@@ -14,8 +13,8 @@ interface CameraInputProps {
   compact?: boolean;
 }
 
-const MAX_SIZE = 1024; // Max dimension in pixels
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function resizeImage(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
@@ -88,67 +87,115 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
 
   if (preview) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative inline-block"
-      >
+      <div style={{ position: 'relative', display: 'inline-block' }}>
         <img
           src={`data:image/jpeg;base64,${preview}`}
           alt="Captured problem"
-          className={compact ? 'h-12 w-12 rounded-lg object-cover' : 'max-h-48 rounded-xl object-contain border border-surface-700'}
+          style={compact
+            ? { width: 48, height: 48, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }
+            : { maxHeight: 192, borderRadius: 'var(--radius-lg)', objectFit: 'contain', border: 'var(--hairline) solid var(--separator)' }
+          }
         />
         <button
           onClick={onClear}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
+          style={{
+            position: 'absolute',
+            top: -8,
+            right: -8,
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            background: 'var(--red)',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: 'var(--shadow-raise)',
+          }}
         >
-          <X size={12} className="text-white" />
+          <X size={12} style={{ color: '#fff' }} />
         </button>
-      </motion.div>
+      </div>
     );
   }
 
   return (
     <div>
-      <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleChange} className="hidden" />
-      <input ref={galleryRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleChange} style={{ display: 'none' }} />
+      <input ref={galleryRef} type="file" accept="image/*" onChange={handleChange} style={{ display: 'none' }} />
 
-      <div className={compact ? 'flex gap-1' : 'flex gap-3'}>
+      <div style={{ display: 'flex', gap: compact ? 4 : 12 }}>
         <button
           onClick={() => cameraRef.current?.click()}
           disabled={loading}
-          className={compact
-            ? 'p-2.5 rounded-xl bg-surface-800 hover:bg-surface-700 text-emerald-400 transition-colors'
-            : 'flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-surface-900 border border-surface-700 hover:border-emerald-500/50 text-surface-300 hover:text-emerald-400 transition-all'
-          }
+          style={compact ? {
+            padding: 10,
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--surface-fill)',
+            border: 'none',
+            color: 'var(--green-ink)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          } : {
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: '16px 0',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--surface-fill)',
+            border: 'var(--hairline) solid var(--separator)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'var(--text-footnote)',
+            fontWeight: 'var(--weight-medium)',
+          }}
         >
           <Camera size={compact ? 18 : 24} />
-          {!compact && <span className="text-sm font-medium">Take Photo</span>}
+          {!compact && <span>Take Photo</span>}
         </button>
         {!compact && (
           <button
             onClick={() => galleryRef.current?.click()}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-surface-900 border border-surface-700 hover:border-violet-500/50 text-surface-300 hover:text-violet-400 transition-all"
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: '16px 0',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-fill)',
+              border: 'var(--hairline) solid var(--separator)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-footnote)',
+              fontWeight: 'var(--weight-medium)',
+            }}
           >
             <Image size={24} />
-            <span className="text-sm font-medium">From Gallery</span>
+            <span>From Gallery</span>
           </button>
         )}
       </div>
 
-      <AnimatePresence>
-        {loading && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-surface-400 mt-2">
-            Processing image...
-          </motion.p>
-        )}
-        {error && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xs text-red-400 mt-2">
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      {loading && (
+        <p style={{ margin: '8px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+          Processing image…
+        </p>
+      )}
+      {error && (
+        <p style={{ margin: '8px 0 0', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,32 +1,11 @@
 /**
- * ReviewQueueCard — surfaces GBrain's retention + trajectory insights on
- * the student's planner.
- *
- * Two compact panels:
- *
- *   1. Retention queue  — concepts due for spaced review now, plus how
- *                         many concepts are coming up over the next 7 days.
- *                         Helps the student catch their own forgetting curve.
- *
- *   2. Performance signal — top trajectory insights (breakthrough / plateau /
- *                            decline / steady). Highlights what's moving
- *                            and what's stuck.
- *
- * Both panels read from /api/gbrain/retention/:sid and
- * /api/gbrain/trajectory/:sid. The card returns null when the student
- * has no tracked encounters yet (cold-start), so we don't show empty UI.
+ * ReviewQueueCard — surfaces GBrain's retention + trajectory insights.
  */
 
 import { useEffect, useState } from 'react';
 import { authFetch, getToken } from '@/lib/auth/client';
-import { clsx } from 'clsx';
 import { Brain, Clock, TrendingUp, TrendingDown, Minus, ArrowUpRight } from 'lucide-react';
 
-/**
- * Lightweight JWT payload decode — no verification, just claim extraction.
- * The token is already trusted (came from our own auth flow); we just need
- * the user_id to call /api/gbrain/retention/:sid.
- */
 function getCurrentUserId(): string | null {
   const t = getToken();
   if (!t) return null;
@@ -92,60 +71,68 @@ export function ReviewQueueCard() {
           setTrajectories(d.insights ?? []);
         }
       })
-      .catch(() => { /* fail silently — this card is supplementary */ })
+      .catch(() => { /* fail silently */ })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
   }, []);
 
-  // Hide when there's nothing useful to show (cold-start student)
   const hasRetention = !!retention && retention.snapshot.total_concepts_tracked > 0;
   const hasTrajectory = trajectories.length > 0;
   if (loading) return null;
   if (!hasRetention && !hasTrajectory) return null;
 
   return (
-    <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-4 space-y-4">
-      <div className="flex items-center gap-2">
-        <Brain className="w-4 h-4 text-violet-400" />
-        <h3 className="text-sm font-semibold text-zinc-100">Your learning health</h3>
-        <span className="text-[10px] text-zinc-500 uppercase tracking-wider">GBrain</span>
+    <div style={{
+      borderRadius: 'var(--radius-md)',
+      border: 'var(--hairline) solid var(--separator)',
+      background: 'var(--surface-card)',
+      boxShadow: 'var(--shadow-raise)',
+      padding: 16,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 16,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Brain size={16} style={{ color: 'var(--indigo-ink)' }} />
+        <h3 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Your learning health</h3>
+        <span style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>GBrain</span>
       </div>
 
       {hasRetention && retention && (
         <div>
-          <div className="flex items-baseline justify-between mb-1.5">
-            <h4 className="text-xs uppercase tracking-wide text-zinc-400 flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Review queue
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+            <h4 style={{ margin: 0, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Clock size={12} /> Review queue
             </h4>
-            <span className="text-[10px] text-zinc-500">{retention.snapshot.total_concepts_tracked} concepts tracked</span>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{retention.snapshot.total_concepts_tracked} concepts tracked</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            <Stat label="Due now"      value={retention.snapshot.due_now}   tone={retention.snapshot.due_now > 0 ? 'warn' : 'mute'} />
-            <Stat label="Next 24h"     value={retention.snapshot.due_in_24h} tone="info" />
-            <Stat label="Next 7d"      value={retention.snapshot.due_in_7d}  tone="info" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <Stat label="Due now"  value={retention.snapshot.due_now}    tone={retention.snapshot.due_now > 0 ? 'warn' : 'mute'} />
+            <Stat label="Next 24h" value={retention.snapshot.due_in_24h} tone="info" />
+            <Stat label="Next 7d"  value={retention.snapshot.due_in_7d}  tone="info" />
           </div>
 
           {retention.snapshot.due_now > 0 && retention.due.length > 0 && (
-            <div className="rounded-lg bg-zinc-950 border border-zinc-800 p-2 space-y-1">
-              <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Catch these first</div>
+            <div style={{ borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Catch these first</div>
               {retention.due.slice(0, 3).map(item => (
-                <div key={item.concept_id} className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-zinc-300">{item.concept_id}</span>
-                  <span className="text-[10px] text-zinc-500">
+                <div key={item.concept_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 'var(--text-caption)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{item.concept_id}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
                     rev #{item.repetitions} · ease {item.ease_factor.toFixed(1)}
                   </span>
                 </div>
               ))}
               {retention.due.length > 3 && (
-                <div className="text-[10px] text-zinc-500 italic">+ {retention.due.length - 3} more</div>
+                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>+ {retention.due.length - 3} more</div>
               )}
             </div>
           )}
 
           {retention.snapshot.fragile_concepts > 0 && (
-            <div className="mt-2 text-[11px] text-amber-300/80">
+            <div style={{ marginTop: 8, fontSize: 11, color: 'var(--orange)' }}>
               {retention.snapshot.fragile_concepts} concept{retention.snapshot.fragile_concepts === 1 ? '' : 's'} fragile —
               recent attempts weren't strong. Worth re-encountering before harder material.
             </div>
@@ -155,10 +142,10 @@ export function ReviewQueueCard() {
 
       {hasTrajectory && (
         <div>
-          <h4 className="text-xs uppercase tracking-wide text-zinc-400 flex items-center gap-1 mb-1.5">
-            <ArrowUpRight className="w-3 h-3" /> Performance signal · last 30 days
+          <h4 style={{ margin: '0 0 6px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <ArrowUpRight size={12} /> Performance signal · last 30 days
           </h4>
-          <div className="space-y-1.5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {trajectories.slice(0, 4).map(t => <TrajectoryRow key={t.concept_id} t={t} />)}
           </div>
         </div>
@@ -168,43 +155,36 @@ export function ReviewQueueCard() {
 }
 
 function Stat({ label, value, tone }: { label: string; value: number; tone: 'mute' | 'warn' | 'info' }) {
+  const bg = tone === 'warn' ? 'rgba(255,149,0,.06)' : tone === 'info' ? 'rgba(88,86,214,.05)' : 'var(--surface-fill)';
+  const border = tone === 'warn' ? '1px solid rgba(255,149,0,.22)' : tone === 'info' ? '1px solid rgba(88,86,214,.18)' : 'var(--hairline) solid var(--separator)';
+  const color = tone === 'warn' ? 'var(--orange)' : tone === 'info' ? 'var(--indigo-ink)' : 'var(--text-primary)';
   return (
-    <div className={clsx(
-      'rounded-lg px-2.5 py-1.5 border',
-      tone === 'warn' && 'bg-amber-500/10 border-amber-500/30',
-      tone === 'info' && 'bg-sky-500/10 border-sky-500/30',
-      tone === 'mute' && 'bg-zinc-950 border-zinc-800',
-    )}>
-      <div className={clsx(
-        'text-lg font-bold leading-tight',
-        tone === 'warn' && 'text-amber-300',
-        tone === 'info' && 'text-sky-300',
-        tone === 'mute' && 'text-zinc-200',
-      )}>{value}</div>
-      <div className="text-[10px] text-zinc-500">{label}</div>
+    <div style={{ borderRadius: 'var(--radius-sm)', padding: '6px 10px', background: bg, border }}>
+      <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, color }}>{value}</div>
+      <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{label}</div>
     </div>
   );
 }
 
 function TrajectoryRow({ t }: { t: ConceptTrajectory }) {
   const Icon = t.pattern === 'breakthrough' ? TrendingUp
-            : t.pattern === 'decline'      ? TrendingDown
-            : Minus;
-  const tone = t.pattern === 'breakthrough' ? 'text-emerald-300'
-             : t.pattern === 'decline'      ? 'text-red-300'
-             : t.pattern === 'plateau'      ? 'text-amber-300'
-             : 'text-zinc-300';
+             : t.pattern === 'decline'       ? TrendingDown
+             : Minus;
+  const color = t.pattern === 'breakthrough' ? 'var(--green-ink)'
+              : t.pattern === 'decline'       ? 'var(--red)'
+              : t.pattern === 'plateau'       ? 'var(--orange)'
+              : 'var(--text-secondary)';
   return (
-    <div className="flex items-start gap-2 text-xs">
-      <Icon className={clsx('w-3.5 h-3.5 mt-0.5 shrink-0', tone)} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-zinc-200">{t.concept_id}</span>
-          <span className={clsx('text-[10px]', tone)}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 'var(--text-caption)' }}>
+      <Icon size={14} style={{ marginTop: 2, flexShrink: 0, color }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{t.concept_id}</span>
+          <span style={{ fontSize: 10, color }}>
             {t.delta_30d >= 0 ? '+' : ''}{(t.delta_30d * 100).toFixed(0)}%
           </span>
         </div>
-        <div className="text-[11px] text-zinc-500 mt-0.5">{t.insight.replace(`${t.concept_id}: `, '')}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{t.insight.replace(`${t.concept_id}: `, '')}</div>
       </div>
     </div>
   );

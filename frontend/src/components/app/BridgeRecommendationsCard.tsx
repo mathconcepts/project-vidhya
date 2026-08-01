@@ -1,18 +1,9 @@
 /**
  * BridgeRecommendationsCard — student-facing surface for syllabus-bridge content.
- *
- * For students whose exam profile has a knowledge_track_id set (e.g.
- * TN-HSE-12-MATH), GBrain ranks the bridge entries that bridge their school
- * curriculum to their exam target. This card surfaces the top 3 with ready
- * content links and inline feedback.
- *
- * Renders nothing when there is no relevant mapping for the student — safe
- * to drop into any planner page; it disappears for students without a track.
  */
 
 import { useEffect, useState } from 'react';
 import { authFetch } from '@/lib/auth/client';
-import { clsx } from 'clsx';
 import { Sparkles, ChevronRight, ThumbsUp, ThumbsDown, BookOpen } from 'lucide-react';
 
 interface GeneratedContentItem {
@@ -54,11 +45,7 @@ export function BridgeRecommendationsCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedContentId, setExpandedContentId] = useState<string | null>(null);
-  // Track which content_ids the student has already rated, so we don't
-  // show the rate buttons again post-feedback (less noisy UI).
   const [ratedContent, setRatedContent] = useState<Set<string>>(new Set());
-  // Active prep intent — null means "use the one on my profile". A user
-  // can temporarily switch view without mutating their stored profile.
   const [profileIntent, setProfileIntent] = useState<string | null>(null);
   const [intentOverride, setIntentOverride] = useState<'board-focused' | 'bridge' | 'entrance-focused' | null>(null);
 
@@ -67,32 +54,23 @@ export function BridgeRecommendationsCard() {
 
     async function load() {
       try {
-        // 1. Read student's onboard meta -> get their knowledge_track + exam
         const metaRes = await authFetch('/api/onboard/meta');
         if (!metaRes.ok) return;
         const meta = await metaRes.json();
         if (cancelled) return;
         const track = meta.knowledge_track as KnowledgeTrack | null;
-        if (!track) { setLoading(false); return; }   // student has no track -> hide card
+        if (!track) { setLoading(false); return; }
         setKnowledgeTrack(track);
         setProfileIntent(meta.prep_intent ?? null);
 
-        // 2. Find a mapping whose source_curriculum_id matches this track
-        //    (or whose target_exam_id matches their primary exam).
         const mapRes = await authFetch('/api/syllabus-bridge/mappings');
         if (!mapRes.ok) return;
         const { mappings } = await mapRes.json() as { mappings: Mapping[] };
         if (cancelled) return;
 
-        // Heuristic: match on the prefix shared between track id and curriculum id.
-        // Track 'TN-HSE-12-MATH' aligns with curriculum 'TN-12-MATH'; we look for
-        // any mapping whose source curriculum mentions the same board + grade + subject.
         const target = mappings.find(m => {
-          // Source curriculum naming convention is e.g. 'TN-12-MATH'.
-          // Track ids are 'TN-HSE-12-MATH'. Strip a known mid segment and compare.
-          const trackTokens = track.id.split('-');           // TN, HSE, 12, MATH
-          const sourceTokens = m.source_curriculum_id.split('-'); // TN, 12, MATH
-          // Compare board, grade, subject
+          const trackTokens = track.id.split('-');
+          const sourceTokens = m.source_curriculum_id.split('-');
           return trackTokens[0] === sourceTokens[0]
               && trackTokens.slice(-2).join('-') === sourceTokens.slice(-2).join('-')
               && m.target_exam_id === meta.exam_id;
@@ -100,7 +78,6 @@ export function BridgeRecommendationsCard() {
         if (!target) { setLoading(false); return; }
         setMapping(target);
 
-        // 3. Fetch top-3 recommendations, honouring the intent override
         const qs = new URLSearchParams({ limit: '3' });
         if (intentOverride) qs.set('intent', intentOverride);
         const recRes = await authFetch(`/api/syllabus-bridge/mappings/${target.id}/recommendations?${qs.toString()}`);
@@ -127,34 +104,37 @@ export function BridgeRecommendationsCard() {
         body: JSON.stringify({ rating }),
       });
       setRatedContent(prev => new Set(prev).add(content_id));
-    } catch { /* silent — student doesn't need an error toast */ }
+    } catch { /* silent */ }
   }
 
-  // Nothing to show — return null so this card doesn't take up space.
   if (loading) return null;
   if (error) return null;
   if (!mapping || !knowledgeTrack) return null;
   if (recs.length === 0) return null;
 
-  // Resolve effective intent for display
   const effectiveIntent = intentOverride ?? profileIntent ?? 'bridge';
 
   return (
-    <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-emerald-500/5 border border-sky-500/30 p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Sparkles className="w-4 h-4 text-sky-400" />
-        <h3 className="text-sm font-semibold text-zinc-100">
+    <div style={{
+      borderRadius: 'var(--radius-md)',
+      border: 'var(--hairline) solid var(--separator)',
+      background: 'var(--surface-card)',
+      boxShadow: 'var(--shadow-raise)',
+      padding: 16,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <Sparkles size={16} style={{ color: 'var(--indigo-ink)' }} />
+        <h3 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
           Bridge content for {knowledgeTrack.display_name}
         </h3>
       </div>
-      <p className="text-xs text-zinc-400 mb-2">
+      <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
         GBrain picked these topics based on where you are right now — they connect what you know
         from school to what your exam expects.
       </p>
 
-      {/* Intent toggle — explicit override, doesn't mutate the profile. */}
-      <div className="flex items-center gap-1.5 mb-3 text-[11px]">
-        <span className="text-zinc-500">View as:</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 11 }}>
+        <span style={{ color: 'var(--text-tertiary)' }}>View as:</span>
         {(['board-focused', 'bridge', 'entrance-focused'] as const).map(opt => {
           const active = effectiveIntent === opt;
           const labels: Record<typeof opt, string> = {
@@ -166,42 +146,45 @@ export function BridgeRecommendationsCard() {
             <button
               key={opt}
               onClick={() => setIntentOverride(opt === profileIntent ? null : opt)}
-              className={clsx(
-                'px-2 py-0.5 rounded-full transition-colors',
-                active
-                  ? 'bg-sky-500/30 text-sky-100 border border-sky-500/50'
-                  : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700',
-              )}
+              style={{
+                padding: '2px 8px',
+                borderRadius: 12,
+                background: active ? 'rgba(88,86,214,.08)' : 'var(--surface-fill)',
+                border: active ? '1px solid rgba(88,86,214,.3)' : 'var(--hairline) solid var(--separator)',
+                color: active ? 'var(--indigo-ink)' : 'var(--text-secondary)',
+                fontSize: 11,
+                cursor: 'pointer',
+              }}
             >
               {labels[opt]}
             </button>
           );
         })}
         {intentOverride && intentOverride !== profileIntent && (
-          <span className="ml-auto text-zinc-500 italic">temporary view</span>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>temporary view</span>
         )}
       </div>
 
-      <div className="space-y-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {recs.map(r => {
           const primaryContent = r.ready_content[0];
           return (
-            <div key={r.entry_id} className="rounded-lg bg-zinc-950/50 border border-zinc-800 overflow-hidden">
-              <div className="p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-zinc-100">
+            <div key={r.entry_id} style={{ borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', overflow: 'hidden' }}>
+              <div style={{ padding: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>
                       {primaryContent?.title ?? r.entry_id}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">{r.reason}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{r.reason}</div>
                   </div>
-                  <div className="text-[10px] text-sky-400 shrink-0">
+                  <div style={{ fontSize: 10, color: 'var(--indigo-ink)', flexShrink: 0 }}>
                     need {Math.round(r.need_score * 100)}
                   </div>
                 </div>
 
                 {r.needs_generation && (
-                  <div className="mt-2 text-[11px] text-zinc-500 italic">
+                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
                     Material not generated yet. Ask your teacher to enable it.
                   </div>
                 )}
@@ -211,44 +194,41 @@ export function BridgeRecommendationsCard() {
                     onClick={() => setExpandedContentId(
                       expandedContentId === primaryContent.content_id ? null : primaryContent.content_id
                     )}
-                    className="mt-2 inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 transition-colors"
+                    style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
-                    <BookOpen className="w-3 h-3" />
+                    <BookOpen size={12} />
                     {expandedContentId === primaryContent.content_id ? 'Hide' : 'Read'}
-                    <ChevronRight className={clsx(
-                      'w-3 h-3 transition-transform',
-                      expandedContentId === primaryContent.content_id && 'rotate-90',
-                    )} />
+                    <ChevronRight size={12} style={{ transform: expandedContentId === primaryContent.content_id ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
                   </button>
                 )}
               </div>
 
               {primaryContent && expandedContentId === primaryContent.content_id && (
-                <div className="border-t border-zinc-800 bg-zinc-950 p-4 space-y-3">
-                  <pre className="text-xs text-zinc-300 whitespace-pre-wrap font-mono leading-relaxed">
+                <div style={{ borderTop: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <pre style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-mono)', lineHeight: 'var(--leading-relaxed)' }}>
                     {primaryContent.body_markdown}
                   </pre>
 
                   {!ratedContent.has(primaryContent.content_id) && (
-                    <div className="border-t border-zinc-800 pt-3 flex items-center gap-2 text-xs">
-                      <span className="text-zinc-400">Did this help?</span>
+                    <div style={{ borderTop: 'var(--hairline) solid var(--separator)', paddingTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Did this help?</span>
                       <button
                         onClick={() => rateContent(primaryContent.content_id, 'helpful')}
-                        className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 transition-colors"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)', cursor: 'pointer', fontSize: 'var(--text-caption)' }}
                       >
-                        <ThumbsUp className="w-3 h-3" /> Helpful
+                        <ThumbsUp size={12} /> Helpful
                       </button>
                       <button
                         onClick={() => rateContent(primaryContent.content_id, 'not-helpful')}
-                        className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 'var(--text-caption)' }}
                       >
-                        <ThumbsDown className="w-3 h-3" /> Not really
+                        <ThumbsDown size={12} /> Not really
                       </button>
                     </div>
                   )}
 
                   {ratedContent.has(primaryContent.content_id) && (
-                    <div className="text-[11px] text-emerald-400 italic border-t border-zinc-800 pt-3">
+                    <div style={{ fontSize: 11, color: 'var(--green-ink)', fontStyle: 'italic', borderTop: 'var(--hairline) solid var(--separator)', paddingTop: 12 }}>
                       Thanks — your rating shapes what gets re-written.
                     </div>
                   )}

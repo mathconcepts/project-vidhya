@@ -4,24 +4,12 @@
  *
  * U1-1 funnel-ize (partial): progress (current question + answers so far)
  * persists to localStorage and resumes if the student leaves mid-diagnostic
- * and comes back to the SAME question set (see loadDiagnosticProgress /
- * saveDiagnosticProgress below). Honesty note: this is fixed-length
- * (10 questions, 1/topic), not the "20-min adaptive" diagnostic the backlog
- * doc describes — adaptive item selection isn't built, so marketing copy
- * says "10-question diagnostic," not "adaptive" or "20-minute" (see
- * docs/capability-register.md for the open items this defers).
+ * and comes back to the SAME question set.
  *
  * Results moment (Wave U1, UX-100x doc §3.2 "Results moment"): agency before
  * diagnosis. The default post-submit screen leads with focus areas — what
  * the student should DO next — with the honest per-concept band/score map
- * one tap behind via "See the full picture". Never lead with the weakness
- * map; it's still there, just not first.
- *
- * Honesty note: this screen does NOT compute a hours/marks-weighted plan —
- * no per-concept time or expected-marks number exists in the diagnostic
- * pipeline today. It surfaces missed-topic concepts in diagnostic order,
- * honestly labeled. A real "next N hours" plan is future scope (see
- * docs/capability-register.md).
+ * one tap behind via "See the full picture".
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -32,7 +20,6 @@ import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { trackAction, trackPageView } from '@/lib/beacon';
 import { Clock, ChevronRight, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import { ShareCard } from '@/components/ShareCard';
 
@@ -48,19 +35,10 @@ interface DiagnosticQuestion {
   explanation?: string;
 }
 
-/** How many focus concepts to surface on the "next 10 hours" plan screen. */
 const MAX_FOCUS_CONCEPTS = 6;
 
-/** Which secondary screen is showing behind the agency-first results view. */
 type ResultsView = 'plan' | 'map';
 
-// U1-1 funnel-ize: resumability. Keyed by session so switching anonymous
-// sessions never leaks one student's in-progress answers into another's.
-// Storing `questionIds` alongside progress lets a resume attempt verify the
-// saved state actually belongs to the CURRENT question set fetched from the
-// backend — if the backend ever returns a different set (new day, different
-// exam), the stale progress is discarded rather than silently misapplied to
-// the wrong questions.
 const diagnosticStorageKey = (sessionId: string) => `vidhya_diagnostic_progress_${sessionId}`;
 
 interface DiagnosticProgress {
@@ -84,25 +62,18 @@ function loadDiagnosticProgress(sessionId: string): DiagnosticProgress | null {
 function saveDiagnosticProgress(sessionId: string, progress: DiagnosticProgress): void {
   try {
     localStorage.setItem(diagnosticStorageKey(sessionId), JSON.stringify(progress));
-  } catch {
-    // best-effort — private mode / full storage
-  }
+  } catch { /* best-effort */ }
 }
 
 function clearDiagnosticProgress(sessionId: string): void {
   try {
     localStorage.removeItem(diagnosticStorageKey(sessionId));
-  } catch {
-    // best-effort
-  }
+  } catch { /* best-effort */ }
 }
 
 export default function DiagnosticPage() {
   const sessionId = useSession();
   const navigate = useNavigate();
-  // Authenticated users with exam profiles who land here directly should
-  // go to /planned (not restart the diagnostic).
-  // The `checking` state prevents the page from flashing before redirect.
   const checking = useAuthRedirect('/planned');
   const [questions, setQuestions] = useState<DiagnosticQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -114,26 +85,15 @@ export default function DiagnosticPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load questions
   useEffect(() => {
-    if (checking) return; // wait for auth check before loading questions
-    // page_view is tracked once via the beacon (below) — trackEvent's own
-    // 'page_view' type is intentionally not also fired here to avoid a
-    // duplicate event for the same view.
+    if (checking) return;
     trackPageView('/diagnostic');
+
     authFetch(`/api/diagnostic/${sessionId}`)
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then((data: { questions: DiagnosticQuestion[] }) => {
         setQuestions(data.questions);
-        // Resume: only trust saved progress if it was recorded against this
-        // EXACT question set (same ids, same order) — otherwise a stale
-        // localStorage entry from a previous day's diagnostic could resume
-        // into the wrong question at the wrong index.
         const saved = loadDiagnosticProgress(sessionId);
-        // A corrupted or hand-edited localStorage value must never crash the
-        // page — validate currentIdx is a real in-bounds index (not negative,
-        // not a float, not NaN from a tampered string) and answers is a
-        // plain object before trusting either.
         const validIdx = saved && Number.isInteger(saved.currentIdx)
           && saved.currentIdx >= 0 && saved.currentIdx < data.questions.length;
         const validAnswers = saved && saved.answers !== null && typeof saved.answers === 'object'
@@ -145,22 +105,13 @@ export default function DiagnosticPage() {
           setAnswers(saved.answers);
           setCurrentIdx(saved.currentIdx);
         } else if (saved) {
-          // Belongs to a different question set — don't let it linger.
           clearDiagnosticProgress(sessionId);
         }
       })
-      .catch(() => {
-        // Genuine failure — go home (GateHome will redirect to /planned for
-        // authenticated users; anonymous users see the onboarding state).
-        navigate('/');
-      })
+      .catch(() => { navigate('/'); })
       .finally(() => setLoading(false));
   }, [sessionId, navigate, checking]);
 
-  // Persist progress after every answer so a closed tab / lost connection /
-  // app kill resumes to the exact question rather than restarting the
-  // diagnostic (U1-1). Skipped once results are showing — a finished
-  // diagnostic has nothing left to resume into.
   useEffect(() => {
     if (loading || showResult || questions.length === 0) return;
     saveDiagnosticProgress(sessionId, {
@@ -170,14 +121,10 @@ export default function DiagnosticPage() {
     });
   }, [sessionId, loading, showResult, questions, currentIdx, answers]);
 
-  // Once the diagnostic completes, the saved progress has served its
-  // purpose — clear it so a later fresh diagnostic (new questions) doesn't
-  // find stale state.
   useEffect(() => {
     if (showResult) clearDiagnosticProgress(sessionId);
   }, [showResult, sessionId]);
 
-  // Timer countdown
   useEffect(() => {
     if (loading || showResult || currentIdx >= questions.length) return;
     setTimer(45);
@@ -185,7 +132,7 @@ export default function DiagnosticPage() {
       setTimer(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          handleAnswer(null); // time's up
+          handleAnswer(null);
           return 0;
         }
         return prev - 1;
@@ -199,7 +146,6 @@ export default function DiagnosticPage() {
     if (currentIdx >= questions.length) return;
 
     const q = questions[currentIdx];
-    // Determine correctness — check if options has a correct_answer field
     const correctAnswer = q.options?.correct_answer || q.options?.answer;
     const isCorrect = selected !== null && selected === correctAnswer;
 
@@ -208,7 +154,6 @@ export default function DiagnosticPage() {
       [q.topic]: { selected, correct: isCorrect },
     }));
 
-    // Move to next question after brief delay
     setTimeout(() => {
       if (currentIdx < questions.length - 1) {
         setCurrentIdx(prev => prev + 1);
@@ -218,9 +163,6 @@ export default function DiagnosticPage() {
     }, 600);
   }, [currentIdx, questions]);
 
-  // Persist the diagnostic to the backend. Fire-and-forget: the agency-first
-  // results screen renders from local `answers` state immediately, so a slow
-  // or failed save shouldn't block the student from seeing their plan.
   const submitScores = useCallback(async () => {
     try {
       const scores: Record<string, number> = {};
@@ -244,7 +186,6 @@ export default function DiagnosticPage() {
     }
   }, [questions, answers, sessionId]);
 
-  // Submit once, the moment results are ready to show.
   useEffect(() => {
     if (showResult) submitScores();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,17 +193,17 @@ export default function DiagnosticPage() {
 
   if (loading || checking) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 size={32} className="text-emerald-400 animate-spin" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <Loader2 size={32} className="animate-spin" style={{ color: 'var(--green-ink)' }} />
       </div>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <div className="text-center py-16 space-y-4">
-        <p className="text-surface-400">No diagnostic questions available.</p>
-        <button onClick={() => navigate('/')} className="text-emerald-400 underline">Go home</button>
+      <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>No diagnostic questions available.</p>
+        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--green-ink)', textDecoration: 'underline', cursor: 'pointer', fontSize: 'var(--text-body)' }}>Go home</button>
       </div>
     );
   }
@@ -273,10 +214,6 @@ export default function DiagnosticPage() {
     const totalCount = questions.length;
     const examName = questions[0]?.exam_name ?? 'Exam';
 
-    // Agency-first: resurface the per-topic weakness signal the diagnostic
-    // already computes (correct/incorrect per topic, above) as a prioritized
-    // "what to do next" list. No new scoring algorithm — this is the same
-    // `answers` map, just read in the order that helps the student act.
     const focusConcepts = questions
       .filter(q => !answers[q.topic]?.correct)
       .map(q => q.topic_name)
@@ -286,9 +223,6 @@ export default function DiagnosticPage() {
       ? `${focusConcepts.length} concept${focusConcepts.length === 1 ? '' : 's'} ${focusConcepts.length === 1 ? 'stands' : 'stand'} between you and a stronger score.`
       : 'Strong across the board today — we\'ll keep pace with fresh problems.';
 
-    // No short-link system exists yet (checked — see grep in PR notes), so
-    // the shareable link is the app's own origin. Swap this for a real
-    // short-link when one ships.
     const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://vidhya-demo.onrender.com/';
 
     const handleStartHour1 = () => {
@@ -300,54 +234,46 @@ export default function DiagnosticPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-6 py-4"
+        style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 16, paddingBottom: 16 }}
       >
         {resultsView === 'plan' ? (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wider text-emerald-400/90">Your plan</p>
-              {/* Headline names what this screen actually delivers: an ordered
-                  list of focus concepts, not a scheduled hour-by-hour plan —
-                  no per-concept time/marks estimate exists yet (see backend
-                  follow-up in docs/capability-register.md). */}
-              <h1 className="font-display text-3xl font-bold text-surface-50">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--green-ink)' }}>Your plan</p>
+              <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
                 {focusConcepts.length > 0 ? 'Your focus areas' : "You're solid here"}
               </h1>
-              <p className="text-sm text-surface-400">
+              <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>
                 You got {correctCount} of {totalCount} today. {planSubtext}
               </p>
             </div>
 
             {focusConcepts.length > 0 && (
-              <div className="space-y-2">
-                {/* Listed in diagnostic order — not yet ranked by marks-weight
-                    or exam proximity (that's the priority engine's job, not
-                    wired to this screen). No fabricated "high priority" tiers. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {focusConcepts.map((name, i) => (
                   <div
                     key={name}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5"
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid rgba(52,199,89,.22)', background: 'rgba(52,199,89,.05)' }}
                   >
-                    <span className="shrink-0 size-6 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-mono font-semibold flex items-center justify-center">
+                    <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(52,199,89,.12)', color: 'var(--green-ink)', fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {i + 1}
                     </span>
-                    <span className="text-sm text-surface-200 flex-1">{name}</span>
+                    <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', flex: 1 }}>{name}</span>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="flex flex-col gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
                 onClick={handleStartHour1}
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+                style={{ width: '100%', padding: '12px 0', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-body)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
-                Start hour 1 now
-                <ChevronRight size={18} />
+                Start hour 1 now <ChevronRight size={18} />
               </button>
               <button
                 onClick={() => setShareOpen(true)}
-                className="w-full py-3 rounded-xl border border-surface-700 text-surface-200 font-medium hover:border-surface-600 transition-colors"
+                style={{ width: '100%', padding: '12px 0', borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)', fontSize: 'var(--text-body)', cursor: 'pointer' }}
               >
                 Get my report card
               </button>
@@ -355,65 +281,54 @@ export default function DiagnosticPage() {
 
             <button
               onClick={() => setResultsView('map')}
-              className="w-full text-center text-xs text-surface-500 hover:text-surface-300 underline underline-offset-2 transition-colors"
+              style={{ textAlign: 'center', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
             >
               See the full picture — why this plan
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <button
               onClick={() => setResultsView('plan')}
-              className="text-xs text-surface-400 hover:text-surface-200 transition-colors"
+              style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
             >
-              &larr; Back to your plan
+              ← Back to your plan
             </button>
 
-            <div className="text-center space-y-3">
-              <h1 className="font-display text-2xl font-bold text-surface-100">Your {examName} Profile</h1>
-              <div className="text-5xl font-bold font-mono text-emerald-400">
+            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>Your {examName} Profile</h1>
+              <div style={{ fontSize: 48, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--green-ink)' }}>
                 {correctCount}/{totalCount}
               </div>
-              <p className="text-xs text-surface-500 max-w-xs mx-auto">
+              <p style={{ margin: '0 auto', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', maxWidth: 280 }}>
                 Estimate from your {totalCount} diagnostic answers today — not a full exam attempt. Confidence grows with every session.
               </p>
             </div>
 
-            {/* Topic breakdown — the honest band/score map, one tap behind the plan */}
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {questions.map(q => {
                 const answer = answers[q.topic];
-                const row = (
-                  <div className="flex items-center gap-3 p-3">
-                    {answer?.correct
-                      ? <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-                      : <XCircle size={18} className="text-red-400 shrink-0" />
-                    }
-                    <span className="text-sm text-surface-200 flex-1">{q.topic_name}</span>
-                    <span className={clsx(
-                      'text-xs font-mono',
-                      answer?.correct ? 'text-emerald-400' : 'text-red-400'
-                    )}>
-                      {answer?.correct ? 'Correct' : 'Incorrect'}
-                    </span>
-                  </div>
-                );
-                // Note: this is a plain correct/incorrect mark, not a receipt.
-                // The receipt border is reserved for content backed by a real
-                // verification_log / AnswerVerifier record (CAS/SymPy/Wolfram).
-                // A diagnostic self-score is a client-side string match against
-                // the question's answer key — it earns a checkmark, not a ✓ receipt.
+                const correct = answer?.correct;
                 return (
                   <div
                     key={q.topic}
-                    className={clsx(
-                      'rounded-xl border',
-                      answer?.correct
-                        ? 'border-emerald-500/20 bg-emerald-500/5'
-                        : 'border-red-500/20 bg-red-500/5',
-                    )}
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                      border: correct ? '1px solid rgba(52,199,89,.22)' : '1px solid rgba(255,59,48,.22)',
+                      background: correct ? 'rgba(52,199,89,.05)' : 'rgba(255,59,48,.05)',
+                      padding: 12,
+                    }}
                   >
-                    {row}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      {correct
+                        ? <CheckCircle2 size={18} style={{ color: 'var(--green-ink)', flexShrink: 0 }} />
+                        : <XCircle size={18} style={{ color: 'var(--red)', flexShrink: 0 }} />
+                      }
+                      <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', flex: 1 }}>{q.topic_name}</span>
+                      <span style={{ fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)', color: correct ? 'var(--green-ink)' : 'var(--red)' }}>
+                        {correct ? 'Correct' : 'Incorrect'}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -434,47 +349,42 @@ export default function DiagnosticPage() {
     );
   }
 
-  // Question screen. Defense in depth: currentIdx is validated on resume
-  // (see the loadDiagnosticProgress guard above), but this render path
-  // dereferences `q` unconditionally right below — a corrupted/out-of-range
-  // index must degrade to a loading state, never a hard crash.
+  // Question screen
   const q = questions[currentIdx];
-  if (!q) return <Loader2 className="w-6 h-6 animate-spin text-emerald-400 mx-auto mt-12" />;
+  if (!q) return <Loader2 size={24} className="animate-spin" style={{ color: 'var(--green-ink)', display: 'block', margin: '48px auto' }} />;
   const options = Array.isArray(q.options?.choices) ? q.options.choices :
     typeof q.options === 'object' && q.options !== null ?
       Object.entries(q.options).filter(([k]) => !['correct_answer', 'answer', 'explanation'].includes(k)).map(([k, v]) => ({ key: k, text: v })) :
       [];
 
+  const timerColor = timer > 30 ? 'var(--green-ink)' : timer > 10 ? 'var(--orange)' : 'var(--red)';
+  const timerBg = timer > 30 ? 'rgba(52,199,89,.06)' : timer > 10 ? 'rgba(255,149,0,.06)' : 'rgba(255,59,48,.06)';
+
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Header: progress + timer */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-surface-400 font-medium">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>
           Question {currentIdx + 1} of {questions.length}
         </span>
-        <div className={clsx(
-          'flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-sm font-semibold',
-          timer > 30 ? 'text-emerald-400 bg-emerald-500/10' :
-          timer > 10 ? 'text-amber-400 bg-amber-500/10' :
-          'text-red-400 bg-red-500/10'
-        )}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: timerColor, background: timerBg }}>
           <Clock size={14} />
           {timer}s
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
+      <div style={{ height: 4, borderRadius: 2, background: 'var(--surface-fill)', overflow: 'hidden' }}>
         <motion.div
-          className="h-full bg-emerald-500 rounded-full"
+          style={{ height: '100%', background: 'var(--green)', borderRadius: 2 }}
           initial={{ width: 0 }}
-          animate={{ width: `${((currentIdx) / questions.length) * 100}%` }}
+          animate={{ width: `${(currentIdx / questions.length) * 100}%` }}
           transition={{ duration: 0.3 }}
         />
       </div>
 
       {/* Topic tag */}
-      <span className="inline-block text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
+      <span style={{ display: 'inline-block', fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 12, background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }}>
         {q.topic_name}
       </span>
 
@@ -486,14 +396,14 @@ export default function DiagnosticPage() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.2 }}
-          className="space-y-4"
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          <p className="text-surface-100 text-base leading-relaxed">
+          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)' }}>
             {q.question_text}
           </p>
 
           {/* Options */}
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {options.map((opt: any, i: number) => {
               const optKey = opt.key || String.fromCharCode(65 + i);
               const optText = opt.text || opt;
@@ -501,10 +411,10 @@ export default function DiagnosticPage() {
                 <button
                   key={i}
                   onClick={() => handleAnswer(optKey)}
-                  className="w-full text-left p-3 rounded-xl border border-surface-700 bg-surface-900 hover:border-emerald-500/50 hover:bg-surface-800 transition-all active:scale-[0.98]"
+                  style={{ width: '100%', textAlign: 'left', padding: 12, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', cursor: 'pointer', fontSize: 'var(--text-body)' }}
                 >
-                  <span className="text-xs font-mono text-emerald-400 mr-2">{optKey}.</span>
-                  <span className="text-sm text-surface-200">{optText}</span>
+                  <span style={{ fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)', color: 'var(--green-ink)', marginRight: 8 }}>{optKey}.</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{optText}</span>
                 </button>
               );
             })}
@@ -513,7 +423,7 @@ export default function DiagnosticPage() {
           {/* Skip button */}
           <button
             onClick={() => handleAnswer(null)}
-            className="text-xs text-surface-500 hover:text-surface-300 transition-colors"
+            style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
           >
             Skip this question
           </button>

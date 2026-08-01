@@ -15,16 +15,15 @@
  * (practice, chat, multimodal) orbits this.
  */
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
 import {
-  ChevronLeft, ChevronRight, Loader2, CheckCircle2, XCircle, Eye,
+  Loader2, CheckCircle2, XCircle, Eye,
   Lightbulb, BookOpen, Target, Zap, AlertTriangle, Hash, GitBranch,
   Sparkles, ExternalLink, RotateCcw, Gauge,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useSession } from '@/hooks/useSession';
 
 // ============================================================================
@@ -69,14 +68,14 @@ interface Lesson {
 // ============================================================================
 
 const KIND_META: Record<ComponentKind, { icon: typeof Lightbulb; color: string; title: string }> = {
-  hook:             { icon: Lightbulb,    color: 'text-amber-400',   title: 'Why care' },
-  definition:       { icon: BookOpen,     color: 'text-violet-400',     title: 'Definition' },
-  intuition:        { icon: Eye,          color: 'text-emerald-400', title: 'Intuition' },
-  worked_example:   { icon: Target,       color: 'text-purple-400',  title: 'Worked example' },
-  micro_exercise:   { icon: Zap,          color: 'text-orange-400',  title: 'Quick check' },
-  common_traps:     { icon: AlertTriangle,color: 'text-rose-400',    title: 'Watch for' },
-  formal_statement: { icon: Hash,         color: 'text-indigo-400',  title: 'Formal' },
-  connections:      { icon: GitBranch,    color: 'text-cyan-400',    title: 'Connections' },
+  hook:             { icon: Lightbulb,     color: 'var(--orange)',    title: 'Why care' },
+  definition:       { icon: BookOpen,      color: 'var(--indigo-ink)', title: 'Definition' },
+  intuition:        { icon: Eye,           color: 'var(--green-ink)', title: 'Intuition' },
+  worked_example:   { icon: Target,        color: 'var(--indigo-ink)', title: 'Worked example' },
+  micro_exercise:   { icon: Zap,           color: 'var(--orange)',    title: 'Quick check' },
+  common_traps:     { icon: AlertTriangle, color: 'var(--red)',       title: 'Watch for' },
+  formal_statement: { icon: Hash,          color: 'var(--indigo-ink)', title: 'Formal' },
+  connections:      { icon: GitBranch,     color: 'var(--indigo-ink)', title: 'Connections' },
 };
 
 // ============================================================================
@@ -106,21 +105,20 @@ function saveVisits(v: Record<string, StoredVisit>) {
 
 function AttributionBadge({ a }: { a: Attribution | undefined }) {
   if (!a) return null;
-  const kindTone: Record<Attribution['kind'], string> = {
-    'user-material':    'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
-    'bundle-canon':     'bg-violet-500/10 text-violet-300 border-violet-500/25',
-    'wolfram-computed': 'bg-amber-500/10 text-amber-300 border-amber-500/25',
-    'concept-graph':    'bg-surface-800/60 text-surface-400 border-surface-700',
-    'generated':        'bg-purple-500/10 text-purple-300 border-purface-500/25',
+  type AKind = Attribution['kind'];
+  const kindStyle: Record<AKind, React.CSSProperties> = {
+    'user-material':    { background: 'rgba(52,199,89,.06)',   color: 'var(--green-ink)',   border: '1px solid rgba(52,199,89,.22)' },
+    'bundle-canon':     { background: 'rgba(88,86,214,.06)',   color: 'var(--indigo-ink)',  border: '1px solid rgba(88,86,214,.22)' },
+    'wolfram-computed': { background: 'rgba(255,149,0,.06)',   color: 'var(--orange)',      border: '1px solid rgba(255,149,0,.22)' },
+    'concept-graph':    { background: 'var(--surface-fill)',   color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' },
+    'generated':        { background: 'rgba(88,86,214,.06)',   color: 'var(--indigo-ink)',  border: '1px solid rgba(88,86,214,.22)' },
   };
+  const s = kindStyle[a.kind];
   return (
-    <div className={clsx(
-      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border',
-      kindTone[a.kind]
-    )}>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 999, fontSize: 10, ...s }}>
       <span>{a.title || a.kind}</span>
       {a.url && (
-        <a href={a.url} target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100">
+        <a href={a.url} target="_blank" rel="noopener noreferrer" style={{ opacity: 0.7, color: 'inherit' }}>
           <ExternalLink size={9} />
         </a>
       )}
@@ -148,11 +146,11 @@ function ComponentCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="space-y-4"
+      style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
     >
-      <div className="flex items-center gap-2">
-        <Icon size={16} className={meta.color} />
-        <h2 className={clsx('text-sm font-semibold uppercase tracking-wide', meta.color)}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Icon size={16} style={{ color: meta.color }} />
+        <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: meta.color }}>
           {meta.title}
         </h2>
       </div>
@@ -169,16 +167,16 @@ function ComponentCard({
       <AttributionBadge a={component.attribution} />
 
       {component.kind !== 'micro_exercise' && (
-        <div className="flex gap-2 pt-2">
+        <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
           <button
             onClick={() => onComplete()}
-            className="flex-1 py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30 text-sm text-violet-300 hover:bg-violet-500/25"
+            style={{ flex: 1, padding: '10px 0', borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.25)', fontSize: 'var(--text-body)', color: 'var(--indigo-ink)', cursor: 'pointer' }}
           >
             Got it
           </button>
           <button
             onClick={onSkip}
-            className="px-4 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-400 hover:text-surface-200"
+            style={{ padding: '10px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', cursor: 'pointer' }}
           >
             Skip
           </button>
@@ -189,20 +187,24 @@ function ComponentCard({
 }
 
 function HookBody({ c }: { c: any }) {
-  return <p className="text-sm text-surface-200 leading-relaxed">{c.text}</p>;
+  return (
+    <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+      {c.text}
+    </p>
+  );
 }
 
 function DefinitionBody({ c }: { c: any }) {
   return (
-    <div className="space-y-2">
-      <div className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-        <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1">Canonical</p>
-        <p className="text-sm text-surface-200">{c.canonical}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+        <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Canonical</p>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{c.canonical}</p>
       </div>
       {c.plain_english && c.plain_english !== c.canonical && (
-        <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
-          <p className="text-[10px] text-violet-300 uppercase tracking-wide mb-1">In plain English</p>
-          <p className="text-sm text-violet-100/90">{c.plain_english}</p>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.2)' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>In plain English</p>
+          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)' }}>{c.plain_english}</p>
         </div>
       )}
     </div>
@@ -211,10 +213,10 @@ function DefinitionBody({ c }: { c: any }) {
 
 function IntuitionBody({ c }: { c: any }) {
   return (
-    <div className="space-y-2">
-      <p className="text-sm text-surface-200 leading-relaxed">{c.text}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>{c.text}</p>
       {c.analogy && (
-        <p className="text-sm italic text-emerald-300/90 pl-3 border-l-2 border-emerald-500/50">
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', fontStyle: 'italic', color: 'var(--green-ink)', paddingLeft: 12, borderLeft: '2px solid rgba(52,199,89,.4)' }}>
           {c.analogy}
         </p>
       )}
@@ -225,33 +227,33 @@ function IntuitionBody({ c }: { c: any }) {
 function WorkedExampleBody({ c, onReveal }: { c: any; onReveal: () => void }) {
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
   return (
-    <div className="space-y-3">
-      <div className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-        <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1">Problem</p>
-        <p className="text-sm text-surface-200">{c.problem}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+        <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Problem</p>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{c.problem}</p>
       </div>
-      <div className="space-y-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {c.steps?.map((step: any) => {
           const isRevealed = !!revealed[step.step_number];
           return (
-            <div key={step.step_number} className="p-3 rounded-xl bg-surface-900/60 border border-surface-800">
-              <div className="flex items-start gap-2">
-                <span className="shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-semibold flex items-center justify-center">
+            <div key={step.step_number} style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(88,86,214,.12)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-semibold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {step.step_number}
                 </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-surface-200">{step.action}</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{step.action}</p>
                   {isRevealed ? (
                     <>
-                      <p className="text-xs text-surface-400 mt-1.5 leading-relaxed">{step.explanation}</p>
+                      <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', lineHeight: 'var(--leading-relaxed)' }}>{step.explanation}</p>
                       {step.self_check_prompt && (
-                        <p className="text-xs text-emerald-300 mt-2 italic">{step.self_check_prompt}</p>
+                        <p style={{ margin: '8px 0 0', fontSize: 'var(--text-caption)', color: 'var(--green-ink)', fontStyle: 'italic' }}>{step.self_check_prompt}</p>
                       )}
                     </>
                   ) : (
                     <button
                       onClick={() => { setRevealed(p => ({ ...p, [step.step_number]: true })); onReveal(); }}
-                      className="mt-1.5 text-xs text-violet-400 hover:text-violet-300"
+                      style={{ marginTop: 6, fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
                       Why this step? →
                     </button>
@@ -262,11 +264,11 @@ function WorkedExampleBody({ c, onReveal }: { c: any; onReveal: () => void }) {
           );
         })}
       </div>
-      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
-        <p className="text-[10px] text-emerald-300 uppercase tracking-wide mb-1">Final answer</p>
-        <p className="text-sm text-emerald-100 font-mono">{c.final_answer}</p>
+      <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}>
+        <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--green-ink)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Final answer</p>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{c.final_answer}</p>
         {c.wolfram_verified && (
-          <p className="text-[10px] text-emerald-400 mt-1">✓ Wolfram-verified</p>
+          <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--green-ink)' }}>✓ Wolfram-verified</p>
         )}
       </div>
     </div>
@@ -280,7 +282,6 @@ function MicroExerciseBody({ c, onComplete }: { c: any; onComplete: (extra?: any
 
   const submit = () => {
     if (!answer.trim()) return;
-    // Simple string-equivalence check (case/whitespace insensitive) for instant feedback
     const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '').replace(/[,;]/g, '');
     const correct = normalize(answer) === normalize(c.expected_answer);
     setSubmitted({ correct });
@@ -291,8 +292,8 @@ function MicroExerciseBody({ c, onComplete }: { c: any; onComplete: (extra?: any
   };
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-surface-200">{c.question}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{c.question}</p>
       {!submitted ? (
         <>
           <input
@@ -301,47 +302,43 @@ function MicroExerciseBody({ c, onComplete }: { c: any; onComplete: (extra?: any
             onChange={e => setAnswer(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && submit()}
             placeholder="Your answer"
-            className="w-full px-3 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-200 focus:outline-none focus:border-violet-500/50"
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-body)', color: 'var(--text-primary)', boxSizing: 'border-box', outline: 'none' }}
           />
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={submit}
               disabled={!answer.trim()}
-              className="flex-1 py-2.5 rounded-xl bg-violet-500/20 border border-violet-500/40 text-sm text-violet-200 font-medium disabled:opacity-50"
+              style={{ flex: 1, padding: '10px 0', borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.1)', border: '1px solid rgba(88,86,214,.3)', fontSize: 'var(--text-body)', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-medium)', cursor: answer.trim() ? 'pointer' : 'not-allowed', opacity: answer.trim() ? 1 : 0.5 }}
             >
               Check my answer
             </button>
             <button
               onClick={() => onComplete({ skipped: true })}
-              className="px-4 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-400"
+              style={{ padding: '10px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', cursor: 'pointer' }}
             >
               Skip
             </button>
           </div>
         </>
       ) : (
-        <div className={clsx(
-          'p-3 rounded-xl border space-y-2',
-          submitted.correct
-            ? 'bg-emerald-500/10 border-emerald-500/30'
-            : 'bg-rose-500/10 border-rose-500/30'
-        )}>
-          <div className="flex items-center gap-2">
+        <div style={{
+          padding: 12, borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: 8,
+          background: submitted.correct ? 'rgba(52,199,89,.06)' : 'rgba(255,59,48,.06)',
+          border: submitted.correct ? '1px solid rgba(52,199,89,.3)' : '1px solid rgba(255,59,48,.3)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {submitted.correct
-              ? <CheckCircle2 size={16} className="text-emerald-400" />
-              : <XCircle size={16} className="text-rose-400" />}
-            <span className={clsx(
-              'text-sm font-semibold',
-              submitted.correct ? 'text-emerald-300' : 'text-rose-300'
-            )}>
+              ? <CheckCircle2 size={16} style={{ color: 'var(--green-ink)' }} />
+              : <XCircle size={16} style={{ color: 'var(--red)' }} />}
+            <span style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: submitted.correct ? 'var(--green-ink)' : 'var(--red)' }}>
               {submitted.correct ? 'Correct' : 'Not quite'}
             </span>
           </div>
-          <p className="text-xs text-surface-400">
-            Expected: <span className="font-mono text-surface-200">{c.expected_answer}</span>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+            Expected: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{c.expected_answer}</span>
           </p>
           {c.answer_explanation && (
-            <p className="text-xs text-surface-400 leading-relaxed">{c.answer_explanation}</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', lineHeight: 'var(--leading-relaxed)' }}>{c.answer_explanation}</p>
           )}
         </div>
       )}
@@ -351,15 +348,15 @@ function MicroExerciseBody({ c, onComplete }: { c: any; onComplete: (extra?: any
 
 function CommonTrapsBody({ c }: { c: any }) {
   return (
-    <div className="space-y-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {c.traps?.map((t: any, i: number) => (
-        <div key={i} className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
-          <p className="text-sm text-rose-100 font-medium">{t.description}</p>
+        <div key={i} style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,59,48,.04)', border: '1px solid rgba(255,59,48,.18)' }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)' }}>{t.description}</p>
           {t.why_it_happens && (
-            <p className="text-xs text-rose-200/70 mt-1 italic">Why: {t.why_it_happens}</p>
+            <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Why: {t.why_it_happens}</p>
           )}
           {t.correction && (
-            <p className="text-xs text-emerald-300 mt-1">Fix: {t.correction}</p>
+            <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--green-ink)' }}>Fix: {t.correction}</p>
           )}
         </div>
       ))}
@@ -369,13 +366,15 @@ function CommonTrapsBody({ c }: { c: any }) {
 
 function FormalStatementBody({ c }: { c: any }) {
   return (
-    <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/20">
-      <p className="text-sm text-indigo-100 font-mono whitespace-pre-wrap">{c.statement}</p>
+    <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.04)', border: '1px solid rgba(88,86,214,.18)' }}>
+      <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap' }}>{c.statement}</p>
       {c.assumptions && c.assumptions.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-indigo-500/20">
-          <p className="text-[10px] text-indigo-300 uppercase tracking-wide">Assumptions</p>
-          <ul className="text-xs text-indigo-200/80 space-y-0.5 mt-1">
-            {c.assumptions.map((a: string, i: number) => <li key={i}>• {a}</li>)}
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: 'var(--hairline) solid var(--separator)' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Assumptions</p>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {c.assumptions.map((a: string, i: number) => (
+              <li key={i} style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>• {a}</li>
+            ))}
           </ul>
         </div>
       )}
@@ -386,16 +385,16 @@ function FormalStatementBody({ c }: { c: any }) {
 function ConnectionsBody({ c }: { c: any }) {
   const navigate = useNavigate();
   return (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {c.prerequisites?.length > 0 && (
         <div>
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1.5">Requires</p>
-          <div className="flex flex-wrap gap-1.5">
+          <p style={{ margin: '0 0 6px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Requires</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {c.prerequisites.map((p: any) => (
               <button
                 key={p.concept_id}
                 onClick={() => navigate(`/lesson/${p.concept_id}`)}
-                className="text-xs px-2 py-1 rounded-lg bg-surface-900 border border-surface-800 text-surface-300 hover:border-violet-500/30"
+                style={{ fontSize: 'var(--text-caption)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: 'pointer' }}
               >
                 {p.label}
               </button>
@@ -405,13 +404,13 @@ function ConnectionsBody({ c }: { c: any }) {
       )}
       {c.leads_to?.length > 0 && (
         <div>
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1.5">Unlocks</p>
-          <div className="flex flex-wrap gap-1.5">
+          <p style={{ margin: '0 0 6px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Unlocks</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {c.leads_to.slice(0, 6).map((p: any) => (
               <button
                 key={p.concept_id}
                 onClick={() => navigate(`/lesson/${p.concept_id}`)}
-                className="text-xs px-2 py-1 rounded-lg bg-violet-500/5 border border-violet-500/20 text-violet-300 hover:bg-violet-500/15"
+                style={{ fontSize: 'var(--text-caption)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.2)', color: 'var(--indigo-ink)', cursor: 'pointer' }}
               >
                 {p.label} →
               </button>
@@ -442,7 +441,6 @@ export default function LessonPage() {
   const [doneState, setDoneState] = useState<null | { quality: number; interval_days: number }>(null);
   const visitsRef = useRef<Record<string, StoredVisit>>({});
 
-  // Load lesson
   useEffect(() => {
     if (!concept_id) return;
     setLoading(true);
@@ -475,7 +473,6 @@ export default function LessonPage() {
     if (index < totalComponents - 1) {
       setIndex(i => i + 1);
     } else {
-      // End of lesson — compute SM-2 advance
       finalizeLesson();
     }
   }, [index, totalComponents, engagement]);
@@ -486,7 +483,6 @@ export default function LessonPage() {
       completed: e.completed + 1,
       micro: extra?.micro_exercise_correct !== undefined ? extra : e.micro,
     }));
-    // Fire-and-forget engagement log
     if (currentComponent) {
       fetch('/api/lesson/engagement', {
         method: 'POST',
@@ -547,30 +543,32 @@ export default function LessonPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-surface-400 text-sm py-10 justify-center">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', padding: '40px 0', justifyContent: 'center' }}>
         <Loader2 size={14} className="animate-spin" /> Building your lesson...
       </div>
     );
   }
   if (error || !lesson) {
     return (
-      <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-300">
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', fontSize: 'var(--text-body)', color: 'var(--red)' }}>
         {error || 'Could not load lesson.'}
       </div>
     );
   }
 
   // ContentAtom v2 path: when atoms[] is non-empty, render the atom card stack.
-  // Falls through to the legacy components[] renderer below otherwise.
   if (lesson.atoms && lesson.atoms.length > 0) {
     return (
-      <div className="space-y-4 max-w-2xl mx-auto">
-        <div className="flex items-start justify-between gap-2 px-4 pt-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 672, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, padding: '8px 16px 0' }}>
           <div>
-            <button onClick={() => navigate(-1)} className="text-xs text-surface-500 hover:text-surface-300 mb-1">
+            <button
+              onClick={() => navigate(-1)}
+              style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 4, padding: 0 }}
+            >
               ← Back
             </button>
-            <h1 className="text-xl font-bold text-surface-100">{lesson.concept_label}</h1>
+            <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
           </div>
         </div>
         <AtomCardRenderer
@@ -583,29 +581,31 @@ export default function LessonPage() {
     );
   }
 
-  // Lesson header (concept name, metadata, progress)
   return (
-    <div className="space-y-4 max-w-2xl mx-auto">
-      <div className="flex items-start justify-between gap-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 672, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
         <div>
-          <button onClick={() => navigate(-1)} className="text-xs text-surface-500 hover:text-surface-300 mb-1">
+          <button
+            onClick={() => navigate(-1)}
+            style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 4, padding: 0 }}
+          >
             ← Back
           </button>
-          <h1 className="text-xl font-bold text-surface-100">{lesson.concept_label}</h1>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-surface-500 mt-1">
+          <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
+          <div style={{ display: 'flex', flexWrap: 'wrap', columnGap: 12, rowGap: 2, fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>
             <span>{lesson.topic.replace(/-/g, ' ')}</span>
             <span>~{lesson.estimated_minutes}min</span>
             <span>quality {(lesson.quality_score * 100).toFixed(0)}%</span>
-            {lesson.is_revisit && <span className="text-emerald-400">revisit</span>}
+            {lesson.is_revisit && <span style={{ color: 'var(--green-ink)' }}>revisit</span>}
           </div>
         </div>
       </div>
 
       {/* Progress bar */}
       {!doneState && (
-        <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
+        <div style={{ height: 4, borderRadius: 99, background: 'var(--surface-fill)', overflow: 'hidden' }}>
           <motion.div
-            className="h-full bg-gradient-to-r from-violet-400 to-emerald-400"
+            style={{ height: '100%', background: 'var(--green)', borderRadius: 99 }}
             initial={{ width: 0 }}
             animate={{ width: `${progress * 100}%` }}
             transition={{ duration: 0.3 }}
@@ -629,27 +629,31 @@ export default function LessonPage() {
 
       {/* Completion screen */}
       {doneState && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-violet-500/15 to-emerald-500/15 border border-violet-500/25">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={16} className="text-violet-400" />
-              <h2 className="text-base font-semibold text-surface-100">Lesson complete</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          <div style={{ padding: 20, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Sparkles size={16} style={{ color: 'var(--green-ink)' }} />
+              <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Lesson complete</h2>
             </div>
-            <div className="grid grid-cols-3 gap-3 mt-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 12 }}>
               <div>
-                <p className="text-xl font-bold text-emerald-400">{engagement.completed}</p>
-                <p className="text-[10px] text-surface-500">completed</p>
+                <p style={{ margin: '0 0 2px', fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--green-ink)' }}>{engagement.completed}</p>
+                <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>completed</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-surface-400">{engagement.skipped}</p>
-                <p className="text-[10px] text-surface-500">skipped</p>
+                <p style={{ margin: '0 0 2px', fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-tertiary)' }}>{engagement.skipped}</p>
+                <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>skipped</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-violet-400">{engagement.reveals}</p>
-                <p className="text-[10px] text-surface-500">explanations</p>
+                <p style={{ margin: '0 0 2px', fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--indigo-ink)' }}>{engagement.reveals}</p>
+                <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>explanations</p>
               </div>
             </div>
-            <p className="text-xs text-surface-300 mt-3 leading-relaxed">
+            <p style={{ margin: '12px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
               {doneState.interval_days === 1
                 ? "Bring this back tomorrow for a quick retrieval check."
                 : `I'll suggest this again in ${doneState.interval_days} days — proven to cement it.`}
@@ -658,33 +662,33 @@ export default function LessonPage() {
 
           {/* Related problems */}
           {lesson.related_problems && lesson.related_problems.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Target size={13} className="text-purple-400" />
-                <h3 className="text-sm font-semibold text-surface-200">Try these next</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Target size={13} style={{ color: 'var(--indigo-ink)' }} />
+                <h3 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Try these next</h3>
               </div>
               {lesson.related_problems.map(p => (
-                <div key={p.id} className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-1">
-                  <div className="flex justify-between items-center text-[10px] text-surface-500">
+                <div key={p.id} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: 'var(--text-tertiary)' }}>
                     <span>{p.relationship.replace(/-/g, ' ')}</span>
-                    {p.wolfram_verified && <span className="text-emerald-400">Wolfram ✓</span>}
+                    {p.wolfram_verified && <span style={{ color: 'var(--green-ink)' }}>Wolfram ✓</span>}
                   </div>
-                  <p className="text-sm text-surface-200">{p.question_text}</p>
+                  <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{p.question_text}</p>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => navigate('/smart-practice')}
-              className="flex-1 py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30 text-sm text-violet-300 hover:bg-violet-500/25"
+              style={{ flex: 1, padding: '10px 0', borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.25)', fontSize: 'var(--text-body)', color: 'var(--indigo-ink)', cursor: 'pointer' }}
             >
               Practice more
             </button>
             <button
               onClick={() => { setIndex(0); setEngagement({ completed: 0, skipped: 0, reveals: 0 }); setDoneState(null); }}
-              className="px-4 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-400"
+              style={{ padding: '10px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <RotateCcw size={14} />
             </button>
@@ -694,13 +698,13 @@ export default function LessonPage() {
 
       {/* Lesson-level sources footer */}
       {!doneState && lesson.sources.length > 0 && (
-        <div className="pt-4 mt-4 border-t border-surface-800">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1.5">Sources cited</p>
-          <div className="flex flex-wrap gap-1.5">
+        <div style={{ paddingTop: 16, marginTop: 16, borderTop: 'var(--hairline) solid var(--separator)' }}>
+          <p style={{ margin: '0 0 6px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sources cited</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {lesson.sources.map((s, i) => <AttributionBadge key={i} a={s} />)}
           </div>
           {lesson.personalization_applied.length > 0 && (
-            <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-400">
+            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--green-ink)' }}>
               <Gauge size={10} />
               <span>personalized for you</span>
             </div>

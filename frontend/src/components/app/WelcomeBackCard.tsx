@@ -1,24 +1,5 @@
 /**
  * WelcomeBackCard (v4.0) — re-engagement moment for lapsed students.
- *
- * Returning after 2+ days away, students currently see the same Home flow
- * as always — no acknowledgment, no re-entry hook. This card replaces the
- * CompoundingCard slot for lapsed users with a journal-voice welcome.
- *
- * Design (per plan-design-review):
- *   - Headline NOT "Welcome back" (AI-slop blacklist #9). Pulls from the
- *     student's actual weak concept: "You left off on Linear Algebra."
- *   - Headline in white (relational, not AI/Plan, so no violet)
- *   - No left-border accent (avoid AI-slop pattern #8)
- *   - Per-day TTL via useDismissible
- *
- * Lapse detection (T7):
- *   - LAPSE_THRESHOLD_HOURS = 48 (exam-prep daily-habit; 2 missed days = at risk)
- *   - Account age guard: only show if user.created_at > 3 days ago AND
- *     (recent_attempts is empty OR latest is >48h old)
- *   - Empty-attempts case requires user has exam_id (completed onboard) —
- *     prevents firing for never-engaged old accounts
- *   - Dual field path: timestamp ?? attempted_at (per gbrain summary shape)
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -46,43 +27,29 @@ interface UserProfile {
 }
 
 interface Props {
-  /** Pre-fetched gbrain summary, or null if unavailable. */
   summary?: GBrainSummary | null;
-  /** Pre-fetched user profile, or null if unavailable. */
   user?: UserProfile | null;
 }
 
 const LAPSE_THRESHOLD_HOURS = 48;
 const ACCOUNT_AGE_THRESHOLD_HOURS = 72;
 
-/**
- * Pick a topic name to surface in the welcome-back copy.
- * Returns null if no usable signal is present.
- */
 function pickPickupTopic(summary: GBrainSummary | null | undefined): string | null {
   if (!summary) return null;
-  // Prefer the latest attempted concept (the user was actively working on it)
   const latest = summary.recent_attempts?.[summary.recent_attempts.length - 1];
   if (latest?.concept_id) return prettify(latest.concept_id);
-  // Fall back to the weakest concept
   const weak = summary.mastery?.weak_concepts_preview?.[0];
   if (weak?.concept_id) return prettify(weak.concept_id);
   return null;
 }
 
 function prettify(conceptId: string): string {
-  // "linear-algebra" → "Linear Algebra"
   return conceptId
     .split('-')
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 }
 
-/**
- * Compute lapse status. Returns:
- *   - { lapsed: false } if not lapsed (or insufficient data)
- *   - { lapsed: true, daysAway: N } if lapsed
- */
 function computeLapse(
   summary: GBrainSummary | null | undefined,
   user: UserProfile | null | undefined,
@@ -92,13 +59,11 @@ function computeLapse(
   const accountAgeMs = Date.now() - Date.parse(user.created_at);
   if (!Number.isFinite(accountAgeMs)) return { lapsed: false };
   if (accountAgeMs < ACCOUNT_AGE_THRESHOLD_HOURS * 3600 * 1000) {
-    // Brand-new account, never lapsed regardless of activity
     return { lapsed: false };
   }
 
   const attempts = summary.recent_attempts ?? [];
   if (attempts.length === 0) {
-    // Old account, no attempts ever — only lapsed if onboarded
     if (!summary.user?.exam_id) return { lapsed: false };
     return { lapsed: true, daysAway: Math.floor(accountAgeMs / (24 * 3600 * 1000)) };
   }
@@ -151,31 +116,46 @@ export function WelcomeBackCard({ summary, user }: Props) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-md rounded-2xl border border-surface-700 bg-surface-900 p-4"
+        style={{
+          width: '100%',
+          borderRadius: 'var(--radius-md)',
+          border: 'var(--hairline) solid var(--separator)',
+          background: 'var(--surface-card)',
+          boxShadow: 'var(--shadow-raise)',
+          padding: 16,
+        }}
       >
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 min-w-0 space-y-1">
-            <h2 className="font-display text-lg font-semibold text-white leading-snug">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)', lineHeight: 1.35 }}>
               {headline}
             </h2>
-            <p className="text-xs text-surface-400">{subline}</p>
+            <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{subline}</p>
           </div>
           <button
             onClick={() => {
               trackEvent('welcome_back_dismissed', {});
               dismiss();
             }}
-            className="shrink-0 p-1 -m-1 rounded hover:bg-surface-800 transition-colors"
+            style={{ flexShrink: 0, padding: 4, borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer' }}
             aria-label="Dismiss welcome-back card"
           >
-            <X size={14} className="text-surface-500" />
+            <X size={14} style={{ color: 'var(--text-tertiary)' }} />
           </button>
         </div>
 
         <Link
           to="/planned"
           onClick={() => trackEvent('welcome_back_clicked', { topic: topic ?? null })}
-          className="inline-flex items-center gap-1 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 'var(--text-body)',
+            fontWeight: 'var(--weight-medium)',
+            color: 'var(--green-ink)',
+            textDecoration: 'none',
+          }}
         >
           {topic ? `Resume ${topic}` : 'Resume your plan'} <ArrowRight size={13} />
         </Link>

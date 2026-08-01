@@ -28,10 +28,8 @@ import {
   ExternalLink, Shield, AlertCircle, Sparkles, Zap, Image as ImageIcon,
   Braces, Trash2, RefreshCw, Info,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useLLMConfig } from '@/hooks/useLLMConfig';
-import { maskKey, validateKeyLocally } from '@/lib/llm/config-store';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
+import { validateKeyLocally } from '@/lib/llm/config-store';
 
 // ============================================================================
 // Types — server-returned shape
@@ -74,19 +72,19 @@ interface Provider {
 // ============================================================================
 
 const ROLE_META: Record<LLMRole, { icon: typeof Sparkles; label: string; description: string; color: string }> = {
-  chat:   { icon: Sparkles, label: 'Chat & reasoning', description: 'Conversational responses, tutor-style', color: 'text-violet-400' },
-  vision: { icon: ImageIcon, label: 'Image understanding', description: 'Photos of math problems, diagrams, handwriting', color: 'text-emerald-400' },
-  json:   { icon: Braces, label: 'Structured output', description: 'Intent detection, explainer generation, extraction', color: 'text-purple-400' },
+  chat:   { icon: Sparkles,   label: 'Chat & reasoning',    description: 'Conversational responses, tutor-style',                         color: 'var(--indigo-ink)' },
+  vision: { icon: ImageIcon,  label: 'Image understanding', description: 'Photos of math problems, diagrams, handwriting',                color: 'var(--green-ink)'  },
+  json:   { icon: Braces,     label: 'Structured output',   description: 'Intent detection, explainer generation, extraction',            color: 'var(--indigo-ink)' },
 };
 
 const COST_TIER_LABEL: Record<ProviderModel['cost_tier'], string> = {
   free: 'free', cheap: '$', mid: '$$', premium: '$$$',
 };
 const COST_TIER_COLOR: Record<ProviderModel['cost_tier'], string> = {
-  free: 'text-emerald-400',
-  cheap: 'text-violet-400',
-  mid: 'text-amber-400',
-  premium: 'text-rose-400',
+  free:    'var(--green-ink)',
+  cheap:   'var(--indigo-ink)',
+  mid:     'var(--orange)',
+  premium: 'var(--red)',
 };
 
 // ============================================================================
@@ -201,7 +199,10 @@ export default function LLMConfigPage() {
 
   if (loadingProviders) {
     return (
-      <div className="flex items-center justify-center gap-2 py-10 text-surface-400 text-sm">
+      <div
+        style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem' }}
+        className="flex items-center justify-center gap-2 py-10"
+      >
         <Loader2 size={14} className="animate-spin" />
         Loading providers...
       </div>
@@ -209,33 +210,49 @@ export default function LLMConfigPage() {
   }
 
   return (
-    <motion.div className="space-y-5 max-w-2xl mx-auto" initial="hidden" animate="visible" variants={staggerContainer}>
+    <motion.div
+      className="space-y-5 max-w-2xl mx-auto"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
       {/* Header */}
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Key size={20} className="text-violet-400" />
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1
+          style={{ color: 'var(--text-primary)' }}
+          className="text-xl font-bold flex items-center gap-2"
+        >
+          <Key size={20} style={{ color: 'var(--indigo-ink)' }} />
           AI Provider Setup
         </h1>
-        <p className="text-xs text-surface-500 mt-1">
+        <p style={{ color: 'var(--text-tertiary)' }} className="text-xs mt-1">
           Pick the AI you want to power Vidhya. Your keys stay in your browser — never sent to our servers for storage.
         </p>
       </motion.div>
 
       {/* Privacy notice */}
       <motion.div
-        variants={fadeInUp}
-        className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-start gap-2.5"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{
+          background: 'rgba(52,199,89,.05)',
+          border: '1px solid rgba(52,199,89,.22)',
+        }}
+        className="p-3 rounded-xl flex items-start gap-2.5"
       >
-        <Shield size={14} className="shrink-0 mt-0.5 text-emerald-400" />
-        <div className="text-xs text-emerald-200/90 leading-relaxed">
-          <span className="font-medium text-emerald-300">Keys stay on your device.</span>{' '}
+        <Shield size={14} style={{ color: 'var(--green-ink)' }} className="shrink-0 mt-0.5" />
+        <div style={{ color: 'var(--green-ink)' }} className="text-xs leading-relaxed">
+          <span className="font-medium">Keys stay on your device.</span>{' '}
           They're stored in your browser's localStorage and sent only as authentication headers on outbound API calls. We don't persist them server-side. Clear your browser data to erase them.
         </div>
       </motion.div>
 
       {/* Step 1: Provider picker */}
-      <motion.div variants={fadeInUp} className="space-y-2">
-        <p className="text-[10px] text-surface-500 uppercase tracking-wide">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-2"
+      >
+        <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] uppercase tracking-wide">
           1. Choose a provider
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -245,38 +262,52 @@ export default function LLMConfigPage() {
               <button
                 key={p.id}
                 onClick={() => selectPrimary(p.id)}
-                className={clsx(
-                  'p-3 rounded-xl border text-left transition-all',
-                  isSelected
-                    ? 'bg-violet-500/10 border-violet-500/40 ring-1 ring-violet-500/30'
-                    : 'bg-surface-900 border-surface-800 hover:border-surface-600',
-                )}
+                style={isSelected ? {
+                  background: 'rgba(88,86,214,.08)',
+                  border: '1px solid rgba(88,86,214,.40)',
+                  boxShadow: '0 0 0 1px rgba(88,86,214,.30)',
+                } : {
+                  background: 'var(--surface-card)',
+                  border: '1px solid var(--separator)',
+                }}
+                className="p-3 rounded-xl text-left transition-all"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{p.icon}</span>
-                    <span className={clsx('text-sm font-medium', isSelected ? 'text-violet-200' : 'text-surface-200')}>
+                    <span
+                      style={{ color: isSelected ? 'var(--indigo-ink)' : 'var(--text-secondary)' }}
+                      className="text-sm font-medium"
+                    >
                       {p.name}
                     </span>
                   </div>
-                  {isSelected && <Check size={14} className="text-violet-400 shrink-0 mt-0.5" />}
+                  {isSelected && (
+                    <Check size={14} style={{ color: 'var(--indigo-ink)' }} className="shrink-0 mt-0.5" />
+                  )}
                 </div>
-                <p className="text-[10px] text-surface-500 mt-1.5 leading-relaxed">
+                <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] mt-1.5 leading-relaxed">
                   {p.description}
                 </p>
                 <div className="flex items-center gap-2 mt-2 text-[10px]">
                   {!p.requires_key && (
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                    <span style={{
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: 'rgba(52,199,89,.06)',
+                      color: 'var(--green-ink)',
+                      border: '1px solid rgba(52,199,89,.22)',
+                    }}>
                       no key needed
                     </span>
                   )}
                   {p.capabilities.image_input && (
-                    <span className="text-surface-500 inline-flex items-center gap-0.5">
+                    <span style={{ color: 'var(--text-tertiary)' }} className="inline-flex items-center gap-0.5">
                       <ImageIcon size={9} /> vision
                     </span>
                   )}
                   {p.capabilities.streaming && (
-                    <span className="text-surface-500 inline-flex items-center gap-0.5">
+                    <span style={{ color: 'var(--text-tertiary)' }} className="inline-flex items-center gap-0.5">
                       <Zap size={9} /> stream
                     </span>
                   )}
@@ -289,13 +320,23 @@ export default function LLMConfigPage() {
 
       {/* Step 2: API key entry */}
       {primary && (
-        <motion.div variants={fadeInUp} className="space-y-3">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-3"
+        >
+          <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] uppercase tracking-wide">
             2. {primary.requires_key ? `Your ${primary.name} API key` : 'Configure endpoint'}
           </p>
 
           {primary.requires_key && (
-            <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+            <div
+              style={{
+                background: 'var(--surface-card)',
+                border: '1px solid var(--separator)',
+              }}
+              className="p-3 rounded-xl space-y-2"
+            >
               <div className="relative">
                 <input
                   type={showKey ? 'text' : 'password'}
@@ -304,12 +345,18 @@ export default function LLMConfigPage() {
                   placeholder={primary.key_format?.prefix ? `${primary.key_format.prefix}...` : 'paste your key'}
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full px-3 py-2.5 pr-10 rounded-lg bg-surface-950 border border-surface-800 text-sm text-surface-200 font-mono placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
+                  style={{
+                    background: 'var(--surface-fill)',
+                    border: '1px solid var(--separator)',
+                    color: 'var(--text-secondary)',
+                  }}
+                  className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm font-mono focus:outline-none"
                 />
                 <button
                   onClick={() => setShowKey(!showKey)}
                   aria-label={showKey ? 'hide key' : 'show key'}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-surface-500 hover:text-surface-300"
+                  style={{ color: 'var(--text-tertiary)' }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
                 >
                   {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
@@ -320,14 +367,15 @@ export default function LLMConfigPage() {
                 href={primary.key_docs_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300"
+                style={{ color: 'var(--indigo-ink)' }}
+                className="inline-flex items-center gap-1 text-[11px]"
               >
                 Get an API key <ExternalLink size={10} />
               </a>
 
               {/* Format warning inline */}
               {keyDraft.length > 0 && !localCheck.ok && (
-                <div className="flex items-center gap-1.5 text-[10px] text-amber-400">
+                <div style={{ color: 'var(--orange)' }} className="flex items-center gap-1.5 text-[10px]">
                   <AlertCircle size={10} />
                   {localCheck.reason}
                 </div>
@@ -337,16 +385,29 @@ export default function LLMConfigPage() {
 
           {/* Endpoint override */}
           {primary.endpoint_overridable && (
-            <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-1.5">
-              <p className="text-[10px] text-surface-500 uppercase tracking-wide">Custom endpoint (optional)</p>
+            <div
+              style={{
+                background: 'var(--surface-card)',
+                border: '1px solid var(--separator)',
+              }}
+              className="p-3 rounded-xl space-y-1.5"
+            >
+              <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] uppercase tracking-wide">
+                Custom endpoint (optional)
+              </p>
               <input
                 type="text"
                 value={endpointDraft}
                 onChange={e => setEndpointDraft(e.target.value)}
                 placeholder={primary.default_endpoint}
-                className="w-full px-3 py-2 rounded-lg bg-surface-950 border border-surface-800 text-xs text-surface-200 font-mono placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
+                style={{
+                  background: 'var(--surface-fill)',
+                  border: '1px solid var(--separator)',
+                  color: 'var(--text-secondary)',
+                }}
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono focus:outline-none"
               />
-              <p className="text-[10px] text-surface-500">
+              <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px]">
                 Leave blank to use default: <span className="font-mono">{primary.default_endpoint}</span>
               </p>
             </div>
@@ -357,11 +418,8 @@ export default function LLMConfigPage() {
             <button
               onClick={testConnection}
               disabled={validating || (primary.requires_key && !localCheck.ok)}
-              className={clsx(
-                'flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2',
-                'bg-gradient-to-r from-violet-500 to-emerald-500 text-white',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
-              )}
+              style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {validating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
               {validating ? 'Testing...' : 'Test & save'}
@@ -369,7 +427,12 @@ export default function LLMConfigPage() {
             <button
               onClick={saveKey}
               disabled={primary.requires_key && !localCheck.ok}
-              className="px-4 py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-300 hover:text-surface-100 disabled:opacity-40"
+              style={{
+                background: 'var(--surface-card)',
+                border: '1px solid var(--separator)',
+                color: 'var(--text-secondary)',
+              }}
+              className="px-4 py-2.5 rounded-xl text-sm disabled:opacity-40"
             >
               Save without testing
             </button>
@@ -380,38 +443,43 @@ export default function LLMConfigPage() {
             {validationResult && (() => {
               const skipped = !validationResult.ok && validationResult.stage === 'skipped';
               const variant = validationResult.ok ? 'ok' : skipped ? 'skipped' : 'fail';
+              const variantStyle = variant === 'ok'
+                ? { background: 'rgba(52,199,89,.06)',   border: '1px solid rgba(52,199,89,.22)'  }
+                : variant === 'skipped'
+                ? { background: 'rgba(255,149,0,.06)',   border: '1px solid rgba(255,149,0,.22)'  }
+                : { background: 'rgba(255,59,48,.06)',   border: '1px solid rgba(255,59,48,.22)'  };
+              const variantTextColor = variant === 'ok'
+                ? 'var(--green-ink)'
+                : variant === 'skipped'
+                ? 'var(--orange)'
+                : 'var(--red)';
               return (
                 <motion.div
                   key={variant}
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className={clsx(
-                    'p-3 rounded-xl border flex items-start gap-2',
-                    variant === 'ok' && 'bg-emerald-500/10 border-emerald-500/25',
-                    variant === 'skipped' && 'bg-amber-500/10 border-amber-500/25',
-                    variant === 'fail' && 'bg-rose-500/10 border-rose-500/25',
-                  )}
+                  style={variantStyle}
+                  className="p-3 rounded-xl flex items-start gap-2"
                 >
-                  {variant === 'ok' && <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />}
-                  {variant === 'skipped' && <Info size={14} className="text-amber-400 shrink-0 mt-0.5" />}
-                  {variant === 'fail' && <X size={14} className="text-rose-400 shrink-0 mt-0.5" />}
+                  {variant === 'ok'      && <Check size={14} style={{ color: 'var(--green-ink)' }} className="shrink-0 mt-0.5" />}
+                  {variant === 'skipped' && <Info  size={14} style={{ color: 'var(--orange)'    }} className="shrink-0 mt-0.5" />}
+                  {variant === 'fail'    && <X     size={14} style={{ color: 'var(--red)'        }} className="shrink-0 mt-0.5" />}
                   <div className="flex-1 min-w-0">
-                    <p className={clsx(
-                      'text-xs font-medium',
-                      variant === 'ok' && 'text-emerald-300',
-                      variant === 'skipped' && 'text-amber-300',
-                      variant === 'fail' && 'text-rose-300',
-                    )}>
-                      {variant === 'ok' && 'Key works — saved'}
+                    <p style={{ color: variantTextColor }} className="text-xs font-medium">
+                      {variant === 'ok'      && 'Key works — saved'}
                       {variant === 'skipped' && 'Test skipped — local endpoint'}
-                      {variant === 'fail' && 'Key didn\'t validate'}
+                      {variant === 'fail'    && "Key didn't validate"}
                     </p>
                     {validationResult.reason && (
-                      <p className="text-[11px] text-surface-400 mt-0.5 break-words">{validationResult.reason}</p>
+                      <p style={{ color: 'var(--text-tertiary)' }} className="text-[11px] mt-0.5 break-words">
+                        {validationResult.reason}
+                      </p>
                     )}
                     {validationResult.ok && validationResult.latency_ms !== undefined && (
-                      <p className="text-[10px] text-surface-500 mt-0.5">Roundtrip: {validationResult.latency_ms}ms</p>
+                      <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] mt-0.5">
+                        Roundtrip: {validationResult.latency_ms}ms
+                      </p>
                     )}
                   </div>
                 </motion.div>
@@ -423,8 +491,12 @@ export default function LLMConfigPage() {
 
       {/* Step 3: Cascading role defaults preview */}
       {primary && configured && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-2"
+        >
+          <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] uppercase tracking-wide">
             3. How it will be used
           </p>
           <div className="space-y-1.5">
@@ -441,23 +513,25 @@ export default function LLMConfigPage() {
               return (
                 <div
                   key={role}
-                  className={clsx(
-                    'p-2.5 rounded-lg border flex items-center gap-3',
-                    supportsRole
-                      ? 'bg-surface-900 border-surface-800'
-                      : 'bg-surface-900/50 border-surface-800 opacity-60',
-                  )}
+                  style={{
+                    background: 'var(--surface-card)',
+                    border: '1px solid var(--separator)',
+                    opacity: supportsRole ? 1 : 0.6,
+                  }}
+                  className="p-2.5 rounded-lg flex items-center gap-3"
                 >
-                  <Icon size={14} className={meta.color} />
+                  <Icon size={14} style={{ color: meta.color }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-surface-200">{meta.label}</p>
-                    <p className="text-[10px] text-surface-500 mt-0.5">
+                    <p style={{ color: 'var(--text-secondary)' }} className="text-xs font-medium">
+                      {meta.label}
+                    </p>
+                    <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] mt-0.5">
                       {supportsRole ? (
                         <>
-                          <span className="text-surface-400">{rolePrimaryProvider.name}</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{rolePrimaryProvider.name}</span>
                           {model && <> · <span className="font-mono">{model.label}</span></>}
-                          {model && <> <span className={COST_TIER_COLOR[model.cost_tier]}>{COST_TIER_LABEL[model.cost_tier]}</span></>}
-                          {override && <span className="ml-1 text-amber-400">(custom)</span>}
+                          {model && <> <span style={{ color: COST_TIER_COLOR[model.cost_tier] }}>{COST_TIER_LABEL[model.cost_tier]}</span></>}
+                          {override && <span style={{ color: 'var(--orange)' }} className="ml-1">(custom)</span>}
                         </>
                       ) : (
                         <>not supported by {rolePrimaryProvider.name} — will fall back</>
@@ -473,14 +547,17 @@ export default function LLMConfigPage() {
 
       {/* Advanced: per-role overrides */}
       {primary && configured && (
-        <motion.div variants={fadeInUp}>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <button
             onClick={() => setAdvancedOpen(!advancedOpen)}
-            className="w-full flex items-center gap-2 text-xs text-surface-400 hover:text-surface-200 py-2"
+            style={{ color: 'var(--text-tertiary)' }}
+            className="w-full flex items-center gap-2 text-xs py-2"
           >
             {advancedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            <span className="font-medium">Advanced — per-role overrides</span>
-            <span className="text-surface-600">
+            <span style={{ color: 'var(--text-secondary)' }} className="font-medium">
+              Advanced — per-role overrides
+            </span>
+            <span style={{ color: 'var(--text-tertiary)' }}>
               {Object.keys(config.overrides || {}).length > 0
                 ? `${Object.keys(config.overrides || {}).length} customized`
                 : 'all defaults'}
@@ -516,17 +593,23 @@ export default function LLMConfigPage() {
 
       {/* Clear all */}
       {configured && (
-        <motion.div variants={fadeInUp} className="pt-4 mt-4 border-t border-surface-800">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ borderTop: '1px solid var(--separator)' }}
+          className="pt-4 mt-4"
+        >
           <button
             onClick={() => {
               if (confirm('Clear all LLM configuration from this browser?')) clear();
             }}
-            className="inline-flex items-center gap-1.5 text-[11px] text-rose-400 hover:text-rose-300"
+            style={{ color: 'var(--red)' }}
+            className="inline-flex items-center gap-1.5 text-[11px]"
           >
             <Trash2 size={11} />
             Clear all config from this browser
           </button>
-          <p className="text-[10px] text-surface-600 mt-1">
+          <p style={{ color: 'var(--text-tertiary)' }} className="text-[10px] mt-1">
             You can always come back to /llm-config to set up again.
           </p>
         </motion.div>
@@ -557,17 +640,33 @@ function RoleOverrideRow({
   const effectiveModelId = override?.model_id || effectiveProvider.default_models[role] || '';
   const needsOwnKey = !!override?.provider_id && override.provider_id !== primary.id && effectiveProvider.requires_key;
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'var(--surface-fill)',
+    border: '1px solid var(--separator)',
+    color: 'var(--text-secondary)',
+  };
+
   return (
-    <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+    <div
+      style={{
+        background: 'var(--surface-card)',
+        border: '1px solid var(--separator)',
+      }}
+      className="p-3 rounded-xl space-y-2"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon size={13} className={meta.color} />
-          <span className="text-xs font-medium text-surface-200">{meta.label}</span>
+          <Icon size={13} style={{ color: meta.color }} />
+          <span style={{ color: 'var(--text-secondary)' }} className="text-xs font-medium">
+            {meta.label}
+          </span>
         </div>
         {override && (
           <button
             onClick={onClear}
-            className="text-[10px] text-surface-500 hover:text-rose-400 inline-flex items-center gap-1"
+            style={{ color: 'var(--text-tertiary)' }}
+            className="text-[10px] inline-flex items-center gap-1"
           >
             <RefreshCw size={9} /> reset
           </button>
@@ -576,11 +675,14 @@ function RoleOverrideRow({
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-[10px] text-surface-500 uppercase tracking-wide block mb-1">Provider</label>
+          <label style={{ color: 'var(--text-tertiary)' }} className="text-[10px] uppercase tracking-wide block mb-1">
+            Provider
+          </label>
           <select
             value={effectiveProviderId}
             onChange={e => onUpdate({ provider_id: e.target.value === primary.id ? null : e.target.value })}
-            className="w-full px-2 py-1.5 rounded-lg bg-surface-950 border border-surface-800 text-xs text-surface-200"
+            style={{ ...inputStyle }}
+            className="px-2 py-1.5 rounded-lg text-xs"
           >
             {providers.filter(p =>
               p.models.some(m => m.roles.includes(role))
@@ -592,11 +694,14 @@ function RoleOverrideRow({
           </select>
         </div>
         <div>
-          <label className="text-[10px] text-surface-500 uppercase tracking-wide block mb-1">Model</label>
+          <label style={{ color: 'var(--text-tertiary)' }} className="text-[10px] uppercase tracking-wide block mb-1">
+            Model
+          </label>
           <select
             value={effectiveModelId}
             onChange={e => onUpdate({ model_id: e.target.value })}
-            className="w-full px-2 py-1.5 rounded-lg bg-surface-950 border border-surface-800 text-xs text-surface-200 font-mono"
+            style={{ ...inputStyle }}
+            className="px-2 py-1.5 rounded-lg text-xs font-mono"
           >
             {availableModels.map(m => (
               <option key={m.id} value={m.id}>
@@ -609,15 +714,17 @@ function RoleOverrideRow({
 
       {needsOwnKey && (
         <div>
-          <label className="text-[10px] text-surface-500 uppercase tracking-wide block mb-1">
-            Key for {effectiveProvider.name} <span className="text-amber-400">(different from primary)</span>
+          <label style={{ color: 'var(--text-tertiary)' }} className="text-[10px] uppercase tracking-wide block mb-1">
+            Key for {effectiveProvider.name}{' '}
+            <span style={{ color: 'var(--orange)' }}>(different from primary)</span>
           </label>
           <input
             type="password"
             value={override?.key || ''}
             onChange={e => onUpdate({ key: e.target.value })}
             placeholder={`paste ${effectiveProvider.name} key`}
-            className="w-full px-2 py-1.5 rounded-lg bg-surface-950 border border-surface-800 text-xs text-surface-200 font-mono"
+            style={{ ...inputStyle }}
+            className="px-2 py-1.5 rounded-lg text-xs font-mono"
           />
         </div>
       )}

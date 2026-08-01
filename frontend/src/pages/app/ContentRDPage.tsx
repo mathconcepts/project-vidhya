@@ -14,7 +14,6 @@ import { motion } from 'framer-motion';
 import { Shield, Loader2, FlaskConical, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { RunLauncher } from '@/components/admin/RunLauncher';
 import { ActiveRunsPanel } from '@/components/admin/ActiveRunsPanel';
 import { EffectivenessLedger } from '@/components/admin/EffectivenessLedger';
@@ -88,24 +87,24 @@ export default function ContentRDPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="animate-spin text-violet-400" size={20} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+        <Loader2 className="animate-spin" size={20} style={{ color: 'var(--indigo-ink)' }} />
       </div>
     );
   }
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className="text-center py-16 space-y-4">
-        <Shield size={40} className="text-surface-700 mx-auto" />
-        <h2 className="text-lg font-semibold text-surface-300">Admin access required</h2>
-        <p className="text-xs text-surface-500">
+      <div style={{ textAlign: 'center', padding: '64px 0' }}>
+        <Shield size={40} style={{ color: 'var(--text-tertiary)', margin: '0 auto 16px' }} />
+        <h2 style={{ margin: '0 0 8px', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Admin access required</h2>
+        <p style={{ margin: '0 0 16px', fontSize: 11, color: 'var(--text-tertiary)' }}>
           The Content R&D page is gated to admin accounts.
         </p>
         {!user && (
           <a
             href="/login"
-            className="inline-block px-5 py-2 rounded-xl bg-violet-500 text-white text-xs font-medium"
+            style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 'var(--radius-md)', background: 'var(--indigo)', color: '#fff', fontSize: 11, fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
           >
             Sign in
           </a>
@@ -115,21 +114,16 @@ export default function ContentRDPage() {
   }
 
   return (
-    <motion.div
-      className="space-y-6 max-w-3xl mx-auto pb-12"
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-    >
-      <motion.div variants={fadeInUp}>
+    <div style={{ maxWidth: 768, margin: '0 auto', paddingBottom: 48, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
         <JourneyNudge currentHref="/admin/content-rd" />
       </motion.div>
-      <motion.header variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <FlaskConical size={20} className="text-violet-400" />
+      <motion.header initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FlaskConical size={20} style={{ color: 'var(--indigo-ink)' }} />
           Content R&D
         </h1>
-        <p className="text-xs text-surface-500 mt-1">
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
           Launch generation runs, watch active jobs, decide what to promote based on
           measured mastery lift.
         </p>
@@ -137,23 +131,24 @@ export default function ContentRDPage() {
 
       {error && /DATABASE_URL/i.test(error) ? (
         <motion.div
-          variants={fadeInUp}
-          className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-2"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,149,0,.22)', background: 'rgba(255,149,0,.06)', display: 'flex', flexDirection: 'column', gap: 8 }}
         >
-          <div className="flex items-center gap-2 text-amber-300 text-sm font-medium">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--orange)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)' }}>
             <Database size={14} /> Content R&D needs a database
           </div>
-          <p className="text-xs text-surface-300 leading-relaxed">
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             This deploy is running without <code>DATABASE_URL</code>. Generation
             runs, experiments, and the lift ledger all persist to Postgres, so
             the launcher is hidden until a DB is configured.
           </p>
-          <p className="text-xs text-surface-400 leading-relaxed">
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
             <strong>Local:</strong> run <code>docker compose up</code> for the
             full stack with Postgres + pgvector. <strong>Cloud:</strong> set
             the <code>DATABASE_URL</code> env var (a Supabase or Render Postgres
             connection string) and redeploy. See{' '}
-            <a href="/admin/scenarios" className="text-violet-300 underline">
+            <a href="/admin/scenarios" style={{ color: 'var(--indigo-ink)' }}>
               /admin/scenarios
             </a>{' '}
             for the demo path that runs without a DB.
@@ -163,38 +158,39 @@ export default function ContentRDPage() {
         <>
           {error && (
             <motion.div
-              variants={fadeInUp}
-              className="rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-300 p-3"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{ padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}
             >
               {error}
             </motion.div>
           )}
 
           <SuggestedRunsPanel
-        suggestions={suggestions}
-        loading={loadingSuggestions}
-        onRefresh={loadSuggestions}
-        onActed={() => {
-          void loadSuggestions();
-          void loadRuns();
-          void loadExperiments();
-        }}
-      />
+            suggestions={suggestions}
+            loading={loadingSuggestions}
+            onRefresh={loadSuggestions}
+            onActed={() => {
+              void loadSuggestions();
+              void loadRuns();
+              void loadExperiments();
+            }}
+          />
 
-      <RunLauncher
-        defaultExam="gate-ma"
-        onLaunched={() => {
-          void loadRuns();
-          void loadExperiments();
-        }}
-      />
+          <RunLauncher
+            defaultExam="gate-ma"
+            onLaunched={() => {
+              void loadRuns();
+              void loadExperiments();
+            }}
+          />
 
-      <ActiveRunsPanel
-        runs={runs}
-        loading={loadingRuns}
-        onRefresh={loadRuns}
-        onAborted={() => void loadRuns()}
-      />
+          <ActiveRunsPanel
+            runs={runs}
+            loading={loadingRuns}
+            onRefresh={loadRuns}
+            onAborted={() => void loadRuns()}
+          />
 
           <EffectivenessLedger
             experiments={experiments}
@@ -204,6 +200,6 @@ export default function ContentRDPage() {
           />
         </>
       )}
-    </motion.div>
+    </div>
   );
 }

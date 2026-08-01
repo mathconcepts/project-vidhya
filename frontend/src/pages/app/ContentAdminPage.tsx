@@ -14,16 +14,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
-// v2.5: migrated from @/hooks/useAuth (Supabase) to @/contexts/AuthContext (Vidhya JWT).
 import { useAuth } from '@/contexts/AuthContext';
 import { getToken } from '@/lib/auth/client';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
-  Shield, Loader2, RefreshCcw, Database, Zap, Sparkles, DollarSign,
-  TrendingUp, BookOpen, Layers, CheckCircle2,
+  Shield, Loader2, RefreshCcw, Layers, TrendingUp, BookOpen,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface Summary {
   lifetime: {
@@ -56,15 +52,15 @@ interface BundleStats {
   by_topic: Record<string, number>;
 }
 
-const SOURCE_LABELS: Record<string, { label: string; color: string; tier: string }> = {
-  'tier-0-bundle-exact': { label: 'Bundle Exact', color: 'bg-emerald-500/60', tier: 'Tier 0' },
-  'tier-0-explainer': { label: 'Explainer', color: 'bg-emerald-400/60', tier: 'Tier 0' },
-  'tier-0-client-cache': { label: 'Client Cache', color: 'bg-teal-500/60', tier: 'Tier 0' },
-  'tier-1-rag': { label: 'Bundle RAG', color: 'bg-violet-500/60', tier: 'Tier 1' },
-  'tier-1-material': { label: 'Your Notes', color: 'bg-purple-500/60', tier: 'Tier 1' },
-  'tier-2-generated': { label: 'Generated (LLM)', color: 'bg-amber-500/60', tier: 'Tier 2' },
-  'tier-3-wolfram-verified': { label: 'Wolfram Verified', color: 'bg-blue-500/60', tier: 'Tier 3' },
-  'miss': { label: 'Miss', color: 'bg-red-500/50', tier: 'Miss' },
+const SOURCE_LABELS: Record<string, { label: string; barColor: string; tier: string }> = {
+  'tier-0-bundle-exact':   { label: 'Bundle Exact',    barColor: 'rgba(52,199,89,.6)',   tier: 'Tier 0' },
+  'tier-0-explainer':      { label: 'Explainer',       barColor: 'rgba(52,199,89,.5)',   tier: 'Tier 0' },
+  'tier-0-client-cache':   { label: 'Client Cache',    barColor: 'rgba(20,184,166,.6)',  tier: 'Tier 0' },
+  'tier-1-rag':            { label: 'Bundle RAG',      barColor: 'rgba(88,86,214,.6)',   tier: 'Tier 1' },
+  'tier-1-material':       { label: 'Your Notes',      barColor: 'rgba(88,86,214,.5)',   tier: 'Tier 1' },
+  'tier-2-generated':      { label: 'Generated (LLM)', barColor: 'rgba(255,149,0,.6)',   tier: 'Tier 2' },
+  'tier-3-wolfram-verified': { label: 'Wolfram Verified', barColor: 'rgba(59,130,246,.6)', tier: 'Tier 3' },
+  'miss':                  { label: 'Miss',            barColor: 'rgba(255,59,48,.5)',   tier: 'Miss' },
 };
 
 export default function ContentAdminPage() {
@@ -77,7 +73,6 @@ export default function ContentAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // v2.5: getToken() is now sync (Vidhya JWT in localStorage).
       const token = getToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -103,15 +98,22 @@ export default function ContentAdminPage() {
   }, [authLoading, user, load]);
 
   if (authLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-violet-400" size={24} /></div>;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+        <Loader2 className="animate-spin" size={24} style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
   }
   if (!user || (user.role !== 'admin' && user.role !== 'teacher')) {
     return (
-      <div className="text-center py-16 space-y-4">
-        <Shield size={48} className="text-surface-700 mx-auto" />
-        <h2 className="text-xl font-bold text-surface-300">Admin access required</h2>
+      <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <Shield size={48} style={{ color: 'var(--text-tertiary)' }} />
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)' }}>Admin access required</h2>
         {!user && (
-          <a href="/login" className="inline-block px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white text-sm font-medium">
+          <a
+            href="/login"
+            style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 'var(--radius-md)', background: 'var(--indigo)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
+          >
             Sign in
           </a>
         )}
@@ -120,93 +122,101 @@ export default function ContentAdminPage() {
   }
 
   return (
-    <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp} className="flex items-start justify-between gap-3">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-            <Layers size={20} className="text-violet-400" />
+          <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Layers size={20} style={{ color: 'var(--indigo-ink)' }} />
             Content Engine
           </h1>
-          <p className="text-xs text-surface-500 mt-1">Tier hit rates, cost trends, bundle inventory</p>
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>Tier hit rates, cost trends, bundle inventory</p>
         </div>
-        <button onClick={load} className="p-2 rounded-lg bg-surface-900 border border-surface-800 text-surface-400 hover:text-surface-200">
+        <button
+          onClick={load}
+          style={{ padding: 8, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)', cursor: 'pointer' }}
+        >
           <RefreshCcw size={13} />
         </button>
-      </motion.div>
+      </div>
 
       {error && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-300">
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
           {error}
-        </motion.div>
+        </div>
       )}
 
       {loading && !summary ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-surface-800/60 animate-pulse" />)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="animate-pulse" style={{ height: 80, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} />
+          ))}
         </div>
       ) : summary && stats ? (
         <>
           {/* Headline metrics */}
-          <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-violet-500/10 border border-emerald-500/25 text-center">
-              <p className="text-3xl font-black text-emerald-400">{summary.lifetime.free_hit_rate_pct}%</p>
-              <p className="text-xs text-surface-400 mt-1">free tier hit rate</p>
-              <p className="text-[10px] text-surface-600 mt-0.5">target ≥ 85%</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(52,199,89,.22)', background: 'rgba(52,199,89,.06)', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 900, color: 'var(--green-ink)' }}>{summary.lifetime.free_hit_rate_pct}%</p>
+              <p style={{ margin: '0 0 2px', fontSize: 11, color: 'var(--text-secondary)' }}>free tier hit rate</p>
+              <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>target ≥ 85%</p>
             </div>
-            <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-center">
-              <p className="text-3xl font-black text-surface-100">
+            <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 900, color: 'var(--text-primary)' }}>
                 ${summary.lifetime.avg_cost_per_event_usd.toFixed(5)}
               </p>
-              <p className="text-xs text-surface-400 mt-1">avg cost / event</p>
-              <p className="text-[10px] text-surface-600 mt-0.5">lifetime: ${summary.lifetime.total_cost_usd.toFixed(4)}</p>
+              <p style={{ margin: '0 0 2px', fontSize: 11, color: 'var(--text-secondary)' }}>avg cost / event</p>
+              <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>lifetime: ${summary.lifetime.total_cost_usd.toFixed(4)}</p>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div variants={fadeInUp} className="grid grid-cols-3 gap-2">
-            <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-              <p className="text-lg font-bold text-surface-200">{stats.total_problems}</p>
-              <p className="text-[10px] text-surface-500">bundle problems</p>
-            </div>
-            <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-              <p className="text-lg font-bold text-surface-200">{stats.total_explainers}</p>
-              <p className="text-[10px] text-surface-500">explainers</p>
-            </div>
-            <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-              <p className="text-lg font-bold text-emerald-400">{stats.wolfram_verified_count}</p>
-              <p className="text-[10px] text-surface-500">Wolfram verified</p>
-            </div>
-          </motion.div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[
+              { label: 'bundle problems', value: stats.total_problems, color: 'var(--text-primary)' },
+              { label: 'explainers', value: stats.total_explainers, color: 'var(--text-primary)' },
+              { label: 'Wolfram verified', value: stats.wolfram_verified_count, color: 'var(--green-ink)' },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 2px', fontSize: 18, fontWeight: 'var(--weight-bold)', color }}>{value}</p>
+                <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>{label}</p>
+              </div>
+            ))}
+          </div>
 
-          {/* Tier source breakdown — lifetime */}
-          <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-            <h3 className="text-sm font-semibold text-surface-200 mb-3 flex items-center gap-1.5">
-              <Layers size={13} className="text-violet-400" />
+          {/* Lifetime source breakdown */}
+          <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Layers size={13} style={{ color: 'var(--indigo-ink)' }} />
               Lifetime Source Distribution
             </h3>
             {summary.lifetime.total_events === 0 ? (
-              <p className="text-xs text-surface-500 italic">No resolve events yet. Use Smart Practice to generate traffic.</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No resolve events yet. Use Smart Practice to generate traffic.</p>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {Object.entries(summary.lifetime.by_source)
                   .sort(([, a], [, b]) => b - a)
                   .map(([source, count]) => {
-                    const meta = SOURCE_LABELS[source] || { label: source, color: 'bg-surface-600', tier: '' };
+                    const meta = SOURCE_LABELS[source] || { label: source, barColor: 'var(--surface-fill)', tier: '' };
                     const pct = Math.round((count / summary.lifetime.total_events) * 100);
                     return (
                       <div key={source}>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-surface-300 flex items-center gap-2">
-                            <span className="text-[10px] text-surface-500 font-mono">{meta.tier}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
+                          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{meta.tier}</span>
                             {meta.label}
                           </span>
-                          <span className="text-surface-400 font-mono">{count} ({pct}%)</span>
+                          <span style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{count} ({pct}%)</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-surface-800 overflow-hidden">
+                        <div style={{ height: 6, borderRadius: 3, background: 'var(--surface-fill)', overflow: 'hidden' }}>
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${pct}%` }}
                             transition={{ duration: 0.5 }}
-                            className={clsx('h-full rounded-full', meta.color)}
+                            style={{ height: '100%', borderRadius: 3, background: meta.barColor }}
                           />
                         </div>
                       </div>
@@ -214,60 +224,57 @@ export default function ContentAdminPage() {
                   })}
               </div>
             )}
-          </motion.div>
+          </div>
 
           {/* 14-day trend */}
-          <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-            <h3 className="text-sm font-semibold text-surface-200 mb-3 flex items-center gap-1.5">
-              <TrendingUp size={13} className="text-emerald-400" />
+          <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <TrendingUp size={13} style={{ color: 'var(--green-ink)' }} />
               Last 14 Days
             </h3>
             {summary.last_14_days.length === 0 ? (
-              <p className="text-xs text-surface-500 italic">No daily data yet.</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No daily data yet.</p>
             ) : (
-              <div className="space-y-1.5">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {summary.last_14_days.map(d => (
-                  <div key={d.day} className="flex items-center gap-2 text-[11px]">
-                    <span className="font-mono text-surface-500 w-16 shrink-0">{d.day.slice(5)}</span>
-                    <div className="flex-1 flex h-4 rounded overflow-hidden bg-surface-800">
-                      {d.tier_0 > 0 && (
-                        <div className="bg-emerald-500/70" style={{ width: `${(d.tier_0 / d.total) * 100}%` }} title={`Tier 0: ${d.tier_0}`} />
-                      )}
-                      {d.tier_1 > 0 && (
-                        <div className="bg-violet-500/70" style={{ width: `${(d.tier_1 / d.total) * 100}%` }} title={`Tier 1: ${d.tier_1}`} />
-                      )}
-                      {d.tier_2 > 0 && (
-                        <div className="bg-amber-500/70" style={{ width: `${(d.tier_2 / d.total) * 100}%` }} title={`Tier 2: ${d.tier_2}`} />
-                      )}
-                      {d.tier_3 > 0 && (
-                        <div className="bg-blue-500/70" style={{ width: `${(d.tier_3 / d.total) * 100}%` }} title={`Tier 3: ${d.tier_3}`} />
-                      )}
-                      {d.miss > 0 && (
-                        <div className="bg-red-500/60" style={{ width: `${(d.miss / d.total) * 100}%` }} title={`Miss: ${d.miss}`} />
-                      )}
+                  <div key={d.day} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', width: 40, flexShrink: 0 }}>{d.day.slice(5)}</span>
+                    <div style={{ flex: 1, display: 'flex', height: 16, borderRadius: 4, overflow: 'hidden', background: 'var(--surface-fill)' }}>
+                      {d.tier_0 > 0 && <div style={{ width: `${(d.tier_0 / d.total) * 100}%`, background: 'rgba(52,199,89,.7)' }} title={`Tier 0: ${d.tier_0}`} />}
+                      {d.tier_1 > 0 && <div style={{ width: `${(d.tier_1 / d.total) * 100}%`, background: 'rgba(88,86,214,.7)' }} title={`Tier 1: ${d.tier_1}`} />}
+                      {d.tier_2 > 0 && <div style={{ width: `${(d.tier_2 / d.total) * 100}%`, background: 'rgba(255,149,0,.7)' }} title={`Tier 2: ${d.tier_2}`} />}
+                      {d.tier_3 > 0 && <div style={{ width: `${(d.tier_3 / d.total) * 100}%`, background: 'rgba(59,130,246,.7)' }} title={`Tier 3: ${d.tier_3}`} />}
+                      {d.miss > 0 && <div style={{ width: `${(d.miss / d.total) * 100}%`, background: 'rgba(255,59,48,.6)' }} title={`Miss: ${d.miss}`} />}
                     </div>
-                    <span className="text-surface-400 font-mono w-12 text-right shrink-0">{d.total}</span>
-                    <span className="text-emerald-400 font-mono w-16 text-right shrink-0">${d.cost_usd.toFixed(4)}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', width: 40, textAlign: 'right', flexShrink: 0 }}>{d.total}</span>
+                    <span style={{ color: 'var(--green-ink)', fontFamily: 'var(--font-mono)', width: 56, textAlign: 'right', flexShrink: 0 }}>${d.cost_usd.toFixed(4)}</span>
                   </div>
                 ))}
               </div>
             )}
-            <div className="mt-3 flex items-center gap-3 text-[10px] text-surface-500 flex-wrap">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500/70" /> Tier 0 (free)</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-violet-500/70" /> Tier 1 (free)</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-amber-500/70" /> Tier 2 (LLM)</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70" /> Tier 3 (Wolfram)</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500/60" /> Miss</span>
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, fontSize: 10, color: 'var(--text-tertiary)', flexWrap: 'wrap' }}>
+              {[
+                { label: 'Tier 0 (free)',  bg: 'rgba(52,199,89,.7)' },
+                { label: 'Tier 1 (free)',  bg: 'rgba(88,86,214,.7)' },
+                { label: 'Tier 2 (LLM)',   bg: 'rgba(255,149,0,.7)' },
+                { label: 'Tier 3 (Wolfram)', bg: 'rgba(59,130,246,.7)' },
+                { label: 'Miss',           bg: 'rgba(255,59,48,.6)' },
+              ].map(({ label, bg }) => (
+                <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: bg, display: 'inline-block' }} />
+                  {label}
+                </span>
+              ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Topic coverage */}
-          <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-            <h3 className="text-sm font-semibold text-surface-200 mb-3 flex items-center gap-1.5">
-              <BookOpen size={13} className="text-purple-400" />
+          <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <BookOpen size={13} style={{ color: 'var(--indigo-ink)' }} />
               Bundle Topic Coverage
             </h3>
-            <div className="space-y-1.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {Object.entries(stats.by_topic)
                 .sort(([, a], [, b]) => b - a)
                 .map(([topic, count]) => {
@@ -275,28 +282,27 @@ export default function ContentAdminPage() {
                   const pct = (count / maxCount) * 100;
                   return (
                     <div key={topic}>
-                      <div className="flex justify-between text-xs mb-0.5">
-                        <span className="text-surface-300 capitalize">{topic.replace(/-/g, ' ')}</span>
-                        <span className="text-surface-500 font-mono">{count}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
+                        <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{topic.replace(/-/g, ' ')}</span>
+                        <span style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{count}</span>
                       </div>
-                      <div className="h-1 rounded-full bg-surface-800 overflow-hidden">
+                      <div style={{ height: 4, borderRadius: 2, background: 'var(--surface-fill)', overflow: 'hidden' }}>
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${pct}%` }}
                           transition={{ duration: 0.5 }}
-                          className="h-full bg-purple-500/60 rounded-full"
+                          style={{ height: '100%', borderRadius: 2, background: 'rgba(88,86,214,.6)' }}
                         />
                       </div>
                     </div>
                   );
                 })}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Lifetime started_at */}
-          <motion.div variants={fadeInUp} className="text-center text-[10px] text-surface-600">
+          <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-tertiary)' }}>
             Tracking since {new Date(summary.started_at).toLocaleDateString()}
-          </motion.div>
+          </div>
         </>
       ) : null}
     </motion.div>

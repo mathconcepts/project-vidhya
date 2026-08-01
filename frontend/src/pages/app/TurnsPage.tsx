@@ -5,10 +5,8 @@ import {
   Activity, Target, TrendingUp, TrendingDown, Minus, Loader2, RefreshCw,
   AlertCircle, Info, CheckCircle2, XCircle, Clock, Zap,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 /**
  * /gate/turns           — current student's own turn history
@@ -59,6 +57,13 @@ interface TurnsResponse {
   turns: TeachingTurn[];
 }
 
+const TREND_META: Record<TurnsResponse['summary']['trend'], { icon: typeof TrendingUp; label: string; color: string }> = {
+  improving:           { icon: TrendingUp,   label: 'Improving',      color: 'var(--green-ink)' },
+  flat:                { icon: Minus,        label: 'Flat',           color: 'var(--orange)' },
+  declining:           { icon: TrendingDown, label: 'Declining',      color: 'var(--red)' },
+  'insufficient-data': { icon: Info,         label: 'Need more data', color: 'var(--text-tertiary)' },
+};
+
 export default function TurnsPage() {
   const { id } = useParams<{ id?: string }>();
   const { user } = useAuth();
@@ -89,8 +94,8 @@ export default function TurnsPage() {
         return;
       }
       setData(await r.json());
-    } catch (e: any) {
-      setError(`Network error: ${e?.message ?? 'unknown'}`);
+    } catch (e: unknown) {
+      setError(`Network error: ${e instanceof Error ? e.message : 'unknown'}`);
       setData(null);
     } finally {
       setLoading(false);
@@ -101,7 +106,7 @@ export default function TurnsPage() {
 
   if (!user) {
     return (
-      <div className="p-6 text-surface-300">
+      <div style={{ padding: 24, color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)' }}>
         Sign in to view your learning history.
       </div>
     );
@@ -109,23 +114,20 @@ export default function TurnsPage() {
 
   return (
     <motion.div
-      className="p-6 max-w-4xl mx-auto"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ maxWidth: 896, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}
     >
-      <motion.div variants={fadeInUp} className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Activity className="w-6 h-6 text-violet-400" />
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Activity size={20} style={{ color: 'var(--indigo-ink)' }} />
           <div>
-            <h1 className="text-2xl font-display font-semibold text-surface-50">
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>
               {id ? `${data?.student_name ?? 'Student'}'s learning history` : 'Your learning history'}
             </h1>
-            {/* v2.5: explicit "viewing as" indicator when viewing another
-                student's history — makes the role-based access transparent
-                to teachers and admins. */}
             {id && user?.role && (
-              <p className="text-[11px] text-surface-500 uppercase tracking-wide mt-0.5">
+              <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
                 Viewing as {user.role}
               </p>
             )}
@@ -134,33 +136,34 @@ export default function TurnsPage() {
         <button
           onClick={refresh}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-200 disabled:opacity-50"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           <span>Refresh</span>
         </button>
-      </motion.div>
+      </div>
 
-      <motion.div variants={fadeInUp} className="mb-6 p-4 rounded-lg bg-surface-900 border border-surface-700 flex gap-3">
-        <Info className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
-        <div className="text-sm text-surface-300 leading-relaxed">
+      {/* Info box */}
+      <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.06)', border: '1px solid rgba(88,86,214,.22)', display: 'flex', gap: 10 }}>
+        <Info size={16} style={{ color: 'var(--indigo-ink)', flexShrink: 0, marginTop: 2 }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           Each row below is a "turn" — one round of (you opened something → the system served something →
           you responded → the system observed and updated your mastery model). The summary below shows
           whether your mastery has been improving, flat, or declining across recent turns.
-        </div>
-      </motion.div>
+        </p>
+      </div>
 
       {error && (
-        <motion.div variants={fadeInUp} className="mb-6 p-4 rounded-lg bg-rose-950/30 border border-rose-800/50 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-          <div className="text-rose-300 text-sm">{error}</div>
-        </motion.div>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <AlertCircle size={16} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--red)' }}>{error}</span>
+        </div>
       )}
 
       {loading && !data && (
-        <motion.div variants={fadeInUp} className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-surface-500" />
-        </motion.div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+          <Loader2 size={20} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+        </div>
       )}
 
       {data && (
@@ -168,11 +171,11 @@ export default function TurnsPage() {
           <SummaryCard summary={data.summary} />
 
           {data.turns.length === 0 ? (
-            <motion.div variants={fadeInUp} className="text-center py-12 text-surface-500">
+            <div style={{ textAlign: 'center', padding: '48px 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
               No turns recorded yet. Try the chat tutor or work through a practice problem to start.
-            </motion.div>
+            </div>
           ) : (
-            <div className="space-y-3 mt-6">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {data.turns.map(turn => <TurnCard key={turn.turn_id} turn={turn} />)}
             </div>
           )}
@@ -189,8 +192,12 @@ function SummaryCard({ summary }: { summary: TurnsResponse['summary'] }) {
     ? Math.round((summary.correct_attempts / summary.total_attempts) * 100)
     : null;
 
+  const deltaColor = summary.avg_mastery_delta_pct > 0 ? 'var(--green-ink)'
+                   : summary.avg_mastery_delta_pct < 0 ? 'var(--red)'
+                   : 'var(--text-secondary)';
+
   return (
-    <motion.div variants={fadeInUp} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
       <StatTile
         icon={Target}
         label="Total turns"
@@ -210,9 +217,7 @@ function SummaryCard({ summary }: { summary: TurnsResponse['summary'] }) {
           ? `+${summary.avg_mastery_delta_pct}%`
           : `${summary.avg_mastery_delta_pct}%`}
         sub="per turn"
-        accentColor={summary.avg_mastery_delta_pct > 0 ? 'text-emerald-400'
-                   : summary.avg_mastery_delta_pct < 0 ? 'text-rose-400'
-                   : 'text-surface-300'}
+        accentColor={deltaColor}
       />
       <StatTile
         icon={TrendIcon}
@@ -220,18 +225,11 @@ function SummaryCard({ summary }: { summary: TurnsResponse['summary'] }) {
         value={trend_meta.label}
         accentColor={trend_meta.color}
       />
-    </motion.div>
+    </div>
   );
 }
 
-const TREND_META: Record<TurnsResponse['summary']['trend'], { icon: typeof TrendingUp; label: string; color: string }> = {
-  improving:           { icon: TrendingUp,    label: 'Improving',         color: 'text-emerald-400' },
-  flat:                { icon: Minus,         label: 'Flat',              color: 'text-amber-400' },
-  declining:           { icon: TrendingDown,  label: 'Declining',         color: 'text-rose-400' },
-  'insufficient-data': { icon: Info,          label: 'Need more data',    color: 'text-surface-300' },
-};
-
-function StatTile({ icon: Icon, label, value, sub, accentColor = 'text-surface-100' }: {
+function StatTile({ icon: Icon, label, value, sub, accentColor = 'var(--text-primary)' }: {
   icon: typeof Target;
   label: string;
   value: string;
@@ -239,13 +237,13 @@ function StatTile({ icon: Icon, label, value, sub, accentColor = 'text-surface-1
   accentColor?: string;
 }) {
   return (
-    <div className="p-4 rounded-lg bg-surface-900 border border-surface-700">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className={clsx('w-4 h-4', accentColor)} />
-        <span className="text-xs text-surface-400 uppercase tracking-wide">{label}</span>
+    <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <Icon size={14} style={{ color: accentColor }} />
+        <span style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
       </div>
-      <div className={clsx('text-2xl font-semibold', accentColor)}>{value}</div>
-      {sub && <div className="text-xs text-surface-500 mt-1">{sub}</div>}
+      <div style={{ fontSize: 22, fontWeight: 'var(--weight-semibold)', color: accentColor, fontFamily: 'var(--font-mono)' }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>{sub}</div>}
     </div>
   );
 }
@@ -257,46 +255,50 @@ function TurnCard({ turn }: { turn: TeachingTurn }) {
 
   return (
     <motion.div
-      variants={fadeInUp}
-      className={clsx(
-        'p-4 rounded-lg border',
-        turn.status === 'open' ? 'bg-surface-900/50 border-surface-700 border-dashed'
-                                : 'bg-surface-900 border-surface-700',
-      )}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        padding: 16,
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--surface-card)',
+        borderColor: 'var(--separator)',
+        borderWidth: 1,
+        borderStyle: turn.status === 'open' ? 'dashed' : 'solid',
+      }}
     >
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs px-2 py-0.5 rounded bg-violet-900/30 text-violet-300 font-mono">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.1)', color: 'var(--indigo-ink)', fontFamily: 'var(--font-mono)' }}>
               {turn.intent}
             </span>
             {turn.routed_source && (
-              <span className="text-xs px-2 py-0.5 rounded bg-surface-800 text-surface-400 font-mono">
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                 {turn.routed_source}
               </span>
             )}
             {turn.delivery_channel !== 'web' && (
-              <span className="text-xs px-2 py-0.5 rounded bg-violet-900/30 text-violet-300 font-mono">
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.1)', color: 'var(--indigo-ink)', fontFamily: 'var(--font-mono)' }}>
                 {turn.delivery_channel}
               </span>
             )}
             {turn.degraded && (
-              <span className="text-xs px-2 py-0.5 rounded bg-amber-900/30 text-amber-300">
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.08)', color: 'var(--orange)' }}>
                 degraded: {turn.degraded.reason}
               </span>
             )}
             {turn.status === 'open' && (
-              <span className="text-xs px-2 py-0.5 rounded bg-surface-800 text-surface-400">
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', color: 'var(--text-tertiary)' }}>
                 open
               </span>
             )}
           </div>
-          <div className="text-sm text-surface-200 leading-relaxed">
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             {turn.generated_content.summary}
           </div>
           {turn.pre_state.concept_id && (
-            <div className="text-xs text-surface-500 mt-1">
-              concept: <span className="font-mono">{turn.pre_state.concept_id}</span>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
+              concept: <span style={{ fontFamily: 'var(--font-mono)' }}>{turn.pre_state.concept_id}</span>
               {turn.pre_state.mastery_before !== null && (
                 <> · mastery before: {(turn.pre_state.mastery_before * 100).toFixed(0)}%</>
               )}
@@ -304,11 +306,11 @@ function TurnCard({ turn }: { turn: TeachingTurn }) {
           )}
         </div>
 
-        <div className="flex flex-col items-end gap-1 shrink-0 text-xs text-surface-400">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
           <span>{ts}</span>
           {turn.duration_ms && (
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Clock size={11} />
               {(turn.duration_ms / 1000).toFixed(1)}s
             </span>
           )}
@@ -316,22 +318,19 @@ function TurnCard({ turn }: { turn: TeachingTurn }) {
       </div>
 
       {turn.attempt_outcome && (
-        <div className="mt-3 pt-3 border-t border-surface-700/50 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm">
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: 'var(--hairline) solid var(--separator)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)' }}>
             {correct ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 size={14} style={{ color: 'var(--green-ink)' }} />
             ) : (
-              <XCircle className="w-4 h-4 text-rose-400" />
+              <XCircle size={14} style={{ color: 'var(--red)' }} />
             )}
-            <span className={clsx(correct ? 'text-emerald-300' : 'text-rose-300')}>
+            <span style={{ color: correct ? 'var(--green-ink)' : 'var(--red)' }}>
               {correct ? 'correct' : 'incorrect'}
             </span>
           </div>
           {typeof delta === 'number' && (
-            <div className={clsx(
-              'text-sm font-medium',
-              delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-rose-400' : 'text-surface-300',
-            )}>
+            <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: delta > 0 ? 'var(--green-ink)' : delta < 0 ? 'var(--red)' : 'var(--text-secondary)' }}>
               {delta >= 0 ? '+' : ''}{delta}% mastery
             </div>
           )}

@@ -1,6 +1,7 @@
 /**
- * MasteryRing — SVG circular progress indicator.
- * Color auto-selects: red (<40%) → amber (40-70%) → emerald (>70%).
+ * MasteryRing (app) — SVG circular progress indicator.
+ * Color auto-selects: red (<40%) → orange (40–70%) → green (≥70%).
+ * Uses Clarity CSS vars, not hard-coded Tailwind stroke classes.
  */
 import { useEffect, useState } from 'react';
 
@@ -24,39 +25,34 @@ export function MasteryRing({
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (animatedValue / 100) * circumference;
 
-  // Animate on mount
   useEffect(() => {
     const timer = setTimeout(() => setAnimatedValue(value), 100);
     return () => clearTimeout(timer);
   }, [value]);
 
-  // Color based on value
-  let strokeColor = 'stroke-red-500';
-  let bgColor = 'stroke-red-500/20';
-  if (value >= 70) {
-    strokeColor = 'stroke-emerald-500';
-    bgColor = 'stroke-emerald-500/20';
-  } else if (value >= 40) {
-    strokeColor = 'stroke-amber-500';
-    bgColor = 'stroke-amber-500/20';
-  }
+  const strokeColor = value >= 70
+    ? 'var(--green)'
+    : value >= 40
+    ? 'var(--orange)'
+    : 'var(--red)';
+
+  const bgOpacity = 0.15;
 
   const reducedMotion = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`}>
-      <svg width={size} height={size} className="-rotate-90">
-        {/* Background ring */}
+    <div className={className} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
           strokeWidth={strokeWidth}
-          className={bgColor}
+          stroke={strokeColor}
+          strokeOpacity={bgOpacity}
         />
-        {/* Progress ring */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -66,14 +62,12 @@ export function MasteryRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className={strokeColor}
-          style={{
-            transition: reducedMotion ? 'none' : 'stroke-dashoffset 0.8s ease-out',
-          }}
+          stroke={strokeColor}
+          style={{ transition: reducedMotion ? 'none' : 'stroke-dashoffset 0.8s ease-out' }}
         />
       </svg>
       {children && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {children}
         </div>
       )}

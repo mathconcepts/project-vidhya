@@ -1,14 +1,21 @@
 /**
- * SettingsPage — Theme toggle + session info with animations.
+ * SettingsPage — Theme toggle + session info.
  */
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSession } from '@/hooks/useSession';
 import { useStorageMode, type StorageMode } from '@/hooks/useStorageMode';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { isOptedIn as getAggregateOptIn, setOptIn as persistAggregateOptIn } from '@/lib/gbrain/aggregate';
-import { Moon, Sun, Copy, Check, Trash2, Bell, BellOff, Mail, Zap, Database, HardDrive, Cpu } from 'lucide-react';
+import { Moon, Sun, Copy, Check, Trash2, Bell, Mail, Zap, Database, HardDrive, Cpu } from 'lucide-react';
+
+const sectionStyle: React.CSSProperties = {
+  padding: 16,
+  borderRadius: 'var(--radius-md)',
+  background: 'var(--surface-card)',
+  border: 'var(--hairline) solid var(--separator)',
+  boxShadow: 'var(--shadow-raise)',
+};
 
 export default function SettingsPage() {
   const sessionId = useSession();
@@ -73,26 +80,21 @@ export default function SettingsPage() {
   };
 
   return (
-    <motion.div
-      className="space-y-6"
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-    >
-      <motion.h1 variants={fadeInUp} className="text-xl font-bold text-surface-100">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>
         Settings
-      </motion.h1>
+      </h1>
 
       {/* Theme */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-        <div className="flex items-center justify-between">
+      <div style={sectionStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p className="text-sm font-medium text-surface-200">Theme</p>
-            <p className="text-xs text-surface-500">{theme === 'dark' ? 'Dark mode' : 'Light mode'}</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Theme</p>
+            <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</p>
           </div>
           <button
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors active:scale-95"
+            style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', cursor: 'pointer' }}
           >
             <motion.div
               key={theme}
@@ -100,52 +102,53 @@ export default function SettingsPage() {
               animate={{ rotate: 0, opacity: 1 }}
               transition={{ duration: 0.2 }}
             >
-              {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-violet-400" />}
+              {theme === 'dark'
+                ? <Sun size={18} style={{ color: 'var(--orange)' }} />
+                : <Moon size={18} style={{ color: 'var(--indigo-ink)' }} />
+              }
             </motion.div>
           </button>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Content settings — bundles + source exclusions */}
-      <motion.a
-        variants={fadeInUp}
+      {/* Content settings */}
+      <a
         href="/content-settings"
-        className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-surface-700 hover:bg-surface-850 transition-colors"
+        style={{ ...sectionStyle, display: 'block', textDecoration: 'none' }}
       >
-        <div className="flex items-center justify-between">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p className="text-sm font-medium text-surface-200">Content settings</p>
-            <p className="text-xs text-surface-500">Manage bundle subscriptions and excluded sources</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Content settings</p>
+            <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Manage bundle subscriptions and excluded sources</p>
           </div>
-          <span className="text-surface-500">→</span>
+          <span style={{ color: 'var(--text-tertiary)' }}>→</span>
         </div>
-      </motion.a>
+      </a>
 
-      {/* Uploads — private file library */}
-      <motion.a
-        variants={fadeInUp}
+      {/* Uploads */}
+      <a
         href="/uploads"
-        className="block p-4 rounded-xl bg-surface-900 border border-surface-800 hover:border-surface-700 hover:bg-surface-850 transition-colors"
+        style={{ ...sectionStyle, display: 'block', textDecoration: 'none' }}
       >
-        <div className="flex items-center justify-between">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p className="text-sm font-medium text-surface-200">Your uploads</p>
-            <p className="text-xs text-surface-500">Upload class notes, problem photos, PDFs — private to you</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Your uploads</p>
+            <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Upload class notes, problem photos, PDFs — private to you</p>
           </div>
-          <span className="text-surface-500">→</span>
+          <span style={{ color: 'var(--text-tertiary)' }}>→</span>
         </div>
-      </motion.a>
+      </a>
 
       {/* Session */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
-        <p className="text-sm font-medium text-surface-200">Session</p>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 text-xs text-surface-500 bg-surface-800 px-3 py-2 rounded-lg truncate">
+      <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Session</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <code style={{ flex: 1, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', background: 'var(--surface-fill)', padding: '6px 12px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>
             {sessionId}
           </code>
           <button
             onClick={copySessionId}
-            className="p-2 rounded-lg bg-surface-800 hover:bg-surface-700 transition-colors active:scale-95"
+            style={{ padding: 8, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', cursor: 'pointer', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <motion.div
               key={copied ? 'check' : 'copy'}
@@ -153,128 +156,137 @@ export default function SettingsPage() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 500, damping: 20 }}
             >
-              {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} className="text-surface-400" />}
+              {copied
+                ? <Check size={16} style={{ color: 'var(--green-ink)' }} />
+                : <Copy size={16} style={{ color: 'var(--text-secondary)' }} />
+              }
             </motion.div>
           </button>
         </div>
-        <p className="text-xs text-surface-600">
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
           Your progress is tied to this session ID. Save it to restore progress on another device.
         </p>
-      </motion.div>
+      </div>
 
-      {/* Storage Mode (DB-less GBrain) */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
-        <div className="flex items-center gap-2">
-          <Database size={14} className="text-violet-400" />
-          <p className="text-sm font-medium text-surface-200">Storage Mode</p>
+      {/* Storage Mode */}
+      <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Database size={14} style={{ color: 'var(--indigo-ink)' }} />
+          <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Storage Mode</p>
         </div>
-        <p className="text-xs text-surface-500 leading-relaxed">
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
           Where your student state (mastery, errors, attempts) is saved. IndexedDB
           keeps everything on your device — required for material grounding.
         </p>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
           {([
             { id: 'auto' as StorageMode, label: 'Auto', icon: Cpu, desc: 'Best of both' },
             { id: 'indexeddb' as StorageMode, label: 'Local', icon: HardDrive, desc: 'On-device' },
             { id: 'postgres' as StorageMode, label: 'Cloud', icon: Database, desc: 'Sync across' },
-          ]).map(opt => (
-            <button
-              key={opt.id}
-              onClick={() => setStorageMode(opt.id)}
-              className={`p-2 rounded-lg border transition-colors text-left ${
-                storageMode === opt.id
-                  ? 'bg-violet-500/10 border-violet-500/40'
-                  : 'bg-surface-800 border-surface-700 hover:border-surface-600'
-              }`}
-            >
-              <opt.icon size={12} className={storageMode === opt.id ? 'text-violet-400 mb-1' : 'text-surface-500 mb-1'} />
-              <p className={`text-xs font-medium ${storageMode === opt.id ? 'text-violet-300' : 'text-surface-300'}`}>{opt.label}</p>
-              <p className="text-[10px] text-surface-500">{opt.desc}</p>
-            </button>
-          ))}
+          ]).map(opt => {
+            const active = storageMode === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => setStorageMode(opt.id)}
+                style={{
+                  padding: 8,
+                  borderRadius: 'var(--radius-sm)',
+                  border: active ? '1px solid rgba(88,86,214,.35)' : 'var(--hairline) solid var(--separator)',
+                  background: active ? 'rgba(88,86,214,.06)' : 'var(--surface-fill)',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <opt.icon size={12} style={{ color: active ? 'var(--indigo-ink)' : 'var(--text-tertiary)', marginBottom: 4 }} />
+                <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: active ? 'var(--indigo-ink)' : 'var(--text-secondary)' }}>{opt.label}</p>
+                <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>{opt.desc}</p>
+              </button>
+            );
+          })}
         </div>
-        <div className="text-[10px] text-surface-600">
-          Currently active: <span className="text-surface-400 font-mono">{effectiveMode}</span>
+        <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
+          Currently active: <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{effectiveMode}</span>
           {groundingCount > 0 && <span> · {groundingCount} material chunks</span>}
         </div>
-      </motion.div>
+      </div>
 
       {/* Notifications */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-4">
-        <p className="text-sm font-medium text-surface-200">Notifications</p>
+      <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Notifications</p>
         {([
           { key: 'email_digest' as const, label: 'Weekly Email Digest', desc: 'Problems solved, accuracy, weak topics', icon: Mail },
           { key: 'streak_reminders' as const, label: 'Streak Reminders', desc: 'Get notified when your streak is at risk', icon: Zap },
           { key: 'push_enabled' as const, label: 'Push Notifications', desc: 'Daily practice reminders in your browser', icon: Bell },
         ]).map(({ key, label, desc, icon: Icon }) => (
-          <div key={key} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Icon size={16} className="text-surface-400" />
+          <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Icon size={16} style={{ color: 'var(--text-secondary)' }} />
               <div>
-                <p className="text-sm text-surface-200">{label}</p>
-                <p className="text-xs text-surface-500">{desc}</p>
+                <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)' }}>{label}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{desc}</p>
               </div>
             </div>
             <button
               onClick={() => updateNotifPref(key)}
-              className={`w-10 h-6 rounded-full transition-colors ${notifPrefs[key] ? 'bg-emerald-500' : 'bg-surface-700'}`}
+              style={{ width: 40, height: 24, borderRadius: 12, background: notifPrefs[key] ? 'var(--green)' : 'var(--surface-fill)', border: notifPrefs[key] ? 'none' : 'var(--hairline) solid var(--separator)', cursor: 'pointer', position: 'relative', flexShrink: 0 }}
             >
               <motion.div
-                className="w-4 h-4 rounded-full bg-white shadow"
+                style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', position: 'absolute', top: 4 }}
                 animate={{ x: notifPrefs[key] ? 18 : 2 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               />
             </button>
           </div>
         ))}
-      </motion.div>
+      </div>
 
-      {/* Community Data Sharing (opt-in) */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
+      {/* Community Data Sharing */}
+      <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
-          <h2 className="text-sm font-semibold text-surface-200">Help improve GBrain</h2>
-          <p className="text-xs text-surface-500 mt-1">
+          <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Help improve GBrain</h2>
+          <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
             Send anonymized stats (concept, error type, misconception — never your name, text, or answers)
             to help the population-level misconception library grow. Off by default.
           </p>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Zap size={16} className="text-surface-400" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Zap size={16} style={{ color: 'var(--text-secondary)' }} />
             <div>
-              <p className="text-sm text-surface-200">Anonymous aggregation</p>
-              <p className="text-xs text-surface-500">Batched every 5 min · cancelable anytime</p>
+              <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)' }}>Anonymous aggregation</p>
+              <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Batched every 5 min · cancelable anytime</p>
             </div>
           </div>
           <button
             onClick={toggleAggregateOptIn}
-            className={`w-10 h-6 rounded-full transition-colors ${aggregateOptIn ? 'bg-emerald-500' : 'bg-surface-700'}`}
+            style={{ width: 40, height: 24, borderRadius: 12, background: aggregateOptIn ? 'var(--green)' : 'var(--surface-fill)', border: aggregateOptIn ? 'none' : 'var(--hairline) solid var(--separator)', cursor: 'pointer', position: 'relative', flexShrink: 0 }}
           >
             <motion.div
-              className="w-4 h-4 rounded-full bg-white shadow"
+              style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', position: 'absolute', top: 4 }}
               animate={{ x: aggregateOptIn ? 18 : 2 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             />
           </button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Danger Zone */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-red-500/20">
+      <div style={{ ...sectionStyle, border: '1px solid rgba(255,59,48,.2)' }}>
         <button
           onClick={clearProgress}
-          className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors active:scale-[0.98]"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body)', color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           <Trash2 size={16} />
           <span>Clear all progress and start fresh</span>
         </button>
-      </motion.div>
+      </div>
 
       {/* About */}
-      <motion.div variants={fadeInUp} className="text-center text-xs text-surface-600 space-y-1 pt-4">
-        <p className="font-medium text-surface-500">Vidhya — built for India's toughest exams</p>
-        <p>AI-powered planning &middot; Practice &middot; Smart review</p>
-      </motion.div>
-    </motion.div>
+      <div style={{ textAlign: 'center', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', paddingTop: 16, paddingBottom: 8 }}>
+        <p style={{ margin: '0 0 4px', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Vidhya — built for India's toughest exams</p>
+        <p style={{ margin: 0 }}>AI-powered planning · Practice · Smart review</p>
+      </div>
+    </div>
   );
 }

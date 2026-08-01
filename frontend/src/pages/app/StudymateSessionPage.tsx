@@ -3,7 +3,7 @@
  *
  * State machine: idle → loading → in_progress → answered → gap_shown → complete → stat
  *
- * Design: Calm focus mode. Dark bg, emerald progress bar, subtle entrance animations.
+ * Design: Calm focus mode. Emerald progress bar, subtle entrance animations.
  * One problem at a time. Thinking-gap shown for wrong answers. Deterministic stat line at end.
  */
 
@@ -14,9 +14,7 @@ import { useSession } from '@/hooks/useSession';
 import { useActiveExam } from '@/hooks/useActiveExam';
 import { apiFetch } from '@/hooks/useApi';
 import { useNavigate } from 'react-router-dom';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { Loader2, CheckCircle, XCircle, ChevronRight, BookOpen, Zap, ArrowRight } from 'lucide-react';
-import { clsx } from 'clsx';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -52,9 +50,14 @@ type PageState = 'idle' | 'loading' | 'answering' | 'checking' | 'answered' | 'g
 
 function DifficultyPip({ difficulty }: { difficulty: number }) {
   const label = difficulty <= 0.4 ? 'Easy' : difficulty <= 0.7 ? 'Medium' : 'Hard';
-  const color = difficulty <= 0.4 ? 'text-emerald-400 bg-emerald-500/10' : difficulty <= 0.7 ? 'text-amber-400 bg-amber-500/10' : 'text-red-400 bg-red-500/10';
+  const pipStyle =
+    difficulty <= 0.4
+      ? { color: 'var(--green-ink)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }
+      : difficulty <= 0.7
+      ? { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }
+      : { color: 'var(--red)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' };
   return (
-    <span className={clsx('text-xs font-medium px-2 py-0.5 rounded-full border border-current/25', color)}>
+    <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={pipStyle}>
       {label}
     </span>
   );
@@ -65,9 +68,10 @@ function DifficultyPip({ difficulty }: { difficulty: number }) {
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = Math.round((current / total) * 100);
   return (
-    <div className="w-full h-1 bg-surface-2 rounded-full overflow-hidden">
+    <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface-fill)' }}>
       <motion.div
-        className="h-full bg-emerald-500 rounded-full"
+        className="h-full rounded-full"
+        style={{ background: 'var(--green)' }}
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -148,8 +152,8 @@ export default function StudymateSessionPage() {
       setWasCorrect(null);
       setGapText(null);
       setPageState('answering');
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to start session');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to start session');
       setPageState('idle');
     }
   }, [sessionId, examId]);
@@ -183,8 +187,8 @@ export default function StudymateSessionPage() {
         setGapText(null);
         setPageState('answered');
       }
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to record answer');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to record answer');
       setPageState('answering');
     }
   }, [session, currentProblem, userAnswer]);
@@ -255,8 +259,8 @@ export default function StudymateSessionPage() {
   if (pageState === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-        <p className="text-sm text-surface-400">Setting up your session…</p>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--green-ink)' }} />
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Setting up your session…</p>
       </div>
     );
   }
@@ -265,38 +269,51 @@ export default function StudymateSessionPage() {
     return (
       <motion.div
         className="max-w-lg mx-auto px-4 py-12 flex flex-col items-center gap-8 text-center"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <motion.div variants={fadeInUp} className="flex flex-col gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mx-auto">
-            <Zap className="w-7 h-7 text-emerald-400" />
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
+            style={{ background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}
+          >
+            <Zap className="w-7 h-7" style={{ color: 'var(--green-ink)' }} />
           </div>
-          <h1 className="text-2xl font-display font-black text-surface-50">
+          <h1 className="text-2xl font-display font-black" style={{ color: 'var(--text-primary)' }}>
             Anytime Studymate
           </h1>
-          <p className="text-sm text-surface-400">
+          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
             15 min · 5 adaptive problems · calibrated to your weak spots
           </p>
           {activeExam && (
-            <p className="text-xs text-violet-300/80 mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--indigo-ink)' }}>
               {activeExam.name}
             </p>
           )}
         </motion.div>
 
         {error && (
-          <motion.div variants={fadeInUp} className="w-full px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full px-4 py-3 rounded-xl text-sm"
+            style={{
+              background: 'rgba(255,59,48,.06)',
+              border: '1px solid rgba(255,59,48,.22)',
+              color: 'var(--red)',
+            }}
+          >
             {error}
           </motion.div>
         )}
 
         <motion.button
-          variants={fadeInUp}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
           onClick={startSession}
           disabled={!examId}
-          className="w-full max-w-xs py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-base hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full max-w-xs py-4 rounded-2xl font-semibold text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: 'var(--green)', color: 'var(--text-primary)' }}
           whileTap={{ scale: 0.97 }}
         >
           Start Session
@@ -309,56 +326,74 @@ export default function StudymateSessionPage() {
     return (
       <motion.div
         className="max-w-lg mx-auto px-4 py-12 flex flex-col items-center gap-8 text-center"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <motion.div variants={fadeInUp} className="flex flex-col gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mx-auto">
-            <CheckCircle className="w-7 h-7 text-emerald-400" />
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
+            style={{ background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}
+          >
+            <CheckCircle className="w-7 h-7" style={{ color: 'var(--green-ink)' }} />
           </div>
-          <h2 className="text-xl font-display font-black text-surface-50">
+          <h2 className="text-xl font-display font-black" style={{ color: 'var(--text-primary)' }}>
             Session complete
           </h2>
-          <p className="text-base text-emerald-400 font-medium">{statLine}</p>
+          <p className="text-base font-medium" style={{ color: 'var(--green-ink)' }}>{statLine}</p>
         </motion.div>
 
-        <motion.div variants={fadeInUp} className="flex flex-col gap-3 w-full max-w-xs">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-3 w-full max-w-xs"
+        >
           <button
             onClick={startSession}
-            className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-base hover:bg-emerald-400 transition-colors"
+            className="w-full py-4 rounded-2xl font-semibold text-base transition-colors"
+            style={{ background: 'var(--green)', color: 'var(--text-primary)' }}
           >
             New Session
           </button>
           {!isAnonymous && (
             <button
               onClick={() => navigate('/planned')}
-              className="w-full py-3 rounded-2xl bg-surface-800 border border-surface-700 text-surface-200 text-sm font-semibold hover:bg-surface-700 transition-colors inline-flex items-center justify-center gap-1.5"
+              className="w-full py-3 rounded-2xl text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5"
+              style={{
+                background: 'var(--surface-fill)',
+                border: 'var(--hairline) solid var(--separator)',
+                color: 'var(--text-secondary)',
+              }}
             >
               Continue your plan <ChevronRight size={14} />
             </button>
           )}
-          <a href="/" className="text-sm text-surface-400 hover:text-surface-300 transition-colors">
+          <a href="/" className="text-sm transition-colors" style={{ color: 'var(--text-tertiary)' }}>
             Back to home
           </a>
         </motion.div>
 
         {isAnonymous && (
           <motion.div
-            variants={fadeInUp}
-            className="w-full max-w-xs p-4 rounded-2xl bg-violet-500/10 border border-violet-500/25 space-y-3 text-center"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-xs p-4 rounded-2xl space-y-3 text-center"
+            style={{
+              background: 'rgba(88,86,214,.08)',
+              border: '1px solid rgba(88,86,214,.22)',
+            }}
           >
-            <p className="text-sm font-semibold text-surface-100">Save your progress</p>
-            <p className="text-xs text-surface-400 leading-relaxed">
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Save your progress</p>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
               Sign in to track your streak, unlock a personalized study plan, and pick up exactly where you left off.
             </p>
             <a
               href="/sign-in"
-              className="w-full py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold hover:bg-violet-400 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+              style={{ background: 'var(--indigo)', color: 'var(--text-primary)' }}
             >
               Create free account <ArrowRight size={14} />
             </a>
-            <p className="text-[11px] text-surface-600">No credit card. Takes 30 seconds.</p>
+            <p className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>No credit card. Takes 30 seconds.</p>
           </motion.div>
         )}
       </motion.div>
@@ -375,10 +410,10 @@ export default function StudymateSessionPage() {
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-6">
       {/* Progress */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-xs text-surface-400">
+        <div className="flex items-center justify-between text-xs" style={{ color: 'var(--text-tertiary)' }}>
           <span>{currentIdx + 1} of {session.problem_count}</span>
           {session.frustration_mode && (
-            <span className="text-amber-400 font-medium">Focus mode</span>
+            <span className="font-medium" style={{ color: 'var(--orange)' }}>Focus mode</span>
           )}
         </div>
         <ProgressBar current={currentIdx} total={session.problem_count} />
@@ -388,7 +423,13 @@ export default function StudymateSessionPage() {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentProblem.problem_id}
-          className="rounded-2xl bg-surface-1 border border-surface-3 p-6 flex flex-col gap-5"
+          className="p-6 flex flex-col gap-5"
+          style={{
+            background: 'var(--surface-card)',
+            border: 'var(--hairline) solid var(--separator)',
+            boxShadow: 'var(--shadow-raise)',
+            borderRadius: 'var(--radius-md)',
+          }}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -396,12 +437,14 @@ export default function StudymateSessionPage() {
         >
           {/* Meta */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-violet-400 font-mono">{currentProblem.concept_id.replace(/-/g, ' ')}</span>
+            <span className="text-xs font-mono" style={{ color: 'var(--indigo-ink)' }}>
+              {currentProblem.concept_id.replace(/-/g, ' ')}
+            </span>
             <DifficultyPip difficulty={currentProblem.difficulty} />
           </div>
 
           {/* Question */}
-          <p className="text-base text-surface-100 leading-relaxed font-medium">
+          <p className="text-base leading-relaxed font-medium" style={{ color: 'var(--text-primary)' }}>
             {currentProblem.question}
           </p>
 
@@ -413,7 +456,13 @@ export default function StudymateSessionPage() {
                 onChange={e => setUserAnswer(e.target.value)}
                 placeholder="Your answer…"
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-surface-2 border border-surface-3 text-surface-100 text-sm placeholder:text-surface-500 focus:outline-none focus:border-violet-500/60 resize-none transition-colors"
+                className="w-full px-4 py-3 resize-none focus:outline-none transition-colors"
+                style={{
+                  background: 'var(--surface-fill)',
+                  border: 'var(--hairline) solid var(--separator)',
+                  color: 'var(--text-primary)',
+                  borderRadius: 'var(--radius-sm)',
+                }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !e.shiftKey && userAnswer.trim()) {
                     e.preventDefault();
@@ -424,12 +473,12 @@ export default function StudymateSessionPage() {
               <motion.button
                 onClick={submitAnswer}
                 disabled={!userAnswer.trim() || pageState === 'checking'}
-                className={clsx(
-                  'w-full py-3 rounded-xl font-semibold text-sm transition-colors',
+                className="w-full py-3 rounded-xl font-semibold text-sm transition-colors"
+                style={
                   userAnswer.trim()
-                    ? 'bg-emerald-500 text-white hover:bg-emerald-400'
-                    : 'bg-surface-2 text-surface-500 cursor-not-allowed',
-                )}
+                    ? { background: 'var(--green)', color: 'var(--text-primary)' }
+                    : { background: 'var(--surface-fill)', color: 'var(--text-tertiary)', cursor: 'not-allowed' }
+                }
                 whileTap={userAnswer.trim() ? { scale: 0.97 } : {}}
               >
                 {pageState === 'checking' ? (
@@ -449,13 +498,17 @@ export default function StudymateSessionPage() {
                 transition={{ duration: 0.3 }}
               >
                 {/* Result banner */}
-                <div className={clsx(
-                  'flex items-center gap-3 px-4 py-3 rounded-xl border',
-                  wasCorrect
-                    ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
-                    : 'bg-red-500/10 border-red-500/25 text-red-400',
-                )}>
-                  {wasCorrect ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <XCircle className="w-5 h-5 flex-shrink-0" />}
+                <div
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                  style={
+                    wasCorrect
+                      ? { background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)' }
+                      : { background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', color: 'var(--red)' }
+                  }
+                >
+                  {wasCorrect
+                    ? <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    : <XCircle className="w-5 h-5 flex-shrink-0" />}
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-semibold">{wasCorrect ? 'Correct' : 'Not quite'}</span>
                     {!wasCorrect && (
@@ -471,17 +524,22 @@ export default function StudymateSessionPage() {
                   <AnimatePresence>
                     {gapText ? (
                       <motion.div
-                        className="flex gap-3 px-4 py-3 rounded-xl bg-violet-500/8 border border-violet-500/20"
+                        className="flex gap-3 px-4 py-3 rounded-xl"
+                        style={{
+                          background: 'rgba(88,86,214,.08)',
+                          border: '1px solid rgba(88,86,214,.22)',
+                        }}
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         transition={{ duration: 0.35, ease: 'easeOut' }}
                       >
-                        <BookOpen className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-violet-300 leading-relaxed">{gapText}</p>
+                        <BookOpen className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--indigo-ink)' }} />
+                        <p className="text-sm leading-relaxed" style={{ color: 'var(--indigo-ink)' }}>{gapText}</p>
                       </motion.div>
                     ) : pollGap ? (
                       <motion.div
-                        className="flex items-center gap-2 text-xs text-surface-400"
+                        className="flex items-center gap-2 text-xs"
+                        style={{ color: 'var(--text-tertiary)' }}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
@@ -494,10 +552,15 @@ export default function StudymateSessionPage() {
 
                 {/* Source attribution */}
                 {currentProblem.source && (
-                  <p className="text-xs text-surface-500 font-mono">
+                  <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
                     Source: {currentProblem.source}
                     {currentProblem.source_url && (
-                      <> · <a href={currentProblem.source_url} target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300">view</a></>
+                      <> · <a
+                        href={currentProblem.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--indigo-ink)' }}
+                      >view</a></>
                     )}
                   </p>
                 )}
@@ -505,7 +568,12 @@ export default function StudymateSessionPage() {
                 {/* Next button */}
                 <motion.button
                   onClick={advance}
-                  className="w-full py-3 rounded-xl bg-surface-2 border border-surface-3 text-surface-100 text-sm font-medium hover:bg-surface-3 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  style={{
+                    background: 'var(--surface-fill)',
+                    border: 'var(--hairline) solid var(--separator)',
+                    color: 'var(--text-primary)',
+                  }}
                   whileTap={{ scale: 0.97 }}
                 >
                   {currentIdx + 1 >= session.problem_count ? 'Finish Session' : 'Next Problem'}

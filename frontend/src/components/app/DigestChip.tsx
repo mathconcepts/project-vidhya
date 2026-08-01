@@ -1,19 +1,5 @@
 /**
  * DigestChip (v4.0) — Monday-morning chip surfacing the weekly digest.
- *
- * The Weekly Digest at /digest has the best narrative the product produces
- * (growth proof, ugly truth, one concrete action). But it's orphaned —
- * users have to know the URL. This chip surfaces it on Home, dismissible
- * per-week.
- *
- * Visibility rules:
- *   - Browser-local time (T11): today.getDay() ∈ {1, 2} (Mon or Tue).
- *     Off-by-one across IST/UTC midnight is acceptable noise; this is a
- *     dismissible chip, not data correctness.
- *   - Digest endpoint must return generated_at within last 7 days.
- *   - Failure-soft: 404, parse error, or missing fields → no chip.
- *   - Per-ISO-week dismiss via useDismissible. Once dismissed, hidden
- *     until the next ISO week.
  */
 
 import { useState, useEffect } from 'react';
@@ -31,10 +17,6 @@ interface Props {
   sessionId: string;
 }
 
-/**
- * ISO 8601 week-of-year. Used as the dismiss key suffix so dismissing the
- * chip in week 17 doesn't carry into week 18.
- */
 function isoWeekKey(date: Date): string {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dayNum = d.getUTCDay() || 7;
@@ -45,7 +27,7 @@ function isoWeekKey(date: Date): string {
 }
 
 function isMonOrTueLocal(): boolean {
-  const day = new Date().getDay(); // 0=Sun, 1=Mon, 2=Tue, browser-local
+  const day = new Date().getDay();
   return day === 1 || day === 2;
 }
 
@@ -55,7 +37,7 @@ export function DigestChip({ sessionId }: Props) {
 
   const { dismissed, dismiss } = useDismissible({
     key: `vidhya.digest_chip.${isoWeekKey(new Date())}`,
-    ttlHours: 7 * 24, // a full ISO week
+    ttlHours: 7 * 24,
   });
 
   useEffect(() => {
@@ -94,22 +76,35 @@ export function DigestChip({ sessionId }: Props) {
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
-        className="inline-flex"
+        style={{ display: 'inline-flex' }}
       >
         <Link
           to="/digest"
           onClick={() => trackEvent('digest_chip_clicked', {})}
-          className="inline-flex items-center gap-2 px-3 h-8 rounded-full bg-surface-800 border border-surface-700 hover:border-violet-500/50 transition-colors text-sm font-medium text-surface-200 group"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '0 12px',
+            height: 32,
+            borderRadius: 16,
+            background: 'var(--surface-fill)',
+            border: 'var(--hairline) solid var(--separator)',
+            fontSize: 'var(--text-body)',
+            fontWeight: 'var(--weight-medium)',
+            color: 'var(--text-primary)',
+            textDecoration: 'none',
+          }}
         >
-          <BookOpen size={14} className="text-surface-400 group-hover:text-violet-400 transition-colors" />
+          <BookOpen size={14} style={{ color: 'var(--text-secondary)' }} />
           <span>Weekly report ready</span>
           <button
             type="button"
             onClick={handleDismiss}
-            className="ml-1 -mr-1 p-0.5 rounded hover:bg-surface-700 transition-colors"
+            style={{ marginLeft: 4, marginRight: -4, padding: 2, borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer' }}
             aria-label="Dismiss"
           >
-            <X size={11} className="text-surface-500" />
+            <X size={11} style={{ color: 'var(--text-tertiary)' }} />
           </button>
         </Link>
       </motion.div>

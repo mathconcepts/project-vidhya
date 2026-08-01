@@ -66,10 +66,6 @@ interface Subscription {
 }
 
 // ─── Known source classes the router supports ──────────────────────────
-// Mirrors the Source type in src/content/router.ts. Omits 'declined' and
-// 'subscription' — those aren't user-excludable. 'bundle' (shipped default)
-// is technically excludable but excluding it would break most requests,
-// so we don't surface it here.
 
 type ExcludableSource = 'generated' | 'wolfram' | 'uploads' | 'community' | 'cache';
 
@@ -119,13 +115,10 @@ export default function ContentSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Per-bundle in-flight + per-bundle inline error states
   const [inFlightBundle, setInFlightBundle] = useState<string | null>(null);
   const [bundleError, setBundleError] = useState<Record<string, string>>({});
   const [sourcesInFlight, setSourcesInFlight] = useState(false);
   const [sourcesError, setSourcesError] = useState<string | null>(null);
-
-  // ─── Initial load ────────────────────────────────────────────────────
 
   useEffect(() => {
     let cancelled = false;
@@ -144,8 +137,8 @@ export default function ContentSettingsPage() {
         if (cancelled) return;
         setBundlesData(b);
         setSubscription(s);
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'failed to load');
+      } catch (e: unknown) {
+        if (!cancelled) setError((e instanceof Error ? e.message : null) || 'failed to load');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -154,11 +147,8 @@ export default function ContentSettingsPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // ─── Subscribe / unsubscribe ─────────────────────────────────────────
-
   async function toggleSubscription(bundleId: string, currentlySubscribed: boolean) {
     if (!subscription) return;
-    // Optimistic update — flip the UI immediately
     const previous = subscription.bundles;
     const next = currentlySubscribed
       ? previous.filter(b => b !== bundleId)
@@ -182,16 +172,13 @@ export default function ContentSettingsPage() {
       }
       const updated: Subscription = await resp.json();
       setSubscription(updated);
-    } catch (e: any) {
-      // Roll back optimistic change
+    } catch (e: unknown) {
       setSubscription({ ...subscription, bundles: previous });
-      setBundleError(prev => ({ ...prev, [bundleId]: e?.message || 'failed' }));
+      setBundleError(prev => ({ ...prev, [bundleId]: (e instanceof Error ? e.message : null) || 'failed' }));
     } finally {
       setInFlightBundle(null);
     }
   }
-
-  // ─── Toggle an excluded source ───────────────────────────────────────
 
   async function toggleExcludedSource(sourceId: ExcludableSource) {
     if (!subscription) return;
@@ -216,42 +203,38 @@ export default function ContentSettingsPage() {
       }
       const updated: Subscription = await resp.json();
       setSubscription(updated);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setSubscription({ ...subscription, exclude_sources: previous });
-      setSourcesError(e?.message || 'failed');
+      setSourcesError((e instanceof Error ? e.message : null) || 'failed');
     } finally {
       setSourcesInFlight(false);
     }
   }
 
-  // ─── Render ──────────────────────────────────────────────────────────
-
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="flex items-center gap-2 text-slate-400">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Loading your content settings…</span>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-tertiary)', padding: '32px 0' }}>
+        <Loader2 size={16} className="animate-spin" />
+        <span style={{ fontSize: 'var(--text-caption)' }}>Loading your content settings…</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-red-950/40 border border-red-800/60 rounded-lg p-4 flex gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <h2 className="text-red-200 font-semibold mb-1">Couldn't load your content settings</h2>
-            <p className="text-red-300/80 text-sm">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-3 text-red-200 hover:text-red-100 text-sm underline"
-            >
-              Retry
-            </button>
-          </div>
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', display: 'flex', gap: 12 }}>
+        <AlertCircle size={18} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />
+        <div>
+          <h2 style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--red)' }}>
+            Couldn't load your content settings
+          </h2>
+          <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: 'var(--text-caption)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -264,36 +247,36 @@ export default function ContentSettingsPage() {
   const excludedSources = new Set(subscription.exclude_sources);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <BookOpen className="w-6 h-6 text-violet-400" />
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <BookOpen size={20} style={{ color: 'var(--indigo-ink)' }} />
           Content settings
         </h1>
-        <p className="text-slate-400 mt-1">
+        <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
           Choose which community bundles to prefer, and which source classes to exclude.
           Vidhya's content router respects these settings on every request.
         </p>
       </div>
 
-      {/* Mode banner — surfaces the subrepo state honestly */}
+      {/* Mode banner */}
       <ModeBanner mode={mode} pin={bundlesData.pin} />
 
       {/* Bundles */}
-      <section className="space-y-3">
-        <header>
-          <h2 className="text-lg font-semibold text-white">Available bundles</h2>
-          <p className="text-sm text-slate-400">
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Available bundles</h2>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
             Subscribed bundles are checked first. If a bundle contains the concept you're asking about,
             its explainer is served with full source disclosure.
           </p>
-        </header>
+        </div>
 
         {bundlesData.bundles.length === 0 ? (
           <EmptyBundles mode={mode} />
         ) : (
-          <ul className="space-y-2">
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {bundlesData.bundles.map(bundle => {
               const isSubscribed = subscribedIds.has(bundle.id);
               const isBusy = inFlightBundle === bundle.id;
@@ -301,30 +284,31 @@ export default function ContentSettingsPage() {
               return (
                 <li
                   key={bundle.id}
-                  className={`rounded-lg border p-4 transition-colors ${
-                    isSubscribed
-                      ? 'bg-violet-950/30 border-violet-700/60'
-                      : 'bg-slate-800/40 border-slate-700/60 hover:border-slate-600'
-                  }`}
+                  style={{
+                    borderRadius: 'var(--radius-md)',
+                    border: isSubscribed ? '1px solid rgba(88,86,214,.3)' : 'var(--hairline) solid var(--separator)',
+                    background: isSubscribed ? 'rgba(88,86,214,.05)' : 'var(--surface-card)',
+                    padding: 16,
+                  }}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-white font-medium">{bundle.name}</h3>
-                        <span className="text-xs text-slate-500 font-mono">{bundle.id}</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <h3 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>{bundle.name}</h3>
+                        <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>{bundle.id}</span>
                         {bundle.verified && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-emerald-900/40 text-emerald-300 px-1.5 py-0.5 rounded">
-                            <Shield className="w-3 h-3" /> verified
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, background: 'rgba(52,199,89,.08)', color: 'var(--green-ink)', padding: '2px 6px', borderRadius: 4 }}>
+                            <Shield size={10} /> verified
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-300 mt-1">{bundle.description}</p>
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{bundle.description}</p>
+                      <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-tertiary)' }}>
                         {bundle.concept_count} concept{bundle.concept_count === 1 ? '' : 's'}
                       </p>
                       {err && (
-                        <p className="text-xs text-red-300 mt-2 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" /> {err}
+                        <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--red)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <AlertCircle size={10} /> {err}
                         </p>
                       )}
                     </div>
@@ -332,19 +316,26 @@ export default function ContentSettingsPage() {
                       type="button"
                       disabled={isBusy}
                       onClick={() => toggleSubscription(bundle.id, isSubscribed)}
-                      className={`flex-shrink-0 text-sm px-3 py-1.5 rounded-md transition-colors ${
-                        isSubscribed
-                          ? 'bg-violet-600 hover:bg-violet-500 text-white'
-                          : 'bg-slate-700 hover:bg-slate-600 text-slate-100'
-                      } ${isBusy ? 'opacity-60 cursor-wait' : ''}`}
+                      style={{
+                        flexShrink: 0,
+                        fontSize: 'var(--text-caption)',
+                        padding: '6px 12px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: 'none',
+                        cursor: isBusy ? 'wait' : 'pointer',
+                        opacity: isBusy ? 0.6 : 1,
+                        background: isSubscribed ? 'var(--indigo)' : 'var(--surface-fill)',
+                        color: isSubscribed ? '#fff' : 'var(--text-secondary)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
                       aria-label={isSubscribed ? `Unsubscribe from ${bundle.name}` : `Subscribe to ${bundle.name}`}
                     >
                       {isBusy ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 size={14} className="animate-spin" />
                       ) : isSubscribed ? (
-                        <span className="flex items-center gap-1.5">
-                          <Check className="w-4 h-4" /> Subscribed
-                        </span>
+                        <><Check size={14} /> Subscribed</>
                       ) : (
                         'Subscribe'
                       )}
@@ -358,55 +349,57 @@ export default function ContentSettingsPage() {
       </section>
 
       {/* Source exclusion */}
-      <section className="space-y-3">
-        <header>
-          <h2 className="text-lg font-semibold text-white">Exclude source classes</h2>
-          <p className="text-sm text-slate-400">
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Exclude source classes</h2>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
             Excluded sources are never used, even when a request explicitly allows them.
             Useful if you only want human-authored content or are on a restricted network.
           </p>
-        </header>
+        </div>
 
         {sourcesError && (
-          <div className="bg-red-950/40 border border-red-800/60 rounded-md p-3 text-sm text-red-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', fontSize: 'var(--text-caption)', color: 'var(--red)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertCircle size={14} style={{ flexShrink: 0 }} />
             <span>Couldn't save: {sourcesError}</span>
           </div>
         )}
 
-        <ul className="space-y-2">
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {EXCLUDABLE_SOURCES.map(src => {
             const Icon = src.icon;
             const isExcluded = excludedSources.has(src.id);
             return (
               <li
                 key={src.id}
-                className={`rounded-lg border p-4 transition-colors ${
-                  isExcluded
-                    ? 'bg-amber-950/20 border-amber-800/40'
-                    : 'bg-slate-800/40 border-slate-700/60'
-                }`}
+                style={{
+                  borderRadius: 'var(--radius-md)',
+                  border: isExcluded ? '1px solid rgba(255,149,0,.25)' : 'var(--hairline) solid var(--separator)',
+                  background: isExcluded ? 'rgba(255,149,0,.05)' : 'var(--surface-card)',
+                  padding: 16,
+                }}
               >
-                <label className="flex items-start gap-3 cursor-pointer">
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={isExcluded}
                     disabled={sourcesInFlight}
                     onChange={() => toggleExcludedSource(src.id)}
-                    className="mt-1 w-4 h-4 accent-amber-500 cursor-pointer"
+                    className="mt-1"
+                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--orange)' }}
                     aria-describedby={`src-desc-${src.id}`}
                   />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 text-white font-medium">
-                      <Icon className="w-4 h-4 text-slate-400" />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>
+                      <Icon size={14} style={{ color: 'var(--text-tertiary)' }} />
                       {src.label}
                       {isExcluded && (
-                        <span className="text-xs bg-amber-900/40 text-amber-300 px-1.5 py-0.5 rounded">
+                        <span style={{ fontSize: 10, background: 'rgba(255,149,0,.1)', color: 'var(--orange)', padding: '2px 6px', borderRadius: 4 }}>
                           excluded
                         </span>
                       )}
                     </div>
-                    <p id={`src-desc-${src.id}`} className="text-sm text-slate-400 mt-1">
+                    <p id={`src-desc-${src.id}`} style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
                       {src.description}
                     </p>
                   </div>
@@ -417,8 +410,8 @@ export default function ContentSettingsPage() {
         </ul>
       </section>
 
-      {/* Footer — subscription metadata */}
-      <footer className="text-xs text-slate-500 pt-4 border-t border-slate-800">
+      {/* Footer */}
+      <footer style={{ fontSize: 10, color: 'var(--text-tertiary)', paddingTop: 16, borderTop: 'var(--hairline) solid var(--separator)' }}>
         Last updated {new Date(subscription.updated_at).toLocaleString()}
       </footer>
     </div>
@@ -430,13 +423,13 @@ export default function ContentSettingsPage() {
 function ModeBanner({ mode, pin }: { mode: 'stub' | 'local' | 'live'; pin: ContentPin }) {
   if (mode === 'live') {
     return (
-      <div className="bg-emerald-950/30 border border-emerald-800/50 rounded-lg p-4 flex gap-3">
-        <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="text-emerald-200 font-medium">Community content is live</p>
-          <p className="text-emerald-300/80 mt-0.5">
-            Pulling from <code className="text-emerald-200">{pin.repo}</code> at commit{' '}
-            <code className="text-emerald-200">{pin.sha.slice(0, 8)}</code> (pinned {pin.pinned_at}).
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', display: 'flex', gap: 12 }}>
+        <CheckCircle2 size={16} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
+        <div style={{ fontSize: 'var(--text-caption)' }}>
+          <p style={{ margin: '0 0 2px', color: 'var(--green-ink)', fontWeight: 'var(--weight-semibold)' }}>Community content is live</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+            Pulling from <code style={{ color: 'var(--green-ink)', fontFamily: 'var(--font-mono)' }}>{pin.repo}</code> at commit{' '}
+            <code style={{ color: 'var(--green-ink)', fontFamily: 'var(--font-mono)' }}>{pin.sha.slice(0, 8)}</code> (pinned {pin.pinned_at}).
           </p>
         </div>
       </div>
@@ -444,28 +437,27 @@ function ModeBanner({ mode, pin }: { mode: 'stub' | 'local' | 'live'; pin: Conte
   }
   if (mode === 'local') {
     return (
-      <div className="bg-violet-950/30 border border-violet-800/50 rounded-lg p-4 flex gap-3">
-        <Info className="w-5 h-5 text-violet-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="text-violet-200 font-medium">Content served from local subrepo</p>
-          <p className="text-violet-300/80 mt-0.5">
-            This deployment reads community content from <code className="text-violet-200">modules/project-vidhya-content/</code>{' '}
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.06)', border: '1px solid rgba(88,86,214,.22)', display: 'flex', gap: 12 }}>
+        <Info size={16} style={{ color: 'var(--indigo-ink)', flexShrink: 0, marginTop: 2 }} />
+        <div style={{ fontSize: 'var(--text-caption)' }}>
+          <p style={{ margin: '0 0 2px', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)' }}>Content served from local subrepo</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+            This deployment reads community content from <code style={{ color: 'var(--indigo-ink)', fontFamily: 'var(--font-mono)' }}>modules/project-vidhya-content/</code>{' '}
             in the main repo. When the separate content repo goes live, subscriptions here keep working without changes.
           </p>
         </div>
       </div>
     );
   }
-  // stub
   return (
-    <div className="bg-amber-950/30 border border-amber-800/50 rounded-lg p-4 flex gap-3">
-      <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-      <div className="text-sm">
-        <p className="text-amber-200 font-medium">No community bundles available yet</p>
-        <p className="text-amber-300/80 mt-0.5">
-          The community content subrepo hasn't been pinned on this deployment (<code className="text-amber-200">sha=pending</code>).
+    <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', display: 'flex', gap: 12 }}>
+      <AlertCircle size={16} style={{ color: 'var(--orange)', flexShrink: 0, marginTop: 2 }} />
+      <div style={{ fontSize: 'var(--text-caption)' }}>
+        <p style={{ margin: '0 0 2px', color: 'var(--orange)', fontWeight: 'var(--weight-semibold)' }}>No community bundles available yet</p>
+        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+          The community content subrepo hasn't been pinned on this deployment (<code style={{ fontFamily: 'var(--font-mono)', color: 'var(--orange)' }}>sha=pending</code>).
           You'll still receive Vidhya's built-in content; subscriptions unlock when the operator bumps{' '}
-          <code className="text-amber-200">content.pin</code>.
+          <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--orange)' }}>content.pin</code>.
         </p>
       </div>
     </div>
@@ -477,8 +469,8 @@ function EmptyBundles({ mode }: { mode: 'stub' | 'local' | 'live' }) {
     ? 'The content subrepo is in stub mode on this deployment.'
     : 'No bundles have been published yet.';
   return (
-    <div className="bg-slate-800/30 border border-slate-700/50 border-dashed rounded-lg p-6 text-center">
-      <p className="text-slate-400 text-sm">{reason}</p>
+    <div style={{ padding: 24, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)', border: 'var(--hairline) dashed var(--separator)', textAlign: 'center' }}>
+      <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{reason}</p>
     </div>
   );
 }

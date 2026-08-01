@@ -117,7 +117,7 @@ export default function DailyCardsPage() {
 
   if (error) {
     return (
-      <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-300 max-w-md mx-auto">
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', fontSize: 'var(--text-caption)', color: 'var(--red)', maxWidth: 448, margin: '0 auto' }}>
         {error}
       </div>
     );
@@ -125,7 +125,7 @@ export default function DailyCardsPage() {
 
   if (cards == null) {
     return (
-      <div className="flex items-center gap-2 text-surface-400 text-sm py-10 justify-center">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)', padding: '40px 0', justifyContent: 'center' }}>
         <Loader2 size={14} className="animate-spin" /> Loading today's cards…
       </div>
     );
@@ -133,15 +133,15 @@ export default function DailyCardsPage() {
 
   if (cards.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-center px-4">
-        <Sparkles size={32} className="text-emerald-400" />
-        <h1 className="text-xl font-bold text-surface-100">{message ?? 'All caught up for today'}</h1>
-        <p className="text-sm text-surface-500 max-w-sm">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 12, textAlign: 'center', padding: '0 16px' }}>
+        <Sparkles size={32} style={{ color: 'var(--green-ink)' }} />
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{message ?? 'All caught up for today'}</h1>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', maxWidth: 320 }}>
           Come back tomorrow for your next round of recall practice.
         </p>
         <button
           onClick={() => navigate('/')}
-          className="mt-2 px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold"
+          style={{ marginTop: 8, padding: '8px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', border: 'none', cursor: 'pointer' }}
         >
           Back home
         </button>
@@ -152,14 +152,19 @@ export default function DailyCardsPage() {
   const card = cards[index];
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6">
-      <div className="flex items-center justify-center gap-1.5 mb-6">
+    <div style={{ maxWidth: 448, margin: '0 auto', padding: '24px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 24 }}>
         {cards.map((_, i) => (
           <div
             key={i}
-            className={`h-1 rounded-full transition-all ${
-              i === index ? 'w-8 bg-violet-500' : i < index ? 'w-2 bg-violet-500/40' : 'w-2 bg-surface-700'
-            }`}
+            style={{
+              height: 4,
+              borderRadius: 999,
+              transition: 'all 0.2s',
+              width: i === index ? 32 : 8,
+              background: i <= index ? 'var(--indigo-ink)' : 'var(--surface-fill)',
+              opacity: i < index ? 0.4 : 1,
+            }}
           />
         ))}
       </div>
@@ -171,31 +176,31 @@ export default function DailyCardsPage() {
           animate={{ opacity: 1, rotateY: 0 }}
           exit={{ opacity: 0, rotateY: -90 }}
           transition={{ duration: 0.4 }}
-          className="p-6 rounded-2xl bg-surface-900 border border-surface-800 min-h-[280px] flex flex-col"
+          style={{ padding: 24, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', minHeight: 280, display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-raise)' }}
         >
-          <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-3">Recall</div>
-          <div className="flex-1 prose prose-invert max-w-none text-surface-100 text-sm leading-relaxed whitespace-pre-wrap">
+          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--indigo-ink)', marginBottom: 12 }}>Recall</div>
+          <div style={{ flex: 1, color: 'var(--text-primary)', fontSize: 'var(--text-caption)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
             {revealed ? card.content : card.content.split(/<details/)[0].trim()}
           </div>
           {!revealed && (
             <button
               onClick={() => setRevealed(true)}
-              className="mt-4 w-full px-3 py-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-200 text-sm"
+              style={{ marginTop: 16, width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', cursor: 'pointer' }}
             >
               Reveal answer
             </button>
           )}
           {revealed && (
-            <div className="flex gap-2 mt-4 pt-3 border-t border-surface-800">
+            <div style={{ display: 'flex', gap: 8, marginTop: 16, paddingTop: 12, borderTop: 'var(--hairline) solid var(--separator)' }}>
               <button
                 onClick={() => submit(false)}
-                className="flex-1 px-3 py-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 text-sm inline-flex items-center justify-center gap-1.5"
+                style={{ flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
               >
                 <XCircle size={14} /> Not yet
               </button>
               <button
                 onClick={() => submit(true)}
-                className="flex-1 px-3 py-2 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold inline-flex items-center justify-center gap-1.5"
+                style={{ flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', cursor: 'pointer' }}
               >
                 <CheckCircle2 size={14} /> Got it
               </button>
@@ -204,7 +209,7 @@ export default function DailyCardsPage() {
         </motion.div>
       </AnimatePresence>
 
-      <div className="text-center text-xs text-surface-500 mt-4">
+      <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 16 }}>
         Card {index + 1} of {cards.length}
       </div>
     </div>

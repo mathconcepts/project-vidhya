@@ -16,12 +16,10 @@ import { apiFetch } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { getToken } from '@/lib/auth/client';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
   Users, Activity, Package, RefreshCcw, CheckCircle2, AlertTriangle, XCircle,
   Brain, Target, TrendingUp, Zap, Loader2, Play, Shield,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 type Tab = 'cohort' | 'health' | 'content';
 
@@ -145,15 +143,23 @@ export default function GBrainAdminPage() {
 
   // Auth gating
   if (authLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-violet-400" size={24} /></div>;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+        <Loader2 className="animate-spin" size={24} style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
   }
   if (!user) {
     return (
       <div className="text-center py-16 space-y-4">
-        <Shield size={48} className="text-surface-700 mx-auto" />
-        <h2 className="text-xl font-bold text-surface-300">Sign in required</h2>
-        <p className="text-sm text-surface-500">The admin dashboard requires authentication.</p>
-        <a href="/login" className="inline-block mt-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white text-sm font-medium">
+        <Shield size={48} style={{ color: 'var(--text-tertiary)', margin: '0 auto' }} />
+        <h2 className="text-xl font-bold" style={{ color: 'var(--text-secondary)' }}>Sign in required</h2>
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>The admin dashboard requires authentication.</p>
+        <a
+          href="/login"
+          className="inline-block mt-2 px-6 py-2.5 rounded-xl text-sm font-medium"
+          style={{ background: 'var(--indigo)', color: 'white' }}
+        >
           Sign in
         </a>
       </div>
@@ -162,25 +168,29 @@ export default function GBrainAdminPage() {
   if (user.role !== 'admin' && user.role !== 'teacher') {
     return (
       <div className="text-center py-16 space-y-4">
-        <Shield size={48} className="text-surface-700 mx-auto" />
-        <h2 className="text-xl font-bold text-surface-300">Access denied</h2>
-        <p className="text-sm text-surface-500">This page is only available to admins and teachers.</p>
+        <Shield size={48} style={{ color: 'var(--text-tertiary)', margin: '0 auto' }} />
+        <h2 className="text-xl font-bold" style={{ color: 'var(--text-secondary)' }}>Access denied</h2>
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>This page is only available to admins and teachers.</p>
       </div>
     );
   }
 
   return (
-    <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Brain size={20} className="text-violet-400" />
+    <motion.div className="space-y-5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Brain size={20} style={{ color: 'var(--indigo-ink)' }} />
           GBrain Admin
         </h1>
-        <p className="text-xs text-surface-500 mt-1">Cognitive architecture observability + control plane</p>
+        <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Cognitive architecture observability + control plane</p>
       </motion.div>
 
       {/* Tab switcher */}
-      <motion.div variants={fadeInUp} className="flex gap-1 p-1 rounded-xl bg-surface-900 border border-surface-800 overflow-x-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        className="flex gap-1 p-1 rounded-xl overflow-x-auto"
+        style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+      >
         {[
           { id: 'cohort' as Tab, label: 'Cohort', icon: Users },
           { id: 'health' as Tab, label: 'Health', icon: Activity },
@@ -189,10 +199,11 @@ export default function GBrainAdminPage() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={clsx(
-              'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
-              tab === t.id ? 'bg-surface-800 text-surface-100 shadow-sm' : 'text-surface-500 hover:text-surface-400',
-            )}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
+            style={tab === t.id
+              ? { background: 'var(--surface-fill)', color: 'var(--text-primary)' }
+              : { color: 'var(--text-tertiary)' }
+            }
           >
             <t.icon size={13} />
             {t.label}
@@ -201,7 +212,11 @@ export default function GBrainAdminPage() {
       </motion.div>
 
       {error && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-300">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="p-3 rounded-xl text-sm"
+          style={{ background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', color: 'var(--red)' }}
+        >
           {error}
         </motion.div>
       )}
@@ -211,37 +226,53 @@ export default function GBrainAdminPage() {
         <>
           {loading.cohort ? (
             <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-surface-800/60 animate-pulse" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: 'var(--surface-fill)' }} />
+              ))}
             </div>
           ) : cohort ? (
-            <motion.div className="space-y-4" variants={staggerContainer} initial="hidden" animate="visible">
+            <motion.div className="space-y-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               {/* Summary stats */}
-              <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-                  <p className="text-lg font-bold text-surface-200">{cohort.total_students}</p>
-                  <p className="text-xs text-surface-500">students tracked</p>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl text-center" style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}>
+                  <p className="text-lg font-bold" style={{ color: 'var(--text-secondary)' }}>{cohort.total_students}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>students tracked</p>
                 </div>
-                <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-                  <p className="text-lg font-bold text-surface-200">{cohort.top_misconceptions.length}</p>
-                  <p className="text-xs text-surface-500">misconceptions ({cohort.period_days}d)</p>
+                <div className="p-3 rounded-xl text-center" style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}>
+                  <p className="text-lg font-bold" style={{ color: 'var(--text-secondary)' }}>{cohort.top_misconceptions.length}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>misconceptions ({cohort.period_days}d)</p>
                 </div>
               </motion.div>
 
               {/* Motivation health */}
-              <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-                <h3 className="text-sm font-semibold text-surface-200 mb-3">Motivation Health</h3>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl"
+                style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+              >
+                <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Motivation Health</h3>
                 <div className="space-y-2">
                   {Object.entries(cohort.motivation_health).map(([state, count]) => {
                     const pct = cohort.total_students > 0 ? Math.round((count / cohort.total_students) * 100) : 0;
-                    const color = state === 'driven' || state === 'steady' ? 'bg-emerald-500/60' : state === 'flagging' ? 'bg-amber-500/60' : 'bg-red-500/60';
+                    const barColor = state === 'driven' || state === 'steady'
+                      ? 'rgba(52,199,89,.6)'
+                      : state === 'flagging'
+                        ? 'rgba(255,149,0,.6)'
+                        : 'rgba(255,59,48,.6)';
                     return (
                       <div key={state}>
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-surface-300 capitalize">{state}</span>
-                          <span className="text-surface-500">{count} ({pct}%)</span>
+                          <span className="capitalize" style={{ color: 'var(--text-secondary)' }}>{state}</span>
+                          <span style={{ color: 'var(--text-tertiary)' }}>{count} ({pct}%)</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-surface-800 overflow-hidden">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.5 }} className={clsx('h-full rounded-full', color)} />
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-fill)' }}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.5 }}
+                            className="h-full rounded-full"
+                            style={{ background: barColor }}
+                          />
                         </div>
                       </div>
                     );
@@ -250,37 +281,46 @@ export default function GBrainAdminPage() {
               </motion.div>
 
               {/* Top misconceptions */}
-              <motion.div variants={fadeInUp} className="space-y-2">
-                <h3 className="text-sm font-semibold text-surface-200">Top Misconceptions</h3>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Top Misconceptions</h3>
                 {cohort.top_misconceptions.length === 0 ? (
-                  <p className="text-xs text-surface-500 p-3 bg-surface-900 border border-surface-800 rounded-xl">No misconceptions logged yet.</p>
+                  <p
+                    className="text-xs p-3 rounded-xl"
+                    style={{ color: 'var(--text-tertiary)', background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+                  >
+                    No misconceptions logged yet.
+                  </p>
                 ) : (
                   cohort.top_misconceptions.slice(0, 10).map((m, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
+                    <div key={i} className="p-3 rounded-xl" style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-mono text-violet-400">{m.id}</span>
+                        <span className="text-xs font-mono" style={{ color: 'var(--indigo-ink)' }}>{m.id}</span>
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="text-surface-500">{m.count}×</span>
-                          <span className="text-emerald-400">impact: {m.impact_score.toFixed(1)}</span>
+                          <span style={{ color: 'var(--text-tertiary)' }}>{m.count}×</span>
+                          <span style={{ color: 'var(--green-ink)' }}>impact: {m.impact_score.toFixed(1)}</span>
                         </div>
                       </div>
-                      <p className="text-xs text-surface-500">{m.concept} — {m.description}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{m.concept} — {m.description}</p>
                     </div>
                   ))
                 )}
               </motion.div>
 
               {/* Error type distribution */}
-              <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-                <h3 className="text-sm font-semibold text-surface-200 mb-3">Error Types</h3>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl"
+                style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+              >
+                <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>Error Types</h3>
                 {cohort.error_type_distribution.length === 0 ? (
-                  <p className="text-xs text-surface-500">No errors logged yet.</p>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No errors logged yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {cohort.error_type_distribution.map(e => (
                       <div key={e.type} className="flex items-center justify-between text-xs">
-                        <span className="text-surface-300 capitalize">{e.type.replace(/_/g, ' ')}</span>
-                        <span className="text-surface-500">{e.count}</span>
+                        <span className="capitalize" style={{ color: 'var(--text-secondary)' }}>{e.type.replace(/_/g, ' ')}</span>
+                        <span style={{ color: 'var(--text-tertiary)' }}>{e.count}</span>
                       </div>
                     ))}
                   </div>
@@ -289,21 +329,30 @@ export default function GBrainAdminPage() {
 
               {/* Bottleneck concepts */}
               {cohort.bottleneck_concepts.length > 0 && (
-                <motion.div variants={fadeInUp} className="space-y-2">
-                  <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-1.5">
-                    <AlertTriangle size={13} className="text-red-400" />
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <AlertTriangle size={13} style={{ color: 'var(--red)' }} />
                     Bottleneck Concepts
                   </h3>
                   {cohort.bottleneck_concepts.slice(0, 10).map(b => (
-                    <div key={b.concept_id} className="flex items-center justify-between p-3 rounded-xl bg-red-500/5 border border-red-500/15">
-                      <span className="text-sm text-surface-300">{b.label}</span>
-                      <span className="text-xs text-red-400 font-mono">{b.struggler_count} strugglers</span>
+                    <div
+                      key={b.concept_id}
+                      className="flex items-center justify-between p-3 rounded-xl"
+                      style={{ background: 'rgba(255,59,48,.05)', border: '1px solid rgba(255,59,48,.15)' }}
+                    >
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{b.label}</span>
+                      <span className="text-xs font-mono" style={{ color: 'var(--red)' }}>{b.struggler_count} strugglers</span>
                     </div>
                   ))}
                 </motion.div>
               )}
 
-              <motion.button variants={fadeInUp} onClick={loadCohort} className="w-full py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-400 hover:text-surface-200 flex items-center justify-center gap-2">
+              <motion.button
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                onClick={loadCohort}
+                className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)', color: 'var(--text-tertiary)' }}
+              >
                 <RefreshCcw size={13} /> Refresh
               </motion.button>
             </motion.div>
@@ -316,48 +365,70 @@ export default function GBrainAdminPage() {
         <>
           {loading.health ? (
             <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 rounded-xl bg-surface-800/60 animate-pulse" />)}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: 'var(--surface-fill)' }} />
+              ))}
             </div>
           ) : health ? (
-            <motion.div className="space-y-3" variants={staggerContainer} initial="hidden" animate="visible">
+            <motion.div className="space-y-3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               {/* Overall status */}
-              <motion.div variants={fadeInUp} className={clsx(
-                'p-4 rounded-xl border text-center',
-                health.status === 'healthy' ? 'bg-emerald-500/10 border-emerald-500/25' :
-                health.status === 'degraded' ? 'bg-amber-500/10 border-amber-500/25' :
-                'bg-red-500/10 border-red-500/25'
-              )}>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl text-center"
+                style={health.status === 'healthy'
+                  ? { background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }
+                  : health.status === 'degraded'
+                    ? { background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }
+                    : { background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' }
+                }
+              >
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  {health.status === 'healthy' ? <CheckCircle2 size={18} className="text-emerald-400" /> :
-                   health.status === 'degraded' ? <AlertTriangle size={18} className="text-amber-400" /> :
-                   <XCircle size={18} className="text-red-400" />}
-                  <span className="text-lg font-bold uppercase tracking-wide text-surface-100">
+                  {health.status === 'healthy'
+                    ? <CheckCircle2 size={18} style={{ color: 'var(--green-ink)' }} />
+                    : health.status === 'degraded'
+                      ? <AlertTriangle size={18} style={{ color: 'var(--orange)' }} />
+                      : <XCircle size={18} style={{ color: 'var(--red)' }} />
+                  }
+                  <span className="text-lg font-bold uppercase tracking-wide" style={{ color: 'var(--text-primary)' }}>
                     {health.status}
                   </span>
                 </div>
-                <p className="text-xs text-surface-400">{health.summary}</p>
-                <p className="text-[10px] text-surface-500 mt-1">checked {new Date(health.generated_at).toLocaleTimeString()}</p>
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{health.summary}</p>
+                <p className="text-[10px] mt-1" style={{ color: 'var(--text-tertiary)' }}>checked {new Date(health.generated_at).toLocaleTimeString()}</p>
               </motion.div>
 
               {/* Individual checks */}
-              {health.checks.map((c, i) => (
-                <motion.div key={c.name} variants={fadeInUp} className={clsx(
-                  'p-3 rounded-xl border',
-                  c.status === 'ok' ? 'bg-surface-900 border-surface-800' :
-                  c.status === 'warn' ? 'bg-amber-500/5 border-amber-500/20' :
-                  'bg-red-500/5 border-red-500/20'
-                )}>
+              {health.checks.map((c) => (
+                <motion.div
+                  key={c.name}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-xl"
+                  style={c.status === 'ok'
+                    ? { background: 'var(--surface-card)', border: '1px solid var(--separator)' }
+                    : c.status === 'warn'
+                      ? { background: 'rgba(255,149,0,.05)', border: '1px solid rgba(255,149,0,.20)' }
+                      : { background: 'rgba(255,59,48,.05)', border: '1px solid rgba(255,59,48,.20)' }
+                  }
+                >
                   <div className="flex items-center gap-2 mb-1">
-                    {c.status === 'ok' ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0" /> :
-                     c.status === 'warn' ? <AlertTriangle size={14} className="text-amber-400 shrink-0" /> :
-                     <XCircle size={14} className="text-red-400 shrink-0" />}
-                    <span className="text-sm text-surface-200 font-mono">{c.name}</span>
+                    {c.status === 'ok'
+                      ? <CheckCircle2 size={14} className="shrink-0" style={{ color: 'var(--green-ink)' }} />
+                      : c.status === 'warn'
+                        ? <AlertTriangle size={14} className="shrink-0" style={{ color: 'var(--orange)' }} />
+                        : <XCircle size={14} className="shrink-0" style={{ color: 'var(--red)' }} />
+                    }
+                    <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>{c.name}</span>
                   </div>
-                  <p className="text-xs text-surface-400 ml-6">{c.message}</p>
+                  <p className="text-xs ml-6" style={{ color: 'var(--text-tertiary)' }}>{c.message}</p>
                 </motion.div>
               ))}
 
-              <motion.button variants={fadeInUp} onClick={loadHealth} className="w-full py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-400 hover:text-surface-200 flex items-center justify-center gap-2">
+              <motion.button
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                onClick={loadHealth}
+                className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)', color: 'var(--text-tertiary)' }}
+              >
                 <RefreshCcw size={13} /> Refresh
               </motion.button>
             </motion.div>
@@ -370,36 +441,47 @@ export default function GBrainAdminPage() {
         <>
           {loading.content ? (
             <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 rounded-xl bg-surface-800/60 animate-pulse" />)}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: 'var(--surface-fill)' }} />
+              ))}
             </div>
           ) : gaps ? (
-            <motion.div className="space-y-4" variants={staggerContainer} initial="hidden" animate="visible">
+            <motion.div className="space-y-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               {/* Summary */}
-              <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl"
+                style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <p className="text-2xl font-bold text-surface-100">{gaps.total_gaps}</p>
-                    <p className="text-xs text-surface-500">content gaps identified</p>
+                    <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{gaps.total_gaps}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>content gaps identified</p>
                   </div>
                   <button
                     onClick={() => handleFillGap(undefined, 20)}
                     disabled={fillingTopic !== null}
-                    className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                    style={{ background: 'var(--green)', color: 'white' }}
                   >
                     {fillingTopic === 'all' ? <Loader2 className="animate-spin" size={13} /> : <Play size={13} />}
                     Fill Top 20
                   </button>
                 </div>
-                <p className="text-xs text-surface-400">
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                   Auto-generates problems for the highest-priority gaps and verifies them via GBrain's self-check pipeline.
                 </p>
               </motion.div>
 
               {/* Fill result */}
               {fillResult && (
-                <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
-                  <p className="text-sm font-semibold text-emerald-300 mb-1">Generation complete</p>
-                  <p className="text-xs text-surface-300">
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-xl"
+                  style={{ background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}
+                >
+                  <p className="text-sm font-semibold mb-1" style={{ color: 'var(--green-ink)' }}>Generation complete</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                     {fillResult.error ? `Error: ${fillResult.error}` : (
                       `${fillResult.processed} gap(s) processed. ${(fillResult.results || []).filter((r: any) => r.verified).length} problems verified.`
                     )}
@@ -408,32 +490,44 @@ export default function GBrainAdminPage() {
               )}
 
               {/* Top gaps */}
-              <motion.div variants={fadeInUp} className="space-y-2">
-                <h3 className="text-sm font-semibold text-surface-200">Top priority gaps</h3>
-                {gaps.gaps.slice(0, 20).map((g, i) => (
-                  <div key={`${g.concept_id}-${g.difficulty_bucket}`} className="flex items-center justify-between p-3 rounded-xl bg-surface-900 border border-surface-800">
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Top priority gaps</h3>
+                {gaps.gaps.slice(0, 20).map((g) => (
+                  <div
+                    key={`${g.concept_id}-${g.difficulty_bucket}`}
+                    className="flex items-center justify-between p-3 rounded-xl"
+                    style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+                  >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={clsx(
-                          'text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase',
-                          g.difficulty_bucket === 'easy' ? 'bg-emerald-500/15 text-emerald-400' :
-                          g.difficulty_bucket === 'medium' ? 'bg-amber-500/15 text-amber-400' :
-                          'bg-red-500/15 text-red-400'
-                        )}>
+                        <span
+                          className="text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase"
+                          style={g.difficulty_bucket === 'easy'
+                            ? { background: 'rgba(52,199,89,.15)', color: 'var(--green-ink)' }
+                            : g.difficulty_bucket === 'medium'
+                              ? { background: 'rgba(255,149,0,.15)', color: 'var(--orange)' }
+                              : { background: 'rgba(255,59,48,.15)', color: 'var(--red)' }
+                          }
+                        >
                           {g.difficulty_bucket}
                         </span>
-                        <span className="text-sm text-surface-200 truncate">{g.concept_id.replace(/-/g, ' ')}</span>
+                        <span className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>{g.concept_id.replace(/-/g, ' ')}</span>
                       </div>
-                      <p className="text-xs text-surface-500 mt-0.5">
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
                         {g.topic.replace(/-/g, ' ')} · {g.gate_frequency} freq · {g.current_count}/5 problems
                       </p>
                     </div>
-                    <div className="text-xs text-surface-500 ml-3">priority: {g.priority}</div>
+                    <div className="text-xs ml-3" style={{ color: 'var(--text-tertiary)' }}>priority: {g.priority}</div>
                   </div>
                 ))}
               </motion.div>
 
-              <motion.button variants={fadeInUp} onClick={loadGaps} className="w-full py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-400 hover:text-surface-200 flex items-center justify-center gap-2">
+              <motion.button
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                onClick={loadGaps}
+                className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)', color: 'var(--text-tertiary)' }}
+              >
                 <RefreshCcw size={13} /> Refresh
               </motion.button>
             </motion.div>

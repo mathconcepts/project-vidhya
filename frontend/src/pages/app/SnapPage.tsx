@@ -20,10 +20,8 @@ import {
   CheckCircle2, XCircle, Brain, Target, HelpCircle, FileText, X,
   Clock, DollarSign, ArrowRight, ClipboardCheck, MinusCircle,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import NextStepChip, { type NextStepData } from '@/components/app/NextStepChip';
 
 // ============================================================================
@@ -126,48 +124,54 @@ interface AnalysisResponse {
 // Intent picker data
 // ============================================================================
 
-const INTENTS: Array<{ id: Intent; label: string; description: string; icon: typeof Sparkles; color: string }> = [
+const INTENTS: Array<{
+  id: Intent;
+  label: string;
+  description: string;
+  icon: typeof Sparkles;
+  style: { color: string; background: string; border: string };
+}> = [
   {
     id: 'concept_question',
     label: 'Explain',
     description: 'Overview and intuition for the concept',
     icon: BookOpen,
-    color: 'text-violet-400 bg-violet-500/10 border-violet-500/25',
+    style: { color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.22)' },
   },
   {
     id: 'solve_problem',
     label: 'Solve',
     description: 'Worked solution with steps',
     icon: Target,
-    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25',
+    style: { color: 'var(--green-ink)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' },
   },
   {
     id: 'practice_request',
     label: 'Similar',
     description: 'More problems like this',
     icon: Sparkles,
-    color: 'text-purple-400 bg-purple-500/10 border-purple-500/25',
+    style: { color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.22)' },
   },
   {
     id: 'solution_check',
     label: 'Check my work',
     description: "Verify the answer you wrote",
     icon: CheckCircle2,
-    color: 'text-amber-400 bg-amber-500/10 border-amber-500/25',
+    style: { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' },
   },
   {
     id: 'expressing_confusion',
     label: "I'm stuck",
     description: 'Walk me through it',
     icon: HelpCircle,
-    color: 'text-orange-400 bg-orange-500/10 border-orange-500/25',
+    style: { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' },
   },
   {
     id: 'extract_text',
     label: 'Transcribe',
     description: 'Just OCR, no reasoning',
     icon: FileText,
-    color: 'text-surface-400 bg-surface-700/30 border-surface-600',
+    style: { color: 'var(--text-tertiary)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' },
   },
 ];
 
@@ -425,13 +429,13 @@ export default function SnapPage() {
   const intentMeta = INTENTS.find(i => i.id === response?.analysis.intent);
 
   return (
-    <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <Camera size={20} className="text-violet-400" />
+    <div className="space-y-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Camera size={20} style={{ color: 'var(--indigo-ink)' }} />
           Snap
         </h1>
-        <p className="text-xs text-surface-500 mt-1">
+        <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
           {mode === 'analyze'
             ? "Photograph a problem, your notes, or a textbook page. I'll figure out what to do with it."
             : "Upload a photo of your completed test. I'll grade it and build a study plan for your weak spots."}
@@ -439,23 +443,28 @@ export default function SnapPage() {
       </motion.div>
 
       {/* Mode toggle — segmented control */}
-      <motion.div variants={fadeInUp} className="inline-flex rounded-lg bg-surface-900 border border-surface-800 p-0.5">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="inline-flex rounded-lg p-0.5"
+        style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
+      >
         <button
           onClick={() => { setMode('analyze'); clearImage(); }}
-          className={clsx(
-            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
-            mode === 'analyze' ? 'bg-violet-500/15 text-violet-300' : 'text-surface-500 hover:text-surface-300'
-          )}
+          className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5"
+          style={mode === 'analyze'
+            ? { color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.08)' }
+            : { color: 'var(--text-tertiary)' }}
         >
           <Sparkles size={12} />
           Single problem
         </button>
         <button
           onClick={() => { setMode('diagnostic'); clearImage(); }}
-          className={clsx(
-            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
-            mode === 'diagnostic' ? 'bg-emerald-500/15 text-emerald-300' : 'text-surface-500 hover:text-surface-300'
-          )}
+          className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5"
+          style={mode === 'diagnostic'
+            ? { color: 'var(--green-ink)', background: 'rgba(52,199,89,.06)' }
+            : { color: 'var(--text-tertiary)' }}
         >
           <ClipboardCheck size={12} />
           Grade full test
@@ -464,22 +473,24 @@ export default function SnapPage() {
 
       {/* Image input */}
       {!imageFile ? (
-        <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-3">
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="p-5 rounded-xl bg-surface-900 border border-surface-800 hover:border-violet-500/30 transition-colors flex flex-col items-center gap-2"
+            className="p-5 rounded-xl transition-colors flex flex-col items-center gap-2"
+            style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
           >
-            <Camera size={28} className="text-violet-400" />
-            <span className="text-sm font-medium text-surface-200">Take photo</span>
-            <span className="text-[10px] text-surface-500">Camera</span>
+            <Camera size={28} style={{ color: 'var(--indigo-ink)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Take photo</span>
+            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>Camera</span>
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-5 rounded-xl bg-surface-900 border border-surface-800 hover:border-emerald-500/30 transition-colors flex flex-col items-center gap-2"
+            className="p-5 rounded-xl transition-colors flex flex-col items-center gap-2"
+            style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
           >
-            <Upload size={28} className="text-emerald-400" />
-            <span className="text-sm font-medium text-surface-200">Upload</span>
-            <span className="text-[10px] text-surface-500">From device</span>
+            <Upload size={28} style={{ color: 'var(--green-ink)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Upload</span>
+            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>From device</span>
           </button>
           <input ref={cameraInputRef} type="file" accept="image/*" capture="environment"
                  className="hidden" onChange={e => onFileSelected(e.target.files?.[0])} />
@@ -487,12 +498,16 @@ export default function SnapPage() {
                  className="hidden" onChange={e => onFileSelected(e.target.files?.[0])} />
         </motion.div>
       ) : (
-        <motion.div variants={fadeInUp} className="space-y-3">
-          <div className="relative rounded-xl overflow-hidden border border-surface-800 bg-surface-950">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+          <div
+            className="relative rounded-xl overflow-hidden"
+            style={{ border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-sunken)' }}
+          >
             <img src={previewUrl!} alt="preview" className="w-full max-h-72 object-contain" />
             <button
               onClick={clearImage}
-              className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-black/80"
+              className="absolute top-2 right-2 p-1.5 rounded-lg"
+              style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--text-on-accent)' }}
             >
               <X size={14} />
             </button>
@@ -504,28 +519,33 @@ export default function SnapPage() {
             placeholder="Optional: add a note ('I got stuck at step 3', 'is this right?', etc.)"
             rows={2}
             maxLength={500}
-            className="w-full px-3 py-2 rounded-lg bg-surface-900 border border-surface-800 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:border-violet-500/50"
+            className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none"
+            style={{
+              background: 'var(--surface-card)',
+              border: 'var(--hairline) solid var(--separator)',
+              color: 'var(--text-secondary)',
+              borderRadius: 'var(--radius-sm)',
+            }}
           />
         </motion.div>
       )}
 
       {/* Intent picker — only in Single Problem (analyze) mode */}
       {imageFile && mode === 'analyze' && !response && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide">
-            What should I do? <span className="text-surface-600">(or tap "Auto-detect")</span>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
+            What should I do? <span style={{ color: 'var(--text-tertiary)' }}>(or tap "Auto-detect")</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
             {INTENTS.map(opt => (
               <button
                 key={opt.id}
                 onClick={() => setSelectedIntent(selectedIntent === opt.id ? null : opt.id)}
-                className={clsx(
-                  'p-2.5 rounded-lg border text-left transition-all',
-                  selectedIntent === opt.id
-                    ? opt.color + ' ring-2 ring-offset-0'
-                    : 'bg-surface-900 border-surface-800 text-surface-300 hover:border-surface-600'
-                )}
+                className="p-2.5 rounded-lg text-left transition-all"
+                style={selectedIntent === opt.id
+                  ? { ...opt.style, boxShadow: '0 0 0 2px var(--indigo)' }
+                  : { background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)' }
+                }
               >
                 <div className="flex items-start gap-2">
                   <opt.icon size={14} className="shrink-0 mt-0.5" />
@@ -540,7 +560,8 @@ export default function SnapPage() {
           <button
             onClick={submit}
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
           >
             {loading ? <Loader2 className="animate-spin" size={16} /> : <ArrowRight size={16} />}
             {loading ? 'Analyzing...' : selectedIntent ? 'Analyze' : 'Auto-detect & analyze'}
@@ -550,14 +571,18 @@ export default function SnapPage() {
 
       {/* Diagnostic-mode CTA — single, unambiguous call to action */}
       {imageFile && mode === 'diagnostic' && !diagSummary && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs text-emerald-200/90 leading-relaxed">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+          <div
+            className="p-3 rounded-xl text-xs leading-relaxed"
+            style={{ background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)' }}
+          >
             I'll read every problem on the page, compare your answers with Wolfram, and suggest a plan for the spots that need work. No pressure — we'll go at your pace.
           </div>
           <button
             onClick={submit}
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-violet-500 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
           >
             {loading ? <Loader2 className="animate-spin" size={16} /> : <ClipboardCheck size={16} />}
             {loading ? (diagStatus || 'Grading…') : 'Grade my test'}
@@ -567,9 +592,9 @@ export default function SnapPage() {
 
       {/* Diagnostic streaming results */}
       {mode === 'diagnostic' && (diagStatus || diagProblems.length > 0 || diagSummary) && (
-        <motion.div variants={fadeInUp} className="space-y-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
           {diagStatus && (
-            <div className="flex items-center gap-2 text-xs text-surface-400">
+            <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
               <Loader2 size={12} className="animate-spin" />
               <span>{diagStatus}</span>
             </div>
@@ -578,25 +603,25 @@ export default function SnapPage() {
           {diagProblems.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase tracking-wide text-surface-500">
+                <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
                   Problem-by-problem
                 </p>
                 {diagSummary && (
-                  <p className="text-[10px] text-surface-500">
+                  <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                     {diagSummary.correct_count}/{diagSummary.total_attempts} verified correct
                   </p>
                 )}
               </div>
               {diagProblems.map(p => {
                 const verdictMeta = {
-                  correct: { icon: CheckCircle2, label: 'Correct', tone: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25' },
-                  incorrect: { icon: XCircle, label: 'Off', tone: 'text-rose-400 bg-rose-500/10 border-rose-500/25' },
-                  skipped: { icon: MinusCircle, label: 'Skipped', tone: 'text-surface-500 bg-surface-800/40 border-surface-700' },
-                  unverifiable: { icon: HelpCircle, label: 'Needs review', tone: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+                  correct: { icon: CheckCircle2, label: 'Correct', style: { color: 'var(--green-ink)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' } },
+                  incorrect: { icon: XCircle, label: 'Off', style: { color: 'var(--red)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' } },
+                  skipped: { icon: MinusCircle, label: 'Skipped', style: { color: 'var(--text-tertiary)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' } },
+                  unverifiable: { icon: HelpCircle, label: 'Needs review', style: { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' } },
                 }[p.verdict];
                 const VIcon = verdictMeta.icon;
                 return (
-                  <div key={p.index} className={clsx('p-3 rounded-xl border', verdictMeta.tone)}>
+                  <div key={p.index} className="p-3 rounded-xl" style={verdictMeta.style}>
                     <div className="flex items-start gap-2">
                       <VIcon size={14} className="shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
@@ -608,14 +633,14 @@ export default function SnapPage() {
                             <span className="text-[10px] opacity-70">{p.concept_id.replace(/-/g, ' ')}</span>
                           )}
                         </div>
-                        <p className="text-xs text-surface-300 line-clamp-2">{p.problem_text}</p>
+                        <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{p.problem_text}</p>
                         {(p.student_answer || p.correct_answer) && (
                           <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono">
                             {p.student_answer && (
-                              <span className="text-surface-400">You: {p.student_answer}</span>
+                              <span style={{ color: 'var(--text-tertiary)' }}>You: {p.student_answer}</span>
                             )}
                             {p.correct_answer && p.correct_answer !== p.student_answer && (
-                              <span className="text-emerald-300">Answer: {p.correct_answer}</span>
+                              <span style={{ color: 'var(--green-ink)' }}>Answer: {p.correct_answer}</span>
                             )}
                           </div>
                         )}
@@ -629,35 +654,42 @@ export default function SnapPage() {
 
           {/* Summary + offer to reveal syllabus */}
           {diagSummary && (
-            <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+            <div
+              className="p-4 rounded-xl space-y-2"
+              style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
+            >
               <div className="flex items-center gap-2">
-                <Brain size={13} className="text-violet-400" />
-                <h3 className="text-sm font-semibold text-surface-200">How you did</h3>
+                <Brain size={13} style={{ color: 'var(--indigo-ink)' }} />
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>How you did</h3>
               </div>
               <div className="grid grid-cols-4 gap-2 text-center">
                 <div>
-                  <p className="text-lg font-bold text-emerald-400">{diagSummary.correct_count}</p>
-                  <p className="text-[10px] text-surface-500">correct</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--green-ink)' }}>{diagSummary.correct_count}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>correct</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-rose-400">{diagSummary.incorrect_count}</p>
-                  <p className="text-[10px] text-surface-500">off</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--red)' }}>{diagSummary.incorrect_count}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>off</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-surface-400">{diagSummary.skipped_count}</p>
-                  <p className="text-[10px] text-surface-500">skipped</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--text-tertiary)' }}>{diagSummary.skipped_count}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>skipped</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-amber-400">{diagSummary.unverifiable_count}</p>
-                  <p className="text-[10px] text-surface-500">need review</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--orange)' }}>{diagSummary.unverifiable_count}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>need review</p>
                 </div>
               </div>
               {diagSummary.weak_concepts.length > 0 && (
-                <div className="pt-2 border-t border-surface-800">
-                  <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1">Focus areas</p>
+                <div className="pt-2" style={{ borderTop: 'var(--hairline) solid var(--separator)' }}>
+                  <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--text-tertiary)' }}>Focus areas</p>
                   <div className="flex flex-wrap gap-1">
                     {diagSummary.weak_concepts.map(c => (
-                      <span key={c} className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/25">
+                      <span
+                        key={c}
+                        className="text-[10px] px-1.5 py-0.5 rounded-full"
+                        style={{ background: 'rgba(255,59,48,.06)', color: 'var(--red)', border: '1px solid rgba(255,59,48,.22)' }}
+                      >
                         {c.replace(/-/g, ' ')}
                       </span>
                     ))}
@@ -678,18 +710,21 @@ export default function SnapPage() {
 
           {/* Expanded syllabus — only shown after explicit consent via the chip */}
           {diagSyllabus && diagSyllabusRevealed && (
-            <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
+            <div
+              className="p-4 rounded-xl space-y-3"
+              style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
+            >
               <div className="flex items-center gap-2">
-                <BookOpen size={13} className="text-violet-400" />
-                <h3 className="text-sm font-semibold text-surface-200">Your focused plan</h3>
+                <BookOpen size={13} style={{ color: 'var(--indigo-ink)' }} />
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Your focused plan</h3>
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-surface-400">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                 <span>{diagSyllabus.stats.total_concepts} concepts</span>
                 <span>~{diagSyllabus.stats.estimated_days} days</span>
                 <span>~{Math.round(diagSyllabus.stats.total_study_minutes / 60)} study hours</span>
                 <span>scope: {diagSyllabus.scope}</span>
               </div>
-              <p className="text-xs text-surface-300 leading-relaxed">
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                 {diagSyllabus.intro}
               </p>
               <div className="space-y-1.5 pt-1">
@@ -697,26 +732,29 @@ export default function SnapPage() {
                   <button
                     key={i}
                     onClick={() => navigate(`/lesson/${n.concept_id}`)}
-                    className="w-full flex items-start gap-2 text-xs text-left p-1.5 -mx-1.5 rounded-lg hover:bg-surface-800/60 transition-colors group"
+                    className="w-full flex items-start gap-2 text-xs text-left p-1.5 -mx-1.5 rounded-lg transition-colors"
                   >
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-surface-800 text-surface-400 text-[10px] flex items-center justify-center group-hover:bg-violet-500/20 group-hover:text-violet-300">
+                    <span
+                      className="shrink-0 w-5 h-5 rounded-full text-[10px] flex items-center justify-center"
+                      style={{ background: 'var(--surface-fill)', color: 'var(--text-tertiary)' }}
+                    >
                       {n.scheduled_day}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-surface-200 group-hover:text-violet-200 flex items-center gap-1">
+                      <p className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
                         {n.concept_label}
-                        <span className="text-[10px] text-surface-600 group-hover:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                           → study
                         </span>
                       </p>
-                      <p className="text-[10px] text-surface-500">
+                      <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                         {n.topic.replace(/-/g, ' ')} · {n.estimated_study_minutes}min · {n.inclusion_reason.replace(/-/g, ' ')}
                       </p>
                     </div>
                   </button>
                 ))}
                 {diagSyllabus.nodes.length > 8 && (
-                  <p className="text-[10px] text-surface-500 pl-7">
+                  <p className="text-[10px] pl-7" style={{ color: 'var(--text-tertiary)' }}>
                     …and {diagSyllabus.nodes.length - 8} more concept{diagSyllabus.nodes.length - 8 === 1 ? '' : 's'}
                   </p>
                 )}
@@ -727,8 +765,12 @@ export default function SnapPage() {
       )}
 
       {error && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-300">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="p-3 rounded-xl text-sm"
+          style={{ background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', color: 'var(--red)' }}
+        >
           {error}
         </motion.div>
       )}
@@ -744,7 +786,7 @@ export default function SnapPage() {
           >
             {/* Analysis header */}
             {intentMeta && (
-              <div className={clsx('p-3 rounded-xl border', intentMeta.color)}>
+              <div className="p-3 rounded-xl" style={intentMeta.style}>
                 <div className="flex items-start gap-2">
                   <intentMeta.icon size={14} className="shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
@@ -761,7 +803,11 @@ export default function SnapPage() {
                     {response.analysis.detected_concepts.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {response.analysis.detected_concepts.map(c => (
-                          <span key={c} className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-900/60 text-surface-300 border border-surface-700">
+                          <span
+                            key={c}
+                            className="text-[10px] px-1.5 py-0.5 rounded-full"
+                            style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)', border: 'var(--hairline) solid var(--separator)' }}
+                          >
                             {c.replace(/-/g, ' ')}
                           </span>
                         ))}
@@ -774,19 +820,25 @@ export default function SnapPage() {
 
             {/* Explanation */}
             {response.explanation && (
-              <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+              <div
+                className="p-4 rounded-xl space-y-2"
+                style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
+              >
                 <div className="flex items-center gap-2">
-                  <BookOpen size={13} className="text-violet-400" />
-                  <h3 className="text-sm font-semibold text-surface-200">Overview</h3>
+                  <BookOpen size={13} style={{ color: 'var(--indigo-ink)' }} />
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Overview</h3>
                 </div>
-                <p className="text-sm text-surface-300 leading-relaxed">{response.explanation.summary}</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{response.explanation.summary}</p>
                 {response.explanation.steps.length > 0 && (
-                  <ol className="list-decimal pl-5 space-y-1 text-xs text-surface-400">
+                  <ol className="list-decimal pl-5 space-y-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                     {response.explanation.steps.map((s, i) => <li key={i}>{s}</li>)}
                   </ol>
                 )}
                 {response.explanation.example && (
-                  <div className="mt-2 p-2 rounded-lg bg-surface-950 border border-surface-800 text-xs text-surface-400 font-mono whitespace-pre-wrap">
+                  <div
+                    className="mt-2 p-2 rounded-lg text-xs font-mono whitespace-pre-wrap"
+                    style={{ background: 'var(--surface-sunken)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)' }}
+                  >
                     {response.explanation.example}
                   </div>
                 )}
@@ -795,23 +847,29 @@ export default function SnapPage() {
 
             {/* Solution */}
             {response.solution && (
-              <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+              <div
+                className="p-4 rounded-xl space-y-2"
+                style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Target size={13} className="text-emerald-400" />
-                    <h3 className="text-sm font-semibold text-surface-200">Solution</h3>
+                    <Target size={13} style={{ color: 'var(--green-ink)' }} />
+                    <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Solution</h3>
                   </div>
                   {response.solution.verification_method === 'wolfram' && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full"
+                      style={{ background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.22)' }}
+                    >
                       Wolfram ✓
                     </span>
                   )}
                 </div>
                 {response.solution.final_answer && (
-                  <p className="text-sm text-emerald-300 font-mono">Answer: {response.solution.final_answer}</p>
+                  <p className="text-sm font-mono" style={{ color: 'var(--green-ink)' }}>Answer: {response.solution.final_answer}</p>
                 )}
                 {response.solution.steps.length > 0 && (
-                  <ol className="list-decimal pl-5 space-y-1 text-xs text-surface-400">
+                  <ol className="list-decimal pl-5 space-y-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                     {response.solution.steps.map((s, i) => <li key={i}>{s}</li>)}
                   </ol>
                 )}
@@ -822,19 +880,23 @@ export default function SnapPage() {
             {response.practice_problems && response.practice_problems.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles size={13} className="text-purple-400" />
-                  <h3 className="text-sm font-semibold text-surface-200">Similar problems</h3>
+                  <Sparkles size={13} style={{ color: 'var(--indigo-ink)' }} />
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Similar problems</h3>
                 </div>
                 {response.practice_problems.map(p => (
-                  <div key={p.id} className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-1">
-                    <div className="flex justify-between items-center text-[10px] text-surface-500 uppercase tracking-wide">
+                  <div
+                    key={p.id}
+                    className="p-3 rounded-xl space-y-1"
+                    style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
+                  >
+                    <div className="flex justify-between items-center text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
                       <span>{p.topic.replace(/-/g, ' ')} · difficulty {p.difficulty.toFixed(2)}</span>
                       {p.wolfram_verified && (
-                        <span className="text-emerald-400">Wolfram ✓</span>
+                        <span style={{ color: 'var(--green-ink)' }}>Wolfram ✓</span>
                       )}
                     </div>
-                    <p className="text-sm text-surface-200">{p.question_text}</p>
-                    <p className="text-xs text-surface-500 font-mono">A: {p.correct_answer}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{p.question_text}</p>
+                    <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>A: {p.correct_answer}</p>
                   </div>
                 ))}
               </div>
@@ -842,25 +904,31 @@ export default function SnapPage() {
 
             {/* OCR */}
             {response.ocr && (
-              <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
+              <div
+                className="p-4 rounded-xl space-y-2"
+                style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', boxShadow: 'var(--shadow-raise)' }}
+              >
                 <div className="flex items-center gap-2">
-                  <FileText size={13} className="text-surface-400" />
-                  <h3 className="text-sm font-semibold text-surface-200">Transcription</h3>
+                  <FileText size={13} style={{ color: 'var(--text-tertiary)' }} />
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Transcription</h3>
                 </div>
-                <pre className="text-xs text-surface-300 whitespace-pre-wrap font-mono">{response.ocr.text}</pre>
+                <pre className="text-xs whitespace-pre-wrap font-mono" style={{ color: 'var(--text-secondary)' }}>{response.ocr.text}</pre>
               </div>
             )}
 
             {/* Strategy hints */}
             {response.strategy_hints && response.strategy_hints.length > 0 && (
-              <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 space-y-1.5">
+              <div
+                className="p-3 rounded-xl space-y-1.5"
+                style={{ background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.22)' }}
+              >
                 <div className="flex items-center gap-2">
-                  <Brain size={12} className="text-violet-400" />
-                  <p className="text-[10px] text-violet-300 uppercase tracking-wide font-medium">Strategy</p>
+                  <Brain size={12} style={{ color: 'var(--indigo-ink)' }} />
+                  <p className="text-[10px] uppercase tracking-wide font-medium" style={{ color: 'var(--indigo-ink)' }}>Strategy</p>
                 </div>
                 <ul className="space-y-1">
                   {response.strategy_hints.map((h, i) => (
-                    <li key={i} className="text-xs text-surface-300 leading-relaxed">• {h}</li>
+                    <li key={i} className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>• {h}</li>
                   ))}
                 </ul>
               </div>
@@ -876,13 +944,14 @@ export default function SnapPage() {
 
             <button
               onClick={clearImage}
-              className="w-full py-2.5 rounded-xl bg-surface-900 border border-surface-800 text-sm text-surface-400 hover:text-surface-200"
+              className="w-full py-2.5 rounded-xl text-sm"
+              style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)' }}
             >
               Try another image
             </button>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }

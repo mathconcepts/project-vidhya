@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, Users, Zap, Globe, CheckCircle, XCircle, Clock, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { BarChart3, Users, Zap, Globe, CheckCircle, XCircle, Clock, Loader2, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { apiFetch } from '@/hooks/useApi';
 
 interface SocialPost {
@@ -25,24 +25,31 @@ interface Stats {
   total_streaks: number;
 }
 
-const PLATFORM_ICONS: Record<string, any> = {
+const PLATFORM_ICONS: Record<string, typeof Twitter> = {
   twitter: Twitter,
   instagram: Instagram,
   linkedin: Linkedin,
 };
 
-const PLATFORM_COLORS: Record<string, string> = {
-  twitter: 'text-violet-400',
-  instagram: 'text-pink-400',
-  linkedin: 'text-blue-400',
+const PLATFORM_COLOR: Record<string, string> = {
+  twitter:   'var(--indigo-ink)',
+  instagram: 'var(--orange)',
+  linkedin:  'var(--indigo-ink)',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
-  approved: 'bg-emerald-500/20 text-emerald-400',
-  rejected: 'bg-red-500/20 text-red-400',
-  published: 'bg-violet-500/20 text-violet-400',
+const STATUS_STYLE: Record<string, { background: string; color: string }> = {
+  pending:   { background: 'rgba(255,149,0,.10)',    color: 'var(--orange)' },
+  approved:  { background: 'rgba(52,199,89,.08)',    color: 'var(--green-ink)' },
+  rejected:  { background: 'rgba(255,59,48,.08)',    color: 'var(--red)' },
+  published: { background: 'rgba(88,86,214,.08)',    color: 'var(--indigo-ink)' },
 };
+
+const STAT_COLORS = [
+  'var(--green)',
+  'var(--indigo)',
+  'var(--indigo)',
+  'var(--orange)',
+];
 
 export default function AdminPage() {
   const [tab, setTab] = useState<'overview' | 'social'>('overview');
@@ -51,10 +58,9 @@ export default function AdminPage() {
   const [socialLoading, setSocialLoading] = useState(false);
 
   useEffect(() => {
-    // Load basic stats
-    apiFetch<any>('/api/topics')
+    apiFetch<{ topics: { problem_count?: number }[] }>('/api/topics')
       .then(data => {
-        const total = (data.topics || []).reduce((acc: number, t: any) => acc + (t.problem_count || 0), 0);
+        const total = (data.topics || []).reduce((acc, t) => acc + (t.problem_count || 0), 0);
         setStats({
           total_problems: total,
           total_sessions: 0,
@@ -68,7 +74,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === 'social') {
       setSocialLoading(true);
-      apiFetch<any>('/api/admin/social')
+      apiFetch<{ content: SocialPost[] }>('/api/admin/social')
         .then(data => setSocialPosts(data.content || []))
         .catch(() => setSocialPosts([]))
         .finally(() => setSocialLoading(false));
@@ -88,23 +94,28 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
-        <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-        <p className="text-surface-400 text-sm mt-1">Manage content and monitor performance</p>
+        <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Admin Dashboard</h1>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Manage content and monitor performance</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: 8 }}>
         {(['overview', 'social'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              tab === t
-                ? 'bg-violet-600 text-white'
-                : 'bg-surface-800 text-surface-400 hover:text-white'
-            }`}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--text-caption)',
+              fontWeight: 'var(--weight-medium)',
+              border: 'none',
+              cursor: 'pointer',
+              background: tab === t ? 'var(--indigo)' : 'var(--surface-fill)',
+              color: tab === t ? '#fff' : 'var(--text-secondary)',
+            }}
           >
             {t === 'overview' ? 'Overview' : 'Social Media'}
           </button>
@@ -115,26 +126,26 @@ export default function AdminPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-2 gap-3"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
         >
           {[
-            { label: 'Problems', value: stats?.total_problems || 0, icon: Zap, color: 'from-emerald-500 to-green-600' },
-            { label: 'Active Sessions', value: stats?.total_sessions || '-', icon: Users, color: 'from-violet-500 to-blue-600' },
-            { label: 'Verifications', value: stats?.total_verifications || '-', icon: BarChart3, color: 'from-purple-500 to-violet-600' },
-            { label: 'SEO Pages', value: '-', icon: Globe, color: 'from-amber-500 to-orange-600' },
+            { label: 'Problems', value: stats?.total_problems || 0, icon: Zap },
+            { label: 'Active Sessions', value: stats?.total_sessions || '-', icon: Users },
+            { label: 'Verifications', value: stats?.total_verifications || '-', icon: BarChart3 },
+            { label: 'SEO Pages', value: '-', icon: Globe },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="rounded-xl bg-surface-900 border border-surface-800 p-4"
+              style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}
             >
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center mb-3`}>
-                <stat.icon size={16} className="text-white" />
+              <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', background: STAT_COLORS[i], display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <stat.icon size={16} style={{ color: '#fff' }} />
               </div>
-              <div className="text-2xl font-bold text-white">{stat.value}</div>
-              <div className="text-xs text-surface-500 mt-0.5">{stat.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{stat.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{stat.label}</div>
             </motion.div>
           ))}
         </motion.div>
@@ -144,63 +155,64 @@ export default function AdminPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-3"
+          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
         >
           {socialLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500" />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+              <Loader2 className="animate-spin" style={{ color: 'var(--indigo-ink)' }} size={24} />
             </div>
           ) : socialPosts.length === 0 ? (
-            <div className="text-center py-12">
-              <Globe size={32} className="mx-auto text-surface-600 mb-3" />
-              <p className="text-surface-400 text-sm">No social content yet.</p>
-              <p className="text-surface-600 text-xs mt-1">Content is auto-generated when the flywheel runs.</p>
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <Globe size={32} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />
+              <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>No social content yet.</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>Content is auto-generated when the flywheel runs.</p>
             </div>
           ) : (
             socialPosts.map((post, i) => {
               const PlatformIcon = PLATFORM_ICONS[post.platform] || Globe;
+              const statusStyle = STATUS_STYLE[post.status] || { background: 'var(--surface-fill)', color: 'var(--text-tertiary)' };
               return (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className="rounded-xl bg-surface-900 border border-surface-800 p-4 space-y-3"
+                  style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 12 }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <PlatformIcon size={16} className={PLATFORM_COLORS[post.platform] || 'text-surface-400'} />
-                      <span className="text-xs font-medium text-surface-400 capitalize">{post.platform}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <PlatformIcon size={16} style={{ color: PLATFORM_COLOR[post.platform] || 'var(--text-tertiary)' }} />
+                      <span style={{ fontSize: 11, fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{post.platform}</span>
                       {post.topic && (
-                        <span className="text-xs bg-surface-800 text-surface-400 px-2 py-0.5 rounded-full">{post.topic}</span>
+                        <span style={{ fontSize: 11, background: 'var(--surface-fill)', color: 'var(--text-tertiary)', padding: '2px 8px', borderRadius: 999 }}>{post.topic}</span>
                       )}
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[post.status] || 'bg-surface-800 text-surface-400'}`}>
+                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, fontWeight: 'var(--weight-medium)', ...statusStyle }}>
                       {post.status}
                     </span>
                   </div>
 
-                  <p className="text-sm text-surface-300 whitespace-pre-wrap line-clamp-4">
+                  <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' }}>
                     {post.content}
                   </p>
 
                   {post.status === 'pending' && (
-                    <div className="flex gap-2">
+                    <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         onClick={() => updatePostStatus(post.id, 'approved')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 text-xs font-medium hover:bg-emerald-600/30 transition-colors"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.08)', color: 'var(--green-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', border: '1px solid rgba(52,199,89,.22)', cursor: 'pointer' }}
                       >
                         <CheckCircle size={14} /> Approve
                       </button>
                       <button
                         onClick={() => updatePostStatus(post.id, 'rejected')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 text-red-400 text-xs font-medium hover:bg-red-600/30 transition-colors"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,59,48,.06)', color: 'var(--red)', fontSize: 11, fontWeight: 'var(--weight-medium)', border: '1px solid rgba(255,59,48,.22)', cursor: 'pointer' }}
                       >
                         <XCircle size={14} /> Reject
                       </button>
                       <button
                         onClick={() => updatePostStatus(post.id, 'scheduled')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/20 text-violet-400 text-xs font-medium hover:bg-violet-600/30 transition-colors"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', border: '1px solid rgba(88,86,214,.22)', cursor: 'pointer' }}
                       >
                         <Clock size={14} /> Schedule
                       </button>

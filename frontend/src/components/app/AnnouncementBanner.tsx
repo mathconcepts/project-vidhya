@@ -41,7 +41,6 @@ export function AnnouncementBanner() {
         if (!r.ok) return;
         const d = await r.json();
         if (!d.announcement) return;
-        // Check dismissed
         if (getDismissedKey() === d.announcement.posted_at) return;
         setAnnouncement(d.announcement);
       } catch {}
@@ -61,15 +60,15 @@ export function AnnouncementBanner() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
-        className="relative p-3 pr-10 rounded-xl bg-violet-500/10 border border-violet-500/30"
+        style={{ position: 'relative', padding: '12px 40px 12px 12px', borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.06)', border: '1px solid rgba(88,86,214,.22)' }}
       >
-        <div className="flex items-start gap-2.5">
-          <Megaphone size={13} className="shrink-0 mt-0.5 text-violet-400" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-violet-400 uppercase tracking-wide font-medium">
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <Megaphone size={13} style={{ flexShrink: 0, marginTop: 2, color: 'var(--indigo-ink)' }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--weight-medium)' }}>
               From {announcement.teacher_name}
             </p>
-            <p className="text-[13px] text-surface-200 leading-relaxed mt-1">
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
               {announcement.text}
             </p>
           </div>
@@ -77,7 +76,7 @@ export function AnnouncementBanner() {
         <button
           onClick={dismiss}
           aria-label="dismiss"
-          className="absolute top-2 right-2 p-1 rounded text-surface-500 hover:text-surface-200"
+          style={{ position: 'absolute', top: 8, right: 8, padding: 4, borderRadius: 'var(--radius-sm)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}
         >
           <X size={12} />
         </button>

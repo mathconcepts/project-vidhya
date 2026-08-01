@@ -11,10 +11,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
-import { GraduationCap, BookOpen, Calendar, ChevronLeft, Check, Loader2 } from 'lucide-react';
-import { clsx } from 'clsx';
+import { GraduationCap, BookOpen, Calendar, ChevronLeft, Check, Loader2, AlertCircle } from 'lucide-react';
 
 interface SubjectTrack {
   id: string;
@@ -43,29 +42,37 @@ interface SuggestedExam {
   topic_count: number;
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: 'var(--radius-sm)',
+  background: 'var(--surface-fill)',
+  border: 'var(--hairline) solid var(--separator)',
+  fontSize: 'var(--text-caption)',
+  color: 'var(--text-primary)',
+  boxSizing: 'border-box',
+  fontFamily: 'var(--font-mono)',
+};
+
 export default function KnowledgePickerPage() {
   const navigate = useNavigate();
   const [boards, setBoards] = useState<BoardGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Selection state — cascades board → grade → subject
   const [selectedBoard, setSelectedBoard] = useState<BoardGroup | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<GradeGroup | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<SubjectTrack | null>(null);
 
-  // Phase 2 — after a track is picked, fetch suggested exams
   const [suggestedExams, setSuggestedExams] = useState<SuggestedExam[]>([]);
   const [pickedExamIds, setPickedExamIds] = useState<Set<string>>(new Set());
   const [examDate, setExamDate] = useState<string>(() => {
     const d = new Date(); d.setMonth(d.getMonth() + 3);
     return d.toISOString().slice(0, 10);
   });
-  // Goal — shapes content generation + chat tone + bridge recommendations.
   const [prepIntent, setPrepIntent] = useState<'board-focused' | 'bridge' | 'entrance-focused'>('bridge');
   const [saving, setSaving] = useState(false);
 
-  // Load all knowledge tracks on mount
   useEffect(() => {
     authFetch('/api/knowledge/tracks')
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
@@ -74,14 +81,12 @@ export default function KnowledgePickerPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // When a track is selected, fetch its suggested exams
   useEffect(() => {
     if (!selectedTrack) return;
     authFetch(`/api/knowledge/tracks/${selectedTrack.id}`)
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then((data: { suggested_exams: SuggestedExam[] }) => {
         setSuggestedExams(data.suggested_exams);
-        // Pre-select all by default — students rarely want fewer
         setPickedExamIds(new Set(data.suggested_exams.map(e => e.exam_id)));
       })
       .catch(() => setError('Could not load suggested exams'));
@@ -111,8 +116,6 @@ export default function KnowledgePickerPage() {
     setSaving(true);
     setError(null);
     try {
-      // Each picked exam becomes one ExamRegistration carrying the track id
-      // and prep_intent so backend personalisation knows the student's goal.
       const exams = [...pickedExamIds].map(exam_id => ({
         exam_id,
         exam_date: examDate,
@@ -130,8 +133,8 @@ export default function KnowledgePickerPage() {
         throw new Error(body.error || `Save failed: ${res.status}`);
       }
       navigate('/planned');
-    } catch (err: any) {
-      setError(err.message || 'Save failed');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : null) || 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -139,19 +142,29 @@ export default function KnowledgePickerPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <Loader2 size={24} className="animate-spin" style={{ color: 'var(--green-ink)' }} />
       </div>
     );
   }
 
+  const cardButtonStyle: React.CSSProperties = {
+    width: '100%',
+    padding: 16,
+    borderRadius: 'var(--radius-md)',
+    background: 'var(--surface-card)',
+    border: 'var(--hairline) solid var(--separator)',
+    cursor: 'pointer',
+    textAlign: 'left',
+  };
+
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 pb-16">
+    <div style={{ maxWidth: 608, margin: '0 auto', paddingBottom: 64 }}>
       <button
         onClick={goBack}
-        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 mb-4"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 16 }}
       >
-        <ChevronLeft className="w-3.5 h-3.5" />
+        <ChevronLeft size={14} />
         {selectedTrack ? 'Pick a different subject' :
           selectedGrade ? 'Pick a different grade' :
           selectedBoard ? 'Pick a different board' :
@@ -160,21 +173,17 @@ export default function KnowledgePickerPage() {
 
       {/* Step 1 — Board */}
       {!selectedBoard && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="text-center space-y-1">
-            <GraduationCap className="w-8 h-8 mx-auto text-emerald-400" />
-            <h1 className="text-xl font-bold text-zinc-100">What's your school board?</h1>
-            <p className="text-sm text-zinc-500">We'll match it to the right entrance exams</p>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <GraduationCap size={32} style={{ color: 'var(--green-ink)' }} />
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>What's your school board?</h1>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>We'll match it to the right entrance exams</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {boards.map(b => (
-              <button
-                key={b.board}
-                onClick={() => setSelectedBoard(b)}
-                className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition-colors text-left"
-              >
-                <div className="font-semibold text-zinc-100">{b.board_name}</div>
-                <div className="text-xs text-zinc-500 mt-1">
+              <button key={b.board} onClick={() => setSelectedBoard(b)} style={cardButtonStyle}>
+                <div style={{ fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-caption)', color: 'var(--text-primary)' }}>{b.board_name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>
                   {b.grades.length} grade{b.grades.length === 1 ? '' : 's'},{' '}
                   {b.grades.flatMap(g => g.subjects).length} subjects
                 </div>
@@ -186,21 +195,17 @@ export default function KnowledgePickerPage() {
 
       {/* Step 2 — Grade */}
       {selectedBoard && !selectedGrade && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="text-center space-y-1">
-            <BookOpen className="w-8 h-8 mx-auto text-emerald-400" />
-            <h1 className="text-xl font-bold text-zinc-100">Which grade are you in?</h1>
-            <p className="text-sm text-zinc-500">{selectedBoard.board_name}</p>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <BookOpen size={32} style={{ color: 'var(--green-ink)' }} />
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Which grade are you in?</h1>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{selectedBoard.board_name}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {selectedBoard.grades.map(g => (
-              <button
-                key={g.grade}
-                onClick={() => setSelectedGrade(g)}
-                className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition-colors text-center"
-              >
-                <div className="font-semibold text-zinc-100">{g.grade_name}</div>
-                <div className="text-xs text-zinc-500 mt-1">{g.subjects.length} subjects</div>
+              <button key={g.grade} onClick={() => setSelectedGrade(g)} style={{ ...cardButtonStyle, textAlign: 'center' }}>
+                <div style={{ fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-caption)', color: 'var(--text-primary)' }}>{g.grade_name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>{g.subjects.length} subjects</div>
               </button>
             ))}
           </div>
@@ -209,21 +214,17 @@ export default function KnowledgePickerPage() {
 
       {/* Step 3 — Subject */}
       {selectedBoard && selectedGrade && !selectedTrack && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="text-center space-y-1">
-            <BookOpen className="w-8 h-8 mx-auto text-emerald-400" />
-            <h1 className="text-xl font-bold text-zinc-100">Pick your subject</h1>
-            <p className="text-sm text-zinc-500">{selectedBoard.board_name} · {selectedGrade.grade_name}</p>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <BookOpen size={32} style={{ color: 'var(--green-ink)' }} />
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Pick your subject</h1>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{selectedBoard.board_name} · {selectedGrade.grade_name}</p>
           </div>
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {selectedGrade.subjects.map(s => (
-              <button
-                key={s.id}
-                onClick={() => setSelectedTrack(s)}
-                className="w-full p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition-colors text-left"
-              >
-                <div className="font-semibold text-zinc-100">{s.subject_name}</div>
-                <div className="text-xs text-zinc-500 mt-1">{s.description}</div>
+              <button key={s.id} onClick={() => setSelectedTrack(s)} style={cardButtonStyle}>
+                <div style={{ fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-caption)', color: 'var(--text-primary)' }}>{s.subject_name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>{s.description}</div>
               </button>
             ))}
           </div>
@@ -232,95 +233,127 @@ export default function KnowledgePickerPage() {
 
       {/* Step 4 — Suggested exams */}
       {selectedTrack && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-          <div className="text-center space-y-1">
-            <Calendar className="w-8 h-8 mx-auto text-emerald-400" />
-            <h1 className="text-xl font-bold text-zinc-100">Pick the exams you're preparing for</h1>
-            <p className="text-sm text-zinc-500">{selectedTrack.display_name}</p>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <Calendar size={32} style={{ color: 'var(--green-ink)' }} />
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Pick the exams you're preparing for</h1>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{selectedTrack.display_name}</p>
           </div>
-          <div className="space-y-2">
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {suggestedExams.map(e => {
               const picked = pickedExamIds.has(e.exam_id);
               return (
                 <button
                   key={e.exam_id}
                   onClick={() => togglePickedExam(e.exam_id)}
-                  className={clsx(
-                    'w-full p-4 rounded-xl border transition-colors text-left flex items-center gap-3',
-                    picked
-                      ? 'bg-emerald-500/10 border-emerald-500/50'
-                      : 'bg-zinc-900 border-zinc-800 hover:border-emerald-500/30',
-                  )}
+                  style={{
+                    width: '100%',
+                    padding: 16,
+                    borderRadius: 'var(--radius-md)',
+                    border: picked ? '1px solid rgba(52,199,89,.3)' : 'var(--hairline) solid var(--separator)',
+                    background: picked ? 'rgba(52,199,89,.06)' : 'var(--surface-card)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
                 >
-                  <div className={clsx(
-                    'w-5 h-5 rounded-md border flex items-center justify-center shrink-0',
-                    picked ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-700',
-                  )}>
-                    {picked && <Check className="w-3 h-3 text-white" />}
+                  <div style={{
+                    width: 20, height: 20,
+                    borderRadius: 4,
+                    border: picked ? 'none' : '1px solid var(--separator)',
+                    background: picked ? 'var(--green)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    {picked && <Check size={12} style={{ color: '#fff' }} />}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-zinc-100">{e.exam_name}</div>
-                    <div className="text-xs text-zinc-500 mt-0.5">{e.topic_count} topics</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{e.exam_name}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>{e.topic_count} topics</div>
                   </div>
                 </button>
               );
             })}
           </div>
+
           <div>
-            <label className="text-xs text-zinc-500 uppercase tracking-wide">What's your goal?</label>
-            <p className="text-[11px] text-zinc-500 mt-1 mb-2">
+            <label style={{ display: 'block', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 4 }}>What's your goal?</label>
+            <p style={{ margin: '0 0 8px', fontSize: 11, color: 'var(--text-tertiary)' }}>
               Shapes how content is written for you. You can switch any time.
             </p>
-            <div className="space-y-1.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[
                 { v: 'board-focused' as const, t: 'Board exam first', d: 'School board exam is the priority. No entrance-exam references unless I ask.' },
                 { v: 'bridge'         as const, t: 'Both — bridge me', d: "I'm preparing for both. Show me how each board concept extends to the entrance exam." },
                 { v: 'entrance-focused' as const, t: 'Entrance exam first', d: 'I have school down. Push me straight to entrance-exam depth and tricks.' },
               ].map(opt => (
-                <label key={opt.v} className={clsx(
-                  'block p-3 rounded-xl border-2 cursor-pointer transition-all',
-                  prepIntent === opt.v ? 'bg-violet-500/10 border-violet-500/50' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700',
-                )}>
-                  <div className="flex items-center gap-2">
+                <label key={opt.v} style={{
+                  display: 'block',
+                  padding: 12,
+                  borderRadius: 'var(--radius-md)',
+                  border: prepIntent === opt.v ? '2px solid rgba(88,86,214,.3)' : '2px solid var(--separator)',
+                  background: prepIntent === opt.v ? 'rgba(88,86,214,.05)' : 'var(--surface-card)',
+                  cursor: 'pointer',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <input
                       type="radio"
                       name="prep-intent"
                       checked={prepIntent === opt.v}
                       onChange={() => setPrepIntent(opt.v)}
-                      className="accent-violet-500"
+                      style={{ accentColor: 'var(--indigo)' }}
                     />
-                    <div className="font-medium text-zinc-100 text-sm">{opt.t}</div>
+                    <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>{opt.t}</div>
                   </div>
-                  <div className="text-[11px] text-zinc-500 mt-1 ml-5">{opt.d}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, marginLeft: 24 }}>{opt.d}</div>
                 </label>
               ))}
             </div>
           </div>
+
           <div>
-            <label className="text-xs text-zinc-500 uppercase tracking-wide">Exam date</label>
+            <label style={{ display: 'block', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 6 }}>Exam date</label>
             <input
               type="date"
               value={examDate}
               onChange={e => setExamDate(e.target.value)}
               min={new Date().toISOString().slice(0, 10)}
-              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 focus:border-emerald-500 focus:outline-none font-mono"
+              style={inputStyle}
             />
           </div>
+
           {error && (
-            <div className="text-sm text-red-400">{error}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
+              <AlertCircle size={14} />
+              {error}
+            </div>
           )}
+
           <button
             onClick={saveProfile}
             disabled={saving || pickedExamIds.size === 0}
-            className={clsx(
-              'w-full py-3 rounded-xl font-semibold text-white transition-all',
-              pickedExamIds.size > 0 && !saving
-                ? 'bg-gradient-to-r from-emerald-500 to-violet-500'
-                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed',
-            )}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              background: pickedExamIds.size > 0 && !saving ? 'var(--green)' : 'var(--surface-fill)',
+              color: pickedExamIds.size > 0 && !saving ? '#fff' : 'var(--text-tertiary)',
+              fontWeight: 'var(--weight-semibold)',
+              fontSize: 'var(--text-body)',
+              cursor: pickedExamIds.size === 0 || saving ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> :
-              `Save ${pickedExamIds.size} exam${pickedExamIds.size === 1 ? '' : 's'} & continue`}
+            {saving
+              ? <Loader2 size={16} className="animate-spin" />
+              : `Save ${pickedExamIds.size} exam${pickedExamIds.size === 1 ? '' : 's'} & continue`}
           </button>
         </motion.div>
       )}

@@ -1,20 +1,17 @@
 /**
- * ExamCountdownChip
- *
- * Shown on student home ONLY when the student has an exam_id assigned.
- * Self-gating — renders nothing for students without an exam.
+ * ExamCountdownChip — Shows exam name + countdown when the student has an exam assigned.
+ * Self-gating: renders nothing for students without an exam.
  *
  * Urgency tiers:
- *   - critical (≤7 days): rose styling, bold countdown
- *   - high (≤30 days): amber, days to go
- *   - medium (≤90 days): sky, weeks to go
- *   - low (>90d or no date): neutral, just the exam name
+ *   critical (≤7 days): red, bold countdown
+ *   high (≤30 days):    orange, days to go
+ *   medium (≤90 days):  indigo, weeks to go
+ *   low (>90d or none): neutral surface
  */
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Zap } from 'lucide-react';
-import { clsx } from 'clsx';
 import { authFetch } from '@/lib/auth/client';
 
 interface ExamContext {
@@ -33,11 +30,19 @@ function countdownLabel(days: number | null): string | null {
   if (days === null) return null;
   if (days === 0) return 'Today';
   if (days === 1) return '1 day';
-  if (days <= 7) return `${days} days`;
   if (days <= 30) return `${days} days`;
   if (days <= 90) return `${Math.round(days / 7)} weeks`;
   return `${Math.round(days / 30)} months`;
 }
+
+type Tier = 'critical' | 'high' | 'medium' | 'low';
+
+const TIER_STYLE: Record<Tier, { bg: string; border: string; color: string }> = {
+  critical: { bg: 'rgba(255,59,48,.08)',   border: 'rgba(255,59,48,.22)',   color: 'var(--red)' },
+  high:     { bg: 'rgba(255,149,0,.08)',   border: 'rgba(255,149,0,.22)',   color: 'var(--orange)' },
+  medium:   { bg: 'rgba(88,86,214,.07)',   border: 'rgba(88,86,214,.22)',   color: 'var(--indigo-ink)' },
+  low:      { bg: 'var(--surface-fill)',   border: 'var(--separator)',       color: 'var(--text-secondary)' },
+};
 
 export function ExamCountdownChip() {
   const [ctx, setCtx] = useState<ExamContext | null>(null);
@@ -59,36 +64,42 @@ export function ExamCountdownChip() {
   if (loading || !ctx) return null;
 
   const label = countdownLabel(ctx.days_to_exam);
-  const tier = ctx.exam_is_imminent ? 'critical' : ctx.exam_is_close ? 'high' : ctx.days_to_exam !== null ? 'medium' : 'low';
-  const icon = tier === 'critical' ? Zap : tier === 'high' ? Clock : Calendar;
-  const Icon = icon;
-
-  const toneClass =
-    tier === 'critical' ? 'bg-rose-500/10 border-rose-500/30 text-rose-200'
-    : tier === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
-    : tier === 'medium' ? 'bg-violet-500/10 border-violet-500/30 text-violet-200'
-    : 'bg-surface-900 border-surface-800 text-surface-300';
+  const tier: Tier = ctx.exam_is_imminent ? 'critical' : ctx.exam_is_close ? 'high' : ctx.days_to_exam !== null ? 'medium' : 'low';
+  const ts = TIER_STYLE[tier];
+  const Icon = tier === 'critical' ? Zap : tier === 'high' ? Clock : Calendar;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      className={clsx(
-        'p-2.5 rounded-xl border flex items-center gap-2',
-        toneClass,
-      )}
+      transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 14px',
+        borderRadius: 'var(--radius-md)',
+        background: ts.bg,
+        border: `1px solid ${ts.border}`,
+      }}
     >
-      <Icon size={13} className="shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] uppercase tracking-wide opacity-80 font-medium">
+      <Icon size={13} style={{ color: ts.color, flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.06em', color: ts.color, opacity: 0.8 }}>
           Your exam
         </p>
-        <p className="text-xs font-medium truncate">{ctx.exam_name}</p>
+        <p style={{ margin: '1px 0 0', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: ts.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {ctx.exam_name}
+        </p>
       </div>
       {label && (
-        <div className="text-right shrink-0">
-          <p className="text-sm font-bold leading-none">{label}</p>
-          <p className="text-[9px] opacity-80 uppercase">to go</p>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-bold)', color: ts.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+            {label}
+          </p>
+          <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.06em', color: ts.color, opacity: 0.8 }}>
+            to go
+          </p>
         </div>
       )}
     </motion.div>

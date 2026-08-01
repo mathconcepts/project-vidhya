@@ -23,18 +23,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
 import { useSession } from '@/hooks/useSession';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
 import { recordAttempt } from '@/lib/gbrain/client';
 import { authFetch } from '@/lib/auth/client';
 import {
-  Sparkles, Zap, Database, Server, CheckCircle2, XCircle, Loader2, ArrowRight,
+  Sparkles, Zap, Database, CheckCircle2, XCircle, Loader2, ArrowRight,
   BookOpen, Target, GraduationCap,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
-// Topics are loaded dynamically from the student's exam adapter (see useEffect below).
-// This fallback covers the brief moment before the fetch completes.
 const GATE_FALLBACK_TOPICS = [
   'linear-algebra', 'calculus', 'differential-equations', 'probability-statistics',
   'complex-variables', 'numerical-methods', 'transform-theory',
@@ -48,35 +44,25 @@ const DIFFICULTY_LABELS: Array<{ label: string; value: number }> = [
 ];
 
 const SOURCE_META: Record<ContentSource, { label: string; icon: typeof Sparkles; color: string; description: string }> = {
-  'tier-0-bundle-exact': { label: 'Bundled', icon: Database, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', description: 'Served from pre-verified bundle — instant, free.' },
-  'tier-0-explainer': { label: 'Explainer', icon: BookOpen, color: 'text-violet-400 bg-violet-500/10 border-violet-500/25', description: 'Canonical concept explainer — pre-computed.' },
-  'tier-0-client-cache': { label: 'Cached', icon: Zap, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', description: 'Cached on your device from previous session.' },
-  'tier-1-rag': { label: 'RAG', icon: Sparkles, color: 'text-purple-400 bg-purple-500/10 border-purple-500/25', description: 'Semantic match over bundle.' },
-  'tier-1-material': { label: 'Your Notes', icon: BookOpen, color: 'text-amber-400 bg-amber-500/10 border-amber-500/25', description: 'Grounded in your uploaded materials.' },
-  'tier-2-generated': { label: 'Generated', icon: Sparkles, color: 'text-violet-400 bg-violet-500/10 border-violet-500/25', description: 'Generated live via Gemini Flash-Lite.' },
-  'tier-3-wolfram-verified': { label: 'Wolfram-Verified', icon: CheckCircle2, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', description: 'Computationally verified by Wolfram|Alpha.' },
-  'miss': { label: 'No Match', icon: XCircle, color: 'text-red-400 bg-red-500/10 border-red-500/25', description: 'No content available. Upload materials or pick another topic.' },
+  'tier-0-bundle-exact': { label: 'Bundled', icon: Database, color: 'var(--green-ink)', description: 'Served from pre-verified bundle — instant, free.' },
+  'tier-0-explainer': { label: 'Explainer', icon: BookOpen, color: 'var(--indigo-ink)', description: 'Canonical concept explainer — pre-computed.' },
+  'tier-0-client-cache': { label: 'Cached', icon: Zap, color: 'var(--green-ink)', description: 'Cached on your device from previous session.' },
+  'tier-1-rag': { label: 'RAG', icon: Sparkles, color: 'var(--indigo-ink)', description: 'Semantic match over bundle.' },
+  'tier-1-material': { label: 'Your Notes', icon: BookOpen, color: 'var(--orange)', description: 'Grounded in your uploaded materials.' },
+  'tier-2-generated': { label: 'Generated', icon: Sparkles, color: 'var(--indigo-ink)', description: 'Generated live via Gemini Flash-Lite.' },
+  'tier-3-wolfram-verified': { label: 'Wolfram-Verified', icon: CheckCircle2, color: 'var(--green-ink)', description: 'Computationally verified by Wolfram|Alpha.' },
+  'miss': { label: 'No Match', icon: XCircle, color: 'var(--red)', description: 'No content available. Upload materials or pick another topic.' },
 };
 
 export default function SmartPracticePage() {
   const sessionId = useSession();
   const navigate = useNavigate();
 
-  // Read plan-seeded params from the URL query string.
-  // PlannedSessionPage navigates here with:
-  //   ?topic=calculus&difficulty=hard&from_plan=PLN-xxx&action_id=act-yyy
-  // We initialize topic + difficulty from those values so the practice
-  // session starts on the topic the plan recommended.
   const [searchParams] = useSearchParams();
   const initialTopic = searchParams.get('topic') || 'linear-algebra';
   const rawDiff = searchParams.get('difficulty');
-  const initialDifficulty = rawDiff === 'easy' ? 0.2
-    : rawDiff === 'hard' ? 0.8
-    : rawDiff === 'medium' ? 0.5
-    : 0.5;
+  const initialDifficulty = rawDiff === 'easy' ? 0.2 : rawDiff === 'hard' ? 0.8 : rawDiff === 'medium' ? 0.5 : 0.5;
 
-  // Dynamic topic list from the student's exam adapter.
-  // Falls back to GATE topics until the profile fetch completes.
   const [examTopics, setExamTopics] = useState<string[]>(GATE_FALLBACK_TOPICS);
   const [topic, setTopic] = useState<string>(initialTopic);
   const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
@@ -93,23 +79,19 @@ export default function SmartPracticePage() {
     warmContentBundle();
   }, []);
 
-  // Load the student's exam topic list so the topic picker shows their
-  // actual exam syllabus instead of the hardcoded GATE topic list.
   useEffect(() => {
     import('@/lib/auth/client').then(({ authFetch, getToken }) => {
-      if (!getToken()) return; // anonymous → keep GATE fallback
+      if (!getToken()) return;
       authFetch('/api/onboard/meta')
         .then(r => r.ok ? r.json() : null)
         .then((data: any) => {
           if (data?.topics?.length > 0) {
             const ids = data.topics.map((t: any) => t.id as string);
             setExamTopics(ids);
-            // If the current topic (from URL param or default) isn't in
-            // the student's syllabus, reset to their first topic.
             setTopic(prev => ids.includes(prev) ? prev : ids[0]);
           }
         })
-        .catch(() => {}); // keep GATE fallback on error
+        .catch(() => {});
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -127,9 +109,6 @@ export default function SmartPracticePage() {
         require_wolfram: false,
         use_materials: true,
       });
-      // Wave 11: server-gradable items belong on the server-graded page.
-      // One cheap lookup; any failure (404 for non-DB tiers, DB-less
-      // deploys, network) falls through to the legacy self-check flow.
       if (result.problem?.id) {
         try {
           const r = await authFetch(`/api/practice/item/${encodeURIComponent(result.problem.id)}`);
@@ -139,7 +118,6 @@ export default function SmartPracticePage() {
           }
         } catch {}
       }
-
       setResolved(result);
       setStartedAt(Date.now());
       setSessionStats(s => ({
@@ -162,7 +140,6 @@ export default function SmartPracticePage() {
       answer.trim().toLowerCase() === String(resolved.problem.correct_answer).trim().toLowerCase();
     setWasCorrect(!!correct);
     setSubmitted(true);
-
     try {
       await recordAttempt({
         sessionId,
@@ -178,62 +155,100 @@ export default function SmartPracticePage() {
     } catch {}
   };
 
-  const sourceMeta = resolved ? SOURCE_META[resolved.source] : null;
-
   return (
-    <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-display font-bold text-surface-100 flex items-center gap-2">
-          <Sparkles size={20} className="text-violet-400" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.015em' }}>
+          <Sparkles size={18} style={{ color: 'var(--indigo-ink)', flexShrink: 0 }} />
           Smart Practice
         </h1>
-        <p className="text-xs text-surface-500 mt-1">
+        <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
           Pick a topic and difficulty — the right problem comes to you.
         </p>
-      </motion.div>
-
+      </div>
 
       {/* Controls */}
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
+      <div style={{ padding: 14, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
-          <label className="text-[10px] text-surface-500 uppercase tracking-wide">Topic</label>
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
+          <label style={{ display: 'block', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+            Topic
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {examTopics.map(t => (
-              <button key={t}
+              <button
+                key={t}
                 onClick={() => setTopic(t)}
-                className={clsx(
-                  'px-2.5 py-1 rounded-lg text-xs transition-colors',
-                  topic === t ? 'bg-violet-500 text-white' : 'bg-surface-800 text-surface-400 hover:text-surface-200',
-                )}>
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-caption)',
+                  fontFamily: 'var(--font-sans)',
+                  cursor: 'pointer',
+                  border: topic === t ? 'none' : 'var(--hairline) solid var(--separator)',
+                  background: topic === t ? 'var(--indigo)' : 'var(--surface-fill)',
+                  color: topic === t ? '#fff' : 'var(--text-secondary)',
+                  fontWeight: topic === t ? 'var(--weight-semibold)' : undefined,
+                }}
+              >
                 {t.replace(/-/g, ' ')}
               </button>
             ))}
           </div>
         </div>
+
         <div>
-          <label className="text-[10px] text-surface-500 uppercase tracking-wide">Difficulty</label>
-          <div className="flex gap-1.5 mt-1.5">
+          <label style={{ display: 'block', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+            Difficulty
+          </label>
+          <div style={{ display: 'flex', gap: 6 }}>
             {DIFFICULTY_LABELS.map(d => (
-              <button key={d.value}
+              <button
+                key={d.value}
                 onClick={() => setDifficulty(d.value)}
-                className={clsx(
-                  'flex-1 py-1.5 rounded-lg text-xs',
-                  difficulty === d.value ? 'bg-violet-500 text-white' : 'bg-surface-800 text-surface-400',
-                )}>
+                style={{
+                  flex: 1,
+                  padding: '6px 0',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-caption)',
+                  fontFamily: 'var(--font-sans)',
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: difficulty === d.value ? 'var(--indigo)' : 'var(--surface-fill)',
+                  color: difficulty === d.value ? '#fff' : 'var(--text-secondary)',
+                  fontWeight: difficulty === d.value ? 'var(--weight-semibold)' : undefined,
+                }}
+              >
                 {d.label}
               </button>
             ))}
           </div>
         </div>
+
         <button
           onClick={nextProblem}
           disabled={loading}
-          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-emerald-500 text-white font-semibold flex items-center justify-center gap-1.5"
+          style={{
+            width: '100%',
+            padding: '10px 0',
+            borderRadius: 'var(--radius-sm)',
+            background: loading ? 'var(--surface-fill)' : 'var(--green)',
+            color: loading ? 'var(--text-tertiary)' : '#fff',
+            border: 'none',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 'var(--weight-semibold)',
+            fontSize: 'var(--text-body)',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}
         >
-          {loading ? <Loader2 className="animate-spin" size={14} /> : <ArrowRight size={14} />}
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
           {loading ? 'Resolving...' : resolved ? 'Next problem' : 'Get problem'}
         </button>
-      </motion.div>
+      </div>
 
       {/* Resolved problem */}
       <AnimatePresence mode="wait">
@@ -243,54 +258,50 @@ export default function SmartPracticePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3"
+            style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 12 }}
           >
-            <div className="h-3 w-24 rounded bg-surface-800 animate-pulse" />
-            <div className="h-5 w-full rounded bg-surface-800 animate-pulse" />
-            <div className="h-5 w-4/5 rounded bg-surface-800 animate-pulse" />
-            <div className="h-5 w-3/5 rounded bg-surface-800 animate-pulse" />
-            <div className="space-y-1.5 pt-1">
+            <div style={{ height: 12, width: 96, borderRadius: 4, background: 'var(--surface-fill)' }} />
+            {[100, 80, 60].map((w, i) => (
+              <div key={i} style={{ height: 18, borderRadius: 4, background: 'var(--surface-fill)', width: `${w}%` }} />
+            ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-10 rounded-lg bg-surface-800 animate-pulse" />
+                <div key={i} style={{ height: 40, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)' }} />
               ))}
             </div>
           </motion.div>
         )}
+
         {!loading && resolved && (
           <motion.div
             key={resolved.problem?.id || resolved.source}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="space-y-3"
+            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
           >
-            {/* Wolfram-verified is the only provenance signal worth surfacing
-                to students — it's a trust marker. All other tiers (bundle,
-                cache, RAG, generated) are admin telemetry and don't help the
-                student learn. Latency + per-problem USD cost stripped per
-                v2.5 frugal-layout principle. Aggregate session cost moved
-                behind the "transparency" expandable below. */}
+            {/* Wolfram-verified — the only provenance signal worth showing students */}
             {resolved.source === 'tier-3-wolfram-verified' && (
-              <div className="p-2.5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 flex items-center gap-2 text-emerald-400">
-                <CheckCircle2 size={14} className="shrink-0" />
-                <p className="text-xs font-medium">Computationally verified by Wolfram Alpha</p>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(52,199,89,.25)', background: 'rgba(52,199,89,.06)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--green-ink)' }}>
+                <CheckCircle2 size={14} style={{ flexShrink: 0 }} />
+                <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)' }}>Computationally verified by Wolfram Alpha</p>
               </div>
             )}
 
             {resolved.source === 'miss' && (
-              <div className="p-5 rounded-xl bg-surface-900 border border-surface-800 space-y-3 text-center">
-                <div className="w-10 h-10 rounded-full bg-surface-800 flex items-center justify-center mx-auto">
-                  <XCircle size={20} className="text-surface-500" />
+              <div style={{ padding: 20, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-fill)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <XCircle size={20} style={{ color: 'var(--text-tertiary)' }} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-surface-200">No problems found here</p>
-                  <p className="text-xs text-surface-500 mt-1">Try a different topic or difficulty level.</p>
+                  <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>No problems found here</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Try a different topic or difficulty level.</p>
                 </div>
-                <div className="flex gap-2 justify-center">
-                  <a href="/materials" className="px-3 py-2 rounded-lg bg-violet-500/15 border border-violet-500/25 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-colors">
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <a href="/materials" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.06)', border: '1px solid rgba(88,86,214,.2)', color: 'var(--indigo-ink)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}>
                     Upload materials
                   </a>
-                  <a href="/chat" className="px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-300 text-xs font-medium hover:bg-surface-700 transition-colors">
+                  <a href="/chat" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}>
                     Ask the tutor
                   </a>
                 </div>
@@ -298,9 +309,9 @@ export default function SmartPracticePage() {
             )}
 
             {resolved.problem && (
-              <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-[10px] text-surface-500 uppercase tracking-wide">
+              <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     <Target size={10} />
                     {resolved.problem.topic?.replace(/-/g, ' ')}
                     <span>·</span>
@@ -311,36 +322,58 @@ export default function SmartPracticePage() {
                   {(resolved.problem.concept_id || topic) && (
                     <button
                       onClick={() => navigate(`/lesson/${resolved.problem.concept_id || topic}`)}
-                      className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 'var(--radius-xs)', fontSize: 'var(--text-caption2)', color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', flexShrink: 0 }}
                     >
                       <GraduationCap size={11} />
                       Study this concept
                     </button>
                   )}
                 </div>
-                <p className="text-sm text-surface-100 leading-relaxed whitespace-pre-wrap">
+
+                <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
                   {resolved.problem.question_text}
                 </p>
 
                 {resolved.problem.options && typeof resolved.problem.options === 'object' && (
-                  <div className="space-y-1.5">
-                    {Object.entries(resolved.problem.options).map(([key, val]) => (
-                      <button
-                        key={key}
-                        disabled={submitted}
-                        onClick={() => !submitted && setAnswer(key)}
-                        className={clsx(
-                          'w-full text-left p-2.5 rounded-lg border transition-colors text-sm',
-                          submitted && key === resolved.problem.correct_answer ? 'bg-emerald-500/15 border-emerald-500/40' :
-                          submitted && key === answer && key !== resolved.problem.correct_answer ? 'bg-red-500/15 border-red-500/40' :
-                          answer === key ? 'bg-violet-500/15 border-violet-500/40 text-violet-200' :
-                          'bg-surface-800 border-surface-700 text-surface-300',
-                        )}
-                      >
-                        <span className="font-mono mr-2 font-bold">{key}.</span>
-                        {String(val)}
-                      </button>
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {Object.entries(resolved.problem.options).map(([key, val]) => {
+                      const isCorrectAfterSubmit = submitted && key === resolved.problem.correct_answer;
+                      const isWrongSelected = submitted && key === answer && key !== resolved.problem.correct_answer;
+                      const isSelected = !submitted && answer === key;
+                      return (
+                        <button
+                          key={key}
+                          disabled={submitted}
+                          onClick={() => !submitted && setAnswer(key)}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 12px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: `1px solid ${
+                              isCorrectAfterSubmit ? 'rgba(52,199,89,.4)' :
+                              isWrongSelected ? 'rgba(255,59,48,.4)' :
+                              isSelected ? 'rgba(88,86,214,.4)' :
+                              'var(--separator)'
+                            }`,
+                            background: isCorrectAfterSubmit ? 'rgba(52,199,89,.08)' :
+                              isWrongSelected ? 'rgba(255,59,48,.08)' :
+                              isSelected ? 'rgba(88,86,214,.08)' :
+                              'var(--surface-fill)',
+                            color: isCorrectAfterSubmit ? 'var(--green-ink)' :
+                              isWrongSelected ? 'var(--red)' :
+                              isSelected ? 'var(--indigo-ink)' :
+                              'var(--text-secondary)',
+                            fontSize: 'var(--text-body)',
+                            fontFamily: 'var(--font-sans)',
+                            cursor: submitted ? 'default' : 'pointer',
+                          }}
+                        >
+                          <span style={{ fontFamily: 'var(--font-mono)', marginRight: 8, fontWeight: 'var(--weight-bold)' }}>{key}.</span>
+                          {String(val)}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -351,7 +384,18 @@ export default function SmartPracticePage() {
                     disabled={submitted}
                     onChange={e => setAnswer(e.target.value)}
                     placeholder="Your answer..."
-                    className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 text-sm focus:outline-none focus:border-violet-500/50"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'var(--surface-fill)',
+                      border: 'var(--hairline) solid var(--separator)',
+                      color: 'var(--text-primary)',
+                      fontSize: 'var(--text-body)',
+                      fontFamily: 'var(--font-sans)',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
                   />
                 )}
 
@@ -359,34 +403,55 @@ export default function SmartPracticePage() {
                   <button
                     onClick={handleSubmit}
                     disabled={!answer}
-                    className="w-full py-2.5 rounded-lg bg-violet-500 text-white text-sm font-semibold disabled:opacity-50"
+                    style={{
+                      width: '100%',
+                      padding: '10px 0',
+                      borderRadius: 'var(--radius-sm)',
+                      background: answer ? 'var(--green)' : 'var(--surface-fill)',
+                      color: answer ? '#fff' : 'var(--text-tertiary)',
+                      border: 'none',
+                      fontFamily: 'var(--font-sans)',
+                      fontWeight: 'var(--weight-semibold)',
+                      fontSize: 'var(--text-body)',
+                      cursor: answer ? 'pointer' : 'not-allowed',
+                    }}
                   >
                     Submit
                   </button>
                 ) : (
-                  <div className={clsx(
-                    'p-3 rounded-lg border flex items-start gap-2',
-                    wasCorrect ? 'bg-emerald-500/10 border-emerald-500/25' : 'bg-red-500/10 border-red-500/25',
-                  )}>
-                    {wasCorrect ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" /> : <XCircle size={14} className="text-red-400 shrink-0 mt-0.5" />}
-                    <div className="text-xs text-surface-300">
-                      <p className="font-semibold">{wasCorrect ? 'Self-check: matches.' : 'Self-check: differs.'}</p>
-                      <p className="mt-0.5 text-[10px] opacity-60">Text comparison against the revealed answer — not exam grading, no marks recorded.</p>
-                      <p className="mt-0.5">Answer: <span className="font-mono">{resolved.problem.correct_answer}</span></p>
-                      {resolved.problem.explanation && <p className="mt-1 opacity-80">{resolved.problem.explanation}</p>}
+                  <div style={{
+                    padding: 12,
+                    borderRadius: 'var(--radius-sm)',
+                    border: `1px solid ${wasCorrect ? 'rgba(52,199,89,.25)' : 'rgba(255,59,48,.25)'}`,
+                    background: wasCorrect ? 'rgba(52,199,89,.06)' : 'rgba(255,59,48,.06)',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 8,
+                  }}>
+                    {wasCorrect
+                      ? <CheckCircle2 size={14} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
+                      : <XCircle size={14} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />}
+                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+                      <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
+                        {wasCorrect ? 'Self-check: matches.' : 'Self-check: differs.'}
+                      </p>
+                      <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
+                        Text comparison against the revealed answer — not exam grading, no marks recorded.
+                      </p>
+                      <p style={{ margin: '4px 0 0' }}>Answer: <span style={{ fontFamily: 'var(--font-mono)' }}>{resolved.problem.correct_answer}</span></p>
+                      {resolved.problem.explanation && <p style={{ margin: '4px 0 0', color: 'var(--text-tertiary)' }}>{resolved.problem.explanation}</p>}
                     </div>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Explainer mode */}
             {resolved.explainer && (
-              <div className="p-4 rounded-xl bg-surface-900 border border-surface-800 space-y-2">
-                <h3 className="text-sm font-semibold text-surface-100">{resolved.explainer.label}</h3>
-                <p className="text-xs text-surface-400 leading-relaxed">{resolved.explainer.canonical_definition}</p>
+              <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <h3 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{resolved.explainer.label}</h3>
+                <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>{resolved.explainer.canonical_definition}</p>
                 {resolved.explainer.exam_tip && (
-                  <p className="text-xs text-violet-300 mt-2">💡 {resolved.explainer.exam_tip}</p>
+                  <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)' }}>{resolved.explainer.exam_tip}</p>
                 )}
               </div>
             )}
@@ -394,15 +459,13 @@ export default function SmartPracticePage() {
         )}
       </AnimatePresence>
 
-      {/* Session stats. v2.5: avg-latency + total-cost stripped (admin
-          telemetry, not student value). Kept the problem count because
-          "you've done N problems this session" is real Compounding evidence. */}
+      {/* Session stats — only problems_served surfaces (real Compounding evidence). */}
       {sessionStats.problems_served > 0 && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <p className="text-lg font-bold text-surface-200">{sessionStats.problems_served}</p>
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide">problems this session</p>
-        </motion.div>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{sessionStats.problems_served}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>problems this session</p>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

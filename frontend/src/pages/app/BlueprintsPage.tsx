@@ -48,28 +48,35 @@ export default function BlueprintsPage() {
       .catch((e) => setError((e as Error).message));
   }, [id]);
 
-  if (authLoading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-violet-400" /></div>;
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <Loader2 size={20} className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
+  }
+
   if (!user || user.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto mt-20 p-6 rounded-xl border border-surface-800 bg-surface-900 text-center">
-        <Lock size={28} className="mx-auto text-surface-500 mb-3" />
-        <p className="text-surface-200 font-medium mb-1">Admin only</p>
-        <p className="text-sm text-surface-400">Blueprints are operator-only generation specs.</p>
+      <div style={{ maxWidth: 448, margin: '80px auto 0', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
+        <Lock size={28} style={{ color: 'var(--text-tertiary)', margin: '0 auto 12px' }} />
+        <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Admin only</p>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>Blueprints are operator-only generation specs.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div style={{ maxWidth: 1152, margin: '0 auto', padding: '32px 16px' }}>
       <JourneyNudge currentHref="/admin/blueprints" />
-      <header className="mb-8">
-        <div className="flex items-center gap-2 text-violet-400 text-xs uppercase tracking-wider mb-2">
-          <BookOpen size={14} /> Content Blueprints
+      <header style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--indigo-ink)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+          <BookOpen size={13} /> Content Blueprints
         </div>
-        <h1 className="text-2xl font-display font-semibold text-surface-100">
+        <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>
           The spec layer: stages, atom kinds, rationale
         </h1>
-        <p className="text-sm text-surface-400 mt-1">
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
           Each blueprint is the human-editable plan a generation run is built from.
           Edit per-stage decisions before generation fires, or approve the
           template's default and let it ship.
@@ -77,17 +84,16 @@ export default function BlueprintsPage() {
       </header>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">
+        <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
           {error}
         </div>
       )}
 
       <PresetsPanel onInstalled={() => {
-        // Refresh the blueprint list after install — the preset adds rows.
         listBlueprints({}).then(setBlueprints).catch(() => { /* ignore */ });
       }} />
 
-      <div className="grid md:grid-cols-[280px_1fr] gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24 }}>
         <Sidebar blueprints={blueprints} activeId={id ?? null} onCreated={(bp) => {
           setBlueprints((cur) => (cur ? [bp, ...cur] : [bp]));
         }} />
@@ -98,7 +104,7 @@ export default function BlueprintsPage() {
             onUpdated={(bp, newEtag) => { setActive(bp); setEtag(newEtag); }}
           />
         ) : (
-          <div className="text-sm text-surface-500">
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
             {id ? 'Loading…' : 'Select a blueprint or create one to get started.'}
           </div>
         )}
@@ -142,72 +148,91 @@ function Sidebar({
     } finally { setBusy(false); }
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '6px 8px',
+    fontSize: 11,
+    borderRadius: 'var(--radius-sm)',
+    background: 'var(--surface-fill)',
+    border: 'var(--hairline) solid var(--separator)',
+    color: 'var(--text-primary)',
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
   return (
-    <aside className="space-y-2">
+    <aside style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <button
         onClick={() => setCreating((c) => !c)}
-        className="w-full px-3 py-2 rounded-lg border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-medium flex items-center justify-center gap-1 hover:bg-violet-500/20"
+        style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.3)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
       >
         <Plus size={12} /> {creating ? 'Cancel' : 'New blueprint'}
       </button>
 
       {creating && (
-        <div className="p-3 rounded-lg border border-surface-800 bg-surface-900 space-y-2">
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
             type="text"
             placeholder="concept_id (e.g. limits-jee)"
             value={conceptId}
             onChange={(e) => setConceptId(e.target.value)}
-            className="w-full px-2 py-1.5 text-xs rounded border border-surface-700 bg-surface-950 text-surface-200"
+            style={inputStyle}
           />
           <input
             type="text"
             value={examPack}
             onChange={(e) => setExamPack(e.target.value)}
-            className="w-full px-2 py-1.5 text-xs rounded border border-surface-700 bg-surface-950 text-surface-200"
+            style={inputStyle}
           />
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value as DifficultyLabel)}
-            className="w-full px-2 py-1.5 text-xs rounded border border-surface-700 bg-surface-950 text-surface-200"
+            style={inputStyle}
           >
             <option value="easy">easy</option>
             <option value="medium">medium</option>
             <option value="hard">hard</option>
           </select>
-          <label className="flex items-center gap-2 text-[11px] text-surface-400">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={useArbitrator}
               onChange={(e) => setUseArbitrator(e.target.checked)}
-              className="rounded border-surface-700"
             />
             <span>Run arbitrator (LLM may override template)</span>
           </label>
-          {err && <div className="text-[11px] text-rose-400">{err}</div>}
+          {err && <div style={{ fontSize: 11, color: 'var(--red)' }}>{err}</div>}
           <button
             onClick={handleCreate}
             disabled={busy || !conceptId}
-            className="w-full px-3 py-1.5 rounded text-xs bg-violet-500 text-white disabled:opacity-50"
+            style={{ width: '100%', padding: '6px 12px', borderRadius: 'var(--radius-sm)', border: 'none', fontSize: 11, background: (busy || !conceptId) ? 'var(--surface-fill)' : 'var(--indigo)', color: (busy || !conceptId) ? 'var(--text-tertiary)' : '#fff', cursor: (busy || !conceptId) ? 'not-allowed' : 'pointer' }}
           >
             {busy ? 'Building…' : 'Build from template'}
           </button>
         </div>
       )}
 
-      <div className="text-[10px] text-surface-500 uppercase tracking-wider mt-4 mb-1">Recent</div>
-      {blueprints === null && <div className="text-xs text-surface-500">Loading…</div>}
+      <div style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 16, marginBottom: 4 }}>Recent</div>
+      {blueprints === null && <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Loading…</div>}
       {blueprints && blueprints.length === 0 && (
-        <div className="text-xs text-surface-500">No blueprints yet.</div>
+        <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>No blueprints yet.</div>
       )}
       {blueprints?.map((b) => (
         <Link
           key={b.id}
           to={`/admin/blueprints/${encodeURIComponent(b.id)}`}
-          className={`block px-3 py-2 rounded text-xs hover:bg-surface-800 ${activeId === b.id ? 'bg-surface-800 text-violet-300' : 'text-surface-300'}`}
+          style={{
+            display: 'block',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-sm)',
+            textDecoration: 'none',
+            background: activeId === b.id ? 'var(--surface-fill)' : 'transparent',
+            color: activeId === b.id ? 'var(--indigo-ink)' : 'var(--text-secondary)',
+            fontSize: 11,
+          }}
         >
-          <div className="truncate">{b.concept_id}</div>
-          <div className="text-[10px] text-surface-500 mt-0.5">
+          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.concept_id}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>
             {b.created_by} · {b.decisions.metadata.target_difficulty}
             {b.approved_at && ' · approved'}
           </div>
@@ -264,28 +289,36 @@ function Detail({
     } finally { setBusy(false); }
   };
 
+  const cardStyle: React.CSSProperties = {
+    padding: 16,
+    borderRadius: 'var(--radius-md)',
+    border: 'var(--hairline) solid var(--separator)',
+    background: 'var(--surface-card)',
+  };
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-      <div className="p-4 rounded-xl border border-surface-800 bg-surface-900">
-        <div className="flex items-start justify-between gap-3">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Meta card */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <div className="text-xs text-surface-500">Concept × Exam Pack</div>
-            <div className="text-lg font-medium text-surface-100">
-              {blueprint.concept_id} <span className="text-surface-600">·</span> {blueprint.exam_pack_id}
+            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Concept × Exam Pack</div>
+            <div style={{ fontSize: 17, fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>
+              {blueprint.concept_id} <span style={{ color: 'var(--text-tertiary)' }}>·</span> {blueprint.exam_pack_id}
             </div>
-            <div className="text-xs text-surface-400 mt-1">
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
               Target: {blueprint.decisions.metadata.target_difficulty}
-              {' · created by '}<span className="text-surface-300">{blueprint.created_by}</span>
-              {' · confidence '}<span className="text-surface-300">{blueprint.confidence.toFixed(2)}</span>
+              {' · created by '}<span style={{ color: 'var(--text-primary)' }}>{blueprint.created_by}</span>
+              {' · confidence '}<span style={{ color: 'var(--text-primary)' }}>{blueprint.confidence.toFixed(2)}</span>
             </div>
           </div>
-          <div className="flex flex-col gap-2 items-end">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
             {blueprint.approved_at ? (
-              <span className="inline-flex items-center gap-1 text-emerald-300 text-xs">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--green-ink)', fontSize: 11 }}>
                 <CheckCircle2 size={12} /> Approved
               </span>
             ) : blueprint.requires_review ? (
-              <span className="inline-flex items-center gap-1 text-amber-300 text-xs">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--orange)', fontSize: 11 }}>
                 <AlertCircle size={12} /> Needs review
               </span>
             ) : null}
@@ -293,7 +326,7 @@ function Detail({
               <button
                 onClick={approve}
                 disabled={busy}
-                className="text-xs px-3 py-1 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 disabled:opacity-50"
+                style={{ fontSize: 11, padding: '4px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(52,199,89,.3)', background: 'rgba(52,199,89,.08)', color: 'var(--green-ink)', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.5 : 1 }}
               >
                 Approve
               </button>
@@ -302,30 +335,34 @@ function Detail({
         </div>
       </div>
 
-      <div className="p-4 rounded-xl border border-surface-800 bg-surface-900">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-surface-200">Stages</h3>
+      {/* Stages card */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <h3 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Stages</h3>
           {!editing && (
-            <button onClick={beginEdit} className="text-xs text-violet-300 hover:underline">
+            <button
+              onClick={beginEdit}
+              style={{ fontSize: 11, color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+            >
               Edit JSON
             </button>
           )}
         </div>
         {!editing ? (
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {blueprint.decisions.stages.map((s, i) => (
-              <div key={i} className="p-3 rounded-lg border border-surface-800 bg-surface-950">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase text-violet-300">{s.id}</span>
-                  <span className="text-xs text-surface-200">→ {s.atom_kind}</span>
-                  {s.count !== undefined && <span className="text-[11px] text-surface-500">×{s.count}</span>}
+              <div key={i} style={{ padding: 12, borderRadius: 'var(--radius-sm)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--indigo-ink)' }}>{s.id}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>→ {s.atom_kind}</span>
+                  {s.count !== undefined && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>×{s.count}</span>}
                 </div>
-                <div className="text-[11px] text-surface-400 mt-1">
-                  Why: <code className="text-surface-300">{s.rationale_id}</code>
-                  {s.rationale_note && <span className="text-surface-500"> — {s.rationale_note}</span>}
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Why: <code style={{ color: 'var(--text-secondary)' }}>{s.rationale_id}</code>
+                  {s.rationale_note && <span style={{ color: 'var(--text-tertiary)' }}> — {s.rationale_note}</span>}
                 </div>
                 {s.difficulty_mix && (
-                  <div className="text-[11px] text-surface-500 mt-1">
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
                     Mix: easy {s.difficulty_mix.easy}% · med {s.difficulty_mix.medium}% · hard {s.difficulty_mix.hard}%
                   </div>
                 )}
@@ -338,33 +375,37 @@ function Detail({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               rows={20}
-              className="w-full font-mono text-[11px] p-3 rounded bg-surface-950 border border-surface-700 text-surface-200"
+              style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 11, padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
             />
-            <div className="flex justify-end gap-2 mt-2">
-              <button onClick={() => setEditing('')} className="text-xs text-surface-400 hover:text-surface-200">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => setEditing('')}
+                style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
                 Cancel
               </button>
               <button
                 onClick={save}
                 disabled={busy}
-                className="text-xs px-3 py-1 rounded bg-violet-500 text-white disabled:opacity-50"
+                style={{ fontSize: 11, padding: '4px 12px', borderRadius: 'var(--radius-sm)', border: 'none', background: busy ? 'var(--surface-fill)' : 'var(--indigo)', color: busy ? 'var(--text-tertiary)' : '#fff', cursor: busy ? 'not-allowed' : 'pointer' }}
               >
                 {busy ? 'Saving…' : 'Save'}
               </button>
             </div>
           </>
         )}
-        {err && <div className="mt-2 text-xs text-rose-400">{err}</div>}
+        {err && <div style={{ marginTop: 8, fontSize: 11, color: 'var(--red)' }}>{err}</div>}
       </div>
 
-      <div className="p-4 rounded-xl border border-surface-800 bg-surface-900">
-        <h3 className="text-sm font-medium text-surface-200 mb-3">Constraints</h3>
-        <ul className="space-y-1 text-xs text-surface-300">
+      {/* Constraints card */}
+      <div style={cardStyle}>
+        <h3 style={{ margin: '0 0 12px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Constraints</h3>
+        <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {blueprint.decisions.constraints.map((c, i) => (
-            <li key={i} className="flex items-center gap-2">
-              <span className="inline-block w-1 h-1 rounded-full bg-violet-400" />
+            <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)' }}>
+              <span style={{ display: 'inline-block', width: 4, height: 4, borderRadius: '50%', background: 'var(--indigo)', flexShrink: 0 }} />
               <code>{c.id}</code>
-              <span className="text-surface-500">({c.source})</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>({c.source})</span>
             </li>
           ))}
         </ul>

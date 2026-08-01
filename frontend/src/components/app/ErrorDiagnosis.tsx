@@ -1,13 +1,12 @@
 /**
- * ErrorDiagnosis — GBrain error analysis display.
- * Shows error type, why the misconception is tempting, why it's wrong,
- * and a corrective problem. Appears after a wrong answer.
+ * ErrorDiagnosis — GBrain error analysis displayed after a wrong answer.
+ * Shows error type, why the misconception was tempting, why it's wrong,
+ * corrective hint, and an optional corrective problem.
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, Brain, ChevronDown, ChevronUp, Lightbulb, Target, GitBranch } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface CorrectionProblem {
   question: string;
@@ -39,14 +38,14 @@ interface ErrorDiagnosisProps {
   consecutiveFailures?: number;
 }
 
-const ERROR_TYPE_CONFIG: Record<string, { label: string; color: string; icon: typeof Brain; tip: string }> = {
-  conceptual:          { label: 'Conceptual Gap',      color: 'text-red-400',    icon: Brain,         tip: 'The underlying concept needs review' },
-  procedural:          { label: 'Wrong Procedure',     color: 'text-amber-400',  icon: GitBranch,     tip: 'Right concept, wrong method applied' },
-  notation:            { label: 'Notation Confusion',  color: 'text-violet-400',    icon: AlertTriangle, tip: 'Mathematical notation was misread' },
-  misread:             { label: 'Question Misread',    color: 'text-purple-400', icon: AlertTriangle, tip: 'The question was misinterpreted' },
-  time_pressure:       { label: 'Rushed Error',        color: 'text-amber-400',  icon: Target,        tip: 'You knew the method but went too fast' },
-  arithmetic:          { label: 'Calculation Error',   color: 'text-emerald-400',icon: Target,        tip: 'Right approach, arithmetic slip' },
-  overconfidence_skip: { label: 'Skipped Steps',       color: 'text-amber-400',  icon: Lightbulb,     tip: 'Important steps were skipped' },
+const ERROR_TYPE_CONFIG: Record<string, { label: string; color: string; icon: typeof Brain }> = {
+  conceptual:          { label: 'Conceptual Gap',     color: 'var(--red)',        icon: Brain },
+  procedural:          { label: 'Wrong Procedure',    color: 'var(--orange)',     icon: GitBranch },
+  notation:            { label: 'Notation Confusion', color: 'var(--indigo-ink)', icon: AlertTriangle },
+  misread:             { label: 'Question Misread',   color: 'var(--indigo-ink)', icon: AlertTriangle },
+  time_pressure:       { label: 'Rushed Error',       color: 'var(--orange)',     icon: Target },
+  arithmetic:          { label: 'Calculation Error',  color: 'var(--green-ink)',  icon: Target },
+  overconfidence_skip: { label: 'Skipped Steps',      color: 'var(--orange)',     icon: Lightbulb },
 };
 
 export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState, consecutiveFailures }: ErrorDiagnosisProps) {
@@ -59,26 +58,57 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 25 }}
-      className="rounded-xl border border-surface-800 overflow-hidden"
+      style={{
+        borderRadius: 'var(--radius-md)',
+        border: 'var(--hairline) solid var(--separator)',
+        background: 'var(--surface-card)',
+        overflow: 'hidden',
+      }}
     >
-      {/* Header — Error Type Badge */}
+      {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-4 py-3 bg-surface-900/80 hover:bg-surface-800/80 transition-colors cursor-pointer"
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '14px 16px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-sans)',
+          textAlign: 'left',
+        }}
       >
-        <div className={clsx('p-1.5 rounded-lg bg-surface-800', config.color)}>
+        <div style={{
+          width: 28,
+          height: 28,
+          borderRadius: 'var(--radius-xs)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--surface-fill)',
+          flexShrink: 0,
+          color: config.color,
+        }}>
           <Icon size={14} />
         </div>
-        <div className="flex-1 text-left">
-          <span className={clsx('text-xs font-semibold uppercase tracking-wide', config.color)}>
+        <div style={{ flex: 1, textAlign: 'left' }}>
+          <span style={{ fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: config.color }}>
             {config.label}
           </span>
-          <p className="text-sm text-surface-300 mt-0.5">{diagnosis.diagnosis}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)' }}>
+            {diagnosis.diagnosis}
+          </p>
         </div>
-        {expanded ? <ChevronUp size={14} className="text-surface-500" /> : <ChevronDown size={14} className="text-surface-500" />}
+        {expanded
+          ? <ChevronUp size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+          : <ChevronDown size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+        }
       </button>
 
       <AnimatePresence>
@@ -87,57 +117,77 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
+            transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+            style={{ overflow: 'hidden' }}
           >
-            <div className="px-4 pb-4 space-y-3">
-              {/* Why Tempting */}
+            <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Why tempting */}
               {diagnosis.why_tempting && (
-                <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/15">
-                  <p className="text-xs font-semibold text-amber-400 mb-1">Why your approach seemed right</p>
-                  <p className="text-sm text-surface-300 leading-relaxed">{diagnosis.why_tempting}</p>
+                <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.18)' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Why your approach seemed right
+                  </p>
+                  <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+                    {diagnosis.why_tempting}
+                  </p>
                 </div>
               )}
 
-              {/* Why Wrong */}
+              {/* Why wrong */}
               {diagnosis.why_wrong && (
-                <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/15">
-                  <p className="text-xs font-semibold text-red-400 mb-1">The specific flaw</p>
-                  <p className="text-sm text-surface-300 leading-relaxed">{diagnosis.why_wrong}</p>
+                <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,59,48,.05)', border: '1px solid rgba(255,59,48,.15)' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', color: 'var(--red)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    The specific flaw
+                  </p>
+                  <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+                    {diagnosis.why_wrong}
+                  </p>
                 </div>
               )}
 
-              {/* Corrective Hint */}
-              <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
-                <p className="text-xs font-semibold text-emerald-400 mb-1">
-                  <Lightbulb size={12} className="inline mr-1" />
+              {/* Corrective hint */}
+              <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.18)' }}>
+                <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', color: 'var(--green-ink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <Lightbulb size={10} style={{ display: 'inline', marginRight: 4 }} />
                   How to fix this
                 </p>
-                <p className="text-sm text-surface-300 leading-relaxed">{diagnosis.corrective_hint}</p>
+                <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+                  {diagnosis.corrective_hint}
+                </p>
               </div>
 
-              {/* Prerequisite Alerts */}
+              {/* Prerequisite alerts */}
               {prerequisiteAlerts && prerequisiteAlerts.length > 0 && (
-                <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/15">
-                  <p className="text-xs font-semibold text-purple-400 mb-1">
-                    <GitBranch size={12} className="inline mr-1" />
+                <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <GitBranch size={10} style={{ display: 'inline', marginRight: 4 }} />
                     Foundation gap detected
                   </p>
-                  <p className="text-sm text-surface-300 leading-relaxed">
+                  <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
                     Strengthen first:{' '}
-                    {prerequisiteAlerts[0].shaky_prereqs
-                      .map(p => p.replace(/-/g, ' '))
-                      .join(' → ')}
+                    {prerequisiteAlerts[0].shaky_prereqs.map(p => p.replace(/-/g, ' ')).join(' → ')}
                   </p>
                 </div>
               )}
 
-              {/* Corrective Problem */}
+              {/* Corrective problem */}
               {diagnosis.corrective_problem && (
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <button
                     onClick={() => setShowCorrective(!showCorrective)}
-                    className="flex items-center gap-2 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors cursor-pointer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-sans)',
+                      fontSize: 'var(--text-caption)',
+                      fontWeight: 'var(--weight-semibold)',
+                      color: 'var(--indigo-ink)',
+                      padding: 0,
+                    }}
                   >
                     <Target size={12} />
                     {showCorrective ? 'Hide' : 'Try'} a corrective problem
@@ -150,30 +200,35 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
+                        style={{ overflow: 'hidden' }}
                       >
-                        <div className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/15 space-y-3">
-                          <p className="text-sm text-surface-200 leading-relaxed whitespace-pre-wrap">
+                        <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
                             {diagnosis.corrective_problem.question}
                           </p>
-
                           {!corrAnswerRevealed ? (
                             <button
                               onClick={() => setCorrAnswerRevealed(true)}
-                              className="text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors cursor-pointer"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontFamily: 'var(--font-sans)',
+                                fontSize: 'var(--text-caption)',
+                                fontWeight: 'var(--weight-semibold)',
+                                color: 'var(--indigo-ink)',
+                                padding: 0,
+                                textAlign: 'left',
+                              }}
                             >
                               Reveal answer
                             </button>
                           ) : (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="space-y-2"
-                            >
-                              <p className="text-sm font-semibold text-emerald-300">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <p style={{ margin: 0, fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)', color: 'var(--green-ink)' }}>
                                 Answer: {diagnosis.corrective_problem.answer}
                               </p>
-                              <p className="text-xs text-surface-400 leading-relaxed whitespace-pre-wrap">
+                              <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
                                 {diagnosis.corrective_problem.explanation}
                               </p>
                             </motion.div>
@@ -191,9 +246,9 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/15 text-center"
+                  style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.15)', textAlign: 'center' }}
                 >
-                  <p className="text-sm text-violet-300">
+                  <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--indigo-ink)', lineHeight: 'var(--leading-relaxed)' }}>
                     Struggling is how learning happens. Every expert was once a beginner who didn't quit.
                   </p>
                 </motion.div>

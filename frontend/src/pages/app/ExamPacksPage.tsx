@@ -25,68 +25,68 @@ export default function ExamPacksPage() {
   useEffect(() => {
     if (authLoading || !user || user.role !== 'admin') return;
     listExamPacks().then((packs) => {
-      // Filter out anything that duplicates a canonical id (the canonical
-      // packs are the source of truth for the bundled exams).
       const canonicalIds = new Set(CANONICAL_PACKS.map((p) => p.id));
       setOperatorPacks(packs.filter((p) => !canonicalIds.has(p.id)));
     });
   }, [authLoading, user]);
 
   if (authLoading) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-violet-400" /></div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <Loader2 className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
   }
   if (!user || user.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto mt-20 p-6 rounded-xl border border-surface-800 bg-surface-900 text-center">
-        <Lock size={28} className="mx-auto text-surface-500 mb-3" />
-        <p className="text-surface-200 font-medium mb-1">Admin only</p>
+      <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
+        <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Admin only</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 0' }}>
       <JourneyNudge currentHref="/admin/exam-packs" />
 
-      <header className="mb-6">
-        <div className="flex items-center gap-2 text-violet-400 text-xs uppercase tracking-wider mb-2">
+      <header style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--indigo-ink)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
           <BookOpen size={14} /> Exam packs
         </div>
-        <h1 className="text-2xl font-display font-semibold text-surface-100">
+        <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
           Pick the exam your cohort is preparing for
         </h1>
-        <p className="text-sm text-surface-400 mt-1">
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
           An exam pack defines the syllabus, sections, weights, holdout PYQs, and capability flags
           (e.g. <code>interactives_enabled</code>). Canonical packs ship in the repo; operator-defined
           packs live in the DB.
         </p>
       </header>
 
-      {/* Canonical (YAML-bundled) packs — always present */}
-      <section className="mb-8">
-        <h2 className="text-xs uppercase tracking-wider text-emerald-300 mb-3">Canonical · ships with Vidhya</h2>
-        <div className="space-y-2">
+      <section style={{ marginBottom: 32 }}>
+        <h2 style={{ margin: '0 0 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--green-ink)' }}>Canonical · ships with Vidhya</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {CANONICAL_PACKS.map((p) => <PackRow key={p.id} pack={p} />)}
         </div>
       </section>
 
-      {/* Operator-defined packs (DB) */}
       <section>
-        <h2 className="text-xs uppercase tracking-wider text-violet-300 mb-3">Operator-defined</h2>
+        <h2 style={{ margin: '0 0 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--indigo-ink)' }}>Operator-defined</h2>
         {operatorPacks === null ? (
-          <div className="text-sm text-surface-500">Loading…</div>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Loading…</div>
         ) : operatorPacks.length === 0 ? (
-          <div className="p-4 rounded-xl border border-surface-800 bg-surface-900">
-            <p className="text-sm text-surface-300">
+          <div style={{ padding: 16, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)' }}>
+            <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
               No operator-defined packs yet.
             </p>
-            <p className="text-xs text-surface-500 mt-2">
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
               Most admins start with a canonical pack above. Custom packs are configured via the
               API (<code>POST /api/admin/exam-packs</code>) — a UI for this lands later.
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {operatorPacks.map((p) => <PackRow key={p.id} pack={p} />)}
           </div>
         )}
@@ -95,15 +95,15 @@ export default function ExamPacksPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="mt-8 p-4 rounded-xl border border-violet-500/20 bg-violet-500/5"
+        style={{ marginTop: 32, padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(88,86,214,.22)', background: 'rgba(88,86,214,.05)' }}
       >
-        <p className="text-sm text-surface-200 mb-2">
-          <strong className="text-violet-300">Picked an exam?</strong> Next move: install a starter pack
+        <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+          <strong style={{ color: 'var(--indigo-ink)' }}>Picked an exam?</strong> Next move: install a starter pack
           that bundles cohort rulesets + concept blueprints in one click.
         </p>
         <Link
           to="/admin/rulesets"
-          className="inline-flex items-center gap-1 text-xs text-violet-300 hover:text-violet-200"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--indigo-ink)', textDecoration: 'none' }}
         >
           Go to rulesets <ArrowRight size={11} />
         </Link>
@@ -114,25 +114,25 @@ export default function ExamPacksPage() {
 
 function PackRow({ pack }: { pack: ExamPackRow }) {
   return (
-    <div className="p-3 rounded-xl border border-surface-800 bg-surface-900 flex items-start gap-3">
-      <CheckCircle2 size={18} className="text-emerald-400 shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-surface-100">{pack.name}</span>
-          <code className="text-[11px] text-surface-500">{pack.id}</code>
+    <div style={{ padding: 12, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+      <CheckCircle2 size={18} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 'var(--weight-medium)', fontSize: 'var(--text-caption)', color: 'var(--text-primary)' }}>{pack.name}</span>
+          <code style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{pack.id}</code>
           {pack.interactives_enabled && (
-            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-violet-500/30 bg-violet-500/10 text-violet-300">
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, padding: '2px 6px', borderRadius: 4, border: '1px solid rgba(88,86,214,.22)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)' }}>
               <Settings size={9} /> interactives
             </span>
           )}
           {pack.source === 'yaml' && (
-            <span className="text-[10px] text-surface-500">YAML</span>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>YAML</span>
           )}
           {pack.source === 'operator' && (
-            <span className="text-[10px] text-surface-500">DB</span>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>DB</span>
           )}
           {pack.status === 'archived' && (
-            <span className="text-[10px] text-amber-400">archived</span>
+            <span style={{ fontSize: 10, color: 'var(--orange)' }}>archived</span>
           )}
         </div>
       </div>

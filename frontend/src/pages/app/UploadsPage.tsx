@@ -172,20 +172,17 @@ function UploadZone({ onFileChosen, disabled }: UploadZoneProps) {
           inputRef.current?.click();
         }
       }}
-      className={`
-        rounded-lg border-2 border-dashed p-8 text-center cursor-pointer
-        transition-colors
-        ${disabled ? 'opacity-60 cursor-not-allowed' : ''}
-        ${isDragging
-          ? 'border-violet-500 bg-violet-950/30'
-          : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'}
-      `}
+      className={`rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors${disabled ? ' opacity-60 cursor-not-allowed' : ''}`}
+      style={isDragging
+        ? { background: 'rgba(88,86,214,.08)', borderColor: 'rgba(88,86,214,.6)' }
+        : { background: 'var(--surface-fill)', borderColor: 'var(--separator)' }
+      }
     >
-      <Upload className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-      <p className="text-slate-200 font-medium">
+      <Upload className="w-8 h-8 mx-auto mb-3" style={{ color: 'var(--text-tertiary)' }} />
+      <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
         Drop a file here, or click to select
       </p>
-      <p className="text-xs text-slate-500 mt-2">
+      <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
         Images · PDFs · Text notes · up to 7.5 MB each
       </p>
       <input
@@ -240,20 +237,32 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
   const suggestions = KNOWN_CONCEPT_IDS.filter(id => !conceptTags.includes(id));
 
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-5 space-y-4">
+    <div
+      className="rounded-lg p-5 space-y-4"
+      style={{
+        border: '1px solid var(--separator)',
+        background: 'var(--surface-card)',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-raise)',
+      }}
+    >
       {/* Selected file summary */}
-      <div className="flex items-center gap-3 pb-3 border-b border-slate-700">
-        <FileIcon className="w-5 h-5 text-slate-400" />
+      <div
+        className="flex items-center gap-3 pb-3"
+        style={{ borderBottom: '1px solid var(--separator)' }}
+      >
+        <FileIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--text-tertiary)' }} />
         <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-medium truncate">{file.name}</p>
-          <p className="text-xs text-slate-500">{formatBytes(file.size)}</p>
+          <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{file.name}</p>
+          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatBytes(file.size)}</p>
         </div>
         <button
           type="button"
           onClick={onCancel}
           disabled={submitting}
           aria-label="Cancel upload"
-          className="text-slate-400 hover:text-slate-200 disabled:opacity-40"
+          className="disabled:opacity-40"
+          style={{ color: 'var(--text-tertiary)' }}
         >
           <X className="w-4 h-4" />
         </button>
@@ -261,8 +270,8 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
 
       {/* Note */}
       <div>
-        <label className="block text-sm text-slate-300 mb-1" htmlFor="note-input">
-          Note <span className="text-slate-500">(optional)</span>
+        <label className="block text-sm mb-1" htmlFor="note-input" style={{ color: 'var(--text-secondary)' }}>
+          Note <span style={{ color: 'var(--text-tertiary)' }}>(optional)</span>
         </label>
         <input
           id="note-input"
@@ -271,16 +280,22 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           onChange={e => setNote(e.target.value)}
           disabled={submitting}
           placeholder="e.g. Class notes from Oct 15 on derivatives"
-          className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-violet-600"
+          className="w-full rounded-md px-3 py-2 text-sm focus:outline-none"
+          style={{
+            background: 'var(--surface-fill)',
+            border: '1px solid var(--separator)',
+            color: 'var(--text-primary)',
+            borderRadius: 'var(--radius-sm)',
+          }}
         />
       </div>
 
       {/* Concept tags */}
       <div>
-        <label className="block text-sm text-slate-300 mb-1" htmlFor="tag-input">
-          Concept tags <span className="text-slate-500">(enter or comma to add)</span>
+        <label className="block text-sm mb-1" htmlFor="tag-input" style={{ color: 'var(--text-secondary)' }}>
+          Concept tags <span style={{ color: 'var(--text-tertiary)' }}>(enter or comma to add)</span>
         </label>
-        <p className="text-xs text-slate-500 mb-2">
+        <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>
           Tags help the content router find this upload when you later ask about a topic.
         </p>
 
@@ -290,7 +305,8 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
             {conceptTags.map(t => (
               <span
                 key={t}
-                className="inline-flex items-center gap-1 text-xs bg-slate-700 text-slate-200 px-2 py-1 rounded"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded"
+                style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
               >
                 <Tag className="w-3 h-3" />
                 {t}
@@ -299,7 +315,7 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
                   onClick={() => removeTag(t)}
                   aria-label={`Remove tag ${t}`}
                   disabled={submitting}
-                  className="hover:text-white"
+                  style={{ color: 'var(--text-tertiary)' }}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -317,13 +333,19 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           onBlur={() => tagInput && addTag(tagInput)}
           disabled={submitting}
           placeholder="calculus-derivatives"
-          className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-violet-600"
+          className="w-full rounded-md px-3 py-2 text-sm focus:outline-none"
+          style={{
+            background: 'var(--surface-fill)',
+            border: '1px solid var(--separator)',
+            color: 'var(--text-primary)',
+            borderRadius: 'var(--radius-sm)',
+          }}
         />
 
         {/* Known-concept suggestions */}
         {suggestions.length > 0 && (
           <div className="mt-2">
-            <p className="text-xs text-slate-500 mb-1">Known concepts:</p>
+            <p className="text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>Known concepts:</p>
             <div className="flex flex-wrap gap-1">
               {suggestions.slice(0, 8).map(id => (
                 <button
@@ -331,7 +353,12 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
                   type="button"
                   onClick={() => addTag(id)}
                   disabled={submitting}
-                  className="text-xs bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-2 py-0.5 rounded border border-slate-700"
+                  className="text-xs px-2 py-0.5 rounded"
+                  style={{
+                    background: 'var(--surface-fill)',
+                    color: 'var(--text-tertiary)',
+                    border: '1px solid var(--separator)',
+                  }}
                 >
                   + {id}
                 </button>
@@ -343,7 +370,14 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-2 text-sm text-red-300 bg-red-950/30 border border-red-900/50 rounded-md p-3">
+        <div
+          className="flex items-start gap-2 text-sm rounded-md p-3"
+          style={{
+            color: 'var(--red)',
+            background: 'rgba(255,59,48,.06)',
+            border: '1px solid rgba(255,59,48,.22)',
+          }}
+        >
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -355,7 +389,8 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           type="button"
           onClick={onCancel}
           disabled={submitting}
-          className="text-sm px-3 py-1.5 text-slate-300 hover:text-white disabled:opacity-40"
+          className="text-sm px-3 py-1.5 disabled:opacity-40"
+          style={{ color: 'var(--text-secondary)' }}
         >
           Cancel
         </button>
@@ -363,7 +398,8 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           type="button"
           onClick={() => onSubmit(note, conceptTags)}
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-1.5 rounded-md disabled:opacity-60 disabled:cursor-wait"
+          className="inline-flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-md disabled:opacity-60 disabled:cursor-wait"
+          style={{ background: 'var(--indigo)', color: '#fff' }}
         >
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
           {submitting ? 'Uploading…' : 'Upload'}
@@ -385,10 +421,17 @@ interface UploadsListProps {
 function UploadsList({ uploads, onDelete, deletingId, deleteErrors }: UploadsListProps) {
   if (uploads.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-800 border-dashed bg-slate-800/20 p-8 text-center">
-        <FileIcon className="w-6 h-6 text-slate-500 mx-auto mb-2" />
-        <p className="text-slate-400 text-sm">No uploads yet</p>
-        <p className="text-slate-600 text-xs mt-1">
+      <div
+        className="rounded-lg border border-dashed p-8 text-center"
+        style={{
+          borderColor: 'var(--separator)',
+          background: 'var(--surface-fill)',
+          borderRadius: 'var(--radius-md)',
+        }}
+      >
+        <FileIcon className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--text-tertiary)' }} />
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>No uploads yet</p>
+        <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
           Files you upload here stay private to your account.
         </p>
       </div>
@@ -404,20 +447,26 @@ function UploadsList({ uploads, onDelete, deletingId, deleteErrors }: UploadsLis
         return (
           <li
             key={u.id}
-            className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 flex items-start gap-3"
+            className="rounded-lg p-3 flex items-start gap-3"
+            style={{
+              border: '1px solid var(--separator)',
+              background: 'var(--surface-card)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-raise)',
+            }}
           >
-            <Icon className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
+            <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--text-tertiary)' }} />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-white text-sm font-medium truncate">{u.filename}</span>
-                <span className="text-xs text-slate-500">{formatBytes(u.size_bytes)}</span>
-                <span className="text-xs text-slate-600">·</span>
-                <span className="text-xs text-slate-500">{formatTime(u.uploaded_at)}</span>
+                <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{u.filename}</span>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatBytes(u.size_bytes)}</span>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>·</span>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatTime(u.uploaded_at)}</span>
               </div>
 
               {u.note && (
-                <p className="text-sm text-slate-300 mt-1 line-clamp-2">{u.note}</p>
+                <p className="text-sm mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{u.note}</p>
               )}
 
               {u.concept_tags.length > 0 && (
@@ -425,7 +474,8 @@ function UploadsList({ uploads, onDelete, deletingId, deleteErrors }: UploadsLis
                   {u.concept_tags.map(t => (
                     <span
                       key={t}
-                      className="inline-flex items-center gap-1 text-[11px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded"
+                      className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded"
+                      style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
                     >
                       <Tag className="w-2.5 h-2.5" />
                       {t}
@@ -435,7 +485,7 @@ function UploadsList({ uploads, onDelete, deletingId, deleteErrors }: UploadsLis
               )}
 
               {err && (
-                <p className="text-xs text-red-300 mt-1.5 flex items-center gap-1">
+                <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: 'var(--red)' }}>
                   <AlertCircle className="w-3 h-3" /> {err}
                 </p>
               )}
@@ -446,7 +496,8 @@ function UploadsList({ uploads, onDelete, deletingId, deleteErrors }: UploadsLis
               onClick={() => onDelete(u.id)}
               disabled={isDeleting}
               aria-label={`Delete ${u.filename}`}
-              className="flex-shrink-0 p-1.5 text-slate-500 hover:text-red-400 disabled:opacity-40"
+              className="flex-shrink-0 p-1.5 disabled:opacity-40"
+              style={{ color: 'var(--text-tertiary)' }}
             >
               {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             </button>
@@ -584,19 +635,27 @@ export default function UploadsPage() {
     <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Upload className="w-6 h-6 text-violet-400" />
+        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Upload className="w-6 h-6" style={{ color: 'var(--indigo-ink)' }} />
           Your uploads
         </h1>
-        <p className="text-slate-400 mt-1 text-sm">
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-tertiary)' }}>
           Upload class notes, problem photos, or reference PDFs. The content router
           can find them when you later ask about a tagged topic.
         </p>
       </div>
 
       {/* Privacy banner — constitutional constraint made visible */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3 flex gap-2 items-start text-xs text-slate-400">
-        <Info className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+      <div
+        className="rounded-lg p-3 flex gap-2 items-start text-xs"
+        style={{
+          border: '1px solid var(--separator)',
+          background: 'var(--surface-fill)',
+          color: 'var(--text-tertiary)',
+          borderRadius: 'var(--radius-md)',
+        }}
+      >
+        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--text-tertiary)' }} />
         <div>
           Uploads are private to your account. They never enter cohort analysis, are
           never sent to an LLM or Wolfram without your per-request consent, and are
@@ -617,7 +676,14 @@ export default function UploadsPage() {
         <>
           <UploadZone onFileChosen={handleFileChosen} disabled={submitting} />
           {submitError && !pendingFile && (
-            <div className="flex items-start gap-2 text-sm text-red-300 bg-red-950/30 border border-red-900/50 rounded-md p-3">
+            <div
+              className="flex items-start gap-2 text-sm rounded-md p-3"
+              style={{
+                color: 'var(--red)',
+                background: 'rgba(255,59,48,.06)',
+                border: '1px solid rgba(255,59,48,.22)',
+              }}
+            >
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>{submitError}</span>
             </div>
@@ -627,7 +693,14 @@ export default function UploadsPage() {
 
       {/* Success highlight */}
       {justUploadedId && (
-        <div className="flex items-center gap-2 text-sm text-emerald-300 bg-emerald-950/30 border border-emerald-900/50 rounded-md p-3">
+        <div
+          className="flex items-center gap-2 text-sm rounded-md p-3"
+          style={{
+            color: 'var(--green-ink)',
+            background: 'rgba(52,199,89,.06)',
+            border: '1px solid rgba(52,199,89,.22)',
+          }}
+        >
           <Check className="w-4 h-4" />
           <span>Upload added.</span>
         </div>
@@ -636,19 +709,27 @@ export default function UploadsPage() {
       {/* Uploads list */}
       <section className="space-y-2">
         <header className="flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
             {uploads ? `${uploads.length} upload${uploads.length === 1 ? '' : 's'}` : 'Uploads'}
           </h2>
         </header>
 
         {loadError && (
-          <div className="flex items-start gap-2 text-sm text-red-300 bg-red-950/30 border border-red-900/50 rounded-md p-3">
+          <div
+            className="flex items-start gap-2 text-sm rounded-md p-3"
+            style={{
+              color: 'var(--red)',
+              background: 'rgba(255,59,48,.06)',
+              border: '1px solid rgba(255,59,48,.22)',
+            }}
+          >
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <span>Couldn't load uploads: {loadError}</span>
               <button
                 onClick={refresh}
-                className="ml-2 underline hover:text-red-200"
+                className="ml-2 underline"
+                style={{ color: 'var(--red)' }}
               >
                 Retry
               </button>
@@ -657,7 +738,7 @@ export default function UploadsPage() {
         )}
 
         {uploads === null && !loadError ? (
-          <div className="flex items-center gap-2 text-sm text-slate-400 p-4">
+          <div className="flex items-center gap-2 text-sm p-4" style={{ color: 'var(--text-tertiary)' }}>
             <Loader2 className="w-4 h-4 animate-spin" />
             Loading your uploads…
           </div>

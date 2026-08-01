@@ -24,9 +24,9 @@ import {
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
 const REASON_META: Record<AttentionReason, { label: string; icon: typeof AlertTriangle; color: string }> = {
-  frequent_regen:        { label: 'Frequent regen',        icon: RotateCw,      color: 'text-amber-300' },
-  declining_mastery:     { label: 'Declining mastery',     icon: TrendingDown,  color: 'text-rose-300' },
-  frustrated_or_flagging: { label: 'Frustrated/flagging',  icon: Frown,         color: 'text-orange-300' },
+  frequent_regen:          { label: 'Frequent regen',       icon: RotateCw,     color: 'var(--orange)' },
+  declining_mastery:       { label: 'Declining mastery',    icon: TrendingDown, color: 'var(--red)' },
+  frustrated_or_flagging:  { label: 'Frustrated/flagging',  icon: Frown,        color: 'var(--orange)' },
 };
 
 export default function AdminCohortPage() {
@@ -48,31 +48,35 @@ export default function AdminCohortPage() {
   }, [authLoading, user]);
 
   if (authLoading) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-violet-400" /></div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <Loader2 className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
   }
   if (!user || user.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto mt-20 p-6 rounded-xl border border-surface-800 bg-surface-900 text-center">
-        <Lock size={28} className="mx-auto text-surface-500 mb-3" />
-        <p className="text-surface-200 font-medium mb-1">Admin only</p>
+      <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
+        <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Admin only</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 0' }}>
       <JourneyNudge currentHref="/admin/cohort" />
 
-      <header className="mb-6">
-        <div className="flex items-center justify-between">
+      <header style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div className="flex items-center gap-2 text-violet-400 text-xs uppercase tracking-wider mb-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--indigo-ink)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
               <Users size={14} /> Cohort attention
             </div>
-            <h1 className="text-2xl font-display font-semibold text-surface-100">
+            <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
               Who needs you this week
             </h1>
-            <p className="text-sm text-surface-400 mt-1">
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
               The deliberately small list of students whose data says they're stuck. Healthy students are rolled up — no
               individual call-outs by design.
             </p>
@@ -80,7 +84,7 @@ export default function AdminCohortPage() {
           <button
             onClick={load}
             disabled={refreshing}
-            className="inline-flex items-center gap-1 text-xs text-surface-500 hover:text-surface-300"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: refreshing ? 'not-allowed' : 'pointer', padding: 0 }}
           >
             <RefreshCw size={11} className={refreshing ? 'animate-spin' : ''} /> Refresh
           </button>
@@ -88,25 +92,25 @@ export default function AdminCohortPage() {
       </header>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">{error}</div>
+        <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>{error}</div>
       )}
 
       {data && (
         <>
           {/* Needs attention */}
-          <section className="mb-8">
-            <h2 className="text-xs uppercase tracking-wider text-rose-300 mb-3">Needs attention</h2>
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ margin: '0 0 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--red)' }}>Needs attention</h2>
             {data.needs_attention.length === 0 ? (
-              <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-sm text-emerald-200">
+              <div style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(52,199,89,.22)', background: 'rgba(52,199,89,.06)', fontSize: 'var(--text-caption)', color: 'var(--green-ink)' }}>
                 Nobody needs intervention right now. Quiet weeks are real wins — the system is working.
               </div>
             ) : (
-              <ul className="space-y-2">
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {data.needs_attention.map((card) => (
                   <CohortCard key={card.session_id} card={card} />
                 ))}
                 {data.cap_reached && (
-                  <li className="text-xs text-surface-500 px-3 py-2">
+                  <li style={{ fontSize: 11, color: 'var(--text-tertiary)', padding: '8px 12px' }}>
                     Cap of 10 reached. More students may need attention; address these first, then refresh to see the next batch.
                   </li>
                 )}
@@ -116,19 +120,19 @@ export default function AdminCohortPage() {
 
           {/* On track */}
           <section>
-            <h2 className="text-xs uppercase tracking-wider text-emerald-300 mb-3">On track</h2>
-            <div className="p-4 rounded-xl border border-surface-800 bg-surface-900">
-              <div className="flex items-center gap-2 text-surface-200 text-sm">
-                <TrendingUp size={14} className="text-emerald-400" />
+            <h2 style={{ margin: '0 0 12px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--green-ink)' }}>On track</h2>
+            <div style={{ padding: 16, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 'var(--text-caption)' }}>
+                <TrendingUp size={14} style={{ color: 'var(--green-ink)' }} />
                 <span>
-                  <strong className="text-surface-100">{data.on_track.progressing_normally}</strong> of{' '}
+                  <strong style={{ color: 'var(--text-primary)' }}>{data.on_track.progressing_normally}</strong> of{' '}
                   {data.on_track.total_active_students} students progressing normally
                   {data.on_track.mastered_this_week > 0 && (
-                    <span className="text-emerald-300"> — {data.on_track.mastered_this_week} mastered new ground this week</span>
+                    <span style={{ color: 'var(--green-ink)' }}> — {data.on_track.mastered_this_week} mastered new ground this week</span>
                   )}.
                 </span>
               </div>
-              <p className="text-xs text-surface-500 mt-2">
+              <p style={{ margin: '8px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>
                 No individual call-outs by design. Vidhya refuses to surveil students who are doing fine.
               </p>
             </div>
@@ -144,42 +148,42 @@ function CohortCard({ card }: { card: AttentionCard }) {
     <motion.li
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="p-3 rounded-xl border border-rose-500/25 bg-rose-500/5"
+      style={{ padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,59,48,.2)', background: 'rgba(255,59,48,.04)', listStyle: 'none' }}
     >
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="font-mono text-[11px] text-surface-300">
-          session: <span className="text-surface-200">{card.session_id.slice(0, 18)}…</span>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
+          session: <span style={{ color: 'var(--text-primary)' }}>{card.session_id.slice(0, 18)}…</span>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-surface-400">
-          {card.motivation_state && <span>motivation: <span className="text-surface-300">{card.motivation_state}</span></span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>
+          {card.motivation_state && <span>motivation: <span style={{ color: 'var(--text-secondary)' }}>{card.motivation_state}</span></span>}
           <span>·</span>
-          <span>14d Δ: <span className={card.mastery_trajectory_14d < 0 ? 'text-rose-300' : 'text-emerald-300'}>
+          <span>14d Δ: <span style={{ color: card.mastery_trajectory_14d < 0 ? 'var(--red)' : 'var(--green-ink)' }}>
             {card.mastery_trajectory_14d >= 0 ? '+' : ''}{card.mastery_trajectory_14d.toFixed(2)}
           </span></span>
           {card.recent_regen_count > 0 && (
             <>
               <span>·</span>
-              <span>regens (7d): <span className="text-amber-300">{card.recent_regen_count}</span></span>
+              <span>regens (7d): <span style={{ color: 'var(--orange)' }}>{card.recent_regen_count}</span></span>
             </>
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {card.reasons.map((r) => {
           const meta = REASON_META[r];
           const Icon = meta.icon;
           return (
             <span
               key={r}
-              className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border border-surface-800 bg-surface-900"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, padding: '2px 8px', borderRadius: 4, border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)' }}
             >
-              <Icon size={11} className={meta.color} />
+              <Icon size={11} style={{ color: meta.color }} />
               {meta.label}
             </span>
           );
         })}
-        <span className="ml-auto text-[11px] text-surface-500">
-          Run audit: <code className="text-violet-300">npx tsx src/gbrain/operations/student-audit.ts {card.session_id.slice(0, 8)}…</code>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-tertiary)' }}>
+          Run audit: <code style={{ color: 'var(--indigo-ink)' }}>npx tsx src/gbrain/operations/student-audit.ts {card.session_id.slice(0, 8)}…</code>
         </span>
       </div>
     </motion.li>

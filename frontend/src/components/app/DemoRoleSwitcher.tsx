@@ -48,24 +48,34 @@ export function DemoRoleSwitcher() {
   const handleSelect = (role: DemoRole) => {
     if (role === active) return;
     setActive(role);
-    switchDemoRole(role); // full navigation for student/teacher/admin; SPA nav for parent
+    switchDemoRole(role);
   };
 
   return (
     <div
       role="toolbar"
       aria-label="Demo theater role switcher"
-      className={[
-        'fixed left-1/2 -translate-x-1/2 z-[60]',
-        'flex items-center gap-2 px-3 py-2.5 rounded-2xl',
-        'bg-surface-950 border-2 border-surface-700 shadow-2xl shadow-black/50',
-        'max-w-[calc(100vw-16px)] overflow-x-auto',
-      ].join(' ')}
-      style={{ bottom: 'calc(148px + env(safe-area-inset-bottom, 0px))' }}
+      style={{
+        position: 'fixed',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 60,
+        bottom: 'calc(148px + env(safe-area-inset-bottom, 0px))',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '10px 12px',
+        borderRadius: 16,
+        background: 'var(--surface-card)',
+        border: '2px solid var(--separator)',
+        boxShadow: '0 8px 32px rgba(0,0,0,.12)',
+        maxWidth: 'calc(100vw - 16px)',
+        overflowX: 'auto',
+      }}
     >
-      <div className="flex items-center gap-1.5 pr-2 mr-1 border-r border-surface-800 shrink-0">
-        <Radio size={16} className="text-emerald-400 animate-pulse" aria-hidden="true" />
-        <span className="text-sm font-bold text-surface-200 tracking-wide hidden sm:inline">DEMO</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingRight: 8, marginRight: 4, borderRight: 'var(--hairline) solid var(--separator)', flexShrink: 0 }}>
+        <Radio size={16} className="animate-pulse" style={{ color: 'var(--green-ink)' }} aria-hidden="true" />
+        <span style={{ fontSize: 14, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '0.06em' }}>DEMO</span>
       </div>
 
       {DEMO_ROLES.map((role) => {
@@ -77,13 +87,16 @@ export function DemoRoleSwitcher() {
             type="button"
             onClick={() => handleSelect(role)}
             aria-pressed={isActive}
-            className={[
-              'flex items-center gap-2 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0',
-              'text-base font-semibold transition-colors touch-manipulation',
-              isActive
-                ? 'bg-emerald-500 text-surface-950'
-                : 'bg-surface-900 text-surface-200 border border-surface-700 hover:bg-surface-800',
-            ].join(' ')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 14px', borderRadius: 'var(--radius-md)',
+              whiteSpace: 'nowrap', flexShrink: 0,
+              fontSize: 16, fontWeight: 'var(--weight-semibold)',
+              cursor: 'pointer',
+              background: isActive ? 'var(--green)' : 'var(--surface-fill)',
+              color: isActive ? '#fff' : 'var(--text-secondary)',
+              border: isActive ? 'none' : 'var(--hairline) solid var(--separator)',
+            }}
           >
             <meta.icon size={18} strokeWidth={2.25} aria-hidden="true" />
             {meta.label}
@@ -97,14 +110,16 @@ export function DemoRoleSwitcher() {
         type="button"
         onClick={resetDemoMode}
         title="Reset demo — clears session, back to a clean start"
-        className={[
-          'flex items-center gap-1.5 px-3 py-2 rounded-xl shrink-0',
-          'text-sm font-semibold text-surface-400 border border-surface-800',
-          'hover:text-surface-100 hover:bg-surface-800 transition-colors touch-manipulation',
-        ].join(' ')}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '8px 12px', borderRadius: 'var(--radius-md)',
+          flexShrink: 0, fontSize: 14, fontWeight: 'var(--weight-semibold)',
+          color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)',
+          background: 'var(--surface-fill)', cursor: 'pointer',
+        }}
       >
         <RotateCcw size={16} aria-hidden="true" />
-        <span className="hidden sm:inline">Reset</span>
+        <span>Reset</span>
       </button>
     </div>
   );

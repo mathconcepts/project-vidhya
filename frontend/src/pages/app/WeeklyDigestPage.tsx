@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { CountUp } from '@/components/app/CountUp';
 import { Calendar, Flame, TrendingUp, Target, AlertCircle, Sparkles } from 'lucide-react';
 import { isDemoMode, isSeededRole, getDemoRole } from '@/lib/demoMode';
@@ -48,9 +47,9 @@ export default function WeeklyDigestPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 rounded-xl bg-surface-800/60 animate-pulse" />
+          <div key={i} style={{ height: 96, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} className="animate-pulse" />
         ))}
       </div>
     );
@@ -58,90 +57,116 @@ export default function WeeklyDigestPage() {
 
   if (!digest) {
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16 space-y-4">
-        <Calendar size={48} className="text-surface-700 mx-auto" />
-        <h2 className="text-xl font-bold text-surface-300">Digest unavailable</h2>
-        <p className="text-sm text-surface-500">Come back next week for your progress summary.</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}
+      >
+        <Calendar size={48} style={{ color: 'var(--text-tertiary)' }} />
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)' }}>Digest unavailable</h2>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Come back next week for your progress summary.</p>
       </motion.div>
     );
   }
 
   return (
-    <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
           This Week
-          {/* Parent demo lens (see frontend/src/lib/demoMode.ts) reuses this
-              page directly — the sample-data marker must live here too. */}
           {isDemoMode() && isSeededRole(getDemoRole()) && <SampleDataChip />}
         </h1>
-        <p className="text-xs text-surface-500 mt-1">
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>
           {new Date(digest.generated_at).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
         </p>
       </motion.div>
 
       {/* Opening */}
-      <motion.div variants={fadeInUp} className="p-5 rounded-xl bg-gradient-to-br from-violet-500/10 to-emerald-500/10 border border-violet-500/20">
-        <Sparkles size={20} className="text-violet-400 mb-3" />
-        <p className="text-base text-surface-100 leading-relaxed font-medium">{digest.opening}</p>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: 20, borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.06)', border: '1px solid rgba(88,86,214,.22)' }}
+      >
+        <Sparkles size={20} style={{ color: 'var(--indigo-ink)', marginBottom: 12 }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 1.6, fontWeight: 'var(--weight-medium)' }}>{digest.opening}</p>
       </motion.div>
 
       {/* Stats Grid */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <Target size={14} className="text-violet-400 mx-auto mb-1" />
-          <CountUp target={digest.stats.problems_this_week} className="text-lg font-bold text-surface-200 block" />
-          <p className="text-[10px] text-surface-500">problems solved</p>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
+      >
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+          <Target size={14} style={{ color: 'var(--indigo-ink)', margin: '0 auto 4px' }} />
+          <CountUp target={digest.stats.problems_this_week} style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)', display: 'block' }} />
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>problems solved</p>
         </div>
-        <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <TrendingUp size={14} className="text-emerald-400 mx-auto mb-1" />
-          <CountUp target={digest.stats.accuracy_pct} suffix="%" className="text-lg font-bold text-surface-200 block" />
-          <p className="text-[10px] text-surface-500">accuracy</p>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+          <TrendingUp size={14} style={{ color: 'var(--green-ink)', margin: '0 auto 4px' }} />
+          <CountUp target={digest.stats.accuracy_pct} suffix="%" style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)', display: 'block' }} />
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>accuracy</p>
         </div>
-        <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <Flame size={14} className="text-amber-400 mx-auto mb-1" />
-          <CountUp target={digest.stats.streak_days} suffix="d" className="text-lg font-bold text-surface-200 block" />
-          <p className="text-[10px] text-surface-500">day streak</p>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+          <Flame size={14} style={{ color: 'var(--orange)', margin: '0 auto 4px' }} />
+          <CountUp target={digest.stats.streak_days} suffix="d" style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)', display: 'block' }} />
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>day streak</p>
         </div>
-        <div className="p-3 rounded-xl bg-surface-900 border border-surface-800 text-center">
-          <Sparkles size={14} className="text-purple-400 mx-auto mb-1" />
-          <CountUp target={digest.stats.errors_fixed} className="text-lg font-bold text-surface-200 block" />
-          <p className="text-[10px] text-surface-500">errors fixed</p>
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
+          <Sparkles size={14} style={{ color: 'var(--indigo-ink)', margin: '0 auto 4px' }} />
+          <CountUp target={digest.stats.errors_fixed} style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)', display: 'block' }} />
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>errors fixed</p>
         </div>
       </motion.div>
 
       {/* Growth Proof */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
-        <p className="text-xs font-semibold text-emerald-400 mb-1">Growth Proof</p>
-        <p className="text-sm text-surface-300 leading-relaxed">{digest.growth_proof}</p>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}
+      >
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 'var(--weight-semibold)', color: 'var(--green-ink)' }}>Growth Proof</p>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{digest.growth_proof}</p>
       </motion.div>
 
       {/* Ugly Truth */}
       {digest.ugly_truth && (
-        <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/15">
-          <p className="text-xs font-semibold text-amber-400 mb-1 flex items-center gap-1">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}
+        >
+          <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 'var(--weight-semibold)', color: 'var(--orange)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <AlertCircle size={11} /> The Honest Truth
           </p>
-          <p className="text-sm text-surface-300 leading-relaxed">{digest.ugly_truth}</p>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{digest.ugly_truth}</p>
         </motion.div>
       )}
 
       {/* One Action */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/25">
-        <p className="text-xs font-semibold text-violet-400 mb-1">Your One Action This Week</p>
-        <p className="text-sm text-surface-100 leading-relaxed font-medium">{digest.one_action}</p>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.08)', border: '1px solid rgba(88,86,214,.22)' }}
+      >
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 'var(--weight-semibold)', color: 'var(--indigo-ink)' }}>Your One Action This Week</p>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-primary)', lineHeight: 1.5, fontWeight: 'var(--weight-medium)' }}>{digest.one_action}</p>
       </motion.div>
 
       {/* Predicted Score */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800 text-center">
-        <p className="text-xs text-surface-500 mb-1">On your current trajectory</p>
-        <div className="flex items-baseline justify-center gap-2">
-          <CountUp target={digest.predicted_score.current_trajectory} className="text-3xl font-bold text-surface-100" />
-          <span className="text-sm text-surface-500">marks</span>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}
+      >
+        <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--text-tertiary)' }}>On your current trajectory</p>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8 }}>
+          <CountUp target={digest.predicted_score.current_trajectory} style={{ fontSize: 30, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }} />
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>marks</span>
         </div>
-        <p className="text-[10px] text-surface-600 mt-1">Range: {digest.predicted_score.range}</p>
+        <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--text-tertiary)' }}>Range: {digest.predicted_score.range}</p>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

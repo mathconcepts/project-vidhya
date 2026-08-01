@@ -10,12 +10,10 @@ import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
-  Target, TrendingUp, Brain, AlertTriangle, Lightbulb, Flame, CheckCircle2,
-  BookOpen, Clock, Sparkles, ChevronRight,
+  Target, TrendingUp, Brain, AlertTriangle, Lightbulb, Flame,
+  BookOpen, Clock, Sparkles,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface AuditReport {
   session_id: string;
@@ -58,11 +56,11 @@ interface AuditReport {
   }>;
 }
 
-const READINESS_CONFIG = {
-  'not-ready': { label: 'Foundation Phase', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/25' },
-  'building': { label: 'Building', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/25' },
-  'ready': { label: 'Exam-Ready', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/25' },
-  'confident': { label: 'Peak Form', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25' },
+const READINESS_CONFIG: Record<string, { label: string; color: string; background: string; border: string }> = {
+  'not-ready': { label: 'Foundation Phase', color: 'var(--red)',        background: 'rgba(255,59,48,.06)',   border: '1px solid rgba(255,59,48,.22)' },
+  'building':  { label: 'Building',         color: 'var(--orange)',     background: 'rgba(255,149,0,.06)',   border: '1px solid rgba(255,149,0,.22)' },
+  'ready':     { label: 'Exam-Ready',       color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.05)',   border: '1px solid rgba(88,86,214,.22)' },
+  'confident': { label: 'Peak Form',        color: 'var(--green-ink)',  background: 'rgba(52,199,89,.06)',   border: '1px solid rgba(52,199,89,.22)' },
 };
 
 export default function StudentAuditPage() {
@@ -75,7 +73,7 @@ export default function StudentAuditPage() {
     trackEvent('page_view', { page: 'student-audit' });
     apiFetch<{ report: AuditReport }>(`/api/gbrain/audit/${sessionId}`)
       .then(res => setReport(res.report))
-      .catch(err => setError(err.message))
+      .catch(err => setError((err as Error).message))
       .finally(() => setLoading(false));
   }, [sessionId]);
 
@@ -93,9 +91,9 @@ export default function StudentAuditPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-24 rounded-xl bg-surface-800/60 animate-pulse" />
+          <div key={i} className="animate-pulse" style={{ height: 96, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} />
         ))}
       </div>
     );
@@ -103,10 +101,14 @@ export default function StudentAuditPage() {
 
   if (error || !report) {
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16 space-y-4">
-        <Brain size={48} className="text-surface-700 mx-auto" />
-        <h2 className="text-xl font-bold text-surface-300">Audit unavailable</h2>
-        <p className="text-sm text-surface-500">{error || 'Not enough data yet. Practice more problems first.'}</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}
+      >
+        <Brain size={48} style={{ color: 'var(--text-tertiary)' }} />
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)' }}>Audit unavailable</h2>
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{error || 'Not enough data yet. Practice more problems first.'}</p>
       </motion.div>
     );
   }
@@ -114,187 +116,195 @@ export default function StudentAuditPage() {
   const readiness = READINESS_CONFIG[report.executive_summary.readiness_level];
 
   return (
-    <motion.div className="space-y-6" initial="hidden" animate="visible" variants={staggerContainer}>
-      <motion.div variants={fadeInUp} className="flex items-start justify-between gap-3">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <h1 className="text-xl font-bold text-surface-100">Your Audit</h1>
-          <p className="text-xs text-surface-500 mt-1">
+          <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Your Audit</h1>
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
             Generated {new Date(report.generated_at).toLocaleDateString()}
           </p>
         </div>
         <button
           onClick={handleExportMarkdown}
-          className="px-3 py-1.5 rounded-lg bg-surface-900 border border-surface-800 text-xs text-surface-400 hover:text-surface-200 hover:border-surface-700 transition-colors cursor-pointer flex items-center gap-1.5"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}
         >
           <BookOpen size={12} /> Export
         </button>
-      </motion.div>
+      </div>
 
       {/* Executive Summary */}
-      <motion.div variants={fadeInUp} className={clsx('p-4 rounded-xl border', readiness.bg, readiness.border)}>
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles size={14} className={readiness.color} />
-          <span className={clsx('text-xs font-semibold uppercase tracking-wide', readiness.color)}>
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: readiness.background, border: readiness.border }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Sparkles size={14} style={{ color: readiness.color }} />
+          <span style={{ fontSize: 11, fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.08em', color: readiness.color }}>
             {readiness.label}
           </span>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-surface-500">Predicted Score</span>
-            <span className={clsx('text-sm font-bold', readiness.color)}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Predicted Score</span>
+            <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', color: readiness.color }}>
               {report.executive_summary.predicted_score_range}
             </span>
           </div>
           <div>
-            <p className="text-xs text-surface-500 mb-0.5">Biggest Risk</p>
-            <p className="text-sm text-surface-300">{report.executive_summary.biggest_risk}</p>
+            <p style={{ margin: '0 0 2px', fontSize: 11, color: 'var(--text-tertiary)' }}>Biggest Risk</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{report.executive_summary.biggest_risk}</p>
           </div>
           <div>
-            <p className="text-xs text-surface-500 mb-0.5">Top Strength</p>
-            <p className="text-sm text-surface-300">{report.executive_summary.top_strength}</p>
+            <p style={{ margin: '0 0 2px', fontSize: 11, color: 'var(--text-tertiary)' }}>Top Strength</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{report.executive_summary.top_strength}</p>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Mastery Heatmap */}
-      <motion.div variants={fadeInUp} className="space-y-2">
-        <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-          <Target size={13} className="text-violet-400" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Target size={13} style={{ color: 'var(--indigo-ink)' }} />
           Mastery Heatmap
         </h2>
-        <div className="space-y-1.5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {report.mastery_heatmap.map(h => {
             const pct = Math.round(h.mastery * 100);
-            let barColor = 'bg-red-500/60';
-            if (pct >= 70) barColor = 'bg-emerald-500/60';
-            else if (pct >= 40) barColor = 'bg-amber-500/60';
-            else if (pct >= 20) barColor = 'bg-orange-500/60';
+            const barColor = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--orange)' : 'var(--red)';
 
             return (
-              <div key={h.topic} className="p-2.5 rounded-lg bg-surface-900 border border-surface-800">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-surface-200 font-medium">{h.label}</span>
-                  <div className="flex items-center gap-2 text-[10px] text-surface-500">
+              <div key={h.topic} style={{ padding: 10, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)' }}>{h.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, color: 'var(--text-tertiary)' }}>
                     <span>{pct}%</span>
-                    <span className="text-emerald-400">+{h.expected_marks_contribution} marks</span>
+                    <span style={{ color: 'var(--green-ink)' }}>+{h.expected_marks_contribution} marks</span>
                   </div>
                 </div>
-                <div className="h-1.5 rounded-full bg-surface-800 overflow-hidden">
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--surface-fill)', overflow: 'hidden' }}>
                   <motion.div
-                    className={clsx('h-full rounded-full', barColor)}
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.6, ease: 'easeOut' }}
+                    style={{ height: '100%', borderRadius: 3, background: barColor }}
                   />
                 </div>
               </div>
             );
           })}
         </div>
-      </motion.div>
+      </div>
 
       {/* Prerequisite Alerts */}
       {report.prerequisite_alerts.length > 0 && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-            <AlertTriangle size={13} className="text-purple-400" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AlertTriangle size={13} style={{ color: 'var(--orange)' }} />
             Foundation Alerts
           </h2>
           {report.prerequisite_alerts.slice(0, 5).map((a, i) => (
-            <div key={i} className={clsx(
-              'p-3 rounded-lg border',
-              a.severity === 'critical' ? 'bg-red-500/5 border-red-500/20' : 'bg-amber-500/5 border-amber-500/20'
-            )}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className={clsx(
-                  'text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide',
-                  a.severity === 'critical' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
-                )}>
+            <div key={i} style={{
+              padding: 12,
+              borderRadius: 'var(--radius-sm)',
+              background: a.severity === 'critical' ? 'rgba(255,59,48,.05)' : 'rgba(255,149,0,.05)',
+              border: a.severity === 'critical' ? '1px solid rgba(255,59,48,.20)' : '1px solid rgba(255,149,0,.20)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{
+                  fontSize: 10,
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  fontWeight: 'var(--weight-semibold)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  background: a.severity === 'critical' ? 'rgba(255,59,48,.15)' : 'rgba(255,149,0,.15)',
+                  color: a.severity === 'critical' ? 'var(--red)' : 'var(--orange)',
+                }}>
                   {a.severity}
                 </span>
-                <span className="text-sm text-surface-200 font-medium">
+                <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)' }}>
                   {a.concept.replace(/-/g, ' ')}
                 </span>
               </div>
-              <p className="text-xs text-surface-400">
+              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>
                 Fix order: {a.fix_order.slice(0, 3).map(c => c.replace(/-/g, ' ')).join(' → ')}
               </p>
             </div>
           ))}
-        </motion.div>
+        </div>
       )}
 
       {/* Cognitive Profile */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-        <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5 mb-2">
-          <Brain size={13} className="text-violet-400" />
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+        <h2 style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Brain size={13} style={{ color: 'var(--indigo-ink)' }} />
           How You Think
         </h2>
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="text-center p-2 rounded-lg bg-surface-800">
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide">Style</p>
-            <p className="text-sm text-surface-200 font-medium capitalize">{report.cognitive_profile.representation_mode}</p>
-          </div>
-          <div className="text-center p-2 rounded-lg bg-surface-800">
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide">Abstract</p>
-            <p className="text-sm text-surface-200 font-medium">{Math.round(report.cognitive_profile.abstraction_comfort * 100)}%</p>
-          </div>
-          <div className="text-center p-2 rounded-lg bg-surface-800">
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide">Memory</p>
-            <p className="text-sm text-surface-200 font-medium">{report.cognitive_profile.working_memory_est} steps</p>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+          {[
+            { label: 'Style', value: report.cognitive_profile.representation_mode },
+            { label: 'Abstract', value: `${Math.round(report.cognitive_profile.abstraction_comfort * 100)}%` },
+            { label: 'Memory', value: `${report.cognitive_profile.working_memory_est} steps` },
+          ].map(({ label, value }) => (
+            <div key={label} style={{ textAlign: 'center', padding: 8, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)' }}>
+              <p style={{ margin: '0 0 2px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
+              <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)', textTransform: 'capitalize' }}>{value}</p>
+            </div>
+          ))}
         </div>
-        <p className="text-xs text-surface-400 leading-relaxed">{report.cognitive_profile.narrative}</p>
-      </motion.div>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{report.cognitive_profile.narrative}</p>
+      </div>
 
       {/* Motivation */}
-      <motion.div variants={fadeInUp} className="p-4 rounded-xl bg-surface-900 border border-surface-800">
-        <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5 mb-2">
-          <Flame size={13} className="text-amber-400" />
+      <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+        <h2 style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Flame size={13} style={{ color: 'var(--orange)' }} />
           Motivation
         </h2>
-        <p className="text-xs text-surface-400 leading-relaxed">{report.motivation_trajectory.narrative}</p>
-      </motion.div>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{report.motivation_trajectory.narrative}</p>
+      </div>
 
       {/* Strategic Recommendations */}
       {report.strategic_recommendations.length > 0 && (
-        <motion.div variants={fadeInUp} className="space-y-2">
-          <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-            <Lightbulb size={13} className="text-emerald-400" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Lightbulb size={13} style={{ color: 'var(--green-ink)' }} />
             Strategic Recommendations
           </h2>
           {report.strategic_recommendations.map((rec, i) => (
-            <div key={i} className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
-              <p className="text-sm text-surface-300 leading-relaxed">{rec}</p>
+            <div key={i} style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.15)' }}>
+              <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{rec}</p>
             </div>
           ))}
-        </motion.div>
+        </div>
       )}
 
       {/* Action Plan */}
-      <motion.div variants={fadeInUp} className="space-y-2">
-        <h2 className="text-sm font-semibold text-surface-300 flex items-center gap-1.5">
-          <TrendingUp size={13} className="text-violet-400" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h2 style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <TrendingUp size={13} style={{ color: 'var(--indigo-ink)' }} />
           Next 3 Sessions
         </h2>
         {report.action_plan.map(s => (
-          <div key={s.session} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold bg-violet-500/15 text-violet-400">
+          <div key={s.session} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 20, height: 20, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 'var(--weight-bold)', background: 'rgba(88,86,214,.12)', color: 'var(--indigo-ink)' }}>
                   {s.session}
                 </span>
-                <span className="text-sm font-medium text-surface-200">{s.focus}</span>
+                <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>{s.focus}</span>
               </div>
-              <span className="text-[10px] text-surface-500 flex items-center gap-1">
+              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Clock size={9} />
                 {s.duration_minutes}m
               </span>
             </div>
-            <p className="text-xs text-surface-400 leading-relaxed">{s.rationale}</p>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{s.rationale}</p>
           </div>
         ))}
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

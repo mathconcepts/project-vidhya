@@ -11,12 +11,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import {
   Upload, FileText, Image as ImageIcon, FileCode, Trash2, Loader2,
   CheckCircle2, AlertCircle, Shield, Sparkles, BookOpen,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import {
   ingestMaterial,
 } from '@/lib/gbrain/materials';
@@ -39,13 +37,13 @@ const TYPE_ICONS: Record<Material['type'], typeof FileText> = {
   'image-work': ImageIcon,
 };
 
-const TYPE_COLORS: Record<Material['type'], string> = {
-  pdf: 'text-red-400 bg-red-500/10',
-  docx: 'text-violet-400 bg-violet-500/10',
-  md: 'text-purple-400 bg-purple-500/10',
-  txt: 'text-surface-400 bg-surface-800',
-  'image-notes': 'text-emerald-400 bg-emerald-500/10',
-  'image-work': 'text-amber-400 bg-amber-500/10',
+const TYPE_STYLES: Record<Material['type'], { iconColor: string; bg: string }> = {
+  pdf: { iconColor: 'var(--red)', bg: 'rgba(255,59,48,.08)' },
+  docx: { iconColor: 'var(--indigo-ink)', bg: 'rgba(88,86,214,.08)' },
+  md: { iconColor: 'var(--indigo-ink)', bg: 'rgba(88,86,214,.08)' },
+  txt: { iconColor: 'var(--text-tertiary)', bg: 'var(--surface-fill)' },
+  'image-notes': { iconColor: 'var(--green-ink)', bg: 'rgba(52,199,89,.08)' },
+  'image-work': { iconColor: 'var(--orange)', bg: 'rgba(255,149,0,.08)' },
 };
 
 function formatBytes(bytes: number): string {
@@ -74,7 +72,6 @@ export default function MaterialsPage() {
       const all = await getAllMaterials();
       all.sort((a, b) => (b.uploaded_at > a.uploaded_at ? 1 : -1));
       setMaterials(all);
-      // Load chunk counts for each
       const counts: Record<string, number> = {};
       for (const m of all) {
         const chunks = await getChunksForMaterial(m.id);
@@ -91,7 +88,6 @@ export default function MaterialsPage() {
   useEffect(() => {
     trackEvent('page_view', { page: 'materials' });
     loadMaterials();
-    // Warm up the embedder in the background
     warmupEmbedder().catch(() => {});
   }, [loadMaterials]);
 
@@ -126,56 +122,58 @@ export default function MaterialsPage() {
   };
 
   return (
-    <motion.div className="space-y-5" initial="hidden" animate="visible" variants={staggerContainer}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-xl font-bold text-surface-100 flex items-center gap-2">
-          <BookOpen size={20} className="text-emerald-400" />
+      <div>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <BookOpen size={20} style={{ color: 'var(--green-ink)' }} />
           Your Materials
         </h1>
-        <p className="text-xs text-surface-500 mt-1">
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>
           Upload notes, textbooks, handwritten work. GBrain learns from them.
         </p>
-      </motion.div>
+      </div>
 
       {/* Privacy banner */}
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-start gap-2">
-        <Shield size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-        <div className="text-xs text-surface-400 leading-relaxed">
-          <span className="text-emerald-400 font-semibold">Privacy-first.</span>{' '}
+      <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <Shield size={14} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
+        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 'var(--leading-relaxed)' }}>
+          <span style={{ color: 'var(--green-ink)', fontWeight: 'var(--weight-semibold)' }}>Privacy-first.</span>{' '}
           Files are parsed and embedded entirely in your browser. Only handwritten
           images briefly touch the server for OCR. Your materials never leave your device.
         </div>
-      </motion.div>
+      </div>
 
       {/* Upload drop zone */}
-      <motion.div
-        variants={fadeInUp}
+      <div
         onDragOver={e => { e.preventDefault(); setDragActive(true); }}
         onDragLeave={() => setDragActive(false)}
         onDrop={handleDrop}
-        className={clsx(
-          'relative p-6 rounded-xl border-2 border-dashed text-center transition-colors',
-          dragActive ? 'border-emerald-500 bg-emerald-500/5' : 'border-surface-700 bg-surface-900',
-          uploading && 'pointer-events-none opacity-60',
-        )}
+        style={{
+          position: 'relative', padding: 24, borderRadius: 'var(--radius-md)', textAlign: 'center',
+          border: `2px dashed ${dragActive ? 'var(--green)' : 'var(--separator)'}`,
+          background: dragActive ? 'rgba(52,199,89,.04)' : 'var(--surface-card)',
+          transition: 'border-color 0.15s, background 0.15s',
+          pointerEvents: uploading ? 'none' : 'auto',
+          opacity: uploading ? 0.6 : 1,
+        }}
       >
         <input
           ref={inputRef}
           type="file"
           accept={ACCEPTED}
           onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
-          className="hidden"
+          style={{ display: 'none' }}
         />
 
         {uploading ? (
-          <div className="space-y-2">
-            <Loader2 className="animate-spin text-emerald-400 mx-auto" size={24} />
-            <p className="text-sm font-medium text-surface-200 truncate">{uploading.filename}</p>
-            <p className="text-[10px] text-surface-500 uppercase tracking-wide">{uploading.stage}</p>
-            <div className="max-w-xs mx-auto h-1.5 rounded-full bg-surface-800 overflow-hidden">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <Loader2 style={{ color: 'var(--green-ink)' }} size={24} className="animate-spin" />
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 280 }}>{uploading.filename}</p>
+            <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{uploading.stage}</p>
+            <div style={{ maxWidth: 280, width: '100%', height: 6, borderRadius: 999, background: 'var(--surface-fill)', overflow: 'hidden' }}>
               <motion.div
-                className="h-full bg-emerald-500 rounded-full"
+                style={{ height: '100%', background: 'var(--green)', borderRadius: 999 }}
                 animate={{ width: `${Math.round(uploading.pct * 100)}%` }}
                 transition={{ duration: 0.3 }}
               />
@@ -183,55 +181,55 @@ export default function MaterialsPage() {
           </div>
         ) : (
           <>
-            <Upload size={28} className="text-surface-500 mx-auto mb-2" />
-            <p className="text-sm font-medium text-surface-200 mb-1">
+            <Upload size={28} style={{ color: 'var(--text-tertiary)', margin: '0 auto 8px' }} />
+            <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>
               Drop a file here or{' '}
-              <button onClick={() => inputRef.current?.click()} className="text-emerald-400 underline">browse</button>
+              <button onClick={() => inputRef.current?.click()} style={{ color: 'var(--green-ink)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: 'inherit' }}>browse</button>
             </p>
-            <p className="text-[10px] text-surface-500">
+            <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>
               PDF, DOCX, Markdown, TXT, or images (up to ~50 MB)
             </p>
           </>
         )}
-      </motion.div>
+      </div>
 
       {error && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2">
-          <AlertCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-red-300">{error}</p>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <AlertCircle size={14} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--red)' }}>{error}</p>
         </motion.div>
       )}
 
       {/* Grounding indicator */}
       {materials.length > 0 && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/15 flex items-center gap-2">
-          <Sparkles size={14} className="text-violet-400 shrink-0" />
-          <p className="text-xs text-surface-300">
-            <span className="font-semibold text-violet-300">{materials.length}</span> material{materials.length === 1 ? '' : 's'} ·{' '}
-            <span className="font-semibold text-violet-300">
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.22)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Sparkles size={14} style={{ color: 'var(--indigo-ink)', flexShrink: 0 }} />
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>
+            <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--indigo-ink)' }}>{materials.length}</span> material{materials.length === 1 ? '' : 's'} ·{' '}
+            <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--indigo-ink)' }}>
               {Object.values(chunkCounts).reduce((a, b) => a + b, 0)}
             </span>{' '}
             chunks ready for chat grounding
           </p>
-        </motion.div>
+        </div>
       )}
 
       {/* Materials list */}
       {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 rounded-xl bg-surface-800/60 animate-pulse" />)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {Array.from({ length: 3 }).map((_, i) => <div key={i} style={{ height: 64, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} className="animate-pulse" />)}
         </div>
       ) : materials.length === 0 ? (
-        <motion.div variants={fadeInUp} className="text-center py-8 space-y-2">
-          <BookOpen size={32} className="text-surface-700 mx-auto" />
-          <p className="text-sm text-surface-500">No materials yet. Upload your first file above.</p>
-        </motion.div>
+        <div style={{ textAlign: 'center', padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <BookOpen size={32} style={{ color: 'var(--text-tertiary)' }} />
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>No materials yet. Upload your first file above.</p>
+        </div>
       ) : (
-        <motion.div variants={fadeInUp} className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <AnimatePresence>
             {materials.map(m => {
               const Icon = TYPE_ICONS[m.type];
-              const colorCls = TYPE_COLORS[m.type];
+              const ts = TYPE_STYLES[m.type];
               return (
                 <motion.div
                   key={m.id}
@@ -239,14 +237,14 @@ export default function MaterialsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-surface-900 border border-surface-800"
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}
                 >
-                  <div className={clsx('p-2 rounded-lg shrink-0', colorCls)}>
-                    <Icon size={14} />
+                  <div style={{ padding: 8, borderRadius: 'var(--radius-sm)', flexShrink: 0, background: ts.bg }}>
+                    <Icon size={14} style={{ color: ts.iconColor }} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-surface-200 truncate">{m.filename}</p>
-                    <p className="text-[10px] text-surface-500">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: '0 0 2px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.filename}</p>
+                    <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>
                       {formatBytes(m.size_bytes)}
                       {m.page_count ? ` · ${m.page_count} pages` : ''}
                       {chunkCounts[m.id] !== undefined ? ` · ${chunkCounts[m.id]} chunks` : ''}
@@ -254,10 +252,10 @@ export default function MaterialsPage() {
                       {formatDate(m.uploaded_at)}
                     </p>
                   </div>
-                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  <CheckCircle2 size={14} style={{ color: 'var(--green-ink)', flexShrink: 0 }} />
                   <button
                     onClick={() => handleDelete(m.id)}
-                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-surface-500 hover:text-red-400 transition-colors cursor-pointer"
+                    style={{ padding: 6, borderRadius: 'var(--radius-sm)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}
                     aria-label="Delete material"
                   >
                     <Trash2 size={13} />
@@ -266,20 +264,20 @@ export default function MaterialsPage() {
               );
             })}
           </AnimatePresence>
-        </motion.div>
+        </div>
       )}
 
       {/* Tip */}
       {materials.length > 0 && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-surface-900 border border-surface-800">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide mb-1">Tip</p>
-          <p className="text-xs text-surface-400 leading-relaxed">
+        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tip</p>
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 'var(--leading-relaxed)' }}>
             Ask the tutor about your materials — e.g. "Explain the chain rule example from my notes"
             or "Generate practice problems like the ones in chapter 3". GBrain will automatically
             pull the most relevant chunks.
           </p>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

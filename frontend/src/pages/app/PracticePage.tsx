@@ -1,22 +1,16 @@
 /**
- * PracticePage — Answer a problem with celebration animations.
- *
- * Exam-agnostic: the problem topic + exam name come from the active
- * exam adapter (or the URL params), not hardcoded GATE references.
- *
- * Flow: Read problem → Select answer → Submit → Celebration/Encouragement → Next
+ * PracticePage — Answer a problem with animated feedback.
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { fadeInUp, celebration, tapScale, getRandomMessage } from '@/lib/animations';
+import { getRandomMessage } from '@/lib/animations';
 import { ErrorDiagnosis } from '@/components/app/ErrorDiagnosis';
 import { ChevronLeft, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface Problem {
   id: string;
@@ -40,12 +34,13 @@ interface VerifyResult {
 
 type Phase = 'answering' | 'verifying' | 'result';
 
-// v2.5 (per /plan-ceo-review): students don't learn from watching the AI work.
-// Old code exposed a 3-stage VERIFY_STAGES animation ("Checking knowledge base /
-// Running AI verification / Confirming result") — admin-process spectacle that
-// added latency theater without value. Removed; verifying phase shows a single
-// subtle shimmer for slow verifies (>1.5s) and nothing for fast ones.
 const SLOW_VERIFY_THRESHOLD_MS = 1500;
+
+const DIFF_STYLE: Record<string, { color: string; bg: string }> = {
+  easy:   { color: 'var(--green-ink)', bg: 'rgba(52,199,89,.10)' },
+  medium: { color: 'var(--orange)',    bg: 'rgba(255,149,0,.10)' },
+  hard:   { color: 'var(--red)',       bg: 'rgba(255,59,48,.10)' },
+};
 
 export default function PracticePage() {
   const { problemId } = useParams<{ problemId: string }>();
@@ -54,7 +49,6 @@ export default function PracticePage() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('answering');
-  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [showVerifyShimmer, setShowVerifyShimmer] = useState(false);
   const [message, setMessage] = useState('');
@@ -67,7 +61,6 @@ export default function PracticePage() {
     startTime.current = Date.now();
     setPhase('answering');
     setSelected(null);
-    setVerifyResult(null);
     setErrorDiagnosis(null);
     setShowVerifyShimmer(false);
     setLoading(true);
@@ -80,27 +73,21 @@ export default function PracticePage() {
       .finally(() => setLoading(false));
   }, [problemId]);
 
-  // Fetch next problem in topic
   useEffect(() => {
     if (!problem) return;
     apiFetch<{ problems: { id: string }[] }>(`/api/problems/${problem.topic}`)
       .then(res => {
-        const problems = res.problems || [];
-        const currentIdx = problems.findIndex(p => p.id === problemId);
-        if (currentIdx >= 0 && currentIdx < problems.length - 1) {
-          setNextProblemId(problems[currentIdx + 1].id);
-        } else if (problems.length > 0) {
-          // Wrap around to first problem
-          const other = problems.find(p => p.id !== problemId);
-          setNextProblemId(other?.id || null);
+        const list = res.problems || [];
+        const idx = list.findIndex(p => p.id === problemId);
+        if (idx >= 0 && idx < list.length - 1) {
+          setNextProblemId(list[idx + 1].id);
+        } else {
+          setNextProblemId(list.find(p => p.id !== problemId)?.id || null);
         }
       })
       .catch(() => {});
   }, [problem, problemId]);
 
-  // Show a single subtle shimmer ONLY when verification takes longer than the
-  // SLOW_VERIFY_THRESHOLD_MS budget. Fast verifies show no spinner — instant
-  // result lands as soon as the API resolves.
   useEffect(() => {
     if (phase !== 'verifying') return;
     const t = setTimeout(() => setShowVerifyShimmer(true), SLOW_VERIFY_THRESHOLD_MS);
@@ -123,22 +110,14 @@ export default function PracticePage() {
     const answerText = options[selected] || selected;
 
     try {
-      const result = await apiFetch<VerifyResult>('/api/verify', {
+      await apiFetch<VerifyResult>('/api/verify', {
         method: 'POST',
-        body: JSON.stringify({
-          problem: problem.question_text,
-          answer: answerText,
-          sessionId,
-        }),
+        body: JSON.stringify({ problem: problem.question_text, answer: answerText, sessionId }),
       });
 
-      setVerifyResult(result);
       setPhase('result');
-
       const isCorrect = selected === problem.correct_answer;
       setMessage(getRandomMessage(isCorrect));
-      if (isCorrect) {
-      }
 
       trackEvent('problem_complete', {
         problemId,
@@ -147,19 +126,16 @@ export default function PracticePage() {
         timeMs: Date.now() - startTime.current,
       });
 
-      // Update spaced repetition
       const quality = isCorrect ? 4 : 1;
       await apiFetch(`/api/sr/${sessionId}`, {
         method: 'POST',
         body: JSON.stringify({ pyqId: problem.id, quality, answer: selected }),
       }).catch(() => {});
 
-      // Update streak on correct
       if (isCorrect) {
         await apiFetch(`/api/streak/${sessionId}`, { method: 'POST' }).catch(() => {});
       }
 
-      // GBrain: Record attempt for cognitive model + error diagnosis
       try {
         const gbrainResult = await apiFetch<any>('/api/gbrain/attempt', {
           method: 'POST',
@@ -168,19 +144,15 @@ export default function PracticePage() {
             problem: problem.question_text,
             studentAnswer: answerText,
             correctAnswer: problem.correct_answer,
-            conceptId: problem.topic, // topic-level for PYQ problems
+            conceptId: problem.topic,
             isCorrect,
             difficulty: problem.difficulty === 'hard' ? 0.8 : problem.difficulty === 'medium' ? 0.5 : 0.3,
             timeTakenMs: Date.now() - startTime.current,
             problemId: problem.id,
           }),
         });
-        if (!isCorrect && gbrainResult?.error_diagnosis) {
-          setErrorDiagnosis(gbrainResult);
-        }
-      } catch {
-        // Non-fatal: GBrain diagnosis is supplemental
-      }
+        if (!isCorrect && gbrainResult?.error_diagnosis) setErrorDiagnosis(gbrainResult);
+      } catch {}
     } catch {
       setPhase('result');
       setMessage('Verification unavailable — check the solution below.');
@@ -189,127 +161,154 @@ export default function PracticePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <Loader2 className="animate-spin text-violet-400" size={32} />
-        <span className="text-sm text-surface-500">Loading problem...</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{ height: 64, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }} />
+        ))}
       </div>
     );
   }
 
   if (!problem) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-center py-12"
-      >
-        <p className="text-surface-500">Problem not found.</p>
-        <Link to="/" className="text-violet-400 text-sm mt-2 inline-block">Back to topics</Link>
-      </motion.div>
+      <div style={{ textAlign: 'center', padding: '48px 0' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-body)', margin: 0 }}>
+          Problem not found.
+        </p>
+        <Link
+          to="/"
+          style={{ color: 'var(--indigo-ink)', fontSize: 'var(--text-footnote)', display: 'inline-block', marginTop: 8, textDecoration: 'none' }}
+        >
+          Back to topics
+        </Link>
+      </div>
     );
   }
 
   const options = typeof problem.options === 'string' ? JSON.parse(problem.options) : problem.options;
   const isCorrect = selected === problem.correct_answer;
   const topicName = problem.topic.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const diffStyle = DIFF_STYLE[problem.difficulty] || { color: 'var(--text-secondary)', bg: 'var(--surface-fill)' };
 
   return (
-    <motion.div
-      className="space-y-5"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Back + Meta */}
-      <div className="flex items-center gap-3">
-        <Link to={`/topic/${problem.topic}`} className="p-2 -ml-2 rounded-lg hover:bg-surface-800 transition-colors">
-          <ChevronLeft size={20} className="text-surface-400" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Link
+          to={`/topic/${problem.topic}`}
+          style={{ display: 'flex', alignItems: 'center', marginLeft: -6, padding: 6, color: 'var(--text-tertiary)', textDecoration: 'none' }}
+        >
+          <ChevronLeft size={20} />
         </Link>
-        <div className="flex-1">
-          <p className="text-xs text-surface-500">{topicName} | {problem.year} | {problem.marks}M</p>
-        </div>
-        <span className={clsx(
-          'text-[10px] font-medium px-2 py-0.5 rounded-full',
-          problem.difficulty === 'hard' ? 'bg-red-500/10 text-red-400' :
-          problem.difficulty === 'medium' ? 'bg-amber-500/10 text-amber-400' :
-          'bg-emerald-500/10 text-emerald-400',
-        )}>
-          {problem.difficulty}
-        </span>
+        <p style={{ flex: 1, margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)' }}>
+          {topicName} | {problem.year} | {problem.marks}M
+        </p>
+        {problem.difficulty && (
+          <span style={{
+            fontSize: 'var(--text-caption2)',
+            fontWeight: 'var(--weight-semibold)',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-capsule)',
+            color: diffStyle.color,
+            background: diffStyle.bg,
+          }}>
+            {problem.difficulty}
+          </span>
+        )}
       </div>
 
-      {/* Question */}
-      <motion.div
-        className="p-4 rounded-xl bg-surface-900 border border-surface-800"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <p className="text-surface-200 leading-relaxed whitespace-pre-wrap">{problem.question_text}</p>
-      </motion.div>
+      {/* Question card */}
+      <div style={{
+        padding: 16,
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--surface-card)',
+        boxShadow: 'var(--shadow-raise)',
+      }}>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
+          {problem.question_text}
+        </p>
+      </div>
 
       {/* Options */}
-      <div className="space-y-2">
-        {Object.entries(options).map(([key, value], index) => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {Object.entries(options).map(([key, value]) => {
           const isThisCorrect = key === problem.correct_answer;
           const isThisSelected = key === selected;
 
-          let borderColor = 'border-surface-800';
-          let bgColor = 'bg-surface-900';
-          let textColor = 'text-surface-300';
+          let bg = 'var(--surface-card)';
+          let border = '1px solid var(--separator)';
+          let textColor = 'var(--text-primary)';
+          let badgeBg = 'var(--surface-fill)';
+          let badgeColor = 'var(--text-secondary)';
 
           if (phase === 'result') {
             if (isThisCorrect) {
-              borderColor = 'border-emerald-500/50';
-              bgColor = 'bg-emerald-500/10';
-              textColor = 'text-emerald-300';
-            } else if (isThisSelected && !isThisCorrect) {
-              borderColor = 'border-red-500/50';
-              bgColor = 'bg-red-500/10';
-              textColor = 'text-red-300';
+              bg = 'rgba(52,199,89,.08)';
+              border = '1.5px solid var(--green)';
+              textColor = 'var(--green-ink)';
+              badgeBg = 'rgba(52,199,89,.18)';
+              badgeColor = 'var(--green-ink)';
+            } else if (isThisSelected) {
+              bg = 'rgba(255,59,48,.06)';
+              border = '1.5px solid var(--red)';
+              textColor = 'var(--red)';
+              badgeBg = 'rgba(255,59,48,.15)';
+              badgeColor = 'var(--red)';
             }
           } else if (isThisSelected) {
-            borderColor = 'border-violet-500/50';
-            bgColor = 'bg-violet-500/10';
-            textColor = 'text-violet-300';
+            bg = 'rgba(88,86,214,.07)';
+            border = '1.5px solid var(--indigo)';
+            badgeBg = 'rgba(88,86,214,.15)';
+            badgeColor = 'var(--indigo-ink)';
           }
 
           return (
             <motion.button
               key={key}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 + index * 0.05 }}
-              whileTap={phase === 'answering' ? tapScale : undefined}
+              whileTap={phase === 'answering' ? { scale: 0.97 } : undefined}
               onClick={() => phase === 'answering' && setSelected(key)}
               disabled={phase !== 'answering'}
-              className={clsx(
-                'w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all duration-200',
-                borderColor, bgColor, textColor,
-                phase === 'answering' && 'hover:border-violet-500/30 hover:bg-surface-800/80',
-              )}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '14px 16px',
+                borderRadius: 'var(--radius-md)',
+                border,
+                background: bg,
+                textAlign: 'left',
+                cursor: phase === 'answering' ? 'pointer' : 'default',
+                fontFamily: 'var(--font-sans)',
+                transition: 'border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)',
+              }}
             >
-              <span className={clsx(
-                'w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0',
-                isThisSelected ? 'bg-violet-500/20 text-violet-300' : 'bg-surface-800 text-surface-400',
-                phase === 'result' && isThisCorrect && 'bg-emerald-500/20 text-emerald-300',
-              )}>
+              <span style={{
+                width: 28,
+                height: 28,
+                borderRadius: 'var(--radius-xs)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 'var(--text-caption)',
+                fontWeight: 'var(--weight-bold)',
+                flexShrink: 0,
+                background: badgeBg,
+                color: badgeColor,
+              }}>
                 {key}
               </span>
-              <span className="text-sm">{value as string}</span>
+              <span style={{ flex: 1, fontSize: 'var(--text-body)', color: textColor }}>
+                {value as string}
+              </span>
               {phase === 'result' && isThisCorrect && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                  className="ml-auto"
-                >
-                  <CheckCircle size={16} className="text-emerald-400" />
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 15 }}>
+                  <CheckCircle size={16} style={{ color: 'var(--green)', flexShrink: 0 }} />
                 </motion.div>
               )}
               {phase === 'result' && isThisSelected && !isThisCorrect && (
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="ml-auto">
-                  <XCircle size={16} className="text-red-400" />
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                  <XCircle size={16} style={{ color: 'var(--red)', flexShrink: 0 }} />
                 </motion.div>
               )}
             </motion.button>
@@ -322,18 +321,25 @@ export default function PracticePage() {
         {phase === 'answering' && (
           <motion.button
             key="submit"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            whileTap={selected ? tapScale : undefined}
+            exit={{ opacity: 0, y: -8 }}
+            whileTap={selected ? { scale: 0.97 } : undefined}
             onClick={handleSubmit}
             disabled={!selected}
-            className={clsx(
-              'w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200',
-              selected
-                ? 'bg-gradient-to-r from-emerald-500 to-violet-500 text-white shadow-lg shadow-emerald-500/25'
-                : 'bg-surface-800 text-surface-500 cursor-not-allowed',
-            )}
+            style={{
+              width: '100%',
+              padding: 14,
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              background: selected ? 'var(--green)' : 'var(--surface-fill)',
+              color: selected ? '#fff' : 'var(--text-tertiary)',
+              fontSize: 'var(--text-body)',
+              fontWeight: 'var(--weight-semibold)',
+              cursor: selected ? 'pointer' : 'not-allowed',
+              fontFamily: 'var(--font-sans)',
+              transition: 'background var(--dur-fast) var(--ease-out)',
+            }}
           >
             Check Answer
           </motion.button>
@@ -345,58 +351,64 @@ export default function PracticePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="flex justify-center py-4"
+            style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}
           >
-            <Loader2 className="animate-spin text-violet-400" size={18} />
+            <Loader2 size={20} className="animate-spin" style={{ color: 'var(--indigo)' }} />
           </motion.div>
         )}
 
         {phase === 'result' && (
           <motion.div
             key="result"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="space-y-4"
+            style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
           >
-            {/* Result Banner — compact single-line */}
-            <motion.div
-              variants={celebration}
-              initial="hidden"
-              animate="visible"
-              className={clsx(
-                'flex items-center gap-2 px-4 py-3 rounded-xl',
-                isCorrect
-                  ? 'bg-emerald-500/10 text-emerald-300'
-                  : 'bg-red-500/10 text-red-300',
-              )}
-            >
-              {isCorrect ? (
-                <CheckCircle size={18} className="text-emerald-400 shrink-0" />
-              ) : (
-                <XCircle size={18} className="text-red-400 shrink-0" />
-              )}
-              <span className="font-semibold text-sm">
+            {/* Result banner */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '14px 16px',
+              borderRadius: 'var(--radius-md)',
+              background: isCorrect ? 'rgba(52,199,89,.10)' : 'rgba(255,59,48,.08)',
+              border: `1px solid ${isCorrect ? 'rgba(52,199,89,.25)' : 'rgba(255,59,48,.20)'}`,
+            }}>
+              {isCorrect
+                ? <CheckCircle size={18} style={{ color: 'var(--green)', flexShrink: 0 }} />
+                : <XCircle size={18} style={{ color: 'var(--red)', flexShrink: 0 }} />
+              }
+              <span style={{
+                fontWeight: 'var(--weight-semibold)',
+                fontSize: 'var(--text-body)',
+                color: isCorrect ? 'var(--green-ink)' : 'var(--red)',
+              }}>
                 {isCorrect ? 'Correct!' : `Answer: ${problem.correct_answer}`}
               </span>
-            </motion.div>
+            </div>
 
             {/* Explanation */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="p-4 rounded-xl bg-surface-900 border border-surface-800"
-            >
-              <h3 className="text-sm font-semibold text-surface-300 mb-2">Solution</h3>
-              <p className="text-sm text-surface-400 leading-relaxed whitespace-pre-wrap">
+            <div style={{
+              padding: 16,
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--surface-card)',
+              boxShadow: 'var(--shadow-raise)',
+            }}>
+              <p style={{ margin: '0 0 8px', fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
+                Solution
+              </p>
+              <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
                 {problem.explanation}
               </p>
-              <p className="text-xs text-surface-500 mt-3 italic">{message}</p>
-            </motion.div>
+              {message && (
+                <p style={{ margin: '10px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                  {message}
+                </p>
+              )}
+            </div>
 
-            {/* GBrain Error Diagnosis — only shown on wrong answers */}
+            {/* GBrain Error Diagnosis — wrong answers only */}
             {!isCorrect && errorDiagnosis?.error_diagnosis && (
               <ErrorDiagnosis
                 diagnosis={errorDiagnosis.error_diagnosis}
@@ -406,39 +418,65 @@ export default function PracticePage() {
               />
             )}
 
-            {/* Next Action */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="space-y-2"
-            >
+            {/* Next action */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {nextProblemId ? (
                 <button
                   onClick={() => navigate(`/practice/${nextProblemId}`)}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-400 transition-colors cursor-pointer touch-manipulation"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    padding: 14,
+                    borderRadius: 'var(--radius-md)',
+                    border: 'none',
+                    background: 'var(--green)',
+                    color: '#fff',
+                    fontSize: 'var(--text-body)',
+                    fontWeight: 'var(--weight-semibold)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                  }}
                 >
-                  Next Problem
-                  <ArrowRight size={16} />
+                  Next Problem <ArrowRight size={16} />
                 </button>
               ) : (
                 <Link
                   to="/"
-                  className="block w-full py-3 rounded-xl text-center text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-400 transition-colors"
+                  style={{
+                    display: 'block',
+                    padding: 14,
+                    borderRadius: 'var(--radius-md)',
+                    textAlign: 'center',
+                    background: 'var(--green)',
+                    color: '#fff',
+                    fontSize: 'var(--text-body)',
+                    fontWeight: 'var(--weight-semibold)',
+                    textDecoration: 'none',
+                  }}
                 >
                   Back to Home
                 </Link>
               )}
               <Link
                 to={`/topic/${problem.topic}`}
-                className="block text-center text-xs text-surface-500 hover:text-surface-400 transition-colors py-1"
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  fontSize: 'var(--text-caption)',
+                  color: 'var(--text-tertiary)',
+                  textDecoration: 'none',
+                  padding: '4px 0',
+                }}
               >
-                All {problem.topic.replace(/-/g, ' ')} problems
+                All {topicName} problems
               </Link>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }

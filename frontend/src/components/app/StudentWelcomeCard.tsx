@@ -57,35 +57,35 @@ export function StudentWelcomeCard({ onDismiss }: Props) {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="relative p-4 rounded-2xl bg-gradient-to-br from-violet-500/8 via-surface-900 to-emerald-500/8 border border-violet-500/20 space-y-3"
+      style={{ position: 'relative', padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: '1px solid rgba(88,86,214,.2)', boxShadow: 'var(--shadow-raise)', display: 'flex', flexDirection: 'column', gap: 12 }}
     >
       <button
         onClick={dismiss}
         aria-label="dismiss welcome"
-        className="absolute top-2 right-2 p-1 rounded-lg text-surface-500 hover:text-surface-300"
+        style={{ position: 'absolute', top: 8, right: 8, padding: 4, borderRadius: 'var(--radius-sm)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         <X size={13} />
       </button>
 
-      <div className="flex items-center gap-2">
-        <Sparkles size={14} className="text-violet-400" />
-        <p className="text-sm font-medium text-surface-100">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Sparkles size={14} style={{ color: 'var(--indigo-ink)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>
           Hi, I'm Vidhya. Here are three things I can do right now.
         </p>
       </div>
 
-      <p className="text-xs text-surface-400 leading-relaxed">
+      <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
         No signup needed. Try any of these — if it clicks, keep going.
       </p>
 
-      <div className="grid gap-2 pt-1">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
         <WelcomeAction
           icon={MessageSquare}
           title="Ask a question"
           description="Type any question from your textbook — get a walkthrough, not just an answer."
           actionLabel="Try chat"
           onClick={() => tryIt('/chat')}
-          tone="violet"
+          accentColor="var(--indigo-ink)"
         />
         <WelcomeAction
           icon={Camera}
@@ -93,7 +93,7 @@ export function StudentWelcomeCard({ onDismiss }: Props) {
           description="Photo of any handwritten or printed math problem. I'll read it and teach the method."
           actionLabel="Try snap"
           onClick={() => tryIt('/snap')}
-          tone="emerald"
+          accentColor="var(--green-ink)"
         />
         <WelcomeAction
           icon={FileUp}
@@ -101,11 +101,11 @@ export function StudentWelcomeCard({ onDismiss }: Props) {
           description="Drop your class PDFs — I'll weave your own notes into every lesson."
           actionLabel="Try materials"
           onClick={() => tryIt('/materials')}
-          tone="amber"
+          accentColor="var(--orange)"
         />
       </div>
 
-      <p className="text-[10px] text-surface-600 text-center pt-1">
+      <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center', paddingTop: 4 }}>
         Your stuff stays on your device. Sign in later if you want cross-device sync.
       </p>
     </motion.div>
@@ -114,36 +114,27 @@ export function StudentWelcomeCard({ onDismiss }: Props) {
 
 // ============================================================================
 
-function WelcomeAction({ icon: Icon, title, description, actionLabel, onClick, tone }: {
+function WelcomeAction({ icon: Icon, title, description, actionLabel, onClick, accentColor }: {
   icon: typeof MessageSquare;
   title: string;
   description: string;
   actionLabel: string;
   onClick: () => void;
-  tone: 'violet' | 'emerald' | 'amber';
+  accentColor: string;
 }) {
-  const toneAccent =
-    tone === 'violet' ? 'text-violet-400'
-    : tone === 'emerald' ? 'text-emerald-400'
-    : 'text-amber-400';
-  const toneBtn =
-    tone === 'violet' ? 'text-violet-300 hover:text-violet-200'
-    : tone === 'emerald' ? 'text-emerald-300 hover:text-emerald-200'
-    : 'text-amber-300 hover:text-amber-200';
-
   return (
     <button
       onClick={onClick}
-      className="w-full p-3 rounded-xl bg-surface-950/60 border border-surface-800 hover:border-surface-700 text-left group transition-colors"
+      style={{ width: '100%', padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', textAlign: 'left', cursor: 'pointer' }}
     >
-      <div className="flex items-start gap-3">
-        <div className={`shrink-0 w-8 h-8 rounded-lg bg-surface-900 flex items-center justify-center`}>
-          <Icon size={14} className={toneAccent} />
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={14} style={{ color: accentColor }} />
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-surface-200">{title}</p>
-          <p className="text-[11px] text-surface-500 leading-relaxed mt-0.5">{description}</p>
-          <p className={`text-[11px] mt-1.5 ${toneBtn} inline-flex items-center gap-1`}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: '0 0 2px', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>{title}</p>
+          <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 'var(--leading-relaxed)' }}>{description}</p>
+          <p style={{ margin: 0, fontSize: 11, color: accentColor, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             {actionLabel} →
           </p>
         </div>

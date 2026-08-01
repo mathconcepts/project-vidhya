@@ -26,7 +26,6 @@ import {
   CheckCircle2, XCircle, Loader2, ArrowLeft, SkipForward,
   Target, AlertTriangle, Compass,
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 
 interface PracticeItem {
@@ -149,24 +148,27 @@ export default function PracticeAttemptPage() {
     item?.question_type === 'mcq' ? selectedIndex === i : selectedIndices.has(i);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <Link to="/planned" className="inline-flex items-center gap-1.5 text-xs text-surface-400 hover:text-surface-200 transition-colors mb-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Link
+        to="/planned"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', textDecoration: 'none' }}
+      >
         <ArrowLeft size={13} /> Back to your plan
       </Link>
 
       {loading && (
-        <div className="flex items-center gap-2 text-surface-400 text-sm py-12 justify-center">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 'var(--text-body)', padding: '48px 0', justifyContent: 'center' }}>
           <Loader2 size={16} className="animate-spin" /> Loading item…
         </div>
       )}
 
       {loadError && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 text-sm text-red-300 flex items-start gap-2">
-          <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+        <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', fontSize: 'var(--text-body)', color: 'var(--red)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
-            <p className="font-semibold">Couldn't load this item</p>
-            <p className="mt-0.5 opacity-80">{loadError}</p>
-            <Link to="/smart-practice" className="mt-2 inline-block text-emerald-400 hover:text-emerald-300">Practice something else →</Link>
+            <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)' }}>Couldn't load this item</p>
+            <p style={{ margin: '4px 0 0', opacity: 0.8 }}>{loadError}</p>
+            <Link to="/smart-practice" style={{ marginTop: 8, display: 'inline-block', color: 'var(--green-ink)', textDecoration: 'none' }}>Practice something else →</Link>
           </div>
         </div>
       )}
@@ -175,42 +177,44 @@ export default function PracticeAttemptPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-surface-900 border border-surface-800 p-5 space-y-4"
+          style={{ borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-surface-400">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>
               <Target size={12} />
               {item.topic ?? item.node_id}
-              {item.question_type && <span className="text-surface-500 normal-case">· {item.question_type.toUpperCase()}</span>}
+              {item.question_type && (
+                <span style={{ color: 'var(--text-tertiary)', textTransform: 'none' }}>· {item.question_type.toUpperCase()}</span>
+              )}
             </div>
             {item.marking && (
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-surface-800 border border-surface-700 text-surface-300">
+              <span style={{ fontSize: 'var(--text-caption2)', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 'var(--radius-xs)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)' }}>
                 correct +{fmt(item.marking.marks_correct)} · wrong {item.marking.marks_wrong === 0 ? '0' : fmt(item.marking.marks_wrong)}
               </span>
             )}
           </div>
 
-          <p className="text-sm text-surface-100 leading-relaxed whitespace-pre-wrap">
+          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
             {item.question_text ?? 'This item has no question text.'}
           </p>
 
           {!item.gradable && (
-            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-xs text-amber-300 flex items-start gap-2">
-              <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+            <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', fontSize: 'var(--text-caption)', color: 'var(--orange)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
-                <p className="font-semibold">Display-only practice</p>
-                <p className="mt-0.5 opacity-80">
+                <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)' }}>Display-only practice</p>
+                <p style={{ margin: '4px 0 0', opacity: 0.8 }}>
                   This item isn't deterministically gradable yet — work it on paper, then
-                  {' '}<Link to="/smart-practice" className="text-emerald-400 hover:text-emerald-300">practice a graded set →</Link>
+                  {' '}<Link to="/smart-practice" style={{ color: 'var(--green-ink)', textDecoration: 'none' }}>practice a graded set →</Link>
                 </p>
               </div>
             </div>
           )}
 
           {item.gradable && item.options && (
-            <div className="space-y-1.5" role={item.question_type === 'mcq' ? 'radiogroup' : 'group'}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }} role={item.question_type === 'mcq' ? 'radiogroup' : 'group'}>
               {item.question_type === 'msq' && (
-                <p className="text-[11px] text-surface-500">Select every correct option — full marks only for the exact set.</p>
+                <p style={{ margin: 0, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>Select every correct option — full marks only for the exact set.</p>
               )}
               {item.options.map((opt, i) => (
                 <button
@@ -219,15 +223,22 @@ export default function PracticeAttemptPage() {
                   onClick={() => toggleIndex(i)}
                   role={item.question_type === 'mcq' ? 'radio' : 'checkbox'}
                   aria-checked={isPicked(i)}
-                  className={clsx(
-                    'w-full text-left p-2.5 rounded-lg border transition-colors text-sm',
-                    isPicked(i)
-                      ? 'bg-surface-700 border-surface-400 text-surface-100'
-                      : 'bg-surface-800 border-surface-700 text-surface-300 hover:border-surface-500',
-                    (result || submitting) && 'opacity-70 cursor-default',
-                  )}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '10px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: `var(--hairline) solid ${isPicked(i) ? 'var(--text-secondary)' : 'var(--separator)'}`,
+                    background: isPicked(i) ? 'var(--surface-fill)' : 'var(--surface-fill)',
+                    color: isPicked(i) ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontSize: 'var(--text-body)',
+                    fontFamily: 'var(--font-sans)',
+                    cursor: result || submitting ? 'default' : 'pointer',
+                    opacity: result || submitting ? 0.7 : 1,
+                    fontWeight: isPicked(i) ? 'var(--weight-medium)' : undefined,
+                  }}
                 >
-                  <span className="font-mono mr-2 font-bold">{String.fromCharCode(65 + i)}.</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', marginRight: 8, fontWeight: 'var(--weight-bold)' }}>{String.fromCharCode(65 + i)}.</span>
                   {opt}
                 </button>
               ))}
@@ -243,16 +254,42 @@ export default function PracticeAttemptPage() {
               disabled={!!result || submitting}
               onChange={e => setNatValue(e.target.value)}
               placeholder="Numeric answer…"
-              className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-200 text-sm focus:outline-none focus:border-emerald-500/50"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--surface-fill)',
+                border: 'var(--hairline) solid var(--separator)',
+                color: 'var(--text-primary)',
+                fontSize: 'var(--text-body)',
+                fontFamily: 'var(--font-sans)',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           )}
 
           {item.gradable && !result && (
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => submit(false)}
                 disabled={!canSubmit}
-                className="flex-1 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                style={{
+                  flex: 1,
+                  padding: '10px 0',
+                  borderRadius: 'var(--radius-sm)',
+                  background: canSubmit ? 'var(--green)' : 'var(--surface-fill)',
+                  color: canSubmit ? '#fff' : 'var(--text-tertiary)',
+                  border: 'none',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 'var(--weight-semibold)',
+                  fontSize: 'var(--text-body)',
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
               >
                 {submitting && <Loader2 size={14} className="animate-spin" />}
                 Submit
@@ -261,7 +298,19 @@ export default function PracticeAttemptPage() {
                 onClick={() => submit(true)}
                 disabled={submitting}
                 title="Skipping earns and costs nothing"
-                className="px-4 py-2.5 rounded-lg bg-surface-800 border border-surface-700 text-surface-400 text-sm hover:text-surface-200 inline-flex items-center gap-1.5"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--surface-fill)',
+                  border: 'var(--hairline) solid var(--separator)',
+                  color: 'var(--text-secondary)',
+                  fontSize: 'var(--text-body)',
+                  fontFamily: 'var(--font-sans)',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
               >
                 <SkipForward size={13} /> Skip
               </button>
@@ -269,44 +318,42 @@ export default function PracticeAttemptPage() {
           )}
 
           {submitError && (
-            <p className="text-xs text-red-400">{submitError} — your answer wasn't lost; try Submit again.</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
+              {submitError} — your answer wasn't lost; try Submit again.
+            </p>
           )}
 
           {result && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div
-                className={clsx(
-                  'p-3 rounded-lg border flex items-start gap-2',
-                  result.grade.correct ? 'bg-emerald-500/10 border-emerald-500/25' : 'bg-red-500/10 border-red-500/25',
-                )}
-              >
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+              <div style={{
+                padding: 12,
+                borderRadius: 'var(--radius-sm)',
+                border: `1px solid ${result.grade.correct ? 'rgba(52,199,89,.25)' : 'rgba(255,59,48,.25)'}`,
+                background: result.grade.correct ? 'rgba(52,199,89,.06)' : 'rgba(255,59,48,.06)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
+              }}>
                 {result.grade.correct
-                  ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
-                  : <XCircle size={15} className="text-red-400 shrink-0 mt-0.5" />}
-                <div className="text-xs text-surface-300 space-y-1 w-full">
+                  ? <CheckCircle2 size={15} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
+                  : <XCircle size={15} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />}
+                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: 4, width: '100%' }}>
                   {/* Server-graded: GateDeterministicScorer computed this on the
                       server from the canonical answer key, which the client
-                      never sees (see file header). That's a real backing
-                      verification, not a client-side string match — earns the
-                      receipt border regardless of `recorded` (recording to the
-                      student model can fail independently of whether the grade
-                      itself is correct). Scoped to ONLY the grade+feedback line:
-                      the "not recorded" caveat and the nav link below are real
-                      but NOT themselves backed by the grading receipt, so they
-                      sit outside the border rather than borrowing its promise. */}
+                      never sees. That's a real backing verification, not a
+                      client-side string match — earns the receipt border. */}
                   <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }}>
-                    <p className="font-semibold">
+                    <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
                       {result.grade.correct ? 'Correct' : 'Not this time'} — {fmt(result.grade.earned)} / {fmt(result.grade.max)} marks
                     </p>
-                    <p className="opacity-80">{result.grade.feedback}</p>
+                    <p style={{ margin: '4px 0 0', opacity: 0.8 }}>{result.grade.feedback}</p>
                   </ReceiptBorder>
                   {!result.recorded && (
-                    <p className="text-amber-400/90 pt-1">Graded, but not recorded to your model (server storage unavailable).</p>
+                    <p style={{ margin: 0, color: 'var(--orange)', paddingTop: 4 }}>
+                      Graded, but not recorded to your model (server storage unavailable).
+                    </p>
                   )}
-                  <Link to="/planned" className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 pt-1">
+                  <Link to="/planned" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--green-ink)', textDecoration: 'none', paddingTop: 4 }}>
                     <Compass size={12} /> What's next for me?
                   </Link>
                 </div>

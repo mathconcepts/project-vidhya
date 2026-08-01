@@ -24,10 +24,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import { DemoBanner } from '@/components/DemoBanner';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { WelcomeBackCard } from '@/components/app/WelcomeBackCard';
 import { NextBestActionCard } from '@/components/app/NextBestActionCard';
 import { trackPageView, trackAction } from '@/lib/beacon';
@@ -41,7 +39,6 @@ import { DigestChip } from '@/components/app/DigestChip';
 import { BridgeRecommendationsCard } from '@/components/app/BridgeRecommendationsCard';
 import { ReviewQueueCard } from '@/components/app/ReviewQueueCard';
 import { useSession } from '@/hooks/useSession';
-import { clsx } from 'clsx';
 
 // ============================================================================
 // Types (mirroring src/session-planner/types.ts)
@@ -115,28 +112,18 @@ const PRESETS: Array<{ minutes: number; label: string; subtitle: string }> = [
 // Action kind → UI meta
 // ============================================================================
 
-// Reduction pass (U1-8): the four action kinds used to carry four different
-// decorative hues (violet/purple/amber/emerald) on the same badge — pure
-// color-coding that didn't map to a user action and burned through the
-// app's whole accent budget on one small label. The icon + label already
-// distinguish the kinds; the badge itself is now a single neutral treatment.
 const KIND_META: Record<ActionKind, { icon: typeof Sparkles; label: string }> = {
-  'practice':      { icon: BookOpen, label: 'Practice' },
-  'review':        { icon: RefreshCw, label: 'Review' },
+  'practice':      { icon: BookOpen,    label: 'Practice' },
+  'review':        { icon: RefreshCw,   label: 'Review' },
   'spaced-review': { icon: AlertCircle, label: 'Spaced review' },
-  'micro-mock':    { icon: Sparkles, label: 'Micro-mock' },
+  'micro-mock':    { icon: Sparkles,    label: 'Micro-mock' },
 };
 
 // ============================================================================
 // Component
 // ============================================================================
 
-// Default exam — the sample UGEE is always available. A more polished
-// UX would let the student pick from their registered exams; this is
-// the v2.31 MVP.
 const DEFAULT_EXAM_ID = 'EXM-UGEE-MATH-SAMPLE';
-// Default exam date — roughly 3 months out. Real deployments pull
-// this from the student's profile.
 const DEFAULT_EXAM_DATE = (() => {
   const d = new Date();
   d.setMonth(d.getMonth() + 3);
@@ -171,16 +158,13 @@ export default function PlannedSessionPage() {
   const [plan, setPlan] = useState<SessionPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPicker, setShowPicker] = useState(false);
 
-  // v2.32: profile + templates
   const [profile, setProfile] = useState<ExamProfile | null>(null);
   const [templates, setTemplates] = useState<PlanTemplate[]>([]);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [savingTemplate, setSavingTemplate] = useState(false);
 
-  // v2.33: trailing stats + preset catalog
   const [trailingStats, setTrailingStats] = useState<{
     trailing_7d_minutes: number; trailing_7d_sessions: number;
   } | null>(null);
@@ -189,20 +173,11 @@ export default function PlannedSessionPage() {
     exam_selection: 'all' | 'primary' | string[]; description: string; adopted: boolean;
   }>>([]);
 
-  // Session tracking — local-only outcomes that get posted together
-  // at completion. Until the user hits "Finish", this state is
-  // ephemeral.
   const [outcomes, setOutcomes] = useState<Record<string, LocalOutcome>>({});
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [rationaleOpen, setRationaleOpen] = useState<Record<string, boolean>>({});
-  // Wave U1: static end-of-session summary. Snapshotted at the moment
-  // completion is confirmed by the server so the numbers on the closure
-  // screen don't silently drift upward if the student lingers on it
-  // (elapsed-minutes would otherwise keep counting from Date.now()).
-  // Only real, already-tracked data lives here — never a fabricated
-  // "marks saved" figure. See SessionSummary comment below.
   const [sessionSummary, setSessionSummary] = useState<{
     doneCount: number;
     totalCount: number;
@@ -212,7 +187,6 @@ export default function PlannedSessionPage() {
     totalCorrect: number;
     tomorrowPriority?: string;
   } | null>(null);
-  // P5: gbrain summary for WelcomeBackCard lapse detection
   const [gbrainSummary, setGbrainSummary] = useState<any>(null);
   const [userMeta, setUserMeta] = useState<{ created_at?: string } | null>(null);
 
@@ -220,7 +194,6 @@ export default function PlannedSessionPage() {
     trackPageView('/planned');
   }, []);
 
-  // Wave U1: fire once when the static end-of-session screen renders.
   useEffect(() => {
     if (completed) trackAction('session_complete', '/planned');
   }, [completed]);
@@ -238,8 +211,6 @@ export default function PlannedSessionPage() {
       .catch(() => { /* fail soft */ });
   }, []);
 
-  // Load profile + templates + trailing stats + presets on mount.
-  // For returning users (has exams + prior sessions), auto-generate a 15-min plan.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -251,7 +222,6 @@ export default function PlannedSessionPage() {
           authFetch('/api/student/session/templates/presets'),
         ]);
         if (cancelled) return;
-        // 401 means stale/missing JWT — clear it and show session-expired state
         if (profResp.status === 401) {
           const { clearToken } = await import('@/lib/auth/client');
           clearToken();
@@ -281,12 +251,9 @@ export default function PlannedSessionPage() {
           setPresets(j.presets || []);
         }
 
-        // Auto-generate for returning users — skip the time picker friction
         const isReturning = loadedProfile && loadedProfile.exams.length > 0
           && loadedTrailing && loadedTrailing.trailing_7d_sessions > 0;
         if (isReturning && !cancelled) {
-          // fetchPlan reads `profile` from state which may not be set yet —
-          // call the API directly with the loaded profile.
           setLoading(true);
           try {
             const hasMultiple = loadedProfile!.exams.length >= 2;
@@ -329,7 +296,6 @@ export default function PlannedSessionPage() {
       const hasMultiple = profile && profile.exams.length >= 2;
       const hasOne = profile && profile.exams.length === 1;
       if (hasMultiple) {
-        // Multi-exam plan when student has ≥2 exams registered
         res = await authFetch('/api/student/session/plan/multi-exam', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -353,7 +319,6 @@ export default function PlannedSessionPage() {
           }),
         });
       } else {
-        // No profile yet — use defaults (student can set this up later)
         res = await authFetch('/api/student/session/plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -365,9 +330,6 @@ export default function PlannedSessionPage() {
         });
       }
       if (res.status === 401) {
-        // authFetch already cleared the stale token; surface the friendly state.
-        // Do NOT route this through the generic "Couldn't generate the plan"
-        // red box — this is auth, not a plan-generation failure.
         setError('session_expired');
         return;
       }
@@ -385,7 +347,6 @@ export default function PlannedSessionPage() {
     }
   }, [minutes, profile]);
 
-  // Recall a saved template
   const useTemplate = useCallback(async (tpl: PlanTemplate) => {
     setLoading(true);
     setError(null);
@@ -405,8 +366,6 @@ export default function PlannedSessionPage() {
       setPlan(j.plan);
       setStartedAtMs(Date.now());
       setMinutes(tpl.minutes_available);
-      // Optimistic: nudge the use_count so templates reorder. Real
-      // value re-syncs on next page load.
       setTemplates(cur => cur.map(t =>
         t.id === tpl.id ? { ...t, use_count: t.use_count + 1 } : t,
       ));
@@ -456,11 +415,6 @@ export default function PlannedSessionPage() {
     }
   }, []);
 
-  /**
-   * Adopt a preset — POST a real template carrying the preset's slug,
-   * then immediately recall it to generate a plan. The saved template
-   * stays for future one-tap use.
-   */
   const adoptPreset = useCallback(async (preset: typeof presets[number]) => {
     setLoading(true);
     setError(null);
@@ -479,7 +433,6 @@ export default function PlannedSessionPage() {
       const tpl: PlanTemplate = await res.json();
       setTemplates(cur => [tpl, ...cur]);
       setPresets(cur => cur.map(p => p.slug === preset.slug ? { ...p, adopted: true } : p));
-      // Immediately recall so the student sees a plan
       await useTemplate(tpl);
     } catch (err: any) {
       setError(err.message || 'Preset adoption failed');
@@ -488,9 +441,6 @@ export default function PlannedSessionPage() {
   }, [useTemplate]);
 
   const startAction = useCallback((action: ActionRecommendation) => {
-    // Route the user into the existing practice flow with the topic +
-    // difficulty pre-selected via query string. The SmartPracticePage
-    // already handles this signal format.
     const params = new URLSearchParams({
       topic: action.content_hint.topic,
       difficulty: action.content_hint.difficulty,
@@ -547,9 +497,6 @@ export default function PlannedSessionPage() {
         const body = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(body.error || `Completion failed: ${res.status}`);
       }
-      // Snapshot the real, already-tracked numbers at the moment the server
-      // confirms completion — this is what the static end screen reads, so
-      // it never fabricates a figure and never silently drifts while shown.
       const completedActions = plan.actions.filter(a => outcomes[a.id]?.completed === true);
       let totalAttempts = 0;
       let totalCorrect = 0;
@@ -578,581 +525,593 @@ export default function PlannedSessionPage() {
   // ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen text-surface-100 pb-20">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <DemoBanner />
-      <div className="max-w-3xl mx-auto px-4 pt-8">
 
-        {/* Wave 7: NextBestActionCard is the dominant top-of-page surface —
-            "what should I do right now," backed by the readiness engine. */}
-        <div className="mb-6">
-          <NextBestActionCard />
-        </div>
+      {/* Wave 7: NextBestActionCard is the dominant top-of-page surface */}
+      <NextBestActionCard />
 
-        {/* P5: WelcomeBackCard self-gates on lapse + account-age. No-op
-            for active users or new accounts. */}
-        <div className="mb-6">
-          <WelcomeBackCard summary={gbrainSummary} user={userMeta} />
-        </div>
+      {/* P5: WelcomeBackCard self-gates on lapse + account-age */}
+      <WelcomeBackCard summary={gbrainSummary} user={userMeta} />
 
-        <motion.header variants={fadeInUp} initial="hidden" animate="visible" className="mb-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-display font-semibold tracking-tight mb-1">Today's plan</h1>
-              <p className="text-sm text-surface-400">
-                Tell us how long you have. We'll give you the three things that move
-                your score most — in order. Show up, follow it, get better.
-              </p>
-            </div>
-            <Link
-              to="/exam-profile"
-              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-xs text-surface-300 transition-colors"
-              title="Register the exams you're preparing for"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              Exam profile
-              {profile && (
-                <span className="ml-1 px-1.5 py-0.5 rounded bg-surface-800 text-surface-400 text-[10px] font-mono">
-                  {profile.exams.length}
-                </span>
-              )}
-            </Link>
-          </div>
-          {trailingStats && trailingStats.trailing_7d_minutes > 0 && (
-            <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
-              <Clock className="w-3 h-3" />
-              You've studied <strong className="text-emerald-100 font-mono">{trailingStats.trailing_7d_minutes}</strong> min
-              {' '}across <strong className="text-emerald-100 font-mono">{trailingStats.trailing_7d_sessions}</strong> session{trailingStats.trailing_7d_sessions === 1 ? '' : 's'} this week.
-            </div>
-          )}
-          {profile && profile.exams.length === 0 && (
-            <div className="mt-3 text-xs text-violet-300/80 bg-violet-500/5 border border-violet-500/20 rounded-lg px-3 py-2 space-y-1">
-              <div>
-                Using a default exam. <Link to="/exam-profile" className="underline">Set up your exam profile</Link> for plans tuned to your dates.
-              </div>
-              <div className="text-violet-200/60">
-                Or <Link to="/knowledge" className="underline">tell us your school curriculum</Link> and we'll suggest the right exams.
-              </div>
-            </div>
-          )}
-          {profile && profile.exams.length >= 2 && (
-            <div className="mt-3 text-xs text-violet-300/80">
-              Multi-exam mode — planning across your {profile.exams.length} registered exams, weighted by proximity.
-            </div>
-          )}
-        </motion.header>
-
-        {/* Template bar — saved recurring patterns, one-tap recall */}
-        {!plan && !loading && templates.length > 0 && (
-          <motion.section
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            className="mb-6"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500">
-                <Bookmark className="inline w-3 h-3 mr-1 -mt-0.5" />
-                Your templates
-              </label>
-              <span className="text-[10px] text-surface-600">tap to recall</span>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {templates.map((tpl) => (
-                <div key={tpl.id} className="group flex items-stretch bg-surface-900 border border-surface-800 rounded-lg overflow-hidden hover:border-violet-500/30 transition-colors">
-                  <button
-                    onClick={() => useTemplate(tpl)}
-                    className="px-3 py-2 text-left hover:bg-violet-500/5 transition-colors"
-                  >
-                    <div className="text-sm font-semibold text-surface-100">{tpl.name}</div>
-                    <div className="text-[10px] text-surface-500 font-mono mt-0.5">
-                      {tpl.minutes_available}min · {
-                        tpl.exam_selection === 'all' ? 'all exams' :
-                        tpl.exam_selection === 'primary' ? 'primary' :
-                        Array.isArray(tpl.exam_selection) ? `${tpl.exam_selection.length} exam${tpl.exam_selection.length === 1 ? '' : 's'}` :
-                        ''
-                      }{tpl.use_count > 0 ? ` · used ${tpl.use_count}×` : ''}
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => deleteTemplateFn(tpl.id)}
-                    className="px-2 border-l border-surface-800 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400 text-surface-600 transition-all"
-                    title="Delete template"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {/* Preset suggestions — curated starter templates (v2.33) */}
-        {!plan && !loading && presets.filter(p => !p.adopted).length > 0 && (
-          <motion.section
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            className="mb-6"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500">
-                <Sparkles className="inline w-3 h-3 mr-1 -mt-0.5" />
-                {templates.length === 0 ? 'Try a starter template' : 'More presets'}
-              </label>
-              <span className="text-[10px] text-surface-600">tap to adopt + run</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {presets.filter(p => !p.adopted).slice(0, 6).map((preset) => (
-                <button
-                  key={preset.slug}
-                  onClick={() => adoptPreset(preset)}
-                  disabled={loading}
-                  className="px-3 py-2 rounded-lg bg-surface-900/40 border border-dashed border-surface-700 hover:border-violet-500/40 hover:bg-violet-500/5 text-left transition-colors disabled:opacity-50"
-                >
-                  <div className="text-sm font-semibold text-surface-100">{preset.name}</div>
-                  <div className="text-[10px] text-surface-500 font-mono mt-0.5">
-                    {preset.minutes_available}min · {
-                      preset.exam_selection === 'all' ? 'all exams' : 'primary'
-                    }
-                  </div>
-                  <div className="text-[10px] text-surface-600 mt-1 leading-tight">{preset.description}</div>
-                </button>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {/* Minutes picker — hidden once a plan is loaded */}
-        {!plan && !loading && (
-          <motion.section
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="mb-8"
-          >
-            <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 mb-3">
-              How many minutes do you have?
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.minutes}
-                  onClick={() => setMinutes(p.minutes)}
-                  className={clsx(
-                    'px-4 py-3 rounded-lg border text-left transition-colors',
-                    minutes === p.minutes
-                      ? 'bg-violet-500/15 border-violet-500/40 text-violet-100'
-                      : 'bg-surface-900 border-surface-800 text-surface-300 hover:border-surface-700',
-                  )}
-                >
-                  <div className="text-sm font-semibold flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    {p.label}
-                  </div>
-                  <div className="text-xs text-surface-500 mt-0.5">{p.subtitle}</div>
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-3 mb-6">
-              <input
-                type="range"
-                min={1}
-                max={120}
-                value={minutes}
-                onChange={(e) => setMinutes(parseInt(e.target.value, 10))}
-                className="flex-1 accent-violet-500"
-              />
-              <span className="text-sm font-mono w-20 text-right">{minutes} min</span>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={fetchPlan}
-                disabled={loading}
-                className="flex-1 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-white font-semibold transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Planning…' : 'Generate my plan'}
-              </button>
-              <button
-                onClick={() => setShowSaveTemplate(v => !v)}
-                className="px-4 py-3 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-surface-300 text-sm transition-colors"
-                title="Save these settings as a template"
-              >
-                <Bookmark className="w-4 h-4 inline" />
-              </button>
-            </div>
-
-            {/* Save-as-template inline form */}
-            {showSaveTemplate && (
-              <motion.div
-                variants={fadeInUp}
-                initial="hidden"
-                animate="visible"
-                className="mt-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20"
-              >
-                <label className="block text-xs text-surface-400 mb-2">
-                  Name this template ({minutes} min
-                  {profile && profile.exams.length >= 2 ? ', all exams' :
-                   profile && profile.exams.length === 1 ? ', primary exam' : ''})
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    placeholder="e.g. Morning commute"
-                    maxLength={60}
-                    className="flex-1 px-3 py-2 rounded bg-surface-900 border border-surface-800 text-surface-100 text-sm"
-                    onKeyDown={(e) => { if (e.key === 'Enter') saveTemplate(); }}
-                  />
-                  <button
-                    onClick={saveTemplate}
-                    disabled={!templateName.trim() || savingTemplate}
-                    className="px-3 py-2 rounded bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold disabled:opacity-50"
-                  >
-                    {savingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </motion.section>
-        )}
-
-        {loading && (
-          <div className="flex items-center justify-center gap-2 text-violet-400 py-12">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm">Planning your {minutes}-minute session…</span>
-          </div>
-        )}
-
-        {error === 'session_expired' ? (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <p className="text-surface-300 font-display text-lg font-semibold">Sign in again to continue</p>
-            <p className="text-sm text-surface-500 max-w-sm">
-              Your sign-in expired. Pick a demo role to start a new session.
+      {/* Header */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8 }}>
+          <div>
+            <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>Today's plan</h1>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+              Tell us how long you have. We'll give you the three things that move
+              your score most — in order. Show up, follow it, get better.
             </p>
-            <div className="flex gap-2">
-              <a
-                href="/demo.html"
-                className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
-              >
-                Demo sign-in
-              </a>
-              <a
-                href="/sign-in"
-                className="px-5 py-2.5 rounded-xl bg-surface-800 text-surface-200 text-sm font-medium hover:bg-surface-700 border border-surface-700 transition-colors"
-              >
-                Real sign-in
-              </a>
-            </div>
           </div>
-        ) : error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-200 text-sm">
-            <div className="flex items-start gap-2">
-              <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              <div>
-                <div className="font-semibold">Couldn't generate the plan</div>
-                <div className="mt-1 text-red-300/80">{error}</div>
-              </div>
+          <Link
+            to="/exam-profile"
+            style={{
+              flexShrink: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--surface-fill)',
+              border: 'var(--hairline) solid var(--separator)',
+              fontSize: 'var(--text-caption)',
+              color: 'var(--text-secondary)',
+              textDecoration: 'none',
+            }}
+            title="Register the exams you're preparing for"
+          >
+            <Settings size={14} />
+            Exam profile
+            {profile && (
+              <span style={{ marginLeft: 4, padding: '1px 6px', borderRadius: 4, background: 'var(--surface-canvas)', color: 'var(--text-tertiary)', fontSize: 10, fontFamily: 'var(--font-mono)' }}>
+                {profile.exams.length}
+              </span>
+            )}
+          </Link>
+        </div>
+
+        {trailingStats && trailingStats.trailing_7d_minutes > 0 && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.2)', fontSize: 'var(--text-caption)', color: 'var(--green-ink)' }}>
+            <Clock size={12} />
+            You've studied{' '}
+            <strong style={{ fontFamily: 'var(--font-mono)' }}>{trailingStats.trailing_7d_minutes}</strong> min{' '}
+            across{' '}
+            <strong style={{ fontFamily: 'var(--font-mono)' }}>{trailingStats.trailing_7d_sessions}</strong>{' '}
+            session{trailingStats.trailing_7d_sessions === 1 ? '' : 's'} this week.
+          </div>
+        )}
+
+        {profile && profile.exams.length === 0 && (
+          <div style={{ marginTop: 12, fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div>
+              Using a default exam.{' '}
+              <Link to="/exam-profile" style={{ color: 'inherit', textDecoration: 'underline' }}>Set up your exam profile</Link>{' '}
+              for plans tuned to your dates.
+            </div>
+            <div style={{ opacity: 0.7 }}>
+              Or{' '}
+              <Link to="/knowledge" style={{ color: 'inherit', textDecoration: 'underline' }}>tell us your school curriculum</Link>{' '}
+              and we'll suggest the right exams.
             </div>
           </div>
         )}
 
-        {/* Plan view */}
-        <AnimatePresence mode="wait">
-          {plan && !completed && (
-            <motion.section
-              key="plan"
-              variants={fadeInUp}
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0 }}
-            >
-              {/* CompoundingCard + DigestChip — north-star pillar surfaces daily */}
-              <CompoundingCard sessionId={sessionId} />
-              <DigestChip sessionId={sessionId} />
+        {profile && profile.exams.length >= 2 && (
+          <div style={{ marginTop: 12, fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', opacity: 0.8 }}>
+            Multi-exam mode — planning across your {profile.exams.length} registered exams, weighted by proximity.
+          </div>
+        )}
+      </div>
 
-              {/* Curriculum bridge — only renders when the student has a knowledge_track set */}
-              <div className="mb-4"><BridgeRecommendationsCard /></div>
-              <div className="mb-4"><ReviewQueueCard /></div>
-
-              {/* Headline */}
-              <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-500/20">
-                <div className="text-xs uppercase tracking-wider text-violet-300/80 mb-1">Your plan</div>
-                <div className="text-lg font-semibold text-surface-100 mb-2">{plan.headline}</div>
-                <div className="flex gap-3 text-xs text-surface-400 flex-wrap">
-                  <span>{plan.budget.context} session</span>
-                  <span>·</span>
-                  <span>{plan.total_estimated_minutes} min total</span>
-                  <Link
-                    to="/exam-strategy"
-                    className="ml-auto text-violet-400 hover:text-violet-300 transition-colors inline-flex items-center gap-0.5 text-xs"
-                  >
-                    See your full strategy <ChevronRight className="w-3 h-3" />
-                  </Link>
-                </div>
+      {/* Template bar — saved recurring patterns, one-tap recall */}
+      {!plan && !loading && templates.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>
+              <Bookmark size={12} /> Your templates
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>tap to recall</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {templates.map((tpl) => (
+              <div key={tpl.id} style={{ display: 'flex', alignItems: 'stretch', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                 <button
-                  onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
-                  className="mt-2 text-surface-600 hover:text-surface-400 transition-colors underline text-xs"
+                  onClick={() => useTemplate(tpl)}
+                  style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', flex: 1 }}
                 >
-                  Change time
-                </button>
-              </div>
-
-              {/* v2.6: Compounding progress ribbon. "completed N of M today"
-                  reinforces the v2.4 Compounding promise — every action ticks
-                  the visible counter forward. */}
-              {plan.actions.length > 0 && (() => {
-                const doneCount = plan.actions.filter(a => outcomes[a.id]?.completed === true).length;
-                const total = plan.actions.length;
-                const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
-                return (
-                  <motion.div variants={fadeInUp} className="mb-4 flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-                    <div className="flex-1">
-                      <div className="text-xs text-emerald-300 font-medium">
-                        {doneCount === 0
-                          ? `${total} action${total === 1 ? '' : 's'} ahead — start with #1.`
-                          : doneCount === total
-                          ? `All done. ${total} actions complete today.`
-                          : `${doneCount} of ${total} done. ${total - doneCount} to go.`}
-                      </div>
-                      <div className="mt-1.5 h-1 rounded-full bg-surface-800 overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 transition-all duration-500"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })()}
-
-              {/* Action cards. v2.6: First pending action gets a violet accent
-                  + "NEXT" label so the student sees unambiguously where to start. */}
-              <div className="space-y-3 mb-8">
-                {(() => {
-                  const firstPendingIdx = plan.actions.findIndex(a => outcomes[a.id]?.completed === undefined || outcomes[a.id]?.completed === null);
-                  return plan.actions.map((action, i) => {
-                    const meta = KIND_META[action.kind];
-                    const Icon = meta.icon;
-                    const outcome = outcomes[action.id];
-                    const doneState =
-                      outcome?.completed === true ? 'done' :
-                      outcome?.completed === false ? 'skipped' :
-                      'pending';
-                    const isNext = i === firstPendingIdx;
-                    return (
-                      <motion.div
-                        key={action.id}
-                        variants={fadeInUp}
-                        className={clsx(
-                          'p-4 rounded-lg border transition-colors',
-                          doneState === 'done'    && 'bg-emerald-500/5 border-emerald-500/30',
-                          doneState === 'skipped' && 'bg-surface-900/50 border-surface-800 opacity-60',
-                          doneState === 'pending' && !isNext && 'bg-surface-900 border-surface-800',
-                          doneState === 'pending' && isNext && 'bg-violet-500/5 border-violet-400/40 ring-1 ring-violet-400/20',
-                        )}
-                      >
-                        {isNext && (
-                          <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2">
-                            Next →
-                          </div>
-                        )}
-                      <div className="flex items-start gap-3">
-                        <div className="text-xs text-surface-500 font-mono w-6 pt-1">{i + 1}</div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border border-surface-700 bg-surface-800/60 text-surface-300">
-                              <Icon className="w-3 h-3" />
-                              {meta.label}
-                            </span>
-                            <span className="text-xs text-surface-500">~{action.estimated_minutes} min</span>
-                          </div>
-                          <div className="text-sm font-semibold text-surface-100 mb-1">{action.title}</div>
-                          {action.rationale && (
-                            <div>
-                              <button
-                                onClick={() => setRationaleOpen(prev => ({ ...prev, [action.id]: !prev[action.id] }))}
-                                className="text-[11px] text-surface-500 hover:text-surface-400 transition-colors inline-flex items-center gap-0.5 mb-1"
-                              >
-                                Why this order
-                                <ChevronDown className={clsx('w-3 h-3 transition-transform', rationaleOpen[action.id] && 'rotate-180')} />
-                              </button>
-                              {rationaleOpen[action.id] && (
-                                <div className="text-xs text-surface-400 leading-relaxed mb-1">{action.rationale}</div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Controls */}
-                          {doneState === 'pending' && (
-                            <div className="mt-3 flex gap-2 flex-wrap">
-                              <button
-                                onClick={() => startAction(action)}
-                                className="px-3 py-1.5 rounded bg-violet-500 hover:bg-violet-400 text-white text-xs font-semibold transition-colors inline-flex items-center gap-1"
-                              >
-                                <Play className="w-3 h-3" /> Start
-                                <ChevronRight className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={() => markDone(action.id, true)}
-                                className="px-3 py-1.5 rounded bg-surface-800 hover:bg-surface-700 text-surface-200 text-xs transition-colors"
-                              >
-                                Mark done
-                              </button>
-                              <button
-                                onClick={() => markDone(action.id, false)}
-                                className="px-3 py-1.5 rounded bg-surface-800 hover:bg-surface-700 text-surface-400 text-xs transition-colors"
-                              >
-                                Skip
-                              </button>
-                            </div>
-                          )}
-                          {doneState === 'done' && (
-                            <div className="mt-3 space-y-2">
-                              <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Marked done</span>
-                              </div>
-                              {(action.kind === 'practice' || action.kind === 'micro-mock' || action.kind === 'spaced-review') && (
-                                <div className="flex gap-3 items-center text-xs flex-wrap">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-surface-500">Attempts:</span>
-                                    <div className="flex items-center gap-1">
-                                      <button
-                                        onClick={() => setAttempts(action.id, Math.max(0, (outcome?.attempts ?? 0) - 1), outcome?.correct ?? 0)}
-                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
-                                      >−</button>
-                                      <span className="w-8 text-center font-mono text-surface-100">{outcome?.attempts ?? 0}</span>
-                                      <button
-                                        onClick={() => setAttempts(action.id, (outcome?.attempts ?? 0) + 1, outcome?.correct ?? 0)}
-                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
-                                      >+</button>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-surface-500">Correct:</span>
-                                    <div className="flex items-center gap-1">
-                                      <button
-                                        onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.max(0, (outcome?.correct ?? 0) - 1))}
-                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
-                                      >−</button>
-                                      <span className="w-8 text-center font-mono text-surface-100">{outcome?.correct ?? 0}</span>
-                                      <button
-                                        onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.min(outcome?.attempts ?? action.content_hint.count, (outcome?.correct ?? 0) + 1))}
-                                        className="w-[44px] h-[44px] rounded bg-surface-800 border border-surface-700 text-surface-200 text-base font-bold flex items-center justify-center hover:bg-surface-700 transition-colors"
-                                      >+</button>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {doneState === 'skipped' && (
-                            <div className="mt-3 flex items-center gap-2 text-xs text-surface-500">
-                              <XCircle className="w-3.5 h-3.5" />
-                              <span>Skipped</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                  });
-                })()}
-              </div>
-
-              {/* Finish */}
-              <div className="flex gap-2">
-                <button
-                  onClick={finishSession}
-                  disabled={submittingCompletion}
-                  className="flex-1 px-4 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {submittingCompletion ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                  Finish & log this session
-                </button>
-                <button
-                  onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
-                  className="px-4 py-3 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-surface-300 transition-colors"
-                >
-                  Reset
-                </button>
-              </div>
-            </motion.section>
-          )}
-        </AnimatePresence>
-
-        {/* Wave U1: static end-of-session screen (Ecstasy/Hooks/Craft §1.2).
-            Deliberately the LEAST animated moment in the app — no motion
-            wrapper, no confetti, no count-up. Every number here is read
-            straight from `sessionSummary`, snapshotted at the instant the
-            server confirmed completion (see finishSession). Nothing on
-            this screen is fabricated:
-              - "marks saved" is NOT shown — the frontend has no per-session
-                marks/expected-marks field today (mock-to-marks.ts operates
-                on rich Attempt[] with partial credit + error tags that
-                this page never receives). We show real structural data
-                instead (blocks done + minutes), and — only when the
-                student actually logged attempts/correct counts via the
-                stepper controls above — a self-logged accuracy line.
-              - "what firmed up" is the real list of completed action
-                titles (topics actually touched this session).
-              - a numeric readiness delta ("+N marks" / band change) is
-                intentionally omitted: this page never captures a
-                pre-session baseline to diff against, so any such number
-                would be invented. See PlannedSessionPage.tsx header notes
-                if wiring a real baseline later (e.g. via
-                /api/readiness/expected-score at plan-generation time).
-              - one forward action only — back to Home. */}
-        {completed && plan && (
-          <div className="py-10">
-            <div className="max-w-md mx-auto">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <h2 className="text-lg font-display font-semibold text-surface-100">Session complete</h2>
-              </div>
-              <p className="text-sm text-surface-400 mb-6">
-                {(sessionSummary?.doneCount ?? 0)} of {(sessionSummary?.totalCount ?? plan.actions.length)} blocks done · {(sessionSummary?.elapsedMin ?? 0)} min
-                {sessionSummary && sessionSummary.totalAttempts > 0 && (
-                  <> · {sessionSummary.totalCorrect}/{sessionSummary.totalAttempts} correct (self-logged)</>
-                )}
-              </p>
-
-              {sessionSummary && sessionSummary.concepts.length > 0 && (
-                <div className="mb-6">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-surface-500 mb-2">
-                    What firmed up
+                  <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{tpl.name}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                    {tpl.minutes_available}min · {
+                      tpl.exam_selection === 'all' ? 'all exams' :
+                      tpl.exam_selection === 'primary' ? 'primary' :
+                      Array.isArray(tpl.exam_selection) ? `${tpl.exam_selection.length} exam${tpl.exam_selection.length === 1 ? '' : 's'}` :
+                      ''
+                    }{tpl.use_count > 0 ? ` · used ${tpl.use_count}×` : ''}
                   </div>
-                  <ul className="space-y-1.5">
-                    {sessionSummary.concepts.map((c, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-surface-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                        <span>{c}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                </button>
+                <button
+                  onClick={() => deleteTemplateFn(tpl.id)}
+                  style={{ padding: '0 8px', borderTop: 'none', borderRight: 'none', borderBottom: 'none', borderLeft: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  title="Delete template"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-              {sessionSummary?.tomorrowPriority && (
-                <p className="text-xs text-surface-500 mb-6">
-                  Next up: <span className="text-surface-300">{sessionSummary.tomorrowPriority}</span>
-                </p>
-              )}
-
-              <Link
-                to="/"
-                className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-3 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-sm font-semibold transition-colors"
+      {/* Preset suggestions — curated starter templates */}
+      {!plan && !loading && presets.filter(p => !p.adopted).length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>
+              <Sparkles size={12} /> {templates.length === 0 ? 'Try a starter template' : 'More presets'}
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>tap to adopt + run</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+            {presets.filter(p => !p.adopted).slice(0, 6).map((preset) => (
+              <button
+                key={preset.slug}
+                onClick={() => adoptPreset(preset)}
+                disabled={loading}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--surface-fill)',
+                  border: 'var(--hairline) solid var(--separator)',
+                  textAlign: 'left',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.5 : 1,
+                }}
               >
-                Back to Home <ArrowRight className="w-3.5 h-3.5" />
+                <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{preset.name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                  {preset.minutes_available}min · {preset.exam_selection === 'all' ? 'all exams' : 'primary'}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.3 }}>{preset.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Minutes picker — hidden once a plan is loaded */}
+      {!plan && !loading && (
+        <div>
+          <span style={{ display: 'block', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 12 }}>
+            How many minutes do you have?
+          </span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 8, marginBottom: 16 }}>
+            {PRESETS.map((p) => (
+              <button
+                key={p.minutes}
+                onClick={() => setMinutes(p.minutes)}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  border: minutes === p.minutes ? '1px solid rgba(88,86,214,.4)' : 'var(--hairline) solid var(--separator)',
+                  background: minutes === p.minutes ? 'rgba(88,86,214,.08)' : 'var(--surface-fill)',
+                  color: minutes === p.minutes ? 'var(--indigo-ink)' : 'var(--text-secondary)',
+                }}
+              >
+                <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Clock size={14} />{p.label}
+                </div>
+                <div style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', marginTop: 2 }}>{p.subtitle}</div>
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <input
+              type="range"
+              min={1}
+              max={120}
+              value={minutes}
+              onChange={(e) => setMinutes(parseInt(e.target.value, 10))}
+              style={{ flex: 1, accentColor: 'var(--indigo)' }}
+            />
+            <span style={{ fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)', width: 80, textAlign: 'right', color: 'var(--text-primary)' }}>{minutes} min</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={fetchPlan}
+              disabled={loading}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--indigo)',
+                color: '#fff',
+                fontWeight: 'var(--weight-semibold)',
+                fontSize: 'var(--text-body)',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.5 : 1,
+              }}
+            >
+              {loading ? 'Planning…' : 'Generate my plan'}
+            </button>
+            <button
+              onClick={() => setShowSaveTemplate(v => !v)}
+              style={{
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--surface-fill)',
+                border: 'var(--hairline) solid var(--separator)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              title="Save these settings as a template"
+            >
+              <Bookmark size={16} />
+            </button>
+          </div>
+
+          {/* Save-as-template inline form */}
+          {showSaveTemplate && (
+            <div style={{ marginTop: 12, padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)' }}>
+              <span style={{ display: 'block', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 8 }}>
+                Name this template ({minutes} min
+                {profile && profile.exams.length >= 2 ? ', all exams' :
+                 profile && profile.exams.length === 1 ? ', primary exam' : ''})
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  autoFocus
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="e.g. Morning commute"
+                  maxLength={60}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 'var(--text-caption)' }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveTemplate(); }}
+                />
+                <button
+                  onClick={saveTemplate}
+                  disabled={!templateName.trim() || savingTemplate}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'var(--indigo)',
+                    color: '#fff',
+                    fontSize: 'var(--text-caption)',
+                    fontWeight: 'var(--weight-semibold)',
+                    border: 'none',
+                    cursor: (!templateName.trim() || savingTemplate) ? 'not-allowed' : 'pointer',
+                    opacity: (!templateName.trim() || savingTemplate) ? 0.5 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {savingTemplate ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--indigo-ink)', padding: '48px 0' }}>
+          <Loader2 size={20} className="animate-spin" />
+          <span style={{ fontSize: 'var(--text-caption)' }}>Planning your {minutes}-minute session…</span>
+        </div>
+      )}
+
+      {/* Error states */}
+      {error === 'session_expired' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '64px 0', textAlign: 'center' }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Sign in again to continue</p>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', maxWidth: 320 }}>
+            Your sign-in expired. Pick a demo role to start a new session.
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <a href="/demo.html" style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}>
+              Demo sign-in
+            </a>
+            <a href="/sign-in" style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', textDecoration: 'none' }}>
+              Real sign-in
+            </a>
+          </div>
+        </div>
+      ) : error && (
+        <div style={{ padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <XCircle size={16} style={{ marginTop: 2, flexShrink: 0, color: 'var(--red)' }} />
+            <div>
+              <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--red)' }}>Couldn't generate the plan</div>
+              <div style={{ marginTop: 4, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{error}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plan view */}
+      {plan && !completed && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <CompoundingCard sessionId={sessionId} />
+          <DigestChip sessionId={sessionId} />
+          <BridgeRecommendationsCard />
+          <ReviewQueueCard />
+
+          {/* Plan headline */}
+          <div style={{ padding: '20px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: '1px solid rgba(88,86,214,.18)', boxShadow: 'var(--shadow-raise)' }}>
+            <div style={{ fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--indigo-ink)', opacity: 0.8, marginBottom: 4 }}>Your plan</div>
+            <div style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)', marginBottom: 8 }}>{plan.headline}</div>
+            <div style={{ display: 'flex', gap: 12, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span>{plan.budget.context} session</span>
+              <span>·</span>
+              <span>{plan.total_estimated_minutes} min total</span>
+              <Link
+                to="/exam-strategy"
+                style={{ marginLeft: 'auto', color: 'var(--indigo-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 'var(--text-caption)' }}
+              >
+                See your full strategy <ChevronRight size={12} />
               </Link>
             </div>
+            <button
+              onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
+              style={{ marginTop: 8, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              Change time
+            </button>
           </div>
-        )}
 
-      </div>
+          {/* Compounding progress ribbon */}
+          {plan.actions.length > 0 && (() => {
+            const doneCount = plan.actions.filter(a => outcomes[a.id]?.completed === true).length;
+            const total = plan.actions.length;
+            const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.2)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--green-ink)', fontWeight: 'var(--weight-medium)' }}>
+                    {doneCount === 0
+                      ? `${total} action${total === 1 ? '' : 's'} ahead — start with #1.`
+                      : doneCount === total
+                      ? `All done. ${total} actions complete today.`
+                      : `${doneCount} of ${total} done. ${total - doneCount} to go.`}
+                  </div>
+                  <div style={{ marginTop: 6, height: 4, borderRadius: 2, background: 'var(--surface-fill)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: 'var(--green)', transition: 'width 0.5s', width: `${pct}%` }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Action cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {(() => {
+              const firstPendingIdx = plan.actions.findIndex(a => outcomes[a.id]?.completed === undefined || outcomes[a.id]?.completed === null);
+              return plan.actions.map((action, i) => {
+                const meta = KIND_META[action.kind];
+                const Icon = meta.icon;
+                const outcome = outcomes[action.id];
+                const doneState =
+                  outcome?.completed === true ? 'done' :
+                  outcome?.completed === false ? 'skipped' :
+                  'pending';
+                const isNext = i === firstPendingIdx;
+
+                const actionCardStyle: React.CSSProperties =
+                  doneState === 'done'
+                    ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.22)' }
+                  : doneState === 'skipped'
+                    ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', opacity: 0.5 }
+                  : isNext
+                    ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.25)' }
+                  : { padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' };
+
+                return (
+                  <div key={action.id} style={actionCardStyle}>
+                    {isNext && (
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--indigo-ink)', marginBottom: 8 }}>
+                        Next →
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', width: 24, paddingTop: 4, flexShrink: 0 }}>{i + 1}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}>
+                            <Icon size={12} />
+                            {meta.label}
+                          </span>
+                          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>~{action.estimated_minutes} min</span>
+                        </div>
+                        <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)', marginBottom: 4 }}>{action.title}</div>
+                        {action.rationale && (
+                          <div>
+                            <button
+                              onClick={() => setRationaleOpen(prev => ({ ...prev, [action.id]: !prev[action.id] }))}
+                              style={{ fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 2, marginBottom: 4 }}
+                            >
+                              Why this order
+                              <ChevronDown size={12} style={{ transform: rationaleOpen[action.id] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }} />
+                            </button>
+                            {rationaleOpen[action.id] && (
+                              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)', marginBottom: 4 }}>{action.rationale}</div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Controls */}
+                        {doneState === 'pending' && (
+                          <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <button
+                              onClick={() => startAction(action)}
+                              style={{ padding: '6px 12px', minHeight: 44, borderRadius: 'var(--radius-sm)', background: 'var(--indigo)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            >
+                              <Play size={12} /> Start <ChevronRight size={12} />
+                            </button>
+                            <button
+                              onClick={() => markDone(action.id, true)}
+                              style={{ padding: '6px 12px', minHeight: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', cursor: 'pointer' }}
+                            >
+                              Mark done
+                            </button>
+                            <button
+                              onClick={() => markDone(action.id, false)}
+                              style={{ padding: '6px 12px', minHeight: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)', cursor: 'pointer' }}
+                            >
+                              Skip
+                            </button>
+                          </div>
+                        )}
+
+                        {doneState === 'done' && (
+                          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)', color: 'var(--green-ink)' }}>
+                              <CheckCircle2 size={14} />
+                              <span>Marked done</span>
+                            </div>
+                            {(action.kind === 'practice' || action.kind === 'micro-mock' || action.kind === 'spaced-review') && (
+                              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', fontSize: 'var(--text-caption)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ color: 'var(--text-tertiary)' }}>Attempts:</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <button onClick={() => setAttempts(action.id, Math.max(0, (outcome?.attempts ?? 0) - 1), outcome?.correct ?? 0)} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                                    <span style={{ width: 32, textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{outcome?.attempts ?? 0}</span>
+                                    <button onClick={() => setAttempts(action.id, (outcome?.attempts ?? 0) + 1, outcome?.correct ?? 0)} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ color: 'var(--text-tertiary)' }}>Correct:</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <button onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.max(0, (outcome?.correct ?? 0) - 1))} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                                    <span style={{ width: 32, textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{outcome?.correct ?? 0}</span>
+                                    <button onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.min(outcome?.attempts ?? action.content_hint.count, (outcome?.correct ?? 0) + 1))} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {doneState === 'skipped' && (
+                          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+                            <XCircle size={14} />
+                            <span>Skipped</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Finish row */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={finishSession}
+              disabled={submittingCompletion}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--green)',
+                color: '#fff',
+                fontWeight: 'var(--weight-semibold)',
+                fontSize: 'var(--text-body)',
+                border: 'none',
+                cursor: submittingCompletion ? 'not-allowed' : 'pointer',
+                opacity: submittingCompletion ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              {submittingCompletion ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              Finish & log this session
+            </button>
+            <button
+              onClick={() => { setPlan(null); setOutcomes({}); setStartedAtMs(null); }}
+              style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Wave U1: static end-of-session screen.
+          Every number here is read from `sessionSummary`, snapshotted at the
+          instant the server confirmed completion. Nothing on this screen is
+          fabricated — "marks saved" is intentionally omitted (no per-session
+          baseline to diff against). */}
+      {completed && plan && (
+        <div style={{ padding: '40px 0' }}>
+          <div style={{ maxWidth: 448, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <CheckCircle2 size={20} style={{ color: 'var(--green-ink)' }} />
+              <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Session complete</h2>
+            </div>
+            <p style={{ margin: '0 0 24px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+              {(sessionSummary?.doneCount ?? 0)} of {(sessionSummary?.totalCount ?? plan.actions.length)} blocks done · {(sessionSummary?.elapsedMin ?? 0)} min
+              {sessionSummary && sessionSummary.totalAttempts > 0 && (
+                <> · {sessionSummary.totalCorrect}/{sessionSummary.totalAttempts} correct (self-logged)</>
+              )}
+            </p>
+
+            {sessionSummary && sessionSummary.concepts.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                  What firmed up
+                </div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {sessionSummary.concepts.map((c, i) => (
+                    <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)', color: 'var(--text-primary)' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {sessionSummary?.tomorrowPriority && (
+              <p style={{ margin: '0 0 24px', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+                Next up: <span style={{ color: 'var(--text-secondary)' }}>{sessionSummary.tomorrowPriority}</span>
+              </p>
+            )}
+
+            <Link
+              to="/"
+              style={{
+                display: 'flex',
+                width: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--indigo)',
+                color: '#fff',
+                fontSize: 'var(--text-caption)',
+                fontWeight: 'var(--weight-semibold)',
+                textDecoration: 'none',
+              }}
+            >
+              Back to Home <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

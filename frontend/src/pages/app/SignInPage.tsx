@@ -7,7 +7,6 @@ import {
   fetchAuthConfig, loadGoogleIdentityServices, completeGoogleSignIn,
   type AuthConfig,
 } from '@/lib/auth/client';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 export default function SignInPage() {
   const navigate = useNavigate();
@@ -73,16 +72,21 @@ export default function SignInPage() {
   }, [config?.google_client_id, link_token, navigate, refresh]);
 
   return (
-    <motion.div
-      className="max-w-md mx-auto space-y-6 py-6"
-      initial="hidden" animate="visible" variants={staggerContainer}
-    >
-      <motion.div variants={fadeInUp} className="text-center space-y-2">
-        <div className="inline-flex w-16 h-16 rounded-full bg-gradient-to-br from-violet-500/20 to-emerald-500/20 items-center justify-center border border-violet-500/30">
-          <Key size={28} className="text-violet-400" />
+    <div style={{ maxWidth: 448, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 24 }}>
+      {/* Logo + headline */}
+      <motion.div
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18 }}
+        style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}
+      >
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Key size={28} style={{ color: 'var(--indigo-ink)' }} />
         </div>
-        <h1 className="text-2xl font-bold text-surface-100">Sign in to Vidhya</h1>
-        <p className="text-sm text-surface-400">
+        <h1 style={{ margin: 0, fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+          Sign in to Vidhya
+        </h1>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>
           {link_token
             ? 'Complete sign-in to link your chat app.'
             : 'Use Google to access your progress, materials, and personalized plan.'}
@@ -90,26 +94,35 @@ export default function SignInPage() {
       </motion.div>
 
       {link_token && (
-        <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 flex items-start gap-2.5">
-          <MessageCircle size={14} className="shrink-0 mt-0.5 text-violet-400" />
-          <div className="text-xs text-violet-200/90 leading-relaxed">
-            <span className="font-medium text-violet-300">Linking a chat app.</span>{' '}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)', display: 'flex', alignItems: 'flex-start', gap: 10 }}
+        >
+          <MessageCircle size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--indigo-ink)' }} />
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+            <span style={{ fontWeight: 'var(--weight-medium)', color: 'var(--indigo-ink)' }}>Linking a chat app.</span>{' '}
             Once you sign in, your Telegram or WhatsApp chat will be bound to this account.
           </div>
         </motion.div>
       )}
 
       {/* Google button container */}
-      <motion.div variants={fadeInUp} className="flex flex-col items-center gap-3">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.08 }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}
+      >
         {config === null ? (
-          <div className="text-xs text-surface-500 flex items-center gap-2">
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Loader2 size={12} className="animate-spin" />
             Loading...
           </div>
         ) : !config.google_client_id ? (
           <LocalDevQuickStart />
         ) : pending ? (
-          <div className="text-xs text-surface-400 flex items-center gap-2">
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Loader2 size={12} className="animate-spin" />
             Signing in...
           </div>
@@ -118,40 +131,50 @@ export default function SignInPage() {
         )}
 
         {error && (
-          <div className="text-xs text-rose-400 text-center">
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--red)', textAlign: 'center' }}>
             {error}
           </div>
         )}
       </motion.div>
 
       {/* Privacy note */}
-      <motion.div variants={fadeInUp} className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-start gap-2.5">
-        <Shield size={14} className="shrink-0 mt-0.5 text-emerald-400" />
-        <div className="text-xs text-emerald-200/90 leading-relaxed space-y-1">
-          <p><span className="font-medium text-emerald-300">Lean identity.</span> We use Google to verify who you are. We only receive your email, name, and avatar.</p>
-          <p>Your study materials stay on your device. Your chat history and progress stay in your browser's storage unless you explicitly sync.</p>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.12 }}
+        style={{ padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.18)', display: 'flex', alignItems: 'flex-start', gap: 10 }}
+      >
+        <Shield size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--green-ink)' }} />
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <p style={{ margin: 0 }}><span style={{ fontWeight: 'var(--weight-medium)', color: 'var(--green-ink)' }}>Lean identity.</span> We use Google to verify who you are. We only receive your email, name, and avatar.</p>
+          <p style={{ margin: 0 }}>Your study materials stay on your device. Your chat history and progress stay in your browser's storage unless you explicitly sync.</p>
         </div>
       </motion.div>
 
       {/* Channel hints */}
       {config?.channels && (config.channels.telegram || config.channels.whatsapp) && !link_token && (
-        <motion.div variants={fadeInUp} className="space-y-2 pt-2">
-          <p className="text-[10px] text-surface-500 uppercase tracking-wide">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.16 }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+        >
+          <p style={{ margin: 0, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Access from elsewhere
           </p>
-          <div className="space-y-1.5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {config.channels.telegram && (
-              <div className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 flex items-center gap-2">
-                <Smartphone size={13} className="text-violet-400" />
-                <p className="text-xs text-surface-300 flex-1">
-                  Telegram bot available — send <span className="font-mono">/start</span> to the Vidhya bot
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Smartphone size={13} style={{ color: 'var(--indigo-ink)' }} />
+                <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', flex: 1 }}>
+                  Telegram bot available — send <span style={{ fontFamily: 'var(--font-mono)' }}>/start</span> to the Vidhya bot
                 </p>
               </div>
             )}
             {config.channels.whatsapp && (
-              <div className="p-2.5 rounded-lg bg-surface-900 border border-surface-800 flex items-center gap-2">
-                <MessageCircle size={13} className="text-emerald-400" />
-                <p className="text-xs text-surface-300 flex-1">
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <MessageCircle size={13} style={{ color: 'var(--green-ink)' }} />
+                <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', flex: 1 }}>
                   WhatsApp Business — send "start" to the configured number
                 </p>
               </div>
@@ -159,7 +182,7 @@ export default function SignInPage() {
           </div>
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -180,49 +203,49 @@ export default function SignInPage() {
 
 function LocalDevQuickStart() {
   return (
-    <div className="w-full p-4 rounded-xl bg-violet-500/5 border border-violet-500/25 space-y-3">
-      <div className="flex items-start gap-2">
-        <FlaskConical size={14} className="shrink-0 mt-0.5 text-violet-400" />
-        <div className="flex-1">
-          <p className="text-xs font-medium text-violet-300">Local dev quick start</p>
-          <p className="text-[11px] text-violet-200/80 mt-0.5">
+    <div style={{ width: '100%', padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.2)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <FlaskConical size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--indigo-ink)' }} />
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--indigo-ink)' }}>Local dev quick start</p>
+          <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption2)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
             Google OAuth isn&apos;t configured. Sign in with a pre-seeded demo account to start
             generating content immediately.
           </p>
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <a
           href="/demo-login?role=admin"
-          className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg bg-violet-500 hover:bg-violet-400 text-white text-xs font-medium transition-colors"
+          style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--indigo)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
         >
           <Crown size={14} />
-          <span className="flex-1 text-left">Sign in as Admin</span>
-          <span className="text-[10px] text-violet-100/80">recommended for dev</span>
+          <span style={{ flex: 1 }}>Sign in as Admin</span>
+          <span style={{ fontSize: 'var(--text-caption2)', opacity: 0.75 }}>recommended for dev</span>
         </a>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <a
             href="/demo-login?role=teacher"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-xs text-surface-300 hover:text-surface-100 transition-colors"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', textDecoration: 'none' }}
           >
-            <GraduationCap size={12} className="text-emerald-400" />
+            <GraduationCap size={12} style={{ color: 'var(--green-ink)' }} />
             <span>Teacher</span>
           </a>
           <a
             href="/demo-login?role=student"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-900 hover:bg-surface-800 border border-surface-800 text-xs text-surface-300 hover:text-surface-100 transition-colors"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', textDecoration: 'none' }}
           >
-            <BookOpen size={12} className="text-emerald-400" />
+            <BookOpen size={12} style={{ color: 'var(--green-ink)' }} />
             <span>Student</span>
           </a>
         </div>
       </div>
 
-      <p className="text-[10px] text-surface-600 leading-relaxed">
+      <p style={{ margin: 0, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', lineHeight: 'var(--leading-relaxed)' }}>
         These accounts are seeded automatically on first click. To enable real Google sign-in,
-        set <span className="font-mono">GOOGLE_OAUTH_CLIENT_ID</span> in your <span className="font-mono">.env</span>.
+        set <span style={{ fontFamily: 'var(--font-mono)' }}>GOOGLE_OAUTH_CLIENT_ID</span> in your <span style={{ fontFamily: 'var(--font-mono)' }}>.env</span>.
       </p>
     </div>
   );

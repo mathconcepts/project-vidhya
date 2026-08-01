@@ -1,10 +1,6 @@
 /**
  * CompoundingCard (v4.0) — periodic Compounding-evidence surface.
  *
- * The v2.4 design system anchored the product on Compounding: "every rep
- * adds; what you cracked in October is still with you in November." This
- * card makes that promise visible inside the daily product loop.
- *
  * v4.0 changes:
  *   - dismissibility extracted to useDismissible hook (shared with
  *     DigestChip, WelcomeBackCard).
@@ -104,16 +100,13 @@ export function CompoundingCard({ sessionId, endpoint = '/api/student/compoundin
     });
   };
 
-  // Build details list — replace the "coming soon" streak placeholder when
-  // we have live data, drop the row entirely when streak is 0 (empty-state
-  // warmth lives elsewhere; here we just hide the row).
   const details = data.details
     ? data.details.map(d => {
         if (d.label === 'streak') {
           if (streak !== null && streak > 0) {
             return { ...d, value: streak, hint: 'day streak' };
           }
-          return null; // hide row
+          return null;
         }
         return d;
       }).filter((d): d is NonNullable<typeof d> => d !== null)
@@ -126,36 +119,54 @@ export function CompoundingCard({ sessionId, endpoint = '/api/student/compoundin
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.25 }}
-        className="w-full max-w-md rounded-xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-surface-900 to-emerald-500/8 overflow-hidden"
+        style={{
+          width: '100%',
+          borderRadius: 'var(--radius-md)',
+          border: 'var(--hairline) solid var(--separator)',
+          background: 'var(--surface-card)',
+          boxShadow: 'var(--shadow-raise)',
+          overflow: 'hidden',
+        }}
       >
         <button
           onClick={handleExpand}
-          className="w-full text-left p-3 flex items-start gap-3 hover:bg-violet-500/5 transition-colors"
+          style={{
+            width: '100%',
+            textAlign: 'left',
+            padding: '12px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+          }}
         >
-          <div className="shrink-0 mt-0.5">
-            <TrendingUp size={16} className="text-violet-400" />
+          <div style={{ flexShrink: 0, marginTop: 2 }}>
+            <TrendingUp size={16} style={{ color: 'var(--indigo-ink)' }} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-surface-100 leading-snug">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)', lineHeight: 1.35 }}>
               {data.headline}
             </p>
             {data.subline && (
-              <p className="text-xs text-surface-400 mt-1 leading-relaxed">
+              <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
                 {data.subline}
               </p>
             )}
             {details && details.length > 0 && (
-              <span className="inline-flex items-center gap-1 mt-2 text-[11px] text-violet-400">
-                {expanded ? 'Less' : 'More detail'} <ChevronRight size={11} className={expanded ? 'rotate-90' : ''} />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, fontSize: 11, color: 'var(--indigo-ink)' }}>
+                {expanded ? 'Less' : 'More detail'}{' '}
+                <ChevronRight size={11} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
               </span>
             )}
           </div>
           <button
             onClick={handleDismiss}
-            className="shrink-0 p-1 -m-1 rounded hover:bg-surface-800 transition-colors"
+            style={{ flexShrink: 0, padding: 4, borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer' }}
             aria-label="Dismiss"
           >
-            <X size={12} className="text-surface-500" />
+            <X size={12} style={{ color: 'var(--text-tertiary)' }} />
           </button>
         </button>
 
@@ -165,13 +176,19 @@ export function CompoundingCard({ sessionId, endpoint = '/api/student/compoundin
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-violet-500/15 px-3 py-3 grid grid-cols-2 gap-3"
+            style={{
+              borderTop: 'var(--hairline) solid var(--separator)',
+              padding: '12px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 12,
+            }}
           >
             {details.map((d, i) => (
-              <div key={i} className="text-center">
-                <p className="text-lg font-display font-bold text-surface-100">{d.value}</p>
-                <p className="text-[10px] text-surface-400 uppercase tracking-wide">{d.label}</p>
-                {d.hint && <p className="text-[10px] text-surface-500 mt-0.5">{d.hint}</p>}
+              <div key={i} style={{ textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{d.value}</p>
+                <p style={{ margin: 0, fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{d.label}</p>
+                {d.hint && <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-tertiary)' }}>{d.hint}</p>}
               </div>
             ))}
           </motion.div>

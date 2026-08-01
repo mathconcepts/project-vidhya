@@ -266,7 +266,7 @@ export function Home() {
         {/* Discovery list */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {[
-            { icon: <MessageCircle size={22} style={{ color: 'var(--indigo-ink)' }} />, label: 'Ask a question', sub: 'Type it the way you'd say it out loud.' },
+            { icon: <MessageCircle size={22} style={{ color: 'var(--indigo-ink)' }} />, label: 'Ask a question', sub: "Type it the way you'd say it out loud." },
             { icon: <Camera size={22} style={{ color: 'var(--indigo-ink)' }} />, label: 'Snap a problem', sub: 'Handwriting is fine.' },
             { icon: <FileText size={22} style={{ color: 'var(--indigo-ink)' }} />, label: 'Upload your notes', sub: 'Lessons get built around what you already have.' },
           ].map((row, i) => (

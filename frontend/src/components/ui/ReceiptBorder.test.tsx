@@ -62,6 +62,6 @@ describe('ReceiptBorder', () => {
     // Tailwind classes silently drift from DESIGN-SYSTEM.md's token if
     // that token is ever re-themed. Asserting the inline style references
     // the CSS var (rather than a literal color) keeps the two in sync.
-    expect(wrapper.getAttribute('style')).toContain('--receipt-border');
+    expect(wrapper.getAttribute('style')).toContain('--receipt-line');
   });
 });

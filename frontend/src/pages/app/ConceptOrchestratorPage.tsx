@@ -16,7 +16,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getToken } from '@/lib/auth/client';
 import { Sparkles, AlertTriangle, RefreshCw, Loader2, X, CheckCircle2, XCircle } from 'lucide-react';
-import { clsx } from 'clsx';
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
 import { wordDiff } from '@/lib/wordDiff';
 
@@ -90,20 +89,21 @@ function authHeaders(): Record<string, string> {
 function CostMeter({ spent_usd, cap_usd }: { spent_usd: number; cap_usd: number }) {
   const pct = cap_usd > 0 ? (spent_usd / cap_usd) * 100 : 0;
   const tone = pct >= 100 ? 'rose' : pct >= 80 ? 'amber' : 'violet';
-  const colors = {
-    violet: { bar: 'bg-violet-500', track: 'bg-violet-500/15', text: 'text-violet-300' },
-    amber:  { bar: 'bg-amber-500',  track: 'bg-amber-500/15',  text: 'text-amber-300' },
-    rose:   { bar: 'bg-rose-500',   track: 'bg-rose-500/15',   text: 'text-rose-300' },
-  }[tone];
+  const barColor  = tone === 'violet' ? 'var(--indigo)'    : tone === 'amber' ? 'var(--orange)' : 'var(--red)';
+  const trackBg   = tone === 'violet' ? 'rgba(88,86,214,.08)' : tone === 'amber' ? 'rgba(255,149,0,.06)' : 'rgba(255,59,48,.06)';
+  const textColor = tone === 'violet' ? 'var(--indigo-ink)' : tone === 'amber' ? 'var(--orange)'  : 'var(--red)';
   return (
     <div className="flex items-center gap-2 text-[11px] tabular-nums">
-      <span className={colors.text}>
+      <span style={{ color: textColor }}>
         ${spent_usd.toFixed(2)}/${cap_usd.toFixed(0)}
       </span>
-      <div className={clsx('h-1.5 w-16 rounded-full', colors.track)}>
-        <div className={clsx('h-full rounded-full', colors.bar)} style={{ width: `${Math.min(100, pct)}%` }} />
+      <div className="h-1.5 w-16 rounded-full" style={{ background: trackBg }}>
+        <div
+          className="h-full rounded-full"
+          style={{ background: barColor, width: `${Math.min(100, pct)}%` }}
+        />
       </div>
-      <span className="text-surface-500">{Math.round(pct)}%</span>
+      <span style={{ color: 'var(--text-tertiary)' }}>{Math.round(pct)}%</span>
     </div>
   );
 }
@@ -112,13 +112,16 @@ function CostMeter({ spent_usd, cap_usd }: { spent_usd: number; cap_usd: number 
 
 function StateBadge({ state }: { state: ConceptState }) {
   const cfg = {
-    missing: { label: 'Missing',  cls: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
-    partial: { label: 'Partial',  cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
-    stale:   { label: 'Stale',    cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
-    current: { label: 'Current',  cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+    missing: { label: 'Missing',  bg: 'rgba(255,59,48,.06)',  color: 'var(--red)',        border: '1px solid rgba(255,59,48,.22)' },
+    partial: { label: 'Partial',  bg: 'rgba(255,149,0,.06)',  color: 'var(--orange)',     border: '1px solid rgba(255,149,0,.22)' },
+    stale:   { label: 'Stale',    bg: 'rgba(255,149,0,.06)',  color: 'var(--orange)',     border: '1px solid rgba(255,149,0,.22)' },
+    current: { label: 'Current',  bg: 'rgba(52,199,89,.06)',  color: 'var(--green-ink)',  border: '1px solid rgba(52,199,89,.22)' },
   }[state];
   return (
-    <span className={clsx('inline-block px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider border', cfg.cls)}>
+    <span
+      className="inline-block px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider"
+      style={{ background: cfg.bg, color: cfg.color, border: cfg.border }}
+    >
       {cfg.label}
     </span>
   );
@@ -179,31 +182,51 @@ function GenerateProgressModal({
   const pct = (stepIdx / Math.max(totalSteps, 1)) * 100;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-xl rounded-xl bg-surface-900 border border-surface-700 p-5 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,.6)' }}
+    >
+      <div
+        className="w-full max-w-xl rounded-xl p-5 shadow-2xl"
+        style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+      >
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h3 className="text-sm font-semibold text-white">Generating: {conceptLabel}</h3>
-            <p className="text-xs text-surface-400 mt-0.5">11 atoms via Wolfram + Claude{' + Gemini consensus on math'}</p>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Generating: {conceptLabel}
+            </h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+              11 atoms via Wolfram + Claude{' + Gemini consensus on math'}
+            </p>
           </div>
-          <button onClick={onClose} className="p-1 rounded text-surface-500 hover:text-surface-200">
+          <button
+            onClick={onClose}
+            className="p-1 rounded"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
             <X size={16} />
           </button>
         </div>
 
         <div className="mb-3">
-          <div className="flex items-center justify-between text-[11px] text-surface-400 mb-1.5 tabular-nums">
+          <div
+            className="flex items-center justify-between text-[11px] mb-1.5 tabular-nums"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
             <span>Step {Math.min(stepIdx + (job?.status === 'running' ? 1 : 0), totalSteps)} / {totalSteps}</span>
-            {job?.status === 'done' && <span className="text-emerald-300">Complete</span>}
-            {job?.status === 'failed' && <span className="text-rose-300">Failed</span>}
+            {job?.status === 'done'   && <span style={{ color: 'var(--green-ink)' }}>Complete</span>}
+            {job?.status === 'failed' && <span style={{ color: 'var(--red)' }}>Failed</span>}
           </div>
-          <div className="h-1.5 rounded-full bg-surface-800 overflow-hidden">
+          <div
+            className="h-1.5 rounded-full overflow-hidden"
+            style={{ background: 'var(--surface-fill)' }}
+          >
             <div
-              className={clsx(
-                'h-full transition-all duration-300',
-                job?.status === 'failed' ? 'bg-rose-500' : 'bg-emerald-500',
-              )}
-              style={{ width: `${pct}%` }}
+              className="h-full transition-all duration-300"
+              style={{
+                width: `${pct}%`,
+                background: job?.status === 'failed' ? 'var(--red)' : 'var(--green)',
+              }}
             />
           </div>
         </div>
@@ -212,9 +235,11 @@ function GenerateProgressModal({
           {(job?.events ?? []).map((e, i) => (
             <EventRow key={i} event={e} />
           ))}
-          {!job && <div className="text-surface-500 italic">Starting…</div>}
+          {!job && (
+            <div className="italic" style={{ color: 'var(--text-tertiary)' }}>Starting…</div>
+          )}
           {error && (
-            <div className="text-rose-300 flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 mt-2" style={{ color: 'var(--red)' }}>
               <AlertTriangle size={12} /> {error}
             </div>
           )}
@@ -225,10 +250,14 @@ function GenerateProgressModal({
         )}
 
         {job?.status !== 'done' && (
-          <div className="mt-4 pt-3 border-t border-surface-800 flex justify-end">
+          <div
+            className="mt-4 pt-3 flex justify-end"
+            style={{ borderTop: '1px solid var(--separator)' }}
+          >
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs text-surface-300 hover:bg-surface-800"
+              className="px-3 py-1.5 rounded-lg text-xs"
+              style={{ color: 'var(--text-secondary)' }}
             >
               {job?.status === 'failed' ? 'Close' : 'Run in background'}
             </button>
@@ -250,12 +279,20 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
   const [selected, setSelected] = useState<Set<string>>(() => new Set(accepted.map((a) => a.atom_id)));
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState<{ activated: number; failed: number } | null>(null);
+  const [hoveredAtomId, setHoveredAtomId] = useState<string | null>(null);
 
   if (accepted.length === 0) {
     return (
-      <div className="mt-4 pt-3 border-t border-surface-800 flex items-center justify-between">
-        <span className="text-xs text-surface-500">No atoms to approve.</span>
-        <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-surface-300 hover:bg-surface-800">
+      <div
+        className="mt-4 pt-3 flex items-center justify-between"
+        style={{ borderTop: '1px solid var(--separator)' }}
+      >
+        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No atoms to approve.</span>
+        <button
+          onClick={onClose}
+          className="px-3 py-1.5 rounded-lg text-xs"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           Close
         </button>
       </div>
@@ -301,12 +338,19 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
   };
 
   return (
-    <div className="mt-4 pt-3 border-t border-surface-800">
+    <div
+      className="mt-4 pt-3"
+      style={{ borderTop: '1px solid var(--separator)' }}
+    >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-white">
+        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
           Approve {selected.size} of {accepted.length}
         </span>
-        <button onClick={toggleAll} className="text-[10px] uppercase tracking-wider text-violet-400 hover:text-violet-300">
+        <button
+          onClick={toggleAll}
+          className="text-[10px] uppercase tracking-wider"
+          style={{ color: 'var(--indigo-ink)' }}
+        >
           {allChecked ? 'Deselect all' : 'Select all'}
         </button>
       </div>
@@ -318,20 +362,27 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
           return (
             <label
               key={a.atom_id}
-              className="flex items-center gap-2 px-2 py-1 rounded hover:bg-surface-800 cursor-pointer"
+              className="flex items-center gap-2 px-2 py-1 rounded cursor-pointer"
+              style={{
+                background: hoveredAtomId === a.atom_id ? 'var(--surface-fill)' : 'transparent',
+              }}
+              onMouseEnter={() => setHoveredAtomId(a.atom_id)}
+              onMouseLeave={() => setHoveredAtomId(null)}
             >
               <input
                 type="checkbox"
                 checked={checked}
                 onChange={() => toggle(a.atom_id)}
-                className="accent-violet-400"
+                style={{ accentColor: 'var(--indigo)' }}
               />
-              <span className="font-mono text-[10px] text-surface-500 w-20 truncate">
+              <span className="font-mono text-[10px] w-20 truncate" style={{ color: 'var(--text-tertiary)' }}>
                 {a.atom_type}
               </span>
-              <span className="flex-1 text-surface-300 truncate">{a.atom_id}</span>
+              <span className="flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>{a.atom_id}</span>
               {score != null && (
-                <span className="text-emerald-300 tabular-nums text-[10px]">judge {Number(score).toFixed(1)}</span>
+                <span className="tabular-nums text-[10px]" style={{ color: 'var(--green-ink)' }}>
+                  judge {Number(score).toFixed(1)}
+                </span>
               )}
             </label>
           );
@@ -340,12 +391,12 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
 
       {outcome && (
         <div
-          className={clsx(
-            'mb-3 px-2.5 py-1.5 rounded text-xs',
+          className="mb-3 px-2.5 py-1.5 rounded text-xs"
+          style={
             outcome.failed > 0
-              ? 'bg-amber-500/10 text-amber-200'
-              : 'bg-emerald-500/10 text-emerald-200',
-          )}
+              ? { background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }
+              : { background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }
+          }
         >
           {outcome.activated} activated{outcome.failed > 0 ? `, ${outcome.failed} failed` : ''}.
           {outcome.failed === 0 && ' Atoms are now live.'}
@@ -356,14 +407,20 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
         <button
           onClick={onClose}
           disabled={submitting}
-          className="px-3 py-1.5 rounded-lg text-xs text-surface-300 hover:bg-surface-800"
+          className="px-3 py-1.5 rounded-lg text-xs"
+          style={{ color: 'var(--text-secondary)' }}
         >
           Close
         </button>
         <button
           onClick={submit}
           disabled={submitting || selected.size === 0 || outcome?.activated === selected.size}
-          className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs hover:bg-emerald-500/30 disabled:opacity-50"
+          className="px-3 py-1.5 rounded-lg text-xs"
+          style={{
+            background: 'rgba(52,199,89,.06)',
+            color: 'var(--green-ink)',
+            opacity: (submitting || selected.size === 0 || outcome?.activated === selected.size) ? 0.5 : 1,
+          }}
         >
           {submitting ? 'Activating…' : outcome?.activated === selected.size ? 'Activated' : `Activate ${selected.size}`}
         </button>
@@ -373,33 +430,31 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
 }
 
 function EventRow({ event }: { event: ProgressEvent }) {
-  const Icon = event.type === 'atom_finished'
-    ? CheckCircle2
-    : event.type === 'atom_rejected'
-    ? XCircle
-    : event.type === 'atom_started'
-    ? Loader2
-    : event.type === 'done'
-    ? Sparkles
+  const Icon =
+    event.type === 'atom_finished' ? CheckCircle2
+    : event.type === 'atom_rejected' ? XCircle
+    : event.type === 'atom_started' ? Loader2
+    : event.type === 'done' ? Sparkles
     : null;
-  const tone = event.type === 'atom_finished' || event.type === 'done'
-    ? 'text-emerald-300'
-    : event.type === 'atom_rejected'
-    ? 'text-rose-300'
-    : 'text-surface-400';
+  const toneColor =
+    event.type === 'atom_finished' || event.type === 'done'
+      ? 'var(--green-ink)'
+      : event.type === 'atom_rejected'
+      ? 'var(--red)'
+      : 'var(--text-tertiary)';
   if (event.type === 'start') return null;
   if (event.type === 'done') {
     return (
-      <div className={clsx('flex items-center gap-1.5', tone)}>
+      <div className="flex items-center gap-1.5" style={{ color: toneColor }}>
         <Sparkles size={12} />
         <span>Done: {event.total_cost_usd ? `$${event.total_cost_usd.toFixed(3)} spent` : ''}</span>
       </div>
     );
   }
   return (
-    <div className={clsx('flex items-center gap-1.5', tone)}>
+    <div className="flex items-center gap-1.5" style={{ color: toneColor }}>
       {Icon && <Icon size={12} className={event.type === 'atom_started' ? 'animate-spin' : ''} />}
-      <span className="font-mono text-[10px] text-surface-500 w-8 text-right">
+      <span className="font-mono text-[10px] w-8 text-right" style={{ color: 'var(--text-tertiary)' }}>
         {event.atom_type?.slice(0, 7)}
       </span>
       <span className="flex-1 truncate">
@@ -429,7 +484,7 @@ function VersionDiffModal({ atomId, onClose }: { atomId: string; onClose: () => 
       .catch((e) => setError(e.message));
   }, [atomId]);
 
-  const active = versions.find((v) => v.active) ?? versions[1] ?? null;
+  const active    = versions.find((v) => v.active)  ?? versions[1] ?? null;
   const candidate = versions.find((v) => !v.active) ?? versions[0] ?? null;
 
   const activate = useCallback(async (version_n: number) => {
@@ -447,22 +502,41 @@ function VersionDiffModal({ atomId, onClose }: { atomId: string; onClose: () => 
   }, [atomId]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl bg-surface-900 border border-surface-700 shadow-2xl flex flex-col">
-        <div className="flex items-start justify-between p-4 border-b border-surface-800">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,.6)' }}
+    >
+      <div
+        className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl shadow-2xl flex flex-col"
+        style={{ background: 'var(--surface-card)', border: '1px solid var(--separator)' }}
+      >
+        <div
+          className="flex items-start justify-between p-4"
+          style={{ borderBottom: '1px solid var(--separator)' }}
+        >
           <div>
-            <h3 className="text-sm font-semibold text-white">{atomId}</h3>
-            <p className="text-xs text-surface-500 mt-0.5">{versions.length} version{versions.length === 1 ? '' : 's'}</p>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{atomId}</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+              {versions.length} version{versions.length === 1 ? '' : 's'}
+            </p>
           </div>
-          <button onClick={onClose} className="p-1 rounded text-surface-500 hover:text-surface-200">
+          <button
+            onClick={onClose}
+            className="p-1 rounded"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
             <X size={16} />
           </button>
         </div>
 
-        {error && <div className="p-4 text-rose-300 text-sm">{error}</div>}
+        {error && (
+          <div className="p-4 text-sm" style={{ color: 'var(--red)' }}>{error}</div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-4">
-          {versions.length === 0 && !error && <div className="text-surface-500 italic text-sm">Loading…</div>}
+          {versions.length === 0 && !error && (
+            <div className="italic text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading…</div>
+          )}
           {versions.length === 1 && (
             <SingleVersion v={versions[0]} onActivate={activate} />
           )}
@@ -472,7 +546,7 @@ function VersionDiffModal({ atomId, onClose }: { atomId: string; onClose: () => 
                 <DiffHighlights before={active.content} after={candidate.content} />
               )}
               <div className="grid grid-cols-2 gap-4">
-                <VersionPane label="Active" v={active} onActivate={activate} />
+                <VersionPane label="Active"    v={active}    onActivate={activate} />
                 <VersionPane label="Candidate" v={candidate} onActivate={activate} highlight />
               </div>
             </>
@@ -502,11 +576,17 @@ function DiffHighlights({ before, after }: { before: string; after: string }) {
   if (!hasChanges) return null;
 
   return (
-    <div className="mb-4 rounded-lg border border-surface-800 bg-surface-950/70 p-3">
-      <div className="text-[10px] uppercase tracking-wider text-surface-500 mb-2">
+    <div
+      className="mb-4 rounded-lg p-3"
+      style={{ background: 'var(--surface-fill)', border: '1px solid var(--separator)' }}
+    >
+      <div
+        className="text-[10px] uppercase tracking-wider mb-2"
+        style={{ color: 'var(--text-tertiary)' }}
+      >
         Word-level changes
       </div>
-      <div className="text-xs leading-relaxed text-surface-300 break-words">
+      <div className="text-xs leading-relaxed break-words" style={{ color: 'var(--text-secondary)' }}>
         {segments.map((s, i) => {
           if (s.op === 'equal') {
             return <span key={i}>{s.text}</span>;
@@ -515,7 +595,8 @@ function DiffHighlights({ before, after }: { before: string; after: string }) {
             return (
               <span
                 key={i}
-                className="bg-emerald-500/20 text-emerald-200 rounded px-0.5"
+                className="rounded px-0.5"
+                style={{ background: 'rgba(52,199,89,.12)', color: 'var(--green-ink)' }}
                 title="added"
               >
                 {s.text}
@@ -525,7 +606,8 @@ function DiffHighlights({ before, after }: { before: string; after: string }) {
           return (
             <span
               key={i}
-              className="bg-rose-500/15 text-rose-200 line-through rounded px-0.5"
+              className="line-through rounded px-0.5"
+              style={{ background: 'rgba(255,59,48,.06)', color: 'var(--red)' }}
               title="removed"
             >
               {s.text}
@@ -539,15 +621,23 @@ function DiffHighlights({ before, after }: { before: string; after: string }) {
 
 function SingleVersion({ v, onActivate }: { v: AtomVersion; onActivate: (n: number) => void }) {
   return (
-    <div className="rounded-lg border border-surface-800 p-3">
+    <div
+      className="rounded-lg p-3"
+      style={{ border: '1px solid var(--separator)' }}
+    >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-surface-400">v{v.version_n} · {new Date(v.generated_at).toLocaleString()}</span>
+        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          v{v.version_n} · {new Date(v.generated_at).toLocaleString()}
+        </span>
         {v.active ? (
-          <span className="text-[10px] uppercase tracking-wider text-emerald-300">Active</span>
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--green-ink)' }}>
+            Active
+          </span>
         ) : (
           <button
             onClick={() => onActivate(v.version_n)}
-            className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs hover:bg-emerald-500/30"
+            className="px-2.5 py-1 rounded-lg text-xs"
+            style={{ background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }}
           >
             Activate
           </button>
@@ -569,40 +659,64 @@ function VersionPane({
   onActivate: (n: number) => void;
   highlight?: boolean;
 }) {
-  if (!v) return <div className="text-surface-500 italic text-sm">no version</div>;
+  if (!v) return (
+    <div className="italic text-sm" style={{ color: 'var(--text-tertiary)' }}>no version</div>
+  );
   const meta = v.generation_meta as any;
   const disagreed = meta?.consensus_disagreement;
   return (
-    <div className={clsx('rounded-lg border p-3', highlight ? 'border-violet-500/40' : 'border-surface-800')}>
+    <div
+      className="rounded-lg p-3"
+      style={{
+        border: highlight
+          ? '1px solid rgba(88,86,214,.22)'
+          : '1px solid var(--separator)',
+      }}
+    >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-surface-400">{label} · v{v.version_n}</span>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            {label} · v{v.version_n}
+          </span>
           {disagreed && (
-            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">
+            <span
+              className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded"
+              style={{
+                background: 'rgba(255,59,48,.06)',
+                color: 'var(--red)',
+                border: '1px solid rgba(255,59,48,.22)',
+              }}
+            >
               models disagree
             </span>
           )}
           {v.improvement_reason && (
-            <Sparkles size={12} className="text-emerald-300" aria-label={v.improvement_reason} />
+            <Sparkles size={12} style={{ color: 'var(--green-ink)' }} aria-label={v.improvement_reason} />
           )}
         </div>
         {v.active ? (
-          <span className="text-[10px] uppercase tracking-wider text-emerald-300">Active</span>
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--green-ink)' }}>
+            Active
+          </span>
         ) : (
           <button
             onClick={() => onActivate(v.version_n)}
-            className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs hover:bg-emerald-500/30"
+            className="px-2.5 py-1 rounded-lg text-xs"
+            style={{ background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }}
           >
             Activate
           </button>
         )}
       </div>
       {v.improvement_reason && (
-        <div className="mb-2 px-2 py-1 rounded text-[11px] bg-emerald-500/5 text-emerald-200/80">
+        <div
+          className="mb-2 px-2 py-1 rounded text-[11px]"
+          style={{ background: 'rgba(52,199,89,.04)', color: 'var(--green-ink)' }}
+        >
           {v.improvement_reason}
         </div>
       )}
-      <div className="prose prose-invert prose-sm max-w-none">
+      <div className="prose prose-sm max-w-none">
         <MarkdownAtomRenderer atomId={`${v.atom_id}.diff.${v.version_n}`} content={v.content} />
       </div>
     </div>
@@ -620,6 +734,7 @@ export default function ConceptOrchestratorPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeJob, setActiveJob] = useState<{ id: string; label: string } | null>(null);
   const [diffAtomId, setDiffAtomId] = useState<string | null>(null);
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
   const loadQueue = useCallback(async () => {
     setLoading(true);
@@ -678,7 +793,14 @@ export default function ConceptOrchestratorPage() {
   if (!isAdmin) {
     return (
       <div className="px-4 py-8 max-w-2xl mx-auto">
-        <div className="p-4 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-200 text-sm">
+        <div
+          className="p-4 rounded-lg text-sm"
+          style={{
+            background: 'rgba(255,59,48,.06)',
+            border: '1px solid rgba(255,59,48,.22)',
+            color: 'var(--red)',
+          }}
+        >
           Admin access required.
         </div>
       </div>
@@ -689,20 +811,23 @@ export default function ConceptOrchestratorPage() {
     <div className="px-4 py-6 max-w-5xl mx-auto">
       <header className="flex items-end justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-white">Concepts needing content</h1>
-          <p className="text-xs text-surface-400 mt-1">
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Concepts needing content
+          </h1>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
             Sorted by impact (exam weight × students affected × cohort error %).
             One-click regen produces an 11-atom draft set in ~30s.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-surface-500 tabular-nums">
+          <span className="text-xs tabular-nums" style={{ color: 'var(--text-tertiary)' }}>
             ${totalSpent.toFixed(2)} this month
           </span>
           <button
             onClick={loadQueue}
             disabled={loading}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 text-xs"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs"
+            style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>
@@ -710,15 +835,28 @@ export default function ConceptOrchestratorPage() {
       </header>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm">
+        <div
+          className="mb-4 p-3 rounded-lg text-sm"
+          style={{
+            background: 'rgba(255,149,0,.06)',
+            border: '1px solid rgba(255,149,0,.22)',
+            color: 'var(--orange)',
+          }}
+        >
           {error}
         </div>
       )}
 
-      <div className="rounded-xl border border-surface-800 overflow-hidden">
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{ border: '1px solid var(--separator)' }}
+      >
         <table className="w-full text-sm">
-          <thead className="bg-surface-900/50 border-b border-surface-800">
-            <tr className="text-left text-[10px] uppercase tracking-wider text-surface-500">
+          <thead style={{ background: 'var(--surface-fill)', borderBottom: '1px solid var(--separator)' }}>
+            <tr
+              className="text-left text-[10px] uppercase tracking-wider"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
               <th className="px-3 py-2">Concept</th>
               <th className="px-3 py-2">State</th>
               <th className="px-3 py-2">Atoms</th>
@@ -729,27 +867,58 @@ export default function ConceptOrchestratorPage() {
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-surface-500 text-xs">Loading queue…</td></tr>
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-3 py-6 text-center text-xs"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  Loading queue…
+                </td>
+              </tr>
             )}
             {!loading && rows.length === 0 && !error && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-surface-500 text-xs">All concepts have content. ✨</td></tr>
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-3 py-6 text-center text-xs"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  All concepts have content.
+                </td>
+              </tr>
             )}
             {rows.map((row) => {
-              const atCap = row.spent_usd >= row.cap_usd;
+              const atCap    = row.spent_usd >= row.cap_usd;
+              const isHovered = hoveredRowId === row.concept_id;
               return (
-                <tr key={row.concept_id} className="border-b border-surface-800 last:border-b-0 hover:bg-surface-900/30">
+                <tr
+                  key={row.concept_id}
+                  style={{
+                    borderBottom: '1px solid var(--separator)',
+                    background: isHovered ? 'var(--surface-fill)' : 'transparent',
+                  }}
+                  onMouseEnter={() => setHoveredRowId(row.concept_id)}
+                  onMouseLeave={() => setHoveredRowId(null)}
+                >
                   <td className="px-3 py-2.5">
-                    <div className="font-medium text-white text-sm">{row.label}</div>
-                    <div className="text-[10px] text-surface-500">{row.concept_id} · {row.topic_family}</div>
+                    <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+                      {row.label}
+                    </div>
+                    <div className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                      {row.concept_id} · {row.topic_family}
+                    </div>
                   </td>
                   <td className="px-3 py-2.5"><StateBadge state={row.state} /></td>
-                  <td className="px-3 py-2.5 tabular-nums text-surface-300">
+                  <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
                     {row.atoms_existing}/11
                     {row.atoms_to_generate > 0 && (
-                      <span className="text-[10px] text-surface-500 ml-1">+{row.atoms_to_generate}</span>
+                      <span className="text-[10px] ml-1" style={{ color: 'var(--text-tertiary)' }}>
+                        +{row.atoms_to_generate}
+                      </span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 tabular-nums text-surface-300">
+                  <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
                     {(row.cohort_error_pct * 100).toFixed(0)}%
                   </td>
                   <td className="px-3 py-2.5">
@@ -757,12 +926,13 @@ export default function ConceptOrchestratorPage() {
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     {atCap ? (
-                      <span className="text-[11px] text-rose-300">Cap reached</span>
+                      <span className="text-[11px]" style={{ color: 'var(--red)' }}>Cap reached</span>
                     ) : (
                       <button
                         onClick={() => startGenerate(row)}
                         title={`+$${row.estimated_cost_usd.toFixed(2)} ~ ${row.atoms_to_generate || 11} atoms`}
-                        className="px-3 py-1 rounded-lg bg-violet-500/20 text-violet-300 text-xs hover:bg-violet-500/30"
+                        className="px-3 py-1 rounded-lg text-xs"
+                        style={{ background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)' }}
                       >
                         Generate
                       </button>

@@ -13,11 +13,10 @@
  * exactly what's about to happen. Admins never see a blank power-tool wall.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
-import { clsx } from 'clsx';
 import {
   ChevronLeft, ChevronRight, Sparkles, BookOpen, Send, AlertTriangle,
   ThumbsUp, ThumbsDown, RefreshCw, CheckCircle2, Loader2,
@@ -98,11 +97,11 @@ const STEPS = [
   { id: 5, label: 'Review & feedback', icon: ThumbsUp },
 ];
 
-const GAP_COLOR: Record<MappingEntry['gap_class'], string> = {
-  'aligned':     'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
-  'depth-gap':   'bg-amber-500/10  border-amber-500/30  text-amber-300',
-  'breadth-gap': 'bg-orange-500/10 border-orange-500/30 text-orange-300',
-  'foundation':  'bg-red-500/10    border-red-500/30    text-red-300',
+const GAP_STYLE: Record<MappingEntry['gap_class'], CSSProperties> = {
+  'aligned':     { background: 'rgba(52,199,89,.06)',  border: '1px solid rgba(52,199,89,.22)',  color: 'var(--green-ink)' },
+  'depth-gap':   { background: 'rgba(255,149,0,.06)',  border: '1px solid rgba(255,149,0,.22)',  color: 'var(--orange)' },
+  'breadth-gap': { background: 'rgba(255,149,0,.06)',  border: '1px solid rgba(255,149,0,.22)',  color: 'var(--orange)' },
+  'foundation':  { background: 'rgba(255,59,48,.06)',  border: '1px solid rgba(255,59,48,.22)',  color: 'var(--red)' },
 };
 
 const GAP_LABEL: Record<MappingEntry['gap_class'], string> = {
@@ -202,7 +201,7 @@ export default function SyllabusBridgePage() {
       if (!r.ok) throw new Error((await r.json()).error || `Preview failed: ${r.status}`);
       const { ranked } = await r.json();
       setRankedEntries(ranked); setCohortStats(null);
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
   const runCohortReport = async () => {
@@ -219,14 +218,14 @@ export default function SyllabusBridgePage() {
       if (!r.ok) throw new Error((await r.json()).error || `Cohort failed: ${r.status}`);
       const { stats } = await r.json();
       setCohortStats(stats); setRankedEntries(null);
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
   const submitBatch = async () => {
     if (!selectedMappingId) return;
     setSubmitting(true); setError(null);
     try {
-      const payload: any = { mapping_id: selectedMappingId };
+      const payload: Record<string, unknown> = { mapping_id: selectedMappingId };
       if (personaMode === 'student' && studentId.trim()) {
         payload.for_student_id = studentId.trim();
         if (smartPriority) payload.smart_priority = true;
@@ -239,7 +238,7 @@ export default function SyllabusBridgePage() {
       const { batch } = await r.json();
       setActiveBatch(batch);
       if (selectedMappingId) refreshAll(selectedMappingId);
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setSubmitting(false); }
   };
 
@@ -252,7 +251,7 @@ export default function SyllabusBridgePage() {
       const result = await r.json();
       if (result.batch) setActiveBatch(result.batch);
       if (selectedMappingId) refreshAll(selectedMappingId);
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setSubmitting(false); }
   };
 
@@ -269,7 +268,7 @@ export default function SyllabusBridgePage() {
         const fo = await authFetch(`/api/syllabus-bridge/mappings/${selectedMappingId}/feedback-overview`);
         if (fo.ok) setFeedbackOverview(await fo.json());
       }
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
   // ---- Derived ----
@@ -286,7 +285,7 @@ export default function SyllabusBridgePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-zinc-500">
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh', color: 'var(--text-tertiary)' }}>
         <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     );
@@ -296,10 +295,10 @@ export default function SyllabusBridgePage() {
     <div className="max-w-4xl mx-auto px-4 pt-6 pb-16">
       {/* Header */}
       <div className="mb-6 flex items-baseline gap-3">
-        <h1 className="text-2xl font-bold text-zinc-100">Syllabus Bridge</h1>
-        <Link to="/admin/dashboard" className="text-xs text-zinc-500 hover:text-zinc-300">← Admin home</Link>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Syllabus Bridge</h1>
+        <Link to="/admin/dashboard" className="text-xs" style={{ color: 'var(--text-tertiary)' }}>← Admin home</Link>
       </div>
-      <p className="text-sm text-zinc-400 mb-6 max-w-2xl">
+      <p className="text-sm mb-6 max-w-2xl" style={{ color: 'var(--text-tertiary)' }}>
         Build a curriculum-aware course that helps students bridge from a school syllabus (e.g. TN State Board)
         to an entrance exam (e.g. IIT JEE). Five guided steps.
       </p>
@@ -310,96 +309,124 @@ export default function SyllabusBridgePage() {
           const Icon = s.icon;
           const isCurrent = step === s.id;
           const isPast = step > s.id;
+          const stepStyle: CSSProperties = isCurrent ? {
+            background: 'rgba(88,86,214,.08)',
+            border: '1px solid rgba(88,86,214,.22)',
+            color: 'var(--indigo-ink)',
+          } : isPast ? {
+            background: 'rgba(52,199,89,.06)',
+            border: '1px solid rgba(52,199,89,.22)',
+            color: 'var(--green-ink)',
+            cursor: 'pointer',
+          } : {
+            background: 'var(--surface-card)',
+            border: 'var(--hairline) solid var(--separator)',
+            color: 'var(--text-tertiary)',
+          };
           return (
             <div key={s.id} className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => isPast && setStep(s.id)}
                 disabled={!isPast && !isCurrent}
-                className={clsx(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors',
-                  isCurrent && 'bg-sky-500/20 border border-sky-500/40 text-sky-200',
-                  isPast    && 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 cursor-pointer',
-                  !isCurrent && !isPast && 'bg-zinc-900 border border-zinc-800 text-zinc-500',
-                )}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors"
+                style={stepStyle}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span className="font-medium">{s.label}</span>
               </button>
-              {i < STEPS.length - 1 && <ChevronRight className="w-3 h-3 text-zinc-700" />}
+              {i < STEPS.length - 1 && (
+                <ChevronRight className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />
+              )}
             </div>
           );
         })}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-200 text-sm">{error}</div>
+        <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)', color: 'var(--red)' }}>
+          {error}
+        </div>
       )}
 
       <AnimatePresence mode="wait">
         {step === 1 && (
           <motion.section key="s1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <h2 className="text-sm font-semibold text-zinc-100 mb-2">Step 1 — Pick the curriculum → exam pair</h2>
-            <p className="text-xs text-zinc-500 mb-4">
+            <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Step 1 — Pick the curriculum → exam pair</h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
               Each mapping pairs a source curriculum with a target exam. The framework identifies where they
               align, where the source is shallower than the exam, and where the exam needs material the source skips.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {mappings.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setSelectedMappingId(m.id)}
-                  className={clsx(
-                    'text-left p-4 rounded-xl border-2 transition-all',
-                    selectedMappingId === m.id
-                      ? 'bg-sky-500/10 border-sky-500/50 ring-1 ring-sky-500/30'
-                      : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700',
-                  )}
-                >
-                  <div className="font-semibold text-zinc-100">{m.display_name}</div>
-                  <div className="text-xs text-zinc-500 mt-1">{m.entry_count} bridge entries</div>
-                  <div className="mt-2 grid grid-cols-4 gap-1 text-[10px] text-center">
-                    <div className="px-1 py-1 rounded bg-emerald-500/15 text-emerald-300">aligned<br/>{m.gap_breakdown.aligned}</div>
-                    <div className="px-1 py-1 rounded bg-amber-500/15 text-amber-300">depth<br/>{m.gap_breakdown.depth_gap}</div>
-                    <div className="px-1 py-1 rounded bg-orange-500/15 text-orange-300">breadth<br/>{m.gap_breakdown.breadth_gap}</div>
-                    <div className="px-1 py-1 rounded bg-red-500/15 text-red-300">foundation<br/>{m.gap_breakdown.foundation}</div>
-                  </div>
-                </button>
-              ))}
+              {mappings.map(m => {
+                const isSelected = selectedMappingId === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedMappingId(m.id)}
+                    className="text-left p-4 rounded-xl transition-all"
+                    style={isSelected ? {
+                      background: 'rgba(88,86,214,.08)',
+                      border: '2px solid rgba(88,86,214,.22)',
+                      boxShadow: '0 0 0 1px rgba(88,86,214,.22)',
+                    } : {
+                      background: 'var(--surface-card)',
+                      border: '2px solid var(--separator)',
+                    }}
+                  >
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{m.display_name}</div>
+                    <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{m.entry_count} bridge entries</div>
+                    <div className="mt-2 grid grid-cols-4 gap-1 text-[10px] text-center">
+                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }}>
+                        aligned<br/>{m.gap_breakdown.aligned}
+                      </div>
+                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }}>
+                        depth<br/>{m.gap_breakdown.depth_gap}
+                      </div>
+                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }}>
+                        breadth<br/>{m.gap_breakdown.breadth_gap}
+                      </div>
+                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,59,48,.06)', color: 'var(--red)' }}>
+                        foundation<br/>{m.gap_breakdown.foundation}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </motion.section>
         )}
 
         {step === 2 && selectedMapping && plan && mappingDetail && (
           <motion.section key="s2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <h2 className="text-sm font-semibold text-zinc-100 mb-2">Step 2 — Review the gap analysis</h2>
-            <p className="text-xs text-zinc-500 mb-4">
+            <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Step 2 — Review the gap analysis</h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
               Each entry below maps source concepts to target exam topics, colour-coded by gap class.
               Below the count, total cost if you generate the whole pack.
             </p>
 
-            <div className="mb-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800 grid grid-cols-3 gap-4">
+            <div className="mb-4 p-4 rounded-xl grid grid-cols-3 gap-4" style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
               <div>
-                <div className="text-2xl font-bold text-zinc-100">{plan.total_units}</div>
-                <div className="text-xs text-zinc-500">units to generate</div>
+                <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{plan.total_units}</div>
+                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>units to generate</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-zinc-100">{plan.total_estimated_tokens.toLocaleString()}</div>
-                <div className="text-xs text-zinc-500">est. tokens</div>
+                <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{plan.total_estimated_tokens.toLocaleString()}</div>
+                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>est. tokens</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-emerald-400">${plan.estimated_cost_usd.toFixed(4)}</div>
-                <div className="text-xs text-zinc-500">est. cost (Gemini Flash)</div>
+                <div className="text-2xl font-bold" style={{ color: 'var(--green-ink)' }}>${plan.estimated_cost_usd.toFixed(4)}</div>
+                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>est. cost (Gemini Flash)</div>
               </div>
             </div>
 
             <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
               {mappingDetail.entries.map(e => (
-                <div key={e.id} className={clsx('p-2.5 rounded-lg border text-xs', GAP_COLOR[e.gap_class])}>
+                <div key={e.id} className="p-2.5 rounded-lg text-xs" style={GAP_STYLE[e.gap_class]}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-mono text-zinc-100">{e.id}</span>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{e.id}</span>
                     <span className="text-[10px]">{GAP_LABEL[e.gap_class]} · jump {e.difficulty_jump}/5</span>
                   </div>
-                  <p className="text-zinc-300 leading-relaxed text-[11px]">{e.bridge_note}</p>
+                  <p className="leading-relaxed text-[11px]" style={{ color: 'var(--text-secondary)' }}>{e.bridge_note}</p>
                 </div>
               ))}
             </div>
@@ -408,56 +435,96 @@ export default function SyllabusBridgePage() {
 
         {step === 3 && (
           <motion.section key="s3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <h2 className="text-sm font-semibold text-zinc-100 mb-2">Step 3 — Personalise (optional)</h2>
-            <p className="text-xs text-zinc-500 mb-4">
+            <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Step 3 — Personalise (optional)</h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
               Choose who this batch is for. GBrain enriches generation prompts with the target audience's
               mastery + motivation signals so the content matches their level.
             </p>
 
             <div className="space-y-2 mb-4">
-              {(['pack', 'student', 'cohort'] as const).map(mode => (
-                <label key={mode} className={clsx(
-                  'block p-3 rounded-xl border-2 cursor-pointer transition-all',
-                  personaMode === mode ? 'bg-sky-500/10 border-sky-500/50' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700',
-                )}>
-                  <div className="flex items-center gap-2">
-                    <input type="radio" name="persona" checked={personaMode === mode} onChange={() => setPersonaMode(mode)} className="accent-sky-500" />
-                    <div className="font-medium text-zinc-100">
-                      {mode === 'pack'    && 'Generic pack — for everyone'}
-                      {mode === 'student' && 'Solo prep — personalised to one student'}
-                      {mode === 'cohort'  && 'Teacher cohort — analyse class gaps first'}
+              {(['pack', 'student', 'cohort'] as const).map(mode => {
+                const isSelected = personaMode === mode;
+                return (
+                  <label
+                    key={mode}
+                    className="block p-3 rounded-xl cursor-pointer transition-all"
+                    style={isSelected ? {
+                      background: 'rgba(88,86,214,.08)',
+                      border: '2px solid rgba(88,86,214,.22)',
+                    } : {
+                      background: 'var(--surface-card)',
+                      border: '2px solid var(--separator)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="persona"
+                        checked={personaMode === mode}
+                        onChange={() => setPersonaMode(mode)}
+                        style={{ accentColor: 'var(--indigo)' }}
+                      />
+                      <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {mode === 'pack'    && 'Generic pack — for everyone'}
+                        {mode === 'student' && 'Solo prep — personalised to one student'}
+                        {mode === 'cohort'  && 'Teacher cohort — analyse class gaps first'}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-[11px] text-zinc-500 mt-1 ml-6">
-                    {mode === 'pack' && 'Same content every student sees. Lowest cost, fastest.'}
-                    {mode === 'student' && "GBrain reads this student's mastery and weak spots; prompt is calibrated to them. Smart Priority limits to their top-10 gaps."}
-                    {mode === 'cohort' && "See where the class is stuck before generating. Pick the highest-impact entries."}
-                  </div>
-                </label>
-              ))}
+                    <div className="text-[11px] mt-1 ml-6" style={{ color: 'var(--text-tertiary)' }}>
+                      {mode === 'pack'    && 'Same content every student sees. Lowest cost, fastest.'}
+                      {mode === 'student' && "GBrain reads this student's mastery and weak spots; prompt is calibrated to them. Smart Priority limits to their top-10 gaps."}
+                      {mode === 'cohort'  && "See where the class is stuck before generating. Pick the highest-impact entries."}
+                    </div>
+                  </label>
+                );
+              })}
             </div>
 
             {personaMode === 'student' && (
-              <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 space-y-2">
-                <input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="student id (user_xxxxx)"
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-zinc-100 font-mono focus:border-sky-500 focus:outline-none"/>
+              <div className="p-3 rounded-lg space-y-2" style={{ background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+                <input
+                  value={studentId}
+                  onChange={e => setStudentId(e.target.value)}
+                  placeholder="student id (user_xxxxx)"
+                  className="w-full px-3 py-2 rounded-lg text-sm font-mono focus:outline-none"
+                  style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)' }}
+                />
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-xs text-zinc-300 cursor-pointer">
-                    <input type="checkbox" checked={smartPriority} onChange={e => setSmartPriority(e.target.checked)} className="accent-sky-500"/>
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={smartPriority}
+                      onChange={e => setSmartPriority(e.target.checked)}
+                      style={{ accentColor: 'var(--indigo)' }}
+                    />
                     Smart priority — generate only their top 10 gaps
                   </label>
-                  <button onClick={previewRanked} disabled={!studentId.trim()} className={clsx(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                    studentId.trim() ? 'bg-sky-500/20 text-sky-300 hover:bg-sky-500/30' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed',
-                  )}>Preview rank</button>
+                  <button
+                    onClick={previewRanked}
+                    disabled={!studentId.trim()}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={studentId.trim() ? {
+                      background: 'rgba(88,86,214,.08)',
+                      color: 'var(--indigo-ink)',
+                    } : {
+                      background: 'var(--surface-fill)',
+                      color: 'var(--text-tertiary)',
+                      cursor: 'not-allowed',
+                    }}
+                  >
+                    Preview rank
+                  </button>
                 </div>
                 {rankedEntries && (
                   <div className="max-h-60 overflow-y-auto space-y-1 mt-2">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-wide">Top entries this student needs</div>
+                    <div className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Top entries this student needs</div>
                     {rankedEntries.slice(0, 8).map(r => (
-                      <div key={r.entry_id} className={clsx('p-1.5 rounded text-[11px]', GAP_COLOR[r.gap_class])}>
-                        <div className="flex justify-between"><span className="font-mono">{r.entry_id}</span><span>need {(r.need_score * 100).toFixed(0)}</span></div>
-                        <div className="text-zinc-400">{r.reason}</div>
+                      <div key={r.entry_id} className="p-1.5 rounded text-[11px]" style={GAP_STYLE[r.gap_class]}>
+                        <div className="flex justify-between">
+                          <span className="font-mono">{r.entry_id}</span>
+                          <span>need {(r.need_score * 100).toFixed(0)}</span>
+                        </div>
+                        <div style={{ color: 'var(--text-tertiary)' }}>{r.reason}</div>
                       </div>
                     ))}
                   </div>
@@ -466,19 +533,32 @@ export default function SyllabusBridgePage() {
             )}
 
             {personaMode === 'cohort' && (
-              <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 space-y-2">
-                <textarea value={cohortIds} onChange={e => setCohortIds(e.target.value)} placeholder="Comma-separated student ids (paste your roster)" rows={2}
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 font-mono focus:border-sky-500 focus:outline-none"/>
-                <button onClick={runCohortReport} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 transition-colors">
+              <div className="p-3 rounded-lg space-y-2" style={{ background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+                <textarea
+                  value={cohortIds}
+                  onChange={e => setCohortIds(e.target.value)}
+                  placeholder="Comma-separated student ids (paste your roster)"
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-lg text-xs font-mono focus:outline-none"
+                  style={{ background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)' }}
+                />
+                <button
+                  onClick={runCohortReport}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  style={{ background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)' }}
+                >
                   Run cohort gap report
                 </button>
                 {cohortStats && (
                   <div className="max-h-60 overflow-y-auto space-y-1 mt-2">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-wide">Where the class is stuck</div>
+                    <div className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Where the class is stuck</div>
                     {cohortStats.map(s => (
-                      <div key={s.entry_id} className={clsx('p-1.5 rounded text-[11px]', GAP_COLOR[s.gap_class])}>
-                        <div className="flex justify-between"><span className="font-mono">{s.entry_id}</span><span>{s.students_struggling}/{s.cohort_size} struggling</span></div>
-                        <div className="text-zinc-300 italic">{s.recommended_action}</div>
+                      <div key={s.entry_id} className="p-1.5 rounded text-[11px]" style={GAP_STYLE[s.gap_class]}>
+                        <div className="flex justify-between">
+                          <span className="font-mono">{s.entry_id}</span>
+                          <span>{s.students_struggling}/{s.cohort_size} struggling</span>
+                        </div>
+                        <div className="italic" style={{ color: 'var(--text-secondary)' }}>{s.recommended_action}</div>
                       </div>
                     ))}
                   </div>
@@ -490,45 +570,61 @@ export default function SyllabusBridgePage() {
 
         {step === 4 && plan && (
           <motion.section key="s4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <h2 className="text-sm font-semibold text-zinc-100 mb-2">Step 4 — Generate</h2>
+            <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Step 4 — Generate</h2>
             {!activeBatch && (
               <>
-                <p className="text-xs text-zinc-500 mb-4">
-                  Ready to spend up to <span className="text-emerald-400 font-semibold">${plan.estimated_cost_usd.toFixed(4)}</span>
-                  {' '}on <span className="text-zinc-200 font-semibold">{plan.total_units} units</span>
+                <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
+                  Ready to spend up to{' '}
+                  <span className="font-semibold" style={{ color: 'var(--green-ink)' }}>${plan.estimated_cost_usd.toFixed(4)}</span>
+                  {' '}on{' '}
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{plan.total_units} units</span>
                   {personaMode === 'student' && ` for student ${studentId}`}.
                 </p>
-                <button onClick={submitBatch} disabled={submitting} className={clsx(
-                  'w-full py-4 rounded-xl font-semibold text-white transition-all',
-                  submitting ? 'bg-zinc-800 cursor-not-allowed text-zinc-500' : 'bg-gradient-to-r from-emerald-500 to-sky-500 hover:opacity-90',
-                )}>
+                <button
+                  onClick={submitBatch}
+                  disabled={submitting}
+                  className="w-full py-4 rounded-xl font-semibold transition-all"
+                  style={submitting ? {
+                    background: 'var(--surface-fill)',
+                    cursor: 'not-allowed',
+                    color: 'var(--text-tertiary)',
+                  } : {
+                    background: 'var(--green)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
                   {submitting ? 'Submitting…' : `Submit batch — generate ${plan.total_units} units`}
                 </button>
-                <p className="text-[10px] text-zinc-600 mt-2">
+                <p className="text-[10px] mt-2" style={{ color: 'var(--text-tertiary)' }}>
                   Without an LLM key, units generate as mock placeholders (free, instant). Set GEMINI_API_KEY in your env for real generation.
                 </p>
               </>
             )}
             {activeBatch && (
               <div className="space-y-3">
-                <div className="p-4 rounded-xl bg-zinc-900 border border-emerald-500/30">
+                <div className="p-4 rounded-xl" style={{ background: 'var(--surface-card)', border: '1px solid rgba(52,199,89,.22)' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <div className="text-sm font-medium text-zinc-100">{activeBatch.batch_id}</div>
-                      <div className="text-xs text-zinc-500">{activeBatch.status}</div>
+                      <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{activeBatch.batch_id}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{activeBatch.status}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-zinc-100">{activeBatch.completed_units}/{activeBatch.total_units}</div>
-                      <div className="text-xs text-emerald-400">${activeBatch.total_cost_estimate_usd.toFixed(5)}</div>
+                      <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{activeBatch.completed_units}/{activeBatch.total_units}</div>
+                      <div className="text-xs" style={{ color: 'var(--green-ink)' }}>${activeBatch.total_cost_estimate_usd.toFixed(5)}</div>
                     </div>
                   </div>
-                  <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
-                    <div className="h-full bg-emerald-500 transition-all"
-                      style={{ width: `${(activeBatch.completed_units / Math.max(1, activeBatch.total_units)) * 100}%` }}/>
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-fill)' }}>
+                    <div
+                      className="h-full transition-all"
+                      style={{
+                        width: `${(activeBatch.completed_units / Math.max(1, activeBatch.total_units)) * 100}%`,
+                        background: 'var(--green)',
+                      }}
+                    />
                   </div>
                 </div>
                 {activeBatch.status === 'completed' && (
-                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-2">
+                  <div className="p-3 rounded-lg text-sm flex items-center gap-2" style={{ background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)', color: 'var(--green-ink)' }}>
                     <CheckCircle2 className="w-4 h-4"/>
                     Done — head to Review & feedback to scan results.
                   </div>
@@ -540,22 +636,26 @@ export default function SyllabusBridgePage() {
 
         {step === 5 && (
           <motion.section key="s5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <h2 className="text-sm font-semibold text-zinc-100 mb-2">Step 5 — Review & feedback</h2>
-            <p className="text-xs text-zinc-500 mb-4">
+            <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Step 5 — Review & feedback</h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
               Read what was generated. Rate items honestly — the framework auto-flags content with consistent
               negative feedback for regeneration.
             </p>
 
             {feedbackOverview && feedbackOverview.flagged_content_count > 0 && (
-              <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+              <div className="mb-4 p-3 rounded-xl flex items-center justify-between" style={{ background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}>
                 <div className="text-sm">
-                  <div className="text-amber-200 font-medium">
+                  <div className="font-medium" style={{ color: 'var(--orange)' }}>
                     {feedbackOverview.flagged_content_count} content piece{feedbackOverview.flagged_content_count === 1 ? '' : 's'} flagged for regeneration
                   </div>
-                  <div className="text-xs text-amber-300/70">Based on accumulated student + teacher feedback.</div>
+                  <div className="text-xs" style={{ color: 'var(--orange)', opacity: 0.7 }}>Based on accumulated student + teacher feedback.</div>
                 </div>
-                <button onClick={regenerateFlagged} disabled={submitting}
-                  className="px-3 py-2 rounded-lg text-xs font-medium bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 border border-amber-500/40 transition-colors flex items-center gap-1.5">
+                <button
+                  onClick={regenerateFlagged}
+                  disabled={submitting}
+                  className="px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+                  style={{ background: 'rgba(255,149,0,.08)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.22)' }}
+                >
                   <RefreshCw className="w-3.5 h-3.5"/> Regenerate flagged
                 </button>
               </div>
@@ -563,34 +663,51 @@ export default function SyllabusBridgePage() {
 
             <div className="space-y-2">
               {content.length === 0 && (
-                <div className="text-center py-8 text-zinc-500 text-sm">No content yet. Submit a batch first.</div>
+                <div className="text-center py-8 text-sm" style={{ color: 'var(--text-tertiary)' }}>No content yet. Submit a batch first.</div>
               )}
               {content.map(c => {
                 const summary = feedbackBySummary[c.content_id];
                 const isExpanded = expandedContent === c.content_id;
+                const isFlagged = c.flagged_for_regen;
                 return (
-                  <div key={c.content_id} className={clsx(
-                    'rounded-lg border overflow-hidden',
-                    c.flagged_for_regen ? 'bg-amber-500/5 border-amber-500/30' : 'bg-zinc-900 border-zinc-800',
-                  )}>
-                    <button onClick={() => setExpandedContent(isExpanded ? null : c.content_id)}
-                      className="w-full p-3 text-left hover:bg-zinc-800/40 transition-colors">
+                  <div
+                    key={c.content_id}
+                    className="rounded-lg overflow-hidden"
+                    style={isFlagged ? {
+                      background: 'rgba(255,149,0,.04)',
+                      border: '1px solid rgba(255,149,0,.22)',
+                    } : {
+                      background: 'var(--surface-card)',
+                      border: 'var(--hairline) solid var(--separator)',
+                    }}
+                  >
+                    <button
+                      onClick={() => setExpandedContent(isExpanded ? null : c.content_id)}
+                      className="w-full p-3 text-left transition-colors"
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-zinc-100 flex items-center gap-2">
+                          <div className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             {c.title}
-                            {c.flagged_for_regen && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-200">FLAGGED</span>
+                            {isFlagged && (
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded"
+                                style={{ background: 'rgba(255,149,0,.22)', color: 'var(--orange)' }}
+                              >
+                                FLAGGED
+                              </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-zinc-500 mt-0.5">{c.unit_type} · {c.source} · {c.tokens_used ?? 0} tokens</div>
+                          <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                            {c.unit_type} · {c.source} · {c.tokens_used ?? 0} tokens
+                          </div>
                         </div>
-                        <span className="text-xs text-zinc-500">{isExpanded ? '▼' : '▶'}</span>
+                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{isExpanded ? '▼' : '▶'}</span>
                       </div>
                     </button>
                     {isExpanded && (
-                      <div className="p-4 bg-zinc-950 border-t border-zinc-800">
-                        <pre className="text-xs text-zinc-300 whitespace-pre-wrap font-mono leading-relaxed mb-3">{c.body_markdown}</pre>
+                      <div className="p-4" style={{ background: 'var(--surface-fill)', borderTop: 'var(--hairline) solid var(--separator)' }}>
+                        <pre className="text-xs whitespace-pre-wrap font-mono leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>{c.body_markdown}</pre>
                         <FeedbackBar summary={summary} onRate={(rating) => submitFeedback(c.content_id, rating)} />
                       </div>
                     )}
@@ -603,24 +720,44 @@ export default function SyllabusBridgePage() {
       </AnimatePresence>
 
       {/* Wizard nav */}
-      <div className="mt-8 pt-4 border-t border-zinc-800 flex items-center justify-between">
-        <button onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1} className={clsx(
-          'flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-colors',
-          step === 1 ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-300 hover:bg-zinc-900',
-        )}>
+      <div className="mt-8 pt-4 flex items-center justify-between" style={{ borderTop: 'var(--hairline) solid var(--separator)' }}>
+        <button
+          onClick={() => setStep(Math.max(1, step - 1))}
+          disabled={step === 1}
+          className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-colors"
+          style={step === 1 ? {
+            color: 'var(--text-tertiary)',
+            cursor: 'not-allowed',
+          } : {
+            color: 'var(--text-secondary)',
+          }}
+        >
           <ChevronLeft className="w-4 h-4"/> Back
         </button>
-        <div className="text-xs text-zinc-500">Step {step} of {STEPS.length}</div>
+        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Step {step} of {STEPS.length}</div>
         {step < 4 && (
-          <button onClick={() => setStep(step + 1)} disabled={!canGoNext} className={clsx(
-            'flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-colors',
-            canGoNext ? 'bg-sky-500 hover:bg-sky-400 text-white' : 'bg-zinc-900 text-zinc-600 cursor-not-allowed',
-          )}>
+          <button
+            onClick={() => setStep(step + 1)}
+            disabled={!canGoNext}
+            className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-colors"
+            style={canGoNext ? {
+              background: 'var(--indigo)',
+              color: 'var(--text-primary)',
+            } : {
+              background: 'var(--surface-card)',
+              color: 'var(--text-tertiary)',
+              cursor: 'not-allowed',
+            }}
+          >
             Next <ChevronRight className="w-4 h-4"/>
           </button>
         )}
         {step === 4 && activeBatch?.status === 'completed' && (
-          <button onClick={() => setStep(5)} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm bg-sky-500 hover:bg-sky-400 text-white">
+          <button
+            onClick={() => setStep(5)}
+            className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm"
+            style={{ background: 'var(--indigo)', color: 'var(--text-primary)' }}
+          >
             Review content <ChevronRight className="w-4 h-4"/>
           </button>
         )}
@@ -633,25 +770,38 @@ export default function SyllabusBridgePage() {
 function FeedbackBar({ summary, onRate }: { summary: FeedbackSummary | undefined; onRate: (rating: string) => void }) {
   const reasons = ['wrong', 'unclear', 'too-easy', 'too-hard'];
   return (
-    <div className="border-t border-zinc-800 pt-3">
-      <div className="flex items-center gap-2 mb-2 text-xs text-zinc-400">
+    <div className="pt-3" style={{ borderTop: 'var(--hairline) solid var(--separator)' }}>
+      <div className="flex items-center gap-2 mb-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
         <span>Was this useful?</span>
-        <button onClick={() => onRate('helpful')} className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 transition-colors">
+        <button
+          onClick={() => onRate('helpful')}
+          className="flex items-center gap-1 px-2 py-1 rounded transition-colors"
+          style={{ background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }}
+        >
           <ThumbsUp className="w-3 h-3"/> Helpful
         </button>
-        <button onClick={() => onRate('not-helpful')} className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-red-500/20 hover:text-red-300 transition-colors">
+        <button
+          onClick={() => onRate('not-helpful')}
+          className="flex items-center gap-1 px-2 py-1 rounded transition-colors"
+          style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
+        >
           <ThumbsDown className="w-3 h-3"/> Not helpful
         </button>
         {summary && summary.total > 0 && (
-          <span className="ml-auto text-[10px] text-zinc-500">
+          <span className="ml-auto text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
             {summary.by_rating.helpful} 👍 · {summary.by_rating['not-helpful']} 👎 · {summary.total} total
           </span>
         )}
       </div>
       <div className="flex flex-wrap gap-1 text-[10px]">
-        <span className="text-zinc-600">Or flag a specific issue:</span>
+        <span style={{ color: 'var(--text-tertiary)' }}>Or flag a specific issue:</span>
         {reasons.map(r => (
-          <button key={r} onClick={() => onRate(r)} className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 hover:bg-amber-500/20 hover:text-amber-300 transition-colors">
+          <button
+            key={r}
+            onClick={() => onRate(r)}
+            className="px-1.5 py-0.5 rounded transition-colors"
+            style={{ background: 'var(--surface-fill)', color: 'var(--text-tertiary)' }}
+          >
             {r}
           </button>
         ))}

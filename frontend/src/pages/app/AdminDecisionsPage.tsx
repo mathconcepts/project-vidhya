@@ -17,10 +17,10 @@ import { listDecisions, type DecisionRow, type DecisionKind } from '@/api/admin/
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
 const KIND_META: Record<DecisionKind, { label: string; icon: typeof BookOpen; color: string }> = {
-  ruleset_created:    { label: 'Ruleset',    icon: BookOpen,  color: 'text-amber-300' },
-  blueprint_created:  { label: 'Blueprint',  icon: FileText,  color: 'text-violet-300' },
-  blueprint_approved: { label: 'Approved',   icon: Sparkles,  color: 'text-emerald-300' },
-  run_launched:       { label: 'Run',        icon: Rocket,    color: 'text-cyan-300' },
+  ruleset_created:    { label: 'Ruleset',    icon: BookOpen,  color: 'var(--orange)' },
+  blueprint_created:  { label: 'Blueprint',  icon: FileText,  color: 'var(--indigo-ink)' },
+  blueprint_approved: { label: 'Approved',   icon: Sparkles,  color: 'var(--green-ink)' },
+  run_launched:       { label: 'Run',        icon: Rocket,    color: 'var(--indigo-ink)' },
 };
 
 const ALL_KINDS: DecisionKind[] = ['ruleset_created', 'blueprint_created', 'blueprint_approved', 'run_launched'];
@@ -53,13 +53,17 @@ export default function AdminDecisionsPage() {
   }, [filtered]);
 
   if (authLoading) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-violet-400" /></div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <Loader2 className="animate-spin" style={{ color: 'var(--indigo-ink)' }} />
+      </div>
+    );
   }
   if (!user || user.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto mt-20 p-6 rounded-xl border border-surface-800 bg-surface-900 text-center">
-        <Lock size={28} className="mx-auto text-surface-500 mb-3" />
-        <p className="text-surface-200 font-medium mb-1">Admin only</p>
+      <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
+        <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>Admin only</p>
       </div>
     );
   }
@@ -74,23 +78,23 @@ export default function AdminDecisionsPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 0' }}>
       <JourneyNudge currentHref="/admin/decisions" />
 
-      <header className="mb-6">
-        <div className="flex items-center gap-2 text-violet-400 text-xs uppercase tracking-wider mb-2">
+      <header style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--indigo-ink)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
           <ScrollText size={14} /> Decision log
         </div>
-        <h1 className="text-2xl font-display font-semibold text-surface-100">
+        <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
           What you did, when you did it
         </h1>
-        <p className="text-sm text-surface-400 mt-1">
+        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
           Every blueprint, ruleset, approval, and run launch — newest first. Click through to the source.
         </p>
       </header>
 
-      <div className="mb-4 flex items-center gap-2 flex-wrap">
-        <Filter size={11} className="text-surface-500" />
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <Filter size={11} style={{ color: 'var(--text-tertiary)' }} />
         {ALL_KINDS.map((k) => {
           const meta = KIND_META[k];
           const on = activeKinds.has(k);
@@ -98,11 +102,15 @@ export default function AdminDecisionsPage() {
             <button
               key={k}
               onClick={() => toggle(k)}
-              className={`text-xs px-2 py-1 rounded border ${
-                on
-                  ? `border-violet-500/30 bg-violet-500/10 ${meta.color}`
-                  : 'border-surface-800 bg-surface-900 text-surface-500'
-              }`}
+              style={{
+                fontSize: 11,
+                padding: '4px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: on ? '1px solid rgba(88,86,214,.3)' : 'var(--hairline) solid var(--separator)',
+                background: on ? 'rgba(88,86,214,.08)' : 'var(--surface-card)',
+                color: on ? meta.color : 'var(--text-tertiary)',
+                cursor: 'pointer',
+              }}
             >
               {meta.label}
             </button>
@@ -111,32 +119,38 @@ export default function AdminDecisionsPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">{error}</div>
+        <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>{error}</div>
       )}
 
-      {filtered === null && <div className="text-sm text-surface-500">Loading…</div>}
+      {filtered === null && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Loading…</div>}
       {filtered && filtered.length === 0 && (
-        <div className="text-sm text-surface-500 text-center py-12">
-          No decisions yet. Visit <Link to="/admin/journey" className="text-violet-300">the journey dashboard</Link> for what to do first.
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', textAlign: 'center', padding: '48px 0' }}>
+          No decisions yet. Visit <Link to="/admin/journey" style={{ color: 'var(--indigo-ink)' }}>the journey dashboard</Link> for what to do first.
         </div>
       )}
 
       {grouped.map(([day, rows]) => (
-        <motion.section key={day} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
-          <h2 className="text-[10px] uppercase tracking-wider text-surface-600 mb-2">{day}</h2>
-          <ul className="space-y-1">
+        <motion.section key={day} initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: 24 }}>
+          <h2 style={{ margin: '0 0 8px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>{day}</h2>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {rows.map((r, i) => {
               const meta = KIND_META[r.kind];
               const Icon = meta.icon;
               const time = r.at.slice(11, 16);
               return (
-                <li key={`${r.kind}-${r.ref_id}-${i}`} className="p-2.5 rounded-lg border border-surface-800 bg-surface-900 flex items-start gap-3">
-                  <Icon size={14} className={`mt-0.5 shrink-0 ${meta.color}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[11px] text-surface-500 mb-0.5">
-                      {time} <span className="text-surface-700">·</span> {meta.label} <span className="text-surface-700">·</span> {r.actor}
+                <li
+                  key={`${r.kind}-${r.ref_id}-${i}`}
+                  style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', display: 'flex', alignItems: 'flex-start', gap: 12 }}
+                >
+                  <Icon size={14} style={{ marginTop: 2, flexShrink: 0, color: meta.color }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 2 }}>
+                      {time} · {meta.label} · {r.actor}
                     </div>
-                    <Link to={r.href} className="text-sm text-surface-200 hover:text-violet-300 truncate block">
+                    <Link
+                      to={r.href}
+                      style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', textDecoration: 'none' }}
+                    >
                       {r.summary}
                     </Link>
                   </div>

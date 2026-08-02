@@ -46,6 +46,11 @@ describe('retention-engine', () => {
     vi.clearAllMocks();
     delete process.env.CRON_SECRET;
     delete process.env.RESEND_API_KEY;
+    // Post-migration (CEO plan Phase 0 §5.1): the job resolves its repo via
+    // getSharedPool(), which returns null (and requireRepo() throws) unless
+    // DATABASE_URL is set — unlike the old module-level `new pg.Pool(...)`,
+    // which the vi.mock('pg') factory below satisfied unconditionally.
+    process.env.DATABASE_URL = 'postgres://test';
   });
 
   describe('POST /api/email/process', () => {
@@ -84,8 +89,10 @@ describe('retention-engine', () => {
       expect(res.json.skipped).toBe(2);
       expect(res.json.sent).toBe(0);
 
-      // Verify LIMIT 20 in the query
-      expect(mockQuery.mock.calls[0][0]).toContain('LIMIT 20');
+      // Post-migration: LIMIT is parameterized (repo's getPendingEmails(limit))
+      // rather than inlined into the SQL text.
+      expect(mockQuery.mock.calls[0][0]).toContain('LIMIT $1');
+      expect(mockQuery.mock.calls[0][1]).toEqual([20]);
     });
 
     it('skips emails when user has no email address', async () => {

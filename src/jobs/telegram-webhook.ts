@@ -20,6 +20,7 @@ import {
 import { formatSolution } from './daily-problem';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { getTelegramWebhookRepo } from '../storage/repositories/telegram-webhook-repo';
 
 // ============================================================================
 // Types
@@ -29,30 +30,6 @@ interface RouteDefinition {
   method: string;
   path: string;
   handler: RouteHandler;
-}
-
-// ============================================================================
-// Database
-// ============================================================================
-
-function getPool() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[telegram-webhook] DATABASE_URL not configured');
-  const { Pool } = require('pg');
-  return new Pool({ connectionString, max: 2, idleTimeoutMillis: 10_000 });
-}
-
-async function findPYQById(pool: any, id: string): Promise<any | null> {
-  const client = await pool.connect();
-  try {
-    const result = await client.query(
-      'SELECT * FROM pyq_questions WHERE id = $1 LIMIT 1',
-      [id]
-    );
-    return result.rows[0] ?? null;
-  } finally {
-    client.release();
-  }
 }
 
 // ============================================================================
@@ -70,34 +47,31 @@ async function handleShowSolution(
   pyqId: string,
   userId: number
 ): Promise<void> {
-  const pool = getPool();
-  try {
-    const pyq = await findPYQById(pool, pyqId);
+  const repo = getTelegramWebhookRepo();
+  if (!repo) throw new Error('[telegram-webhook] DATABASE_URL not configured');
+  const pyq = await repo.findPyqById(pyqId);
 
-    if (!pyq) {
-      await answerCallbackQuery(callbackQueryId, {
-        text: 'This problem is no longer available.',
-        showAlert: true,
-      });
-      return;
-    }
-
-    // Answer the callback to remove the loading spinner
+  if (!pyq) {
     await answerCallbackQuery(callbackQueryId, {
-      text: `Answer: ${pyq.correct_answer})`,
+      text: 'This problem is no longer available.',
+      showAlert: true,
     });
-
-    // Send the full solution as a reply
-    const solutionText = formatSolution(pyq);
-    await sendTextMessage(chatId, solutionText, {
-      parseMode: 'HTML',
-      replyTo: messageId,
-    });
-
-    console.log(`[telegram-webhook] Solution for PYQ #${pyqId} sent to user ${userId} in chat ${chatId}`);
-  } finally {
-    await pool.end().catch(() => {});
+    return;
   }
+
+  // Answer the callback to remove the loading spinner
+  await answerCallbackQuery(callbackQueryId, {
+    text: `Answer: ${pyq.correct_answer})`,
+  });
+
+  // Send the full solution as a reply
+  const solutionText = formatSolution(pyq as any);
+  await sendTextMessage(chatId, solutionText, {
+    parseMode: 'HTML',
+    replyTo: messageId,
+  });
+
+  console.log(`[telegram-webhook] Solution for PYQ #${pyqId} sent to user ${userId} in chat ${chatId}`);
 }
 
 // ============================================================================

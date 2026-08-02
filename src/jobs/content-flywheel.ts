@@ -28,6 +28,7 @@ import {
   markRunFailed,
   incrementRunArtifacts,
 } from '../generation/run-orchestrator';
+import { getContentFlywheelRepo } from '../storage/repositories/content-flywheel-repo';
 
 // ============================================================================
 // Types
@@ -72,17 +73,7 @@ function getDefaultExamId(): string {
 const BATCH_SIZE = 5;
 const MIN_CONFIDENCE = 0.8;
 
-let _pool: any = null;
 let _orchestrator: any = null;
-
-function getPool() {
-  if (_pool) return _pool;
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[flywheel] DATABASE_URL not configured');
-  const { Pool } = require('pg');
-  _pool = new Pool({ connectionString, max: 3, idleTimeoutMillis: 30_000 });
-  return _pool;
-}
 
 export function setFlywheelOrchestrator(orch: any): void {
   _orchestrator = orch;
@@ -94,23 +85,20 @@ export function setFlywheelOrchestrator(orch: any): void {
 
 async function selectTopic(): Promise<string> {
   try {
-    const pool = getPool();
+    const repo = getContentFlywheelRepo();
+    if (!repo) throw new Error('[flywheel] DATABASE_URL not configured');
 
     // Try priority-based selection first (from content-prioritizer)
-    const { rows: priorities } = await pool.query(
-      `SELECT topic, priority_score FROM content_priorities
-       WHERE created_at > NOW() - INTERVAL '2 days'
-       ORDER BY priority_score DESC LIMIT 5`
-    );
+    const priorities = await repo.getTopPriorities();
 
     if (priorities.length > 0) {
       // Weighted random from top 5 priorities
-      const totalWeight = priorities.reduce((s, r) => s + parseFloat(r.priority_score), 0);
+      const totalWeight = priorities.reduce((s, r) => s + r.priority_score, 0);
       let roll = Math.random() * totalWeight;
       for (const r of priorities) {
-        roll -= parseFloat(r.priority_score);
+        roll -= r.priority_score;
         if (roll <= 0) {
-          console.log(`[flywheel] Topic selected via priorities: ${r.topic} (score=${parseFloat(r.priority_score).toFixed(3)})`);
+          console.log(`[flywheel] Topic selected via priorities: ${r.topic} (score=${r.priority_score.toFixed(3)})`);
           return r.topic;
         }
       }
@@ -118,14 +106,10 @@ async function selectTopic(): Promise<string> {
     }
 
     // Fallback: inverse-count logic (original behavior)
-    const result = await pool.query(`
-      SELECT topic, COUNT(*) as count
-      FROM pyq_questions
-      GROUP BY topic
-    `);
+    const topicCounts = await repo.getTopicCounts();
     const counts: Record<string, number> = {};
-    for (const row of result.rows) {
-      counts[row.topic] = parseInt(row.count, 10);
+    for (const row of topicCounts) {
+      counts[row.topic] = row.count;
     }
 
     const maxCount = Math.max(...Object.values(counts), 1);
@@ -229,50 +213,37 @@ async function verifyAndPublish(problem: GeneratedProblem): Promise<{ verified: 
     }
 
     // Insert into pyq_questions
-    const pool = getPool();
+    const repo = getContentFlywheelRepo();
+    if (!repo) throw new Error('[flywheel] DATABASE_URL not configured');
     const topicLabel = problem.topic.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const year = new Date().getFullYear();
 
-    const insertResult = await pool.query(
-      `INSERT INTO pyq_questions
-       (exam_id, year, question_text, options, correct_answer, explanation,
-        topic, difficulty, marks, negative_marks, source, generated_at, verification_tier)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12)
-       RETURNING id`,
-      [
-        'gate-engineering-maths',
-        year,
-        problem.question_text,
-        JSON.stringify(problem.options),
-        problem.correct_answer,
-        problem.explanation,
-        problem.topic,
-        problem.difficulty,
-        2,
-        -0.67,
-        'generated',
-        result.tierUsed,
-      ],
-    );
-
-    const pyqId = insertResult.rows[0].id;
+    const pyqId = await repo.insertPyqQuestion({
+      exam_id: 'gate-engineering-maths',
+      year,
+      question_text: problem.question_text,
+      options: problem.options,
+      correct_answer: problem.correct_answer,
+      explanation: problem.explanation,
+      topic: problem.topic,
+      difficulty: problem.difficulty,
+      marks: 2,
+      negative_marks: -0.67,
+      source: 'generated',
+      verification_tier: result.tierUsed,
+    });
 
     // Generate SEO page
     const slug = `gate-${problem.topic}-${pyqId.slice(0, 8)}`;
     try {
-      await pool.query(
-        `INSERT INTO seo_pages (slug, title, html_content, topic, pyq_id, meta_desc)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (slug) DO NOTHING`,
-        [
-          slug,
-          `GATE ${topicLabel} Practice Problem | Verified Solution`,
-          generateSEOHtml(problem, pyqId),
-          problem.topic,
-          pyqId,
-          `Practice GATE ${topicLabel} with verified solutions. ${problem.difficulty} difficulty MCQ with step-by-step explanation.`,
-        ],
-      );
+      await repo.insertSeoPage({
+        slug,
+        title: `GATE ${topicLabel} Practice Problem | Verified Solution`,
+        html_content: generateSEOHtml(problem, pyqId),
+        topic: problem.topic,
+        pyq_id: pyqId,
+        meta_desc: `Practice GATE ${topicLabel} with verified solutions. ${problem.difficulty} difficulty MCQ with step-by-step explanation.`,
+      });
     } catch (seoErr) {
       console.warn('[flywheel] SEO page insert failed (non-fatal):', (seoErr as Error).message);
     }
@@ -331,17 +302,13 @@ Return ONLY valid JSON, no markdown.`;
     if (!jsonMatch) return;
 
     const content = JSON.parse(jsonMatch[0]);
-    const pool = getPool();
+    const repo = getContentFlywheelRepo();
+    if (!repo) throw new Error('[flywheel] DATABASE_URL not configured');
 
     const platforms = ['twitter', 'instagram', 'linkedin'] as const;
     for (const platform of platforms) {
       if (content[platform]) {
-        await pool.query(
-          `INSERT INTO social_content (pyq_id, platform, content, status)
-           VALUES ($1, $2, $3, 'pending')
-           ON CONFLICT DO NOTHING`,
-          [pyqId, platform, content[platform]]
-        );
+        await repo.insertSocialContent(pyqId, platform, content[platform]);
       }
     }
     console.log(`[flywheel] Social content generated for ${platforms.length} platforms`);
@@ -426,16 +393,22 @@ Structure:
 ~600 words. Analytical, helpful for students transitioning from JEE to GATE prep.`,
   };
 
+  // Repo declared once up front and reused below — the pre-migration code
+  // called getPool() a second time down near the INSERT, but referenced
+  // `pool` here first without ever assigning it in this scope, so this
+  // trend-context fetch always threw "Cannot access 'pool' before
+  // initialization" and silently fell into the catch below. Real bug,
+  // found while migrating this file onto the storage boundary; fixed here
+  // by resolving the repo once, before it's first used.
+  const repo = getContentFlywheelRepo();
+
   // Fetch trend context for this topic (enriches the prompt)
   let trendContext = '';
   try {
-    const trendResult = await pool.query(
-      `SELECT title, source, score FROM trend_signals
-       WHERE topic_match = $1 AND collected_at > NOW() - INTERVAL '7 days'
-       ORDER BY score DESC LIMIT 3`, [problem.topic]
-    );
-    if (trendResult.rows.length > 0) {
-      trendContext = `\n\nCurrently trending in ${topicLabel}: ${trendResult.rows.map(r => `"${r.title}" (${r.source})`).join(', ')}. Weave these trends into the content naturally where relevant.`;
+    if (!repo) throw new Error('[flywheel] DATABASE_URL not configured');
+    const trends = await repo.getRecentTrends(problem.topic);
+    if (trends.length > 0) {
+      trendContext = `\n\nCurrently trending in ${topicLabel}: ${trends.map(r => `"${r.title}" (${r.source})`).join(', ')}. Weave these trends into the content naturally where relevant.`;
     }
   } catch {
     // Non-fatal: proceed without trend context
@@ -489,7 +462,7 @@ Return ONLY valid JSON in this format:
       return;
     }
 
-    const pool = getPool();
+    if (!repo) throw new Error('[flywheel] DATABASE_URL not configured');
     const slugBase = contentType === 'solved_problem'
       ? `gate-${problem.topic}-solved-${pyqId.slice(0, 8)}`
       : contentType === 'topic_explainer'
@@ -513,23 +486,17 @@ Return ONLY valid JSON in this format:
       content: 'Explanations in this article are AI-generated. Problems and solutions are verified through our 3-tier verification system (RAG cache, dual LLM solve, Wolfram Alpha).',
     });
 
-    await pool.query(
-      `INSERT INTO blog_posts
-       (slug, title, excerpt, content_type, sections, seo_meta, topic, exam_tags, pyq_id, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
-       ON CONFLICT (slug) DO NOTHING`,
-      [
-        slugBase,
-        blog.title,
-        blog.excerpt || '',
-        contentType,
-        JSON.stringify(blog.sections),
-        JSON.stringify({ title: blog.title, description: blog.excerpt, keywords: blog.keywords || [] }),
-        problem.topic,
-        ['GATE'],
-        contentType === 'solved_problem' || contentType === 'topic_explainer' ? pyqId : null,
-      ]
-    );
+    await repo.insertBlogPost({
+      slug: slugBase,
+      title: blog.title,
+      excerpt: blog.excerpt || '',
+      content_type: contentType,
+      sections: blog.sections,
+      seo_meta: { title: blog.title, description: blog.excerpt, keywords: blog.keywords || [] },
+      topic: problem.topic,
+      exam_tags: ['GATE'],
+      pyq_id: contentType === 'solved_problem' || contentType === 'topic_explainer' ? pyqId : null,
+    });
 
     console.log(`[flywheel] Blog post generated: "${blog.title}" (${contentType})`);
   } catch (err) {

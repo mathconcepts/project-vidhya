@@ -28,21 +28,13 @@
  */
 
 import { execSync } from 'child_process';
-import pg from 'pg';
-import { getGenerationPool } from './db';
 import { CostMeter, RunBudgetExceeded, priceForCall } from './cost-meter';
 import { pedagogyVerifier } from '../content/verifiers/pedagogy-verifier';
 import type { GenerationRunConfig } from '../experiments/types';
-
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
-function getPool(): pg.Pool | null {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 4 });
-  return _pool;
-}
+import {
+  getCurriculumUnitRepo,
+  type CurriculumUnitRepo,
+} from '../storage/repositories/curriculum-unit-repo';
 
 // ============================================================================
 // Public types
@@ -115,21 +107,18 @@ export const INTERACTIVE_KINDS = new Set<string>([
 const _capCache = new Map<string, { enabled: boolean; expires_at: number }>();
 const CAP_CACHE_TTL_MS = 30_000;
 
-async function isInteractivesEnabled(pool: pg.Pool | null, examPackId: string): Promise<boolean> {
+async function isInteractivesEnabled(repo: CurriculumUnitRepo | null, examPackId: string): Promise<boolean> {
   const cached = _capCache.get(examPackId);
   if (cached && cached.expires_at > Date.now()) return cached.enabled;
 
   let enabled = false;
 
   // 1. DB row for operator pack
-  if (pool) {
+  if (repo) {
     try {
-      const { rows } = await pool.query<{ interactives_enabled: boolean }>(
-        `SELECT interactives_enabled FROM exam_packs WHERE id = $1`,
-        [examPackId],
-      );
-      if (rows.length > 0) {
-        enabled = !!rows[0].interactives_enabled;
+      const dbEnabled = await repo.getInteractivesEnabled(examPackId);
+      if (dbEnabled !== null) {
+        enabled = dbEnabled;
         _capCache.set(examPackId, { enabled, expires_at: Date.now() + CAP_CACHE_TTL_MS });
         return enabled;
       }
@@ -208,8 +197,8 @@ export async function generateUnit(
   const start = Date.now();
   const unitId = spec.id ?? generateUnitId(spec.name);
 
-  const pool = getPool();
-  if (!pool) {
+  const repo = getCurriculumUnitRepo();
+  if (!repo) {
     // DB-less safety net — return stub. Caller should treat this as
     // "couldn't run; no work attempted" not "succeeded with 0 atoms".
     return {
@@ -224,45 +213,23 @@ export async function generateUnit(
   }
 
   // 1. Insert (or fetch) the unit row in 'generating' status
-  await pool.query(
-    `INSERT INTO curriculum_units (
-        id, exam_pack_id, concept_id, name, hypothesis,
-        learning_objectives, prepared_for_pyq_ids, atom_ids,
-        retrieval_schedule, generation_run_id, status
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, '{}'::TEXT[], $8, $9, 'generating')
-      ON CONFLICT (id) DO UPDATE
-        SET status = CASE
-                       WHEN curriculum_units.status IN ('queued','failed','aborted')
-                         THEN 'generating'
-                       ELSE curriculum_units.status
-                     END`,
-    [
-      unitId,
-      spec.exam_pack_id,
-      spec.concept_id,
-      spec.name,
-      spec.hypothesis ?? null,
-      JSON.stringify(spec.learning_objectives),
-      spec.prepared_for_pyq_ids,
-      JSON.stringify(defaultRetrievalSchedule(spec.retrieval_days)),
-      ctx.generation_run_id ?? null,
-    ],
-  );
+  await repo.upsertUnitGenerating({
+    id: unitId,
+    exam_pack_id: spec.exam_pack_id,
+    concept_id: spec.concept_id,
+    name: spec.name,
+    hypothesis: spec.hypothesis ?? null,
+    learning_objectives: spec.learning_objectives,
+    prepared_for_pyq_ids: spec.prepared_for_pyq_ids,
+    retrieval_schedule: defaultRetrievalSchedule(spec.retrieval_days),
+    generation_run_id: ctx.generation_run_id ?? null,
+  });
 
   // 2. Bidirectional PYQ link: stamp `taught_by_unit_id` on each PYQ
-  if (spec.prepared_for_pyq_ids.length > 0) {
-    await pool.query(
-      `UPDATE pyq_questions
-          SET taught_by_unit_id = $1
-        WHERE id::TEXT = ANY($2::TEXT[])
-          AND (taught_by_unit_id IS NULL OR taught_by_unit_id = $1)`,
-      [unitId, spec.prepared_for_pyq_ids],
-    );
-  }
+  await repo.linkPyqsToUnit(unitId, spec.prepared_for_pyq_ids);
 
   if (ctx.dry_run) {
-    await markUnitReady(pool, unitId, [], null);
+    await repo.markUnitReady(unitId, [], null);
     return {
       unit_id: unitId,
       status: 'ready',
@@ -277,7 +244,7 @@ export async function generateUnit(
   // when the exam pack has interactives_enabled=false, drop interactive
   // atom kinds from the spec. The shipped/canonical packs (gate-ma,
   // jee-main) opt in via YAML; operator-defined packs default to false.
-  const interactivesEnabled = await isInteractivesEnabled(pool, spec.exam_pack_id);
+  const interactivesEnabled = await isInteractivesEnabled(repo, spec.exam_pack_id);
   const allowedKinds = spec.atom_kinds.filter((k) => {
     if (interactivesEnabled) return true;
     return !INTERACTIVE_KINDS.has(k);
@@ -297,7 +264,7 @@ export async function generateUnit(
 
   try {
     for (const kind of allowedKinds) {
-      const atomResult = await generateAtomForKind(pool, {
+      const atomResult = await generateAtomForKind(repo, {
         unit_id: unitId,
         concept_id: spec.concept_id,
         kind,
@@ -312,7 +279,7 @@ export async function generateUnit(
     }
   } catch (err) {
     if (err instanceof RunBudgetExceeded) {
-      await markUnitFailed(pool, unitId, atomIds, `budget exceeded after ${atomIds.length} atoms`);
+      await repo.markUnitFailed(unitId, atomIds, `budget exceeded after ${atomIds.length} atoms`);
       return {
         unit_id: unitId,
         status: 'aborted',
@@ -324,7 +291,7 @@ export async function generateUnit(
       };
     }
     const msg = (err as Error)?.message ?? String(err);
-    await markUnitFailed(pool, unitId, atomIds, msg);
+    await repo.markUnitFailed(unitId, atomIds, msg);
     return {
       unit_id: unitId,
       status: 'failed',
@@ -339,7 +306,8 @@ export async function generateUnit(
   // 4. Run the pedagogy verifier on the assembled unit
   let pedagogyScore: number | null = null;
   try {
-    const unitContent = await readUnitForReview(pool, unitId);
+    const reviewRows = await repo.readUnitForReview(unitId);
+    const unitContent = reviewRows.map((r) => `## ${r.atom_id}\n\n${r.content}`).join('\n\n---\n\n');
     const result = await pedagogyVerifier.verify(unitContent, { concept_id: spec.concept_id });
     pedagogyScore = result.score;
   } catch (err) {
@@ -349,7 +317,7 @@ export async function generateUnit(
   }
 
   // 5. Mark the unit ready
-  await markUnitReady(pool, unitId, atomIds, pedagogyScore);
+  await repo.markUnitReady(unitId, atomIds, pedagogyScore);
 
   return {
     unit_id: unitId,
@@ -380,7 +348,7 @@ interface AtomGenerationOk {
  * the parent run via generation_run_id stamping (Sprint A).
  */
 async function generateAtomForKind(
-  pool: pg.Pool,
+  repo: CurriculumUnitRepo,
   args: {
     unit_id: string;
     concept_id: string;
@@ -429,21 +397,16 @@ async function generateAtomForKind(
     // Fallback: insert a minimal atom_versions stub so the unit's atom_ids
     // list is populated. This is the dev/test path; production flywheel
     // exposes a real generator function.
-    await pool.query(
-      `INSERT INTO atom_versions (atom_id, version_n, content, generation_meta, active, generation_run_id)
-       VALUES ($1, 1, $2, $3::JSONB, TRUE, $4)
-       ON CONFLICT (atom_id, version_n) DO NOTHING`,
-      [
-        atomId,
-        `# ${args.kind} for ${args.concept_id}\n\n_Stub atom — concept-orchestrator generator not wired in this deployment._`,
-        JSON.stringify({
-          unit_id: args.unit_id,
-          kind: args.kind,
-          learning_objectives: args.learning_objectives,
-        }),
-        args.generation_run_id ?? null,
-      ],
-    );
+    await repo.insertStubAtomVersion({
+      atom_id: atomId,
+      content: `# ${args.kind} for ${args.concept_id}\n\n_Stub atom — concept-orchestrator generator not wired in this deployment._`,
+      generation_meta: {
+        unit_id: args.unit_id,
+        kind: args.kind,
+        learning_objectives: args.learning_objectives,
+      },
+      generation_run_id: args.generation_run_id ?? null,
+    });
     return { atom_id: atomId, cost_usd: preCost };
   }
 
@@ -459,50 +422,12 @@ async function generateAtomForKind(
   return { atom_id: atomId, cost_usd: preCost };
 }
 
-async function readUnitForReview(pool: pg.Pool, unitId: string): Promise<string> {
-  const { rows } = await pool.query<{ atom_id: string; content: string }>(
-    `SELECT av.atom_id, av.content
-       FROM curriculum_units cu
-       JOIN atom_versions av ON av.atom_id = ANY(cu.atom_ids) AND av.active = TRUE
-      WHERE cu.id = $1
-      ORDER BY array_position(cu.atom_ids, av.atom_id)`,
-    [unitId],
-  );
-  return rows.map((r) => `## ${r.atom_id}\n\n${r.content}`).join('\n\n---\n\n');
-}
-
-async function markUnitReady(
-  pool: pg.Pool,
-  unitId: string,
-  atomIds: string[],
-  pedagogyScore: number | null,
-): Promise<void> {
-  await pool.query(
-    `UPDATE curriculum_units
-        SET status = 'ready',
-            atom_ids = $2,
-            pedagogy_score = $3,
-            error = NULL
-      WHERE id = $1`,
-    [unitId, atomIds, pedagogyScore],
-  );
-}
-
-async function markUnitFailed(
-  pool: pg.Pool,
-  unitId: string,
-  partialAtomIds: string[],
-  err: string,
-): Promise<void> {
-  await pool.query(
-    `UPDATE curriculum_units
-        SET status = 'failed',
-            atom_ids = $2,
-            error = $3
-      WHERE id = $1`,
-    [unitId, partialAtomIds, err.slice(0, 4000)],
-  );
-}
+// readUnitForReview / markUnitReady / markUnitFailed moved to
+// src/storage/repositories/curriculum-unit-repo.ts (CEO plan Phase 0 §5.1
+// storage boundary) — same SQL, called via `repo.*` in generateUnit() above.
+// The markdown-joining that used to live inside readUnitForReview now
+// happens at its one call site (the pedagogy-verifier step), since it's
+// presentation logic, not persistence.
 
 // ============================================================================
 // Bulk wrapper — what the admin POST /runs route calls when the run config

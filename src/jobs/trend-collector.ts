@@ -13,6 +13,7 @@ import { ServerResponse } from 'http';
 import { getKeywordsForExam } from '../curriculum/topic-adapter';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { getTrendCollectorRepo } from '../storage/repositories/trend-collector-repo';
 
 interface RouteDefinition {
   method: string;
@@ -61,30 +62,24 @@ function matchTopics(text: string): string[] {
 // Database
 // ============================================================================
 
-let _pool: any = null;
-
-function getPool() {
-  if (_pool) return _pool;
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[trend-collector] DATABASE_URL not configured');
-  const { Pool } = require('pg');
-  _pool = new Pool({ connectionString, max: 3, idleTimeoutMillis: 30_000 });
-  return _pool;
-}
-
 async function insertSignals(signals: TrendSignal[]): Promise<number> {
   if (signals.length === 0) return 0;
-  const pool = getPool();
+  const repo = getTrendCollectorRepo();
+  if (!repo) throw new Error('[trend-collector] DATABASE_URL not configured');
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
   let inserted = 0;
 
   for (const s of signals) {
     try {
-      await pool.query(
-        `INSERT INTO trend_signals (source, topic_match, title, url, score, raw_data, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [s.source, s.topic_match, s.title, s.url, s.score, JSON.stringify(s.raw_data), expiresAt]
-      );
+      await repo.insertSignal({
+        source: s.source,
+        topic_match: s.topic_match,
+        title: s.title,
+        url: s.url,
+        score: s.score,
+        raw_data: s.raw_data,
+        expires_at: expiresAt,
+      });
       inserted++;
     } catch (err) {
       console.warn(`[trend-collector] Insert failed for "${s.title}":`, (err as Error).message);
@@ -270,8 +265,9 @@ async function collectNewsAPI(): Promise<TrendSignal[]> {
 async function runTrendCollection(): Promise<{ sources: Record<string, number>; total: number }> {
   // Clean expired signals first
   try {
-    const pool = getPool();
-    await pool.query(`DELETE FROM trend_signals WHERE expires_at < NOW()`);
+    const repo = getTrendCollectorRepo();
+    if (!repo) throw new Error('[trend-collector] DATABASE_URL not configured');
+    await repo.deleteExpiredSignals();
   } catch (err) {
     console.warn('[trend-collector] Cleanup failed:', (err as Error).message);
   }

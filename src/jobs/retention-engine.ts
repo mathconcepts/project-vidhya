@@ -11,10 +11,10 @@
  */
 
 import { ServerResponse } from 'http';
-import pg from 'pg';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { BRAND_NAME, FROM_EMAIL, BASE_URL } from '../lib/brand';
+import { getRetentionEngineRepo, type RetentionEngineRepo } from '../storage/repositories/retention-engine-repo';
 
 interface RouteDefinition {
   method: string;
@@ -22,7 +22,17 @@ interface RouteDefinition {
   handler: RouteHandler;
 }
 
-const pool = new pg.Pool({ connectionString: process.env.SUPABASE_DB_URL || process.env.DATABASE_URL });
+// Raw queries moved to src/storage/repositories/retention-engine-repo.ts
+// (CEO plan Phase 0 §5.1). requireRepo() throws when DATABASE_URL isn't
+// configured; server.ts's route dispatch already wraps every handler in
+// try/catch and turns a thrown error into a 500 — same wire behavior the
+// original unset-connectionString pool would have eventually produced,
+// just with a clear message instead of a raw pg connection error.
+function requireRepo(): RetentionEngineRepo {
+  const repo = getRetentionEngineRepo();
+  if (!repo) throw new Error('[retention] DATABASE_URL not configured');
+  return repo;
+}
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -163,23 +173,16 @@ async function handleProcessEmails(req: ParsedRequest, res: ServerResponse): Pro
     return;
   }
 
-  const pending = await pool.query(
-    `SELECT eq.id, eq.user_id, eq.template, eq.payload,
-            up.email
-     FROM email_queue eq
-     LEFT JOIN user_profiles up ON eq.user_id = up.id
-     WHERE eq.status = 'pending' AND eq.scheduled_at <= NOW()
-     ORDER BY eq.scheduled_at ASC
-     LIMIT 20`
-  );
+  const repo = requireRepo();
+  const pending = await repo.getPendingEmails(20);
 
   let sent = 0;
   let skipped = 0;
   let failed = 0;
 
-  for (const row of pending.rows) {
+  for (const row of pending) {
     if (!row.email) {
-      await pool.query(`UPDATE email_queue SET status = 'skipped' WHERE id = $1`, [row.id]);
+      await repo.setEmailStatus(row.id, 'skipped');
       skipped++;
       continue;
     }
@@ -188,21 +191,21 @@ async function handleProcessEmails(req: ParsedRequest, res: ServerResponse): Pro
     const success = await sendEmail(row.email, template);
 
     if (success) {
-      await pool.query(`UPDATE email_queue SET status = 'sent', sent_at = NOW() WHERE id = $1`, [row.id]);
+      await repo.setEmailStatus(row.id, 'sent');
       sent++;
     } else if (!process.env.RESEND_API_KEY) {
-      await pool.query(`UPDATE email_queue SET status = 'skipped' WHERE id = $1`, [row.id]);
+      await repo.setEmailStatus(row.id, 'skipped');
       skipped++;
     } else {
-      await pool.query(`UPDATE email_queue SET status = 'failed' WHERE id = $1`, [row.id]);
+      await repo.setEmailStatus(row.id, 'failed');
       failed++;
     }
   }
 
-  console.log(`[retention] Processed ${pending.rows.length} emails: ${sent} sent, ${skipped} skipped, ${failed} failed`);
+  console.log(`[retention] Processed ${pending.length} emails: ${sent} sent, ${skipped} skipped, ${failed} failed`);
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ processed: pending.rows.length, sent, skipped, failed }));
+  res.end(JSON.stringify({ processed: pending.length, sent, skipped, failed }));
 }
 
 // ── Enqueue retention emails (streak checks + welcome sequence) ───────────────
@@ -214,6 +217,7 @@ async function handleEnqueueRetention(req: ParsedRequest, res: ServerResponse): 
     return;
   }
 
+  const repo = requireRepo();
   let enqueued = 0;
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
@@ -223,66 +227,26 @@ async function handleEnqueueRetention(req: ParsedRequest, res: ServerResponse): 
 
   // 1. Streak reminders (6pm IST check)
   if (istHour >= 17 && istHour <= 19) {
-    const streakUsers = await pool.query(
-      `SELECT up.id as user_id, up.email,
-              COALESCE((up.study_profile->>'current_streak')::int, 0) as streak
-       FROM user_profiles up
-       WHERE COALESCE((up.study_profile->>'current_streak')::int, 0) >= 3
-         AND up.notification_prefs->>'streak_reminders' != 'false'
-         AND NOT EXISTS (
-           SELECT 1 FROM sr_sessions ss
-           WHERE ss.user_id = up.id::text
-             AND ss.updated_at >= (NOW() AT TIME ZONE 'Asia/Kolkata')::date
-         )
-         AND NOT EXISTS (
-           SELECT 1 FROM email_queue eq
-           WHERE eq.user_id = up.id AND eq.template = 'streak_reminder'
-             AND eq.created_at >= (NOW() AT TIME ZONE 'Asia/Kolkata')::date
-         )`
-    );
+    const streakUsers = await repo.getStreakReminderCandidates();
 
-    for (const user of streakUsers.rows) {
-      await pool.query(
-        `INSERT INTO email_queue (user_id, template, payload, scheduled_at)
-         VALUES ($1, 'streak_reminder', $2, NOW())`,
-        [user.user_id, JSON.stringify({ streak_count: user.streak })]
-      );
+    for (const user of streakUsers) {
+      await repo.enqueueEmail(user.user_id, 'streak_reminder', { streak_count: user.streak }, new Date());
       enqueued++;
     }
   }
 
   // 2. Weekly digest (Sunday 10am IST)
   if (istDay === 0 && istHour >= 9 && istHour <= 11) {
-    const digestUsers = await pool.query(
-      `SELECT up.id as user_id
-       FROM user_profiles up
-       WHERE up.notification_prefs->>'email_digest' != 'false'
-         AND NOT EXISTS (
-           SELECT 1 FROM email_queue eq
-           WHERE eq.user_id = up.id AND eq.template = 'weekly_digest'
-             AND eq.created_at >= NOW() - INTERVAL '6 days'
-         )`
-    );
+    const digestUsers = await repo.getWeeklyDigestCandidates();
 
-    for (const user of digestUsers.rows) {
+    for (const user of digestUsers) {
       // Get stats for the week
-      const stats = await pool.query(
-        `SELECT
-           COUNT(*) as problems_solved,
-           AVG(CASE WHEN correct_count > 0 THEN correct_count::float / NULLIF(attempts, 0) ELSE 0 END) * 100 as accuracy
-         FROM sr_sessions
-         WHERE user_id = $1 AND updated_at >= NOW() - INTERVAL '7 days'`,
-        [user.user_id]
-      );
+      const stats = await repo.getWeeklyStats(user.user_id);
 
-      await pool.query(
-        `INSERT INTO email_queue (user_id, template, payload, scheduled_at)
-         VALUES ($1, 'weekly_digest', $2, NOW())`,
-        [user.user_id, JSON.stringify({
-          problems_solved: parseInt(stats.rows[0]?.problems_solved || '0'),
-          accuracy: Math.round(parseFloat(stats.rows[0]?.accuracy || '0')),
-        })]
-      );
+      await repo.enqueueEmail(user.user_id, 'weekly_digest', {
+        problems_solved: parseInt(stats.problems_solved || '0'),
+        accuracy: Math.round(parseFloat(stats.accuracy || '0')),
+      }, new Date());
       enqueued++;
     }
   }
@@ -300,13 +264,8 @@ export async function enqueueWelcomeSequence(userId: string): Promise<void> {
   const day3 = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
   const day7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  await pool.query(
-    `INSERT INTO email_queue (user_id, template, payload, scheduled_at) VALUES
-     ($1, 'welcome_day0', '{}', NOW()),
-     ($1, 'welcome_day3', '{}', $2),
-     ($1, 'welcome_day7', '{}', $3)`,
-    [userId, day3.toISOString(), day7.toISOString()]
-  );
+  const repo = requireRepo();
+  await repo.enqueueWelcomeSequence(userId, day3, day7);
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────────

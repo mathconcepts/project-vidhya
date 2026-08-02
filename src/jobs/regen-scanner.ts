@@ -20,18 +20,9 @@
  * a no-op result. Local dev never accidentally regenerates.
  */
 
-import pg from 'pg';
 import { generateConcept, type GeneratedAtom, createExperiment } from '../content/concept-orchestrator';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
-
-const { Pool } = pg;
-let _pool: any = null;
-function getPool() {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
-  return _pool;
-}
+import { getRegenScannerRepo, type RegenScannerRepo } from '../storage/repositories/regen-scanner-repo';
 
 export const SCANNER_NIGHTLY_CAP = Number(process.env.VIDHYA_REGEN_NIGHTLY_CAP || '20');
 export const SCANNER_ERROR_THRESHOLD = Number(process.env.VIDHYA_REGEN_ERROR_THRESHOLD || '0.5');
@@ -62,12 +53,9 @@ interface Candidate {
  * window. Returns true when fresh, false when stale or empty (treat
  * "empty" as stale — better to skip than regen on missing data).
  */
-async function isCohortDataFresh(pool: any): Promise<boolean> {
+async function isCohortDataFresh(repo: RegenScannerRepo): Promise<boolean> {
   try {
-    const r = await pool.query(
-      `SELECT MAX(updated_at) AS max_ts FROM cohort_signals`,
-    );
-    const max_ts = r.rows[0]?.max_ts;
+    const max_ts = await repo.getMaxCohortSignalUpdatedAt();
     if (!max_ts) return false;
     const age_ms = Date.now() - new Date(max_ts).getTime();
     return age_ms < SCANNER_FRESHNESS_HOURS * 60 * 60 * 1000;
@@ -81,23 +69,16 @@ async function isCohortDataFresh(pool: any): Promise<boolean> {
  * Pull top-N candidates eligible for regen. Excludes atoms regenerated
  * in the dedupe window — avoids wasted LLM calls on yesterday's regen.
  */
-async function fetchCandidates(pool: any): Promise<Candidate[]> {
-  const r = await pool.query(
-    `SELECT cs.atom_id, cs.error_pct, cs.n_seen
-       FROM cohort_signals cs
-       WHERE cs.error_pct > $1 AND cs.n_seen >= $2
-         AND NOT EXISTS (
-           SELECT 1 FROM atom_versions av
-            WHERE av.atom_id = cs.atom_id
-              AND av.generated_at > NOW() - ($3 || ' hours')::interval
-         )
-       ORDER BY cs.error_pct DESC, cs.n_seen DESC
-       LIMIT $4`,
-    [SCANNER_ERROR_THRESHOLD, SCANNER_MIN_N_SEEN, String(SCANNER_DEDUPE_HOURS), SCANNER_NIGHTLY_CAP],
+async function fetchCandidates(repo: RegenScannerRepo): Promise<Candidate[]> {
+  const rows = await repo.getCandidates(
+    SCANNER_ERROR_THRESHOLD,
+    SCANNER_MIN_N_SEEN,
+    SCANNER_DEDUPE_HOURS,
+    SCANNER_NIGHTLY_CAP,
   );
 
-  return r.rows
-    .map((row: any): Candidate | null => {
+  return rows
+    .map((row): Candidate | null => {
       const parsed = parseAtomId(row.atom_id);
       if (!parsed) return null;
       return {
@@ -116,20 +97,16 @@ async function fetchCandidates(pool: any): Promise<Candidate[]> {
  * Pull the top-3 wrong-answer patterns for an atom from error_log.
  * Used as misconception context in the regen prompt — the new atom
  * is generated knowing exactly what students get wrong.
+ *
+ * KNOWN BUG (pre-existing, not introduced or fixed by the storage-boundary
+ * migration): see the comment on RegenScannerRepo.getTopMisconceptions —
+ * the underlying query references columns error_log has never had, so
+ * this always throws, is always caught below, and always returns [].
+ * Misconception context has never actually reached the regen prompt.
  */
-async function fetchTopMisconceptions(pool: any, atom_id: string): Promise<string[]> {
+async function fetchTopMisconceptions(repo: RegenScannerRepo, atom_id: string): Promise<string[]> {
   try {
-    const r = await pool.query(
-      `SELECT error_text, COUNT(*) AS freq
-         FROM error_log
-         WHERE atom_id = $1
-           AND created_at > NOW() - INTERVAL '30 days'
-         GROUP BY error_text
-         ORDER BY freq DESC
-         LIMIT 3`,
-      [atom_id],
-    );
-    return r.rows.map((row: any) => row.error_text).filter(Boolean);
+    return await repo.getTopMisconceptions(atom_id);
   } catch (err) {
     console.warn(`[regen-scanner] misconception lookup failed for ${atom_id}: ${(err as Error).message}`);
     return [];
@@ -154,8 +131,8 @@ function parseAtomId(atom_id: string): { concept_id: string; atom_type: string; 
 }
 
 export async function runRegenScanner(): Promise<ScannerResult> {
-  const pool = getPool();
-  if (!pool) {
+  const repo = getRegenScannerRepo();
+  if (!repo) {
     return {
       status: 'skipped_no_db',
       candidates_examined: 0,
@@ -167,7 +144,7 @@ export async function runRegenScanner(): Promise<ScannerResult> {
   }
 
   // Eng-review decision A: freshness-gate.
-  const fresh = await isCohortDataFresh(pool);
+  const fresh = await isCohortDataFresh(repo);
   if (!fresh) {
     console.warn(`[regen-scanner] cohort_signals stale (>${SCANNER_FRESHNESS_HOURS}h since last update or empty) — skipping`);
     return {
@@ -182,7 +159,7 @@ export async function runRegenScanner(): Promise<ScannerResult> {
 
   let candidates: Candidate[] = [];
   try {
-    candidates = await fetchCandidates(pool);
+    candidates = await fetchCandidates(repo);
   } catch (err) {
     console.error(`[regen-scanner] candidate fetch failed: ${(err as Error).message}`);
     return {
@@ -210,7 +187,7 @@ export async function runRegenScanner(): Promise<ScannerResult> {
   let failed = 0;
 
   for (const c of candidates) {
-    const misconceptions = await fetchTopMisconceptions(pool, c.atom_id);
+    const misconceptions = await fetchTopMisconceptions(repo, c.atom_id);
     try {
       const draft = await generateConcept({
         concept_id: c.concept_id,
@@ -224,7 +201,7 @@ export async function runRegenScanner(): Promise<ScannerResult> {
       // shows "what changed".
       const generated = draft.atoms[0];
       if (generated && misconceptions.length > 0) {
-        await annotateImprovementReason(pool, c.atom_id, c.error_pct, misconceptions);
+        await annotateImprovementReason(repo, c.atom_id, c.error_pct, misconceptions);
       }
       if (generated) {
         succeeded++;
@@ -233,7 +210,7 @@ export async function runRegenScanner(): Promise<ScannerResult> {
         // in atom_versions and is served to half of students via hash bucket.
         // Gated behind VIDHYA_AB_TESTING=on so deploys can opt out.
         if (process.env.VIDHYA_AB_TESTING === 'on') {
-          await maybeStartExperiment(pool, c.atom_id);
+          await maybeStartExperiment(repo, c.atom_id);
         }
       }
       else failed++;
@@ -263,15 +240,11 @@ export async function runRegenScanner(): Promise<ScannerResult> {
  * append). atom-loader's A/B path serves both during the experiment
  * window via hash bucketing.
  */
-async function maybeStartExperiment(pool: any, atom_id: string): Promise<void> {
+async function maybeStartExperiment(repo: RegenScannerRepo, atom_id: string): Promise<void> {
   try {
-    const r = await pool.query(
-      `SELECT version_n FROM atom_versions WHERE atom_id = $1 ORDER BY version_n DESC LIMIT 2`,
-      [atom_id],
-    );
-    if (r.rows.length < 2) return;  // no prior version → no experiment
-    const candidate_version_n = r.rows[0].version_n;
-    const control_version_n = r.rows[1].version_n;
+    const versions = await repo.getLatestTwoVersionNumbers(atom_id);
+    if (versions.length < 2) return;  // no prior version → no experiment
+    const [candidate_version_n, control_version_n] = versions;
     await createExperiment(atom_id, control_version_n, candidate_version_n);
   } catch (err) {
     console.warn(`[regen-scanner] maybeStartExperiment failed for ${atom_id}: ${(err as Error).message}`);
@@ -284,20 +257,14 @@ async function maybeStartExperiment(pool: any, atom_id: string): Promise<void> {
  * secant" rather than a generic "regenerated".
  */
 async function annotateImprovementReason(
-  pool: any,
+  repo: RegenScannerRepo,
   atom_id: string,
   error_pct: number,
   misconceptions: string[],
 ): Promise<void> {
   const reason = `Cohort error ${Math.round(error_pct * 100)}% — top miss: ${misconceptions[0].slice(0, 120)}`;
   try {
-    await pool.query(
-      `UPDATE atom_versions
-         SET improvement_reason = $1
-         WHERE atom_id = $2
-           AND version_n = (SELECT MAX(version_n) FROM atom_versions WHERE atom_id = $2)`,
-      [reason, atom_id],
-    );
+    await repo.updateImprovementReason(atom_id, reason);
   } catch (err) {
     console.warn(`[regen-scanner] improvement_reason annotation failed: ${(err as Error).message}`);
   }

@@ -34,7 +34,6 @@
 import { execSync } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
-import pg from 'pg';
 import { computeLift } from '../experiments/lift';
 import { listExperiments, updateExperimentStatus } from '../experiments/registry';
 import { suggestRuns, type RunSuggestion } from '../generation/suggester';
@@ -43,15 +42,7 @@ import type {
   ExperimentStatus,
   GenerationRunConfig,
 } from '../experiments/types';
-
-const { Pool } = pg;
-let _pool: pg.Pool | null = null;
-function getPool(): pg.Pool | null {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 4 });
-  return _pool;
-}
+import { getLearningsLedgerRepo, type LearningsLedgerRepo } from '../storage/repositories/learnings-ledger-repo';
 
 // ============================================================================
 // Public API
@@ -110,15 +101,15 @@ export async function runLearningsLedger(
     duration_ms: 0,
   };
 
-  const pool = getPool();
-  if (!pool) {
+  const repo = getLearningsLedgerRepo();
+  if (!repo) {
     result.duration_ms = Date.now() - start;
     return result;
   }
 
   const cfg = { ...DEFAULTS, ...opts };
 
-  await markLedgerRunRunning(pool, id);
+  await repo.markLedgerRunRunning(id);
 
   // 1) Pull active experiments
   const experiments = await listExperiments({
@@ -161,9 +152,9 @@ export async function runLearningsLedger(
         lift,
         n,
         p: pv,
-        targets: await fetchAtomTargets(pool, exp.id),
+        targets: await repo.fetchAtomTargets(exp.id),
       };
-      await applyPromotion(pool, decision);
+      await repo.applyPromotion(decision.targets, promotionReason(decision));
       await updateExperimentStatus(exp.id, 'won');
       promotions.push(decision);
     } else if (lift < cfg.loss_lift_threshold && pv < cfg.p_threshold) {
@@ -173,9 +164,9 @@ export async function runLearningsLedger(
         lift,
         n,
         p: pv,
-        targets: await fetchAtomTargets(pool, exp.id),
+        targets: await repo.fetchAtomTargets(exp.id),
       };
-      await applyDemotion(pool, decision);
+      await repo.applyDemotion(decision.targets, demotionReason(decision));
       await updateExperimentStatus(exp.id, 'lost');
       demotions.push(decision);
     }
@@ -184,7 +175,10 @@ export async function runLearningsLedger(
   result.demotions = demotions.length;
 
   // 3) Build suggestions from the just-decided experiments
-  const baseConfigs = await loadRecentRunConfigs(pool, refreshed.map((e) => e.id));
+  const runConfigRows = await repo.loadRecentRunConfigs(refreshed.map((e) => e.id));
+  const baseConfigs = new Map<string, GenerationRunConfig>(
+    runConfigRows.map((r) => [r.experiment_id, r.config as GenerationRunConfig]),
+  );
   const suggestions = suggestRuns(refreshed, baseConfigs, {
     win_lift_threshold: cfg.win_lift_threshold,
     loss_lift_threshold: cfg.loss_lift_threshold,
@@ -192,7 +186,7 @@ export async function runLearningsLedger(
     n_threshold: cfg.n_min,
   });
   for (const s of suggestions) {
-    await upsertSuggestion(pool, s);
+    await repo.upsertSuggestion(s);
   }
   result.suggestions = suggestions.length;
 
@@ -230,9 +224,17 @@ export async function runLearningsLedger(
     }
   }
 
-  await markLedgerRunComplete(pool, id, result, opts.no_digest ? buildDigest({
-    runId: id, promotions, demotions, suggestions, evaluated: refreshed.length,
-  }) : undefined);
+  await repo.markLedgerRunComplete({
+    id,
+    experiments_evaluated: result.experiments_evaluated,
+    promotions: result.promotions,
+    demotions: result.demotions,
+    suggestions: result.suggestions,
+    pr_url: result.pr_url,
+    digest: opts.no_digest ? buildDigest({
+      runId: id, promotions, demotions, suggestions, evaluated: refreshed.length,
+    }) : undefined,
+  });
 
   result.duration_ms = Date.now() - start;
   return result;
@@ -252,161 +254,22 @@ interface PromotionDecision {
   targets: string[];
 }
 
-async function fetchAtomTargets(pool: pg.Pool, experimentId: string): Promise<string[]> {
-  const { rows } = await pool.query<{ target_id: string }>(
-    `SELECT target_id
-       FROM experiment_assignments
-      WHERE experiment_id = $1
-        AND target_kind = 'atom'
-        AND variant <> 'control'`,
-    [experimentId],
-  );
-  return rows.map((r) => r.target_id);
+/** Matches the pre-migration inline format exactly — a leading '+' since win lift is always positive. */
+function promotionReason(d: PromotionDecision): string {
+  return `lift_v1=+${d.lift.toFixed(4)} p=${d.p.toFixed(4)} n=${d.n} (exp=${d.experiment.id})`;
 }
 
-async function applyPromotion(pool: pg.Pool, d: PromotionDecision): Promise<void> {
-  if (d.targets.length === 0) return;
-  const reason = `lift_v1=+${d.lift.toFixed(4)} p=${d.p.toFixed(4)} n=${d.n} (exp=${d.experiment.id})`;
-
-  await pool.query(
-    `UPDATE atom_versions
-       SET canonical = TRUE,
-           canonical_at = NOW(),
-           canonical_reason = $2
-     WHERE atom_id = ANY($1::TEXT[])`,
-    [d.targets, reason],
-  );
-
-  await pool.query(
-    `UPDATE media_artifacts
-       SET canonical = TRUE,
-           canonical_at = NOW(),
-           canonical_reason = $2
-     WHERE atom_id = ANY($1::TEXT[]) AND status = 'done'`,
-    [d.targets, reason],
-  );
-
-  // generated_problems uses `id`, not atom_id, but the experiment may
-  // have assigned problem ids directly under the same target_kind=atom
-  // bucket (we don't currently distinguish). Best-effort: try by id.
-  await pool.query(
-    `UPDATE generated_problems
-       SET canonical = TRUE,
-           canonical_at = NOW(),
-           canonical_reason = $2
-     WHERE id::TEXT = ANY($1::TEXT[]) AND verified = TRUE`,
-    [d.targets, reason],
-  );
+/** Matches the pre-migration inline format exactly — no leading '+', loss lift is already negative. */
+function demotionReason(d: PromotionDecision): string {
+  return `lift_v1=${d.lift.toFixed(4)} p=${d.p.toFixed(4)} n=${d.n} (exp=${d.experiment.id})`;
 }
 
-async function applyDemotion(pool: pg.Pool, d: PromotionDecision): Promise<void> {
-  if (d.targets.length === 0) return;
-  const reason = `lift_v1=${d.lift.toFixed(4)} p=${d.p.toFixed(4)} n=${d.n} (exp=${d.experiment.id})`;
-
-  // Flip media artifacts to 'failed' so applyMediaUrls skips them
-  await pool.query(
-    `UPDATE media_artifacts
-       SET status = 'failed',
-           canonical = FALSE,
-           canonical_at = NOW(),
-           canonical_reason = $2
-     WHERE atom_id = ANY($1::TEXT[])`,
-    [d.targets, reason],
-  );
-
-  // Mark atom_versions explicitly non-canonical (operator may regen)
-  await pool.query(
-    `UPDATE atom_versions
-       SET canonical = FALSE,
-           canonical_at = NOW(),
-           canonical_reason = $2
-     WHERE atom_id = ANY($1::TEXT[])`,
-    [d.targets, reason],
-  );
-}
-
-/**
- * Pull the most recent generation_runs.config for each experiment so the
- * suggester can scale or invert it.
- */
-async function loadRecentRunConfigs(
-  pool: pg.Pool,
-  experimentIds: string[],
-): Promise<Map<string, GenerationRunConfig>> {
-  if (experimentIds.length === 0) return new Map();
-  const { rows } = await pool.query<{
-    experiment_id: string;
-    config: GenerationRunConfig;
-  }>(
-    `SELECT DISTINCT ON (experiment_id) experiment_id, config
-       FROM generation_runs
-      WHERE experiment_id = ANY($1::TEXT[])
-      ORDER BY experiment_id, created_at DESC`,
-    [experimentIds],
-  );
-  const m = new Map<string, GenerationRunConfig>();
-  for (const r of rows) m.set(r.experiment_id, r.config);
-  return m;
-}
-
-async function upsertSuggestion(pool: pg.Pool, s: RunSuggestion): Promise<void> {
-  await pool.query(
-    `INSERT INTO run_suggestions (id, exam_pack_id, source_experiment_id, hypothesis, config, reason, expected_lift, expected_n)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     ON CONFLICT (id) DO UPDATE SET
-       hypothesis = EXCLUDED.hypothesis,
-       config     = EXCLUDED.config,
-       reason     = EXCLUDED.reason,
-       expected_lift = EXCLUDED.expected_lift,
-       expected_n    = EXCLUDED.expected_n`,
-    [
-      s.id,
-      s.exam_pack_id,
-      s.source_experiment_id,
-      s.hypothesis,
-      JSON.stringify(s.config),
-      s.reason,
-      s.expected_lift,
-      s.expected_n,
-    ],
-  );
-}
-
-async function markLedgerRunRunning(pool: pg.Pool, id: string): Promise<void> {
-  await pool.query(
-    `INSERT INTO ledger_runs (id, status) VALUES ($1, 'running')
-     ON CONFLICT (id) DO NOTHING`,
-    [id],
-  );
-}
-
-async function markLedgerRunComplete(
-  pool: pg.Pool,
-  id: string,
-  r: LedgerRunResult,
-  digest?: string,
-): Promise<void> {
-  await pool.query(
-    `UPDATE ledger_runs
-        SET experiments_evaluated = $2,
-            promotions = $3,
-            demotions = $4,
-            suggestions = $5,
-            pr_url = $6,
-            digest_md = COALESCE($7, digest_md),
-            status = 'complete'
-      WHERE id = $1`,
-    [
-      id,
-      r.experiments_evaluated,
-      r.promotions,
-      r.demotions,
-      r.suggestions,
-      r.pr_url,
-      digest ?? null,
-    ],
-  );
-}
+// fetchAtomTargets / applyPromotion / applyDemotion / loadRecentRunConfigs /
+// upsertSuggestion / markLedgerRunRunning / markLedgerRunComplete moved to
+// src/storage/repositories/learnings-ledger-repo.ts (CEO plan Phase 0 §5.1
+// storage boundary) — same SQL, called via `repo.*` in runLearningsLedger()
+// above. promotionReason()/demotionReason() (just above) carry the reason
+// string formatting that used to live inline in applyPromotion/applyDemotion.
 
 // ============================================================================
 // Digest markdown

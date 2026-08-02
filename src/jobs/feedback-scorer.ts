@@ -17,6 +17,11 @@
 import { ServerResponse } from 'http';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import {
+  getFeedbackScorerRepo,
+  PgFeedbackScorerRepo,
+  type FeedbackScorerRepo,
+} from '../storage/repositories/feedback-scorer-repo';
 
 interface RouteDefinition {
   method: string;
@@ -38,15 +43,12 @@ interface ScoredPost {
 // Database
 // ============================================================================
 
-let _pool: any = null;
+// Test-only override — see _setPool() at the bottom of this file.
+let _testRepo: FeedbackScorerRepo | null | undefined;
 
-function getPool() {
-  if (_pool) return _pool;
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[feedback-scorer] DATABASE_URL not configured');
-  const { Pool } = require('pg');
-  _pool = new Pool({ connectionString, max: 3, idleTimeoutMillis: 30_000 });
-  return _pool;
+function resolveRepo(): FeedbackScorerRepo | null {
+  if (_testRepo !== undefined) return _testRepo;
+  return getFeedbackScorerRepo();
 }
 
 // ============================================================================
@@ -59,14 +61,11 @@ function normalizeScore(value: number, max: number): number {
 }
 
 async function runFeedbackScoring(): Promise<{ scored: number; archived: number; topPosts: string[] }> {
-  const pool = getPool();
+  const repo = resolveRepo();
+  if (!repo) throw new Error('[feedback-scorer] DATABASE_URL not configured');
 
   // Get all published blog posts
-  const { rows: posts } = await pool.query(`
-    SELECT id, slug, topic, views, published_at
-    FROM blog_posts
-    WHERE status = 'published'
-  `);
+  const posts = await repo.getPublishedPosts();
 
   if (posts.length === 0) {
     console.log('[feedback-scorer] No published posts to score');
@@ -74,26 +73,15 @@ async function runFeedbackScoring(): Promise<{ scored: number; archived: number;
   }
 
   // Get conversion data (funnel events that reference blog slugs)
-  const { rows: conversions } = await pool.query(`
-    SELECT metadata->>'blog_slug' as slug, COUNT(*) as signups
-    FROM funnel_events
-    WHERE event_type = 'signup_complete'
-      AND metadata->>'blog_slug' IS NOT NULL
-    GROUP BY metadata->>'blog_slug'
-  `);
+  const conversions = await repo.getSignupConversions();
   const conversionMap: Record<string, number> = {};
   for (const c of conversions) {
-    conversionMap[c.slug] = parseInt(c.signups, 10);
+    conversionMap[c.slug] = c.signups;
   }
 
   // Get trending topics (last 7 days)
-  const { rows: trendingTopics } = await pool.query(`
-    SELECT DISTINCT topic_match
-    FROM trend_signals
-    WHERE topic_match IS NOT NULL
-      AND collected_at > NOW() - INTERVAL '7 days'
-  `);
-  const trendingSet = new Set(trendingTopics.map(r => r.topic_match));
+  const trendingTopics = await repo.getTrendingTopics();
+  const trendingSet = new Set(trendingTopics);
 
   // Score each post
   const scored: ScoredPost[] = [];
@@ -142,10 +130,7 @@ async function runFeedbackScoring(): Promise<{ scored: number; archived: number;
   // Update scores in DB
   for (const post of scored) {
     try {
-      await pool.query(
-        `UPDATE blog_posts SET content_score = $1, last_scored_at = NOW() WHERE id = $2`,
-        [post.content_score, post.id]
-      );
+      await repo.updatePostScore(post.id, post.content_score);
     } catch (err) {
       console.warn(`[feedback-scorer] Update failed for ${post.slug}:`, (err as Error).message);
     }
@@ -154,15 +139,7 @@ async function runFeedbackScoring(): Promise<{ scored: number; archived: number;
   // Auto-archive low-scoring posts after 90 days
   let archived = 0;
   try {
-    const archiveResult = await pool.query(`
-      UPDATE blog_posts
-      SET status = 'archived', updated_at = NOW()
-      WHERE status = 'published'
-        AND content_score < 0.1
-        AND published_at < NOW() - INTERVAL '90 days'
-      RETURNING id
-    `);
-    archived = archiveResult.rowCount || 0;
+    archived = await repo.archiveStalePosts();
     if (archived > 0) {
       console.log(`[feedback-scorer] Auto-archived ${archived} low-performing posts`);
     }
@@ -210,8 +187,16 @@ async function handleFeedbackScore(req: ParsedRequest, res: ServerResponse): Pro
 // Exports
 // ============================================================================
 
-/** For testing: inject a mock pool */
-export function _setPool(pool: any): void { _pool = pool; }
+/**
+ * For testing: inject a mock pg.Pool-shaped object (matches the pre-
+ * migration signature — tests build `{ query: mockQuery }`). Wrapped into
+ * a real PgFeedbackScorerRepo so the exact same SQL runs against the mock,
+ * just via the storage boundary (CEO plan Phase 0 §5.1) instead of a raw
+ * pool. Pass `null` to force the DATABASE_URL-not-configured path.
+ */
+export function _setPool(pool: { query: (...args: any[]) => any } | null): void {
+  _testRepo = pool ? new PgFeedbackScorerRepo(pool as any) : null;
+}
 
 export { runFeedbackScoring, normalizeScore };
 

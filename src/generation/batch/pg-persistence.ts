@@ -10,19 +10,20 @@
  * become no-ops — same pattern the rest of the codebase uses.
  */
 
-import pg from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import type { BatchPersistence, RunRow, JobRow } from './persistence';
 import type { BatchProvider, BatchState, AtomSpec } from './types';
+import { getSharedPool } from '../../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
-
-function getPool(): pg.Pool | null {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 4 });
-  return _pool;
+// Was its own dedicated `new Pool({ max: 4 })` — now the one shared pool
+// (CEO plan Phase 0 §5/§5.1). `import type` above means this file no
+// longer imports 'pg' at runtime at all, so it drops off
+// scripts/pg-import-allowlist.json entirely rather than needing a
+// src/storage/repositories/ wrapper — this file was already the clean
+// BatchPersistence interface Phase 0 wants; it just needed to stop
+// running its own pool.
+function getPool(): Pool | null {
+  return getSharedPool();
 }
 
 /**
@@ -44,7 +45,7 @@ function lockKeyFor(run_id: string): bigint {
  * session-scoped, so we hold a single client checked out for the lock's
  * lifetime. We use a small pool of dedicated clients keyed by run_id.
  */
-const lockClients = new Map<string, pg.PoolClient>();
+const lockClients = new Map<string, PoolClient>();
 
 export function createPgPersistence(): BatchPersistence {
   return {

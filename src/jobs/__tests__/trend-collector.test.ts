@@ -64,7 +64,14 @@ describe('matchTopics', () => {
 
 describe('trendCollectorRoutes', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    // NOTE: vi.resetAllMocks() would also reset the `Pool: vi.fn(() => ({
+    // query: mockQuery }))` constructor mock's implementation, so
+    // `new Pool(...)` would start returning a bare `{}` with no `query`
+    // method — silently routing every DB call into the catch-fallback path
+    // instead of actually exercising mockQuery. Reset the individual mocks
+    // instead of the Pool constructor wrapper.
+    mockQuery.mockReset();
+    mockFetch.mockReset();
     process.env.DATABASE_URL = 'postgres://test';
     process.env.CRON_SECRET = 'test-secret';
   });

@@ -20,6 +20,7 @@ import { getTopicIdsForExam } from '../curriculum/topic-adapter';
 import { BLOG_CONTENT_TYPES } from '../constants/content-types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { getContentPrioritizerRepo } from '../storage/repositories/content-prioritizer-repo';
 
 interface RouteDefinition {
   method: string;
@@ -44,16 +45,17 @@ function getDefaultExamId(): string {
 // ============================================================================
 // Database
 // ============================================================================
+//
+// Raw queries moved to src/storage/repositories/content-prioritizer-repo.ts
+// (CEO plan Phase 0 §5.1). requireRepo() preserves the old getPool()
+// behavior: throws synchronously (outside any try/catch) when
+// DATABASE_URL isn't configured, so callers that don't wrap the pool
+// lookup in a try still fail the same way they did before.
 
-let _pool: any = null;
-
-function getPool() {
-  if (_pool) return _pool;
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[prioritizer] DATABASE_URL not configured');
-  const { Pool } = require('pg');
-  _pool = new Pool({ connectionString, max: 3, idleTimeoutMillis: 30_000 });
-  return _pool;
+function requireRepo() {
+  const repo = getContentPrioritizerRepo();
+  if (!repo) throw new Error('[prioritizer] DATABASE_URL not configured');
+  return repo;
 }
 
 // ============================================================================
@@ -66,23 +68,11 @@ function normalize(value: number, max: number): number {
 }
 
 async function computeUserStruggle(): Promise<Record<string, number>> {
-  const pool = getPool();
+  const repo = requireRepo();
   const result: Record<string, number> = {};
 
   try {
-    const { rows } = await pool.query(`
-      SELECT topic, AVG(accuracy) as avg_accuracy
-      FROM (
-        SELECT
-          q.topic,
-          CASE WHEN s.selected_answer = q.correct_answer THEN 1.0 ELSE 0.0 END as accuracy
-        FROM sr_sessions s
-        JOIN pyq_questions q ON q.id = s.question_id
-        WHERE s.created_at > NOW() - INTERVAL '30 days'
-          AND q.topic IS NOT NULL
-      ) sub
-      GROUP BY topic
-    `);
+    const rows = await repo.getTopicAccuracy();
 
     for (const row of rows) {
       // Low accuracy = high struggle = high priority
@@ -100,17 +90,11 @@ async function computeUserStruggle(): Promise<Record<string, number>> {
 }
 
 async function computeTrendSignal(): Promise<Record<string, number>> {
-  const pool = getPool();
+  const repo = requireRepo();
   const result: Record<string, number> = {};
 
   try {
-    const { rows } = await pool.query(`
-      SELECT topic_match, COUNT(*) as count
-      FROM trend_signals
-      WHERE topic_match IS NOT NULL
-        AND collected_at > NOW() - INTERVAL '7 days'
-      GROUP BY topic_match
-    `);
+    const rows = await repo.getTrendCounts();
 
     const maxCount = Math.max(...rows.map(r => parseInt(r.count, 10)), 1);
     for (const row of rows) {
@@ -127,20 +111,11 @@ async function computeTrendSignal(): Promise<Record<string, number>> {
 }
 
 async function computeConversionRate(): Promise<Record<string, number>> {
-  const pool = getPool();
+  const repo = requireRepo();
   const result: Record<string, number> = {};
 
   try {
-    const { rows } = await pool.query(`
-      SELECT
-        metadata->>'blog_topic' as topic,
-        COUNT(*) FILTER (WHERE event_type = 'signup_complete') as signups,
-        COUNT(*) FILTER (WHERE event_type = 'page_view') as views
-      FROM funnel_events
-      WHERE metadata->>'blog_topic' IS NOT NULL
-        AND created_at > NOW() - INTERVAL '30 days'
-      GROUP BY metadata->>'blog_topic'
-    `);
+    const rows = await repo.getConversionData();
 
     for (const row of rows) {
       const views = parseInt(row.views, 10) || 1;
@@ -158,19 +133,11 @@ async function computeConversionRate(): Promise<Record<string, number>> {
 }
 
 async function computeViewVelocity(): Promise<Record<string, number>> {
-  const pool = getPool();
+  const repo = requireRepo();
   const result: Record<string, number> = {};
 
   try {
-    const { rows } = await pool.query(`
-      SELECT topic, SUM(views) as total_views,
-             GREATEST(1, EXTRACT(EPOCH FROM NOW() - MIN(published_at)) / 86400) as days
-      FROM blog_posts
-      WHERE status = 'published'
-        AND published_at > NOW() - INTERVAL '14 days'
-        AND topic IS NOT NULL
-      GROUP BY topic
-    `);
+    const rows = await repo.getViewVelocityData();
 
     const velocities: Record<string, number> = {};
     let maxVelocity = 0;
@@ -194,16 +161,11 @@ async function computeViewVelocity(): Promise<Record<string, number>> {
 }
 
 async function computeCoverageGap(): Promise<Record<string, number>> {
-  const pool = getPool();
+  const repo = requireRepo();
   const result: Record<string, number> = {};
 
   try {
-    const { rows } = await pool.query(`
-      SELECT topic, COUNT(*) as count
-      FROM pyq_questions
-      WHERE topic IS NOT NULL
-      GROUP BY topic
-    `);
+    const rows = await repo.getCoverageCounts();
 
     const maxCount = Math.max(...rows.map(r => parseInt(r.count, 10)), 1);
     for (const row of rows) {
@@ -295,14 +257,15 @@ async function runPrioritization(): Promise<PriorityResult[]> {
   priorities.sort((a, b) => b.priority_score - a.priority_score);
 
   // Persist to DB
-  const pool = getPool();
+  const repo = requireRepo();
   for (const p of priorities) {
     try {
-      await pool.query(
-        `INSERT INTO content_priorities (topic, content_type, priority_score, signals)
-         VALUES ($1, $2, $3, $4)`,
-        [p.topic, p.content_type, p.priority_score, JSON.stringify(p.signals)]
-      );
+      await repo.insertPriority({
+        topic: p.topic,
+        content_type: p.content_type,
+        priority_score: p.priority_score,
+        signals: p.signals,
+      });
     } catch (err) {
       console.warn(`[prioritizer] Insert failed for ${p.topic}:`, (err as Error).message);
     }

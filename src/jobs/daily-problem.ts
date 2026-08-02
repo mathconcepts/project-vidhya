@@ -23,6 +23,7 @@ import {
 import { renderLatexToPng, hasComplexMath } from '../utils/latex-to-image';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { getDailyProblemRepo, type UnpostedPyq as PYQ } from '../storage/repositories/daily-problem-repo';
 
 // ============================================================================
 // Types
@@ -34,29 +35,9 @@ interface RouteDefinition {
   handler: RouteHandler;
 }
 
-interface PYQ {
-  id: string;
-  exam_id: string;
-  year: number;
-  question_text: string;
-  options: Record<string, string>;
-  correct_answer: string;
-  explanation: string;
-  topic: string;
-  difficulty: string;
-  marks: number;
-}
-
 // ============================================================================
 // Configuration
 // ============================================================================
-
-function getPool() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[daily-problem] DATABASE_URL not configured');
-  const { Pool } = require('pg');
-  return new Pool({ connectionString, max: 2, idleTimeoutMillis: 10_000 });
-}
 
 function getCronSecret(): string {
   const secret = process.env.CRON_SECRET;
@@ -76,41 +57,15 @@ function getTargetChatIds(): string[] {
 
 /**
  * Select a random unposted PYQ using FOR UPDATE SKIP LOCKED for idempotency.
- * Returns null if pool is exhausted.
+ * Returns null if the pool of unposted PYQs is exhausted. The transaction
+ * itself now lives in DailyProblemRepo (CEO plan Phase 0 §5.1 storage
+ * boundary) — this is a thin wrapper kept for the module's existing export
+ * surface.
  */
-async function selectUnpostedPYQ(pool: any): Promise<PYQ | null> {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-
-    const result = await client.query(`
-      SELECT * FROM pyq_questions
-      WHERE posted_at IS NULL
-      ORDER BY RANDOM()
-      LIMIT 1
-      FOR UPDATE SKIP LOCKED
-    `);
-
-    if (result.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return null;
-    }
-
-    const pyq = result.rows[0];
-
-    await client.query(
-      'UPDATE pyq_questions SET posted_at = NOW() WHERE id = $1',
-      [pyq.id]
-    );
-
-    await client.query('COMMIT');
-    return pyq;
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
-    throw err;
-  } finally {
-    client.release();
-  }
+async function selectUnpostedPYQ(): Promise<PYQ | null> {
+  const repo = getDailyProblemRepo();
+  if (!repo) throw new Error('[daily-problem] DATABASE_URL not configured');
+  return repo.selectAndClaimUnpostedPyq();
 }
 
 /**
@@ -163,55 +118,50 @@ async function postDailyProblem(): Promise<{ posted: boolean; pyqId?: string; gr
   if (!botToken) throw new Error('[daily-problem] TELEGRAM_BOT_TOKEN not configured');
   configureTelegram({ botToken });
 
-  const pool = getPool();
-  try {
-    const pyq = await selectUnpostedPYQ(pool);
+  const pyq = await selectUnpostedPYQ();
 
-    if (!pyq) {
-      console.warn('[daily-problem] ALERT: No unposted PYQs remaining. Pool exhausted.');
-      return { posted: false, reason: 'pool_exhausted' };
-    }
-
-    const chatIds = getTargetChatIds();
-    const caption = formatProblemCaption(pyq);
-    const keyboard = createInlineKeyboard([
-      [{ text: '💡 Show Solution', callbackData: `show_solution:${pyq.id}` }],
-    ]);
-
-    // Try LaTeX image rendering for the question
-    let questionImage: Buffer | null = null;
-    if (hasComplexMath(pyq.question_text)) {
-      questionImage = await renderLatexToPng(pyq.question_text);
-    }
-
-    let successCount = 0;
-    for (const chatId of chatIds) {
-      try {
-        if (questionImage) {
-          // Send as photo with caption
-          // Telegram sendPhoto with Buffer requires multipart — use URL instead
-          // For MVP, send text message (image rendering is a bonus)
-          await sendTextMessage(chatId, caption, {
-            parseMode: 'HTML',
-            keyboard,
-          });
-        } else {
-          await sendTextMessage(chatId, caption, {
-            parseMode: 'HTML',
-            keyboard,
-          });
-        }
-        successCount++;
-        console.log(`[daily-problem] Posted PYQ #${pyq.id} (${pyq.topic}, ${pyq.year}) to group ${chatId}`);
-      } catch (err) {
-        console.error(`[daily-problem] Failed to post to group ${chatId}: ${(err as Error).message}`);
-      }
-    }
-
-    return { posted: successCount > 0, pyqId: pyq.id, groups: successCount };
-  } finally {
-    await pool.end().catch(() => {});
+  if (!pyq) {
+    console.warn('[daily-problem] ALERT: No unposted PYQs remaining. Pool exhausted.');
+    return { posted: false, reason: 'pool_exhausted' };
   }
+
+  const chatIds = getTargetChatIds();
+  const caption = formatProblemCaption(pyq);
+  const keyboard = createInlineKeyboard([
+    [{ text: '💡 Show Solution', callbackData: `show_solution:${pyq.id}` }],
+  ]);
+
+  // Try LaTeX image rendering for the question
+  let questionImage: Buffer | null = null;
+  if (hasComplexMath(pyq.question_text)) {
+    questionImage = await renderLatexToPng(pyq.question_text);
+  }
+
+  let successCount = 0;
+  for (const chatId of chatIds) {
+    try {
+      if (questionImage) {
+        // Send as photo with caption
+        // Telegram sendPhoto with Buffer requires multipart — use URL instead
+        // For MVP, send text message (image rendering is a bonus)
+        await sendTextMessage(chatId, caption, {
+          parseMode: 'HTML',
+          keyboard,
+        });
+      } else {
+        await sendTextMessage(chatId, caption, {
+          parseMode: 'HTML',
+          keyboard,
+        });
+      }
+      successCount++;
+      console.log(`[daily-problem] Posted PYQ #${pyq.id} (${pyq.topic}, ${pyq.year}) to group ${chatId}`);
+    } catch (err) {
+      console.error(`[daily-problem] Failed to post to group ${chatId}: ${(err as Error).message}`);
+    }
+  }
+
+  return { posted: successCount > 0, pyqId: pyq.id, groups: successCount };
 }
 
 // ============================================================================

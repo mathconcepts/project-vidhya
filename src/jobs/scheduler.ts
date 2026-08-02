@@ -142,6 +142,22 @@ register('rateLimitCheckpoint', HOUR_MS, () => {
   }
 });
 
+register('contentPipelineNightly', DAY_MS, async () => {
+  // Nightly autonomous content chain (content-pipeline realignment plan,
+  // D4.3): content-generation → wolfram-verify → bundle rebuild (the
+  // rebuild is a documented skip — see nightly-content-chain.ts). Gated
+  // on CONTENT_CRON_ENABLED=true (default OFF — enable only after the
+  // first successful manual run) and bounded by CONTENT_CRON_MAX_LLM_CALLS
+  // (default 200, overrides CONTENT_MAX_LLM_CALLS_PER_RUN for cron runs).
+  // The global CONTENT_JOBS_DISABLED=true kill switch still refuses every
+  // start. Writes a morning summary line to .data/jobs/cron-summary.jsonl.
+  if (process.env.CONTENT_CRON_ENABLED !== 'true') {
+    return { status: 'skipped', reason: 'CONTENT_CRON_ENABLED not enabled (ships disabled by design)' };
+  }
+  const { runNightlyContentChain } = await import('./nightly-content-chain');
+  return runNightlyContentChain();
+});
+
 register('batchPoller', FIVE_MIN_MS, async () => {
   // Drives every in-flight batch generation run forward by one step.
   // Same code path used at server boot for resume-after-restart.

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Wolfram Alpha Service
  *

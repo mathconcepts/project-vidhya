@@ -7,16 +7,19 @@
  *
  * Honesty note (register law #1, "labels never lie"): the quota ledger
  * (.data/jobs/quota-ledger.jsonl, written by job-runner.ts's
- * recordProviderCall()) records call counts and success/failure per
- * provider — it does NOT record a dollar/rupee cost per call. Wiring a
- * real ₹-per-concept cost figure means threading token usage through
- * every provider call site into the ledger, which is real, separate work
- * (touches the content-generation and wolfram-verify job internals) — out
- * of scope for this thin-wrapper panel. Rather than fabricate a cost
- * number the platform can't back with a receipt, this endpoint reports
- * real call volume/success-rate (a genuine health signal) and leaves cost
- * as an explicit `cost_tracking: 'not_yet_implemented'` field so the
- * cockpit UI can say so honestly instead of inventing a ₹ figure.
+ * recordProviderCall()) now carries an optional `cost_usd` per line —
+ * content-generation-job.ts passes the atom's meta.cost_usd (the SAME
+ * per-atom-type estimate already trusted platform-wide for generation
+ * budget gating, src/content/concept-orchestrator/orchestrator.ts's
+ * ESTIMATED_COST_USD), and wolfram-verify-job.ts passes the flat
+ * WOLFRAM_PER_CALL_USD estimate from src/generation/cost-meter.ts.
+ * Neither is metered provider billing — both are estimates the codebase
+ * already relies on elsewhere. So `cost_tracking` reports 'estimated',
+ * never 'exact', and `cost_tracking_note` carries the one-sentence
+ * caveat so the cockpit UI says so instead of implying a real invoice.
+ * A ledger line written before this change (or by a caller that didn't
+ * pass a cost) has no `cost_usd` field at all — summed as 0, never
+ * guessed at.
  *
  *   GET /api/admin/platform-health
  */
@@ -38,26 +41,29 @@ interface ProviderCallSummary {
   calls: number;
   ok: number;
   failed: number;
+  cost_usd: number;
 }
 
 interface QuotaLedgerSummary {
   since: string;
   total_calls: number;
+  total_cost_usd: number;
   by_provider: ProviderCallSummary[];
 }
 
 /** Aggregate the last 24h of quota-ledger.jsonl by provider. Tolerates a missing/corrupt file — never throws. */
 function readQuotaLedger24h(now: Date = new Date()): QuotaLedgerSummary {
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const byProvider = new Map<string, { calls: number; ok: number; failed: number }>();
+  const byProvider = new Map<string, { calls: number; ok: number; failed: number; cost_usd: number }>();
   let total_calls = 0;
+  let total_cost_usd = 0;
   const file = path.join(jobsDir(), 'quota-ledger.jsonl');
   if (fs.existsSync(file)) {
     const lines = fs.readFileSync(file, 'utf-8').split('\n');
     for (const raw of lines) {
       const line = raw.trim();
       if (!line) continue;
-      let rec: { ts?: string; provider?: string; ok?: boolean };
+      let rec: { ts?: string; provider?: string; ok?: boolean; cost_usd?: number };
       try {
         rec = JSON.parse(line);
       } catch {
@@ -66,9 +72,14 @@ function readQuotaLedger24h(now: Date = new Date()): QuotaLedgerSummary {
       if (!rec.ts || !rec.provider) continue;
       const ts = new Date(rec.ts);
       if (Number.isNaN(ts.getTime()) || ts < since) continue;
+      // A missing/non-numeric cost_usd means "unknown", summed as 0 — never
+      // guessed at (see the file-level honesty note).
+      const cost = typeof rec.cost_usd === 'number' && Number.isFinite(rec.cost_usd) ? rec.cost_usd : 0;
       total_calls++;
-      const cur = byProvider.get(rec.provider) ?? { calls: 0, ok: 0, failed: 0 };
+      total_cost_usd += cost;
+      const cur = byProvider.get(rec.provider) ?? { calls: 0, ok: 0, failed: 0, cost_usd: 0 };
       cur.calls++;
+      cur.cost_usd += cost;
       if (rec.ok) cur.ok++;
       else cur.failed++;
       byProvider.set(rec.provider, cur);
@@ -77,6 +88,7 @@ function readQuotaLedger24h(now: Date = new Date()): QuotaLedgerSummary {
   return {
     since: since.toISOString(),
     total_calls,
+    total_cost_usd,
     by_provider: [...byProvider.entries()]
       .map(([provider, v]) => ({ provider, ...v }))
       .sort((a, b) => b.calls - a.calls),
@@ -160,7 +172,11 @@ async function handlePlatformHealth(req: ParsedRequest, res: ServerResponse): Pr
     db,
     jobs: listJobs(),
     quota_calls_24h: readQuotaLedger24h(),
-    cost_tracking: 'not_yet_implemented',
+    cost_tracking: 'estimated',
+    cost_tracking_note:
+      'Costs are per-atom-type / per-call estimates already used elsewhere for generation budget ' +
+      'gating (concept-orchestrator ESTIMATED_COST_USD, cost-meter WOLFRAM_PER_CALL_USD), not metered ' +
+      'provider billing. Ledger lines written before this estimate existed count as $0, not "free".',
     content_bundle: readContentBundleSummary(),
     explainer_placeholders: readExplainerPlaceholderSummary(),
     pg_allowlist_remaining: readPgAllowlistCount(),

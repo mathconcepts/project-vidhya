@@ -48,11 +48,13 @@ export interface ProviderCallSummary {
   calls: number;
   ok: number;
   failed: number;
+  cost_usd: number;
 }
 
 export interface QuotaCalls24h {
   since: string;
   total_calls: number;
+  total_cost_usd: number;
   by_provider: ProviderCallSummary[];
 }
 
@@ -85,7 +87,11 @@ export interface PlatformHealth {
   db: DbHealth;
   jobs: JobStatusSummary[];
   quota_calls_24h: QuotaCalls24h;
-  cost_tracking: 'not_yet_implemented';
+  /** 'estimated' — per-atom-type / per-call figures already used for
+   *  generation budget gating, not metered provider billing. See
+   *  cost_tracking_note for the exact caveat to show alongside any $ figure. */
+  cost_tracking: 'estimated';
+  cost_tracking_note: string;
   content_bundle: ContentBundleSummary | null;
   explainer_placeholders: PlaceholderSummary | null;
   pg_allowlist_remaining: number | null;

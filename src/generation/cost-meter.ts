@@ -38,7 +38,11 @@ const PRICES: Record<string, ModelPrice> = {
   wolfram: { input_per_1m: 0, output_per_1m: 0 },
 };
 
-const WOLFRAM_PER_CALL_USD = 0.001; // assumed enterprise rate; adjust as needed
+// Exported (not just module-local) so any other call site that needs "the
+// one Wolfram per-call estimate" — e.g. the quota-ledger cost figure in
+// src/jobs/wolfram-verify-job.ts — reuses this number instead of growing a
+// second, driftable copy of the same assumption.
+export const WOLFRAM_PER_CALL_USD = 0.001; // assumed enterprise rate; adjust as needed
 
 export function priceForCall(opts: {
   model: string;

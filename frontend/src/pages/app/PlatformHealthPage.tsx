@@ -8,11 +8,12 @@
  * placeholder count, the pg-import allowlist ratchet, and provider price
  * staleness.
  *
- * Honesty note: this panel does NOT show a rupee cost figure. The quota
- * ledger records call counts and success/failure, not token cost — see
- * the backend route's docblock. Showing a fabricated ₹ number would
- * violate this project's own "labels never lie" law, so the panel says
- * so plainly instead.
+ * Honesty note: the $ figure shown is an ESTIMATE — the same per-atom-type
+ * / per-call cost the codebase already uses for generation budget gating
+ * (concept-orchestrator's ESTIMATED_COST_USD, cost-meter's
+ * WOLFRAM_PER_CALL_USD) — not metered provider billing. The panel labels
+ * it "estimated" everywhere rather than implying a real invoice, per this
+ * project's "labels never lie" law. See the backend route's docblock.
  *
  * Auth: admin role only. Falls back to a friendly gate for non-admins.
  */
@@ -118,7 +119,7 @@ export default function PlatformHealthPage() {
           )}
 
           {/* Headline KPIs */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
             <KpiCard
               icon={Database}
               label="Database"
@@ -133,6 +134,12 @@ export default function PlatformHealthPage() {
               sub={health.quota_calls_24h.by_provider.map((p) => `${p.provider}:${p.calls}`).join(', ') || 'no calls yet'}
             />
             <KpiCard
+              icon={Activity}
+              label="Est. spend (24h)"
+              value={`$${health.quota_calls_24h.total_cost_usd.toFixed(4)}`}
+              sub="estimated — not metered billing"
+            />
+            <KpiCard
               icon={AlertTriangle}
               label="pg-allowlist"
               value={health.pg_allowlist_remaining != null ? health.pg_allowlist_remaining.toString() : '—'}
@@ -140,12 +147,27 @@ export default function PlatformHealthPage() {
             />
           </div>
 
-          {/* Cost tracking — honest gap, not a fabricated number */}
+          {/* Cost tracking — the note comes straight from the backend so
+              the caveat text has one source of truth, not a copy that can
+              drift from the API's own docblock. */}
           <div style={{ padding: 12, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', fontSize: 11, color: 'var(--text-tertiary)' }}>
-            ₹-per-concept cost is not tracked yet — the quota ledger records call counts and success/failure per
-            provider, not token cost. Showing a rupee figure here without real cost data would be a fabricated
-            number, so this panel doesn't show one.
+            {health.cost_tracking_note}
           </div>
+
+          {/* Per-provider cost + call breakdown */}
+          <Section title="Provider calls (24h), by provider">
+            <Table
+              headers={['Provider', 'Calls', 'OK', 'Failed', 'Est. cost']}
+              rows={health.quota_calls_24h.by_provider.map((p) => [
+                p.provider,
+                p.calls.toString(),
+                p.ok.toString(),
+                p.failed.toString(),
+                `$${p.cost_usd.toFixed(4)}`,
+              ])}
+              toneForRow={(row) => (Number(row[3]) > 0 ? 'bad' : 'neutral')}
+            />
+          </Section>
 
           {/* Jobs */}
           <Section title="Background jobs">

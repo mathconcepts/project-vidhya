@@ -33,6 +33,7 @@ import {
 } from './job-runner';
 import { wolframSolve, verifyProblemWithWolfram } from '../services/wolfram-service';
 import { writeWolframSteps, queryIdFor } from '../services/wolfram-steps-cache';
+import { WOLFRAM_PER_CALL_USD } from '../generation/cost-meter';
 
 export const WOLFRAM_VERIFY_JOB = 'wolfram-verify';
 
@@ -152,7 +153,7 @@ async function run(ctx: JobContext): Promise<void> {
       const result = await rateLimitedCall(() =>
         verifyProblemWithWolfram(p.question_text || '', p.correct_answer || ''),
       );
-      ctx.recordProviderCall('wolfram', !result.error);
+      ctx.recordProviderCall('wolfram', !result.error, WOLFRAM_PER_CALL_USD);
 
       if (result.error && isTimeoutError(result.error)) {
         // Runner retries this item ×2, then skips-and-records.
@@ -184,7 +185,7 @@ async function run(ctx: JobContext): Promise<void> {
       ) {
         const query = p.question_text || '';
         const stepRes = await rateLimitedCall(() => wolframSolve(query, { show_steps: true }));
-        ctx.recordProviderCall('wolfram', !stepRes.error);
+        ctx.recordProviderCall('wolfram', !stepRes.error, WOLFRAM_PER_CALL_USD);
         if (!stepRes.error && stepRes.steps.length > 0) {
           const ok = writeWolframSteps(p.id, {
             problem_id: p.id,

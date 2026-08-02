@@ -20,6 +20,18 @@ import { verifyProblemWithWolfram, wolframSolve } from '../../services/wolfram-s
 import { startJob, __testing as runnerTesting } from '../job-runner';
 import { WOLFRAM_VERIFY_JOB, shouldSkipProblem, __testing as jobTesting } from '../wolfram-verify-job';
 import { readWolframSteps } from '../../services/wolfram-steps-cache';
+import { WOLFRAM_PER_CALL_USD } from '../../generation/cost-meter';
+
+function readQuotaLedgerLines(): Array<Record<string, unknown>> {
+  const file = path.join(tmp, 'jobs', 'quota-ledger.jsonl');
+  if (!fs.existsSync(file)) return [];
+  return fs
+    .readFileSync(file, 'utf-8')
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((l) => JSON.parse(l));
+}
 
 const mockVerify = vi.mocked(verifyProblemWithWolfram);
 const mockSolve = vi.mocked(wolframSolve);
@@ -152,6 +164,25 @@ describe('verification + rate limiting', () => {
     expect(mockSolve).not.toHaveBeenCalled();
     expect(readWolframSteps('p1')).toBeNull();
     expect(readBundle().problems[0].wolfram_verified).toBeUndefined();
+  });
+
+  it('records the flat WOLFRAM_PER_CALL_USD estimate on every quota-ledger line, verify + steps alike', async () => {
+    writeBundle([{ id: 'p1', question_text: 'integrate x^2', correct_answer: 'x^3/3' }]);
+    mockVerify.mockResolvedValue({ verified: true, wolfram_answer: 'x^3/3', latency_ms: 5 });
+    mockSolve.mockResolvedValue({
+      available: true, query: 'integrate x^2', answer: 'x^3/3 + C', steps: ['a step'],
+      interpretation: null, pods: [], latency_ms: 5,
+    });
+
+    const final = await runJob();
+    expect(final?.state).toBe('completed');
+
+    const ledger = readQuotaLedgerLines();
+    expect(ledger.length).toBe(2); // 1 verify call + 1 steps call
+    for (const line of ledger) {
+      expect(line.provider).toBe('wolfram');
+      expect(line.cost_usd).toBe(WOLFRAM_PER_CALL_USD);
+    }
   });
 });
 

@@ -119,8 +119,13 @@ export interface JobContext {
   completed: Map<string, CheckpointRecord>;
   /** Append a checkpoint record (atomic temp-write + rename). */
   checkpoint(rec: CheckpointRecord): void;
-  /** Append one line to the quota ledger for a provider call. */
-  recordProviderCall(provider: string, ok: boolean): void;
+  /**
+   * Append one line to the quota ledger for a provider call. `costUsd`
+   * is optional and additive-only — omit it when the caller has no cost
+   * figure rather than guessing; the platform-health panel sums whatever
+   * is present and never fabricates a number for lines that lack it.
+   */
+  recordProviderCall(provider: string, ok: boolean, costUsd?: number): void;
   /**
    * Drive the standard per-item loop: skips keys already in the
    * checkpoint, checks cancellation between items, retries
@@ -397,13 +402,18 @@ export async function startJob(
       const lines = [...completed.values()].map((r) => JSON.stringify(r)).join('\n');
       atomicWrite(checkpointPath(name), lines + '\n');
     },
-    recordProviderCall(provider: string, ok: boolean): void {
+    recordProviderCall(provider: string, ok: boolean, costUsd?: number): void {
       try {
         fs.mkdirSync(jobsDir(), { recursive: true });
-        fs.appendFileSync(
-          quotaLedgerPath(),
-          JSON.stringify({ ts: new Date().toISOString(), provider, job: name, ok }) + '\n',
-        );
+        const record: Record<string, unknown> = { ts: new Date().toISOString(), provider, job: name, ok };
+        // Only ever write cost_usd when the caller actually has a figure —
+        // a line with no cost_usd means "unknown", not "free". Readers
+        // (readQuotaLedger24h) must treat a missing field as 0 when
+        // summing, never as a signal to invent a number.
+        if (typeof costUsd === 'number' && Number.isFinite(costUsd)) {
+          record.cost_usd = costUsd;
+        }
+        fs.appendFileSync(quotaLedgerPath(), JSON.stringify(record) + '\n');
       } catch (err) {
         console.warn(`[job-runner] quota ledger write failed: ${(err as Error).message}`);
       }

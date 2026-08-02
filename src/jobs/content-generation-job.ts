@@ -328,14 +328,20 @@ async function run(ctx: JobContext): Promise<void> {
 
       // Ledger: one line per atom attempt. Provider approximated from the
       // atom's source cascade (per-call hooks are a deferred orchestrator
-      // change; the cost dashboard reads this ledger later).
+      // change). Cost is the atom's meta.cost_usd — the SAME per-atom-type
+      // estimate (ESTIMATED_COST_USD in concept-orchestrator/orchestrator.ts)
+      // already trusted platform-wide for budget gating (canSpend/recordSpend)
+      // — not a new estimation method, just the existing one finally surfaced
+      // to the cost dashboard. Atoms rejected before any generation attempt
+      // (cost-cap pre-checks) carry meta.cost_usd === 0, which is correct:
+      // no LLM call was made for them.
       for (const atom of draft.atoms) {
         const provider = atom.meta?.source_cascade?.includes('llm-gemini') ? 'gemini' : 'claude';
-        ctx.recordProviderCall(provider, true);
+        ctx.recordProviderCall(provider, true, atom.meta?.cost_usd);
       }
       for (const atom of draft.rejected_atoms) {
         const provider = atom.meta?.source_cascade?.includes('llm-gemini') ? 'gemini' : 'claude';
-        ctx.recordProviderCall(provider, false);
+        ctx.recordProviderCall(provider, false, atom.meta?.cost_usd);
       }
 
       // FILE mode: persist only atoms with real content. Empty or

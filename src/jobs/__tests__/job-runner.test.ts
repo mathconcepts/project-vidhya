@@ -310,6 +310,34 @@ describe('quota ledger', () => {
     expect(first.job).toBe(name);
     expect(first.ok).toBe(true);
     expect(first.ts).toBeTruthy();
+    // No cost passed — the field must be absent entirely, not present as 0
+    // (0 would silently claim "this call was free", which is a lie).
+    expect(first.cost_usd).toBeUndefined();
     expect(JSON.parse(lines[1])).toMatchObject({ provider: 'gemini', ok: false });
+  });
+
+  it('recordProviderCall writes cost_usd only when the caller supplies a finite number', async () => {
+    const name = uniqueName('ledger-cost');
+    registerJob({
+      name,
+      description: 'ledger cost test',
+      run: async (ctx) => {
+        ctx.recordProviderCall('wolfram', true, 0.001);
+        ctx.recordProviderCall('gemini', true, 0); // a real zero cost is still worth recording
+        ctx.recordProviderCall('claude', true, NaN); // non-finite — must be dropped, not written as NaN
+        ctx.recordProviderCall('openai', true, undefined);
+      },
+    });
+    const r = await startJob(name);
+    if (r.ok) await r.completion;
+    const lines = fs
+      .readFileSync(path.join(tmp, 'quota-ledger.jsonl'), 'utf-8')
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l));
+    expect(lines.find((l) => l.provider === 'wolfram')?.cost_usd).toBe(0.001);
+    expect(lines.find((l) => l.provider === 'gemini')?.cost_usd).toBe(0);
+    expect(lines.find((l) => l.provider === 'claude')?.cost_usd).toBeUndefined();
+    expect(lines.find((l) => l.provider === 'openai')?.cost_usd).toBeUndefined();
   });
 });

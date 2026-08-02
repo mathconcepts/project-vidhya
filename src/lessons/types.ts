@@ -1,8 +1,7 @@
-// @ts-nocheck
 /**
  * Lesson Types — the atomic pedagogical unit in Vidhya.
  *
- * A Lesson is an 8-component structured object for one concept. Each
+ * A Lesson is a structured object of up to 9 components for one concept. Each
  * component is grounded in a learning-science principle (see
  * docs/LESSON-FRAMEWORK.md for full rationale). Components are optional
  * — the composer falls back gracefully when a source has no content.
@@ -24,6 +23,7 @@ export type SourceKind =
   | 'bundle-canon'      // Vidhya's curated content bundle
   | 'wolfram-computed'  // Live or cached Wolfram result
   | 'concept-graph'     // The 82-concept fallback
+  | 'topic-notes'       // Authored per-topic study guides (teaching-tips.md)
   | 'generated';        // LLM-synthesized (only as last resort)
 
 export interface Attribution {
@@ -104,6 +104,18 @@ export interface WorkedExampleComponent {
   id: string;
   problem: string;              // The problem statement
   final_answer: string;
+  /**
+   * 'worked'          — a real authored/generated step-by-step solution.
+   * 'example_problem' — an MCQ rendered honestly as a single example card
+   *                     (question, options, answer, explanation as one prose
+   *                     block). steps is empty; NO fabricated step structure.
+   * Absent means 'worked' (backwards compatible).
+   */
+  presentation?: 'worked' | 'example_problem';
+  /** MCQ options — only on 'example_problem' cards. */
+  options?: string[];
+  /** One-block prose explanation — only on 'example_problem' cards. */
+  explanation?: string;
   steps: WorkedStep[];
   attribution?: Attribution;
   wolfram_verified?: boolean;
@@ -148,6 +160,21 @@ export interface CommonTrapsComponent {
 }
 
 /**
+ * Component 6.5 — Strategy.
+ *
+ * How to actually study/attack this topic in the exam: sequencing, time
+ * budgets, drills. Sourced from the authored per-topic study guides
+ * (teaching-tips.md) via the topic-context importer — deterministic,
+ * never LLM-fabricated.
+ */
+export interface StrategyComponent {
+  kind: 'strategy';
+  id: string;
+  text: string;                 // Markdown-ish prose from the study guide
+  attribution?: Attribution;
+}
+
+/**
  * Component 7 — Formal Statement.
  *
  * The precise mathematical statement, for the student who wants depth.
@@ -184,6 +211,7 @@ export type LessonComponent =
   | WorkedExampleComponent
   | MicroExerciseComponent
   | CommonTrapsComponent
+  | StrategyComponent
   | FormalStatementComponent
   | ConnectionsComponent;
 
@@ -202,6 +230,7 @@ export const COMPONENT_ORDER: Array<LessonComponent['kind']> = [
   'worked_example',
   'micro_exercise',
   'common_traps',
+  'strategy',
   'formal_statement',
   'connections',
 ];
@@ -217,7 +246,7 @@ export interface Lesson {
   /** Aggregate metadata */
   estimated_minutes: number;
   difficulty_base: number;
-  /** Completeness 0..1 — fraction of the 8 components that have real content */
+  /** Completeness 0..1 — fraction of COMPONENT_ORDER that has real content */
   quality_score: number;
   /** All unique sources cited across components */
   sources: Attribution[];

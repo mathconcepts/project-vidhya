@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Composer
  *
@@ -8,7 +7,14 @@
  * components, not crashes.
  *
  * Source priority for each component (highest to lowest):
- *   USER-MATERIALS > BUNDLE-CANON > WOLFRAM > CONCEPT-GRAPH
+ *   USER-MATERIALS > BUNDLE-CANON > TOPIC-NOTES > WOLFRAM > CONCEPT-GRAPH
+ *
+ * Honesty rules (locked by the content-pipeline realignment plan):
+ *   - Never split MCQ explanations into fake numbered "steps". An MCQ
+ *     without a real worked solution renders as an 'example_problem' card.
+ *   - Never serve placeholder explainer prose as intuition; use the
+ *     authored topic study guide instead, clearly attributed.
+ *   - Never duplicate the canonical definition as a "formal statement".
  *
  * The resulting Lesson is deterministic and cacheable. Personalization
  * happens in a separate pass (src/lessons/personalizer.ts).
@@ -24,9 +30,9 @@ import type {
   WorkedExampleComponent,
   MicroExerciseComponent,
   CommonTrapsComponent,
+  StrategyComponent,
   FormalStatementComponent,
   ConnectionsComponent,
-  WorkedStep,
   TrapEntry,
   Attribution,
 } from './types';
@@ -34,8 +40,8 @@ import type { SourceBundle, UserMaterialChunk } from './source-resolver';
 import {
   userMaterialAttribution,
   bundleAttribution,
-  wolframAttribution,
   graphAttribution,
+  topicNotesAttribution,
 } from './source-resolver';
 import { COMPONENT_ORDER } from './types';
 
@@ -132,7 +138,9 @@ function buildIntuition(sources: SourceBundle): IntuitionComponent | null {
       attribution: userMaterialAttribution(userChunk),
     };
   }
-  if (bundle.explainer?.deep_explanation) {
+  // A REAL explainer (not the placeholder stub) wins next.
+  const isPlaceholder = bundle.explainer?.model === 'placeholder';
+  if (bundle.explainer?.deep_explanation && !isPlaceholder) {
     return {
       kind: 'intuition',
       id: componentId(sources.concept_id, 'intuition'),
@@ -140,56 +148,82 @@ function buildIntuition(sources: SourceBundle): IntuitionComponent | null {
       attribution: bundleAttribution(undefined, graph.label),
     };
   }
+  // Topic-notes fallback: authored per-topic "mental model" prose (or the
+  // concept's own section when the study guide has one). Honest label —
+  // the concept-specific explainer is still expanding.
+  const notes = sources.topic_notes;
+  const topicText = notes?.concept_section ?? notes?.mental_model ?? null;
+  if (notes && topicText) {
+    return {
+      kind: 'intuition',
+      id: componentId(sources.concept_id, 'intuition'),
+      text:
+        `${topicText.trim()}\n\n` +
+        `_From the ${notes.topic_id.replace(/-/g, ' ')} study guide — ` +
+        `a concept-specific explainer for ${graph.label} is still expanding._`,
+      attribution: topicNotesAttribution(notes.topic_id),
+    };
+  }
   // No rich source — skip intuition rather than fabricate
   return null;
 }
 
+function buildStrategy(sources: SourceBundle): StrategyComponent | null {
+  const notes = sources.topic_notes;
+  const strategy = notes?.study_strategy?.trim();
+  if (!notes || !strategy) return null;
+  return {
+    kind: 'strategy',
+    id: componentId(sources.concept_id, 'strategy'),
+    text: strategy,
+    attribution: topicNotesAttribution(notes.topic_id),
+  };
+}
+
 function buildWorkedExample(sources: SourceBundle): WorkedExampleComponent | null {
   const { bundle, graph } = sources;
-  const p = bundle.problems[0];
-  if (p) {
-    const explanationLines = (p.explanation || '').split(/\n|\. /).filter(s => s.trim().length > 0).slice(0, 6);
-    const steps: WorkedStep[] = explanationLines.length > 0
-      ? explanationLines.map((line, i) => ({
-          step_number: i + 1,
-          action: line.trim().replace(/^\d+[.)]\s*/, ''),
-          explanation: line.trim(),
-        }))
-      : [{
-          step_number: 1,
-          action: 'Apply the standard procedure for this type of problem.',
-          explanation: 'See canonical technique for this concept.',
-        }];
-    // Attach a self-check prompt to the last step — encourages elaborative interrogation
-    if (steps.length > 0) {
-      steps[steps.length - 1].self_check_prompt = 'What would change in this solution if the numbers were swapped or a constant added?';
-    }
-    return {
-      kind: 'worked_example',
-      id: componentId(sources.concept_id, 'worked_example'),
-      problem: p.question_text,
-      final_answer: p.correct_answer || '(not provided)',
-      steps,
-      attribution: bundleAttribution(p.source, graph.label),
-      wolfram_verified: !!p.wolfram_verified,
-    };
-  }
-  // Explainer-embedded worked example fallback
+  // 1. A REAL worked example (explainer-authored/generated) wins. Its
+  //    solution renders as one authored solution block — we don't invent
+  //    step boundaries the author didn't write.
   const ex = bundle.explainer?.worked_examples?.[0];
   if (ex) {
     const problem = typeof ex === 'string' ? ex : ex.problem;
     const solution = typeof ex === 'string' ? '' : ex.solution;
+    const answer = typeof ex === 'string' ? undefined : ex.answer;
+    if (problem && problem.trim()) {
+      return {
+        kind: 'worked_example',
+        id: componentId(sources.concept_id, 'worked_example'),
+        problem,
+        final_answer: answer || '(see solution)',
+        steps: [{
+          step_number: 1,
+          action: 'Worked solution',
+          explanation: solution || '(solution not provided)',
+          self_check_prompt: 'What would change in this solution if the numbers were swapped or a constant added?',
+        }],
+        attribution: bundleAttribution(undefined, graph.label),
+      };
+    }
+  }
+  // 2. Otherwise render an MCQ from the bundle HONESTLY: a single
+  //    "example problem" card — question, options, answer, explanation as
+  //    one prose block. Never split the explanation into fake numbered
+  //    "steps" (the old behavior manufactured step structure from
+  //    sentence boundaries).
+  const p = bundle.problems[0];
+  if (p) {
     return {
       kind: 'worked_example',
       id: componentId(sources.concept_id, 'worked_example'),
-      problem,
-      final_answer: '(see explanation)',
-      steps: [{
-        step_number: 1,
-        action: solution || 'Apply the core technique.',
-        explanation: solution || 'See canonical worked solution.',
-      }],
-      attribution: bundleAttribution(undefined, graph.label),
+      presentation: 'example_problem',
+      problem: p.question_text,
+      options: Array.isArray(p.options) ? p.options : undefined,
+      final_answer: p.correct_answer || '(not provided)',
+      explanation: (p.explanation || '').trim() || undefined,
+      steps: [],
+      attribution: bundleAttribution(p.source, graph.label),
+      wolfram_verified: !!p.wolfram_verified,
     };
   }
   return null;
@@ -217,10 +251,16 @@ function buildCommonTraps(sources: SourceBundle): CommonTrapsComponent | null {
   const raw = bundle.explainer?.common_misconceptions;
   if (!raw || raw.length === 0) return null;
   const traps: TrapEntry[] = raw.slice(0, 4).map(m => {
+    // Generated explainers emit {id, description, corrective} objects.
+    if (typeof m !== 'string') {
+      return {
+        description: m.description ?? m.id ?? 'A common point of confusion.',
+        why_it_happens: 'A common point of confusion.',
+        correction: m.corrective,
+      };
+    }
     // If the misconception is a full sentence with "because", split it
-    const match = typeof m === 'string'
-      ? m.match(/^(.*?)\s*(?:because|since|as)\s+(.*)$/i)
-      : null;
+    const match = m.match(/^(.*?)\s*(?:because|since|as)\s+(.*)$/i);
     if (match) {
       return {
         description: match[1].trim(),
@@ -228,7 +268,7 @@ function buildCommonTraps(sources: SourceBundle): CommonTrapsComponent | null {
       };
     }
     return {
-      description: typeof m === 'string' ? m : String(m),
+      description: m,
       why_it_happens: 'A common point of confusion.',
     };
   });
@@ -242,15 +282,17 @@ function buildCommonTraps(sources: SourceBundle): CommonTrapsComponent | null {
 
 function buildFormalStatement(sources: SourceBundle): FormalStatementComponent | null {
   const { bundle, graph } = sources;
-  // Use the canonical definition as the formal statement if available.
-  // We don't attempt LaTeX conversion here — the canonical definition
-  // is expected to be LaTeX-friendly already for math content.
-  if (bundle.explainer?.canonical_definition) {
+  // A formal-statement card exists only when a DISTINCT formal statement
+  // is authored. The old behavior copied canonical_definition verbatim,
+  // which duplicated the definition card and read as padding.
+  const formal = bundle.explainer?.formal_statement?.trim();
+  const canonical = bundle.explainer?.canonical_definition?.trim();
+  if (formal && formal !== canonical) {
     return {
       kind: 'formal_statement',
       id: componentId(sources.concept_id, 'formal_statement'),
-      statement: bundle.explainer.canonical_definition,
-      latex: bundle.explainer.canonical_definition, // consumer may render with KaTeX
+      statement: formal,
+      latex: formal, // consumer may render with KaTeX
       attribution: bundleAttribution(undefined, graph.label),
     };
   }
@@ -281,7 +323,7 @@ function buildConnections(sources: SourceBundle): ConnectionsComponent {
 // ============================================================================
 
 function computeQualityScore(components: LessonComponent[]): number {
-  // Fraction of the 8 possible components that are present
+  // Fraction of the possible components (COMPONENT_ORDER) that are present
   return Math.round((components.length / COMPONENT_ORDER.length) * 100) / 100;
 }
 
@@ -294,6 +336,7 @@ function computeEstimatedMinutes(components: LessonComponent[], difficulty: numb
     worked_example: 3,
     micro_exercise: 1,
     common_traps: 1,
+    strategy: 1,
     formal_statement: 1,
     connections: 1,
   };
@@ -318,6 +361,7 @@ export function composeBase(sources: SourceBundle): Lesson {
     () => buildWorkedExample(sources),
     () => buildMicroExercise(sources),
     () => buildCommonTraps(sources),
+    () => buildStrategy(sources),
     () => buildFormalStatement(sources),
     () => buildConnections(sources),
   ];

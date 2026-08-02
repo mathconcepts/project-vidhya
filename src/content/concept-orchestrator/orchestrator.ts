@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * orchestrator.ts — ConceptGenerationOrchestrator (v1).
  *

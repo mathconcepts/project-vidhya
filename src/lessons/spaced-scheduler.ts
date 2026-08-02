@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Spaced Scheduler — SM-2
  *

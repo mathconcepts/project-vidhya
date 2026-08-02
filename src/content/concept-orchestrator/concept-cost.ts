@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * concept-cost.ts — per-concept LLM/Wolfram spend tracking + cap (E8).
  *

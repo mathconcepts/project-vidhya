@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * queue.ts — admin "Concepts needing content" priority queue.
  *

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Build Content Bundle
  *
@@ -10,10 +9,15 @@
  *   frontend/public/data/pyq-bank.json    — legacy PYQ bundle
  *   frontend/public/data/explainers.json  — concept explainer library
  *   data/generated/problems-*.json        — CI-generated verified problems
+ *   data/courses/gate-em/topics/NN-<topic>/lecture-notes.md — per-topic notes
  *
  * Output:
  *   frontend/public/data/content-bundle.json
- *     { version, problems: [...], explainers: {...}, stats }
+ *     { version: 3, problems: [...], explainers: {...}, topic_notes: {...}, stats }
+ *
+ * v3 adds topic_notes (first ~2000 chars of each topic's lecture-notes.md,
+ * keyed by concept-graph topic id). Readers must tolerate its absence —
+ * v2 bundles have no topic_notes field.
  *
  * Dedup: problems hashed by normalized(question_text + answer). First wins.
  */
@@ -25,7 +29,9 @@ import crypto from 'crypto';
 const FE_DATA = path.resolve(process.cwd(), 'frontend/public/data');
 const RAW_DIR = path.resolve(process.cwd(), 'data/raw');
 const GEN_DIR = path.resolve(process.cwd(), 'data/generated');
+const TOPICS_DIR = path.resolve(process.cwd(), 'data/courses/gate-em/topics');
 const OUT_PATH = path.join(FE_DATA, 'content-bundle.json');
+const TOPIC_NOTES_EXCERPT_CHARS = 2000;
 
 function fingerprint(problem: any): string {
   const normalized = `${problem.question_text}|${problem.correct_answer}`
@@ -159,6 +165,39 @@ function collectExplainers(): Record<string, any> {
   }
 }
 
+/**
+ * Per-topic lecture-notes excerpts, keyed by concept-graph topic id
+ * (dir `01-linear-algebra` → key `linear-algebra`). First ~2000 chars
+ * each — enough for the frontend resolver to serve real topic prose
+ * without bloating the bundle. Missing dir/files are skipped silently.
+ */
+function collectTopicNotes(): Record<string, string> {
+  const notes: Record<string, string> = {};
+  if (!fs.existsSync(TOPICS_DIR)) {
+    console.warn('  ⚠ topics dir missing — bundle ships without topic_notes');
+    return notes;
+  }
+  for (const entry of fs.readdirSync(TOPICS_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const m = /^\d+-(.+)$/.exec(entry.name);
+    if (!m) continue;
+    const topicId = m[1];
+    const file = path.join(TOPICS_DIR, entry.name, 'lecture-notes.md');
+    if (!fs.existsSync(file)) continue;
+    try {
+      const raw = fs.readFileSync(file, 'utf-8');
+      const excerpt = raw.slice(0, TOPIC_NOTES_EXCERPT_CHARS).trim();
+      if (excerpt) {
+        notes[topicId] = raw.length > TOPIC_NOTES_EXCERPT_CHARS ? `${excerpt}\n\n…` : excerpt;
+        console.log(`  ✓ ${entry.name}/lecture-notes.md: ${excerpt.length} chars`);
+      }
+    } catch (err) {
+      console.warn(`  ⚠ ${entry.name}/lecture-notes.md: ${(err as Error).message}`);
+    }
+  }
+  return notes;
+}
+
 function main() {
   fs.mkdirSync(FE_DATA, { recursive: true });
   console.log('Building content bundle...\n');
@@ -168,6 +207,9 @@ function main() {
 
   console.log('\nCollecting explainers:');
   const explainers = collectExplainers();
+
+  console.log('\nCollecting topic notes:');
+  const topic_notes = collectTopicNotes();
 
   // Stats
   const byTopic: Record<string, number> = {};
@@ -181,13 +223,15 @@ function main() {
   }
 
   const bundle = {
-    version: 2,
+    version: 3,
     generated_at: new Date().toISOString(),
     problems,
     explainers,
+    topic_notes,
     stats: {
       total_problems: problems.length,
       total_explainers: Object.keys(explainers).length,
+      total_topic_notes: Object.keys(topic_notes).length,
       wolfram_verified: wolframVerified,
       by_topic: byTopic,
       by_difficulty: byDifficulty,
@@ -197,7 +241,7 @@ function main() {
   fs.writeFileSync(OUT_PATH, JSON.stringify(bundle, null, 2));
 
   console.log(`\n✓ Bundle written: ${OUT_PATH}`);
-  console.log(`  ${problems.length} problems, ${Object.keys(explainers).length} explainers`);
+  console.log(`  ${problems.length} problems, ${Object.keys(explainers).length} explainers, ${Object.keys(topic_notes).length} topic notes`);
   console.log(`  ${wolframVerified} Wolfram-verified`);
   console.log(`  Size: ${(fs.statSync(OUT_PATH).size / 1024).toFixed(1)} KB`);
   console.log(`  Topics: ${Object.entries(byTopic).map(([t, c]) => `${t}(${c})`).join(', ')}`);

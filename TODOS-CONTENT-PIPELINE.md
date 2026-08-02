@@ -45,8 +45,20 @@ The demo read as a question bank because (RC1) a concept-ID mismatch (`calculus-
 
 ## FOR GIRI — to activate (in order)
 
+**Update (2026-08-02, workflow-hardening session):** activation hit three real bugs
+during a live run — empty LLM provider config, a provider-routing bug that masked
+which provider actually failed, and both API keys turning out to be externally
+broken. All three are fixed (see `claude/2026-08-02-Content-Pipeline-Workflow-Hardening.md`
+in the Vidhya project for the full record). The activation path below is also now
+one command instead of four, and the job is syllabus-parametric
+(`VIDHYA_SYLLABUS=<id>`, defaults to `gate-ma`) via `src/jobs/generation-syllabi.ts` —
+register a new exam by adding `data/curriculum/<exam-id>.yml` and linking its
+concepts into `concept-graph.ts` (§6 of `docs/CURRICULUM-FRAMEWORK.md`); no code
+change needed here.
+
 - [ ] **Apply the branch**: `git fetch <bundle-or-remote> && git merge content-pipeline-realignment` (delivered as git bundle + patch; CI will run the new gate)
-- [ ] **First generation run** (background, walk away): `GEMINI_API_KEY=... npm run content:generate` — checkpointed; re-run resumes. Then `npm run content:explainers` (same key) to replace the 82 placeholders, then `npm run content:bundle`.
+- [ ] **Check credentials upfront**: `npm run content:setup` — one command, live calls to every configured provider + a DB reachability check, exits 1 with a clear reason if Gemini (the hard requirement) isn't working. Run this before anything below.
+- [ ] **First generation run** (background, walk away): `npm run content:generate:auto` — runs the setup check, then auto-resumes `content:generate` across checkpoint pauses until it actually completes, then fires a native OS notification. (Or `GEMINI_API_KEY=... npm run content:generate` for the original one-shot-per-invocation command — still works, still checkpointed.) Then `npm run content:explainers` (same key) to replace the 82 placeholders, then `npm run content:bundle`.
 - [ ] **First verification run**: `WOLFRAM_APP_ID=... npm run content:verify` — rate-limited 1200ms, capped 200/run, harvests step-by-step pods (cap 50/run).
 - [ ] **Flip `CONTENT_CI_STRICT: 'true'`** in `.github/workflows/ci.yml` in the same commit that lands the first real `explainers.json` (ratchet → zero-placeholder gate).
 - [ ] **Enable nightly cron** only after one successful manual run: `CONTENT_CRON_ENABLED=true` (ceiling + kill switch already in place).

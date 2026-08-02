@@ -33,6 +33,8 @@
     "content:scrape": "tsx scripts/scrape-corpus.ts --source gate && tsx scripts/scrape-textbooks.ts --source openstax && tsx scripts/scrape-textbooks.ts --source ocw",
     "content:explainers": "tsx scripts/build-explainers.ts",
     "content:generate": "tsx src/jobs/job-cli.ts content-generation",
+    "content:generate:auto": "bash scripts/run-content-generation.sh",
+    "content:setup": "tsx src/jobs/setup-cli.ts",
     "content:verify": "tsx src/jobs/job-cli.ts wolfram-verify",
     "content:verify:legacy": "tsx scripts/verify-wolfram-batch.ts",
     "content:bundle": "tsx scripts/build-bundle.ts",

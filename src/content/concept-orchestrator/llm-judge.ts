@@ -60,9 +60,10 @@ export async function scoreAtom(atom: GeneratedAtom): Promise<JudgeScore> {
 
   try {
     const { LLMClient } = await import('../../llm/index');
+    const { buildLlmConfigFromEnv } = await import('../../llm/env-config');
     const config = process.env.LLM_CONFIG_PATH
       ? require(process.env.LLM_CONFIG_PATH)
-      : { providers: {}, defaultProvider: '' };
+      : buildLlmConfigFromEnv();
     const client = new (LLMClient as any)(config);
     const response = await client.generate({
       messages: [{ role: 'user', content: prompt }],

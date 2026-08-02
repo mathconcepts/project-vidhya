@@ -7,7 +7,7 @@
  * generateConcept() as the single entry point.
  */
 
-export { generateConcept } from './orchestrator';
+export { generateConcept, ALL_ATOM_TYPES } from './orchestrator';
 export type {
   ConceptDraft,
   GeneratedAtom,

@@ -42,7 +42,7 @@ import { renderScene, type SceneDescription } from './gif-generator';
 import { toPromptText as _toPromptTextRef } from '../../personalization/student-context';
 import { generateNarration, shouldNarrate } from './tts-generator';
 
-const ALL_ATOM_TYPES: AtomType[] = [
+export const ALL_ATOM_TYPES: AtomType[] = [
   'hook', 'intuition', 'formal_definition', 'visual_analogy',
   'worked_example', 'micro_exercise', 'common_traps',
   'retrieval_prompt', 'interleaved_drill', 'mnemonic', 'exam_pattern',
@@ -473,9 +473,10 @@ async function maybeEmbedQuery(args: GenerateOneArgs): Promise<number[] | null> 
   const text = `${args.concept_id} ${args.atom_type} ${args.topic_family}`;
   try {
     const { LLMClient } = await import('../../llm/index');
+    const { buildLlmConfigFromEnv } = await import('../../llm/env-config');
     const config = process.env.LLM_CONFIG_PATH
       ? require(process.env.LLM_CONFIG_PATH)
-      : { providers: {}, defaultProvider: '' };
+      : buildLlmConfigFromEnv();
     const client = new (LLMClient as any)(config);
     const r = await client.embed({
       model: process.env.VIDHYA_PYQ_EMBED_MODEL || 'text-embedding-3-small',
@@ -491,18 +492,33 @@ async function maybeEmbedQuery(args: GenerateOneArgs): Promise<number[] | null> 
   }
 }
 
+// LLMClient.generate() only routes on request.model/request.taskType — it
+// never reads request.provider, so the old `provider: 'gemini' | undefined`
+// field was silently ignored and every call fell through to whatever
+// task-based routing picked (often the same provider for both 'claude' and
+// 'gemini' requests). That both masked which provider actually failed and
+// undermined multi-llm-consensus's independence guarantee (two "different"
+// models silently resolving to the same adapter). Target explicitly by
+// model id instead, and use maxRetries: 0 so a failure is never masked by
+// a same-request fallback to a different provider.
+const MODEL_ID_MAP: Record<'claude' | 'gemini', string> = {
+  claude: 'claude-sonnet-4-20250514',
+  gemini: 'gemini-2.0-flash',
+};
+
 async function callLlm(prompt: string, model: 'claude' | 'gemini'): Promise<string> {
   try {
     const { LLMClient } = await import('../../llm/index');
+    const { buildLlmConfigFromEnv } = await import('../../llm/env-config');
     const config = process.env.LLM_CONFIG_PATH
       ? require(process.env.LLM_CONFIG_PATH)
-      : { providers: {}, defaultProvider: '' };
+      : buildLlmConfigFromEnv();
     const client = new (LLMClient as any)(config);
     const response = await client.generate({
       messages: [{ role: 'user', content: prompt }],
       taskType: 'content-generation',
-      provider: model === 'gemini' ? 'gemini' : undefined,
-      maxRetries: 1,
+      model: MODEL_ID_MAP[model],
+      maxRetries: 0,
     });
     return (response.content ?? response.text ?? '').trim();
   } catch (err) {

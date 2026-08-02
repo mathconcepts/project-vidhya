@@ -138,8 +138,8 @@ export interface JobContext {
 export interface JobDefinition {
   name: string;
   description: string;
-  /** Return a refusal message (job will not start) or null to proceed. */
-  preflight?: () => string | null;
+  /** Return a refusal message (job will not start) or null to proceed. May be async (e.g. a live provider health check). */
+  preflight?: () => string | null | Promise<string | null>;
   run: (ctx: JobContext) => Promise<void>;
 }
 
@@ -341,8 +341,9 @@ export async function startJob(
     };
   }
 
-  // Job-specific preflight (e.g. missing GEMINI_API_KEY / WOLFRAM_APP_ID).
-  const refusal = def.preflight?.() ?? null;
+  // Job-specific preflight (e.g. missing GEMINI_API_KEY / WOLFRAM_APP_ID,
+  // or — for content-generation — a live per-provider health check).
+  const refusal = (await def.preflight?.()) ?? null;
   if (refusal) {
     return { ok: false, code: 'refused', message: refusal, status: getJobStatus(name) };
   }

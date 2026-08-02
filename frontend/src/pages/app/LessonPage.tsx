@@ -25,6 +25,7 @@ import {
   Sparkles, ExternalLink, RotateCcw, Gauge, ListChecks,
 } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
+import { gatherComposeSignals } from '@/lib/gbrain/compose-signals';
 
 // ============================================================================
 // Minimal type mirrors (the server is the source of truth)
@@ -505,26 +506,46 @@ export default function LessonPage() {
 
   useEffect(() => {
     if (!concept_id) return;
+    let cancelled = false;
     setLoading(true);
     const visits = loadVisits();
     visitsRef.current = visits;
     const lastVisit = visits[concept_id];
 
-    fetch('/api/lesson/compose', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        concept_id,
-        session_id: sessionId,
-        student: lastVisit ? {
-          session_id: sessionId,
-          last_lesson_visit: { [concept_id]: lastVisit },
-        } : { session_id: sessionId },
-      }),
-    })
-      .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.error); }))
-      .then((data: Lesson) => { setLesson(data); setLoading(false); })
-      .catch((err) => { setError(err.message); setLoading(false); });
+    (async () => {
+      // Adaptive threading (items 6 + 7): mastery + recent errors from the
+      // local GBrain stores, plus concept-relevant chunks from the
+      // student's uploaded materials (IndexedDB RAG). Best-effort — empty
+      // stores mean an empty signal set and the server's generic path.
+      const signals = await gatherComposeSignals(sessionId, concept_id);
+
+      const student: Record<string, unknown> = { session_id: sessionId };
+      if (lastVisit) student.last_lesson_visit = { [concept_id]: lastVisit };
+      if (signals.mastery_by_topic) student.mastery_by_topic = signals.mastery_by_topic;
+      if (signals.mastery_by_concept) student.mastery_by_concept = signals.mastery_by_concept;
+      if (signals.recent_errors) student.recent_errors = signals.recent_errors;
+
+      const body: Record<string, unknown> = { concept_id, session_id: sessionId, student };
+      if (signals.user_material_chunks) body.user_material_chunks = signals.user_material_chunks;
+
+      try {
+        const r = await fetch('/api/lesson/compose', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const e = await r.json();
+          throw new Error(e.error);
+        }
+        const data: Lesson = await r.json();
+        if (!cancelled) { setLesson(data); setLoading(false); }
+      } catch (err: any) {
+        if (!cancelled) { setError(err.message); setLoading(false); }
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [concept_id, sessionId]);
 
   const currentComponent = lesson?.components[index];

@@ -23,6 +23,12 @@ name: CI
 # violations are frozen in scripts/fork-test-lint-baseline.json so this
 # ratchets forward without blocking on debt this change didn't introduce;
 # see scripts/fork-test-lint.mjs's header for the full rationale.
+#
+# CEO plan Phase 0 (SOTA facelift) §5.1 added a `ci:pg-allowlist` step:
+# same ratchet shape as fork-test-lint, this time over scripts/
+# pg-import-allowlist.json — every file outside src/storage/ that imports
+# 'pg' directly is frozen in that list; a new one appearing anywhere else
+# fails CI unless added to the list explicitly in the same diff.
 
 on:
   push:
@@ -64,6 +70,14 @@ jobs:
         env:
           CONTENT_CI_STRICT: 'false'
         run: npm run ci:content-gate
+
+      # pg-import allowlist ratchet (CEO plan Phase 0 §5.1): fails if a file
+      # outside src/storage/ starts importing 'pg' at runtime without being
+      # added to scripts/pg-import-allowlist.json in the same diff. The
+      # allowlist may shrink freely as files migrate onto the storage
+      # boundary; growing it requires an explicit, reviewable edit.
+      - name: pg-import allowlist ratchet
+        run: npm run ci:pg-allowlist
 
       - name: Test
         run: npm test

@@ -27,17 +27,8 @@
  * pattern as regen-scanner.
  */
 
-import pg from 'pg';
 import { createExperiment } from '../content/concept-orchestrator';
-
-const { Pool } = pg;
-let _pool: any = null;
-function getPool() {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
-  return _pool;
-}
+import { getNarrationExperimentsRepo } from '../storage/repositories/narration-experiments-repo';
 
 export const MAX_ACTIVE_NARRATION = Number(process.env.VIDHYA_MAX_NARRATION_AB || '50');
 
@@ -50,19 +41,15 @@ export interface NarrationScanResult {
 }
 
 export async function runNarrationExperimentScanner(): Promise<NarrationScanResult> {
-  const pool = getPool();
-  if (!pool) {
+  const repo = getNarrationExperimentsRepo();
+  if (!repo) {
     return { scheduled: 0, skipped_existing: 0, skipped_cap: false, active_count: 0, error: 'no DATABASE_URL' };
   }
 
   // Cost cap: how many narration experiments are running already?
   let activeCount = 0;
   try {
-    const r = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM atom_ab_tests
-         WHERE variant_kind = 'narration' AND status = 'running'`,
-    );
-    activeCount = r.rows[0]?.n ?? 0;
+    activeCount = await repo.countActiveNarrationExperiments();
   } catch (err) {
     return { scheduled: 0, skipped_existing: 0, skipped_cap: false, active_count: 0, error: (err as Error).message };
   }
@@ -81,27 +68,7 @@ export async function runNarrationExperimentScanner(): Promise<NarrationScanResu
   // no running narration experiment yet. Cap by slots remaining.
   let eligible: { atom_id: string; version_n: number }[] = [];
   try {
-    const r = await pool.query(
-      // atom_type derives from the atom_id suffix: '{concept_id}.{atom_type}'.
-      // 'intuition' is the only narratable kind in v1 per shouldNarrate().
-      `SELECT v.atom_id, v.version_n
-         FROM atom_versions v
-         JOIN media_artifacts m
-           ON m.atom_id = v.atom_id AND m.version_n = v.version_n
-         LEFT JOIN atom_ab_tests t
-           ON t.atom_id = v.atom_id
-          AND t.variant_kind = 'narration'
-          AND t.status = 'running'
-        WHERE v.active = TRUE
-          AND m.kind = 'audio_narration'
-          AND m.status = 'done'
-          AND t.id IS NULL
-          AND v.atom_id LIKE '%.intuition'
-        ORDER BY m.generated_at DESC
-        LIMIT $1`,
-      [slotsLeft],
-    );
-    eligible = r.rows;
+    eligible = await repo.findEligibleAtoms(slotsLeft);
   } catch (err) {
     return { scheduled: 0, skipped_existing: 0, skipped_cap: false, active_count: activeCount, error: (err as Error).message };
   }

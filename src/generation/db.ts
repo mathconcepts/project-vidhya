@@ -1,18 +1,17 @@
 /**
  * src/generation/db.ts
  *
- * Pool helper for the generation module. Mirrors src/experiments/db.ts.
+ * Pool helper for the generation module. Delegates to the single shared
+ * pool in src/storage/pool.ts (CEO plan Phase 0 §5 storage boundary) —
+ * this used to build its own independent `pg.Pool({ max: 5 })`, one of
+ * ~65 near-identical copies across the codebase. Kept as a thin
+ * re-export so existing `getGenerationPool()` callers need zero changes.
  * Returns null in DB-less mode so callers no-op gracefully.
  */
 
-import pg from 'pg';
-
-const { Pool } = pg;
-let _pool: pg.Pool | null = null;
+import type pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 
 export function getGenerationPool(): pg.Pool | null {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
+  return getSharedPool();
 }

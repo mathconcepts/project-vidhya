@@ -23,16 +23,7 @@
  * looks up cohort_signals for that linked atom_id, not for the trap itself.
  */
 
-import pg from 'pg';
-
-const { Pool } = pg;
-let _pool: any = null;
-function getPool() {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
-}
+import { getCohortSignalsRepo } from '../storage/repositories/cohort-signals-repo';
 
 export interface CohortAggregateResult {
   atoms_processed: number;
@@ -42,42 +33,20 @@ export interface CohortAggregateResult {
 
 export async function runCohortAggregator(): Promise<CohortAggregateResult> {
   const start = Date.now();
-  const pool = getPool();
-  if (!pool) {
-    return { atoms_processed: 0, rows_upserted: 0, duration_ms: 0 };
-  }
-
-  const aggregateSql = `
-    SELECT atom_id,
-           SUM(CASE WHEN last_recall_correct = false THEN 1 ELSE 0 END)::int AS errors,
-           SUM(CASE WHEN last_recall_correct = true  THEN 1 ELSE 0 END)::int AS corrects
-    FROM atom_engagements
-    WHERE last_recall_correct IS NOT NULL
-    GROUP BY atom_id
-  `;
-  const result = await pool.query(aggregateSql);
+  const repo = getCohortSignalsRepo();
+  const aggregates = await repo.getEngagementAggregates();
   let upserts = 0;
 
-  for (const row of result.rows) {
-    const errors = Number(row.errors) || 0;
-    const corrects = Number(row.corrects) || 0;
-    const n_seen = errors + corrects;
+  for (const row of aggregates) {
+    const n_seen = row.errors + row.corrects;
     if (n_seen === 0) continue;
-    const error_pct = errors / n_seen;
-    await pool.query(
-      `INSERT INTO cohort_signals (atom_id, error_pct, n_seen, computed_at)
-       VALUES ($1, $2, $3, NOW())
-       ON CONFLICT (atom_id) DO UPDATE
-         SET error_pct = EXCLUDED.error_pct,
-             n_seen = EXCLUDED.n_seen,
-             computed_at = NOW()`,
-      [row.atom_id, error_pct.toFixed(3), n_seen],
-    );
+    const error_pct = row.errors / n_seen;
+    await repo.upsertSignal(row.atom_id, error_pct, n_seen);
     upserts++;
   }
 
   return {
-    atoms_processed: result.rows.length,
+    atoms_processed: aggregates.length,
     rows_upserted: upserts,
     duration_ms: Date.now() - start,
   };

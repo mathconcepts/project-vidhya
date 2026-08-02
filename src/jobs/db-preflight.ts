@@ -22,28 +22,17 @@
  * Only the standalone CLI entrypoint (job-cli.ts — always a fresh,
  * one-shot process) additionally acts on a failed result by unsetting
  * DATABASE_URL for that process; see the comment there.
+ *
+ * Implementation relocated to src/storage/pool.ts's checkConnectivity()
+ * (CEO plan Phase 0 §5 storage boundary — the canonical pg-touching
+ * primitive now lives in src/storage/, this file is a thin re-export so
+ * existing callers of `preflightDatabase()` need zero changes).
  */
 
-import pg from 'pg';
+import { checkConnectivity, type ConnectivityResult } from '../storage/pool';
 
-export interface DbPreflightResult {
-  ok: boolean;
-  error?: string;
-}
+export type DbPreflightResult = ConnectivityResult;
 
 export async function preflightDatabase(): Promise<DbPreflightResult> {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) return { ok: true };
-
-  const { Pool } = pg;
-  let pool: InstanceType<typeof Pool> | null = null;
-  try {
-    pool = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 3000 });
-    await pool.query('SELECT 1');
-    return { ok: true };
-  } catch (err) {
-    return { ok: false, error: (err as Error).message };
-  } finally {
-    if (pool) await pool.end().catch(() => {});
-  }
+  return checkConnectivity();
 }

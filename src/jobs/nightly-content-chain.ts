@@ -10,14 +10,15 @@
  * CONTENT_MAX_LLM_CALLS_PER_RUN for cron runs only. The global kill
  * switch (CONTENT_JOBS_DISABLED=true) still refuses every start.
  *
- * Bundle rebuild: DOCUMENTED SKIP. scripts/build-bundle.ts is
- * script-only (scripts/ sits outside the tsc rootDir, so it cannot be
- * imported from src/ without breaking `npm run build`) and this chain
- * never shells out. The morning summary records the skip; the operator
- * runs `npm run content:bundle` to fold newly verified flags/explainers
- * into the shipped bundle. Exporting the script's logic as an importable
- * function is a TODO for the follow-up de-nocheck PR that moves the
- * content scripts under typecheck.
+ * Bundle rebuild: runs in-process via src/content/build-content-bundle.ts
+ * (previously a documented skip — build-bundle.ts's logic lived only in
+ * scripts/, which sits outside the tsc rootDir and can never be imported
+ * from src/; the fix moved the logic into src/content/ instead, with
+ * scripts/build-bundle.ts reduced to a thin CLI wrapper around it — see
+ * that module's docblock). A rebuild failure here is recorded in the
+ * summary line, never thrown — one broken input file (e.g. a malformed
+ * scraped corpus JSONL) degrades the summary, it doesn't crash the chain
+ * after content-generation and wolfram-verify already did real work.
  *
  * Every run appends a morning summary line to
  * .data/jobs/cron-summary.jsonl.
@@ -27,6 +28,7 @@ import fs from 'fs';
 import path from 'path';
 import { startJob, jobsDir, type JobLimits, type JobStatusFile } from './job-runner';
 import { CONTENT_GENERATION_JOB, WOLFRAM_VERIFY_JOB } from './job-registry';
+import { buildContentBundle, type BuildContentBundleOptions } from '../content/build-content-bundle';
 
 export interface CronJobOutcome {
   job: string;
@@ -77,8 +79,15 @@ async function runOne(
 /**
  * Run the nightly chain once. Returns a scheduler-friendly summary.
  * Never throws — every failure lands in the summary line instead.
+ *
+ * `bundleOptions` is test-only plumbing (defaults to the real
+ * frontend/public/data paths in production) — it lets tests redirect the
+ * bundle rebuild's file I/O to a temp dir instead of mutating the repo's
+ * real content-bundle.json on every cron-chain test run.
  */
-export async function runNightlyContentChain(): Promise<{ status: string; summary?: CronSummaryLine }> {
+export async function runNightlyContentChain(
+  bundleOptions?: BuildContentBundleOptions,
+): Promise<{ status: string; summary?: CronSummaryLine }> {
   if (process.env.CONTENT_CRON_ENABLED !== 'true') {
     return { status: 'skipped: CONTENT_CRON_ENABLED not "true" (cron ships disabled by design)' };
   }
@@ -92,9 +101,15 @@ export async function runNightlyContentChain(): Promise<{ status: string; summar
   // 2. wolfram-verify (env-standard caps).
   jobs.push(await runOne(WOLFRAM_VERIFY_JOB));
 
-  // 3. bundle rebuild — documented skip (see module header).
-  const bundle_rebuild =
-    'skipped: build-bundle.ts is script-only — run `npm run content:bundle` to fold verified flags into the shipped bundle';
+  // 3. bundle rebuild — in-process (see module header).
+  let bundle_rebuild: string;
+  try {
+    const result = buildContentBundle({ quiet: true, ...bundleOptions });
+    bundle_rebuild = `ok: ${result.total_problems} problems, ${result.total_explainers} explainers, ${result.total_topic_notes} topic notes -> ${result.outPath}`;
+  } catch (err) {
+    bundle_rebuild = `failed: ${(err as Error).message}`;
+    console.warn(`[nightly-content-chain] bundle rebuild failed: ${(err as Error).message}`);
+  }
 
   const summary: CronSummaryLine = { ts: new Date().toISOString(), jobs, bundle_rebuild };
   try {

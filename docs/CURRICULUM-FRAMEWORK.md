@@ -249,7 +249,9 @@ migration, no admin panel bootstrap.
 
 **Scalable:**
 - Adding an exam: write one YAML, run three scripts
-- Adding a concept: one line in concept-graph.ts, then link to exams
+- Adding a concept: one entry in `data/curriculum/gate-ma.yml`'s `concepts:`
+  section (the canonical concept graph — `concept-graph.ts` is a thin
+  loader over it, Phase 0 §6), then link to exams
 - Serving more students: stateless server, no per-user storage cost
 
 ---

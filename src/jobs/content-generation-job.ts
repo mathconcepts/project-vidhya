@@ -67,7 +67,12 @@ import {
   type JobDefinition,
 } from './job-runner';
 import type { ConceptNode } from '../constants/concept-graph';
-import { getSyllabus, DEFAULT_SYLLABUS_ID, listSyllabusIds, type Syllabus } from './generation-syllabi';
+import {
+  getSyllabus,
+  DEFAULT_SYLLABUS_ID,
+  listSyllabusIds,
+  type GenerationSyllabus as Syllabus,
+} from '../curriculum/exam-loader';
 import { generateConcept, ALL_ATOM_TYPES } from '../content/concept-orchestrator';
 import type { GeneratedAtom } from '../content/concept-orchestrator';
 import type { AtomType } from '../content/content-types';

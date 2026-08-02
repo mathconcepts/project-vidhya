@@ -51,10 +51,14 @@ which provider actually failed, and both API keys turning out to be externally
 broken. All three are fixed (see `claude/2026-08-02-Content-Pipeline-Workflow-Hardening.md`
 in the Vidhya project for the full record). The activation path below is also now
 one command instead of four, and the job is syllabus-parametric
-(`VIDHYA_SYLLABUS=<id>`, defaults to `gate-ma`) via `src/jobs/generation-syllabi.ts` —
-register a new exam by adding `data/curriculum/<exam-id>.yml` and linking its
-concepts into `concept-graph.ts` (§6 of `docs/CURRICULUM-FRAMEWORK.md`); no code
-change needed here.
+(`VIDHYA_SYLLABUS=<id>`, defaults to `gate-ma`) via `getSyllabus()`/`listSyllabusIds()`
+in `src/curriculum/exam-loader.ts` (relocated here from the now-deleted
+`src/jobs/generation-syllabi.ts` once Phase 0's registry unification made
+`concept-graph.ts` a thin loader over `data/curriculum/gate-ma.yml` — see
+`claude/2026-08-02-SOTA-Facelift-CEO-Review.md` Phase 0 §6 in the Vidhya
+project) — register a new exam by adding `data/curriculum/<exam-id>.yml`
+and linking its concepts into `data/curriculum/gate-ma.yml`'s `concepts:`
+section (§6 of `docs/CURRICULUM-FRAMEWORK.md`); no code change needed here.
 
 - [ ] **Apply the branch**: `git fetch <bundle-or-remote> && git merge content-pipeline-realignment` (delivered as git bundle + patch; CI will run the new gate)
 - [ ] **Check credentials upfront**: `npm run content:setup` — one command, live calls to every configured provider + a DB reachability check, exits 1 with a clear reason if Gemini (the hard requirement) isn't working. Run this before anything below.

@@ -16,11 +16,12 @@ metadata:
     once. This keeps the file truthful: only concepts that have at least
     one generated curriculum_unit + at least one PYQ link are listed.
 
-    Note: server startup will log "[exam-loader] syllabus: unknown concepts"
-    warnings for every concept_id listed here that has no matching entry in
-    src/constants/concept-graph.ts (which currently only covers GATE). These
-    warnings are expected and harmless — they mean the concept exists in this
-    syllabus stub but hasn't yet had a curriculum unit generated for it.
+    Note (CEO plan §6 stub-exam rule): every concept_id listed here is
+    declared in this file's stub_concepts: block below, because none of
+    them have a matching node in the concept graph yet (currently
+    GATE-only). exam-loader.ts requires that — an undeclared unknown
+    concept_id is a hard load failure, not a warning. Remove an id from
+    stub_concepts: once it gets a real concept-graph entry + curriculum unit.
   scope: mcq-and-numerical
   total_marks: 300
   duration_minutes: 180
@@ -132,6 +133,81 @@ syllabus:
       # Probability + Statistics
       - probability-jee
       - statistics-jee
+
+# ---------------------------------------------------------------------------
+# Stub-exam rule (CEO plan §6 baseline) — every concept_id above is declared
+# here because none of them have a real node in the concept graph yet
+# (src/constants/concept-graph.ts / data/curriculum/gate-ma.yml's concepts:
+# section is GATE-only today). exam-loader.ts refuses to load a concept_id
+# that is neither a real node nor listed here — a Phase-1 stub exam says so
+# explicitly instead of relying on a warning that scrolls by in server logs.
+# Remove an id from this list once it gets a real concept-graph entry.
+# ---------------------------------------------------------------------------
+stub_concepts:
+  - alcohols-phenols-ethers
+  - aldehydes-ketones-acids
+  - alternating-current
+  - amines-and-diazonium
+  - applications-of-derivatives
+  - atomic-structure
+  - atoms-and-nuclei
+  - binomial-theorem
+  - biomolecules
+  - capacitance
+  - chemical-bonding
+  - chemical-kinetics
+  - circles-coordinate
+  - complex-numbers-algebra
+  - continuity-differentiability-jee
+  - coordination-compounds
+  - current-electricity
+  - d-and-f-block
+  - definite-integration
+  - differential-equations-jee
+  - dual-nature-matter
+  - electromagnetic-induction
+  - electrostatics-coulomb
+  - equilibrium-chemical
+  - equilibrium-ionic
+  - gravitation
+  - haloalkanes-haloarenes
+  - heights-distances
+  - hydrocarbons
+  - indefinite-integration
+  - inverse-trigonometric
+  - kinematics-1d
+  - kinematics-2d
+  - limits-jee
+  - magnetic-effects
+  - matrices-and-determinants
+  - mole-concept
+  - newtons-laws
+  - oscillations-shm
+  - p-block-elements
+  - parabola-ellipse-hyperbola
+  - periodic-table-trends
+  - permutations-combinations
+  - polymers
+  - probability-jee
+  - quadratic-equations
+  - ray-optics
+  - redox-and-electrochemistry
+  - rotational-mechanics
+  - semiconductor-electronics
+  - sequences-series
+  - sets-relations-functions
+  - solid-state
+  - solutions-and-colligative
+  - statistics-jee
+  - straight-lines
+  - thermodynamics-chemistry
+  - three-d-geometry
+  - trigonometric-functions
+  - units-and-measurements
+  - vectors-jee
+  - wave-optics
+  - waves-mechanical
+  - work-energy-power
 
 # ---------------------------------------------------------------------------
 # Score interpretation

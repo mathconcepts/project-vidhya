@@ -26,6 +26,11 @@
  *        non-empty (\boxed{...} / <summary>Answer</summary> block).
  *      Growing to the full 24-item LA chapter when the Cowork artifact is
  *      staged remains a TODO (spec).
+ *   E. prerequisite-DAG cycle check (CEO plan Phase 0, §6) — the concept
+ *      graph's prerequisite edges must form a DAG. A cycle silently breaks
+ *      topologicalSort() (Kahn's algorithm just drops the cyclic nodes,
+ *      no error) and would infinite-loop-adjacent code paths elsewhere.
+ *      See src/curriculum/prereq-cycles.ts.
  */
 
 import fs from 'fs';
@@ -33,6 +38,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ALL_CONCEPTS } from '../src/constants/concept-graph';
 import { loadConceptAtoms, loadConceptMeta } from '../src/content/atom-loader';
+import { findPrerequisiteCycle } from '../src/curriculum/prereq-cycles';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -260,15 +266,27 @@ async function checkGoldenConcepts(): Promise<void> {
   }
 }
 
+// ─── E. prerequisite-DAG cycle check ────────────────────────────────────
+
+function checkPrerequisiteCycles(): void {
+  const cycle = findPrerequisiteCycle(ALL_CONCEPTS);
+  if (cycle) {
+    fail('cycle-check', `prerequisite DAG has a cycle: ${cycle.join(' -> ')}`);
+  } else {
+    ok('cycle-check', `${ALL_CONCEPTS.length}-node prerequisite graph is a valid DAG (no cycles)`);
+  }
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  console.log('content-ci-gate — checks A-D (plan D4.2)\n');
+  console.log('content-ci-gate — checks A-E (plan D4.2 + CEO plan Phase 0 §6)\n');
   checkAtomsDirs();
   checkRetiredIds();
   checkPlaceholderRatchet();
   checkGoldenMcqs();
   await checkGoldenConcepts();
+  checkPrerequisiteCycles();
 
   if (failures.length > 0) {
     console.error(`\nFAIL — ${failures.length} violation(s):`);

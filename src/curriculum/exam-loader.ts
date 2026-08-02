@@ -22,7 +22,7 @@
 import fs from 'fs';
 import path from 'path';
 import { parse as parseYaml } from 'yaml';
-import { ALL_CONCEPTS } from '../constants/concept-graph';
+import { ALL_CONCEPTS, CONCEPT_MAP, type ConceptNode } from '../constants/concept-graph';
 import type {
   ExamDefinition,
   ExamMetadata,
@@ -71,7 +71,33 @@ function validateMetadata(raw: any, filepath: string): ExamMetadata {
   };
 }
 
-function validateSyllabusSection(raw: any, path_: string, knownConcepts: Set<string>): SyllabusSection {
+/**
+ * Stub-exam rule (CEO plan §6 baseline): a concept_id referenced anywhere in
+ * an exam YAML is either (a) a real concept-graph node, (b) an explicitly
+ * declared stub (listed in the file's top-level `stub_concepts:`), or (c) a
+ * hard validation failure. There is no fourth path where an unrecognized id
+ * gets silently dropped behind a console.warn that scrolls by in server
+ * logs — a Phase-1 exam stub like jee-main.yml declares its placeholder ids
+ * up front instead.
+ *
+ * Exported for unit testing — pure, no side effects.
+ */
+export function checkConceptId(cid: string, path_: string, knownConcepts: Set<string>, declaredStubs: Set<string>): void {
+  if (knownConcepts.has(cid) || declaredStubs.has(cid)) return;
+  throw new Error(
+    `${path_}: concept_id "${cid}" is neither a known concept-graph node nor declared in ` +
+    `this file's stub_concepts: list. Either link it into the concept graph (` +
+    `data/curriculum/gate-ma.yml's concepts: section) or add it to stub_concepts: to ` +
+    `acknowledge it's a placeholder — an unrecognized concept_id is a hard failure, not a warning.`,
+  );
+}
+
+function validateSyllabusSection(
+  raw: any,
+  path_: string,
+  knownConcepts: Set<string>,
+  declaredStubs: Set<string>,
+): SyllabusSection {
   if (!raw || typeof raw !== 'object') {
     throw new Error(`${path_}: expected object`);
   }
@@ -87,14 +113,13 @@ function validateSyllabusSection(raw: any, path_: string, knownConcepts: Set<str
   const concept_ids: string[] = Array.isArray(raw.concept_ids)
     ? raw.concept_ids.filter((c: any) => typeof c === 'string')
     : [];
-  // Warn on unknown concepts but don't fail — curriculum should be forward-compatible
-  const unknown = concept_ids.filter(c => !knownConcepts.has(c));
-  if (unknown.length > 0) {
-    console.warn(`[exam-loader] ${path_}: unknown concepts: ${unknown.join(', ')}`);
+  for (const cid of concept_ids) {
+    checkConceptId(cid, `${path_}.concept_ids`, knownConcepts, declaredStubs);
   }
+  const stub_concept_ids = concept_ids.filter(c => declaredStubs.has(c) && !knownConcepts.has(c));
   const sub: SyllabusSection[] = Array.isArray(raw.sub_sections)
     ? raw.sub_sections.map((s: any, i: number) =>
-        validateSyllabusSection(s, `${path_}.sub_sections[${i}]`, knownConcepts))
+        validateSyllabusSection(s, `${path_}.sub_sections[${i}]`, knownConcepts, declaredStubs))
     : [];
   return {
     id,
@@ -102,17 +127,23 @@ function validateSyllabusSection(raw: any, path_: string, knownConcepts: Set<str
     weight_pct: weight,
     description: raw.description,
     sub_sections: sub.length > 0 ? sub : undefined,
-    concept_ids: concept_ids.filter(c => knownConcepts.has(c)),
+    concept_ids,
+    stub_concept_ids: stub_concept_ids.length > 0 ? stub_concept_ids : undefined,
   };
 }
 
-function validateConceptLink(raw: any, i: number, knownConcepts: Set<string>): ConceptExamLink | null {
+function validateConceptLink(
+  raw: any,
+  i: number,
+  knownConcepts: Set<string>,
+  declaredStubs: Set<string>,
+): ConceptExamLink | null {
   if (!raw || typeof raw !== 'object') return null;
   const cid = typeof raw.concept_id === 'string' ? raw.concept_id : null;
-  if (!cid || !knownConcepts.has(cid)) {
-    console.warn(`[exam-loader] concept_links[${i}]: unknown concept_id ${cid}`);
-    return null;
+  if (!cid) {
+    throw new Error(`concept_links[${i}]: missing concept_id`);
   }
+  checkConceptId(cid, `concept_links[${i}]`, knownConcepts, declaredStubs);
   const depth: ConceptDepth = VALID_DEPTHS.includes(raw.depth) ? raw.depth : 'standard';
   const weight = Number(raw.weight);
   return {
@@ -125,6 +156,13 @@ function validateConceptLink(raw: any, i: number, knownConcepts: Set<string>): C
   };
 }
 
+function collectStubIds(sections: SyllabusSection[], out: Set<string>): void {
+  for (const s of sections) {
+    for (const cid of s.stub_concept_ids ?? []) out.add(cid);
+    if (s.sub_sections?.length) collectStubIds(s.sub_sections, out);
+  }
+}
+
 // ============================================================================
 // Load + parse one YAML file
 // ============================================================================
@@ -135,17 +173,27 @@ function loadOne(filepath: string): ExamDefinition {
     throw new Error(`${filepath}: empty or malformed YAML`);
   }
   const knownConcepts = new Set(ALL_CONCEPTS.map(c => c.id));
+  const declaredStubs: Set<string> = new Set(
+    Array.isArray(raw.stub_concepts) ? raw.stub_concepts.filter((c: any) => typeof c === 'string') : [],
+  );
   const metadata = validateMetadata(raw.metadata, filepath);
   const syllabus = Array.isArray(raw.syllabus)
     ? raw.syllabus.map((s: any, i: number) =>
-        validateSyllabusSection(s, `syllabus[${i}]`, knownConcepts))
+        validateSyllabusSection(s, `syllabus[${i}]`, knownConcepts, declaredStubs))
     : [];
   const concept_links = Array.isArray(raw.concept_links)
     ? raw.concept_links
-        .map((l: any, i: number) => validateConceptLink(l, i, knownConcepts))
+        .map((l: any, i: number) => validateConceptLink(l, i, knownConcepts, declaredStubs))
         .filter(Boolean) as ConceptExamLink[]
     : [];
-  return { metadata, syllabus, concept_links };
+  const stub_concept_ids = new Set<string>();
+  collectStubIds(syllabus, stub_concept_ids);
+  for (const link of concept_links) {
+    if (declaredStubs.has(link.concept_id) && !knownConcepts.has(link.concept_id)) {
+      stub_concept_ids.add(link.concept_id);
+    }
+  }
+  return { metadata, syllabus, concept_links, stub_concept_ids: Array.from(stub_concept_ids).sort() };
 }
 
 // ============================================================================
@@ -181,6 +229,107 @@ export function getExam(exam_id: string): ExamDefinition | null {
 
 export function listExamIds(): string[] {
   return Array.from(loadAllExams().keys()).sort();
+}
+
+// ============================================================================
+// Generation scope — resolves an exam's syllabus into actual concept-graph
+// nodes for the content-generation job (formerly src/jobs/generation-syllabi.ts;
+// relocated here per that file's own docblock once this migration — concept-graph.ts
+// becoming a thin loader over data/curriculum/gate-ma.yml — landed, so the job
+// no longer needs a separate narrow adapter: it reads the unified registry
+// directly. CEO plan §6 baseline / Loop A.)
+// ============================================================================
+
+export interface GenerationSyllabus {
+  id: string;
+  name: string;
+  /** Concepts resolvable in the concept graph — the actual generation scope. */
+  concepts: ConceptNode[];
+  /** concept_ids this exam's YAML declares that the concept graph doesn't have a node for yet
+   *  (includes declared stubs — see the stub-exam rule above). */
+  unresolvedConceptIds: string[];
+  /** '' = gate-ma's existing unprefixed atom layout; else nested under this id. */
+  atomsSubdir: string;
+}
+
+/** @deprecated kept as an alias — prefer {@link GenerationSyllabus}. */
+export type Syllabus = GenerationSyllabus;
+
+export const DEFAULT_SYLLABUS_ID = 'gate-ma';
+
+function flattenConceptIds(sections: SyllabusSection[]): string[] {
+  const ids: string[] = [];
+  for (const s of sections) {
+    ids.push(...s.concept_ids);
+    if (s.sub_sections?.length) ids.push(...flattenConceptIds(s.sub_sections));
+  }
+  return ids;
+}
+
+/** Registered syllabus ids — every data/curriculum/*.yml file, auto-discovered. Alias of listExamIds(). */
+export function listSyllabusIds(): string[] {
+  return listExamIds();
+}
+
+/**
+ * Resolves an exam's generation scope: which concept-graph nodes the
+ * content-generation job should iterate for this exam.
+ *
+ * Scope rule (why gate-ma is special-cased):
+ *   - The concept graph (data/curriculum/gate-ma.yml's `concepts:` section,
+ *     loaded via src/constants/concept-graph.ts) is GATE-only (82 concepts)
+ *     and IS the authoritative concept universe for GATE. gate-ma.yml's
+ *     `syllabus:` concept_ids are an intentionally partial, in-progress
+ *     curation (27/82 today) used for weight/depth/emphasis metadata (the
+ *     Lesson composer's filtering), not a generation scope. Trusting the
+ *     syllabus for gate-ma would silently drop 55 concepts from generation
+ *     — a regression versus current behavior. So gate-ma keeps the full graph.
+ *   - Every OTHER exam has no such native mapping in the concept graph, so
+ *     its generation scope is exactly what data/curriculum/<exam>.yml
+ *     declares, intersected with whatever concepts already exist in the
+ *     shared graph. For a Phase-1 stub like jee-main (concept_ids declared
+ *     via stub_concepts:, not yet real nodes) that intersection is
+ *     legitimately empty today; contentGenerationJob's preflight refuses
+ *     with an honest message instead of silently generating nothing.
+ *   - Onboarding real content generation for a new exam: (1) write
+ *     data/curriculum/<exam-id>.yml, (2) link its concept_ids into the
+ *     concept graph (data/curriculum/gate-ma.yml's concepts: section, one
+ *     entry each with real prerequisites — or a future per-exam concepts
+ *     file, once a second exam earns its own canonical graph).
+ */
+export function getSyllabus(id: string = DEFAULT_SYLLABUS_ID): GenerationSyllabus {
+  const exam = getExam(id);
+  if (!exam) {
+    throw new Error(`unknown syllabus "${id}" — registered: ${listSyllabusIds().join(', ')}`);
+  }
+
+  if (id === DEFAULT_SYLLABUS_ID) {
+    // gate-ma: the concept graph is the full, authoritative scope (see docblock above).
+    return {
+      id,
+      name: exam.metadata.name,
+      concepts: ALL_CONCEPTS,
+      unresolvedConceptIds: [],
+      atomsSubdir: '',
+    };
+  }
+
+  const declaredIds = Array.from(new Set(flattenConceptIds(exam.syllabus)));
+  const concepts: ConceptNode[] = [];
+  const unresolvedConceptIds: string[] = [];
+  for (const cid of declaredIds) {
+    const node = CONCEPT_MAP.get(cid);
+    if (node) concepts.push(node);
+    else unresolvedConceptIds.push(cid);
+  }
+
+  return {
+    id,
+    name: exam.metadata.name,
+    concepts,
+    unresolvedConceptIds,
+    atomsSubdir: id,
+  };
 }
 
 /**
@@ -310,6 +459,7 @@ function dbPackToDefinition(row: ExamPackDbRow): ExamDefinition | null {
     metadata,
     syllabus,
     concept_links: [], // operator packs don't seed concept_links yet — they grow via the unit generator
+    stub_concept_ids: [], // operator packs don't declare stubs via YAML — N/A until they seed concept_links
   };
 }
 

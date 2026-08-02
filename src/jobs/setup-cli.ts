@@ -22,7 +22,7 @@ loadDotEnvIntoProcess();
 
 import { preflightProviders } from '../llm/env-config';
 import { preflightDatabase } from './db-preflight';
-import { getSyllabus, DEFAULT_SYLLABUS_ID, listSyllabusIds } from './generation-syllabi';
+import { getSyllabus, DEFAULT_SYLLABUS_ID, listSyllabusIds } from '../curriculum/exam-loader';
 
 async function main(): Promise<void> {
   const requestedSyllabus = process.env.VIDHYA_SYLLABUS || DEFAULT_SYLLABUS_ID;

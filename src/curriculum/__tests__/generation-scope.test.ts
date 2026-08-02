@@ -1,12 +1,16 @@
 /**
- * Tests for src/jobs/generation-syllabi.ts — syllabus resolution for the
- * content-generation job. See that file's docblock for the scope rule
+ * Tests for src/curriculum/exam-loader.ts's generation-scope resolution
+ * (getSyllabus / listSyllabusIds / DEFAULT_SYLLABUS_ID) — relocated from
+ * src/jobs/generation-syllabi.ts (deleted, CEO plan §6 registry
+ * unification) once concept-graph.ts became a thin loader over
+ * data/curriculum/gate-ma.yml, removing the need for a separate job-local
+ * adapter. See exam-loader.ts's getSyllabus() docblock for the scope rule
  * (why gate-ma keeps the full concept graph while every other exam is
  * derived from its data/curriculum/<exam>.yml).
  */
 
 import { describe, it, expect } from 'vitest';
-import { getSyllabus, listSyllabusIds, DEFAULT_SYLLABUS_ID } from '../generation-syllabi';
+import { getSyllabus, listSyllabusIds, DEFAULT_SYLLABUS_ID } from '../exam-loader';
 import { ALL_CONCEPTS } from '../../constants/concept-graph';
 
 describe('DEFAULT_SYLLABUS_ID', () => {
@@ -42,7 +46,7 @@ describe('getSyllabus — gate-ma (default, special-cased)', () => {
 });
 
 describe('getSyllabus — jee-main (Phase-1 stub, not gate-ma)', () => {
-  it('resolves to zero concepts today — jee-main.yml concept_ids are not yet in concept-graph.ts', () => {
+  it('resolves to zero concepts today — jee-main.yml concept_ids are declared stubs, not yet in the concept graph', () => {
     const syllabus = getSyllabus('jee-main');
     expect(syllabus.id).toBe('jee-main');
     expect(syllabus.concepts).toEqual([]);

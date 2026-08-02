@@ -68,6 +68,14 @@ export interface SyllabusSection {
   sub_sections?: SyllabusSection[];
   /** Concept IDs from the concept graph covered by this section */
   concept_ids: string[];
+  /**
+   * Subset of concept_ids that are declared stubs (see ExamDefinition.stub_concept_ids)
+   * rather than real concept-graph nodes — content doesn't exist for these yet.
+   * Never overlaps with a real node: the loader enforces that every concept_id is
+   * either a real node, a declared stub, or a hard validation failure at load time
+   * (CEO plan §6 — "never a warning that scrolls by").
+   */
+  stub_concept_ids?: string[];
 }
 
 /**
@@ -99,6 +107,14 @@ export interface ExamDefinition {
   metadata: ExamMetadata;
   syllabus: SyllabusSection[];
   concept_links: ConceptExamLink[];
+  /**
+   * Every concept_id referenced anywhere in this exam (syllabus sections +
+   * concept_links) that was declared a stub via the YAML's top-level
+   * `stub_concepts:` list — i.e. explicitly acknowledged as "no concept-graph
+   * node / curriculum unit yet" rather than silently dropped or unexplained.
+   * Deduplicated, exam-loader.ts's stub-exam rule (CEO plan §6).
+   */
+  stub_concept_ids: string[];
 }
 
 // ============================================================================

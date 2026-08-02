@@ -1,0 +1,75 @@
+{
+  "$comment": "CEO plan Phase 0 §4 'the law' — a seam is plug-and-play only if it has (a) one interface, (b) one config source of truth, (c) a CI conformance suite every implementation must pass. This file lists every seam that currently satisfies all three, checkably. scripts/check-seam-registry.ts (wired into ci.yml) fails the build if a listed conformance_test_path doesn't exist on disk. Adding a seam here is a claim CI enforces — see EXTENDING.md and CLAUDE.md's '100x Blueprint Foundation' section for the broader seam catalog, some of which (AnswerVerifier, CadenceStrategy, PedagogyReviewer) are documented extension points without a real implementation yet and are deliberately NOT listed here; see the Phase 0 delivery doc for that gap.",
+  "seams": [
+    {
+      "name": "llm-provider-adapter",
+      "description": "LLM provider/model registry — one adapter per provider (gemini/anthropic/openai/ollama), selected by config/providers.yaml, never hardcoded per call site.",
+      "interface_file": "src/llm/types.ts",
+      "config_source": "config/providers.yaml",
+      "conformance_test_path": "src/llm/__tests__/conformance.test.ts"
+    },
+    {
+      "name": "gate-ma-concept-graph",
+      "description": "The GATE-MA prerequisite concept graph — one canonical set of nodes, no hardcoded duplicate.",
+      "interface_file": "src/constants/concept-graph.ts",
+      "config_source": "data/curriculum/gate-ma.yml",
+      "conformance_test_path": "src/constants/__tests__/concept-graph.test.ts"
+    },
+    {
+      "name": "prerequisite-dag",
+      "description": "Prerequisite-edge cycle detection — every concept graph consuming this must stay a valid DAG.",
+      "interface_file": "src/curriculum/prereq-cycles.ts",
+      "config_source": "data/curriculum/gate-ma.yml",
+      "conformance_test_path": "src/curriculum/__tests__/prereq-cycles.test.ts"
+    },
+    {
+      "name": "exam-loader-stub-rule",
+      "description": "Exam YAML concept_id resolution — every concept_id is a real node, a declared stub, or a hard load failure.",
+      "interface_file": "src/curriculum/exam-loader.ts",
+      "config_source": "data/curriculum/*.yml",
+      "conformance_test_path": "src/curriculum/__tests__/stub-exam-rule.test.ts"
+    },
+    {
+      "name": "content-verifier",
+      "description": "Tier 4+ content-quality gate. pedagogyVerifier is the one real implementation today.",
+      "interface_file": "src/content/verifiers/types.ts",
+      "config_source": "env: VIDHYA_PEDAGOGY_GATE, VIDHYA_PEDAGOGY_THRESHOLD",
+      "conformance_test_path": "src/content/verifiers/__tests__/pedagogy-verifier-contract.test.ts"
+    },
+    {
+      "name": "curriculum-repo",
+      "description": "L2 Curriculum & Content seam (100x Blueprint) — per-course concept graph access.",
+      "interface_file": "src/core/interfaces.ts",
+      "config_source": "data/curriculum/*.yml (via ConceptGraphCurriculumRepo)",
+      "conformance_test_path": "src/curriculum/__tests__/curriculum-repo.test.ts"
+    },
+    {
+      "name": "scorer",
+      "description": "L4 Assessment seam (100x Blueprint) — descriptive-grading rubric scorer.",
+      "interface_file": "src/core/interfaces.ts",
+      "config_source": null,
+      "conformance_test_path": "src/scoring/__tests__/rubric-grader.test.ts"
+    },
+    {
+      "name": "item-selector",
+      "description": "L4 Assessment seam (100x Blueprint) — proto-CAT item selection.",
+      "interface_file": "src/core/interfaces.ts",
+      "config_source": null,
+      "conformance_test_path": "src/scoring/__tests__/proto-cat-selector.test.ts"
+    },
+    {
+      "name": "teaching-policy",
+      "description": "L5 Teaching Policy seam (100x Blueprint) — motivation-aware modality ranking.",
+      "interface_file": "src/core/interfaces.ts",
+      "config_source": null,
+      "conformance_test_path": "src/teaching/__tests__/motivation-aware-policy.test.ts"
+    },
+    {
+      "name": "readiness-engine",
+      "description": "L6 Readiness Engine seam (100x Blueprint) — nextBestAction() across the four-arm core loop.",
+      "interface_file": "src/core/interfaces.ts",
+      "config_source": null,
+      "conformance_test_path": "src/readiness/__tests__/syllabus-aware-engine.test.ts"
+    }
+  ]
+}

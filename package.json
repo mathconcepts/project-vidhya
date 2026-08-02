@@ -30,6 +30,7 @@
     "lint:fork-test": "node scripts/fork-test-lint.mjs",
     "ci:content-gate": "tsx scripts/content-ci-gate.ts",
     "ci:pg-allowlist": "tsx scripts/check-pg-allowlist.ts",
+    "ci:seam-registry": "tsx scripts/check-seam-registry.ts",
     "typecheck": "tsc --noEmit",
     "content:scrape": "tsx scripts/scrape-corpus.ts --source gate && tsx scripts/scrape-textbooks.ts --source openstax && tsx scripts/scrape-textbooks.ts --source ocw",
     "content:explainers": "tsx scripts/build-explainers.ts",

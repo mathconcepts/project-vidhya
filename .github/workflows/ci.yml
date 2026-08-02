@@ -29,6 +29,11 @@ name: CI
 # pg-import-allowlist.json — every file outside src/storage/ that imports
 # 'pg' directly is frozen in that list; a new one appearing anywhere else
 # fails CI unless added to the list explicitly in the same diff.
+#
+# §4 ("the law": one interface, one config source, one CI conformance
+# suite) added `ci:seam-registry` — fails the build if a seam listed in
+# seam-registry.json points at an interface file or conformance test path
+# that no longer exists on disk.
 
 on:
   push:
@@ -78,6 +83,9 @@ jobs:
       # boundary; growing it requires an explicit, reviewable edit.
       - name: pg-import allowlist ratchet
         run: npm run ci:pg-allowlist
+
+      - name: seam-registry check
+        run: npm run ci:seam-registry
 
       - name: Test
         run: npm test

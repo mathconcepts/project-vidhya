@@ -19,9 +19,14 @@
  * Scope limits for this cut:
  *   - Storage by user_id + metadata row. ✓
  *   - Listing, retrieval, per-item deletion. ✓
- *   - OCR / PDF text extraction is STUBBED (hooks present, not
- *     implemented — would need tesseract / pdf-parse deps). The
- *     upload is still stored and retrievable; indexing is deferred.
+ *   - Born-digital PDF text extraction via pdf-parse (text layer only). ✓
+ *   - Plain text / markdown passthrough. ✓
+ *   - Scanned / image-only PDFs: honest refusal (ExtractionEmptyError,
+ *     protected copy — see SCANNED_DOC_REFUSAL). Math OCR for scanned
+ *     documents is explicitly parked (register §5.6); it never fails
+ *     silently with mangled math.
+ *   - Image OCR remains out of scope here (SnapPage's vision path is a
+ *     separate, consent-gated flow).
  */
 
 import {
@@ -35,9 +40,37 @@ const UPLOADS_META_PATH = '.data/user-uploads.json';
 const UPLOADS_DIR_ROOT  = '.data/user-uploads';
 const MAX_SIZE_BYTES    = 10 * 1024 * 1024;   // 10 MB per upload
 
+/** Cap on stored extracted text per upload (chars). */
+const MAX_EXTRACTED_CHARS = 20_000;
+
+/**
+ * Below this many non-whitespace chars, a PDF "extraction" is treated as
+ * an image-only / scanned document (a text layer this thin is page
+ * furniture, not content) and the honest refusal state applies.
+ */
+const MIN_EXTRACTED_CHARS = 40;
+
+/**
+ * PROTECTED COPY (register law #5 — honest states everywhere; UX design
+ * law §9.15). The scanned-doc refusal string is one of the five protected
+ * honest-state strings: changing it requires a decision log entry.
+ */
+export const SCANNED_DOC_REFUSAL =
+  "couldn't read this PDF (scanned docs not yet supported)";
+
 // ─── Types ────────────────────────────────────────────────────────────
 
 export type UploadKind = 'image' | 'pdf' | 'text' | 'other';
+
+/**
+ * Extraction outcome recorded on the upload:
+ *   - 'extracted'       — born-digital text captured into extracted_text
+ *   - 'refused_scanned' — PDF had no usable text layer; honest refusal
+ *                         (ExtractionEmptyError + SCANNED_DOC_REFUSAL copy)
+ *   - 'failed'          — parser threw; named ExtractionFailedError recorded
+ *   - 'not_applicable'  — kind has no text extraction path (image/other)
+ */
+export type ExtractionStatus = 'extracted' | 'refused_scanned' | 'failed' | 'not_applicable';
 
 export interface UploadRecord {
   id:            string;                // "upl_<base32>"
@@ -47,7 +80,14 @@ export interface UploadRecord {
   size_bytes:    number;
   concept_tags:  string[];              // user-provided or OCR-extracted
   uploaded_at:   string;
-  extracted_text?: string | null;       // null until OCR / PDF parse runs
+  extracted_text?: string | null;       // null when extraction refused/failed/N.A.
+  /** Extraction outcome — always set by createUpload since the realignment. */
+  extraction_status?: ExtractionStatus;
+  /**
+   * Named extraction error ('ExtractionEmptyError: …' / 'ExtractionFailedError: …').
+   * An honest recorded state — extraction never crashes the upload.
+   */
+  extraction_error?: string | null;
   note?:         string;                // user-facing note
 }
 
@@ -87,6 +127,80 @@ function _guessKind(filename: string): UploadKind {
   return 'other';
 }
 
+// ─── Text extraction (born-digital only) ─────────────────────────────
+
+/**
+ * Extract the text layer of a born-digital PDF. Uses pdf-parse (lazy
+ * import — the dependency loads only when a PDF is actually uploaded).
+ * Page-separator furniture emitted by pdf-parse ("-- 1 of 3 --") is
+ * stripped. Throws on parser failure — the caller records the named
+ * error; this module never lets extraction crash an upload.
+ */
+async function extractPdfText(body: Buffer): Promise<string> {
+  const { PDFParse } = await import('pdf-parse');
+  const parser = new PDFParse({ data: new Uint8Array(body) });
+  try {
+    const result = await parser.getText();
+    return (result.text ?? '')
+      .split('\n')
+      .filter((line: string) => !/^--\s*\d+\s+of\s+\d+\s*--$/.test(line.trim()))
+      .join('\n')
+      .trim();
+  } finally {
+    await parser.destroy().catch(() => { /* best effort */ });
+  }
+}
+
+interface ExtractionOutcome {
+  extracted_text: string | null;
+  extraction_status: ExtractionStatus;
+  extraction_error: string | null;
+}
+
+/**
+ * Run the extraction pipeline for an upload. NEVER throws — failures are
+ * recorded as named-error honest states on the record.
+ *
+ * Consent boundary (constitutional): this function makes no external
+ * calls. pdf-parse runs locally; extracted text is used only in
+ * deterministic local composition unless the per-request consent flags
+ * in content/router.ts (allow_generation / allow_wolfram) are set.
+ */
+async function runExtraction(kind: UploadKind, body: Buffer): Promise<ExtractionOutcome> {
+  if (kind === 'text') {
+    return {
+      extracted_text: body.toString('utf-8').slice(0, MAX_EXTRACTED_CHARS),
+      extraction_status: 'extracted',
+      extraction_error: null,
+    };
+  }
+  if (kind !== 'pdf') {
+    return { extracted_text: null, extraction_status: 'not_applicable', extraction_error: null };
+  }
+  try {
+    const text = await extractPdfText(body);
+    if (text.replace(/\s/g, '').length < MIN_EXTRACTED_CHARS) {
+      // Image-only / scanned PDF — honest refusal, protected copy.
+      return {
+        extracted_text: null,
+        extraction_status: 'refused_scanned',
+        extraction_error: `ExtractionEmptyError: ${SCANNED_DOC_REFUSAL}`,
+      };
+    }
+    return {
+      extracted_text: text.slice(0, MAX_EXTRACTED_CHARS),
+      extraction_status: 'extracted',
+      extraction_error: null,
+    };
+  } catch (e: any) {
+    return {
+      extracted_text: null,
+      extraction_status: 'failed',
+      extraction_error: `ExtractionFailedError: ${e?.message ?? 'unknown parser error'}`,
+    };
+  }
+}
+
 // ─── API ──────────────────────────────────────────────────────────────
 
 export interface CreateUploadInput {
@@ -103,7 +217,7 @@ export interface CreateUploadResult {
   record?: UploadRecord;
 }
 
-export function createUpload(input: CreateUploadInput): CreateUploadResult {
+export async function createUpload(input: CreateUploadInput): Promise<CreateUploadResult> {
   const body = typeof input.body === 'string' ? Buffer.from(input.body, 'utf-8') : input.body;
   if (body.length > MAX_SIZE_BYTES) {
     return { ok: false, reason: `upload exceeds ${MAX_SIZE_BYTES} byte limit` };
@@ -121,6 +235,9 @@ export function createUpload(input: CreateUploadInput): CreateUploadResult {
   const blobPath = _blobPath(input.user_id, upload_id, ext);
   writeFileSync(blobPath, body);
 
+  // Extraction never crashes the upload — failures are honest recorded states.
+  const extraction = await runExtraction(kind, body);
+
   const record: UploadRecord = {
     id: upload_id,
     user_id: input.user_id,
@@ -129,7 +246,9 @@ export function createUpload(input: CreateUploadInput): CreateUploadResult {
     size_bytes: body.length,
     concept_tags: input.concept_tags ?? [],
     uploaded_at: new Date().toISOString(),
-    extracted_text: kind === 'text' ? body.toString('utf-8').slice(0, 8192) : null,
+    extracted_text: extraction.extracted_text,
+    extraction_status: extraction.extraction_status,
+    extraction_error: extraction.extraction_error,
     note: input.note,
   };
 

@@ -70,7 +70,7 @@ async function h_uploadCreate(req: ParsedRequest, res: ServerResponse): Promise<
     buf = body.body;
   }
 
-  const result = createUpload({
+  const result = await createUpload({
     user_id: auth.user.id,
     filename: body.filename,
     body: buf,

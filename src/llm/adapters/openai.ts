@@ -158,6 +158,28 @@ export class OpenAIAdapter extends BaseLLMAdapter {
   }
 
   getCapabilities(model: string): ModelCapabilities {
+    // Prefer the CONFIGURED registry data (config/providers.yaml, threaded
+    // in via this.models by the constructor) over the hardcoded table
+    // below. The hardcoded table used to be consulted unconditionally —
+    // a second, silently-driftable truth for OpenAI pricing alongside
+    // config/providers.yaml (the exact "parallel truths" bug class CEO
+    // plan §8 names). It survives only as a fallback for well-known ids
+    // a caller queries without a loaded registry model config.
+    const fromRegistry = this.models[model]
+      || Object.values(this.models).find((m) => m.id === model)
+      || this.models[this.defaultModel];
+    if (fromRegistry) {
+      return {
+        maxTokens: fromRegistry.contextWindow || fromRegistry.maxOutput || 128000,
+        supportsStreaming: true,
+        supportsFunctionCalling: true,
+        supportsVision: true,
+        supportsJson: true,
+        costPer1kInput: fromRegistry.costPer1kInput,
+        costPer1kOutput: fromRegistry.costPer1kOutput,
+      };
+    }
+
     const capabilities: Record<string, ModelCapabilities> = {
       'gpt-4o': {
         maxTokens: 128000,
@@ -326,13 +348,22 @@ export class OpenAIAdapter extends BaseLLMAdapter {
     const message = choice?.message as Record<string, unknown>;
     const usage = data.usage as Record<string, number>;
 
+    const inputTokens = usage?.prompt_tokens || 0;
+    const outputTokens = usage?.completion_tokens || 0;
+
     const response: LLMResponse = {
       content: (message?.content as string) || '',
       model: (data.model as string) || model,
       usage: {
-        inputTokens: usage?.prompt_tokens || 0,
-        outputTokens: usage?.completion_tokens || 0,
+        inputTokens,
+        outputTokens,
         totalTokens: usage?.total_tokens || 0,
+        // Was missing entirely — every OpenAI generation call reported
+        // zero cost to the quota ledger regardless of actual spend,
+        // silently defeating the per-run budget ceiling for this
+        // provider specifically (caught by the adapter conformance
+        // suite's cost-report check, CEO plan §8.2).
+        estimatedCostUsd: this.calculateCost(inputTokens, outputTokens, this.defaultModel),
       },
       finishReason: this.mapFinishReason(choice?.finish_reason as string),
       latencyMs,

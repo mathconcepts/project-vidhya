@@ -7,6 +7,8 @@ import { AnthropicAdapter } from './adapters/anthropic';
 import { OpenAIAdapter } from './adapters/openai';
 import { OllamaAdapter } from './adapters/ollama';
 import { ModelRouter } from './router/model-router';
+import { ModelRetiredError } from './errors';
+import { logRoutingDecision } from './registry';
 
 const API_KEY_ENV: Record<string, string> = {
   gemini: 'GEMINI_API_KEY',
@@ -109,7 +111,10 @@ export class LLMClient extends EventEmitter {
     if (request.model) {
       route = this.router.selectRoute({ preferredModel: request.model });
       if (!route.provider) {
-        // Fallback: find by scanning providers
+        // Fallback: find by scanning providers directly (belt-and-braces —
+        // selectRoute already does this same scan, kept here in case a
+        // caller constructs LLMClient with a raw config that bypasses the
+        // router's own provider map for some reason).
         for (const [pid, pconfig] of Object.entries(this.config.providers || {})) {
           for (const [, mc] of Object.entries((pconfig as any).models || {})) {
             if ((mc as any).id === request.model) {
@@ -119,6 +124,12 @@ export class LLMClient extends EventEmitter {
           }
           if (route.provider) break;
         }
+      }
+      if (!route.provider) {
+        // No configured provider serves this model id. Fail fast and named
+        // — never silently substitute a different provider/model for an
+        // explicit request (see model-router.ts's selectRoute comment).
+        throw new ModelRetiredError(request.model);
       }
     } else {
       route = this.router.selectRoute({ taskType: request.taskType, agentId: request.agentId });
@@ -158,6 +169,16 @@ export class LLMClient extends EventEmitter {
           provider: current.provider,
           model: current.model,
           latencyMs: response.latencyMs || (Date.now() - startTime),
+        });
+
+        // Routing-decision log line (CEO plan §8.1) — makes any future
+        // silent-rerouting visible in one grep, independent of whether a
+        // caller is listening to the 'generate:complete' event.
+        logRoutingDecision({
+          requestedModel: request.model,
+          servedProvider: current.provider,
+          servedModel: current.model,
+          taskType: request.taskType,
         });
 
         return response;

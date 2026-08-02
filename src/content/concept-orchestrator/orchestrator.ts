@@ -275,15 +275,21 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
   // Math atoms go through dual-model consensus.
   if (requiresConsensus(args.atom_type)) {
     sourceCascade.push('llm-claude', 'llm-gemini');
-    const [primary, secondary] = await Promise.all([
-      callLlm(prompt, 'claude'),
-      callLlm(prompt, 'gemini'),
-    ]);
+    const distinctProviders = await consensusProvidersAreDistinct();
+    const [primary, secondary] = distinctProviders
+      ? await Promise.all([
+          callLlm(prompt, 'claude'),
+          callLlm(prompt, 'gemini'),
+        ])
+      // Both legs would hit the same provider — treat as "one leg
+      // unavailable" (the existing degraded-consensus path below)
+      // rather than spending twice on a single opinion.
+      : [await callLlm(prompt, 'gemini'), ''];
     if (!primary && !secondary) {
       content = '';
     } else if (!secondary) {
       content = primary;
-      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: ['gemini'], reason: 'gemini call failed' } };
+      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: ['gemini'], reason: distinctProviders ? 'gemini call failed' : 'claude and gemini resolve to the same provider — consensus refused' } };
     } else if (!primary) {
       content = secondary;
       consensusMeta = { llm_consensus: false, consensus_disagreement: { models: ['claude'], reason: 'claude call failed' } };
@@ -473,10 +479,8 @@ async function maybeEmbedQuery(args: GenerateOneArgs): Promise<number[] | null> 
   const text = `${args.concept_id} ${args.atom_type} ${args.topic_family}`;
   try {
     const { LLMClient } = await import('../../llm/index');
-    const { buildLlmConfigFromEnv } = await import('../../llm/env-config');
-    const config = process.env.LLM_CONFIG_PATH
-      ? require(process.env.LLM_CONFIG_PATH)
-      : buildLlmConfigFromEnv();
+    const { loadLlmConfig } = await import('../../llm/registry');
+    const config = loadLlmConfig();
     const client = new (LLMClient as any)(config);
     const r = await client.embed({
       model: process.env.VIDHYA_PYQ_EMBED_MODEL || 'text-embedding-3-small',
@@ -506,13 +510,27 @@ const MODEL_ID_MAP: Record<'claude' | 'gemini', string> = {
   gemini: 'gemini-2.0-flash',
 };
 
+/**
+ * Which registry provider actually serves a given model id, per the
+ * currently loaded config — or null if no configured provider serves it
+ * (ModelRetiredError territory). Used by the consensus guard below to
+ * refuse a consensus pair BEFORE spending, rather than discovering after
+ * the fact that both legs silently hit the same provider.
+ */
+function resolveProviderForModel(config: { providers: Record<string, { models: Record<string, { id: string }> }> }, modelId: string): string | null {
+  for (const [providerId, pconfig] of Object.entries(config.providers)) {
+    for (const mdef of Object.values(pconfig.models)) {
+      if (mdef.id === modelId) return providerId;
+    }
+  }
+  return null;
+}
+
 async function callLlm(prompt: string, model: 'claude' | 'gemini'): Promise<string> {
   try {
     const { LLMClient } = await import('../../llm/index');
-    const { buildLlmConfigFromEnv } = await import('../../llm/env-config');
-    const config = process.env.LLM_CONFIG_PATH
-      ? require(process.env.LLM_CONFIG_PATH)
-      : buildLlmConfigFromEnv();
+    const { loadLlmConfig } = await import('../../llm/registry');
+    const config = loadLlmConfig();
     const client = new (LLMClient as any)(config);
     const response = await client.generate({
       messages: [{ role: 'user', content: prompt }],
@@ -524,6 +542,38 @@ async function callLlm(prompt: string, model: 'claude' | 'gemini'): Promise<stri
   } catch (err) {
     console.warn(`[orchestrator] LLM call failed (${model}): ${(err as Error).message}`);
     return '';
+  }
+}
+
+/**
+ * Consensus independence guard (CEO plan §8.5 — ConsensusRoutingError).
+ * Runs before the two consensus calls fire: if both MODEL_ID_MAP legs
+ * would resolve to the same provider (e.g. only a Gemini key is
+ * configured, or a future model-id change accidentally aliases both
+ * legs to one provider), refuse up front instead of silently paying for
+ * "two independent opinions" that are really one opinion twice.
+ *
+ * Returns true when a consensus pair is safe to dispatch, false when the
+ * caller should treat this the same as "one leg unavailable" (existing
+ * degraded-consensus handling in generateOne already covers that path —
+ * this just makes sure it's never invisible-same-provider degradation).
+ */
+async function consensusProvidersAreDistinct(): Promise<boolean> {
+  try {
+    const { loadLlmConfig } = await import('../../llm/registry');
+    const config = loadLlmConfig();
+    const providerA = resolveProviderForModel(config, MODEL_ID_MAP.claude);
+    const providerB = resolveProviderForModel(config, MODEL_ID_MAP.gemini);
+    if (providerA && providerB && providerA === providerB) {
+      const { ConsensusRoutingError } = await import('../../llm/errors');
+      console.warn(`[orchestrator] ${new ConsensusRoutingError(providerA, providerB).message}`);
+      return false;
+    }
+    return true;
+  } catch {
+    // Config load failure — let the individual callLlm() calls surface
+    // their own (equally honest) failures rather than blocking here.
+    return true;
   }
 }
 

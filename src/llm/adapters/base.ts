@@ -146,6 +146,14 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
       return true;
     }
     if (error instanceof Error) {
+      // AbortError means the request was already deliberately cancelled
+      // (client timeout, caller abort) — blindly retrying it with the same
+      // signal/timeout budget just re-triggers the same abort three more
+      // times at exponential-backoff cost. Named 'timeout' classification
+      // (see classifyError below) already marks it retryable=true for
+      // callers who want to retry with a FRESH timeout budget; internal
+      // retry-with-backoff isn't that.
+      if ((error as any).name === 'AbortError') return true;
       const message = error.message.toLowerCase();
       return (
         message.includes('invalid api key') ||
@@ -191,6 +199,17 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
   classifyError(error: Error): { type: string; retryable?: boolean } {
     const msg = error.message?.toLowerCase() ?? '';
     const status = (error as any).status;
+    const code = (error as any).code;
+    if (
+      (error as any).name === 'AbortError' ||
+      code === 'ETIMEDOUT' || code === 'ECONNABORTED' ||
+      msg.includes('timeout') || msg.includes('timed out')
+    ) {
+      // Named timeout classification (CEO plan §8.2 conformance check) —
+      // previously fell into the generic 'unknown' bucket, indistinguishable
+      // from any other failure in logs/metrics.
+      return { type: 'timeout', retryable: true };
+    }
     if (status === 429 || msg.includes('rate limit') || msg.includes('429')) {
       return { type: 'rate_limit', retryable: true };
     }

@@ -41,6 +41,16 @@ export class ModelRouter extends EventEmitter {
           }
         }
       }
+      // An explicit model was requested but no configured provider serves
+      // it. Historically this fell through to task-based routing below,
+      // which (since no taskType was passed) picked "the first enabled
+      // provider" — silently substituting a DIFFERENT model than the one
+      // requested, with no error. That's the exact bug class CEO plan §8.1
+      // named: two "different" requests silently resolving to the same
+      // provider undermines multi-llm-consensus's independence guarantee.
+      // Return an empty-provider sentinel instead; LLMClient.generate()
+      // turns this into a named ModelRetiredError rather than a silent swap.
+      return { provider: '', model: preferredModel, reason: 'explicit model not configured' };
     }
 
     // Explicit provider override — use its first model

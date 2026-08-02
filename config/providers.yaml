@@ -7,6 +7,8 @@ default_provider: gemini
 providers:
   gemini:
     enabled: true
+    api_key_env: GEMINI_API_KEY
+    priced_at: "2026-08-02"
     models:
       flash:
         id: "gemini-2.0-flash"
@@ -30,6 +32,8 @@ providers:
 
   anthropic:
     enabled: true
+    api_key_env: ANTHROPIC_API_KEY
+    priced_at: "2026-08-02"
     models:
       sonnet:
         id: "claude-sonnet-4-20250514"
@@ -49,6 +53,8 @@ providers:
 
   openai:
     enabled: true
+    api_key_env: OPENAI_API_KEY
+    priced_at: "2026-08-02"
     models:
       gpt4o:
         id: "gpt-4o"
@@ -68,6 +74,8 @@ providers:
 
   ollama:
     enabled: false
+    # No api_key_env — local, keyless by design.
+    priced_at: "2026-08-02"
     base_url: "http://localhost:11434"
     models:
       llama:
@@ -81,6 +89,10 @@ providers:
 
   learnlm:
     enabled: true
+    # Shares Gemini's key (learnlm is served on the same Gemini API surface;
+    # see API_KEY_ENV in src/llm/index.ts).
+    api_key_env: GEMINI_API_KEY
+    priced_at: "2026-08-02"
     models:
       tutor:
         id: "learnlm-2.0-flash-experimental"

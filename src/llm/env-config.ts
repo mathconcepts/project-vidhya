@@ -1,63 +1,45 @@
 /**
- * env-config — builds a minimal LLMClient provider config directly from
- * environment variables.
+ * env-config — bootstrap shim over the ONE config truth (src/llm/registry.ts).
  *
- * orchestrator.ts's callLlm()/maybeEmbedQuery() and llm-judge.ts's
- * scoreAtom() previously fell back to `{ providers: {}, defaultProvider: '' }`
+ * Until this file's history: orchestrator.ts's callLlm()/maybeEmbedQuery()
+ * and llm-judge.ts's scoreAtom() fell back to `{ providers: {}, defaultProvider: '' }`
  * whenever LLM_CONFIG_PATH wasn't set (it never was, anywhere in this repo) —
  * an empty-providers config that made every generation/judging call fail
  * with "No adapter for provider: " and silently burn the LLM call budget.
  * config/providers.yaml (the real, populated provider registry) was never
- * actually wired to these call sites. This fills that gap: if the relevant
- * API key env var is set, that provider is enabled with a real model.
+ * actually wired to these call sites — this module's first version fixed
+ * that by hand-duplicating one model per provider from env vars.
+ *
+ * That hand-duplication was itself a second, narrower config truth that
+ * could silently drift from config/providers.yaml (CEO plan §8 names this
+ * exact class of bug: "parallel truths that drift"). It's retired now:
+ * buildLlmConfigFromEnv() below delegates entirely to registry.ts, which
+ * reads config/providers.yaml directly. This file's remaining job is the
+ * bootstrap shim (write the tracked file only if it's missing — see
+ * registry.ts's ensureProvidersYamlBootstrap) and the live preflight check
+ * used before a generation run spends its budget.
  */
 
-export interface EnvLlmConfig {
-  providers: Record<string, {
-    enabled: boolean;
-    models: Record<string, { id: string; tier?: string; costPer1kInput?: number; costPer1kOutput?: number }>;
-    fallbackOrder: string[];
-  }>;
-  defaultProvider: string;
-}
+import { buildLlmConfigFromRegistry, loadProvidersRegistry, ensureProvidersYamlBootstrap, type EnvLlmConfig } from './registry';
 
+export type { EnvLlmConfig };
+
+/**
+ * @deprecated Prefer `loadLlmConfig()` from `./registry` directly — this
+ * wrapper exists only so existing call sites (orchestrator.ts, llm-judge.ts,
+ * content-generation-job.ts, setup-cli.ts) don't all need simultaneous
+ * edits. It has the same "never throws, degrades to empty config" contract
+ * the original had.
+ */
 export function buildLlmConfigFromEnv(): EnvLlmConfig {
-  const providers: EnvLlmConfig['providers'] = {};
-
-  if (process.env.GEMINI_API_KEY) {
-    providers.gemini = {
-      enabled: true,
-      models: {
-        flash: { id: 'gemini-2.0-flash', tier: 'routine', costPer1kInput: 0.000075, costPer1kOutput: 0.0003 },
-      },
-      fallbackOrder: ['flash'],
-    };
+  try {
+    ensureProvidersYamlBootstrap();
+    const registry = loadProvidersRegistry();
+    return buildLlmConfigFromRegistry(registry);
+  } catch (err) {
+    console.warn(`[env-config] falling back to empty config: ${(err as Error).message}`);
+    return { providers: {}, defaultProvider: '' };
   }
-
-  if (process.env.ANTHROPIC_API_KEY) {
-    providers.anthropic = {
-      enabled: true,
-      models: {
-        sonnet: { id: 'claude-sonnet-4-20250514', tier: 'quality', costPer1kInput: 0.003, costPer1kOutput: 0.015 },
-      },
-      fallbackOrder: ['sonnet'],
-    };
-  }
-
-  if (process.env.OPENAI_API_KEY) {
-    providers.openai = {
-      enabled: true,
-      models: {
-        gpt4o_mini: { id: 'gpt-4o-mini', tier: 'routine', costPer1kInput: 0.00015, costPer1kOutput: 0.0006 },
-      },
-      fallbackOrder: ['gpt4o_mini'],
-    };
-  }
-
-  return {
-    providers,
-    defaultProvider: providers.gemini ? 'gemini' : Object.keys(providers)[0] || '',
-  };
 }
 export interface ProviderPreflightResult {
   provider: string;

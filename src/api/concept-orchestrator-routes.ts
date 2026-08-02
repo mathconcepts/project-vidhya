@@ -9,6 +9,14 @@
  *   GET  /api/admin/concept-orchestrator/status/:job_id
  *     Returns the JobState including event history + final result.
  *
+ *     DEPRECATED (content-pipeline realignment plan, item 4): this
+ *     generate/status pair is in-memory only — job state dies with the
+ *     process. The persistent, checkpointed replacement is the job
+ *     runner's admin surface in src/api/job-routes.ts
+ *     (POST /api/admin/jobs/content-generation/start,
+ *      GET  /api/admin/jobs/content-generation/status). Kept functional
+ *     this patch; removal is tracked in the realignment TODO.
+ *
  *   GET  /api/admin/concept-orchestrator/queue
  *     Returns the priority-sorted queue of concepts needing content.
  *     Query params: limit, topic_family, state (repeatable filters)

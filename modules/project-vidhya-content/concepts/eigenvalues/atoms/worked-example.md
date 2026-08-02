@@ -1,6 +1,6 @@
 ---
-id: linear-algebra-eigenvalues.worked-example
-concept_id: linear-algebra-eigenvalues
+id: eigenvalues.worked-example
+concept_id: eigenvalues
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.45

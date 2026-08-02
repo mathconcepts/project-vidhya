@@ -1,11 +1,11 @@
 ---
-id: calculus-derivatives.common-traps
-concept_id: calculus-derivatives
+id: derivatives-basic.common-traps
+concept_id: derivatives-basic
 atom_type: common_traps
 bloom_level: 4
 difficulty: 0.5
 exam_ids: ["*"]
-tested_by_atom: calculus-derivatives.micro-exercise.power-rule
+tested_by_atom: derivatives-basic.micro-exercise.power-rule
 ---
 
 **Trap 1 — Forgetting the chain rule on composites.** If $y = (\sin x)^3$, then $y' = 3(\sin x)^2 \cdot \cos x$, not $3(\sin x)^2$. The outer power gives the $3(\cdot)^2$; the chain rule supplies the $\cos x$.

@@ -17,7 +17,7 @@ describe('personalized-regen (DB unavailable)', () => {
   afterEach(() => { if (original) process.env.DATABASE_URL = original; });
 
   it('maybeQueueRegenForStudent returns no_db when DATABASE_URL unset', async () => {
-    const r = await maybeQueueRegenForStudent('student-1', 'calculus-derivatives.intuition');
+    const r = await maybeQueueRegenForStudent('student-1', 'derivatives-basic.intuition');
     expect(r.queued).toBe(false);
     expect(r.reason).toBe('no_db');
   });

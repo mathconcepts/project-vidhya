@@ -69,10 +69,10 @@ const MAX_BINARY_SIZE_BYTES = 7.5 * 1024 * 1024;
 // these as suggestion chips saves the user from guessing exact strings.
 
 const KNOWN_CONCEPT_IDS = [
-  'calculus-derivatives',
+  'derivatives-basic',
   'calculus-integration',
   'calculus-limits',
-  'linear-algebra-eigenvalues',
+  'eigenvalues',
   'linear-algebra-matrices',
   'complex-numbers',
   'probability-basics',
@@ -332,7 +332,7 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           onKeyDown={handleTagKey}
           onBlur={() => tagInput && addTag(tagInput)}
           disabled={submitting}
-          placeholder="calculus-derivatives"
+          placeholder="derivatives-basic"
           className="w-full rounded-md px-3 py-2 text-sm focus:outline-none"
           style={{
             background: 'var(--surface-fill)',

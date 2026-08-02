@@ -1,6 +1,6 @@
 ---
-id: calculus-derivatives.micro-exercise.power-rule
-concept_id: calculus-derivatives
+id: derivatives-basic.micro-exercise.power-rule
+concept_id: derivatives-basic
 atom_type: micro_exercise
 bloom_level: 3
 difficulty: 0.4

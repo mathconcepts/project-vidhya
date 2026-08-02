@@ -1,6 +1,6 @@
 ---
-id: linear-algebra-eigenvalues.hook
-concept_id: linear-algebra-eigenvalues
+id: eigenvalues.hook
+concept_id: eigenvalues
 atom_type: hook
 bloom_level: 1
 difficulty: 0.0

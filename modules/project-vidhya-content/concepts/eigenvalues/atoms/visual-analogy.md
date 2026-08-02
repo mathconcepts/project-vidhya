@@ -1,6 +1,6 @@
 ---
-id: linear-algebra-eigenvalues.visual_analogy
-concept_id: linear-algebra-eigenvalues
+id: eigenvalues.visual_analogy
+concept_id: eigenvalues
 atom_type: visual_analogy
 bloom_level: 2
 difficulty: 0.2

@@ -31,7 +31,7 @@ beforeEach(() => {
       problems: [
         {
           id: 'p-derivative-easy-1',
-          concept_id: 'calculus-derivatives',
+          concept_id: 'derivatives-basic',
           topic: 'calculus',
           difficulty: 0.3,
           question_text: 'd/dx (x^2) = ?',
@@ -40,7 +40,7 @@ beforeEach(() => {
         },
         {
           id: 'p-derivative-mid-1',
-          concept_id: 'calculus-derivatives',
+          concept_id: 'derivatives-basic',
           topic: 'calculus',
           difficulty: 0.5,
           question_text: 'd/dx (sin x) = ?',
@@ -73,9 +73,9 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
     const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
     _resetSessionStoreForTests();
     const store = getSessionStore();
-    const problem = await store.fetchProblemsForConcept('calculus-derivatives', 0.7, new Set());
+    const problem = await store.fetchProblemsForConcept('derivatives-basic', 0.7, new Set());
     expect(problem).not.toBeNull();
-    expect(problem!.concept_id).toBe('calculus-derivatives');
+    expect(problem!.concept_id).toBe('derivatives-basic');
     expect(['p-derivative-easy-1', 'p-derivative-mid-1']).toContain(problem!.problem_id);
   });
 
@@ -84,7 +84,7 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
     _resetSessionStoreForTests();
     const store = getSessionStore();
     // max 0.4 should only return the easy one (0.3)
-    const problem = await store.fetchProblemsForConcept('calculus-derivatives', 0.4, new Set());
+    const problem = await store.fetchProblemsForConcept('derivatives-basic', 0.4, new Set());
     expect(problem!.problem_id).toBe('p-derivative-easy-1');
   });
 
@@ -93,7 +93,7 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
     _resetSessionStoreForTests();
     const store = getSessionStore();
     const result = await store.fetchProblemsForConcept(
-      'calculus-derivatives',
+      'derivatives-basic',
       1.0,
       new Set(['p-derivative-easy-1', 'p-derivative-mid-1']),
     );
@@ -116,7 +116,7 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
     const problems = [
       {
         problem_id: 'p-derivative-easy-1',
-        concept_id: 'calculus-derivatives',
+        concept_id: 'derivatives-basic',
         topic: 'calculus',
         difficulty: 0.3,
         question: 'd/dx (x^2) = ?',
@@ -145,7 +145,7 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
     expect(afterAnswer[0].was_correct).toBe(true);
 
     const attempts = await store.getCompletionAttempts(studymateId);
-    expect(attempts).toEqual([{ concept_id: 'calculus-derivatives', was_correct: true }]);
+    expect(attempts).toEqual([{ concept_id: 'derivatives-basic', was_correct: true }]);
 
     await store.markCompleted(studymateId, '1/1 today. Strong on calculus.');
     const afterComplete = await store.findResumable('user-1', 4);

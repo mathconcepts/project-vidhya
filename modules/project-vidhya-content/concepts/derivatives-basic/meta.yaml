@@ -1,4 +1,4 @@
-concept_id: calculus-derivatives
+concept_id: derivatives-basic
 title: Derivative
 licence: MIT
 contributor: Project Vidhya Seed
@@ -20,19 +20,19 @@ exams:
 
 # ContentAtom v2 — additive fields
 learning_objectives:
-  - id: calculus-derivatives.lo.power-rule
+  - id: derivatives-basic.lo.power-rule
     text: Apply the power rule to differentiate polynomials.
     bloom_level: 3
     mastery_criteria:
       min_correct_streak: 3
       target_score: 0.8
-  - id: calculus-derivatives.lo.product-rule
+  - id: derivatives-basic.lo.product-rule
     text: Apply the product rule to compute (fg)'.
     bloom_level: 3
     mastery_criteria:
       min_correct_streak: 3
       target_score: 0.8
-  - id: calculus-derivatives.lo.chain-rule
+  - id: derivatives-basic.lo.chain-rule
     text: Apply the chain rule to differentiate compositions.
     bloom_level: 3
     mastery_criteria:

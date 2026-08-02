@@ -25,7 +25,7 @@ export interface GenerationMeta {
 }
 
 export interface GeneratedAtom {
-  /** Stable atom_id (e.g. "calculus-derivatives.intuition"). */
+  /** Stable atom_id (e.g. "derivatives-basic.intuition"). */
   atom_id: string;
   concept_id: string;
   atom_type: AtomType;

@@ -1,6 +1,6 @@
 ---
-id: calculus-derivatives.formal-definition
-concept_id: calculus-derivatives
+id: derivatives-basic.formal-definition
+concept_id: derivatives-basic
 atom_type: formal_definition
 bloom_level: 2
 difficulty: 0.3

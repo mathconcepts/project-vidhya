@@ -17,7 +17,7 @@ needing to touch the backend.
 ```
 project-vidhya-content/
 ├── concepts/                   ← human-authored explainers
-│   ├── calculus-derivatives/
+│   ├── derivatives-basic/
 │   │   ├── explainer.md        (the teachable content)
 │   │   ├── worked-example.md   (step-by-step problem)
 │   │   └── meta.yaml           (concept_id, licence, contributor)
@@ -111,8 +111,8 @@ and the main repo bumps its pin.
 
 Initial seed:
 
-- `calculus-derivatives/` — derivative from first principles, with BITSAT-style worked example
-- `linear-algebra-eigenvalues/` — eigenvalue intuition + worked example
+- `derivatives-basic/` — derivative from first principles, with BITSAT-style worked example
+- `eigenvalues/` — eigenvalue intuition + worked example
 - `complex-numbers/` — polar form + Euler's identity
 
 Initial bundles:

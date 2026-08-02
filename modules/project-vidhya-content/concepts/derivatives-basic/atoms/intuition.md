@@ -1,6 +1,6 @@
 ---
-id: calculus-derivatives.intuition
-concept_id: calculus-derivatives
+id: derivatives-basic.intuition
+concept_id: derivatives-basic
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.1

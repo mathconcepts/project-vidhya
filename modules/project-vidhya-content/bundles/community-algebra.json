@@ -4,7 +4,7 @@
   "description": "Foundational algebra explainers maintained by the community — broad appeal across BITSAT, JEE Main, UGEE, and general post-secondary study.",
   "concepts": [
     "complex-numbers",
-    "linear-algebra-eigenvalues"
+    "eigenvalues"
   ],
   "licence": "MIT",
   "maintainer": "project-vidhya",

@@ -1,16 +1,16 @@
 """
-calculus-derivatives-tangent.py
+derivatives-basic-tangent.py
 
 Animation: secant line on f(x) = x² collapsing to the tangent at x = 1
-as h → 0. Used by `calculus-derivatives.intuition` and
-`calculus-derivatives.formal-definition` atoms.
+as h → 0. Used by `derivatives-basic.intuition` and
+`derivatives-basic.formal-definition` atoms.
 
 Render:
-    python build.py scenes/calculus-derivatives-tangent.py
+    python build.py scenes/derivatives-basic-tangent.py
 
 Output:
-    ../media/manim/calculus-derivatives-tangent.mp4
-    ../media/manim/calculus-derivatives-tangent.vtt
+    ../media/manim/derivatives-basic-tangent.mp4
+    ../media/manim/derivatives-basic-tangent.vtt
 """
 
 from manim import (

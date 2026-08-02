@@ -1,6 +1,6 @@
 ---
-id: calculus-derivatives.hook
-concept_id: calculus-derivatives
+id: derivatives-basic.hook
+concept_id: derivatives-basic
 atom_type: hook
 bloom_level: 1
 difficulty: 0.0

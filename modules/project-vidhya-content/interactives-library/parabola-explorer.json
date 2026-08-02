@@ -15,6 +15,6 @@
     "alt_text": "Three parabolas overlaid: y = x² (standard), y = 2x² + x (steeper, shifted left), and y = -x² + 1 (inverted, raised by 1)."
   },
   "atoms_using": [
-    "calculus-derivatives.intuition"
+    "derivatives-basic.intuition"
   ]
 }

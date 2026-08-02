@@ -1,6 +1,6 @@
 ---
-id: linear-algebra-eigenvalues.micro-exercise.trace
-concept_id: linear-algebra-eigenvalues
+id: eigenvalues.micro-exercise.trace
+concept_id: eigenvalues
 atom_type: micro_exercise
 bloom_level: 3
 difficulty: 0.45

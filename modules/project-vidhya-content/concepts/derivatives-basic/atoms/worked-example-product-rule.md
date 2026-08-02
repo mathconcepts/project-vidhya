@@ -1,6 +1,6 @@
 ---
-id: calculus-derivatives.worked-example.product-rule
-concept_id: calculus-derivatives
+id: derivatives-basic.worked-example.product-rule
+concept_id: derivatives-basic
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.35

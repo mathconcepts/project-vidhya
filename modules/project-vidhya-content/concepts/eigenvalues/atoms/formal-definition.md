@@ -1,6 +1,6 @@
 ---
-id: linear-algebra-eigenvalues.formal-definition
-concept_id: linear-algebra-eigenvalues
+id: eigenvalues.formal-definition
+concept_id: eigenvalues
 atom_type: formal_definition
 bloom_level: 2
 difficulty: 0.4

@@ -203,7 +203,7 @@ export type Modality = 'visual' | 'text' | 'mnemonic' | 'drill';
  */
 export interface ContentAtom {
   // ── Required (frontmatter) ─────────────────────────────────────────────
-  id: string;                           // e.g. "calculus-derivatives.worked-example.product-rule"
+  id: string;                           // e.g. "derivatives-basic.worked-example.product-rule"
   concept_id: string;
   atom_type: AtomType;
   bloom_level: BloomLevel;

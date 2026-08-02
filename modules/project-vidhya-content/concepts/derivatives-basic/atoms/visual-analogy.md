@@ -1,6 +1,6 @@
 ---
-id: calculus-derivatives.visual_analogy
-concept_id: calculus-derivatives
+id: derivatives-basic.visual_analogy
+concept_id: derivatives-basic
 atom_type: visual_analogy
 bloom_level: 2
 difficulty: 0.2

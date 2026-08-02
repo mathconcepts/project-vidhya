@@ -65,10 +65,10 @@ export function extractConceptId(text: string, fallback?: string): string | null
   if (fallback) return fallback;
   const t = text.toLowerCase();
   const map: Array<[RegExp, string]> = [
-    [/derivative|differentiat/,           'calculus-derivatives'],
+    [/derivative|differentiat/,           'derivatives-basic'],
     [/integral|integrat/,                  'calculus-integration'],
     [/limit/,                              'calculus-limits'],
-    [/eigenval|eigenvector/,               'linear-algebra-eigenvalues'],
+    [/eigenval|eigenvector/,               'eigenvalues'],
     [/matrix|matrices/,                    'linear-algebra-matrices'],
     [/probability/,                        'probability-basics'],
     [/complex\s*number/,                   'complex-numbers'],

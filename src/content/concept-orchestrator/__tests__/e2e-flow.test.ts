@@ -61,7 +61,7 @@ describe('Phase 5 E2E — concept-orchestrator v1 pipeline (DB-less)', () => {
 
   it('Step 1-2: admin Generate kicks off a job with progress events', async () => {
     // Story: admin clicks Generate. Server creates a job record.
-    const job = createJob('calculus-derivatives', 'calculus');
+    const job = createJob('derivatives-basic', 'calculus');
     expect(job.id).toBeTruthy();
     expect(job.status).toBe('queued');
 
@@ -78,7 +78,7 @@ describe('Phase 5 E2E — concept-orchestrator v1 pipeline (DB-less)', () => {
       step_index: 0,
       total_steps: 11,
       atom_type: 'hook',
-      atom_id: 'calculus-derivatives.hook',
+      atom_id: 'derivatives-basic.hook',
       sources: ['llm-claude'],
       judge_score: 8.4,
     });
@@ -91,18 +91,18 @@ describe('Phase 5 E2E — concept-orchestrator v1 pipeline (DB-less)', () => {
 
   it('Step 3: orchestrator returns a draft + accepts/rejects via LLM-judge', async () => {
     const draft = await generateConcept({
-      concept_id: 'calculus-derivatives',
+      concept_id: 'derivatives-basic',
       topic_family: 'calculus',
       atom_types: ['hook'],
       dry_run: true,
     });
     // Without LLM keys the kag-fallback returns a stub; either accepted
     // or auto-rejected via judge — both are valid signals the path runs.
-    expect(draft.concept_id).toBe('calculus-derivatives');
+    expect(draft.concept_id).toBe('derivatives-basic');
     expect(draft.atoms.length + draft.rejected_atoms.length).toBe(1);
     const all = [...draft.atoms, ...draft.rejected_atoms];
     expect(all[0].atom_type).toBe('hook');
-    expect(all[0].atom_id).toBe('calculus-derivatives.hook');
+    expect(all[0].atom_id).toBe('derivatives-basic.hook');
     // Provenance recorded
     expect(all[0].meta.generated_at).toBeTruthy();
     expect(typeof all[0].meta.cost_usd).toBe('number');
@@ -145,26 +145,26 @@ describe('Phase 5 E2E — concept-orchestrator v1 pipeline (DB-less)', () => {
   });
 
   it('Step 7: per-student E5 trigger is no-op without DB', async () => {
-    const r = await maybeQueueRegenForStudent('student-1', 'calculus-derivatives.intuition');
+    const r = await maybeQueueRegenForStudent('student-1', 'derivatives-basic.intuition');
     expect(r.queued).toBe(false);
     expect(r.reason).toBe('no_db');
 
-    const overrides = await readStudentOverrides('student-1', ['calculus-derivatives.intuition']);
+    const overrides = await readStudentOverrides('student-1', ['derivatives-basic.intuition']);
     expect(overrides.size).toBe(0);
   });
 
   it('Step 8: cost tracking degrades to "always allowed" without DB', async () => {
-    const state = await readState('calculus-derivatives');
+    const state = await readState('derivatives-basic');
     expect(state.exhausted).toBe(false);
     expect(state.spent_usd).toBe(0);
 
-    const can = await canSpend('calculus-derivatives');
+    const can = await canSpend('derivatives-basic');
     expect(can.allowed).toBe(true);
   });
 
   it('integration contract: generate → judge → consensus all return shapes the next stage expects', async () => {
     const draft = await generateConcept({
-      concept_id: 'calculus-derivatives',
+      concept_id: 'derivatives-basic',
       topic_family: 'calculus',
       atom_types: ['hook', 'intuition'],
       dry_run: true,
@@ -175,8 +175,8 @@ describe('Phase 5 E2E — concept-orchestrator v1 pipeline (DB-less)', () => {
     // Every atom has the fields that downstream consumers (atom-loader,
     // ImprovedBadge, admin diff viewer) rely on.
     for (const a of [...draft.atoms, ...draft.rejected_atoms]) {
-      expect(a.atom_id).toMatch(/^calculus-derivatives\./);
-      expect(a.concept_id).toBe('calculus-derivatives');
+      expect(a.atom_id).toMatch(/^derivatives-basic\./);
+      expect(a.concept_id).toBe('derivatives-basic');
       expect(['hook', 'intuition']).toContain(a.atom_type);
       expect(a.meta).toBeDefined();
       expect(typeof a.meta.cost_usd).toBe('number');
@@ -189,7 +189,7 @@ describe('Phase 5 E2E — concept-orchestrator v1 pipeline (DB-less)', () => {
   it('progress events emitted in order through the pipeline', async () => {
     const events: any[] = [];
     await generateConcept({
-      concept_id: 'calculus-derivatives',
+      concept_id: 'derivatives-basic',
       topic_family: 'calculus',
       atom_types: ['hook'],
       dry_run: true,

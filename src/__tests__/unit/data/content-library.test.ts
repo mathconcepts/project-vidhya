@@ -53,15 +53,15 @@ describe('content-library store', () => {
     const m = await import('../../../modules/content-library');
     const summaries = m.listSummaries();
     const ids = summaries.map(s => s.concept_id).sort();
-    expect(ids).toContain('calculus-derivatives');
+    expect(ids).toContain('derivatives-basic');
     expect(ids).toContain('complex-numbers');
-    expect(ids).toContain('linear-algebra-eigenvalues');
+    expect(ids).toContain('eigenvalues');
     expect(summaries.every(s => s.source === 'seed')).toBe(true);
   });
 
   it('getEntry round-trips a known seed concept', async () => {
     const { getEntry } = await import('../../../modules/content-library');
-    const e = getEntry('calculus-derivatives');
+    const e = getEntry('derivatives-basic');
     expect(e).not.toBeNull();
     expect(e!.title).toBe('Derivative');
     expect(e!.difficulty).toBe('intro');
@@ -82,29 +82,29 @@ describe('content-library store', () => {
     const { findEntries } = await import('../../../modules/content-library');
     const intro_first = findEntries({ prefer_difficulty: 'intro' });
     expect(intro_first[0].difficulty).toBe('intro');
-    expect(intro_first[0].concept_id).toBe('calculus-derivatives');
+    expect(intro_first[0].concept_id).toBe('derivatives-basic');
   });
 
   it('findEntries ranks by exam_id relevance', async () => {
     const { findEntries } = await import('../../../modules/content-library');
     const ugee = findEntries({ exam_id: 'EXM-UGEE-MATH-SAMPLE' });
-    // Both calculus-derivatives and linear-algebra-eigenvalues
+    // Both derivatives-basic and eigenvalues
     // include UGEE; complex-numbers does not. Top 2 should be the
     // UGEE-tagged ones.
     const top_two = ugee.slice(0, 2).map(e => e.concept_id).sort();
-    expect(top_two).toEqual(['calculus-derivatives', 'linear-algebra-eigenvalues']);
+    expect(top_two).toEqual(['derivatives-basic', 'eigenvalues']);
   });
 
   it('findEntries with tags filter is strict (all-tags-required)', async () => {
     const { findEntries } = await import('../../../modules/content-library');
     const calculus_only = findEntries({ tags: ['calculus'] });
-    expect(calculus_only.map(e => e.concept_id)).toEqual(['calculus-derivatives']);
-    // 'derivatives' alone should also match calculus-derivatives
+    expect(calculus_only.map(e => e.concept_id)).toEqual(['derivatives-basic']);
+    // 'derivatives' alone should also match derivatives-basic
     const derivs = findEntries({ tags: ['derivatives'] });
-    expect(derivs.map(e => e.concept_id)).toEqual(['calculus-derivatives']);
-    // Both tags required — still calculus-derivatives only
+    expect(derivs.map(e => e.concept_id)).toEqual(['derivatives-basic']);
+    // Both tags required — still derivatives-basic only
     const both = findEntries({ tags: ['calculus', 'derivatives'] });
-    expect(both.map(e => e.concept_id)).toEqual(['calculus-derivatives']);
+    expect(both.map(e => e.concept_id)).toEqual(['derivatives-basic']);
     // Tag that doesn't exist on any entry → empty
     const none = findEntries({ tags: ['nonexistent-tag'] });
     expect(none).toEqual([]);
@@ -167,11 +167,11 @@ describe('content-library store', () => {
 
   it('additions override seed entries with the same concept_id', async () => {
     const { addEntry, reloadIndex, getEntry } = await import('../../../modules/content-library');
-    const seed_before = getEntry('calculus-derivatives');
+    const seed_before = getEntry('derivatives-basic');
     expect(seed_before!.source).toBe('seed');
 
     addEntry({
-      concept_id: 'calculus-derivatives',
+      concept_id: 'derivatives-basic',
       title: 'Derivatives — local override',
       difficulty: 'advanced',
       tags: ['override'],
@@ -181,7 +181,7 @@ describe('content-library store', () => {
       source: 'user',
     });
     reloadIndex();
-    const after = getEntry('calculus-derivatives');
+    const after = getEntry('derivatives-basic');
     expect(after!.source).toBe('user');
     expect(after!.title).toBe('Derivatives — local override');
     expect(after!.difficulty).toBe('advanced');

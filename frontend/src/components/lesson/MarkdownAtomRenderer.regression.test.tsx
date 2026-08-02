@@ -14,7 +14,7 @@ import matter from 'gray-matter';
 import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 
 const CONTENT_ROOT = path.resolve(__dirname, '../../../../modules/project-vidhya-content/concepts');
-const CONCEPTS = ['calculus-derivatives', 'complex-numbers', 'linear-algebra-eigenvalues'];
+const CONCEPTS = ['derivatives-basic', 'complex-numbers', 'eigenvalues'];
 
 interface AtomFile {
   concept: string;

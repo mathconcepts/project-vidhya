@@ -1,11 +1,11 @@
 ---
-id: linear-algebra-eigenvalues.common-traps
-concept_id: linear-algebra-eigenvalues
+id: eigenvalues.common-traps
+concept_id: eigenvalues
 atom_type: common_traps
 bloom_level: 4
 difficulty: 0.55
 exam_ids: ["*"]
-tested_by_atom: linear-algebra-eigenvalues.micro-exercise.trace
+tested_by_atom: eigenvalues.micro-exercise.trace
 ---
 
 **Trap 1 — Sign on the characteristic polynomial.** $\det(A - \lambda I)$ expands with alternating signs. For a $2\times 2$, the constant term is $\det(A)$, not $-\det(A)$.

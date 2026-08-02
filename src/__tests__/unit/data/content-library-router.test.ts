@@ -52,15 +52,15 @@ beforeEach(async () => {
 });
 
 describe('content router — library tier', () => {
-  it('hits library for a seeded concept_id (calculus-derivatives)', async () => {
+  it('hits library for a seeded concept_id (derivatives-basic)', async () => {
     const { routeContent } = await import('../../../content/router');
     const r = await routeContent({
       user_id: 'test',
-      text: 'explain calculus-derivatives',
-      concept_id: 'calculus-derivatives',
+      text: 'explain derivatives-basic',
+      concept_id: 'derivatives-basic',
     });
     expect(r.source).toBe('library');
-    expect(r.source_ref).toBe('library:seed:calculus-derivatives');
+    expect(r.source_ref).toBe('library:seed:derivatives-basic');
     expect(r.licence).toBe('MIT');
     expect(r.content).not.toBeNull();
     expect(r.content!.length).toBeGreaterThan(500);
@@ -72,8 +72,8 @@ describe('content router — library tier', () => {
     const { routeContent } = await import('../../../content/router');
     const r = await routeContent({
       user_id: 'test',
-      text: 'explain calculus-derivatives',
-      concept_id: 'calculus-derivatives',
+      text: 'explain derivatives-basic',
+      concept_id: 'derivatives-basic',
     });
     expect(r.disclosure).toMatch(/built-in content library/);
     expect(r.disclosure).toMatch(/explainer/);
@@ -84,8 +84,8 @@ describe('content router — library tier', () => {
     const { routeContent } = await import('../../../content/router');
     const r = await routeContent({
       user_id: 'test',
-      text: 'give me a practice problem on calculus-derivatives',
-      concept_id: 'calculus-derivatives',
+      text: 'give me a practice problem on derivatives-basic',
+      concept_id: 'derivatives-basic',
     });
     expect(r.source).toBe('library');
     expect(r.disclosure).toMatch(/worked example/);
@@ -97,8 +97,8 @@ describe('content router — library tier', () => {
     const { routeContent } = await import('../../../content/router');
     const r = await routeContent({
       user_id: 'test',
-      text: 'explain calculus-derivatives',
-      concept_id: 'calculus-derivatives',
+      text: 'explain derivatives-basic',
+      concept_id: 'derivatives-basic',
     });
     expect(r.source).toBe('library');
     expect(r.disclosure).toMatch(/explainer/);
@@ -153,8 +153,8 @@ describe('content router — library tier', () => {
     const { routeContent } = await import('../../../content/router');
     const r = await routeContent({
       user_id: 'test',
-      text: 'explain calculus-derivatives',
-      concept_id: 'calculus-derivatives',
+      text: 'explain derivatives-basic',
+      concept_id: 'derivatives-basic',
     });
     expect(r.intent).toBe('explain-concept');
     expect(r.ok).toBe(true);
@@ -164,8 +164,8 @@ describe('content router — library tier', () => {
     const { routeContent } = await import('../../../content/router');
     const r = await routeContent({
       user_id: 'test',
-      text: 'walk me through calculus-derivatives',
-      concept_id: 'calculus-derivatives',
+      text: 'walk me through derivatives-basic',
+      concept_id: 'derivatives-basic',
     });
     expect(r.source).toBe('library');
     // walkthrough-problem also gets the worked example, like practice-problem

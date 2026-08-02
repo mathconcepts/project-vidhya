@@ -1,6 +1,6 @@
 ---
-id: linear-algebra-eigenvalues.intuition
-concept_id: linear-algebra-eigenvalues
+id: eigenvalues.intuition
+concept_id: eigenvalues
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.15

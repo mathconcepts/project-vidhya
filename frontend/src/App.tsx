@@ -71,6 +71,7 @@ const ExamGroupsPage = lazy(() => import('@/pages/app/ExamGroupsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/app/ContentAdminPage'));
 const ContentRDPage = lazy(() => import('@/pages/app/ContentRDPage'));
 const HoldoutPage = lazy(() => import('@/pages/app/HoldoutPage'));
+const PlatformHealthPage = lazy(() => import('@/pages/app/PlatformHealthPage'));
 const ScenariosPage = lazy(() => import('@/pages/app/ScenariosPage'));
 const BlueprintsPage = lazy(() => import('@/pages/app/BlueprintsPage'));
 const RulesetsPage = lazy(() => import('@/pages/app/RulesetsPage'));
@@ -166,6 +167,7 @@ export default function App() {
           <Route path="admin/content-studio" element={<ContentStudioPage />} />
           <Route path="admin/content-rd" element={<ContentRDPage />} />
           <Route path="admin/holdout" element={<HoldoutPage />} />
+          <Route path="admin/platform-health" element={<PlatformHealthPage />} />
           <Route path="admin/scenarios" element={<ScenariosPage />} />
           <Route path="admin/scenarios/:id" element={<ScenariosPage />} />
           <Route path="admin/blueprints" element={<BlueprintsPage />} />

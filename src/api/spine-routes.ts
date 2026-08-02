@@ -24,10 +24,18 @@
 import { ServerResponse } from 'http';
 import { explainerCoverageByTopic } from '../content/resolver';
 import { getTopicsForExam } from '../curriculum/topic-adapter';
+import { resolveActiveExamId } from '../curriculum/exam-loader';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON } from '../lib/route-helpers';
 
-const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+// Was `process.env.DEFAULT_EXAM_ID ?? 'gate-ma'` — a silent GATE fallback
+// independent of every other surface's exam resolution (see
+// resolveActiveExamId's doc in src/curriculum/exam-loader.ts). Lazy-resolved
+// so it agrees with GET /api/exam/active and the rest of the app instead of
+// always landing on gate-ma when no operator override is set.
+function resolveSpineExamId(): string {
+  return resolveActiveExamId() ?? 'gate-ma';
+}
 
 interface RouteDefinition {
   method: string;
@@ -38,7 +46,7 @@ interface RouteDefinition {
 export type LearnStatus = 'available' | 'partial' | 'expanding';
 
 async function handleGetSpine(_req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const topics = getTopicsForExam(DEFAULT_EXAM_ID);
+  const topics = getTopicsForExam(resolveSpineExamId());
   const coverage = explainerCoverageByTopic();
   const byTopic = new Map(coverage.map(c => [c.topic, c]));
 

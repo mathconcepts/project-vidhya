@@ -184,6 +184,38 @@ export function listExamIds(): string[] {
 }
 
 /**
+ * Resolves the deployment's single "active" YAML curriculum exam — the
+ * same identity GET /api/exam/active (src/api/curriculum-routes.ts) reports
+ * to the frontend's useActiveExam() hook.
+ *
+ * Resolution order (admin-configurable):
+ *   1. process.env.DEFAULT_EXAM_ID — operator picks via the Render
+ *      dashboard (env var declared in render.yaml as sync:false) — only
+ *      honoured if that id is actually loaded from data/curriculum/.
+ *   2. First entry from listExamIds() (alphabetical) — the deployment's
+ *      implicit default when no operator override is set.
+ *
+ * Returns null when data/curriculum/ has no exams loaded at all.
+ *
+ * IMPORTANT — do not confuse this with src/exams/default-exam.ts's
+ * resolveDefaultExamId(). That resolves an *admin-defined Exam record*
+ * (ids like 'EXM-UGEE-MATH-SAMPLE', stored in .data/exams.json via
+ * src/exams/exam-store.ts) for marketing/content-flywheel purposes. This
+ * function resolves a *YAML curriculum exam* (ids like 'gate-ma',
+ * 'jee-main', loaded from data/curriculum/*.yml) for anything that needs
+ * topics/syllabus/concepts — gate-routes, spine-routes, topic-pages,
+ * blog-index, topic-detection, and this module's own /api/exam/active.
+ * The two registries are unrelated; passing one's id into the other's
+ * lookup silently returns nothing.
+ */
+export function resolveActiveExamId(): string | null {
+  const ids = listExamIds();
+  if (ids.length === 0) return null;
+  const envExamId = (process.env.DEFAULT_EXAM_ID || '').trim();
+  return envExamId && ids.includes(envExamId) ? envExamId : ids[0];
+}
+
+/**
  * Total concept-link weight for an exam — used by gap analyzer for
  * priority scoring.
  */

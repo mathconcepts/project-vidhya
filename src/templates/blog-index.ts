@@ -10,6 +10,7 @@
 
 import { getTopicIdsForExam } from '../curriculum/topic-adapter';
 import { CONTENT_TYPE_LABELS, CONTENT_TYPE_ACCENTS } from '../constants/content-types';
+import { resolveActiveExamId } from '../curriculum/exam-loader';
 
 const BASE_URL = process.env.BASE_URL || 'https://gate-math-api.onrender.com';
 
@@ -83,7 +84,11 @@ export function renderBlogIndex(
   };
 
   // Topic filter pills
-  const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+  // Was `process.env.DEFAULT_EXAM_ID ?? 'gate-ma'` — a silent GATE fallback
+  // independent of every other surface's exam resolution (see
+  // resolveActiveExamId's doc in src/curriculum/exam-loader.ts). Now agrees
+  // with GET /api/exam/active.
+  const DEFAULT_EXAM_ID = resolveActiveExamId() ?? 'gate-ma';
   const topicPillsHtml = getTopicIdsForExam(DEFAULT_EXAM_ID).map(t => {
     const isActive = topic === t;
     const label = t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());

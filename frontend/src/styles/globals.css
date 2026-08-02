@@ -1,7 +1,13 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+/* @import must precede every other statement (CSS spec — @charset aside).
+ * MIGRATION.md originally placed these after the @tailwind directives and
+ * suggested postcss-import to hoist them; that plugin doesn't help here
+ * because Vite's own CSS pipeline resolves @import before handing off to
+ * user PostCSS plugins, so an out-of-order @import was silently dropped
+ * (with only a build-time warning) rather than hoisted — the whole
+ * Clarity token set (--surface-canvas, --green, --indigo, --font-sans,
+ * etc.) never reached the shipped CSS even though every component
+ * correctly reads it via var(--...). Importing first is both spec-correct
+ * and what actually works with Vite. */
 @import "./tokens/fonts.css";
 @import "./tokens/colors.css";
 @import "./tokens/typography.css";
@@ -9,6 +15,10 @@
 @import "./tokens/shape.css";
 @import "./tokens/motion.css";
 @import "./tokens/base.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer utilities {
   /* Scrollbar hide */

@@ -12,6 +12,7 @@
 import { ServerResponse } from 'http';
 import pg from 'pg';
 import { getTopicsForExam } from '../curriculum/topic-adapter';
+import { resolveActiveExamId } from '../curriculum/exam-loader';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 const { Pool } = pg;
@@ -40,7 +41,12 @@ function getPool() {
   return _pool;
 }
 
-const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
+// Was `process.env.DEFAULT_EXAM_ID ?? 'gate-ma'` computed once at module
+// load — a silent GATE fallback independent of every other surface's exam
+// resolution (see resolveActiveExamId's doc in src/curriculum/exam-loader.ts).
+// Now agrees with GET /api/exam/active and the rest of the app instead of
+// always landing on gate-ma when no operator override is set.
+const DEFAULT_EXAM_ID = resolveActiveExamId() ?? 'gate-ma';
 const GATE_TOPIC_OBJECTS = getTopicsForExam(DEFAULT_EXAM_ID).map(t => ({ id: t.id, name: t.name }));
 
 // ============================================================================

@@ -18,10 +18,10 @@
  *     students confused tangent with secant").
  *   - On reduced-motion, no fade animation; tooltip shows on focus only.
  *
- * Design system alignment:
- *   - Emerald palette matches mastery dot + particle (consistent feedback
- *     vocabulary).
- *   - 11px DM Sans, ~36px wide pill matches existing card-header chrome.
+ * Design system alignment (Clarity):
+ *   - Uses --green-ink / --green tint tokens, matching the mastery dot
+ *     (consistent feedback vocabulary — see DESIGN-SYSTEM.md).
+ *   - 11px system sans, ~36px wide pill matches existing card-header chrome.
  */
 
 import { useEffect, useRef, useState } from 'react';

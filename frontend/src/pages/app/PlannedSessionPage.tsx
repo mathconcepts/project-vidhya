@@ -38,6 +38,7 @@ import { CompoundingCard } from '@/components/app/CompoundingCard';
 import { DigestChip } from '@/components/app/DigestChip';
 import { BridgeRecommendationsCard } from '@/components/app/BridgeRecommendationsCard';
 import { ReviewQueueCard } from '@/components/app/ReviewQueueCard';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { useSession } from '@/hooks/useSession';
 
 // ============================================================================
@@ -123,7 +124,26 @@ const KIND_META: Record<ActionKind, { icon: typeof Sparkles; label: string }> = 
 // Component
 // ============================================================================
 
-const DEFAULT_EXAM_ID = 'EXM-UGEE-MATH-SAMPLE';
+// The planner's exam_id (below, POST /api/student/session/plan) is looked
+// up against the exam-BUILDER adapter registry (src/exam-builder/registry.ts,
+// ids like 'EXM-GATE-MATH-SAMPLE') — a different namespace from the YAML
+// curriculum exams Home reads via useActiveExam() (ids like 'gate-ma',
+// 'jee-main', from src/curriculum/exam-loader.ts). The two only ever
+// coincidentally look similar; there's no shared registry translating one
+// into the other today (a real gap, flagged here rather than silently
+// "fixed" by pretending they're the same system).
+//
+// This map is the deliberate, minimal bridge for the common case: an
+// unregistered visitor's plan should be built around the SAME exam identity
+// Home/Chat are showing, translated into the adapter id that actually
+// carries per-exam topic weights. Falls back to the GATE sample (matching
+// gate-routes.ts's own 'gate-ma' fallback) if useActiveExam() hasn't
+// resolved yet or names an exam with no adapter counterpart.
+const ACTIVE_EXAM_TO_ADAPTER_ID: Record<string, string> = {
+  'gate-ma': 'EXM-GATE-MATH-SAMPLE',
+  'jee-main': 'EXM-JEEMAIN-MATH-SAMPLE',
+};
+const DEFAULT_EXAM_ID = 'EXM-GATE-MATH-SAMPLE';
 const DEFAULT_EXAM_DATE = (() => {
   const d = new Date();
   d.setMonth(d.getMonth() + 3);
@@ -153,6 +173,9 @@ interface PlanTemplate {
 export default function PlannedSessionPage() {
   const navigate = useNavigate();
   const sessionId = useSession();
+  // Same deployment-wide "active exam" Home and the chat tutor read from —
+  // keeps the no-profile-registered fallback below consistent across screens.
+  const { exam: activeExam } = useActiveExam();
 
   const [minutes, setMinutes] = useState<number>(15);
   const [plan, setPlan] = useState<SessionPlan | null>(null);
@@ -323,7 +346,7 @@ export default function PlannedSessionPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            exam_id: DEFAULT_EXAM_ID,
+            exam_id: (activeExam && ACTIVE_EXAM_TO_ADAPTER_ID[activeExam.exam_id]) ?? DEFAULT_EXAM_ID,
             exam_date: DEFAULT_EXAM_DATE,
             minutes_available: minutes,
           }),
@@ -345,7 +368,7 @@ export default function PlannedSessionPage() {
     } finally {
       setLoading(false);
     }
-  }, [minutes, profile]);
+  }, [minutes, profile, activeExam]);
 
   const useTemplate = useCallback(async (tpl: PlanTemplate) => {
     setLoading(true);

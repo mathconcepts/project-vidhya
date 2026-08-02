@@ -27,6 +27,7 @@ import path from 'path';
 import pg from 'pg';
 import { detectTopic } from '../utils/topic-detection';
 import { getTopicsForExam } from '../curriculum/topic-adapter';
+import { resolveActiveExamId, listExamIds } from '../curriculum/exam-loader';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { checkRateLimit } from '../lib/rate-limit';
@@ -71,14 +72,61 @@ function sendError(res: ServerResponse, status: number, message: string): void {
 // GATE Topics (static — derived from seed data)
 // ============================================================================
 
-const DEFAULT_EXAM_ID = process.env.DEFAULT_EXAM_ID ?? 'gate-ma';
-const GATE_TOPIC_OBJECTS = getTopicsForExam(DEFAULT_EXAM_ID).map(t => ({
-  id: t.id,
-  name: t.name,
-  icon: t.icon,
-}));
+// Was `process.env.DEFAULT_EXAM_ID ?? 'gate-ma'` computed once at module
+// load into a frozen GATE_TOPIC_OBJECTS constant — a silent GATE fallback
+// resolved completely independently of GET /api/exam/active
+// (curriculum-routes.ts), which already had its own (correct) resolution
+// order for the same "deployment default" concept. Two independent
+// resolvers for the same fact is exactly how they drift: this file always
+// landed on 'gate-ma' while PlannedSessionPage's own independent fallback
+// (a *different* hardcoded literal, 'EXM-UGEE-MATH-SAMPLE') landed on a
+// Class-12-entrance-exam sample — producing two unrelated exams' content
+// on Home vs. Practice for the same unregistered visitor.
+//
+// getGateTopicObjects(examId?) resolves lazily per call: an explicit
+// ?exam_id= query param (only if it's actually a loaded YAML curriculum
+// exam — see resolveActiveExamId's doc in src/curriculum/exam-loader.ts)
+// wins, then the deployment default via the shared resolver, matching
+// /api/exam/active.
+function resolveGateDefaultExamId(): string {
+  return resolveActiveExamId() ?? 'gate-ma';
+}
 
-async function handleGetTopics(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+const _topicObjectsCache = new Map<string, Array<{ id: string; name: string; icon: string }>>();
+
+function getGateTopicObjects(examId?: string): Array<{ id: string; name: string; icon: string }> {
+  const requested = examId && examId.trim() ? examId.trim() : null;
+  // Reject an unrecognized override rather than silently rendering an
+  // empty topic list — falls back to the deployment default instead.
+  const id = requested && listExamIds().includes(requested) ? requested : resolveGateDefaultExamId();
+  let cached = _topicObjectsCache.get(id);
+  if (!cached) {
+    cached = getTopicsForExam(id).map(t => ({ id: t.id, name: t.name, icon: t.icon }));
+    _topicObjectsCache.set(id, cached);
+  }
+  return cached;
+}
+
+// Backward-compatible default list — the coverage calculation further down
+// (Studymate score) only needs a topic *count* for the deployment's default
+// exam, not a per-student exam, so it keeps using this.
+const GATE_TOPIC_OBJECTS = getGateTopicObjects();
+
+async function handleGetTopics(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  // Optional ?exam_id= override — must be a loaded YAML curriculum exam id
+  // ('gate-ma', 'jee-main'), validated in getGateTopicObjects(). Without
+  // it, this now resolves through the SAME function GET /api/exam/active
+  // uses, so an anonymous visitor sees the same exam's topics on Home that
+  // Chat's active-exam banner names — the immediate fix for the reported
+  // mismatch. Note this is still the deployment default, not a signed-in
+  // student's own exam registration: a student's ExamProfile (src/exams/
+  // exam-profile.ts) uses a *different* id namespace (admin-defined 'EXM-*'
+  // records from src/exams/exam-store.ts) that has no mapping onto YAML
+  // curriculum exam ids today. Wiring a signed-in student's registered
+  // exam through to Home's topic list would need that translation layer —
+  // flagged as follow-up scope, not silently done here.
+  const requestedExamId = req.query.get('exam_id') ?? undefined;
+  const topicObjects = getGateTopicObjects(requestedExamId);
   // Try to enrich with Postgres problem-count data.
   // If Postgres is unavailable (DATABASE_URL not set / ECONNREFUSED),
   // fall back to the static topic list with problemCount: 0. This lets
@@ -99,7 +147,7 @@ async function handleGetTopics(_req: ParsedRequest, res: ServerResponse): Promis
     // DB unavailable -- serve the static list with zero counts
   }
 
-  const topics = GATE_TOPIC_OBJECTS.map(t => ({
+  const topics = topicObjects.map(t => ({
     ...t,
     // Same DB-first-with-static-fallback rule as handleGetProblems, so the
     // home page's counts match what clicking into a topic actually shows.

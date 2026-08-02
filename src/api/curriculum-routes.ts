@@ -21,6 +21,7 @@ import {
   loadAllExams,
   getExam,
   listExamIds,
+  resolveActiveExamId,
 } from '../curriculum/exam-loader';
 import {
   getExamsForConcept,
@@ -90,8 +91,11 @@ async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promi
   if (ids.length === 0) {
     return sendError(res, 503, 'no exams loaded — check data/curriculum/');
   }
-  const envExamId = (process.env.DEFAULT_EXAM_ID || '').trim();
-  const activeId = envExamId && ids.includes(envExamId) ? envExamId : ids[0];
+  // resolveActiveExamId() is the single source of truth for "which exam is
+  // active" — gate-routes/spine-routes/topic-pages/blog-index/topic-detection
+  // all resolve through the same function so they can't drift from what this
+  // endpoint (and therefore Home, via useActiveExam()) reports.
+  const activeId = resolveActiveExamId()!;
   const exam = getExam(activeId)!;
 
   sendJSON(res, {
@@ -114,9 +118,18 @@ async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promi
  * Generate 4 chat starter prompts from the exam's syllabus.
  * Picks one popular concept from the first 3 sections plus a strategy prompt.
  * The frontend ChatPage uses these directly — no exam name hardcoded.
+ *
+ * `dot` is currently unread by ChatPage (it only uses `.text`), but the
+ * previous values ('bg-violet-400', 'bg-emerald-400', 'bg-amber-400',
+ * 'bg-sky-400') were retired-palette colours from the pre-Clarity theme —
+ * violet/amber/sky don't exist in the Clarity system at all, and green/
+ * indigo are reserved (mastery, tutor) rather than decorative. These are
+ * plain suggestion bullets with no status to encode, so Clarity's "decoration:
+ * none" rule means no colour differentiation at all — a single neutral grey
+ * dot, kept only so a future consumer doesn't inherit off-palette values.
  */
 function buildStarterPrompts(exam: any): Array<{ text: string; dot: string }> {
-  const dots = ['bg-violet-400', 'bg-emerald-400', 'bg-amber-400', 'bg-sky-400'];
+  const dots = ['bg-[--grey-5]', 'bg-[--grey-5]', 'bg-[--grey-5]', 'bg-[--grey-5]'];
   const examShortName = exam.metadata.name.split(' ').slice(0, 3).join(' ');
 
   const conceptToHumanLabel = (id: string): string =>

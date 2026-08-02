@@ -59,6 +59,13 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines;
 }
 
+// Clarity system-sans / mono stacks (frontend/src/styles/tokens/fonts.css)
+// duplicated here because <canvas> text can't read CSS custom properties —
+// ctx.font needs a literal font-family string.
+const FONT_SANS =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Tight", "Segoe UI", system-ui, sans-serif';
+const FONT_MONO = 'ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace';
+
 async function drawCard(
   canvas: HTMLCanvasElement,
   props: { planHeadline: string; planSubtext: string; examName?: string; shareUrl: string },
@@ -68,20 +75,21 @@ async function drawCard(
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Best-effort wait for the Fraunces/DM Sans webfonts already loaded by the
-  // app shell; falls back to system serif/sans if unavailable (e.g. jsdom).
+  // Best-effort wait for the Inter Tight / JetBrains Mono webfonts already
+  // loaded by the app shell; falls back to system sans/mono if unavailable
+  // (e.g. jsdom).
   try {
     await (document as any).fonts?.ready;
   } catch {
     /* ignore — draw with fallback fonts */
   }
 
-  // Background — DESIGN-SYSTEM.md deep navy.
-  ctx.fillStyle = '#0a0f1a';
+  // Background — Clarity canvas (DESIGN-SYSTEM.md --surface-canvas).
+  ctx.fillStyle = '#f5f5f7';
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
   // Deliberately NO border/badge here: this card carries a plan + a forward
-  // projection, not a CAS-verified answer. The emerald "receipt" border and
+  // projection, not a CAS-verified answer. The green "receipt" border and
   // any "Verified ✓" language are reserved for content backed by a real
   // verification_log record (see DESIGN-SYSTEM.md "Receipt Border") — putting
   // that visual language on a share card with nothing behind it is exactly
@@ -89,25 +97,28 @@ async function drawCard(
   const left = 72;
   let y = 112;
 
-  // Wordmark
-  ctx.fillStyle = '#10b981';
-  ctx.font = '600 32px "DM Sans", sans-serif';
+  // Wordmark — Clarity mastery green (--green-ink, on white/canvas — clears
+  // 4.5:1), never the retired emerald-500 (#10b981).
+  ctx.fillStyle = '#248a3d';
+  ctx.font = `600 32px ${FONT_SANS}`;
   ctx.fillText(props.examName ? `VIDHYA · ${props.examName.toUpperCase()}` : 'VIDHYA', left, y);
 
-  // Headline (Fraunces, editorial weight)
+  // Headline — Clarity ink on canvas, system sans (no Fraunces).
   y += 96;
-  ctx.fillStyle = '#f9fafb';
-  ctx.font = '700 78px Fraunces, Georgia, serif';
+  ctx.fillStyle = '#1d1d1f';
+  ctx.font = `700 78px ${FONT_SANS}`;
   const headlineLines = wrapText(ctx, props.planHeadline, CARD_WIDTH - left * 2);
   for (const line of headlineLines.slice(0, 2)) {
     y += 86;
     ctx.fillText(line, left, y);
   }
 
-  // Subtext — the forward-looking gain statement only, never the weakness map.
+  // Subtext — the forward-looking gain statement only, never the weakness
+  // map. Clarity secondary text (--text-secondary at full opacity for
+  // legibility on a flattened canvas — no rgba compositing here).
   y += 66;
-  ctx.fillStyle = '#d1d5db';
-  ctx.font = '400 40px "DM Sans", sans-serif';
+  ctx.fillStyle = '#6e6e73';
+  ctx.font = `400 40px ${FONT_SANS}`;
   const subLines = wrapText(ctx, props.planSubtext, CARD_WIDTH - left * 2);
   for (const line of subLines.slice(0, 2)) {
     y += 52;
@@ -115,8 +126,8 @@ async function drawCard(
   }
 
   // URL baked directly into the pixels — a screenshot must carry the link.
-  ctx.font = '600 34px "JetBrains Mono", monospace';
-  ctx.fillStyle = '#a7f3d0';
+  ctx.font = `600 34px ${FONT_MONO}`;
+  ctx.fillStyle = '#248a3d';
   ctx.fillText(props.shareUrl, left, CARD_HEIGHT - 54);
 }
 
@@ -212,7 +223,7 @@ export function ShareCard({ planHeadline, planSubtext, examName, shareUrl, onClo
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 z-50 backdrop-blur-sm flex flex-col items-center justify-center px-4 py-8"
-      style={{ background: 'rgba(10,15,26,.95)' }}
+      style={{ background: 'rgba(0,0,0,.28)' }}
     >
       <button
         onClick={onClose}

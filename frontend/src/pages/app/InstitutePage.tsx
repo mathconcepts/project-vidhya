@@ -102,14 +102,14 @@ export default function InstitutePage() {
               iconBg: 'rgba(52,199,89,.08)',
               iconColor: 'var(--green-ink)',
               title: 'Teacher roster dashboard',
-              desc: 'A per-teacher view of every linked student's mastery, and who needs attention right now — real, live, already shipped.',
+              desc: "A per-teacher view of every linked student's mastery, and who needs attention right now — real, live, already shipped.",
             },
             {
               icon: BookOpen,
               iconBg: 'rgba(52,199,89,.08)',
               iconColor: 'var(--green-ink)',
               title: 'Weekly teacher brief + syllabus coverage',
-              desc: 'A weekly digest of your cohort's progress, plus a coverage view of which syllabus topics your batch has and hasn't touched.',
+              desc: "A weekly digest of your cohort's progress, plus a coverage view of which syllabus topics your batch has and hasn't touched.",
             },
             {
               icon: Smartphone,

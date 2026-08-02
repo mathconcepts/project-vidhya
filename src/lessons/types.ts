@@ -99,6 +99,22 @@ export interface WorkedStep {
   self_check_prompt?: string;   // Optional "What would change if...?" question
 }
 
+/**
+ * Step-by-step solution harvested from Wolfram|Alpha by the
+ * wolfram-verify background job (cached in .data/wolfram-steps/).
+ * Always provenance-labeled — the UI renders it through the existing
+ * wolframAttribution path, never as authored steps.
+ */
+export interface WolframStepsEnrichment {
+  steps: string[];
+  provenance: {
+    source: 'wolfram';
+    query_id: string;
+    fetched_at: string;
+  };
+  attribution: Attribution;
+}
+
 export interface WorkedExampleComponent {
   kind: 'worked_example';
   id: string;
@@ -117,6 +133,13 @@ export interface WorkedExampleComponent {
   /** One-block prose explanation — only on 'example_problem' cards. */
   explanation?: string;
   steps: WorkedStep[];
+  /**
+   * Wolfram-harvested step-by-step enrichment, attached when the
+   * wolfram-verify job has cached steps for this example problem.
+   * Distinct from `steps` — these are computed, provenance-labeled,
+   * never presented as authored content.
+   */
+  wolfram_steps?: WolframStepsEnrichment;
   attribution?: Attribution;
   wolfram_verified?: boolean;
 }

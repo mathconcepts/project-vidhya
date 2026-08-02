@@ -18,6 +18,13 @@
  *
  * The resulting Lesson is deterministic and cacheable. Personalization
  * happens in a separate pass (src/lessons/personalizer.ts).
+ *
+ * One deliberate exception to "no I/O": the worked-example builder reads
+ * the LOCAL wolfram-steps disk cache (.data/wolfram-steps/, written by
+ * the wolfram-verify background job) and, when a cached entry exists for
+ * the example problem, attaches a provenance-labeled step-by-step
+ * enrichment. Still no network, still deterministic for a given cache
+ * state, and graceful when the cache dir is missing.
  */
 
 import crypto from 'crypto';
@@ -42,7 +49,9 @@ import {
   bundleAttribution,
   graphAttribution,
   topicNotesAttribution,
+  wolframAttribution,
 } from './source-resolver';
+import { readWolframSteps } from '../services/wolfram-steps-cache';
 import { COMPONENT_ORDER } from './types';
 
 // ============================================================================
@@ -213,7 +222,7 @@ function buildWorkedExample(sources: SourceBundle): WorkedExampleComponent | nul
   //    sentence boundaries).
   const p = bundle.problems[0];
   if (p) {
-    return {
+    const component: WorkedExampleComponent = {
       kind: 'worked_example',
       id: componentId(sources.concept_id, 'worked_example'),
       presentation: 'example_problem',
@@ -225,6 +234,20 @@ function buildWorkedExample(sources: SourceBundle): WorkedExampleComponent | nul
       attribution: bundleAttribution(p.source, graph.label),
       wolfram_verified: !!p.wolfram_verified,
     };
+    // Wolfram step harvest (realignment plan item 5): when the
+    // wolfram-verify job has cached real step-by-step output for THIS
+    // example problem, attach it as a provenance-labeled enrichment.
+    // Never fabricated — either Wolfram computed the steps or the field
+    // is absent. Graceful when the cache dir is missing (reader → null).
+    const cached = p.id ? readWolframSteps(p.id) : null;
+    if (cached) {
+      component.wolfram_steps = {
+        steps: cached.steps,
+        provenance: cached.provenance,
+        attribution: wolframAttribution(),
+      };
+    }
+    return component;
   }
   return null;
 }
@@ -378,12 +401,19 @@ export function composeBase(sources: SourceBundle): Lesson {
   const seenSources = new Set<string>();
   const sourcesList: Attribution[] = [];
   for (const c of components) {
-    const a = (c as any).attribution as Attribution | undefined;
-    if (!a) continue;
-    const key = `${a.kind}|${a.title || ''}|${a.license || ''}`;
-    if (!seenSources.has(key)) {
-      seenSources.add(key);
-      sourcesList.push(a);
+    const attributions: Array<Attribution | undefined> = [(c as any).attribution];
+    // Wolfram step enrichment carries its own attribution — surface it
+    // in the lesson-level sources list too.
+    if (c.kind === 'worked_example' && c.wolfram_steps) {
+      attributions.push(c.wolfram_steps.attribution);
+    }
+    for (const a of attributions) {
+      if (!a) continue;
+      const key = `${a.kind}|${a.title || ''}|${a.license || ''}`;
+      if (!seenSources.has(key)) {
+        seenSources.add(key);
+        sourcesList.push(a);
+      }
     }
   }
 

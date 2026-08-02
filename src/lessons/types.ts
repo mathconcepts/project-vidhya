@@ -277,6 +277,8 @@ export interface StudentSnapshot {
     sm2_interval_days: number;
     sm2_ease_factor: number;
   }>;
+  /** Preferred exam pack (e.g. "gate-ma") — steers atom selection + ranking. */
+  preferred_exam_id?: string;
   /** Has the student uploaded materials the RAG can surface? */
   has_materials?: boolean;
   /** Optional scope context from syllabus */

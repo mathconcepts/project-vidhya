@@ -39,7 +39,7 @@ beforeEach(() => {
 function makeReq(overrides: any = {}) {
   return {
     pathname: '',
-    query: {},
+    query: new URLSearchParams(),
     params: {},
     body: null,
     headers: {},
@@ -93,10 +93,49 @@ describe('REGRESSION — GET /api/lesson/:concept_id', () => {
 
   it('400 when concept_id is missing', async () => {
     const handler = getHandler('GET', '/api/lesson/:concept_id');
-    const req = makeReq({ params: {}, query: {} });
+    const req = makeReq({ params: {} });
     const wrap = makeRes();
     await handler(req as any, wrap.res);
     expect(wrap.status).toBe(400);
+  });
+});
+
+// ─── RC1 — atom fallback is never silent ───────────────────────────────
+
+describe('RC1 — atom fallback logging + counter', () => {
+  it('warns once per concept and counts every fallback when atoms are unavailable', async () => {
+    const { getAtomFallbackCounts, resetAtomFallbackCounts } = await import('../lesson-routes');
+    resetAtomFallbackCounts();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const handler = getHandler('GET', '/api/lesson/:concept_id');
+    // 'determinants' is in the concept graph but has no authored atoms dir.
+    for (let i = 0; i < 2; i++) {
+      const wrap = makeRes();
+      await handler(makeReq({ params: { concept_id: 'determinants' } }) as any, wrap.res);
+      expect(wrap.status).toBe(200);
+      expect((wrap.payload as any).atoms).toEqual([]);
+      expect(wrap.payload).toHaveProperty('components');
+    }
+
+    expect(getAtomFallbackCounts()['determinants']).toBe(2);
+    const fallbackWarns = warnSpy.mock.calls.filter(c =>
+      String(c[0]).includes('atoms unavailable for determinants'),
+    );
+    expect(fallbackWarns.length).toBe(1); // once per concept, not per request
+    warnSpy.mockRestore();
+    resetAtomFallbackCounts();
+  });
+
+  it('does not count concepts that have atoms', async () => {
+    const { getAtomFallbackCounts, resetAtomFallbackCounts } = await import('../lesson-routes');
+    resetAtomFallbackCounts();
+    const handler = getHandler('GET', '/api/lesson/:concept_id');
+    const wrap = makeRes();
+    await handler(makeReq({ params: { concept_id: 'derivatives-basic' } }) as any, wrap.res);
+    expect(wrap.status).toBe(200);
+    expect(getAtomFallbackCounts()['derivatives-basic']).toBeUndefined();
+    resetAtomFallbackCounts();
   });
 });
 

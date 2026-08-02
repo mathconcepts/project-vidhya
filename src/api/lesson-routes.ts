@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Lesson Routes — HTTP surface for the Lesson subsystem.
  *
@@ -43,6 +42,38 @@ import { sendJSON, sendError } from '../lib/route-helpers';
 // ============================================================================
 // ContentAtom v2 — engagement enrichment helpers
 // ============================================================================
+
+// ============================================================================
+// RC1 guard — atom fallbacks are never silent
+// ============================================================================
+
+/**
+ * Counts, per concept, how often the atom path was unavailable and the
+ * legacy composer served the lesson instead. Exposed via
+ * getAtomFallbackCounts() so the health/metrics surface can report it.
+ * The warn fires once per concept per process; the counter always increments.
+ */
+const _atomFallbackCounts = new Map<string, number>();
+const _atomFallbackWarned = new Set<string>();
+
+function noteAtomFallback(concept_id: string): void {
+  _atomFallbackCounts.set(concept_id, (_atomFallbackCounts.get(concept_id) ?? 0) + 1);
+  if (!_atomFallbackWarned.has(concept_id)) {
+    _atomFallbackWarned.add(concept_id);
+    console.warn(`[lesson] atoms unavailable for ${concept_id} — falling back to legacy composer`);
+  }
+}
+
+/** Snapshot of per-concept atom-fallback counts (health/metrics surface). */
+export function getAtomFallbackCounts(): Record<string, number> {
+  return Object.fromEntries(_atomFallbackCounts);
+}
+
+/** Test hook — clears counters and the warn-once memory. */
+export function resetAtomFallbackCounts(): void {
+  _atomFallbackCounts.clear();
+  _atomFallbackWarned.clear();
+}
 
 const { Pool } = pg;
 let _atomPool: any = null;
@@ -233,7 +264,7 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
   // omitted or GBrain is unavailable.
   if (lessonReq.session_id && !lessonReq.student) {
     try {
-      const model = await getOrCreateStudentModel(lessonReq.session_id, null);
+      const model = await getOrCreateStudentModel(lessonReq.session_id);
       lessonReq.student = modelToLessonSnapshot(model);
     } catch {
       // Graceful degradation — lesson works without enrichment
@@ -298,14 +329,16 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       // Phase A wire-in (PR following #36): re-rank within the already-
       // selected set per the PersonalizedSelector. Returns atoms unchanged
       // when the session is anonymous or in the control bucket.
-      atoms = await rankAtomsForLesson(atoms, {
+      atoms = (await rankAtomsForLesson(atoms as Array<ContentAtom & Record<string, unknown>>, {
         session_id: lessonReq.session_id ?? null,
         student_id: null, // resolved from session_id inside the helper
         concept_id: lessonReq.concept_id,
-        exam_pack_id: lessonReq.preferred_exam_id ?? undefined,
-      });
+        exam_pack_id: lessonReq.student?.preferred_exam_id ?? undefined,
+      })) as ContentAtom[];
     } catch (err) {
-      if (!(err instanceof ConceptNotFoundError)) {
+      if (err instanceof ConceptNotFoundError) {
+        noteAtomFallback(lessonReq.concept_id);
+      } else {
         console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
       }
     }
@@ -347,17 +380,16 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
     try {
       const conceptAtoms = await loadConceptAtoms(concept_id);
       const conceptMeta = await loadConceptMeta(concept_id);
-      const session_id = (req.query?.session_id as string | undefined) ?? null;
-      const student_id = (req.query?.student_id as string | undefined) ?? session_id;
-      const exam_proximity_days = req.query?.exam_proximity_days
-        ? Number(req.query.exam_proximity_days)
-        : undefined;
-      const preferred_exam_id = (req.query?.preferred_exam_id as string | undefined);
+      const session_id = req.query?.get('session_id') ?? null;
+      const student_id = req.query?.get('student_id') ?? session_id;
+      const rawProximity = req.query?.get('exam_proximity_days');
+      const exam_proximity_days = rawProximity ? Number(rawProximity) : undefined;
+      const preferred_exam_id = req.query?.get('preferred_exam_id') ?? undefined;
 
       let studentModel = null;
       if (session_id) {
         try {
-          studentModel = await getOrCreateStudentModel(session_id, null);
+          studentModel = await getOrCreateStudentModel(session_id);
         } catch { /* graceful degradation */ }
       }
       const sessionContext: SessionContext = {
@@ -387,17 +419,19 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       // Phase A wire-in (PR following #36): re-rank within the already-
       // selected set per the PersonalizedSelector. Returns atoms unchanged
       // when the session is anonymous or in the control bucket.
-      atoms = await rankAtomsForLesson(atoms, {
+      atoms = (await rankAtomsForLesson(atoms as Array<ContentAtom & Record<string, unknown>>, {
         session_id: student_id ?? session_id ?? null,
         student_id: null, // resolved from session_id inside the helper
         concept_id,
         exam_pack_id: preferred_exam_id ?? undefined,
-      });
+      })) as ContentAtom[];
     } catch (err) {
-      if (!(err instanceof ConceptNotFoundError)) {
+      if (err instanceof ConceptNotFoundError) {
+        // Legacy base lesson without atoms — loudly counted, never silent.
+        noteAtomFallback(concept_id);
+      } else {
         console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);
       }
-      // ConceptNotFoundError → just return the legacy base lesson without atoms.
     }
 
     sendJSON(res, { ...base, atoms });
@@ -426,7 +460,8 @@ async function handleAtomEngagement(req: ParsedRequest, res: ServerResponse): Pr
   if (!pool) {
     // Local dev without DB — accept silently
     res.statusCode = 204;
-    return res.end();
+    res.end();
+    return;
   }
 
   try {
@@ -583,7 +618,7 @@ async function handleAdvanceSM2(req: ParsedRequest, res: ServerResponse): Promis
   if (!body.concept_id) return sendError(res, 400, 'concept_id required');
 
   const quality = body.quality !== undefined
-    ? Math.max(0, Math.min(4, Math.round(body.quality)))
+    ? (Math.max(0, Math.min(4, Math.round(body.quality))) as 0 | 1 | 2 | 3 | 4)
     : inferQualityFromEngagement({
         micro_exercise_correct: body.micro_exercise_correct,
         micro_exercise_duration_ms: body.micro_exercise_duration_ms,

@@ -66,7 +66,7 @@ Structure suggestion (not enforced):
 ### `meta.yaml` — structured metadata (required)
 
 ```yaml
-concept_id: calculus-derivatives
+concept_id: derivatives-basic
 title: Derivative
 licence: MIT
 contributor: <your name>
@@ -119,7 +119,7 @@ Bundles group concepts for subscription. To create one:
   "name": "My New Bundle",
   "description": "Two-sentence explanation of what this bundle covers.",
   "concepts": [
-    "calculus-derivatives",
+    "derivatives-basic",
     "calculus-integration",
     "calculus-limits"
   ],

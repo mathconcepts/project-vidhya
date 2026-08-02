@@ -63,6 +63,9 @@ interface ContentBundle {
   version: number;
   problems: any[];
   explainers: Record<string, any>;
+  /** v3+: per-topic lecture-notes excerpts keyed by concept-graph topic id.
+   *  Absent on v2 bundles — always read defensively. */
+  topic_notes?: Record<string, string>;
   stats?: any;
 }
 
@@ -93,6 +96,19 @@ function getBundle(): Promise<ContentBundle> {
 // Call once at app start to warm the cache
 export async function warmContentBundle(): Promise<void> {
   await getBundle();
+}
+
+/**
+ * Per-topic lecture-notes excerpt from the bundle (v3+). Returns null on
+ * older bundles (no topic_notes field) or unknown topic ids — callers
+ * must treat null as "no notes", never as an error.
+ */
+export async function getTopicNotes(topic: string): Promise<string | null> {
+  const bundle = await getBundle();
+  const notes = bundle.topic_notes;
+  if (!notes || typeof notes !== 'object') return null;
+  const text = notes[topic];
+  return typeof text === 'string' && text.trim() ? text : null;
 }
 
 // ============================================================================

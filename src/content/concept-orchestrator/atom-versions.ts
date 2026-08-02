@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * atom-versions.ts — DB layer for the atom_versions table.
  *

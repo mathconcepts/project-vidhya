@@ -259,7 +259,7 @@ import type { BloomLevel, AtomType } from '../content/content-types';
  * Each LO has explicit mastery criteria so progress can be measured.
  */
 export interface LearningObjective {
-  id: string;                        // e.g. "calculus-derivatives.lo.product-rule"
+  id: string;                        // e.g. "derivatives-basic.lo.product-rule"
   text: string;                      // "Apply the product rule to compute (fg)'"
   bloom_level: BloomLevel;
   mastery_criteria: {

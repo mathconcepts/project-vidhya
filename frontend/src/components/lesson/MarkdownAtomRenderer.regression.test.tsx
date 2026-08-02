@@ -1,5 +1,5 @@
 /**
- * REGRESSION — every existing seed atom (3 concepts × 7 atoms = 21 files)
+ * REGRESSION — every existing seed atom (3 concepts × 8 atoms = 24 files)
  * must render without throwing under the v3 markdown pipeline.
  *
  * The contract from the eng review: atoms NEVER fail to render. If a parser
@@ -14,7 +14,7 @@ import matter from 'gray-matter';
 import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 
 const CONTENT_ROOT = path.resolve(__dirname, '../../../../modules/project-vidhya-content/concepts');
-const CONCEPTS = ['calculus-derivatives', 'complex-numbers', 'linear-algebra-eigenvalues'];
+const CONCEPTS = ['derivatives-basic', 'complex-numbers', 'eigenvalues'];
 
 interface AtomFile {
   concept: string;
@@ -44,8 +44,8 @@ function loadAtoms(): AtomFile[] {
 describe('MarkdownAtomRenderer — regression on seed atoms', () => {
   const atoms = loadAtoms();
 
-  it('loads all 21 seed atoms', () => {
-    expect(atoms.length).toBe(21);
+  it('loads all 24 seed atoms', () => {
+    expect(atoms.length).toBe(24);
   });
 
   it.each(atoms)('renders $concept/$file without throwing', ({ id, body }) => {

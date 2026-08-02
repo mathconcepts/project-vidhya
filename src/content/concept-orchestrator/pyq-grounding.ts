@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * pyq-grounding.ts — exam-pattern grounding for the orchestrator (E3).
  *

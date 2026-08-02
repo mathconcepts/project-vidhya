@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Source Resolver
  *
@@ -23,6 +22,7 @@ import path from 'path';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import { verifyProblemWithWolfram } from '../services/wolfram-service';
 import { filterChunksForExam } from '../curriculum/guardrails';
+import { getConceptTopicContext } from '../content/topic-context';
 import type { Attribution, LessonRequest } from './types';
 
 // ============================================================================
@@ -49,10 +49,14 @@ interface BundleExplainer {
   label: string;
   canonical_definition?: string;
   deep_explanation?: string;
-  worked_examples?: Array<{ problem: string; solution: string } | string>;
-  common_misconceptions?: string[];
+  /** A DISTINCT formal statement, when authored. Never duplicated from canonical_definition. */
+  formal_statement?: string;
+  worked_examples?: Array<{ problem: string; solution: string; answer?: string } | string>;
+  common_misconceptions?: Array<string | { id?: string; description?: string; corrective?: string }>;
   prerequisite_reminders?: string[];
   exam_tip?: string;
+  /** Generator model id; 'placeholder' marks metadata-only stub content. */
+  model?: string;
 }
 
 interface ContentBundle {
@@ -112,12 +116,24 @@ export interface GraphSourceData {
   dependents: Array<{ id: string; label: string }>;
 }
 
+export interface TopicNotesSourceData {
+  topic_id: string;
+  /** Concept-level section from teaching-tips.md when a heading matched this concept's label. */
+  concept_section: string | null;
+  /** Topic-level "Mental Model" prose. */
+  mental_model: string | null;
+  /** Topic-level "Study Strategy" prose. */
+  study_strategy: string | null;
+}
+
 export interface SourceBundle {
   concept_id: string;
   user_materials: UserMaterialChunk[];
   bundle: BundleSourceData;
   wolfram: WolframSourceData;
   graph: GraphSourceData;
+  /** Authored per-topic study-guide content; absent when no guide exists. */
+  topic_notes?: TopicNotesSourceData | null;
 }
 
 // ============================================================================
@@ -207,6 +223,15 @@ export function graphAttribution(): Attribution {
   };
 }
 
+export function topicNotesAttribution(topic_id: string): Attribution {
+  return {
+    kind: 'topic-notes',
+    title: `${topic_id.replace(/-/g, ' ')} study guide`,
+    license: 'MIT',
+    author: 'Vidhya course notes',
+  };
+}
+
 // ============================================================================
 // Resolver
 // ============================================================================
@@ -283,11 +308,28 @@ export async function resolveSources(req: LessonRequest): Promise<SourceBundle> 
     ? filterChunksForExam(raw_user_chunks, (req as any).exam_id)
     : { allowed: raw_user_chunks };
 
+  // Topic notes: authored per-topic study-guide content (teaching-tips.md).
+  // Deterministic file read, cached in topic-context. Never a crash — a
+  // missing guide simply yields null and the composer omits those cards.
+  let topic_notes: TopicNotesSourceData | null = null;
+  try {
+    const ctx = getConceptTopicContext(req.concept_id);
+    if (ctx) {
+      topic_notes = {
+        topic_id: ctx.topic_id,
+        concept_section: ctx.concept_section,
+        mental_model: ctx.mental_model,
+        study_strategy: ctx.study_strategy,
+      };
+    }
+  } catch { /* shadow path — omit topic notes */ }
+
   return {
     concept_id: req.concept_id,
     user_materials: guarded_user_chunks.slice(0, 5),
     bundle: { explainer, problems: bundleProblems },
     wolfram,
+    topic_notes,
     graph: {
       id: concept.id,
       label: concept.label,

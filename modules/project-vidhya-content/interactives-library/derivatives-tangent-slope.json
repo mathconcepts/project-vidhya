@@ -15,7 +15,7 @@
     "alt_text": "Plot of y = x squared on x ∈ [-2, 3]. The tangent line at x = 1 has slope 2; secant lines drawn for h = 1, 0.5, 0.1 visibly converge to the tangent as h shrinks."
   },
   "atoms_using": [
-    "calculus-derivatives.intuition",
-    "calculus-derivatives.formal-definition"
+    "derivatives-basic.intuition",
+    "derivatives-basic.formal-definition"
   ]
 }

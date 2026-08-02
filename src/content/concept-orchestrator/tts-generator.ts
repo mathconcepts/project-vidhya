@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * tts-generator.ts — TTS narration for atom bodies (§4.15 Phase C).
  *

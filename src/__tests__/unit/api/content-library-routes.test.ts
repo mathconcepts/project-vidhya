@@ -143,14 +143,14 @@ describe('content-library routes — read', () => {
     const s = snapshot();
     expect(s.status).toBe(200);
     expect(s.json.count).toBeGreaterThanOrEqual(3);
-    expect(s.json.concepts.some((c: any) => c.concept_id === 'calculus-derivatives')).toBe(true);
+    expect(s.json.concepts.some((c: any) => c.concept_id === 'derivatives-basic')).toBe(true);
   });
 
   it('GET /concept/:id is public', async () => {
     const { contentLibraryRoutes } = await import('../../../api/content-library-routes');
     const handler = contentLibraryRoutes.find(r => r.method === 'GET' && r.path === '/api/content-library/concept/:id')!.handler;
     const { res, snapshot } = makeRes();
-    await handler(makeReq({ method: 'GET', url: '/api/content-library/concept/calculus-derivatives', params: { id: 'calculus-derivatives' } }), res as any);
+    await handler(makeReq({ method: 'GET', url: '/api/content-library/concept/derivatives-basic', params: { id: 'derivatives-basic' } }), res as any);
     const s = snapshot();
     expect(s.status).toBe(200);
     expect(s.json.title).toBe('Derivative');

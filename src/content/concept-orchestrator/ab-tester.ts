@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ab-tester.ts — automatic A/B testing of regen variants (PENDING.md §4.12).
  *

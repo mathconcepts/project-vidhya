@@ -23,7 +23,7 @@ import type { StudentModel } from '../../gbrain/student-model';
 function atom(id: string, atom_type: AtomType, opts: Partial<ContentAtom> = {}): ContentAtom {
   return {
     id,
-    concept_id: 'calculus-derivatives',
+    concept_id: 'derivatives-basic',
     atom_type,
     bloom_level: 2,
     difficulty: 0.0,
@@ -43,16 +43,16 @@ function fullAtomSet(): ContentAtom[] {
   return allTypes.map((t, i) => atom(`a-${t}`, t, { difficulty: 0.0 + i * 0.01 }));
 }
 
-const baseMeta: ConceptMeta = { concept_id: 'calculus-derivatives' };
+const baseMeta: ConceptMeta = { concept_id: 'derivatives-basic' };
 const baseSession: SessionContext = { error_streak: 0, last_error_atom_type: null };
-const baseRouteRequest: RouteRequest = { user_id: 'u', text: '', concept_id: 'calculus-derivatives' };
+const baseRouteRequest: RouteRequest = { user_id: 'u', text: '', concept_id: 'derivatives-basic' };
 
 function studentWithMastery(score: number): StudentModel {
   return {
     id: 'sm-1',
     session_id: 's-1',
     user_id: null,
-    mastery_vector: { 'calculus-derivatives': { score, attempts: 1, correct: 1, last_update: '' } },
+    mastery_vector: { 'derivatives-basic': { score, attempts: 1, correct: 1, last_update: '' } },
     speed_profile: {},
     prerequisite_alerts: [],
   } as any;
@@ -80,7 +80,7 @@ describe('classifyMastery', () => {
 
 describe('readMasteryScore', () => {
   it('returns 0 for null model', () => {
-    expect(readMasteryScore(null, 'calculus-derivatives')).toBe(0);
+    expect(readMasteryScore(null, 'derivatives-basic')).toBe(0);
   });
   it('returns 0 for missing concept', () => {
     const m = studentWithMastery(0.5);
@@ -88,7 +88,7 @@ describe('readMasteryScore', () => {
   });
   it('reads MasteryEntry.score', () => {
     const m = studentWithMastery(0.7);
-    expect(readMasteryScore(m, 'calculus-derivatives')).toBe(0.7);
+    expect(readMasteryScore(m, 'derivatives-basic')).toBe(0.7);
   });
 });
 
@@ -298,7 +298,7 @@ describe('selectAtoms — exam overlay', () => {
   it('skip_atom_types filters out matching types (non-wildcard atoms)', () => {
     const atoms = fullAtomSet().map((a) => ({ ...a, exam_ids: ['EXM-GATE-CS'] }));
     const meta: ConceptMeta = {
-      concept_id: 'calculus-derivatives',
+      concept_id: 'derivatives-basic',
       exam_overlays: {
         'EXM-GATE-CS': {
           required_bloom_levels: [1, 2, 3, 4, 5, 6],
@@ -324,7 +324,7 @@ describe('selectAtoms — exam overlay', () => {
       atom('w-fdef', 'formal_definition', { exam_ids: ['*'] }),
     ];
     const meta: ConceptMeta = {
-      concept_id: 'calculus-derivatives',
+      concept_id: 'derivatives-basic',
       exam_overlays: {
         'EXM-GATE-CS': {
           required_bloom_levels: [1, 2, 3, 4, 5, 6],
@@ -349,7 +349,7 @@ describe('selectAtoms — exam overlay', () => {
       atom('a-mid', 'formal_definition', { bloom_level: 3, id: 'a-mid' }),
     ];
     const meta: ConceptMeta = {
-      concept_id: 'calculus-derivatives',
+      concept_id: 'derivatives-basic',
       exam_overlays: {
         'EXM-GATE-CS': {
           required_bloom_levels: [3, 4],

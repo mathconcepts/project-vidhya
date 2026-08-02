@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * prompt-patterns.ts — self-improving prompts (PENDING.md §4.13).
  *
@@ -85,8 +84,11 @@ export async function patternForVersion(
  */
 export function signatureFromMeta(atom_id: string, meta: any): PatternSignature {
   const concept_id = atom_id.split('.')[0];
-  const concept = ALL_CONCEPTS.find((c: any) => c.id === concept_id);
-  const topic_family = concept?.topic_family ?? concept?.topic ?? 'generic';
+  const concept = ALL_CONCEPTS.find((c) => c.id === concept_id);
+  // ConceptNode carries no topic_family field today; some meta producers
+  // stamp one, so tolerate it before falling back to the graph topic.
+  const topic_family =
+    (concept as { topic_family?: string } | undefined)?.topic_family ?? concept?.topic ?? 'generic';
 
   // atom_id stores hyphenated atom_type (e.g. "formal-definition");
   // canonicalize to underscore form for the key.

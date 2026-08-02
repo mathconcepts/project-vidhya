@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Build Explainer Library
  *
@@ -12,6 +11,11 @@
  * Usage:
  *   GEMINI_API_KEY=... npx tsx scripts/build-explainers.ts
  *   GEMINI_API_KEY=... npx tsx scripts/build-explainers.ts --concept eigenvalues
+ *
+ * Without GEMINI_API_KEY the script REFUSES to run (exit 1) — shipping
+ * placeholder explainers as if they were real content is exactly the
+ * regression that put 82 placeholders in production. Pass
+ * --allow-placeholder to explicitly opt in to the metadata-only library.
  *
  * Output: frontend/public/data/explainers.json
  */
@@ -70,9 +74,19 @@ Keep misconceptions array to 3-5 entries. Keep everything precise and exam-relev
 async function main() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error('GEMINI_API_KEY required. Generating placeholder library from concept metadata only.');
-    generatePlaceholderLibrary();
-    return;
+    if (process.argv.includes('--allow-placeholder')) {
+      console.error('GEMINI_API_KEY unset; --allow-placeholder passed — generating placeholder library from concept metadata only.');
+      generatePlaceholderLibrary();
+      return;
+    }
+    console.error(
+      'GEMINI_API_KEY is required to build real explainers.\n' +
+      'Refusing to emit placeholder content — placeholders shipped as real ' +
+      'explainers are a known production regression.\n' +
+      'Either set GEMINI_API_KEY, or pass --allow-placeholder to explicitly ' +
+      'generate the metadata-only placeholder library.',
+    );
+    process.exit(1);
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);

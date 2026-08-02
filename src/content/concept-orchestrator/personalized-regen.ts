@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * personalized-regen.ts — per-student variant generation (E5).
  *

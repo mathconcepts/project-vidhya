@@ -12,8 +12,8 @@ import { AtomCardRenderer, type ContentAtom } from './AtomCardRenderer';
 
 function makeAtom(overrides: Partial<ContentAtom> = {}): ContentAtom {
   return {
-    id: 'calculus-derivatives.intuition',
-    concept_id: 'calculus-derivatives',
+    id: 'derivatives-basic.intuition',
+    concept_id: 'derivatives-basic',
     atom_type: 'intuition',
     bloom_level: 2,
     difficulty: 0.1,
@@ -30,7 +30,7 @@ describe('Phase 5 — AtomCardRenderer + ImprovedBadge integration', () => {
       last_seen_at: '2026-04-30T08:00:00Z',
       improvement_reason: 'Cohort error 52% — top miss: students confused tangent with secant',
     });
-    render(<AtomCardRenderer atoms={[atom]} conceptId="calculus-derivatives" studentId="s1" />);
+    render(<AtomCardRenderer atoms={[atom]} conceptId="derivatives-basic" studentId="s1" />);
     expect(screen.getByText('Improved')).toBeInTheDocument();
   });
 
@@ -39,7 +39,7 @@ describe('Phase 5 — AtomCardRenderer + ImprovedBadge integration', () => {
       improved_since: '2026-04-30T08:00:00Z',
       last_seen_at: '2026-05-01T12:00:00Z',
     });
-    render(<AtomCardRenderer atoms={[atom]} conceptId="calculus-derivatives" studentId="s1" />);
+    render(<AtomCardRenderer atoms={[atom]} conceptId="derivatives-basic" studentId="s1" />);
     expect(screen.queryByText('Improved')).toBeNull();
   });
 
@@ -48,13 +48,13 @@ describe('Phase 5 — AtomCardRenderer + ImprovedBadge integration', () => {
       improved_since: '2026-05-01T12:00:00Z',
       // last_seen_at intentionally undefined — first-time encounter post-regen
     });
-    render(<AtomCardRenderer atoms={[atom]} conceptId="calculus-derivatives" studentId="s1" />);
+    render(<AtomCardRenderer atoms={[atom]} conceptId="derivatives-basic" studentId="s1" />);
     expect(screen.getByText('Improved')).toBeInTheDocument();
   });
 
   it('hides badge when atom has no orchestrator enrichment at all', () => {
     const atom = makeAtom();
-    render(<AtomCardRenderer atoms={[atom]} conceptId="calculus-derivatives" studentId="s1" />);
+    render(<AtomCardRenderer atoms={[atom]} conceptId="derivatives-basic" studentId="s1" />);
     expect(screen.queryByText('Improved')).toBeNull();
   });
 
@@ -68,7 +68,7 @@ describe('Phase 5 — AtomCardRenderer + ImprovedBadge integration', () => {
       is_student_override: true,
       improved_since: '2026-05-01T12:00:00Z',
     });
-    render(<AtomCardRenderer atoms={[atom]} conceptId="calculus-derivatives" studentId="s1" />);
+    render(<AtomCardRenderer atoms={[atom]} conceptId="derivatives-basic" studentId="s1" />);
     expect(screen.getByText(/Personalized variant/)).toBeInTheDocument();
     expect(screen.getByText('Improved')).toBeInTheDocument();
   });
@@ -78,7 +78,7 @@ describe('Phase 5 — AtomCardRenderer + ImprovedBadge integration', () => {
       improved_since: '2026-05-01T12:00:00Z',
       last_seen_at: '2026-04-30T08:00:00Z',
     });
-    render(<AtomCardRenderer atoms={[atom]} conceptId="calculus-derivatives" studentId="s1" />);
+    render(<AtomCardRenderer atoms={[atom]} conceptId="derivatives-basic" studentId="s1" />);
     const status = screen.getByRole('status');
     expect(status).toHaveAttribute('aria-label', 'This concept improved since your last visit');
   });

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * gif-generator.ts — server-side parametric GIF render (§4.15 Phase B).
  *

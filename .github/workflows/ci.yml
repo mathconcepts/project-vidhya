@@ -50,6 +50,21 @@ jobs:
       - name: Fork-test lint (no exam-name literals in engine modules)
         run: npm run lint:fork-test
 
+      # Content gate (realignment plan D4.2): atoms-dir/concept-id check,
+      # retired-id grep, placeholder ratchet, golden-set answer keys.
+      #
+      # CONTENT_CI_STRICT flip rule (placeholder sequencing, spec-locked):
+      # the 82 shipped placeholder explainers are grandfathered as the
+      # ratchet baseline — CI fails only if the count INCREASES. After the
+      # first real generation run lands, flip CONTENT_CI_STRICT to 'true'
+      # IN THE SAME COMMIT that lands the real explainers.json; the gate
+      # then requires zero placeholders. The gate is never permanently red
+      # and --allow-placeholder never becomes routine.
+      - name: Content gate (golden set + placeholder ratchet + atoms-dir)
+        env:
+          CONTENT_CI_STRICT: 'false'
+        run: npm run ci:content-gate
+
       - name: Test
         run: npm test
 

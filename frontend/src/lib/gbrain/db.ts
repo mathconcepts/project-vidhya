@@ -278,6 +278,11 @@ export async function getChunksForMaterial(materialId: string) {
   return db.getAllFromIndex('chunks', 'by-material', materialId);
 }
 
+export async function getChunk(chunkId: string) {
+  const db = await getDB();
+  return db.get('chunks', chunkId);
+}
+
 export async function getAllMaterialEmbeddings() {
   const db = await getDB();
   return db.getAllFromIndex('embeddings', 'by-source', 'material');

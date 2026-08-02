@@ -22,16 +22,17 @@ import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCard
 import {
   Loader2, CheckCircle2, XCircle, Eye,
   Lightbulb, BookOpen, Target, Zap, AlertTriangle, Hash, GitBranch,
-  Sparkles, ExternalLink, RotateCcw, Gauge,
+  Sparkles, ExternalLink, RotateCcw, Gauge, ListChecks,
 } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
+import { gatherComposeSignals } from '@/lib/gbrain/compose-signals';
 
 // ============================================================================
 // Minimal type mirrors (the server is the source of truth)
 // ============================================================================
 
 interface Attribution {
-  kind: 'user-material' | 'bundle-canon' | 'wolfram-computed' | 'concept-graph' | 'generated';
+  kind: 'user-material' | 'bundle-canon' | 'wolfram-computed' | 'concept-graph' | 'topic-notes' | 'generated';
   title?: string;
   url?: string;
   license?: string;
@@ -40,7 +41,7 @@ interface Attribution {
 
 type ComponentKind =
   | 'hook' | 'definition' | 'intuition' | 'worked_example'
-  | 'micro_exercise' | 'common_traps' | 'formal_statement' | 'connections';
+  | 'micro_exercise' | 'common_traps' | 'strategy' | 'formal_statement' | 'connections';
 
 interface Lesson {
   concept_id: string;
@@ -74,6 +75,7 @@ const KIND_META: Record<ComponentKind, { icon: typeof Lightbulb; color: string; 
   worked_example:   { icon: Target,        color: 'var(--indigo-ink)', title: 'Worked example' },
   micro_exercise:   { icon: Zap,           color: 'var(--orange)',    title: 'Quick check' },
   common_traps:     { icon: AlertTriangle, color: 'var(--red)',       title: 'Watch for' },
+  strategy:         { icon: ListChecks,    color: 'var(--indigo-ink)', title: 'Study strategy' },
   formal_statement: { icon: Hash,          color: 'var(--indigo-ink)', title: 'Formal' },
   connections:      { icon: GitBranch,     color: 'var(--indigo-ink)', title: 'Connections' },
 };
@@ -111,6 +113,7 @@ function AttributionBadge({ a }: { a: Attribution | undefined }) {
     'bundle-canon':     { background: 'rgba(88,86,214,.06)',   color: 'var(--indigo-ink)',  border: '1px solid rgba(88,86,214,.22)' },
     'wolfram-computed': { background: 'rgba(255,149,0,.06)',   color: 'var(--orange)',      border: '1px solid rgba(255,149,0,.22)' },
     'concept-graph':    { background: 'var(--surface-fill)',   color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' },
+    'topic-notes':      { background: 'var(--surface-fill)',   color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' },
     'generated':        { background: 'rgba(88,86,214,.06)',   color: 'var(--indigo-ink)',  border: '1px solid rgba(88,86,214,.22)' },
   };
   const s = kindStyle[a.kind];
@@ -139,7 +142,10 @@ function ComponentCard({
   onSkip: () => void;
   onReveal: () => void;
 }) {
-  const meta = KIND_META[component.kind as ComponentKind];
+  // Unknown kinds (newer server than client) fall back to a neutral header
+  // instead of crashing the lesson.
+  const meta = KIND_META[component.kind as ComponentKind]
+    ?? { icon: BookOpen, color: 'var(--text-tertiary)', title: String(component.kind).replace(/_/g, ' ') };
   const Icon = meta.icon;
   return (
     <motion.div
@@ -161,6 +167,7 @@ function ComponentCard({
       {component.kind === 'worked_example' && <WorkedExampleBody c={component} onReveal={onReveal} />}
       {component.kind === 'micro_exercise' && <MicroExerciseBody c={component} onComplete={onComplete} />}
       {component.kind === 'common_traps' && <CommonTrapsBody c={component} />}
+      {component.kind === 'strategy' && <StrategyBody c={component} />}
       {component.kind === 'formal_statement' && <FormalStatementBody c={component} />}
       {component.kind === 'connections' && <ConnectionsBody c={component} />}
 
@@ -224,8 +231,64 @@ function IntuitionBody({ c }: { c: any }) {
   );
 }
 
+function StrategyBody({ c }: { c: any }) {
+  return (
+    <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
+      {c.text}
+    </p>
+  );
+}
+
+/**
+ * Honest MCQ rendering: one example-problem card — question, options,
+ * answer, explanation as a single revealable prose block. No fabricated
+ * step structure.
+ */
+function ExampleProblemBody({ c, onReveal }: { c: any; onReveal: () => void }) {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+        <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Example problem</p>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{c.problem}</p>
+        {Array.isArray(c.options) && c.options.length > 0 && (
+          <ul style={{ margin: '8px 0 0', paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {c.options.map((opt: string, i: number) => (
+              <li key={i} style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{opt}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {revealed ? (
+        <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--green-ink)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Answer</p>
+          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{c.final_answer}</p>
+          {c.explanation && (
+            <p style={{ margin: '8px 0 0', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
+              {c.explanation}
+            </p>
+          )}
+          {c.wolfram_verified && (
+            <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--green-ink)' }}>✓ Wolfram-verified</p>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={() => { setRevealed(true); onReveal(); }}
+          style={{ alignSelf: 'flex-start', fontSize: 'var(--text-body)', color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          Show answer & explanation →
+        </button>
+      )}
+    </div>
+  );
+}
+
 function WorkedExampleBody({ c, onReveal }: { c: any; onReveal: () => void }) {
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
+  if (c.presentation === 'example_problem') {
+    return <ExampleProblemBody c={c} onReveal={onReveal} />;
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
@@ -443,26 +506,46 @@ export default function LessonPage() {
 
   useEffect(() => {
     if (!concept_id) return;
+    let cancelled = false;
     setLoading(true);
     const visits = loadVisits();
     visitsRef.current = visits;
     const lastVisit = visits[concept_id];
 
-    fetch('/api/lesson/compose', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        concept_id,
-        session_id: sessionId,
-        student: lastVisit ? {
-          session_id: sessionId,
-          last_lesson_visit: { [concept_id]: lastVisit },
-        } : { session_id: sessionId },
-      }),
-    })
-      .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.error); }))
-      .then((data: Lesson) => { setLesson(data); setLoading(false); })
-      .catch((err) => { setError(err.message); setLoading(false); });
+    (async () => {
+      // Adaptive threading (items 6 + 7): mastery + recent errors from the
+      // local GBrain stores, plus concept-relevant chunks from the
+      // student's uploaded materials (IndexedDB RAG). Best-effort — empty
+      // stores mean an empty signal set and the server's generic path.
+      const signals = await gatherComposeSignals(sessionId, concept_id);
+
+      const student: Record<string, unknown> = { session_id: sessionId };
+      if (lastVisit) student.last_lesson_visit = { [concept_id]: lastVisit };
+      if (signals.mastery_by_topic) student.mastery_by_topic = signals.mastery_by_topic;
+      if (signals.mastery_by_concept) student.mastery_by_concept = signals.mastery_by_concept;
+      if (signals.recent_errors) student.recent_errors = signals.recent_errors;
+
+      const body: Record<string, unknown> = { concept_id, session_id: sessionId, student };
+      if (signals.user_material_chunks) body.user_material_chunks = signals.user_material_chunks;
+
+      try {
+        const r = await fetch('/api/lesson/compose', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const e = await r.json();
+          throw new Error(e.error);
+        }
+        const data: Lesson = await r.json();
+        if (!cancelled) { setLesson(data); setLoading(false); }
+      } catch (err: any) {
+        if (!cancelled) { setError(err.message); setLoading(false); }
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [concept_id, sessionId]);
 
   const currentComponent = lesson?.components[index];

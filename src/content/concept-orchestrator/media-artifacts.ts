@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * media-artifacts.ts — DB layer for multi-modal sidecars (§4.15).
  *

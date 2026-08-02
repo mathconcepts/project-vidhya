@@ -39,7 +39,7 @@ beforeEach(() => {
 function makeReq(overrides: any = {}) {
   return {
     pathname: '',
-    query: {},
+    query: new URLSearchParams(),
     params: {},
     body: null,
     headers: {},
@@ -80,7 +80,7 @@ function getHandler(method: string, path: string) {
 describe('REGRESSION — GET /api/lesson/:concept_id', () => {
   it('returns the legacy lesson shape (components[] preserved alongside atoms[])', async () => {
     const handler = getHandler('GET', '/api/lesson/:concept_id');
-    const req = makeReq({ params: { concept_id: 'calculus-derivatives' }, query: {} });
+    const req = makeReq({ params: { concept_id: 'derivatives-basic' }, query: {} });
     const wrap = makeRes();
     await handler(req as any, wrap.res);
     expect(wrap.status).toBe(200);
@@ -93,10 +93,49 @@ describe('REGRESSION — GET /api/lesson/:concept_id', () => {
 
   it('400 when concept_id is missing', async () => {
     const handler = getHandler('GET', '/api/lesson/:concept_id');
-    const req = makeReq({ params: {}, query: {} });
+    const req = makeReq({ params: {} });
     const wrap = makeRes();
     await handler(req as any, wrap.res);
     expect(wrap.status).toBe(400);
+  });
+});
+
+// ─── RC1 — atom fallback is never silent ───────────────────────────────
+
+describe('RC1 — atom fallback logging + counter', () => {
+  it('warns once per concept and counts every fallback when atoms are unavailable', async () => {
+    const { getAtomFallbackCounts, resetAtomFallbackCounts } = await import('../lesson-routes');
+    resetAtomFallbackCounts();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const handler = getHandler('GET', '/api/lesson/:concept_id');
+    // 'determinants' is in the concept graph but has no authored atoms dir.
+    for (let i = 0; i < 2; i++) {
+      const wrap = makeRes();
+      await handler(makeReq({ params: { concept_id: 'determinants' } }) as any, wrap.res);
+      expect(wrap.status).toBe(200);
+      expect((wrap.payload as any).atoms).toEqual([]);
+      expect(wrap.payload).toHaveProperty('components');
+    }
+
+    expect(getAtomFallbackCounts()['determinants']).toBe(2);
+    const fallbackWarns = warnSpy.mock.calls.filter(c =>
+      String(c[0]).includes('atoms unavailable for determinants'),
+    );
+    expect(fallbackWarns.length).toBe(1); // once per concept, not per request
+    warnSpy.mockRestore();
+    resetAtomFallbackCounts();
+  });
+
+  it('does not count concepts that have atoms', async () => {
+    const { getAtomFallbackCounts, resetAtomFallbackCounts } = await import('../lesson-routes');
+    resetAtomFallbackCounts();
+    const handler = getHandler('GET', '/api/lesson/:concept_id');
+    const wrap = makeRes();
+    await handler(makeReq({ params: { concept_id: 'derivatives-basic' } }) as any, wrap.res);
+    expect(wrap.status).toBe(200);
+    expect(getAtomFallbackCounts()['derivatives-basic']).toBeUndefined();
+    resetAtomFallbackCounts();
   });
 });
 
@@ -106,7 +145,7 @@ describe('POST /api/lesson/:concept_id/engagement', () => {
   it('400 when atom_id missing', async () => {
     const handler = getHandler('POST', '/api/lesson/:concept_id/engagement');
     const req = makeReq({
-      params: { concept_id: 'calculus-derivatives' },
+      params: { concept_id: 'derivatives-basic' },
       body: { student_id: 's-1' },
     });
     const wrap = makeRes();
@@ -117,7 +156,7 @@ describe('POST /api/lesson/:concept_id/engagement', () => {
   it('400 when student_id missing', async () => {
     const handler = getHandler('POST', '/api/lesson/:concept_id/engagement');
     const req = makeReq({
-      params: { concept_id: 'calculus-derivatives' },
+      params: { concept_id: 'derivatives-basic' },
       body: { atom_id: 'a-1' },
     });
     const wrap = makeRes();
@@ -129,9 +168,9 @@ describe('POST /api/lesson/:concept_id/engagement', () => {
     mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
     const handler = getHandler('POST', '/api/lesson/:concept_id/engagement');
     const req = makeReq({
-      params: { concept_id: 'calculus-derivatives' },
+      params: { concept_id: 'derivatives-basic' },
       body: {
-        atom_id: 'calculus-derivatives.micro-exercise.power-rule',
+        atom_id: 'derivatives-basic.micro-exercise.power-rule',
         time_ms: 4200,
         skipped: false,
         recall_correct: true,
@@ -148,8 +187,8 @@ describe('POST /api/lesson/:concept_id/engagement', () => {
     const params = mockQuery.mock.calls[0][1];
     expect(params).toEqual([
       's-1',
-      'calculus-derivatives.micro-exercise.power-rule',
-      'calculus-derivatives',
+      'derivatives-basic.micro-exercise.power-rule',
+      'derivatives-basic',
       true,
     ]);
   });
@@ -158,7 +197,7 @@ describe('POST /api/lesson/:concept_id/engagement', () => {
     mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
     const handler = getHandler('POST', '/api/lesson/:concept_id/engagement');
     const req = makeReq({
-      params: { concept_id: 'calculus-derivatives' },
+      params: { concept_id: 'derivatives-basic' },
       body: {
         atom_id: 'a-1',
         time_ms: 1500,
@@ -178,7 +217,7 @@ describe('POST /api/lesson/:concept_id/engagement', () => {
 describe('GET /api/knowledge/concepts/:id/objectives', () => {
   it('returns learning_objectives from meta.yaml', async () => {
     const handler = getHandler('GET', '/api/knowledge/concepts/:id/objectives');
-    const req = makeReq({ params: { id: 'calculus-derivatives' } });
+    const req = makeReq({ params: { id: 'derivatives-basic' } });
     const wrap = makeRes();
     await handler(req as any, wrap.res);
     expect(wrap.status).toBe(200);
@@ -219,7 +258,7 @@ describe('POST /api/daily-cards', () => {
     const req = makeReq({
       body: {
         last_lesson_visit: {
-          'calculus-derivatives': {
+          'derivatives-basic': {
             last_visited_at: oldDate,
             sm2_interval_days: 1,
           },
@@ -233,7 +272,7 @@ describe('POST /api/daily-cards', () => {
           },
         },
         mastery_by_concept: {
-          'calculus-derivatives': 0.75,    // in band
+          'derivatives-basic': 0.75,    // in band
           'too-low-mastery': 0.3,          // below 0.6
           'too-high-mastery': 0.99,        // above 0.95
         },
@@ -242,7 +281,7 @@ describe('POST /api/daily-cards', () => {
     const wrap = makeRes();
     await handler(req as any, wrap.res);
     expect(wrap.status).toBe(200);
-    // Only calculus-derivatives has atoms; the eligible filter screens out the others.
+    // Only derivatives-basic has atoms; the eligible filter screens out the others.
     // We don't have a retrieval_prompt in our seed atoms, so cards should be empty
     // and the "caught up" message should fire — but the filter test still passes
     // because we verified the endpoint accepts the shape and runs the filter.

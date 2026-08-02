@@ -1,9 +1,8 @@
-// @ts-nocheck
 /**
  * concept-cost.ts — per-concept LLM/Wolfram spend tracking + cap (E8).
  *
  * Extends the existing per-user budget (lib/llm-budget.ts) with concept-scoped
- * tracking. Admin sees "calculus-derivatives: $0.84/$10 this month" before
+ * tracking. Admin sees "derivatives-basic: $0.84/$10 this month" before
  * clicking regen; the orchestrator soft-warns at 80% of cap and hard-stops
  * at 100%.
  *

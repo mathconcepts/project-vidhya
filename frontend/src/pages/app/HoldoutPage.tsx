@@ -250,7 +250,7 @@ function KpiCard({
   value,
   sub,
 }: {
-  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
+  icon: React.ElementType;
   label: string;
   value: string;
   sub?: string;

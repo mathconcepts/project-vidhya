@@ -17,8 +17,8 @@ All content in this repo is **MIT licensed** unless individually marked otherwis
 
 | Concept | Licence | `derived_from` |
 |---|---|---|
-| `calculus-derivatives` | MIT | none (original) |
-| `linear-algebra-eigenvalues` | MIT | none (original) |
+| `derivatives-basic` | MIT | none (original) |
+| `eigenvalues` | MIT | none (original) |
 | `complex-numbers` | MIT | none (original) |
 
 ## If you're adapting from another source

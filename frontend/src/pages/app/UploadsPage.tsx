@@ -40,6 +40,8 @@ import {
 
 type UploadKind = 'image' | 'pdf' | 'text' | 'other';
 
+type ExtractionStatus = 'extracted' | 'refused_scanned' | 'failed' | 'not_applicable';
+
 interface UploadRecord {
   id: string;
   user_id: string;
@@ -48,7 +50,17 @@ interface UploadRecord {
   size_bytes: number;
   concept_tags: string[];
   uploaded_at: string;
+  /**
+   * Born-digital extracted text — returned by GET /api/student/uploads.
+   * TODO(realignment item 6 follow-up): index this into the client-side
+   * GBrain materials store (chunk + embed, like MaterialsPage's local
+   * pipeline) so server uploads also feed lesson composition. Deliberately
+   * NOT built as a new sync system in this pass.
+   */
   extracted_text?: string | null;
+  extraction_status?: ExtractionStatus;
+  /** Named honest-state error, e.g. the protected scanned-doc refusal. */
+  extraction_error?: string | null;
   note?: string;
 }
 
@@ -69,10 +81,10 @@ const MAX_BINARY_SIZE_BYTES = 7.5 * 1024 * 1024;
 // these as suggestion chips saves the user from guessing exact strings.
 
 const KNOWN_CONCEPT_IDS = [
-  'calculus-derivatives',
+  'derivatives-basic',
   'calculus-integration',
   'calculus-limits',
-  'linear-algebra-eigenvalues',
+  'eigenvalues',
   'linear-algebra-matrices',
   'complex-numbers',
   'probability-basics',
@@ -332,7 +344,7 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           onKeyDown={handleTagKey}
           onBlur={() => tagInput && addTag(tagInput)}
           disabled={submitting}
-          placeholder="calculus-derivatives"
+          placeholder="derivatives-basic"
           className="w-full rounded-md px-3 py-2 text-sm focus:outline-none"
           style={{
             background: 'var(--surface-fill)',
@@ -467,6 +479,20 @@ function UploadsList({ uploads, onDelete, deletingId, deleteErrors }: UploadsLis
 
               {u.note && (
                 <p className="text-sm mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{u.note}</p>
+              )}
+
+              {/* Extraction honest states (register law #5). The refusal /
+                  failure copy comes verbatim from the server record — the
+                  scanned-doc refusal is a protected string, never reworded. */}
+              {u.extraction_status === 'extracted' && (
+                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--green-ink)' }}>
+                  <Check className="w-3 h-3" /> Text extracted — searchable when you ask about a tagged topic
+                </p>
+              )}
+              {(u.extraction_status === 'refused_scanned' || u.extraction_status === 'failed') && u.extraction_error && (
+                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
+                  <AlertCircle className="w-3 h-3" /> {u.extraction_error.replace(/^\w+Error:\s*/, '')}
+                </p>
               )}
 
               {u.concept_tags.length > 0 && (

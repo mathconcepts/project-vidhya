@@ -18,7 +18,7 @@ required for the baseline experience.
 # First time
 npm run demo:setup             # install deps + seed (one-off)
 npm run demo:start             # boot backend + frontend
-# → open http://localhost:3000/demo.html
+# → open http://localhost:3000/?demo
 
 # Day-to-day
 npm run demo:reset             # clear seed artefacts
@@ -36,7 +36,7 @@ npm run demo:channel-link      # bind a demo role to a channel identity
 | Piece | Where | Status |
 |---|---|---|
 | 6 seeded users across 4 roles | `demo/seed.ts` | ✓ shipped |
-| Role picker (one-click sign-in) | `/demo.html` | ✓ shipped |
+| Role switcher (one-click sign-in) | `/?demo` (DemoRoleSwitcher) | ✓ shipped |
 | BYOK discovery page | `/demo-api-keys.html` | ✓ shipped |
 | Owner-visible usage telemetry | `.data/demo-usage-log.json` | ✓ shipped |
 | Telegram + WhatsApp channel linking | `demo/CHANNELS.md` | ✓ shipped |
@@ -60,11 +60,12 @@ would run for a production student on the same exam.
 ```bash
 npm run demo:setup      # install deps + build frontend + seed all six users
 npm run demo:start      # boot backend + frontend
-# open http://localhost:3000/demo.html
+# open http://localhost:3000/?demo
 ```
 
-The landing page shows six cards. Click any one to auto-login as that
-user.
+The `?demo` flag turns on demo-theater mode: a persistent role switcher
+(DemoRoleSwitcher) appears in the app, letting you flip between the
+seeded Student / Teacher / Parent / Admin views with one click.
 
 ---
 
@@ -283,7 +284,7 @@ into one image; the container runs the seed + serve on boot.
 
 ## Via Telegram or WhatsApp — not just the browser
 
-The role-picker at `/demo.html` is the easiest path, but Vidhya was
+The role switcher at `/?demo` is the easiest path, but Vidhya was
 designed to reach students on the channels they already use. Demo
 testers can message the product on Telegram or WhatsApp too — with
 their real chat account mapped to any seeded demo user.

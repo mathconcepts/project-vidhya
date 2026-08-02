@@ -136,7 +136,7 @@ git clone https://github.com/mathconcepts/project-vidhya
 cd project-vidhya
 npm run demo:setup
 npm run demo:start
-# open http://localhost:3000/demo.html
+# open http://localhost:3000/?demo   (on-screen role switcher)
 ```
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya) — one-click public URL, free tier.

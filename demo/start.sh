@@ -45,7 +45,7 @@ echo "================================================================"
 echo ""
 echo "  Backend:   http://localhost:8080"
 echo "  Frontend:  http://localhost:3000"
-echo "  Demo:      http://localhost:3000/demo.html"
+echo "  Demo:      http://localhost:3000/?demo   (on-screen role switcher)"
 echo ""
 echo "  Ctrl-C to stop both."
 echo ""
@@ -84,7 +84,7 @@ done
 
 echo ""
 echo "================================================================"
-echo "  Ready. Open: http://localhost:3000/demo.html"
+echo "  Ready. Open: http://localhost:3000/?demo"
 echo "================================================================"
 
 # Keep alive until Ctrl-C (compatible with bash 3.2 on macOS).

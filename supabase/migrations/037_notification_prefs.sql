@@ -1,0 +1,32 @@
+-- =============================================================================
+-- 037_notification_prefs.sql
+-- =============================================================================
+-- Purpose: add the notification_prefs column that src/api/notification-routes.ts
+-- and src/storage/repositories/retention-engine-repo.ts have both been reading
+-- and writing against since they were authored — a column that has never
+-- existed on user_profiles in any prior migration (confirmed by grepping every
+-- migration touching user_profiles: only 005_chat_and_roles.sql adds columns,
+-- and none of them is this one).
+--
+-- Practical impact fixed by this migration: every real call to
+-- POST/GET /api/notifications/preferences and POST /api/retention/enqueue has
+-- been either throwing (retention-engine, no try/catch around the query) or
+-- silently defaulting (notification-routes, `?? {}` swallows the error at the
+-- row level but the column still doesn't exist so nothing ever persists).
+--
+-- Decision recorded here (per SOTA-Facelift-Phase0-Delivery.md "What's left"):
+-- notification preferences live directly on user_profiles as JSONB, matching
+-- the shape both call sites already assume:
+--   { email_digest: boolean, streak_reminders: boolean, push_enabled: boolean }
+-- Streak data does NOT get a new column — it already has a canonical home in
+-- the existing `streaks` table (004_autopilot_growth.sql, keyed by
+-- `identifier` = user_id or session_id as text), which is what
+-- src/api/streak-routes.ts reads/writes today. retention-engine-repo.ts is
+-- updated in the same change to join `streaks` instead of a nonexistent
+-- `user_profiles.study_profile` column. Email is read from `auth.users.email`
+-- (a real column — see 000_local_auth_stub.sql for the local-dev stub and
+-- Supabase's own auth.users in production), not from user_profiles.
+-- =============================================================================
+
+ALTER TABLE user_profiles
+  ADD COLUMN IF NOT EXISTS notification_prefs JSONB NOT NULL DEFAULT '{}'::jsonb;

@@ -28,8 +28,8 @@ export interface RegenScannerRepo {
   getMaxCohortSignalUpdatedAt(): Promise<string | null>;
   /** Top-N atoms over the error/n_seen thresholds, excluding atoms regenerated within dedupeHours. */
   getCandidates(errorThreshold: number, minNSeen: number, dedupeHours: number, cap: number): Promise<CandidateRow[]>;
-  /** Top-3 most frequent error_text values for an atom in the last 30 days. */
-  getTopMisconceptions(atomId: string): Promise<string[]>;
+  /** Top-3 most frequent diagnosis values for a concept in the last 30 days. */
+  getTopMisconceptions(conceptId: string): Promise<string[]>;
   /** Up to the 2 most recent atom_versions.version_n for an atom, newest first. */
   getLatestTwoVersionNumbers(atomId: string): Promise<number[]>;
   /** Sets improvement_reason on the atom's newest version row. */
@@ -74,38 +74,36 @@ export class PgRegenScannerRepo implements RegenScannerRepo {
     return rows;
   }
 
-  async getTopMisconceptions(atomId: string): Promise<string[]> {
-    // KNOWN PRE-EXISTING BUG, preserved verbatim (not fixed here — see note
-    // below): `error_log` (migration 011_gbrain_cognitive_architecture.sql)
-    // has never had an `atom_id` or `error_text` column. It's keyed by
-    // `concept_id` + `problem_id`, with the human-readable text in
-    // `diagnosis`. This query has always thrown against real Postgres,
-    // always been caught by fetchTopMisconceptions()'s try/catch in
-    // src/jobs/regen-scanner.ts, and always silently returned `[]` — the
-    // nightly regen scanner's "generate the new atom knowing exactly what
-    // students get wrong" misconception-context feature has never actually
-    // run in any real deployment. Confirmed by live-DB smoke test during
-    // this migration (2026-08-02).
+  async getTopMisconceptions(conceptId: string): Promise<string[]> {
+    // FIXED (was: KNOWN PRE-EXISTING BUG, flagged in the Phase 0 delivery
+    // doc as lower-urgency than retention-engine.ts's bug but "worth a
+    // look in the same pass"). `error_log`
+    // (migration 011_gbrain_cognitive_architecture.sql) has never had an
+    // `atom_id` or `error_text` column — it's keyed by `concept_id` +
+    // `problem_id`, with the human-readable text in `diagnosis`. The old
+    // query against `atom_id`/`error_text` always threw, was always caught
+    // by fetchTopMisconceptions()'s try/catch in src/jobs/regen-scanner.ts,
+    // and always silently returned `[]` — the "generate the new atom
+    // knowing exactly what students get wrong" feature never actually ran.
     //
-    // Not fixed as part of this migration: unlike the sr_sessions column
-    // rename in content-prioritizer-repo.ts, there's no unambiguous
-    // mechanical fix — `atom_id` isn't a column on error_log at all, only
-    // `concept_id` (coarser: many atoms share a concept_id) and
-    // `problem_id`. Picking the right grouping key + column is a product
-    // decision, not a typo fix, so the original (broken) query is
-    // preserved as-is per migration discipline: move the SQL to the
-    // storage boundary without silently changing behavior.
-    const { rows } = await this.pool.query<{ error_text: string; freq: string }>(
-      `SELECT error_text, COUNT(*) AS freq
+    // Fix: group by the coarser `concept_id` instead of `atom_id` (many
+    // atoms share a concept_id — this is a real, accepted precision loss,
+    // not a workaround) and select `diagnosis` instead of the nonexistent
+    // `error_text`. The call site (src/jobs/regen-scanner.ts) already
+    // derives `concept_id` from the atom_id via parseAtomId() for its own
+    // generateConcept() call, so this repo now takes conceptId directly —
+    // no new join or lookup needed.
+    const { rows } = await this.pool.query<{ diagnosis: string; freq: string }>(
+      `SELECT diagnosis, COUNT(*) AS freq
          FROM error_log
-         WHERE atom_id = $1
+         WHERE concept_id = $1
            AND created_at > NOW() - INTERVAL '30 days'
-         GROUP BY error_text
+         GROUP BY diagnosis
          ORDER BY freq DESC
          LIMIT 3`,
-      [atomId],
+      [conceptId],
     );
-    return rows.map((row) => row.error_text).filter(Boolean);
+    return rows.map((row) => row.diagnosis).filter(Boolean);
   }
 
   async getLatestTwoVersionNumbers(atomId: string): Promise<number[]> {

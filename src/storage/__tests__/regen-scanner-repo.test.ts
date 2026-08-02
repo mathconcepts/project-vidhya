@@ -41,18 +41,22 @@ describe('PgRegenScannerRepo', () => {
     expect(result).toEqual([{ atom_id: 'calculus.limits-intro', error_pct: 0.6, n_seen: 15 }]);
   });
 
-  it('getTopMisconceptions returns error_text values, filtering falsy entries', async () => {
+  it('getTopMisconceptions groups by concept_id and returns diagnosis values, filtering falsy entries', async () => {
     let capturedSql = '';
     let capturedParams: any[] = [];
     const query = async (sql: string, params: any[]) => {
       capturedSql = sql;
       capturedParams = params;
-      return { rows: [{ error_text: 'sign error', freq: '5' }, { error_text: null, freq: '1' }] };
+      return { rows: [{ diagnosis: 'sign error', freq: '5' }, { diagnosis: null, freq: '1' }] };
     };
     const repo = new PgRegenScannerRepo({ query } as any);
-    const result = await repo.getTopMisconceptions('calculus.limits-intro');
+    const result = await repo.getTopMisconceptions('calculus-derivatives');
     expect(capturedSql).toMatch(/FROM error_log/);
-    expect(capturedParams).toEqual(['calculus.limits-intro']);
+    expect(capturedSql).toMatch(/WHERE concept_id = \$1/);
+    expect(capturedSql).toMatch(/GROUP BY diagnosis/);
+    expect(capturedSql).not.toMatch(/atom_id/);
+    expect(capturedSql).not.toMatch(/error_text/);
+    expect(capturedParams).toEqual(['calculus-derivatives']);
     expect(result).toEqual(['sign error']);
   });
 

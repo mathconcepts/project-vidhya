@@ -4,7 +4,7 @@
  *
  * The job file keeps email template rendering, the Resend HTTP call, IST
  * time-window gating, and the enqueue orchestration; this repo owns the
- * raw queries against email_queue, user_profiles, and sr_sessions.
+ * raw queries against email_queue, user_profiles, streaks, and auth.users.
  *
  * ENV VAR NOTE (flagged, not silently resolved): the original module-level
  * pool used `SUPABASE_DB_URL || DATABASE_URL` — same precedence as
@@ -28,41 +28,31 @@
  * try/catch), just with a clear message instead of a raw pg connection
  * error.
  *
- * MAJOR PRE-EXISTING BUG, preserved verbatim, NOT fixed here — flagged for
- * a real product/schema decision, not a migration-time fix:
+ * FIXED (was: MAJOR PRE-EXISTING BUG, flagged in the Phase 0 delivery doc
+ * as "worth real attention before the next release touches email/
+ * retention"). getPendingEmails(), getStreakReminderCandidates(), and
+ * getWeeklyDigestCandidates() referenced user_profiles.email,
+ * user_profiles.study_profile, and user_profiles.notification_prefs —
+ * none of which ever existed on user_profiles in any migration. Every
+ * real invocation of `POST /api/email/process` and
+ * `POST /api/retention/enqueue` threw (no try/catch around these calls in
+ * the job file) and 500'd via server.ts's route-dispatch wrapper. Product
+ * decision made and implemented (2026-08-02), each backed by an existing,
+ * canonical home for the data rather than a new ad-hoc column:
  *
- * getPendingEmails(), getStreakReminderCandidates(), and
- * getWeeklyDigestCandidates() all reference user_profiles.email,
- * user_profiles.study_profile, and/or user_profiles.notification_prefs.
- * None of those three columns have ever existed on user_profiles in any
- * migration (checked every migration touching user_profiles —
- * 005_chat_and_roles.sql is the only one, and it only adds id/role/
- * display_name/avatar_url/session_id/created_at/updated_at). Confirmed
- * against the live schema during this migration (2026-08-02):
- *   - email actually lives on auth.users, not user_profiles
- *   - "current_streak" isn't tracked anywhere — the real study_profiles
- *     table (plural, a different table entirely — user_id/exam_date/
- *     target_score/weekly_hours/topic_confidence/diagnostic_scores) has
- *     no streak column
- *   - notification_prefs doesn't exist anywhere in the schema at all,
- *     despite src/api/notification-routes.ts (out of scope for this
- *     migration) ALSO reading/writing it on user_profiles
- *
- * Unlike every other bug found during this Phase 0 pass (a stale column
- * rename in content-prioritizer-repo.ts, a stale column rename in
- * regen-scanner-repo.ts), this isn't a typo with an unambiguous fix —
- * there's no existing column anywhere holding streak or notification-
- * preference data to redirect these queries to. A real fix means a new
- * migration and a product decision about where that data lives, which is
- * out of scope for "migrate pg imports off files."
- *
- * Practical impact: unlike the other repos' bugs (silently caught,
- * degrading to defaults), retention-engine.ts's handlers have NO
- * try/catch around these calls. Every real invocation of
- * `POST /api/email/process` and `POST /api/retention/enqueue` throws,
- * is caught by server.ts's route-dispatch try/catch, and 500s. The
- * entire retention-email feature (streak reminders, weekly digest,
- * queue processing) has never functioned against this schema.
+ *   - email: read from `auth.users.email` (a real column — see
+ *     000_local_auth_stub.sql for the local-dev stub, and Supabase's own
+ *     auth.users in production) via a join, not from user_profiles.
+ *   - streak: read from the existing `streaks` table
+ *     (004_autopilot_growth.sql, keyed by `identifier` = user_id or
+ *     session_id as text) — the same table src/api/streak-routes.ts
+ *     already reads/writes. No `study_profile` column invented. A streak
+ *     only counts as "reminder-worthy" when it mirrors streak-routes.ts's
+ *     own `streakAlive` semantics: last active yesterday (IST) but not yet
+ *     today — i.e. the streak is real and about to lapse.
+ *   - notification_prefs: migration 037_notification_prefs.sql adds the
+ *     column to user_profiles (also fixes src/api/notification-routes.ts,
+ *     which was reading/writing the same nonexistent column).
  */
 
 import type { Pool } from 'pg';
@@ -116,9 +106,9 @@ export class PgRetentionEngineRepo implements RetentionEngineRepo {
   async getPendingEmails(limit: number): Promise<PendingEmailRow[]> {
     const { rows } = await this.pool.query<PendingEmailRow>(
       `SELECT eq.id, eq.user_id, eq.template, eq.payload,
-              up.email
+              au.email
        FROM email_queue eq
-       LEFT JOIN user_profiles up ON eq.user_id = up.id
+       LEFT JOIN auth.users au ON eq.user_id = au.id
        WHERE eq.status = 'pending' AND eq.scheduled_at <= NOW()
        ORDER BY eq.scheduled_at ASC
        LIMIT $1`,
@@ -136,17 +126,21 @@ export class PgRetentionEngineRepo implements RetentionEngineRepo {
   }
 
   async getStreakReminderCandidates(): Promise<StreakCandidateRow[]> {
+    // Streak source of truth is the `streaks` table (identifier = user_id
+    // as text — same convention src/api/streak-routes.ts uses), not a
+    // nonexistent user_profiles.study_profile column. "Reminder-worthy"
+    // mirrors streak-routes.ts's own streakAlive check: last active
+    // yesterday IST (streak is real and about to lapse) but not yet today
+    // (no reminder needed if they've already shown up).
     const { rows } = await this.pool.query<StreakCandidateRow>(
-      `SELECT up.id as user_id, up.email,
-              COALESCE((up.study_profile->>'current_streak')::int, 0) as streak
+      `SELECT up.id as user_id, au.email,
+              s.current_streak as streak
        FROM user_profiles up
-       WHERE COALESCE((up.study_profile->>'current_streak')::int, 0) >= 3
-         AND up.notification_prefs->>'streak_reminders' != 'false'
-         AND NOT EXISTS (
-           SELECT 1 FROM sr_sessions ss
-           WHERE ss.user_id = up.id::text
-             AND ss.updated_at >= (NOW() AT TIME ZONE 'Asia/Kolkata')::date
-         )
+       JOIN streaks s ON s.identifier = up.id::text
+       LEFT JOIN auth.users au ON au.id = up.id
+       WHERE s.current_streak >= 3
+         AND s.last_active_date = ((NOW() AT TIME ZONE 'Asia/Kolkata')::date - INTERVAL '1 day')
+         AND COALESCE(up.notification_prefs->>'streak_reminders', 'true') != 'false'
          AND NOT EXISTS (
            SELECT 1 FROM email_queue eq
            WHERE eq.user_id = up.id AND eq.template = 'streak_reminder'
@@ -160,7 +154,7 @@ export class PgRetentionEngineRepo implements RetentionEngineRepo {
     const { rows } = await this.pool.query<DigestCandidateRow>(
       `SELECT up.id as user_id
        FROM user_profiles up
-       WHERE up.notification_prefs->>'email_digest' != 'false'
+       WHERE COALESCE(up.notification_prefs->>'email_digest', 'true') != 'false'
          AND NOT EXISTS (
            SELECT 1 FROM email_queue eq
            WHERE eq.user_id = up.id AND eq.template = 'weekly_digest'

@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { PgRetentionEngineRepo, NullRetentionEngineRepo } from '../repositories/retention-engine-repo';
 
 describe('PgRetentionEngineRepo', () => {
-  it('getPendingEmails passes limit positionally', async () => {
+  it('getPendingEmails passes limit positionally and joins auth.users for email', async () => {
     let capturedSql = '';
     let capturedParams: any[] = [];
     const query = async (sql: string, params: any[]) => {
@@ -18,6 +18,8 @@ describe('PgRetentionEngineRepo', () => {
     const repo = new PgRetentionEngineRepo({ query } as any);
     const result = await repo.getPendingEmails(20);
     expect(capturedSql).toMatch(/FROM email_queue eq/);
+    expect(capturedSql).toMatch(/LEFT JOIN auth\.users au ON eq\.user_id = au\.id/);
+    expect(capturedSql).not.toMatch(/user_profiles/);
     expect(capturedSql).toMatch(/LIMIT \$1/);
     expect(capturedParams).toEqual([20]);
     expect(result).toEqual([{ id: 'e1', user_id: 'u1', template: 'welcome_day0', payload: {}, email: 'a@test.com' }]);
@@ -51,7 +53,7 @@ describe('PgRetentionEngineRepo', () => {
     expect(capturedParams).toEqual(['e1', 'failed']);
   });
 
-  it('getStreakReminderCandidates selects opted-in, streak>=3, inactive-today, not-already-queued users', async () => {
+  it('getStreakReminderCandidates joins the streaks table + auth.users, selects streak-alive-yesterday-not-yet-today, opted-in, not-already-queued users', async () => {
     let capturedSql = '';
     const query = async (sql: string) => {
       capturedSql = sql;
@@ -59,8 +61,12 @@ describe('PgRetentionEngineRepo', () => {
     };
     const repo = new PgRetentionEngineRepo({ query } as any);
     const result = await repo.getStreakReminderCandidates();
-    expect(capturedSql).toMatch(/current_streak/);
+    expect(capturedSql).toMatch(/JOIN streaks s ON s\.identifier = up\.id::text/);
+    expect(capturedSql).toMatch(/LEFT JOIN auth\.users au ON au\.id = up\.id/);
+    expect(capturedSql).toMatch(/s\.current_streak >= 3/);
+    expect(capturedSql).toMatch(/s\.last_active_date = /);
     expect(capturedSql).toMatch(/streak_reminders/);
+    expect(capturedSql).not.toMatch(/study_profile/);
     expect(result).toEqual([{ user_id: 'u1', email: 'a@test.com', streak: 5 }]);
   });
 

@@ -94,21 +94,23 @@ async function fetchCandidates(repo: RegenScannerRepo): Promise<Candidate[]> {
 }
 
 /**
- * Pull the top-3 wrong-answer patterns for an atom from error_log.
+ * Pull the top-3 wrong-answer patterns for a concept from error_log.
  * Used as misconception context in the regen prompt — the new atom
  * is generated knowing exactly what students get wrong.
  *
- * KNOWN BUG (pre-existing, not introduced or fixed by the storage-boundary
- * migration): see the comment on RegenScannerRepo.getTopMisconceptions —
- * the underlying query references columns error_log has never had, so
- * this always throws, is always caught below, and always returns [].
- * Misconception context has never actually reached the regen prompt.
+ * FIXED (was a known pre-existing bug — see RegenScannerRepo.
+ * getTopMisconceptions): the query now groups by concept_id (error_log's
+ * real column) instead of a nonexistent atom_id, so misconception context
+ * actually reaches the regen prompt. Precision note, accepted: concept_id
+ * is coarser than atom_id (multiple atoms can share a concept), so this
+ * surfaces the concept's top misconceptions generally, not this specific
+ * atom's — still strictly better than the [] it always returned before.
  */
-async function fetchTopMisconceptions(repo: RegenScannerRepo, atom_id: string): Promise<string[]> {
+async function fetchTopMisconceptions(repo: RegenScannerRepo, concept_id: string): Promise<string[]> {
   try {
-    return await repo.getTopMisconceptions(atom_id);
+    return await repo.getTopMisconceptions(concept_id);
   } catch (err) {
-    console.warn(`[regen-scanner] misconception lookup failed for ${atom_id}: ${(err as Error).message}`);
+    console.warn(`[regen-scanner] misconception lookup failed for ${concept_id}: ${(err as Error).message}`);
     return [];
   }
 }
@@ -187,7 +189,7 @@ export async function runRegenScanner(): Promise<ScannerResult> {
   let failed = 0;
 
   for (const c of candidates) {
-    const misconceptions = await fetchTopMisconceptions(repo, c.atom_id);
+    const misconceptions = await fetchTopMisconceptions(repo, c.concept_id);
     try {
       const draft = await generateConcept({
         concept_id: c.concept_id,

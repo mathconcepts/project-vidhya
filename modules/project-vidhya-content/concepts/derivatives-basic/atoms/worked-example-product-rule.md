@@ -24,4 +24,4 @@ scaffold_fade: true
 
 ---
 
-**Step 4 — Simplify.** $\frac{d}{dx}\left(x^2 \sin x\right) = 2x \sin x + x^2 \cos x$.
+**Step 4 — Simplify.** $\frac{d}{dx}\left(x^2 \sin x\right) = \boxed{2x \sin x + x^2 \cos x}$.

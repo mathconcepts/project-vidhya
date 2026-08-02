@@ -24,4 +24,4 @@ scaffold_fade: true
 
 ---
 
-**Step 4 — Read off the eigenvalues.** $\lambda_1 = 5, \lambda_2 = 2$. Sanity check: $\lambda_1 + \lambda_2 = 7 = \text{tr}(A)$ ✓; $\lambda_1 \lambda_2 = 10 = \det(A)$ ✓.
+**Step 4 — Read off the eigenvalues.** $\boxed{\lambda_1 = 5,\ \lambda_2 = 2}$. Sanity check: $\lambda_1 + \lambda_2 = 7 = \text{tr}(A)$ ✓; $\lambda_1 \lambda_2 = 10 = \det(A)$ ✓.

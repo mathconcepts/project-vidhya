@@ -558,7 +558,10 @@ export function RunLauncher({ defaultExam, onLaunched, initialBlueprint }: Props
 
         {/* Pipeline + Verification */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-          <Field label="LLM">
+          <Field
+            label="LLM"
+            hint="Cost-estimate input only today — atom generation itself calls Claude (or Gemini for math-atom consensus) regardless of this pick. Wiring this selection into the generator is tracked separately."
+          >
             <select
               value={form.llm_model}
               onChange={(e) => setForm({ ...form, llm_model: e.target.value })}
@@ -566,9 +569,12 @@ export function RunLauncher({ defaultExam, onLaunched, initialBlueprint }: Props
             >
               <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
               <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-              <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+              <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
               <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
               <option value="gpt-4o-mini">GPT-4o mini</option>
+              <option value="gpt-4o">GPT-4o</option>
+              <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (via OpenRouter)</option>
+              <option value="anthropic/claude-sonnet-4-5">Claude Sonnet 4.5 (via OpenRouter)</option>
             </select>
           </Field>
           <Field label="Verification tier ceiling">

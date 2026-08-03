@@ -12,8 +12,10 @@
  * let `npm run content:generate:auto` run it for you automatically).
  *
  * Exit codes:
- *   0 — ready: Gemini is configured and reachable (the one hard
- *       requirement — content-generation refuses to start without it)
+ *   0 — ready: at least one LLM provider (Gemini, Anthropic, OpenAI,
+ *       OpenRouter, ...) is configured and reachable — content-generation
+ *       refuses to start with zero working providers, but doesn't care
+ *       which one you picked.
  *   1 — not ready: fix the reported errors and re-run
  */
 
@@ -21,6 +23,7 @@ import { loadDotEnvIntoProcess } from './dotenv-loader';
 loadDotEnvIntoProcess();
 
 import { preflightProviders } from '../llm/env-config';
+import { loadProvidersRegistry } from '../llm/registry';
 import { preflightDatabase } from './db-preflight';
 import { getSyllabus, DEFAULT_SYLLABUS_ID, listSyllabusIds } from '../curriculum/exam-loader';
 
@@ -49,30 +52,45 @@ async function main(): Promise<void> {
   const results = await preflightProviders();
   let hardFailure = false;
 
-  if (!process.env.GEMINI_API_KEY) {
-    console.error('[setup] GEMINI_API_KEY  — MISSING (required — content-generation refuses to start without it)');
-    hardFailure = true;
-  } else {
-    const gemini = results.find((r) => r.provider === 'gemini');
-    if (gemini?.ok) {
-      console.log('[setup] GEMINI_API_KEY  — OK (live call succeeded)');
-    } else {
-      console.error(`[setup] GEMINI_API_KEY  — FAILED live check: ${gemini?.error ?? 'unknown error'}`);
-      hardFailure = true;
+  // Report every provider the registry knows about — including ones with
+  // no key set — so "not configured" is visible, not just silently absent.
+  try {
+    const registry = loadProvidersRegistry();
+    for (const [id, p] of Object.entries(registry.providers)) {
+      if (!p.enabled || !p.api_key_env) continue; // keyless (ollama) has nothing to report here
+      if (!process.env[p.api_key_env]) {
+        console.log(`[setup] ${p.api_key_env.padEnd(20)} — not configured`);
+      }
     }
+  } catch {
+    // registry load failure surfaces below via preflightProviders' own empty-config fallback
   }
 
-  for (const provider of ['anthropic', 'openai'] as const) {
-    const envVar = provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY';
-    const r = results.find((x) => x.provider === provider);
-    if (!process.env[envVar]) {
-      console.log(`[setup] ${envVar.padEnd(15)} — not configured (optional; backs consensus/second-opinions only)`);
-    } else if (r?.ok) {
-      console.log(`[setup] ${envVar.padEnd(15)} — OK (live call succeeded)`);
-    } else {
+  if (results.length === 0) {
+    console.error(
+      '[setup] No LLM provider is configured — content-generation refuses to start. ' +
+        'Set at least one of GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY ' +
+        'and re-run.',
+    );
+    hardFailure = true;
+  } else {
+    for (const r of results) {
+      if (r.ok) {
+        console.log(`[setup] ${r.provider.padEnd(20)} — OK (live call succeeded)`);
+      } else {
+        console.warn(`[setup] ${r.provider.padEnd(20)} — FAILED live check: ${r.error ?? 'unknown error'}`);
+      }
+    }
+    if (!results.some((r) => r.ok)) {
+      console.error(
+        '[setup] Every configured provider failed its live check — content-generation refuses to start ' +
+          'with zero working providers. Fix at least one key/quota above and retry.',
+      );
+      hardFailure = true;
+    } else if (results.some((r) => !r.ok)) {
       console.warn(
-        `[setup] ${envVar.padEnd(15)} — FAILED live check: ${r?.error ?? 'unknown error'} ` +
-          '(non-blocking — consensus atoms may fall back to a single provider this run)',
+        '[setup] Some configured providers failed their live check (non-blocking — generation will use ' +
+          'whichever providers ARE working; consensus/second-opinion atoms may fall back to a single provider).',
       );
     }
   }

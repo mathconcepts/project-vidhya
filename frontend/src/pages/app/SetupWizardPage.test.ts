@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest';
 import { __testing } from './SetupWizardPage';
 import type { ProviderStatus, ProviderTestResult, SetupStatus } from '@/api/admin/setup';
 
-const { mergeLiveResult, providerTone, overallTone } = __testing;
+const { mergeLiveResult, providerTone, overallTone, configuredProviderNames } = __testing;
 
 function provider(overrides: Partial<ProviderStatus> = {}): ProviderStatus {
   return {
@@ -69,13 +69,31 @@ describe('SetupWizardPage.overallTone', () => {
     expect(overallTone(null)).toBe('neutral');
   });
 
-  it('is good when the hard requirement (Gemini) is met', () => {
+  it('is good when at least one provider is configured', () => {
     const status = { hard_requirement_met: true } as SetupStatus;
     expect(overallTone(status)).toBe('good');
   });
 
-  it('is bad when the hard requirement is not met', () => {
+  it('is bad when no provider is configured', () => {
     const status = { hard_requirement_met: false } as SetupStatus;
     expect(overallTone(status)).toBe('bad');
+  });
+});
+
+describe('SetupWizardPage.configuredProviderNames', () => {
+  it('is empty before status has loaded', () => {
+    expect(configuredProviderNames(null)).toEqual([]);
+  });
+
+  it('lists every enabled provider with a key present, not just one', () => {
+    const status = {
+      providers: [
+        provider({ provider: 'gemini', enabled: true, key_present: true }),
+        provider({ provider: 'anthropic', enabled: true, key_present: true }),
+        provider({ provider: 'openai', enabled: true, key_present: false }),
+        provider({ provider: 'ollama', enabled: false, key_present: true }),
+      ],
+    } as unknown as SetupStatus;
+    expect(configuredProviderNames(status)).toEqual(['gemini', 'anthropic']);
   });
 });

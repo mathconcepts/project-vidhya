@@ -4,7 +4,7 @@
  */
 
 // Provider identifiers
-export type ProviderId = 'gemini' | 'anthropic' | 'openai' | 'ollama' | 'learnlm';
+export type ProviderId = 'gemini' | 'anthropic' | 'openai' | 'openrouter' | 'ollama' | 'learnlm';
 
 // Model tiers for routing decisions
 export type ModelTier = 'quality' | 'routine' | 'pedagogical' | 'local';

@@ -15,6 +15,7 @@ const API_KEY_ENV_VARS: Record<ProviderId, string> = {
   gemini: 'GEMINI_API_KEY',
   anthropic: 'ANTHROPIC_API_KEY',
   openai: 'OPENAI_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
   ollama: '', // No API key needed
   learnlm: 'GEMINI_API_KEY', // LearnLM uses Gemini API
 };
@@ -24,6 +25,7 @@ const DEFAULT_BASE_URLS: Record<ProviderId, string> = {
   gemini: 'https://generativelanguage.googleapis.com',
   anthropic: 'https://api.anthropic.com',
   openai: 'https://api.openai.com',
+  openrouter: 'https://openrouter.ai/api/v1',
   ollama: 'http://localhost:11434',
   learnlm: 'https://generativelanguage.googleapis.com',
 };
@@ -74,8 +76,9 @@ export function createAdapter(
       return new AnthropicAdapter(adapterConfig);
       
     case 'openai':
+    case 'openrouter':
       return new OpenAIAdapter(adapterConfig);
-      
+
     case 'ollama':
       return new OllamaAdapter(adapterConfig);
       

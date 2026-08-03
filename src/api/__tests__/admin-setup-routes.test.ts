@@ -146,26 +146,39 @@ describe('GET /api/admin/setup/status', () => {
     const gemini = out.body.providers.find((p: any) => p.provider === 'gemini');
     const anthropic = out.body.providers.find((p: any) => p.provider === 'anthropic');
     const ollama = out.body.providers.find((p: any) => p.provider === 'ollama');
-    expect(gemini).toMatchObject({ key_present: true, required: true, enabled: true });
+    // No single provider is individually "required" any more — readiness
+    // is "at least one of them", checked via hard_requirement_met below.
+    expect(gemini).toMatchObject({ key_present: true, required: false, enabled: true });
     expect(anthropic).toMatchObject({ key_present: false, required: false });
     expect(ollama.key_present).toBe(true); // keyless provider always "present"
     expect(JSON.stringify(out.body)).not.toContain('test-key');
   });
 
-  it('marks the hard requirement met only when GEMINI_API_KEY is present', async () => {
+  it('marks the hard requirement met when ANY enabled provider has its key present', async () => {
     actAsAdmin();
     const handler = findHandler('GET', '/api/admin/setup/status');
 
+    // Only GEMINI_API_KEY set (from the outer beforeEach) — ready.
     const { res: res1, out: out1 } = makeRes();
     await handler(makeReq() as any, res1);
     expect(out1.body.hard_requirement_met).toBe(true);
     expect(out1.body.ready).toBe(true);
 
+    // Gemini's key removed but Anthropic's is now present — still ready,
+    // since Gemini is no longer the sole gate.
     delete process.env.GEMINI_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     const { res: res2, out: out2 } = makeRes();
     await handler(makeReq() as any, res2);
-    expect(out2.body.hard_requirement_met).toBe(false);
-    expect(out2.body.ready).toBe(false);
+    expect(out2.body.hard_requirement_met).toBe(true);
+    expect(out2.body.ready).toBe(true);
+    delete process.env.ANTHROPIC_API_KEY;
+
+    // Neither configured — not ready.
+    const { res: res3, out: out3 } = makeRes();
+    await handler(makeReq() as any, res3);
+    expect(out3.body.hard_requirement_met).toBe(false);
+    expect(out3.body.ready).toBe(false);
   });
 
   it('surfaces per-syllabus resolution counts', async () => {

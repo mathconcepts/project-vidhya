@@ -68,7 +68,16 @@ export function overallTone(status: SetupStatus | null): Tone {
   return status.hard_requirement_met ? 'good' : 'bad';
 }
 
-export const __testing = { mergeLiveResult, providerTone, overallTone };
+/** Pure — names of providers currently satisfying readiness (enabled +
+ *  key present), for the ready banner's copy. No single provider is
+ *  required any more — this just says which one(s) actually are
+ *  configured. Exported for tests. */
+export function configuredProviderNames(status: SetupStatus | null): string[] {
+  if (!status) return [];
+  return status.providers.filter((p) => p.enabled && p.key_present).map((p) => p.provider);
+}
+
+export const __testing = { mergeLiveResult, providerTone, overallTone, configuredProviderNames };
 
 const TONE_COLOR: Record<Tone, string> = {
   good: 'var(--green-ink)',
@@ -140,6 +149,7 @@ export default function SetupWizardPage() {
   }
 
   const tone = overallTone(status);
+  const configuredProviders = configuredProviderNames(status);
 
   return (
     <motion.div
@@ -194,8 +204,8 @@ export default function SetupWizardPage() {
               : <XCircle size={16} style={{ color: 'var(--red)' }} />}
             <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: tone === 'good' ? 'var(--green-ink)' : 'var(--red)', flex: 1 }}>
               {tone === 'good'
-                ? 'Ready — Gemini is configured. Generation can start.'
-                : 'Not ready — GEMINI_API_KEY is missing or not configured (the one hard requirement).'}
+                ? `Ready — ${configuredProviders.join(', ')} configured. Generation can start.`
+                : 'Not ready — no LLM provider is configured. Set at least one of GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY.'}
             </span>
             {tone === 'good' && (
               <Link

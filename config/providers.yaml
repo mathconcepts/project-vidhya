@@ -8,17 +8,22 @@ providers:
   gemini:
     enabled: true
     api_key_env: GEMINI_API_KEY
-    priced_at: "2026-08-02"
+    priced_at: "2026-08-03"
     models:
       flash:
-        id: "gemini-2.0-flash"
+        # Was gemini-2.0-flash — bumped to match the id every other part of
+        # this app already uses (provider-registry.ts's BYOK chat registry,
+        # the RunLauncher model dropdown). The old id was never wrong per
+        # se, just a second, drifted truth for "which Gemini model" — see
+        # registry.ts's header comment on why that class of bug matters.
+        id: "gemini-2.5-flash"
         context_window: 1000000
         max_output: 8192
         cost_per_1k_input: 0.000075
         cost_per_1k_output: 0.0003
         tier: routine
       pro:
-        id: "gemini-2.0-pro"
+        id: "gemini-2.5-pro"
         context_window: 2000000
         max_output: 8192
         cost_per_1k_input: 0.00125
@@ -33,17 +38,22 @@ providers:
   anthropic:
     enabled: true
     api_key_env: ANTHROPIC_API_KEY
-    priced_at: "2026-08-02"
+    priced_at: "2026-08-03"
     models:
       sonnet:
-        id: "claude-sonnet-4-20250514"
+        # Was claude-sonnet-4-20250514 / claude-haiku — same drift fix as
+        # gemini above; these ids didn't match provider-registry.ts's
+        # claude-sonnet-4-5 / claude-haiku-4-5, nor the RunLauncher
+        # dropdown's (differently-drifted) claude-sonnet-4-6, so picking
+        # "Claude" in the generation-run launcher threw ModelRetiredError.
+        id: "claude-sonnet-4-5"
         context_window: 200000
         max_output: 8192
         cost_per_1k_input: 0.003
         cost_per_1k_output: 0.015
         tier: quality
       haiku:
-        id: "claude-haiku"
+        id: "claude-haiku-4-5"
         context_window: 200000
         max_output: 4096
         cost_per_1k_input: 0.00025
@@ -71,6 +81,40 @@ providers:
         cost_per_1k_output: 0.0006
         tier: routine
     fallback_order: [gpt4o_mini, gpt4o]
+
+  openrouter:
+    enabled: true
+    api_key_env: OPENROUTER_API_KEY
+    priced_at: "2026-08-03"
+    base_url: "https://openrouter.ai/api/v1"
+    models:
+      # Model ids match provider-registry.ts's openrouter entries (the
+      # BYOK chat registry) — one key, routed to the underlying model.
+      # Costs are inherited from that underlying model's own pricing row
+      # above (OpenRouter's markup is small and varies by model; treat
+      # these as estimates, same caveat as every other cost_per_1k here).
+      gemini_flash:
+        id: "google/gemini-2.5-flash"
+        context_window: 1000000
+        max_output: 8192
+        cost_per_1k_input: 0.000075
+        cost_per_1k_output: 0.0003
+        tier: routine
+      claude_sonnet:
+        id: "anthropic/claude-sonnet-4-5"
+        context_window: 200000
+        max_output: 8192
+        cost_per_1k_input: 0.003
+        cost_per_1k_output: 0.015
+        tier: quality
+      gpt4o:
+        id: "openai/gpt-4o"
+        context_window: 128000
+        max_output: 4096
+        cost_per_1k_input: 0.005
+        cost_per_1k_output: 0.015
+        tier: quality
+    fallback_order: [gemini_flash, claude_sonnet, gpt4o]
 
   ollama:
     enabled: false
@@ -131,7 +175,7 @@ fallback:
     - name: primary
       providers: [gemini, anthropic]
     - name: fallback
-      providers: [openai, ollama]
+      providers: [openai, openrouter, ollama]
     - name: emergency
       providers: [ollama]
       alert: true

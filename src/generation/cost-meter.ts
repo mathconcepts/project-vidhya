@@ -22,9 +22,12 @@ interface ModelPrice {
 
 // Snapshot of public pricing as of 2026-05. Update + bump PRICING_VERSION.
 const PRICES: Record<string, ModelPrice> = {
-  // Anthropic
+  // Anthropic — ids kept in sync with config/providers.yaml's anthropic
+  // block by hand; a drifted id here silently estimates $0 for that model
+  // (priceForCall()'s unknown-model fallback), not a crash, so nothing
+  // forces this back into sync — check both when a model id changes.
   'claude-opus-4-7': { input_per_1m: 15.0, output_per_1m: 75.0 },
-  'claude-sonnet-4-6': { input_per_1m: 3.0, output_per_1m: 15.0 },
+  'claude-sonnet-4-5': { input_per_1m: 3.0, output_per_1m: 15.0 },
   'claude-haiku-4-5': { input_per_1m: 1.0, output_per_1m: 5.0 },
   // Google
   'gemini-2.5-flash': { input_per_1m: 0.075, output_per_1m: 0.3 },
@@ -36,6 +39,11 @@ const PRICES: Record<string, ModelPrice> = {
   'tts-1': { input_per_1m: 15.0, output_per_1m: 0 },
   // Wolfram Alpha — no token model; charge a flat per-call estimate
   wolfram: { input_per_1m: 0, output_per_1m: 0 },
+  // OpenRouter — same underlying model, routed through one key. Reuses
+  // the direct-provider price above (OpenRouter's markup is small and
+  // model-dependent; treat as an estimate like every other price here).
+  'google/gemini-2.5-flash': { input_per_1m: 0.075, output_per_1m: 0.3 },
+  'anthropic/claude-sonnet-4-5': { input_per_1m: 3.0, output_per_1m: 15.0 },
 };
 
 // Exported (not just module-local) so any other call site that needs "the

@@ -505,9 +505,14 @@ async function maybeEmbedQuery(args: GenerateOneArgs): Promise<number[] | null> 
 // models silently resolving to the same adapter). Target explicitly by
 // model id instead, and use maxRetries: 0 so a failure is never masked by
 // a same-request fallback to a different provider.
+// Kept in sync with config/providers.yaml's anthropic.sonnet / gemini.flash
+// model ids by hand (resolveProviderForModel() below does an exact-string
+// match against the registry, so drift here silently breaks routing — see
+// registry.ts's header comment on why "parallel truths" are the bug class
+// to avoid).
 const MODEL_ID_MAP: Record<'claude' | 'gemini', string> = {
-  claude: 'claude-sonnet-4-20250514',
-  gemini: 'gemini-2.0-flash',
+  claude: 'claude-sonnet-4-5',
+  gemini: 'gemini-2.5-flash',
 };
 
 /**

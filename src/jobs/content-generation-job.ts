@@ -34,15 +34,16 @@
  *    personalized-regen.ts), so a bad/adversarial upload can never
  *    corrupt the canonical atom set.
  *
- * Without GEMINI_API_KEY the job REFUSES to start: generating
+ * With ZERO LLM providers configured the job REFUSES to start: generating
  * stub/placeholder atoms is banned by the realignment plan — the exact
  * regression that shipped 82 placeholder explainers. The preflight also
  * makes one LIVE call per configured provider (preflightProviders()) so a
  * bad/expired/quota-exhausted key is caught before the job burns budget
- * churning through per-concept failures: a broken Gemini key still
- * refuses to start (Gemini is required), a broken Anthropic key only
- * warns (Anthropic backs consensus/second-opinions, not primary
- * generation).
+ * churning through per-concept failures. No single provider is hard-
+ * required — set any of GEMINI_API_KEY / ANTHROPIC_API_KEY /
+ * OPENAI_API_KEY / OPENROUTER_API_KEY and the job proceeds; it only
+ * refuses when every configured provider fails its live check (or none
+ * are configured at all).
  *
  * Syllabus-agnostic by design: which concept graph to iterate and where
  * its atoms live both come from `./generation-syllabi`, which resolves
@@ -419,32 +420,36 @@ export const contentGenerationJob: JobDefinition = {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return (
-        'GEMINI_API_KEY is not set — the content-generation job refuses to start. ' +
-        'Generating stub/placeholder atoms is banned by the content-pipeline realignment plan; ' +
-        'set GEMINI_API_KEY and retry.'
-      );
-    }
-
     // Live per-provider health check — catches an invalid/expired/quota-
     // exhausted key BEFORE the job burns its LLM-call budget churning
     // through per-concept failures with a confusing, potentially
     // misattributed error (see orchestrator.ts's callLlm() fix).
+    // preflightProviders() only returns providers that are enabled AND
+    // have a key present, so an empty result means nothing is configured.
     const results = await preflightProviders();
-    const gemini = results.find((r) => r.provider === 'gemini');
-    if (gemini && !gemini.ok) {
+
+    if (results.length === 0) {
       return (
-        `GEMINI_API_KEY is set but failed a live preflight call (${gemini.error}) — ` +
-        'the content-generation job refuses to start since Gemini is the required primary ' +
-        'provider. Check the key / quota and retry.'
+        'No LLM provider is configured — the content-generation job refuses to start. ' +
+        'Generating stub/placeholder atoms is banned by the content-pipeline realignment plan; ' +
+        'set at least one of GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY and retry.'
+      );
+    }
+
+    if (!results.some((r) => r.ok)) {
+      const detail = results.map((r) => `${r.provider}: ${r.error ?? 'unknown error'}`).join('; ');
+      return (
+        `Every configured LLM provider failed its live preflight call (${detail}) — the content-generation ` +
+        'job refuses to start with zero working providers. Check the key(s) / quota and retry.'
       );
     }
 
     for (const r of results) {
-      if (r.provider !== 'gemini' && !r.ok) {
-        // Non-Gemini providers (e.g. Anthropic) back consensus/second-opinions,
-        // not primary generation — warn but don't block the run.
+      if (!r.ok) {
+        // At least one other configured provider IS working (checked above),
+        // so a single failed provider is non-blocking — warn but proceed.
+        // Math atoms that need dual-model consensus degrade gracefully to
+        // single-model generation when a leg is unavailable (orchestrator.ts).
         console.warn(
           `[content-generation preflight] ${r.provider} failed a live health check (${r.error}) — ` +
             'continuing without it; consensus/second-opinion atoms may fall back to a single provider.',

@@ -671,6 +671,20 @@ Full suite **1595/1595 across 140 files.**
 - Cockpit drill-downs.
 - Phase 4 — DKT/AKT for `StudentModel`, IRT + true CAT for `ItemSelector`.
 
+---
+
+### Multi-Provider LLM Support (v4.25.0)
+
+Content-generation no longer hard-requires `GEMINI_API_KEY` specifically — it requires **at least one** configured provider (Gemini, Anthropic, OpenAI, or OpenRouter), matching what the code already did in practice (`orchestrator.ts`'s non-math atom generation calls Claude primary, Gemini only backs math-atom consensus + the single-provider fallback).
+
+**Root cause found while relaxing the gate:** three independent places declared the "requested" model id for Claude/Gemini and had drifted from each other — `config/providers.yaml` (`claude-sonnet-4-20250514` / `gemini-2.0-flash`), `orchestrator.ts`'s `MODEL_ID_MAP` (had to match providers.yaml exactly since `resolveProviderForModel()` does a literal string match), `RunLauncher.tsx`'s model dropdown (`claude-sonnet-4-6`, off by one from every other copy), and `cost-meter.ts`'s `PRICES` table (`claude-sonnet-4-6` too). Any operator picking "Claude" in the RunLauncher would have hit `ModelRetiredError`. All four now agree on `claude-sonnet-4-5` / `gemini-2.5-flash` / `gemini-2.5-pro` — the ids `src/llm/provider-registry.ts` (the BYOK chat registry) already used, so there's one id per model across the app instead of near-miss copies. This is exactly the "parallel truths that drift" bug class `registry.ts`'s own header comment warns about — nothing currently prevents a future re-drift; a shared constants module is the real fix, not attempted here.
+
+**OpenRouter added as a real content-generation provider**, not just a BYOK chat option: `config/providers.yaml` gained an `openrouter` block (`OPENROUTER_API_KEY`, openai-compatible shape, `google/gemini-2.5-flash` / `anthropic/claude-sonnet-4-5` / `openai/gpt-4o`), `src/llm/index.ts`'s `LLMClient` and `src/llm/adapters/index.ts`'s factory both route `openrouter` through the existing `OpenAIAdapter` (OpenRouter speaks OpenAI's chat-completions shape — no new adapter class needed), and `ProviderId` in `src/llm/types.ts` gained the id. `preflightProviders()` / `npm run content:setup` / the Setup Wizard's provider list all pick it up automatically since none of them hardcode a provider allowlist — `config/providers.yaml` is the only place a new provider needs to be declared.
+
+**Setup Wizard (`/admin/setup`) and `npm run content:setup`:** the readiness banner is `hard_requirement_met = providers.some(p => p.enabled && p.key_present)` instead of checking Gemini specifically; the banner names which provider(s) actually satisfied it. `ProviderStatus.required` is always `false` now (no single provider is individually mandatory) — kept as a field rather than removed in case a future deployment wants to reintroduce a mandatory provider. `content-generation-job.ts`'s in-process preflight (the one `npm run content:generate` actually runs) got the same treatment: refuses only when `preflightProviders()` returns zero results (nothing configured) or every configured provider fails its live check.
+
+**Known gap, not fixed here:** the RunLauncher's "LLM" dropdown is estimate-input only — `config.pipeline.llm_models` is read by `dry-run.ts` for the cost estimate and nowhere else. Real atom generation is hardcoded in `orchestrator.ts`'s `callLlm()` to Claude (primary, all atom types) + Gemini (math-atom consensus partner, or sole fallback when only one of the two is configured) — the operator's dropdown pick doesn't currently route to a different model. Wiring the dropdown's choice into `generateOne()`/`callLlm()` — while preserving the consensus-independence guard (`resolveProviderForModel()`, `ConsensusRoutingError`) — is a separate, larger follow-up; the dropdown's hint text says so inline so the gap isn't silent.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

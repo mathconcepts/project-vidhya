@@ -14,6 +14,7 @@ const API_KEY_ENV: Record<string, string> = {
   gemini: 'GEMINI_API_KEY',
   anthropic: 'ANTHROPIC_API_KEY',
   openai: 'OPENAI_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
   ollama: '',
   learnlm: 'GEMINI_API_KEY',
 };
@@ -22,6 +23,7 @@ const DEFAULT_BASE_URL: Record<string, string> = {
   gemini: 'https://generativelanguage.googleapis.com',
   anthropic: 'https://api.anthropic.com',
   openai: 'https://api.openai.com/v1',
+  openrouter: 'https://openrouter.ai/api/v1',
   ollama: 'http://localhost:11434',
   learnlm: 'https://generativelanguage.googleapis.com',
 };
@@ -70,6 +72,12 @@ export class LLMClient extends EventEmitter {
             adapter = new AnthropicAdapter(cfg);
             break;
           case 'openai':
+            adapter = new OpenAIAdapter(cfg as any);
+            break;
+          case 'openrouter':
+            // OpenRouter speaks the OpenAI chat-completions shape; the
+            // adapter is already parametrized by baseUrl/apiKey, so no new
+            // adapter class is needed — just point it at OpenRouter.
             adapter = new OpenAIAdapter(cfg as any);
             break;
           case 'ollama':

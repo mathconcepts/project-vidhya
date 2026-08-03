@@ -250,7 +250,7 @@ providers:
     priced_at: "${new Date().toISOString().slice(0, 10)}"
     models:
       flash:
-        id: "gemini-2.0-flash"
+        id: "gemini-2.5-flash"
         cost_per_1k_input: 0.000075
         cost_per_1k_output: 0.0003
         tier: routine
@@ -262,11 +262,24 @@ providers:
     priced_at: "${new Date().toISOString().slice(0, 10)}"
     models:
       sonnet:
-        id: "claude-sonnet-4-20250514"
+        id: "claude-sonnet-4-5"
         cost_per_1k_input: 0.003
         cost_per_1k_output: 0.015
         tier: quality
     fallback_order: [sonnet]
+
+  openrouter:
+    enabled: true
+    api_key_env: OPENROUTER_API_KEY
+    priced_at: "${new Date().toISOString().slice(0, 10)}"
+    base_url: "https://openrouter.ai/api/v1"
+    models:
+      gemini_flash:
+        id: "google/gemini-2.5-flash"
+        cost_per_1k_input: 0.000075
+        cost_per_1k_output: 0.0003
+        tier: routine
+    fallback_order: [gemini_flash]
 `;
   writeFileSync(yamlPath, bootstrap, 'utf-8');
   return 'created';

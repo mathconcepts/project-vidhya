@@ -50,8 +50,11 @@ interface ProviderStatus {
   api_key_env: string | null;
   key_present: boolean;
   model_count: number;
-  /** Only 'gemini' is a hard requirement — content-generation refuses to
-   *  start without it (same rule as setup-cli.ts). */
+  /** No single provider is individually required any more — content-
+   *  generation refuses to start only if NO provider is configured (see
+   *  `hard_requirement_met` below). Field kept (always false today) so the
+   *  frontend type doesn't need a breaking change if a future deployment
+   *  wants to flag one provider as mandatory again. */
   required: boolean;
 }
 
@@ -64,7 +67,7 @@ function readProviderStatuses(): { providers: ProviderStatus[]; registry_error: 
       api_key_env: p.api_key_env ?? null,
       key_present: p.api_key_env ? Boolean(process.env[p.api_key_env]) : true, // keyless providers (ollama) are always "present"
       model_count: Object.keys(p.models ?? {}).length,
-      required: id === 'gemini',
+      required: false,
     }));
     return { providers, registry_error: null };
   } catch (err) {
@@ -110,8 +113,11 @@ async function handleStatus(req: ParsedRequest, res: ServerResponse): Promise<vo
   const { syllabi } = readSyllabusStatuses();
   const db = await preflightDatabase();
 
-  const gemini = providers.find((p) => p.provider === 'gemini');
-  const hard_requirement_met = Boolean(gemini?.key_present);
+  // Ready as soon as ANY enabled provider has its key present — Gemini,
+  // Anthropic, OpenAI, OpenRouter, whatever the operator configured.
+  // Content-generation no longer hard-requires Gemini specifically (see
+  // content-generation-job.ts's preflight() and setup-cli.ts).
+  const hard_requirement_met = providers.some((p) => p.enabled && p.key_present);
 
   sendJSON(res, {
     generated_at: new Date().toISOString(),

@@ -13,7 +13,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Lock, BookOpen, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
+import { Loader2, Lock, BookOpen, CheckCircle2, AlertCircle, Plus, Rocket } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   listBlueprints,
@@ -314,9 +314,17 @@ function Detail({
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
             {blueprint.approved_at ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--green-ink)', fontSize: 11 }}>
-                <CheckCircle2 size={12} /> Approved
-              </span>
+              <>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--green-ink)', fontSize: 11 }}>
+                  <CheckCircle2 size={12} /> Approved
+                </span>
+                <Link
+                  to={`/admin/content-rd?blueprint=${encodeURIComponent(blueprint.id)}`}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--indigo)', color: 'var(--text-on-accent)', fontSize: 11, fontWeight: 'var(--weight-medium)', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                >
+                  <Rocket size={11} /> Launch this blueprint
+                </Link>
+              </>
             ) : blueprint.requires_review ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--orange)', fontSize: 11 }}>
                 <AlertCircle size={12} /> Needs review

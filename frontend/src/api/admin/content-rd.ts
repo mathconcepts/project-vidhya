@@ -259,7 +259,11 @@ export async function createRun(input: {
   hypothesis?: string;
   experiment_id?: string;
   auto_experiment?: boolean;
-}): Promise<{ run: GenerationRunRow }> {
+  /** §14.2 — when set, the backend translates the blueprint's stage
+   *  decisions into the unit spec and it takes over as source of truth,
+   *  overriding config.target.curriculum_unit_specs. */
+  blueprint_id?: string;
+}): Promise<{ run: GenerationRunRow; blueprint_warning?: string }> {
   return jsonOrThrow(
     await authFetch('/api/admin/runs', {
       method: 'POST',

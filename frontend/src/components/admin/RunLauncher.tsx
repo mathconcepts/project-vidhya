@@ -35,6 +35,16 @@ import {
 interface Props {
   defaultExam?: string;
   onLaunched?: (runId: string) => void;
+  /** Set when arriving from BlueprintsPage's "Launch this blueprint" CTA.
+   *  Pre-fills unit mode + concept/exam fields and threads blueprint_id
+   *  through to createRun() so the backend derives the unit spec from the
+   *  blueprint's own stage decisions (§14.2) instead of the manual form. */
+  initialBlueprint?: {
+    id: string;
+    concept_id: string;
+    exam_pack_id: string;
+    unit_name?: string;
+  } | null;
 }
 
 interface FormState {
@@ -197,16 +207,26 @@ const toggleInactiveStyle: React.CSSProperties = {
   color: 'var(--text-tertiary)',
 };
 
-export function RunLauncher({ defaultExam, onLaunched }: Props) {
-  const [form, setForm] = useState<FormState>({
-    ...DEFAULT_FORM,
-    exam_pack_id: defaultExam ?? DEFAULT_FORM.exam_pack_id,
-  });
+export function RunLauncher({ defaultExam, onLaunched, initialBlueprint }: Props) {
+  const [form, setForm] = useState<FormState>(() => initialBlueprint
+    ? {
+        ...DEFAULT_FORM,
+        exam_pack_id: initialBlueprint.exam_pack_id,
+        unit_mode: true,
+        unit_concept_id: initialBlueprint.concept_id,
+        unit_name: initialBlueprint.unit_name || initialBlueprint.concept_id,
+        hypothesis: `Launch from blueprint: ${initialBlueprint.concept_id}`,
+      }
+    : {
+        ...DEFAULT_FORM,
+        exam_pack_id: defaultExam ?? DEFAULT_FORM.exam_pack_id,
+      });
   const [estimate, setEstimate] = useState<CostEstimate | null>(null);
   const [estimating, setEstimating] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const blueprintId = initialBlueprint?.id ?? null;
 
   // PR-A — Prefilled defaults: pre-fill the form from the exam's most
   // recent COMPLETE run when the operator changes exam_pack_id. Best-
@@ -320,8 +340,13 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
         exam_pack_id: form.exam_pack_id,
         config,
         hypothesis: form.hypothesis || undefined,
+        blueprint_id: blueprintId ?? undefined,
       });
-      setSuccess(`Launched ${r.run.id} (queued)`);
+      setSuccess(
+        r.blueprint_warning
+          ? `Launched ${r.run.id} (queued) — ${r.blueprint_warning}`
+          : `Launched ${r.run.id} (queued). Watch its progress in Active runs below, then check the Effectiveness ledger once mastery signal comes in.`,
+      );
       onLaunched?.(r.run.id);
       // Reset hypothesis so operator doesn't accidentally re-launch the same one
       setForm((f) => ({ ...f, hypothesis: '' }));
@@ -349,7 +374,11 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
         <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>
           Every run auto-creates a wrapping experiment so lift can be measured.
         </p>
-        {prefilledFromRunId && (
+        {blueprintId ? (
+          <p style={{ fontSize: '10px', color: 'var(--indigo-ink)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
+            ⤷ launching from blueprint <span style={{ fontWeight: 600 }}>{blueprintId}</span> — stages + constraints come from the blueprint, not this form
+          </p>
+        ) : prefilledFromRunId && (
           <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
             ⤺ pre-filled from run <span style={{ color: 'var(--indigo-ink)' }}>{prefilledFromRunId}</span>
           </p>

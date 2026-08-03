@@ -24,10 +24,11 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Wand2, CheckCircle2, XCircle, AlertTriangle, Loader2, Shield, RefreshCw,
-  Database, KeyRound, BookOpen, PlayCircle,
+  Database, KeyRound, BookOpen, PlayCircle, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackEvent } from '@/lib/analytics';
@@ -35,6 +36,7 @@ import {
   getSetupStatus, testProviders, SetupApiError,
   type SetupStatus, type ProviderStatus, type ProviderTestResult,
 } from '@/api/admin/setup';
+import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
 type Tone = 'good' | 'bad' | 'warn' | 'neutral';
 
@@ -145,6 +147,8 @@ export default function SetupWizardPage() {
       animate={{ opacity: 1, y: 0 }}
       style={{ maxWidth: 768, margin: '0 auto', paddingBottom: 48, display: 'flex', flexDirection: 'column', gap: 24 }}
     >
+      <JourneyNudge currentHref="/admin/setup" />
+
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div>
           <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -188,11 +192,19 @@ export default function SetupWizardPage() {
             {tone === 'good'
               ? <CheckCircle2 size={16} style={{ color: 'var(--green-ink)' }} />
               : <XCircle size={16} style={{ color: 'var(--red)' }} />}
-            <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: tone === 'good' ? 'var(--green-ink)' : 'var(--red)' }}>
+            <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: tone === 'good' ? 'var(--green-ink)' : 'var(--red)', flex: 1 }}>
               {tone === 'good'
                 ? 'Ready — Gemini is configured. Generation can start.'
                 : 'Not ready — GEMINI_API_KEY is missing or not configured (the one hard requirement).'}
             </span>
+            {tone === 'good' && (
+              <Link
+                to="/admin/journey"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 11, fontWeight: 'var(--weight-medium)', textDecoration: 'none', whiteSpace: 'nowrap' }}
+              >
+                Continue setup <ArrowRight size={11} />
+              </Link>
+            )}
           </div>
 
           <Section

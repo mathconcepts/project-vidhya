@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Loader2, FlaskConical, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,10 +27,12 @@ import {
   type GenerationRunRow,
   type RunSuggestionRow,
 } from '@/api/admin/content-rd';
+import { getBlueprint } from '@/api/admin/blueprints';
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
 export default function ContentRDPage() {
   const { user, loading: authLoading } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const [experiments, setExperiments] = useState<ExperimentRow[]>([]);
   const [runs, setRuns] = useState<GenerationRunRow[]>([]);
@@ -38,6 +41,32 @@ export default function ContentRDPage() {
   const [loadingRuns, setLoadingRuns] = useState(false);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Arrived from BlueprintsPage's "Launch this blueprint" CTA
+  // (/admin/content-rd?blueprint=<id>) — load it so RunLauncher can
+  // pre-fill unit mode and thread blueprint_id through on launch.
+  const blueprintParam = searchParams.get('blueprint');
+  const [initialBlueprint, setInitialBlueprint] = useState<{
+    id: string;
+    concept_id: string;
+    exam_pack_id: string;
+    unit_name?: string;
+  } | null>(null);
+  useEffect(() => {
+    if (!blueprintParam) { setInitialBlueprint(null); return; }
+    let cancelled = false;
+    getBlueprint(blueprintParam)
+      .then(({ blueprint }) => {
+        if (cancelled) return;
+        setInitialBlueprint({
+          id: blueprint.id,
+          concept_id: blueprint.concept_id,
+          exam_pack_id: blueprint.exam_pack_id,
+        });
+      })
+      .catch(() => { /* blueprint may have been superseded — form falls back to manual entry */ });
+    return () => { cancelled = true; };
+  }, [blueprintParam]);
 
   const loadExperiments = useCallback(async () => {
     setLoadingExperiments(true);
@@ -179,6 +208,7 @@ export default function ContentRDPage() {
 
           <RunLauncher
             defaultExam="gate-ma"
+            initialBlueprint={initialBlueprint}
             onLaunched={() => {
               void loadRuns();
               void loadExperiments();

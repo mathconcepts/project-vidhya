@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Loader2, AlertCircle, RefreshCw, Plus, FileText, Search,
-  Check, X, Edit3, ArrowLeft, Save, AlertTriangle,
+  Check, X, Edit3, ArrowLeft, Save, AlertTriangle, Clock,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
+import { wordDiff } from '@/lib/wordDiff';
 
 /**
  * /gate/admin/content-studio — admin-driven content authoring UI.
@@ -31,15 +32,41 @@ import { authFetch } from '@/lib/auth/client';
  *   - The underperforming endpoint result is shown as a side-panel
  *     callout on the Drafts tab when the count is non-zero.
  *
- * What's NOT in this page:
+ * Mission Control Phase 1, "review queue, elevated" (SOTA-Facelift-CEO-
+ * Review.md §7.5) — two of the three asks were real to build, one wasn't:
  *
- *   - Diff view between draft revisions (a draft only has the latest
- *     edits state; the JSONL log has history but no UI surface
- *     traverses it)
+ *   - Queue-age warning: YES. Pending ('draft'-status) items older than
+ *     QUEUE_AGE_WARNING_DAYS get a badge + a summary banner. This is a
+ *     genuinely NEW threshold — investigation found no pre-existing
+ *     "7-day throttle" enforcement anywhere in the codebase despite the
+ *     CEO doc referencing one; it's informational only here, not wired
+ *     to actually throttle generation (that would be a job-scheduler
+ *     change, out of scope for a queue view).
+ *   - Diff view: YES, but against the CURRENTLY-PUBLISHED library entry
+ *     for the same concept_id (GET /api/content-library/concept/:id),
+ *     not against prior draft revisions — a Draft has no version chain
+ *     to diff against (the JSONL log is append-only history with no
+ *     reader), but "what will change if I approve this" is the more
+ *     useful question anyway. Reuses the existing wordDiff() utility
+ *     (already used by ConceptOrchestratorPage's atom-version compare).
+ *   - Consensus-disagreement flagging: NOT built. `consensus_disagreement`
+ *     lives on `GenerationMeta` in the concept-orchestrator's ATOM
+ *     pipeline (multi-LLM math verification) — a completely different
+ *     generation system Content Studio drafts never go through (drafts
+ *     are single-pass: uploads/Wolfram/URL/LLM, no consensus step).
+ *     Faking this field here would violate "labels never lie" — there
+ *     is nothing to disagree between. If atom-generation output ever
+ *     gets its own review queue, that's where this belongs.
+ *
+ * What's still NOT in this page:
+ *
  *   - Bulk operations (approve-multiple, reject-multiple)
  *   - Source preview (e.g. show the URL's extracted text before
  *     submitting). The admin sees the result in the draft body.
  */
+
+/** New in the review-queue elevation — not a pre-existing enforced value. */
+const QUEUE_AGE_WARNING_DAYS = 7;
 
 type Difficulty = 'intro' | 'intermediate' | 'advanced';
 type SourceKind = 'uploads' | 'wolfram' | 'url-extract' | 'llm';
@@ -78,7 +105,28 @@ interface Underperformer {
   last_turn_at:         string;
 }
 
+interface LibraryEntry {
+  concept_id: string;
+  title: string;
+  explainer_md: string;
+  worked_example_md?: string;
+}
+
 type Tab = 'generate' | 'drafts' | 'review';
+
+/** Pure — whole days elapsed since an ISO timestamp. Exported for tests. */
+export function daysSince(iso: string, now: Date = new Date()): number {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return 0;
+  return Math.max(0, Math.floor((now.getTime() - then) / (24 * 60 * 60 * 1000)));
+}
+
+/** Pure — pending drafts older than the threshold. Exported for tests. */
+export function staleDrafts(drafts: Draft[], thresholdDays: number = QUEUE_AGE_WARNING_DAYS, now: Date = new Date()): Draft[] {
+  return drafts.filter((d) => d.status === 'draft' && daysSince(d.generation.generated_at, now) >= thresholdDays);
+}
+
+export const __testing = { daysSince, staleDrafts, QUEUE_AGE_WARNING_DAYS };
 
 export default function ContentStudioPage() {
   const { hasRole } = useAuth();
@@ -453,6 +501,8 @@ function sourceHelp(s: SourceKind): string {
 function DraftsTab({
   drafts, loading, error, statusFilter, onStatusFilter, onRefresh, onSelect, underperformers,
 }: any) {
+  const stale = useMemo(() => staleDrafts(drafts), [drafts]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -493,6 +543,8 @@ function DraftsTab({
         <UnderperformerCallout items={underperformers} />
       )}
 
+      {stale.length > 0 && <QueueAgeBanner count={stale.length} />}
+
       {loading && (
         <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
           <Loader2 className="w-4 h-4 animate-spin" /> loading…
@@ -512,41 +564,115 @@ function DraftsTab({
         </div>
       )}
 
-      {drafts.map((d: Draft) => (
-        <button
-          key={d.draft_id}
-          onClick={() => onSelect(d)}
-          className="w-full text-left rounded p-4"
-          style={{
-            background: 'var(--surface-card)',
-            boxShadow: 'var(--shadow-raise)',
-            border: 'var(--hairline) solid var(--separator)',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-sans)',
-          }}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>{d.title}</h3>
-                <StatusBadge status={d.status} />
+      {drafts.map((d: Draft) => {
+        const age = daysSince(d.generation.generated_at);
+        const isStale = d.status === 'draft' && age >= QUEUE_AGE_WARNING_DAYS;
+        return (
+          <button
+            key={d.draft_id}
+            onClick={() => onSelect(d)}
+            className="w-full text-left rounded p-4"
+            style={{
+              background: 'var(--surface-card)',
+              boxShadow: 'var(--shadow-raise)',
+              border: isStale ? '1px solid rgba(255,149,0,.4)' : 'var(--hairline) solid var(--separator)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>{d.title}</h3>
+                  <StatusBadge status={d.status} />
+                  {isStale && (
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1"
+                      style={{ background: 'rgba(255,149,0,.1)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }}
+                    >
+                      <Clock className="w-3 h-3" /> {age}d waiting
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{d.concept_id}</p>
+                <p className="text-xs mt-2 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                  {d.explainer_md.replace(/[#*]/g, '').slice(0, 200)}
+                </p>
               </div>
-              <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{d.concept_id}</p>
-              <p className="text-xs mt-2 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                {d.explainer_md.replace(/[#*]/g, '').slice(0, 200)}
-              </p>
+              <div className="text-right shrink-0">
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  {d.generation.used_source ?? 'no source'}
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                  {new Date(d.generation.generated_at).toLocaleString()}
+                </p>
+              </div>
             </div>
-            <div className="text-right shrink-0">
-              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {d.generation.used_source ?? 'no source'}
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
-                {new Date(d.generation.generated_at).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </button>
-      ))}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * DiffAgainstLibrary — word-level diff of the current (editable) draft
+ * body against the currently-published library entry for the same
+ * concept, so a reviewer sees exactly what approving will change.
+ * Mirrors ConceptOrchestratorPage's DiffHighlights pattern (same
+ * wordDiff utility, same insert/delete styling) rather than a new
+ * diff implementation.
+ */
+function DiffAgainstLibrary({
+  liveExplainer, draftExplainer, liveWorkedExample, draftWorkedExample,
+}: {
+  liveExplainer: string; draftExplainer: string; liveWorkedExample: string; draftWorkedExample: string;
+}) {
+  const explainerSegments = useMemo(() => wordDiff(liveExplainer, draftExplainer), [liveExplainer, draftExplainer]);
+  const workedSegments = useMemo(() => wordDiff(liveWorkedExample, draftWorkedExample), [liveWorkedExample, draftWorkedExample]);
+  const explainerChanged = explainerSegments.some((s) => s.op !== 'equal');
+  const workedChanged = workedSegments.some((s) => s.op !== 'equal');
+
+  if (!explainerChanged && !workedChanged) {
+    return (
+      <div className="text-xs rounded p-2" style={{ background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.2)', color: 'var(--green-ink)' }}>
+        Identical to the published version — approving will not change what students see.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded p-3" style={{ background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+      <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--text-tertiary)' }}>
+        Diff vs. published version
+      </div>
+      {explainerChanged && <DiffStrip label="explainer" segments={explainerSegments} />}
+      {workedChanged && <DiffStrip label="worked example" segments={workedSegments} />}
+    </div>
+  );
+}
+
+function DiffStrip({ label, segments }: { label: string; segments: Array<{ op: 'equal' | 'insert' | 'delete'; text: string }> }) {
+  return (
+    <div className="mb-2 last:mb-0">
+      <div className="text-[10px] mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</div>
+      <div className="text-xs leading-relaxed break-words" style={{ color: 'var(--text-secondary)' }}>
+        {segments.map((s, i) => {
+          if (s.op === 'equal') return <span key={i}>{s.text}</span>;
+          if (s.op === 'insert') {
+            return (
+              <span key={i} className="rounded px-0.5" style={{ background: 'rgba(52,199,89,.12)', color: 'var(--green-ink)' }} title="added">
+                {s.text}
+              </span>
+            );
+          }
+          return (
+            <span key={i} className="line-through rounded px-0.5" style={{ background: 'rgba(255,59,48,.06)', color: 'var(--red)' }} title="removed">
+              {s.text}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -563,6 +689,25 @@ function StatusBadge({ status }: { status: DraftStatus }) {
     <span className="text-xs px-2 py-0.5 rounded" style={style}>
       {status}
     </span>
+  );
+}
+
+function QueueAgeBanner({ count }: { count: number }) {
+  return (
+    <div className="rounded p-4" style={{ background: 'rgba(255,149,0,.1)', border: 'var(--hairline) solid rgba(255,149,0,.3)' }}>
+      <div className="flex items-start gap-2">
+        <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--orange)' }} />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-medium" style={{ color: 'var(--orange)' }}>
+            {count} draft{count === 1 ? ' has' : 's have'} been waiting {QUEUE_AGE_WARNING_DAYS}+ days for review
+          </h3>
+          <p className="text-xs mt-1" style={{ color: 'rgba(255,149,0,.8)' }}>
+            Informational only — this doesn't throttle generation. A stale review queue is worth clearing before
+            it grows further.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -609,7 +754,26 @@ function ReviewTab({
   const [error, setError]               = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
+  // undefined = still loading, null = confirmed no live entry (new concept).
+  const [liveEntry, setLiveEntry] = useState<LibraryEntry | null | undefined>(undefined);
   const editable = draft.status === 'draft';
+
+  useEffect(() => {
+    let cancelled = false;
+    setLiveEntry(undefined);
+    (async () => {
+      try {
+        const r = await authFetch(`/api/content-library/concept/${encodeURIComponent(draft.concept_id)}`);
+        if (cancelled) return;
+        if (r.status === 404) { setLiveEntry(null); return; }
+        if (!r.ok) { setLiveEntry(null); return; }
+        setLiveEntry(await r.json());
+      } catch {
+        if (!cancelled) setLiveEntry(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [draft.concept_id]);
 
   const isDirty =
     title !== draft.title ||
@@ -734,6 +898,26 @@ function ReviewTab({
           </ul>
         </details>
       </div>
+
+      {/* Diff vs. currently-published library entry — "what will change if I approve this" */}
+      {editable && liveEntry === undefined && (
+        <div className="text-xs flex items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
+          <Loader2 className="w-3 h-3 animate-spin" /> checking published version…
+        </div>
+      )}
+      {editable && liveEntry === null && (
+        <div className="text-xs rounded p-2" style={{ background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)' }}>
+          No published version yet for <code style={{ fontFamily: 'var(--font-mono)' }}>{draft.concept_id}</code> — approving this creates a new library entry.
+        </div>
+      )}
+      {editable && liveEntry && (
+        <DiffAgainstLibrary
+          liveExplainer={liveEntry.explainer_md}
+          draftExplainer={explainer}
+          liveWorkedExample={liveEntry.worked_example_md ?? ''}
+          draftWorkedExample={workedExample}
+        />
+      )}
 
       {/* Editable fields */}
       <div>

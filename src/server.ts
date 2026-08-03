@@ -58,6 +58,7 @@ import { conceptOrchestratorRoutes } from './api/concept-orchestrator-routes';
 import { jobRoutes } from './api/job-routes';
 import { platformHealthRoutes } from './api/admin-platform-health-routes';
 import { setupRoutes } from './api/admin-setup-routes';
+import { graphRoutes } from './api/admin-graph-routes';
 import { mediaRoutes } from './api/media-routes';
 import { curriculumRoutes } from './api/curriculum-routes';
 import { llmConfigRoutes } from './api/llm-config-routes';
@@ -295,6 +296,9 @@ for (const route of platformHealthRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of setupRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of graphRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of mediaRoutes) {

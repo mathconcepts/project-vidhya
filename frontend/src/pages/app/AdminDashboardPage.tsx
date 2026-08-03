@@ -4,7 +4,7 @@ import {
   Crown, Shield, Activity, Users, MessageCircle, Smartphone, Key,
   CheckCircle2, Circle, AlertTriangle, TrendingDown, Brain,
   ArrowRight, Loader2, RefreshCw, Sparkles, Settings, FileText, Server,
-  FlaskConical, Lock, BookOpen, Terminal, Wand2,
+  FlaskConical, Lock, BookOpen, Terminal, Wand2, Network,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
@@ -363,6 +363,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/platform-health" label="Platform health" icon={Server} />
               <QuickLink href="/admin/jobs" label="Run console" icon={Terminal} />
               <QuickLink href="/admin/setup" label="Setup wizard" icon={Wand2} />
+              <QuickLink href="/admin/graph" label="Graph browser" icon={Network} />
               <QuickLink href="/admin/scenarios" label="Persona scenarios" icon={Sparkles} />
               <QuickLink href="/admin/blueprints" label="Content blueprints" icon={FileText} />
               <QuickLink href="/admin/rulesets" label="Blueprint rulesets" icon={Settings} />

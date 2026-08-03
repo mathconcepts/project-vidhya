@@ -78,6 +78,12 @@ describe('ShareCard', () => {
 
     render(<ShareCard {...props} />);
     const button = await screen.findByRole('button', { name: /share report card/i });
+    // The button stays disabled until the canvas-draw effect's drawCard()
+    // promise resolves (setReady(true)) — findByRole only waits for the
+    // (disabled) element to exist, not for it to become clickable. A
+    // fireEvent.click on a disabled button never fires onClick, which is
+    // silently a no-op rather than an error — wait for enabled explicitly.
+    await waitFor(() => expect(button).not.toBeDisabled());
     fireEvent.click(button);
 
     await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
@@ -93,6 +99,7 @@ describe('ShareCard', () => {
 
     render(<ShareCard {...props} />);
     const button = await screen.findByRole('button', { name: /share report card/i });
+    await waitFor(() => expect(button).not.toBeDisabled());
     fireEvent.click(button);
 
     await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
@@ -120,6 +127,7 @@ describe('ShareCard', () => {
 
     render(<ShareCard {...props} />);
     const button = await screen.findByRole('button', { name: /share report card/i });
+    await waitFor(() => expect(button).not.toBeDisabled());
     fireEvent.click(button);
 
     await waitFor(() => expect(share).toHaveBeenCalledTimes(1));

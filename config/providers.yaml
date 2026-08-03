@@ -2,11 +2,11 @@
 # Hot-swappable provider configuration
 
 version: "2.0"
-default_provider: gemini
+default_provider: openrouter
 
 providers:
   gemini:
-    enabled: true
+    enabled: false
     api_key_env: GEMINI_API_KEY
     priced_at: "2026-08-03"
     models:
@@ -132,7 +132,7 @@ providers:
     fallback_order: [llama]
 
   learnlm:
-    enabled: true
+    enabled: false
     # Shares Gemini's key (learnlm is served on the same Gemini API surface;
     # see API_KEY_ENV in src/llm/index.ts).
     api_key_env: GEMINI_API_KEY
@@ -173,9 +173,9 @@ fallback:
   retry_delay_ms: 1000
   degradation_levels:
     - name: primary
-      providers: [gemini, anthropic]
+      providers: [openrouter, anthropic, openai]
     - name: fallback
-      providers: [openai, openrouter, ollama]
+      providers: [gemini, ollama]
     - name: emergency
       providers: [ollama]
       alert: true

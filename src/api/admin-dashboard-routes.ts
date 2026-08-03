@@ -57,12 +57,14 @@ async function handleDashboardSummary(req: ParsedRequest, res: ServerResponse): 
   };
   const llm_configured = !!(
     process.env.VIDHYA_LLM_PRIMARY_PROVIDER ||
+    process.env.OPENROUTER_API_KEY ||
     process.env.GEMINI_API_KEY ||
     process.env.ANTHROPIC_API_KEY ||
     process.env.OPENAI_API_KEY
   );
   const llm_provider = process.env.VIDHYA_LLM_PRIMARY_PROVIDER ||
-    (process.env.GEMINI_API_KEY ? 'google-gemini' :
+    (process.env.OPENROUTER_API_KEY ? 'openrouter' :
+     process.env.GEMINI_API_KEY ? 'google-gemini' :
      process.env.ANTHROPIC_API_KEY ? 'anthropic' :
      process.env.OPENAI_API_KEY ? 'openai' : null);
 

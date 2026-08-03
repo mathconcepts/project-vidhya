@@ -1,11 +1,12 @@
-# ── GATE Math — Production Dockerfile ──────────────────────────────────────────
-# Multi-stage build: install deps + build frontend, then run with tsx
+# ── Project Vidhya — Multi-arch Dockerfile (supports linux/arm64 for M1 Mac) ──
 # Usage:
-#   docker build -t gate-math .
-#   docker run -p 8080:8080 --env-file .env gate-math
+#   docker build -t vidhya .
+#   docker run -p 8080:8080 --env-file .env vidhya
+#
+# M1 Mac: docker compose up --build  (arm64 native via docker-compose.yml)
 
 # ── Stage 1: Build ────────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 WORKDIR /app
 
 # Install root dependencies
@@ -38,17 +39,16 @@ COPY --from=builder /app/src ./src
 COPY --from=builder /app/frontend/dist ./frontend/dist
 COPY --from=builder /app/tsconfig.json ./
 
-# Copy migrations + curriculum YAML + demo seeder so runtime auto-migrator,
-# exam-pack loader, and /demo-login auto-seed work without host bind-mounts.
-# Production parity. The demo seed is tiny (one-shot generator) so including
-# it in production images is fine; it only runs when demo-tokens.json is
-# missing AND someone hits /demo-login (gated to local-dev mode by default).
+# Copy migrations + curriculum YAML + config + demo seeder so runtime
+# auto-migrator, exam-pack loader, and /demo-login auto-seed work without
+# host bind-mounts.
 COPY --from=builder /app/supabase ./supabase
 COPY --from=builder /app/data ./data
 COPY --from=builder /app/demo ./demo
+COPY --from=builder /app/config ./config
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:${PORT:-8080}/health || exit 1
 
 EXPOSE ${PORT:-8080}

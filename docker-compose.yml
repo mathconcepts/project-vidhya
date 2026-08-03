@@ -1,15 +1,20 @@
-# ── GATE Math — Local Development with Docker Compose ─────────────────────────
+# ── Project Vidhya — Local Development with Docker Compose (M1/arm64) ──────────
 # Usage:
-#   cp .env.example .env  (fill in at least GEMINI_API_KEY)
+#   cp .env.example .env  (fill in OPENROUTER_API_KEY at minimum)
 #   docker compose up --build
 #
 # This spins up PostgreSQL + pgvector locally so you don't need Supabase.
 # Access: http://localhost:8080
+#
+# M1 Mac (Apple Silicon): images are multi-arch; platform: linux/arm64 is set
+# explicitly to run natively (fast). On Intel Mac / Linux x86, override via:
+#   PLATFORM=linux/amd64 docker compose up --build
 
 services:
   # ── PostgreSQL with pgvector ──────────────────────────────────────────────
   db:
     image: pgvector/pgvector:pg16
+    platform: ${PLATFORM:-linux/arm64}
     restart: unless-stopped
     environment:
       POSTGRES_USER: gatemath
@@ -28,6 +33,7 @@ services:
   # ── Run migrations ────────────────────────────────────────────────────────
   migrate:
     image: postgres:16-alpine
+    platform: ${PLATFORM:-linux/arm64}
     depends_on:
       db:
         condition: service_healthy
@@ -35,17 +41,19 @@ services:
       - ./supabase/migrations:/migrations
     entrypoint: >
       sh -c '
-        for f in /migrations/*.sql; do
+        for f in $(ls /migrations/*.sql | sort); do
           echo "Applying $$f..."
           PGPASSWORD=gatemath psql -h db -U gatemath -d gatemath -f "$$f" 2>&1 || true
         done
         echo "All migrations applied."
       '
 
-  # ── GATE Math API ─────────────────────────────────────────────────────────
+  # ── Vidhya API ────────────────────────────────────────────────────────────
   app:
     build:
       context: .
+      platforms:
+        - ${PLATFORM:-linux/arm64}
       args:
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-http://localhost:8080}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-local}
@@ -60,7 +68,12 @@ services:
     environment:
       PORT: ${PORT:-8080}
       DATABASE_URL: postgres://gatemath:gatemath@db:5432/gatemath
+      # ── LLM providers — set at least one ────────────────────────────────
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # ── Other optional integrations ──────────────────────────────────────
       WOLFRAM_APP_ID: ${WOLFRAM_APP_ID:-}
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production-please}
       CRON_SECRET: ${CRON_SECRET:-dev-cron-secret}
@@ -74,8 +87,8 @@ services:
       test: ["CMD", "wget", "-qO-", "http://localhost:${PORT:-8080}/health"]
       interval: 10s
       timeout: 5s
-      start_period: 15s
-      retries: 3
+      start_period: 30s
+      retries: 5
 
 volumes:
   pgdata:

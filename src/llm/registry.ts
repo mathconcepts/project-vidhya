@@ -241,11 +241,11 @@ export function ensureProvidersYamlBootstrap(yamlPath: string = defaultProviders
 # each provider's key.
 
 version: "2.0"
-default_provider: gemini
+default_provider: openrouter
 
 providers:
   gemini:
-    enabled: true
+    enabled: false
     api_key_env: GEMINI_API_KEY
     priced_at: "${new Date().toISOString().slice(0, 10)}"
     models:

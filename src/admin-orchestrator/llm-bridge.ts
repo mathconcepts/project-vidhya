@@ -44,10 +44,10 @@ import { createAdapter } from '../llm/adapters';
  * the adapter factory accepts. Returns null if the caller's provider
  * can't be bridged to any supported adapter.
  *
- * Supported adapters: gemini, anthropic, openai, ollama, learnlm.
- * Unsupported here: openrouter, groq, deepseek, mistral — these would
- * need their own adapters before wiring in. Gracefully returning null
- * for these is correct: the bridge doesn't hallucinate support.
+ * Supported adapters: gemini, anthropic, openai, ollama, learnlm, openrouter.
+ * OpenRouter uses the OpenAI-compatible adapter pointed at openrouter.ai.
+ * Unsupported here: groq, deepseek, mistral — these would need their own
+ * adapters. Gracefully returning null for these is correct.
  */
 function resolveProviderId(config: LLMConfig): ProviderId | null {
   const id = config.primary_provider_id;
@@ -57,6 +57,7 @@ function resolveProviderId(config: LLMConfig): ProviderId | null {
     'google-gemini': 'gemini',
     'anthropic': 'anthropic',
     'openai': 'openai',
+    'openrouter': 'openrouter',
     'ollama': 'ollama',
     'learnlm': 'learnlm',
   };
@@ -102,6 +103,15 @@ const DEFAULT_CONFIGS: Record<ProviderId, any> = {
   ollama: {
     models: {
       'default': { id: 'llama3.2:3b', contextWindow: 128000, maxOutput: 4096, costPer1kInput: 0, costPer1kOutput: 0, tier: 'local' },
+    },
+    fallbackOrder: ['default'],
+  },
+  openrouter: {
+    // OpenRouter speaks the OpenAI chat-completions shape; OpenAIAdapter
+    // handles it by pointing baseUrl at openrouter.ai.
+    baseUrl: 'https://openrouter.ai/api/v1',
+    models: {
+      'default': { id: 'google/gemini-2.5-flash', contextWindow: 1000000, maxOutput: 8192, costPer1kInput: 0.000075, costPer1kOutput: 0.0003, tier: 'routine' },
     },
     fallbackOrder: ['default'],
   },

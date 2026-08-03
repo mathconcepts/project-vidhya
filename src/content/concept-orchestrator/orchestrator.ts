@@ -580,19 +580,41 @@ async function callLlm(prompt: string, modelId: string): Promise<string> {
 
 /**
  * Picks the consensus "second opinion" model for a given operator-chosen
- * primary model. Always resolves to a DIFFERENT provider than the
- * primary so consensusProvidersAreDistinct() below has something
- * meaningful to check: if the primary resolves to the gemini provider,
- * the secondary defaults to Claude; otherwise it defaults to Gemini.
- * This reduces to today's exact default pair (claude primary / gemini
- * secondary) when the caller doesn't set model_id at all.
+ * primary model. Tries to pick a model from a DIFFERENT configured provider
+ * than the primary, so consensusProvidersAreDistinct() has something
+ * meaningful to check. Falls back in order: gemini → claude → first available
+ * OpenRouter model. When only one provider is configured, both legs resolve
+ * to the same provider and consensusProvidersAreDistinct() gracefully degrades
+ * to single-model mode (no key waste, no silent wrong-opinion).
  */
 async function pickConsensusSecondary(primaryModelId: string): Promise<string> {
   try {
     const { loadLlmConfig } = await import('../../llm/registry');
     const config = loadLlmConfig();
     const primaryProvider = resolveProviderForModel(config, primaryModelId);
-    return primaryProvider === 'gemini' ? MODEL_ID_MAP.claude : MODEL_ID_MAP.gemini;
+
+    // Candidate secondary providers in preference order (distinct from primary)
+    const candidates: Array<{ provider: string; modelId: string }> = [
+      { provider: 'gemini', modelId: MODEL_ID_MAP.gemini },
+      { provider: 'anthropic', modelId: MODEL_ID_MAP.claude },
+    ];
+
+    // Also try the first model from any other configured provider (e.g. openrouter)
+    for (const [pid, pconfig] of Object.entries(config.providers)) {
+      if (pid === 'gemini' || pid === 'anthropic') continue;
+      const firstModel = Object.values(pconfig.models)[0];
+      if (firstModel?.id) candidates.push({ provider: pid, modelId: firstModel.id });
+    }
+
+    for (const c of candidates) {
+      if (c.provider !== primaryProvider && config.providers[c.provider]) {
+        return c.modelId;
+      }
+    }
+
+    // No different provider found — fall back to Claude (consensusProvidersAreDistinct
+    // will catch the same-provider case and degrade to single-model mode)
+    return MODEL_ID_MAP.claude;
   } catch {
     return MODEL_ID_MAP.gemini;
   }

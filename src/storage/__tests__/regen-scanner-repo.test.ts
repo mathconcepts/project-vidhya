@@ -50,13 +50,13 @@ describe('PgRegenScannerRepo', () => {
       return { rows: [{ diagnosis: 'sign error', freq: '5' }, { diagnosis: null, freq: '1' }] };
     };
     const repo = new PgRegenScannerRepo({ query } as any);
-    const result = await repo.getTopMisconceptions('calculus-derivatives');
+    const result = await repo.getTopMisconceptions('derivatives-basic');
     expect(capturedSql).toMatch(/FROM error_log/);
     expect(capturedSql).toMatch(/WHERE concept_id = \$1/);
     expect(capturedSql).toMatch(/GROUP BY diagnosis/);
     expect(capturedSql).not.toMatch(/atom_id/);
     expect(capturedSql).not.toMatch(/error_text/);
-    expect(capturedParams).toEqual(['calculus-derivatives']);
+    expect(capturedParams).toEqual(['derivatives-basic']);
     expect(result).toEqual(['sign error']);
   });
 

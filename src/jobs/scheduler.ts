@@ -29,6 +29,7 @@ import { evaluateRipeExperiments } from '../content/concept-orchestrator';
 import { snapshotAllActiveSessions } from '../experiments/snapshotter';
 import { runLearningsLedger } from './learnings-ledger';
 import { pollAllInFlightBatches } from '../generation/batch/poller';
+import { resumeQueuedRuns } from '../generation/run-dispatcher';
 import { flushToDisk as flushRateLimits } from '../llm/rate-limit-tracker';
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -172,6 +173,19 @@ register('batchPoller', FIVE_MIN_MS, async () => {
     transitions: out.filter((r) => r.result.kind === 'transitioned').length,
     still_pending: out.filter((r) => r.result.kind === 'still_pending').length,
   };
+});
+
+register('generationRunResume', FIVE_MIN_MS, async () => {
+  // Safety net for admin-launched GenerationRuns (RunLauncher / ledger
+  // "run now"): picks up anything still 'queued' — normally
+  // dispatchRun() already fired synchronously right after createRun(),
+  // so this is only needed after a crash/restart mid-dispatch. Same
+  // code path used at server boot. No-op when DATABASE_URL is unset.
+  if (!process.env.DATABASE_URL) {
+    return { status: 'skipped', reason: 'no_db' };
+  }
+  const out = await resumeQueuedRuns();
+  return { status: 'ran', ...out };
 });
 
 register('abEvaluator', DAY_MS, async () => {

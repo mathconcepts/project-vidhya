@@ -41,16 +41,24 @@ export async function appendVersion(
   content: string,
   meta: GenerationMeta,
   improvement_reason?: string,
+  /**
+   * Parent GenerationRun id, when this atom was produced by an
+   * admin-launched run (src/generation/run-dispatcher.ts) rather than the
+   * syllabus-driven content-generation job. Stamped onto the row so the
+   * run's artifacts are traceable — mirrors how insertStubAtomVersion()
+   * (curriculum-unit-repo.ts) already stamps it for unit-mode atoms.
+   */
+  generation_run_id?: string,
 ): Promise<AtomVersion | null> {
   const pool = getPool();
   if (!pool) return null;
   try {
     const r = await pool.query(
-      `INSERT INTO atom_versions (atom_id, version_n, content, generation_meta, improvement_reason)
-         SELECT $1, COALESCE(MAX(version_n), 0) + 1, $2, $3, $4
+      `INSERT INTO atom_versions (atom_id, version_n, content, generation_meta, improvement_reason, generation_run_id)
+         SELECT $1, COALESCE(MAX(version_n), 0) + 1, $2, $3, $4, $5
            FROM atom_versions WHERE atom_id = $1
          RETURNING atom_id, version_n, content, generation_meta, generated_at, active, improvement_reason`,
-      [atom_id, content, JSON.stringify(meta), improvement_reason ?? null],
+      [atom_id, content, JSON.stringify(meta), improvement_reason ?? null, generation_run_id ?? null],
     );
     return r.rows[0] ? mapRow(r.rows[0]) : null;
   } catch (err) {

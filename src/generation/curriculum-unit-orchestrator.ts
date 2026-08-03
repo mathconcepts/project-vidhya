@@ -31,10 +31,34 @@ import { execSync } from 'child_process';
 import { CostMeter, RunBudgetExceeded, priceForCall } from './cost-meter';
 import { pedagogyVerifier } from '../content/verifiers/pedagogy-verifier';
 import type { GenerationRunConfig } from '../experiments/types';
+import type { AtomType } from '../content/content-types';
+import { CONCEPT_MAP } from '../constants/concept-graph';
 import {
   getCurriculumUnitRepo,
   type CurriculumUnitRepo,
 } from '../storage/repositories/curriculum-unit-repo';
+
+// Curriculum-unit specs use free-form "kind" strings (operator-facing,
+// e.g. RunLauncher's DEFAULT_ATOM_KINDS) that mostly — but not entirely —
+// line up with concept-orchestrator's AtomType union. 'practice' is the
+// one curriculum-unit-specific label with no 1:1 AtomType name; it maps
+// to the closest existing atom type. Kinds with no mapping (e.g. the
+// INTERACTIVE_KINDS, which aren't concept-orchestrator atom types at all)
+// fall through to the stub path below rather than being silently dropped.
+const KIND_TO_ATOM_TYPE: Record<string, AtomType> = {
+  hook: 'hook',
+  intuition: 'intuition',
+  formal_definition: 'formal_definition',
+  visual_analogy: 'visual_analogy',
+  worked_example: 'worked_example',
+  micro_exercise: 'micro_exercise',
+  practice: 'micro_exercise',
+  common_traps: 'common_traps',
+  retrieval_prompt: 'retrieval_prompt',
+  interleaved_drill: 'interleaved_drill',
+  mnemonic: 'mnemonic',
+  exam_pattern: 'exam_pattern',
+};
 
 // ============================================================================
 // Public types
@@ -270,6 +294,7 @@ export async function generateUnit(
         kind,
         learning_objectives: spec.learning_objectives,
         generation_run_id: ctx.generation_run_id,
+        model_id: ctx.pipeline_config?.llm_models?.[0],
         meter,
       });
       if (atomResult) {
@@ -346,6 +371,12 @@ interface AtomGenerationOk {
  * Phase 2 v1: stamps the atom_id onto curriculum_units.atom_ids; PR #33
  * adds the interactive atom kinds. Atoms generated here register with
  * the parent run via generation_run_id stamping (Sprint A).
+ *
+ * Until v4.26.0 this looked up conceptOrchestrator.generateAtom /
+ * .generate / .runOrchestrator — none of which the barrel actually
+ * exports (its one production entry point is generateConcept) — so this
+ * ALWAYS fell through to the "stub atom" fallback below, even in a fully
+ * configured deployment. Fixed to call the real generateConcept().
  */
 async function generateAtomForKind(
   repo: CurriculumUnitRepo,
@@ -355,6 +386,8 @@ async function generateAtomForKind(
     kind: string;
     learning_objectives: Array<{ id: string; statement: string; blooms_level?: string }>;
     generation_run_id?: string;
+    /** Operator-selected model id — see UnitGenerationContext.pipeline_config. */
+    model_id?: string;
     meter: CostMeter;
   },
 ): Promise<AtomGenerationOk | null> {
@@ -370,7 +403,8 @@ async function generateAtomForKind(
   // right generation prompt (intuition-eigenvalues, formal-definition-eigenvalues, etc.)
   const atomId = `${args.kind}-${args.concept_id}`;
 
-  // Estimate tokens for cost-meter pre-debit (best-effort; refined post-call)
+  // Estimate tokens for cost-meter pre-debit (best-effort; refined below
+  // once generateConcept reports its own real per-atom cost).
   const inputEst = 1500;
   const outputEst = 800;
   const preCost = priceForCall({
@@ -386,20 +420,20 @@ async function generateAtomForKind(
     output_tokens: outputEst,
   });
 
-  // Best-effort dispatch into the concept orchestrator; signature varies
-  // across deployments so we look for the most common entry name.
-  const generator =
-    conceptOrchestrator?.generateAtom ??
-    conceptOrchestrator?.generate ??
-    conceptOrchestrator?.runOrchestrator;
+  const atomType = KIND_TO_ATOM_TYPE[args.kind];
+  const generateConcept = conceptOrchestrator?.generateConcept;
 
-  if (typeof generator !== 'function') {
+  if (typeof generateConcept !== 'function' || !atomType) {
     // Fallback: insert a minimal atom_versions stub so the unit's atom_ids
-    // list is populated. This is the dev/test path; production flywheel
-    // exposes a real generator function.
+    // list is populated. Hit when the real generator can't be loaded
+    // (DB-less/test paths — generateConcept itself no-ops without a DB
+    // anyway) or the spec asked for a kind concept-orchestrator doesn't
+    // know how to generate (e.g. an interactive kind).
     await repo.insertStubAtomVersion({
       atom_id: atomId,
-      content: `# ${args.kind} for ${args.concept_id}\n\n_Stub atom — concept-orchestrator generator not wired in this deployment._`,
+      content: `# ${args.kind} for ${args.concept_id}\n\n_Stub atom — ${
+        atomType ? 'concept-orchestrator generator not wired in this deployment' : `unsupported atom kind "${args.kind}"`
+      }._`,
       generation_meta: {
         unit_id: args.unit_id,
         kind: args.kind,
@@ -410,16 +444,34 @@ async function generateAtomForKind(
     return { atom_id: atomId, cost_usd: preCost };
   }
 
-  // Real generator path
-  await generator({
+  // Real generator path. topic_family is best-effort: concept-graph is
+  // GATE-MA-scoped today, so an unknown concept_id (a different exam
+  // pack) falls back to the concept_id itself — template-loader.getTemplate()
+  // degrades gracefully to the generic scaffold when the family is unknown.
+  const topicFamily = CONCEPT_MAP.get(args.concept_id)?.topic ?? args.concept_id;
+  const draft = await generateConcept({
     concept_id: args.concept_id,
-    kind: args.kind,
-    unit_id: args.unit_id,
-    learning_objectives: args.learning_objectives,
+    topic_family: topicFamily,
+    atom_types: [atomType],
+    dry_run: false,
+    model_id: args.model_id,
     generation_run_id: args.generation_run_id,
   });
 
-  return { atom_id: atomId, cost_usd: preCost };
+  const generated = draft.atoms[0];
+  if (!generated) {
+    // LLM-judge auto-rejected it (or the call failed and produced empty
+    // content, which fails the judge gate too) — surfaced in
+    // draft.rejected_atoms[0].meta.auto_rejected for whoever inspects the
+    // run later. Treat as "no atom" rather than inserting a stub in its
+    // place, matching how atom-only generateConcept() callers already
+    // handle rejections.
+    const reason = draft.rejected_atoms[0]?.meta.auto_rejected?.reason;
+    console.warn(`[unit-orchestrator] ${atomId} generation produced no accepted atom${reason ? `: ${reason}` : ''}`);
+    return null;
+  }
+
+  return { atom_id: generated.atom_id, cost_usd: draft.total_cost_usd || preCost };
 }
 
 // readUnitForReview / markUnitReady / markUnitFailed moved to
@@ -455,4 +507,5 @@ export const __testing = {
   generateUnitId,
   defaultRetrievalSchedule,
   currentGitSha,
+  KIND_TO_ATOM_TYPE,
 };

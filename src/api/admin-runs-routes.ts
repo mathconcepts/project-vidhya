@@ -10,10 +10,11 @@
  *   POST   /api/admin/runs/dry-run           → cost estimate, no DB write
  *   PATCH  /api/admin/runs/:id               → abort a queued/running run
  *
- * Note: this Sprint B2 surface CREATES the run row but does NOT yet
- * dispatch the actual generation. The cron-driven flywheel still picks
- * up its default daily run. A future iteration will let admin-launched
- * runs override the flywheel queue.
+ * handleCreate fires src/generation/run-dispatcher.ts's dispatchRun()
+ * right after the row lands (fire-and-forget — the HTTP response returns
+ * immediately with the 'queued' row; dispatch flips it to running/complete
+ * in the background). The independent cron-driven flywheel still runs its
+ * own default daily batch on top of whatever admin-launched runs do.
  *
  * Auth: requireRole('admin') — same gate as admin-experiments-routes.ts.
  * JWT for browsers, CRON_SECRET backdoor for curl/CI.
@@ -27,6 +28,7 @@ import {
   markRunFailed,
 } from '../generation/run-orchestrator';
 import { estimateRunCost } from '../generation/dry-run';
+import { dispatchRun } from '../generation/run-dispatcher';
 import type {
   GenerationRunStatus,
   GenerationRunConfig,
@@ -322,6 +324,16 @@ async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<vo
     sendJSON(res, { error: 'Failed to create run' }, 500);
     return;
   }
+
+  // Fire-and-forget: don't make the operator's HTTP request wait on
+  // however long the run takes (could be minutes). dispatchRun() owns
+  // the row's status transitions from here; a dispatch-time failure
+  // lands on the row as status='failed' + error, visible in
+  // ActiveRunsPanel/GET /api/admin/runs/:id — never thrown back here.
+  void dispatchRun(run.id).catch((err) => {
+    console.error(`[admin-runs] dispatch failed to start for ${run.id}: ${(err as Error).message}`);
+  });
+
   // If translation fell through, surface the warning to the operator via
   // the response. Frontend renders it as a toast next to the new run.
   // Not annotated on the run row itself — `error` is reserved for true

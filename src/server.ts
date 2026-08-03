@@ -1051,6 +1051,21 @@ Solve carefully:`;
         console.error(`[server] batch resume failed: ${e?.message}`);
       }
     })();
+
+    // Resume any admin-launched GenerationRuns still 'queued' when this
+    // process last died — e.g. the process restarted between createRun()
+    // and its fire-and-forget dispatchRun() call (see src/generation/
+    // run-dispatcher.ts and admin-runs-routes.ts's handleCreate). Same
+    // one-pass-on-boot pattern as the batch resume above; the scheduler
+    // sweeps again periodically. No-op when DATABASE_URL is unset.
+    void (async () => {
+      try {
+        const { resumeQueuedRuns } = await import('./generation/run-dispatcher.js');
+        await resumeQueuedRuns();
+      } catch (e: any) {
+        console.error(`[server] generation-run resume failed: ${e?.message}`);
+      }
+    })();
   });
 
   // Graceful shutdown

@@ -164,6 +164,7 @@ export async function generateConcept(
       topic_family: opts.topic_family,
       atom_type,
       student_context: opts.student_context,
+      model_id: opts.model_id,
     });
 
     total_cost += generated.meta.cost_usd;
@@ -206,7 +207,13 @@ export async function generateConcept(
         ? { llm_tokens: 4000, wolfram_calls: 1 }
         : { llm_tokens: 2000, wolfram_calls: 0 };
       await recordSpend(opts.concept_id, generated.meta.cost_usd, cost_meta);
-      const versionRow = await appendVersion(generated.atom_id, generated.content, generated.meta);
+      const versionRow = await appendVersion(
+        generated.atom_id,
+        generated.content,
+        generated.meta,
+        undefined,
+        opts.generation_run_id,
+      );
       // §4.15 multi-modal: generate media sidecars after the version is
       // committed. Best-effort — failure here doesn't undo the atom.
       if (versionRow) {
@@ -249,6 +256,13 @@ interface GenerateOneArgs {
    * generic prompt is unchanged for anonymous and uncalled paths.
    */
   student_context?: unknown;
+  /**
+   * Operator-selected primary generation model id (e.g. from an admin-
+   * launched GenerationRun's config.pipeline.llm_models[0]). Defaults to
+   * DEFAULT_MODEL_ID (Claude) when absent, preserving pre-multi-provider
+   * behavior for callers that don't surface a model choice.
+   */
+  model_id?: string;
 }
 
 async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
@@ -274,36 +288,43 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
 
   // Math atoms go through dual-model consensus.
   if (requiresConsensus(args.atom_type)) {
+    const primaryModelId = args.model_id ?? DEFAULT_MODEL_ID;
+    const secondaryModelId = await pickConsensusSecondary(primaryModelId);
+    // Labels are historical — 'llm-claude'/'llm-gemini' now mean "primary
+    // leg" / "secondary consensus leg" rather than literally Claude/Gemini,
+    // since either can be any configured provider's model. See
+    // GenerationSource's doc comment.
     sourceCascade.push('llm-claude', 'llm-gemini');
-    const distinctProviders = await consensusProvidersAreDistinct();
+    const distinctProviders = await consensusProvidersAreDistinct(primaryModelId, secondaryModelId);
     const [primary, secondary] = distinctProviders
       ? await Promise.all([
-          callLlm(prompt, 'claude'),
-          callLlm(prompt, 'gemini'),
+          callLlm(prompt, primaryModelId),
+          callLlm(prompt, secondaryModelId),
         ])
       // Both legs would hit the same provider — treat as "one leg
       // unavailable" (the existing degraded-consensus path below)
-      // rather than spending twice on a single opinion.
-      : [await callLlm(prompt, 'gemini'), ''];
+      // rather than spending twice on a single opinion. Use the
+      // operator's actual primary choice for the one call we do make.
+      : [await callLlm(prompt, primaryModelId), ''];
     if (!primary && !secondary) {
       content = '';
     } else if (!secondary) {
       content = primary;
-      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: ['gemini'], reason: distinctProviders ? 'gemini call failed' : 'claude and gemini resolve to the same provider — consensus refused' } };
+      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: [secondaryModelId], reason: distinctProviders ? `${secondaryModelId} call failed` : `${primaryModelId} and ${secondaryModelId} resolve to the same provider — consensus refused` } };
     } else if (!primary) {
       content = secondary;
-      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: ['claude'], reason: 'claude call failed' } };
+      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: [primaryModelId], reason: `${primaryModelId} call failed` } };
     } else {
       const cmp = compareMathAtoms(args.atom_type, primary, secondary);
       content = primary;
       consensusMeta = { llm_consensus: cmp.agreed };
       if (!cmp.agreed) {
-        consensusMeta.consensus_disagreement = { models: ['claude', 'gemini'], reason: cmp.reason };
+        consensusMeta.consensus_disagreement = { models: [primaryModelId, secondaryModelId], reason: cmp.reason };
       }
     }
   } else {
     sourceCascade.push('llm-claude');
-    content = (await callLlm(prompt, 'claude')) || '';
+    content = (await callLlm(prompt, args.model_id ?? DEFAULT_MODEL_ID)) || '';
   }
 
   const defaults = ATOM_TYPE_DEFAULTS[args.atom_type];
@@ -505,15 +526,22 @@ async function maybeEmbedQuery(args: GenerateOneArgs): Promise<number[] | null> 
 // models silently resolving to the same adapter). Target explicitly by
 // model id instead, and use maxRetries: 0 so a failure is never masked by
 // a same-request fallback to a different provider.
-// Kept in sync with config/providers.yaml's anthropic.sonnet / gemini.flash
-// model ids by hand (resolveProviderForModel() below does an exact-string
-// match against the registry, so drift here silently breaks routing — see
-// registry.ts's header comment on why "parallel truths" are the bug class
-// to avoid).
+//
+// Multi-provider support (v4.26.0): callers may now pass ANY model id
+// present in config/providers.yaml, not just this fixed claude/gemini
+// pair — see OrchestratorOptions.model_id. MODEL_ID_MAP survives as the
+// DEFAULT primary/secondary pair for callers that don't surface a model
+// choice (unchanged behavior). Kept in sync with config/providers.yaml's
+// anthropic.sonnet / gemini.flash model ids by hand (resolveProviderForModel()
+// below does an exact-string match against the registry, so drift here
+// silently breaks routing — see registry.ts's header comment on why
+// "parallel truths" are the bug class to avoid).
 const MODEL_ID_MAP: Record<'claude' | 'gemini', string> = {
   claude: 'claude-sonnet-4-5',
   gemini: 'gemini-2.5-flash',
 };
+
+const DEFAULT_MODEL_ID: string = MODEL_ID_MAP.claude;
 
 /**
  * Which registry provider actually serves a given model id, per the
@@ -531,7 +559,7 @@ function resolveProviderForModel(config: { providers: Record<string, { models: R
   return null;
 }
 
-async function callLlm(prompt: string, model: 'claude' | 'gemini'): Promise<string> {
+async function callLlm(prompt: string, modelId: string): Promise<string> {
   try {
     const { LLMClient } = await import('../../llm/index');
     const { loadLlmConfig } = await import('../../llm/registry');
@@ -540,35 +568,55 @@ async function callLlm(prompt: string, model: 'claude' | 'gemini'): Promise<stri
     const response = await client.generate({
       messages: [{ role: 'user', content: prompt }],
       taskType: 'content-generation',
-      model: MODEL_ID_MAP[model],
+      model: modelId,
       maxRetries: 0,
     });
     return (response.content ?? response.text ?? '').trim();
   } catch (err) {
-    console.warn(`[orchestrator] LLM call failed (${model}): ${(err as Error).message}`);
+    console.warn(`[orchestrator] LLM call failed (${modelId}): ${(err as Error).message}`);
     return '';
   }
 }
 
 /**
+ * Picks the consensus "second opinion" model for a given operator-chosen
+ * primary model. Always resolves to a DIFFERENT provider than the
+ * primary so consensusProvidersAreDistinct() below has something
+ * meaningful to check: if the primary resolves to the gemini provider,
+ * the secondary defaults to Claude; otherwise it defaults to Gemini.
+ * This reduces to today's exact default pair (claude primary / gemini
+ * secondary) when the caller doesn't set model_id at all.
+ */
+async function pickConsensusSecondary(primaryModelId: string): Promise<string> {
+  try {
+    const { loadLlmConfig } = await import('../../llm/registry');
+    const config = loadLlmConfig();
+    const primaryProvider = resolveProviderForModel(config, primaryModelId);
+    return primaryProvider === 'gemini' ? MODEL_ID_MAP.claude : MODEL_ID_MAP.gemini;
+  } catch {
+    return MODEL_ID_MAP.gemini;
+  }
+}
+
+/**
  * Consensus independence guard (CEO plan §8.5 — ConsensusRoutingError).
- * Runs before the two consensus calls fire: if both MODEL_ID_MAP legs
- * would resolve to the same provider (e.g. only a Gemini key is
- * configured, or a future model-id change accidentally aliases both
- * legs to one provider), refuse up front instead of silently paying for
- * "two independent opinions" that are really one opinion twice.
+ * Runs before the two consensus calls fire: if both legs would resolve
+ * to the same provider (e.g. only one provider's key is configured, or
+ * a future model-id change accidentally aliases both legs to one
+ * provider), refuse up front instead of silently paying for "two
+ * independent opinions" that are really one opinion twice.
  *
  * Returns true when a consensus pair is safe to dispatch, false when the
  * caller should treat this the same as "one leg unavailable" (existing
  * degraded-consensus handling in generateOne already covers that path —
  * this just makes sure it's never invisible-same-provider degradation).
  */
-async function consensusProvidersAreDistinct(): Promise<boolean> {
+async function consensusProvidersAreDistinct(primaryModelId: string, secondaryModelId: string): Promise<boolean> {
   try {
     const { loadLlmConfig } = await import('../../llm/registry');
     const config = loadLlmConfig();
-    const providerA = resolveProviderForModel(config, MODEL_ID_MAP.claude);
-    const providerB = resolveProviderForModel(config, MODEL_ID_MAP.gemini);
+    const providerA = resolveProviderForModel(config, primaryModelId);
+    const providerB = resolveProviderForModel(config, secondaryModelId);
     if (providerA && providerB && providerA === providerB) {
       const { ConsensusRoutingError } = await import('../../llm/errors');
       console.warn(`[orchestrator] ${new ConsensusRoutingError(providerA, providerB).message}`);
@@ -592,3 +640,16 @@ function emptyMeta(extra: Partial<GenerationMeta> = {}): GenerationMeta {
     ...extra,
   };
 }
+
+// Exported for tests only — the v4.26.0 model-routing generalization
+// (pickConsensusSecondary / resolveProviderForModel / consensusProvidersAreDistinct)
+// is easiest to pin directly rather than through generateConcept's full
+// pipeline, where the two consensus legs fire concurrently via
+// Promise.all and are awkward to assert on independently.
+export const __testing = {
+  MODEL_ID_MAP,
+  DEFAULT_MODEL_ID,
+  resolveProviderForModel,
+  pickConsensusSecondary,
+  consensusProvidersAreDistinct,
+};

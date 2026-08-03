@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { __testing, generateUnit } from '../curriculum-unit-orchestrator';
+import { __testing, generateUnit, INTERACTIVE_KINDS } from '../curriculum-unit-orchestrator';
 
-const { generateUnitId, defaultRetrievalSchedule } = __testing;
+const { generateUnitId, defaultRetrievalSchedule, KIND_TO_ATOM_TYPE } = __testing;
 
 describe('curriculum-unit-orchestrator · helpers', () => {
   it('generates a stable-shape unit id', () => {
@@ -37,6 +37,31 @@ describe('curriculum-unit-orchestrator · defaultRetrievalSchedule', () => {
 
   it('honours custom schedule when provided', () => {
     expect(defaultRetrievalSchedule([1, 7, 21])).toEqual({ revisit_days: [1, 7, 21] });
+  });
+});
+
+describe('curriculum-unit-orchestrator · KIND_TO_ATOM_TYPE', () => {
+  // v4.26.0: generateAtomForKind used to look up a nonexistent
+  // conceptOrchestrator.generateAtom/.generate/.runOrchestrator export and
+  // ALWAYS fell through to a placeholder stub atom. Fixed to call the real
+  // generateConcept(), which requires kind -> AtomType. This mapping is
+  // the one part of that fix worth pinning directly (RunLauncher's
+  // DEFAULT_ATOM_KINDS and CurriculumUnitSpec.atom_kinds are free-form
+  // strings, not typed against AtomType).
+  it("maps the curriculum-unit-specific 'practice' label to 'micro_exercise'", () => {
+    expect(KIND_TO_ATOM_TYPE.practice).toBe('micro_exercise');
+  });
+
+  it('maps every other known kind to itself (already valid AtomType names)', () => {
+    for (const kind of ['hook', 'intuition', 'formal_definition', 'worked_example', 'common_traps']) {
+      expect(KIND_TO_ATOM_TYPE[kind]).toBe(kind);
+    }
+  });
+
+  it('has no entry for the interactive kinds — those fall through to the stub path, not a bogus AtomType', () => {
+    for (const kind of INTERACTIVE_KINDS) {
+      expect(KIND_TO_ATOM_TYPE[kind]).toBeUndefined();
+    }
   });
 });
 

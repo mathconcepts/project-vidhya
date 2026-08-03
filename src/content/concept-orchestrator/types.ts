@@ -4,7 +4,14 @@
 
 import type { AtomType, BloomLevel } from '../content-types';
 
-/** Source identifier for the cascade. */
+/**
+ * Source identifier for the cascade. 'llm-claude'/'llm-gemini' are
+ * historical labels for "primary generation leg" / "secondary consensus
+ * leg" — since multi-provider support landed, either leg can be backed by
+ * any configured provider's model (see OrchestratorOptions.model_id), not
+ * literally Claude/Gemini. Kept as-is to avoid a wider rename; treat them
+ * as positional labels, not provider identity.
+ */
 export type GenerationSource = 'wolfram' | 'llm-claude' | 'llm-gemini' | 'url-extract' | 'uploads';
 
 export interface GenerationMeta {
@@ -79,6 +86,24 @@ export interface OrchestratorOptions {
    * context only steers tone/level/misconception-targeting.
    */
   student_context?: unknown;
+  /**
+   * Operator-selected primary generation model id — e.g. the first entry
+   * of an admin-launched GenerationRun's config.pipeline.llm_models[].
+   * Must be a model id present in config/providers.yaml (any configured
+   * provider — gemini/anthropic/openai/openrouter/...). Defaults to
+   * Claude when absent, matching pre-multi-provider behavior. For math
+   * atoms (which run dual-model consensus), a distinct-provider second
+   * opinion is chosen automatically — see orchestrator.ts's
+   * pickConsensusSecondary().
+   */
+  model_id?: string;
+  /**
+   * Parent GenerationRun id — stamped onto atom_versions rows so an
+   * admin-launched run's artifacts are traceable back to it (see
+   * src/generation/run-dispatcher.ts). Absent for the syllabus-driven
+   * content-generation job and other unlabeled callers, same as today.
+   */
+  generation_run_id?: string;
 }
 
 export interface ProgressEvent {

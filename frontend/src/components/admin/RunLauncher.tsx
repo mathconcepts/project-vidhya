@@ -345,7 +345,7 @@ export function RunLauncher({ defaultExam, onLaunched, initialBlueprint }: Props
       setSuccess(
         r.blueprint_warning
           ? `Launched ${r.run.id} (queued) — ${r.blueprint_warning}`
-          : `Launched ${r.run.id} (queued). Watch its progress in Active runs below, then check the Effectiveness ledger once mastery signal comes in.`,
+          : `Launched ${r.run.id}. Generation is running in the background — watch its progress in Active runs below, then check the Effectiveness ledger once mastery signal comes in.`,
       );
       onLaunched?.(r.run.id);
       // Reset hypothesis so operator doesn't accidentally re-launch the same one
@@ -560,7 +560,7 @@ export function RunLauncher({ defaultExam, onLaunched, initialBlueprint }: Props
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           <Field
             label="LLM"
-            hint="Cost-estimate input only today — atom generation itself calls Claude (or Gemini for math-atom consensus) regardless of this pick. Wiring this selection into the generator is tracked separately."
+            hint="Primary model for this run's generation. Math atoms (formal definition, worked example) also get an automatic second opinion from a different provider for consensus — this pick doesn't change that safety check, only which provider leads."
           >
             <select
               value={form.llm_model}

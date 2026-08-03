@@ -14,6 +14,7 @@
 import { ServerResponse } from 'http';
 import pg from 'pg';
 import { createRun } from '../generation/run-orchestrator';
+import { dispatchRun } from '../generation/run-dispatcher';
 import { runLearningsLedger } from '../jobs/learnings-ledger';
 import type { GenerationRunConfig } from '../experiments/types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
@@ -182,6 +183,13 @@ async function handleSuggestionAction(
   if (!run) {
     return sendJSON(res, { error: 'Failed to create run' }, 500);
   }
+
+  // Same dispatch as admin-runs-routes.ts's handleCreate — a suggestion
+  // "launch" produces a real GenerationRun and must actually run it, not
+  // just leave the row queued forever.
+  void dispatchRun(run.id).catch((err) => {
+    console.error(`[admin-ledger] dispatch failed to start for ${run.id}: ${(err as Error).message}`);
+  });
 
   await pool.query(
     `UPDATE run_suggestions SET status = 'launched', acted_at = NOW() WHERE id = $1`,

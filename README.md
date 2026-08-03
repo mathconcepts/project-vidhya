@@ -146,7 +146,9 @@ For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPL
 For the full local stack with Postgres + pgvector + auto-migrations (production parity):
 
 ```bash
+cp .env.example .env             # add OPENROUTER_API_KEY (or any LLM key) in .env
 docker compose up --build        # http://localhost:8080
+# M1 Mac: defaults to linux/arm64 (native). Intel: PLATFORM=linux/amd64 docker compose up --build
 ```
 
 | | Local | Render | Netlify + Render | Docker (full stack) |

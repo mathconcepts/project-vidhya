@@ -111,15 +111,65 @@ npm run demo:verify
 
 ---
 
+## Docker install (full stack — production parity)
+
+Runs Postgres + pgvector + auto-migrations + the app in one command. Best for local development that mirrors what Render runs.
+
+### Quick start
+
+```bash
+# 1. Copy the env file
+cp .env.example .env
+
+# 2. Add your LLM key (OpenRouter recommended — one key, many models)
+#    Edit .env and set OPENROUTER_API_KEY=sk-or-v1-...
+#    (or GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY — any one works)
+
+# 3. Start
+docker compose up --build
+# → http://localhost:8080
+```
+
+### M1 Mac (Apple Silicon)
+
+The Compose file defaults to `linux/arm64` — native on M1, no Rosetta emulation needed:
+
+```bash
+# Default — works out of the box on M1:
+docker compose up --build
+
+# Intel Mac / Linux x86 — override the platform:
+PLATFORM=linux/amd64 docker compose up --build
+```
+
+If you see a `platform mismatch` warning, set `PLATFORM=linux/arm64` explicitly in your `.env`.
+
+### What the stack runs
+
+| Service | Image | Port |
+|---|---|---|
+| `db` | `pgvector/pgvector:pg16` | 5432 (internal) |
+| `migrate` | runs SQL files in `supabase/migrations/` | — |
+| `app` | built from `Dockerfile` | 8080 |
+
+Flat-file data lives in a `vidhya_data` Docker volume (survives container restarts). If host port 5432 is taken by your own Postgres, create a `docker-compose.override.yml` that remaps `db.ports` to `"5433:5432"` (gitignored by default).
+
+---
+
 ## Recommended install (with AI tutor)
 
-Add **one** BYOK LLM key — Gemini is free-tier friendly:
+Add **one** BYOK LLM key. OpenRouter is the easiest starting point — one key reaches Gemini, Claude, GPT-4o, and more:
 
 ```bash
 # Minimum from above, plus:
-export GEMINI_API_KEY=<your-key>
-export VIDHYA_LLM_PRIMARY_PROVIDER=gemini
+export OPENROUTER_API_KEY=<your-key>          # https://openrouter.ai/keys
+# OR use any single provider directly:
+export GEMINI_API_KEY=<your-key>              # https://aistudio.google.com/apikey (free tier)
+export ANTHROPIC_API_KEY=<your-key>           # https://console.anthropic.com/settings/keys
+export OPENAI_API_KEY=<your-key>              # https://platform.openai.com/api-keys
 ```
+
+The server auto-detects which key is set. No `VIDHYA_LLM_PRIMARY_PROVIDER` needed — `config/providers.yaml` picks the first provider that has a key.
 
 Now `/gate/llm-config` works, chat surfaces light up, Snap solve is functional, concept explainers generate live via the router.
 
@@ -134,9 +184,11 @@ Add everything:
 ```bash
 export JWT_SECRET=$(openssl rand -hex 16)
 
-# LLM (one or more)
-export GEMINI_API_KEY=<your-key>
-export VIDHYA_LLM_PRIMARY_PROVIDER=gemini
+# LLM — set any one (or more). OpenRouter covers all providers with one key.
+export OPENROUTER_API_KEY=<your-key>     # recommended
+# export GEMINI_API_KEY=<your-key>       # alternative
+# export ANTHROPIC_API_KEY=<your-key>    # alternative
+# export OPENAI_API_KEY=<your-key>       # alternative
 
 # Wolfram
 export WOLFRAM_APP_ID=<your-wolfram-id>
@@ -162,10 +214,11 @@ See [`demo/CHANNELS.md`](./demo/CHANNELS.md) for Telegram + WhatsApp setup.
 | `JWT_SECRET` | **yes** (≥ 16 chars) | — | Auth tokens |
 | `PORT` | no | `8080` | Server port |
 | `NODE_ENV` | no | `development` | Production mode |
-| `GEMINI_API_KEY` | no | — | Gemini provider |
-| `ANTHROPIC_API_KEY` | no | — | Anthropic provider |
+| `OPENROUTER_API_KEY` | no | — | OpenRouter (recommended — routes to Gemini, Claude, GPT-4o via one key) |
+| `GEMINI_API_KEY` | no | — | Gemini provider (free tier available) |
+| `ANTHROPIC_API_KEY` | no | — | Anthropic Claude provider |
 | `OPENAI_API_KEY` | no | — | OpenAI provider |
-| `VIDHYA_LLM_PRIMARY_PROVIDER` | no | — | `gemini` / `anthropic` / `openai` |
+| `VIDHYA_LLM_PRIMARY_PROVIDER` | no | — | Override auto-detect: `openrouter` / `gemini` / `anthropic` / `openai` |
 | `WOLFRAM_APP_ID` | no | — | Maths verification + solve intents |
 | `TELEGRAM_BOT_TOKEN` | no | — | Telegram delivery |
 | `WHATSAPP_ACCESS_TOKEN` | no | — | WhatsApp delivery |

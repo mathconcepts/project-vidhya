@@ -4,6 +4,48 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.27.0] — 2026-08-03 — Multi-provider LLM + M1 Docker setup
+
+**Operator action:** none for existing deploys. Local Docker users: `cp .env.example .env`, add your `OPENROUTER_API_KEY` (or any LLM key), then `docker compose up --build`. No migration, no code change needed for Render deploys.
+
+### Changed
+
+- **`config/providers.yaml` default provider: `gemini` → `openrouter`.**
+  Gemini is no longer required. The system uses whichever provider has a key set.
+  Gemini and LearnLM stay in the registry but are disabled by default (`enabled: false`)
+  since they both require a `GEMINI_API_KEY`.
+
+- **OpenRouter is now a full first-class content-generation provider** (not just BYOK chat).
+  `src/admin-orchestrator/llm-bridge.ts`, `src/api/feature-flags.ts`, and
+  `src/api/admin-dashboard-routes.ts` all recognise `OPENROUTER_API_KEY` — the `ai_chat`
+  feature flag lights up, the admin dashboard reports the provider correctly.
+
+- **Consensus secondary selection no longer hardcodes Gemini.**
+  `pickConsensusSecondary()` in `orchestrator.ts` now iterates configured providers and
+  picks a different-provider secondary. With only OpenRouter configured,
+  `consensusProvidersAreDistinct()` detects the same-provider pair and degrades
+  gracefully to single-model mode — no wasted API call, no error.
+
+- **Docker Compose: M1 Mac native arm64 support.**
+  All services (`db`, `migrate`, `app`) now carry `platform: ${PLATFORM:-linux/arm64}`.
+  Defaults to native arm64 on Apple Silicon; override with `PLATFORM=linux/amd64` for Intel.
+
+- **Dockerfile: `config/providers.yaml` now included in the production image.**
+  The builder stage previously did not copy `config/` into the final image, causing
+  `config/providers.yaml` (the single source of truth for provider/model/pricing) to be
+  absent at runtime. Fixed with `COPY --from=builder /app/config ./config`.
+  Dockerfile also uses `--platform=$BUILDPLATFORM` for BuildKit cross-compilation.
+
+- **`.env.example`:** OpenRouter promoted as the first/recommended LLM option with
+  a link to https://openrouter.ai/. All four providers listed as alternatives.
+
+### Fixed
+
+- Migration apply order in Docker Compose was non-deterministic (shell glob expansion).
+  Fixed to `$(ls /migrations/*.sql | sort)` — migrations always apply in filename order.
+
+---
+
 ## v3.0.0 — Clarity UI (2026-08-01)
 
 Full replacement of the frontend visual system. No API, engine or data changes.

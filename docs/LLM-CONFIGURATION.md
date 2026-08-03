@@ -8,7 +8,9 @@ Vidhya is **LLM-agnostic**. You bring your own API key from any supported provid
 
 1. Open Vidhya in your browser
 2. Navigate to `/llm-config`
-3. Pick a provider (we recommend **Google Gemini** — generous free tier)
+3. Pick a provider:
+   - **OpenRouter** — one key routes to Gemini, Claude, GPT-4o and more. Start here if you're unsure.
+   - **Google Gemini** — generous free tier, good for most student workloads.
 4. Paste your API key
 5. Click **Test & save**
 

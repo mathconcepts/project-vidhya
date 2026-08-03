@@ -49,7 +49,7 @@ export default function Quiz({ attrs }: DirectiveProps) {
           const optStyle = isCorrect
             ? { background: 'rgba(52,199,89,.08)', borderColor: 'rgba(52,199,89,.22)', color: 'var(--green-ink)' }
             : isWrong
-            ? { background: 'rgba(255,149,0,.08)', borderColor: 'rgba(255,149,0,.22)', color: 'var(--orange)' }
+            ? { background: 'rgba(255,159,10,.08)', borderColor: 'rgba(255,159,10,.22)', color: 'var(--orange)' }
             : { background: 'var(--surface-fill)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' };
           return (
             <li key={opt}>

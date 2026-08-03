@@ -247,7 +247,7 @@ export function ShareCard({ planHeadline, planSubtext, examName, shareUrl, onClo
             onClick={handleShare}
             disabled={!ready || shareState === 'sharing'}
             className="w-full py-3 rounded-xl disabled:opacity-50 text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors"
-            style={{ background: 'var(--green)', color: '#fff' }}
+            style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
           >
             {supportsShare ? <Share2 size={16} /> : <Download size={16} />}
             {supportsShare ? 'Share report card' : 'Download report card'}

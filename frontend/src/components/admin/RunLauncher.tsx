@@ -663,7 +663,7 @@ export function RunLauncher({ defaultExam, onLaunched }: Props) {
           <button
             onClick={handleLaunch}
             disabled={launching || estimating || diffSum === 0}
-            style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, background: 'var(--indigo)', color: '#fff', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: (launching || estimating || diffSum === 0) ? 'not-allowed' : 'pointer', opacity: (launching || estimating || diffSum === 0) ? 0.5 : 1 }}
+            style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, background: 'var(--indigo)', color: 'var(--text-on-accent)', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: (launching || estimating || diffSum === 0) ? 'not-allowed' : 'pointer', opacity: (launching || estimating || diffSum === 0) ? 0.5 : 1 }}
           >
             {launching ? <Loader2 size={12} className="animate-spin" /> : <Rocket size={12} />}
             {launching ? 'Launching…' : 'Launch'}

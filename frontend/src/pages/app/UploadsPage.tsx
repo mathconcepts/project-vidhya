@@ -411,7 +411,7 @@ function UploadDetails({ file, onSubmit, onCancel, submitting, error }: UploadDe
           onClick={() => onSubmit(note, conceptTags)}
           disabled={submitting}
           className="inline-flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-md disabled:opacity-60 disabled:cursor-wait"
-          style={{ background: 'var(--indigo)', color: '#fff' }}
+          style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
         >
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
           {submitting ? 'Uploading…' : 'Upload'}

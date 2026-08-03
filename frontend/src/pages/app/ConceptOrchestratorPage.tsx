@@ -90,7 +90,7 @@ function CostMeter({ spent_usd, cap_usd }: { spent_usd: number; cap_usd: number 
   const pct = cap_usd > 0 ? (spent_usd / cap_usd) * 100 : 0;
   const tone = pct >= 100 ? 'rose' : pct >= 80 ? 'amber' : 'violet';
   const barColor  = tone === 'violet' ? 'var(--indigo)'    : tone === 'amber' ? 'var(--orange)' : 'var(--red)';
-  const trackBg   = tone === 'violet' ? 'rgba(88,86,214,.08)' : tone === 'amber' ? 'rgba(255,149,0,.06)' : 'rgba(255,59,48,.06)';
+  const trackBg   = tone === 'violet' ? 'rgba(88,86,214,.08)' : tone === 'amber' ? 'rgba(255,159,10,.06)' : 'rgba(255,59,48,.06)';
   const textColor = tone === 'violet' ? 'var(--indigo-ink)' : tone === 'amber' ? 'var(--orange)'  : 'var(--red)';
   return (
     <div className="flex items-center gap-2 text-[11px] tabular-nums">
@@ -113,8 +113,8 @@ function CostMeter({ spent_usd, cap_usd }: { spent_usd: number; cap_usd: number 
 function StateBadge({ state }: { state: ConceptState }) {
   const cfg = {
     missing: { label: 'Missing',  bg: 'rgba(255,59,48,.06)',  color: 'var(--red)',        border: '1px solid rgba(255,59,48,.22)' },
-    partial: { label: 'Partial',  bg: 'rgba(255,149,0,.06)',  color: 'var(--orange)',     border: '1px solid rgba(255,149,0,.22)' },
-    stale:   { label: 'Stale',    bg: 'rgba(255,149,0,.06)',  color: 'var(--orange)',     border: '1px solid rgba(255,149,0,.22)' },
+    partial: { label: 'Partial',  bg: 'rgba(255,159,10,.06)',  color: 'var(--orange)',     border: '1px solid rgba(255,159,10,.22)' },
+    stale:   { label: 'Stale',    bg: 'rgba(255,159,10,.06)',  color: 'var(--orange)',     border: '1px solid rgba(255,159,10,.22)' },
     current: { label: 'Current',  bg: 'rgba(52,199,89,.06)',  color: 'var(--green-ink)',  border: '1px solid rgba(52,199,89,.22)' },
   }[state];
   return (
@@ -394,7 +394,7 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
           className="mb-3 px-2.5 py-1.5 rounded text-xs"
           style={
             outcome.failed > 0
-              ? { background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }
+              ? { background: 'rgba(255,159,10,.06)', color: 'var(--orange)' }
               : { background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }
           }
         >
@@ -838,8 +838,8 @@ export default function ConceptOrchestratorPage() {
         <div
           className="mb-4 p-3 rounded-lg text-sm"
           style={{
-            background: 'rgba(255,149,0,.06)',
-            border: '1px solid rgba(255,149,0,.22)',
+            background: 'rgba(255,159,10,.06)',
+            border: '1px solid rgba(255,159,10,.22)',
             color: 'var(--orange)',
           }}
         >

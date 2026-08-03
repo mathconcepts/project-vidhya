@@ -199,7 +199,7 @@ export default function PracticeAttemptPage() {
           </p>
 
           {!item.gradable && (
-            <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', fontSize: 'var(--text-caption)', color: 'var(--orange)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)', fontSize: 'var(--text-caption)', color: 'var(--orange)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
               <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
                 <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)' }}>Display-only practice</p>

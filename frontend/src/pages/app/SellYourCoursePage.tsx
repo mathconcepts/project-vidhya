@@ -33,7 +33,7 @@ export default function SellYourCoursePage() {
   return (
     <div style={{ margin: '0 -16px' }}>
       {/* NOT-LIVE BANNER */}
-      <div style={{ padding: '10px 16px', background: 'rgba(255,149,0,.08)', borderBottom: '1px solid rgba(255,149,0,.25)', textAlign: 'center' }}>
+      <div style={{ padding: '10px 16px', background: 'rgba(255,159,10,.08)', borderBottom: '1px solid rgba(255,159,10,.25)', textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 11, fontWeight: 'var(--weight-semibold)', color: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <AlertTriangle size={13} />
           Coming soon — this doesn't exist yet. This page only measures interest.
@@ -62,7 +62,7 @@ export default function SellYourCoursePage() {
           <div>
             <a
               href="#interest-form"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 24px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', textDecoration: 'none' }}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 24px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', textDecoration: 'none' }}
             >
               Tell us this matters to you <ArrowRight size={14} />
             </a>
@@ -129,7 +129,7 @@ export default function SellYourCoursePage() {
 
       {/* EXPLICIT NON-CLAIM */}
       <section style={{ padding: '32px 16px', background: 'var(--surface-fill)', borderTop: 'var(--hairline) solid var(--separator)', borderBottom: 'var(--hairline) solid var(--separator)' }}>
-        <div style={{ maxWidth: 672, margin: '0 auto', padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.25)' }}>
+        <div style={{ maxWidth: 672, margin: '0 auto', padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.25)' }}>
           <h2 style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', color: 'var(--orange)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <AlertTriangle size={14} /> To be completely clear
           </h2>

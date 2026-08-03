@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import {
-  ChevronLeft, ChevronRight, Sparkles, BookOpen, Send, AlertTriangle,
+  ChevronLeft, ChevronRight, ChevronDown, Sparkles, BookOpen, Send, AlertTriangle,
   ThumbsUp, ThumbsDown, RefreshCw, CheckCircle2, Loader2,
 } from 'lucide-react';
 
@@ -99,8 +99,8 @@ const STEPS = [
 
 const GAP_STYLE: Record<MappingEntry['gap_class'], CSSProperties> = {
   'aligned':     { background: 'rgba(52,199,89,.06)',  border: '1px solid rgba(52,199,89,.22)',  color: 'var(--green-ink)' },
-  'depth-gap':   { background: 'rgba(255,149,0,.06)',  border: '1px solid rgba(255,149,0,.22)',  color: 'var(--orange)' },
-  'breadth-gap': { background: 'rgba(255,149,0,.06)',  border: '1px solid rgba(255,149,0,.22)',  color: 'var(--orange)' },
+  'depth-gap':   { background: 'rgba(255,159,10,.06)',  border: '1px solid rgba(255,159,10,.22)',  color: 'var(--orange)' },
+  'breadth-gap': { background: 'rgba(255,159,10,.06)',  border: '1px solid rgba(255,159,10,.22)',  color: 'var(--orange)' },
   'foundation':  { background: 'rgba(255,59,48,.06)',  border: '1px solid rgba(255,59,48,.22)',  color: 'var(--red)' },
 };
 
@@ -379,10 +379,10 @@ export default function SyllabusBridgePage() {
                       <div className="px-1 py-1 rounded" style={{ background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' }}>
                         aligned<br/>{m.gap_breakdown.aligned}
                       </div>
-                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }}>
+                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,159,10,.06)', color: 'var(--orange)' }}>
                         depth<br/>{m.gap_breakdown.depth_gap}
                       </div>
-                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }}>
+                      <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,159,10,.06)', color: 'var(--orange)' }}>
                         breadth<br/>{m.gap_breakdown.breadth_gap}
                       </div>
                       <div className="px-1 py-1 rounded" style={{ background: 'rgba(255,59,48,.06)', color: 'var(--red)' }}>
@@ -590,7 +590,7 @@ export default function SyllabusBridgePage() {
                     color: 'var(--text-tertiary)',
                   } : {
                     background: 'var(--green)',
-                    color: 'var(--text-primary)',
+                    color: 'var(--text-on-accent)',
                   }}
                 >
                   {submitting ? 'Submitting…' : `Submit batch — generate ${plan.total_units} units`}
@@ -643,7 +643,7 @@ export default function SyllabusBridgePage() {
             </p>
 
             {feedbackOverview && feedbackOverview.flagged_content_count > 0 && (
-              <div className="mb-4 p-3 rounded-xl flex items-center justify-between" style={{ background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}>
+              <div className="mb-4 p-3 rounded-xl flex items-center justify-between" style={{ background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' }}>
                 <div className="text-sm">
                   <div className="font-medium" style={{ color: 'var(--orange)' }}>
                     {feedbackOverview.flagged_content_count} content piece{feedbackOverview.flagged_content_count === 1 ? '' : 's'} flagged for regeneration
@@ -654,7 +654,7 @@ export default function SyllabusBridgePage() {
                   onClick={regenerateFlagged}
                   disabled={submitting}
                   className="px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
-                  style={{ background: 'rgba(255,149,0,.08)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.22)' }}
+                  style={{ background: 'rgba(255,159,10,.08)', color: 'var(--orange)', border: '1px solid rgba(255,159,10,.22)' }}
                 >
                   <RefreshCw className="w-3.5 h-3.5"/> Regenerate flagged
                 </button>
@@ -674,8 +674,8 @@ export default function SyllabusBridgePage() {
                     key={c.content_id}
                     className="rounded-lg overflow-hidden"
                     style={isFlagged ? {
-                      background: 'rgba(255,149,0,.04)',
-                      border: '1px solid rgba(255,149,0,.22)',
+                      background: 'rgba(255,159,10,.04)',
+                      border: '1px solid rgba(255,159,10,.22)',
                     } : {
                       background: 'var(--surface-card)',
                       border: 'var(--hairline) solid var(--separator)',
@@ -692,7 +692,7 @@ export default function SyllabusBridgePage() {
                             {isFlagged && (
                               <span
                                 className="text-[10px] px-1.5 py-0.5 rounded"
-                                style={{ background: 'rgba(255,149,0,.22)', color: 'var(--orange)' }}
+                                style={{ background: 'rgba(255,159,10,.22)', color: 'var(--orange)' }}
                               >
                                 FLAGGED
                               </span>
@@ -702,7 +702,9 @@ export default function SyllabusBridgePage() {
                             {c.unit_type} · {c.source} · {c.tokens_used ?? 0} tokens
                           </div>
                         </div>
-                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{isExpanded ? '▼' : '▶'}</span>
+                        {isExpanded
+                          ? <ChevronDown className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />
+                          : <ChevronRight className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />}
                       </div>
                     </button>
                     {isExpanded && (
@@ -742,7 +744,7 @@ export default function SyllabusBridgePage() {
             className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-colors"
             style={canGoNext ? {
               background: 'var(--indigo)',
-              color: 'var(--text-primary)',
+              color: 'var(--text-on-accent)',
             } : {
               background: 'var(--surface-card)',
               color: 'var(--text-tertiary)',
@@ -756,7 +758,7 @@ export default function SyllabusBridgePage() {
           <button
             onClick={() => setStep(5)}
             className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm"
-            style={{ background: 'var(--indigo)', color: 'var(--text-primary)' }}
+            style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
           >
             Review content <ChevronRight className="w-4 h-4"/>
           </button>
@@ -788,8 +790,9 @@ function FeedbackBar({ summary, onRate }: { summary: FeedbackSummary | undefined
           <ThumbsDown className="w-3 h-3"/> Not helpful
         </button>
         {summary && summary.total > 0 && (
-          <span className="ml-auto text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
-            {summary.by_rating.helpful} 👍 · {summary.by_rating['not-helpful']} 👎 · {summary.total} total
+          <span className="ml-auto flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+            <ThumbsUp className="w-2.5 h-2.5" /> {summary.by_rating.helpful} ·
+            <ThumbsDown className="w-2.5 h-2.5" /> {summary.by_rating['not-helpful']} · {summary.total} total
           </span>
         )}
       </div>

@@ -752,7 +752,7 @@ export default function PlannedSessionPage() {
                 padding: '12px 16px',
                 borderRadius: 'var(--radius-sm)',
                 background: 'var(--indigo)',
-                color: '#fff',
+                color: 'var(--text-on-accent)',
                 fontWeight: 'var(--weight-semibold)',
                 fontSize: 'var(--text-body)',
                 border: 'none',
@@ -806,7 +806,7 @@ export default function PlannedSessionPage() {
                     padding: '8px 12px',
                     borderRadius: 'var(--radius-sm)',
                     background: 'var(--indigo)',
-                    color: '#fff',
+                    color: 'var(--text-on-accent)',
                     fontSize: 'var(--text-caption)',
                     fontWeight: 'var(--weight-semibold)',
                     border: 'none',
@@ -840,7 +840,7 @@ export default function PlannedSessionPage() {
             Your sign-in expired. Pick a demo role to start a new session.
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <a href="/demo.html" style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}>
+            <a href="/demo.html" style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}>
               Demo sign-in
             </a>
             <a href="/sign-in" style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', textDecoration: 'none' }}>
@@ -975,7 +975,7 @@ export default function PlannedSessionPage() {
                           <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button
                               onClick={() => startAction(action)}
-                              style={{ padding: '6px 12px', minHeight: 44, borderRadius: 'var(--radius-sm)', background: 'var(--indigo)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              style={{ padding: '6px 12px', minHeight: 44, borderRadius: 'var(--radius-sm)', background: 'var(--indigo)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                             >
                               <Play size={12} /> Start <ChevronRight size={12} />
                             </button>
@@ -1047,7 +1047,7 @@ export default function PlannedSessionPage() {
                 padding: '12px 16px',
                 borderRadius: 'var(--radius-sm)',
                 background: 'var(--green)',
-                color: '#fff',
+                color: 'var(--text-on-accent)',
                 fontWeight: 'var(--weight-semibold)',
                 fontSize: 'var(--text-body)',
                 border: 'none',
@@ -1124,7 +1124,7 @@ export default function PlannedSessionPage() {
                 padding: '12px 16px',
                 borderRadius: 'var(--radius-sm)',
                 background: 'var(--indigo)',
-                color: '#fff',
+                color: 'var(--text-on-accent)',
                 fontSize: 'var(--text-caption)',
                 fontWeight: 'var(--weight-semibold)',
                 textDecoration: 'none',

@@ -290,8 +290,8 @@ export default function AdminDashboardPage() {
                     className="px-3 py-2 inline-flex items-center gap-1.5 text-xs"
                     style={{
                       borderRadius: 'var(--radius-xs)',
-                      background: 'rgba(255,149,0,.1)',
-                      border: 'var(--hairline) solid rgba(255,149,0,.25)',
+                      background: 'rgba(255,159,10,.1)',
+                      border: 'var(--hairline) solid rgba(255,159,10,.25)',
                       color: 'var(--orange)',
                       textDecoration: 'none',
                     }}

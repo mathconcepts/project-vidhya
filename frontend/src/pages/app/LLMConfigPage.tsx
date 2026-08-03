@@ -446,7 +446,7 @@ export default function LLMConfigPage() {
               const variantStyle = variant === 'ok'
                 ? { background: 'rgba(52,199,89,.06)',   border: '1px solid rgba(52,199,89,.22)'  }
                 : variant === 'skipped'
-                ? { background: 'rgba(255,149,0,.06)',   border: '1px solid rgba(255,149,0,.22)'  }
+                ? { background: 'rgba(255,159,10,.06)',   border: '1px solid rgba(255,159,10,.22)'  }
                 : { background: 'rgba(255,59,48,.06)',   border: '1px solid rgba(255,59,48,.22)'  };
               const variantTextColor = variant === 'ok'
                 ? 'var(--green-ink)'

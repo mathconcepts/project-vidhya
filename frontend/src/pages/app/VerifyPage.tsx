@@ -81,10 +81,14 @@ export default function VerifyPage() {
     return <AlertTriangle size={20} style={{ color: 'var(--orange)' }} />;
   };
 
+  // 'verified' uses the same inset-border token as <ReceiptBorder> (DESIGN-SYSTEM.md's
+  // receipt-border law) rather than a hand-rolled green rgba() — this panel already
+  // carries its own "Answer verified correct" + tier/confidence meta, so it borrows the
+  // receipt token treatment in place rather than nesting the full ReceiptBorder component.
   const statusColor = (status: string): React.CSSProperties => {
-    if (status === 'verified') return { border: '1px solid rgba(52,199,89,.25)', background: 'rgba(52,199,89,.06)' };
-    if (status === 'failed') return { border: '1px solid rgba(255,59,48,.25)', background: 'rgba(255,59,48,.06)' };
-    return { border: '1px solid rgba(255,149,0,.25)', background: 'rgba(255,149,0,.06)' };
+    if (status === 'verified') return { background: 'var(--surface-card)', boxShadow: 'inset 0 0 0 1px var(--receipt-line)' };
+    if (status === 'failed') return { border: '1px solid var(--red-tint)', background: 'var(--red-tint)' };
+    return { border: '1px solid var(--orange-tint)', background: 'var(--orange-tint)' };
   };
 
   const statusLabel = (status: string) => {

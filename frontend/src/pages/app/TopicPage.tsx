@@ -31,7 +31,7 @@ interface TopicMastery {
 
 const DIFF_STYLE: Record<string, { color: string; bg: string }> = {
   easy:   { color: 'var(--green-ink)', bg: 'rgba(52,199,89,.10)' },
-  medium: { color: 'var(--orange)',    bg: 'rgba(255,149,0,.10)' },
+  medium: { color: 'var(--orange)',    bg: 'rgba(255,159,10,.10)' },
   hard:   { color: 'var(--red)',       bg: 'rgba(255,59,48,.10)' },
 };
 

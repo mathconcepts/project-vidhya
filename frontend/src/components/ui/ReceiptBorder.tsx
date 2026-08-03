@@ -57,7 +57,7 @@ export function ReceiptBorder({ receipt, children, className }: ReceiptBorderPro
             height: 15,
             borderRadius: 'var(--radius-capsule)',
             background: 'var(--receipt-mark)',
-            color: '#fff',
+            color: 'var(--text-on-accent)',
             fontSize: 10,
             display: 'inline-flex',
             alignItems: 'center',

@@ -167,7 +167,7 @@ export function InterestForm({
         <button
           type="submit"
           disabled={status === 'submitting'}
-          style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 20px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-bold)', border: 'none', cursor: status === 'submitting' ? 'not-allowed' : 'pointer', opacity: status === 'submitting' ? 0.6 : 1 }}
+          style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 20px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-bold)', border: 'none', cursor: status === 'submitting' ? 'not-allowed' : 'pointer', opacity: status === 'submitting' ? 0.6 : 1 }}
         >
           {status === 'submitting' ? <Loader2 size={14} className="animate-spin" /> : null}
           {status === 'submitting' ? 'Sending…' : submitLabel}

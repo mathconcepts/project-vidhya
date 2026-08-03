@@ -43,7 +43,7 @@ const TYPE_STYLES: Record<Material['type'], { iconColor: string; bg: string }> =
   md: { iconColor: 'var(--indigo-ink)', bg: 'rgba(88,86,214,.08)' },
   txt: { iconColor: 'var(--text-tertiary)', bg: 'var(--surface-fill)' },
   'image-notes': { iconColor: 'var(--green-ink)', bg: 'rgba(52,199,89,.08)' },
-  'image-work': { iconColor: 'var(--orange)', bg: 'rgba(255,149,0,.08)' },
+  'image-work': { iconColor: 'var(--orange)', bg: 'rgba(255,159,10,.08)' },
 };
 
 function formatBytes(bytes: number): string {

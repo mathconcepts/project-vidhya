@@ -58,7 +58,7 @@ const SOURCE_LABELS: Record<string, { label: string; barColor: string; tier: str
   'tier-0-client-cache':   { label: 'Client Cache',    barColor: 'rgba(20,184,166,.6)',  tier: 'Tier 0' },
   'tier-1-rag':            { label: 'Bundle RAG',      barColor: 'rgba(88,86,214,.6)',   tier: 'Tier 1' },
   'tier-1-material':       { label: 'Your Notes',      barColor: 'rgba(88,86,214,.5)',   tier: 'Tier 1' },
-  'tier-2-generated':      { label: 'Generated (LLM)', barColor: 'rgba(255,149,0,.6)',   tier: 'Tier 2' },
+  'tier-2-generated':      { label: 'Generated (LLM)', barColor: 'rgba(255,159,10,.6)',   tier: 'Tier 2' },
   'tier-3-wolfram-verified': { label: 'Wolfram Verified', barColor: 'rgba(59,130,246,.6)', tier: 'Tier 3' },
   'miss':                  { label: 'Miss',            barColor: 'rgba(255,59,48,.5)',   tier: 'Miss' },
 };
@@ -112,7 +112,7 @@ export default function ContentAdminPage() {
         {!user && (
           <a
             href="/login"
-            style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 'var(--radius-md)', background: 'var(--indigo)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 'var(--radius-md)', background: 'var(--indigo)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
           >
             Sign in
           </a>
@@ -242,7 +242,7 @@ export default function ContentAdminPage() {
                     <div style={{ flex: 1, display: 'flex', height: 16, borderRadius: 4, overflow: 'hidden', background: 'var(--surface-fill)' }}>
                       {d.tier_0 > 0 && <div style={{ width: `${(d.tier_0 / d.total) * 100}%`, background: 'rgba(52,199,89,.7)' }} title={`Tier 0: ${d.tier_0}`} />}
                       {d.tier_1 > 0 && <div style={{ width: `${(d.tier_1 / d.total) * 100}%`, background: 'rgba(88,86,214,.7)' }} title={`Tier 1: ${d.tier_1}`} />}
-                      {d.tier_2 > 0 && <div style={{ width: `${(d.tier_2 / d.total) * 100}%`, background: 'rgba(255,149,0,.7)' }} title={`Tier 2: ${d.tier_2}`} />}
+                      {d.tier_2 > 0 && <div style={{ width: `${(d.tier_2 / d.total) * 100}%`, background: 'rgba(255,159,10,.7)' }} title={`Tier 2: ${d.tier_2}`} />}
                       {d.tier_3 > 0 && <div style={{ width: `${(d.tier_3 / d.total) * 100}%`, background: 'rgba(59,130,246,.7)' }} title={`Tier 3: ${d.tier_3}`} />}
                       {d.miss > 0 && <div style={{ width: `${(d.miss / d.total) * 100}%`, background: 'rgba(255,59,48,.6)' }} title={`Miss: ${d.miss}`} />}
                     </div>
@@ -256,7 +256,7 @@ export default function ContentAdminPage() {
               {[
                 { label: 'Tier 0 (free)',  bg: 'rgba(52,199,89,.7)' },
                 { label: 'Tier 1 (free)',  bg: 'rgba(88,86,214,.7)' },
-                { label: 'Tier 2 (LLM)',   bg: 'rgba(255,149,0,.7)' },
+                { label: 'Tier 2 (LLM)',   bg: 'rgba(255,159,10,.7)' },
                 { label: 'Tier 3 (Wolfram)', bg: 'rgba(59,130,246,.7)' },
                 { label: 'Miss',           bg: 'rgba(255,59,48,.6)' },
               ].map(({ label, bg }) => (

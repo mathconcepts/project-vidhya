@@ -104,7 +104,7 @@ export default function ContentRDPage() {
         {!user && (
           <a
             href="/login"
-            style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 'var(--radius-md)', background: 'var(--indigo)', color: '#fff', fontSize: 11, fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 'var(--radius-md)', background: 'var(--indigo)', color: 'var(--text-on-accent)', fontSize: 11, fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
           >
             Sign in
           </a>
@@ -133,7 +133,7 @@ export default function ContentRDPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,149,0,.22)', background: 'rgba(255,149,0,.06)', display: 'flex', flexDirection: 'column', gap: 8 }}
+          style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,159,10,.22)', background: 'rgba(255,159,10,.06)', display: 'flex', flexDirection: 'column', gap: 8 }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--orange)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)' }}>
             <Database size={14} /> Content R&D needs a database

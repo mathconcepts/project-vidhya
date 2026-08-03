@@ -54,7 +54,7 @@ function DifficultyPip({ difficulty }: { difficulty: number }) {
     difficulty <= 0.4
       ? { color: 'var(--green-ink)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }
       : difficulty <= 0.7
-      ? { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }
+      ? { color: 'var(--orange)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' }
       : { color: 'var(--red)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' };
   return (
     <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={pipStyle}>

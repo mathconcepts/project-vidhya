@@ -163,7 +163,7 @@ export default function ConvertDemoPage() {
             </div>
           )}
 
-          <div style={{ marginTop: 16, padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}>
+          <div style={{ marginTop: 16, padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' }}>
             <strong style={{ display: 'block', marginBottom: 4, fontSize: 11, color: 'var(--orange)' }}>Next step — sign in with Google</strong>
             <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>
               In production, the next step is to complete Google sign-in with the real
@@ -176,7 +176,7 @@ export default function ConvertDemoPage() {
           <div style={{ marginTop: 24 }}>
             <button
               onClick={() => navigate('/planned')}
-              style={{ width: '100%', padding: '10px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-caption)', border: 'none', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '10px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-caption)', border: 'none', cursor: 'pointer' }}
             >
               Back to planned session
             </button>

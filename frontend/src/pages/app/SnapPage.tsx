@@ -157,14 +157,14 @@ const INTENTS: Array<{
     label: 'Check my work',
     description: "Verify the answer you wrote",
     icon: CheckCircle2,
-    style: { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' },
+    style: { color: 'var(--orange)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' },
   },
   {
     id: 'expressing_confusion',
     label: "I'm stuck",
     description: 'Walk me through it',
     icon: HelpCircle,
-    style: { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' },
+    style: { color: 'var(--orange)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' },
   },
   {
     id: 'extract_text',
@@ -617,7 +617,7 @@ export default function SnapPage() {
                   correct: { icon: CheckCircle2, label: 'Correct', style: { color: 'var(--green-ink)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' } },
                   incorrect: { icon: XCircle, label: 'Off', style: { color: 'var(--red)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' } },
                   skipped: { icon: MinusCircle, label: 'Skipped', style: { color: 'var(--text-tertiary)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' } },
-                  unverifiable: { icon: HelpCircle, label: 'Needs review', style: { color: 'var(--orange)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' } },
+                  unverifiable: { icon: HelpCircle, label: 'Needs review', style: { color: 'var(--orange)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' } },
                 }[p.verdict];
                 const VIcon = verdictMeta.icon;
                 return (

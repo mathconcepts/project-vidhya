@@ -71,7 +71,7 @@ export const __testing = { mergeLiveResult, providerTone, overallTone };
 const TONE_COLOR: Record<Tone, string> = {
   good: 'var(--green-ink)',
   bad: 'var(--red)',
-  warn: '#B87503',
+  warn: 'var(--orange-ink)',
   neutral: 'var(--text-tertiary)',
 };
 
@@ -266,7 +266,7 @@ export default function SetupWizardPage() {
                   ? (status.database.reachable ? 'DATABASE_URL is set and reachable.' : `DATABASE_URL is set but unreachable: ${status.database.error}`)
                   : (status.database.note ?? 'DATABASE_URL is not set.')}
               </div>
-              <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--weight-medium)', color: !status.database.configured ? 'var(--text-tertiary)' : (status.database.reachable ? 'var(--green-ink)' : '#B87503'), whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--weight-medium)', color: !status.database.configured ? 'var(--text-tertiary)' : (status.database.reachable ? 'var(--green-ink)' : 'var(--orange-ink)'), whiteSpace: 'nowrap' }}>
                 {!status.database.configured ? 'file mode' : (status.database.reachable ? 'reachable' : 'unreachable')}
               </span>
             </div>
@@ -283,7 +283,7 @@ export default function SetupWizardPage() {
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{s.id}</div>
                   </div>
-                  <div style={{ fontSize: 11, color: s.unresolved_count > 0 ? '#B87503' : 'var(--text-secondary)', textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, color: s.unresolved_count > 0 ? 'var(--orange-ink)' : 'var(--text-secondary)', textAlign: 'right' }}>
                     {s.concept_count} concept{s.concept_count === 1 ? '' : 's'} resolved
                     {s.unresolved_count > 0 && <div>{s.unresolved_count} unresolved (stub)</div>}
                   </div>

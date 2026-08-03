@@ -179,7 +179,7 @@ function MilestoneRow({ milestone, isLast }: { milestone: Milestone; isLast: boo
           {isNext ? (
             <Link
               to={milestone.cta_href}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontSize: 11, fontWeight: 'var(--weight-medium)', background: 'var(--indigo)', color: '#fff', textDecoration: 'none' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontSize: 11, fontWeight: 'var(--weight-medium)', background: 'var(--indigo)', color: 'var(--text-on-accent)', textDecoration: 'none' }}
             >
               {milestone.cta_label}
               <ArrowRight size={11} />

@@ -148,8 +148,8 @@ function StudentRow({ student: s }: { student: RosterStudent }) {
     <div style={{
       padding: 12,
       borderRadius: 'var(--radius-md)',
-      border: s.needs_attention ? '1px solid rgba(255,149,0,.25)' : 'var(--hairline) solid var(--separator)',
-      background: s.needs_attention ? 'rgba(255,149,0,.04)' : 'var(--surface-card)',
+      border: s.needs_attention ? '1px solid rgba(255,159,10,.25)' : 'var(--hairline) solid var(--separator)',
+      background: s.needs_attention ? 'rgba(255,159,10,.04)' : 'var(--surface-card)',
       display: 'flex',
       flexDirection: 'column',
       gap: 8,
@@ -167,7 +167,7 @@ function StudentRow({ student: s }: { student: RosterStudent }) {
           <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</p>
         </div>
         {s.needs_attention && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--orange)', background: 'rgba(255,149,0,.08)', padding: '2px 8px', borderRadius: 999, border: '1px solid rgba(255,149,0,.25)' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--orange)', background: 'rgba(255,159,10,.08)', padding: '2px 8px', borderRadius: 999, border: '1px solid rgba(255,159,10,.25)' }}>
             <AlertTriangle size={10} />
             attention
           </div>

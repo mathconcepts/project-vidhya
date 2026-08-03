@@ -159,7 +159,7 @@ export default function ExamStrategyPage() {
             const accPct = Math.round(entry.expected_accuracy * 100);
             const timeMins = playbook.time_budget[entry.topic] || 0;
             const accColor = accPct >= 70 ? 'var(--green-ink)' : accPct >= 40 ? 'var(--orange)' : 'var(--red)';
-            const rankBg = i < 3 ? 'rgba(52,199,89,.12)' : i < 6 ? 'rgba(255,149,0,.08)' : 'var(--surface-fill)';
+            const rankBg = i < 3 ? 'rgba(52,199,89,.12)' : i < 6 ? 'rgba(255,159,10,.08)' : 'var(--surface-fill)';
             const rankColor = i < 3 ? 'var(--green-ink)' : i < 6 ? 'var(--orange)' : 'var(--text-tertiary)';
 
             return (

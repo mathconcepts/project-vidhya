@@ -155,8 +155,8 @@ export function ReviewQueueCard() {
 }
 
 function Stat({ label, value, tone }: { label: string; value: number; tone: 'mute' | 'warn' | 'info' }) {
-  const bg = tone === 'warn' ? 'rgba(255,149,0,.06)' : tone === 'info' ? 'rgba(88,86,214,.05)' : 'var(--surface-fill)';
-  const border = tone === 'warn' ? '1px solid rgba(255,149,0,.22)' : tone === 'info' ? '1px solid rgba(88,86,214,.18)' : 'var(--hairline) solid var(--separator)';
+  const bg = tone === 'warn' ? 'rgba(255,159,10,.06)' : tone === 'info' ? 'rgba(88,86,214,.05)' : 'var(--surface-fill)';
+  const border = tone === 'warn' ? '1px solid rgba(255,159,10,.22)' : tone === 'info' ? '1px solid rgba(88,86,214,.18)' : 'var(--hairline) solid var(--separator)';
   const color = tone === 'warn' ? 'var(--orange)' : tone === 'info' ? 'var(--indigo-ink)' : 'var(--text-primary)';
   return (
     <div style={{ borderRadius: 'var(--radius-sm)', padding: '6px 10px', background: bg, border }}>

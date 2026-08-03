@@ -96,7 +96,7 @@ export function PresetsPanel({ onInstalled }: Props) {
                     } : {
                       fontSize: '12px', padding: '6px 12px', borderRadius: '6px', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0,
                       cursor: busyId === p.id ? 'not-allowed' : 'pointer',
-                      background: 'var(--green)', color: '#fff', border: 'none',
+                      background: 'var(--green)', color: 'var(--text-on-accent)', border: 'none',
                       opacity: busyId === p.id ? 0.5 : 1,
                     }}
                   >

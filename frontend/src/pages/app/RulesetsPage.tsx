@@ -79,7 +79,7 @@ export default function RulesetsPage() {
       </header>
 
       {error && /503|DATABASE_URL/i.test(error) ? (
-        <div style={{ marginBottom: 16, padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,149,0,.22)', background: 'rgba(255,149,0,.06)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ marginBottom: 16, padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,159,10,.22)', background: 'rgba(255,159,10,.06)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--orange)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)' }}>
             <Database size={14} /> Rulesets need a database
           </div>

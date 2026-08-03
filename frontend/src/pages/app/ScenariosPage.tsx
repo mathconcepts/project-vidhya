@@ -165,7 +165,7 @@ function TrialDetail({ trial, digest, runId }: { trial: TrialState; digest: stri
           <EventRow key={e.idx} event={e} runId={runId} />
         ))}
         {trial.pending && (
-          <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,149,0,.22)', background: 'rgba(255,149,0,.05)', fontSize: 'var(--text-caption)', color: 'var(--orange)' }}>
+          <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,159,10,.22)', background: 'rgba(255,159,10,.05)', fontSize: 'var(--text-caption)', color: 'var(--orange)' }}>
             Paused on <code>{trial.pending.atom.id}</code>: {trial.pending.reason}.
             Resume from CLI: <code>npm run demo:scenario:resume {trial.run_id}</code>
           </div>
@@ -198,16 +198,17 @@ function EventRow({ event, runId }: { event: TrialState['events'][number]; runId
     }
   };
 
-  let mark = '·';
+  // Status is a coloured dot, not an icon or emoji glyph (Clarity iconography rule).
+  let dotColor = 'var(--text-tertiary)';
   let summary = '';
   if (event.result.kind === 'answer') {
-    mark = event.result.correct ? '✓' : '✗';
+    dotColor = event.result.correct ? 'var(--green)' : 'var(--red)';
     summary = `${event.result.via_rule} → ${event.result.correct ? 'correct' : 'incorrect'}`;
   } else if (event.result.kind === 'human_answered') {
-    mark = event.result.correct ? '✓ (human)' : '✗ (human)';
+    dotColor = event.result.correct ? 'var(--green)' : 'var(--red)';
     summary = `human: ${event.result.answer}`;
   } else {
-    mark = '⏸';
+    dotColor = 'var(--orange)';
     summary = event.result.reason;
   }
 
@@ -217,7 +218,10 @@ function EventRow({ event, runId }: { event: TrialState['events'][number]; runId
         <div style={{ fontSize: 'var(--text-caption)' }}>
           <span style={{ color: 'var(--text-tertiary)', marginRight: 8 }}>#{event.idx}</span>
           <code style={{ color: 'var(--text-secondary)' }}>{event.atom_id}</code>
-          <span style={{ marginLeft: 8, color: 'var(--text-tertiary)' }}>{mark}</span>
+          <span
+            aria-hidden="true"
+            style={{ display: 'inline-block', marginLeft: 8, width: 9, height: 9, borderRadius: '50%', background: dotColor, verticalAlign: 'middle' }}
+          />
           <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>{summary}</span>
         </div>
         <button

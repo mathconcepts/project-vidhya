@@ -71,7 +71,7 @@ export function StaticSampleProblem({ examId = 'gate-ma' }: Props) {
             if (showCorrect) {
               optStyle = { background: 'rgba(52,199,89,.08)', border: '1px solid rgba(52,199,89,.4)', color: 'var(--text-primary)' };
             } else if (showWrong) {
-              optStyle = { background: 'rgba(255,149,0,.08)', border: '1px solid rgba(255,149,0,.4)', color: 'var(--text-primary)' };
+              optStyle = { background: 'rgba(255,159,10,.08)', border: '1px solid rgba(255,159,10,.4)', color: 'var(--text-primary)' };
             } else if (isSelected) {
               optStyle = { background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.4)', color: 'var(--text-primary)' };
             } else {
@@ -101,8 +101,8 @@ export function StaticSampleProblem({ examId = 'gate-ma' }: Props) {
             >
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: 8, borderRadius: 'var(--radius-sm)', padding: 12,
-                background: isCorrect ? 'rgba(52,199,89,.06)' : 'rgba(255,149,0,.06)',
-                border: isCorrect ? '1px solid rgba(52,199,89,.22)' : '1px solid rgba(255,149,0,.22)',
+                background: isCorrect ? 'rgba(52,199,89,.06)' : 'rgba(255,159,10,.06)',
+                border: isCorrect ? '1px solid rgba(52,199,89,.22)' : '1px solid rgba(255,159,10,.22)',
               }}>
                 {isCorrect ? (
                   <CheckCircle2 size={16} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
@@ -127,7 +127,7 @@ export function StaticSampleProblem({ examId = 'gate-ma' }: Props) {
                 <Link
                   to="/sign-in"
                   onClick={() => trackEvent('sample_problem_converted', { from_problem_id: problem.id })}
-                  style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, height: 40, padding: '0 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}
+                  style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, height: 40, padding: '0 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}
                 >
                   Create your free plan <ArrowRight size={14} />
                 </Link>

@@ -158,7 +158,7 @@ export default function GBrainAdminPage() {
         <a
           href="/login"
           className="inline-block mt-2 px-6 py-2.5 rounded-xl text-sm font-medium"
-          style={{ background: 'var(--indigo)', color: 'white' }}
+          style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
         >
           Sign in
         </a>
@@ -257,7 +257,7 @@ export default function GBrainAdminPage() {
                     const barColor = state === 'driven' || state === 'steady'
                       ? 'rgba(52,199,89,.6)'
                       : state === 'flagging'
-                        ? 'rgba(255,149,0,.6)'
+                        ? 'rgba(255,159,10,.6)'
                         : 'rgba(255,59,48,.6)';
                     return (
                       <div key={state}>
@@ -378,7 +378,7 @@ export default function GBrainAdminPage() {
                 style={health.status === 'healthy'
                   ? { background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.22)' }
                   : health.status === 'degraded'
-                    ? { background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }
+                    ? { background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' }
                     : { background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' }
                 }
               >
@@ -406,7 +406,7 @@ export default function GBrainAdminPage() {
                   style={c.status === 'ok'
                     ? { background: 'var(--surface-card)', border: '1px solid var(--separator)' }
                     : c.status === 'warn'
-                      ? { background: 'rgba(255,149,0,.05)', border: '1px solid rgba(255,149,0,.20)' }
+                      ? { background: 'rgba(255,159,10,.05)', border: '1px solid rgba(255,159,10,.20)' }
                       : { background: 'rgba(255,59,48,.05)', border: '1px solid rgba(255,59,48,.20)' }
                   }
                 >
@@ -462,7 +462,7 @@ export default function GBrainAdminPage() {
                     onClick={() => handleFillGap(undefined, 20)}
                     disabled={fillingTopic !== null}
                     className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
-                    style={{ background: 'var(--green)', color: 'white' }}
+                    style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
                   >
                     {fillingTopic === 'all' ? <Loader2 className="animate-spin" size={13} /> : <Play size={13} />}
                     Fill Top 20
@@ -505,7 +505,7 @@ export default function GBrainAdminPage() {
                           style={g.difficulty_bucket === 'easy'
                             ? { background: 'rgba(52,199,89,.15)', color: 'var(--green-ink)' }
                             : g.difficulty_bucket === 'medium'
-                              ? { background: 'rgba(255,149,0,.15)', color: 'var(--orange)' }
+                              ? { background: 'rgba(255,159,10,.15)', color: 'var(--orange)' }
                               : { background: 'rgba(255,59,48,.15)', color: 'var(--red)' }
                           }
                         >

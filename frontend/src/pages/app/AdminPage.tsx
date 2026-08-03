@@ -38,7 +38,7 @@ const PLATFORM_COLOR: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, { background: string; color: string }> = {
-  pending:   { background: 'rgba(255,149,0,.10)',    color: 'var(--orange)' },
+  pending:   { background: 'rgba(255,159,10,.10)',    color: 'var(--orange)' },
   approved:  { background: 'rgba(52,199,89,.08)',    color: 'var(--green-ink)' },
   rejected:  { background: 'rgba(255,59,48,.08)',    color: 'var(--red)' },
   published: { background: 'rgba(88,86,214,.08)',    color: 'var(--indigo-ink)' },
@@ -142,7 +142,7 @@ export default function AdminPage() {
               style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}
             >
               <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', background: STAT_COLORS[i], display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                <stat.icon size={16} style={{ color: '#fff' }} />
+                <stat.icon size={16} style={{ color: 'var(--text-on-accent)' }} />
               </div>
               <div style={{ fontSize: 24, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{stat.value}</div>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{stat.label}</div>

@@ -218,7 +218,7 @@ function LocalDevQuickStart() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <a
           href="/demo-login?role=admin"
-          style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--indigo)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--indigo)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}
         >
           <Crown size={14} />
           <span style={{ flex: 1 }}>Sign in as Admin</span>

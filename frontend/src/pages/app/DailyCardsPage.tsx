@@ -141,7 +141,7 @@ export default function DailyCardsPage() {
         </p>
         <button
           onClick={() => navigate('/')}
-          style={{ marginTop: 8, padding: '8px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', border: 'none', cursor: 'pointer' }}
+          style={{ marginTop: 8, padding: '8px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', border: 'none', cursor: 'pointer' }}
         >
           Back home
         </button>
@@ -200,7 +200,7 @@ export default function DailyCardsPage() {
               </button>
               <button
                 onClick={() => submit(true)}
-                style={{ flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', cursor: 'pointer' }}
               >
                 <CheckCircle2 size={14} /> Got it
               </button>

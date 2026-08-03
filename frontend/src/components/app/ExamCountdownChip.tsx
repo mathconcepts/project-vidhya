@@ -39,7 +39,7 @@ type Tier = 'critical' | 'high' | 'medium' | 'low';
 
 const TIER_STYLE: Record<Tier, { bg: string; border: string; color: string }> = {
   critical: { bg: 'rgba(255,59,48,.08)',   border: 'rgba(255,59,48,.22)',   color: 'var(--red)' },
-  high:     { bg: 'rgba(255,149,0,.08)',   border: 'rgba(255,149,0,.22)',   color: 'var(--orange)' },
+  high:     { bg: 'rgba(255,159,10,.08)',   border: 'rgba(255,159,10,.22)',   color: 'var(--orange)' },
   medium:   { bg: 'rgba(88,86,214,.07)',   border: 'rgba(88,86,214,.22)',   color: 'var(--indigo-ink)' },
   low:      { bg: 'var(--surface-fill)',   border: 'var(--separator)',       color: 'var(--text-secondary)' },
 };

@@ -106,7 +106,7 @@ export function SuggestedRunsPanel({ suggestions, loading, onRefresh, onActed }:
                 <button
                   onClick={() => act(s.id, 'launch')}
                   disabled={acting === s.id}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '8px', background: 'var(--indigo)', color: '#fff', fontSize: '11px', fontWeight: 500, border: 'none', cursor: acting === s.id ? 'not-allowed' : 'pointer', opacity: acting === s.id ? 0.5 : 1 }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '8px', background: 'var(--indigo)', color: 'var(--text-on-accent)', fontSize: '11px', fontWeight: 500, border: 'none', cursor: acting === s.id ? 'not-allowed' : 'pointer', opacity: acting === s.id ? 0.5 : 1 }}
                 >
                   {acting === s.id ? <Loader2 size={11} className="animate-spin" /> : <Rocket size={11} />}
                   Launch

@@ -161,7 +161,7 @@ export default function ExamProfilePage() {
         </p>
         <a
           href="/demo.html"
-          style={{ padding: '10px 20px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}
+          style={{ padding: '10px 20px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', textDecoration: 'none' }}
         >
           Back to demo sign-in
         </a>
@@ -287,7 +287,7 @@ export default function ExamProfilePage() {
             <button
               onClick={save}
               disabled={saving}
-              style={{ flex: 1, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-body)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              style={{ flex: 1, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-body)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               Save profile

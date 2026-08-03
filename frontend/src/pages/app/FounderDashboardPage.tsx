@@ -429,7 +429,7 @@ function HealthBadge({ status }: { status: string }) {
   const style: React.CSSProperties = status === 'healthy'
     ? { background: 'rgba(52,199,89,.1)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.3)' }
     : status === 'degraded'
-    ? { background: 'rgba(255,149,0,.1)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }
+    ? { background: 'rgba(255,159,10,.1)', color: 'var(--orange)', border: '1px solid rgba(255,159,10,.3)' }
     : status === 'unavailable'
     ? { background: 'rgba(255,59,48,.1)', color: 'var(--red)', border: '1px solid rgba(255,59,48,.3)' }
     : { background: 'var(--surface-fill)', color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' };
@@ -444,17 +444,17 @@ function HealthBadge({ status }: { status: string }) {
 
 function CaveatsBanner({ caveats }: { caveats: string[] }) {
   return (
-    <div className="rounded p-4" style={{ background: 'rgba(255,149,0,.1)', border: 'var(--hairline) solid rgba(255,149,0,.3)' }}>
+    <div className="rounded p-4" style={{ background: 'rgba(255,159,10,.1)', border: 'var(--hairline) solid rgba(255,159,10,.3)' }}>
       <div className="flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--orange)' }} />
         <div>
           <h3 className="text-sm font-medium mb-1" style={{ color: 'var(--orange)' }}>
             What this view does NOT yet show
           </h3>
-          <p className="text-xs mb-2" style={{ color: 'rgba(255,149,0,.8)' }}>
+          <p className="text-xs mb-2" style={{ color: 'rgba(255,159,10,.8)' }}>
             The dashboard is honest about its gaps. Each item below is something the operator module isn't yet tracking.
           </p>
-          <ul className="text-xs space-y-0.5" style={{ color: 'rgba(255,149,0,.8)' }}>
+          <ul className="text-xs space-y-0.5" style={{ color: 'rgba(255,159,10,.8)' }}>
             {caveats.map((c, i) => <li key={i}>• {c}</li>)}
           </ul>
         </div>

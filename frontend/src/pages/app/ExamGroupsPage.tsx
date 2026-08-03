@@ -195,7 +195,7 @@ export default function ExamGroupsPage() {
                       Approved
                     </span>
                   ) : (
-                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', color: 'var(--orange)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)', color: 'var(--orange)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Draft
                     </span>
                   )}
@@ -325,7 +325,7 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
                   <CheckCircle size={8} />Approved
                 </span>
               ) : (
-                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', color: 'var(--orange)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)', color: 'var(--orange)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Draft
                 </span>
               )}
@@ -380,7 +380,7 @@ function GroupDetailView({ groupId, onBack }: { groupId: string; onBack: () => v
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ padding: 12, borderRadius: 12, background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', display: 'flex', alignItems: 'flex-start', gap: 10 }}
+          style={{ padding: 12, borderRadius: 12, background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)', display: 'flex', alignItems: 'flex-start', gap: 10 }}
         >
           <AlertCircle size={13} className="shrink-0" style={{ marginTop: 2, color: 'var(--orange)' }} />
           <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>

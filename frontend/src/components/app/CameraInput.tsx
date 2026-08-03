@@ -114,7 +114,7 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
             boxShadow: 'var(--shadow-raise)',
           }}
         >
-          <X size={12} style={{ color: '#fff' }} />
+          <X size={12} style={{ color: 'var(--text-on-accent)' }} />
         </button>
       </div>
     );

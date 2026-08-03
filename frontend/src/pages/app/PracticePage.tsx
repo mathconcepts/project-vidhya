@@ -38,7 +38,7 @@ const SLOW_VERIFY_THRESHOLD_MS = 1500;
 
 const DIFF_STYLE: Record<string, { color: string; bg: string }> = {
   easy:   { color: 'var(--green-ink)', bg: 'rgba(52,199,89,.10)' },
-  medium: { color: 'var(--orange)',    bg: 'rgba(255,149,0,.10)' },
+  medium: { color: 'var(--orange)',    bg: 'rgba(255,159,10,.10)' },
   hard:   { color: 'var(--red)',       bg: 'rgba(255,59,48,.10)' },
 };
 
@@ -433,7 +433,7 @@ export default function PracticePage() {
                     borderRadius: 'var(--radius-md)',
                     border: 'none',
                     background: 'var(--green)',
-                    color: '#fff',
+                    color: 'var(--text-on-accent)',
                     fontSize: 'var(--text-body)',
                     fontWeight: 'var(--weight-semibold)',
                     cursor: 'pointer',
@@ -451,7 +451,7 @@ export default function PracticePage() {
                     borderRadius: 'var(--radius-md)',
                     textAlign: 'center',
                     background: 'var(--green)',
-                    color: '#fff',
+                    color: 'var(--text-on-accent)',
                     fontSize: 'var(--text-body)',
                     fontWeight: 'var(--weight-semibold)',
                     textDecoration: 'none',

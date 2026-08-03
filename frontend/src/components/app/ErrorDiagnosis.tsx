@@ -123,7 +123,7 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
             <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {/* Why tempting */}
               {diagnosis.why_tempting && (
-                <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.18)' }}>
+                <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.18)' }}>
                   <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Why your approach seemed right
                   </p>

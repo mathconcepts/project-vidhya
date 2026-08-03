@@ -51,8 +51,8 @@ type GapStyle = { background: string; border: string; color: string };
 
 const GAP_COLOR: Record<CohortStat['gap_class'], GapStyle> = {
   'aligned':     { background: 'rgba(52,199,89,.06)',  border: '1px solid rgba(52,199,89,.22)',  color: 'var(--green-ink)' },
-  'depth-gap':   { background: 'rgba(255,149,0,.06)',  border: '1px solid rgba(255,149,0,.22)',  color: 'var(--orange)' },
-  'breadth-gap': { background: 'rgba(255,149,0,.06)',  border: '1px solid rgba(255,149,0,.22)',  color: 'var(--orange)' },
+  'depth-gap':   { background: 'rgba(255,159,10,.06)',  border: '1px solid rgba(255,159,10,.22)',  color: 'var(--orange)' },
+  'breadth-gap': { background: 'rgba(255,159,10,.06)',  border: '1px solid rgba(255,159,10,.22)',  color: 'var(--orange)' },
   'foundation':  { background: 'rgba(255,59,48,.06)',  border: '1px solid rgba(255,59,48,.22)',  color: 'var(--red)' },
 };
 

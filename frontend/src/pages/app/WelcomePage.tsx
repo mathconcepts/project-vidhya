@@ -106,7 +106,7 @@ export default function WelcomePage() {
           padding: '12px 20px',
           borderRadius: 'var(--radius-md)',
           background: 'var(--green)',
-          color: '#fff',
+          color: 'var(--text-on-accent)',
           fontWeight: 'var(--weight-semibold)',
           fontSize: 'var(--text-body)',
           display: 'inline-flex',

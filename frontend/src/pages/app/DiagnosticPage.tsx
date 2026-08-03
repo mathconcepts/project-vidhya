@@ -267,7 +267,7 @@ export default function DiagnosticPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
                 onClick={handleStartHour1}
-                style={{ width: '100%', padding: '12px 0', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-body)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                style={{ width: '100%', padding: '12px 0', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-body)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 Start hour 1 now <ChevronRight size={18} />
               </button>
@@ -358,7 +358,7 @@ export default function DiagnosticPage() {
       [];
 
   const timerColor = timer > 30 ? 'var(--green-ink)' : timer > 10 ? 'var(--orange)' : 'var(--red)';
-  const timerBg = timer > 30 ? 'rgba(52,199,89,.06)' : timer > 10 ? 'rgba(255,149,0,.06)' : 'rgba(255,59,48,.06)';
+  const timerBg = timer > 30 ? 'rgba(52,199,89,.06)' : timer > 10 ? 'rgba(255,159,10,.06)' : 'rgba(255,59,48,.06)';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

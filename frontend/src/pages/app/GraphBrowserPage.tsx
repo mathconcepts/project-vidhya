@@ -77,7 +77,7 @@ export const __testing = { groupByTopic, frequencyTone, dagHealthTone };
 const TONE_COLOR: Record<Tone, string> = {
   good: 'var(--green-ink)',
   bad: 'var(--red)',
-  warn: '#B87503',
+  warn: 'var(--orange-ink)',
   neutral: 'var(--text-tertiary)',
 };
 
@@ -262,7 +262,7 @@ export default function GraphBrowserPage() {
                 <div>{selectedExam.declared_concept_count} concept id{selectedExam.declared_concept_count === 1 ? '' : 's'} declared in this exam's syllabus.</div>
                 {selectedExam.stub_concept_ids.length > 0 ? (
                   <div>
-                    <div style={{ color: '#B87503', fontWeight: 'var(--weight-medium)' }}>
+                    <div style={{ color: 'var(--orange-ink)', fontWeight: 'var(--weight-medium)' }}>
                       {selectedExam.stub_concept_ids.length} declared as stubs — no concept-graph node yet:
                     </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>

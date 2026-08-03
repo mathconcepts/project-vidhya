@@ -50,7 +50,7 @@ export default function InstitutePage() {
           <div>
             <a
               href="#interest-form"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 24px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: '#fff', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', textDecoration: 'none' }}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 24px', borderRadius: 'var(--radius-md)', background: 'var(--green)', color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', textDecoration: 'none' }}
             >
               Register interest for your batch <ArrowRight size={14} />
             </a>

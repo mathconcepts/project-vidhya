@@ -254,7 +254,7 @@ export default function NotebookPage() {
                                   ? `1px solid ${s === 'mastered' ? 'var(--green)' : s === 'in_progress' ? 'var(--orange)' : 'var(--separator)'}`
                                   : '1px solid var(--separator)',
                                 background: entry.status === s
-                                  ? s === 'mastered' ? 'rgba(52,199,89,.12)' : s === 'in_progress' ? 'rgba(255,149,0,.12)' : 'var(--surface-fill)'
+                                  ? s === 'mastered' ? 'rgba(52,199,89,.12)' : s === 'in_progress' ? 'rgba(255,159,10,.12)' : 'var(--surface-fill)'
                                   : 'var(--surface-fill)',
                                 color: entry.status === s
                                   ? s === 'mastered' ? 'var(--green-ink)' : s === 'in_progress' ? 'var(--orange)' : 'var(--text-secondary)'

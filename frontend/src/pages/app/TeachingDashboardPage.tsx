@@ -272,8 +272,8 @@ export default function TeachingDashboardPage() {
               className="block p-3"
               style={{
                 borderRadius: 'var(--radius-sm)',
-                background: 'rgba(255,149,0,.1)',
-                border: '1px solid rgba(255,149,0,.3)',
+                background: 'rgba(255,159,10,.1)',
+                border: '1px solid rgba(255,159,10,.3)',
                 color: 'var(--orange)',
                 textDecoration: 'none',
               }}
@@ -342,7 +342,7 @@ export default function TeachingDashboardPage() {
               style={{
                 borderRadius: 'var(--radius-xs)',
                 background: 'var(--green)',
-                color: '#fff',
+                color: 'var(--text-on-accent)',
                 fontSize: 'var(--text-body)',
                 fontWeight: 'var(--weight-medium)',
                 border: 'none',
@@ -480,7 +480,7 @@ export default function TeachingDashboardPage() {
                 style={{
                   borderRadius: 'var(--radius-xs)',
                   background: 'var(--indigo)',
-                  color: '#fff',
+                  color: 'var(--text-on-accent)',
                   fontSize: 'var(--text-caption)',
                   fontWeight: 'var(--weight-medium)',
                   border: 'none',
@@ -623,12 +623,12 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                         fontFamily: 'var(--font-sans)',
                         border: confidence === n
                           ? n <= 2
-                            ? '1px solid rgba(255,149,0,.4)'
+                            ? '1px solid rgba(255,159,10,.4)'
                             : '1px solid rgba(52,199,89,.4)'
                           : 'var(--hairline) solid var(--separator)',
                         background: confidence === n
                           ? n <= 2
-                            ? 'rgba(255,149,0,.2)'
+                            ? 'rgba(255,159,10,.2)'
                             : 'rgba(52,199,89,.2)'
                           : 'var(--surface-card)',
                         color: confidence === n

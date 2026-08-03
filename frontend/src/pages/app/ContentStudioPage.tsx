@@ -463,7 +463,7 @@ function GenerateTab({ onCreated }: { onCreated: (d: Draft) => void }) {
         className="px-4 py-2 rounded text-sm font-medium flex items-center gap-2"
         style={{
           background: busy ? 'rgba(88,86,214,.5)' : 'var(--indigo)',
-          color: 'white',
+          color: 'var(--text-on-accent)',
           cursor: busy ? 'wait' : isDisabled ? 'not-allowed' : 'pointer',
           opacity: isDisabled ? 0.3 : 1,
           border: 'none',
@@ -575,7 +575,7 @@ function DraftsTab({
             style={{
               background: 'var(--surface-card)',
               boxShadow: 'var(--shadow-raise)',
-              border: isStale ? '1px solid rgba(255,149,0,.4)' : 'var(--hairline) solid var(--separator)',
+              border: isStale ? '1px solid rgba(255,159,10,.4)' : 'var(--hairline) solid var(--separator)',
               cursor: 'pointer',
               fontFamily: 'var(--font-sans)',
             }}
@@ -588,7 +588,7 @@ function DraftsTab({
                   {isStale && (
                     <span
                       className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1"
-                      style={{ background: 'rgba(255,149,0,.1)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }}
+                      style={{ background: 'rgba(255,159,10,.1)', color: 'var(--orange)', border: '1px solid rgba(255,159,10,.3)' }}
                     >
                       <Clock className="w-3 h-3" /> {age}d waiting
                     </span>
@@ -679,7 +679,7 @@ function DiffStrip({ label, segments }: { label: string; segments: Array<{ op: '
 
 function StatusBadge({ status }: { status: DraftStatus }) {
   const style: React.CSSProperties = status === 'draft'
-    ? { background: 'rgba(255,149,0,.1)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }
+    ? { background: 'rgba(255,159,10,.1)', color: 'var(--orange)', border: '1px solid rgba(255,159,10,.3)' }
     : status === 'approved'
     ? { background: 'rgba(52,199,89,.1)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.3)' }
     : status === 'rejected'
@@ -694,14 +694,14 @@ function StatusBadge({ status }: { status: DraftStatus }) {
 
 function QueueAgeBanner({ count }: { count: number }) {
   return (
-    <div className="rounded p-4" style={{ background: 'rgba(255,149,0,.1)', border: 'var(--hairline) solid rgba(255,149,0,.3)' }}>
+    <div className="rounded p-4" style={{ background: 'rgba(255,159,10,.1)', border: 'var(--hairline) solid rgba(255,159,10,.3)' }}>
       <div className="flex items-start gap-2">
         <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--orange)' }} />
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium" style={{ color: 'var(--orange)' }}>
             {count} draft{count === 1 ? ' has' : 's have'} been waiting {QUEUE_AGE_WARNING_DAYS}+ days for review
           </h3>
-          <p className="text-xs mt-1" style={{ color: 'rgba(255,149,0,.8)' }}>
+          <p className="text-xs mt-1" style={{ color: 'rgba(255,159,10,.8)' }}>
             Informational only — this doesn't throttle generation. A stale review queue is worth clearing before
             it grows further.
           </p>
@@ -713,23 +713,23 @@ function QueueAgeBanner({ count }: { count: number }) {
 
 function UnderperformerCallout({ items }: { items: Underperformer[] }) {
   return (
-    <div className="rounded p-4" style={{ background: 'rgba(255,149,0,.1)', border: 'var(--hairline) solid rgba(255,149,0,.3)' }}>
+    <div className="rounded p-4" style={{ background: 'rgba(255,159,10,.1)', border: 'var(--hairline) solid rgba(255,159,10,.3)' }}>
       <div className="flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--orange)' }} />
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium" style={{ color: 'var(--orange)' }}>
             {items.length} library {items.length === 1 ? 'concept is' : 'concepts are'} underperforming
           </h3>
-          <p className="text-xs mt-1" style={{ color: 'rgba(255,149,0,.8)' }}>
+          <p className="text-xs mt-1" style={{ color: 'rgba(255,159,10,.8)' }}>
             Students using these library entries are not improving. Consider regenerating drafts with different sources.
           </p>
-          <ul className="text-xs mt-2 space-y-0.5 font-mono" style={{ color: 'rgba(255,149,0,.8)' }}>
+          <ul className="text-xs mt-2 space-y-0.5 font-mono" style={{ color: 'rgba(255,159,10,.8)' }}>
             {items.slice(0, 5).map(u => (
               <li key={u.concept_id}>
                 {u.concept_id} — avg Δmastery {u.avg_mastery_delta_pct?.toFixed(1)}% over {u.turn_count} turns
               </li>
             ))}
-            {items.length > 5 && <li style={{ color: 'rgba(255,149,0,.6)' }}>…and {items.length - 5} more</li>}
+            {items.length > 5 && <li style={{ color: 'rgba(255,159,10,.6)' }}>…and {items.length - 5} more</li>}
           </ul>
         </div>
       </div>
@@ -1000,7 +1000,7 @@ function ReviewTab({
             className="px-3 py-1.5 rounded text-sm flex items-center gap-1.5"
             style={{
               background: 'var(--green)',
-              color: 'white',
+              color: 'var(--text-on-accent)',
               border: 'none',
               cursor: busy ? 'not-allowed' : 'pointer',
               opacity: busy ? 0.3 : 1,
@@ -1048,7 +1048,7 @@ function ReviewTab({
                 className="px-3 py-1.5 rounded text-sm"
                 style={{
                   background: 'var(--red)',
-                  color: 'white',
+                  color: 'var(--text-on-accent)',
                   border: 'none',
                   cursor: busy || !rejectReason.trim() ? 'not-allowed' : 'pointer',
                   opacity: busy || !rejectReason.trim() ? 0.3 : 1,

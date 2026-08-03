@@ -169,8 +169,8 @@ export default function FeaturesPage() {
                 style={{
                   padding: 16,
                   borderRadius: 'var(--radius-md)',
-                  background: flag.overridden ? 'rgba(255,149,0,.06)' : 'var(--surface-card)',
-                  border: flag.overridden ? '1px solid rgba(255,149,0,.3)' : 'var(--hairline) solid var(--separator)',
+                  background: flag.overridden ? 'rgba(255,159,10,.06)' : 'var(--surface-card)',
+                  border: flag.overridden ? '1px solid rgba(255,159,10,.3)' : 'var(--hairline) solid var(--separator)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8 }}>
@@ -178,7 +178,7 @@ export default function FeaturesPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <code style={{ color: 'var(--indigo-ink)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-caption)' }}>{flag.flag}</code>
                       {flag.overridden && (
-                        <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,149,0,.12)', color: 'var(--orange)', border: '1px solid rgba(255,149,0,.3)' }}>
+                        <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,159,10,.12)', color: 'var(--orange)', border: '1px solid rgba(255,159,10,.3)' }}>
                           overridden
                         </span>
                       )}

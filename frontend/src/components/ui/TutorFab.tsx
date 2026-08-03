@@ -23,7 +23,7 @@ export function TutorFab({ label = 'Ask the tutor', onClick, children }: TutorFa
         border: 'none',
         cursor: 'pointer',
         background: 'var(--indigo)',
-        color: '#fff',
+        color: 'var(--text-on-accent)',
         boxShadow: 'var(--shadow-fab)',
         display: 'inline-flex',
         alignItems: 'center',

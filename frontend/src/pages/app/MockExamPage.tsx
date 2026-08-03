@@ -347,7 +347,7 @@ export default function MockExamPage() {
                 borderRadius: 'var(--radius-sm)',
                 background: 'var(--indigo)',
                 border: 'none',
-                color: '#fff',
+                color: 'var(--text-on-accent)',
                 fontSize: 'var(--text-footnote)',
                 fontWeight: 'var(--weight-semibold)',
                 cursor: 'pointer',
@@ -365,7 +365,7 @@ export default function MockExamPage() {
                 borderRadius: 'var(--radius-sm)',
                 background: 'var(--green)',
                 border: 'none',
-                color: '#fff',
+                color: 'var(--text-on-accent)',
                 fontSize: 'var(--text-footnote)',
                 fontWeight: 'var(--weight-semibold)',
                 cursor: 'pointer',
@@ -434,7 +434,7 @@ export default function MockExamPage() {
   if (phase === 'results' && results) {
     const pct = Math.round((results.marks / results.max_marks) * 100);
     const scoreColor = pct >= 50 ? 'var(--green-ink)' : pct >= 25 ? 'var(--orange)' : 'var(--red)';
-    const scoreBg = pct >= 50 ? 'rgba(52,199,89,.1)' : pct >= 25 ? 'rgba(255,149,0,.1)' : 'rgba(255,59,48,.1)';
+    const scoreBg = pct >= 50 ? 'rgba(52,199,89,.1)' : pct >= 25 ? 'rgba(255,159,10,.1)' : 'rgba(255,59,48,.1)';
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

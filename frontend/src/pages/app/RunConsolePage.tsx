@@ -227,7 +227,7 @@ export default function RunConsolePage() {
 
       {jobs?.map((job) => {
         const tone = stateTone(job.status?.state);
-        const toneColor = tone === 'good' ? 'var(--green-ink)' : tone === 'bad' ? 'var(--red)' : tone === 'warn' ? '#B87503' : 'var(--text-tertiary)';
+        const toneColor = tone === 'good' ? 'var(--green-ink)' : tone === 'bad' ? 'var(--red)' : tone === 'warn' ? 'var(--orange-ink)' : 'var(--text-tertiary)';
         const running = job.status?.state === 'running';
         const busy = pendingAction === job.name;
         return (

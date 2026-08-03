@@ -115,7 +115,7 @@ export default function Verify({ attrs }: DirectiveProps) {
           type="submit"
           disabled={status === 'pending' || !input.trim()}
           className="px-3 py-1.5 rounded text-sm font-semibold disabled:opacity-40"
-          style={{ background: 'var(--indigo)', color: '#fff' }}
+          style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
         >
           Check
         </button>

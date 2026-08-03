@@ -283,7 +283,7 @@ function TurnCard({ turn }: { turn: TeachingTurn }) {
               </span>
             )}
             {turn.degraded && (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,149,0,.08)', color: 'var(--orange)' }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,159,10,.08)', color: 'var(--orange)' }}>
                 degraded: {turn.degraded.reason}
               </span>
             )}

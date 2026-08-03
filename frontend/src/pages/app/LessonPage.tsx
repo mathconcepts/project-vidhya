@@ -111,7 +111,7 @@ function AttributionBadge({ a }: { a: Attribution | undefined }) {
   const kindStyle: Record<AKind, React.CSSProperties> = {
     'user-material':    { background: 'rgba(52,199,89,.06)',   color: 'var(--green-ink)',   border: '1px solid rgba(52,199,89,.22)' },
     'bundle-canon':     { background: 'rgba(88,86,214,.06)',   color: 'var(--indigo-ink)',  border: '1px solid rgba(88,86,214,.22)' },
-    'wolfram-computed': { background: 'rgba(255,149,0,.06)',   color: 'var(--orange)',      border: '1px solid rgba(255,149,0,.22)' },
+    'wolfram-computed': { background: 'rgba(255,159,10,.06)',   color: 'var(--orange)',      border: '1px solid rgba(255,159,10,.22)' },
     'concept-graph':    { background: 'var(--surface-fill)',   color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' },
     'topic-notes':      { background: 'var(--surface-fill)',   color: 'var(--text-tertiary)', border: 'var(--hairline) solid var(--separator)' },
     'generated':        { background: 'rgba(88,86,214,.06)',   color: 'var(--indigo-ink)',  border: '1px solid rgba(88,86,214,.22)' },

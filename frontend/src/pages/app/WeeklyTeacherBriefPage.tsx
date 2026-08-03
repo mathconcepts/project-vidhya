@@ -181,7 +181,7 @@ export default function WeeklyTeacherBriefPage() {
 
       {/* Struggling */}
       {brief.struggling_students && brief.struggling_students.length > 0 && (
-        <section style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,149,0,.22)', background: 'rgba(255,149,0,.05)' }}>
+        <section style={{ padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,159,10,.22)', background: 'rgba(255,159,10,.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <AlertTriangle size={14} style={{ color: 'var(--orange)' }} />
             <p style={{ margin: 0, fontSize: 11, fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--orange)' }}>

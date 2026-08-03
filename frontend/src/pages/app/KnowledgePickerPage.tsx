@@ -268,7 +268,7 @@ export default function KnowledgePickerPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                   }}>
-                    {picked && <Check size={12} style={{ color: '#fff' }} />}
+                    {picked && <Check size={12} style={{ color: 'var(--text-on-accent)' }} />}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{e.exam_name}</div>

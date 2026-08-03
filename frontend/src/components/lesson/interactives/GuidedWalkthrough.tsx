@@ -150,7 +150,7 @@ export function GuidedWalkthrough({ spec }: Props) {
           onClick={advance}
           disabled={buttonDisabled}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: 'var(--indigo)', color: '#fff' }}
+          style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
         >
           {buttonLabel}
           {!buttonDisabled && <ChevronRight size={12} />}

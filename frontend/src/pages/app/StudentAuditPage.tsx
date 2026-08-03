@@ -58,7 +58,7 @@ interface AuditReport {
 
 const READINESS_CONFIG: Record<string, { label: string; color: string; background: string; border: string }> = {
   'not-ready': { label: 'Foundation Phase', color: 'var(--red)',        background: 'rgba(255,59,48,.06)',   border: '1px solid rgba(255,59,48,.22)' },
-  'building':  { label: 'Building',         color: 'var(--orange)',     background: 'rgba(255,149,0,.06)',   border: '1px solid rgba(255,149,0,.22)' },
+  'building':  { label: 'Building',         color: 'var(--orange)',     background: 'rgba(255,159,10,.06)',   border: '1px solid rgba(255,159,10,.22)' },
   'ready':     { label: 'Exam-Ready',       color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.05)',   border: '1px solid rgba(88,86,214,.22)' },
   'confident': { label: 'Peak Form',        color: 'var(--green-ink)',  background: 'rgba(52,199,89,.06)',   border: '1px solid rgba(52,199,89,.22)' },
 };
@@ -208,8 +208,8 @@ export default function StudentAuditPage() {
             <div key={i} style={{
               padding: 12,
               borderRadius: 'var(--radius-sm)',
-              background: a.severity === 'critical' ? 'rgba(255,59,48,.05)' : 'rgba(255,149,0,.05)',
-              border: a.severity === 'critical' ? '1px solid rgba(255,59,48,.20)' : '1px solid rgba(255,149,0,.20)',
+              background: a.severity === 'critical' ? 'rgba(255,59,48,.05)' : 'rgba(255,159,10,.05)',
+              border: a.severity === 'critical' ? '1px solid rgba(255,59,48,.20)' : '1px solid rgba(255,159,10,.20)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                 <span style={{
@@ -219,7 +219,7 @@ export default function StudentAuditPage() {
                   fontWeight: 'var(--weight-semibold)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
-                  background: a.severity === 'critical' ? 'rgba(255,59,48,.15)' : 'rgba(255,149,0,.15)',
+                  background: a.severity === 'critical' ? 'rgba(255,59,48,.15)' : 'rgba(255,159,10,.15)',
                   color: a.severity === 'critical' ? 'var(--red)' : 'var(--orange)',
                 }}>
                   {a.severity}

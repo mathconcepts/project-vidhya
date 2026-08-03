@@ -215,7 +215,7 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
       {showCallout && (
         <div
           className="px-3 py-2 rounded-lg border text-xs"
-          style={{ background: 'rgba(255,149,0,.08)', borderColor: 'rgba(255,149,0,.3)', color: 'var(--orange)' }}
+          style={{ background: 'rgba(255,159,10,.08)', borderColor: 'rgba(255,159,10,.3)', color: 'var(--orange)' }}
         >
           {Math.round((atom.cohort_error_pct ?? 0) * 100)}% of students at your level miss this on the practice problem.
         </div>
@@ -567,7 +567,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               <button
                 onClick={() => next(true)}
                 className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold"
-                style={{ background: 'var(--indigo)', color: '#fff' }}
+                style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
               >
                 Got it
               </button>

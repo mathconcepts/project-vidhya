@@ -83,7 +83,7 @@ export default function OnboardPage() {
   if (examLoadError || !examMeta) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16, padding: '0 16px', textAlign: 'center' }}>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Calendar size={20} style={{ color: 'var(--orange)' }} />
         </div>
         <div>
@@ -99,7 +99,7 @@ export default function OnboardPage() {
             padding: '12px 24px',
             borderRadius: 'var(--radius-md)',
             background: 'var(--green)',
-            color: '#fff',
+            color: 'var(--text-on-accent)',
             fontSize: 'var(--text-body)',
             fontWeight: 'var(--weight-semibold)',
             border: 'none',
@@ -167,7 +167,7 @@ export default function OnboardPage() {
             padding: '12px 0',
             borderRadius: 'var(--radius-md)',
             fontWeight: 'var(--weight-semibold)',
-            color: '#fff',
+            color: 'var(--text-on-accent)',
             fontSize: 'var(--text-body)',
             border: 'none',
             cursor: examDate && !saving ? 'pointer' : 'not-allowed',

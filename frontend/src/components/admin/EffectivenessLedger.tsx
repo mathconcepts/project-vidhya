@@ -188,7 +188,7 @@ function SuggestionRow({ experiment }: { experiment: ExperimentRow }) {
 
   const tonedStyle: React.CSSProperties =
     tone === 'emerald' ? { background: 'rgba(52,199,89,.06)', color: 'var(--green-ink)' } :
-    tone === 'amber'   ? { background: 'rgba(255,149,0,.05)', color: 'var(--orange)' } :
+    tone === 'amber'   ? { background: 'rgba(255,159,10,.05)', color: 'var(--orange)' } :
                          { background: 'var(--surface-fill)', color: 'var(--text-secondary)' };
 
   return (

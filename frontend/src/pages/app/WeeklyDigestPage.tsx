@@ -135,7 +135,7 @@ export default function WeeklyDigestPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}
+          style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' }}
         >
           <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 'var(--weight-semibold)', color: 'var(--orange)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <AlertCircle size={11} /> The Honest Truth

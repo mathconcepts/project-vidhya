@@ -165,7 +165,7 @@ export default function ExamSetupPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="px-3 h-9 rounded-lg text-xs font-medium inline-flex items-center gap-1.5"
-            style={{ background: 'var(--indigo)', color: '#fff' }}
+            style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
           >
             <Plus size={13} />
             New exam
@@ -185,7 +185,7 @@ export default function ExamSetupPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="p-3 rounded-xl flex items-start gap-2.5"
-          style={{ background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}
+          style={{ background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' }}
         >
           <AlertCircle size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--orange)' }} />
           <div className="text-[11px] leading-relaxed" style={{ color: 'var(--orange)' }}>
@@ -223,7 +223,7 @@ export default function ExamSetupPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="px-4 h-9 rounded-lg text-xs font-medium inline-flex items-center gap-1.5"
-            style={{ background: 'var(--indigo)', color: '#fff' }}
+            style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
           >
             <Plus size={13} />
             Create your first exam
@@ -244,7 +244,7 @@ export default function ExamSetupPage() {
                   {e.is_draft && (
                     <span
                       className="text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide"
-                      style={{ background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }}
+                      style={{ background: 'rgba(255,159,10,.06)', color: 'var(--orange)' }}
                     >
                       Draft
                     </span>
@@ -309,7 +309,7 @@ function ExamDetailView({
             {exam.is_draft && (
               <span
                 className="text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide"
-                style={{ background: 'rgba(255,149,0,.06)', color: 'var(--orange)' }}
+                style={{ background: 'rgba(255,159,10,.06)', color: 'var(--orange)' }}
               >
                 Draft
               </span>
@@ -463,7 +463,7 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
             onClick={runEnrich}
             disabled={enriching}
             className="px-3 h-9 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
-            style={{ background: 'var(--indigo)', color: '#fff' }}
+            style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
           >
             {enriching ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             Auto-enrich from web
@@ -474,7 +474,7 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
             onClick={markReady}
             disabled={markingReady}
             className="px-3 h-9 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
-            style={{ background: 'var(--green)', color: '#fff' }}
+            style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
           >
             {markingReady ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
             Mark ready for students
@@ -518,7 +518,7 @@ function OverviewTab({ exam, breakdown, suggestions, enrichmentAvailable, onRefr
               onClick={applyProposal}
               disabled={applying || proposal.merge_preview.would_update_fields.length === 0}
               className="px-3 h-8 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
-              style={{ background: 'var(--green)', color: '#fff' }}
+              style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
             >
               {applying ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle size={11} />}
               Apply
@@ -648,7 +648,7 @@ function FieldsTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => void 
               onClick={save}
               disabled={saving}
               className="px-3 h-8 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
-              style={{ background: 'var(--indigo)', color: '#fff' }}
+              style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
             >
               {saving ? <Loader2 size={11} className="animate-spin" /> : saved ? <CheckCircle size={11} /> : null}
               {saved ? 'Saved' : 'Save changes'}
@@ -725,7 +725,7 @@ function ProvenanceChip({ source, confidence }: { source: string; confidence?: n
     switch (src) {
       case 'admin_manual': return { background: 'rgba(52,199,89,.10)', color: 'var(--green-ink)' };
       case 'user_upload':  return { background: 'rgba(88,86,214,.10)', color: 'var(--indigo-ink)' };
-      case 'web_research': return { background: 'rgba(255,149,0,.10)', color: 'var(--orange)' };
+      case 'web_research': return { background: 'rgba(255,159,10,.10)', color: 'var(--orange)' };
       default:             return { background: 'var(--surface-fill)', color: 'var(--text-tertiary)' };
     }
   };
@@ -821,7 +821,7 @@ function LocalDataTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
           onClick={add}
           disabled={!title.trim() || !content.trim() || saving}
           className="px-3 h-9 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
-          style={{ background: 'var(--indigo)', color: '#fff' }}
+          style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
         >
           {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
           Add entry
@@ -942,7 +942,7 @@ function AssistantTab({ exam, onRefresh }: { exam: ExamFull; onRefresh: () => vo
           onClick={() => input.trim() && send('reply', input.trim())}
           disabled={!input.trim() || sending}
           className="px-3 h-9 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
-          style={{ background: 'var(--indigo)', color: '#fff' }}
+          style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
         >
           <Send size={12} />
           Send
@@ -1109,7 +1109,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
           {similar.length > 0 && (
             <div
               className="p-2.5 rounded-lg space-y-1.5"
-              style={{ background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)' }}
+              style={{ background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)' }}
             >
               <p className="text-[10px] uppercase font-medium flex items-center gap-1" style={{ color: 'var(--orange)' }}>
                 <AlertCircle size={10} />
@@ -1199,7 +1199,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
             onClick={submit}
             disabled={!code.trim() || !name.trim() || creating}
             className="w-full h-10 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50"
-            style={{ background: 'var(--indigo)', color: '#fff' }}
+            style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
           >
             {creating ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
             Create exam

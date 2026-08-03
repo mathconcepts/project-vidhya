@@ -374,8 +374,8 @@ export default function ContentSettingsPage() {
                 key={src.id}
                 style={{
                   borderRadius: 'var(--radius-md)',
-                  border: isExcluded ? '1px solid rgba(255,149,0,.25)' : 'var(--hairline) solid var(--separator)',
-                  background: isExcluded ? 'rgba(255,149,0,.05)' : 'var(--surface-card)',
+                  border: isExcluded ? '1px solid rgba(255,159,10,.25)' : 'var(--hairline) solid var(--separator)',
+                  background: isExcluded ? 'rgba(255,159,10,.05)' : 'var(--surface-card)',
                   padding: 16,
                 }}
               >
@@ -394,7 +394,7 @@ export default function ContentSettingsPage() {
                       <Icon size={14} style={{ color: 'var(--text-tertiary)' }} />
                       {src.label}
                       {isExcluded && (
-                        <span style={{ fontSize: 10, background: 'rgba(255,149,0,.1)', color: 'var(--orange)', padding: '2px 6px', borderRadius: 4 }}>
+                        <span style={{ fontSize: 10, background: 'rgba(255,159,10,.1)', color: 'var(--orange)', padding: '2px 6px', borderRadius: 4 }}>
                           excluded
                         </span>
                       )}
@@ -450,7 +450,7 @@ function ModeBanner({ mode, pin }: { mode: 'stub' | 'local' | 'live'; pin: Conte
     );
   }
   return (
-    <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.22)', display: 'flex', gap: 12 }}>
+    <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)', display: 'flex', gap: 12 }}>
       <AlertCircle size={16} style={{ color: 'var(--orange)', flexShrink: 0, marginTop: 2 }} />
       <div style={{ fontSize: 'var(--text-caption)' }}>
         <p style={{ margin: '0 0 2px', color: 'var(--orange)', fontWeight: 'var(--weight-semibold)' }}>No community bundles available yet</p>

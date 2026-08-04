@@ -26,7 +26,7 @@
  * This module is the single loader every call site now uses.
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync } from 'fs';
 import path from 'path';
 import { parse as parseYaml } from 'yaml';
 
@@ -115,7 +115,7 @@ let cachedRegistry: { path: string; mtimeMs: number; parsed: ProvidersRegistry }
  * the cache automatically.
  */
 export function loadProvidersRegistry(yamlPath: string = resolveProvidersYamlPath()): ProvidersRegistry {
-  const stat = existsSync(yamlPath) ? require('fs').statSync(yamlPath) : null;
+  const stat = existsSync(yamlPath) ? statSync(yamlPath) : null;
   const mtimeMs = stat?.mtimeMs ?? 0;
 
   if (cachedRegistry && cachedRegistry.path === yamlPath && cachedRegistry.mtimeMs === mtimeMs) {

@@ -108,17 +108,22 @@ ENVEOF
   exit 0
 fi
 
-# Check for placeholder API key
+# Check for at least one usable LLM provider key
 set -a; source "$ENV_FILE" 2>/dev/null; set +a
-if [[ -z "${GEMINI_API_KEY:-}" ]] || [[ "${GEMINI_API_KEY}" == "your_gemini_api_key_here" ]]; then
-  warn "GEMINI_API_KEY is not set in $ENV_FILE"
+HAS_KEY=false
+if [[ -n "${GEMINI_API_KEY:-}" ]] && [[ "${GEMINI_API_KEY}" != "your_gemini_api_key_here" ]]; then HAS_KEY=true; fi
+if [[ -n "${ANTHROPIC_API_KEY:-}" ]] && [[ "${ANTHROPIC_API_KEY}" != "your_anthropic_api_key_here" ]]; then HAS_KEY=true; fi
+if [[ -n "${OPENAI_API_KEY:-}" ]]; then HAS_KEY=true; fi
+if [[ -n "${OPENROUTER_API_KEY:-}" ]]; then HAS_KEY=true; fi
+if [[ "$HAS_KEY" == "false" ]]; then
+  warn "No LLM provider API key is set in $ENV_FILE"
   echo ""
-  echo "  1. Get your free key at: https://aistudio.google.com/app/apikey"
-  echo "  2. Edit: nano $ENV_FILE"
-  echo "  3. Set:  GEMINI_API_KEY=your_actual_key"
-  echo "  4. Re-run this script"
+  echo "  Set at least one of: GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY"
+  echo "  Free Gemini key: https://aistudio.google.com/app/apikey"
+  echo "  Edit: nano $ENV_FILE"
+  echo "  Then re-run this script"
   echo ""
-  error "API key required to start."
+  error "At least one LLM provider API key is required to start."
 fi
 success "Environment loaded from $ENV_FILE"
 

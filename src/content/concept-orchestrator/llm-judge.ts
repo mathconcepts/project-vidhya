@@ -15,6 +15,7 @@
  */
 
 import type { GeneratedAtom } from './types';
+import { loadProvidersRegistry } from '../../llm/registry';
 
 export interface JudgeScore {
   /** Min of the three axes — the gating value. */
@@ -52,6 +53,23 @@ Return ONLY a JSON object on a single line, no preamble:
  * auto-rejects the atom. judge_unavailable=true means the LLM call
  * failed; consumer treats the score as "needs manual review".
  */
+/**
+ * Resolve which model the judge should call, from config/providers.yaml's
+ * default_provider — no hardcoded Gemini/Claude preference. Falls back to
+ * undefined (LLMClient's own default routing) if the registry can't be read.
+ */
+function resolveJudgeModelId(): string | undefined {
+  try {
+    const registry: any = loadProvidersRegistry();
+    const pconfig = registry.providers?.[registry.default_provider];
+    if (!pconfig?.enabled) return undefined;
+    const modelKey = pconfig.fallback_order?.[0];
+    return modelKey ? pconfig.models?.[modelKey]?.id : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function scoreAtom(atom: GeneratedAtom): Promise<JudgeScore> {
   const prompt = JUDGE_PROMPT_TEMPLATE
     .replace('{atom_type}', atom.atom_type)
@@ -63,9 +81,12 @@ export async function scoreAtom(atom: GeneratedAtom): Promise<JudgeScore> {
     const { loadLlmConfig } = await import('../../llm/registry');
     const config = loadLlmConfig();
     const client = new (LLMClient as any)(config);
+    const model_id = resolveJudgeModelId();
     const response = await client.generate({
       messages: [{ role: 'user', content: prompt }],
       taskType: 'eval',
+      model: model_id,
+      maxTokens: 512,
       maxRetries: 1,
     });
     const text = (response.content ?? response.text ?? '').trim();

@@ -295,22 +295,25 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
     // since either can be any configured provider's model. See
     // GenerationSource's doc comment.
     sourceCascade.push('llm-claude', 'llm-gemini');
-    const distinctProviders = await consensusProvidersAreDistinct(primaryModelId, secondaryModelId);
-    const [primary, secondary] = distinctProviders
+    const distinctProviders = secondaryModelId
+      ? await consensusProvidersAreDistinct(primaryModelId, secondaryModelId)
+      : false;
+    const [primary, secondary] = distinctProviders && secondaryModelId
       ? await Promise.all([
           callLlm(prompt, primaryModelId),
           callLlm(prompt, secondaryModelId),
         ])
-      // Both legs would hit the same provider — treat as "one leg
-      // unavailable" (the existing degraded-consensus path below)
-      // rather than spending twice on a single opinion. Use the
-      // operator's actual primary choice for the one call we do make.
+      // No credentialed second provider available (or both legs would hit
+      // the same provider) — treat as "one leg unavailable" (the existing
+      // degraded-consensus path below) rather than firing a call we
+      // already know can't authenticate. Use the operator's actual
+      // primary choice for the one call we do make.
       : [await callLlm(prompt, primaryModelId), ''];
     if (!primary && !secondary) {
       content = '';
     } else if (!secondary) {
       content = primary;
-      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: [secondaryModelId], reason: distinctProviders ? `${secondaryModelId} call failed` : `${primaryModelId} and ${secondaryModelId} resolve to the same provider — consensus refused` } };
+      consensusMeta = { llm_consensus: false, consensus_disagreement: { models: [secondaryModelId ?? 'none'], reason: !secondaryModelId ? 'no credentialed second provider configured — consensus skipped' : distinctProviders ? `${secondaryModelId} call failed` : `${primaryModelId} and ${secondaryModelId} resolve to the same provider — consensus refused` } };
     } else if (!primary) {
       content = secondary;
       consensusMeta = { llm_consensus: false, consensus_disagreement: { models: [primaryModelId], reason: `${primaryModelId} call failed` } };
@@ -569,6 +572,7 @@ async function callLlm(prompt: string, modelId: string): Promise<string> {
       messages: [{ role: 'user', content: prompt }],
       taskType: 'content-generation',
       model: modelId,
+      maxTokens: 4096,
       maxRetries: 0,
     });
     return (response.content ?? response.text ?? '').trim();
@@ -580,43 +584,39 @@ async function callLlm(prompt: string, modelId: string): Promise<string> {
 
 /**
  * Picks the consensus "second opinion" model for a given operator-chosen
- * primary model. Tries to pick a model from a DIFFERENT configured provider
- * than the primary, so consensusProvidersAreDistinct() has something
- * meaningful to check. Falls back in order: gemini → claude → first available
- * OpenRouter model. When only one provider is configured, both legs resolve
- * to the same provider and consensusProvidersAreDistinct() gracefully degrades
- * to single-model mode (no key waste, no silent wrong-opinion).
+ * primary model. Only offers a provider that is (a) a different registry
+ * provider than the primary AND (b) actually has a non-placeholder API
+ * key set in the environment right now (config-level check, no network
+ * call). Returns null when no such provider exists, so the caller
+ * degrades to single-model generation instead of firing a consensus call
+ * against a provider we already know can't authenticate. Fully
+ * provider-agnostic — nothing is pinned to Gemini or Claude by name;
+ * whichever second credentialed provider is actually configured wins.
  */
-async function pickConsensusSecondary(primaryModelId: string): Promise<string> {
+function providerHasLiveCredential(pconfig: any): boolean {
+  const envVar = pconfig?.api_key_env;
+  if (!envVar) return false;
+  const val = process.env[envVar];
+  if (!val || !val.trim()) return false;
+  return !/your_.*_api_key_here/i.test(val) && val.trim().toLowerCase() !== 'changeme';
+}
+
+async function pickConsensusSecondary(primaryModelId: string): Promise<string | null> {
   try {
-    const { loadLlmConfig } = await import('../../llm/registry');
-    const config = loadLlmConfig();
-    const primaryProvider = resolveProviderForModel(config, primaryModelId);
-
-    // Candidate secondary providers in preference order (distinct from primary)
-    const candidates: Array<{ provider: string; modelId: string }> = [
-      { provider: 'gemini', modelId: MODEL_ID_MAP.gemini },
-      { provider: 'anthropic', modelId: MODEL_ID_MAP.claude },
-    ];
-
-    // Also try the first model from any other configured provider (e.g. openrouter)
-    for (const [pid, pconfig] of Object.entries(config.providers)) {
-      if (pid === 'gemini' || pid === 'anthropic') continue;
-      const firstModel = Object.values(pconfig.models)[0];
-      if (firstModel?.id) candidates.push({ provider: pid, modelId: firstModel.id });
+    const { loadProvidersRegistry } = await import('../../llm/registry');
+    const registry: any = loadProvidersRegistry();
+    const primaryProvider = resolveProviderForModel(registry, primaryModelId);
+    for (const [pid, pconfig] of Object.entries<any>(registry.providers || {})) {
+      if (pid === primaryProvider) continue;
+      if (!pconfig?.enabled) continue;
+      if (!providerHasLiveCredential(pconfig)) continue;
+      const modelKey = pconfig.fallback_order?.[0];
+      const modelId = modelKey ? pconfig.models?.[modelKey]?.id : (Object.values(pconfig.models || {})[0] as any)?.id;
+      if (modelId) return modelId;
     }
-
-    for (const c of candidates) {
-      if (c.provider !== primaryProvider && config.providers[c.provider]) {
-        return c.modelId;
-      }
-    }
-
-    // No different provider found — fall back to Claude (consensusProvidersAreDistinct
-    // will catch the same-provider case and degrade to single-model mode)
-    return MODEL_ID_MAP.claude;
+    return null;
   } catch {
-    return MODEL_ID_MAP.gemini;
+    return null;
   }
 }
 

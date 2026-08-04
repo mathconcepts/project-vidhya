@@ -78,6 +78,7 @@ export async function preflightProviders(
         messages: [{ role: 'user', content: 'ping' }],
         taskType: 'preflight',
         model: modelId,
+        maxTokens: 5,
         maxRetries: 0,
       });
       results.push({ provider: providerId, ok: true });

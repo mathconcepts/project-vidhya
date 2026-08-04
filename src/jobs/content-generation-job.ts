@@ -61,6 +61,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { loadProvidersRegistry } from '../llm/registry';
 import {
   registerJob,
   QuotaExhaustedError,
@@ -266,9 +267,32 @@ function ensureMetaYaml(concept_id: string, label: string, syllabus: Syllabus): 
 let _sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms));
 const BATCH_BREATHER_MS = 500;
 
+// Resolve which model to generate with from config/providers.yaml's
+// default_provider, so that field (and which provider actually passes its
+// live preflight check) genuinely drives generation instead of silently
+// falling back to orchestrator.ts's hardcoded Claude default. Returns
+// undefined (falls back to that default) if the registry can't be loaded.
+function resolveDefaultModelId(): string | undefined {
+  try {
+    const registry: any = loadProvidersRegistry();
+    const pconfig = registry.providers?.[registry.default_provider];
+    if (!pconfig?.enabled) return undefined;
+    const modelKey = pconfig.fallback_order?.[0];
+    return modelKey ? pconfig.models?.[modelKey]?.id : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function run(ctx: JobContext): Promise<void> {
   const syllabus = currentSyllabus();
   const allConcepts = syllabus.concepts;
+  const model_id = resolveDefaultModelId();
+  ctx.log(
+    model_id
+      ? `[llm] generating with model_id=${model_id} (from config/providers.yaml default_provider)`
+      : `[llm] no default_provider model resolved — using orchestrator's built-in default`,
+  );
 
   const missingByConcept = new Map<string, AtomType[]>();
   for (const c of allConcepts) {
@@ -324,6 +348,7 @@ async function run(ctx: JobContext): Promise<void> {
         topic_family: concept.topic,
         dry_run: false,
         atom_types,
+        model_id,
       });
       llmCallsUsed += estimatedCalls;
 

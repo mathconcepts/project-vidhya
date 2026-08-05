@@ -11,17 +11,19 @@
  * scorers and prior_curriculum that calibrated the personalized side.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Lock, Sparkles, ChevronRight } from 'lucide-react';
+import { Loader2, Lock, Sparkles, ChevronRight, PlayCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   listScenarios,
   readScenario,
   neutralRender,
+  seedDemo,
   type TrialState,
   type RunListItem,
+  type SeedDemoResult,
 } from '@/api/admin/scenarios';
 
 export default function ScenariosPage() {
@@ -32,13 +34,36 @@ export default function ScenariosPage() {
   const [trial, setTrial] = useState<TrialState | null>(null);
   const [digest, setDigest] = useState<string>('');
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<SeedDemoResult | null>(null);
+  const [seedErr, setSeedErr] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (authLoading || !user || user.role !== 'admin') return;
+  const loadRuns = useCallback(() => {
+    if (!user || user.role !== 'admin') return;
     listScenarios()
       .then(setRuns)
       .catch((e) => setLoadErr((e as Error).message));
-  }, [authLoading, user]);
+  }, [user]);
+
+  useEffect(() => {
+    if (authLoading || !user || user.role !== 'admin') return;
+    loadRuns();
+  }, [authLoading, user, loadRuns]);
+
+  const onSeedDemo = async () => {
+    setSeedErr(null);
+    setSeedResult(null);
+    setSeeding(true);
+    try {
+      const result = await seedDemo();
+      setSeedResult(result);
+      loadRuns();
+    } catch (e) {
+      setSeedErr((e as Error).message);
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) {
@@ -98,8 +123,8 @@ export default function ScenariosPage() {
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Recent runs</div>
           {runs === null && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Loading…</div>}
           {runs && runs.length === 0 && (
-            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
-              No runs yet. Run <code style={{ color: 'var(--indigo-ink)' }}>npm run demo:scenario</code>.
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+              No runs yet.
             </div>
           )}
           {runs?.map((r) => (
@@ -126,10 +151,19 @@ export default function ScenariosPage() {
           ))}
         </aside>
 
-        {/* Main: trial detail */}
+        {/* Main: trial detail or demo seed CTA */}
         <section>
           {!trial && id === undefined && (
-            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Select a run to view its trial.</div>
+            runs !== null && runs.length === 0 ? (
+              <DemoSeedCard
+                seeding={seeding}
+                seedResult={seedResult}
+                seedErr={seedErr}
+                onSeed={onSeedDemo}
+              />
+            ) : (
+              <div style={{ fontSize: 15, color: 'var(--text-tertiary)' }}>Select a run to view its trial.</div>
+            )
           )}
           {trial && <TrialDetail trial={trial} digest={digest} runId={id!} />}
         </section>
@@ -252,5 +286,98 @@ function EventRow({ event, runId }: { event: TrialState['events'][number]; runId
         </div>
       )}
     </div>
+  );
+}
+
+function DemoSeedCard({
+  seeding,
+  seedResult,
+  seedErr,
+  onSeed,
+}: {
+  seeding: boolean;
+  seedResult: SeedDemoResult | null;
+  seedErr: string | null;
+  onSeed: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        padding: 24,
+        borderRadius: 'var(--radius-md)',
+        border: 'var(--hairline) solid var(--separator)',
+        background: 'var(--surface-card)',
+        maxWidth: 520,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <PlayCircle size={20} style={{ color: 'var(--green-ink)', flexShrink: 0 }} />
+        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
+          Seed the moat demo
+        </h2>
+      </div>
+      <p style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+        Runs both scripted personas — Priya (anxious, geometric) and Arjun (driven, algebraic) — against the{' '}
+        <code style={{ fontSize: 13, color: 'var(--text-primary)' }}>derivatives-basic</code> concept and writes
+        their trial files to disk.
+      </p>
+      <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+        No terminal needed. Two trial rows appear in the sidebar when seeding completes. Then click any row and
+        use "Show neutral version" to see the side-by-side comparison.
+      </p>
+
+      {seedErr && (
+        <div style={{ marginBottom: 16, padding: 10, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 13, color: 'var(--red)' }}>
+          {seedErr}
+        </div>
+      )}
+
+      {seedResult && (
+        <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(52,199,89,.22)', background: 'rgba(52,199,89,.06)' }}>
+          <div style={{ fontSize: 13, fontWeight: 'var(--weight-medium)', color: 'var(--green-ink)', marginBottom: 8 }}>
+            Seeded {seedResult.personas.length} persona{seedResult.personas.length !== 1 ? 's' : ''} against {seedResult.concept_id}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {seedResult.personas.map((p) => (
+              <div key={p.run_id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                <span
+                  style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: p.status === 'complete' ? 'var(--green)' : 'var(--orange)', flexShrink: 0 }}
+                  aria-hidden="true"
+                />
+                <code style={{ color: 'var(--text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.run_id}</code>
+                <span style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}>{p.status}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-tertiary)' }}>
+            Select a run in the sidebar to view its trial.
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={onSeed}
+        disabled={seeding}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '10px 20px',
+          borderRadius: 'var(--radius-sm)',
+          border: 'none',
+          background: seeding ? 'var(--surface-fill)' : 'var(--green)',
+          color: seeding ? 'var(--text-tertiary)' : '#fff',
+          fontSize: 15,
+          fontWeight: 'var(--weight-medium)',
+          cursor: seeding ? 'not-allowed' : 'pointer',
+          transition: 'opacity 0.15s var(--ease-standard)',
+        }}
+      >
+        {seeding && <Loader2 size={15} className="animate-spin" />}
+        {seeding ? 'Seeding…' : seedResult ? 'Re-seed' : 'Seed the moat demo'}
+      </button>
+    </motion.div>
   );
 }

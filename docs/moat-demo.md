@@ -44,15 +44,29 @@ You now have:
 
 ## 1 · Run the trial (~30 seconds)
 
+### Option A — browser (no terminal needed, recommended for live demos)
+
+In the browser at `http://localhost:3000/admin/scenarios`:
+
+1. The empty state shows a **"Seed the moat demo"** card.
+2. Click the button. Both personas (Priya + Arjun) are seeded against `derivatives-basic` in-browser.
+3. The sidebar auto-refreshes with two trial rows.
+
+> The browser seed uses the same deterministic runner as the CLI — mulberry32 PRNG seeded by `SHA-256(persona.id + ':' + concept_id + ':' + atom_idx)` — so output is byte-identical to Option B. DB-graceful: seeds `student_model` if `DATABASE_URL` is available; the trial loop runs from disk either way.
+
+### Option B — CLI
+
 In a terminal, with the docker stack still running:
 
 ```bash
 # Priya: CBSE-12 anxious, geometric — lower mastery, prone to algebraic-trap distractors on first exposure
-npm run demo:scenario priya-cbse-12-anxious limits-jee --atoms 5
+npm run demo:scenario priya-cbse-12-anxious derivatives-basic --atoms 5
 
 # Arjun: IIT-aspirant driven, algebraic — high mastery, low first-exposure trap probability
-npm run demo:scenario arjun-iit-driven limits-jee --atoms 5
+npm run demo:scenario arjun-iit-driven derivatives-basic --atoms 5
 ```
+
+> **Note:** The demo concept is `derivatives-basic` (8 atoms in `modules/project-vidhya-content/concepts/`). Earlier versions of this runbook referenced `limits-jee` — that concept has no authored atoms in the repo and the CLI command would fail on a fresh clone.
 
 Each command:
 1. Seeds a namespaced `student_model` row (UUID prefix `0aded0a0-` — visible in psql, can't collide with real users).
@@ -128,7 +142,7 @@ Run the on-laptop demo first; let prospects see the cloud version land later whe
 ## Troubleshooting
 
 **"`npm run demo:scenario` fails with `seeding failed: ... ECONNREFUSED`."**
-Docker isn't up, or `DATABASE_URL` isn't set. `docker compose up -d` and retry.
+Docker isn't up, or `DATABASE_URL` isn't set. `docker compose up -d` and retry. Alternatively, use Option A (the browser seed button) — it doesn't require a DB connection.
 
 **"`/admin/scenarios` is empty even though I just ran a trial."**
 The API process needs `VIDHYA_SCENARIO_ROOT` to point at the same directory the CLI wrote to. By default both default to `<cwd>/.data/scenarios`. If you ran the CLI in repo root and the API in Docker, the Docker container sees a different cwd — bind-mount `.data/` or run the CLI inside the container.

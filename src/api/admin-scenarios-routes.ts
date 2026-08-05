@@ -5,6 +5,8 @@
  *
  *   GET  /api/admin/scenarios                  list run-ids (newest first)
  *   GET  /api/admin/scenarios/:id              read trial.json + digest.md
+ *   POST /api/admin/scenarios/demo/seed        one-click demo: seeds both personas
+ *                                              against derivatives-basic in-browser
  *   POST /api/admin/scenarios/:id/neutral-render
  *        body: { atom_id }                     on-demand "what would a
  *                                              generic prompt have produced?"
@@ -32,7 +34,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
-import { listRunIds, readTrial, runDir, digestOf } from '../scenarios/trial-storage';
+import { listRunIds, readTrial, runDir, digestOf, writeTrialReport } from '../scenarios/trial-storage';
 
 interface RouteDefinition {
   method: string;
@@ -185,6 +187,112 @@ async function handleNeutralRender(req: ParsedRequest, res: ServerResponse): Pro
   sendJSON(res, { atom_id, concept_id, body: neutral, cached: false });
 }
 
+// ----------------------------------------------------------------------------
+// Demo seed — one-click in-browser alternative to the CLI moat demo.
+// Seeds both personas against the derivatives-basic concept (present in
+// modules/project-vidhya-content/concepts/) and writes trial files to disk.
+// DB-graceful: seeds student_model if DATABASE_URL is available; the trial
+// policy loop (disk-only) runs either way.
+
+const DEMO_SEED_CONCEPT = 'derivatives-basic';
+const DEMO_SEED_ATOMS = 5;
+
+async function handleSeedDemo(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const user = await checkAdminAuth(req, res);
+  if (!user) return;
+
+  const { listPersonaIds, loadPersona } = await import('../scenarios/persona-loader');
+  const { loadConceptAtoms } = await import('../content/atom-loader');
+  const { personaUserId, seedPersona } = await import('../scenarios/persona-seeder');
+  const { newTrialState, runUntilPauseOrDone } = await import('../scenarios/trial-runner');
+
+  // Load atoms for the demo concept.
+  let rawAtoms: Awaited<ReturnType<typeof loadConceptAtoms>>;
+  try {
+    rawAtoms = await loadConceptAtoms(DEMO_SEED_CONCEPT);
+  } catch (err) {
+    sendJSON(res, {
+      error: `could not load atoms for "${DEMO_SEED_CONCEPT}": ${(err as Error).message}`,
+    }, 422);
+    return;
+  }
+
+  const atoms = rawAtoms.slice(0, DEMO_SEED_ATOMS).map((a) => ({
+    id: a.id,
+    concept_id: a.concept_id ?? DEMO_SEED_CONCEPT,
+    atom_type: a.atom_type,
+  }));
+
+  const personaIds = listPersonaIds();
+  if (personaIds.length === 0) {
+    sendJSON(res, { error: 'no personas found in data/personas/' }, 404);
+    return;
+  }
+
+  const results: Array<{
+    persona_id: string;
+    run_id: string;
+    status: string;
+    db_seeded: boolean;
+  }> = [];
+
+  for (const personaId of personaIds) {
+    let persona;
+    try {
+      persona = loadPersona(personaId);
+    } catch (err) {
+      sendJSON(res, { error: `failed to load persona "${personaId}": ${(err as Error).message}` }, 500);
+      return;
+    }
+
+    // Try DB seed (best-effort — trial runs without it).
+    let dbSeeded = false;
+    try {
+      await seedPersona(persona);
+      dbSeeded = true;
+    } catch {
+      // DATABASE_URL absent or student_model table not yet migrated — skip.
+    }
+
+    const userId = personaUserId(persona.id);
+    const sessionId = `persona-session-${persona.id}`;
+    const initialMastery = persona.seed.initial_mastery[DEMO_SEED_CONCEPT] ?? 0.50;
+
+    // Use a fixed run-id so repeated seeds overwrite rather than accumulate.
+    const runId = `${persona.id}--${DEMO_SEED_CONCEPT}--demo`;
+    const dir = runDir(runId);
+
+    const initState = newTrialState({
+      run_id: runId,
+      persona_id: persona.id,
+      concept_id: DEMO_SEED_CONCEPT,
+      user_id: userId,
+      session_id: sessionId,
+      initial_mastery: initialMastery,
+      atoms,
+    });
+
+    const finalState = runUntilPauseOrDone(persona, initState);
+    writeTrialReport(dir, finalState);
+
+    results.push({
+      persona_id: persona.id,
+      run_id: runId,
+      status: finalState.status,
+      db_seeded: dbSeeded,
+    });
+  }
+
+  sendJSON(res, {
+    run_ids: results.map((r) => r.run_id),
+    concept_id: DEMO_SEED_CONCEPT,
+    personas: results,
+    db_seeded: results.some((r) => r.db_seeded),
+  });
+}
+
+// ----------------------------------------------------------------------------
+
 export const __testing = {
   checkRateLimit,
   resetRateLimit: () => _buckets.clear(),
@@ -194,6 +302,9 @@ export const __testing = {
 };
 
 export const adminScenariosRoutes: RouteDefinition[] = [
+  // seed-demo must be registered before /:id to prevent the param pattern
+  // from swallowing it on future method expansions.
+  { method: 'POST', path: '/api/admin/scenarios/demo/seed', handler: handleSeedDemo },
   { method: 'GET', path: '/api/admin/scenarios', handler: handleList },
   { method: 'GET', path: '/api/admin/scenarios/:id', handler: handleRead },
   { method: 'POST', path: '/api/admin/scenarios/:id/neutral-render', handler: handleNeutralRender },

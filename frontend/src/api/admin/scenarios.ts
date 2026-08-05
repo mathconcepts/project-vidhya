@@ -75,3 +75,26 @@ export async function neutralRender(
   if (!r.ok) throw new Error(`neutral-render failed: ${r.status}`);
   return r.json();
 }
+
+export interface SeedDemoPersona {
+  persona_id: string;
+  run_id: string;
+  status: string;
+  db_seeded: boolean;
+}
+
+export interface SeedDemoResult {
+  run_ids: string[];
+  concept_id: string;
+  personas: SeedDemoPersona[];
+  db_seeded: boolean;
+}
+
+export async function seedDemo(): Promise<SeedDemoResult> {
+  const r = await authFetch('/api/admin/scenarios/demo/seed', { method: 'POST' });
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? `seed-demo failed: ${r.status}`);
+  }
+  return r.json();
+}

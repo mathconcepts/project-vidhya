@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Flat-File Store — atomic-write JSON persistence
  *

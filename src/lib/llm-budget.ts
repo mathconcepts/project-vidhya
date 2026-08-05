@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * src/lib/llm-budget.ts
  *

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * src/lib/rate-limit.ts
  *

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * src/lib/append-log.ts — JSONL append-only log
  *

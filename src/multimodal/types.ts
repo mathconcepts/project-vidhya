@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Multimodal Input Types
  *

@@ -1,10 +1,14 @@
-// @ts-nocheck
 /**
  * Project Vidhya Data Layer - Vector Store
  * For semantic search and embeddings storage
  */
 
-import { UUID } from './types';
+// `./types` never existed in this directory — this file only ever used UUID
+// as a type annotation, so esbuild/tsx silently elided the import at runtime
+// (no crash) while `@ts-nocheck` hid the TS2307 that would otherwise have
+// caught it at compile time. Restored as a local alias rather than reaching
+// for a shared module, since nothing else in this file needs one.
+type UUID = string;
 
 // ============================================================================
 // Vector Store Types
@@ -232,7 +236,7 @@ export class SemanticSearchService {
       metadata: {
         ...item.metadata,
         createdAt: Date.now(),
-      },
+      } as VectorMetadata,
       content: item.content,
     }));
 

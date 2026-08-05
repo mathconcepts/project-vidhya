@@ -582,35 +582,32 @@ async function callLlm(prompt: string, modelId: string): Promise<string> {
   }
 }
 
-/**
- * Picks the consensus "second opinion" model for a given operator-chosen
- * primary model. Only offers a provider that is (a) a different registry
- * provider than the primary AND (b) actually has a non-placeholder API
- * key set in the environment right now (config-level check, no network
- * call). Returns null when no such provider exists, so the caller
- * degrades to single-model generation instead of firing a consensus call
- * against a provider we already know can't authenticate. Fully
- * provider-agnostic — nothing is pinned to Gemini or Claude by name;
- * whichever second credentialed provider is actually configured wins.
- */
-function providerHasLiveCredential(pconfig: any): boolean {
-  const envVar = pconfig?.api_key_env;
-  if (!envVar) return false;
-  const val = process.env[envVar];
-  if (!val || !val.trim()) return false;
-  return !/your_.*_api_key_here/i.test(val) && val.trim().toLowerCase() !== 'changeme';
-}
-
 async function pickConsensusSecondary(primaryModelId: string): Promise<string | null> {
   try {
-    const { loadProvidersRegistry } = await import('../../llm/registry');
-    const registry: any = loadProvidersRegistry();
-    const primaryProvider = resolveProviderForModel(registry, primaryModelId);
-    for (const [pid, pconfig] of Object.entries<any>(registry.providers || {})) {
+    const { loadLlmConfig } = await import('../../llm/registry');
+    // loadLlmConfig already filters to providers that are enabled AND have a
+    // live credential — no need to re-check either here.
+    const config = loadLlmConfig();
+    const primaryProvider = resolveProviderForModel(config, primaryModelId);
+
+    // Preserve the historical Claude↔Gemini consensus pair: prefer Gemini as
+    // the secondary unless the primary is already on the Gemini provider, in
+    // which case prefer Claude. This keeps the "two independent opinions"
+    // guarantee across different platforms without hardcoding a fixed pair.
+    const geminiProvider = resolveProviderForModel(config, MODEL_ID_MAP.gemini);
+    const preferredSecondary =
+      primaryProvider !== null && primaryProvider === geminiProvider
+        ? MODEL_ID_MAP.claude
+        : MODEL_ID_MAP.gemini;
+    const preferredProvider = resolveProviderForModel(config, preferredSecondary);
+    if (preferredProvider && preferredProvider !== primaryProvider && config.providers[preferredProvider]) {
+      return preferredSecondary;
+    }
+
+    // Fall through: first available provider different from the primary.
+    for (const [pid, pconfig] of Object.entries<any>(config.providers || {})) {
       if (pid === primaryProvider) continue;
-      if (!pconfig?.enabled) continue;
-      if (!providerHasLiveCredential(pconfig)) continue;
-      const modelKey = pconfig.fallback_order?.[0];
+      const modelKey = (pconfig as any).fallbackOrder?.[0];
       const modelId = modelKey ? pconfig.models?.[modelKey]?.id : (Object.values(pconfig.models || {})[0] as any)?.id;
       if (modelId) return modelId;
     }

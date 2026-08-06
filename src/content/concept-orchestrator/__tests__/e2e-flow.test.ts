@@ -38,11 +38,6 @@ import {
   buildQueue,
   readState,
   canSpend,
-  createJob,
-  getJob,
-  recordProgress,
-  recordResult,
-  _resetJobsForTests,
   maybeQueueRegenForStudent,
   readStudentOverrides,
 } from '../index';
@@ -52,42 +47,18 @@ describe('Phase 5 E2E — concept-orchestrator v1 pipeline (DB-less)', () => {
   const origDb = process.env.DATABASE_URL;
   beforeEach(() => {
     delete process.env.DATABASE_URL;
-    _resetJobsForTests();
   });
   afterEach(() => {
     if (origDb) process.env.DATABASE_URL = origDb;
     vi.unstubAllGlobals();
   });
 
-  it('Step 1-2: admin Generate kicks off a job with progress events', async () => {
-    // Story: admin clicks Generate. Server creates a job record.
-    const job = createJob('derivatives-basic', 'calculus');
-    expect(job.id).toBeTruthy();
-    expect(job.status).toBe('queued');
-
-    // The orchestrator emits progress events as it walks the atom_types.
-    recordProgress(job.id, { type: 'start', step_index: 0, total_steps: 11 });
-    recordProgress(job.id, {
-      type: 'atom_started',
-      step_index: 0,
-      total_steps: 11,
-      atom_type: 'hook',
-    });
-    recordProgress(job.id, {
-      type: 'atom_finished',
-      step_index: 0,
-      total_steps: 11,
-      atom_type: 'hook',
-      atom_id: 'derivatives-basic.hook',
-      sources: ['llm-claude'],
-      judge_score: 8.4,
-    });
-
-    const polled = getJob(job.id);
-    expect(polled?.status).toBe('running');
-    expect(polled?.events).toHaveLength(3);
-    expect(polled?.events[2].judge_score).toBe(8.4);
-  });
+  // Step 1-2 (admin Generate kicks off a job, polled for progress events)
+  // used to be tested here against the in-memory jobs.ts registry. That
+  // registry — and the generate/status routes it backed — were removed
+  // 2026-08-06 in favor of a real GenerationRun dispatched through
+  // src/generation/run-dispatcher.ts; see that module's tests for the
+  // run-lifecycle equivalent of this step.
 
   it('Step 3: orchestrator returns a draft + accepts/rejects via LLM-judge', async () => {
     const draft = await generateConcept({

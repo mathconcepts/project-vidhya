@@ -2,21 +2,6 @@
 /**
  * Concept Orchestrator HTTP routes (admin-only).
  *
- *   POST /api/admin/concept-orchestrator/generate
- *     Starts a generation job asynchronously. Returns { job_id }.
- *     Frontend polls GET /status/:job_id until status === 'done'.
- *
- *   GET  /api/admin/concept-orchestrator/status/:job_id
- *     Returns the JobState including event history + final result.
- *
- *     DEPRECATED (content-pipeline realignment plan, item 4): this
- *     generate/status pair is in-memory only — job state dies with the
- *     process. The persistent, checkpointed replacement is the job
- *     runner's admin surface in src/api/job-routes.ts
- *     (POST /api/admin/jobs/content-generation/start,
- *      GET  /api/admin/jobs/content-generation/status). Kept functional
- *     this patch; removal is tracked in the realignment TODO.
- *
  *   GET  /api/admin/concept-orchestrator/queue
  *     Returns the priority-sorted queue of concepts needing content.
  *     Query params: limit, topic_family, state (repeatable filters)
@@ -29,23 +14,33 @@
  *
  * All endpoints gated to admin/owner/institution roles. Feature-flagged
  * behind VIDHYA_CONCEPT_ORCHESTRATOR=on.
+ *
+ * REMOVED (2026-08-06): the generate/status pair
+ * (POST .../generate, GET .../status/:job_id) that used to live here.
+ * It was in-memory-only (job state died with the process) — a real gap,
+ * but the docblock's stated replacement (src/api/job-routes.ts's job
+ * runner) was WRONG: job-routes.ts's JobDefinition is a singleton keyed
+ * by NAME only (one job named 'content-generation' at a time, refuses
+ * concurrent starts with the same name) — fine for one nightly job,
+ * broken for per-invocation, per-concept, concurrently-launchable
+ * generation. Migrated onto src/generation/run-dispatcher.ts +
+ * generation_runs instead (the v4.26.0 infrastructure that already
+ * supports exactly this: one row per invocation, its own run_id, real
+ * concurrency). The frontend now calls POST /api/admin/runs +
+ * GET /api/admin/runs/:id/atoms (frontend/src/pages/app/ConceptOrchestratorPage.tsx).
+ * The in-memory job store (jobs.ts) is deleted alongside this — nothing
+ * else referenced it.
  */
 
 import { ServerResponse } from 'http';
 import {
-  generateConcept,
   readState,
   listVersions,
   activate,
   buildQueue,
-  createJob,
-  getJob,
-  recordProgress,
-  recordResult,
-  recordFailure,
   topPatterns,
 } from '../content/concept-orchestrator';
-import type { OrchestratorOptions, ConceptState } from '../content/concept-orchestrator';
+import type { ConceptState } from '../content/concept-orchestrator';
 import { requireRole } from '../auth/middleware';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
@@ -58,51 +53,6 @@ function checkFeatureFlag(res: ServerResponse): boolean {
     return false;
   }
   return true;
-}
-
-async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkFeatureFlag(res)) return;
-  const role = await requireRole(req, res, ['admin', 'owner', 'institution']);
-  if (!role) return;
-
-  const body = (req.body || {}) as Partial<OrchestratorOptions>;
-  if (!body.concept_id || !body.topic_family) {
-    return sendError(res, 400, 'concept_id and topic_family are required');
-  }
-
-  // Start the job + return its id immediately. Generation runs async.
-  const job = createJob(body.concept_id, body.topic_family);
-  const opts: OrchestratorOptions = {
-    concept_id: body.concept_id,
-    lo_id: body.lo_id,
-    topic_family: body.topic_family,
-    atom_types: body.atom_types,
-    cost_cap_usd: body.cost_cap_usd,
-    dry_run: body.dry_run ?? false,
-    force: body.force ?? false,
-    on_progress: (event) => recordProgress(job.id, event),
-  };
-
-  // Fire-and-forget. Errors recorded into the job state for the poll endpoint.
-  generateConcept(opts)
-    .then((draft) => recordResult(job.id, draft))
-    .catch((err) => {
-      console.error(`[orchestrator job ${job.id}] failed: ${(err as Error).message}`);
-      recordFailure(job.id, (err as Error).message);
-    });
-
-  sendJSON(res, { job_id: job.id, status: 'queued' });
-}
-
-async function handleStatus(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  if (!checkFeatureFlag(res)) return;
-  const role = await requireRole(req, res, ['admin', 'owner', 'institution']);
-  if (!role) return;
-  const job_id = (req.params as any)?.job_id;
-  if (!job_id) return sendError(res, 400, 'job_id required');
-  const job = getJob(job_id);
-  if (!job) return sendError(res, 404, `job ${job_id} not found (may have expired or server restarted)`);
-  sendJSON(res, job);
 }
 
 async function handleQueue(req: ParsedRequest, res: ServerResponse): Promise<void> {
@@ -252,8 +202,6 @@ async function handleBulkActivate(req: ParsedRequest, res: ServerResponse): Prom
 }
 
 export const conceptOrchestratorRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
-  { method: 'POST', path: '/api/admin/concept-orchestrator/generate', handler: handleGenerate },
-  { method: 'GET',  path: '/api/admin/concept-orchestrator/status/:job_id', handler: handleStatus },
   { method: 'GET',  path: '/api/admin/concept-orchestrator/queue', handler: handleQueue },
   { method: 'GET',  path: '/api/admin/concept-orchestrator/cost/:concept_id', handler: handleCost },
   { method: 'GET',  path: '/api/admin/concept-orchestrator/prompt-patterns', handler: handlePromptPatterns },

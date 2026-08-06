@@ -34,17 +34,6 @@ export type { ConsensusResult } from './multi-llm-consensus';
 export { appendVersion, activate, listVersions, getActiveVersion, listVersionsByRunId } from './atom-versions';
 export type { AtomVersion } from './atom-versions';
 
-export {
-  createJob,
-  getJob,
-  recordProgress,
-  recordResult,
-  recordFailure,
-  _resetJobsForTests,
-  _jobCountForTests,
-} from './jobs';
-export type { JobState, JobStatus } from './jobs';
-
 export type { ProgressEvent } from './types';
 
 export { buildQueue } from './queue';

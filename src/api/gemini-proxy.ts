@@ -443,9 +443,16 @@ async function handleGeminiChat(req: ParsedRequest, res: ServerResponse): Promis
 // ============================================================================
 
 export const geminiProxyRoutes: Array<{ method: string; path: string; handler: RouteHandler }> = [
+  // Legacy /api/gemini/* paths — kept for backward compatibility
   { method: 'POST', path: '/api/gemini/classify-error', handler: handleClassifyError },
   { method: 'POST', path: '/api/gemini/generate-problem', handler: handleGenerateProblem },
   { method: 'POST', path: '/api/gemini/embed', handler: handleEmbed },
   { method: 'POST', path: '/api/gemini/vision-ocr', handler: handleVisionOCR },
   { method: 'POST', path: '/api/gemini/chat', handler: handleGeminiChat },
+  // Provider-neutral aliases at /api/llm/* — same handlers, no vendor lock-in
+  { method: 'POST', path: '/api/llm/classify-error', handler: handleClassifyError },
+  { method: 'POST', path: '/api/llm/generate-problem', handler: handleGenerateProblem },
+  { method: 'POST', path: '/api/llm/embed', handler: handleEmbed },
+  { method: 'POST', path: '/api/llm/vision-ocr', handler: handleVisionOCR },
+  { method: 'POST', path: '/api/llm/chat', handler: handleGeminiChat },
 ];

@@ -17,6 +17,7 @@
 
 import { priceForCall } from './cost-meter';
 import type { GenerationRunConfig } from '../experiments/types';
+import { loadLlmConfig } from '../llm/registry';
 
 // Heuristic averages for one atom + one verification pass.
 // Refined automatically if prompt_pattern_stats is queryable later.
@@ -110,6 +111,12 @@ export function estimateRunCost(config: GenerationRunConfig): CostEstimate {
 function pickGenerationModel(config: GenerationRunConfig): string {
   const list = config.pipeline.llm_models;
   if (list && list.length > 0) return list[0];
+  const cfg = loadLlmConfig();
+  const provider = cfg.providers[cfg.defaultProvider];
+  if (provider?.fallbackOrder?.[0]) {
+    const model = provider.models[provider.fallbackOrder[0]];
+    if (model?.id) return model.id;
+  }
   return 'gemini-2.5-flash';
 }
 

@@ -9,8 +9,9 @@
  *      and instructed to produce structured JSON
  *
  * Design choices:
- *   - LLM-optional: if no GEMINI_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY
- *     is set, enrichment returns a clear "manual-only" response. The UI
+ *   - LLM-optional: if no LLM provider key is set (OPENROUTER_API_KEY,
+ *     ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or VIDHYA_LLM_*),
+ *     enrichment returns a clear "manual-only" response. The UI
  *     still works — the admin just fills fields themselves.
  *   - Local-data-first: if the admin has uploaded the official syllabus PDF
  *     or a prep guide, that text is included in the LLM prompt as
@@ -38,10 +39,15 @@ import type {
  * Detect which LLM provider has an API key set in the environment.
  * Returns null if none is configured.
  */
-function detectAvailableProvider(): 'gemini' | 'anthropic' | 'openai' | null {
-  if (process.env.GEMINI_API_KEY) return 'gemini';
+function detectAvailableProvider(): 'gemini' | 'anthropic' | 'openai' | 'openrouter' | null {
+  if (process.env.VIDHYA_LLM_PROVIDER === 'anthropic' && process.env.VIDHYA_LLM_API_KEY) return 'anthropic';
+  if (process.env.VIDHYA_LLM_PROVIDER === 'openai' && process.env.VIDHYA_LLM_API_KEY) return 'openai';
+  if (process.env.VIDHYA_LLM_PROVIDER === 'openrouter' && process.env.VIDHYA_LLM_API_KEY) return 'openrouter';
+  if (process.env.VIDHYA_LLM_PROVIDER === 'gemini' && process.env.VIDHYA_LLM_API_KEY) return 'gemini';
+  if (process.env.OPENROUTER_API_KEY) return 'openrouter';
   if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
   if (process.env.OPENAI_API_KEY) return 'openai';
+  if (process.env.GEMINI_API_KEY) return 'gemini';
   return null;
 }
 
@@ -110,12 +116,35 @@ async function callOpenAI(prompt: string): Promise<string> {
   return j?.choices?.[0]?.message?.content || '';
 }
 
+async function callOpenRouter(prompt: string): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY ?? process.env.VIDHYA_LLM_API_KEY ?? '';
+  const model = process.env.VIDHYA_LLM_MODEL ?? 'anthropic/claude-sonnet-4-5';
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      max_tokens: 2500,
+      temperature: 0.2,
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}`);
+  const j = await res.json();
+  return j?.choices?.[0]?.message?.content || '';
+}
+
 async function callLLM(prompt: string): Promise<string> {
   const provider = detectAvailableProvider();
-  if (provider === 'gemini') return callGemini(prompt);
+  if (provider === 'openrouter') return callOpenRouter(prompt);
   if (provider === 'anthropic') return callAnthropic(prompt);
   if (provider === 'openai') return callOpenAI(prompt);
-  throw new Error('no LLM provider configured (set GEMINI_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY)');
+  if (provider === 'gemini') return callGemini(prompt);
+  throw new Error('no LLM provider configured (set OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY)');
 }
 
 // ============================================================================
@@ -233,7 +262,7 @@ export async function enrichExam(exam: Exam): Promise<EnrichmentProposal> {
       field_proposals: {},
       provenance: {},
       sources_consulted: [],
-      notes: 'No LLM provider is configured on this Vidhya instance. Enrichment is disabled — you can still add exam details manually. To enable automatic enrichment, set GEMINI_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY in the server environment.',
+      notes: 'No LLM provider is configured on this Vidhya instance. Enrichment is disabled — you can still add exam details manually. To enable automatic enrichment, set OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY in the server environment.',
       confidence_overall: 0,
     };
   }

@@ -153,7 +153,7 @@ function replyTurn(exam: Exam, message: string): AssistantResponse {
       return {
         turn: {
           role: 'assistant',
-          content: `I'd love to, but no LLM provider is configured on this instance. Ask your deployment admin to set \`GEMINI_API_KEY\`, \`ANTHROPIC_API_KEY\`, or \`OPENAI_API_KEY\`. In the meantime, we can fill fields manually — or you can upload some reference text and I can at least structure that.`,
+          content: `I'd love to, but no LLM provider is configured on this instance. Ask your deployment admin to set \`OPENROUTER_API_KEY\`, \`ANTHROPIC_API_KEY\`, \`OPENAI_API_KEY\`, or \`GEMINI_API_KEY\`. In the meantime, we can fill fields manually — or you can upload some reference text and I can at least structure that.`,
           suggestions: ['Upload local data', 'Fill manually', 'What\'s needed?'],
           timestamp: new Date().toISOString(),
         },

@@ -854,7 +854,7 @@ async function main() {
     const result = await embedText(text);
     if (!result) {
       console.warn('[server] No embedding provider configured — using zero embeddings');
-      return new Array(3072).fill(0);   // Gemini-shape default; pgvector tolerates dim mismatch by failing on insert
+      return new Array(1536).fill(0);   // 1536-dim zero vector (text-embedding-3-small shape); pgvector fails on dim mismatch so zero vectors are never persisted
     }
     return result.embedding;
   };

@@ -80,8 +80,77 @@ export interface EnvLlmConfig {
     enabled: boolean;
     models: Record<string, { id: string; tier?: string; costPer1kInput?: number; costPer1kOutput?: number }>;
     fallbackOrder: string[];
+    /** Injected by the env-override path only. LLMClient reads these before
+     *  falling back to API_KEY_ENV / DEFAULT_BASE_URL lookups, so they take
+     *  precedence without touching providers.yaml. */
+    apiKey?: string;
+    baseUrl?: string;
   }>;
   defaultProvider: string;
+}
+
+// ============================================================================
+// Env-override path — three env vars bypass providers.yaml entirely.
+// Intended for platform-team deployments that bring their own provider
+// (Azure OpenAI, Vertex AI, a private gateway) without editing the YAML.
+// ============================================================================
+
+/**
+ * Adapter ids that LLMClient's constructor switch statement recognises.
+ * A VIDHYA_LLM_PROVIDER value outside this set is an operator error —
+ * warn and fall back to providers.yaml rather than silently doing nothing.
+ */
+const VALID_ADAPTER_IDS = new Set(['gemini', 'learnlm', 'anthropic', 'openai', 'openrouter', 'ollama']);
+
+/**
+ * When VIDHYA_LLM_PROVIDER is set, return a synthetic single-provider
+ * EnvLlmConfig that completely bypasses providers.yaml. loadLlmConfig()
+ * checks this first; callers that want YAML-only behaviour can call
+ * loadProvidersRegistry() + buildLlmConfigFromRegistry() directly.
+ *
+ * Env vars:
+ *   VIDHYA_LLM_PROVIDER   — adapter id (must be in VALID_ADAPTER_IDS)
+ *   VIDHYA_LLM_API_KEY    — API key (optional for keyless providers like ollama)
+ *   VIDHYA_LLM_BASE_URL   — custom endpoint (Azure OpenAI, Vertex AI, private gateway)
+ *   VIDHYA_LLM_MODEL      — model id override (default: provider's built-in default)
+ *
+ * Azure OpenAI example:
+ *   VIDHYA_LLM_PROVIDER=openai
+ *   VIDHYA_LLM_API_KEY=<azure-key>
+ *   VIDHYA_LLM_BASE_URL=https://company.openai.azure.com/openai/deployments/gpt-4o
+ *   VIDHYA_LLM_MODEL=gpt-4o
+ *
+ * Vertex AI (OpenAI-compat) example:
+ *   VIDHYA_LLM_PROVIDER=openai
+ *   VIDHYA_LLM_API_KEY=<vertex-token>
+ *   VIDHYA_LLM_BASE_URL=https://us-central1-aiplatform.googleapis.com/v1beta1/projects/.../locations/.../endpoints/openapi
+ *   VIDHYA_LLM_MODEL=google/gemini-2.5-flash
+ */
+export function buildEnvOverrideConfig(env: NodeJS.ProcessEnv = process.env): EnvLlmConfig | null {
+  const providerId = env.VIDHYA_LLM_PROVIDER;
+  if (!providerId) return null;
+
+  if (!VALID_ADAPTER_IDS.has(providerId)) {
+    console.warn(
+      `[llm/registry] VIDHYA_LLM_PROVIDER="${providerId}" is not a recognised adapter id ` +
+      `(valid: ${[...VALID_ADAPTER_IDS].join(', ')}). Falling back to providers.yaml.`,
+    );
+    return null;
+  }
+
+  const apiKey = env.VIDHYA_LLM_API_KEY;
+  const baseUrl = env.VIDHYA_LLM_BASE_URL;
+  const modelId = env.VIDHYA_LLM_MODEL || 'default';
+
+  const providerEntry: EnvLlmConfig['providers'][string] = {
+    enabled: true,
+    models: { custom: { id: modelId, tier: 'quality' } },
+    fallbackOrder: ['custom'],
+  };
+  if (apiKey) providerEntry.apiKey = apiKey;
+  if (baseUrl) providerEntry.baseUrl = baseUrl;
+
+  return { providers: { [providerId]: providerEntry }, defaultProvider: providerId };
 }
 
 // ============================================================================
@@ -206,6 +275,9 @@ export function buildLlmConfigFromRegistry(
  * (used by setup-cli.ts, which wants to fail loudly).
  */
 export function loadLlmConfig(opts: { strict?: boolean } = {}): EnvLlmConfig {
+  const override = buildEnvOverrideConfig();
+  if (override) return override;
+
   try {
     const registry = loadProvidersRegistry();
     return buildLlmConfigFromRegistry(registry);

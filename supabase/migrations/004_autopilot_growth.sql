@@ -3,28 +3,82 @@
 -- Run AFTER 003_gate_app.sql
 -- ============================================================
 
--- ── RAG Verification Cache (pgvector, 3072 dims for gemini-embedding-001) ──
--- Persists verified solution patterns so Tier 1 RAG survives cold starts.
--- This is the compounding data asset.
+-- ── RAG Verification Cache (pgvector-optional) ───────────────────────────────
+-- The rag_cache table and match_rag_cache function use the VECTOR type, which
+-- requires the pgvector extension. They are created inside a DO block so the
+-- rest of this migration (daily_limits, streaks, analytics_events) always
+-- succeeds on plain Postgres deployments without pgvector.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
 
-CREATE TABLE IF NOT EXISTS rag_cache (
-  id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  embedding               VECTOR(3072),
-  content                 TEXT NOT NULL,           -- "problem answer: student_answer"
-  verification_status     TEXT NOT NULL,           -- verified | failed | partial | inconclusive
-  verification_confidence REAL NOT NULL,
-  verifier                TEXT NOT NULL,           -- database | llm_consensus | wolfram
-  answer                  TEXT,
-  topic                   TEXT,
-  metadata                JSONB DEFAULT '{}',
-  created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+    CREATE TABLE IF NOT EXISTS rag_cache (
+      id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      embedding               VECTOR(3072),
+      content                 TEXT NOT NULL,           -- "problem answer: student_answer"
+      verification_status     TEXT NOT NULL,           -- verified | failed | partial | inconclusive
+      verification_confidence REAL NOT NULL,
+      verifier                TEXT NOT NULL,           -- database | llm_consensus | wolfram
+      answer                  TEXT,
+      topic                   TEXT,
+      metadata                JSONB DEFAULT '{}',
+      created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
 
--- NOTE: pgvector on Supabase caps IVFFlat/HNSW at 2000 dims.
--- gemini-embedding-001 produces 3072 dims, so no vector index for now.
--- Brute-force cosine scan is fine at <100K vectors (see TODOS #1).
+    -- NOTE: pgvector on Supabase caps IVFFlat/HNSW at 2000 dims.
+    -- gemini-embedding-001 / text-embedding-3-large produce 3072 dims, so no
+    -- vector index for now. Brute-force cosine scan is fine at <100K vectors.
 
-CREATE INDEX IF NOT EXISTS idx_rag_cache_status ON rag_cache(verification_status);
+    CREATE INDEX IF NOT EXISTS idx_rag_cache_status ON rag_cache(verification_status);
+
+    ALTER TABLE rag_cache ENABLE ROW LEVEL SECURITY;
+    BEGIN
+      CREATE POLICY "rag_cache_public_read" ON rag_cache FOR SELECT USING (true);
+    EXCEPTION WHEN duplicate_object THEN NULL; END;
+    BEGIN
+      CREATE POLICY "rag_cache_service_write" ON rag_cache FOR INSERT WITH CHECK (true);
+    EXCEPTION WHEN duplicate_object THEN NULL; END;
+
+    CREATE OR REPLACE FUNCTION match_rag_cache(
+      query_embedding VECTOR(3072),
+      match_count     INT DEFAULT 1,
+      min_similarity  FLOAT DEFAULT 0.85
+    )
+    RETURNS TABLE (
+      id                      UUID,
+      content                 TEXT,
+      verification_status     TEXT,
+      verification_confidence REAL,
+      verifier                TEXT,
+      answer                  TEXT,
+      similarity              FLOAT
+    )
+    LANGUAGE plpgsql
+    AS $fn$
+    BEGIN
+      RETURN QUERY
+      SELECT
+        rc.id,
+        rc.content,
+        rc.verification_status,
+        rc.verification_confidence,
+        rc.verifier,
+        rc.answer,
+        1 - (rc.embedding <=> query_embedding) AS similarity
+      FROM rag_cache rc
+      WHERE
+        rc.embedding IS NOT NULL
+        AND 1 - (rc.embedding <=> query_embedding) >= min_similarity
+      ORDER BY rc.embedding <=> query_embedding
+      LIMIT match_count;
+    END;
+    $fn$;
+
+  ELSE
+    RAISE NOTICE '004: pgvector absent — rag_cache table and match_rag_cache function skipped';
+  END IF;
+END;
+$$;
 
 -- ── Alter pyq_questions: source tracking for generated problems ────────────
 ALTER TABLE pyq_questions ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'seed';
@@ -65,50 +119,15 @@ CREATE TABLE IF NOT EXISTS analytics_events (
 CREATE INDEX IF NOT EXISTS idx_analytics_type_date ON analytics_events(event_type, created_at);
 
 -- ── Row Level Security ────────────────────────────────────────────────────
-ALTER TABLE rag_cache ENABLE ROW LEVEL SECURITY;
-ALTER TABLE daily_limits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE streaks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_limits    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE streaks          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "rag_cache_public_read" ON rag_cache FOR SELECT USING (true);
-CREATE POLICY "rag_cache_service_write" ON rag_cache FOR INSERT WITH CHECK (true);
-CREATE POLICY "daily_limits_public_all" ON daily_limits FOR ALL USING (true);
-CREATE POLICY "streaks_public_all" ON streaks FOR ALL USING (true);
-CREATE POLICY "analytics_service_write" ON analytics_events FOR INSERT WITH CHECK (true);
-CREATE POLICY "analytics_service_read" ON analytics_events FOR SELECT USING (true);
-
--- ── RAG cache search function ─────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION match_rag_cache(
-  query_embedding VECTOR(3072),
-  match_count     INT DEFAULT 1,
-  min_similarity  FLOAT DEFAULT 0.85
-)
-RETURNS TABLE (
-  id                      UUID,
-  content                 TEXT,
-  verification_status     TEXT,
-  verification_confidence REAL,
-  verifier                TEXT,
-  answer                  TEXT,
-  similarity              FLOAT
-)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-    rc.id,
-    rc.content,
-    rc.verification_status,
-    rc.verification_confidence,
-    rc.verifier,
-    rc.answer,
-    1 - (rc.embedding <=> query_embedding) AS similarity
-  FROM rag_cache rc
-  WHERE
-    rc.embedding IS NOT NULL
-    AND 1 - (rc.embedding <=> query_embedding) >= min_similarity
-  ORDER BY rc.embedding <=> query_embedding
-  LIMIT match_count;
-END;
-$$;
+DO $$ BEGIN CREATE POLICY "daily_limits_public_all" ON daily_limits FOR ALL USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END; $$;
+DO $$ BEGIN CREATE POLICY "streaks_public_all" ON streaks FOR ALL USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END; $$;
+DO $$ BEGIN CREATE POLICY "analytics_service_write" ON analytics_events FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END; $$;
+DO $$ BEGIN CREATE POLICY "analytics_service_read" ON analytics_events FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END; $$;

@@ -1,10 +1,12 @@
-// @ts-nocheck
 /**
  * src/jobs/content-refresh-queue.ts
  *
  * Nightly content-refresh queue with a hard cap of MAX_PER_NIGHT generations.
- * This file owns the invariant — callers (content-flywheel, kag-corpus-builder
- * nightly job) MUST go through enqueue() rather than generating directly.
+ * This file owns the invariant — callers (kag-concept-generator.ts, driven by
+ * the scheduler's kagRefreshScanner job) MUST go through enqueueKagEntry()
+ * rather than writing to kag-store.ts directly. The CLI corpus builder
+ * (scripts/kag-corpus-builder.ts) is explicitly exempt via bypass_nightly_cap
+ * — operator-run, not autonomous.
  *
  * Midnight UTC resets the counter automatically via the isNewNight() check.
  */

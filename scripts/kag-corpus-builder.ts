@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * scripts/kag-corpus-builder.ts
  *

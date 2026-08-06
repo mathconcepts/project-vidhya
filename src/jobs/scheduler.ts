@@ -25,6 +25,7 @@ import { finaliseExpiredDeletions } from '../data-rights/delete';
 import { runCohortAggregator } from './cohort-aggregator';
 import { runRegenScanner } from './regen-scanner';
 import { runNarrationExperimentScanner } from './narration-experiment-scanner';
+import { runKagRefreshScanner } from './kag-refresh-scanner';
 import { evaluateRipeExperiments } from '../content/concept-orchestrator';
 import { snapshotAllActiveSessions } from '../experiments/snapshotter';
 import { runLearningsLedger } from './learnings-ledger';
@@ -186,6 +187,15 @@ register('generationRunResume', FIVE_MIN_MS, async () => {
   }
   const out = await resumeQueuedRuns();
   return { status: 'ran', ...out };
+});
+
+register('kagRefreshScanner', DAY_MS, async () => {
+  // Nightly: grow the KAG corpus (tier-0 content source, src/content/router.ts)
+  // toward full concept-graph coverage, bounded by content-refresh-queue.ts's
+  // MAX_PER_NIGHT=5 cap. Off by default — gated on VIDHYA_KAG_NIGHTLY=on,
+  // since each generation spends a real LLM + Wolfram Alpha call.
+  const r = await runKagRefreshScanner();
+  return r;
 });
 
 register('abEvaluator', DAY_MS, async () => {

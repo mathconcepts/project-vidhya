@@ -158,7 +158,6 @@ async function generatePersonalVariant(
     concept_id: concept.id,
     topic_family,
     atom_types: [atom_type as any],
-    force: true,
     dry_run: true,  // we write to student_atom_overrides, not atom_versions
     student_context,
   });

@@ -171,7 +171,6 @@ async function handleNeutralRender(req: ParsedRequest, res: ServerResponse): Pro
       concept_id,
       topic_family: (concept as any).topic_family ?? (concept as any).topic ?? 'generic',
       atom_types: [atom_type as any],
-      force: true,
       dry_run: true,
       // NOTE: student_context omitted on purpose — the orchestrator's
       // existing fall-through is "generic prompt", which is exactly the

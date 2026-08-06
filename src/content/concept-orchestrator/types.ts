@@ -66,8 +66,6 @@ export interface OrchestratorOptions {
   cost_cap_usd?: number;
   /** When true, skip writes to atom_versions (used by admin "preview" mode). */
   dry_run?: boolean;
-  /** Force regen even if a recent version exists. */
-  force?: boolean;
   /** Progress callback fired before/during/after each atom step. */
   on_progress?: (event: ProgressEvent) => void;
   /**

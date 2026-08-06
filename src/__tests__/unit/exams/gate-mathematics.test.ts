@@ -146,6 +146,34 @@ describe('GATE adapter — defaultGenerationSections', () => {
   });
 });
 
+describe('JEE Main adapter — defaultGenerationSections', () => {
+  // Regression test: an earlier version emitted kind: 'nat_question' for
+  // 1-in-3 sections (mirroring the exam's real 20 MCQ : 10 NAT ratio), but
+  // 'nat_question' was never a valid GenerationSection.kind — nothing in
+  // src/sample-check/llm-generator.ts's stitchSnapshot() recognized it, so
+  // those sections were silently dropped from the stitched mock exam
+  // entirely. Caught when @ts-nocheck was removed from this adapter and
+  // tsc flagged the kind mismatch. Fixed by requesting mock_question
+  // uniformly (see the adapter's class docblock for why this doesn't
+  // regress format-awareness — there wasn't any to begin with).
+  it('every generated section has a kind valid for GenerationSection', () => {
+    const jeeMain = registry.getExamAdapter('EXM-JEEMAIN-MATH-SAMPLE');
+    const sections = jeeMain.defaultGenerationSections();
+    expect(sections.length).toBeGreaterThan(0);
+    const validKinds = new Set(['mock_question', 'lesson_component', 'strategy']);
+    for (const s of sections) {
+      expect(validKinds.has(s.kind)).toBe(true);
+    }
+  });
+
+  it('produces sections across easy/medium/hard difficulties', () => {
+    const jeeMain = registry.getExamAdapter('EXM-JEEMAIN-MATH-SAMPLE');
+    const sections = jeeMain.defaultGenerationSections();
+    const difficulties = new Set(sections.map((s: any) => s.difficulty));
+    expect(difficulties).toEqual(new Set(['easy', 'medium', 'hard']));
+  });
+});
+
 describe('GATE adapter — postProcessSnapshot', () => {
   it('dedupes questions by id', () => {
     const gate = registry.getExamAdapter('EXM-GATE-MATH-SAMPLE');

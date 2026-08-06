@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * BITSAT Mathematics — exam adapter.
  *
@@ -12,6 +11,7 @@
  */
 
 import { registerExamAdapter, type ExamAdapter } from '../../exam-builder/registry';
+import type { GenerationSection } from '../../sample-check/llm-generator';
 import {
   BITSAT_EXAM, BITSAT_MOCK_EXAM, LESSON_LIMITS, BITSAT_STRATEGIES,
 } from '../../samples/bitsat-mathematics';
@@ -43,7 +43,7 @@ const adapter: ExamAdapter = {
     // BITSAT is 100% MCQ — generation asks for MCQs across priority topics
     const topics = opts?.topic_ids ?? BITSAT_EXAM.priority_concepts;
     const count = opts?.count_per_topic ?? 2;
-    const sections = [];
+    const sections: GenerationSection[] = [];
     for (const topic_id of topics) {
       for (let i = 0; i < count; i++) {
         sections.push({

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * NEET Chemistry — exam adapter.
  *
@@ -16,6 +15,7 @@
  */
 
 import { registerExamAdapter, type ExamAdapter } from '../../exam-builder/registry';
+import type { GenerationSection } from '../../sample-check/llm-generator';
 import {
   NEET_CHEM_EXAM, NEET_CHEM_MOCK_EXAM, NEET_CHEM_STRATEGIES,
 } from '../../samples/neet-chemistry';
@@ -51,7 +51,7 @@ const adapter: ExamAdapter = {
     // hydrocarbons) which are the foundation everything else depends on.
     const topics = opts?.topic_ids ?? NEET_CHEM_EXAM.priority_concepts;
     const count = opts?.count_per_topic ?? 3;
-    const sections: Array<{ kind: 'mock_question'; topic_id: string; difficulty: string }> = [];
+    const sections: GenerationSection[] = [];
     for (const topic_id of topics) {
       for (let i = 0; i < count; i++) {
         sections.push({

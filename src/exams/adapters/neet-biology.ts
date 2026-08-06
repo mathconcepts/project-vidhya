@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * NEET Biology — exam adapter.
  *
@@ -11,6 +10,7 @@
  */
 
 import { registerExamAdapter, type ExamAdapter } from '../../exam-builder/registry';
+import type { GenerationSection } from '../../sample-check/llm-generator';
 import {
   NEET_BIO_EXAM, NEET_BIO_MOCK_EXAM, LESSON_MENDELIAN, NEET_BIO_STRATEGIES,
 } from '../../samples/neet-biology';
@@ -43,7 +43,7 @@ const adapter: ExamAdapter = {
     // focus on high-weight topics (genetics, ecology, physiology).
     const topics = opts?.topic_ids ?? NEET_BIO_EXAM.priority_concepts;
     const count = opts?.count_per_topic ?? 3;
-    const sections: Array<{ kind: 'mock_question'; topic_id: string; difficulty: string }> = [];
+    const sections: GenerationSection[] = [];
     for (const topic_id of topics) {
       for (let i = 0; i < count; i++) {
         sections.push({

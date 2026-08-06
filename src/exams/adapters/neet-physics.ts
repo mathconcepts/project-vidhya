@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * NEET Physics — exam adapter.
  *
@@ -15,6 +14,7 @@
  */
 
 import { registerExamAdapter, type ExamAdapter } from '../../exam-builder/registry';
+import type { GenerationSection } from '../../sample-check/llm-generator';
 import {
   NEET_PHYS_EXAM, NEET_PHYS_MOCK_EXAM, NEET_PHYS_STRATEGIES,
 } from '../../samples/neet-physics';
@@ -50,7 +50,7 @@ const adapter: ExamAdapter = {
     // cover ~60% of marks.
     const topics = opts?.topic_ids ?? NEET_PHYS_EXAM.priority_concepts;
     const count = opts?.count_per_topic ?? 3;
-    const sections: Array<{ kind: 'mock_question'; topic_id: string; difficulty: string }> = [];
+    const sections: GenerationSection[] = [];
     for (const topic_id of topics) {
       for (let i = 0; i < count; i++) {
         sections.push({

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * GATE Engineering Mathematics — exam adapter.
  *
@@ -30,6 +29,7 @@
  */
 
 import { registerExamAdapter, type ExamAdapter } from '../../exam-builder/registry';
+import type { GenerationSection } from '../../sample-check/llm-generator';
 import {
   GATE_MATH_EXAM, GATE_MATH_MOCK_EXAM, GATE_MATH_STRATEGIES,
 } from '../../samples/gate-mathematics';
@@ -68,7 +68,7 @@ const adapter: ExamAdapter = {
     // hard discriminator questions.
     const topics = opts?.topic_ids ?? GATE_MATH_EXAM.priority_concepts;
     const count = opts?.count_per_topic ?? 3;
-    const sections: Array<{ kind: 'mock_question'; topic_id: string; difficulty: string }> = [];
+    const sections: GenerationSection[] = [];
     for (const topic_id of topics) {
       for (let i = 0; i < count; i++) {
         sections.push({

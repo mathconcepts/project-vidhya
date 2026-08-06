@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * JEE Main Mathematics — exam adapter.
  *
@@ -12,8 +11,19 @@
  * captures:
  *
  *   1. MIXED QUESTION TYPES. 20 MCQs + 10 NAT (numerical-answer-type).
- *      defaultGenerationSections asks for both kinds proportional
- *      to the exam's 20:10 ratio.
+ *      The exam spec (JEE_MAIN_EXAM) captures the 20:10 ratio. NOTE:
+ *      defaultGenerationSections below requests every section as
+ *      kind: 'mock_question' — GenerationSection.kind has no NAT
+ *      variant, and nothing downstream (resolveContent, stitchSnapshot)
+ *      distinguishes MCQ from NAT during generation. An earlier
+ *      version of this method emitted 'nat_question' for 1-in-3
+ *      sections, which silently dropped them from the stitched
+ *      snapshot entirely (stitchSnapshot only recognizes
+ *      mock_question/lesson_component/strategy) — found while removing
+ *      this file's @ts-nocheck, since 'nat_question' isn't a valid
+ *      GenerationSection.kind and TS caught the mismatch immediately.
+ *      Fixed by requesting mock_question uniformly; format-aware
+ *      generation is future work, not a regression from this fix.
  *
  *   2. NEGATIVE MARKING ASYMMETRY. MCQs carry -1 for wrong answers;
  *      NATs carry 0. The exam spec captures this and downstream
@@ -25,6 +35,7 @@
  */
 
 import { registerExamAdapter, type ExamAdapter } from '../../exam-builder/registry';
+import type { GenerationSection } from '../../sample-check/llm-generator';
 import {
   JEE_MAIN_EXAM, JEE_MAIN_MOCK_EXAM, JEE_MAIN_STRATEGIES, JEE_LESSON_MANIFEST,
 } from '../../samples/jee-main-mathematics';
@@ -57,14 +68,13 @@ const adapter: ExamAdapter = {
     // Weight calculus-first via priority_concepts ordering.
     const topics = opts?.topic_ids ?? JEE_MAIN_EXAM.priority_concepts;
     const countPerTopic = opts?.count_per_topic ?? 3;
-    const sections = [];
+    const sections: GenerationSection[] = [];
     for (const topic_id of topics) {
       for (let i = 0; i < countPerTopic; i++) {
-        // 2 out of every 3 are MCQs, 1 is NAT — mirrors the 20:10
-        // exam ratio.
-        const kind = i % 3 === 2 ? 'nat_question' as const : 'mock_question' as const;
+        // All sections request mock_question — see the class docblock
+        // above for why this isn't format-aware (MCQ vs NAT) yet.
         sections.push({
-          kind,
+          kind: 'mock_question',
           topic_id,
           difficulty: i === 0 ? 'easy' : i === 1 ? 'medium' : 'hard',
         });

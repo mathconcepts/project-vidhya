@@ -68,7 +68,8 @@
     "demo:channel-link": "tsx demo/channel-link.ts",
     "backup:create": "tsx scripts/backup-data.ts",
     "backup:list": "tsx scripts/backup-data.ts --list",
-    "backup:prune": "tsx scripts/backup-data.ts --prune"
+    "backup:prune": "tsx scripts/backup-data.ts --prune",
+    "provision-tenant": "tsx scripts/provision-tenant.ts"
   },
   "keywords": [
     "adaptive-learning",
@@ -80,7 +81,7 @@
     "education",
     "gate",
     "wolfram",
-    "gemini"
+    "multi-provider-llm"
   ],
   "author": "Project Vidhya Contributors",
   "license": "MIT",

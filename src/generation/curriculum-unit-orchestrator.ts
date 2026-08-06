@@ -29,6 +29,7 @@
 
 import { execSync } from 'child_process';
 import { CostMeter, RunBudgetExceeded, priceForCall } from './cost-meter';
+import { loadLlmConfig } from '../llm/registry';
 import { pedagogyVerifier } from '../content/verifiers/pedagogy-verifier';
 import type { GenerationRunConfig } from '../experiments/types';
 import type { AtomType } from '../content/content-types';
@@ -407,15 +408,20 @@ async function generateAtomForKind(
   // once generateConcept reports its own real per-atom cost).
   const inputEst = 1500;
   const outputEst = 800;
+  const estimateModel = args.model_id ?? (() => {
+    const cfg = loadLlmConfig();
+    const p = cfg.providers[cfg.defaultProvider];
+    return p?.models[p.fallbackOrder?.[0] ?? '']?.id ?? 'gemini-2.5-flash';
+  })();
   const preCost = priceForCall({
-    model: 'gemini-2.5-flash',
+    model: estimateModel,
     input_tokens: inputEst,
     output_tokens: outputEst,
   });
 
   // Will throw RunBudgetExceeded if cap hit
   args.meter.add({
-    model: 'gemini-2.5-flash',
+    model: estimateModel,
     input_tokens: inputEst,
     output_tokens: outputEst,
   });

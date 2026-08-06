@@ -560,7 +560,7 @@ async function runFlywheel(): Promise<{ generated: number; verified: number; top
     hypothesis: 'Daily flywheel — auto-launched by cron',
     config: {
       target: { difficulty_dist: { easy: 30, medium: 50, hard: 20 } },
-      pipeline: { llm_models: ['gemini-2.5-flash'] },
+      pipeline: { llm_models: [] }, // resolved at dispatch time from VIDHYA_LLM_PROVIDER or providers.yaml
       verification: { tier_ceiling: 'wolfram', gemini_dual_solve: true },
       quota: { count: BATCH_SIZE, max_cost_usd: 1.0 },
     },

@@ -43,7 +43,11 @@ const PRICES: Record<string, ModelPrice> = {
   // the direct-provider price above (OpenRouter's markup is small and
   // model-dependent; treat as an estimate like every other price here).
   'google/gemini-2.5-flash': { input_per_1m: 0.075, output_per_1m: 0.3 },
+  'google/gemini-2.5-pro': { input_per_1m: 1.25, output_per_1m: 5.0 },
   'anthropic/claude-sonnet-4-5': { input_per_1m: 3.0, output_per_1m: 15.0 },
+  'anthropic/claude-haiku-4-5': { input_per_1m: 1.0, output_per_1m: 5.0 },
+  'openai/gpt-4o': { input_per_1m: 2.5, output_per_1m: 10.0 },
+  'openai/gpt-4o-mini': { input_per_1m: 0.15, output_per_1m: 0.6 },
 };
 
 // Exported (not just module-local) so any other call site that needs "the

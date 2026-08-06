@@ -29,6 +29,13 @@ export interface GenerationMeta {
   auto_rejected?: { score: number; reason: string };
   /** Set when math atoms went via consensus path. */
   consensus_disagreement?: { models: string[]; reason: string };
+  /**
+   * CAS pre-verification result (controlled by VIDHYA_CAS_PREFLIGHT env).
+   *   null  = skipped (no extractable answer, or gate is off)
+   *   true  = Wolfram confirmed the stated answer
+   *   false = Wolfram disagreed (atom may have been rejected in gate mode)
+   */
+  cas_pre_verified?: boolean | null;
 }
 
 export interface GeneratedAtom {

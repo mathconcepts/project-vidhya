@@ -32,6 +32,7 @@ import { groundForLO, groundForLOWithEmbedding, formatPyqContext } from './pyq-g
 import { canSpend, recordSpend, DEFAULT_MONTHLY_CAP_USD } from './concept-cost';
 import { scoreAtom, passesGate } from './llm-judge';
 import { compareMathAtoms, requiresConsensus } from './multi-llm-consensus';
+import { casPreVerify } from './cas-pre-verifier';
 import { appendVersion } from './atom-versions';
 import { writeArtifact, markFailed as markMediaFailed } from './media-artifacts';
 import { renderScene, type SceneDescription } from './gif-generator';
@@ -187,6 +188,37 @@ export async function generateConcept(
         atom_id: generated.atom_id,
         judge_score: judge.score,
         reason: judge.reason,
+      });
+      continue;
+    }
+
+    // CAS pre-verification gate (VIDHYA_CAS_PREFLIGHT: off|shadow|on).
+    // Runs after LLM judge so we don't spend Wolfram calls on atoms that
+    // would be rejected on quality anyway. Never throws — all cascade
+    // failures surface as skipped=true.
+    const casResult = await casPreVerify(generated, opts.topic_family);
+    if (!casResult.skipped) {
+      generated.meta.cas_pre_verified = casResult.verified;
+      // Fix wolfram_grounded: only true when Wolfram actually ran
+      if (casResult.verified) generated.meta.wolfram_grounded = true;
+    } else {
+      generated.meta.cas_pre_verified = null;
+    }
+    if (!casResult.skipped && !casResult.verified &&
+        process.env.VIDHYA_CAS_PREFLIGHT === 'on') {
+      generated.meta.auto_rejected = {
+        score: generated.meta.llm_judge_score ?? 0,
+        reason: casResult.reason ?? 'CAS pre-verification: Wolfram disagreed with stated answer',
+      };
+      rejected.push(generated);
+      opts.on_progress?.({
+        type: 'atom_rejected',
+        step_index: idx,
+        total_steps,
+        atom_type,
+        atom_id: generated.atom_id,
+        judge_score: generated.meta.llm_judge_score,
+        reason: generated.meta.auto_rejected.reason,
       });
       continue;
     }

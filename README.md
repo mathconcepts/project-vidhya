@@ -176,6 +176,7 @@ docker compose up --build        # http://localhost:8080
 | 🌉 Generating a school → exam bridge course | [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md) — 5-step wizard at `/admin/syllabus-bridge`, two-file extension story for new boards |
 | 🧑‍🏫 A teacher who wants to know where the class is stuck | `/teacher/syllabus-coverage` — gap report against your roster, one-click "Generate material for this gap" |
 | 🎬 Pitching the moat | [docs/moat-demo.md](./docs/moat-demo.md) — guided 3-minute persona-scenarios path |
+| 🏗 Platform team (own IdP / own LLM / own Postgres) | [docs/PLATFORM.md](./docs/PLATFORM.md) — JWKS auth, LLM routing, tenant provisioning, pgvector-optional |
 | 🛠 Setting up from scratch | [docs/admin-getting-started.md](./docs/admin-getting-started.md) — day-0 to cloud deploy, local-first |
 | 🧑‍🏫 Running real students | [docs/admin-guide-jee-tn.md](./docs/admin-guide-jee-tn.md) — end-to-end admin runbook with concrete TN-board / IIT-JEE / anxious-cohort scenario |
 | 🔬 Technical evaluator | [ARCHITECTURE.md](./ARCHITECTURE.md) → [CLAUDE.md](./CLAUDE.md) → [docs/100x-blueprint.md](./docs/100x-blueprint.md) |
@@ -194,7 +195,7 @@ docker compose up --build        # http://localhost:8080
 
 **Modules** — [AUTH.md](./AUTH.md), [TEACHING.md](./TEACHING.md), [LIBRARY.md](./LIBRARY.md), [STUDIO.md](./STUDIO.md), [CONTENT.md](./CONTENT.md), [EXAMS.md](./EXAMS.md)
 
-**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [SECURITY.md](./SECURITY.md)
+**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [docs/PLATFORM.md](./docs/PLATFORM.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [SECURITY.md](./SECURITY.md)
 
 **Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/CURRICULUM-FRAMEWORK.md](./docs/CURRICULUM-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/LESSON-FRAMEWORK.md](./docs/LESSON-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md), [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md)
 

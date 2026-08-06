@@ -44,6 +44,7 @@ Flat-file storage (`.data/`) is the default. **No database required.**
 
 | Tool / service | What it enables | Get it from |
 |---|---|---|
+| **OpenRouter API key** | AI tutor via any model — Gemini, Claude, GPT-4o — through one key (recommended) | [openrouter.ai/keys](https://openrouter.ai/keys) |
 | **Gemini API key** | AI tutor, Snap solve, explainer generation (free tier available) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **Anthropic API key** | Same (paid) | [console.anthropic.com](https://console.anthropic.com) |
 | **OpenAI API key** | Same (paid) | [platform.openai.com](https://platform.openai.com/api-keys) |
@@ -130,6 +131,8 @@ docker compose up --build
 # → http://localhost:8080
 ```
 
+> **pgvector is optional.** The default Compose file uses `pgvector/pgvector:pg16` (pgvector pre-installed). If you point `DATABASE_URL` at a plain Postgres instance without pgvector, the server still starts and all features work — Tier 1 RAG returns empty results and the cascade falls through to the LLM (Tier 2). See [`docs/PLATFORM.md`](./docs/PLATFORM.md) §3 for details.
+
 ### M1 Mac (Apple Silicon)
 
 The Compose file defaults to `linux/arm64` — native on M1, no Rosetta emulation needed:
@@ -211,14 +214,22 @@ See [`demo/CHANNELS.md`](./demo/CHANNELS.md) for Telegram + WhatsApp setup.
 
 | Variable | Required? | Default | What it enables |
 |---|---|---|---|
-| `JWT_SECRET` | **yes** (≥ 16 chars) | — | Auth tokens |
+| `JWT_SECRET` | **yes** (≥ 16 chars) | — | Auth tokens. Skipped when `VIDHYA_AUTH_MODE=external-jwks`. |
 | `PORT` | no | `8080` | Server port |
 | `NODE_ENV` | no | `development` | Production mode |
+| `DATABASE_URL` | no | — | Postgres connection. Without it, flat-file `.data/` is used. |
 | `OPENROUTER_API_KEY` | no | — | OpenRouter (recommended — routes to Gemini, Claude, GPT-4o via one key) |
 | `GEMINI_API_KEY` | no | — | Gemini provider (free tier available) |
 | `ANTHROPIC_API_KEY` | no | — | Anthropic Claude provider |
 | `OPENAI_API_KEY` | no | — | OpenAI provider |
-| `VIDHYA_LLM_PRIMARY_PROVIDER` | no | — | Override auto-detect: `openrouter` / `gemini` / `anthropic` / `openai` |
+| `VIDHYA_LLM_PROVIDER` | no | — | **Override** all of `config/providers.yaml`: `gemini` / `anthropic` / `openai` / `openrouter` / `ollama`. Set together with `VIDHYA_LLM_API_KEY`. |
+| `VIDHYA_LLM_API_KEY` | no | — | API key for `VIDHYA_LLM_PROVIDER` (omit for keyless providers like `ollama`). |
+| `VIDHYA_LLM_BASE_URL` | no | — | Custom endpoint — required for Azure OpenAI, Vertex AI, private gateways, Ollama. |
+| `VIDHYA_LLM_MODEL` | no | — | Model ID for the override provider (e.g. `gpt-4o`, `claude-sonnet-4-5`). |
+| `VIDHYA_AUTH_MODE` | no | `supabase` | `external-jwks` enables RS256 JWT verification via your own IdP (Auth0, Cognito, Clerk). |
+| `VIDHYA_JWKS_URI` | no | — | Required when `VIDHYA_AUTH_MODE=external-jwks`. Your IdP's JWKS endpoint URL. |
+| `VIDHYA_ROLE_CLAIM_PATH` | no | `role` | Dot-notation path to the role claim in the JWT (e.g. `app_metadata.role`). |
+| `VIDHYA_SKIP_DB_ROLE_LOOKUP` | no | — | `true` trusts the IdP role claim directly, skipping the `user_profiles` DB lookup. |
 | `WOLFRAM_APP_ID` | no | — | Maths verification + solve intents |
 | `TELEGRAM_BOT_TOKEN` | no | — | Telegram delivery |
 | `WHATSAPP_ACCESS_TOKEN` | no | — | WhatsApp delivery |
@@ -240,6 +251,8 @@ In addition to the env vars above, individual modules expose **feature flags** t
 ### Auth module flags
 
 The auth module ships with 4 flags. Defaults preserve existing behaviour, so a fresh clone runs identically to before any flag is touched.
+
+> **Bringing your own IdP?** If your deployment already issues JWTs (Auth0, Cognito, Clerk, etc.), set `VIDHYA_AUTH_MODE=external-jwks` and point `VIDHYA_JWKS_URI` at your IdP's JWKS endpoint. RS256 verification runs entirely via Node.js built-in `crypto` — no extra packages. Full setup guide: [`docs/PLATFORM.md`](./docs/PLATFORM.md) §1.
 
 | Flag | Env var | Default | Off-state effect |
 |---|---|---|---|
@@ -371,11 +384,48 @@ Gate-server serves `frontend/dist/` statically. The dist directory must exist be
 
 ### LLM calls return 503
 
-`VIDHYA_LLM_PRIMARY_PROVIDER` references a provider whose key isn't set, or the key is invalid. Check your env.
+No configured LLM provider has a valid key. Check that at least one of `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` is set — or if using the override path, that `VIDHYA_LLM_PROVIDER` + `VIDHYA_LLM_API_KEY` are both present.
 
 ### Port conflict
 
 Another process is on 8080. Change with `PORT=8081 npx tsx src/server.ts`.
+
+---
+
+## Platform team integration
+
+If you're dropping Vidhya into an existing edtech stack — your own auth, your own LLM gateway, your own Postgres — three env vars cover the common cases:
+
+```bash
+# Bring your own IdP (Auth0, Cognito, Clerk, ...)
+VIDHYA_AUTH_MODE=external-jwks
+VIDHYA_JWKS_URI=https://company.auth0.com/.well-known/jwks.json
+
+# Bring your own LLM endpoint (Azure OpenAI, Vertex AI, Ollama, ...)
+VIDHYA_LLM_PROVIDER=openai
+VIDHYA_LLM_API_KEY=<key>
+VIDHYA_LLM_BASE_URL=https://company.openai.azure.com/openai/deployments/gpt-4o
+VIDHYA_LLM_MODEL=gpt-4o
+```
+
+LLM API endpoints are available at both `/api/llm/*` (provider-neutral, preferred) and `/api/gemini/*` (legacy alias kept for backwards compatibility).
+
+Full reference — all three integration points with examples: [`docs/PLATFORM.md`](./docs/PLATFORM.md).
+
+---
+
+## Tenant provisioning
+
+To provision a new school on its own database (recommended for multi-tenant deployments):
+
+```bash
+npm run provision-tenant -- \
+  --db-url  postgres://user:pass@host:5432/mydb \
+  --tenant-id  acme-school \
+  --admin-email  admin@acme.com
+```
+
+This runs all pending migrations (idempotent), seeds an admin user, and prints a ready-to-use `.env` stub. Add `--dry-run` to preview without writing to the database.
 
 ---
 
@@ -384,6 +434,7 @@ Another process is on 8080. Change with `PORT=8081 npx tsx src/server.ts`.
 - **Running a demo?** → [`DEMO.md`](./DEMO.md) — the multi-role walkthrough
 - **Deploying live (Render)?** → [`DEPLOY.md`](./DEPLOY.md) — single-vendor, one click
 - **Deploying live (Netlify + Render)?** → [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md) — hybrid, frontend on Netlify CDN
+- **Platform team / bringing your own IdP + LLM?** → [`docs/PLATFORM.md`](./docs/PLATFORM.md) — JWKS auth, LLM routing, tenant provisioning, pgvector optionality
 - **Adding an exam?** → [`EXAMS.md`](./EXAMS.md) — the two-file adapter pattern
 - **Contributing content?** → [`CONTENT.md`](./CONTENT.md) + [`modules/project-vidhya-content/CONTRIBUTING.md`](./modules/project-vidhya-content/CONTRIBUTING.md)
 - **Architecture / modules?** → [`MODULARISATION.md`](./MODULARISATION.md)

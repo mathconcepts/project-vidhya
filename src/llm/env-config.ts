@@ -20,7 +20,7 @@
  * used before a generation run spends its budget.
  */
 
-import { buildLlmConfigFromRegistry, loadProvidersRegistry, ensureProvidersYamlBootstrap, type EnvLlmConfig } from './registry';
+import { buildLlmConfigFromRegistry, loadProvidersRegistry, ensureProvidersYamlBootstrap, buildEnvOverrideConfig, type EnvLlmConfig } from './registry';
 
 export type { EnvLlmConfig };
 
@@ -34,6 +34,8 @@ export type { EnvLlmConfig };
 export function buildLlmConfigFromEnv(): EnvLlmConfig {
   try {
     ensureProvidersYamlBootstrap();
+    const override = buildEnvOverrideConfig();
+    if (override) return override;
     const registry = loadProvidersRegistry();
     return buildLlmConfigFromRegistry(registry);
   } catch (err) {

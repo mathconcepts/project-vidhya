@@ -22,6 +22,7 @@ The demo read as a question bank because (RC1) a concept-ID mismatch (`calculus-
 - [x] **CI content gate** atoms-dir check, retired-id grep, placeholder ratchet (baseline 82), golden set v0 (15 committed LA MCQs + 3 seed concepts' answer keys), wired into ci.yml with `CONTENT_CI_STRICT: 'false'` (`12632df`)
 - [x] **De-@ts-nocheck bounded set (22 files)** — all clean, zero pragmas left in `src/content/` + `src/lessons/`; surfaced and fixed 1 latent RC1-class bug (`prompt-patterns.ts` reading a field that never existed) + 1 compose-path bug (`preferred_exam_id` read from the wrong object) (`9a00939`, `c5426e5`)
 - [x] **Honesty sweep** demo entry docs → `/?demo`, package.json version = 4.24.0, retrieval_prompt atoms for 3 seed concepts (daily cards can be non-empty), dead VERIFIED_IDS removed (`1753aff`)
+- [x] **Deprecated concept-orchestrator status routes removed** (2026-08-06, separate cleanup session) — the item below was carried on Deferred since this branch; closed by migrating admin-launched generation onto `generation_runs`/`run-dispatcher.ts` first (closing the `preview`-without-persistence parity gap `POST /generate` had relied on `dry_run` for, and adding the `generation_run_id` read path those routes had no equivalent of), then deleting `jobs.ts` + `handleGenerate`/`handleStatus` outright rather than leaving them functional-but-unused (`6ab5507`, `33e0886`, `ca9b8b0`, `12ae1bd`) — see `claude/2026-08-05-Eng-Cleanup-Refactor-Delivery.md` in the Vidhya project for the full record.
 
 ## Pipeline (as of this branch)
 
@@ -74,7 +75,6 @@ section (§6 of `docs/CURRICULUM-FRAMEWORK.md`); no code change needed here.
 - [ ] Golden set growth 21 → 24-item LA chapter (blocked on staging the uncommitted Cowork artifact into the repo)
 - [ ] Client-side indexing of server-extracted upload text into the GBrain materials store (TODO marked in UploadsPage)
 - [ ] De-@ts-nocheck the remaining 69 files outside the bounded set (follow-up PR)
-- [ ] Remove deprecated in-memory concept-orchestrator status routes (kept functional this patch)
 - [ ] Export build-bundle logic as an importable function so the nightly chain can rebuild the bundle in-process (currently documented skip → run `npm run content:bundle`)
 - [ ] Scanned-document math OCR (register §5.6 parked; honest refusal in place)
 - [ ] Manim service deployment wiring (gif-scene pure-JS path covers demo needs)

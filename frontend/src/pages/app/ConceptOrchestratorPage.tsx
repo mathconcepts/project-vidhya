@@ -15,9 +15,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getToken } from '@/lib/auth/client';
-import { Sparkles, AlertTriangle, RefreshCw, Loader2, X, CheckCircle2, XCircle } from 'lucide-react';
+import { Sparkles, AlertTriangle, RefreshCw, Loader2, X, CheckCircle2 } from 'lucide-react';
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
 import { wordDiff } from '@/lib/wordDiff';
+import {
+  createRun,
+  getRun,
+  getRunAtoms,
+  type GenerationRunRow,
+  type RunAtomVersion,
+} from '@/api/admin/content-rd';
 
 // ─── Types mirroring server-side ──────────────────────────────────
 
@@ -39,31 +46,14 @@ interface QueueRow {
   estimated_cost_usd: number;
 }
 
-interface ProgressEvent {
-  type: 'start' | 'atom_started' | 'atom_finished' | 'atom_rejected' | 'done';
-  step_index: number;
-  total_steps: number;
-  atom_type?: string;
-  atom_id?: string;
-  sources?: string[];
-  judge_score?: number;
-  reason?: string;
-  total_cost_usd?: number;
-}
+// Concept-orchestrator generation is exam-agnostic in principle, but the
+// concept graph it reads from (src/constants/concept-graph.ts) is GATE
+// Engineering Mathematics' syllabus today — same exam_pack_id RunLauncher
+// and the rest of the Content R&D admin UI hardcode.
+const EXAM_PACK_ID = 'gate-ma';
 
-interface JobState {
-  id: string;
-  status: 'queued' | 'running' | 'done' | 'failed';
-  concept_id: string;
-  topic_family: string;
-  events: ProgressEvent[];
-  result?: {
-    atoms: any[];
-    rejected_atoms: any[];
-    total_cost_usd: number;
-  };
-  error?: string;
-}
+// Every concept-orchestrator generation asks for all 11 atom types.
+const DEFAULT_ATOM_COUNT = 11;
 
 interface AtomVersion {
   atom_id: string;
@@ -128,39 +118,49 @@ function StateBadge({ state }: { state: ConceptState }) {
 }
 
 // ─── Generate progress modal (D1) ──────────────────────────────────
+//
+// Migrated off the deprecated in-memory job store (POST .../generate +
+// GET .../status/:job_id) onto a real GenerationRun, polled via
+// GET /api/admin/runs/:id. This trades the old atom-by-atom step feed
+// (11-step indicator with per-atom judge scores as they landed) for the
+// coarser status/cost_usd/artifacts_count view every other run type in
+// this admin UI already shows (RunLauncher's ActiveRunsPanel) — dispatchRun()
+// doesn't persist per-atom progress events anywhere, so the richer feed
+// isn't reachable without new schema/plumbing. Restoring it is future
+// work, not attempted here.
 
 function GenerateProgressModal({
-  jobId,
+  runId,
   conceptLabel,
   onClose,
   onDone,
 }: {
-  jobId: string;
+  runId: string;
   conceptLabel: string;
   onClose: () => void;
-  onDone: (job: JobState) => void;
+  onDone: (run: GenerationRunRow) => void;
 }) {
-  const [job, setJob] = useState<JobState | null>(null);
+  const [run, setRun] = useState<GenerationRunRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const cleanupRef = useRef(false);
+  const doneRef = useRef(false);
 
   useEffect(() => {
     cleanupRef.current = false;
+    doneRef.current = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const poll = async () => {
       if (cleanupRef.current) return;
       try {
-        const r = await fetch(`/api/admin/concept-orchestrator/status/${jobId}`, { headers: authHeaders() });
-        if (!r.ok) {
-          setError(`status ${r.status}: ${await r.text()}`);
-          return;
-        }
-        const j = (await r.json()) as JobState;
+        const { run: r } = await getRun(runId);
         if (cleanupRef.current) return;
-        setJob(j);
-        if (j.status === 'done' || j.status === 'failed') {
-          onDone(j);
+        setRun(r);
+        if (r.status === 'complete' || r.status === 'failed' || r.status === 'aborted') {
+          if (!doneRef.current) {
+            doneRef.current = true;
+            onDone(r);
+          }
           return;
         }
       } catch (e: any) {
@@ -174,12 +174,10 @@ function GenerateProgressModal({
       cleanupRef.current = true;
       if (timer) clearTimeout(timer);
     };
-  }, [jobId, onDone]);
+  }, [runId, onDone]);
 
-  const last = job?.events[job.events.length - 1];
-  const stepIdx = last?.step_index ?? 0;
-  const totalSteps = last?.total_steps ?? 11;
-  const pct = (stepIdx / Math.max(totalSteps, 1)) * 100;
+  const isTerminal = run?.status === 'complete' || run?.status === 'failed' || run?.status === 'aborted';
+  const pct = run?.status === 'complete' ? 100 : run?.status === 'running' ? 60 : run ? 20 : 0;
 
   return (
     <div
@@ -196,7 +194,7 @@ function GenerateProgressModal({
               Generating: {conceptLabel}
             </h3>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-              11 atoms via Wolfram + Claude{' + Gemini consensus on math'}
+              {DEFAULT_ATOM_COUNT} atoms via Wolfram + Claude{' + Gemini consensus on math'}
             </p>
           </div>
           <button
@@ -213,9 +211,13 @@ function GenerateProgressModal({
             className="flex items-center justify-between text-[11px] mb-1.5 tabular-nums"
             style={{ color: 'var(--text-tertiary)' }}
           >
-            <span>Step {Math.min(stepIdx + (job?.status === 'running' ? 1 : 0), totalSteps)} / {totalSteps}</span>
-            {job?.status === 'done'   && <span style={{ color: 'var(--green-ink)' }}>Complete</span>}
-            {job?.status === 'failed' && <span style={{ color: 'var(--red)' }}>Failed</span>}
+            <span>
+              {run ? `${run.status} · $${Number(run.cost_usd).toFixed(3)} · ${run.artifacts_count} atoms` : 'Starting…'}
+            </span>
+            {run?.status === 'complete' && <span style={{ color: 'var(--green-ink)' }}>Complete</span>}
+            {(run?.status === 'failed' || run?.status === 'aborted') && (
+              <span style={{ color: 'var(--red)' }}>{run.status === 'failed' ? 'Failed' : 'Aborted'}</span>
+            )}
           </div>
           <div
             className="h-1.5 rounded-full overflow-hidden"
@@ -225,31 +227,31 @@ function GenerateProgressModal({
               className="h-full transition-all duration-300"
               style={{
                 width: `${pct}%`,
-                background: job?.status === 'failed' ? 'var(--red)' : 'var(--green)',
+                background: (run?.status === 'failed' || run?.status === 'aborted') ? 'var(--red)' : 'var(--green)',
               }}
             />
           </div>
         </div>
 
-        <div className="space-y-1 max-h-48 overflow-y-auto text-xs">
-          {(job?.events ?? []).map((e, i) => (
-            <EventRow key={i} event={e} />
-          ))}
-          {!job && (
-            <div className="italic" style={{ color: 'var(--text-tertiary)' }}>Starting…</div>
-          )}
-          {error && (
-            <div className="flex items-center gap-1 mt-2" style={{ color: 'var(--red)' }}>
-              <AlertTriangle size={12} /> {error}
-            </div>
-          )}
-        </div>
-
-        {job?.status === 'done' && job.result && (
-          <BulkApprovePanel job={job} onClose={onClose} />
+        {run?.status === 'running' && (
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <Loader2 size={12} className="animate-spin" /> Generating…
+          </div>
+        )}
+        {run?.error && (
+          <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--red)' }}>
+            <AlertTriangle size={12} /> {run.error}
+          </div>
+        )}
+        {error && (
+          <div className="flex items-center gap-1 mt-2 text-xs" style={{ color: 'var(--red)' }}>
+            <AlertTriangle size={12} /> {error}
+          </div>
         )}
 
-        {job?.status !== 'done' && (
+        {run?.status === 'complete' && <BulkApprovePanel runId={runId} onClose={onClose} />}
+
+        {!isTerminal && (
           <div
             className="mt-4 pt-3 flex justify-end"
             style={{ borderTop: '1px solid var(--separator)' }}
@@ -259,7 +261,21 @@ function GenerateProgressModal({
               className="px-3 py-1.5 rounded-lg text-xs"
               style={{ color: 'var(--text-secondary)' }}
             >
-              {job?.status === 'failed' ? 'Close' : 'Run in background'}
+              Run in background
+            </button>
+          </div>
+        )}
+        {run?.status === 'failed' && (
+          <div
+            className="mt-4 pt-3 flex justify-end"
+            style={{ borderTop: '1px solid var(--separator)' }}
+          >
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg text-xs"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Close
             </button>
           </div>
         )}
@@ -269,17 +285,57 @@ function GenerateProgressModal({
 }
 
 /**
- * Bulk-approve panel — shown when the orchestrator job completes.
- * Lists every accepted atom with a checkbox (default checked) so admin
- * can deselect any they want to review individually before activation.
- * One click activates all checked atoms via the bulk-activate endpoint.
+ * Bulk-approve panel — shown when the run completes. Fetches what the
+ * run generated via GET /api/admin/runs/:id/atoms (added alongside this
+ * migration — generation_run_id was write-only before), then lets admin
+ * deselect any atom before activating the rest via the unchanged
+ * bulk-activate endpoint.
  */
-function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void }) {
-  const accepted = job.result?.atoms ?? [];
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(accepted.map((a) => a.atom_id)));
+function BulkApprovePanel({ runId, onClose }: { runId: string; onClose: () => void }) {
+  const [accepted, setAccepted] = useState<RunAtomVersion[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState<{ activated: number; failed: number } | null>(null);
   const [hoveredAtomId, setHoveredAtomId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getRunAtoms(runId)
+      .then(({ atoms }) => {
+        setAccepted(atoms);
+        setSelected(new Set(atoms.map((a) => a.atom_id)));
+      })
+      .catch((e: any) => setLoadError(e.message));
+  }, [runId]);
+
+  if (loadError) {
+    return (
+      <div
+        className="mt-4 pt-3 flex items-center justify-between"
+        style={{ borderTop: '1px solid var(--separator)' }}
+      >
+        <span className="text-xs" style={{ color: 'var(--red)' }}>Failed to load generated atoms: {loadError}</span>
+        <button
+          onClick={onClose}
+          className="px-3 py-1.5 rounded-lg text-xs"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
+
+  if (accepted === null) {
+    return (
+      <div
+        className="mt-4 pt-3 flex items-center gap-1.5 text-xs"
+        style={{ borderTop: '1px solid var(--separator)', color: 'var(--text-tertiary)' }}
+      >
+        <Loader2 size={12} className="animate-spin" /> Loading generated atoms…
+      </div>
+    );
+  }
 
   if (accepted.length === 0) {
     return (
@@ -356,9 +412,10 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
       </div>
 
       <div className="max-h-40 overflow-y-auto space-y-1 mb-3 text-xs">
-        {accepted.map((a: any) => {
+        {accepted.map((a) => {
           const checked = selected.has(a.atom_id);
-          const score = a.meta?.llm_judge_score;
+          const score = a.generation_meta?.llm_judge_score;
+          const atomType = a.atom_id.split('.').slice(1).join('.');
           return (
             <label
               key={a.atom_id}
@@ -376,7 +433,7 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
                 style={{ accentColor: 'var(--indigo)' }}
               />
               <span className="font-mono text-[10px] w-20 truncate" style={{ color: 'var(--text-tertiary)' }}>
-                {a.atom_type}
+                {atomType}
               </span>
               <span className="flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>{a.atom_id}</span>
               {score != null && (
@@ -425,48 +482,6 @@ function BulkApprovePanel({ job, onClose }: { job: JobState; onClose: () => void
           {submitting ? 'Activating…' : outcome?.activated === selected.size ? 'Activated' : `Activate ${selected.size}`}
         </button>
       </div>
-    </div>
-  );
-}
-
-function EventRow({ event }: { event: ProgressEvent }) {
-  const Icon =
-    event.type === 'atom_finished' ? CheckCircle2
-    : event.type === 'atom_rejected' ? XCircle
-    : event.type === 'atom_started' ? Loader2
-    : event.type === 'done' ? Sparkles
-    : null;
-  const toneColor =
-    event.type === 'atom_finished' || event.type === 'done'
-      ? 'var(--green-ink)'
-      : event.type === 'atom_rejected'
-      ? 'var(--red)'
-      : 'var(--text-tertiary)';
-  if (event.type === 'start') return null;
-  if (event.type === 'done') {
-    return (
-      <div className="flex items-center gap-1.5" style={{ color: toneColor }}>
-        <Sparkles size={12} />
-        <span>Done: {event.total_cost_usd ? `$${event.total_cost_usd.toFixed(3)} spent` : ''}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1.5" style={{ color: toneColor }}>
-      {Icon && <Icon size={12} className={event.type === 'atom_started' ? 'animate-spin' : ''} />}
-      <span className="font-mono text-[10px] w-8 text-right" style={{ color: 'var(--text-tertiary)' }}>
-        {event.atom_type?.slice(0, 7)}
-      </span>
-      <span className="flex-1 truncate">
-        {event.type === 'atom_started' && (event.sources?.length ? `via ${event.sources.join('+')}` : 'starting…')}
-        {event.type === 'atom_finished' && (
-          <>
-            via {event.sources?.join('+') ?? 'llm'}
-            {event.judge_score != null && ` · judge ${event.judge_score.toFixed(1)}/10`}
-          </>
-        )}
-        {event.type === 'atom_rejected' && `rejected: ${event.reason ?? ''}`}
-      </span>
     </div>
   );
 }
@@ -732,7 +747,7 @@ export default function ConceptOrchestratorPage() {
   const [rows, setRows] = useState<QueueRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeJob, setActiveJob] = useState<{ id: string; label: string } | null>(null);
+  const [activeRun, setActiveRun] = useState<{ id: string; label: string } | null>(null);
   const [diffAtomId, setDiffAtomId] = useState<string | null>(null);
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
@@ -761,22 +776,30 @@ export default function ConceptOrchestratorPage() {
 
   const startGenerate = useCallback(async (row: QueueRow) => {
     try {
-      const r = await fetch('/api/admin/concept-orchestrator/generate', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          concept_id: row.concept_id,
-          topic_family: row.topic_family,
-        }),
+      // Migrated off POST /api/admin/concept-orchestrator/generate onto a
+      // real GenerationRun — see run-dispatcher.ts's dispatchAtomMode,
+      // which now does exactly what the deprecated in-memory route did
+      // (generateConcept() per concept, dry_run:false by default) but
+      // through the same tracked/resumable path every other admin-launched
+      // run uses. auto_experiment:false — this is a one-off "fill in
+      // missing content" click, not a deliberate A/B launch, so it
+      // shouldn't spawn an experiments row the operator never asked for.
+      const { run } = await createRun({
+        exam_pack_id: EXAM_PACK_ID,
+        auto_experiment: false,
+        config: {
+          target: { concept_ids: [row.concept_id] },
+          pipeline: {},
+          verification: { tier_ceiling: 'wolfram' },
+          quota: {
+            count: row.atoms_to_generate || DEFAULT_ATOM_COUNT,
+            max_cost_usd: Math.max(row.estimated_cost_usd * 2, 1),
+          },
+        },
       });
-      if (!r.ok) {
-        setError(`Generate failed: ${r.status}`);
-        return;
-      }
-      const j = await r.json();
-      if (j.job_id) setActiveJob({ id: j.job_id, label: row.label });
+      setActiveRun({ id: run.id, label: row.label });
     } catch (e: any) {
-      setError(e.message);
+      setError(`Generate failed: ${e.message}`);
     }
   }, []);
 
@@ -945,11 +968,11 @@ export default function ConceptOrchestratorPage() {
         </table>
       </div>
 
-      {activeJob && (
+      {activeRun && (
         <GenerateProgressModal
-          jobId={activeJob.id}
-          conceptLabel={activeJob.label}
-          onClose={() => setActiveJob(null)}
+          runId={activeRun.id}
+          conceptLabel={activeRun.label}
+          onClose={() => setActiveRun(null)}
           onDone={() => onGenerateDone()}
         />
       )}

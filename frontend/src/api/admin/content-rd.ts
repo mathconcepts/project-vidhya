@@ -61,6 +61,11 @@ export interface CurriculumUnitSpec {
 }
 
 export interface GenerationRunConfig {
+  /** Preview mode (atom-mode dispatch only) — real LLM call, nothing
+   *  persisted to atom_versions. Not the same as the dry-run cost
+   *  estimate (dryRun() below) — see the backend's GenerationRunConfig
+   *  doc comment. */
+  preview?: boolean;
   target: {
     topic_id?: string;
     concept_ids?: string[];
@@ -239,6 +244,33 @@ export async function listRuns(filter: {
   if (filter.limit) qs.set('limit', String(filter.limit));
   const path = `/api/admin/runs${qs.toString() ? `?${qs}` : ''}`;
   return jsonOrThrow(await authFetch(path));
+}
+
+export async function getRun(id: string): Promise<{ run: GenerationRunRow }> {
+  return jsonOrThrow(await authFetch(`/api/admin/runs/${encodeURIComponent(id)}`));
+}
+
+export interface RunAtomVersion {
+  atom_id: string;
+  version_n: number;
+  content: string;
+  generation_meta: {
+    llm_judge_score?: number;
+    auto_rejected?: { score: number; reason: string };
+    [key: string]: unknown;
+  };
+  generated_at: string;
+  active: boolean;
+  improvement_reason: string | null;
+}
+
+/**
+ * Atoms produced by one run (atom-mode only). See the backend route's
+ * doc comment (admin-runs-routes.ts) — generation_run_id was write-only
+ * before this endpoint existed.
+ */
+export async function getRunAtoms(id: string): Promise<{ atoms: RunAtomVersion[]; count: number }> {
+  return jsonOrThrow(await authFetch(`/api/admin/runs/${encodeURIComponent(id)}/atoms`));
 }
 
 export async function dryRun(input: {

@@ -176,6 +176,22 @@ describe('dispatchRun · atom mode', () => {
     expect(mockMarkRunComplete).not.toHaveBeenCalled();
   });
 
+  it('threads config.preview into generateConcept as dry_run', async () => {
+    const run = baseRun({
+      config: baseConfig({ target: { concept_ids: ['derivatives-basic'] }, preview: true }),
+    });
+    mockGetRun.mockResolvedValue(run);
+    mockGenerateConcept.mockResolvedValue(draft(2, 0.02));
+
+    await dispatchRun('run_1');
+
+    expect(mockGenerateConcept).toHaveBeenCalledWith(expect.objectContaining({ dry_run: true }));
+    // Preview runs still track cost/artifacts and complete normally —
+    // only atom_versions persistence is skipped (inside generateConcept).
+    expect(mockIncrementRunArtifacts).toHaveBeenCalledWith('run_1', 2);
+    expect(mockMarkRunComplete).toHaveBeenCalledWith('run_1', 0.02);
+  });
+
   it('marks the run failed when generateConcept throws', async () => {
     const run = baseRun({ config: baseConfig({ target: { concept_ids: ['a'] } }) });
     mockGetRun.mockResolvedValue(run);

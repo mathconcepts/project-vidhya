@@ -112,6 +112,31 @@ export async function listVersions(atom_id: string): Promise<AtomVersion[]> {
   }
 }
 
+/**
+ * List every atom_versions row stamped with a given generation_run_id.
+ *
+ * generation_run_id has been a write-only column since v4.26.0 — appendVersion()
+ * stamps it, but nothing read it back until this function. Added for the
+ * concept-orchestrator → generation_runs migration: the admin UI's
+ * bulk-approve panel needs "which atoms did this run just produce" and
+ * there was no query path for that at all (GET .../atoms/:atom_id/versions
+ * is per-atom, not per-run).
+ */
+export async function listVersionsByRunId(generation_run_id: string): Promise<AtomVersion[]> {
+  const pool = getPool();
+  if (!pool) return [];
+  try {
+    const r = await pool.query(
+      'SELECT atom_id, version_n, content, generation_meta, generated_at, active, improvement_reason FROM atom_versions WHERE generation_run_id = $1 ORDER BY generated_at ASC',
+      [generation_run_id],
+    );
+    return r.rows.map(mapRow);
+  } catch (err) {
+    console.warn(`[atom-versions] listVersionsByRunId failed for ${generation_run_id}: ${(err as Error).message}`);
+    return [];
+  }
+}
+
 export async function getActiveVersion(atom_id: string): Promise<AtomVersion | null> {
   const pool = getPool();
   if (!pool) return null;

@@ -83,6 +83,22 @@ export interface GenerationRunRow {
  * tier, $ cap) is captured here so the experiment is reproducible.
  */
 export interface GenerationRunConfig {
+  /**
+   * When true, atom-mode dispatch (run-dispatcher.ts's dispatchAtomMode)
+   * threads dry_run:true into every generateConcept() call: a real LLM
+   * call still happens (content is generated and returned in the run's
+   * artifacts_count/cost_usd), but nothing is written to atom_versions —
+   * the concept-orchestrator's content-preview mode, now reachable
+   * through a real GenerationRun instead of the deprecated in-memory
+   * POST /api/admin/concept-orchestrator/generate route.
+   *
+   * Named `preview`, not `dry_run`, to avoid colliding with
+   * POST /api/admin/runs/dry-run — that endpoint is a pure cost/duration
+   * ESTIMATE with zero LLM calls (src/generation/dry-run.ts), a different
+   * thing entirely. Unit-mode dispatch (curriculum_unit_specs) does not
+   * yet honor this flag — see dispatchUnitMode's docblock.
+   */
+  preview?: boolean;
   target: {
     topic_id?: string;
     concept_ids?: string[];

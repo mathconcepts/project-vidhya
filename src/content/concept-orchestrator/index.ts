@@ -31,7 +31,7 @@ export type { JudgeScore } from './llm-judge';
 export { compareMathAtoms, requiresConsensus } from './multi-llm-consensus';
 export type { ConsensusResult } from './multi-llm-consensus';
 
-export { appendVersion, activate, listVersions, getActiveVersion } from './atom-versions';
+export { appendVersion, activate, listVersions, getActiveVersion, listVersionsByRunId } from './atom-versions';
 export type { AtomVersion } from './atom-versions';
 
 export {

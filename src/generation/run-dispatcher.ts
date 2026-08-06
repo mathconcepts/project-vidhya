@@ -22,6 +22,12 @@
  * this is the piece that makes the dropdown actually drive which
  * provider generates content.
  *
+ * config.preview (atom mode only): threads dry_run into generateConcept()
+ * so admin-launched runs can preview content (real LLM call, nothing
+ * persisted to atom_versions) — see GenerationRunConfig.preview's doc
+ * comment for why this isn't named dry_run at the config level.
+ *
+
  * NOT the same lane as src/generation/batch/poller.ts, which drives a
  * separate Gemini-batch-API pipeline keyed off generation_runs.batch_state.
  * This dispatcher only touches rows where batch_state is null (i.e. runs
@@ -89,6 +95,12 @@ export async function dispatchRun(runId: string): Promise<void> {
 // ============================================================================
 
 async function dispatchUnitMode(run: GenerationRunRow): Promise<{ cost_usd: number }> {
+  // NOTE: config.preview is NOT threaded through here yet — unit mode's
+  // own dry_run context field (curriculum-unit-orchestrator.ts) exists
+  // but generateUnitsForRun() never receives it from this call site. Out
+  // of scope for the concept-orchestrator migration (concept-orchestrator
+  // only ever dispatches atom mode); flagged as follow-up if unit-mode
+  // preview is wanted later.
   const specs = run.config.target.curriculum_unit_specs ?? [];
   const meter = new CostMeter({ max_cost_usd: run.config.quota.max_cost_usd });
 
@@ -140,7 +152,7 @@ async function dispatchAtomMode(run: GenerationRunRow): Promise<{ cost_usd: numb
     const draft = await generateConcept({
       concept_id: conceptId,
       topic_family: topicFamily,
-      dry_run: false,
+      dry_run: run.config.preview ?? false,
       model_id: modelId,
       generation_run_id: run.id,
       // Deliberately NOT passing quota.max_cost_usd as cost_cap_usd here:

@@ -157,6 +157,7 @@ function parseRunConfig(raw: unknown): GenerationRunConfig | string {
   }
 
   return {
+    preview: typeof c.preview === 'boolean' ? c.preview : undefined,
     target: {
       topic_id: typeof target.topic_id === 'string' ? target.topic_id : undefined,
       concept_ids: Array.isArray(target.concept_ids)
@@ -257,6 +258,33 @@ async function handleGet(req: ParsedRequest, res: ServerResponse): Promise<void>
     return;
   }
   sendJSON(res, { run });
+}
+
+/**
+ * GET /api/admin/runs/:id/atoms
+ *
+ * Atom-mode runs only. Lists the atom_versions rows this run produced,
+ * via atom-versions.ts's listVersionsByRunId() — added alongside this
+ * route since generation_run_id was write-only before (appendVersion()
+ * stamped it; nothing read it back). Powers the concept-orchestrator
+ * migration's bulk-approve UI: "here's what this run generated, pick
+ * which to activate."
+ *
+ * Unit-mode runs (curriculum_unit_specs) produce atoms via a different
+ * write path (insertStubAtomVersion in curriculum-unit-repo.ts, which
+ * also stamps generation_run_id) — this route works for those too, but
+ * nothing in the admin UI calls it that way today.
+ */
+async function handleRunAtoms(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!(await checkAdminAuth(req, res))) return;
+  if (!requireDb(res)) return;
+
+  const id = req.params.id;
+  if (!isString(id)) return badRequest(res, 'run id required');
+
+  const { listVersionsByRunId } = await import('../content/concept-orchestrator');
+  const atoms = await listVersionsByRunId(id);
+  sendJSON(res, { atoms, count: atoms.length });
 }
 
 async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<void> {
@@ -432,6 +460,7 @@ export const adminRunsRoutes: RouteDefinition[] = [
   // Note: literal paths come BEFORE :id matcher to avoid param capture.
   { method: 'POST', path: '/api/admin/runs/dry-run', handler: handleDryRun },
   { method: 'GET', path: '/api/admin/runs/last-config', handler: handleLastConfig },
+  { method: 'GET', path: '/api/admin/runs/:id/atoms', handler: handleRunAtoms },
   { method: 'GET', path: '/api/admin/runs/:id', handler: handleGet },
   { method: 'POST', path: '/api/admin/runs', handler: handleCreate },
   { method: 'PATCH', path: '/api/admin/runs/:id', handler: handleAbort },

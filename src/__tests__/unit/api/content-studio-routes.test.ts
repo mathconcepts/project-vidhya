@@ -10,17 +10,26 @@
  *   - POST /generate validates concept_id (kebab-case), difficulty,
  *     sources_to_try, source_url type
  *   - POST /generate succeeds for admin and persists the draft
+ *   - POST /generate succeeds for owner (role-access contract)
  *   - GET /drafts and GET /drafts?status=draft work and round-trip
  *   - GET /drafts?status=garbage → 400 with helpful message
+ *   - GET /drafts succeeds for owner (role-access contract)
  *   - GET /draft/:id 200 / 404
  *   - PATCH /draft/:id validates editable fields, sets edited_at/by
  *   - PATCH rejects empty edits (400)
+ *   - PATCH returns 404 for unknown draft_id
+ *   - PATCH returns 400 when draft is already approved
  *   - POST /draft/:id/approve promotes to library with EDITED body
  *     and source='user' for non-LLM sourced drafts
  *   - POST /approve fails with 400 on second approve
  *   - POST /reject requires reason; flips status
+ *   - POST /reject returns 400 when draft is already rejected
  *   - Identity overrides — a student-supplied actor in the request
  *     body is ignored; admin's id is used (audit trail integrity)
+ *   - GET /underperforming: auth gate (401/403), validation (400),
+ *     empty-turns result, no-delta exclusion, below-threshold inclusion,
+ *     above-threshold exclusion, below-min_turns exclusion,
+ *     non-library exclusion, worst-first sort
  *
  * What's NOT tested here:
  *   - Auth middleware itself (covered elsewhere)
@@ -30,9 +39,8 @@
  *     setting GEMINI_API_KEY which isn't available in the test env;
  *     the protections were verified by code inspection + the chat-path
  *     tests that exercise the same modules)
- *   - The /underperforming endpoint logic (would need synthetic
- *     teaching turns; deferred — the handler is straightforward read
- *     + filter and was verified live)
+ *   - institution role: makeAuthedReq is typed for the four roles above;
+ *     institution follows the same ADMIN_ROLES set-membership path as owner
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
@@ -553,7 +561,7 @@ describe('content-studio routes — lifecycle', () => {
     expect(a2_snap().json.error).toMatch(/status='approved'/);
   });
 
-  it('POST /reject requires reason; flips status', async () => {
+  it('POST /reject requires reason; flips status — and 400 on double-reject', async () => {
     const gen = await getHandler('POST', '/api/content-studio/generate');
     const { req: gen_req } = await makeAuthedReq('admin', {
       method: 'POST',
@@ -596,5 +604,355 @@ describe('content-studio routes — lifecycle', () => {
     expect(r2_snap().json.status).toBe('rejected');
     expect(r2_snap().json.rejection_reason).toBe('not on-topic for our exam');
     expect(r2_snap().json.resolved_by).toBe(user.id);
+
+    // Double-reject → 400 (covered here to share the already-rejected id)
+    const { req: r3_req } = await makeAuthedReq('admin', {
+      method: 'POST',
+      url: `/api/content-studio/draft/${id}/reject`,
+      params: { id },
+      body: { reason: 'second attempt' },
+    });
+    const { res: r3_res, snapshot: r3_snap } = makeRes();
+    await reject(r3_req, r3_res as any);
+    expect(r3_snap().status).toBe(400);
+    expect(r3_snap().json.error).toMatch(/status='rejected'/);
+  });
+});
+
+// ─── Owner role access ─────────────────────────────────────────────
+
+describe('content-studio routes — owner role access', () => {
+  it('owner can GET /drafts (200)', async () => {
+    const handler = await getHandler('GET', '/api/content-studio/drafts');
+    const { req } = await makeAuthedReq('owner', {
+      method: 'GET',
+      url: '/api/content-studio/drafts',
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    expect(snapshot().status).toBe(200);
+  });
+
+  it('owner can POST /generate (201)', async () => {
+    const handler = await getHandler('POST', '/api/content-studio/generate');
+    const { req } = await makeAuthedReq('owner', {
+      method: 'POST',
+      url: '/api/content-studio/generate',
+      body: {
+        concept_id: 'owner-generated-concept',
+        title: 'Owner Generation Test',
+        difficulty: 'intro',
+        sources_to_try: ['uploads'],
+      },
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    expect(snapshot().status).toBe(201);
+    expect(snapshot().json.status).toBe('draft');
+  });
+});
+
+// ─── Additional edge cases ─────────────────────────────────────────
+
+describe('content-studio routes — additional edge cases', () => {
+  it('PATCH /draft/:id returns 404 for unknown draft_id', async () => {
+    const patch = await getHandler('PATCH', '/api/content-studio/draft/:id');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'PATCH',
+      url: '/api/content-studio/draft/nonexistent-id',
+      params: { id: 'nonexistent-id' },
+      body: { title: 'New title' },
+    });
+    const { res, snapshot } = makeRes();
+    await patch(req, res as any);
+    expect(snapshot().status).toBe(404);
+  });
+
+  it('PATCH /draft/:id returns 400 when draft is already approved', async () => {
+    const gen = await getHandler('POST', '/api/content-studio/generate');
+    const { req: gen_req } = await makeAuthedReq('admin', {
+      method: 'POST',
+      url: '/api/content-studio/generate',
+      body: {
+        concept_id: 'patch-after-approve',
+        title: 'Patch After Approve',
+        difficulty: 'intro',
+        sources_to_try: ['uploads'],
+      },
+    });
+    const { res: gen_res, snapshot: gen_snap } = makeRes();
+    await gen(gen_req, gen_res as any);
+    const id = gen_snap().json.draft_id;
+
+    const approve = await getHandler('POST', '/api/content-studio/draft/:id/approve');
+    const { req: a_req } = await makeAuthedReq('admin', {
+      method: 'POST', url: `/api/content-studio/draft/${id}/approve`, params: { id },
+    });
+    const { res: a_res } = makeRes();
+    await approve(a_req, a_res as any);
+
+    const patch = await getHandler('PATCH', '/api/content-studio/draft/:id');
+    const { req: p_req } = await makeAuthedReq('admin', {
+      method: 'PATCH',
+      url: `/api/content-studio/draft/${id}`,
+      params: { id },
+      body: { title: 'Should not apply' },
+    });
+    const { res: p_res, snapshot: p_snap } = makeRes();
+    await patch(p_req, p_res as any);
+    expect(p_snap().status).toBe(400);
+    expect(p_snap().json.error).toMatch(/status='approved'/);
+  });
+});
+
+// ─── /underperforming endpoint ─────────────────────────────────────
+
+describe('content-studio routes — /underperforming', () => {
+  beforeEach(() => {
+    if (existsSync('.data/teaching-turns.jsonl')) rmSync('.data/teaching-turns.jsonl');
+  });
+
+  it('GET /underperforming rejects unauth (401)', async () => {
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { res, snapshot } = makeRes();
+    await handler(makeReq({ method: 'GET', url: '/api/content-studio/underperforming' }), res as any);
+    expect(snapshot().status).toBe(401);
+  });
+
+  it('GET /underperforming rejects student (403)', async () => {
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('student', {
+      method: 'GET', url: '/api/content-studio/underperforming',
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    expect(snapshot().status).toBe(403);
+  });
+
+  it('GET /underperforming rejects min_turns=0 (400)', async () => {
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?min_turns=0',
+      query: new URLSearchParams('min_turns=0'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    expect(snapshot().status).toBe(400);
+    expect(snapshot().json.error).toMatch(/min_turns/);
+  });
+
+  it('GET /underperforming rejects non-numeric threshold_pct (400)', async () => {
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?threshold_pct=banana',
+      query: new URLSearchParams('threshold_pct=banana'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    expect(snapshot().status).toBe(400);
+    expect(snapshot().json.error).toMatch(/threshold_pct/);
+  });
+
+  it('returns empty result when no teaching turns exist', async () => {
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET', url: '/api/content-studio/underperforming',
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    const s = snapshot();
+    expect(s.status).toBe(200);
+    expect(s.json.sample_size).toBe(0);
+    expect(s.json.library_turn_count).toBe(0);
+    expect(s.json.underperformer_count).toBe(0);
+    expect(s.json.underperformers).toEqual([]);
+  });
+
+  it('excludes concepts whose closed turns have no mastery_delta', async () => {
+    const { openTurn, closeTurn } = await import('../../../modules/teaching');
+    for (let i = 0; i < 5; i++) {
+      const tid = openTurn({
+        student_id: `nodelta-student-${i}`,
+        intent: 'explain-concept',
+        delivery_channel: 'web',
+        routed_source: 'library',
+        generated_content: { type: 'lesson', summary: 'No delta' },
+        pre_state: { concept_id: 'no-delta-concept', topic: 'math', mastery_before: 0.5, attempts_so_far: i, zpd_concept: null },
+      });
+      closeTurn({ turn_id: tid, duration_ms: 100 }); // no mastery_delta
+    }
+
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?min_turns=5',
+      query: new URLSearchParams('min_turns=5'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    const s = snapshot();
+    expect(s.status).toBe(200);
+    expect(s.json.library_turn_count).toBe(5);
+    expect(s.json.underperformer_count).toBe(0);
+  });
+
+  it('includes concepts with avg delta below threshold and enough turns', async () => {
+    const { openTurn, closeTurn } = await import('../../../modules/teaching');
+    for (let i = 0; i < 5; i++) {
+      const tid = openTurn({
+        student_id: `bad-student-${i}`,
+        intent: 'explain-concept',
+        delivery_channel: 'web',
+        routed_source: 'library',
+        generated_content: { type: 'lesson', summary: 'Bad concept' },
+        pre_state: { concept_id: 'bad-concept', topic: 'math', mastery_before: 0.5, attempts_so_far: i, zpd_concept: null },
+      });
+      closeTurn({ turn_id: tid, duration_ms: 100, mastery_delta: { before: 0.5, after: 0.4, delta_pct: -10 } });
+    }
+
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?min_turns=5',
+      query: new URLSearchParams('min_turns=5'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    const s = snapshot();
+    expect(s.status).toBe(200);
+    expect(s.json.underperformer_count).toBe(1);
+    expect(s.json.underperformers[0].concept_id).toBe('bad-concept');
+    expect(s.json.underperformers[0].avg_mastery_delta_pct).toBe(-10);
+    expect(s.json.underperformers[0].turn_count).toBe(5);
+  });
+
+  it('excludes concepts whose avg delta is above the threshold', async () => {
+    const { openTurn, closeTurn } = await import('../../../modules/teaching');
+    for (let i = 0; i < 5; i++) {
+      const tid = openTurn({
+        student_id: `good-student-${i}`,
+        intent: 'explain-concept',
+        delivery_channel: 'web',
+        routed_source: 'library',
+        generated_content: { type: 'lesson', summary: 'Good concept' },
+        pre_state: { concept_id: 'good-concept', topic: 'math', mastery_before: 0.4, attempts_so_far: i, zpd_concept: null },
+      });
+      closeTurn({ turn_id: tid, duration_ms: 100, mastery_delta: { before: 0.4, after: 0.5, delta_pct: 5 } });
+    }
+
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?min_turns=5',
+      query: new URLSearchParams('min_turns=5'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    const s = snapshot();
+    expect(s.status).toBe(200);
+    expect(s.json.underperformer_count).toBe(0);
+  });
+
+  it('excludes concepts with fewer turns than min_turns', async () => {
+    const { openTurn, closeTurn } = await import('../../../modules/teaching');
+    for (let i = 0; i < 3; i++) {
+      const tid = openTurn({
+        student_id: `few-student-${i}`,
+        intent: 'explain-concept',
+        delivery_channel: 'web',
+        routed_source: 'library',
+        generated_content: { type: 'lesson', summary: 'Too few turns' },
+        pre_state: { concept_id: 'few-turns-concept', topic: 'math', mastery_before: 0.5, attempts_so_far: i, zpd_concept: null },
+      });
+      closeTurn({ turn_id: tid, duration_ms: 100, mastery_delta: { before: 0.5, after: 0.3, delta_pct: -20 } });
+    }
+
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?min_turns=5',
+      query: new URLSearchParams('min_turns=5'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    const s = snapshot();
+    expect(s.status).toBe(200);
+    expect(s.json.underperformer_count).toBe(0);
+  });
+
+  it('ignores non-library turns (routed_source !== "library")', async () => {
+    const { openTurn, closeTurn } = await import('../../../modules/teaching');
+    for (let i = 0; i < 5; i++) {
+      const tid = openTurn({
+        student_id: `llm-student-${i}`,
+        intent: 'explain-concept',
+        delivery_channel: 'web',
+        routed_source: 'llm',
+        generated_content: { type: 'lesson', summary: 'LLM sourced' },
+        pre_state: { concept_id: 'llm-concept', topic: 'math', mastery_before: 0.5, attempts_so_far: i, zpd_concept: null },
+      });
+      closeTurn({ turn_id: tid, duration_ms: 100, mastery_delta: { before: 0.5, after: 0.3, delta_pct: -20 } });
+    }
+
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?min_turns=5',
+      query: new URLSearchParams('min_turns=5'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    const s = snapshot();
+    expect(s.status).toBe(200);
+    expect(s.json.library_turn_count).toBe(0);
+    expect(s.json.underperformer_count).toBe(0);
+  });
+
+  it('sorts underperformers worst-first (lowest avg_mastery_delta_pct first)', async () => {
+    const { openTurn, closeTurn } = await import('../../../modules/teaching');
+
+    // concept-a: avg -5 (less bad)
+    for (let i = 0; i < 5; i++) {
+      const tid = openTurn({
+        student_id: `sort-a-${i}`,
+        intent: 'explain-concept',
+        delivery_channel: 'web',
+        routed_source: 'library',
+        generated_content: { type: 'lesson', summary: 'Concept A' },
+        pre_state: { concept_id: 'sort-concept-a', topic: 'math', mastery_before: 0.5, attempts_so_far: i, zpd_concept: null },
+      });
+      closeTurn({ turn_id: tid, duration_ms: 100, mastery_delta: { before: 0.5, after: 0.45, delta_pct: -5 } });
+    }
+
+    // concept-b: avg -15 (worse → should be first)
+    for (let i = 0; i < 5; i++) {
+      const tid = openTurn({
+        student_id: `sort-b-${i}`,
+        intent: 'explain-concept',
+        delivery_channel: 'web',
+        routed_source: 'library',
+        generated_content: { type: 'lesson', summary: 'Concept B' },
+        pre_state: { concept_id: 'sort-concept-b', topic: 'math', mastery_before: 0.5, attempts_so_far: i, zpd_concept: null },
+      });
+      closeTurn({ turn_id: tid, duration_ms: 100, mastery_delta: { before: 0.5, after: 0.35, delta_pct: -15 } });
+    }
+
+    const handler = await getHandler('GET', '/api/content-studio/underperforming');
+    const { req } = await makeAuthedReq('admin', {
+      method: 'GET',
+      url: '/api/content-studio/underperforming?min_turns=5',
+      query: new URLSearchParams('min_turns=5'),
+    });
+    const { res, snapshot } = makeRes();
+    await handler(req, res as any);
+    const s = snapshot();
+    expect(s.status).toBe(200);
+    expect(s.json.underperformer_count).toBe(2);
+    expect(s.json.underperformers[0].concept_id).toBe('sort-concept-b');
+    expect(s.json.underperformers[0].avg_mastery_delta_pct).toBe(-15);
+    expect(s.json.underperformers[1].concept_id).toBe('sort-concept-a');
+    expect(s.json.underperformers[1].avg_mastery_delta_pct).toBe(-5);
   });
 });

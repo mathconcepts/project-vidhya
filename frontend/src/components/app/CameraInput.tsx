@@ -15,6 +15,7 @@ interface CameraInputProps {
 
 const MAX_SIZE = 1024;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const isTouchDevice = typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
 
 function resizeImage(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
@@ -57,7 +58,6 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
   const galleryRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const isTouchDevice = typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
 
   const handleFile = useCallback(async (file: File) => {
     setError(null);

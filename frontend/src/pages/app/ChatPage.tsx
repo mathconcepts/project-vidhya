@@ -269,7 +269,7 @@ export default function ChatPage() {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: isDemoMode() ? 'calc(100dvh - 284px)' : 'calc(100dvh - 128px)',
+        height: isDemoMode() ? 'calc(100dvh - 284px)' : 'calc(100dvh - 128px)', // demo: 50px nav + 220px banner padding + 14px buffer
         margin: '0 -20px',
       }}
     >

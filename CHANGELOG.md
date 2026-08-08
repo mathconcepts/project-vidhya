@@ -4,6 +4,24 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.27.1] — 2026-08-08 — Bug fixes: exam ID persistence, demo banner height, desktop camera label + CameraInput test coverage
+
+**Operator action:** none.
+
+### Fixed
+
+- **Exam profile switch now reflects immediately in Today's Plan.** Switching from BITSAT to Engineering Mathematics (or any exam) now correctly translates the curriculum ID (`gate-ma`, `jee-main`) to the adapter ID at all 4 plan-request call sites in `PlannedSessionPage`. Previously the plan API call used the raw curriculum ID which the adapter didn't recognise, so the plan continued to show BITSAT topics. (`PlannedSessionPage.tsx`)
+
+- **Demo banner no longer obstructs the chat container.** The AI Tutor chat area (`ChatPage`) now uses `calc(100dvh - 284px)` in demo mode (accounting for 50px nav + 220px banner padding + 14px buffer), vs `calc(100dvh - 128px)` in normal mode. Previously the banner overlapped the bottom of the chat scroll area. (`ChatPage.tsx`)
+
+- **Camera button on MacBook now opens a file picker, not the camera.** `CameraInput` detects non-touch devices (`isTouchDevice = navigator.maxTouchPoints > 0 || 'ontouchstart' in window`) and shows an Upload icon + "Upload Image" label instead of the camera icon; the redundant "From Gallery" button is hidden on desktop. Touch devices are unchanged. The detection constant is now module-level (hoisted from inside the component) for stable evaluation. (`CameraInput.tsx`)
+
+### Added
+
+- **10 CameraInput tests** covering: file-size error (>5 MB), non-image file type rejection, `onCapture` not called on invalid file, preview image rendering, clear button, input hidden during preview, and touch-device rendering paths (camera button, "Take Photo" label, "From Gallery" button, compact mode hiding labels). (`CameraInput.test.tsx`)
+
+- **`dev.sh`** — single-file local bringup at repo root: installs deps, generates `JWT_SECRET`, seeds demo users, starts backend and frontend concurrently with a clean Ctrl-C trap.
+
 ## [4.27.0] — 2026-08-03 — Multi-provider LLM + M1 Docker setup
 
 **Operator action:** none for existing deploys. Local Docker users: `cp .env.example .env`, add your `OPENROUTER_API_KEY` (or any LLM key), then `docker compose up --build`. No migration, no code change needed for Render deploys.

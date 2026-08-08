@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, Lock, BookOpen, CheckCircle2, ArrowRight, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import {
   listExamPacks,
   CANONICAL_PACKS,
@@ -23,7 +24,7 @@ export default function ExamPacksPage() {
   const [operatorPacks, setOperatorPacks] = useState<ExamPackRow[] | null>(null);
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     listExamPacks().then((packs) => {
       const canonicalIds = new Set(CANONICAL_PACKS.map((p) => p.id));
       setOperatorPacks(packs.filter((p) => !canonicalIds.has(p.id)));
@@ -37,7 +38,7 @@ export default function ExamPacksPage() {
       </div>
     );
   }
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
         <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />

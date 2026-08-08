@@ -16,6 +16,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, Lock, Sparkles, ChevronRight, PlayCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import {
   listScenarios,
   readScenario,
@@ -39,14 +40,14 @@ export default function ScenariosPage() {
   const [seedErr, setSeedErr] = useState<string | null>(null);
 
   const loadRuns = useCallback(() => {
-    if (!user || user.role !== 'admin') return;
+    if (!user || !isAdminRole(user.role)) return;
     listScenarios()
       .then(setRuns)
       .catch((e) => setLoadErr((e as Error).message));
   }, [user]);
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     loadRuns();
   }, [authLoading, user, loadRuns]);
 
@@ -86,7 +87,7 @@ export default function ScenariosPage() {
       </div>
     );
   }
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
         <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />

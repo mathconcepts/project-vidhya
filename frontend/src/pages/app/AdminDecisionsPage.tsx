@@ -13,6 +13,7 @@ import {
   Loader2, Lock, Filter, BookOpen, FileText, Sparkles, Rocket, ScrollText,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import { listDecisions, type DecisionRow, type DecisionKind } from '@/api/admin/decisions';
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
 
@@ -32,7 +33,7 @@ export default function AdminDecisionsPage() {
   const [activeKinds, setActiveKinds] = useState<Set<DecisionKind>>(new Set(ALL_KINDS));
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     listDecisions(100).then(setDecisions).catch((e) => setError((e as Error).message));
   }, [authLoading, user]);
 
@@ -59,7 +60,7 @@ export default function AdminDecisionsPage() {
       </div>
     );
   }
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
         <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />

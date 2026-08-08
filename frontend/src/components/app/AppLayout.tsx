@@ -310,7 +310,7 @@ export function AppLayout() {
         style={{
           minHeight: '100dvh',
           paddingTop: calmMode ? 8 : 50,
-          paddingBottom: calmMode ? 8 : 'calc(64px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: calmMode ? 8 : isDemoMode() ? 'calc(220px + env(safe-area-inset-bottom, 0px))' : 'calc(64px + env(safe-area-inset-bottom, 0px))',
         }}
       >
         <div

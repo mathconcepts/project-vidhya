@@ -17,6 +17,7 @@ import {
   Loader2, Lock, RefreshCw, AlertTriangle, Users, TrendingUp, TrendingDown, RotateCw, Frown,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import {
   getCohortAttention,
   type CohortAttentionResponse, type AttentionCard, type AttentionReason,
@@ -43,7 +44,7 @@ export default function AdminCohortPage() {
   };
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     load();
   }, [authLoading, user]);
 
@@ -54,7 +55,7 @@ export default function AdminCohortPage() {
       </div>
     );
   }
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ maxWidth: 448, margin: '80px auto', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
         <Lock size={28} style={{ margin: '0 auto 12px', color: 'var(--text-tertiary)' }} />

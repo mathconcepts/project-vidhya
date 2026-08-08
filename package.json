@@ -57,6 +57,7 @@
     "demo:seed-media": "tsx demo/seed-media.ts",
     "demo:generate-audio": "tsx demo/generate-demo-audio.ts",
     "demo:reset": "tsx demo/reset.ts",
+    "local": "bash scripts/local-install.sh",
     "demo:start": "bash demo/start.sh",
     "demo:verify": "tsx demo/verify.ts",
     "demo:scenario": "tsx scripts/run-scenario.ts",

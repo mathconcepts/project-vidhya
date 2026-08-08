@@ -18,7 +18,7 @@ export JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 16)}"
 
 # ── seed demo users (idempotent) ─────────────────────────────────────────────
 echo "→ seeding demo users..."
-npx tsx demo/seed.ts 2>&1 | tail -5
+npx tsx demo/seed.ts || { echo ""; echo "  seed.ts failed — run: npx tsx demo/seed.ts for full output"; exit 1; }
 
 # ── launch ──────────────────────────────────────────────────────────────────
 echo ""

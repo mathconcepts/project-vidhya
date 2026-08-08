@@ -128,7 +128,7 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
 
       <div style={{ display: 'flex', gap: compact ? 4 : 12 }}>
         <button
-          onClick={() => cameraRef.current?.click()}
+          onClick={() => isTouchDevice ? cameraRef.current?.click() : galleryRef.current?.click()}
           disabled={loading}
           style={compact ? {
             padding: 10,

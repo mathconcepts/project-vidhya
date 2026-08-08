@@ -288,8 +288,8 @@ export default function PlannedSessionPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(
                   hasMultiple
-                    ? { minutes_available: 15, exams: loadedProfile!.exams.map(ex => ({ exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[ex.exam_id] ?? ex.exam_id, exam_date: ex.exam_date })) }
-                    : { exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[e.exam_id] ?? e.exam_id, exam_date: e.exam_date, minutes_available: 15 }
+                    ? { minutes_available: 15, exams: loadedProfile!.exams.map(ex => ({ exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[ex.exam_id] ?? DEFAULT_EXAM_ID, exam_date: ex.exam_date })) }
+                    : { exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[e.exam_id] ?? DEFAULT_EXAM_ID, exam_date: e.exam_date, minutes_available: 15 }
                 ),
               }
             );
@@ -325,7 +325,7 @@ export default function PlannedSessionPage() {
           body: JSON.stringify({
             minutes_available: minutes,
             exams: profile!.exams.map(e => ({
-              exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[e.exam_id] ?? e.exam_id,
+              exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[e.exam_id] ?? DEFAULT_EXAM_ID,
               exam_date: e.exam_date,
             })),
           }),
@@ -336,7 +336,7 @@ export default function PlannedSessionPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[e.exam_id] ?? e.exam_id,
+            exam_id: ACTIVE_EXAM_TO_ADAPTER_ID[e.exam_id] ?? DEFAULT_EXAM_ID,
             exam_date: e.exam_date,
             minutes_available: minutes,
           }),

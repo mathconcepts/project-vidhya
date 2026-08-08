@@ -203,7 +203,7 @@ export default function ExamStrategyPage() {
             </div>
             <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
               <span style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--indigo-ink)' }}>
-                {scorePlan.daily_hours_needed.toFixed(1)} hrs/day
+                {(scorePlan.daily_hours_needed ?? 0).toFixed(1)} hrs/day
               </span>
               <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>study needed</p>
             </div>

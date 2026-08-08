@@ -297,13 +297,11 @@ export function generateScoreMaximizationPlan(
     const current = mastery[topic] || 0;
     const weight = MARKS_WEIGHTS[topic] || 0.08;
 
-    // Untouched topics (< 30%) need a full foundation push to 65%; higher mastery
-    // topics get the standard +20% stretch target. This keeps daily hours realistic
-    // for brand-new students (who were seeing "0 hrs/day" with the old +20% plan).
-    const rawTarget = current < 0.3
-      ? Math.max(0.65, current + 0.4)
-      : Math.min(0.85, current + 0.2);
-    const target = Math.min(0.85, rawTarget);
+    // Untouched topics (< 30%) get a +40% boost; higher mastery topics get +20%.
+    // Both are capped at 0.85. Using a constant boost (not a floor) avoids a
+    // discontinuous jump in expected_marks_gain around the 30% boundary.
+    const boost = current < 0.3 ? 0.4 : 0.2;
+    const target = Math.min(0.85, current + boost);
     const improvement = target - current;
 
     // Expected marks gain = weight × total_marks × improvement

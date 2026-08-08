@@ -472,19 +472,25 @@ export async function weeklyDigest(sessionId: string) {
   const topStrength = sortedMastery[0];
   const weakestTopic = sortedMastery[sortedMastery.length - 1];
 
-  // Opening tone by motivation
+  // Opening tone — first-week students get a welcome, not "another solid week"
   let opening = '';
-  switch (model.motivation_state) {
-    case 'driven':
-      opening = `You're on fire this week. ${streak}-day streak and climbing.`; break;
-    case 'steady':
-      opening = `Another solid week of progress.`; break;
-    case 'flagging':
-      opening = `Small steps add up. Every problem you attempted this week taught your brain something.`; break;
-    case 'frustrated':
-      opening = `Tough week. Here's something important: struggling is a sign you're growing, not failing.`; break;
-    case 'anxious':
-      opening = `Deep breath. Your progress is real — let's look at the numbers.`; break;
+  if (attempts === 0) {
+    opening = `Welcome. Your journey starts here — every problem you attempt this week builds the foundation.`;
+  } else if (attempts < 5) {
+    opening = `Good start — ${attempts} problem${attempts === 1 ? '' : 's'} in the bank. Consistency from here is what compounds.`;
+  } else {
+    switch (model.motivation_state) {
+      case 'driven':
+        opening = `You're on fire this week. ${streak}-day streak and climbing.`; break;
+      case 'steady':
+        opening = `Solid week. Keep this pace and the score will follow.`; break;
+      case 'flagging':
+        opening = `Small steps add up. Every problem you attempted this week taught your brain something.`; break;
+      case 'frustrated':
+        opening = `Tough week. Here's something important: struggling is a sign you're growing, not failing.`; break;
+      case 'anxious':
+        opening = `Deep breath. Your progress is real — let's look at the numbers.`; break;
+    }
   }
 
   // Predicted score

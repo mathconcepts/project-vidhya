@@ -95,7 +95,7 @@ export default function ExamStrategyPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>Exam Strategy</h1>
-        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>{playbook.exam} — personalized for your profile</p>
+        <p style={{ margin: '4px 0 0', fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>{playbook.exam} — personalized for your profile</p>
       </div>
 
       {/* Score Projections */}
@@ -107,7 +107,7 @@ export default function ExamStrategyPage() {
         ].map(s => (
           <div key={s.label} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
             <CountUp target={s.value} style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: s.color }} />
-            <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>{s.label}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -136,7 +136,7 @@ export default function ExamStrategyPage() {
             onClick={() => setActiveTab(tab.id)}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: '8px 0', borderRadius: 'var(--radius-sm)', fontSize: 11, fontWeight: 'var(--weight-semibold)',
+              padding: '8px 0', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)',
               cursor: 'pointer', border: 'none', transition: 'all 0.15s',
               background: activeTab === tab.id ? 'var(--surface-card)' : 'transparent',
               color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-tertiary)',
@@ -151,7 +151,7 @@ export default function ExamStrategyPage() {
       {/* Playbook Tab */}
       {activeTab === 'playbook' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', padding: '0 4px' }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', padding: '0 4px' }}>
             Attempt topics in this order for maximum marks per minute
           </p>
 
@@ -159,7 +159,7 @@ export default function ExamStrategyPage() {
             const accPct = Math.round(entry.expected_accuracy * 100);
             const timeMins = playbook.time_budget[entry.topic] || 0;
             const accColor = accPct >= 70 ? 'var(--green-ink)' : accPct >= 40 ? 'var(--orange)' : 'var(--red)';
-            const rankBg = i < 3 ? 'rgba(52,199,89,.12)' : i < 6 ? 'rgba(255,159,10,.08)' : 'var(--surface-fill)';
+            const rankBg = i < 3 ? 'var(--green-tint)' : i < 6 ? 'var(--orange-tint)' : 'var(--surface-fill)';
             const rankColor = i < 3 ? 'var(--green-ink)' : i < 6 ? 'var(--orange)' : 'var(--text-tertiary)';
 
             return (
@@ -170,21 +170,21 @@ export default function ExamStrategyPage() {
                 transition={{ delay: i * 0.04 }}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}
               >
-                <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 'var(--weight-bold)', flexShrink: 0, background: rankBg, color: rankColor }}>
+                <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-bold)', flexShrink: 0, background: rankBg, color: rankColor }}>
                   {i + 1}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: '0 0 2px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.label}</p>
-                  <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.reason}</p>
+                  <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.reason}</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, textAlign: 'right' }}>
                   <div>
                     <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', color: accColor }}>{accPct}%</p>
-                    <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>accuracy</p>
+                    <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>accuracy</p>
                   </div>
                   <div>
                     <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-bold)', color: 'var(--text-secondary)' }}>{timeMins}m</p>
-                    <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)' }}>budget</p>
+                    <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>budget</p>
                   </div>
                 </div>
               </motion.div>
@@ -199,22 +199,24 @@ export default function ExamStrategyPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
               <CountUp target={Math.round(scorePlan.total_expected_improvement)} suffix=" marks" style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--green-ink)' }} />
-              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>expected gain</p>
+              <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>expected gain</p>
             </div>
             <div style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', textAlign: 'center' }}>
-              <CountUp target={Math.round(scorePlan.daily_hours_needed * 10) / 10} suffix=" hrs/day" style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--indigo-ink)' }} />
-              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>study needed</p>
+              <span style={{ fontSize: 18, fontWeight: 'var(--weight-bold)', color: 'var(--indigo-ink)' }}>
+                {scorePlan.daily_hours_needed.toFixed(1)} hrs/day
+              </span>
+              <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>study needed</p>
             </div>
           </div>
 
-          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', padding: '0 4px' }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', padding: '0 4px' }}>
             Topics ranked by marks gained per hour of study
           </p>
 
           {scorePlan.allocations.map((alloc) => {
             const currentPct = Math.round(alloc.current_mastery * 100);
             const targetPct = Math.round(alloc.target_mastery * 100);
-            const rankBg = alloc.priority_rank <= 3 ? 'rgba(52,199,89,.12)' : 'var(--surface-fill)';
+            const rankBg = alloc.priority_rank <= 3 ? 'var(--green-tint)' : 'var(--surface-fill)';
             const rankColor = alloc.priority_rank <= 3 ? 'var(--green-ink)' : 'var(--text-tertiary)';
 
             return (
@@ -224,34 +226,34 @@ export default function ExamStrategyPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 20, height: 20, borderRadius: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 'var(--weight-bold)', background: rankBg, color: rankColor }}>
+                    <span style={{ width: 20, height: 20, borderRadius: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-bold)', background: rankBg, color: rankColor }}>
                       {alloc.priority_rank}
                     </span>
                     <span style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--text-secondary)' }}>{alloc.label}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-footnote)' }}>
                     <span style={{ color: 'var(--green-ink)', fontWeight: 'var(--weight-bold)' }}>+{alloc.expected_marks_gain}</span>
                     <span style={{ color: 'var(--text-tertiary)' }}>marks</span>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', width: 32 }}>{currentPct}%</span>
+                  <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', width: 32 }}>{currentPct}%</span>
                   <div style={{ flex: 1, height: 8, borderRadius: 999, background: 'var(--surface-fill)', overflow: 'hidden', position: 'relative' }}>
                     <motion.div
-                      style={{ height: '100%', borderRadius: 999, background: 'rgba(88,86,214,.6)' }}
+                      style={{ height: '100%', borderRadius: 999, background: 'var(--indigo)' }}
                       initial={{ width: 0 }}
                       animate={{ width: `${currentPct}%` }}
                       transition={{ duration: 0.6, ease: 'easeOut' }}
                     />
                     <div
-                      style={{ position: 'absolute', top: 0, height: '100%', borderRight: '2px dashed rgba(52,199,89,.5)', left: `${targetPct}%` }}
+                      style={{ position: 'absolute', top: 0, height: '100%', borderRight: `2px dashed var(--green)`, left: `${targetPct}%` }}
                     />
                   </div>
-                  <span style={{ fontSize: 10, color: 'var(--green-ink)', width: 32 }}>{targetPct}%</span>
+                  <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--green-ink)', width: 32 }}>{targetPct}%</span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-tertiary)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>
                   <span>~{alloc.hours_needed} hours needed</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <ArrowUpRight size={10} style={{ color: 'var(--green-ink)' }} />

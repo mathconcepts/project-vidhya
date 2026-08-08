@@ -140,8 +140,8 @@ export default function TeachingDashboardPage() {
         <div
           className="p-4 flex items-start gap-3"
           style={{
-            background: 'rgba(52,199,89,.08)',
-            border: '1px solid rgba(52,199,89,.25)',
+            background: 'var(--green-tint)',
+            border: 'var(--hairline) solid var(--green)',
             borderRadius: 'var(--radius-sm)',
           }}
         >
@@ -152,8 +152,8 @@ export default function TeachingDashboardPage() {
           </div>
           <button
             onClick={() => { localStorage.setItem('teaching_welcome_dismissed', '1'); setShowTeacherWelcome(false); }}
-            className="shrink-0 p-1"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-xs)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)' }}
+            className="shrink-0"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-xs)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-sans)', minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             aria-label="Dismiss"
           >
             <X size={14} />
@@ -208,7 +208,6 @@ export default function TeachingDashboardPage() {
         <button
           onClick={refresh}
           disabled={loading}
-          className="p-2"
           style={{
             borderRadius: 'var(--radius-xs)',
             background: 'var(--surface-fill)',
@@ -216,6 +215,11 @@ export default function TeachingDashboardPage() {
             color: 'var(--text-secondary)',
             cursor: 'pointer',
             fontFamily: 'var(--font-sans)',
+            minWidth: 44,
+            minHeight: 44,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           aria-label="refresh"
         >
@@ -228,8 +232,8 @@ export default function TeachingDashboardPage() {
           className="p-3"
           style={{
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(255,59,48,.1)',
-            border: '1px solid rgba(255,59,48,.25)',
+            background: 'var(--red-tint)',
+            border: 'var(--hairline) solid var(--red)',
             fontSize: 'var(--text-footnote)',
             color: 'var(--red)',
           }}
@@ -272,8 +276,8 @@ export default function TeachingDashboardPage() {
               className="block p-3"
               style={{
                 borderRadius: 'var(--radius-sm)',
-                background: 'rgba(255,159,10,.1)',
-                border: '1px solid rgba(255,159,10,.3)',
+                background: 'var(--orange-tint)',
+                border: 'var(--hairline) solid var(--orange)',
                 color: 'var(--orange)',
                 textDecoration: 'none',
               }}
@@ -293,8 +297,8 @@ export default function TeachingDashboardPage() {
             className="p-4 space-y-3"
             style={{
               borderRadius: 'var(--radius-md)',
-              background: 'rgba(52,199,89,.06)',
-              border: '1px solid rgba(52,199,89,.2)',
+              background: 'var(--green-tint)',
+              border: 'var(--hairline) solid var(--green)',
             }}
           >
             <div className="flex items-start justify-between gap-3">
@@ -476,7 +480,7 @@ export default function TeachingDashboardPage() {
               <button
                 onClick={postAnnouncement}
                 disabled={!announcementText.trim() || announcementPosting}
-                className="px-3 h-8 inline-flex items-center gap-1.5"
+                className="px-3 h-11 inline-flex items-center gap-1.5"
                 style={{
                   borderRadius: 'var(--radius-xs)',
                   background: 'var(--indigo)',
@@ -516,8 +520,8 @@ export default function TeachingDashboardPage() {
         className="p-3 flex items-start gap-2.5"
         style={{
           borderRadius: 'var(--radius-sm)',
-          background: 'rgba(88,86,214,.06)',
-          border: '1px solid rgba(88,86,214,.2)',
+          background: 'var(--indigo-tint)',
+          border: 'var(--hairline) solid var(--indigo)',
         }}
       >
         <Lightbulb size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--indigo)' }} />
@@ -576,8 +580,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
           <p style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>Teaching brief</p>
           <button
             onClick={onClose}
-            className="p-1"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-sans)' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', borderRadius: 'var(--radius-xs)', fontFamily: 'var(--font-sans)', minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <X size={14} />
           </button>
@@ -614,7 +617,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                     <button
                       key={n}
                       onClick={() => setConfidence(n)}
-                      className="flex-1 h-9"
+                      className="flex-1 h-11"
                       style={{
                         borderRadius: 'var(--radius-xs)',
                         fontSize: 'var(--text-body)',
@@ -623,13 +626,13 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                         fontFamily: 'var(--font-sans)',
                         border: confidence === n
                           ? n <= 2
-                            ? '1px solid rgba(255,159,10,.4)'
-                            : '1px solid rgba(52,199,89,.4)'
+                            ? 'var(--hairline) solid var(--orange)'
+                            : 'var(--hairline) solid var(--green)'
                           : 'var(--hairline) solid var(--separator)',
                         background: confidence === n
                           ? n <= 2
-                            ? 'rgba(255,159,10,.2)'
-                            : 'rgba(52,199,89,.2)'
+                            ? 'var(--orange-tint)'
+                            : 'var(--green-tint)'
                           : 'var(--surface-card)',
                         color: confidence === n
                           ? n <= 2
@@ -790,15 +793,15 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
               <button
                 onClick={onPushToReview}
                 disabled={pushStatus !== 'idle'}
-                className="w-full h-10 inline-flex items-center justify-center gap-2 active:scale-[0.98]"
+                className="w-full h-11 inline-flex items-center justify-center gap-2 active:scale-[0.98]"
                 style={{
                   borderRadius: 'var(--radius-xs)',
                   fontSize: 'var(--text-body)',
                   fontWeight: 'var(--weight-medium)',
                   fontFamily: 'var(--font-sans)',
-                  border: pushStatus === 'done' ? '1px solid rgba(52,199,89,.4)' : 'none',
-                  background: pushStatus === 'done' ? 'rgba(52,199,89,.2)' : 'var(--indigo)',
-                  color: pushStatus === 'done' ? 'var(--green-ink)' : '#fff',
+                  border: pushStatus === 'done' ? 'var(--hairline) solid var(--green)' : 'none',
+                  background: pushStatus === 'done' ? 'var(--green-tint)' : 'var(--indigo)',
+                  color: pushStatus === 'done' ? 'var(--green-ink)' : 'var(--text-on-accent)',
                   cursor: pushStatus !== 'idle' ? 'not-allowed' : 'pointer',
                 }}
               >

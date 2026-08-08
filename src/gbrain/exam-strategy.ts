@@ -127,7 +127,7 @@ export function generateAttemptSequence(
     const accuracy = mastery[topic] || 0;
     const speedEntry = model.speed_profile[topic] as SpeedEntry | undefined;
     const avgTimeSec = speedEntry ? speedEntry.avg_ms / 1000 : 180; // default 3 min
-    const marksPerMin = (accuracy * examConfig.marks_per_correct + (1 - accuracy) * Math.abs(examConfig.marks_per_wrong)) / (avgTimeSec / 60);
+    const marksPerMin = (accuracy * examConfig.marks_per_correct - (1 - accuracy) * Math.abs(examConfig.marks_per_wrong)) / (avgTimeSec / 60);
 
     return {
       topic,
@@ -292,13 +292,16 @@ export function generateScoreMaximizationPlan(
   const mastery = getMasterySummary(model);
   const topics = Object.keys(MARKS_WEIGHTS);
 
-  // Compute expected marks gain per topic if mastery improves by 0.2
+  // Compute expected marks gain per topic
   const allocations = topics.map(topic => {
     const current = mastery[topic] || 0;
     const weight = MARKS_WEIGHTS[topic] || 0.08;
 
-    // Target: improve by up to 0.2, capped at 0.85
-    const target = Math.min(0.85, current + 0.2);
+    // Untouched topics (< 30%) get a +40% boost; higher mastery topics get +20%.
+    // Both are capped at 0.85. Using a constant boost (not a floor) avoids a
+    // discontinuous jump in expected_marks_gain around the 30% boundary.
+    const boost = current < 0.3 ? 0.4 : 0.2;
+    const target = Math.min(0.85, current + boost);
     const improvement = target - current;
 
     // Expected marks gain = weight × total_marks × improvement

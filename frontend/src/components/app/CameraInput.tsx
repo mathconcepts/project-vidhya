@@ -4,7 +4,7 @@
  */
 
 import { useRef, useState, useCallback } from 'react';
-import { Camera, Image, X } from 'lucide-react';
+import { Camera, Image, Upload, X } from 'lucide-react';
 
 interface CameraInputProps {
   onCapture: (base64: string, mimeType: string) => void;
@@ -15,6 +15,7 @@ interface CameraInputProps {
 
 const MAX_SIZE = 1024;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const isTouchDevice = typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
 
 function resizeImage(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
@@ -127,7 +128,7 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
 
       <div style={{ display: 'flex', gap: compact ? 4 : 12 }}>
         <button
-          onClick={() => cameraRef.current?.click()}
+          onClick={() => isTouchDevice ? cameraRef.current?.click() : galleryRef.current?.click()}
           disabled={loading}
           style={compact ? {
             padding: 10,
@@ -156,10 +157,10 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
             fontWeight: 'var(--weight-medium)',
           }}
         >
-          <Camera size={compact ? 18 : 24} />
-          {!compact && <span>Take Photo</span>}
+          {isTouchDevice ? <Camera size={compact ? 18 : 24} /> : <Upload size={compact ? 18 : 24} />}
+          {!compact && <span>{isTouchDevice ? 'Take Photo' : 'Upload Image'}</span>}
         </button>
-        {!compact && (
+        {!compact && isTouchDevice && (
           <button
             onClick={() => galleryRef.current?.click()}
             disabled={loading}

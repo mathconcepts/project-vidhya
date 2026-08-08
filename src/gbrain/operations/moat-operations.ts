@@ -439,6 +439,24 @@ export async function generateMockExam(sessionId: string, examKey: string = 'gat
 // WEEKLY DIGEST
 // ============================================================================
 
+/** Pure helper — exported for testing; used by weeklyDigest. */
+export function digestOpening(attempts: number, motivationState: string, streak: number): string {
+  if (attempts === 0) {
+    return `Welcome. Your journey starts here — every problem you attempt this week builds the foundation.`;
+  }
+  if (attempts < 5) {
+    return `Good start — ${attempts} problem${attempts === 1 ? '' : 's'} in the bank. Consistency from here is what compounds.`;
+  }
+  switch (motivationState) {
+    case 'driven':    return `You're on fire this week. ${streak}-day streak and climbing.`;
+    case 'steady':    return `Solid week. Keep this pace and the score will follow.`;
+    case 'flagging':  return `Small steps add up. Every problem you attempted this week taught your brain something.`;
+    case 'frustrated':return `Tough week. Here's something important: struggling is a sign you're growing, not failing.`;
+    case 'anxious':   return `Deep breath. Your progress is real — let's look at the numbers.`;
+    default:          return `Keep going — every problem you work through this week counts.`;
+  }
+}
+
 export async function weeklyDigest(sessionId: string) {
   const pool = getPool();
   const model = await getOrCreateStudentModel(sessionId);
@@ -472,20 +490,8 @@ export async function weeklyDigest(sessionId: string) {
   const topStrength = sortedMastery[0];
   const weakestTopic = sortedMastery[sortedMastery.length - 1];
 
-  // Opening tone by motivation
-  let opening = '';
-  switch (model.motivation_state) {
-    case 'driven':
-      opening = `You're on fire this week. ${streak}-day streak and climbing.`; break;
-    case 'steady':
-      opening = `Another solid week of progress.`; break;
-    case 'flagging':
-      opening = `Small steps add up. Every problem you attempted this week taught your brain something.`; break;
-    case 'frustrated':
-      opening = `Tough week. Here's something important: struggling is a sign you're growing, not failing.`; break;
-    case 'anxious':
-      opening = `Deep breath. Your progress is real — let's look at the numbers.`; break;
-  }
+  // Opening tone — first-week students get a welcome, not "another solid week"
+  const opening = digestOpening(attempts, model.motivation_state, streak);
 
   // Predicted score
   const playbook = generateAttemptSequence(model, EXAM_CONFIGS['gate']);

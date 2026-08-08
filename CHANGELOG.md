@@ -4,6 +4,22 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.27.2] — 2026-08-08 — Bug fixes: marksPerMin sign error + motivation_state default in weekly digest
+
+**Operator action:** none.
+
+### Fixed
+
+- **Exam strategy attempt sequence now correctly penalizes weak topics.** The `marksPerMin` formula in `generateAttemptSequence` used `+` where it should be `-` for the negative-marking penalty term. The correct formula is `(accuracy × correct − (1−accuracy) × |wrong|) / timeMin`, matching standard expected-value decision theory. With the bug, a topic where the student scores 10% accuracy on a GATE MCQ had an EV of +0.268 marks/min (artificially high), when it should be −0.134 (correctly signalling skip). Weak topics now rank toward the end of the attempt sequence as intended. (`src/gbrain/exam-strategy.ts`)
+
+- **Weekly digest no longer produces a blank opening for unrecognized motivation states.** The `motivation_state` switch in `weeklyDigest` had no `default` case, leaving `opening = ''` for any value outside the five known states (`driven`, `steady`, `flagging`, `frustrated`, `anxious`). The switch logic is now extracted into an exported `digestOpening()` helper with a `default` arm returning a generic encouraging message. (`src/gbrain/operations/moat-operations.ts`)
+
+### Added
+
+- **3 `generateAttemptSequence` tests** locking the corrected marksPerMin sort order, the sign of EV for a weak topic, and the GATE skip-threshold value. (`src/gbrain/__tests__/exam-strategy-marks-per-min.test.ts`)
+
+- **10 `digestOpening()` tests** covering all 5 known motivation states, unrecognized states, empty string, zero-attempt welcome, low-attempt path, and streak interpolation. Tests import the real function, not a mirror copy. (`src/gbrain/operations/__tests__/weekly-digest-opening.test.ts`)
+
 ## [4.27.1] — 2026-08-08 — Bug fixes: exam ID persistence, demo banner height, desktop camera label + CameraInput test coverage
 
 **Operator action:** none.

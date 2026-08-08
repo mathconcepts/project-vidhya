@@ -127,7 +127,7 @@ export function generateAttemptSequence(
     const accuracy = mastery[topic] || 0;
     const speedEntry = model.speed_profile[topic] as SpeedEntry | undefined;
     const avgTimeSec = speedEntry ? speedEntry.avg_ms / 1000 : 180; // default 3 min
-    const marksPerMin = (accuracy * examConfig.marks_per_correct + (1 - accuracy) * Math.abs(examConfig.marks_per_wrong)) / (avgTimeSec / 60);
+    const marksPerMin = (accuracy * examConfig.marks_per_correct - (1 - accuracy) * Math.abs(examConfig.marks_per_wrong)) / (avgTimeSec / 60);
 
     return {
       topic,

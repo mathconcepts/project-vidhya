@@ -5,11 +5,12 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Send, BookOpen, Trash2 } from 'lucide-react';
+import { Send, BookOpen, Trash2, Upload } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useStorageMode } from '@/hooks/useStorageMode';
 import { useActiveExam } from '@/hooks/useActiveExam';
 import { CameraInput } from '@/components/app/CameraInput';
+import { isDemoMode } from '@/lib/demoMode';
 import NextStepChip, { type NextStepData } from '@/components/app/NextStepChip';
 import { streamGroundedChat } from '@/lib/gbrain/client';
 import { extractErrorDetail } from '@/lib/api-error';
@@ -268,7 +269,7 @@ export default function ChatPage() {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100dvh - 128px)',
+        height: isDemoMode() ? 'calc(100dvh - 284px)' : 'calc(100dvh - 128px)',
         margin: '0 -20px',
       }}
     >

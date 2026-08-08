@@ -4,7 +4,7 @@
  */
 
 import { useRef, useState, useCallback } from 'react';
-import { Camera, Image, X } from 'lucide-react';
+import { Camera, Image, Upload, X } from 'lucide-react';
 
 interface CameraInputProps {
   onCapture: (base64: string, mimeType: string) => void;
@@ -57,6 +57,7 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
   const galleryRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const isTouchDevice = typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
 
   const handleFile = useCallback(async (file: File) => {
     setError(null);
@@ -156,10 +157,10 @@ export function CameraInput({ onCapture, onClear, preview, compact }: CameraInpu
             fontWeight: 'var(--weight-medium)',
           }}
         >
-          <Camera size={compact ? 18 : 24} />
-          {!compact && <span>Take Photo</span>}
+          {isTouchDevice ? <Camera size={compact ? 18 : 24} /> : <Upload size={compact ? 18 : 24} />}
+          {!compact && <span>{isTouchDevice ? 'Take Photo' : 'Upload Image'}</span>}
         </button>
-        {!compact && (
+        {!compact && isTouchDevice && (
           <button
             onClick={() => galleryRef.current?.click()}
             disabled={loading}

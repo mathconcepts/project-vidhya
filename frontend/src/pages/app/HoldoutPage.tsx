@@ -13,6 +13,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Loader2, Lock, RefreshCw, Database, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import { trackEvent } from '@/lib/analytics';
 import {
   getHoldoutSummary,
@@ -52,7 +53,7 @@ export default function HoldoutPage() {
   useEffect(() => {
     trackEvent('page_view', { page: 'admin-holdout' });
     if (authLoading || !user) return;
-    if (user.role !== 'admin') return;
+    if (!isAdminRole(user.role)) return;
     void load(exam);
   }, [authLoading, user, exam, load]);
 
@@ -64,7 +65,7 @@ export default function HoldoutPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <Shield size={40} style={{ color: 'var(--text-tertiary)' }} />

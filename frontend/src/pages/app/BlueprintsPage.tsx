@@ -15,6 +15,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, Lock, BookOpen, CheckCircle2, AlertCircle, Plus, Rocket } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import {
   listBlueprints,
   getBlueprint,
@@ -37,7 +38,7 @@ export default function BlueprintsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     listBlueprints({}).then(setBlueprints).catch((e) => setError((e as Error).message));
   }, [authLoading, user]);
 
@@ -56,7 +57,7 @@ export default function BlueprintsPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ maxWidth: 448, margin: '80px auto 0', padding: 24, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', textAlign: 'center' }}>
         <Lock size={28} style={{ color: 'var(--text-tertiary)', margin: '0 auto 12px' }} />

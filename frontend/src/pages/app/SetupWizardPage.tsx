@@ -31,6 +31,7 @@ import {
   Database, KeyRound, BookOpen, PlayCircle, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import { trackEvent } from '@/lib/analytics';
 import {
   getSetupStatus, testProviders, SetupApiError,
@@ -112,7 +113,7 @@ export default function SetupWizardPage() {
 
   useEffect(() => {
     trackEvent('page_view', { page: 'admin-setup-wizard' });
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     void loadStatus();
   }, [authLoading, user, loadStatus]);
 
@@ -138,7 +139,7 @@ export default function SetupWizardPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <Shield size={40} style={{ color: 'var(--text-tertiary)' }} />

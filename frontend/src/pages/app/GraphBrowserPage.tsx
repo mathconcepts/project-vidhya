@@ -29,6 +29,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Network, CheckCircle2, XCircle, Loader2, Shield, RefreshCw, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import { trackEvent } from '@/lib/analytics';
 import {
   getGraphSummary, GraphApiError,
@@ -104,7 +105,7 @@ export default function GraphBrowserPage() {
 
   useEffect(() => {
     trackEvent('page_view', { page: 'admin-graph-browser' });
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     void loadSummary();
   }, [authLoading, user, loadSummary]);
 
@@ -125,7 +126,7 @@ export default function GraphBrowserPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <Shield size={40} style={{ color: 'var(--text-tertiary)' }} />

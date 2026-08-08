@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Loader2, FlaskConical, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import { trackEvent } from '@/lib/analytics';
 import { RunLauncher } from '@/components/admin/RunLauncher';
 import { ActiveRunsPanel } from '@/components/admin/ActiveRunsPanel';
@@ -108,7 +109,7 @@ export default function ContentRDPage() {
   useEffect(() => {
     trackEvent('page_view', { page: 'admin-content-rd' });
     if (authLoading || !user) return;
-    if (user.role !== 'admin') return;
+    if (!isAdminRole(user.role)) return;
     void loadExperiments();
     void loadRuns();
     void loadSuggestions();
@@ -122,7 +123,7 @@ export default function ContentRDPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ textAlign: 'center', padding: '64px 0' }}>
         <Shield size={40} style={{ color: 'var(--text-tertiary)', margin: '0 auto 16px' }} />

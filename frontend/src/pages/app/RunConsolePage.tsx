@@ -25,6 +25,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Square, Loader2, Shield, RefreshCw, Terminal, Ban, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/lib/auth/roles';
 import { trackEvent } from '@/lib/analytics';
 import { listJobs, startJob, cancelJob, type JobListing, type JobRunState, JobsApiError } from '@/api/admin/jobs';
 import { getPlatformHealth } from '@/api/admin/platform-health';
@@ -97,7 +98,7 @@ export default function RunConsolePage() {
 
   useEffect(() => {
     trackEvent('page_view', { page: 'admin-run-console' });
-    if (authLoading || !user || user.role !== 'admin') return;
+    if (authLoading || !user || !isAdminRole(user.role)) return;
     void loadJobs();
     void loadKillSwitch();
   }, [authLoading, user, loadJobs, loadKillSwitch]);
@@ -154,7 +155,7 @@ export default function RunConsolePage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !isAdminRole(user.role)) {
     return (
       <div style={{ textAlign: 'center', padding: '64px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <Shield size={40} style={{ color: 'var(--text-tertiary)' }} />

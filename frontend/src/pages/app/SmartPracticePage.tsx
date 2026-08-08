@@ -26,6 +26,7 @@ import { useSession } from '@/hooks/useSession';
 import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
 import { recordAttempt } from '@/lib/gbrain/client';
 import { authFetch } from '@/lib/auth/client';
+import { InteractiveSidecar } from '@/components/lesson/interactives/InteractiveSidecar';
 import {
   Sparkles, Zap, Database, CheckCircle2, XCircle, Loader2, ArrowRight,
   BookOpen, Target, GraduationCap,
@@ -282,7 +283,7 @@ export default function SmartPracticePage() {
           >
             {/* Wolfram-verified — the only provenance signal worth showing students */}
             {resolved.source === 'tier-3-wolfram-verified' && (
-              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(52,199,89,.25)', background: 'rgba(52,199,89,.06)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--green-ink)' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--green)', background: 'var(--green-tint)', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--green-ink)' }}>
                 <CheckCircle2 size={14} style={{ flexShrink: 0 }} />
                 <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)' }}>Computationally verified by Wolfram Alpha</p>
               </div>
@@ -298,7 +299,7 @@ export default function SmartPracticePage() {
                   <p style={{ margin: '4px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Try a different topic or difficulty level.</p>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <a href="/materials" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.06)', border: '1px solid rgba(88,86,214,.2)', color: 'var(--indigo-ink)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}>
+                  <a href="/materials" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)', color: 'var(--indigo-ink)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}>
                     Upload materials
                   </a>
                   <a href="/chat" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-secondary)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', textDecoration: 'none' }}>
@@ -350,15 +351,15 @@ export default function SmartPracticePage() {
                             textAlign: 'left',
                             padding: '10px 12px',
                             borderRadius: 'var(--radius-sm)',
-                            border: `1px solid ${
-                              isCorrectAfterSubmit ? 'rgba(52,199,89,.4)' :
-                              isWrongSelected ? 'rgba(255,59,48,.4)' :
-                              isSelected ? 'rgba(88,86,214,.4)' :
+                            border: `var(--hairline) solid ${
+                              isCorrectAfterSubmit ? 'var(--green)' :
+                              isWrongSelected ? 'var(--red)' :
+                              isSelected ? 'var(--indigo)' :
                               'var(--separator)'
                             }`,
-                            background: isCorrectAfterSubmit ? 'rgba(52,199,89,.08)' :
-                              isWrongSelected ? 'rgba(255,59,48,.08)' :
-                              isSelected ? 'rgba(88,86,214,.08)' :
+                            background: isCorrectAfterSubmit ? 'var(--green-tint)' :
+                              isWrongSelected ? 'var(--red-tint)' :
+                              isSelected ? 'var(--indigo-tint)' :
                               'var(--surface-fill)',
                             color: isCorrectAfterSubmit ? 'var(--green-ink)' :
                               isWrongSelected ? 'var(--red)' :
@@ -419,29 +420,60 @@ export default function SmartPracticePage() {
                     Submit
                   </button>
                 ) : (
-                  <div style={{
-                    padding: 12,
-                    borderRadius: 'var(--radius-sm)',
-                    border: `1px solid ${wasCorrect ? 'rgba(52,199,89,.25)' : 'rgba(255,59,48,.25)'}`,
-                    background: wasCorrect ? 'rgba(52,199,89,.06)' : 'rgba(255,59,48,.06)',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 8,
-                  }}>
-                    {wasCorrect
-                      ? <CheckCircle2 size={14} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
-                      : <XCircle size={14} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />}
-                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
-                      <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
-                        {wasCorrect ? 'Self-check: matches.' : 'Self-check: differs.'}
-                      </p>
-                      <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
-                        Text comparison against the revealed answer — not exam grading, no marks recorded.
-                      </p>
-                      <p style={{ margin: '4px 0 0' }}>Answer: <span style={{ fontFamily: 'var(--font-mono)' }}>{resolved.problem.correct_answer}</span></p>
-                      {resolved.problem.explanation && <p style={{ margin: '4px 0 0', color: 'var(--text-tertiary)' }}>{resolved.problem.explanation}</p>}
+                  <>
+                    <div style={{
+                      padding: 12,
+                      borderRadius: 'var(--radius-sm)',
+                      border: `var(--hairline) solid ${wasCorrect ? 'var(--green)' : 'var(--red)'}`,
+                      background: wasCorrect ? 'var(--green-tint)' : 'var(--red-tint)',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 8,
+                    }}>
+                      {wasCorrect
+                        ? <CheckCircle2 size={14} style={{ color: 'var(--green-ink)', flexShrink: 0, marginTop: 2 }} />
+                        : <XCircle size={14} style={{ color: 'var(--red)', flexShrink: 0, marginTop: 2 }} />}
+                      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+                        <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
+                          {wasCorrect ? 'Self-check: matches.' : 'Self-check: differs.'}
+                        </p>
+                        <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
+                          Text comparison against the revealed answer — not exam grading, no marks recorded.
+                        </p>
+                        <p style={{ margin: '4px 0 0' }}>Answer: <span style={{ fontFamily: 'var(--font-mono)' }}>{resolved.problem.correct_answer}</span></p>
+                      </div>
                     </div>
-                  </div>
+                    {resolved.problem.explanation && (
+                      <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
+                        <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Explanation</p>
+                        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>{resolved.problem.explanation}</p>
+                        <InteractiveSidecar body={resolved.problem.explanation} />
+                        {(resolved.problem.concept_id || resolved.problem.topic || topic) && (
+                          <button
+                            onClick={() => navigate(`/lesson/${resolved.problem.concept_id || resolved.problem.topic || topic}`)}
+                            style={{
+                              marginTop: 12,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '10px 16px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: 'none',
+                              background: 'var(--indigo)',
+                              color: 'var(--text-on-accent)',
+                              fontSize: 'var(--text-caption)',
+                              fontWeight: 'var(--weight-semibold)',
+                              cursor: 'pointer',
+                              fontFamily: 'var(--font-sans)',
+                              letterSpacing: '-0.01em',
+                            }}
+                          >
+                            <BookOpen size={13} /> Explore this concept
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

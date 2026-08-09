@@ -2,11 +2,15 @@
  * AppLayout — Mobile-first layout with bottom nav, header, auth.
  * Persona-aware shell detection. Reads user.role + student profile to serve
  * the right nav and home route for Knowledge / Exam / Teacher / Admin shells.
+ *
+ * Three-room UX superstrategy (2026-08-09):
+ *   vidhya.room localStorage key overrides profile-based persona detection.
+ *   A room badge in the header shows the active room; tapping it opens /rooms.
  */
 
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Eye, EyeOff } from 'lucide-react';
+import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Eye, EyeOff, Target, ChevronDown } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCalmMode } from '@/hooks/useCalmMode';
 import { isDemoMode } from '@/lib/demoMode';
@@ -16,8 +20,21 @@ import { useSession } from '@/hooks/useSession';
 import { authFetch } from '@/lib/auth/client';
 import { TabBar } from '@/components/ui/TabBar';
 import { TutorFab } from '@/components/ui/TutorFab';
+import { getActiveRoom, type RoomId } from '@/pages/app/RoomsPage';
 
 type Persona = 'knowledge' | 'exam' | 'teacher' | 'loading';
+
+const ROOM_TO_PERSONA: Record<RoomId, Exclude<Persona, 'loading'>> = {
+  exam: 'exam',
+  learn: 'knowledge',
+  teach: 'teacher',
+};
+
+const ROOM_META: Record<RoomId, { label: string; icon: React.ReactNode; color: string }> = {
+  exam:  { label: 'Exam prep',         icon: <Target   size={12} />, color: 'var(--green-ink)' },
+  learn: { label: 'Concept learning',  icon: <BookOpen size={12} />, color: 'var(--indigo-ink)' },
+  teach: { label: 'Teaching',          icon: <GraduationCap size={12} />, color: 'var(--text-secondary)' },
+};
 
 const NAV_BY_PERSONA: Record<Exclude<Persona, 'loading'>, Array<{ value: string; label: string; icon?: React.ReactNode }>> = {
   knowledge: [
@@ -53,7 +70,7 @@ export function AppLayout() {
   }, []);
 
   useEffect(() => {
-    const exempt = ['/welcome', '/sign-in'];
+    const exempt = ['/welcome', '/sign-in', '/rooms'];
     if (exempt.includes(location.pathname)) return;
     let welcomed = false;
     try { welcomed = localStorage.getItem('vidhya.demo_welcomed') === '1'; } catch { /* ignore */ }
@@ -63,6 +80,12 @@ export function AppLayout() {
   useEffect(() => setShowMenu(false), [location]);
 
   useEffect(() => {
+    // Three-room superstrategy: vidhya.room overrides all automatic detection.
+    const storedRoom = getActiveRoom();
+    if (storedRoom) {
+      setPersona(ROOM_TO_PERSONA[storedRoom]);
+      return;
+    }
     if (!user) { setPersona('exam'); return; }
     if (user.role === 'teacher' || user.role === 'admin' || user.role === 'owner') {
       setPersona('teacher');
@@ -175,6 +198,43 @@ export function AppLayout() {
               V
             </div>
           </a>
+
+          {/* Room badge — shows active room, tapping opens /rooms */}
+          {persona !== 'loading' && (() => {
+            const activeRoom = getActiveRoom();
+            if (!activeRoom) return null;
+            const meta = ROOM_META[activeRoom];
+            return (
+              <button
+                onClick={() => navigate('/rooms')}
+                aria-label={`Current room: ${meta.label}. Tap to switch.`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-capsule)',
+                  border: 'var(--hairline) solid var(--separator)',
+                  background: 'var(--surface-fill)',
+                  color: meta.color,
+                  fontSize: 'var(--text-caption)',
+                  fontWeight: 'var(--weight-medium)',
+                  fontFamily: 'var(--font-sans)',
+                  cursor: 'pointer',
+                  letterSpacing: '-0.01em',
+                  lineHeight: 1,
+                  minHeight: 28,
+                  transition: `opacity var(--dur-fast) var(--ease-standard)`,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '0.72')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+              >
+                {meta.icon}
+                <span style={{ color: 'var(--text-secondary)' }}>{meta.label}</span>
+                <ChevronDown size={10} style={{ color: 'var(--text-tertiary)' }} />
+              </button>
+            );
+          })()}
 
           {/* Right side — calm toggle always first so it's never crowded */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

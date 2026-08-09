@@ -91,6 +91,8 @@ const UploadsPage = lazy(() => import('@/pages/app/UploadsPage'));
 const StudymateSessionPage = lazy(() => import('@/pages/app/StudymateSessionPage'));
 const DailyCardsPage = lazy(() => import('@/pages/app/DailyCardsPage'));
 const WelcomePage = lazy(() => import('@/pages/app/WelcomePage'));
+// Three-room UX superstrategy (2026-08-09)
+const RoomsPage = lazy(() => import('@/pages/app/RoomsPage'));
 // Wave U1
 const SpinePage = lazy(() => import('@/pages/app/SpinePage'));
 const InstitutePage = lazy(() => import('@/pages/app/InstitutePage'));
@@ -218,6 +220,8 @@ export default function App() {
               new visitors here once. After dismissal, localStorage flag
               vidhya.demo_welcomed prevents re-prompting. */}
           <Route path="welcome" element={<WelcomePage />} />
+          {/* Three-room UX superstrategy: conscious room selection, switchable anytime */}
+          <Route path="rooms" element={<RoomsPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

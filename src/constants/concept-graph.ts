@@ -178,6 +178,21 @@ export const SECTION_MAP: Map<string, SyllabusSection> = new Map(
 );
 
 /**
+ * Maps bundle concept_ids that aren't in the YAML concept graph to the
+ * canonical leaf concept they belong to. Checked before SECTION_MAP so
+ * navigating to /lesson/simpson-rule shows the numerical-integration lesson
+ * rather than the "uncategorized" fallback.
+ */
+const CONCEPT_ALIASES: Record<string, string> = {
+  'simpson-rule': 'numerical-integration',
+  'trapezoidal-rule': 'numerical-integration',
+  'runge-kutta': 'numerical-ode',
+  'euler-method': 'numerical-ode',
+  'newton-raphson': 'root-finding',
+  'bisection-method': 'root-finding',
+};
+
+/**
  * Resolve a concept_id that may be either a leaf concept or a syllabus section
  * ID. When it's a section ID, returns the first concept in that section that
  * exists in the concept graph. Returns undefined when nothing matches.
@@ -185,6 +200,11 @@ export const SECTION_MAP: Map<string, SyllabusSection> = new Map(
 export function resolveConceptOrSection(id: string): ConceptNode | undefined {
   const direct = CONCEPT_MAP.get(id);
   if (direct) return direct;
+  const alias = CONCEPT_ALIASES[id];
+  if (alias) {
+    const node = CONCEPT_MAP.get(alias);
+    if (node) return node;
+  }
   const section = SECTION_MAP.get(id);
   if (!section) return undefined;
   for (const cid of section.concept_ids) {

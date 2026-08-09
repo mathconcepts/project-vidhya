@@ -23,6 +23,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
 import { useSession } from '@/hooks/useSession';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
 import { recordAttempt } from '@/lib/gbrain/client';
 import { authFetch } from '@/lib/auth/client';
@@ -64,6 +65,7 @@ const SOURCE_META: Record<ContentSource, { label: string; icon: typeof Sparkles;
 export default function SmartPracticePage() {
   const sessionId = useSession();
   const navigate = useNavigate();
+  const { exam } = useActiveExam();
 
   const [searchParams] = useSearchParams();
   const initialTopic = searchParams.get('topic') || 'linear-algebra';
@@ -168,6 +170,11 @@ export default function SmartPracticePage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
       <div>
+        {exam?.name && (
+          <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {exam.name}
+          </p>
+        )}
         <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.015em' }}>
           <Sparkles size={18} style={{ color: 'var(--indigo-ink)', flexShrink: 0 }} />
           Smart Practice
@@ -334,15 +341,13 @@ export default function SmartPracticePage() {
                     <span>·</span>
                     <span>{resolved.problem.marks || 2} marks</span>
                   </div>
-                  {resolved.problem.concept_id && (
-                    <button
-                      onClick={() => navigate(`/lesson/${resolved.problem.concept_id}`)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 'var(--radius-xs)', fontSize: 'var(--text-caption2)', color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', flexShrink: 0 }}
-                    >
-                      <GraduationCap size={11} />
-                      Study this concept
-                    </button>
-                  )}
+                  <button
+                    onClick={() => navigate(`/lesson/${resolved.problem.concept_id || (TOPIC_ALIAS[topic] ?? topic)}`)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 'var(--radius-xs)', fontSize: 'var(--text-caption2)', color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', flexShrink: 0 }}
+                  >
+                    <GraduationCap size={11} />
+                    Study this concept
+                  </button>
                 </div>
 
                 <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
@@ -462,31 +467,29 @@ export default function SmartPracticePage() {
                         <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Explanation</p>
                         <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>{resolved.problem.explanation}</p>
                         <InteractiveSidecar body={resolved.problem.explanation} />
-                        {resolved.problem.concept_id && (
-                          <button
-                            onClick={() => navigate(`/lesson/${resolved.problem.concept_id}`)}
-                            style={{
-                              marginTop: 12,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              padding: '10px 16px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: 'none',
-                              background: 'var(--indigo)',
-                              color: 'var(--text-on-accent)',
-                              fontSize: 'var(--text-caption)',
-                              fontWeight: 'var(--weight-semibold)',
-                              cursor: 'pointer',
-                              fontFamily: 'var(--font-sans)',
-                              letterSpacing: '-0.01em',
-                            }}
-                          >
-                            <BookOpen size={13} /> Explore this concept
-                          </button>
-                        )}
                       </div>
                     )}
+                    <button
+                      onClick={() => navigate(`/lesson/${resolved.problem.concept_id || (TOPIC_ALIAS[topic] ?? topic)}`)}
+                      style={{
+                        marginTop: 4,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '10px 16px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: 'none',
+                        background: 'var(--indigo)',
+                        color: 'var(--text-on-accent)',
+                        fontSize: 'var(--text-caption)',
+                        fontWeight: 'var(--weight-semibold)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-sans)',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      <BookOpen size={13} /> Explore this concept
+                    </button>
                   </>
                 )}
               </div>

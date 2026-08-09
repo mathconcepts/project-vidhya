@@ -7,6 +7,7 @@ import { useParams, Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { trackEvent } from '@/lib/analytics';
 import { MasteryRing } from '@/components/ui/MasteryRing';
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
@@ -35,9 +36,24 @@ const DIFF_STYLE: Record<string, { color: string; bg: string }> = {
   hard:   { color: 'var(--red)',       bg: 'rgba(255,59,48,.10)' },
 };
 
+function getPersonalizedPreamble(mastery: TopicMastery | null): string {
+  if (!mastery || mastery.attempts === 0) {
+    return `> **Just getting started?** You haven't attempted this topic yet. Work through a few problems first, then revisit these notes to reinforce your understanding.\n\n`;
+  }
+  const pct = Math.round(mastery.mastery * 100);
+  if (mastery.mastery >= 0.75) {
+    return `> **Strong foundation** — ${pct}% mastery (${mastery.correct}/${mastery.attempts} correct). You've got the core ideas locked in. Use these notes to spot edge cases and sharpen your GATE intuition.\n\n`;
+  }
+  if (mastery.mastery >= 0.4) {
+    return `> **Building momentum** — ${pct}% mastery (${mastery.correct}/${mastery.attempts} correct). You're on the right track. Focus on any sections where your answers diverged from the expected result.\n\n`;
+  }
+  return `> **Early stage** — ${pct}% mastery (${mastery.correct}/${mastery.attempts} correct). Read slowly and flag anything unclear to the AI tutor. Revisit after a few more practice attempts.\n\n`;
+}
+
 export default function TopicPage() {
   const { topicId } = useParams<{ topicId: string }>();
   const sessionId = useSession();
+  const { exam } = useActiveExam();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [mastery, setMastery] = useState<TopicMastery | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,6 +93,11 @@ export default function TopicPage() {
           <ChevronLeft size={20} />
         </Link>
         <div style={{ flex: 1 }}>
+          {exam?.name && (
+            <p style={{ margin: '0 0 2px', fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              {exam.name}
+            </p>
+          )}
           <h1 style={{ margin: 0, fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', letterSpacing: '-0.018em' }}>
             {topicName}
           </h1>
@@ -150,7 +171,10 @@ export default function TopicPage() {
               >
                 <div style={{ padding: '0 16px 16px', borderTop: 'var(--hairline) solid var(--separator)' }}>
                   <div className="prose prose-sm max-w-none" style={{ paddingTop: 12 }}>
-                    <MarkdownAtomRenderer content={notes} atomId={`topic-notes-${topicId}`} />
+                    <MarkdownAtomRenderer
+                      content={getPersonalizedPreamble(mastery) + notes}
+                      atomId={`topic-notes-${topicId}`}
+                    />
                   </div>
                 </div>
               </motion.div>

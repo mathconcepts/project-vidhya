@@ -151,7 +151,7 @@ export default function SmartPracticePage() {
         problem: resolved.problem.question_text,
         studentAnswer: answer.trim(),
         correctAnswer: String(resolved.problem.correct_answer),
-        conceptId: resolved.problem.concept_id || topic,
+        conceptId: resolved.problem.concept_id || '',
         isCorrect: !!correct,
         difficulty,
         timeTakenMs,
@@ -330,9 +330,9 @@ export default function SmartPracticePage() {
                     <span>·</span>
                     <span>{resolved.problem.marks || 2} marks</span>
                   </div>
-                  {(resolved.problem.concept_id || topic) && (
+                  {resolved.problem.concept_id && (
                     <button
-                      onClick={() => navigate(`/lesson/${resolved.problem.concept_id || topic}`)}
+                      onClick={() => navigate(`/lesson/${resolved.problem.concept_id}`)}
                       style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 'var(--radius-xs)', fontSize: 'var(--text-caption2)', color: 'var(--indigo-ink)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', flexShrink: 0 }}
                     >
                       <GraduationCap size={11} />
@@ -458,9 +458,9 @@ export default function SmartPracticePage() {
                         <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Explanation</p>
                         <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>{resolved.problem.explanation}</p>
                         <InteractiveSidecar body={resolved.problem.explanation} />
-                        {(resolved.problem.concept_id || resolved.problem.topic || topic) && (
+                        {resolved.problem.concept_id && (
                           <button
-                            onClick={() => navigate(`/lesson/${resolved.problem.concept_id || resolved.problem.topic || topic}`)}
+                            onClick={() => navigate(`/lesson/${resolved.problem.concept_id}`)}
                             style={{
                               marginTop: 12,
                               display: 'inline-flex',

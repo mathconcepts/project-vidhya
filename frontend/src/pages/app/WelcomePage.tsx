@@ -23,7 +23,7 @@ export default function WelcomePage() {
 
   const onContinue = () => {
     markDemoWelcomed();
-    navigate('/');
+    navigate('/rooms');
   };
 
   return (
@@ -117,7 +117,7 @@ export default function WelcomePage() {
           cursor: 'pointer',
         }}
       >
-        Get started
+        Choose your room
         <ArrowRight size={16} />
       </motion.button>
 

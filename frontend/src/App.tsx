@@ -95,6 +95,10 @@ const WelcomePage = lazy(() => import('@/pages/app/WelcomePage'));
 const SpinePage = lazy(() => import('@/pages/app/SpinePage'));
 const InstitutePage = lazy(() => import('@/pages/app/InstitutePage'));
 const SellYourCoursePage = lazy(() => import('@/pages/app/SellYourCoursePage'));
+// E7 Delight Bundle
+const FormulaMapPage = lazy(() => import('@/pages/app/FormulaMapPage'));
+const TheoremWizardPage = lazy(() => import('@/pages/app/TheoremWizardPage'));
+const DistributionSelectorPage = lazy(() => import('@/pages/app/DistributionSelectorPage'));
 
 const PageLoader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
@@ -206,6 +210,10 @@ export default function App() {
           <Route path="admin/content" element={<ContentAdminPage />} />
           <Route path="session" element={<StudymateSessionPage />} />
           <Route path="daily" element={<DailyCardsPage />} />
+          {/* E7 Delight Bundle */}
+          <Route path="formula-map/:module" element={<FormulaMapPage />} />
+          <Route path="theorem-wizard/:module" element={<TheoremWizardPage />} />
+          <Route path="distribution-selector" element={<DistributionSelectorPage />} />
           {/* /welcome is the first-visit demo landing. AppLayout redirects
               new visitors here once. After dismissal, localStorage flag
               vidhya.demo_welcomed prevents re-prompting. */}

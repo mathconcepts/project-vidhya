@@ -1,0 +1,134 @@
+# Pedagogy Pattern Library (Track E4)
+#
+# Each pattern has a globally unique ped_* id (shared namespace with pp_* / ue_*).
+# Status lifecycle: candidate -> active -> retired
+# Prompt directives are injected into the LLM generation prompt when the pattern is applied.
+# Evidence should reference a pp_* pain point, ue_* expectation, or experiment id.
+
+review_status: draft   # flip to 'reviewed' once validated against student outcomes
+
+patterns:
+
+  - id: ped_property_first
+    name: Property-First Framing
+    description: >
+      Lead with a named property (e.g. "Rank-Nullity Theorem") stated as a
+      memorable rule before any derivation. Students anchor on the name and
+      retrieve the property chain, not the algebra.
+    applicable_modules:
+      - linear-algebra
+      - calculus
+    blueprint_stages:
+      - formalism
+      - worked_example
+    prompt_directives:
+      - "State the named property or theorem in the FIRST sentence using bold formatting."
+      - "Defer all derivation steps until after the property statement."
+      - "End with a one-line 'Why it matters in GATE' callout."
+    modality_bias: STATIC
+    evidence: "pp_la_07 (students skip derivations, memorise results)"
+    status: active
+    version: 1
+
+  - id: ped_physical_metaphor
+    name: Physical Metaphor Bridge
+    description: >
+      Anchor abstract linear-algebra or calculus concepts to a physical
+      analogy before the formal definition. Metaphors should be one sentence
+      and tied to something a GATE student will have studied in engineering.
+    applicable_modules:
+      - linear-algebra
+      - calculus
+    blueprint_stages:
+      - intuition
+      - discovery
+    prompt_directives:
+      - "Open with a one-sentence physical analogy (e.g. 'Think of the nullspace as the set of all do-nothing inputs to a machine')."
+      - "Use the metaphor consistently across all worked examples in the same atom."
+      - "Do NOT mix more than one metaphor per atom."
+    modality_bias: DYNAMIC
+    evidence: "ue_la_02 (students want intuition before formalism)"
+    status: active
+    version: 1
+
+  - id: ped_dual_track
+    name: Dual-Track Presentation
+    description: >
+      Present the algebraic and geometric viewpoints in parallel columns or
+      side-by-side steps. Students who prefer one track can follow it;
+      the pairing builds cross-track fluency over time.
+    applicable_modules:
+      - linear-algebra
+    blueprint_stages:
+      - formalism
+      - worked_example
+    prompt_directives:
+      - "Use a two-column layout (Algebraic vs Geometric) for every key step."
+      - "Each geometric description must reference a dimension count or a visual (e.g. 'plane through the origin in R3')."
+      - "Conclude with a sentence that unifies both tracks."
+    modality_bias: STATIC
+    evidence: "ue_la_01 (both computation and geometry tracks needed)"
+    status: active
+    version: 1
+
+  - id: ped_micro_sprint
+    name: Micro-Sprint Practice
+    description: >
+      After each definition or property, insert a 1-question micro-check before
+      proceeding to the next concept. The question must be answerable in under
+      90 seconds -- no multi-step derivations in micro-sprints.
+    applicable_modules:
+      - linear-algebra
+      - calculus
+    blueprint_stages:
+      - practice
+    prompt_directives:
+      - "After every definition block, emit exactly one MCQ labelled 'Quick check'."
+      - "The quick-check question tests ONLY the immediately preceding property -- never a compound of earlier steps."
+      - "Correct-answer feedback must name the property that was tested."
+    modality_bias: STATIC
+    evidence: "pp_la_05 (students want immediate practice after each step)"
+    status: active
+    version: 1
+
+  - id: ped_prereq_bridge
+    name: Prerequisite Bridge
+    description: >
+      When a concept depends on a prerequisite the student may not have, open
+      with a one-paragraph recap of that prerequisite, citing the concept_id
+      so the system can link back to it.
+    applicable_modules:
+      - linear-algebra
+      - calculus
+    blueprint_stages:
+      - intuition
+    prompt_directives:
+      - "If the atom depends on a prerequisite concept, state it in the first paragraph with a one-sentence recap."
+      - "Keep the recap to 2 sentences maximum -- do not re-teach the prerequisite."
+      - "Include a 'Review first: <concept_id>' callout at the top of the atom."
+    modality_bias: STATIC
+    evidence: "pp_la_01 (missing prereq understanding for eigenvalues/vector spaces)"
+    status: active
+    version: 1
+
+  - id: ped_worked_first
+    name: Worked-Example-First Inversion
+    description: >
+      Reverse the usual definition-then-example order. Show the worked example
+      first (labelled "What happens"), then extract the pattern into a formal
+      definition ("Why it works"). Effective for procedural concepts where
+      students learn by seeing the mechanics before the abstraction.
+    applicable_modules:
+      - linear-algebra
+      - calculus
+    blueprint_stages:
+      - discovery
+      - formalism
+    prompt_directives:
+      - "Open with a concrete numeric worked example -- NO abstract symbols until step 3 of the atom."
+      - "After the worked example, write 'Pattern: <formal statement>' to transition to the definition."
+      - "The formal statement must use the same variable names as the worked example."
+    modality_bias: DYNAMIC
+    evidence: "ue_la_03 (step-by-step worked examples before theory)"
+    status: active
+    version: 1

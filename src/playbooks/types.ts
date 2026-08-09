@@ -14,7 +14,7 @@
  * src/playbooks/non-bulk-allowlist.json.
  */
 
-import type { JSONSchema4 } from 'json-schema';
+type JSONSchema4 = Record<string, unknown>;
 
 // ---------------------------------------------------------------------------
 // Executor types

@@ -47,8 +47,8 @@ export const adminPlaybooksRoutes: RouteDefinition[] = [
       method: 'GET',
       path: '/api/admin/playbooks',
       handler: async (req, res) => {
-        const authErr = await requireRole('admin')(req, res);
-        if (authErr) return;
+        const user = await requireRole(req, res, 'admin');
+        if (!user) return;
 
         const playbooks = listPlaybooks().map((p) => ({
           id: p.id,
@@ -69,8 +69,8 @@ export const adminPlaybooksRoutes: RouteDefinition[] = [
       method: 'GET',
       path: '/api/admin/playbooks/:id',
       handler: async (req, res) => {
-        const authErr = await requireRole('admin')(req, res);
-        if (authErr) return;
+        const user = await requireRole(req, res, 'admin');
+        if (!user) return;
 
         const id = req.params?.id as string;
         const playbook = getPlaybook(id);
@@ -95,8 +95,8 @@ export const adminPlaybooksRoutes: RouteDefinition[] = [
       method: 'POST',
       path: '/api/admin/playbooks/:id/estimate',
       handler: async (req, res) => {
-        const authErr = await requireRole('admin')(req, res);
-        if (authErr) return;
+        const user = await requireRole(req, res, 'admin');
+        if (!user) return;
 
         const id = req.params?.id as string;
         const body = await parseBody(req);
@@ -115,8 +115,8 @@ export const adminPlaybooksRoutes: RouteDefinition[] = [
       method: 'POST',
       path: '/api/admin/playbooks/:id/launch',
       handler: async (req, res) => {
-        const authErr = await requireRole('admin')(req, res);
-        if (authErr) return;
+        const user = await requireRole(req, res, 'admin');
+        if (!user) return;
 
         const id = req.params?.id as string;
         const body = await parseBody(req);
@@ -142,10 +142,10 @@ export const adminPlaybooksRoutes: RouteDefinition[] = [
       method: 'GET',
       path: '/api/admin/playbook-runs',
       handler: async (req, res) => {
-        const authErr = await requireRole('admin')(req, res);
-        if (authErr) return;
+        const user = await requireRole(req, res, 'admin');
+        if (!user) return;
 
-        const playbookId = req.query?.playbook_id as string | undefined;
+        const playbookId = req.query.get('playbook_id') ?? undefined;
         const runs = listRuns(playbookId).slice(0, 50);
         sendJSON(res, { runs, total: runs.length });
       },
@@ -156,8 +156,8 @@ export const adminPlaybooksRoutes: RouteDefinition[] = [
       method: 'GET',
       path: '/api/admin/playbook-runs/:run_id',
       handler: async (req, res) => {
-        const authErr = await requireRole('admin')(req, res);
-        if (authErr) return;
+        const user = await requireRole(req, res, 'admin');
+        if (!user) return;
 
         const runId = req.params?.run_id as string;
         const run = loadRun(runId);
@@ -171,8 +171,8 @@ export const adminPlaybooksRoutes: RouteDefinition[] = [
       method: 'POST',
       path: '/api/admin/playbook-runs/:run_id/abort',
       handler: async (req, res) => {
-        const authErr = await requireRole('admin')(req, res);
-        if (authErr) return;
+        const user = await requireRole(req, res, 'admin');
+        if (!user) return;
 
         const runId = req.params?.run_id as string;
         try {

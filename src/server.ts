@@ -86,6 +86,7 @@ import { marketingRoutes } from './api/marketing-routes';
 import { interestRoutes } from './api/interest-routes';
 import { adminAgentRoutes } from './api/admin-agent-routes';
 import { adminPlaybooksRoutes } from './api/admin-playbooks-routes';
+import { adminResonanceRoutes } from './api/admin-resonance-routes';
 import { sessionPlannerRoutes } from './api/session-planner-routes';
 import { studymateRoutes } from './api/studymate-routes';
 import { knowledgeRoutes } from './api/knowledge-routes';
@@ -204,6 +205,9 @@ for (const route of adminBlueprintsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminPlaybooksRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminResonanceRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminRulesetsRoutes) {

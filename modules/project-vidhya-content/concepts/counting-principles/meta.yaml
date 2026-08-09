@@ -1,0 +1,6 @@
+concept_id: counting-principles
+label: "Counting Principles"
+topic: probability-statistics
+difficulty_base: 0.3
+gate_frequency: medium
+exam_ids: ["*"]

@@ -1,0 +1,6 @@
+concept_id: mean-value-theorems
+label: "Mean Value Theorems"
+topic: calculus
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

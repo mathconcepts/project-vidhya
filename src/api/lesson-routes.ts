@@ -29,7 +29,7 @@ import { recordTelemetry } from '../content/telemetry';
 import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
-import { ALL_CONCEPTS } from '../constants/concept-graph';
+import { ALL_CONCEPTS, resolveConceptOrSection, SECTION_MAP } from '../constants/concept-graph';
 import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
 import { rankAtomsForLesson } from '../personalization/lesson-wire';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
@@ -433,15 +433,20 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
   const concept_id = req.params.concept_id;
   if (!concept_id) return sendError(res, 400, 'concept_id required');
   try {
-    const sources = await resolveSources({ concept_id });
+    // Resolve section IDs (e.g. "differential-equations") to their first leaf
+    // concept so atom loading and source resolution both find real content.
+    const resolvedConcept = resolveConceptOrSection(concept_id);
+    const effective_concept_id = resolvedConcept?.id ?? concept_id;
+
+    const sources = await resolveSources({ concept_id: effective_concept_id });
     const base = composeBase(sources);
 
     // ContentAtom v2: also attempt to load + select atoms. Additive — clients
     // that don't know about atoms[] still see the legacy components[] field.
     let atoms: ContentAtom[] = [];
     try {
-      const conceptAtoms = await loadConceptAtoms(concept_id);
-      const conceptMeta = await loadConceptMeta(concept_id);
+      const conceptAtoms = await loadConceptAtoms(effective_concept_id);
+      const conceptMeta = await loadConceptMeta(effective_concept_id);
       const session_id = req.query?.get('session_id') ?? null;
       const student_id = req.query?.get('student_id') ?? session_id;
       const rawProximity = req.query?.get('exam_proximity_days');
@@ -467,7 +472,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
         } catch { /* graceful degradation */ }
       }
       const sessionContext: SessionContext = {
-        error_streak: computeErrorStreak(recentErrors, concept_id),
+        error_streak: computeErrorStreak(recentErrors, effective_concept_id),
         last_error_atom_type: null,
         exam_proximity_days,
       };
@@ -479,7 +484,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
         routeRequest: {
           user_id: student_id ?? 'anon',
           text: '',
-          concept_id,
+          concept_id: effective_concept_id,
           exam_proximity_days,
           preferred_exam_id,
         },
@@ -496,15 +501,15 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       atoms = (await rankAtomsForLesson(atoms as Array<ContentAtom & Record<string, unknown>>, {
         session_id: student_id ?? session_id ?? null,
         student_id: null, // resolved from session_id inside the helper
-        concept_id,
+        concept_id: effective_concept_id,
         exam_pack_id: preferred_exam_id ?? undefined,
       })) as ContentAtom[];
     } catch (err) {
       if (err instanceof ConceptNotFoundError) {
         // Legacy base lesson without atoms — loudly counted, never silent.
-        noteAtomFallback(concept_id);
+        noteAtomFallback(effective_concept_id);
       } else {
-        console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);
+        console.warn(`[lesson-routes] atom load failed for ${effective_concept_id}: ${(err as Error).message}`);
       }
     }
 

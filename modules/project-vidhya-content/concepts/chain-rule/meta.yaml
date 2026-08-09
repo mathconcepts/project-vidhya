@@ -1,0 +1,6 @@
+concept_id: chain-rule
+label: "Chain Rule"
+topic: calculus
+difficulty_base: 0.4
+gate_frequency: high
+exam_ids: ["*"]

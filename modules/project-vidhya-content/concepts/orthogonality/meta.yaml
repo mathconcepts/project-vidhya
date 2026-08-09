@@ -1,0 +1,6 @@
+concept_id: orthogonality
+label: "Orthogonality"
+topic: linear-algebra
+difficulty_base: 0.6
+gate_frequency: medium
+exam_ids: ["*"]

@@ -1,0 +1,6 @@
+concept_id: vector-fields
+label: "Vector Fields"
+topic: vector-calculus
+difficulty_base: 0.4
+gate_frequency: high
+exam_ids: ["*"]

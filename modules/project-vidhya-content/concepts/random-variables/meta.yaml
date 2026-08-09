@@ -1,0 +1,6 @@
+concept_id: random-variables
+label: "Random Variables"
+topic: probability-statistics
+difficulty_base: 0.4
+gate_frequency: high
+exam_ids: ["*"]

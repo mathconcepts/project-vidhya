@@ -1,0 +1,6 @@
+concept_id: linear-transformations
+label: "Linear Transformations"
+topic: linear-algebra
+difficulty_base: 0.6
+gate_frequency: medium
+exam_ids: ["*"]

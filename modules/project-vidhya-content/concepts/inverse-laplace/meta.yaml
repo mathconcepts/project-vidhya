@@ -1,0 +1,6 @@
+concept_id: inverse-laplace
+label: "Inverse Laplace"
+topic: transform-theory
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

@@ -1,0 +1,6 @@
+concept_id: integration-by-parts
+label: "Integration By Parts"
+topic: calculus
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

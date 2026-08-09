@@ -1,0 +1,6 @@
+concept_id: hypothesis-testing
+label: "Hypothesis Testing"
+topic: probability-statistics
+difficulty_base: 0.6
+gate_frequency: medium
+exam_ids: ["*"]

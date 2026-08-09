@@ -109,18 +109,20 @@ describe('RC1 — atom fallback logging + counter', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const handler = getHandler('GET', '/api/lesson/:concept_id');
-    // 'determinants' is in the concept graph but has no authored atoms dir.
+    // Use a concept_id not in the concept graph and with no authored atoms dir
+    // so the fallback path is exercised regardless of content generation.
+    const CONCEPT_WITHOUT_ATOMS = 'no-atoms-test-fixture';
     for (let i = 0; i < 2; i++) {
       const wrap = makeRes();
-      await handler(makeReq({ params: { concept_id: 'determinants' } }) as any, wrap.res);
+      await handler(makeReq({ params: { concept_id: CONCEPT_WITHOUT_ATOMS } }) as any, wrap.res);
       expect(wrap.status).toBe(200);
       expect((wrap.payload as any).atoms).toEqual([]);
       expect(wrap.payload).toHaveProperty('components');
     }
 
-    expect(getAtomFallbackCounts()['determinants']).toBe(2);
+    expect(getAtomFallbackCounts()[CONCEPT_WITHOUT_ATOMS]).toBe(2);
     const fallbackWarns = warnSpy.mock.calls.filter(c =>
-      String(c[0]).includes('atoms unavailable for determinants'),
+      String(c[0]).includes(`atoms unavailable for ${CONCEPT_WITHOUT_ATOMS}`),
     );
     expect(fallbackWarns.length).toBe(1); // once per concept, not per request
     warnSpy.mockRestore();

@@ -1,0 +1,6 @@
+concept_id: euler-hamilton
+label: "Euler Hamilton"
+topic: graph-theory
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

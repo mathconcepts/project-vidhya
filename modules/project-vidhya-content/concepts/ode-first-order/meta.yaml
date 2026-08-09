@@ -1,0 +1,6 @@
+concept_id: ode-first-order
+label: "Ode First Order"
+topic: differential-equations
+difficulty_base: 0.4
+gate_frequency: high
+exam_ids: ["*"]

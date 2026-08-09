@@ -1,0 +1,6 @@
+concept_id: shortest-paths
+label: "Shortest Paths"
+topic: graph-theory
+difficulty_base: 0.5
+gate_frequency: medium
+exam_ids: ["*"]

@@ -1,0 +1,6 @@
+concept_id: series
+label: "Series"
+topic: calculus
+difficulty_base: 0.4
+gate_frequency: medium
+exam_ids: ["*"]

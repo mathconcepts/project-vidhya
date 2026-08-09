@@ -1,0 +1,6 @@
+concept_id: analytic-functions
+label: "Analytic Functions"
+topic: complex-variables
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

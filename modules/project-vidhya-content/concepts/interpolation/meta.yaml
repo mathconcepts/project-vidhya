@@ -1,0 +1,6 @@
+concept_id: interpolation
+label: "Interpolation"
+topic: numerical-methods
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

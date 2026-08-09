@@ -1,0 +1,6 @@
+concept_id: pde-basics
+label: "Pde Basics"
+topic: differential-equations
+difficulty_base: 0.7
+gate_frequency: medium
+exam_ids: ["*"]

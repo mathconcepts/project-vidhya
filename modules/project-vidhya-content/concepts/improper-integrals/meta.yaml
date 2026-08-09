@@ -1,0 +1,6 @@
+concept_id: improper-integrals
+label: "Improper Integrals"
+topic: calculus
+difficulty_base: 0.6
+gate_frequency: medium
+exam_ids: ["*"]

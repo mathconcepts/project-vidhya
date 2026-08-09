@@ -1,0 +1,6 @@
+concept_id: residue-calculus
+label: "Residue Calculus"
+topic: complex-variables
+difficulty_base: 0.7
+gate_frequency: high
+exam_ids: ["*"]

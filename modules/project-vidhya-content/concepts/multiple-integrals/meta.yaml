@@ -1,0 +1,6 @@
+concept_id: multiple-integrals
+label: "Multiple Integrals"
+topic: calculus
+difficulty_base: 0.7
+gate_frequency: high
+exam_ids: ["*"]

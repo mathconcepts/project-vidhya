@@ -139,6 +139,61 @@ export const CONCEPT_MAP: Map<string, ConceptNode> = new Map(
   ALL_CONCEPTS.map(c => [c.id, c])
 );
 
+// ============================================================================
+// SYLLABUS SECTIONS — section-level IDs (e.g. "differential-equations") that
+// group granular concept IDs. Navigation sometimes lands on a section ID;
+// section-aware consumers resolve it to the first concept in the section.
+// ============================================================================
+
+export interface SyllabusSection {
+  id: string;
+  title: string;
+  concept_ids: string[];
+}
+
+function loadSyllabusFromYaml(yamlPath: string): SyllabusSection[] {
+  try {
+    const raw = parseYaml(fs.readFileSync(yamlPath, 'utf-8'));
+    const sections = raw?.syllabus;
+    if (!Array.isArray(sections)) return [];
+    return sections
+      .filter((s: any) => typeof s?.id === 'string')
+      .map((s: any) => ({
+        id: String(s.id),
+        title: String(s.title ?? s.id),
+        concept_ids: Array.isArray(s.concept_ids)
+          ? s.concept_ids.filter((id: any) => typeof id === 'string')
+          : [],
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export const SYLLABUS_SECTIONS: SyllabusSection[] = loadSyllabusFromYaml(GATE_MA_YAML_PATH);
+
+/** Map section_id → SyllabusSection for O(1) lookup */
+export const SECTION_MAP: Map<string, SyllabusSection> = new Map(
+  SYLLABUS_SECTIONS.map(s => [s.id, s])
+);
+
+/**
+ * Resolve a concept_id that may be either a leaf concept or a syllabus section
+ * ID. When it's a section ID, returns the first concept in that section that
+ * exists in the concept graph. Returns undefined when nothing matches.
+ */
+export function resolveConceptOrSection(id: string): ConceptNode | undefined {
+  const direct = CONCEPT_MAP.get(id);
+  if (direct) return direct;
+  const section = SECTION_MAP.get(id);
+  if (!section) return undefined;
+  for (const cid of section.concept_ids) {
+    const node = CONCEPT_MAP.get(cid);
+    if (node) return node;
+  }
+  return undefined;
+}
+
 /** Get all concepts for a topic */
 export function getConceptsForTopic(topic: string): ConceptNode[] {
   return ALL_CONCEPTS.filter(c => c.topic === topic);

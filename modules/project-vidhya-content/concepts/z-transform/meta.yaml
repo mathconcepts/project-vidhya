@@ -1,0 +1,6 @@
+concept_id: z-transform
+label: "Z Transform"
+topic: transform-theory
+difficulty_base: 0.6
+gate_frequency: medium
+exam_ids: ["*"]

@@ -1,0 +1,6 @@
+concept_id: systems-of-equations
+label: "Systems Of Equations"
+topic: linear-algebra
+difficulty_base: 0.4
+gate_frequency: high
+exam_ids: ["*"]

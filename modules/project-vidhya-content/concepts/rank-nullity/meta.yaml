@@ -1,0 +1,6 @@
+concept_id: rank-nullity
+label: "Rank Nullity"
+topic: linear-algebra
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

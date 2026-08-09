@@ -19,7 +19,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ALL_CONCEPTS } from '../constants/concept-graph';
+import { ALL_CONCEPTS, resolveConceptOrSection } from '../constants/concept-graph';
 import { verifyProblemWithWolfram } from '../services/wolfram-service';
 import { filterChunksForExam } from '../curriculum/guardrails';
 import { getConceptTopicContext } from '../content/topic-context';
@@ -246,7 +246,10 @@ export function topicNotesAttribution(topic_id: string): Attribution {
  */
 export async function resolveSources(req: LessonRequest): Promise<SourceBundle> {
   const bundle = loadBundle();
-  const concept = ALL_CONCEPTS.find(c => c.id === req.concept_id);
+  // resolveConceptOrSection handles both leaf concept IDs ("ode-first-order")
+  // and syllabus section IDs ("differential-equations") — the latter maps to
+  // its first known leaf concept so navigation always surfaces real content.
+  const concept = resolveConceptOrSection(req.concept_id);
 
   if (!concept) {
     // The composer will treat this as a hard fallback; graph fields are synthetic

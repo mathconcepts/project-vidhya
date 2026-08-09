@@ -97,6 +97,19 @@ export const GATE_MATH_EXAM = {
     'transform-theory',           // Laplace + Fourier — GATE-emphasized
   ],
 
+  // GATE EM weightage: linear algebra + calculus lead, transform theory and
+  // numerical methods are GATE-distinctive (not present in JEE).
+  topic_weights: {
+    'linear-algebra':         0.25,
+    'calculus':               0.20,
+    'differential-equations': 0.15,
+    'transform-theory':       0.12,
+    'numerical-methods':      0.10,
+    'complex-variables':      0.08,
+    'probability-statistics': 0.05,
+    'vector-calculus':        0.05,
+  },
+
   // Linear algebra dominates GATE EM in a way it doesn't in JEE Main.
   // Numerical methods + transform theory are GATE-distinctive.
   priority_concepts: [

@@ -122,12 +122,22 @@ export async function planMultiExamSession(req: MultiExamPlanRequest): Promise<S
   })));
 
   // Interleave actions: sort globally by priority_score descending,
-  // preserving per-exam action order on ties. Renumber ids.
+  // preserving per-exam action order on ties.
   const allActions: ActionRecommendation[] = [];
   for (const p of perExamPlans) allActions.push(...p.actions);
   allActions.sort((a, b) => b.priority_score - a.priority_score);
 
-  const renumbered: ActionRecommendation[] = allActions.map((a, i) => ({
+  // Deduplicate: when two exams produce the same (topic, kind, difficulty)
+  // action, keep only the highest-scored one (first after sort).
+  const seen = new Set<string>();
+  const dedupedActions = allActions.filter(a => {
+    const key = `${a.content_hint?.topic ?? ''}|${a.kind}|${a.content_hint?.difficulty ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const renumbered: ActionRecommendation[] = dedupedActions.map((a, i) => ({
     ...a,
     id: `ACT-${i + 1}`,
   }));
@@ -321,6 +331,11 @@ function composeActions(
   //   prerequisite_repair → prefer topics with accuracy < 0.45 (deep gap)
   const biasedTopics = applyBias(priorities, srStats, strategy.gbrain_bias);
 
+  // Track topics already committed to (e.g. the spaced-review action)
+  // so Step 2 doesn't produce a second action for the same topic.
+  const usedTopics = new Set<string>();
+  if (overdueReview) usedTopics.add(overdueReview.topic);
+
   // Difficulty rotation — use the strategy's mix.
   const difficulties = expandDifficultyMix(strategy.mock_difficulty_mix, maxActions - actions.length);
 
@@ -328,6 +343,7 @@ function composeActions(
   for (const pri of biasedTopics) {
     if (actions.length >= maxActions) break;
     if (remainingMinutes < 2) break;
+    if (usedTopics.has(pri.topic)) continue;
 
     const difficulty = difficulties[difficultyIdx % difficulties.length] ?? 'medium';
     difficultyIdx++;
@@ -363,6 +379,7 @@ function composeActions(
       exam_id,
     };
     actions.push(action);
+    usedTopics.add(pri.topic);
     remainingMinutes -= action.estimated_minutes;
   }
 

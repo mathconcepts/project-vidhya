@@ -78,6 +78,17 @@ export const JEE_MAIN_EXAM = {
     'graph-theory',
   ],
 
+  // JEE Main: calculus is ~35-40% of questions; linear algebra and vector
+  // calculus feature heavily; transform theory and graph theory are absent.
+  topic_weights: {
+    'calculus':               0.38,
+    'linear-algebra':         0.18,
+    'vector-calculus':        0.14,
+    'differential-equations': 0.12,
+    'probability-statistics': 0.10,
+    'complex-variables':      0.08,
+  },
+
   // JEE Main is calculus + coordinate geometry heavy vs BITSAT which
   // spreads across algebra + calculus more evenly.
   priority_concepts: [

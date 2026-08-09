@@ -14,12 +14,14 @@ import {
   listRulesets, createRuleset, setRulesetEnabled, deleteRuleset,
   type BlueprintRuleset,
 } from '@/api/admin/rulesets';
+import type { ListRulesetsResult } from '@/api/admin/rulesets';
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
 import { PresetsPanel } from '@/components/admin/PresetsPanel';
 
 export default function RulesetsPage() {
   const { user, loading: authLoading } = useAuth();
   const [rulesets, setRulesets] = useState<BlueprintRuleset[] | null>(null);
+  const [seedReadonly, setSeedReadonly] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [examPack, setExamPack] = useState('jee-main');
@@ -27,7 +29,10 @@ export default function RulesetsPage() {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const refresh = () => listRulesets().then(setRulesets).catch((e) => setError((e as Error).message));
+  const refresh = () => listRulesets().then(({ rulesets: rs, mode }: ListRulesetsResult) => {
+    setRulesets(rs);
+    setSeedReadonly(mode === 'seed_readonly');
+  }).catch((e) => setError((e as Error).message));
 
   useEffect(() => {
     if (authLoading || !user || !isAdminRole(user.role)) return;
@@ -79,33 +84,26 @@ export default function RulesetsPage() {
         </p>
       </header>
 
-      {error && /503|DATABASE_URL/i.test(error) ? (
-        <div style={{ marginBottom: 16, padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,159,10,.22)', background: 'rgba(255,159,10,.06)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--orange)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)' }}>
-            <Database size={14} /> Rulesets need a database
-          </div>
-          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            This deploy is running without <code>DATABASE_URL</code>. Rulesets, blueprints, and the
-            generation pipeline all persist to Postgres. Set the env var on Render and redeploy, or
-            run <code>docker compose up</code> locally.
-          </p>
-          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
-            Until then, you can still browse the <code>/admin/scenarios</code> demo path which works
-            without a DB.
-          </p>
+      {seedReadonly && (
+        <div style={{ marginBottom: 16, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.25)', background: 'rgba(88,86,214,.06)', fontSize: 11, color: 'var(--indigo-ink)' }}>
+          <Database size={12} />
+          Read-only demo data — connect <code>DATABASE_URL</code> to create, edit, or delete rulesets
         </div>
-      ) : error ? (
+      )}
+      {error && (
         <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>{error}</div>
-      ) : null}
+      )}
 
       <PresetsPanel onInstalled={() => refresh()} />
 
-      <button
-        onClick={() => setCreating((c) => !c)}
-        style={{ marginBottom: 16, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.3)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
-      >
-        <Plus size={12} /> {creating ? 'Cancel' : 'New ruleset'}
-      </button>
+      {!seedReadonly && (
+        <button
+          onClick={() => setCreating((c) => !c)}
+          style={{ marginBottom: 16, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.3)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+        >
+          <Plus size={12} /> {creating ? 'Cancel' : 'New ruleset'}
+        </button>
+      )}
 
       {creating && (
         <div style={{ marginBottom: 16, padding: 16, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -153,7 +151,7 @@ export default function RulesetsPage() {
           </div>
         )}
         {rulesets?.map((rs) => (
-          <RulesetRow key={rs.id} ruleset={rs} onChange={refresh} onError={(m) => setError(m)} />
+          <RulesetRow key={rs.id} ruleset={rs} onChange={refresh} onError={(m) => setError(m)} readonly={seedReadonly} />
         ))}
       </div>
     </div>
@@ -164,14 +162,17 @@ function RulesetRow({
   ruleset,
   onChange,
   onError,
+  readonly,
 }: {
   ruleset: BlueprintRuleset;
   onChange: () => void;
   onError: (msg: string) => void;
+  readonly?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
 
   const toggle = async () => {
+    if (readonly) return;
     setBusy(true);
     try { await setRulesetEnabled(ruleset.id, !ruleset.enabled); onChange(); }
     catch (e) { onError((e as Error).message); }
@@ -179,6 +180,7 @@ function RulesetRow({
   };
 
   const handleDelete = async () => {
+    if (readonly) return;
     if (!confirm('Delete this ruleset?')) return;
     setBusy(true);
     try { await deleteRuleset(ruleset.id); onChange(); }
@@ -201,30 +203,37 @@ function RulesetRow({
           </div>
           <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{ruleset.rule_text}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={toggle}
-            disabled={busy}
-            style={{
-              fontSize: 11,
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-sm)',
-              border: ruleset.enabled ? '1px solid rgba(52,199,89,.25)' : 'var(--hairline) solid var(--separator)',
-              background: ruleset.enabled ? 'rgba(52,199,89,.08)' : 'transparent',
-              color: ruleset.enabled ? 'var(--green-ink)' : 'var(--text-tertiary)',
-              cursor: busy ? 'not-allowed' : 'pointer',
-            }}
-          >
+        {!readonly && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={toggle}
+              disabled={busy}
+              style={{
+                fontSize: 11,
+                padding: '4px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: ruleset.enabled ? '1px solid rgba(52,199,89,.25)' : 'var(--hairline) solid var(--separator)',
+                background: ruleset.enabled ? 'rgba(52,199,89,.08)' : 'transparent',
+                color: ruleset.enabled ? 'var(--green-ink)' : 'var(--text-tertiary)',
+                cursor: busy ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {ruleset.enabled ? 'enabled' : 'disabled'}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={busy}
+              style={{ padding: 6, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: 'var(--text-tertiary)', cursor: busy ? 'not-allowed' : 'pointer' }}
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        )}
+        {readonly && (
+          <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-sm)', background: ruleset.enabled ? 'rgba(52,199,89,.08)' : 'transparent', color: ruleset.enabled ? 'var(--green-ink)' : 'var(--text-tertiary)', border: ruleset.enabled ? '1px solid rgba(52,199,89,.25)' : 'var(--hairline) solid var(--separator)' }}>
             {ruleset.enabled ? 'enabled' : 'disabled'}
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={busy}
-            style={{ padding: 6, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: 'var(--text-tertiary)', cursor: busy ? 'not-allowed' : 'pointer' }}
-          >
-            <Trash2 size={12} />
-          </button>
-        </div>
+          </span>
+        )}
       </div>
     </div>
   );

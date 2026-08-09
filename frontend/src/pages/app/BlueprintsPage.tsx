@@ -13,7 +13,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Lock, BookOpen, CheckCircle2, AlertCircle, Plus, Rocket } from 'lucide-react';
+import { Loader2, Lock, BookOpen, CheckCircle2, AlertCircle, Plus, Rocket, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { isAdminRole } from '@/lib/auth/roles';
 import {
@@ -24,6 +24,7 @@ import {
   approveBlueprint,
   type ContentBlueprint,
   type DifficultyLabel,
+  type ListBlueprintsResult,
 } from '@/api/admin/blueprints';
 import { JourneyNudge } from '@/components/admin/JourneyNudge';
 import { PresetsPanel } from '@/components/admin/PresetsPanel';
@@ -33,13 +34,17 @@ export default function BlueprintsPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [blueprints, setBlueprints] = useState<ContentBlueprint[] | null>(null);
+  const [seedReadonly, setSeedReadonly] = useState(false);
   const [active, setActive] = useState<ContentBlueprint | null>(null);
   const [etag, setEtag] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading || !user || !isAdminRole(user.role)) return;
-    listBlueprints({}).then(setBlueprints).catch((e) => setError((e as Error).message));
+    listBlueprints({}).then(({ blueprints: bps, mode }: ListBlueprintsResult) => {
+      setBlueprints(bps);
+      setSeedReadonly(mode === 'seed_readonly');
+    }).catch((e) => setError((e as Error).message));
   }, [authLoading, user]);
 
   useEffect(() => {
@@ -84,6 +89,12 @@ export default function BlueprintsPage() {
         </p>
       </header>
 
+      {seedReadonly && (
+        <div style={{ marginBottom: 16, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.25)', background: 'rgba(88,86,214,.06)', fontSize: 11, color: 'var(--indigo-ink)' }}>
+          <Database size={12} />
+          Read-only demo data — connect <code>DATABASE_URL</code> to create or edit blueprints
+        </div>
+      )}
       {error && (
         <div style={{ marginBottom: 16, padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,59,48,.22)', background: 'rgba(255,59,48,.06)', fontSize: 'var(--text-caption)', color: 'var(--red)' }}>
           {error}
@@ -91,11 +102,11 @@ export default function BlueprintsPage() {
       )}
 
       <PresetsPanel onInstalled={() => {
-        listBlueprints({}).then(setBlueprints).catch(() => { /* ignore */ });
+        listBlueprints({}).then(({ blueprints: bps }: ListBlueprintsResult) => setBlueprints(bps)).catch(() => { /* ignore */ });
       }} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24 }}>
-        <Sidebar blueprints={blueprints} activeId={id ?? null} onCreated={(bp) => {
+        <Sidebar blueprints={blueprints} activeId={id ?? null} readonly={seedReadonly} onCreated={(bp) => {
           setBlueprints((cur) => (cur ? [bp, ...cur] : [bp]));
         }} />
         {active ? (
@@ -118,10 +129,12 @@ function Sidebar({
   blueprints,
   activeId,
   onCreated,
+  readonly,
 }: {
   blueprints: ContentBlueprint[] | null;
   activeId: string | null;
   onCreated: (bp: ContentBlueprint) => void;
+  readonly?: boolean;
 }) {
   const [creating, setCreating] = useState(false);
   const [conceptId, setConceptId] = useState('');
@@ -163,54 +176,58 @@ function Sidebar({
 
   return (
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <button
-        onClick={() => setCreating((c) => !c)}
-        style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.3)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
-      >
-        <Plus size={12} /> {creating ? 'Cancel' : 'New blueprint'}
-      </button>
-
-      {creating && (
-        <div style={{ padding: 12, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <input
-            type="text"
-            placeholder="concept_id (e.g. limits-jee)"
-            value={conceptId}
-            onChange={(e) => setConceptId(e.target.value)}
-            style={inputStyle}
-          />
-          <input
-            type="text"
-            value={examPack}
-            onChange={(e) => setExamPack(e.target.value)}
-            style={inputStyle}
-          />
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value as DifficultyLabel)}
-            style={inputStyle}
-          >
-            <option value="easy">easy</option>
-            <option value="medium">medium</option>
-            <option value="hard">hard</option>
-          </select>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={useArbitrator}
-              onChange={(e) => setUseArbitrator(e.target.checked)}
-            />
-            <span>Run arbitrator (LLM may override template)</span>
-          </label>
-          {err && <div style={{ fontSize: 11, color: 'var(--red)' }}>{err}</div>}
+      {!readonly && (
+        <>
           <button
-            onClick={handleCreate}
-            disabled={busy || !conceptId}
-            style={{ width: '100%', padding: '6px 12px', borderRadius: 'var(--radius-sm)', border: 'none', fontSize: 11, background: (busy || !conceptId) ? 'var(--surface-fill)' : 'var(--indigo)', color: (busy || !conceptId) ? 'var(--text-tertiary)' : '#fff', cursor: (busy || !conceptId) ? 'not-allowed' : 'pointer' }}
+            onClick={() => setCreating((c) => !c)}
+            style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(88,86,214,.3)', background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', fontSize: 11, fontWeight: 'var(--weight-medium)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
           >
-            {busy ? 'Building…' : 'Build from template'}
+            <Plus size={12} /> {creating ? 'Cancel' : 'New blueprint'}
           </button>
-        </div>
+
+          {creating && (
+            <div style={{ padding: 12, borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input
+                type="text"
+                placeholder="concept_id (e.g. limits-jee)"
+                value={conceptId}
+                onChange={(e) => setConceptId(e.target.value)}
+                style={inputStyle}
+              />
+              <input
+                type="text"
+                value={examPack}
+                onChange={(e) => setExamPack(e.target.value)}
+                style={inputStyle}
+              />
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as DifficultyLabel)}
+                style={inputStyle}
+              >
+                <option value="easy">easy</option>
+                <option value="medium">medium</option>
+                <option value="hard">hard</option>
+              </select>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={useArbitrator}
+                  onChange={(e) => setUseArbitrator(e.target.checked)}
+                />
+                <span>Run arbitrator (LLM may override template)</span>
+              </label>
+              {err && <div style={{ fontSize: 11, color: 'var(--red)' }}>{err}</div>}
+              <button
+                onClick={handleCreate}
+                disabled={busy || !conceptId}
+                style={{ width: '100%', padding: '6px 12px', borderRadius: 'var(--radius-sm)', border: 'none', fontSize: 11, background: (busy || !conceptId) ? 'var(--surface-fill)' : 'var(--indigo)', color: (busy || !conceptId) ? 'var(--text-tertiary)' : '#fff', cursor: (busy || !conceptId) ? 'not-allowed' : 'pointer' }}
+              >
+                {busy ? 'Building…' : 'Build from template'}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <div style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 16, marginBottom: 4 }}>Recent</div>

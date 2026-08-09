@@ -53,19 +53,25 @@ export interface ContentBlueprint {
   updated_at: string;
 }
 
+export interface ListBlueprintsResult {
+  blueprints: ContentBlueprint[];
+  /** 'seed_readonly' when DATABASE_URL is absent; 'live' when DB is connected. */
+  mode: 'live' | 'seed_readonly';
+}
+
 export async function listBlueprints(filter: {
   exam?: string;
   concept?: string;
   requires_review?: boolean;
-} = {}): Promise<ContentBlueprint[]> {
+} = {}): Promise<ListBlueprintsResult> {
   const q = new URLSearchParams();
   if (filter.exam) q.set('exam', filter.exam);
   if (filter.concept) q.set('concept', filter.concept);
   if (filter.requires_review !== undefined) q.set('requires_review', String(filter.requires_review));
   const r = await authFetch(`/api/admin/blueprints?${q}`);
   if (!r.ok) throw new Error(`list failed: ${r.status}`);
-  const body = (await r.json()) as { blueprints: ContentBlueprint[] };
-  return body.blueprints;
+  const body = (await r.json()) as { blueprints: ContentBlueprint[]; mode?: string };
+  return { blueprints: body.blueprints, mode: body.mode === 'seed_readonly' ? 'seed_readonly' : 'live' };
 }
 
 export async function getBlueprint(id: string): Promise<{ blueprint: ContentBlueprint; etag: string }> {

@@ -16,6 +16,16 @@ export interface InstallResult {
   rulesets_skipped: number;
   blueprints_created: string[];
   blueprints_skipped: number;
+  mode?: 'live';
+}
+
+export interface DryRunInstallResult {
+  mode: 'dry_run';
+  preset_id: string;
+  persisted: false;
+  rulesets_would_create: number;
+  blueprints_would_create: number;
+  message: string;
 }
 
 export async function listPresets(): Promise<PresetSummary[]> {
@@ -25,9 +35,8 @@ export async function listPresets(): Promise<PresetSummary[]> {
   return body.presets;
 }
 
-export async function installPreset(id: string): Promise<InstallResult> {
+export async function installPreset(id: string): Promise<InstallResult | DryRunInstallResult> {
   const r = await authFetch(`/api/admin/presets/${encodeURIComponent(id)}/install`, { method: 'POST' });
-  if (r.status === 503) throw new Error('Database not configured. Presets need a DB to install rulesets + blueprints.');
   if (!r.ok) {
     const body = await r.json().catch(() => ({}));
     throw new Error((body as any).error ?? `install failed: ${r.status}`);

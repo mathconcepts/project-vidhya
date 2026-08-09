@@ -15,6 +15,7 @@ import { ServerResponse } from 'http';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import { createRuleset, listRulesets, deleteRuleset, setRulesetEnabled } from '../blueprints';
+import { getSeedRulesets } from '../registry/seed-rulesets.js';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -32,9 +33,13 @@ async function checkAdmin(req: ParsedRequest, res: ServerResponse): Promise<{ id
   return u as any;
 }
 
+function hasDb(): boolean {
+  return !!process.env.DATABASE_URL;
+}
+
 function requireDb(res: ServerResponse): boolean {
-  if (!process.env.DATABASE_URL) {
-    sendError(res, 503, 'DATABASE_URL not configured');
+  if (!hasDb()) {
+    sendJSON(res, { error: 'demo_mode', message: 'Connect DATABASE_URL to persist rulesets. Read-only seed data is served via GET.' }, 422);
     return false;
   }
   return true;
@@ -42,10 +47,15 @@ function requireDb(res: ServerResponse): boolean {
 
 async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void> {
   if (!(await checkAdmin(req, res))) return;
-  if (!requireDb(res)) return;
   const exam = req.query.get('exam') ?? undefined;
+  if (!hasDb()) {
+    // DB-less mode: return seed rulesets with mode discriminator.
+    const rulesets = getSeedRulesets(exam);
+    sendJSON(res, { rulesets, mode: 'seed_readonly' });
+    return;
+  }
   const rulesets = await listRulesets({ exam_pack_id: exam });
-  sendJSON(res, { rulesets });
+  sendJSON(res, { rulesets, mode: 'live' });
 }
 
 async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<void> {

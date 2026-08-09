@@ -11,13 +11,18 @@ export interface BlueprintRuleset {
   updated_at: string;
 }
 
-export async function listRulesets(exam?: string): Promise<BlueprintRuleset[]> {
+export interface ListRulesetsResult {
+  rulesets: BlueprintRuleset[];
+  /** 'seed_readonly' when DATABASE_URL is absent; 'live' when DB is connected. */
+  mode: 'live' | 'seed_readonly';
+}
+
+export async function listRulesets(exam?: string): Promise<ListRulesetsResult> {
   const q = exam ? `?exam=${encodeURIComponent(exam)}` : '';
   const r = await authFetch(`/api/admin/rulesets${q}`);
-  if (r.status === 503) throw new Error('DATABASE_URL not configured');
   if (!r.ok) throw new Error(`list failed: ${r.status}`);
-  const body = (await r.json()) as { rulesets: BlueprintRuleset[] };
-  return body.rulesets;
+  const body = (await r.json()) as { rulesets: BlueprintRuleset[]; mode?: string };
+  return { rulesets: body.rulesets, mode: body.mode === 'seed_readonly' ? 'seed_readonly' : 'live' };
 }
 
 export async function createRuleset(input: {

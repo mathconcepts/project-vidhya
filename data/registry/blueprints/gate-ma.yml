@@ -1,0 +1,55 @@
+# Seed blueprints for GATE Mathematics (gate-ma)
+#
+# These are read-only defaults served when DATABASE_URL is absent.
+# Operators can create real blueprints once a database is connected.
+
+exam_pack_id: gate-ma
+
+blueprints:
+  - id: seed_bp_eigenvalues_gate
+    concept_id: eigenvalues-eigenvectors
+    target_difficulty: medium
+    template_version: "v1"
+    created_by: seed
+    stages:
+      - id: intuition
+        atom_kind: visual_analogy
+        rationale_id: concept_is_geometric
+        rationale_note: "Eigenvalues are best grasped as 'stretch factors along special directions' before the algebraic definition lands."
+      - id: formalism
+        atom_kind: worked_example
+        rationale_id: algebra_first
+        rationale_note: "Property-first: state characteristic equation before derivation."
+      - id: worked_example
+        atom_kind: worked_example
+        rationale_id: default_worked
+      - id: practice
+        atom_kind: mcq
+        count: 3
+        difficulty_mix:
+          easy: 33
+          medium: 34
+          hard: 33
+        rationale_id: default_practice_mix
+
+  - id: seed_bp_linear_transforms_gate
+    concept_id: linear-transformations
+    target_difficulty: medium
+    template_version: "v1"
+    created_by: seed
+    stages:
+      - id: intuition
+        atom_kind: visual_analogy
+        rationale_id: concept_is_geometric
+        rationale_note: "A linear transformation is a rule that moves vectors while preserving the grid structure -- show this geometrically first."
+      - id: formalism
+        atom_kind: worked_example
+        rationale_id: algebra_first
+      - id: practice
+        atom_kind: mcq
+        count: 3
+        difficulty_mix:
+          easy: 50
+          medium: 30
+          hard: 20
+        rationale_id: default_practice_mix

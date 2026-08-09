@@ -28,6 +28,7 @@ import {
   type CreatedBy,
   type DifficultyLabel,
 } from '../blueprints';
+import { getSeedBlueprints, getSeedBlueprint } from '../registry/seed-rulesets.js';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -45,9 +46,13 @@ async function checkAdmin(req: ParsedRequest, res: ServerResponse): Promise<{ id
   return u as any;
 }
 
+function hasDb(): boolean {
+  return !!process.env.DATABASE_URL;
+}
+
 function requireDb(res: ServerResponse): boolean {
-  if (!process.env.DATABASE_URL) {
-    sendError(res, 503, 'DATABASE_URL not configured');
+  if (!hasDb()) {
+    sendJSON(res, { error: 'demo_mode', message: 'Connect DATABASE_URL to persist blueprints. Read-only seed data is served via GET.' }, 422);
     return false;
   }
   return true;
@@ -57,9 +62,13 @@ function requireDb(res: ServerResponse): boolean {
 
 async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void> {
   if (!(await checkAdmin(req, res))) return;
-  if (!requireDb(res)) return;
   const exam = req.query.get('exam') ?? undefined;
   const concept = req.query.get('concept') ?? undefined;
+  if (!hasDb()) {
+    const blueprints = getSeedBlueprints({ examPackId: exam, conceptId: concept });
+    sendJSON(res, { blueprints, mode: 'seed_readonly' });
+    return;
+  }
   const review = req.query.get('requires_review');
   const limit = Number(req.query.get('limit') ?? '50');
   const blueprints = await listBlueprints({
@@ -68,17 +77,22 @@ async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void
     requires_review: review === null ? undefined : review === 'true',
     limit,
   });
-  sendJSON(res, { blueprints });
+  sendJSON(res, { blueprints, mode: 'live' });
 }
 
 async function handleGet(req: ParsedRequest, res: ServerResponse): Promise<void> {
   if (!(await checkAdmin(req, res))) return;
-  if (!requireDb(res)) return;
   const id = req.params.id;
   if (!id) return sendError(res, 400, 'id required');
+  if (!hasDb()) {
+    const bp = getSeedBlueprint(id);
+    if (!bp) return sendError(res, 404, 'not found');
+    sendJSON(res, { blueprint: bp, mode: 'seed_readonly' }, 200, { ETag: '"seed"' });
+    return;
+  }
   const bp = await getBlueprint(id);
   if (!bp) return sendError(res, 404, 'not found');
-  sendJSON(res, { blueprint: bp }, 200, { ETag: `"${bp.updated_at}"` });
+  sendJSON(res, { blueprint: bp, mode: 'live' }, 200, { ETag: `"${bp.updated_at}"` });
 }
 
 async function handleCreate(req: ParsedRequest, res: ServerResponse): Promise<void> {

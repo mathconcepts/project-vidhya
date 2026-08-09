@@ -45,11 +45,24 @@ async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void
 async function handleInstall(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const auth = await requireRole(req, res, 'admin');
   if (!auth) return;
-  if (!process.env.DATABASE_URL) {
-    return sendError(res, 503, 'DATABASE_URL not configured');
-  }
   const id = req.params.id;
   if (!id) return sendError(res, 400, 'preset id required');
+
+  if (!process.env.DATABASE_URL) {
+    // DB-less: return a preview of what would be installed without persisting.
+    const { getPreset } = await import('../blueprints/presets.js');
+    const preset = getPreset(id);
+    if (!preset) return sendError(res, 404, `preset not found: ${id}`);
+    return sendJSON(res, {
+      mode: 'dry_run',
+      preset_id: id,
+      persisted: false,
+      rulesets_would_create: preset.rulesets.length,
+      blueprints_would_create: preset.blueprints.length,
+      message: 'Preview only — connect DATABASE_URL to persist rulesets and blueprints.',
+    }, 200);
+  }
+
   try {
     const result = await installPreset(id, (auth as any).id ?? 'admin');
     if (!result) return sendError(res, 404, `preset not found: ${id}`);

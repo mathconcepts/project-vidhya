@@ -3,6 +3,7 @@
   "files":
 [
   "src/api/admin-cohort-routes.ts",
+  "src/api/admin-resonance-routes.ts",
   "src/api/admin-decisions-routes.ts",
   "src/api/admin-exam-packs-routes.ts",
   "src/api/admin-holdout-routes.ts",

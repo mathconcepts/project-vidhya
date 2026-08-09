@@ -1,0 +1,68 @@
+# Gate-MA Bare-Minimum Syllabus Contract (Track E3)
+#
+# This file declares the minimum deliverable set per concept.
+# The CI gate (scripts/check-syllabus-floor.ts) enforces that
+# no released bundle falls below these floors.
+#
+# Default floor per concept (unless overridden below):
+#   explainers: 1        — at least 1 non-placeholder explainer atom
+#   practice_items: 5    — verified practice items OR a certified template
+#   strategy_card: true  — teaching-tips source entry that feeds the strategy card
+#
+# "Verified" means: machine_verified (CAS template) OR SymPy tier-0 check (T-A)
+# OR legacy Wolfram/cross_checked flag. The label never inflates.
+#
+# Ratchet state: report_only until first floor-fill playbook run completes.
+# Flip to blocking in the same commit that records the run id.
+
+defaults:
+  explainers: 1
+  practice_items: 5
+  strategy_card: true
+
+# Ratchet state (operator-controlled):
+ratchet: report_only   # change to 'blocking' after first green floor-fill run
+
+# Per-concept overrides (pure-theory concepts may have no practice floor)
+overrides:
+  vector-spaces:
+    practice_items: 3      # abstract — fewer verified practice items realistic
+    strategy_card: false   # no teaching-tips entry yet
+
+  linear-transformations:
+    practice_items: 3
+    strategy_card: false
+
+  pde-basics:
+    practice_items: 3
+    strategy_card: false
+
+  recurrence-relations:
+    practice_items: 3
+    strategy_card: false
+
+  boolean-algebra:
+    practice_items: 3
+    strategy_card: false
+
+  group-theory-basics:
+    practice_items: 3
+    strategy_card: false
+
+  planar-graphs:
+    practice_items: 3
+    strategy_card: false
+
+  euler-hamilton:
+    practice_items: 3
+    strategy_card: false
+
+  graph-coloring:
+    practice_items: 3
+    strategy_card: false
+
+# The top-up ladder (never a CI concern — floor only governs LAYER 0):
+# LAYER 0  FLOOR     (fixed, D0-servable, CI-guaranteed — this file)
+# LAYER 1  LLM       prose shells, dual-track variants, pp_*-steered
+# LAYER 2  WOLFRAM   T3 MCP agentic items, step-pod harvests
+# LAYER 3  SPECIAL   teaching-tips excerpts, operator notes, user-upload RAG

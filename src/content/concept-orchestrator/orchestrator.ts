@@ -42,6 +42,10 @@ import { renderScene, type SceneDescription } from './gif-generator';
 // silently falls back to today's generic prompts.
 import { toPromptText as _toPromptTextRef } from '../../personalization/student-context';
 import { generateNarration, shouldNarrate } from './tts-generator';
+// E1 Pain-Point Registry — cohort-level prompt steering from reviewed modules.
+// Falls back silently (empty string) when no reviewed entry exists.
+import { buildPainPointPromptBlock } from '../../registry/pain-points';
+import { buildPatternPromptBlock } from '../../registry/pedagogy-patterns';
 
 export const ALL_ATOM_TYPES: AtomType[] = [
   'hook', 'intuition', 'formal_definition', 'visual_analogy',
@@ -398,7 +402,14 @@ function buildPrompt(args: GenerateOneArgs & {
     ? renderStudentContextBlock(args.student_context)
     : '';
 
-  return `${studentContextBlock}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
+  // E1 Pain-Point Registry — inject cohort-level pain steering for reviewed modules.
+  // topic_family maps to module name (e.g. 'linear-algebra', 'calculus').
+  const painPointBlock = buildPainPointPromptBlock(args.topic_family, args.concept_id);
+
+  // E4 Pedagogy Pattern Library — inject active prompt directives for the module.
+  const patternBlock = buildPatternPromptBlock(args.topic_family);
+
+  return `${studentContextBlock}${painPointBlock ? painPointBlock + '\n\n' : ''}${patternBlock ? patternBlock + '\n\n' : ''}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
 
 Scaffold: ${args.template_scaffold}
 ${args.template_guidance ? `Guidance:\n${args.template_guidance}` : ''}

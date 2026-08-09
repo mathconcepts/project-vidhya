@@ -24,7 +24,7 @@ import { motion } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import {
   CheckCircle2, XCircle, Loader2, ArrowLeft, SkipForward,
-  Target, AlertTriangle, Compass,
+  Target, AlertTriangle, Compass, RefreshCw,
 } from 'lucide-react';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 
@@ -67,6 +67,10 @@ export default function PracticeAttemptPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<AttemptResult | null>(null);
+
+  // E7: "New numbers, same concept"
+  const [variantQuestion, setVariantQuestion] = useState<string | null>(null);
+  const [generatingVariant, setGeneratingVariant] = useState(false);
 
   // Fixed per item load: idempotency key half + latency clock start.
   const attemptTs = useMemo(() => Date.now(), [objectId]);
@@ -128,6 +132,22 @@ export default function PracticeAttemptPage() {
       setSubmitError((err as Error).message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function fetchNewNumbers() {
+    if (!item || generatingVariant || result) return;
+    setGeneratingVariant(true);
+    setVariantQuestion(null);
+    try {
+      const r = await authFetch(`/api/practice/new-numbers/${encodeURIComponent(item.id)}`, { method: 'POST' });
+      const data = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
+      setVariantQuestion(data?.question_text ?? null);
+    } catch {
+      setVariantQuestion(null);
+    } finally {
+      setGeneratingVariant(false);
     }
   }
 
@@ -194,9 +214,44 @@ export default function PracticeAttemptPage() {
             )}
           </div>
 
-          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
-            {item.question_text ?? 'This item has no question text.'}
-          </p>
+          <div>
+            <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
+              {variantQuestion ?? item.question_text ?? 'This item has no question text.'}
+            </p>
+            {variantQuestion && (
+              <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
+                ↑ New numbers — same concept. Submit the original item above for grading.
+              </p>
+            )}
+          </div>
+
+          {/* E7: New numbers button — only for NAT/MCQ items, before result */}
+          {(item.question_type === 'nat' || item.question_type === 'mcq') && !result && (
+            <button
+              onClick={fetchNewNumbers}
+              disabled={generatingVariant}
+              title="Same concept, different numbers — self-check only"
+              style={{
+                alignSelf: 'flex-start',
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--surface-fill)',
+                border: 'var(--hairline) solid var(--separator)',
+                color: 'var(--indigo-ink)',
+                fontSize: 'var(--text-caption)',
+                fontFamily: 'var(--font-sans)',
+                cursor: generatingVariant ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              {generatingVariant
+                ? <><Loader2 size={12} className="animate-spin" /> Generating…</>
+                : <><RefreshCw size={12} /> New numbers, same concept</>
+              }
+            </button>
+          )}
 
           {!item.gradable && (
             <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(255,159,10,.06)', border: '1px solid rgba(255,159,10,.22)', fontSize: 'var(--text-caption)', color: 'var(--orange)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>

@@ -87,6 +87,12 @@ jobs:
       - name: seam-registry check
         run: npm run ci:seam-registry
 
+      # Bare-Minimum Syllabus Contract (Track E3): reports concepts below
+      # the declared floor. Exits 0 while ratchet=report_only; exits 1
+      # (blocking) after the first floor-fill playbook completes.
+      - name: Syllabus floor check
+        run: npm run ci:syllabus-floor
+
       - name: Test
         run: npm test
 

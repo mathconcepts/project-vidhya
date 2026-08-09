@@ -296,7 +296,78 @@ async function handleGetItem(req: ParsedRequest, res: ServerResponse): Promise<v
   });
 }
 
+// ────────────────────────────────────────────────────────────────────
+// POST /api/practice/new-numbers — E7 "New numbers, same concept"
+// ────────────────────────────────────────────────────────────────────
+// Regenerates the numeric parameters in a template-born NAT/MCQ item,
+// keeping the same concept and difficulty. The original item is never
+// mutated — a transient variant is returned for display only (no DB write).
+// The variant is NOT gradable server-side (no answer key persisted);
+// the client shows it as a self-check item.
+
+async function handleNewNumbers(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const user = await requireRole(req, res, 'student', 'teacher', 'admin');
+  if (!user) return;
+
+  const objectId = req.params.id;
+  if (!objectId) return sendError(res, 400, 'item id is required');
+
+  const catalog = deps.catalog();
+  if (!catalog.getById) {
+    return sendError(res, 503, 'catalog cannot resolve items by id');
+  }
+  const obj = await catalog.getById(objectId);
+  if (!obj) return sendError(res, 404, `unknown item: ${objectId}`);
+
+  const payload = (obj.payload ?? {}) as Record<string, unknown>;
+  const questionText = typeof payload.questionText === 'string' ? payload.questionText : null;
+  if (!questionText) {
+    return sendError(res, 422, 'item has no question_text — cannot regenerate numbers');
+  }
+
+  // Only NAT and MCQ items carry numeric parameters worth varying.
+  const kind = payload.questionType;
+  if (kind !== 'nat' && kind !== 'mcq') {
+    return sendError(res, 422, `new-numbers is only available for nat/mcq items (got: ${kind})`);
+  }
+
+  try {
+    const { getLlmForRole } = await import('../llm/runtime.js');
+    const llm = await getLlmForRole('chat');
+    if (!llm) throw new Error('no LLM available');
+
+    const prompt = `You are a math problem re-parameterizer.
+
+Original problem:
+${questionText}
+
+Produce a NEW version of the same problem with DIFFERENT specific numbers (change every
+numeric constant, coefficient, or value) but the SAME concept, difficulty, and structure.
+Do NOT change what the problem is asking — only swap the numbers.
+
+Return ONLY the new problem statement with the new numbers, nothing else.`;
+
+    const rawText = await llm.generate(prompt, { maxTokens: 400 });
+    const newText = rawText ?? '';
+
+    return sendJSON(res, {
+      id: `${objectId}_variant`,
+      original_id: objectId,
+      question_text: newText.trim() || questionText,
+      question_type: kind,
+      gradable: false,
+      not_gradable_reason: 'variant — self-check only; submit original item for grading',
+      node_id: obj.nodeId,
+      topic: typeof payload.topic === 'string' ? payload.topic : null,
+    });
+  } catch (err) {
+    console.error('[practice] new-numbers generation failed:', err);
+    return sendError(res, 503, 'number regeneration unavailable — try again later');
+  }
+}
+
 export const practiceRoutes: RouteDefinition[] = [
   { method: 'POST', path: '/api/practice/attempt', handler: handleAttempt },
   { method: 'GET', path: '/api/practice/item/:id', handler: handleGetItem },
+  { method: 'POST', path: '/api/practice/new-numbers/:id', handler: handleNewNumbers },
 ];

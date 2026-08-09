@@ -38,7 +38,7 @@ export type Source =
  *
  * Defaults to 'knowledge' when omitted on RouteRequest.
  */
-export type SessionMode = 'knowledge' | 'exam-prep' | 'revision';
+export type SessionMode = 'knowledge' | 'exam-prep' | 'revision' | 'micro_sprint';
 
 // ─── Router request/response ─────────────────────────────────────────────
 

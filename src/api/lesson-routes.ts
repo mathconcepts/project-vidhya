@@ -730,6 +730,68 @@ async function handleAdvanceSM2(req: ParsedRequest, res: ServerResponse): Promis
 }
 
 // ============================================================================
+// Formula Map (E7) — GET /api/lesson/formula-map/:module
+// ============================================================================
+
+interface FormulaEntry {
+  id: string;
+  name: string;
+  latex: string;
+  description: string;
+  tags?: string[];
+}
+
+const FORMULA_SEEDS: Record<string, { title: string; entries: FormulaEntry[] }> = {
+  'linear-algebra': {
+    title: 'Linear Algebra',
+    entries: [
+      { id: 'la_rank_nullity', name: 'Rank-Nullity Theorem', latex: 'rank(A) + nullity(A) = n', description: 'For an m×n matrix A, the rank (dimension of column space) plus the nullity (dimension of null space) equals the number of columns n.', tags: ['rank', 'nullity', 'subspaces'] },
+      { id: 'la_det_product', name: 'Determinant Multiplicativity', latex: 'det(AB) = det(A) · det(B)', description: 'The determinant of a product of square matrices equals the product of their determinants. Useful for proving invertibility of composed linear maps.', tags: ['determinant', 'invertibility'] },
+      { id: 'la_eigen', name: 'Characteristic Equation', latex: 'det(A − λI) = 0', description: 'Eigenvalues λ are roots of the characteristic polynomial. Each eigenvalue has an associated eigenspace (the null space of A − λI).', tags: ['eigenvalues', 'characteristic polynomial'] },
+      { id: 'la_cayley', name: 'Cayley-Hamilton Theorem', latex: 'p(A) = 0  where  p(λ) = det(A − λI)', description: 'Every square matrix satisfies its own characteristic equation. Useful for computing matrix inverses and high powers of A without diagonalisation.', tags: ['cayley-hamilton', 'matrix powers'] },
+      { id: 'la_spectral', name: 'Spectral Decomposition', latex: 'A = PDP⁻¹  (A = QDQᵀ when symmetric)', description: 'A diagonalisable matrix can be written as A = PDP⁻¹ where D is diagonal (eigenvalues) and P columns are eigenvectors. Symmetric matrices always have a real orthogonal decomposition.', tags: ['diagonalisation', 'eigenvectors'] },
+    ],
+  },
+  'calculus': {
+    title: 'Calculus',
+    entries: [
+      { id: 'calc_chain', name: 'Chain Rule', latex: '(f∘g)′(x) = f′(g(x)) · g′(x)', description: 'Differentiating a composition: differentiate the outer function at the inner, multiply by the derivative of the inner.', tags: ['differentiation', 'composition'] },
+      { id: 'calc_ibp', name: 'Integration by Parts', latex: '∫u dv = uv − ∫v du', description: 'Choose u to differentiate and dv to integrate (LIATE heuristic: Logarithm, Inverse-trig, Algebraic, Trigonometric, Exponential). Reduces one integral to a hopefully simpler one.', tags: ['integration', 'LIATE'] },
+      { id: 'calc_ftc', name: 'Fundamental Theorem of Calculus', latex: 'F′(x) = f(x)  ⟺  ∫_a^b f = F(b) − F(a)', description: 'Part I: every continuous function has an antiderivative. Part II: evaluating a definite integral reduces to evaluating the antiderivative at the endpoints.', tags: ['definite integral', 'antiderivative'] },
+      { id: 'calc_taylor', name: "Taylor's Theorem", latex: 'f(x) = Σ_{n=0}^{∞} f⁽ⁿ⁾(a)/n! · (x−a)ⁿ', description: 'Any infinitely-differentiable function can be expanded in a power series about x = a. The Maclaurin series is the special case a = 0.', tags: ['series', 'approximation'] },
+    ],
+  },
+  'probability': {
+    title: 'Probability & Statistics',
+    entries: [
+      { id: 'prob_bayes', name: "Bayes' Theorem", latex: 'P(A|B) = P(B|A)·P(A) / P(B)', description: 'Updates belief in A given evidence B. P(A) is the prior; P(B|A) is the likelihood; P(A|B) is the posterior. P(B) is the normalising constant (sum over all hypotheses).', tags: ['conditional probability', 'Bayesian'] },
+      { id: 'prob_exp', name: 'Law of Total Expectation', latex: 'E[X] = E[E[X|Y]]', description: 'The expectation of X equals the expectation (over Y) of the conditional expectation of X given Y. Useful when conditioning on Y simplifies the inner expectation.', tags: ['expectation', 'conditioning'] },
+      { id: 'prob_var', name: 'Variance Decomposition', latex: 'Var(X) = E[Var(X|Y)] + Var(E[X|Y])', description: 'Total variance = average conditional variance (within groups) + variance of group means (between groups). Underlies ANOVA.', tags: ['variance', 'conditioning'] },
+      { id: 'prob_clt', name: 'Central Limit Theorem', latex: '(X̄_n − μ)/(σ/√n) → N(0,1)  as  n→∞', description: 'The standardised sample mean of any distribution with finite mean μ and variance σ² converges in distribution to the standard normal. n ≥ 30 is the common rule of thumb.', tags: ['CLT', 'normal approximation'] },
+    ],
+  },
+};
+
+async function handleFormulaMap(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const moduleId = req.params.module;
+  if (!moduleId) return sendError(res, 400, 'module is required');
+
+  const seed = FORMULA_SEEDS[moduleId];
+  if (!seed) {
+    return sendJSON(res, { module: moduleId, title: moduleId, entries: [] });
+  }
+  return sendJSON(res, { module: moduleId, title: seed.title, entries: seed.entries });
+}
+
+// ============================================================================
+// NAT-only mode filter — GET /api/practice/nat-only (E7)
+// Redirects to SmartPracticePage with ?mode=nat filter; the actual filtering
+// is client-side (the SmartPracticePage reads the query param).
+// The backend doesn't need a new endpoint — the mode is a URL convention.
+// See frontend SmartPracticePage for the ?mode=nat handling.
+// ============================================================================
+
+// ============================================================================
 // Export
 // ============================================================================
 
@@ -742,4 +804,5 @@ export const lessonRoutes: Array<{ method: string; path: string; handler: RouteH
   { method: 'POST', path: '/api/lesson/advance-sm2', handler: handleAdvanceSM2 },
   { method: 'GET', path: '/api/knowledge/concepts/:id/objectives', handler: handleConceptObjectives },
   { method: 'POST', path: '/api/daily-cards', handler: handleDailyCards },
+  { method: 'GET', path: '/api/lesson/formula-map/:module', handler: handleFormulaMap },
 ];

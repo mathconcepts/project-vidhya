@@ -77,6 +77,7 @@ const SetupWizardPage = lazy(() => import('@/pages/app/SetupWizardPage'));
 const GraphBrowserPage = lazy(() => import('@/pages/app/GraphBrowserPage'));
 const ScenariosPage = lazy(() => import('@/pages/app/ScenariosPage'));
 const BlueprintsPage = lazy(() => import('@/pages/app/BlueprintsPage'));
+const PlaybooksPage = lazy(() => import('@/pages/app/PlaybooksPage'));
 const RulesetsPage = lazy(() => import('@/pages/app/RulesetsPage'));
 const AdminJourneyPage = lazy(() => import('@/pages/app/AdminJourneyPage'));
 const AdminDecisionsPage = lazy(() => import('@/pages/app/AdminDecisionsPage'));
@@ -94,6 +95,10 @@ const WelcomePage = lazy(() => import('@/pages/app/WelcomePage'));
 const SpinePage = lazy(() => import('@/pages/app/SpinePage'));
 const InstitutePage = lazy(() => import('@/pages/app/InstitutePage'));
 const SellYourCoursePage = lazy(() => import('@/pages/app/SellYourCoursePage'));
+// E7 Delight Bundle
+const FormulaMapPage = lazy(() => import('@/pages/app/FormulaMapPage'));
+const TheoremWizardPage = lazy(() => import('@/pages/app/TheoremWizardPage'));
+const DistributionSelectorPage = lazy(() => import('@/pages/app/DistributionSelectorPage'));
 
 const PageLoader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
@@ -178,6 +183,7 @@ export default function App() {
           <Route path="admin/scenarios/:id" element={<ScenariosPage />} />
           <Route path="admin/blueprints" element={<BlueprintsPage />} />
           <Route path="admin/blueprints/:id" element={<BlueprintsPage />} />
+          <Route path="admin/playbooks" element={<PlaybooksPage />} />
           <Route path="admin/rulesets" element={<RulesetsPage />} />
           <Route path="admin/journey" element={<AdminJourneyPage />} />
           <Route path="admin/decisions" element={<AdminDecisionsPage />} />
@@ -204,6 +210,10 @@ export default function App() {
           <Route path="admin/content" element={<ContentAdminPage />} />
           <Route path="session" element={<StudymateSessionPage />} />
           <Route path="daily" element={<DailyCardsPage />} />
+          {/* E7 Delight Bundle */}
+          <Route path="formula-map/:module" element={<FormulaMapPage />} />
+          <Route path="theorem-wizard/:module" element={<TheoremWizardPage />} />
+          <Route path="distribution-selector" element={<DistributionSelectorPage />} />
           {/* /welcome is the first-visit demo landing. AppLayout redirects
               new visitors here once. After dismissal, localStorage flag
               vidhya.demo_welcomed prevents re-prompting. */}

@@ -63,6 +63,7 @@ export default function SmartPracticePage() {
   const initialTopic = searchParams.get('topic') || 'linear-algebra';
   const rawDiff = searchParams.get('difficulty');
   const initialDifficulty = rawDiff === 'easy' ? 0.2 : rawDiff === 'hard' ? 0.8 : rawDiff === 'medium' ? 0.5 : 0.5;
+  const natOnly = searchParams.get('mode') === 'nat';
 
   const [examTopics, setExamTopics] = useState<string[]>(GATE_FALLBACK_TOPICS);
   const [topic, setTopic] = useState<string>(initialTopic);
@@ -113,9 +114,12 @@ export default function SmartPracticePage() {
       if (result.problem?.id) {
         try {
           const r = await authFetch(`/api/practice/item/${encodeURIComponent(result.problem.id)}`);
-          if (r.ok && (await r.json())?.gradable) {
-            navigate(`/attempt/${encodeURIComponent(result.problem.id)}`);
-            return;
+          if (r.ok) {
+            const item = await r.json();
+            if (item?.gradable && (!natOnly || item.question_type === 'nat')) {
+              navigate(`/attempt/${encodeURIComponent(result.problem.id)}`);
+              return;
+            }
           }
         } catch {}
       }
@@ -168,6 +172,12 @@ export default function SmartPracticePage() {
           Pick a topic and difficulty — the right problem comes to you.
         </p>
       </div>
+
+      {natOnly && (
+        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.06)', border: '1px solid rgba(88,86,214,.18)', fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)' }}>
+          <strong>NAT-only mode</strong> — only numerical answer type questions will be served. Good for practising exact calculation.
+        </div>
+      )}
 
       {/* Controls */}
       <div style={{ padding: 14, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', display: 'flex', flexDirection: 'column', gap: 12 }}>

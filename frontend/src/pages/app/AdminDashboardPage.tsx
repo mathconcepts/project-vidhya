@@ -366,6 +366,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/graph" label="Graph browser" icon={Network} />
               <QuickLink href="/admin/scenarios" label="Persona scenarios" icon={Sparkles} />
               <QuickLink href="/admin/blueprints" label="Content blueprints" icon={FileText} />
+              <QuickLink href="/admin/playbooks" label="Playbooks" icon={Terminal} />
               <QuickLink href="/admin/rulesets" label="Blueprint rulesets" icon={Settings} />
               <QuickLink href="/admin/decisions" label="Decision log" icon={FileText} />
               <QuickLink href="/admin/cohort" label="Cohort attention" icon={Users} />

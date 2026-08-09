@@ -1,0 +1,136 @@
+# Pain-point registry for GATE-MA Linear Algebra module.
+# Extraction source: GATE_Math_Atomic_Breakdown, Standout-Teaching docs.
+# Giri must change review_status to 'reviewed' after spot-checking >= 20 entries.
+# Prompts consume only 'reviewed' modules -- draft entries steer nothing.
+
+module: linear-algebra
+review_status: draft
+reviewed_by: null
+reviewed_at: null
+
+concepts:
+  matrix-operations:
+    pain_points:
+      - { id: pp_matop_row_ops, statement: "Confusing elementary row operations with column operations when reducing matrices", severity: high, source: "GATE_Math_Atomic_Breakdown §1.1" }
+      - { id: pp_matop_multiply_order, statement: "Matrix multiplication order reversal (AB != BA intuition not internalized)", severity: high, source: "GATE_Math_Atomic_Breakdown §1.1" }
+    user_expectations:
+      - { id: ue_matop_visual, statement: "Visual representation of matrix as linear map acting on vectors", artifact_hint: visualization }
+    rule_families: [matrix-row-ops]
+    gate_intent: { mark_class: [1], question_kinds: [MCQ, MSQ], framing: "computational prerequisite" }
+    pedagogy_patterns: [ped_worked_first]
+    competitor_benchmark: []
+
+  determinants:
+    pain_points:
+      - { id: pp_det_cofactor_sign, statement: "Cofactor sign pattern (+/-/+) confusion on 3x3 expansion", severity: high, source: "GATE_Math_Atomic_Breakdown §1.2" }
+      - { id: pp_det_singular, statement: "Not recognising zero determinant <-> singular <-> no unique solution", severity: high, source: "GATE_Math_Atomic_Breakdown §1.2" }
+      - { id: pp_det_properties, statement: "Not using properties (row swap negates, scalar factor) to simplify", severity: med, source: "GATE_Math_Atomic_Breakdown §1.2" }
+    user_expectations:
+      - { id: ue_det_shortcut, statement: "Sarrus's rule shortcut for 3x3 and when to use cofactor expansion", artifact_hint: cheatsheet }
+    rule_families: [matrix-row-ops, determinant-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ, NAT], framing: "invertibility, system solvability" }
+    pedagogy_patterns: [ped_property_first]
+    competitor_benchmark: ["Mathscare one-shot cofactor trick"]
+
+  matrix-inverse:
+    pain_points:
+      - { id: pp_inv_adjugate, statement: "Confusing adjugate (adjoint) formula with cofactor matrix directly", severity: med, source: "GATE_Math_Atomic_Breakdown §1.3" }
+      - { id: pp_inv_augmented, statement: "Errors in row-reducing the augmented [A|I] to find A-inverse", severity: high, source: "GATE_Math_Atomic_Breakdown §1.3" }
+    user_expectations:
+      - { id: ue_inv_when, statement: "Quick check: invertible iff det != 0 -- students want a 2-second test", artifact_hint: cheatsheet }
+    rule_families: [matrix-row-ops, determinant-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, NAT], framing: "system solving, iterative methods" }
+    pedagogy_patterns: [ped_property_first, ped_worked_first]
+    competitor_benchmark: []
+
+  systems-of-equations:
+    pain_points:
+      - { id: pp_sys_consistency, statement: "Rank condition for consistency not applied automatically (rank(A) vs rank(A|b))", severity: high, source: "GATE_Math_Atomic_Breakdown §1.4" }
+      - { id: pp_sys_infinite, statement: "When system has infinitely many solutions, computing the general solution with free variables", severity: high, source: "GATE_Math_Atomic_Breakdown §1.4" }
+      - { id: pp_sys_homogeneous, statement: "Homogeneous systems always consistent -- forgetting trivial solution always exists", severity: med, source: "GATE_Math_Atomic_Breakdown §1.4" }
+    user_expectations:
+      - { id: ue_sys_flowchart, statement: "Decision tree: consistent? -> unique? -> general solution form", artifact_hint: flowchart }
+    rule_families: [matrix-row-ops, rank-nullity-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ, NAT], framing: "circuit networks, structural analysis" }
+    pedagogy_patterns: [ped_property_first, ped_dual_track]
+    competitor_benchmark: ["Mathscare rank-augmented visual"]
+
+  rank-nullity:
+    pain_points:
+      - { id: pp_rn_theorem, statement: "Rank + Nullity = n (columns) not rows -- direction confusion", severity: high, source: "GATE_Math_Atomic_Breakdown §1.4" }
+      - { id: pp_rn_compute_nullity, statement: "Computing null space basis from row echelon form by back-substituting free variables", severity: high, source: "GATE_Math_Atomic_Breakdown §1.4" }
+    user_expectations:
+      - { id: ue_rn_shortcut, statement: "rank(A) + nullity(A) = number of columns -- students want this as a memorisable equation", artifact_hint: cheatsheet }
+    rule_families: [rank-nullity-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ], framing: "linear independence, solution space dimension" }
+    pedagogy_patterns: [ped_property_first]
+    competitor_benchmark: []
+
+  vector-spaces:
+    pain_points:
+      - { id: pp_vs_subspace, statement: "Subspace axiom check -- forgetting to verify closure under scalar multiplication", severity: med, source: "GATE_Math_Atomic_Breakdown §1.5" }
+      - { id: pp_vs_span, statement: "Determining whether a vector is in the span of a given set", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+      - { id: pp_vs_lin_indep, statement: "Linear independence check via determinant vs definition for sets of vectors", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+    user_expectations:
+      - { id: ue_vs_geometric, statement: "Geometric interpretation: span as lines/planes through origin", artifact_hint: visualization }
+    rule_families: [rank-nullity-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ], framing: "theoretical underpinning for all LA" }
+    pedagogy_patterns: [ped_physical_metaphor, ped_worked_first]
+    competitor_benchmark: []
+
+  linear-transformations:
+    pain_points:
+      - { id: pp_lt_matrix_repr, statement: "Computing the matrix of a linear transformation w.r.t. given bases", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+      - { id: pp_lt_kernel_image, statement: "Kernel and image of a linear map -- confusing definitions", severity: med, source: "GATE_Math_Atomic_Breakdown §1.5" }
+    user_expectations:
+      - { id: ue_lt_geometric, statement: "Visual: transformation stretching/rotating a unit square", artifact_hint: visualization }
+    rule_families: [rank-nullity-rules]
+    gate_intent: { mark_class: [2], question_kinds: [MCQ, MSQ], framing: "change of basis, PCA" }
+    pedagogy_patterns: [ped_physical_metaphor]
+    competitor_benchmark: []
+
+  eigenvalues:
+    pain_points:
+      - { id: pp_eig_cubic, statement: "Solving cubic characteristic equations det(A - lambda I) = 0 without numerical roots", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+      - { id: pp_eig_repeated, statement: "Repeated eigenvalues -- algebraic vs geometric multiplicity, defective matrices", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+      - { id: pp_eig_compute_vect, statement: "Finding eigenvectors: row-reducing (A - lambda I)x = 0 correctly with free variables", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+    user_expectations:
+      - { id: ue_eig_shortcut, statement: "Sum of eigenvalues = Trace, product = Det -- the two-second check", artifact_hint: cheatsheet }
+      - { id: ue_eig_steps, statement: "Step-by-step flowchart: characteristic poly -> roots -> eigenvectors", artifact_hint: flowchart }
+    rule_families: [char-poly-roots, matrix-row-ops]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ, NAT], framing: "stability analysis (Controls), PCA (ML)" }
+    pedagogy_patterns: [ped_property_first]
+    competitor_benchmark: ["Mathscare one-shot Trace/Det tricks"]
+
+  diagonalization:
+    pain_points:
+      - { id: pp_diag_when, statement: "Conditions for diagonalizability: n linearly independent eigenvectors (not just distinct eigenvalues)", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+      - { id: pp_diag_compute, statement: "Computing P and D in A = PDP-inverse -- column ordering of P matters", severity: med, source: "GATE_Math_Atomic_Breakdown §1.5" }
+    user_expectations:
+      - { id: ue_diag_checklist, statement: "Diagonalizable? checklist: repeated eigenvalue -> check geometric multiplicity", artifact_hint: flowchart }
+    rule_families: [char-poly-roots]
+    gate_intent: { mark_class: [2], question_kinds: [MCQ, MSQ], framing: "matrix powers, system of ODEs" }
+    pedagogy_patterns: [ped_property_first, ped_dual_track]
+    competitor_benchmark: []
+
+  cayley-hamilton:
+    pain_points:
+      - { id: pp_ch_apply, statement: "Applying Cayley-Hamilton to compute high matrix powers A^n", severity: high, source: "GATE_Math_Atomic_Breakdown §1.5" }
+      - { id: pp_ch_inverse, statement: "Using Cayley-Hamilton to find A-inverse via the characteristic polynomial", severity: med, source: "GATE_Math_Atomic_Breakdown §1.5" }
+    user_expectations:
+      - { id: ue_ch_trick, statement: "The Cayley-Hamilton trick for A^n: reduce using p(A) = 0", artifact_hint: cheatsheet }
+    rule_families: [char-poly-roots]
+    gate_intent: { mark_class: [2], question_kinds: [MCQ, NAT], framing: "GATE frequently tests this" }
+    pedagogy_patterns: [ped_worked_first]
+    competitor_benchmark: ["Mathscare step-by-step CH reduction"]
+
+  orthogonality:
+    pain_points:
+      - { id: pp_orth_gram_schmidt, statement: "Gram-Schmidt orthogonalization -- normalization step errors", severity: med, source: "GATE_Math_Atomic_Breakdown §1.6" }
+      - { id: pp_orth_sym_eigen, statement: "Symmetric matrices always have real eigenvalues, orthogonal eigenvectors -- not internalised", severity: high, source: "GATE_Math_Atomic_Breakdown §1.6" }
+    user_expectations:
+      - { id: ue_orth_facts, statement: "Facts table: symmetric -> real eigenvalues, orthogonal -> lambda = +-1, unitary -> |lambda| = 1", artifact_hint: cheatsheet }
+    rule_families: [char-poly-roots, matrix-row-ops]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ], framing: "QR decomposition, SVD" }
+    pedagogy_patterns: [ped_property_first]
+    competitor_benchmark: []

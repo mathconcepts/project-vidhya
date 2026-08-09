@@ -1,0 +1,157 @@
+# Pain-point registry for GATE-MA Calculus module.
+# Extraction source: GATE_Math_Atomic_Breakdown, Standout-Teaching docs.
+# Giri must change review_status to 'reviewed' after spot-checking >= 20 entries.
+# Prompts consume only 'reviewed' modules -- draft entries steer nothing.
+
+module: calculus
+review_status: draft
+reviewed_by: null
+reviewed_at: null
+
+concepts:
+  limits:
+    pain_points:
+      - { id: pp_lim_lhopital, statement: "Applying L'Hopital blindly on non-indeterminate forms", severity: high, source: "GATE_Math_Atomic_Breakdown §2.1" }
+      - { id: pp_lim_multivariable, statement: "Multivariable limits: path-dependence test -- trying only x=0 and y=0 paths", severity: high, source: "GATE_Math_Atomic_Breakdown §2.1" }
+      - { id: pp_lim_sandwich, statement: "Squeeze theorem application -- setting up the sandwich incorrectly", severity: med, source: "GATE_Math_Atomic_Breakdown §2.1" }
+    user_expectations:
+      - { id: ue_lim_standard_forms, statement: "Table of standard limits (sin x/x, (1+1/n)^n, etc.) for quick recall", artifact_hint: cheatsheet }
+    rule_families: [limit-eval-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ, NAT], framing: "continuity, differentiability precondition" }
+    pedagogy_patterns: [ped_worked_first]
+    competitor_benchmark: []
+
+  continuity:
+    pain_points:
+      - { id: pp_cont_piecewise, statement: "Checking continuity of piecewise functions at the junction -- left/right limits and value", severity: high, source: "GATE_Math_Atomic_Breakdown §2.1" }
+      - { id: pp_cont_vs_diff, statement: "Continuity does not imply differentiability -- counterexample |x| not internalised", severity: med, source: "GATE_Math_Atomic_Breakdown §2.1" }
+    user_expectations:
+      - { id: ue_cont_checklist, statement: "3-step continuity checklist: limit exists, f(a) defined, limit = f(a)", artifact_hint: flowchart }
+    rule_families: [limit-eval-rules]
+    gate_intent: { mark_class: [1], question_kinds: [MCQ], framing: "IVT, EVT applications" }
+    pedagogy_patterns: [ped_worked_first]
+    competitor_benchmark: []
+
+  differentiability:
+    pain_points:
+      - { id: pp_diff_piecewise, statement: "Checking differentiability via left/right derivative at a point -- students compute only the value", severity: high, source: "GATE_Math_Atomic_Breakdown §2.2" }
+      - { id: pp_diff_implicit, statement: "Implicit differentiation: forgetting the chain rule on y terms (dy/dx factor)", severity: high, source: "GATE_Math_Atomic_Breakdown §2.2" }
+    user_expectations:
+      - { id: ue_diff_geometric, statement: "Differentiability = smooth tangent line; corner/cusp = not differentiable -- visual intuition", artifact_hint: visualization }
+    rule_families: [derivative-chain-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ], framing: "MVT, Taylor" }
+    pedagogy_patterns: [ped_physical_metaphor]
+    competitor_benchmark: []
+
+  chain-rule:
+    pain_points:
+      - { id: pp_chain_nested, statement: "Nested chain rule with 3+ levels -- missing an outer derivative factor", severity: high, source: "GATE_Math_Atomic_Breakdown §2.2" }
+      - { id: pp_chain_multivar, statement: "Multivariable chain rule (dz/dt = dz/dx*dx/dt + dz/dy*dy/dt) -- setup errors", severity: high, source: "GATE_Math_Atomic_Breakdown §2.2" }
+    user_expectations:
+      - { id: ue_chain_tree, statement: "Chain rule dependency tree diagram to track partial derivatives", artifact_hint: flowchart }
+    rule_families: [derivative-chain-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, MSQ, NAT], framing: "optimization, ODEs" }
+    pedagogy_patterns: [ped_worked_first]
+    competitor_benchmark: []
+
+  maxima-minima:
+    pain_points:
+      - { id: pp_maxmin_secondtest, statement: "Second derivative test failure (f''=0 case) -- students stop instead of trying higher-order test", severity: high, source: "GATE_Math_Atomic_Breakdown §2.3" }
+      - { id: pp_maxmin_constrained, statement: "Lagrange multipliers setup: lambda appears in gradient conditions, students forget the constraint equation", severity: high, source: "GATE_Math_Atomic_Breakdown §2.3" }
+      - { id: pp_maxmin_multivar, statement: "Hessian matrix second-order test for multivariable: det(H) < 0 = saddle confusion", severity: high, source: "GATE_Math_Atomic_Breakdown §2.3" }
+    user_expectations:
+      - { id: ue_maxmin_decision, statement: "Decision tree: first derivative -> critical points -> second derivative test -> classification", artifact_hint: flowchart }
+    rule_families: [derivative-chain-rules, hessian-rules]
+    gate_intent: { mark_class: [2], question_kinds: [MCQ, MSQ, NAT], framing: "engineering optimisation, ML loss functions" }
+    pedagogy_patterns: [ped_property_first, ped_dual_track]
+    competitor_benchmark: []
+
+  mean-value-theorems:
+    pain_points:
+      - { id: pp_mvt_rolles, statement: "Rolle's theorem conditions -- forgetting f(a) = f(b) is required", severity: med, source: "GATE_Math_Atomic_Breakdown §2.4" }
+      - { id: pp_mvt_apply, statement: "MVT guarantees existence but finding the actual c is not always tested -- students over-compute", severity: med, source: "GATE_Math_Atomic_Breakdown §2.4" }
+    user_expectations:
+      - { id: ue_mvt_geometric, statement: "MVT as 'secant slope = tangent slope somewhere' -- geometric picture", artifact_hint: visualization }
+    rule_families: [derivative-chain-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ], framing: "error bounds, numerical analysis" }
+    pedagogy_patterns: [ped_physical_metaphor]
+    competitor_benchmark: []
+
+  integration-basics:
+    pain_points:
+      - { id: pp_int_fundtheorem, statement: "FTC Part 1: d/dx integral_a^x f(t)dt = f(x) -- variable upper limit chain rule forgotten", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+      - { id: pp_int_const, statement: "Indefinite integrals: forgetting the constant of integration in multi-step problems", severity: med, source: "GATE_Math_Atomic_Breakdown §2.5" }
+    user_expectations:
+      - { id: ue_int_table, statement: "Standard integral table for quick exam recall", artifact_hint: cheatsheet }
+    rule_families: [integration-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, NAT], framing: "area, probability density" }
+    pedagogy_patterns: [ped_worked_first]
+    competitor_benchmark: []
+
+  integration-substitution:
+    pain_points:
+      - { id: pp_sub_choice, statement: "Choosing the right substitution -- no systematic approach", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+      - { id: pp_sub_limits, statement: "Substituting limits when evaluating definite integrals with u-substitution -- students forget to change bounds", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+    user_expectations:
+      - { id: ue_sub_guide, statement: "Substitution guide: trig substitution for sqrt(a^2-x^2), u=g(x) for composite, etc.", artifact_hint: flowchart }
+    rule_families: [integration-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, NAT], framing: "standard GATE question type" }
+    pedagogy_patterns: [ped_worked_first, ped_dual_track]
+    competitor_benchmark: []
+
+  integration-by-parts:
+    pain_points:
+      - { id: pp_ibp_liate, statement: "LIATE rule for choosing u -- not using it systematically, leading to harder integrals", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+      - { id: pp_ibp_cyclic, statement: "Cyclic IBP (integral returns to itself) -- students don't recognise they can solve algebraically", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+    user_expectations:
+      - { id: ue_ibp_liate, statement: "LIATE priority order with examples for each letter", artifact_hint: cheatsheet }
+    rule_families: [integration-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, NAT], framing: "Laplace transform derivations" }
+    pedagogy_patterns: [ped_property_first]
+    competitor_benchmark: []
+
+  definite-integrals:
+    pain_points:
+      - { id: pp_def_symmetry, statement: "Not using even/odd symmetry to simplify definite integrals", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+      - { id: pp_def_king_rule, statement: "King's property integral_a^b f(x)dx = integral_a^b f(a+b-x)dx -- unknown or not applied", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+    user_expectations:
+      - { id: ue_def_properties, statement: "Properties card: linearity, additivity, symmetry, King's rule -- exam shortcuts", artifact_hint: cheatsheet }
+    rule_families: [integration-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, NAT], framing: "GATE high-frequency topic" }
+    pedagogy_patterns: [ped_property_first]
+    competitor_benchmark: []
+
+  multiple-integrals:
+    pain_points:
+      - { id: pp_mult_order, statement: "Changing the order of integration in double integrals -- region sketch not done", severity: high, source: "GATE_Math_Atomic_Breakdown §2.7" }
+      - { id: pp_mult_polar, statement: "Polar coordinate conversion: Jacobian r factor forgotten in dA = r dr dtheta", severity: high, source: "GATE_Math_Atomic_Breakdown §2.7" }
+      - { id: pp_mult_limits, statement: "Setting up limits for triple integrals over non-rectangular regions", severity: high, source: "GATE_Math_Atomic_Breakdown §2.7" }
+    user_expectations:
+      - { id: ue_mult_region_sketch, statement: "Annotated region sketches for common integration regions (triangle, disk, annulus)", artifact_hint: visualization }
+    rule_families: [integration-rules, coordinate-transform-rules]
+    gate_intent: { mark_class: [2], question_kinds: [NAT], framing: "GATE frequently tests switching order and Jacobians" }
+    pedagogy_patterns: [ped_physical_metaphor, ped_worked_first]
+    competitor_benchmark: []
+
+  multivariable-calculus:
+    pain_points:
+      - { id: pp_mv_partial, statement: "Partial differentiation: treating other variables as constants mechanically without understanding", severity: med, source: "GATE_Math_Atomic_Breakdown §2.6" }
+      - { id: pp_mv_gradient, statement: "Gradient direction meaning -- students compute grad f but don't know it points toward steepest ascent", severity: high, source: "GATE_Math_Atomic_Breakdown §2.6" }
+      - { id: pp_mv_directional, statement: "Directional derivative formula D_u f = grad f . u_hat -- forgetting to normalise u", severity: high, source: "GATE_Math_Atomic_Breakdown §2.6" }
+    user_expectations:
+      - { id: ue_mv_geometric, statement: "Gradient as normal to level curve -- 3D surface visualisation", artifact_hint: visualization }
+    rule_families: [derivative-chain-rules, coordinate-transform-rules]
+    gate_intent: { mark_class: [2], question_kinds: [MCQ, NAT], framing: "optimisation, vector fields" }
+    pedagogy_patterns: [ped_physical_metaphor]
+    competitor_benchmark: []
+
+  improper-integrals:
+    pain_points:
+      - { id: pp_improper_convergence, statement: "p-test and comparison test for improper integrals -- applying comparison in wrong direction", severity: high, source: "GATE_Math_Atomic_Breakdown §2.5" }
+      - { id: pp_improper_limit, statement: "Writing improper integral as limit of proper integrals -- limit approach not set up", severity: med, source: "GATE_Math_Atomic_Breakdown §2.5" }
+    user_expectations:
+      - { id: ue_improper_tests, statement: "Convergence test decision tree: p-test -> comparison -> limit comparison", artifact_hint: flowchart }
+    rule_families: [integration-rules]
+    gate_intent: { mark_class: [1, 2], question_kinds: [MCQ, NAT], framing: "Gamma/Beta function connections" }
+    pedagogy_patterns: [ped_property_first]
+    competitor_benchmark: []

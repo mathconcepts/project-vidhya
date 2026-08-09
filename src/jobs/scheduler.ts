@@ -32,6 +32,7 @@ import { runLearningsLedger } from './learnings-ledger';
 import { pollAllInFlightBatches } from '../generation/batch/poller';
 import { resumeQueuedRuns } from '../generation/run-dispatcher';
 import { flushToDisk as flushRateLimits } from '../llm/rate-limit-tracker';
+import { runResonanceJob } from '../resonance/job';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
@@ -196,6 +197,25 @@ register('kagRefreshScanner', DAY_MS, async () => {
   // since each generation spends a real LLM + Wolfram Alpha call.
   const r = await runKagRefreshScanner();
   return r;
+});
+
+register('resonanceScorer', DAY_MS, async () => {
+  // Nightly (Track E2): aggregate atom_ratings + engagement signals into
+  // resonance_v1 scores per atom. Runs in shadow mode until >= 2 weeks AND
+  // >= 500 scored turns (never surfaced to students until criterion met).
+  // k-anon floor: scores with n < 30 persisted as null (insufficient_n).
+  // No-op when DATABASE_URL is unset.
+  if (!process.env.DATABASE_URL) {
+    return { status: 'skipped', reason: 'no_db' };
+  }
+  const pg = await import('pg');
+  const pool = new pg.default.Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
+  try {
+    const r = await runResonanceJob(pool, { window_days: 7 });
+    return { status: 'ran', ...r };
+  } finally {
+    await pool.end().catch(() => {});
+  }
 });
 
 register('abEvaluator', DAY_MS, async () => {

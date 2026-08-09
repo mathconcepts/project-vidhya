@@ -106,6 +106,10 @@ export interface AuthConfig {
   /** True when GOOGLE_OAUTH_CLIENT_ID is unset on the server. Surfaces
    *  demo-login quick-start buttons in the UI. */
   local_dev?: boolean;
+  /** True when VIDHYA_DEMO_MODE is set OR no Google OAuth configured.
+   *  Shows demo quick-start buttons even when Google OAuth is active —
+   *  used on the Render demo deploy so admin access always works. */
+  demo_mode?: boolean;
   channels: { web: boolean; telegram: boolean; whatsapp: boolean };
 }
 

@@ -80,6 +80,10 @@ services:
         generateValue: true
       - key: PUBLIC_URL
         sync: false
+      # Always show demo quick-access buttons on the sign-in page so admin
+      # access works even when GOOGLE_OAUTH_CLIENT_ID is configured.
+      - key: VIDHYA_DEMO_MODE
+        value: "true"
 
       # ── AI tutor (STEP 1: paste one key to unlock AI chat) ──────────────
       # Get a free Gemini key at https://aistudio.google.com/apikey

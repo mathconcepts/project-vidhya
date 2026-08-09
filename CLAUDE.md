@@ -227,7 +227,7 @@ For `/land-and-deploy` to skip the dry-run on subsequent runs.
 
 - **Platform:** Render (auto-deploys backend from `main` branch via `render.yaml`)
 - **Production URL:** https://vidhya-demo.onrender.com
-- **Frontend platform:** Netlify (auto-deploys via `netlify.toml`, separate repo target)
+- **Frontend platform:** Render (bundled in the Docker image — frontend built at deploy time, served as static files by the backend)
 - **Deploy workflow:** none — Render watches the `main` branch directly. There is no GitHub Actions deploy step.
 - **Health check:** `curl -sI https://vidhya-demo.onrender.com` — the API root returns HTTP 403 by design (auth-gated). Treat any non-5xx response as "deploy is live"; treat 502/503 as "Render is still spinning the service up."
 - **Typical deploy duration:** ~2-5 minutes after push to `main`.

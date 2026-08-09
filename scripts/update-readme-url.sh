@@ -27,10 +27,6 @@
 #
 #   - render.yaml          (the BACKEND_URL there is irrelevant — Render
 #                           writes its own URL on first deploy)
-#   - netlify.toml         (uses BACKEND_URL env var, set in Netlify
-#                           dashboard, not in this file)
-#   - DEPLOY-NETLIFY.md    (URL examples are illustrative; the real
-#                           value is set per-deploy in Netlify dashboard)
 #
 # Safe to run repeatedly — replaces existing URL if one is already there.
 

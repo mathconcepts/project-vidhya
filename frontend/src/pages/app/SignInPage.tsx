@@ -121,6 +121,20 @@ export default function SignInPage() {
           </div>
         ) : !config.google_client_id ? (
           <LocalDevQuickStart />
+        ) : config.demo_mode ? (
+          /* Google OAuth configured but demo_mode enabled (e.g. Render deploy) —
+             show Google button above and demo shortcuts below. */
+          <>
+            {pending ? (
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Loader2 size={12} className="animate-spin" />
+                Signing in...
+              </div>
+            ) : (
+              <div ref={buttonRef} />
+            )}
+            <LocalDevQuickStart />
+          </>
         ) : pending ? (
           <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Loader2 size={12} className="animate-spin" />
@@ -207,10 +221,9 @@ function LocalDevQuickStart() {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
         <FlaskConical size={14} style={{ flexShrink: 0, marginTop: 2, color: 'var(--indigo-ink)' }} />
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--indigo-ink)' }}>Local dev quick start</p>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-medium)', color: 'var(--indigo-ink)' }}>Demo quick access</p>
           <p style={{ margin: '2px 0 0', fontSize: 'var(--text-caption2)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
-            Google OAuth isn&apos;t configured. Sign in with a pre-seeded demo account to start
-            generating content immediately.
+            Sign in with a pre-seeded demo account to explore content generation and admin features immediately.
           </p>
         </div>
       </div>
@@ -244,8 +257,7 @@ function LocalDevQuickStart() {
       </div>
 
       <p style={{ margin: 0, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', lineHeight: 'var(--leading-relaxed)' }}>
-        These accounts are seeded automatically on first click. To enable real Google sign-in,
-        set <span style={{ fontFamily: 'var(--font-mono)' }}>GOOGLE_OAUTH_CLIENT_ID</span> in your <span style={{ fontFamily: 'var(--font-mono)' }}>.env</span>.
+        These accounts are pre-seeded on every deploy. For LLM content generation, configure an API key in the Render dashboard or your <span style={{ fontFamily: 'var(--font-mono)' }}>.env</span>.
       </p>
     </div>
   );

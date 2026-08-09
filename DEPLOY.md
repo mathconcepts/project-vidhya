@@ -16,12 +16,9 @@
 > free for new accounts (Fly.io ended its free tier on
 > October 7, 2024). Existing legacy accounts retain their allowances.
 >
-> **Hybrid Netlify option:** If you want the frontend on Netlify (CDN,
-> branch previews, instant deploys) and the backend on Render, see
-> [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md). Netlify cannot host the
-> backend alone — it's a long-running Node server with flat-file
-> persistence and MCP stdio runners — but the hybrid pattern works
-> well and is fully supported.
+> **Frontend delivery:** The Render Docker deploy bundles the frontend
+> as a static build inside the container (no separate frontend host needed).
+> The backend serves frontend files alongside the API.
 
 This doc is the authoritative path from *"clone the repo"* to *"live
 demo URL you can share"*. Three clicks after signing into Render.
@@ -333,9 +330,8 @@ persistence — the Netlify Functions model can't host it without
 rewriting the server as Lambdas (and losing the MCP runner with the
 stdio-based agent execution).
 
-**However, the Netlify+Render hybrid is fully supported** — frontend
-on Netlify's CDN, backend on Render. See
-[`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md) for the walkthrough.
+The Render Docker deploy bundles the frontend inside the container —
+no separate CDN host is needed.
 
 ---
 
@@ -506,8 +502,5 @@ away, see [If Render's free tier doesn't work for you](#if-renders-free-tier-doe
 
 The backend must live on a Node-runtime host. Render is the
 simplest single-vendor path; the alternatives section above covers
-when other hosts make sense. The Netlify+Render hybrid documented
-in [`DEPLOY-NETLIFY.md`](./DEPLOY-NETLIFY.md) gets you Netlify's
-CDN for the frontend without trying to wedge the backend into
-Lambda — that's the right way to use Netlify with Vidhya, and it's
-fully supported.
+when other hosts make sense. The Docker deploy bundles the frontend
+alongside the backend — no separate static host is required.

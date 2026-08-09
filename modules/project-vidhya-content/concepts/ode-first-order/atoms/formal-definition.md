@@ -12,3 +12,18 @@ exam_ids: ["*"]
 **Separable ODE** (most common): If the equation can be written as $\frac{dy}{dx} = g(x) h(y)$, separate variables:
 $$\frac{dy}{h(y)} = g(x) \, dx$$
 Integrate both sides to find the solution.
+
+```interactive-spec
+{
+  "v": 1,
+  "kind": "simulation",
+  "title": "Solution curve: y' = −y  →  y(t) = e^(−t)",
+  "x_expr": "t",
+  "y_expr": "exp(-t)",
+  "t_min": 0,
+  "t_max": 4,
+  "duration_sec": 5,
+  "view_box": {"x_min": -0.2, "x_max": 4.2, "y_min": -0.05, "y_max": 1.1},
+  "caption": "Watch the solution to dy/dt = −y trace out exponential decay. Changing the initial condition y(0) = C scales the curve up or down — the shape never changes."
+}
+```

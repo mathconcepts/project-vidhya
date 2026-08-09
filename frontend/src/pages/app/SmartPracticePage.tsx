@@ -33,9 +33,8 @@ import {
 } from 'lucide-react';
 
 const GATE_FALLBACK_TOPICS = [
-  'linear-algebra', 'calculus', 'differential-equations', 'probability-statistics',
-  'complex-variables', 'numerical-methods', 'transform-theory',
-  'discrete-mathematics', 'graph-theory', 'vector-calculus',
+  'linear-algebra', 'calculus', 'differential-equations', 'complex-variables',
+  'probability-statistics', 'numerical-methods', 'transforms', 'discrete',
 ];
 
 const DIFFICULTY_LABELS: Array<{ label: string; value: number }> = [
@@ -82,19 +81,16 @@ export default function SmartPracticePage() {
   }, []);
 
   useEffect(() => {
-    import('@/lib/auth/client').then(({ authFetch, getToken }) => {
-      if (!getToken()) return;
-      authFetch('/api/onboard/meta')
-        .then(r => r.ok ? r.json() : null)
-        .then((data: any) => {
-          if (data?.topics?.length > 0) {
-            const ids = data.topics.map((t: any) => t.id as string);
-            setExamTopics(ids);
-            setTopic(prev => ids.includes(prev) ? prev : ids[0]);
-          }
-        })
-        .catch(() => {});
-    });
+    fetch('/api/topics')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: any) => {
+        if (data?.topics?.length > 0) {
+          const ids = data.topics.map((t: any) => t.id as string);
+          setExamTopics(ids);
+          setTopic(prev => ids.includes(prev) ? prev : ids[0]);
+        }
+      })
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextProblem = useCallback(async () => {

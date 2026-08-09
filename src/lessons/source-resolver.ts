@@ -271,17 +271,19 @@ export async function resolveSources(req: LessonRequest): Promise<SourceBundle> 
   }
 
   // Bundle: explainer + up-to-3 matching problems for this concept
-  const explainer = bundle.explainers[req.concept_id] || null;
+  // Use concept.id (the resolved leaf concept) not req.concept_id (which may be
+  // a section ID like "linear-algebra") — the bundle is keyed by leaf concept IDs.
+  const explainer = bundle.explainers[concept.id] || null;
   const bundleProblems = bundle.problems
-    .filter(p => (p.concept_id === req.concept_id) ||
+    .filter(p => (p.concept_id === concept.id) ||
                  (p.topic === concept.topic && (p.difficulty ?? 0.5) <= concept.difficulty_base + 0.2))
     .sort((a, b) => {
       // Verified first, then same-concept before same-topic, then easier first
       const aV = a.wolfram_verified ? 2 : (a.verified ? 1 : 0);
       const bV = b.wolfram_verified ? 2 : (b.verified ? 1 : 0);
       if (aV !== bV) return bV - aV;
-      const aS = a.concept_id === req.concept_id ? 1 : 0;
-      const bS = b.concept_id === req.concept_id ? 1 : 0;
+      const aS = a.concept_id === concept.id ? 1 : 0;
+      const bS = b.concept_id === concept.id ? 1 : 0;
       if (aS !== bS) return bS - aS;
       return (a.difficulty ?? 0.5) - (b.difficulty ?? 0.5);
     })
@@ -299,7 +301,7 @@ export async function resolveSources(req: LessonRequest): Promise<SourceBundle> 
   });
   // Dependents: nodes that list this concept in THEIR prerequisites
   const dependentNodes = ALL_CONCEPTS
-    .filter(c => (c.prerequisites || []).includes(req.concept_id))
+    .filter(c => (c.prerequisites || []).includes(concept.id))
     .map(c => ({ id: c.id, label: c.label }));
 
   // Apply curriculum guardrails: if the caller supplied an exam_id,
@@ -316,7 +318,7 @@ export async function resolveSources(req: LessonRequest): Promise<SourceBundle> 
   // missing guide simply yields null and the composer omits those cards.
   let topic_notes: TopicNotesSourceData | null = null;
   try {
-    const ctx = getConceptTopicContext(req.concept_id);
+    const ctx = getConceptTopicContext(concept.id);
     if (ctx) {
       topic_notes = {
         topic_id: ctx.topic_id,
@@ -328,7 +330,7 @@ export async function resolveSources(req: LessonRequest): Promise<SourceBundle> 
   } catch { /* shadow path — omit topic notes */ }
 
   return {
-    concept_id: req.concept_id,
+    concept_id: concept.id,
     user_materials: guarded_user_chunks.slice(0, 5),
     bundle: { explainer, problems: bundleProblems },
     wolfram,

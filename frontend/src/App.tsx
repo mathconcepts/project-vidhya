@@ -77,6 +77,7 @@ const SetupWizardPage = lazy(() => import('@/pages/app/SetupWizardPage'));
 const GraphBrowserPage = lazy(() => import('@/pages/app/GraphBrowserPage'));
 const ScenariosPage = lazy(() => import('@/pages/app/ScenariosPage'));
 const BlueprintsPage = lazy(() => import('@/pages/app/BlueprintsPage'));
+const PlaybooksPage = lazy(() => import('@/pages/app/PlaybooksPage'));
 const RulesetsPage = lazy(() => import('@/pages/app/RulesetsPage'));
 const AdminJourneyPage = lazy(() => import('@/pages/app/AdminJourneyPage'));
 const AdminDecisionsPage = lazy(() => import('@/pages/app/AdminDecisionsPage'));
@@ -178,6 +179,7 @@ export default function App() {
           <Route path="admin/scenarios/:id" element={<ScenariosPage />} />
           <Route path="admin/blueprints" element={<BlueprintsPage />} />
           <Route path="admin/blueprints/:id" element={<BlueprintsPage />} />
+          <Route path="admin/playbooks" element={<PlaybooksPage />} />
           <Route path="admin/rulesets" element={<RulesetsPage />} />
           <Route path="admin/journey" element={<AdminJourneyPage />} />
           <Route path="admin/decisions" element={<AdminDecisionsPage />} />

@@ -92,31 +92,34 @@ export function AppLayout() {
         fontFamily: 'var(--font-sans)',
       }}
     >
-      {/* Calm Mode toggle */}
-      <button
-        onClick={toggleCalm}
-        aria-label={calmMode ? 'Show chrome (exit calm mode)' : 'Hide chrome (enter calm mode)'}
-        style={{
-          position: 'fixed',
-          top: 8,
-          right: 8,
-          zIndex: 50,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 36,
-          height: 36,
-          borderRadius: 'var(--radius-capsule)',
-          border: 'var(--hairline) solid var(--separator)',
-          background: 'var(--material-regular)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          color: 'var(--text-secondary)',
-          cursor: 'pointer',
-        }}
-      >
-        {calmMode ? <Eye size={15} /> : <EyeOff size={15} />}
-      </button>
+      {/* Calm Mode toggle — standalone fixed button ONLY when header is hidden (calm mode active).
+          When calm mode is off, the toggle lives inside the header to prevent top-right overlap. */}
+      {calmMode && (
+        <button
+          onClick={toggleCalm}
+          aria-label="Show chrome (exit calm mode)"
+          style={{
+            position: 'fixed',
+            top: 8,
+            right: 8,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 'var(--radius-capsule)',
+            border: 'var(--hairline) solid var(--separator)',
+            background: 'var(--material-regular)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+          }}
+        >
+          <Eye size={15} />
+        </button>
+      )}
 
       {isDemoMode() && <DemoRoleSwitcher />}
 
@@ -132,7 +135,7 @@ export function AppLayout() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 20px',
+            padding: '0 12px 0 20px',
             height: 50,
             background: scrolled ? 'var(--material-thick)' : 'var(--surface-canvas)',
             backdropFilter: scrolled ? 'var(--blur-nav)' : undefined,
@@ -173,8 +176,28 @@ export function AppLayout() {
             </div>
           </a>
 
-          {/* Right side */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Right side — calm toggle always first so it's never crowded */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Calm mode toggle — inside header so it doesn't overlap the avatar */}
+            <button
+              onClick={toggleCalm}
+              aria-label="Hide chrome (enter calm mode)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: 'var(--radius-capsule)',
+                border: 'var(--hairline) solid var(--separator)',
+                background: 'none',
+                color: 'var(--text-tertiary)',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <EyeOff size={14} />
+            </button>
             {user ? (
               <div style={{ position: 'relative' }}>
                 <button
@@ -324,14 +347,18 @@ export function AppLayout() {
         </div>
       </main>
 
-      {/* Tutor FAB — hidden on /chat and in Calm Mode */}
+      {/* Tutor FAB — hidden on /chat and in Calm Mode.
+          z:45 keeps it above the header (z:40) but below page modals (z:50).
+          In demo mode, pushed higher so it clears the DemoRoleSwitcher bar (~148px). */}
       {location.pathname !== '/chat' && !calmMode && (
         <div
           style={{
             position: 'fixed',
             right: 20,
-            bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)',
-            zIndex: 50,
+            bottom: isDemoMode()
+              ? 'calc(148px + env(safe-area-inset-bottom, 0px) + 72px)'
+              : 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)',
+            zIndex: 45,
           }}
         >
           <TutorFab onClick={() => navigate('/chat')}>
@@ -368,9 +395,11 @@ export function AppLayout() {
         </div>
       )}
 
-      {/* Click-away for menu */}
+      {/* Click-away for menu — z:39 sits below the header (z:40) so the header
+          itself stays interactive; tab-bar navigation already triggers the
+          useEffect that closes showMenu via location change. */}
       {showMenu && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 30 }} onClick={() => setShowMenu(false)} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 39 }} onClick={() => setShowMenu(false)} />
       )}
     </div>
   );

@@ -184,12 +184,31 @@ export const SECTION_MAP: Map<string, SyllabusSection> = new Map(
  * rather than the "uncategorized" fallback.
  */
 const CONCEPT_ALIASES: Record<string, string> = {
+  // Numerical methods sub-concepts
   'simpson-rule': 'numerical-integration',
   'trapezoidal-rule': 'numerical-integration',
   'runge-kutta': 'numerical-ode',
   'euler-method': 'numerical-ode',
   'newton-raphson': 'root-finding',
   'bisection-method': 'root-finding',
+  // Topic names used as concept_ids in the content bundle → canonical leaf concept
+  'transform-theory': 'laplace-transform',
+  'discrete-mathematics': 'functions-combinatorics',
+  'graph-theory': 'graph-basics',
+  'combinatorics': 'functions-combinatorics',
+  // ODE sub-concepts
+  'first-order-linear': 'ode-first-order',
+  'second-order-linear': 'ode-second-order-homo',
+  // Calculus sub-concepts
+  'taylor-series': 'series',
+  'partial-derivatives': 'multivariable-calculus',
+  'gradient': 'vector-fields',
+  // Linear algebra sub-concepts
+  'matrix-rank': 'rank-nullity',
+  // Probability sub-concepts
+  'bayes-theorem': 'probability-basics',
+  // Complex analysis sub-concepts
+  'cauchy-riemann': 'analytic-functions',
 };
 
 /**

@@ -1,0 +1,27 @@
+# Seed rulesets for JEE Main (jee-main)
+#
+# These are read-only defaults served when DATABASE_URL is absent.
+# Operators can override them once a database is connected.
+
+exam_pack_id: jee-main
+
+rulesets:
+  - id: seed_jee_intuition_first
+    concept_pattern: "%"
+    rule_text: "Lead with intuition and a physical analogy before any formal definition. JEE students respond better when the 'why' precedes the 'what'. Keep the analogy to one sentence tied to something from the Class 12 syllabus."
+    enabled: true
+
+  - id: seed_jee_pyq_anchor
+    concept_pattern: "%"
+    rule_text: "Anchor each concept to a real JEE PYQ from the last 5 years. Show the actual question early to demonstrate the concept is approachable. Students who have been told JEE is hard need to see that the actual item is tractable."
+    enabled: true
+
+  - id: seed_jee_gentle_tone
+    concept_pattern: "%"
+    rule_text: "Default tone: gentle, concrete, one step at a time. Avoid 'obviously', 'clearly', 'trivially', and any phrasing that implies a missed concept is unusual. These words spike anxiety without adding information."
+    enabled: true
+
+  - id: seed_jee_calculus_edge_cases
+    concept_pattern: "calculus-%"
+    rule_text: "Include at least one 'Watch out for:' subtlety per calculus concept -- sign errors in the chain rule, discontinuity at endpoints, domain restrictions. Driven students want to feel the concept tested at its corners."
+    enabled: true

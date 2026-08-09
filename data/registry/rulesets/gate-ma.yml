@@ -1,0 +1,28 @@
+# Seed rulesets for GATE Mathematics (gate-ma)
+#
+# These are read-only defaults served when DATABASE_URL is absent.
+# Operators can override them once a database is connected.
+# All ids use the seed_ prefix to distinguish from DB-persisted rows.
+
+exam_pack_id: gate-ma
+
+rulesets:
+  - id: seed_gatema_dual_track
+    concept_pattern: "linear-algebra-%"
+    rule_text: "Present algebra and geometry in parallel. For every algebraic step, add a one-sentence geometric interpretation (e.g. 'this corresponds to a projection onto a subspace'). Both tracks are required -- GATE MA questions test both."
+    enabled: true
+
+  - id: seed_gatema_property_first
+    concept_pattern: "%"
+    rule_text: "State the named theorem or property in the first sentence using bold text. Defer all proofs and derivations until after the statement and its implications are clear. Students anchor on the name, not the derivation."
+    enabled: true
+
+  - id: seed_gatema_worked_before_abstract
+    concept_pattern: "%"
+    rule_text: "Show a concrete numeric worked example before introducing abstract symbols. Label the example 'What happens:' and follow with 'Why it works:' for the formal statement. Use the same variable names in both sections."
+    enabled: true
+
+  - id: seed_gatema_gate_relevance_callout
+    concept_pattern: "%"
+    rule_text: "End every concept explanation with a one-line callout: 'Why it matters in GATE MA.' Connect explicitly to the weightage, question type (MCQ/NAT), or problem pattern the concept typically appears in."
+    enabled: true

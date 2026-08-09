@@ -9,8 +9,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Sparkles, Package, ChevronDown, Check, Loader2 } from 'lucide-react';
-import { listPresets, installPreset, type PresetSummary, type InstallResult } from '@/api/admin/presets';
+import { Sparkles, Package, ChevronDown, Check, Loader2, Database } from 'lucide-react';
+import { listPresets, installPreset, type PresetSummary, type InstallResult, type DryRunInstallResult } from '@/api/admin/presets';
 
 interface Props {
   onInstalled?: (result: InstallResult) => void;
@@ -22,6 +22,7 @@ export function PresetsPanel({ onInstalled }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+  const [dryRunIds, setDryRunIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!open || presets !== null) return;
@@ -32,8 +33,12 @@ export function PresetsPanel({ onInstalled }: Props) {
     setBusyId(id); setError(null);
     try {
       const r = await installPreset(id);
-      setDoneIds((prev) => new Set(prev).add(id));
-      onInstalled?.(r);
+      if ((r as DryRunInstallResult).mode === 'dry_run') {
+        setDryRunIds((prev) => new Set(prev).add(id));
+      } else {
+        setDoneIds((prev) => new Set(prev).add(id));
+        onInstalled?.(r as InstallResult);
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -71,9 +76,10 @@ export function PresetsPanel({ onInstalled }: Props) {
           )}
           {presets?.map((p) => {
             const installed = doneIds.has(p.id);
+            const isDryRun = dryRunIds.has(p.id);
             return (
               <div key={p.id} style={{ padding: '12px', borderRadius: '8px', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: isDryRun ? 0 : '8px' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Sparkles size={11} style={{ color: 'var(--indigo-ink)' }} />
@@ -89,10 +95,13 @@ export function PresetsPanel({ onInstalled }: Props) {
                   </div>
                   <button
                     onClick={() => handleInstall(p.id)}
-                    disabled={busyId === p.id || installed}
+                    disabled={busyId === p.id || installed || isDryRun}
                     style={installed ? {
                       fontSize: '12px', padding: '6px 12px', borderRadius: '6px', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0, cursor: 'default',
                       background: 'rgba(52,199,89,.08)', color: 'var(--green-ink)', border: '1px solid rgba(52,199,89,.22)',
+                    } : isDryRun ? {
+                      fontSize: '12px', padding: '6px 12px', borderRadius: '6px', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0, cursor: 'default',
+                      background: 'rgba(88,86,214,.08)', color: 'var(--indigo-ink)', border: '1px solid rgba(88,86,214,.22)',
                     } : {
                       fontSize: '12px', padding: '6px 12px', borderRadius: '6px', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0,
                       cursor: busyId === p.id ? 'not-allowed' : 'pointer',
@@ -104,11 +113,18 @@ export function PresetsPanel({ onInstalled }: Props) {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Loader2 size={11} className="animate-spin" /> Installing</span>
                     ) : installed ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Check size={11} /> Installed</span>
+                    ) : isDryRun ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Database size={11} /> Preview</span>
                     ) : (
                       'Install'
                     )}
                   </button>
                 </div>
+                {isDryRun && (
+                  <p style={{ margin: '8px 0 0', fontSize: '10px', color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.06)', padding: '6px 8px', borderRadius: '4px', border: '1px solid rgba(88,86,214,.15)' }}>
+                    Preview only — connect <code>DATABASE_URL</code> to persist rulesets + blueprints.
+                  </p>
+                )}
               </div>
             );
           })}

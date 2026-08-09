@@ -141,8 +141,6 @@ npm run demo:start
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mathconcepts/project-vidhya) — one-click public URL, free tier.
 
-For Netlify (frontend) + Render (backend) hybrid: see [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md).
-
 For the full local stack with Postgres + pgvector + auto-migrations (production parity):
 
 ```bash
@@ -151,13 +149,12 @@ docker compose up --build        # http://localhost:8080
 # M1 Mac: defaults to linux/arm64 (native). Intel: PLATFORM=linux/amd64 docker compose up --build
 ```
 
-| | Local | Render | Netlify + Render | Docker (full stack) |
-|---|---|---|---|---|
-| Public URL | no | ✓ | ✓ | no |
-| Branch previews | no | no | ✓ | no |
-| Real Postgres | no | ✓ (Supabase) | ✓ | ✓ (local) |
-| Setup time | 5 min | 5 min | 10 min | 5 min |
-| Cost | $0 | $0 (free tier) | $0 (both free tiers) | $0 |
+| | Local | Render | Docker (full stack) |
+|---|---|---|---|
+| Public URL | no | ✓ | no |
+| Real Postgres | no | ✓ (Supabase) | ✓ (local) |
+| Setup time | 5 min | 5 min | 5 min |
+| Cost | $0 | $0 (free tier) | $0 |
 
 📖 *[DEMO.md](./DEMO.md) for the local walkthrough. [DEPLOY.md](./DEPLOY.md) for Render + production readiness. [docs/moat-demo.md](./docs/moat-demo.md) for the 3-minute persona-scenarios demo.*
 
@@ -194,7 +191,7 @@ docker compose up --build        # http://localhost:8080
 
 **Modules** — [AUTH.md](./AUTH.md), [TEACHING.md](./TEACHING.md), [LIBRARY.md](./LIBRARY.md), [STUDIO.md](./STUDIO.md), [CONTENT.md](./CONTENT.md), [EXAMS.md](./EXAMS.md)
 
-**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [SECURITY.md](./SECURITY.md)
+**Setup + ops** — [INSTALL.md](./INSTALL.md), [DEPLOY.md](./DEPLOY.md), [DEPENDENCIES.md](./DEPENDENCIES.md), [SECURITY.md](./SECURITY.md)
 
 **Frameworks** — [docs/COMPOUNDING-MASTERY-FRAMEWORK.md](./docs/COMPOUNDING-MASTERY-FRAMEWORK.md), [docs/CURRICULUM-FRAMEWORK.md](./docs/CURRICULUM-FRAMEWORK.md), [docs/EXAM-FRAMEWORK.md](./docs/EXAM-FRAMEWORK.md), [docs/LESSON-FRAMEWORK.md](./docs/LESSON-FRAMEWORK.md), [docs/RENDERING-FRAMEWORK.md](./docs/RENDERING-FRAMEWORK.md), [docs/SYLLABUS_BRIDGE.md](./docs/SYLLABUS_BRIDGE.md)
 

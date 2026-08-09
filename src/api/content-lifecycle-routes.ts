@@ -21,7 +21,7 @@
 import type { ServerResponse } from 'http';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
-import { requireAuth, requireRole } from '../auth/middleware';
+import { requireAuth, requireRole, getCurrentUser } from '../auth/middleware';
 import { routeContent } from '../content/router';
 import {
   createUpload, listUploads, getUpload, deleteUpload, readUploadBytes,
@@ -112,9 +112,9 @@ async function h_uploadDelete(req: ParsedRequest, res: ServerResponse): Promise<
 // ─── community-content-specialist ─────────────────────────────────────
 
 async function h_subsGet(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
-  sendJSON(res, getUserSubscriptions(auth.user.id));
+  const auth = await getCurrentUser(req);
+  const user_id = auth?.user?.id ?? 'anonymous';
+  sendJSON(res, getUserSubscriptions(user_id));
 }
 
 async function h_subsAdd(req: ParsedRequest, res: ServerResponse): Promise<void> {
@@ -141,9 +141,7 @@ async function h_subsExclude(req: ParsedRequest, res: ServerResponse): Promise<v
   sendJSON(res, setExcludeSources(auth.user.id, body.sources));
 }
 
-async function h_bundlesList(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
+async function h_bundlesList(_req: ParsedRequest, res: ServerResponse): Promise<void> {
   sendJSON(res, listCommunityBundles());
 }
 

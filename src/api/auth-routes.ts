@@ -62,6 +62,10 @@ async function handleConfig(_req: ParsedRequest, res: ServerResponse): Promise<v
   sendJSON(res, {
     google_client_id: process.env.GOOGLE_OAUTH_CLIENT_ID || null,
     local_dev: !process.env.GOOGLE_OAUTH_CLIENT_ID,
+    // demo_mode: true when VIDHYA_DEMO_MODE is set OR no Google OAuth configured.
+    // Causes the sign-in page to show demo quick-start buttons even when Google
+    // OAuth is configured — so Render demo deployments always allow admin access.
+    demo_mode: !!process.env.VIDHYA_DEMO_MODE || !process.env.GOOGLE_OAUTH_CLIENT_ID,
     channels: {
       web: true,
       telegram: !!process.env.TELEGRAM_BOT_TOKEN,

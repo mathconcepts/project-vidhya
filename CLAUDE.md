@@ -193,7 +193,7 @@ bash .claude/bootstrap-skills.sh
 This clones gstack, installs bun if needed, and wires all skill symlinks. After this, every `/skill-name` below is available as a Claude Code slash command.
 
 ### Available gstack skills
-/office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review, /design-consultation, /design-shotgun, /design-html, /review, /ship, /land-and-deploy, /canary, /benchmark, /browse, /connect-chrome, /qa, /qa-only, /design-review, /setup-browser-cookies, /setup-deploy, /setup-gbrain, /retro, /investigate, /document-release, /codex, /cso, /autoplan, /plan-devex-review, /devex-review, /careful, /freeze, /guard, /unfreeze, /gstack-upgrade, /learn, /context-save, /context-restore
+/office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review, /design-consultation, /design-shotgun, /design-html, /review, /ship, /land-and-deploy, /canary, /benchmark, /browse, /connect-chrome, /qa, /qa-only, /design-review, /setup-browser-cookies, /setup-deploy, /setup-gbrain, /retro, /investigate, /document-release, /document-generate, /codex, /cso, /autoplan, /plan-devex-review, /devex-review, /careful, /freeze, /guard, /unfreeze, /gstack-upgrade, /learn
 
 Skills are vendored at `.claude/skills/gstack/` (cloned from github.com/garrytan/gstack). All skill directories in `.claude/skills/<name>/SKILL.md` are relative symlinks into the vendored gstack. If a skill isn't resolving, re-run `bash .claude/bootstrap-skills.sh`.
 
@@ -227,7 +227,7 @@ For `/land-and-deploy` to skip the dry-run on subsequent runs.
 
 - **Platform:** Render (auto-deploys backend from `main` branch via `render.yaml`)
 - **Production URL:** https://vidhya-demo.onrender.com
-- **Frontend platform:** Netlify (auto-deploys via `netlify.toml`, separate repo target)
+- **Frontend platform:** Render (bundled in the Docker image — frontend built at deploy time, served as static files by the backend)
 - **Deploy workflow:** none — Render watches the `main` branch directly. There is no GitHub Actions deploy step.
 - **Health check:** `curl -sI https://vidhya-demo.onrender.com` — the API root returns HTTP 403 by design (auth-gated). Treat any non-5xx response as "deploy is live"; treat 502/503 as "Render is still spinning the service up."
 - **Typical deploy duration:** ~2-5 minutes after push to `main`.

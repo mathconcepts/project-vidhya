@@ -17,6 +17,7 @@ import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import { ImprovedBadge } from './ImprovedBadge';
 import { InteractiveSidecar } from './interactives/InteractiveSidecar';
+import { parseInteractiveSpec } from './interactives/types';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
@@ -259,7 +260,11 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
 }
 
 function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
-  return <MarkdownAtomRenderer content={atom.content} atomId={atom.id} />;
+  // Strip the interactive-spec fenced block from the prose — InteractiveSidecar
+  // renders the widget; MarkdownAtomRenderer must not also render it as raw JSON.
+  const parsed = parseInteractiveSpec(atom.content);
+  const prose = parsed.ok ? parsed.body_without_spec : atom.content;
+  return <MarkdownAtomRenderer content={prose} atomId={atom.id} />;
 }
 
 /**

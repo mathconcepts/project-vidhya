@@ -37,6 +37,13 @@ const GATE_FALLBACK_TOPICS = [
   'probability-statistics', 'numerical-methods', 'transforms', 'discrete',
 ];
 
+// The content bundle uses directory-slug topic IDs; the GATE syllabus section IDs
+// differ in two cases. Normalize before passing to the client resolver.
+const TOPIC_ALIAS: Record<string, string> = {
+  'transforms': 'transform-theory',
+  'discrete': 'discrete-mathematics',
+};
+
 const DIFFICULTY_LABELS: Array<{ label: string; value: number }> = [
   { label: 'Easy', value: 0.25 },
   { label: 'Medium', value: 0.5 },
@@ -99,10 +106,11 @@ export default function SmartPracticePage() {
     setWasCorrect(null);
     setAnswer('');
     try {
+      const resolvedTopic = TOPIC_ALIAS[topic] ?? topic;
       const result = await resolve({
         intent: 'practice',
-        concept_id: topic,
-        topic,
+        concept_id: resolvedTopic,
+        topic: resolvedTopic,
         difficulty,
         require_wolfram: false,
         use_materials: true,

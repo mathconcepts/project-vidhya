@@ -3,7 +3,7 @@ id: ode-first-order.formal-definition
 concept_id: ode-first-order
 atom_type: formal_definition
 bloom_level: 2
-difficulty: 0.32
+difficulty: 0.20
 exam_ids: ["*"]
 ---
 

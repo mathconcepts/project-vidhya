@@ -3,7 +3,7 @@ id: eigenvalues.worked-example
 concept_id: eigenvalues
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.45
+difficulty: 0.20
 exam_ids: ["*"]
 scaffold_fade: true
 ---

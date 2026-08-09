@@ -3,7 +3,7 @@ id: derivatives-basic.worked-example.product-rule
 concept_id: derivatives-basic
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.35
+difficulty: 0.20
 exam_ids: ["*"]
 scaffold_fade: true
 ---

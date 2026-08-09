@@ -1,0 +1,87 @@
+{
+  "concept_id": "mean-value-theorems",
+  "topic": "calculus",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "mvt-01",
+      "question": "Apply Rolle's Theorem to $f(x) = x^3 - 3x$ on $[-\\sqrt{3}, \\sqrt{3}]$ and find the point $c$ where $f'(c) = 0$.",
+      "options": {
+        "A": "$c = 0$ only",
+        "B": "$c = \\pm 1$",
+        "C": "$c = \\pm 1$ and $c = 0$",
+        "D": "Rolle's Theorem does not apply"
+      },
+      "correct_answer": "B",
+      "explanation": "Check Rolle's conditions:\n- $f$ is continuous on $[-\\sqrt{3}, \\sqrt{3}]$ ✓\n- $f$ is differentiable on $(-\\sqrt{3}, \\sqrt{3})$ ✓\n- $f(-\\sqrt{3}) = -3\\sqrt{3} + 3\\sqrt{3} = 0$ and $f(\\sqrt{3}) = 3\\sqrt{3} - 3\\sqrt{3} = 0$ ✓\n\nRolle's Theorem applies. Find $c$ where $f'(c) = 0$:\n$$f'(x) = 3x^2 - 3 = 3(x^2 - 1) = 0 \\Rightarrow x = \\pm 1$$\n\nBoth $x = -1$ and $x = 1$ are in $(-\\sqrt{3}, \\sqrt{3})$ ✓",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "mean-value-theorem", "rolle-theorem"]
+    },
+    {
+      "id": "mvt-02",
+      "question": "For $f(x) = \\ln(x)$ on $[1, e]$, use MVT to find $c$ such that $f'(c) = \\frac{f(e) - f(1)}{e - 1}$.",
+      "options": {
+        "A": "$c = 1$",
+        "B": "$c = e-1$",
+        "C": "$c = e/2$",
+        "D": "$c = e - 1$"
+      },
+      "correct_answer": "B",
+      "explanation": "By MVT, $f'(c) = \\frac{f(e) - f(1)}{e - 1}$.\n\nCompute:\n$$\\frac{f(e) - f(1)}{e - 1} = \\frac{\\ln(e) - \\ln(1)}{e - 1} = \\frac{1 - 0}{e - 1} = \\frac{1}{e-1}$$\n\nSince $f'(x) = 1/x$, we need:\n$$\\frac{1}{c} = \\frac{1}{e-1} \\Rightarrow c = e - 1$$\n\nSince $e - 1 \\approx 1.718 \\in (1, e)$, this is valid.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "mean-value-theorem"]
+    },
+    {
+      "id": "mvt-03",
+      "question": "Does Rolle's Theorem apply to $f(x) = |x|$ on $[-1, 1]$?",
+      "options": {
+        "A": "Yes, because $f(-1) = f(1) = 1$",
+        "B": "No, because $f$ is not differentiable at $x = 0$",
+        "C": "Yes, and $c = 0$",
+        "D": "No, because $f$ is not continuous"
+      },
+      "correct_answer": "B",
+      "explanation": "Check Rolle's conditions:\n- $f$ is continuous on $[-1, 1]$ ✓\n- $f(-1) = 1$ and $f(1) = 1$ ✓\n- $f$ is NOT differentiable at $x = 0$ (sharp corner) ✗\n\nSince $f$ fails the differentiability condition on the open interval $(-1, 1)$, Rolle's Theorem does not apply.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "mean-value-theorem", "rolle-theorem"]
+    },
+    {
+      "id": "mvt-04",
+      "question": "Which statement is a consequence of the Mean Value Theorem?",
+      "options": {
+        "A": "If $f'(x) = 0$ for all $x$ in $(a,b)$, then $f$ is constant on $(a,b)$",
+        "B": "If $f'(x) > 0$ for all $x$ in $(a,b)$, then $f$ is decreasing on $(a,b)$",
+        "C": "If $f$ is continuous, it must be differentiable",
+        "D": "Every continuous function has a maximum on $[a,b]$"
+      },
+      "correct_answer": "A",
+      "explanation": "MVT implies: if $f'(x) = 0$ for all $x \\in (a,b)$, then for any two points $x_1, x_2 \\in (a,b)$:\n$$f(x_2) - f(x_1) = f'(c)(x_2 - x_1) = 0 \\cdot (x_2 - x_1) = 0$$\n\nSo $f(x_1) = f(x_2)$, meaning $f$ is constant.\n\nB) Wrong: $f' > 0$ means $f$ is increasing, not decreasing.\nC) Counterexample: $|x|$ is continuous but not differentiable at $x=0$.\nD) This is the Extreme Value Theorem, not a consequence of MVT.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "mean-value-theorem", "theorem"]
+    },
+    {
+      "id": "mvt-05",
+      "question": "A car travels 100 miles in 2 hours. By MVT, at some moment the car's speed was:",
+      "options": {
+        "A": "Exactly 50 mph",
+        "B": "At least 50 mph",
+        "C": "At most 50 mph",
+        "D": "Exactly 100 mph"
+      },
+      "correct_answer": "A",
+      "explanation": "Let $s(t)$ be the distance at time $t$.\n- $s(0) = 0$ miles, $s(2) = 100$ miles\n- Average speed: $(100 - 0)/(2 - 0) = 50$ mph\n\nBy MVT, there exists a moment $c \\in (0, 2)$ where the instantaneous speed equals the average speed:\n$$s'(c) = \\frac{s(2) - s(0)}{2 - 0} = 50 \\ \\text{mph}$$",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "mean-value-theorem", "application"]
+    }
+  ]
+}

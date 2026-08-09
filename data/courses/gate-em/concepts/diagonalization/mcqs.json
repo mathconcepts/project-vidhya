@@ -1,0 +1,102 @@
+{
+  "concept_id": "diagonalization",
+  "topic": "linear-algebra",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "dia-01",
+      "question": "Is the matrix $A = \\begin{pmatrix} 1 & 1 \\\\ 0 & 1 \\end{pmatrix}$ diagonalizable?",
+      "options": {
+        "A": "Yes, it is diagonalizable",
+        "B": "No, it is not diagonalizable",
+        "C": "Cannot determine",
+        "D": "Only if we allow complex numbers"
+      },
+      "correct_answer": "B",
+      "explanation": "The characteristic polynomial is:\n$\\det(A - \\lambda I) = \\det \\begin{pmatrix} 1 - \\lambda & 1 \\\\ 0 & 1 - \\lambda \\end{pmatrix} = (1 - \\lambda)^2 = 0$.\n\nSo $\\lambda = 1$ is the only eigenvalue, with algebraic multiplicity 2.\n\nFind the eigenspace for $\\lambda = 1$:\n$(A - I)\\mathbf{v} = \\begin{pmatrix} 0 & 1 \\\\ 0 & 0 \\end{pmatrix}\\mathbf{v} = \\mathbf{0}$ gives $v_2 = 0$.\n\nThe eigenspace is $\\text{span}\\{(1, 0)\\}$, which has dimension 1 (geometric multiplicity = 1).\n\nSince geometric multiplicity (1) $<$ algebraic multiplicity (2), the matrix is not diagonalizable. This is the Jordan normal form case—it would require a Jordan block.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "diagonalization"
+      ]
+    },
+    {
+      "id": "dia-02",
+      "question": "For a symmetric matrix, which statement is always true?",
+      "options": {
+        "A": "It is diagonalizable with orthogonal eigenvectors",
+        "B": "It is diagonalizable with linearly independent (not necessarily orthogonal) eigenvectors",
+        "C": "It is not diagonalizable",
+        "D": "Its eigenvalues are always positive"
+      },
+      "correct_answer": "A",
+      "explanation": "By the Spectral Theorem:\n- A symmetric matrix is always diagonalizable.\n- Its eigenvalues are all real (no complex eigenvalues).\n- Eigenvectors corresponding to distinct eigenvalues are orthogonal.\n- We can choose an orthonormal set of eigenvectors to form an orthogonal matrix $P$ such that $A = PDP^{-1} = PDP^T$.\n\nNote: Eigenvalues of a symmetric matrix can be negative, zero, or positive—nothing restricts them to be positive.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "diagonalization"
+      ]
+    },
+    {
+      "id": "dia-03",
+      "question": "If $A = \\begin{pmatrix} 2 & 0 \\\\ 0 & 3 \\end{pmatrix}$, find $A^{100}$.",
+      "options": {
+        "A": "$\\begin{pmatrix} 2^{100} & 0 \\\\ 0 & 3^{100} \\end{pmatrix}$",
+        "B": "$\\begin{pmatrix} 100 & 0 \\\\ 0 & 100 \\end{pmatrix}$",
+        "C": "$\\begin{pmatrix} 2 & 0 \\\\ 0 & 3 \\end{pmatrix}$",
+        "D": "$\\begin{pmatrix} 200 & 0 \\\\ 0 & 300 \\end{pmatrix}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Since $A$ is already diagonal with $D = \\begin{pmatrix} 2 & 0 \\\\ 0 & 3 \\end{pmatrix}$, we have:\n$A^{100} = D^{100} = \\begin{pmatrix} 2^{100} & 0 \\\\ 0 & 3^{100} \\end{pmatrix}$.\n\nFor a diagonal matrix, raising to a power just raises each diagonal entry to that power.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "diagonalization"
+      ]
+    },
+    {
+      "id": "dia-04",
+      "question": "A $3 \\times 3$ matrix $A$ has eigenvalues $\\lambda_1 = 1$ (multiplicity 1), $\\lambda_2 = 2$ (multiplicity 2). Is $A$ diagonalizable?",
+      "options": {
+        "A": "Yes, always",
+        "B": "No, never",
+        "C": "Only if the geometric multiplicity of $\\lambda_2 = 2$ equals 2",
+        "D": "Cannot determine without more information"
+      },
+      "correct_answer": "C",
+      "explanation": "For $A$ to be diagonalizable, the geometric multiplicity must equal the algebraic multiplicity for each eigenvalue.\n\nFor $\\lambda_1 = 1$: algebraic multiplicity = 1, so geometric multiplicity must equal 1. This is automatic—it's at least 1 and at most the algebraic multiplicity.\n\nFor $\\lambda_2 = 2$: algebraic multiplicity = 2, so the geometric multiplicity (dimension of the eigenspace) must also equal 2.\n\nIf the eigenspace for $\\lambda_2 = 2$ has dimension 2, then $A$ is diagonalizable. Otherwise, it's not (would require Jordan form).\n\nSo the answer depends on whether $\\dim(\\text{null}(A - 2I)) = 2$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "diagonalization"
+      ]
+    },
+    {
+      "id": "dia-05",
+      "question": "If $A = \\begin{pmatrix} 0 & 1 \\\\ -1 & 0 \\end{pmatrix}$ (rotation by 90°), is it diagonalizable over $\\mathbb{R}$?",
+      "options": {
+        "A": "Yes, with real eigenvalues",
+        "B": "No, it has complex eigenvalues",
+        "C": "Only over $\\mathbb{C}$",
+        "D": "Cannot determine"
+      },
+      "correct_answer": "B",
+      "explanation": "Find eigenvalues:\n$\\det(A - \\lambda I) = \\det \\begin{pmatrix} -\\lambda & 1 \\\\ -1 & -\\lambda \\end{pmatrix} = \\lambda^2 + 1 = 0$.\n\nSo $\\lambda = \\pm i$ (pure imaginary complex eigenvalues).\n\nOver $\\mathbb{R}$, there are no real eigenvectors, so $A$ cannot be diagonalized using real matrices.\n\nHowever, over $\\mathbb{C}$ (the complex field), $A$ is diagonalizable with $A = PDP^{-1}$ where $D = \\begin{pmatrix} i & 0 \\\\ 0 & -i \\end{pmatrix}$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "diagonalization"
+      ]
+    }
+  ]
+}

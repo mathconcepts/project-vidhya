@@ -1,0 +1,87 @@
+{
+  "concept_id": "sequences",
+  "topic": "calculus",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "seq-01",
+      "question": "Which of the following sequences converges?",
+      "options": {
+        "A": "$\\{n^2\\}$",
+        "B": "$\\{(-1)^n\\}$",
+        "C": "$\\{\\frac{n+1}{2n}\\}$",
+        "D": "$\\{e^n\\}$"
+      },
+      "correct_answer": "C",
+      "explanation": "Let's check each sequence:\n\nA) $\\{n^2\\}$: As $n \\to \\infty$, $n^2 \\to \\infty$. Diverges to $+\\infty$.\n\nB) $\\{(-1)^n\\}$: Oscillates between $-1$ and $+1$ forever. No limit exists. Diverges.\n\nC) $\\{\\frac{n+1}{2n}\\}$: $\\lim_{n \\to \\infty} \\frac{n+1}{2n} = \\lim_{n \\to \\infty} \\frac{1 + 1/n}{2} = \\frac{1}{2}$. Converges to $1/2$.\n\nD) $\\{e^n\\}$: As $n \\to \\infty$, $e^n \\to \\infty$. Diverges to $+\\infty$.\n\nThe correct answer is C.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "sequences", "convergence"]
+    },
+    {
+      "id": "seq-02",
+      "question": "The sequence $a_n = \\frac{3n^2 + 2n}{n^2 + 5}$ converges to:",
+      "options": {
+        "A": "$0$",
+        "B": "$3$",
+        "C": "$2$",
+        "D": "$\\infty$"
+      },
+      "correct_answer": "B",
+      "explanation": "To find the limit, divide numerator and denominator by the highest power of $n$ (which is $n^2$):\n\n$$\\lim_{n \\to \\infty} \\frac{3n^2 + 2n}{n^2 + 5} = \\lim_{n \\to \\infty} \\frac{3 + 2/n}{1 + 5/n^2}$$\n\nAs $n \\to \\infty$:\n- $2/n \\to 0$\n- $5/n^2 \\to 0$\n\nTherefore: $\\lim_{n \\to \\infty} a_n = \\frac{3 + 0}{1 + 0} = 3$\n\nThe sequence converges to $3$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "sequences", "limits"]
+    },
+    {
+      "id": "seq-03",
+      "question": "Consider the sequence $a_n = \\left(1 + \\frac{1}{n}\\right)^n$. This sequence is:",
+      "options": {
+        "A": "Monotone decreasing and diverges",
+        "B": "Monotone increasing and converges to $e$",
+        "C": "Oscillating and converges to $e$",
+        "D": "Monotone increasing and diverges to $\\infty$"
+      },
+      "correct_answer": "B",
+      "explanation": "The sequence $a_n = \\left(1 + \\frac{1}{n}\\right)^n$ is a classic sequence.\n\nMonotonicity: We can show using calculus that this sequence is strictly increasing. By Bernoulli's inequality or direct verification:\n- $a_1 = 2$\n- $a_2 = (1.5)^2 = 2.25$\n- $a_3 = (4/3)^3 \\approx 2.370$\n- $a_{10} \\approx 2.594$\n- $a_{100} \\approx 2.7048$\n\nThe sequence is monotone increasing.\n\nConvergence: By definition, $\\lim_{n \\to \\infty} \\left(1 + \\frac{1}{n}\\right)^n = e \\approx 2.71828...$\n\nThe sequence is monotone increasing and converges to $e$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "sequences", "exponential", "classic-limit"]
+    },
+    {
+      "id": "seq-04",
+      "question": "If $a_n = \\frac{\\sin(n)}{n}$, which statement is true?",
+      "options": {
+        "A": "The sequence diverges because $\\sin(n)$ oscillates",
+        "B": "The sequence converges to $0$",
+        "C": "The sequence converges to $\\frac{1}{n}$",
+        "D": "The sequence is unbounded"
+      },
+      "correct_answer": "B",
+      "explanation": "Analyze using the squeeze theorem:\n\nWe know that $-1 \\leq \\sin(n) \\leq 1$ for all $n$.\n\nDividing by $n > 0$:\n$$-\\frac{1}{n} \\leq \\frac{\\sin(n)}{n} \\leq \\frac{1}{n}$$\n\nNow:\n- $\\lim_{n \\to \\infty} -\\frac{1}{n} = 0$\n- $\\lim_{n \\to \\infty} \\frac{1}{n} = 0$\n\nBy the Squeeze Theorem, $\\lim_{n \\to \\infty} \\frac{\\sin(n)}{n} = 0$.\n\nThe sequence converges to $0$. The oscillation of $\\sin(n)$ is 'damped' by division by $n$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "sequences", "squeeze-theorem"]
+    },
+    {
+      "id": "seq-05",
+      "question": "A sequence $(a_n)$ is defined by $a_1 = 2$ and $a_{n+1} = \\sqrt{2 + a_n}$. Then $\\lim_{n \\to \\infty} a_n =$",
+      "options": {
+        "A": "$2$",
+        "B": "$\\sqrt{2}$",
+        "C": "$1 + \\sqrt{3}$",
+        "D": "$2$"
+      },
+      "correct_answer": "A",
+      "explanation": "Assume the sequence converges to some limit $L$. Then both $a_n$ and $a_{n+1}$ approach $L$.\n\nTaking the limit of the recurrence relation $a_{n+1} = \\sqrt{2 + a_n}$:\n$$L = \\sqrt{2 + L}$$\n\nSquare both sides:\n$$L^2 = 2 + L$$\n$$L^2 - L - 2 = 0$$\n$$(L - 2)(L + 1) = 0$$\n\nSo $L = 2$ or $L = -1$.\n\nVerify that the sequence is positive and increasing:\n- $a_1 = 2 > 0$\n- If $a_n > 0$, then $a_{n+1} = \\sqrt{2 + a_n} > 0$\n- $a_2 = \\sqrt{2 + 2} = 2$\n\nSince all terms equal $2$, the sequence is constant, and $\\lim_{n \\to \\infty} a_n = 2$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "sequences", "recurrence", "fixed-point"]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "concept_id": "numerical-linear-algebra",
+  "topic": "numerical-methods",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "nla-01",
+      "question": "Perform one step of Gaussian elimination on the system $\\begin{pmatrix} 2 & 1 & | & 5 \\\\ 4 & 3 & | & 11 \\end{pmatrix}$ using the first row as the pivot row. What is the resulting augmented matrix?",
+      "options": {
+        "A": "$\\begin{pmatrix} 2 & 1 & | & 5 \\\\ 0 & 1 & | & 1 \\end{pmatrix}$",
+        "B": "$\\begin{pmatrix} 2 & 1 & | & 5 \\\\ 0 & 2 & | & 2 \\end{pmatrix}$",
+        "C": "$\\begin{pmatrix} 2 & 1 & | & 5 \\\\ 0 & 1 & | & 2 \\end{pmatrix}$",
+        "D": "$\\begin{pmatrix} 2 & 1 & | & 5 \\\\ 0 & 0 & | & 1 \\end{pmatrix}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Gaussian elimination: eliminate the first column in row 2.\n\nMultiplier: $m = \\frac{a_{21}}{a_{11}} = \\frac{4}{2} = 2$.\n\nNew Row 2 = Row 2 $- 2 \\times$ Row 1 = $(4, 3 | 11) - 2(2, 1 | 5) = (4-4, 3-2, 11-10) = (0, 1 | 1)$.\n\nResult: $\\begin{pmatrix} 2 & 1 & | & 5 \\\\ 0 & 1 & | & 1 \\end{pmatrix}$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["numerical-methods", "numerical-linear-algebra"]
+    },
+    {
+      "id": "nla-02",
+      "question": "For the matrix $A = \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$, compute the **Frobenius norm** $\\|A\\|_F = \\sqrt{\\sum_{i,j} a_{ij}^2}$.",
+      "options": {
+        "A": "$\\|A\\|_F = \\sqrt{10}$",
+        "B": "$\\|A\\|_F = \\sqrt{30}$",
+        "C": "$\\|A\\|_F = 10$",
+        "D": "$\\|A\\|_F = 5$"
+      },
+      "correct_answer": "B",
+      "explanation": "Frobenius norm: sum the squares of all entries and take the square root.\n\n$\\|A\\|_F = \\sqrt{1^2 + 2^2 + 3^2 + 4^2} = \\sqrt{1 + 4 + 9 + 16} = \\sqrt{30}$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["numerical-methods", "numerical-linear-algebra"]
+    },
+    {
+      "id": "nla-03",
+      "question": "Factor the matrix $A = \\begin{pmatrix} 2 & 4 \\\\ 3 & 5 \\end{pmatrix}$ into LU form (where $L$ has 1s on the diagonal).",
+      "options": {
+        "A": "$L = \\begin{pmatrix} 1 & 0 \\\\ 1.5 & 1 \\end{pmatrix}$, $U = \\begin{pmatrix} 2 & 4 \\\\ 0 & -1 \\end{pmatrix}$",
+        "B": "$L = \\begin{pmatrix} 1 & 0 \\\\ 1.5 & 1 \\end{pmatrix}$, $U = \\begin{pmatrix} 2 & 4 \\\\ 0 & 1 \\end{pmatrix}$",
+        "C": "$L = \\begin{pmatrix} 1 & 0 \\\\ 0.67 & 1 \\end{pmatrix}$, $U = \\begin{pmatrix} 2 & 4 \\\\ 0 & -1 \\end{pmatrix}$",
+        "D": "$L = \\begin{pmatrix} 1 & 0 \\\\ 1 & 1 \\end{pmatrix}$, $U = \\begin{pmatrix} 2 & 4 \\\\ 0 & 1 \\end{pmatrix}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Gaussian elimination to obtain $U$:\n\nMultiplier for row 2: $m_{21} = \\frac{a_{21}}{a_{11}} = \\frac{3}{2} = 1.5$.\n\nNew Row 2 = Row 2 $- 1.5 \\times$ Row 1 = $(3, 5) - 1.5(2, 4) = (3 - 3, 5 - 6) = (0, -1)$.\n\nSo $U = \\begin{pmatrix} 2 & 4 \\\\ 0 & -1 \\end{pmatrix}$ and $L = \\begin{pmatrix} 1 & 0 \\\\ 1.5 & 1 \\end{pmatrix}$ (multiplier in lower position).\n\nVerification: $LU = \\begin{pmatrix} 1 & 0 \\\\ 1.5 & 1 \\end{pmatrix} \\begin{pmatrix} 2 & 4 \\\\ 0 & -1 \\end{pmatrix} = \\begin{pmatrix} 2 & 4 \\\\ 3 & 5 \\end{pmatrix} = A$ ✓",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["numerical-methods", "numerical-linear-algebra"]
+    },
+    {
+      "id": "nla-04",
+      "question": "The condition number of a matrix $A$ is $\\kappa(A) = \\|A\\| \\cdot \\|A^{-1}\\|$. For a well-conditioned matrix, $\\kappa$ is small. For the identity matrix $I$, what is $\\kappa(I)$?",
+      "options": {
+        "A": "$\\kappa(I) = 0$",
+        "B": "$\\kappa(I) = 1$",
+        "C": "$\\kappa(I) = n$ (size of matrix)",
+        "D": "$\\kappa(I) = \\infty$"
+      },
+      "correct_answer": "B",
+      "explanation": "For the identity matrix $I$:\n- $\\|I\\| = 1$ (any operator norm)\n- $I^{-1} = I$, so $\\|I^{-1}\\| = 1$\n\nTherefore, $\\kappa(I) = 1 \\times 1 = 1$.\n\nThis is the smallest possible condition number. The identity matrix is perfectly conditioned: small perturbations in the right-hand side $b$ lead to small changes in the solution $x$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["numerical-methods", "numerical-linear-algebra"]
+    },
+    {
+      "id": "nla-05",
+      "question": "In the **Gauss-Seidel iterative method**, you solve for $x_i^{(k+1)}$ using the **updated** values of $x_1^{(k+1)}, \\ldots, x_{i-1}^{(k+1)}$ and the **old** values of $x_{i+1}^{(k)}, \\ldots, x_n^{(k)}$. For the system $\\begin{pmatrix} 4 & 0 \\\\ 0 & 4 \\end{pmatrix} \\begin{pmatrix} x_1 \\\\ x_2 \\end{pmatrix} = \\begin{pmatrix} 4 \\\\ 8 \\end{pmatrix}$, starting from $x^{(0)} = (0, 0)^T$, what is $x^{(1)}$ after one Gauss-Seidel iteration?",
+      "options": {
+        "A": "$x^{(1)} = (1, 2)^T$",
+        "B": "$x^{(1)} = (1, 1)^T$",
+        "C": "$x^{(1)} = (0.5, 1)^T$",
+        "D": "$x^{(1)} = (0.5, 0.5)^T$"
+      },
+      "correct_answer": "A",
+      "explanation": "Gauss-Seidel iteration:\n\nFrom $4x_1 = 4$, we get $x_1^{(1)} = 1$.\n\nFrom $4x_2 = 8$, we get $x_2^{(1)} = 2$.\n\nSo $x^{(1)} = (1, 2)^T$. (In this case, the system is diagonal, so one iteration converges exactly to the solution.)\n\nNote: In Gauss-Seidel, each equation is solved using the most recent values. Since the matrix is diagonal and the equations are decoupled, each variable can be solved independently in one step.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["numerical-methods", "numerical-linear-algebra"]
+    }
+  ]
+}

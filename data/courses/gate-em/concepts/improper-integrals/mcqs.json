@@ -1,0 +1,87 @@
+{
+  "concept_id": "improper-integrals",
+  "topic": "calculus",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "imp-01",
+      "question": "Evaluate $\\int_1^{\\infty} \\frac{1}{x} \\, dx$.",
+      "options": {
+        "A": "$0$",
+        "B": "$1$",
+        "C": "Diverges",
+        "D": "$\\ln(\\infty)$"
+      },
+      "correct_answer": "C",
+      "explanation": "$$\\int_1^{\\infty} \\frac{1}{x} dx = \\lim_{t \\to \\infty} \\int_1^t \\frac{1}{x} dx = \\lim_{t \\to \\infty} [\\ln(x)]_1^t$$\n\n$$= \\lim_{t \\to \\infty} (\\ln(t) - \\ln(1)) = \\lim_{t \\to \\infty} \\ln(t) = \\infty$$\n\nThe integral diverges.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "improper-integrals", "divergence"]
+    },
+    {
+      "id": "imp-02",
+      "question": "Evaluate $\\int_1^{\\infty} e^{-x} \\, dx$.",
+      "options": {
+        "A": "$0$",
+        "B": "$1$",
+        "C": "$1/e$",
+        "D": "Diverges"
+      },
+      "correct_answer": "C",
+      "explanation": "$$\\int_1^{\\infty} e^{-x} dx = \\lim_{t \\to \\infty} \\int_1^t e^{-x} dx = \\lim_{t \\to \\infty} [-e^{-x}]_1^t$$\n\n$$= \\lim_{t \\to \\infty} (-e^{-t} + e^{-1}) = 0 + \\frac{1}{e} = \\frac{1}{e}$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "improper-integrals", "exponential"]
+    },
+    {
+      "id": "imp-03",
+      "question": "Does $\\int_1^{\\infty} \\frac{1}{x^p} \\, dx$ converge for $p = 0.5$?",
+      "options": {
+        "A": "Converges",
+        "B": "Diverges",
+        "C": "Converges to $p$",
+        "D": "Undefined"
+      },
+      "correct_answer": "B",
+      "explanation": "For p-integrals $\\int_1^{\\infty} \\frac{1}{x^p} dx$:\n- Converges if $p > 1$\n- Diverges if $p \\leq 1$\n\nSince $p = 0.5 < 1$, the integral diverges.\n\nCheck: $\\int_1^{\\infty} \\frac{1}{\\sqrt{x}} dx = \\lim_{t \\to \\infty} [2\\sqrt{x}]_1^t = \\lim_{t \\to \\infty} (2\\sqrt{t} - 2) = \\infty$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "improper-integrals", "p-integral"]
+    },
+    {
+      "id": "imp-04",
+      "question": "Evaluate $\\int_0^1 \\frac{1}{\\sqrt{x}} \\, dx$.",
+      "options": {
+        "A": "$0$",
+        "B": "$1$",
+        "C": "$2$",
+        "D": "Diverges"
+      },
+      "correct_answer": "C",
+      "explanation": "This is Type 2: discontinuous at $x = 0$.\n\n$$\\int_0^1 \\frac{1}{\\sqrt{x}} dx = \\lim_{\\epsilon \\to 0^+} \\int_{\\epsilon}^1 x^{-1/2} dx$$\n\n$$= \\lim_{\\epsilon \\to 0^+} [2\\sqrt{x}]_{\\epsilon}^1 = \\lim_{\\epsilon \\to 0^+} (2 - 2\\sqrt{\\epsilon}) = 2$$\n\nConverges to $2$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "improper-integrals", "discontinuity"]
+    },
+    {
+      "id": "imp-05",
+      "question": "Evaluate $\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx$.",
+      "options": {
+        "A": "$0$",
+        "B": "$\\sqrt{\\pi}$",
+        "C": "$\\pi$",
+        "D": "Diverges"
+      },
+      "correct_answer": "B",
+      "explanation": "The Gaussian integral is a famous result:\n$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$\n\nThis is proven using polar coordinates in multivariable calculus and is a fundamental result in probability and statistics.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "improper-integrals", "gaussian"]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "concept_id": "definite-integrals",
+  "topic": "calculus",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "def-01",
+      "question": "Evaluate $\\int_0^1 (3x^2 + 2x) \\, dx$.",
+      "options": {
+        "A": "$1$",
+        "B": "$2$",
+        "C": "$3$",
+        "D": "$4$"
+      },
+      "correct_answer": "B",
+      "explanation": "Antiderivative: $F(x) = x^3 + x^2$\n\nApply FTC:\n$$\\int_0^1 (3x^2 + 2x) \\, dx = F(1) - F(0) = (1 + 1) - (0) = 2$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "definite-integrals", "fundamental-theorem"]
+    },
+    {
+      "id": "def-02",
+      "question": "Evaluate $\\int_0^{\\pi/2} \\sin(x) \\, dx$.",
+      "options": {
+        "A": "$0$",
+        "B": "$1$",
+        "C": "$\\pi/2$",
+        "D": "$2$"
+      },
+      "correct_answer": "B",
+      "explanation": "Antiderivative: $F(x) = -\\cos(x)$\n\n$$\\int_0^{\\pi/2} \\sin(x) \\, dx = [-\\cos(x)]_0^{\\pi/2} = -\\cos(\\pi/2) - (-\\cos(0)) = 0 + 1 = 1$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "definite-integrals", "trigonometric"]
+    },
+    {
+      "id": "def-03",
+      "question": "Evaluate $\\int_1^2 \\frac{1}{x} \\, dx$.",
+      "options": {
+        "A": "$\\ln(2)$",
+        "B": "$\\ln(1/2)$",
+        "C": "$e - 1$",
+        "D": "$1 - e$"
+      },
+      "correct_answer": "A",
+      "explanation": "Antiderivative: $F(x) = \\ln|x|$\n\n$$\\int_1^2 \\frac{1}{x} \\, dx = [\\ln(x)]_1^2 = \\ln(2) - \\ln(1) = \\ln(2) - 0 = \\ln(2)$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "definite-integrals", "logarithmic"]
+    },
+    {
+      "id": "def-04",
+      "question": "Evaluate $\\int_{-1}^1 x^3 \\, dx$.",
+      "options": {
+        "A": "$0$",
+        "B": "$1$",
+        "C": "$1/2$",
+        "D": "$2$"
+      },
+      "correct_answer": "A",
+      "explanation": "Note: $f(x) = x^3$ is an odd function (symmetric about the origin).\n\nFor odd functions, $\\int_{-a}^a f(x) dx = 0$.\n\nAlternatively: $F(x) = \\frac{x^4}{4}$\n\n$$\\int_{-1}^1 x^3 dx = [\\frac{x^4}{4}]_{-1}^1 = \\frac{1}{4} - \\frac{1}{4} = 0$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "definite-integrals", "odd-function"]
+    },
+    {
+      "id": "def-05",
+      "question": "Find the area under $f(x) = e^x$ from $x = 0$ to $x = 1$.",
+      "options": {
+        "A": "$e - 1$",
+        "B": "$e$",
+        "C": "$1$",
+        "D": "$e + 1$"
+      },
+      "correct_answer": "A",
+      "explanation": "Area = $\\int_0^1 e^x \\, dx$\n\nAntiderivative: $F(x) = e^x$\n\n$$\\int_0^1 e^x \\, dx = [e^x]_0^1 = e^1 - e^0 = e - 1$$",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "definite-integrals", "exponential", "area"]
+    }
+  ]
+}

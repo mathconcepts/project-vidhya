@@ -1,0 +1,103 @@
+{
+  "concept_id": "rank-nullity",
+  "topic": "linear-algebra",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "rn-01",
+      "question": "Find the rank of $A = \\begin{pmatrix} 1 & 2 \\\\ 2 & 4 \\\\ 3 & 6 \\end{pmatrix}$.",
+      "options": {
+        "A": "1",
+        "B": "2",
+        "C": "3",
+        "D": "0"
+      },
+      "correct_answer": "A",
+      "explanation": "Notice that column 2 is exactly 2 times column 1: $(2, 4, 6)^T = 2(1, 2, 3)^T$. So the two columns are linearly dependent.\n\nOnly one of them is independent, so $\\text{rank}(A) = 1$.\n\nAlternatively, perform row reduction:\n$\\begin{pmatrix} 1 & 2 \\\\ 2 & 4 \\\\ 3 & 6 \\end{pmatrix} \\xrightarrow{R_2 - 2R_1, R_3 - 3R_1} \\begin{pmatrix} 1 & 2 \\\\ 0 & 0 \\\\ 0 & 0 \\end{pmatrix}$.\n\nOne non-zero row, so rank = 1.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "rank-nullity"
+      ]
+    },
+    {
+      "id": "rn-02",
+      "question": "For a $4 \\times 6$ matrix $A$ with $\\text{rank}(A) = 3$, what is the nullity of $A$?",
+      "options": {
+        "A": "1",
+        "B": "2",
+        "C": "3",
+        "D": "4"
+      },
+      "correct_answer": "C",
+      "explanation": "By the rank-nullity theorem:\n$\\text{rank}(A) + \\text{nullity}(A) = \\text{number of columns} = n$.\n\n$3 + \\text{nullity}(A) = 6$\n$\\text{nullity}(A) = 3$.\n\nNote: $\\text{rank}(A) \\leq \\min(m, n) = \\min(4, 6) = 4$, so rank = 3 is valid. The matrix has 3 free variables in its null space.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "rank-nullity"
+      ]
+    },
+    {
+      "id": "rn-03",
+      "question": "Compute the rank of $B = \\begin{pmatrix} 1 & 1 & 1 \\\\ 0 & 1 & 2 \\\\ 0 & 0 & 0 \\end{pmatrix}$.",
+      "options": {
+        "A": "0",
+        "B": "1",
+        "C": "2",
+        "D": "3"
+      },
+      "correct_answer": "C",
+      "explanation": "The matrix is already in row echelon form (upper triangular with a zero row at the bottom).\n\nCount the non-zero rows: rows 1 and 2 are non-zero, row 3 is all zeros. So $\\text{rank}(B) = 2$.\n\nAlternatively, there are 2 pivot positions (one in column 1, one in column 2), confirming rank = 2.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "rank-nullity"
+      ]
+    },
+    {
+      "id": "rn-04",
+      "question": "A matrix $A$ is $5 \\times 7$ with $\\text{rank}(A) = 4$. The system $Ax = b$ is consistent. How many free variables does the solution have?",
+      "options": {
+        "A": "1",
+        "B": "2",
+        "C": "3",
+        "D": "4"
+      },
+      "correct_answer": "C",
+      "explanation": "By rank-nullity:\n$\\text{rank}(A) + \\text{nullity}(A) = 7$ (number of columns)\n$4 + \\text{nullity}(A) = 7$\n$\\text{nullity}(A) = 3$.\n\nThe null space has dimension 3, meaning 3 free variables. For a consistent system $Ax = b$, the general solution is $x = x_p + \\text{null}(A)$, where $x_p$ is a particular solution. The solution space also has 3 free variables (same dimension as the null space).",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "rank-nullity",
+        "systems-of-equations"
+      ]
+    },
+    {
+      "id": "rn-05",
+      "question": "For a square $n \\times n$ matrix $A$, which statement is equivalent to $A$ being invertible?",
+      "options": {
+        "A": "$\\text{rank}(A) = n$ and $\\text{nullity}(A) = 0$",
+        "B": "$\\text{rank}(A) < n$ or $\\text{nullity}(A) > 0$",
+        "C": "$\\text{rank}(A) = 0$",
+        "D": "$\\text{nullity}(A) = n$"
+      },
+      "correct_answer": "A",
+      "explanation": "An $n \\times n$ matrix $A$ is invertible if and only if:\n- $\\det(A) \\neq 0$ (non-singular)\n- All columns are linearly independent\n- $\\text{rank}(A) = n$ (full rank)\n- $Ax = 0$ has only the trivial solution, i.e., $\\text{nullity}(A) = 0$\n\nBy rank-nullity: $\\text{rank}(A) + \\text{nullity}(A) = n$. If $\\text{rank}(A) = n$, then $\\text{nullity}(A) = 0$, confirming invertibility.\n\nOption B describes a singular (non-invertible) matrix. Options C and D describe zero matrices or full-rank zero matrices (impossible).",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "rank-nullity"
+      ]
+    }
+  ]
+}

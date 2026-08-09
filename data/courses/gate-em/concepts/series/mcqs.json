@@ -1,0 +1,87 @@
+{
+  "concept_id": "series",
+  "topic": "calculus",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "ser-01",
+      "question": "The series $\\sum_{n=1}^{\\infty} \\frac{1}{2^n}$ converges to:",
+      "options": {
+        "A": "$1$",
+        "B": "$2$",
+        "C": "$\\frac{1}{2}$",
+        "D": "$\\infty$"
+      },
+      "correct_answer": "A",
+      "explanation": "This is a geometric series with first term $a = 1/2$ and common ratio $r = 1/2$.\n\nSince $|r| = 1/2 < 1$, the series converges to:\n$$S = \\frac{a}{1-r} = \\frac{1/2}{1 - 1/2} = \\frac{1/2}{1/2} = 1$$\n\nAlternatively, compute partial sums:\n$$S_n = \\frac{1}{2} + \\frac{1}{4} + \\cdots + \\frac{1}{2^n} = 1 - \\frac{1}{2^n}$$\n$$\\lim_{n \\to \\infty} S_n = 1 - 0 = 1$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "series", "geometric-series"]
+    },
+    {
+      "id": "ser-02",
+      "question": "Which of the following series converges?",
+      "options": {
+        "A": "$\\sum_{n=1}^{\\infty} \\frac{1}{n}$ (Harmonic series)",
+        "B": "$\\sum_{n=1}^{\\infty} \\frac{1}{n^{0.5}}$",
+        "C": "$\\sum_{n=1}^{\\infty} \\frac{1}{n^2}$",
+        "D": "$\\sum_{n=1}^{\\infty} \\frac{1}{n^{0.8}}$"
+      },
+      "correct_answer": "C",
+      "explanation": "Use the **p-series test**: $\\sum_{n=1}^{\\infty} \\frac{1}{n^p}$ converges if and only if $p > 1$.\n\nA) $p = 1$: Harmonic series diverges.\nB) $p = 0.5 < 1$: Diverges.\nC) $p = 2 > 1$: Converges. (This is known as the Basel problem; $\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}$.)\nD) $p = 0.8 < 1$: Diverges.\n\nThe correct answer is C.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "series", "p-series"]
+    },
+    {
+      "id": "ser-03",
+      "question": "Test the convergence of $\\sum_{n=1}^{\\infty} \\frac{3n + 1}{n^3 + 2n}$ using the limit comparison test with $\\frac{1}{n^2}$.",
+      "options": {
+        "A": "The series diverges because the limit is 0",
+        "B": "The series converges because the limit is finite and positive",
+        "C": "The series diverges because the limit is infinite",
+        "D": "The test is inconclusive"
+      },
+      "correct_answer": "B",
+      "explanation": "Apply the **Limit Comparison Test** with comparison series $b_n = 1/n^2$ (which converges).\n\nCompute:\n$$\\lim_{n \\to \\infty} \\frac{a_n}{b_n} = \\lim_{n \\to \\infty} \\frac{\\frac{3n+1}{n^3+2n}}{\\frac{1}{n^2}} = \\lim_{n \\to \\infty} \\frac{3n+1}{n^3+2n} \\cdot n^2$$\n\n$$= \\lim_{n \\to \\infty} \\frac{(3n+1)n^2}{n^3+2n} = \\lim_{n \\to \\infty} \\frac{3n^3 + n^2}{n^3 + 2n}$$\n\nDivide by $n^3$:\n$$= \\lim_{n \\to \\infty} \\frac{3 + 1/n}{1 + 2/n^2} = \\frac{3}{1} = 3$$\n\nSince the limit is finite and positive ($L = 3$), and $\\sum 1/n^2$ converges, the original series also converges.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "series", "limit-comparison-test"]
+    },
+    {
+      "id": "ser-04",
+      "question": "Test the convergence of $\\sum_{n=1}^{\\infty} \\frac{n!}{n^n}$ using D'Alembert's Ratio Test.",
+      "options": {
+        "A": "Converges because the ratio test limit is less than 1",
+        "B": "Diverges because the ratio test limit is greater than 1",
+        "C": "Converges because the ratio test limit equals 1",
+        "D": "The test is inconclusive"
+      },
+      "correct_answer": "A",
+      "explanation": "Apply **D'Alembert's Ratio Test**: $\\lim_{n \\to \\infty} \\frac{a_{n+1}}{a_n}$.\n\nLet $a_n = \\frac{n!}{n^n}$. Then:\n$$a_{n+1} = \\frac{(n+1)!}{(n+1)^{n+1}}$$\n\nCompute the ratio:\n$$\\frac{a_{n+1}}{a_n} = \\frac{(n+1)!}{(n+1)^{n+1}} \\cdot \\frac{n^n}{n!} = \\frac{(n+1) \\cdot n!}{(n+1)^{n+1}} \\cdot \\frac{n^n}{n!}$$\n\n$$= \\frac{(n+1) \\cdot n^n}{(n+1)^{n+1}} = \\frac{n^n}{(n+1)^n} = \\left(\\frac{n}{n+1}\\right)^n$$\n\nTake the limit:\n$$\\lim_{n \\to \\infty} \\left(\\frac{n}{n+1}\\right)^n = \\lim_{n \\to \\infty} \\left(\\frac{1}{1 + 1/n}\\right)^n = \\frac{1}{e} \\approx 0.368 < 1$$\n\nSince the limit is less than 1, the series converges.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "series", "ratio-test"]
+    },
+    {
+      "id": "ser-05",
+      "question": "The series $\\sum_{n=1}^{\\infty} (-1)^n \\frac{1}{n}$ is:",
+      "options": {
+        "A": "Absolutely convergent",
+        "B": "Conditionally convergent",
+        "C": "Divergent",
+        "D": "Convergent to a negative value"
+      },
+      "correct_answer": "B",
+      "explanation": "The series $\\sum_{n=1}^{\\infty} (-1)^n \\frac{1}{n}$ is the **alternating harmonic series**.\n\n**Absolute convergence test:** Check if $\\sum_{n=1}^{\\infty} |(-1)^n \\frac{1}{n}| = \\sum_{n=1}^{\\infty} \\frac{1}{n}$ converges.\n\nThe harmonic series diverges, so the original series is NOT absolutely convergent.\n\n**Alternating series test:** Check if:\n1. $a_n = 1/n$ is decreasing: Yes, $1/n > 1/(n+1)$.\n2. $\\lim_{n \\to \\infty} a_n = 0$: Yes.\n\nSince both conditions hold, the alternating series $\\sum_{n=1}^{\\infty} (-1)^n \\frac{1}{n}$ converges.\n\nSince the series converges but not absolutely, it is **conditionally convergent**. (The sum is $-\\ln(2)$.)",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "series", "alternating-series", "conditional-convergence"]
+    }
+  ]
+}

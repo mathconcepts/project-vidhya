@@ -1,0 +1,87 @@
+{
+  "concept_id": "ode-bernoulli",
+  "topic": "differential-equations",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "odb-01",
+      "question": "Identify the Bernoulli equation and state its order $n$: $\\frac{dy}{dx} - \\frac{y}{x} = y^3$",
+      "options": {
+        "A": "$n = 1$ (linear)",
+        "B": "$n = 2$",
+        "C": "$n = 3$",
+        "D": "$n = -1$"
+      },
+      "correct_answer": "C",
+      "explanation": "The Bernoulli form is $\\frac{dy}{dx} + P(x)y = Q(x)y^n$.\n\nRewrite: $\\frac{dy}{dx} - \\frac{y}{x} = y^3$.\n\nHere, $P(x) = -\\frac{1}{x}$, $Q(x) = 1$, and the power on the right side is $n = 3$.\n\nThis is a genuine Bernoulli equation (not linear, since $n \\neq 0, 1$). The answer is $n = 3$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-bernoulli", "recognition"]
+    },
+    {
+      "id": "odb-02",
+      "question": "For the Bernoulli equation $\\frac{dy}{dx} + y = y^2$, the correct substitution is:",
+      "options": {
+        "A": "$v = y$",
+        "B": "$v = y^{-1}$",
+        "C": "$v = y^2$",
+        "D": "$v = \\ln(y)$"
+      },
+      "correct_answer": "B",
+      "explanation": "For a Bernoulli equation with $n = 2$, the substitution is $v = y^{1-n} = y^{1-2} = y^{-1}$.\n\nThis substitution transforms the nonlinear Bernoulli ODE into a linear ODE in $v$.\n\nIf $v = y^{-1}$, then $y = \\frac{1}{v}$ and $\\frac{dy}{dx} = -v^{-2} \\frac{dv}{dx}$.\n\nSubstituting into $\\frac{dy}{dx} + y = y^2$ gives a linear equation in $v$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-bernoulli", "substitution"]
+    },
+    {
+      "id": "odb-03",
+      "question": "Solve the Bernoulli equation $\\frac{dy}{dx} - 2y = y^2$ using substitution $v = y^{-1}$. After substitution, the resulting linear ODE is:",
+      "options": {
+        "A": "$\\frac{dv}{dx} + 2v = -1$",
+        "B": "$\\frac{dv}{dx} - 2v = 1$",
+        "C": "$\\frac{dv}{dx} + 2v = 1$",
+        "D": "$\\frac{dv}{dx} - 2v = -1$"
+      },
+      "correct_answer": "A",
+      "explanation": "Start with $\\frac{dy}{dx} - 2y = y^2$.\n\nLet $v = y^{-1}$, so $y = v^{-1}$ and $\\frac{dy}{dx} = -v^{-2} \\frac{dv}{dx}$.\n\nSubstitute:\n$$-v^{-2} \\frac{dv}{dx} - 2v^{-1} = v^{-2}$$\n\nMultiply both sides by $-v^2$:\n$$\\frac{dv}{dx} + 2v = -1$$\n\nThis is a linear ODE in $v$ with $P(x) = 2$ and $Q(x) = -1$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-bernoulli", "transformation"]
+    },
+    {
+      "id": "odb-04",
+      "question": "The general solution to $\\frac{dv}{dx} + 2v = -1$ (from the above substitution) is:",
+      "options": {
+        "A": "$v = Ce^{-2x} - \\frac{1}{2}$",
+        "B": "$v = Ce^{2x} + \\frac{1}{2}$",
+        "C": "$v = -\\frac{1}{2} + Ce^{-2x}$",
+        "D": "$v = \\frac{1}{2} + Ce^{2x}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Solve the linear ODE $\\frac{dv}{dx} + 2v = -1$ using the integrating factor method.\n\n**Step 1:** Integrating factor: $\\mu(x) = e^{\\int 2 \\, dx} = e^{2x}$.\n\n**Step 2:** Multiply both sides by $\\mu(x)$:\n$$e^{2x} \\frac{dv}{dx} + 2e^{2x} v = -e^{2x}$$\n$$\\frac{d}{dx}(e^{2x} v) = -e^{2x}$$\n\n**Step 3:** Integrate:\n$$e^{2x} v = \\int -e^{2x} \\, dx = -\\frac{1}{2}e^{2x} + C$$\n\n**Step 4:** Solve for $v$:\n$$v = -\\frac{1}{2} + Ce^{-2x}$$\n\nGeometrically, $v$ approaches $-\\frac{1}{2}$ as $x \\to \\infty$ (the steady-state solution) while oscillating around it based on the initial condition.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-bernoulli", "linear-solution"]
+    },
+    {
+      "id": "odb-05",
+      "question": "Back-substituting $v = y^{-1}$ into $v = Ce^{-2x} - \\frac{1}{2}$, the solution for $y$ is: (Simplify assuming $C \\neq 0$.)",
+      "options": {
+        "A": "$y = \\frac{1}{Ce^{-2x} - \\frac{1}{2}}$",
+        "B": "$y = \\frac{2}{2Ce^{-2x} - 1}$",
+        "C": "$y = \\frac{-2}{1 - 2Ce^{-2x}}$",
+        "D": "All of the above are equivalent"
+      },
+      "correct_answer": "D",
+      "explanation": "Since $v = y^{-1}$, we have $y = \\frac{1}{v}$.\n\nSubstituting $v = Ce^{-2x} - \\frac{1}{2}$:\n$$y = \\frac{1}{Ce^{-2x} - \\frac{1}{2}}$$\n\n**To verify equivalence with option B:**\nMultiply numerator and denominator by 2:\n$$y = \\frac{2}{2Ce^{-2x} - 1}$$\n\n**To verify equivalence with option C:**\nMultiply numerator and denominator by $-1$:\n$$y = \\frac{-1}{\\frac{1}{2} - Ce^{-2x}} = \\frac{-2}{1 - 2Ce^{-2x}}$$\n\nAll three forms are algebraically identical. The solution is a rational function in $x$ that depends exponentially on $Ce^{-2x}$. As $x \\to \\infty$, the exponential term decays to zero, and $y \\to \\frac{1}{-1/2} = -2$, a horizontal asymptote.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-bernoulli", "back-substitution"]
+    }
+  ]
+}

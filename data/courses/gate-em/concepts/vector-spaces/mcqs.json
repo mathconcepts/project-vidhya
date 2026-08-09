@@ -1,0 +1,102 @@
+{
+  "concept_id": "vector-spaces",
+  "topic": "linear-algebra",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "vs-01",
+      "question": "Which of the following is a subspace of $\\mathbb{R}^2$?",
+      "options": {
+        "A": "$\\{(x, y) : x + y = 1\\}$",
+        "B": "$\\{(x, y) : xy = 0\\}$",
+        "C": "$\\{(x, y) : x - y = 0\\}$",
+        "D": "$\\{(x, y) : x^2 + y^2 = 1\\}$"
+      },
+      "correct_answer": "C",
+      "explanation": "A subspace must: (1) contain $(0, 0)$, (2) be closed under addition, (3) be closed under scalar multiplication.\n\nA: $(0, 0)$ gives $0 + 0 = 0 \\neq 1$, so $(0, 0) \\notin W$. Not a subspace.\n\nB: $(1, 0) \\in W$ (since $1 \\cdot 0 = 0$) and $(0, 1) \\in W$, but $(1, 0) + (0, 1) = (1, 1) \\notin W$ (since $1 \\cdot 1 \\neq 0$). Not closed under addition.\n\nC: $x - y = 0 \\implies y = x$. Contains $(0, 0)$ ✓. For $(a, a)$ and $(b, b)$: $(a, a) + (b, b) = (a+b, a+b)$, which satisfies the condition. For scalar $c$: $c(a, a) = (ca, ca)$, which also satisfies. This is the line $y = x$, a valid subspace.\n\nD: $(0, 0)$ gives $0 + 0 = 0 \\neq 1$, not on the unit circle. Not a subspace.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "vector-spaces"
+      ]
+    },
+    {
+      "id": "vs-02",
+      "question": "What is the dimension of the vector space of all $2 \\times 3$ matrices over $\\mathbb{R}$?",
+      "options": {
+        "A": "5",
+        "B": "6",
+        "C": "2",
+        "D": "3"
+      },
+      "correct_answer": "B",
+      "explanation": "Each $2 \\times 3$ matrix has $2 \\times 3 = 6$ entries. We can write any such matrix as:\n$$\\begin{pmatrix} a & b & c \\\\ d & e & f \\end{pmatrix} = a \\begin{pmatrix} 1 & 0 & 0 \\\\ 0 & 0 & 0 \\end{pmatrix} + b \\begin{pmatrix} 0 & 1 & 0 \\\\ 0 & 0 & 0 \\end{pmatrix} + \\cdots + f \\begin{pmatrix} 0 & 0 & 0 \\\\ 0 & 0 & 1 \\end{pmatrix}$$\n\nThere are 6 basis matrices (one for each entry), so the dimension is 6.\n\nIn general, $\\dim(\\mathbb{R}^{m \\times n}) = mn$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "vector-spaces"
+      ]
+    },
+    {
+      "id": "vs-03",
+      "question": "Check linear independence: Are the vectors $(1, 2, 3)$, $(2, 4, 6)$, and $(1, 1, 1)$ linearly independent?",
+      "options": {
+        "A": "Yes, they are independent",
+        "B": "No, they are dependent",
+        "C": "Cannot determine",
+        "D": "Dependent only in some subspaces"
+      },
+      "correct_answer": "B",
+      "explanation": "Vectors are linearly dependent if $c_1\\mathbf{v}_1 + c_2\\mathbf{v}_2 + c_3\\mathbf{v}_3 = \\mathbf{0}$ for some non-zero $(c_1, c_2, c_3)$.\n\nNotice that $(2, 4, 6) = 2(1, 2, 3)$. So the second vector is a scalar multiple of the first. This means:\n$2(1, 2, 3) - 1(2, 4, 6) = (2, 4, 6) - (2, 4, 6) = (0, 0, 0)$.\n\nWith $c_1 = 1, c_2 = -1, c_3 = 0$, we get $c_1\\mathbf{v}_1 + c_2\\mathbf{v}_2 + c_3\\mathbf{v}_3 = (1, 2, 3) - (2, 4, 6) + 0 = (-1, -2, -3) \\neq \\mathbf{0}$.\n\nActually, the correct dependence is $(2, 4, 6) = 2(1, 2, 3)$, so we can write $1(1, 2, 3) + (-1/2)(2, 4, 6) = 0$ or more simply $2(1, 2, 3) - (2, 4, 6) = 0$. The vectors are linearly dependent.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "vector-spaces"
+      ]
+    },
+    {
+      "id": "vs-04",
+      "question": "Find a basis for the null space of $A = \\begin{pmatrix} 1 & 1 & 0 \\\\ 0 & 0 & 1 \\end{pmatrix}$.",
+      "options": {
+        "A": "$\\{(1, 1, 0)\\}$",
+        "B": "$\\{(-1, 1, 0)\\}$",
+        "C": "$\\{(1, -1, 0)\\}$",
+        "D": "$\\{(1, 0, 0)\\}$"
+      },
+      "correct_answer": "C",
+      "explanation": "The null space of $A$ consists of all $\\mathbf{x} = (x, y, z)$ such that $A\\mathbf{x} = \\mathbf{0}$:\n$$\\begin{pmatrix} 1 & 1 & 0 \\\\ 0 & 0 & 1 \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\\\ z \\end{pmatrix} = \\begin{pmatrix} 0 \\\\ 0 \\end{pmatrix}$$\n\nThis gives: $x + y = 0$ and $z = 0$. So $y = -x$ and $z = 0$, meaning $\\mathbf{x} = (x, -x, 0) = x(1, -1, 0)$.\n\nA basis for the null space is $\\{(1, -1, 0)\\}$, or any non-zero scalar multiple.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "vector-spaces"
+      ]
+    },
+    {
+      "id": "vs-05",
+      "question": "If $V$ is a vector space with $\\dim(V) = 4$, and $W \\subset V$ is a non-trivial proper subspace, what are the possible values of $\\dim(W)$?",
+      "options": {
+        "A": "Only 2",
+        "B": "1, 2, or 3",
+        "C": "Only 3",
+        "D": "0, 1, 2, 3, or 4"
+      },
+      "correct_answer": "B",
+      "explanation": "For a subspace $W$ of a finite-dimensional vector space $V$: $\\dim(W) \\leq \\dim(V) = 4$.\n\n\"Proper\" means $W \\neq V$, so $\\dim(W) < 4$.\n\n\"Non-trivial\" means $W \\neq \\{\\mathbf{0}\\}$, so $\\dim(W) > 0$.\n\nTherefore, $0 < \\dim(W) < 4$, which means $\\dim(W) \\in \\{1, 2, 3\\}$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "vector-spaces"
+      ]
+    }
+  ]
+}

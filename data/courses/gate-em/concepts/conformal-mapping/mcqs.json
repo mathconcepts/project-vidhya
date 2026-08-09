@@ -1,0 +1,87 @@
+{
+  "concept_id": "conformal-mapping",
+  "topic": "complex-variables",
+  "gate_frequency": "low",
+  "questions": [
+    {
+      "id": "cm-01",
+      "question": "Which of the following functions is conformal everywhere in the complex plane?",
+      "options": {
+        "A": "$f(z) = z^2$",
+        "B": "$f(z) = e^z$",
+        "C": "$f(z) = \\bar{z}$ (complex conjugate)",
+        "D": "$f(z) = |z|^2$"
+      },
+      "correct_answer": "B",
+      "explanation": "A function is conformal at a point $z$ if it is analytic at $z$ and $f'(z) \\neq 0$.\nOption A: $f(z) = z^2$ has $f'(z) = 2z$. This is zero at $z = 0$, so the function is NOT conformal at the origin. ✗\nOption B: $f(z) = e^z$ has $f'(z) = e^z$. Since $e^z \\neq 0$ for any $z \\in \\mathbb{C}$, the function is analytic and has non-zero derivative everywhere. It is conformal everywhere. ✓\nOption C: $f(z) = \\bar{z}$ is not analytic (fails Cauchy-Riemann), so it is not conformal. ✗\nOption D: $f(z) = |z|^2 = x^2 + y^2$ is not analytic (fails Cauchy-Riemann except at the origin), so it is not conformal. ✗",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["complex-variables", "conformal-mapping", "analyticity"]
+    },
+    {
+      "id": "cm-02",
+      "question": "Under the map $f(z) = e^z$, the vertical line Re$(z) = 1$ in the $z$-plane maps to which curve in the $w$-plane?",
+      "options": {
+        "A": "A vertical line",
+        "B": "A horizontal line",
+        "C": "A circle centered at the origin",
+        "D": "A ray emanating from the origin"
+      },
+      "correct_answer": "C",
+      "explanation": "Let $z = 1 + iy$ where $y \\in \\mathbb{R}$ (the vertical line Re$(z) = 1$).\nThen $w = f(z) = e^{1 + iy} = e^1 \\cdot e^{iy} = e(\\cos y + i \\sin y)$.\nThis can be written as $w = e \\cdot e^{iy}$.\nIn polar form: $|w| = e$ (constant distance from the origin) and $\\arg(w) = y$ (angle varies).\nAs $y$ ranges over $\\mathbb{R}$, the argument $y$ traces out all angles, while the modulus stays at $e$.\nTherefore, the image is a circle centered at the origin with radius $e$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["complex-variables", "conformal-mapping", "exponential-map"]
+    },
+    {
+      "id": "cm-03",
+      "question": "At $z = 2 + i$, what is the scaling factor (magnification ratio) under the conformal map $f(z) = z^3$?",
+      "options": {
+        "A": "$|2 + i|^2 = 5$",
+        "B": "$3|2 + i|^2 = 15$",
+        "C": "$|f'(2+i)| = 3|2+i|^2 = 15$",
+        "D": "$|2 + i|^3$"
+      },
+      "correct_answer": "C",
+      "explanation": "The scaling factor (magnification) at a point $z$ under a conformal map $f$ is given by $|f'(z)|$.\nFor $f(z) = z^3$, the derivative is $f'(z) = 3z^2$.\nAt $z = 2 + i$:\n$f'(2+i) = 3(2+i)^2 = 3(4 + 4i + i^2) = 3(4 + 4i - 1) = 3(3 + 4i) = 9 + 12i$.\nThe magnitude is $|f'(2+i)| = |9 + 12i| = \\sqrt{9^2 + 12^2} = \\sqrt{81 + 144} = \\sqrt{225} = 15$.\nAlternatively, note that $|f'(2+i)| = 3|2+i|^2 = 3 \\cdot 5 = 15$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "conformal-mapping", "scaling-factor"]
+    },
+    {
+      "id": "cm-04",
+      "question": "The map $w = \\frac{1}{z}$ is conformal everywhere except at which point?",
+      "options": {
+        "A": "$z = 0$ only",
+        "B": "$z = 0$ and $z = \\infty$",
+        "C": "$z = 1$ only",
+        "D": "Nowhere; it is conformal everywhere"
+      },
+      "correct_answer": "A",
+      "explanation": "The function $w = \\frac{1}{z}$ has derivative $\\frac{dw}{dz} = -\\frac{1}{z^2}$.\nThis derivative is undefined at $z = 0$ (pole), and zero nowhere in the finite complex plane.\nTherefore, the function is analytic and conformal everywhere except at $z = 0$.\nNote: At infinity (in the extended complex plane), the map also has a singularity, but the question asks about the finite plane. In the context of GATE, the answer is $z = 0$ only.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "conformal-mapping", "reciprocal-map"]
+    },
+    {
+      "id": "cm-05",
+      "question": "Show that the map $f(z) = \\sin z$ is conformal at $z = 0$. What is the scaling factor at this point?",
+      "options": {
+        "A": "$f'(0) = 0$; not conformal",
+        "B": "$f'(0) = 1$; scaling factor is 1",
+        "C": "$f'(0) = i$; scaling factor is 1",
+        "D": "$f'(0) = \\cos(0) = 1$; scaling factor is 1"
+      },
+      "correct_answer": "D",
+      "explanation": "For $f(z) = \\sin z$, the derivative is $f'(z) = \\cos z$.\nAt $z = 0$: $f'(0) = \\cos(0) = 1 \\neq 0$. ✓\nThe function is analytic (satisfies Cauchy-Riemann everywhere), so it is analytic at $z = 0$.\nSince $f'(0) \\neq 0$ and $f$ is analytic at $z = 0$, the map is conformal at $z = 0$.\nThe scaling factor is $|f'(0)| = |\\cos(0)| = |1| = 1$. This means lengths are unchanged near $z = 0$ (locally, the map looks like a pure rotation).",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "conformal-mapping", "sine-map"]
+    }
+  ]
+}

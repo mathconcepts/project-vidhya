@@ -1,0 +1,87 @@
+{
+  "concept_id": "random-variables",
+  "topic": "probability-statistics",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "rv-01",
+      "question": "Let $X$ be the number obtained when a fair die is rolled. What is $P(X \\leq 3)$?",
+      "options": {
+        "A": "1/2",
+        "B": "1/3",
+        "C": "2/3",
+        "D": "1/6"
+      },
+      "correct_answer": "A",
+      "explanation": "The random variable $X$ takes values $\\{1, 2, 3, 4, 5, 6\\}$, each with probability $1/6$.\n\nWe need $P(X \\le 3)$, which is the CDF at $x = 3$.\n\n$$P(X \\le 3) = P(X = 1) + P(X = 2) + P(X = 3) = \\frac{1}{6} + \\frac{1}{6} + \\frac{1}{6} = \\frac{3}{6} = \\frac{1}{2}$$\n\nThe CDF accumulates probabilities: outcomes 1, 2, and 3 are favorable, and there are 6 equally-likely outcomes total.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["probability-statistics", "random-variables"]
+    },
+    {
+      "id": "rv-02",
+      "question": "A random variable $X$ has the PMF: $P(X = 0) = 0.3$, $P(X = 1) = 0.5$, $P(X = 2) = 0.2$. What is $P(X > 0)$?",
+      "options": {
+        "A": "0.2",
+        "B": "0.5",
+        "C": "0.7",
+        "D": "0.3"
+      },
+      "correct_answer": "C",
+      "explanation": "We need the probability that $X$ takes a value strictly greater than 0.\n\nUsing the complement rule:\n$$P(X > 0) = 1 - P(X \\le 0) = 1 - P(X = 0) = 1 - 0.3 = 0.7$$\n\nAlternatively, directly:\n$$P(X > 0) = P(X = 1) + P(X = 2) = 0.5 + 0.2 = 0.7$$\n\nBoth methods give the same result, confirming the complement rule.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["probability-statistics", "random-variables"]
+    },
+    {
+      "id": "rv-03",
+      "question": "A discrete random variable $X$ has PMF $p(x) = c \\cdot x$ for $x \\in \\{1, 2, 3\\}$ and $p(x) = 0$ otherwise. Find the constant $c$.",
+      "options": {
+        "A": "1/6",
+        "B": "1/3",
+        "C": "1/2",
+        "D": "1/12"
+      },
+      "correct_answer": "A",
+      "explanation": "For a valid PMF, the probabilities must sum to 1:\n$$\\sum_x p(x) = 1$$\n\nGiven $p(x) = c \\cdot x$ for $x \\in \\{1, 2, 3\\}$:\n$$p(1) + p(2) + p(3) = c \\cdot 1 + c \\cdot 2 + c \\cdot 3 = c(1 + 2 + 3) = 6c = 1$$\n\nTherefore:\n$$c = \\frac{1}{6}$$\n\nWe can verify: $p(1) = 1/6$, $p(2) = 2/6 = 1/3$, $p(3) = 3/6 = 1/2$, and $1/6 + 1/3 + 1/2 = 1/6 + 2/6 + 3/6 = 6/6 = 1$ ✓",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.66,
+      "tags": ["probability-statistics", "random-variables"]
+    },
+    {
+      "id": "rv-04",
+      "question": "A continuous random variable $X$ has the PDF $f(x) = \\frac{1}{4}$ for $0 \\le x \\le 4$ and $f(x) = 0$ otherwise. Find $P(1 \\le X \\le 3)$.",
+      "options": {
+        "A": "1/4",
+        "B": "1/2",
+        "C": "3/4",
+        "D": "1/8"
+      },
+      "correct_answer": "B",
+      "explanation": "For a continuous random variable, the probability is computed using integration:\n$$P(a \\le X \\le b) = \\int_a^b f(x) \\, dx$$\n\nGiven $f(x) = \\frac{1}{4}$ on $[0, 4]$:\n$$P(1 \\le X \\le 3) = \\int_1^3 \\frac{1}{4} \\, dx = \\frac{1}{4} \\cdot (3 - 1) = \\frac{1}{4} \\cdot 2 = \\frac{1}{2}$$\n\nGeometrically, the PDF is a horizontal line at height $1/4$ from $x=0$ to $x=4$. The area under the curve from $x=1$ to $x=3$ is $\\text{base} \\times \\text{height} = 2 \\times \\frac{1}{4} = \\frac{1}{2}$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.66,
+      "tags": ["probability-statistics", "random-variables"]
+    },
+    {
+      "id": "rv-05",
+      "question": "A random variable $X$ has CDF $F(x) = 0$ for $x < 0$, $F(x) = x^2$ for $0 \\le x \\le 1$, and $F(x) = 1$ for $x > 1$. Find the PDF $f(x)$ on $[0, 1]$.",
+      "options": {
+        "A": "$f(x) = x$",
+        "B": "$f(x) = 2x$",
+        "C": "$f(x) = 1/2$",
+        "D": "$f(x) = x^2$"
+      },
+      "correct_answer": "B",
+      "explanation": "The PDF is the derivative of the CDF:\n$$f(x) = \\frac{d}{dx} F(x)$$\n\nFor $0 \\le x \\le 1$:\n$$f(x) = \\frac{d}{dx}(x^2) = 2x$$\n\nWe can verify this is a valid PDF on $[0, 1]$:\n$$\\int_0^1 2x \\, dx = \\left[ x^2 \\right]_0^1 = 1 - 0 = 1$$ ✓\n\nAlso, verify that $F(x)$ is indeed the CDF of $f$:\n$$F(x) = \\int_0^x 2t \\, dt = [t^2]_0^x = x^2$$ ✓\n\nThe relationship $f(x) = F'(x)$ is fundamental: the PDF at any point is the rate at which cumulative probability is accumulating.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.66,
+      "tags": ["probability-statistics", "random-variables"]
+    }
+  ]
+}

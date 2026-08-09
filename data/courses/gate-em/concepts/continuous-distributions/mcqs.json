@@ -1,0 +1,87 @@
+{
+  "concept_id": "continuous-distributions",
+  "topic": "probability-statistics",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "cd-01",
+      "question": "A random variable $X$ follows a uniform distribution on $[2, 8]$. What is $P(X \\le 5)$?",
+      "options": {
+        "A": "0.5",
+        "B": "1/2",
+        "C": "1/3",
+        "D": "2/3"
+      },
+      "correct_answer": "A",
+      "explanation": "For a uniform distribution on $[a, b] = [2, 8]$:\n$$f(x) = \\frac{1}{b-a} = \\frac{1}{8-2} = \\frac{1}{6}$$\n\nThe probability is:\n$$P(X \\le 5) = \\int_2^5 \\frac{1}{6} \\, dx = \\frac{1}{6} \\times (5 - 2) = \\frac{3}{6} = \\frac{1}{2} = 0.5$$\n\nGeometrically, the interval $[2, 5]$ has length 3, and the total interval $[2, 8]$ has length 6, so the probability is the ratio: $3/6 = 1/2$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["probability-statistics", "continuous-distributions"]
+    },
+    {
+      "id": "cd-02",
+      "question": "The time between customer arrivals at a store follows an exponential distribution with mean 10 minutes. What is the parameter $\\lambda$ of this exponential distribution?",
+      "options": {
+        "A": "0.1",
+        "B": "0.01",
+        "C": "10",
+        "D": "1"
+      },
+      "correct_answer": "A",
+      "explanation": "For an exponential distribution $\\text{Exp}(\\lambda)$, the mean is:\n$$E[X] = \\frac{1}{\\lambda}$$\n\nGiven $E[X] = 10$ minutes:\n$$10 = \\frac{1}{\\lambda}$$\n$$\\lambda = \\frac{1}{10} = 0.1$$\n\nThe parameter $\\lambda$ is the rate (events per unit time), so $\\lambda = 0.1$ means one arrival every 10 minutes on average.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["probability-statistics", "continuous-distributions"]
+    },
+    {
+      "id": "cd-03",
+      "question": "A test score follows a normal distribution with mean 70 and standard deviation 10. What is the probability that a randomly selected student scores between 60 and 80?",
+      "options": {
+        "A": "0.68",
+        "B": "0.95",
+        "C": "0.997",
+        "D": "0.34"
+      },
+      "correct_answer": "A",
+      "explanation": "Given $X \\sim N(70, 10^2)$, we want $P(60 \\le X \\le 80)$.\n\n**Standardize the bounds:**\n$$Z_1 = \\frac{60 - 70}{10} = -1$$\n$$Z_2 = \\frac{80 - 70}{10} = 1$$\n\nSo:\n$$P(60 \\le X \\le 80) = P(-1 \\le Z \\le 1)$$\n\n**Using the 68–95–99.7 rule:**\nApproximately 68% of the data lies within $\\mu \\pm 1\\sigma$ of the mean.\n\n$$P(-1 \\le Z \\le 1) \\approx 0.68$$\n\nMore precisely, using the standard normal CDF: $\\Phi(1) - \\Phi(-1) = 0.8413 - 0.1587 = 0.6826 \\approx 0.68$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.66,
+      "tags": ["probability-statistics", "continuous-distributions"]
+    },
+    {
+      "id": "cd-04",
+      "question": "The lifetime (in years) of an electronic component follows an exponential distribution with $\\lambda = 0.2$. What is the probability that the component lasts more than 5 years?",
+      "options": {
+        "A": "$e^{-1}$",
+        "B": "$1 - e^{-1}$",
+        "C": "$e^{-5}$",
+        "D": "$1 - e^{-5}$"
+      },
+      "correct_answer": "A",
+      "explanation": "For an exponential distribution with $\\lambda = 0.2$, the CDF is:\n$$F(x) = 1 - e^{-\\lambda x} = 1 - e^{-0.2x}$$\n\nWe want $P(X > 5)$, the probability that the component lasts more than 5 years:\n$$P(X > 5) = 1 - F(5) = 1 - (1 - e^{-0.2 \\times 5}) = e^{-1}$$\n\nAlternatively, using the memoryless property and the complement:\n$$P(X > 5) = 1 - P(X \\le 5) = 1 - (1 - e^{-0.2 \\times 5}) = e^{-1}$$\n\nNote that $0.2 \\times 5 = 1$, so the exponent is $-1$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.66,
+      "tags": ["probability-statistics", "continuous-distributions"]
+    },
+    {
+      "id": "cd-05",
+      "question": "A blood test result follows a normal distribution with mean 100 and standard deviation 15. If the normal range is defined as $[\\mu - 2\\sigma, \\mu + 2\\sigma]$, what percentage of test results fall outside the normal range?",
+      "options": {
+        "A": "5%",
+        "B": "2.5%",
+        "C": "1%",
+        "D": "0.3%"
+      },
+      "correct_answer": "A",
+      "explanation": "Given $X \\sim N(100, 15^2)$, the normal range is:\n$$[\\mu - 2\\sigma, \\mu + 2\\sigma] = [100 - 30, 100 + 30] = [70, 130]$$\n\n**Using the 68–95–99.7 rule:**\nApproximately 95% of the data lies within $\\mu \\pm 2\\sigma$.\n\nTherefore, the percentage of results **outside** the normal range is:\n$$100\\% - 95\\% = 5\\%$$\n\nMore precisely, using the standard normal CDF:\n$$P(X < 70 \\text{ or } X > 130) = P(Z < -2) + P(Z > 2) = 2 \\times (1 - \\Phi(2))$$\n$$= 2 \\times (1 - 0.9772) = 2 \\times 0.0228 = 0.0456 \\approx 4.56\\% \\approx 5\\%$$",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.66,
+      "tags": ["probability-statistics", "continuous-distributions"]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "concept_id": "analytic-functions",
+  "topic": "complex-variables",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "af-01",
+      "question": "Which of the following functions is analytic everywhere in the complex plane?",
+      "options": {
+        "A": "$f(z) = \\bar{z}$ (complex conjugate)",
+        "B": "$f(z) = |z|^2$",
+        "C": "$f(z) = e^z$",
+        "D": "$f(z) = \\text{Re}(z)$ (real part)"
+      },
+      "correct_answer": "C",
+      "explanation": "We check the Cauchy-Riemann equations $\\frac{\\partial u}{\\partial x} = \\frac{\\partial v}{\\partial y}$ and $\\frac{\\partial u}{\\partial y} = -\\frac{\\partial v}{\\partial x}$ for each.\nOption A: $f(z) = \\bar{z} = x - iy$, so $u = x, v = -y$. Then $\\frac{\\partial u}{\\partial x} = 1$ but $\\frac{\\partial v}{\\partial y} = -1$. Cauchy-Riemann fails. ✗\nOption B: $f(z) = |z|^2 = x^2 + y^2$, so $u = x^2 + y^2, v = 0$. Then $\\frac{\\partial u}{\\partial x} = 2x$ but $\\frac{\\partial v}{\\partial y} = 0$. Cauchy-Riemann fails except at $z = 0$. ✗\nOption C: $f(z) = e^z = e^{x}(\\cos y + i \\sin y)$, so $u = e^x \\cos y, v = e^x \\sin y$. Check: $\\frac{\\partial u}{\\partial x} = e^x \\cos y = \\frac{\\partial v}{\\partial y}$ ✓ and $\\frac{\\partial u}{\\partial y} = -e^x \\sin y = -\\frac{\\partial v}{\\partial x}$ ✓ Cauchy-Riemann holds everywhere. ✓\nOption D: $f(z) = \\text{Re}(z) = x$, so $u = x, v = 0$. Then $\\frac{\\partial u}{\\partial x} = 1$ but $\\frac{\\partial v}{\\partial y} = 0$. Cauchy-Riemann fails. ✗",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["complex-variables", "analytic-functions", "cauchy-riemann"]
+    },
+    {
+      "id": "af-02",
+      "question": "If $f(z) = x^2 + 2xy + i(y^2 + x)$ where $z = x + iy$, is $f$ analytic? If so, find $f'(z)$ at $z = 1 + i$.",
+      "options": {
+        "A": "Not analytic",
+        "B": "Analytic; $f'(1+i) = 2 + i$",
+        "C": "Analytic; $f'(1+i) = 3 + 2i$",
+        "D": "Analytic; $f'(1+i) = 4 + i$"
+      },
+      "correct_answer": "A",
+      "explanation": "Given $f(z) = x^2 + 2xy + i(y^2 + x)$, we have $u(x,y) = x^2 + 2xy$ and $v(x,y) = y^2 + x$.\nCompute partial derivatives:\n$\\frac{\\partial u}{\\partial x} = 2x + 2y$, $\\frac{\\partial v}{\\partial y} = 2y$.\nFor Cauchy-Riemann: $\\frac{\\partial u}{\\partial x} = \\frac{\\partial v}{\\partial y}$ requires $2x + 2y = 2y$, which gives $2x = 0$, or $x = 0$.\n$\\frac{\\partial u}{\\partial y} = 2x$, $\\frac{\\partial v}{\\partial x} = 1$.\nFor Cauchy-Riemann: $\\frac{\\partial u}{\\partial y} = -\\frac{\\partial v}{\\partial x}$ requires $2x = -1$, which gives $x = -1/2$.\nThese are contradictory ($x = 0$ and $x = -1/2$ cannot both be true). Therefore, Cauchy-Riemann equations do not hold at any point, and $f$ is not analytic anywhere.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["complex-variables", "analytic-functions", "cauchy-riemann-check"]
+    },
+    {
+      "id": "af-03",
+      "question": "Let $f(z) = u(x,y) + iv(x,y)$ be analytic. If $u(x,y) = x^2 - y^2$, what is $v(x,y)$ (up to an additive constant)?",
+      "options": {
+        "A": "$v(x,y) = 2xy + C$",
+        "B": "$v(x,y) = x^2 + y^2 + C$",
+        "C": "$v(x,y) = 2xy$",
+        "D": "$v(x,y) = -2xy + C$"
+      },
+      "correct_answer": "A",
+      "explanation": "Given $u(x,y) = x^2 - y^2$, we use the Cauchy-Riemann equations to find $v$.\nFrom $\\frac{\\partial u}{\\partial x} = \\frac{\\partial v}{\\partial y}$: $\\frac{\\partial u}{\\partial x} = 2x$, so $\\frac{\\partial v}{\\partial y} = 2x$.\nIntegrate with respect to $y$: $v(x,y) = 2xy + g(x)$, where $g(x)$ is an arbitrary function of $x$ alone.\nFrom $\\frac{\\partial u}{\\partial y} = -\\frac{\\partial v}{\\partial x}$: $\\frac{\\partial u}{\\partial y} = -2y$, so $-\\frac{\\partial v}{\\partial x} = -2y$, which gives $\\frac{\\partial v}{\\partial x} = 2y$.\nDifferentiate $v(x,y) = 2xy + g(x)$ with respect to $x$: $\\frac{\\partial v}{\\partial x} = 2y + g'(x)$.\nFor this to equal $2y$, we need $g'(x) = 0$, so $g(x) = C$ (a constant).\nTherefore, $v(x,y) = 2xy + C$. Note: $u + iv = x^2 - y^2 + i(2xy + C) = (x+iy)^2 + iC = z^2 + iC$, which is indeed analytic.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "analytic-functions", "harmonic-conjugates"]
+    },
+    {
+      "id": "af-04",
+      "question": "A function $f(z)$ is analytic in a region $D$. Which of the following must be true?",
+      "options": {
+        "A": "$f$ is continuous and $f'$ is continuous in $D$",
+        "B": "$f$ is differentiable but not necessarily continuous",
+        "C": "$f$ is continuous in $D$ but $f'$ may not be continuous",
+        "D": "$f$ satisfies Laplace's equation: $\\nabla^2 u = 0$ and $\\nabla^2 v = 0$"
+      },
+      "correct_answer": "A",
+      "explanation": "Analytic functions have the remarkable property that if $f$ is analytic in $D$, then $f$ is infinitely differentiable in $D$, and all derivatives are continuous (this is a consequence of Cauchy's integral formula). In particular:\n(1) Analyticity implies continuity (Option A part 1): If $f$ is differentiable at a point, it must be continuous there.\n(2) Analyticity implies the derivative is continuous (Option A part 2): For analytic functions, the derivative $f'$ is itself analytic, hence continuous.\n(3) Option B is false: all analytic functions are continuous.\n(4) Option C is false: the derivative of an analytic function is continuous (even more: it is analytic).\n(5) Option D is true but incomplete: the real and imaginary parts of an analytic function do satisfy Laplace's equation (they are harmonic), but this is not the only condition that must hold. Option D is less specific than Option A.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "analytic-functions", "properties"]
+    },
+    {
+      "id": "af-05",
+      "question": "Let $f(z) = \\sin z$. Using Cauchy-Riemann equations, find $f'(z)$.",
+      "options": {
+        "A": "$\\cos z$",
+        "B": "$-\\cos z$",
+        "C": "$\\sin z$",
+        "D": "$e^{iz}$"
+      },
+      "correct_answer": "A",
+      "explanation": "We compute $\\sin z$ in terms of real and imaginary parts. With $z = x + iy$:\n$\\sin z = \\sin(x + iy) = \\sin x \\cosh y + i \\cos x \\sinh y$.\nThus $u(x,y) = \\sin x \\cosh y$ and $v(x,y) = \\cos x \\sinh y$.\nVerify Cauchy-Riemann:\n$\\frac{\\partial u}{\\partial x} = \\cos x \\cosh y$ and $\\frac{\\partial v}{\\partial y} = \\cos x \\cosh y$ ✓\n$\\frac{\\partial u}{\\partial y} = \\sin x \\sinh y$ and $-\\frac{\\partial v}{\\partial x} = -(-\\sin x \\sinh y) = \\sin x \\sinh y$ ✓\nThe derivative is $f'(z) = \\frac{\\partial u}{\\partial x} + i\\frac{\\partial v}{\\partial x} = \\cos x \\cosh y + i(-\\sin x \\sinh y) = \\cos(x + iy) = \\cos z$.\nAlternatively, since $\\cos z$ is also analytic (satisfies C-R), we have $\\frac{d}{dz}\\sin z = \\cos z$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "analytic-functions", "trigonometric-derivatives"]
+    }
+  ]
+}

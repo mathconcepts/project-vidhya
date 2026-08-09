@@ -1,0 +1,87 @@
+{
+  "concept_id": "ode-first-order",
+  "topic": "differential-equations",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "ode1-01",
+      "question": "Solve the separable ODE $\\frac{dy}{dx} = 3y$ with initial condition $y(0) = 2$.",
+      "options": {
+        "A": "$y = 2e^{3x}$",
+        "B": "$y = e^{3x}$",
+        "C": "$y = 3e^{2x}$",
+        "D": "$y = 2e^{x/3}$"
+      },
+      "correct_answer": "A",
+      "explanation": "**Step 1:** Separate variables.\n$$\\frac{dy}{y} = 3 \\, dx$$\n\n**Step 2:** Integrate both sides.\n$$\\int \\frac{dy}{y} = \\int 3 \\, dx$$\n$$\\ln|y| = 3x + C$$\n\n**Step 3:** Exponentiate.\n$$y = Ae^{3x}$$\n\n**Step 4:** Apply initial condition $y(0) = 2$.\n$$2 = A e^{0} = A$$\n\n**Solution:** $y = 2e^{3x}$. This represents exponential growth; the population doubles and then grows by a factor of $e^3 \\approx 20$ per unit increase in $x$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-first-order", "separable"]
+    },
+    {
+      "id": "ode1-02",
+      "question": "The solution to $\\frac{dy}{dx} = \\frac{x}{y}$ passing through $(1, 2)$ is:",
+      "options": {
+        "A": "$y^2 = x^2 + 3$",
+        "B": "$y^2 = x^2 + 4$",
+        "C": "$y^2 = x^2 + 2$",
+        "D": "$y^2 = 2x^2 + 1$"
+      },
+      "correct_answer": "A",
+      "explanation": "**Step 1:** Separate variables.\n$$y \\, dy = x \\, dx$$\n\n**Step 2:** Integrate both sides.\n$$\\int y \\, dy = \\int x \\, dx$$\n$$\\frac{y^2}{2} = \\frac{x^2}{2} + C$$\n$$y^2 = x^2 + 2C$$\n\n**Step 3:** Apply initial condition $(1, 2)$.\n$$4 = 1 + 2C$$\n$$2C = 3$$\n\n**Step 4:** Write the solution.\n$$y^2 = x^2 + 3$$\n\nThis is a family of hyperbolas. When we plug in the point $(1,2)$, we get the specific hyperbola that passes through that point.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-first-order", "separable"]
+    },
+    {
+      "id": "ode1-03",
+      "question": "The general solution of $\\frac{dy}{dx} + y = e^{-x}$ is:",
+      "options": {
+        "A": "$y = (x + C)e^{-x}$",
+        "B": "$y = e^{-x}(x + C)$",
+        "C": "$y = (C - x)e^{-x}$",
+        "D": "$y = Ce^{-x} + xe^{-x}$"
+      },
+      "correct_answer": "A",
+      "explanation": "This is a first-order linear ODE of the form $\\frac{dy}{dx} + P(x)y = Q(x)$ where $P(x) = 1$ and $Q(x) = e^{-x}$.\n\n**Step 1:** Find the integrating factor.\n$$\\mu(x) = e^{\\int 1 \\, dx} = e^x$$\n\n**Step 2:** Multiply both sides by $\\mu(x)$.\n$$e^x \\frac{dy}{dx} + e^x y = e^x \\cdot e^{-x} = 1$$\n\n**Step 3:** Recognize the left side as a derivative.\n$$\\frac{d}{dx}(e^x y) = 1$$\n\n**Step 4:** Integrate both sides.\n$$e^x y = x + C$$\n$$y = (x + C)e^{-x}$$\n\nGeometrically, this solution decays exponentially (due to the $e^{-x}$ factor) but is modulated by the linear growth $(x + C)$, creating a solution that eventually decays to zero.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-first-order", "linear", "integrating-factor"]
+    },
+    {
+      "id": "ode1-04",
+      "question": "For the ODE $\\frac{dy}{dx} = \\sin(x) \\cos(y)$, the particular solution with $y(0) = 0$ is:",
+      "options": {
+        "A": "$\\sin(y) = 1 - \\cos(x)$",
+        "B": "$\\sin(y) = \\cos(x) - 1$",
+        "C": "$\\cos(y) = 1 - \\sin(x)$",
+        "D": "$\\sin(y) = \\sin(x)$"
+      },
+      "correct_answer": "A",
+      "explanation": "**Step 1:** Separate variables.\n$$\\frac{dy}{\\cos(y)} = \\sin(x) \\, dx$$\n$$\\sec(y) \\, dy = \\sin(x) \\, dx$$\n\n**Step 2:** Integrate both sides.\n$$\\int \\sec(y) \\, dy = \\int \\sin(x) \\, dx$$\n$$\\ln|\\sec(y) + \\tan(y)| = -\\cos(x) + C$$\n\nAlternatively, using the substitution method: integrating $\\int \\frac{dy}{\\cos(y)}$ yields $\\ln|\\sec(y) + \\tan(y)|$. But easier: note that $\\frac{d}{dy}[\\sin(y)] = \\cos(y)$, so:\n$$\\sin(y) = -\\cos(x) + C$$\n\n**Step 3:** Apply initial condition $y(0) = 0$.\n$$\\sin(0) = -\\cos(0) + C$$\n$$0 = -1 + C$$\n$$C = 1$$\n\n**Step 4:** Write the solution.\n$$\\sin(y) = 1 - \\cos(x)$$\n\nThis solution stays bounded because $\\sin(y)$ ranges between $-1$ and $1$, and $1 - \\cos(x)$ also ranges within $[0, 2]$ but is constrained by the sine function's range.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-first-order", "separable", "trigonometric"]
+    },
+    {
+      "id": "ode1-05",
+      "question": "The solution to $x \\frac{dy}{dx} - 2y = x^3$ with $y(1) = 0$ involves solving a linear ODE. Find $y(2)$.",
+      "options": {
+        "A": "$y(2) = 16$",
+        "B": "$y(2) = 8$",
+        "C": "$y(2) = 4$",
+        "D": "$y(2) = 12$"
+      },
+      "correct_answer": "C",
+      "explanation": "**Step 1:** Rewrite the ODE in standard form by dividing by $x$.\n$$\\frac{dy}{dx} - \\frac{2y}{x} = x^2$$\n\nThis is a first-order linear ODE: $\\frac{dy}{dx} + P(x)y = Q(x)$ where $P(x) = -\\frac{2}{x}$ and $Q(x) = x^2$.\n\n**Step 2:** Find the integrating factor.\n$$\\mu(x) = e^{\\int -\\frac{2}{x} \\, dx} = e^{-2\\ln|x|} = e^{\\ln(x^{-2})} = x^{-2} = \\frac{1}{x^2}$$\n\n**Step 3:** Multiply both sides by $\\mu(x)$.\n$$\\frac{1}{x^2} \\frac{dy}{dx} - \\frac{2y}{x^3} = 1$$\n\n**Step 4:** Recognize the left side as $\\frac{d}{dx}\\left(\\frac{y}{x^2}\\right)$.\n$$\\frac{d}{dx}\\left(\\frac{y}{x^2}\\right) = 1$$\n\n**Step 5:** Integrate both sides.\n$$\\frac{y}{x^2} = x + C$$\n$$y = x^3 + Cx^2$$\n\n**Step 6:** Apply initial condition $y(1) = 0$.\n$$0 = 1 + C$$\n$$C = -1$$\n\n**Step 7:** Write the particular solution.\n$$y = x^3 - x^2$$\n\n**Step 8:** Evaluate at $x = 2$.\n$$y(2) = 8 - 4 = 4$$\n\nGeometrically, the solution is a cubic trajectory that dips below zero between $x = 0$ and $x = 1$, then rises again, representing the balance between exponential-like growth and the decaying influence of the initial condition.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-first-order", "linear", "integrating-factor"]
+    }
+  ]
+}

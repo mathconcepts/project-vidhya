@@ -144,17 +144,19 @@ gate-ma.yml (concept graph)
 
 | Topic | Concepts | explainer | mcqs | tips | Status |
 |-------|---------|-----------|------|------|--------|
-| Linear Algebra | 11 | - | - | - | pending |
-| Calculus | 19 | - | - | - | pending |
-| Differential Equations | 7 | - | - | - | pending |
-| Complex Variables | 6 | - | - | - | pending |
-| Probability & Statistics | 8 | - | - | - | pending |
-| Numerical Methods | 5 | - | - | - | pending |
-| Transform Theory | 6 | - | - | - | pending |
-| Vector Calculus | 7 | - | - | - | pending |
-| Discrete Mathematics | 6 | - | - | - | pending |
-| Graph Theory | 7 | - | - | - | pending |
-| **TOTAL** | **82** | **0/82** | **0/82** | **0/82** | **0%** |
+| Linear Algebra | 11 | 11/11 | 11/11 | 11/11 | ✅ complete |
+| Calculus | 19 | 19/19 | 19/19 | 19/19 | ✅ complete |
+| Differential Equations | 7 | 7/7 | 7/7 | 7/7 | ✅ complete |
+| Complex Variables | 6 | 6/6 | 6/6 | 6/6 | ✅ complete |
+| Probability & Statistics | 8 | 8/8 | 8/8 | 8/8 | ✅ complete |
+| Numerical Methods | 5 | 5/5 | 5/5 | 5/5 | ✅ complete |
+| Transform Theory | 6 | 6/6 | 6/6 | 6/6 | ✅ complete |
+| Vector Calculus | 7 | 7/7 | 7/7 | 7/7 | ✅ complete |
+| Discrete Mathematics | 6 | 6/6 | 6/6 | 6/6 | ✅ complete |
+| Graph Theory | 7 | 7/7 | 7/7 | 7/7 | ✅ complete |
+| **TOTAL** | **82** | **82/82** | **82/82** | **82/82** | **100%** |
+
+**Generation completed: 2026-08-09** — 246 files, 410 MCQ questions, ALL CLEAR (zero JSON errors).
 
 ---
 

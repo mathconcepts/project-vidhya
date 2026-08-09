@@ -1,0 +1,87 @@
+{
+  "concept_id": "implicit-differentiation",
+  "topic": "Calculus",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "id-01",
+      "question": "Using implicit differentiation, find $\\dfrac{dy}{dx}$ for the circle $x^2 + y^2 = r^2$ (where $r$ is a constant).",
+      "options": {
+        "A": "$\\dfrac{x}{y}$",
+        "B": "$-\\dfrac{y}{x}$",
+        "C": "$-\\dfrac{x}{y}$",
+        "D": "$\\dfrac{y}{x}$"
+      },
+      "correct_answer": "C",
+      "explanation": "Differentiate both sides w.r.t. $x$: $\\frac{d}{dx}(x^2) + \\frac{d}{dx}(y^2) = \\frac{d}{dx}(r^2)$. Since $r$ is constant, the right side is 0. Left side: $2x + 2y\\frac{dy}{dx} = 0$. Solve for $\\frac{dy}{dx}$: $2y\\frac{dy}{dx} = -2x \\Rightarrow \\frac{dy}{dx} = -\\frac{x}{y}$. Key step: $\\frac{d}{dx}[y^2] = 2y \\cdot \\frac{dy}{dx}$ by the chain rule (NOT just $2y$).",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["implicit-differentiation", "chain-rule", "calculus", "circle"]
+    },
+    {
+      "id": "id-02",
+      "question": "Find $\\dfrac{dy}{dx}$ for $xy = c$ (where $c$ is a constant).",
+      "options": {
+        "A": "$\\dfrac{y}{x}$",
+        "B": "$-\\dfrac{y}{x}$",
+        "C": "$\\dfrac{x}{y}$",
+        "D": "$-\\dfrac{x}{y}$"
+      },
+      "correct_answer": "B",
+      "explanation": "Differentiate both sides w.r.t. $x$ using the product rule on the left: $\\frac{d}{dx}(xy) = \\frac{d}{dx}(c)$. Product rule: $y \\cdot 1 + x \\cdot \\frac{dy}{dx} = 0$. Solve: $x\\frac{dy}{dx} = -y \\Rightarrow \\frac{dy}{dx} = -\\frac{y}{x}$. Note: $c$ is a constant so its derivative is 0. This result is consistent with the explicit form $y = c/x$, where $dy/dx = -c/x^2 = -y/x$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["implicit-differentiation", "product-rule", "calculus"]
+    },
+    {
+      "id": "id-03",
+      "question": "Find $\\dfrac{dy}{dx}$ for the folium of Descartes: $x^3 + y^3 = 3axy$ (where $a$ is a constant).",
+      "options": {
+        "A": "$\\dfrac{ay - x^2}{y^2 - ax}$",
+        "B": "$\\dfrac{x^2 - ay}{y^2 - ax}$",
+        "C": "$\\dfrac{3x^2 - 3ay}{3y^2 - 3ax}$",
+        "D": "$\\dfrac{x^2 + ay}{y^2 + ax}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Differentiate both sides w.r.t. $x$: $\\frac{d}{dx}(x^3) + \\frac{d}{dx}(y^3) = \\frac{d}{dx}(3axy)$. Compute each term: $3x^2 + 3y^2\\frac{dy}{dx} = 3a\\left(y + x\\frac{dy}{dx}\\right)$ (product rule on right). Expand: $3x^2 + 3y^2\\frac{dy}{dx} = 3ay + 3ax\\frac{dy}{dx}$. Collect $\\frac{dy}{dx}$ terms: $3y^2\\frac{dy}{dx} - 3ax\\frac{dy}{dx} = 3ay - 3x^2$. Factor: $\\frac{dy}{dx}(3y^2 - 3ax) = 3(ay - x^2)$. Divide: $\\frac{dy}{dx} = \\frac{3(ay-x^2)}{3(y^2-ax)} = \\frac{ay-x^2}{y^2-ax}$. Option C is the same expression before cancelling the common factor of 3 — identical value, less simplified.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["implicit-differentiation", "chain-rule", "product-rule", "calculus", "folium"]
+    },
+    {
+      "id": "id-04",
+      "question": "For the unit circle $x^2 + y^2 = 1$, find $\\dfrac{d^2y}{dx^2}$ at the point $(0, 1)$.",
+      "options": {
+        "A": "$0$",
+        "B": "$-1$",
+        "C": "$1$",
+        "D": "$-\\dfrac{1}{y^3}$ (evaluated at any point)"
+      },
+      "correct_answer": "B",
+      "explanation": "First differentiation: $2x + 2y\\frac{dy}{dx} = 0 \\Rightarrow \\frac{dy}{dx} = -\\frac{x}{y}$. Second differentiation using the quotient rule on $-x/y$: $\\frac{d^2y}{dx^2} = \\frac{d}{dx}\\left(-\\frac{x}{y}\\right) = -\\frac{y \\cdot 1 - x \\cdot \\frac{dy}{dx}}{y^2}$. Substitute $\\frac{dy}{dx} = -\\frac{x}{y}$: $\\frac{d^2y}{dx^2} = -\\frac{y - x\\left(-\\frac{x}{y}\\right)}{y^2} = -\\frac{y + \\frac{x^2}{y}}{y^2} = -\\frac{y^2 + x^2}{y^3} = -\\frac{1}{y^3}$ (using $x^2+y^2=1$). At $(0,1)$: $y=1$, so $\\frac{d^2y}{dx^2} = -\\frac{1}{1^3} = -1$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["implicit-differentiation", "second-derivative", "calculus"]
+    },
+    {
+      "id": "id-05",
+      "question": "The curve $x^2 + xy + y^2 = 7$ passes through the point $(1, 2)$. What is the equation of the tangent line at this point?",
+      "options": {
+        "A": "$y - 2 = -\\dfrac{4}{5}(x - 1)$",
+        "B": "$y - 2 = -\\dfrac{5}{4}(x - 1)$",
+        "C": "$y - 2 = \\dfrac{4}{5}(x - 1)$",
+        "D": "$y - 2 = -\\dfrac{2}{5}(x - 1)$"
+      },
+      "correct_answer": "A",
+      "explanation": "Verify the point: $1 + 2 + 4 = 7$ ✓. Differentiate $x^2 + xy + y^2 = 7$ w.r.t. $x$: $2x + \\left(y + x\\frac{dy}{dx}\\right) + 2y\\frac{dy}{dx} = 0$ (product rule on $xy$). Collect: $2x + y + (x + 2y)\\frac{dy}{dx} = 0$. Solve: $\\frac{dy}{dx} = -\\frac{2x+y}{x+2y}$. At $(1,2)$: $\\frac{dy}{dx} = -\\frac{2(1)+2}{1+2(2)} = -\\frac{4}{5}$. Tangent line using point-slope form: $y - 2 = -\\frac{4}{5}(x-1)$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["implicit-differentiation", "tangent-line", "chain-rule", "product-rule", "calculus"]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "concept_id": "recurrence-relations",
+  "topic": "Discrete Mathematics",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "rr-01",
+      "question": "Find the closed-form (explicit formula) for the recurrence $a_n = 2 \\cdot a_{n-1}$, $a_0 = 1$.",
+      "options": {
+        "A": "$a_n = 2n$",
+        "B": "$a_n = n^2$",
+        "C": "$a_n = 2^n$",
+        "D": "$a_n = 2^{n-1}$"
+      },
+      "correct_answer": "C",
+      "explanation": "This is a geometric recurrence: each term is 2 times the previous. Unrolling: $a_n = 2 \\cdot a_{n-1} = 2^2 a_{n-2} = \\cdots = 2^n a_0 = 2^n \\cdot 1 = 2^n$. Verify: $a_0 = 2^0 = 1$ ✓, $a_1 = 2^1 = 2 = 2 \\cdot 1$ ✓. Option A ($2n$) is linear growth, not geometric. Option D ($2^{n-1}$) gives $a_0 = 2^{-1} = 0.5 \\neq 1$, failing the initial condition.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["recurrence-relations", "closed-form", "geometric-recurrence", "discrete-mathematics"]
+    },
+    {
+      "id": "rr-02",
+      "question": "Solve the recurrence $a_n = a_{n-1} + 3$ with initial condition $a_0 = 2$. What is $a_n$?",
+      "options": {
+        "A": "$a_n = 3n$",
+        "B": "$a_n = 3n + 2$",
+        "C": "$a_n = 2 \\cdot 3^n$",
+        "D": "$a_n = 2n + 3$"
+      },
+      "correct_answer": "B",
+      "explanation": "This is an arithmetic recurrence with common difference 3. Unrolling: $a_n = a_0 + 3n = 2 + 3n$. Verify: $a_0 = 2 + 0 = 2$ ✓, $a_1 = 2 + 3 = 5 = a_0 + 3$ ✓, $a_2 = 2 + 6 = 8$ ✓. Option A misses the initial value offset. Option C incorrectly treats '+3' as a multiplicative factor. Option D has the coefficients of $n$ and the constant swapped.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["recurrence-relations", "arithmetic-recurrence", "closed-form", "discrete-mathematics"]
+    },
+    {
+      "id": "rr-03",
+      "question": "Solve the linear homogeneous recurrence $a_n = 5a_{n-1} - 6a_{n-2}$ with $a_0 = 0$, $a_1 = 1$.",
+      "options": {
+        "A": "$a_n = 3^n - 2^n$",
+        "B": "$a_n = 2^n - 3^n$",
+        "C": "$a_n = 3^n + 2^n$",
+        "D": "$a_n = 2 \\cdot 3^n - 3 \\cdot 2^n$"
+      },
+      "correct_answer": "A",
+      "explanation": "Characteristic equation: $r^2 - 5r + 6 = 0 \\Rightarrow (r-2)(r-3) = 0$. Distinct roots $r_1 = 2$, $r_2 = 3$. General solution: $a_n = A \\cdot 2^n + B \\cdot 3^n$. Apply ICs: $a_0 = 0$: $A + B = 0 \\Rightarrow B = -A$. $a_1 = 1$: $2A + 3B = 1 \\Rightarrow 2A - 3A = 1 \\Rightarrow A = -1$, $B = 1$. So $a_n = -2^n + 3^n = 3^n - 2^n$. Verify: $a_2 = 9 - 4 = 5 = 5(1) - 6(0) = 5$ ✓.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["recurrence-relations", "characteristic-equation", "homogeneous", "distinct-roots", "discrete-mathematics"]
+    },
+    {
+      "id": "rr-04",
+      "question": "Solve the recurrence $a_n = 4a_{n-1} - 4a_{n-2}$ with $a_0 = 1$, $a_1 = 2$.",
+      "options": {
+        "A": "$a_n = 2^n$",
+        "B": "$a_n = (1 + n) \\cdot 2^n$",
+        "C": "$a_n = n \\cdot 2^n$",
+        "D": "$a_n = 2^n + n \\cdot 2^{n-1}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Characteristic equation: $r^2 - 4r + 4 = 0 \\Rightarrow (r-2)^2 = 0$. Repeated root $r = 2$ with multiplicity 2. General solution for repeated root: $a_n = (A + Bn) \\cdot 2^n$. Apply ICs: $a_0 = 1$: $A \\cdot 1 = 1 \\Rightarrow A = 1$. $a_1 = 2$: $(1 + B) \\cdot 2 = 2 \\Rightarrow 1 + B = 1 \\Rightarrow B = 0$. So $a_n = 2^n$. Verify: $a_2 = 4(2) - 4(1) = 4 = 2^2$ ✓. The repeated-root form $(A+Bn)2^n$ was necessary to write down the correct general solution, but the initial conditions forced $B=0$, collapsing it to $2^n$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["recurrence-relations", "characteristic-equation", "repeated-roots", "homogeneous", "discrete-mathematics"]
+    },
+    {
+      "id": "rr-05",
+      "question": "Find the general solution of the non-homogeneous recurrence $a_n = 2a_{n-1} + 3^n$.",
+      "options": {
+        "A": "$a_n = C \\cdot 2^n + 3^{n+1}$",
+        "B": "$a_n = C \\cdot 2^n + 3^n$",
+        "C": "$a_n = C \\cdot 3^n + 2^{n+1}$",
+        "D": "$a_n = C \\cdot 2^n + n \\cdot 3^n$"
+      },
+      "correct_answer": "A",
+      "explanation": "Step 1 — Homogeneous solution: characteristic equation $r = 2$, so $a_n^{(h)} = C \\cdot 2^n$. Step 2 — Particular solution: the forcing term is $3^n$. Since $r=3$ is NOT a root of the characteristic equation, try $a_n^{(p)} = K \\cdot 3^n$. Substitute: $K \\cdot 3^n = 2K \\cdot 3^{n-1} + 3^n$. Divide through by $3^{n-1}$: $3K = 2K + 3 \\Rightarrow K = 3$. So $a_n^{(p)} = 3 \\cdot 3^n = 3^{n+1}$. Step 3 — General solution: $a_n = C \\cdot 2^n + 3^{n+1}$. Option B forgets to multiply $K=3$, giving $K=1$. Option D is needed only when $3^n$ duplicates a homogeneous root (it doesn't here). Option C has the homogeneous and particular parts swapped.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["recurrence-relations", "non-homogeneous", "particular-solution", "undetermined-coefficients", "discrete-mathematics"]
+    }
+  ]
+}

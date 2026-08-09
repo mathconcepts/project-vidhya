@@ -1,0 +1,87 @@
+{
+  "concept_id": "multivariable-calculus",
+  "topic": "calculus",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "mv-01",
+      "question": "For $f(x, y) = x^3 + 2xy^2 - y^3$, find $\\frac{\\partial f}{\\partial x}$.",
+      "options": {
+        "A": "$3x^2 + 2y^2$",
+        "B": "$3x^2 + 4xy - 3y^2$",
+        "C": "$4xy$",
+        "D": "$2x + 4y$"
+      },
+      "correct_answer": "A",
+      "explanation": "Treat $y$ as a constant and differentiate with respect to $x$:\n\n$$\\frac{\\partial f}{\\partial x} = \\frac{\\partial}{\\partial x}[x^3 + 2xy^2 - y^3] = 3x^2 + 2y^2 + 0 = 3x^2 + 2y^2$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "multivariable", "partial-derivatives"]
+    },
+    {
+      "id": "mv-02",
+      "question": "For $f(x, y) = e^{xy}$, find $\\frac{\\partial f}{\\partial y}$.",
+      "options": {
+        "A": "$e^{xy}$",
+        "B": "$x e^{xy}$",
+        "C": "$y e^{xy}$",
+        "D": "$e^x$"
+      },
+      "correct_answer": "B",
+      "explanation": "Treat $x$ as constant. Use chain rule:\n\n$$\\frac{\\partial f}{\\partial y} = \\frac{\\partial}{\\partial y}[e^{xy}] = e^{xy} \\cdot x = x e^{xy}$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "multivariable", "chain-rule"]
+    },
+    {
+      "id": "mv-03",
+      "question": "For $f(x, y) = x^2 + 3xy + y^2$, find the critical points by solving $\\nabla f = 0$.",
+      "options": {
+        "A": "$(0, 0)$",
+        "B": "$(1, -1)$",
+        "C": "$(0, 1)$",
+        "D": "No critical points"
+      },
+      "correct_answer": "A",
+      "explanation": "$\\frac{\\partial f}{\\partial x} = 2x + 3y = 0$\n$\\frac{\\partial f}{\\partial y} = 3x + 2y = 0$\n\nFrom first: $2x + 3y = 0 \\Rightarrow 2x = -3y$\nFrom second: $3x + 2y = 0$\n\nSubstitute: $3(-3y/2) + 2y = 0 \\Rightarrow -9y/2 + 2y = 0 \\Rightarrow -5y/2 = 0 \\Rightarrow y = 0$\n\nThen $x = 0$. Critical point: $(0, 0)$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "multivariable", "critical-points"]
+    },
+    {
+      "id": "mv-04",
+      "question": "For $f(x, y) = x^2 y^3$, find $\\frac{\\partial^2 f}{\\partial x \\partial y}$ (mixed partial).",
+      "options": {
+        "A": "$2xy^3$",
+        "B": "$6xy^2$",
+        "C": "$2xy^2$",
+        "D": "$6x^2 y$"
+      },
+      "correct_answer": "B",
+      "explanation": "First, $\\frac{\\partial f}{\\partial y} = 3x^2 y^2$.\n\nThen, $\\frac{\\partial^2 f}{\\partial x \\partial y} = \\frac{\\partial}{\\partial x}[3x^2 y^2] = 6xy^2$.\n\nNote: By Schwarz's theorem (assuming continuity), $\\frac{\\partial^2 f}{\\partial x \\partial y} = \\frac{\\partial^2 f}{\\partial y \\partial x}$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "multivariable", "second-partial"]
+    },
+    {
+      "id": "mv-05",
+      "question": "For $z = f(x, y) = x^2 + y^2$ with $x = t^2$, $y = \\sin(t)$, find $\\frac{dz}{dt}$ using the chain rule.",
+      "options": {
+        "A": "$4t^3 + 2\\sin(t)\\cos(t)$",
+        "B": "$2t + 2y$",
+        "C": "$4t^2 + 2\\sin(t)$",
+        "D": "$4t + \\cos(t)$"
+      },
+      "correct_answer": "A",
+      "explanation": "Apply the chain rule: $\\frac{dz}{dt} = \\frac{\\partial f}{\\partial x}\\frac{dx}{dt} + \\frac{\\partial f}{\\partial y}\\frac{dy}{dt}$\n\n$\\frac{\\partial f}{\\partial x} = 2x$, $\\frac{dx}{dt} = 2t$\n$\\frac{\\partial f}{\\partial y} = 2y$, $\\frac{dy}{dt} = \\cos(t)$\n\n$$\\frac{dz}{dt} = 2x \\cdot 2t + 2y \\cdot \\cos(t) = 2(t^2)(2t) + 2\\sin(t)\\cos(t) = 4t^3 + 2\\sin(t)\\cos(t)$$",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "multivariable", "chain-rule"]
+    }
+  ]
+}

@@ -781,6 +781,20 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         return;
       }
     }
+
+    // Dev-mode fallback: serve /data/* from frontend/public/data/ when dist
+    // hasn't been built. Lets the backend serve the content bundle and other
+    // public assets without requiring a frontend build first.
+    if (pathname.startsWith('/data/')) {
+      const publicFile = path.join(process.cwd(), 'frontend', 'public', pathname);
+      if (fs.existsSync(publicFile) && fs.statSync(publicFile).isFile()) {
+        const ext = path.extname(publicFile);
+        const ct = ext === '.json' ? 'application/json' : ext === '.png' ? 'image/png' : 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': ct });
+        fs.createReadStream(publicFile).pipe(res);
+        return;
+      }
+    }
   }
 
   // Match API routes. HEAD requests fall back to GET routes — Node's http

@@ -1,0 +1,6 @@
+concept_id: recurrence-relations
+label: "Recurrence Relations"
+topic: discrete-mathematics
+difficulty_base: 0.5
+gate_frequency: medium
+exam_ids: ["*"]

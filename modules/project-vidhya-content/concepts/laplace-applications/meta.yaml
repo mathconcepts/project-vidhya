@@ -1,0 +1,6 @@
+concept_id: laplace-applications
+label: "Laplace Applications"
+topic: transform-theory
+difficulty_base: 0.6
+gate_frequency: high
+exam_ids: ["*"]

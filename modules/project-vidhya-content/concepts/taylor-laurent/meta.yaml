@@ -1,0 +1,6 @@
+concept_id: taylor-laurent
+label: "Taylor Laurent"
+topic: complex-variables
+difficulty_base: 0.6
+gate_frequency: high
+exam_ids: ["*"]

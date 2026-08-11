@@ -1,0 +1,6 @@
+concept_id: planar-graphs
+label: "Planar Graphs"
+topic: graph-theory
+difficulty_base: 0.5
+gate_frequency: medium
+exam_ids: ["*"]

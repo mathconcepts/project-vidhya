@@ -1,0 +1,6 @@
+concept_id: multivariable-calculus
+label: "Multivariable Calculus"
+topic: calculus
+difficulty_base: 0.6
+gate_frequency: high
+exam_ids: ["*"]

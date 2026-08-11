@@ -1,0 +1,87 @@
+{
+  "concept_id": "product-quotient-rule",
+  "topic": "calculus",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "pqr-01",
+      "question": "Find the derivative of $f(x) = x \\ln(x)$.",
+      "options": {
+        "A": "$\\ln(x)$",
+        "B": "$\\ln(x) + 1$",
+        "C": "$\\ln(x) + x$",
+        "D": "$1 + 1/x$"
+      },
+      "correct_answer": "B",
+      "explanation": "Use the product rule with $u = x$ and $v = \\ln(x)$.\n\n$u' = 1$, $v' = 1/x$\n\n$$f'(x) = 1 \\cdot \\ln(x) + x \\cdot \\frac{1}{x} = \\ln(x) + 1$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "product-rule", "logarithmic"]
+    },
+    {
+      "id": "pqr-02",
+      "question": "Find the derivative of $f(x) = \\frac{x}{x^2 + 1}$.",
+      "options": {
+        "A": "$\\frac{1}{x^2+1}$",
+        "B": "$\\frac{1-x^2}{(x^2+1)^2}$",
+        "C": "$\\frac{x^2-1}{(x^2+1)^2}$",
+        "D": "$\\frac{2x}{x^2+1}$"
+      },
+      "correct_answer": "B",
+      "explanation": "Use the quotient rule with $u = x$ and $v = x^2 + 1$.\n\n$u' = 1$, $v' = 2x$\n\n$$f'(x) = \\frac{1 \\cdot (x^2+1) - x \\cdot 2x}{(x^2+1)^2} = \\frac{x^2 + 1 - 2x^2}{(x^2+1)^2} = \\frac{1 - x^2}{(x^2+1)^2}$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "quotient-rule", "polynomial"]
+    },
+    {
+      "id": "pqr-03",
+      "question": "Find $f'(0)$ for $f(x) = (x^2 + 1)e^x$.",
+      "options": {
+        "A": "$0$",
+        "B": "$1$",
+        "C": "$2$",
+        "D": "$e$"
+      },
+      "correct_answer": "B",
+      "explanation": "Use the product rule with $u = x^2 + 1$ and $v = e^x$.\n\n$u' = 2x$, $v' = e^x$\n\n$$f'(x) = 2x \\cdot e^x + (x^2 + 1) \\cdot e^x = e^x(2x + x^2 + 1)$$\n\nAt $x = 0$:\n$$f'(0) = e^0(0 + 0 + 1) = 1$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "product-rule", "exponential"]
+    },
+    {
+      "id": "pqr-04",
+      "question": "Find the derivative of $f(x) = \\frac{\\sin(x)}{x}$ for $x \\neq 0$.",
+      "options": {
+        "A": "$\\frac{\\cos(x)}{x}$",
+        "B": "$\\frac{x\\cos(x) - \\sin(x)}{x^2}$",
+        "C": "$\\frac{\\cos(x) - \\sin(x)}{x^2}$",
+        "D": "$\\cos(x) - \\frac{\\sin(x)}{x^2}$"
+      },
+      "correct_answer": "B",
+      "explanation": "Use the quotient rule with $u = \\sin(x)$ and $v = x$.\n\n$u' = \\cos(x)$, $v' = 1$\n\n$$f'(x) = \\frac{\\cos(x) \\cdot x - \\sin(x) \\cdot 1}{x^2} = \\frac{x\\cos(x) - \\sin(x)}{x^2}$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "quotient-rule", "trigonometric"]
+    },
+    {
+      "id": "pqr-05",
+      "question": "If $f(x) = x^2 \\tan(x)$, find $f'(\\pi/4)$.",
+      "options": {
+        "A": "$\\pi/4$",
+        "B": "$\\pi/2 + \\pi^2/8$",
+        "C": "$\\pi^2/8 + \\pi/2$",
+        "D": "$2\\pi/4$"
+      },
+      "correct_answer": "C",
+      "explanation": "Use the product rule with $u = x^2$ and $v = \\tan(x)$.\n\n$u' = 2x$, $v' = \\sec^2(x)$\n\n$$f'(x) = 2x \\tan(x) + x^2 \\sec^2(x)$$\n\nAt $x = \\pi/4$: $\\tan(\\pi/4) = 1$ and $\\sec^2(\\pi/4) = 2$.\n\n$$f'(\\pi/4) = 2 \\cdot \\frac{\\pi}{4} \\cdot 1 + \\frac{\\pi^2}{16} \\cdot 2 = \\frac{\\pi}{2} + \\frac{\\pi^2}{8}$$",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "product-rule", "trigonometric"]
+    }
+  ]
+}

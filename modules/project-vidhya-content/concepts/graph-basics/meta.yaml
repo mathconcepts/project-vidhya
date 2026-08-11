@@ -1,0 +1,6 @@
+concept_id: graph-basics
+label: "Graph Basics"
+topic: graph-theory
+difficulty_base: 0.3
+gate_frequency: high
+exam_ids: ["*"]

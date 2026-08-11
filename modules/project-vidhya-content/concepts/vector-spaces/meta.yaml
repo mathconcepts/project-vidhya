@@ -1,0 +1,6 @@
+concept_id: vector-spaces
+label: "Vector Spaces"
+topic: linear-algebra
+difficulty_base: 0.5
+gate_frequency: medium
+exam_ids: ["*"]

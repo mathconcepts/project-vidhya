@@ -1,0 +1,87 @@
+{
+  "concept_id": "graph-coloring",
+  "topic": "graph-theory",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "gc-01",
+      "question": "What is the chromatic number of a cycle $C_6$ (a 6-vertex cycle)?",
+      "options": {
+        "A": "1",
+        "B": "2",
+        "C": "3",
+        "D": "6"
+      },
+      "correct_answer": "B",
+      "explanation": "A cycle $C_n$ is 2-colorable iff $n$ is even.\n\nFor $C_6$ (a hexagon): vertices arranged in a cycle 1-2-3-4-5-6-1.\n- Color vertices 1, 3, 5 with color A.\n- Color vertices 2, 4, 6 with color B.\n\nEach vertex is adjacent only to its neighbors (one on each side in the cycle). Odd-numbered vertices only touch even-numbered vertices, and vice versa. No two vertices of the same color are adjacent.\n\nTherefore, $\\chi(C_6) = 2$. $C_6$ is bipartite.\n\nGeometrically: Even cycles form two-sided structures (one set of odd positions, one of even); odd cycles do not.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["graph-theory", "graph-coloring", "chromatic-number", "cycle"]
+    },
+    {
+      "id": "gc-02",
+      "question": "What is the chromatic number of the complete graph $K_5$?",
+      "options": {
+        "A": "2",
+        "B": "4",
+        "C": "5",
+        "D": "10"
+      },
+      "correct_answer": "C",
+      "explanation": "$K_n$ is the complete graph on $n$ vertices, where every pair of vertices is adjacent.\n\nIn $K_5$, each vertex is adjacent to all other 4 vertices. For any proper coloring:\n- Vertex 1: color 1\n- Vertex 2: color 2 (adjacent to 1)\n- Vertex 3: color 3 (adjacent to 1, 2)\n- Vertex 4: color 4 (adjacent to 1, 2, 3)\n- Vertex 5: color 5 (adjacent to 1, 2, 3, 4)\n\nSince all vertices are pairwise adjacent (form a clique), each must have a distinct color.\n\nTherefore, $\\chi(K_n) = n$. For $K_5$, $\\chi(K_5) = 5$.\n\nGeometrically: A clique of size $r$ always requires at least $r$ colors because no two vertices can share a color.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["graph-theory", "graph-coloring", "chromatic-number", "complete-graph"]
+    },
+    {
+      "id": "gc-03",
+      "question": "A bipartite graph with vertex sets $V_1$ and $V_2$ can be properly colored with at least how many colors?",
+      "options": {
+        "A": "1",
+        "B": "2",
+        "C": "Cannot be determined.",
+        "D": "Depends on the maximum degree."
+      },
+      "correct_answer": "B",
+      "explanation": "A graph is bipartite iff it can be partitioned into two disjoint vertex sets $V_1$ and $V_2$ such that every edge has one endpoint in $V_1$ and one in $V_2$ (no edges within $V_1$ or within $V_2$).\n\nTo properly color a bipartite graph:\n- Color all vertices in $V_1$ with color 1.\n- Color all vertices in $V_2$ with color 2.\n\nSince no edges exist within $V_1$ or $V_2$, no two vertices of the same color are adjacent. Thus, 2 colors suffice.\n\nConversely, a graph with chromatic number $\\chi(G) \\leq 2$ must be bipartite (by definition).\n\nTherefore, a bipartite graph requires at least 2 colors (unless it has isolated vertices, which need just 1 color, but a minimal bipartite graph with edges requires 2). For connected bipartite graphs, exactly 2 colors are both necessary and sufficient.\n\nAnswer: **At least 2 colors.**",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["graph-theory", "graph-coloring", "bipartite", "chromatic-number"]
+    },
+    {
+      "id": "gc-04",
+      "question": "A graph $G$ has maximum degree $\\Delta(G) = 5$. Which of the following is guaranteed to be true about the chromatic number $\\chi(G)$?",
+      "options": {
+        "A": "$\\chi(G) = 5$",
+        "B": "$\\chi(G) \\leq 5$",
+        "C": "$\\chi(G) \\leq 6$",
+        "D": "$\\chi(G) \\geq 5$"
+      },
+      "correct_answer": "C",
+      "explanation": "The Greedy Coloring Theorem states: Any graph $G$ can be properly colored with at most $\\Delta(G) + 1$ colors, where $\\Delta(G)$ is the maximum degree.\n\nProof: When coloring a vertex $v$ greedily, it has at most $\\Delta(G)$ already-colored neighbors. These neighbors use at most $\\Delta(G)$ different colors. Since we have $\\Delta(G) + 1$ colors available, at least one color remains unused by $v$'s neighbors—assign that color to $v$.\n\nFor $\\Delta(G) = 5$:\n$$\\chi(G) \\leq \\Delta(G) + 1 = 5 + 1 = 6$$\n\nThis bound is not tight (not all graphs achieving degree 5 require 6 colors). For instance, if $G$ is a tree with max degree 5, it's bipartite and $\\chi(G) = 2 \\leq 6$ ✓.\nBut we are **guaranteed** $\\chi(G) \\leq 6$.\n\nOptions (A) and (D) are not guaranteed (a specific graph might need fewer colors). Option (B) is too tight (not always true; $K_6$ has $\\chi = 6 > 5$).\n\nAnswer: **(C) $\\chi(G) \\leq 6$.**",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["graph-theory", "graph-coloring", "greedy-coloring", "degree-bound"]
+    },
+    {
+      "id": "gc-05",
+      "question": "A graph contains a clique of size 4 (i.e., a $K_4$ subgraph). What is the minimum chromatic number $\\chi(G)$?",
+      "options": {
+        "A": "At least 2.",
+        "B": "At least 3.",
+        "C": "At least 4.",
+        "D": "Exactly 4."
+      },
+      "correct_answer": "C",
+      "explanation": "A clique $K_r$ is a complete subgraph on $r$ vertices. In a clique, every pair of vertices is adjacent, so each vertex must have a distinct color.\n\nFor a $K_4$ (complete graph on 4 vertices):\n- Vertex 1: color 1\n- Vertex 2: color 2 (adjacent to 1)\n- Vertex 3: color 3 (adjacent to 1, 2)\n- Vertex 4: color 4 (adjacent to 1, 2, 3)\n\nThe $K_4$ subgraph requires at least 4 colors. Since $G$ contains $K_4$, we need at least 4 colors for $G$.\n\nTherefore, $\\chi(G) \\geq 4$.\n\nNote: $\\chi(G)$ could equal 4, or be larger (if $G$ has additional structure requiring more colors). But the minimum is guaranteed to be at least 4.\n\nGeometrically: A clique is the \"hardest\" subgraph to color. If $G$ contains $K_r$, then $\\chi(G) \\geq r$.\n\nAnswer: **(C) At least 4.**",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["graph-theory", "graph-coloring", "clique", "chromatic-number-lower-bound"]
+    }
+  ]
+}

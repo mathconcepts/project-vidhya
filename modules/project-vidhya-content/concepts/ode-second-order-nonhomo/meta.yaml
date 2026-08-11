@@ -1,0 +1,6 @@
+concept_id: ode-second-order-nonhomo
+label: "Ode Second Order Nonhomo"
+topic: differential-equations
+difficulty_base: 0.6
+gate_frequency: high
+exam_ids: ["*"]

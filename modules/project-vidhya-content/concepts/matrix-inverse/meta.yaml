@@ -1,0 +1,6 @@
+concept_id: matrix-inverse
+label: "Matrix Inverse"
+topic: linear-algebra
+difficulty_base: 0.3
+gate_frequency: high
+exam_ids: ["*"]

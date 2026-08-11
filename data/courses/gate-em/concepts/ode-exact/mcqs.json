@@ -1,0 +1,87 @@
+{
+  "concept_id": "ode-exact",
+  "topic": "differential-equations",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "ode-01",
+      "question": "Check if the equation $(3x^2 + 2y) dx + (2x + 4y^3) dy = 0$ is exact.",
+      "options": {
+        "A": "Exact, because $\\frac{\\partial M}{\\partial y} = \\frac{\\partial N}{\\partial x} = 2$",
+        "B": "Not exact, because $\\frac{\\partial M}{\\partial y} \\neq \\frac{\\partial N}{\\partial x}$",
+        "C": "Exact, because $M(x, y) + N(x, y) = 3x^2 + 2y + 2x + 4y^3$",
+        "D": "Not exact; requires integrating factor"
+      },
+      "correct_answer": "A",
+      "explanation": "For $M(x, y) dx + N(x, y) dy = 0$ to be exact, we need $\\frac{\\partial M}{\\partial y} = \\frac{\\partial N}{\\partial x}$.\n\n**Given:** $M(x, y) = 3x^2 + 2y$, $N(x, y) = 2x + 4y^3$.\n\n**Compute partial derivatives:**\n$$\\frac{\\partial M}{\\partial y} = \\frac{\\partial}{\\partial y}(3x^2 + 2y) = 2$$\n$$\\frac{\\partial N}{\\partial x} = \\frac{\\partial}{\\partial x}(2x + 4y^3) = 2$$\n\nSince $\\frac{\\partial M}{\\partial y} = \\frac{\\partial N}{\\partial x} = 2$, the equation is **exact**.\n\nGeometrically, this means there exists a potential function $F(x, y)$ whose level curves are the solution curves.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-exact", "exactness-test"]
+    },
+    {
+      "id": "ode-02",
+      "question": "For the exact equation $(3x^2 + 2y) dx + (2x + 4y^3) dy = 0$, integrating $M$ with respect to $x$ gives $F(x, y) = $?",
+      "options": {
+        "A": "$F(x, y) = x^3 + 2xy + g(y)$",
+        "B": "$F(x, y) = 3x + 2xy + g(y)$",
+        "C": "$F(x, y) = x^3 + 2xy + y^4$",
+        "D": "$F(x, y) = 3x^2 + 2xy + g(y)$"
+      },
+      "correct_answer": "A",
+      "explanation": "To find $F(x, y)$, integrate $M(x, y)$ with respect to $x$:\n$$F(x, y) = \\int (3x^2 + 2y) \\, dx$$\n\nTreat $y$ as a constant during integration:\n$$F(x, y) = \\int 3x^2 \\, dx + \\int 2y \\, dx = x^3 + 2xy + g(y)$$\n\nwhere $g(y)$ is an arbitrary function of $y$ only (the 'constant of integration' with respect to $x$). Its form will be determined by the condition $\\frac{\\partial F}{\\partial y} = N(x, y)$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-exact", "integration"]
+    },
+    {
+      "id": "ode-03",
+      "question": "Continuing the above problem, differentiate $F(x, y) = x^3 + 2xy + g(y)$ with respect to $y$ and compare with $N(x, y) = 2x + 4y^3$ to find $g(y)$.",
+      "options": {
+        "A": "$g(y) = 4y^3$",
+        "B": "$g(y) = y^4$",
+        "C": "$g(y) = 4y^4$",
+        "D": "$g(y) = y^3 + C$"
+      },
+      "correct_answer": "B",
+      "explanation": "**Step 1:** Differentiate $F(x, y) = x^3 + 2xy + g(y)$ with respect to $y$:\n$$\\frac{\\partial F}{\\partial y} = 0 + 2x + g'(y) = 2x + g'(y)$$\n\n**Step 2:** Set this equal to $N(x, y) = 2x + 4y^3$:\n$$2x + g'(y) = 2x + 4y^3$$\n\n**Step 3:** Solve for $g'(y)$:\n$$g'(y) = 4y^3$$\n\n**Step 4:** Integrate to find $g(y)$:\n$$g(y) = \\int 4y^3 \\, dy = y^4 + C_0$$\n\nWe can set $C_0 = 0$ (absorb it into the final constant). So $g(y) = y^4$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-exact", "partial-derivatives"]
+    },
+    {
+      "id": "ode-04",
+      "question": "The general solution to $(3x^2 + 2y) dx + (2x + 4y^3) dy = 0$ is:",
+      "options": {
+        "A": "$x^3 + 2xy + y^4 = C$",
+        "B": "$3x^2 + 2x + 4y^3 = C$",
+        "C": "$x^3 + y^4 = C$",
+        "D": "$2x + 2xy + y^4 = C$"
+      },
+      "correct_answer": "A",
+      "explanation": "From the previous steps, we found:\n$$F(x, y) = x^3 + 2xy + g(y) = x^3 + 2xy + y^4$$\n\nFor an exact equation, the solution is given by setting $F(x, y) = C$ (where $C$ is an arbitrary constant):\n$$x^3 + 2xy + y^4 = C$$\n\nThis is an implicit relation between $x$ and $y$ that defines the solution curves. Each value of $C$ corresponds to a distinct solution curve passing through different initial conditions.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-exact", "solution"]
+    },
+    {
+      "id": "ode-05",
+      "question": "Given the particular solution curve $x^3 + 2xy + y^4 = C$ passes through the point $(1, 1)$, find $C$ and then determine the value of $y$ when $x = 0$ on this curve.",
+      "options": {
+        "A": "$C = 4$; $y = \\sqrt[4]{4}$",
+        "B": "$C = 4$; $y = \\pm \\sqrt[4]{4}$",
+        "C": "$C = 4$; $y = 1$",
+        "D": "$C = 2$; $y = \\sqrt[4]{2}$"
+      },
+      "correct_answer": "B",
+      "explanation": "**Step 1:** Find $C$ using the point $(1, 1)$:\n$$1^3 + 2(1)(1) + 1^4 = C$$\n$$1 + 2 + 1 = C$$\n$$C = 4$$\n\n**Step 2:** The solution curve is $x^3 + 2xy + y^4 = 4$.\n\n**Step 3:** Find $y$ when $x = 0$:\n$$0^3 + 2(0)y + y^4 = 4$$\n$$y^4 = 4$$\n$$y = \\pm \\sqrt[4]{4} = \\pm 4^{1/4} = \\pm \\sqrt{\\sqrt{4}} = \\pm \\sqrt{2}$$\n\nNote: $\\sqrt[4]{4} = 2^{1/2} = \\sqrt{2}$. Since $y^4 = 4$ has four roots in the complex plane, the real solutions are $y = \\pm \\sqrt[4]{4}$. The implicit curve passes through $(0, \\sqrt[4]{4})$ and $(0, -\\sqrt[4]{4})$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-exact", "particular-solution"]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+concept_id: integration-basics
+label: "Integration Basics"
+topic: calculus
+difficulty_base: 0.3
+gate_frequency: high
+exam_ids: ["*"]

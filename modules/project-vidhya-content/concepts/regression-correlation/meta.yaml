@@ -1,0 +1,6 @@
+concept_id: regression-correlation
+label: "Regression Correlation"
+topic: probability-statistics
+difficulty_base: 0.5
+gate_frequency: medium
+exam_ids: ["*"]

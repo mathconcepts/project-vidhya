@@ -1,0 +1,87 @@
+{
+  "concept_id": "complex-integration",
+  "topic": "complex-variables",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "ci-01",
+      "question": "Evaluate $\\oint_C e^z \\, dz$ where $C$ is the circle $|z| = 1$ traversed counterclockwise.",
+      "options": {
+        "A": "$2\\pi i$",
+        "B": "$0$",
+        "C": "$2\\pi$",
+        "D": "$1$"
+      },
+      "correct_answer": "B",
+      "explanation": "The function $e^z$ is analytic everywhere in the complex plane (it has no singularities or poles). By Cauchy's integral theorem, the line integral of an analytic function around any closed contour is zero.\nTherefore, $\\oint_C e^z \\, dz = 0$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["complex-variables", "complex-integration", "cauchy-theorem"]
+    },
+    {
+      "id": "ci-02",
+      "question": "Evaluate $\\oint_C \\frac{1}{z - 2} \\, dz$ where $C$ is the circle $|z| = 1$.",
+      "options": {
+        "A": "$2\\pi i$",
+        "B": "$0$",
+        "C": "$\\pi i$",
+        "D": "$4\\pi i$"
+      },
+      "correct_answer": "B",
+      "explanation": "The function $\\frac{1}{z-2}$ has a pole at $z = 2$. However, the circle $C$ is $|z| = 1$, which means all points on $C$ satisfy $|z| = 1$. Since $|2| = 2 > 1$, the pole $z = 2$ is outside the contour $C$.\nBy Cauchy's integral theorem, since the integrand is analytic inside and on $C$, the integral is zero.\nTherefore, $\\oint_C \\frac{1}{z - 2} \\, dz = 0$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["complex-variables", "complex-integration", "pole-location"]
+    },
+    {
+      "id": "ci-03",
+      "question": "Use Cauchy's Integral Formula to evaluate $\\oint_C \\frac{\\sin z}{z - \\pi/2} \\, dz$ where $C$ is the circle $|z| = 2$.",
+      "options": {
+        "A": "$2\\pi i \\sin(\\pi/2) = 2\\pi i$",
+        "B": "$2\\pi i \\cos(\\pi/2) = 0$",
+        "C": "$\\pi i$",
+        "D": "$4\\pi i$"
+      },
+      "correct_answer": "A",
+      "explanation": "Apply Cauchy's Integral Formula: For an analytic function $f$ and a point $z_0$ inside a closed contour $C$,\n$$\\oint_C \\frac{f(z)}{z - z_0} \\, dz = 2\\pi i \\cdot f(z_0)$$\nHere, $f(z) = \\sin z$ (analytic everywhere), $z_0 = \\pi/2 \\approx 1.57$, and $C$ is the circle $|z| = 2$.\nSince $|\\pi/2| < 2$, the point $z_0 = \\pi/2$ is inside $C$.\nTherefore, $\\oint_C \\frac{\\sin z}{z - \\pi/2} \\, dz = 2\\pi i \\cdot \\sin(\\pi/2) = 2\\pi i \\cdot 1 = 2\\pi i$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["complex-variables", "complex-integration", "cauchy-formula"]
+    },
+    {
+      "id": "ci-04",
+      "question": "Evaluate $\\oint_C \\frac{z + 1}{z^2 - 1} \\, dz$ where $C$ is the circle $|z| = 2$.",
+      "options": {
+        "A": "$\\pi i$",
+        "B": "$2\\pi i$",
+        "C": "$3\\pi i$",
+        "D": "$4\\pi i$"
+      },
+      "correct_answer": "B",
+      "explanation": "Factor the denominator: $z^2 - 1 = (z-1)(z+1)$.\nThe poles are at $z = 1$ and $z = -1$. Both satisfy $|z| = 1 < 2$, so both are inside $C$.\nUse partial fractions:\n$$\\frac{z+1}{(z-1)(z+1)} = \\frac{z+1}{(z-1)(z+1)} = \\frac{1}{z-1}$$\n(The $(z+1)$ cancels in the numerator and denominator.)\nNow, by Cauchy's Integral Formula:\n$$\\oint_C \\frac{1}{z - 1} \\, dz = 2\\pi i \\cdot f(1)$$\nwhere $f(z) = 1$ (the constant 1 is the numerator after cancellation). So $f(1) = 1$.\nTherefore, $\\oint_C \\frac{z+1}{z^2-1} \\, dz = 2\\pi i \\cdot 1 = 2\\pi i$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "complex-integration", "partial-fractions"]
+    },
+    {
+      "id": "ci-05",
+      "question": "Evaluate $\\oint_C \\frac{e^{2z}}{(z-1)^2} \\, dz$ where $C$ is the circle $|z| = 2$ using the derivative formula.",
+      "options": {
+        "A": "$2\\pi i$",
+        "B": "$4\\pi i e^2$",
+        "C": "$\\pi i e^2$",
+        "D": "$2\\pi i e^2$"
+      },
+      "correct_answer": "B",
+      "explanation": "The pole is at $z = 1$ (a pole of order 2). It lies inside $C$ since $|1| = 1 < 2$.\nFor a pole of order 2 at $z_0$, the generalization of Cauchy's Integral Formula is:\n$$\\oint_C \\frac{f(z)}{(z - z_0)^2} \\, dz = 2\\pi i \\cdot f'(z_0)$$\nHere, $f(z) = e^{2z}$ and $z_0 = 1$.\nCompute the derivative: $f'(z) = 2e^{2z}$.\nEvaluate at $z_0 = 1$: $f'(1) = 2e^{2 \\cdot 1} = 2e^2$.\nTherefore, $\\oint_C \\frac{e^{2z}}{(z-1)^2} \\, dz = 2\\pi i \\cdot 2e^2 = 4\\pi i e^2$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["complex-variables", "complex-integration", "pole-of-order-2"]
+    }
+  ]
+}

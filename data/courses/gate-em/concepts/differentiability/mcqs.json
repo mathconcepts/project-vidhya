@@ -1,0 +1,87 @@
+{
+  "concept_id": "differentiability",
+  "topic": "calculus",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "diff-01",
+      "question": "Which function is NOT differentiable at $x = 0$?",
+      "options": {
+        "A": "$f(x) = x^2$",
+        "B": "$f(x) = x^3$",
+        "C": "$f(x) = |x|$",
+        "D": "$f(x) = \\sin(x)$"
+      },
+      "correct_answer": "C",
+      "explanation": "Check each function:\n\nA) $f(x) = x^2$: $f'(x) = 2x$, so $f'(0) = 0$ exists. Differentiable.\n\nB) $f(x) = x^3$: $f'(x) = 3x^2$, so $f'(0) = 0$ exists. Differentiable.\n\nC) $f(x) = |x|$: \n- Right derivative: $\\lim_{h \\to 0^+} \\frac{|h|}{h} = \\lim_{h \\to 0^+} \\frac{h}{h} = 1$\n- Left derivative: $\\lim_{h \\to 0^-} \\frac{|h|}{h} = \\lim_{h \\to 0^-} \\frac{-h}{h} = -1$\n- One-sided derivatives exist but are different. NOT differentiable at $x = 0$.\n\nD) $f(x) = \\sin(x)$: $f'(x) = \\cos(x)$, so $f'(0) = \\cos(0) = 1$ exists. Differentiable.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "differentiability", "non-differentiable"]
+    },
+    {
+      "id": "diff-02",
+      "question": "If $f(x) = x|x|$, the derivative $f'(0)$ is:",
+      "options": {
+        "A": "Does not exist",
+        "B": "$0$",
+        "C": "$1$",
+        "D": "$-1$"
+      },
+      "correct_answer": "B",
+      "explanation": "We can write:\n$$f(x) = x|x| = \\begin{cases} x^2 & \\text{if } x \\geq 0 \\\\ -x^2 & \\text{if } x < 0 \\end{cases}$$\n\nCheck the derivative definition at $x = 0$:\n$$f'(0) = \\lim_{h \\to 0} \\frac{f(h) - f(0)}{h} = \\lim_{h \\to 0} \\frac{h|h| - 0}{h} = \\lim_{h \\to 0} \\frac{h|h|}{h}$$\n\nRight-side: $\\lim_{h \\to 0^+} \\frac{h \\cdot h}{h} = \\lim_{h \\to 0^+} h = 0$\n\nLeft-side: $\\lim_{h \\to 0^-} \\frac{h \\cdot (-h)}{h} = \\lim_{h \\to 0^-} (-h) = 0$\n\nBoth one-sided limits equal $0$, so $f'(0) = 0$. The function is differentiable at $x = 0$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "differentiability", "derivative"]
+    },
+    {
+      "id": "diff-03",
+      "question": "The function $f(x) = \\begin{cases} x^2 & \\text{if } x \\leq 1 \\\\ ax + b & \\text{if } x > 1 \\end{cases}$ is differentiable everywhere if:",
+      "options": {
+        "A": "$a = 2, b = 1$",
+        "B": "$a = 2, b = -1$",
+        "C": "$a = 1, b = 0$",
+        "D": "$a = -1, b = 2$"
+      },
+      "correct_answer": "B",
+      "explanation": "For differentiability everywhere, $f$ must be:\n1. **Continuous at $x = 1$**\n2. **Differentiable at $x = 1$** (left and right derivatives equal)\n\n**Continuity at $x = 1$:**\n- Left: $f(1^-) = 1^2 = 1$\n- Right: $f(1^+) = a(1) + b = a + b$\n- Require: $a + b = 1$ ... (i)\n\n**Differentiability at $x = 1$:**\n- Left derivative: $f'(x) = 2x$ for $x < 1$, so $f'(1^-) = 2$\n- Right derivative: $f'(x) = a$ for $x > 1$, so $f'(1^+) = a$\n- Require: $a = 2$ ... (ii)\n\nFrom (ii): $a = 2$\nFrom (i): $2 + b = 1 \\Rightarrow b = -1$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "differentiability", "piecewise-function"]
+    },
+    {
+      "id": "diff-04",
+      "question": "For the function $f(x) = |x - 1| + |x - 2|$, how many points in $(0, 3)$ are NOT differentiable?",
+      "options": {
+        "A": "0",
+        "B": "1",
+        "C": "2",
+        "D": "3"
+      },
+      "correct_answer": "C",
+      "explanation": "The function $f(x) = |x-1| + |x-2|$ has absolute value expressions. Differentiability breaks at the points where the expressions inside the absolute values are zero.\n\nCritical points: $x = 1$ and $x = 2$ (both in the interval $(0, 3)$).\n\nAt $x = 1$:\n- Left derivative: $\\lim_{h \\to 0^-} \\frac{|h-1| + |h-2| - |0-1| - |0-2|}{h} = \\lim_{h \\to 0^-} \\frac{(1-h) + (2-h) - 3}{h}$\n  $= \\lim_{h \\to 0^-} \\frac{-2h}{h} = -2$\n- Right derivative: $= 0$ (after simplification)\n- Not equal, so NOT differentiable at $x = 1$.\n\nAt $x = 2$:\n- Left derivative: $= 0$\n- Right derivative: $= 2$ (after simplification)\n- Not equal, so NOT differentiable at $x = 2$.\n\nTotal: 2 points where the function is not differentiable.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "differentiability", "absolute-value"]
+    },
+    {
+      "id": "diff-05",
+      "question": "If $f$ is differentiable at $x = a$, which statement must be true?",
+      "options": {
+        "A": "$f$ is discontinuous at $x = a$",
+        "B": "$f$ is continuous at $x = a$",
+        "C": "$f'(a) = f(a)$",
+        "D": "$f$ has a local extremum at $x = a$"
+      },
+      "correct_answer": "B",
+      "explanation": "**Theorem:** If $f$ is differentiable at $x = a$, then $f$ is continuous at $x = a$.\n\nProof: If $f'(a)$ exists, then:\n$$\\lim_{h \\to 0} [f(a+h) - f(a)] = \\lim_{h \\to 0} \\frac{f(a+h) - f(a)}{h} \\cdot h = f'(a) \\cdot 0 = 0$$\n\nTherefore $\\lim_{h \\to 0} f(a+h) = f(a)$, which means $f$ is continuous at $a$.\n\nThe converse is FALSE: continuity does not imply differentiability (e.g., $f(x) = |x|$ is continuous at $x = 0$ but not differentiable).\n\nA) False; differentiability implies continuity.\nC) False; $f'(a)$ (the slope) is unrelated to $f(a)$ (the value).\nD) False; a differentiable function can be increasing everywhere without local extrema.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "differentiability", "continuity", "theorem"]
+    }
+  ]
+}

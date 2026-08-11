@@ -1,0 +1,87 @@
+{
+  "concept_id": "ode-second-order-nonhomo",
+  "topic": "differential-equations",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "ode2n-01",
+      "question": "For the ODE $\\frac{d^2y}{dx^2} + 4\\frac{dy}{dx} + 4y = 8$, the homogeneous solution $y_h$ is:",
+      "options": {
+        "A": "$y_h = (C_1 + C_2 x)e^{-2x}$",
+        "B": "$y_h = C_1 e^{-2x} + C_2 e^{2x}$",
+        "C": "$y_h = C_1 \\cos(2x) + C_2 \\sin(2x)$",
+        "D": "$y_h = C_1 e^{2x} + C_2 e^{-2x}$"
+      },
+      "correct_answer": "A",
+      "explanation": "First, solve the homogeneous ODE: $\\frac{d^2y}{dx^2} + 4\\frac{dy}{dx} + 4y = 0$.\n\n**Characteristic equation:**\n$$r^2 + 4r + 4 = 0$$\n$$(r + 2)^2 = 0$$\n$$r = -2 \\text{ (repeated)}$$\n\nFor a repeated root $r = -2$, the homogeneous solution is:\n$$y_h = (C_1 + C_2 x)e^{-2x}$$\n\nThis is the complementary function; the non-homogeneous term $8$ affects only the particular solution, not $y_h$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-second-order-nonhomo", "homogeneous-part"]
+    },
+    {
+      "id": "ode2n-02",
+      "question": "For $\\frac{d^2y}{dx^2} + 4\\frac{dy}{dx} + 4y = 8$, using the method of undetermined coefficients, a reasonable guess for the particular solution is:",
+      "options": {
+        "A": "$y_p = A$ (constant)",
+        "B": "$y_p = Ax$ (linear)",
+        "C": "$y_p = Ae^{-2x}$ (exponential)",
+        "D": "$y_p = Ax^2 e^{-2x}$ (resonance form)"
+      },
+      "correct_answer": "A",
+      "explanation": "The non-homogeneous term is $f(x) = 8$, a constant. When guessing $y_p$, we follow the pattern:\n- If $f(x)$ is a constant, try $y_p = A$ (a constant).\n- If $f(x) = e^{\\alpha x}$ and $\\alpha$ is NOT a root of the characteristic equation, try $y_p = Ae^{\\alpha x}$.\n- If $f(x) = e^{\\alpha x}$ and $\\alpha$ IS a root, multiply by $x$ (or higher powers for repeated roots).\n\nSince $8$ is a constant (no exponential), the simplest guess is $y_p = A$. There is no resonance because the homogeneous solution has exponential decay, not constant terms.\n\nTesting: $y_p = A \\Rightarrow y_p' = 0 \\Rightarrow y_p'' = 0$.\nSubstitute: $0 + 0 + 4A = 8 \\Rightarrow A = 2$.\nSo $y_p = 2$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["differential-equations", "ode-second-order-nonhomo", "undetermined-coefficients"]
+    },
+    {
+      "id": "ode2n-03",
+      "question": "Solve $\\frac{d^2y}{dx^2} - y = 4\\sin(x)$. The form of the particular solution (using undetermined coefficients) should be:",
+      "options": {
+        "A": "$y_p = A\\sin(x)$",
+        "B": "$y_p = A\\sin(x) + B\\cos(x)$",
+        "C": "$y_p = x(A\\sin(x) + B\\cos(x))$",
+        "D": "$y_p = Ax\\sin(x)$"
+      },
+      "correct_answer": "B",
+      "explanation": "The non-homogeneous term is $f(x) = 4\\sin(x)$.\n\nFirst, find the homogeneous solution for $\\frac{d^2y}{dx^2} - y = 0$:\n$$r^2 - 1 = 0 \\Rightarrow r = \\pm 1$$\n$$y_h = C_1 e^x + C_2 e^{-x}$$\n\nThe homogeneous solution contains exponentials, NOT sines or cosines. Therefore, $\\sin(x)$ and $\\cos(x)$ are not resonant with the homogeneous solution.\n\nWhen the non-homogeneous term is $\\sin(x)$ or $\\cos(x)$ (and not a homogeneous solution), the standard guess includes BOTH sine and cosine:\n$$y_p = A\\sin(x) + B\\cos(x)$$\n\nWe need both because $y_p''$ will produce both sine and cosine terms when we differentiate, and we need to match the coefficient of $\\sin(x)$ on the right side.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-second-order-nonhomo", "trig-forcing"]
+    },
+    {
+      "id": "ode2n-04",
+      "question": "For $\\frac{d^2y}{dx^2} - y = 4\\sin(x)$ with the form $y_p = A\\sin(x) + B\\cos(x)$, determine $A$ and $B$.",
+      "options": {
+        "A": "$A = 2, B = 0$",
+        "B": "$A = -2, B = 0$",
+        "C": "$A = 0, B = 2$",
+        "D": "$A = 2, B = 2$"
+      },
+      "correct_answer": "B",
+      "explanation": "**Step 1:** Compute derivatives.\n$$y_p = A\\sin(x) + B\\cos(x)$$\n$$y_p' = A\\cos(x) - B\\sin(x)$$\n$$y_p'' = -A\\sin(x) - B\\cos(x)$$\n\n**Step 2:** Substitute into $\\frac{d^2y}{dx^2} - y = 4\\sin(x)$.\n$$(-A\\sin(x) - B\\cos(x)) - (A\\sin(x) + B\\cos(x)) = 4\\sin(x)$$\n$$-2A\\sin(x) - 2B\\cos(x) = 4\\sin(x)$$\n\n**Step 3:** Equate coefficients.\n- Coefficient of $\\sin(x)$: $-2A = 4 \\Rightarrow A = -2$\n- Coefficient of $\\cos(x)$: $-2B = 0 \\Rightarrow B = 0$\n\n**Particular solution:** $y_p = -2\\sin(x)$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-second-order-nonhomo", "coefficient-matching"]
+    },
+    {
+      "id": "ode2n-05",
+      "question": "The general solution to $\\frac{d^2y}{dx^2} - y = 4\\sin(x)$ is:",
+      "options": {
+        "A": "$y(x) = C_1 e^x + C_2 e^{-x} - 2\\sin(x)$",
+        "B": "$y(x) = C_1 e^x + C_2 e^{-x} + 2\\sin(x)$",
+        "C": "$y(x) = C_1 \\cos(x) + C_2 \\sin(x) - 2\\sin(x)$",
+        "D": "$y(x) = e^x(C_1 + C_2 x) - 2\\cos(x)$"
+      },
+      "correct_answer": "A",
+      "explanation": "Combine the homogeneous and particular solutions:\n$$y(x) = y_h(x) + y_p(x)$$\n$$y(x) = (C_1 e^x + C_2 e^{-x}) + (-2\\sin(x))$$\n$$y(x) = C_1 e^x + C_2 e^{-x} - 2\\sin(x)$$\n\nAs $x \\to \\infty$, the $C_1 e^x$ term dominates (unless $C_1 = 0$). As $x \\to -\\infty$, the $C_2 e^{-x}$ term dominates (unless $C_2 = 0$). The particular solution $-2\\sin(x)$ oscillates indefinitely, representing the steady-state forced response.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["differential-equations", "ode-second-order-nonhomo", "general-solution"]
+    }
+  ]
+}

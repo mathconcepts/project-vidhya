@@ -1,0 +1,87 @@
+{
+  "concept_id": "boolean-algebra",
+  "topic": "Discrete Mathematics",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "ba-01",
+      "question": "Apply De Morgan's law to simplify $\\overline{A+B}$.",
+      "options": {
+        "A": "$\\bar{A} + \\bar{B}$",
+        "B": "$\\bar{A} \\cdot \\bar{B}$",
+        "C": "$A \\cdot B$",
+        "D": "$A + B$"
+      },
+      "correct_answer": "B",
+      "explanation": "De Morgan's first law: $\\overline{A+B} = \\bar{A} \\cdot \\bar{B}$. The complement of a sum equals the product of the complements. Option A incorrectly distributes the complement over OR (that would need the law to flip the operator too). Option C drops the complement entirely. Option D is the original expression unchanged.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["boolean-algebra", "de-morgans-law", "discrete-mathematics"]
+    },
+    {
+      "id": "ba-02",
+      "question": "Which of the following correctly states the idempotent law in Boolean algebra?",
+      "options": {
+        "A": "$A + 0 = A$",
+        "B": "$A + \\bar{A} = 1$",
+        "C": "$A + A = A$",
+        "D": "$A \\cdot 1 = A$"
+      },
+      "correct_answer": "C",
+      "explanation": "The idempotent law: $A + A = A$ and $A \\cdot A = A$. Combining an element with itself under either operation returns the element unchanged. Option A is the identity law for OR. Option B is the complement law. Option D is the identity law for AND. 'Idempotent' means the operation can be applied multiple times without changing the result beyond the first application.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["boolean-algebra", "idempotent-law", "discrete-mathematics"]
+    },
+    {
+      "id": "ba-03",
+      "question": "Using a Karnaugh map, minimize the Boolean expression $f(A,B,C) = \\sum m(0,1,2,4,5)$.",
+      "options": {
+        "A": "$\\bar{A}\\bar{C} + \\bar{A}\\bar{B}$",
+        "B": "$\\bar{B} + \\bar{A}\\bar{C}$",
+        "C": "$\\bar{A} + \\bar{B}\\bar{C}$",
+        "D": "$\\bar{A}\\bar{B} + \\bar{B}\\bar{C}$"
+      },
+      "correct_answer": "B",
+      "explanation": "Place minterms 0(000),1(001),2(010),4(100),5(101) on the K-map. Group 1 (quad): minterms {0,1,4,5} — these all have B=0 regardless of A and C, giving term $\\bar{B}$. Group 2 (pair): minterm {2} (010) pairs with minterm {0} (000) — both have A=0 and C=0, giving term $\\bar{A}\\bar{C}$. Minterm 2 is the only one not covered by the quad. Minimum SOP = $\\bar{B} + \\bar{A}\\bar{C}$. Verify: all 5 minterms are covered and no essential prime implicant is dropped.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["boolean-algebra", "karnaugh-map", "minimization", "discrete-mathematics"]
+    },
+    {
+      "id": "ba-04",
+      "question": "Convert the SOP expression $f = \\bar{A}\\bar{B} + AB$ to its equivalent POS (Product of Sums) form.",
+      "options": {
+        "A": "$(A + \\bar{B})(\\bar{A} + B)$",
+        "B": "$(A + B)(\\bar{A} + \\bar{B})$",
+        "C": "$(\\bar{A} + \\bar{B})(A + B)$",
+        "D": "$(A + \\bar{B})(A + B)$"
+      },
+      "correct_answer": "A",
+      "explanation": "$f = \\bar{A}\\bar{B} + AB$ is the XNOR function. Truth table: (0,0)→1, (0,1)→0, (1,0)→0, (1,1)→1. Maxterms occur where f=0: position 1 (A=0,B=1) and position 2 (A=1,B=0). To form a maxterm: uncomplemented literal where variable=0, complemented literal where variable=1. At (0,1): A=0→A, B=1→$\\bar{B}$, giving $(A+\\bar{B})$. At (1,0): A=1→$\\bar{A}$, B=0→B, giving $(\\bar{A}+B)$. POS = $(A+\\bar{B})(\\bar{A}+B)$.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["boolean-algebra", "sop-to-pos", "canonical-forms", "discrete-mathematics"]
+    },
+    {
+      "id": "ba-05",
+      "question": "The Consensus Theorem states $AB + \\bar{A}C + BC = AB + \\bar{A}C$. Which of the following CORRECTLY justifies why $BC$ is redundant?",
+      "options": {
+        "A": "$BC = BC(A+\\bar{A}) = ABC + \\bar{A}BC$; since $ABC \\leq AB$ and $\\bar{A}BC \\leq \\bar{A}C$, the term $BC$ is already covered.",
+        "B": "$BC$ can be dropped by the idempotent law because B appears in $AB$ and C appears in $\\bar{A}C$.",
+        "C": "$BC$ is the complement of $\\bar{A}C$, so together they equal 1, which absorbs both terms.",
+        "D": "De Morgan's law on $BC$ gives $\\bar{B}+\\bar{C}$, which is the dual of $AB + \\bar{A}C$, making $BC$ redundant."
+      },
+      "correct_answer": "A",
+      "explanation": "Insert $1 = (A + \\bar{A})$ into $BC$: $BC = BC(A+\\bar{A}) = ABC + \\bar{A}BC$. Now apply absorption: $AB + ABC = AB(1+C) = AB$, and $\\bar{A}C + \\bar{A}BC = \\bar{A}C(1+B) = \\bar{A}C$. So $AB + \\bar{A}C + BC = AB + \\bar{A}C + ABC + \\bar{A}BC = AB + \\bar{A}C$. The term $BC$ is called the 'consensus term' — it is the resolvent of $AB$ and $\\bar{A}C$ on variable $A$, and is always implied by their disjunction. Option B is wrong — shared variables across different terms do not imply redundancy by idempotence.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["boolean-algebra", "consensus-theorem", "boolean-identities", "discrete-mathematics"]
+    }
+  ]
+}

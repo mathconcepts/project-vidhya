@@ -25,6 +25,7 @@ import {
   Sparkles, ExternalLink, RotateCcw, Gauge, ListChecks,
 } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { gatherComposeSignals } from '@/lib/gbrain/compose-signals';
 
 // ============================================================================
@@ -493,6 +494,7 @@ export default function LessonPage() {
   const { concept_id = '' } = useParams<{ concept_id: string }>();
   const navigate = useNavigate();
   const sessionId = useSession();
+  const { exam } = useActiveExam();
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -676,7 +678,10 @@ export default function LessonPage() {
           </button>
           <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
           <div style={{ display: 'flex', flexWrap: 'wrap', columnGap: 12, rowGap: 2, fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>
-            <span>{lesson.topic.replace(/-/g, ' ')}</span>
+            {exam?.name && (
+              <span style={{ color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{exam.name}</span>
+            )}
+            {lesson.topic !== 'uncategorized' && <span>{lesson.topic.replace(/-/g, ' ')}</span>}
             <span>~{lesson.estimated_minutes}min</span>
             <span>quality {(lesson.quality_score * 100).toFixed(0)}%</span>
             {lesson.is_revisit && <span style={{ color: 'var(--green-ink)' }}>revisit</span>}

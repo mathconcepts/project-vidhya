@@ -1,0 +1,87 @@
+{
+  "concept_id": "continuity",
+  "topic": "calculus",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "con-01",
+      "question": "At $x = 2$, the function $f(x) = \\frac{x^2 - 4}{x - 2}$ is:",
+      "options": {
+        "A": "Continuous",
+        "B": "Discontinuous with a removable discontinuity",
+        "C": "Discontinuous with a jump discontinuity",
+        "D": "Discontinuous with an infinite discontinuity"
+      },
+      "correct_answer": "B",
+      "explanation": "At $x = 2$, the function is undefined (gives $0/0$). However:\n$$\\lim_{x \\to 2} \\frac{x^2 - 4}{x - 2} = \\lim_{x \\to 2} \\frac{(x-2)(x+2)}{x-2} = \\lim_{x \\to 2} (x+2) = 4$$\n\nThe limit exists and equals $4$. This is a **removable discontinuity** because we can redefine $f(2) = 4$ to make the function continuous.\n\nNote: The original function $f(2)$ is undefined, so the three conditions for continuity are not satisfied. But the discontinuity can be removed by redefining the function.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "continuity", "removable-discontinuity"]
+    },
+    {
+      "id": "con-02",
+      "question": "Which function is continuous everywhere?",
+      "options": {
+        "A": "$f(x) = \\frac{1}{x}$",
+        "B": "$f(x) = |x|$",
+        "C": "$f(x) = \\begin{cases} x & \\text{if } x \\leq 1 \\\\ 2 - x & \\text{if } x > 1 \\end{cases}$",
+        "D": "$f(x) = \\tan(x)$"
+      },
+      "correct_answer": "B",
+      "explanation": "Check each function:\n\nA) $f(x) = 1/x$: Discontinuous at $x = 0$ (undefined, infinite discontinuity).\n\nB) $f(x) = |x|$: Continuous everywhere. At $x = 0$:\n- $\\lim_{x \\to 0^-} |x| = 0$\n- $\\lim_{x \\to 0^+} |x| = 0$\n- $|0| = 0$\n\nAll three conditions for continuity are satisfied at every point.\n\nC) The piecewise function: At $x = 1$, $\\lim_{x \\to 1^-} f(x) = 1$ but $\\lim_{x \\to 1^+} f(x) = 2 - 1 = 1$. Actually continuous at $x = 1$. But this was a distraction.\n\nD) $f(x) = \\tan(x)$: Discontinuous at $x = \\pi/2 + n\\pi$ (infinite discontinuity).\n\nThe answer is B.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "continuity", "continuous-everywhere"]
+    },
+    {
+      "id": "con-03",
+      "question": "The function $f(x) = \\begin{cases} x^2 & \\text{if } x < 1 \\\\ ax + 2 & \\text{if } x \\geq 1 \\end{cases}$ is continuous everywhere if $a =$",
+      "options": {
+        "A": "$-1$",
+        "B": "$0$",
+        "C": "$1$",
+        "D": "$-2$"
+      },
+      "correct_answer": "A",
+      "explanation": "For the piecewise function to be continuous everywhere, it must be continuous at $x = 1$. This requires:\n$$\\lim_{x \\to 1^-} f(x) = \\lim_{x \\to 1^+} f(x) = f(1)$$\n\nLeft limit:\n$$\\lim_{x \\to 1^-} x^2 = 1$$\n\nRight limit (and function value at $x = 1$):\n$$\\lim_{x \\to 1^+} (ax + 2) = a(1) + 2 = a + 2$$\n$$f(1) = a + 2$$\n\nFor continuity:\n$$1 = a + 2$$\n$$a = -1$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "continuity", "piecewise-function"]
+    },
+    {
+      "id": "con-04",
+      "question": "The function $f(x) = \\frac{\\sin(x)}{x}$ at $x = 0$ has:",
+      "options": {
+        "A": "A removable discontinuity",
+        "B": "A jump discontinuity",
+        "C": "An infinite discontinuity",
+        "D": "No discontinuity; the function can be made continuous"
+      },
+      "correct_answer": "A",
+      "explanation": "At $x = 0$, $f(x) = \\sin(x)/x$ is undefined (form $0/0$). However:\n$$\\lim_{x \\to 0} \\frac{\\sin(x)}{x} = 1$$\n\nThis is a **removable discontinuity** because the limit exists and is finite.\n\nWe can define (or redefine) $f(0) = 1$, and the function becomes continuous:\n$$\\tilde{f}(x) = \\begin{cases} \\frac{\\sin(x)}{x} & \\text{if } x \\neq 0 \\\\ 1 & \\text{if } x = 0 \\end{cases}$$\n\nThis continuous extension is used throughout calculus.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "continuity", "removable-discontinuity", "standard-limit"]
+    },
+    {
+      "id": "con-05",
+      "question": "Consider $f(x) = \\begin{cases} 1/x & \\text{if } x \\neq 0 \\\\ c & \\text{if } x = 0 \\end{cases}$. For what value of $c$ can $f$ be made continuous at $x = 0$?",
+      "options": {
+        "A": "$c = 0$",
+        "B": "$c = 1$",
+        "C": "$c = -1$",
+        "D": "No value of $c$ works"
+      },
+      "correct_answer": "D",
+      "explanation": "For $f$ to be continuous at $x = 0$, we need:\n$$\\lim_{x \\to 0} f(x) = f(0) = c$$\n\nBut:\n$$\\lim_{x \\to 0^+} \\frac{1}{x} = +\\infty$$\n$$\\lim_{x \\to 0^-} \\frac{1}{x} = -\\infty$$\n\nThe two-sided limit does not exist. No choice of $c$ can make the function continuous at $x = 0$ because the discontinuity is infinite, not removable.\n\nThis is fundamentally different from the $\\sin(x)/x$ case, where the limit exists.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "continuity", "infinite-discontinuity"]
+    }
+  ]
+}

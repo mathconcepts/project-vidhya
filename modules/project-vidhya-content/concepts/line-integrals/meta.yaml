@@ -1,0 +1,6 @@
+concept_id: line-integrals
+label: "Line Integrals"
+topic: vector-calculus
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

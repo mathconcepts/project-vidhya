@@ -1,0 +1,6 @@
+concept_id: ode-second-order-homo
+label: "Ode Second Order Homo"
+topic: differential-equations
+difficulty_base: 0.5
+gate_frequency: high
+exam_ids: ["*"]

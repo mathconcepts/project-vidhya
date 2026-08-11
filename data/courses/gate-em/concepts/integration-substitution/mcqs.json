@@ -1,0 +1,87 @@
+{
+  "concept_id": "integration-substitution",
+  "topic": "calculus",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "sub-01",
+      "question": "Evaluate $\\int 3x^2 e^{x^3} \\, dx$.",
+      "options": {
+        "A": "$e^{x^3} + C$",
+        "B": "$x^3 e^{x^3} + C$",
+        "C": "$3e^{x^3} + C$",
+        "D": "$x e^{x^3} + C$"
+      },
+      "correct_answer": "A",
+      "explanation": "Let $u = x^3$, so $du = 3x^2 dx$.\n\n$$\\int 3x^2 e^{x^3} \\, dx = \\int e^u \\, du = e^u + C = e^{x^3} + C$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "integration", "substitution", "exponential"]
+    },
+    {
+      "id": "sub-02",
+      "question": "Evaluate $\\int \\frac{2x}{x^2 + 1} \\, dx$.",
+      "options": {
+        "A": "$\\ln(x^2 + 1) + C$",
+        "B": "$\\frac{x^2}{x^2 + 1} + C$",
+        "C": "$\\ln|x^2 + 1| + C$",
+        "D": "$2\\ln(x^2 + 1) + C$"
+      },
+      "correct_answer": "A",
+      "explanation": "Let $u = x^2 + 1$, so $du = 2x \\, dx$.\n\n$$\\int \\frac{2x}{x^2 + 1} \\, dx = \\int \\frac{1}{u} \\, du = \\ln|u| + C = \\ln|x^2 + 1| + C$$\n\nSince $x^2 + 1 > 0$ always, $\\ln|x^2 + 1| = \\ln(x^2 + 1)$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "integration", "substitution", "logarithmic"]
+    },
+    {
+      "id": "sub-03",
+      "question": "Evaluate $\\int \\sin(3x) \\, dx$.",
+      "options": {
+        "A": "$-\\cos(3x) + C$",
+        "B": "$-\\frac{1}{3}\\cos(3x) + C$",
+        "C": "$3\\cos(3x) + C$",
+        "D": "$-3\\cos(3x) + C$"
+      },
+      "correct_answer": "B",
+      "explanation": "Let $u = 3x$, so $du = 3 \\, dx$ or $dx = du/3$.\n\n$$\\int \\sin(3x) \\, dx = \\int \\sin(u) \\cdot \\frac{du}{3} = \\frac{1}{3} \\int \\sin(u) \\, du = \\frac{1}{3}(-\\cos(u)) + C = -\\frac{1}{3}\\cos(3x) + C$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "integration", "substitution", "trigonometric"]
+    },
+    {
+      "id": "sub-04",
+      "question": "Evaluate $\\int \\frac{dx}{(2x + 1)^2}$.",
+      "options": {
+        "A": "$-\\frac{1}{2x+1} + C$",
+        "B": "$-\\frac{1}{2(2x+1)} + C$",
+        "C": "$\\frac{1}{2(2x+1)} + C$",
+        "D": "$-\\frac{2}{2x+1} + C$"
+      },
+      "correct_answer": "B",
+      "explanation": "Let $u = 2x + 1$, so $du = 2 \\, dx$ or $dx = du/2$.\n\n$$\\int \\frac{dx}{(2x+1)^2} = \\int \\frac{1}{u^2} \\cdot \\frac{du}{2} = \\frac{1}{2} \\int u^{-2} \\, du = \\frac{1}{2} \\cdot \\frac{u^{-1}}{-1} + C = -\\frac{1}{2u} + C$$\n\n$$= -\\frac{1}{2(2x+1)} + C$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "integration", "substitution", "power"]
+    },
+    {
+      "id": "sub-05",
+      "question": "Evaluate $\\int x\\sqrt{x^2 + 1} \\, dx$.",
+      "options": {
+        "A": "$\\frac{1}{3}(x^2+1)^{3/2} + C$",
+        "B": "$\\frac{2}{3}(x^2+1)^{3/2} + C$",
+        "C": "$\\sqrt{x^2+1} + C$",
+        "D": "$\\frac{1}{2}\\sqrt{x^2+1} + C$"
+      },
+      "correct_answer": "A",
+      "explanation": "Let $u = x^2 + 1$, so $du = 2x \\, dx$ or $x \\, dx = du/2$.\n\n$$\\int x\\sqrt{x^2 + 1} \\, dx = \\int \\sqrt{u} \\cdot \\frac{du}{2} = \\frac{1}{2} \\int u^{1/2} \\, du = \\frac{1}{2} \\cdot \\frac{u^{3/2}}{3/2} + C$$\n\n$$= \\frac{1}{2} \\cdot \\frac{2}{3} u^{3/2} + C = \\frac{1}{3}(x^2+1)^{3/2} + C$$",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "integration", "substitution", "root"]
+    }
+  ]
+}

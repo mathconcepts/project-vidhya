@@ -1,0 +1,87 @@
+{
+  "concept_id": "planar-graphs",
+  "topic": "graph-theory",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "pg-01",
+      "question": "A connected planar graph has 6 vertices and 12 edges. Using Euler's formula, how many faces does this planar embedding have?",
+      "options": {
+        "A": "6",
+        "B": "7",
+        "C": "8",
+        "D": "9"
+      },
+      "correct_answer": "C",
+      "explanation": "Euler's formula for connected planar graphs states:\n$$|V| - |E| + |F| = 2$$\n\nGiven: $|V| = 6$, $|E| = 12$.\n\nSolving for $|F|$:\n$$6 - 12 + |F| = 2$$\n$$|F| = 2 - 6 + 12 = 8$$\n\nThe graph has 8 faces (including the outer unbounded face).\n\nGeometric interpretation: 12 edges in a planar drawing partition the plane into 8 regions—7 bounded regions and 1 unbounded region (the outer face).",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["graph-theory", "planar-graphs", "euler-formula"]
+    },
+    {
+      "id": "pg-02",
+      "question": "Can a simple connected planar graph with 8 vertices have 20 edges?",
+      "options": {
+        "A": "Yes, always.",
+        "B": "No, it violates the edge bound for planar graphs.",
+        "C": "Yes, but only if it has a specific structure.",
+        "D": "Cannot be determined without more information."
+      },
+      "correct_answer": "B",
+      "explanation": "For a connected planar graph with $n$ vertices and $m$ edges (where $n \\geq 3$):\n$$m \\leq 3n - 6$$\n\nThis bound comes from Euler's formula and the constraint that each face is bounded by at least 3 edges.\n\nFor $n = 8$:\n$$m \\leq 3(8) - 6 = 24 - 6 = 18$$\n\nSince we're asked if $m = 20$ edges is possible, and $20 > 18$, the answer is **No**. A simple connected planar graph with 8 vertices can have at most 18 edges, not 20.\n\nTherefore, a graph with 8 vertices and 20 edges must be non-planar.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["graph-theory", "planar-graphs", "edge-bound"]
+    },
+    {
+      "id": "pg-03",
+      "question": "A connected simple planar graph has 7 vertices and 15 edges. How many faces does it have according to Euler's formula?",
+      "options": {
+        "A": "9",
+        "B": "10",
+        "C": "11",
+        "D": "The graph is non-planar; Euler's formula does not apply."
+      },
+      "correct_answer": "B",
+      "explanation": "First, check if the graph can be planar using the edge bound:\n$$m \\leq 3n - 6$$\n$$15 \\leq 3(7) - 6 = 21 - 6 = 15$$ ✓\n\nThe edge bound is satisfied (just at the boundary), so the graph *could* be planar.\n\nApplying Euler's formula for connected planar graphs:\n$$|V| - |E| + |F| = 2$$\n$$7 - 15 + |F| = 2$$\n$$|F| = 2 - 7 + 15 = 10$$\n\nThe graph has 10 faces.\n\nNote: The graph achieving exactly $m = 3n - 6$ is often a maximal planar graph (every face is bounded by exactly 3 edges; a triangulated planar graph). The 10 faces include 1 outer unbounded face and 9 bounded faces.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["graph-theory", "planar-graphs", "euler-formula", "edge-bound"]
+    },
+    {
+      "id": "pg-04",
+      "question": "Is the complete graph $K_5$ planar?",
+      "options": {
+        "A": "Yes, it is planar.",
+        "B": "No, it is non-planar; it violates the edge bound.",
+        "C": "Cannot be determined from the given information.",
+        "D": "Yes, but only if drawn with one edge crossing."
+      },
+      "correct_answer": "B",
+      "explanation": "$K_5$ is the complete graph on 5 vertices: every pair of vertices is connected.\n\n**Check the edge bound:**\n- $|V| = 5$, $|E| = \\binom{5}{2} = 10$.\n- Planar bound: $m \\leq 3n - 6 = 3(5) - 6 = 15 - 6 = 9$.\n- Actual edges: 10.\n\nSince $10 > 9$, the edge bound is violated. Therefore, $K_5$ cannot be planar.\n\n**Kuratowski's Theorem**: $K_5$ and $K_{3,3}$ are the two \"forbidden minors\" for planarity. A graph is planar iff it contains no subdivision of $K_5$ or $K_{3,3}$.\n\n$K_5$ is one of the fundamental non-planar graphs. Any attempt to draw it without edge crossings will fail.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["graph-theory", "planar-graphs", "complete-graph", "non-planar"]
+    },
+    {
+      "id": "pg-05",
+      "question": "A connected planar graph has vertex degree sequence: 4, 4, 4, 4, 3, 3, 3, 3. How many edges does this graph have, and is it planar?",
+      "options": {
+        "A": "16 edges; cannot determine planarity.",
+        "B": "14 edges; planar (satisfies $m \\leq 3n-6$).",
+        "C": "14 edges; non-planar (insufficient information).",
+        "D": "16 edges; planar."
+      },
+      "correct_answer": "B",
+      "explanation": "**Step 1: Count edges using Handshaking Lemma.**\nDegree sequence: 4, 4, 4, 4, 3, 3, 3, 3 (8 vertices).\n\nSum of degrees: $4(4) + 4(3) = 16 + 12 = 28$.\n\nBy Handshaking Lemma: $\\sum \\deg(v) = 2|E|$.\n$$2|E| = 28 \\Rightarrow |E| = 14$$\n\n**Step 2: Check the planar edge bound.**\nFor a connected planar graph with $n \\geq 3$ vertices:\n$$|E| \\leq 3n - 6 = 3(8) - 6 = 24 - 6 = 18$$\n\nWe have $|E| = 14 \\leq 18$ ✓. The edge bound is satisfied.\n\n**Conclusion:** The graph has 14 edges. Since it satisfies the necessary edge bound (a necessary but not sufficient condition for planarity), it *could* be planar. The degree sequence is consistent with a planar graph structure.\n\nTherefore: **14 edges; planar (satisfies the edge bound and is consistent with a planar structure).**",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["graph-theory", "planar-graphs", "degree-sequence", "handshaking-lemma"]
+    }
+  ]
+}

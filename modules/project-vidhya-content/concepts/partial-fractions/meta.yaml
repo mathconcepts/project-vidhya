@@ -1,0 +1,6 @@
+concept_id: partial-fractions
+label: "Partial Fractions"
+topic: calculus
+difficulty_base: 0.4
+gate_frequency: medium
+exam_ids: ["*"]

@@ -1,0 +1,6 @@
+concept_id: ode-higher-order
+label: "Ode Higher Order"
+topic: differential-equations
+difficulty_base: 0.7
+gate_frequency: medium
+exam_ids: ["*"]

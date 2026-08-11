@@ -1,0 +1,6 @@
+concept_id: conformal-mapping
+label: "Conformal Mapping"
+topic: complex-variables
+difficulty_base: 0.7
+gate_frequency: low
+exam_ids: ["*"]

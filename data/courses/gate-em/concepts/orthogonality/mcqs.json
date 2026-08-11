@@ -1,0 +1,102 @@
+{
+  "concept_id": "orthogonality",
+  "topic": "linear-algebra",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "orth-01",
+      "question": "Are the vectors $(1, 2, 2)$ and $(2, 1, -2)$ orthogonal?",
+      "options": {
+        "A": "Yes, their dot product is 0",
+        "B": "No, their dot product is positive",
+        "C": "No, their dot product is negative",
+        "D": "Cannot determine"
+      },
+      "correct_answer": "A",
+      "explanation": "Compute the dot product:\n$(1, 2, 2) \\cdot (2, 1, -2) = 1(2) + 2(1) + 2(-2) = 2 + 2 - 4 = 0$.\n\nSince the dot product is 0, the vectors are orthogonal.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "orth-02",
+      "question": "Normalize the vector $\\mathbf{v} = (3, 4)$ to create a unit vector.",
+      "options": {
+        "A": "$\\mathbf{e} = (3/5, 4/5)$",
+        "B": "$\\mathbf{e} = (3/7, 4/7)$",
+        "C": "$\\mathbf{e} = (1/3, 1/4)$",
+        "D": "$\\mathbf{e} = (3/4, 4/3)$"
+      },
+      "correct_answer": "A",
+      "explanation": "The norm of $\\mathbf{v}$ is:\n$\\|\\mathbf{v}\\| = \\sqrt{3^2 + 4^2} = \\sqrt{9 + 16} = \\sqrt{25} = 5$.\n\nThe unit vector is:\n$\\mathbf{e} = \\frac{\\mathbf{v}}{\\|\\mathbf{v}\\|} = \\frac{(3, 4)}{5} = (3/5, 4/5)$.\n\nVerify: $\\|(3/5, 4/5)\\| = \\sqrt{(3/5)^2 + (4/5)^2} = \\sqrt{9/25 + 16/25} = \\sqrt{25/25} = 1$ ✓",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "orth-03",
+      "question": "Is the matrix $Q = \\begin{pmatrix} 1/\\sqrt{2} & -1/\\sqrt{2} \\\\ 1/\\sqrt{2} & 1/\\sqrt{2} \\end{pmatrix}$ orthogonal?",
+      "options": {
+        "A": "Yes, $Q^T Q = I$",
+        "B": "No, the columns are not orthogonal",
+        "C": "No, the columns are not unit vectors",
+        "D": "Cannot determine"
+      },
+      "correct_answer": "A",
+      "explanation": "For $Q$ to be orthogonal, we need $Q^T Q = I$.\n\nFirst, compute $Q^T$:\n$Q^T = \\begin{pmatrix} 1/\\sqrt{2} & 1/\\sqrt{2} \\\\ -1/\\sqrt{2} & 1/\\sqrt{2} \\end{pmatrix}$.\n\nNow compute $Q^T Q$:\n$Q^T Q = \\begin{pmatrix} 1/\\sqrt{2} & 1/\\sqrt{2} \\\\ -1/\\sqrt{2} & 1/\\sqrt{2} \\end{pmatrix} \\begin{pmatrix} 1/\\sqrt{2} & -1/\\sqrt{2} \\\\ 1/\\sqrt{2} & 1/\\sqrt{2} \\end{pmatrix}$\n\nElement (1,1): $(1/\\sqrt{2})(1/\\sqrt{2}) + (1/\\sqrt{2})(1/\\sqrt{2}) = 1/2 + 1/2 = 1$ ✓\n\nElement (1,2): $(1/\\sqrt{2})(-1/\\sqrt{2}) + (1/\\sqrt{2})(1/\\sqrt{2}) = -1/2 + 1/2 = 0$ ✓\n\nElement (2,1): $(-1/\\sqrt{2})(1/\\sqrt{2}) + (1/\\sqrt{2})(1/\\sqrt{2}) = -1/2 + 1/2 = 0$ ✓\n\nElement (2,2): $(-1/\\sqrt{2})(-1/\\sqrt{2}) + (1/\\sqrt{2})(1/\\sqrt{2}) = 1/2 + 1/2 = 1$ ✓\n\nSo $Q^T Q = I$, confirming $Q$ is orthogonal.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "orth-04",
+      "question": "For an orthogonal matrix $Q$, what is $\\det(Q)$?",
+      "options": {
+        "A": "$\\det(Q) = 0$",
+        "B": "$\\det(Q) = 1$ or $\\det(Q) = -1$",
+        "C": "$\\det(Q) = \\det(Q^T)$",
+        "D": "$\\det(Q)$ can be any non-zero value"
+      },
+      "correct_answer": "B",
+      "explanation": "From $Q^T Q = I$, taking determinants on both sides:\n$\\det(Q^T Q) = \\det(I) = 1$.\n\nUsing the product property $\\det(Q^T Q) = \\det(Q^T) \\det(Q) = \\det(Q)^2$ (since $\\det(Q^T) = \\det(Q)$):\n$\\det(Q)^2 = 1 \\implies \\det(Q) = \\pm 1$.\n\nOrthogonal matrices with $\\det(Q) = 1$ represent rotations; those with $\\det(Q) = -1$ represent reflections.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "orth-05",
+      "question": "Apply Gram-Schmidt to $\\mathbf{v}_1 = (1, 0)$ and $\\mathbf{v}_2 = (1, 1)$ to find an orthonormal basis.",
+      "options": {
+        "A": "$\\mathbf{e}_1 = (1, 0)$, $\\mathbf{e}_2 = (0, 1)$",
+        "B": "$\\mathbf{e}_1 = (1/\\sqrt{2}, 0)$, $\\mathbf{e}_2 = (1/\\sqrt{2}, 1/\\sqrt{2})$",
+        "C": "$\\mathbf{e}_1 = (1, 0)$, $\\mathbf{e}_2 = (1, 1)/\\sqrt{2}$",
+        "D": "$\\mathbf{e}_1 = (1, 1)/\\sqrt{2}$, $\\mathbf{e}_2 = (1, -1)/\\sqrt{2}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Gram-Schmidt:\n\nStep 1: Normalize $\\mathbf{v}_1 = (1, 0)$:\n$\\|\\mathbf{v}_1\\| = 1$, so $\\mathbf{e}_1 = (1, 0)$.\n\nStep 2: Orthogonalize $\\mathbf{v}_2$ against $\\mathbf{e}_1$:\n$\\mathbf{v}_2' = \\mathbf{v}_2 - (\\mathbf{v}_2 \\cdot \\mathbf{e}_1) \\mathbf{e}_1 = (1, 1) - ((1, 1) \\cdot (1, 0))(1, 0) = (1, 1) - 1(1, 0) = (0, 1)$.\n\nStep 3: Normalize $\\mathbf{v}_2'$:\n$\\|\\mathbf{v}_2'\\| = 1$, so $\\mathbf{e}_2 = (0, 1)$.\n\nThe orthonormal basis is $\\{(1, 0), (0, 1)\\}$ (the standard basis, as expected—$\\mathbf{v}_1$ already pointed along the first axis).",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "orthogonality"
+      ]
+    }
+  ]
+}

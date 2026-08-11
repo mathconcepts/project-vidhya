@@ -1,0 +1,6 @@
+concept_id: sequences
+label: "Sequences"
+topic: calculus
+difficulty_base: 0.3
+gate_frequency: medium
+exam_ids: ["*"]

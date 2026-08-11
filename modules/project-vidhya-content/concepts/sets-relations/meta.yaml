@@ -1,0 +1,6 @@
+concept_id: sets-relations
+label: "Sets Relations"
+topic: discrete-mathematics
+difficulty_base: 0.3
+gate_frequency: medium
+exam_ids: ["*"]

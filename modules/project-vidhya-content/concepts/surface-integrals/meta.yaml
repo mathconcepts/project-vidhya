@@ -1,0 +1,6 @@
+concept_id: surface-integrals
+label: "Surface Integrals"
+topic: vector-calculus
+difficulty_base: 0.6
+gate_frequency: medium
+exam_ids: ["*"]

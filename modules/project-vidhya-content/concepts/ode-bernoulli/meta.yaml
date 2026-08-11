@@ -1,0 +1,6 @@
+concept_id: ode-bernoulli
+label: "Ode Bernoulli"
+topic: differential-equations
+difficulty_base: 0.5
+gate_frequency: medium
+exam_ids: ["*"]

@@ -1,0 +1,87 @@
+{
+  "concept_id": "chain-rule",
+  "topic": "calculus",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "chr-01",
+      "question": "Find the derivative of $f(x) = \\sin(3x)$.",
+      "options": {
+        "A": "$\\cos(3x)$",
+        "B": "$3\\cos(3x)$",
+        "C": "$3\\sin(3x)$",
+        "D": "$\\cos(x)$"
+      },
+      "correct_answer": "B",
+      "explanation": "Use the chain rule. Let $u = 3x$, so $f(x) = \\sin(u)$.\n\n$$f'(x) = \\cos(u) \\cdot \\frac{du}{dx} = \\cos(3x) \\cdot 3 = 3\\cos(3x)$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "chain-rule", "trigonometric"]
+    },
+    {
+      "id": "chr-02",
+      "question": "Find the derivative of $f(x) = e^{2x}$.",
+      "options": {
+        "A": "$e^{2x}$",
+        "B": "$2e^{2x}$",
+        "C": "$e^{2x} + 2$",
+        "D": "$2e^x$"
+      },
+      "correct_answer": "B",
+      "explanation": "Use the chain rule with $u = 2x$:\n$$f'(x) = \\frac{d}{dx}[e^{2x}] = e^{2x} \\cdot 2 = 2e^{2x}$$",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["calculus", "chain-rule", "exponential"]
+    },
+    {
+      "id": "chr-03",
+      "question": "Find the derivative of $f(x) = \\sqrt{5x + 2}$.",
+      "options": {
+        "A": "$\\frac{1}{2\\sqrt{5x+2}}$",
+        "B": "$\\frac{5}{\\sqrt{5x+2}}$",
+        "C": "$\\frac{5}{2\\sqrt{5x+2}}$",
+        "D": "$\\frac{1}{2\\sqrt{5}}$"
+      },
+      "correct_answer": "C",
+      "explanation": "Rewrite as $f(x) = (5x+2)^{1/2}$ and use the chain rule.\n\n$$f'(x) = \\frac{1}{2}(5x+2)^{-1/2} \\cdot 5 = \\frac{5}{2\\sqrt{5x+2}}$$",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "chain-rule", "power-root"]
+    },
+    {
+      "id": "chr-04",
+      "question": "Find the derivative of $f(x) = \\ln(\\sin(x))$.",
+      "options": {
+        "A": "$\\frac{1}{\\sin(x)}$",
+        "B": "$\\frac{\\cos(x)}{\\sin(x)}$",
+        "C": "$\\frac{1}{\\cos(x)}$",
+        "D": "$\\cot(x)$"
+      },
+      "correct_answer": "B",
+      "explanation": "Apply chain rule twice. Let $u = \\sin(x)$:\n$$f'(x) = \\frac{1}{u} \\cdot \\frac{du}{dx} = \\frac{1}{\\sin(x)} \\cdot \\cos(x) = \\frac{\\cos(x)}{\\sin(x)} = \\cot(x)$$\n\nNote: $\\frac{\\cos(x)}{\\sin(x)} = \\cot(x)$ are equivalent answers.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "chain-rule", "logarithmic"]
+    },
+    {
+      "id": "chr-05",
+      "question": "Find the derivative of $f(x) = (x^2 + 3x)^{10}$ at $x = 0$.",
+      "options": {
+        "A": "$0$",
+        "B": "$3$",
+        "C": "$300$",
+        "D": "$3^{10}$"
+      },
+      "correct_answer": "A",
+      "explanation": "Use the chain rule:\n$$f'(x) = 10(x^2 + 3x)^9 \\cdot (2x + 3)$$\n\nAt $x = 0$:\n$$f'(0) = 10(0 + 0)^9 \\cdot (0 + 3) = 10 \\cdot 0 \\cdot 3 = 0$$",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["calculus", "chain-rule", "polynomial"]
+    }
+  ]
+}

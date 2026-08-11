@@ -19,6 +19,7 @@ import path from 'path';
 // We deliberately don't import GoogleGenerativeAI here anymore; the
 // runtime layer is provider-agnostic and falls back to env defaults.
 import { verifyProblemWithWolfram } from '../services/wolfram-service';
+import { resolveConceptOrSection } from '../constants/concept-graph';
 
 export type ContentSource =
   | 'tier-0-bundle-exact'
@@ -324,6 +325,25 @@ export async function resolveContent(req: ResolveRequest): Promise<ResolvedConte
   const start = Date.now();
   const maxTier = req.max_tier ?? 3;
   const bundle = loadBundle();
+
+  // Normalize concept_id using the concept graph so syllabus section IDs
+  // ('transforms', 'discrete', 'linear-algebra') and bundle alias names
+  // ('simpson-rule', 'taylor-series', etc.) resolve to leaf concepts. The
+  // leaf concept's topic is then used as the req.topic so tier0's
+  // p.topic === req.topic match finds bundle problems tagged by topic name.
+  if (req.concept_id) {
+    const resolved = resolveConceptOrSection(req.concept_id);
+    if (resolved) {
+      req = {
+        ...req,
+        concept_id: resolved.id,
+        // Always use the canonical topic from the concept graph — it's the ground
+        // truth that bundle problems are tagged with. Informal inputs like
+        // 'discrete' or 'transforms' must not survive past this point.
+        topic: resolved.topic,
+      };
+    }
+  }
 
   // Verify intent — dedicated path
   if (req.intent === 'verify' && req.problem_text && req.expected_answer) {

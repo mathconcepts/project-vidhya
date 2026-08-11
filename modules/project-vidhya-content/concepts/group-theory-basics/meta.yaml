@@ -1,0 +1,6 @@
+concept_id: group-theory-basics
+label: "Group Theory Basics"
+topic: discrete-mathematics
+difficulty_base: 0.6
+gate_frequency: low
+exam_ids: ["*"]

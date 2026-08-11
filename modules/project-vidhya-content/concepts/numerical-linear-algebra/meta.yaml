@@ -1,0 +1,6 @@
+concept_id: numerical-linear-algebra
+label: "Numerical Linear Algebra"
+topic: numerical-methods
+difficulty_base: 0.6
+gate_frequency: medium
+exam_ids: ["*"]

@@ -29,7 +29,7 @@ import { recordTelemetry } from '../content/telemetry';
 import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
-import { ALL_CONCEPTS } from '../constants/concept-graph';
+import { ALL_CONCEPTS, resolveConceptOrSection, SECTION_MAP } from '../constants/concept-graph';
 import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
 import { rankAtomsForLesson } from '../personalization/lesson-wire';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
@@ -319,6 +319,11 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
     }
   }
 
+  // Section IDs (e.g. "linear-algebra") map to a first leaf concept for
+  // routing — resolve here so atom loading always sees a real concept ID.
+  const resolvedConcept = resolveConceptOrSection(lessonReq.concept_id);
+  const effective_concept_id = resolvedConcept?.id ?? lessonReq.concept_id;
+
   try {
     const sources = await resolveSources(lessonReq);
     const base = composeBase(sources);
@@ -330,12 +335,12 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
 
     // Attach related problems (leverages existing resolver)
     personalized.related_problems = await buildRelatedProblems(
-      lessonReq.concept_id,
+      effective_concept_id,
       lessonReq.student,
     );
 
     // Attach next-review date if student has prior visits
-    const visit = lessonReq.student?.last_lesson_visit?.[lessonReq.concept_id];
+    const visit = lessonReq.student?.last_lesson_visit?.[effective_concept_id];
     if (visit) {
       const next = new Date(visit.last_visited_at);
       next.setDate(next.getDate() + visit.sm2_interval_days);
@@ -346,13 +351,13 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
     // prefers atoms[] when non-empty; otherwise falls through to components[].
     let atoms: ContentAtom[] = [];
     try {
-      const conceptAtoms = await loadConceptAtoms(lessonReq.concept_id);
-      const conceptMeta = await loadConceptMeta(lessonReq.concept_id);
+      const conceptAtoms = await loadConceptAtoms(effective_concept_id);
+      const conceptMeta = await loadConceptMeta(effective_concept_id);
       // error_streak computed from the client-transmitted recent_errors
       // (consecutive misses on THIS concept). Empty signals ⇒ 0, exactly
       // the pre-realignment behavior.
       const sessionContext: SessionContext = {
-        error_streak: computeErrorStreak(recentErrors, lessonReq.concept_id),
+        error_streak: computeErrorStreak(recentErrors, effective_concept_id),
         last_error_atom_type: null,
       };
       // Thread client mastery into the PedagogyEngine's tier classifier.
@@ -374,7 +379,7 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
         routeRequest: {
           user_id: lessonReq.session_id ?? 'anon',
           text: '',
-          concept_id: lessonReq.concept_id,
+          concept_id: effective_concept_id,
           preferred_exam_id: lessonReq.student?.preferred_exam_id,
         },
       });
@@ -394,12 +399,12 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       atoms = (await rankAtomsForLesson(atoms as Array<ContentAtom & Record<string, unknown>>, {
         session_id: lessonReq.session_id ?? null,
         student_id: null, // resolved from session_id inside the helper
-        concept_id: lessonReq.concept_id,
+        concept_id: effective_concept_id,
         exam_pack_id: lessonReq.student?.preferred_exam_id ?? undefined,
       })) as ContentAtom[];
     } catch (err) {
       if (err instanceof ConceptNotFoundError) {
-        noteAtomFallback(lessonReq.concept_id);
+        noteAtomFallback(effective_concept_id);
       } else {
         console.warn(`[lesson-routes] compose atom load failed: ${(err as Error).message}`);
       }
@@ -433,15 +438,20 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
   const concept_id = req.params.concept_id;
   if (!concept_id) return sendError(res, 400, 'concept_id required');
   try {
-    const sources = await resolveSources({ concept_id });
+    // Resolve section IDs (e.g. "differential-equations") to their first leaf
+    // concept so atom loading and source resolution both find real content.
+    const resolvedConcept = resolveConceptOrSection(concept_id);
+    const effective_concept_id = resolvedConcept?.id ?? concept_id;
+
+    const sources = await resolveSources({ concept_id: effective_concept_id });
     const base = composeBase(sources);
 
     // ContentAtom v2: also attempt to load + select atoms. Additive — clients
     // that don't know about atoms[] still see the legacy components[] field.
     let atoms: ContentAtom[] = [];
     try {
-      const conceptAtoms = await loadConceptAtoms(concept_id);
-      const conceptMeta = await loadConceptMeta(concept_id);
+      const conceptAtoms = await loadConceptAtoms(effective_concept_id);
+      const conceptMeta = await loadConceptMeta(effective_concept_id);
       const session_id = req.query?.get('session_id') ?? null;
       const student_id = req.query?.get('student_id') ?? session_id;
       const rawProximity = req.query?.get('exam_proximity_days');
@@ -467,7 +477,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
         } catch { /* graceful degradation */ }
       }
       const sessionContext: SessionContext = {
-        error_streak: computeErrorStreak(recentErrors, concept_id),
+        error_streak: computeErrorStreak(recentErrors, effective_concept_id),
         last_error_atom_type: null,
         exam_proximity_days,
       };
@@ -479,7 +489,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
         routeRequest: {
           user_id: student_id ?? 'anon',
           text: '',
-          concept_id,
+          concept_id: effective_concept_id,
           exam_proximity_days,
           preferred_exam_id,
         },
@@ -496,15 +506,15 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       atoms = (await rankAtomsForLesson(atoms as Array<ContentAtom & Record<string, unknown>>, {
         session_id: student_id ?? session_id ?? null,
         student_id: null, // resolved from session_id inside the helper
-        concept_id,
+        concept_id: effective_concept_id,
         exam_pack_id: preferred_exam_id ?? undefined,
       })) as ContentAtom[];
     } catch (err) {
       if (err instanceof ConceptNotFoundError) {
         // Legacy base lesson without atoms — loudly counted, never silent.
-        noteAtomFallback(concept_id);
+        noteAtomFallback(effective_concept_id);
       } else {
-        console.warn(`[lesson-routes] atom load failed for ${concept_id}: ${(err as Error).message}`);
+        console.warn(`[lesson-routes] atom load failed for ${effective_concept_id}: ${(err as Error).message}`);
       }
     }
 

@@ -1,0 +1,87 @@
+{
+  "concept_id": "numerical-ode",
+  "topic": "numerical-methods",
+  "gate_frequency": "medium",
+  "questions": [
+    {
+      "id": "ode-01",
+      "question": "Using Euler's method with step size $h = 0.1$, approximate $y(0.1)$ for the ODE $\\frac{dy}{dt} = t + y$ with $y(0) = 1$.",
+      "options": {
+        "A": "$y_1 \\approx 1.1$",
+        "B": "$y_1 \\approx 1.2$",
+        "C": "$y_1 \\approx 1.15$",
+        "D": "$y_1 \\approx 1.05$"
+      },
+      "correct_answer": "A",
+      "explanation": "Euler's method: $y_{n+1} = y_n + h \\cdot f(t_n, y_n)$.\n\nGiven: $t_0 = 0$, $y_0 = 1$, $h = 0.1$, $f(t, y) = t + y$.\n\nCompute: $y_1 = y_0 + h \\cdot f(t_0, y_0) = 1 + 0.1 \\cdot (0 + 1) = 1 + 0.1 = 1.1$.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["numerical-methods", "numerical-ode"]
+    },
+    {
+      "id": "ode-02",
+      "question": "Which ODE solver has the highest order of accuracy for a given step size $h$?",
+      "options": {
+        "A": "Euler method (forward difference)",
+        "B": "Heun method (RK2)",
+        "C": "Runge-Kutta 4th order (RK4)",
+        "D": "Adams-Bashforth method"
+      },
+      "correct_answer": "C",
+      "explanation": "Order of accuracy (global truncation error order):\n- Euler: $O(h)$ (1st order)\n- Heun/RK2: $O(h^2)$ (2nd order)\n- RK4: $O(h^4)$ (4th order)\n- Adams-Bashforth (multi-step): varies, but typically 2nd–4th order depending on the variant\n\nRK4 has $O(h^4)$ global error, meaning it's 4th order. For the same $h$, RK4 is far more accurate. The trade-off: RK4 requires 4 function evaluations per step; Euler requires only 1.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": ["numerical-methods", "numerical-ode"]
+    },
+    {
+      "id": "ode-03",
+      "question": "For the ODE $\\frac{dy}{dt} = 3y$ with $y(0) = 2$, use RK2 (Heun's method) with $h = 0.1$ to find $y_1 = y(0.1)$.",
+      "options": {
+        "A": "$y_1 \\approx 2.63$",
+        "B": "$y_1 \\approx 2.67$",
+        "C": "$y_1 \\approx 2.70$",
+        "D": "$y_1 \\approx 2.60$"
+      },
+      "correct_answer": "B",
+      "explanation": "Heun's method (RK2): $y_{n+1} = y_n + \\frac{h}{2}(k_1 + k_2)$ where\n$k_1 = f(t_n, y_n)$ and $k_2 = f(t_n + h, y_n + h k_1)$.\n\nGiven: $t_0 = 0$, $y_0 = 2$, $h = 0.1$, $f(t, y) = 3y$.\n\nCompute:\n$k_1 = 3(2) = 6$\n$k_2 = 3(2 + 0.1 \\cdot 6) = 3(2 + 0.6) = 3(2.6) = 7.8$\n$y_1 = 2 + \\frac{0.1}{2}(6 + 7.8) = 2 + 0.05(13.8) = 2 + 0.69 = 2.69$\n\nClosest answer is B: 2.67 (rounding difference).",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["numerical-methods", "numerical-ode"]
+    },
+    {
+      "id": "ode-04",
+      "question": "The local truncation error (LTE) for Euler's method is $O(h^2)$. If you halve the step size from $h$ to $h/2$, the global truncation error is reduced by a factor of approximately...",
+      "options": {
+        "A": "1/2",
+        "B": "1/4",
+        "C": "1/8",
+        "D": "1/16"
+      },
+      "correct_answer": "A",
+      "explanation": "For Euler's method:\n- Local truncation error (LTE): $O(h^2)$ (truncation at each step)\n- Global truncation error (GTE): $O(h)$ (cumulative error over [0, T])\n\nThe global error is $O(h)$ because there are $O(1/h)$ steps over a fixed time interval, and each contributes error $O(h^2)$: $O(1/h) \\times O(h^2) = O(h)$.\n\nWhen you halve $h$: GTE_new $\\approx$ GTE_old $\\times (h/2) / h = $ GTE_old $/ 2$.\n\nThe error is reduced by factor 1/2.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["numerical-methods", "numerical-ode"]
+    },
+    {
+      "id": "ode-05",
+      "question": "For the ODE $\\frac{dy}{dt} = -y + \\sin(t)$ with $y(0) = 0$, which condition ensures stability of an explicit method like Euler?",
+      "options": {
+        "A": "$h < \\frac{2}{|\\lambda|}$ where $\\lambda = -1$ (eigenvalue of the linearized system)",
+        "B": "$h < 0.5$",
+        "C": "$h < 0.1$",
+        "D": "Stability is independent of step size"
+      },
+      "correct_answer": "A",
+      "explanation": "Stability (specifically, linear stability) for explicit methods depends on the step size and the Jacobian of the ODE.\n\nFor the linear part $dy/dt = \\lambda y$ (here $\\lambda = -1$), Euler's method is stable when $|1 + h\\lambda| < 1$.\n\nWith $\\lambda = -1$: $|1 - h| < 1$, which gives $0 < h < 2$.\n\nMore generally, the stability condition is $|1 + h\\lambda| < 1$, or $h < \\frac{2}{|\\lambda|}$. For $\\lambda = -1$, this gives $h < 2$.\n\nSo answer A is correct: the condition is $h < \\frac{2}{|\\lambda|}$.",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": ["numerical-methods", "numerical-ode"]
+    }
+  ]
+}

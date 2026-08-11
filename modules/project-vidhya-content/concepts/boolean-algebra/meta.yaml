@@ -1,0 +1,6 @@
+concept_id: boolean-algebra
+label: "Boolean Algebra"
+topic: discrete-mathematics
+difficulty_base: 0.4
+gate_frequency: medium
+exam_ids: ["*"]

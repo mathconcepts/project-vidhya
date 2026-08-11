@@ -1,0 +1,6 @@
+concept_id: matrix-operations
+label: "Matrix Operations"
+topic: linear-algebra
+difficulty_base: 0.2
+gate_frequency: high
+exam_ids: ["*"]

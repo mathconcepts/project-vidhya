@@ -1,0 +1,6 @@
+concept_id: differentiability
+label: "Differentiability"
+topic: calculus
+difficulty_base: 0.4
+gate_frequency: medium
+exam_ids: ["*"]

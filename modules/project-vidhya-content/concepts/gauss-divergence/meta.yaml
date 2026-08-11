@@ -1,0 +1,6 @@
+concept_id: gauss-divergence
+label: "Gauss Divergence"
+topic: vector-calculus
+difficulty_base: 0.7
+gate_frequency: high
+exam_ids: ["*"]

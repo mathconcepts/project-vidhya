@@ -1,0 +1,103 @@
+{
+  "concept_id": "systems-of-equations",
+  "topic": "linear-algebra",
+  "gate_frequency": "high",
+  "questions": [
+    {
+      "id": "sys-01",
+      "question": "Solve the system: $x + 2y = 5$ and $2x + 4y = 10$. How many solutions exist?",
+      "options": {
+        "A": "No solution",
+        "B": "Unique solution",
+        "C": "Infinitely many solutions",
+        "D": "Two distinct solutions"
+      },
+      "correct_answer": "C",
+      "explanation": "Write in matrix form: $\\begin{pmatrix} 1 & 2 \\\\ 2 & 4 \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix} = \\begin{pmatrix} 5 \\\\ 10 \\end{pmatrix}$.\n\nNotice that row 2 is exactly 2 times row 1 (both on the left and on the right). This means the two equations are equivalent—they represent the same constraint.\n\nFrom the first equation: $x + 2y = 5$, or $x = 5 - 2y$.\n\nFor any value of $y$, we can find a corresponding $x$. For example:\n- If $y = 0$, then $x = 5$ → solution $(5, 0)$\n- If $y = 1$, then $x = 3$ → solution $(3, 1)$\n- If $y = 2$, then $x = 1$ → solution $(1, 2)$\n\nThere are infinitely many solutions. The system is consistent (both equations are the same) but underdetermined (one degree of freedom).",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "systems-of-equations"
+      ]
+    },
+    {
+      "id": "sys-02",
+      "question": "For the system $x + y = 1$ and $x + y = 2$, how many solutions exist?",
+      "options": {
+        "A": "No solution",
+        "B": "Unique solution $(1, 0)$",
+        "C": "Infinitely many solutions",
+        "D": "Unique solution $(0, 1)$"
+      },
+      "correct_answer": "A",
+      "explanation": "The first equation says $x + y = 1$, while the second says $x + y = 2$. These contradict each other—no values of $x$ and $y$ can simultaneously satisfy both.\n\nIn matrix language: $\\text{rank}(A) = 1$ (both rows are different but proportional after rearrangement... actually, the coefficients are identical but the RHS differ), and $\\text{rank}(A|b) = 2$ (the augmented matrix has rank 2 because the RHS are different).\n\nSince $\\text{rank}(A) < \\text{rank}(A|b)$, the system is inconsistent—no solution exists.",
+      "difficulty": "easy",
+      "marks": 1,
+      "negative_marks": -0.33,
+      "tags": [
+        "linear-algebra",
+        "systems-of-equations"
+      ]
+    },
+    {
+      "id": "sys-03",
+      "question": "Solve using Cramer's rule: $2x + y = 4$ and $x - y = 2$. Find $x$.",
+      "options": {
+        "A": "1",
+        "B": "2",
+        "C": "3",
+        "D": "$-1$"
+      },
+      "correct_answer": "B",
+      "explanation": "Use Cramer's rule: $x = \\frac{\\det(A_x)}{\\det(A)}$, where $A$ is the coefficient matrix and $A_x$ replaces the first column with $b$.\n\n$A = \\begin{pmatrix} 2 & 1 \\\\ 1 & -1 \\end{pmatrix}$, so $\\det(A) = 2(-1) - 1(1) = -2 - 1 = -3$.\n\n$A_x = \\begin{pmatrix} 4 & 1 \\\\ 2 & -1 \\end{pmatrix}$, so $\\det(A_x) = 4(-1) - 1(2) = -4 - 2 = -6$.\n\n$x = \\frac{-6}{-3} = 2$.\n\nVerify: If $x = 2$, then from the second equation: $2 - y = 2 \\implies y = 0$. Check first equation: $2(2) + 0 = 4$ ✓",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "systems-of-equations"
+      ]
+    },
+    {
+      "id": "sys-04",
+      "question": "The system $x + 2y + 3z = 1$, $2x + 4y + 6z = 2$, $x + y + z = 1$ has rank 2 for the coefficient matrix. How many solutions exist?",
+      "options": {
+        "A": "No solution",
+        "B": "Unique solution",
+        "C": "Infinitely many solutions with 1 free variable",
+        "D": "Infinitely many solutions with 2 free variables"
+      },
+      "correct_answer": "C",
+      "explanation": "Given: $\\text{rank}(A) = 2$ and there are 3 unknowns.\n\nFirst, determine $\\text{rank}(A|b)$ (the augmented matrix rank).\n\nNotice that the second equation is $2x + 4y + 6z = 2$, which is exactly 2 times the first equation $x + 2y + 3z = 1$. So these two rows are dependent.\n\nThe third equation $x + y + z = 1$ is independent from the first two.\n\nIf the augmented matrix has the same rank as $A$ (rank = 2), the system is consistent. With $n = 3$ unknowns and rank = 2, there are $n - \\text{rank} = 3 - 2 = 1$ free variable, leading to infinitely many solutions.\n\nAssuming consistency is confirmed (rank$(A|b) = 2$), the answer is C.",
+      "difficulty": "medium",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "systems-of-equations"
+      ]
+    },
+    {
+      "id": "sys-05",
+      "question": "For a $3 \\times 5$ system $Ax = b$ with $\\text{rank}(A) = 3$, what is the dimension of the solution space (null space) if the system is consistent?",
+      "options": {
+        "A": "0 (unique solution)",
+        "B": "1 (one free variable)",
+        "C": "2 (two free variables)",
+        "D": "3 (three free variables)"
+      },
+      "correct_answer": "C",
+      "explanation": "By the rank-nullity theorem: $\\text{rank}(A) + \\text{nullity}(A) = n$, where $n$ is the number of columns.\n\nHere, $\\text{rank}(A) = 3$ and $n = 5$, so $\\text{nullity}(A) = 5 - 3 = 2$.\n\nThe null space (solution space of $Ax = 0$) has dimension 2, meaning 2 free variables.\n\nFor a consistent system $Ax = b$ with $\\text{rank}(A|b) = \\text{rank}(A) = 3$, the solution set is $x_p + \\text{null}(A)$, where $x_p$ is a particular solution and null$(A)$ has dimension 2. Therefore, the dimension of the solution space is 2 (equivalently, $n - \\text{rank}(A) = 5 - 3 = 2$ free variables).",
+      "difficulty": "hard",
+      "marks": 2,
+      "negative_marks": -0.67,
+      "tags": [
+        "linear-algebra",
+        "systems-of-equations",
+        "rank-nullity"
+      ]
+    }
+  ]
+}

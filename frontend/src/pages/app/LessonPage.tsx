@@ -19,6 +19,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
+import { ConceptMathViz } from '@/components/lesson/ConceptMathViz';
 import {
   Loader2, CheckCircle2, XCircle, Eye,
   Lightbulb, BookOpen, Target, Zap, AlertTriangle, Hash, GitBranch,
@@ -662,6 +663,7 @@ export default function LessonPage() {
           studentId={sessionId}
           onComplete={() => navigate('/')}
         />
+        <ConceptMathViz conceptId={concept_id} />
       </div>
     );
   }
@@ -783,6 +785,8 @@ export default function LessonPage() {
           </div>
         </motion.div>
       )}
+
+      <ConceptMathViz conceptId={concept_id} />
 
       {/* Lesson-level sources footer */}
       {!doneState && lesson.sources.length > 0 && (

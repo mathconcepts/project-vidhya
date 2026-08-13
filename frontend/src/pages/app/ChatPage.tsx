@@ -226,7 +226,7 @@ export default function ChatPage() {
           if (!line.startsWith('data: ')) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.type === 'chunk') {
+            if (data.type === 'chunk' && data.content) {
               setMessages(prev => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
@@ -235,10 +235,34 @@ export default function ChatPage() {
                 }
                 return updated;
               });
+            } else if (data.type === 'error') {
+              setMessages(prev => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last.role === 'assistant' && !last.content) {
+                  updated[updated.length - 1] = {
+                    ...last,
+                    content: data.content || 'Sorry, I had trouble responding. Please try again.',
+                  };
+                }
+                return updated;
+              });
             }
           } catch { /* skip */ }
         }
       }
+      // Fallback: if stream ended with no content (e.g. empty LLM response), show an error
+      setMessages(prev => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last.role === 'assistant' && !last.content) {
+          updated[updated.length - 1] = {
+            ...last,
+            content: 'Sorry, I had trouble responding. Please try again.',
+          };
+        }
+        return updated;
+      });
     } catch (err) {
       console.error('[chat] Error:', err);
       setMessages(prev => {

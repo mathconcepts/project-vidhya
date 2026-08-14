@@ -27,7 +27,3 @@ For exams, remember:
 ```
 
 ---
-
-## ATOM 2: Visual Analogy
-
-**File path:**

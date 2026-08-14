@@ -23,7 +23,3 @@ Since $e^{rx} \neq 0$, we must have $ar^2 + br + c = 0$ — the **characteristic
 ```
 
 ---
-
-## ATOM 2: VISUAL ANALOGY
-
-**File:**

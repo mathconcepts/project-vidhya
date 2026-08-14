@@ -25,8 +25,3 @@ where $C$ is the **constant of integration** — an unknown constant that disapp
 - $\int e^x \, dx = e^x + C$
 
 These form the foundation for solving GATE problems involving areas, work, motion, and accumulation. Mastering antiderivatives of common functions is non-negotiable for exam success.
-```
-
-## ATOM 2: Visual Analogy
-
-**File path:**

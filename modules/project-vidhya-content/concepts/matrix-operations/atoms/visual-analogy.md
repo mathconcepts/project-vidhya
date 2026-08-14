@@ -25,8 +25,3 @@ Transposition flips this dependency: if a matrix encodes "output 1 depends heavi
 ```
 
 The animation shows how a matrix transforms an ellipse—stretching and rotating it over time, visualizing the continuous action of matrix multiplication on geometric shapes.
-```
-
-## ATOM 3: Worked Example
-
-**File:**

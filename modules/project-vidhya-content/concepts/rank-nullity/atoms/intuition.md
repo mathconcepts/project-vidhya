@@ -29,8 +29,3 @@ where $n$ is the number of columns. This says: the dimensions you keep (rank) pl
 - It's the bridge between row reduction, linear independence, and system consistency
 
 Think of rank and nullity as opposites that must balance: add more independent rows, rank grows and nullity shrinks.
-```
-
-## ATOM 2: Visual Analogy
-
-**File:**

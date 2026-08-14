@@ -23,7 +23,3 @@ The **Jacobian** is like reading all the contour densities and slopes simultaneo
 ```
 
 ---
-
-## ATOM 3: Worked Example
-
-**File:**

@@ -19,8 +19,3 @@ Together, rank + nullity = total input dimensions. It's like energy conservation
 ```gif-scene
 {"type":"parametric","expression":"cos(x)*sin(t)*sqrt(abs(sin(x)))","x_range":[-3.14,3.14],"y_range":[-1.5,1.5],"t_range":[0,6.28],"frames":30,"fps":12}
 ```
-```
-
-## ATOM 3: Worked Example
-
-**File:**

@@ -23,7 +23,3 @@ This is why in exams, you can't just say "the work is 5 Joules"—you must speci
 ```
 
 ---
-
-## ATOM 3: Worked Example
-
-**File path:**

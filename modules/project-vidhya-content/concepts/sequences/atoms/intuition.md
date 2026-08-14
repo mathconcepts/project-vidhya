@@ -26,7 +26,3 @@ Convergence tests and limit calculations appear in calculus, differential equati
 ```
 
 ---
-
-## ATOM 2: Visual Analogy (sequences.visual-analogy.md)
-
-**Path:**

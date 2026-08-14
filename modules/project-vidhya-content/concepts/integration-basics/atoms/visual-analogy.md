@@ -19,8 +19,3 @@ The visual below shows the antiderivative $F(x) = \frac{x^2}{2}$ — the shape y
 ```gif-scene
 {"type":"function-trace","expression":"x^2/2","x_range":[-4,4],"y_range":[-0.5,8],"frames":30,"fps":12}
 ```
-```
-
-## ATOM 3: Worked Example
-
-**File path:**

@@ -24,7 +24,3 @@ This convergence-through-damping pattern appears everywhere in engineering: RLC 
 ```
 
 ---
-
-## ATOM 3: Worked Example (sequences.worked-example.md)
-
-**Path:**

@@ -24,7 +24,3 @@ The circle above shows how a rotation matrix preserves areas—any shape rotates
 ```
 
 ---
-
-## ATOM 3: Worked Example
-
-**File path:**

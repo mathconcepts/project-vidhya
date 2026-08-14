@@ -35,7 +35,3 @@ If either fails, the function is not differentiable at that point.
 ```
 
 ---
-
-## ATOM 2: Visual Analogy
-
-**File path:**

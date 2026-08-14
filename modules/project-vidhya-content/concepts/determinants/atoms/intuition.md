@@ -32,7 +32,3 @@ The determinant is the invisible thread connecting invertibility, area scaling, 
 ```
 
 ---
-
-## ATOM 2: Visual Analogy
-
-**File path:**

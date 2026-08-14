@@ -29,7 +29,3 @@ The animation above shows a classic underdamped solution: oscillation amplitude 
 ```
 
 ---
-
-## ATOM 3: WORKED EXAMPLE
-
-**File:**

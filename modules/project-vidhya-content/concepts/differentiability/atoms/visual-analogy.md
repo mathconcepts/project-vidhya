@@ -25,7 +25,3 @@ Differentiability captures this idea: **a function is differentiable where its g
 ```
 
 ---
-
-## ATOM 3: Worked Example
-
-**File path:**

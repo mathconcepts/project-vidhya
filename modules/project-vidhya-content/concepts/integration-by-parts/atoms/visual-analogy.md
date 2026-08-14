@@ -30,7 +30,3 @@ The LIATE rule is your guide to picking the right fulcrum: put algebraic functio
 ```
 
 ---
-
-## ATOM 3: WORKED_EXAMPLE
-
-**File:**

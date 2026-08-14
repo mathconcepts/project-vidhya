@@ -24,7 +24,3 @@ For exam problems, you'll compute partial derivatives by treating all variables 
 ```
 
 ---
-
-## ATOM 2: Visual Analogy
-
-**File:**

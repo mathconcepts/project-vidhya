@@ -36,7 +36,3 @@ This strategy works because we're **lowering the degree** of polynomials (differ
 ```
 
 ---
-
-## ATOM 2: VISUAL_ANALOGY
-
-**File:**

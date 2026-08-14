@@ -493,28 +493,6 @@ export default function SmartPracticePage() {
                   </>
                 )}
 
-                {/* Always visible — not gated on submission */}
-                <button
-                  onClick={() => navigate(`/lesson/${resolved.problem.concept_id || (TOPIC_ALIAS[topic] ?? topic)}`)}
-                  style={{
-                    marginTop: 4,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '10px 16px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    background: 'var(--indigo)',
-                    color: 'var(--text-on-accent)',
-                    fontSize: 'var(--text-caption)',
-                    fontWeight: 'var(--weight-semibold)',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-sans)',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  <BookOpen size={13} /> Explore this concept
-                </button>
               </div>
             )}
 

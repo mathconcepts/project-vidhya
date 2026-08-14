@@ -2,7 +2,7 @@
  * Tests for src/constants/concept-graph.ts — the thin loader over
  * data/curriculum/gate-ma.yml's `concepts:` section (CEO plan §6 registry
  * unification). Locks the exact API surface + data shape so the YAML
- * migration never silently regresses the 82-concept graph dozens of
+ * migration never silently regresses the 97-concept graph dozens of
  * consumers depend on.
  */
 
@@ -18,8 +18,8 @@ import {
 } from '../concept-graph';
 
 describe('concept-graph.ts (thin YAML loader)', () => {
-  it('loads exactly 82 concepts', () => {
-    expect(ALL_CONCEPTS.length).toBe(82);
+  it('loads exactly 97 concepts', () => {
+    expect(ALL_CONCEPTS.length).toBe(97);
   });
 
   it('every concept has the full ConceptNode shape', () => {

@@ -26,8 +26,9 @@ import { detectTopic } from '../utils/topic-detection';
 const { Pool } = pg;
 
 let _pool: any = null;
-function getPool() {
+function getPool(): any | null {
   if (_pool) return _pool;
+  if (!process.env.DATABASE_URL) return null;
   _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
   return _pool;
 }
@@ -460,6 +461,7 @@ async function logReasonerDecision(
 ): Promise<void> {
   try {
     const pool = getPool();
+    if (!pool) return;
     await pool.query(
       `INSERT INTO task_reasoner_log
        (session_id, student_message, intent, pedagogical_action,

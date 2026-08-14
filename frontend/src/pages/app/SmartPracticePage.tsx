@@ -68,7 +68,8 @@ export default function SmartPracticePage() {
   const { exam } = useActiveExam();
 
   const [searchParams] = useSearchParams();
-  const initialTopic = searchParams.get('topic') || 'linear-algebra';
+  const conceptIdFromUrl = searchParams.get('concept');
+  const initialTopic = conceptIdFromUrl || searchParams.get('topic') || 'linear-algebra';
   const rawDiff = searchParams.get('difficulty');
   const initialDifficulty = rawDiff === 'easy' ? 0.2 : rawDiff === 'hard' ? 0.8 : rawDiff === 'medium' ? 0.5 : 0.5;
   const natOnly = searchParams.get('mode') === 'nat';
@@ -96,7 +97,9 @@ export default function SmartPracticePage() {
         if (data?.topics?.length > 0) {
           const ids = data.topics.map((t: any) => t.id as string);
           setExamTopics(ids);
-          setTopic(prev => ids.includes(prev) ? prev : ids[0]);
+          if (!conceptIdFromUrl) {
+            setTopic(prev => ids.includes(prev) ? prev : ids[0]);
+          }
         }
       })
       .catch(() => {});

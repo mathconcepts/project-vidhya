@@ -21,6 +21,7 @@ import { classifyIntent } from '../content/router';
 import { checkRateLimit } from '../lib/rate-limit';
 import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
 import { getLlmForRole } from '../llm/runtime';
+import { resolveAtom, streamAtomContent } from './atom-responder';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 
@@ -262,45 +263,12 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
     return;
   }
 
-  // Resolve LLM via runtime helper (respects per-request config or env)
+  // Resolve LLM via runtime helper (respects per-request config or env).
+  // We do NOT bail immediately here — the atom-first path can serve pre-authored
+  // content without a live LLM. The hard failure is deferred until we know
+  // whether an atom exists for the student's question.
   const llm = await getLlmForRole(image ? 'vision' : 'chat', req.headers);
-  if (!llm) {
-    // LLM unavailable — record a degraded-mode turn so the failure is
-    // legible in the turn log. (Without this, an admin debugging
-    // "why isn't chat working?" sees zero traces despite real traffic.)
-    // Open + close immediately because we know the turn is complete:
-    // no response will follow this.
-    cancelReservation(_actor_id, _est_total_tokens);   // free the reservation
-    try {
-      const auth = await getCurrentUser(req);
-      const student_id = auth ? auth.user.id : `anon_${sessionId}`;
-      const degraded_turn_id = openTurn({
-        student_id,
-        intent: classifyIntent(message),
-        delivery_channel: 'web',
-        routed_source: null,
-        generated_content: {
-          type: 'chat-response',
-          summary: '(no response — LLM unavailable)',
-        },
-        pre_state: {
-          concept_id: null,
-          topic: null,
-          mastery_before: null,
-          attempts_so_far: null,
-          zpd_concept: null,
-        },
-        degraded: {
-          reason: 'no-llm-available',
-          detail: 'No LLM provider configured (set GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or use /gate/llm-config)',
-        },
-      });
-      closeTurn({ turn_id: degraded_turn_id, duration_ms: 0 });
-    } catch (turnErr) {
-      console.error('[chat] turn-open on degraded path failed (non-fatal):', (turnErr as Error).message);
-    }
-    return sendError(res, 503, 'AI tutor not available (no LLM provider configured)');
-  }
+  const _llm_unavailable = !llm;
 
   // Build conversation history for context — runtime helper expects
   // {role: 'user' | 'assistant', content: string} shape (same as
@@ -488,53 +456,77 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
       res.write(`data: ${JSON.stringify({ type: 'reasoner', ...(_reasonerMeta) })}\n\n`);
     }
 
-    // Stream response via runtime LLM helper. The helper handles the
-    // per-provider streaming protocol (SSE for Gemini/Anthropic/OpenAI,
-    // NDJSON for Ollama) and yields plain text chunks regardless of
-    // provider. The 'assistant primer' that used to be hardcoded here
-    // (a fake first model turn after the system prompt) goes away —
-    // each provider's API natively supports a system prompt.
-    const streamInput: any = {
-      text: message,
-      system: gbrainPrompt,
-      history: chatHistory,
-    };
-    if (image) {
-      streamInput.image = { mimeType: imageMimeType || 'image/jpeg', data: image };
-    }
-
-    // Stream with watchdog: if no chunk arrives within 45s, abort. Free-tier
-    // LLM endpoints sometimes hang on cold starts or network blips; without
-    // this the user sees loading dots forever (the original bug report).
+    // ── Atom-first response: serve pre-authored content when available ────
+    // The 82 Engineering Math concepts each have up to 8 pre-authored atom
+    // files. When the task reasoner identifies a concept + action that maps
+    // to one of these files, stream it directly — no LLM call needed.
+    // This makes chat work for all GATE-MA topics even without an API key.
     let fullResponse = '';
-    let lastChunkAt = Date.now();
-    const watchdogMs = 45_000;
-    const watchdog = setInterval(() => {
-      if (Date.now() - lastChunkAt > watchdogMs) {
-        // Abort by writing an error frame; the for-await below will exit
-        // cleanly because the underlying provider stream surfaces the
-        // closed connection. Belt-and-braces: also signal via a flag.
-        try {
-          res.write(`data: ${JSON.stringify({
-            type: 'error',
-            content: 'The AI tutor is taking longer than expected. Please try again — short, specific questions usually work fastest.',
-          })}\n\n`);
-        } catch { /* socket closed */ }
+    const atom = !image
+      ? resolveAtom(_reasonerInstructions?.selected_concept, _reasonerInstructions?.action)
+      : null;
+
+    if (atom) {
+      // Atom served — no LLM tokens consumed; release the reservation.
+      cancelReservation(_actor_id, _est_total_tokens);
+      res.write(`data: ${JSON.stringify({ type: 'atom', concept: atom.conceptId, atomType: atom.atomType })}\n\n`);
+      for await (const chunk of streamAtomContent(atom.content)) {
+        fullResponse += chunk;
+        _response_chars = fullResponse.length;
+        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+      }
+    } else if (_llm_unavailable) {
+      // No pre-authored atom AND no LLM configured. Cancel the token
+      // reservation and send a descriptive error frame so the frontend
+      // shows a useful message rather than an empty bubble.
+      cancelReservation(_actor_id, _est_total_tokens);
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        content: 'The AI tutor needs an API key to answer questions outside the pre-authored content. Please configure a provider in Settings or contact the admin.',
+      })}\n\n`);
+    } else {
+      // Stream response via runtime LLM helper. The helper handles the
+      // per-provider streaming protocol (SSE for Gemini/Anthropic/OpenAI,
+      // NDJSON for Ollama) and yields plain text chunks regardless of
+      // provider.
+      const streamInput: any = {
+        text: message,
+        system: gbrainPrompt,
+        history: chatHistory,
+      };
+      if (image) {
+        streamInput.image = { mimeType: imageMimeType || 'image/jpeg', data: image };
+      }
+
+      // Stream with watchdog: if no chunk arrives within 45s, abort. Free-tier
+      // LLM endpoints sometimes hang on cold starts or network blips; without
+      // this the user sees loading dots forever (the original bug report).
+      let lastChunkAt = Date.now();
+      const watchdogMs = 45_000;
+      const watchdog = setInterval(() => {
+        if (Date.now() - lastChunkAt > watchdogMs) {
+          try {
+            res.write(`data: ${JSON.stringify({
+              type: 'error',
+              content: 'The AI tutor is taking longer than expected. Please try again — short, specific questions usually work fastest.',
+            })}\n\n`);
+          } catch { /* socket closed */ }
+          clearInterval(watchdog);
+        }
+      }, 5_000);
+
+      try {
+        for await (const chunk of llm.generateStream(streamInput)) {
+          if (chunk) {
+            fullResponse += chunk;
+            _response_chars = fullResponse.length;
+            lastChunkAt = Date.now();
+            res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+          }
+        }
+      } finally {
         clearInterval(watchdog);
       }
-    }, 5_000);
-
-    try {
-      for await (const chunk of llm.generateStream(streamInput)) {
-        if (chunk) {
-          fullResponse += chunk;
-          _response_chars = fullResponse.length;
-          lastChunkAt = Date.now();
-          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-        }
-      }
-    } finally {
-      clearInterval(watchdog);
     }
 
     // Send done event

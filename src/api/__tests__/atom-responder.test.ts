@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveAtom, streamAtomContent } from '../atom-responder';
+import { resolveAtom, resolveAtomFromMessage, streamAtomContent } from '../atom-responder';
 
 describe('resolveAtom', () => {
   it('resolves a known concept + action to atom content', () => {
@@ -56,6 +56,66 @@ describe('resolveAtom', () => {
     // resolveAtom is pure synchronous file-read — no external dependencies
     const result = resolveAtom('integration-basics', 'confidence_building');
     expect(result).not.toBeNull();
+  });
+});
+
+describe('resolveAtomFromMessage', () => {
+  it('resolves "Explain Matrix Operations with a worked example"', () => {
+    const result = resolveAtomFromMessage('Explain Matrix Operations with a worked example', 'worked_example');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('matrix-operations');
+  });
+
+  it('resolves single-word concept "eigenvalues"', () => {
+    const result = resolveAtomFromMessage('How do eigenvalues work?', 'worked_example');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('eigenvalues');
+  });
+
+  it('resolves "Fourier series" by slug keywords', () => {
+    const result = resolveAtomFromMessage('Explain Fourier series', 'scaffolded_hint');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('fourier-series');
+  });
+
+  it('resolves "Laplace transform" by slug keywords', () => {
+    const result = resolveAtomFromMessage('What is the Laplace transform?', 'worked_example');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('laplace-transform');
+  });
+
+  it('resolves "ODE" via keyword override to ode-first-order', () => {
+    const result = resolveAtomFromMessage('Explain ODEs', 'worked_example');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('ode-first-order');
+  });
+
+  it('resolves "partial differential equation" via keyword override', () => {
+    const result = resolveAtomFromMessage('What is a partial differential equation?', 'worked_example');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('pde-basics');
+  });
+
+  it('returns null for generic greetings with no concept', () => {
+    const result = resolveAtomFromMessage('Hello, how are you?', 'worked_example');
+    expect(result).toBeNull();
+  });
+
+  it('returns null for empty message', () => {
+    expect(resolveAtomFromMessage('', 'worked_example')).toBeNull();
+    expect(resolveAtomFromMessage(null as any, 'worked_example')).toBeNull();
+  });
+
+  it('resolves "determinant" to determinants', () => {
+    const result = resolveAtomFromMessage('How do I calculate a determinant?', 'worked_example');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('determinants');
+  });
+
+  it('resolves "probability" to probability-basics', () => {
+    const result = resolveAtomFromMessage('Explain probability concepts', 'scaffolded_hint');
+    expect(result).not.toBeNull();
+    expect(result!.conceptId).toBe('probability-basics');
   });
 });
 

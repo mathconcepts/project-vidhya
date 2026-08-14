@@ -188,6 +188,23 @@ const KEYWORD_OVERRIDES: Array<[RegExp, string]> = [
   [/laplace.application|laplace.ode/i, 'laplace-applications'],
   [/z.transform/i, 'z-transform'],
   [/inverse.z/i, 'z-transform'],
+  // Linear algebra — new topics
+  [/singular.value.decomposition|svd\b|\bsvd/i, 'svd'],
+  [/jordan.normal|jordan.canonical|jordan.form|jordan.block/i, 'jordan-normal-form'],
+  [/spectral.theorem|spectral.decomposition|qdlambdaqt|qΛqt/i, 'spectral-theorem'],
+  [/quadratic.form|x.t.a.x|xtax|xᵀax/i, 'quadratic-forms'],
+  [/positive.definite|negative.definite|positive.semi|sylvester.criterion/i, 'positive-definite-matrices'],
+  [/gram.schmidt|orthogonali[sz]ation|orthonormal.basis|orthonormal.set/i, 'gram-schmidt'],
+  [/lu.factor|lu.decompos|lu.decom|\bL\s*=\s*U\b|\ba\s*=\s*lu\b/i, 'lu-factorization'],
+  [/least.squares?|normal.equation|overdetermined|best.fit.line|best.fit.plan/i, 'least-squares'],
+  [/change.of.basis|change.basis|basis.transform|coordinates.in.new|p.inv.*a.*p|p\^{-1}ap/i, 'change-of-basis'],
+  [/null.space|column.space|row.space|kernel.of.a|range.of.a|left.null.space/i, 'null-space-column-space'],
+  [/inner.product.space|dot.product.space|cauchy.schwarz|schwarz.inequality/i, 'inner-product-spaces'],
+  [/linear.independen|linearly.independen|linearly.depend|span.of.vectors|basis.of/i, 'linear-independence'],
+  [/symmetric.matri[cx]|symmetric.and|a\s*=\s*a.t\b|a\s*=\s*aᵀ|real.eigenvalue/i, 'symmetric-matrices'],
+  [/\btrace\b|\btr\(|sum.of.eigenvalue|tr\s*\(/i, 'trace'],
+  [/matrix.norm|frobenius.norm|spectral.norm|condition.number|ill.condition/i, 'matrix-norms'],
+  [/numerical.linear|partial.pivot|gaussian.elimin.*stabil|iterative.method.*linear/i, 'numerical-linear-algebra'],
 ];
 
 /**

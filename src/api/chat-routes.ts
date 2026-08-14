@@ -21,7 +21,7 @@ import { classifyIntent } from '../content/router';
 import { checkRateLimit } from '../lib/rate-limit';
 import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
 import { getLlmForRole } from '../llm/runtime';
-import { resolveAtom, streamAtomContent } from './atom-responder';
+import { resolveAtom, resolveAtomFromMessage, streamAtomContent } from './atom-responder';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 
@@ -458,12 +458,16 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
 
     // ── Atom-first response: serve pre-authored content when available ────
     // The 82 Engineering Math concepts each have up to 8 pre-authored atom
-    // files. When the task reasoner identifies a concept + action that maps
-    // to one of these files, stream it directly — no LLM call needed.
-    // This makes chat work for all GATE-MA topics even without an API key.
+    // files. Two lookup paths:
+    //   1. Message-keyword matching — works even when task-reasoner heuristic
+    //      returns selected_concept=null (the common case without a live LLM).
+    //   2. Task-reasoner concept — used when the LLM reasoner ran and provided
+    //      a concept id (LLM-powered path).
+    // Falls through to LLM streaming if neither resolves an atom.
     let fullResponse = '';
     const atom = !image
-      ? resolveAtom(_reasonerInstructions?.selected_concept, _reasonerInstructions?.action)
+      ? (resolveAtomFromMessage(message, _reasonerInstructions?.action) ??
+         resolveAtom(_reasonerInstructions?.selected_concept, _reasonerInstructions?.action))
       : null;
 
     if (atom) {

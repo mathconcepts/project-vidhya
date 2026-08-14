@@ -162,3 +162,103 @@ export async function* streamAtomContent(content: string): AsyncGenerator<string
     await new Promise(r => setTimeout(r, 8));
   }
 }
+
+// Generic words that appear in many concept slugs and don't help disambiguate.
+// Excluded from the score denominator so only the specific words must match.
+const SKIP_WORDS = new Set([
+  'basic', 'basics', 'first', 'second', 'higher', 'lower',
+  'order', 'simple', 'advanced', 'general',
+]);
+
+// Regex-based overrides for concepts whose names are abbreviated or highly
+// ambiguous (e.g. "ODE" alone could mean any of six ODE concepts).
+const KEYWORD_OVERRIDES: Array<[RegExp, string]> = [
+  [/\bpde\b|partial.differential.equation/i, 'pde-basics'],
+  [/ordinary.differential|ode.first|first.order.ode/i, 'ode-first-order'],
+  [/bernoulli.ode|ode.bernoulli/i, 'ode-bernoulli'],
+  [/exact.ode|ode.exact/i, 'ode-exact'],
+  [/higher.order.ode|ode.higher/i, 'ode-higher-order'],
+  [/homogeneous.ode|second.order.homo/i, 'ode-second-order-homo'],
+  [/non.?homogeneous|inhomogeneous/i, 'ode-second-order-nonhomo'],
+  [/\bode\b/i, 'ode-first-order'], // bare "ODE" → intro concept
+  [/normal.distribution|gaussian|continuous.distribution/i, 'continuous-distributions'],
+  [/binomial|poisson|discrete.distribution/i, 'discrete-distributions'],
+  [/euler.hamilton|hamiltonian.path|eulerian.circuit/i, 'euler-hamilton'],
+  [/inverse.laplace/i, 'inverse-laplace'],
+  [/laplace.application|laplace.ode/i, 'laplace-applications'],
+  [/z.transform/i, 'z-transform'],
+  [/inverse.z/i, 'z-transform'],
+];
+
+/**
+ * Resolve an atom by scanning the raw user message for concept keywords.
+ * Used when the task reasoner's selected_concept is null (heuristic path).
+ *
+ * Scoring: for each concept directory, count how many of its "meaningful"
+ * slug words (non-generic ones) appear in the message. The concept with the
+ * highest fraction of meaningful words matched wins, provided at least one
+ * meaningful word matched.
+ */
+export function resolveAtomFromMessage(
+  message: string,
+  action: PedagogicalAction | null | undefined,
+): AtomResult | null {
+  if (!message?.trim()) return null;
+
+  // Regex overrides first — handles abbreviated/ambiguous concept names.
+  for (const [pattern, conceptId] of KEYWORD_OVERRIDES) {
+    if (pattern.test(message)) {
+      const result = resolveAtom(conceptId, action);
+      if (result) return result;
+    }
+  }
+
+  // Normalise message to a word array.
+  const lower = message.toLowerCase().replace(/[^a-z0-9]/g, ' ');
+  const msgWords = lower.split(/\s+/).filter(w => w.length > 1);
+  if (msgWords.length === 0) return null;
+
+  const wordMatches = (cw: string) =>
+    msgWords.some(mw => mw === cw || mw.startsWith(cw) || cw.startsWith(mw));
+
+  let bestScore = 0;
+  let bestMatchedCount = 0;
+  let bestLen = Infinity;
+  let bestConceptId: string | null = null;
+
+  let dirs: string[];
+  try {
+    dirs = fs.readdirSync(ATOMS_BASE);
+  } catch { return null; }
+
+  for (const dir of dirs) {
+    if (!fs.existsSync(path.join(ATOMS_BASE, dir, 'atoms'))) continue;
+
+    const allWords = dir.split('-').filter(w => w.length > 1);
+    const meaningful = allWords.filter(w => !SKIP_WORDS.has(w));
+    const denominator = meaningful.length || allWords.length;
+
+    const meaningfulMatched = meaningful.filter(wordMatches).length;
+    if (meaningfulMatched === 0) continue;
+
+    const score = meaningfulMatched / denominator;
+
+    if (
+      score > bestScore ||
+      (score === bestScore && meaningfulMatched > bestMatchedCount) ||
+      (score === bestScore && meaningfulMatched === bestMatchedCount && dir.length < bestLen)
+    ) {
+      bestScore = score;
+      bestMatchedCount = meaningfulMatched;
+      bestLen = dir.length;
+      bestConceptId = dir;
+    }
+  }
+
+  // Require a minimum match fraction to avoid spurious single-word hits on
+  // very short concept slugs. 0.45 allows 1-of-2-meaningful-word matches
+  // while rejecting generic single-word messages.
+  if (bestScore < 0.45 || !bestConceptId) return null;
+
+  return resolveAtom(bestConceptId, action);
+}

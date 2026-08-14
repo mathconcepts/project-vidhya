@@ -47,6 +47,10 @@ COPY --from=builder /app/data ./data
 COPY --from=builder /app/demo ./demo
 COPY --from=builder /app/config ./config
 
+# Pre-authored engineering math atom files (82 concepts × up to 8 atoms).
+# Required by atom-responder.ts for LLM-free chat responses.
+COPY --from=builder /app/modules ./modules
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:${PORT:-8080}/health || exit 1

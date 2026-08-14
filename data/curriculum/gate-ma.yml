@@ -410,15 +410,6 @@ concepts:
     prerequisites:
       - svd
       - eigenvalues
-  - id: numerical-linear-algebra
-    topic: linear-algebra
-    label: Numerical Linear Algebra
-    description: Numerical stability, partial pivoting, iterative methods, computational cost
-    difficulty_base: 0.55
-    gate_frequency: low
-    prerequisites:
-      - lu-factorization
-      - systems-of-equations
   - id: ode-first-order
     topic: differential-equations
     label: First Order ODEs

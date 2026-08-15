@@ -416,3 +416,80 @@ data behind it.
 
 Neither is caused by the demo work. Both were invisible until the rail was
 walked.
+
+**Both were closed later in this branch.** `GET /api/teaching/roster` now
+exists (admin/owner see every student, a teacher sees their own, a student gets
+an empty list rather than a 403, and no email leaves the server), and
+`/api/progress/:sessionId` returns the empty progress shape without a database
+instead of throwing. The paragraphs above are left as written because they
+record what the walk found; this note records what happened next.
+
+---
+
+## 15. The deck shipped two cards nobody could walk
+
+Found during `/ship`'s pre-landing review, after every gate was green and the
+branch had already been pushed. `ci:demo-rails` passed. The personas resolved,
+the atoms existed, the interactive blocks parsed, the captions were anchored.
+Two of the five cards still could not be walked by the visitor they were built
+for.
+
+`demo/seed.ts` seeded **every** persona as `student`. Two cards routed
+somewhere a student cannot go:
+
+| Card | Destination | What the visitor got |
+|---|---|---|
+| `principal-auditing-outcomes` | `/teaching` | "Teacher role required. Your role: student" |
+| `same-lesson-two-students` | `/admin/scenarios` | 403 Insufficient permissions |
+
+Verified live rather than by reading: a token minted by the running server for
+`meera-gate-la-anxious` carries `role: student`, and both endpoints refuse it.
+
+This is the same shape as the five silent-nulls in §2, one level up. Those were
+a *part* that was absent with nothing red. This was every part present and the
+*journey* impossible. A validator that proves each piece exists cannot prove
+they compose into something a person can walk — which is exactly what the
+plan's D3.6 acceptance condition asks for, and exactly what "QA-walked end to
+end" means. The check was encoded; the walk was not.
+
+### Fixed
+
+- Personas declare `demo_role` (`student` | `teacher` | `admin`; absent means
+  student, which is every learner). `data/personas/devika-principal-audit.yaml`
+  is the plan's fourth persona — the principal — seeded at `admin` because her
+  journey spans `/teaching` (needs teacher) and the admin surfaces.
+- `demo/seed.ts` seeds each persona at its declared role **and mints its token
+  with that role**. Both mattered: `src/auth/middleware.ts` reads the role off
+  the stored user row, `src/api/auth-middleware.ts` reads it off the JWT claim.
+  The row was fixed first and the surfaces still refused, because the token was
+  still hardcoded `'student'` — two sources of one truth, and only one of them
+  had been told.
+- `check-demo-rails` gained a reachability check: it resolves every route a
+  card can put the visitor on, maps it to the role that route demands, and
+  fails when the card's persona is seeded below it. Confirmed to fail on the
+  exact pre-fix deck.
+
+### Deferred: D3.1, the split-screen reveal
+
+`same-lesson-two-students` was **pulled**, per the plan's own rule that a card
+which dead-ends is pulled rather than shipped.
+
+Fixing its role was not enough. The side-by-side lives on `/admin/scenarios`,
+which lists trial runs from `.data/scenarios/`; that directory is empty, and
+nothing seeds it. `npm run demo:scenario` cannot fill it either —
+`src/scenarios/persona-seeder.ts` requires `DATABASE_URL` by deliberate design
+("Scenarios need a real DB to be meaningful"), and the venue instance is
+offline with no database. So with the role corrected the card stopped
+returning 403 and started returning an empty list: reachable, and hollow.
+
+Shipping four cards that all walk beats five where one is a blank page in
+front of a skeptic. The deck is now 4/4.
+
+What it would take to bring D3.1 back: a file-backed fallback in
+`persona-seeder` (the same move `FileLearningObjectCatalog` already made for
+practice items), plus a demo-seed step that creates one comparison run. That is
+a real change on the demo-critical path and was declined at seven days out, not
+overlooked.
+
+To make sure the card cannot quietly return in its hollow form,
+`checkCompareRail` now fails when a compare rail exists with no runs on disk.

@@ -55,9 +55,21 @@ describe('PgLearningObjectCatalog — DB-less', () => {
     expect(n).toBe(0);
   });
 
-  it('getLearningObjectCatalog() returns a singleton that behaves DB-lessly', async () => {
+  it('getLearningObjectCatalog() falls back to authored items without a DATABASE_URL', async () => {
+    // CHANGED 2026-08-15. This previously asserted `[]` — correct while the pg
+    // catalog was the only implementation, and the reason a DB-less deploy had
+    // no gradable item at all: /api/practice/item/:id 404'd for everything, so
+    // "the win is earned on a real item" had nothing behind it. An offline demo
+    // venue runs exactly that configuration.
+    //
+    // The singleton now returns FileLearningObjectCatalog when DATABASE_URL is
+    // unset, so a DB-less instance degrades to a smaller REAL catalog instead of
+    // to none. The PgLearningObjectCatalog assertions above are unchanged and
+    // still hold — that class still returns nothing without a database; it is
+    // the resolver's choice of implementation that changed.
     const catalog = getLearningObjectCatalog();
     const rows = await catalog.query({ skillId: 'eigenvalues' });
-    expect(rows).toEqual([]);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.nodeId === 'eigenvalues')).toBe(true);
   });
 });

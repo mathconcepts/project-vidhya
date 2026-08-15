@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable practice items for the linear-algebra demo rail.",
+    "",
+    "These exist because the gradable path was Postgres-only: /api/practice/item/:id",
+    "resolves through PgLearningObjectCatalog, nothing seeds generated_problems, and",
+    "demo/Dockerfile notes those tables are never created on the demo deploy. So a",
+    "DB-less instance — which is what an offline venue runs — had no gradable item at",
+    "all, and 'the win is earned on a real item' had nothing behind it.",
+    "",
+    "Marking shape mirrors markingPayloadFromRow() in learning-object-catalog-pg.ts",
+    "exactly, so a file-backed item and a database row are indistinguishable to",
+    "GateDeterministicScorer. answerIndex indexes THIS options array, in this order.",
+    "",
+    "Every answer here is checkable by hand in under a minute — that is deliberate.",
+    "A demo item whose correctness a visitor cannot verify themselves is a claim, not",
+    "a demonstration."
+  ],
+  "items": [
+    {
+      "id": "la-eigen-trace-det-001",
+      "concept_id": "eigenvalues",
+      "topic": "Linear Algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[4, 1], [2, 3]]. The eigenvalues of A are the roots of λ² − (trace)λ + (det) = 0. What are they?",
+      "options": ["λ = 5 and λ = 2", "λ = 4 and λ = 3", "λ = 7 and λ = 10", "λ = 6 and λ = 1"],
+      "answer_index": 0,
+      "correct_answer": "λ = 5 and λ = 2",
+      "solution_steps": [
+        "trace(A) = 4 + 3 = 7, det(A) = 4·3 − 1·2 = 10.",
+        "Characteristic equation: λ² − 7λ + 10 = 0.",
+        "Factor: (λ − 5)(λ − 2) = 0, so λ = 5 and λ = 2.",
+        "Check: 5 + 2 = 7 = trace, and 5 × 2 = 10 = det."
+      ],
+      "verification_method": "hand_checkable_trace_det"
+    },
+    {
+      "id": "la-det-area-002",
+      "concept_id": "determinants",
+      "topic": "Linear Algebra",
+      "difficulty": 0.25,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[3, 0], [0, 2]] is applied to the unit square. By what factor does the area scale?",
+      "answer_range": [5.99, 6.01],
+      "correct_answer": "6",
+      "solution_steps": [
+        "The area scale factor of a linear map is |det(A)|.",
+        "det(A) = 3·2 − 0·0 = 6.",
+        "The unit square maps to a 3 × 2 rectangle, area 6 — the same answer, seen directly."
+      ],
+      "verification_method": "hand_checkable_determinant"
+    },
+    {
+      "id": "la-orthogonal-dot-003",
+      "concept_id": "orthogonality",
+      "topic": "Linear Algebra",
+      "difficulty": 0.30,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Which vector is orthogonal to u = (3, 1)?",
+      "options": ["(1, −3)", "(3, 1)", "(6, 2)", "(1, 3)"],
+      "answer_index": 0,
+      "correct_answer": "(1, −3)",
+      "solution_steps": [
+        "Two vectors are orthogonal exactly when their dot product is zero.",
+        "(3, 1) · (1, −3) = 3·1 + 1·(−3) = 3 − 3 = 0.",
+        "The others give 10, 20 and 6 — all non-zero, so none of them is perpendicular to u."
+      ],
+      "verification_method": "hand_checkable_dot_product"
+    }
+  ]
+}

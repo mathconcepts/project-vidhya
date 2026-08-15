@@ -27,6 +27,7 @@ import {
   Target, AlertTriangle, Compass, RefreshCw,
 } from 'lucide-react';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
+import { receiptFromServerGrade } from '@/lib/receipt';
 
 interface PracticeItem {
   id: string;
@@ -397,7 +398,7 @@ export default function PracticeAttemptPage() {
                       server from the canonical answer key, which the client
                       never sees. That's a real backing verification, not a
                       client-side string match — earns the receipt border. */}
-                  <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }}>
+                  <ReceiptBorder receipt={receiptFromServerGrade(result.grade)}>
                     <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
                       {result.grade.correct ? 'Correct' : 'Not this time'} — {fmt(result.grade.earned)} / {fmt(result.grade.max)} marks
                     </p>

@@ -53,7 +53,7 @@ describe('ReceiptBorder', () => {
 
   it('reads border color from the DESIGN-SYSTEM CSS custom properties, not a hardcoded class', () => {
     const { container } = render(
-      <ReceiptBorder receipt={{ verified: true }}>
+      <ReceiptBorder receipt={{ verified: true, source: 'cas_verifier' }}>
         <span>Verified answer</span>
       </ReceiptBorder>,
     );

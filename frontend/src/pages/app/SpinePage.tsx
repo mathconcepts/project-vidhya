@@ -23,6 +23,7 @@ import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
+import { NO_RECEIPT, type Receipt } from '@/lib/receipt';
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart, Hash, Repeat, Layers, Share2, Navigation,
   BookOpen, Target, CheckCircle2, RotateCcw, ChevronDown, ChevronRight,
@@ -220,14 +221,15 @@ function SegmentShell({
   tone,
   primary,
   secondary,
-  verified,
+  receipt,
 }: {
   icon: React.ElementType;
   label: string;
   tone: SegmentTone;
   primary: string;
   secondary: string;
-  verified?: boolean;
+  /** A real receipt, or null. Never a boolean — see @/lib/receipt. */
+  receipt?: Receipt | null;
 }) {
   const containerStyle: React.CSSProperties = {
     borderRadius: 'var(--radius-sm)',
@@ -267,8 +269,8 @@ function SegmentShell({
     </div>
   );
 
-  if (verified) {
-    return <ReceiptBorder receipt={{ verified: true }} className="h-full">{content}</ReceiptBorder>;
+  if (receipt) {
+    return <ReceiptBorder receipt={receipt} className="h-full">{content}</ReceiptBorder>;
   }
   return content;
 }
@@ -327,8 +329,15 @@ function ProveSegment({ progress, topicId: _topicId }: { progress: ProgressTopic
       label="Prove"
       tone="lit"
       primary={`${masteryPct}% accuracy`}
-      secondary={`from ${progress.attempts} verified attempt${progress.attempts === 1 ? '' : 's'}`}
-      verified
+      secondary={`from ${progress.attempts} recorded attempt${progress.attempts === 1 ? '' : 's'}`}
+      // No receipt: this is `correct_count / attempts` from sr_sessions —
+      // self-reported spaced-repetition recall, not a verified result. The
+      // border would promise "proven true" over numbers nothing checked, and
+      // any seeded profile with attempts would earn it. Wording corrected from
+      // "verified attempts" for the same reason. When server-graded attempts
+      // (GateDeterministicScorer) are distinguishable here, this can carry a
+      // real receiptFromServerGrade().
+      receipt={NO_RECEIPT}
     />
   );
 }

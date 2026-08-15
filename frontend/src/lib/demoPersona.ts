@@ -29,6 +29,7 @@
 const KEY = 'vidhya.demo.persona';
 const CAPTIONS_KEY = 'vidhya.demo.captions';
 const RAIL_KEY = 'vidhya.demo.rail';
+const OUTCOME_KEY = 'vidhya.demo.outcome';
 
 export interface DemoPersonaSignal {
   /** Persona slug, for display and for the sample-data disclosure. */
@@ -78,6 +79,7 @@ export function clearDemoPersona(): void {
     sessionStorage.removeItem(KEY);
     sessionStorage.removeItem(CAPTIONS_KEY);
     sessionStorage.removeItem(RAIL_KEY);
+    sessionStorage.removeItem(OUTCOME_KEY);
   } catch {
     /* nothing to clear */
   }
@@ -191,4 +193,63 @@ export function railPosition(pathname: string): {
     index,
     total: steps.length,
   };
+}
+
+export interface DemoOutcome {
+  objectId: string;
+  correct: boolean;
+}
+
+/**
+ * The result of the rail's graded step — the hinge of the miss choreography.
+ *
+ * The plan's D3.3 is explicit that for this audience the miss is the LIKELY
+ * case, and that it should become the demo rather than a dead moment: the
+ * caption reframes, the product responds visibly, and the rail re-targets its
+ * ending peak onto the thing just missed. All three need to know what actually
+ * happened, so the outcome is recorded here when the server grades it.
+ *
+ * Recorded, never inferred. A demo that guesses the visitor got it right —
+ * or wrong — would be faking the one moment that has to be real.
+ */
+export function getDemoOutcome(): DemoOutcome | null {
+  try {
+    const raw = sessionStorage.getItem(OUTCOME_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return typeof parsed?.objectId === 'string' && typeof parsed?.correct === 'boolean'
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Fired when the outcome changes, so mounted rail UI can react. */
+export const DEMO_OUTCOME_EVENT = 'vidhya:demo-outcome';
+
+export function setDemoOutcome(outcome: DemoOutcome | null): void {
+  try {
+    if (!outcome) sessionStorage.removeItem(OUTCOME_KEY);
+    else sessionStorage.setItem(OUTCOME_KEY, JSON.stringify(outcome));
+  } catch {
+    /* storage disabled — the rail still walks, just without the reframe */
+  }
+  // React does not observe sessionStorage, and DemoRailNav is mounted up in
+  // AppLayout — it had already rendered by the time the answer was graded, so
+  // the reframe and the re-targeted ending silently never fired. Every unit
+  // test passed because they set the outcome BEFORE rendering; only walking the
+  // miss in a browser showed it. This is the notification that was missing.
+  try {
+    window.dispatchEvent(new CustomEvent(DEMO_OUTCOME_EVENT));
+  } catch {
+    /* non-browser context */
+  }
+}
+
+/** Subscribe to outcome changes. Returns an unsubscribe function. */
+export function onDemoOutcomeChange(fn: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(DEMO_OUTCOME_EVENT, fn);
+  return () => window.removeEventListener(DEMO_OUTCOME_EVENT, fn);
 }

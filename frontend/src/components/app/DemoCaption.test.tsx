@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import fs from 'fs';
 import path from 'path';
 import { DemoCaption, captionFor } from './DemoCaption';
-import { setDemoPersona, clearDemoPersona } from '@/lib/demoPersona';
+import { setDemoPersona, clearDemoPersona, setDemoOutcome } from '@/lib/demoPersona';
 
 const CAPTIONS = [
   { at: 'hook', text: 'The ellipse is what the matrix does to a circle.' },
@@ -106,5 +106,53 @@ describe('shipped caption copy', () => {
         }
       }
     }
+  });
+});
+
+describe('miss choreography', () => {
+  const BRANCHED = [
+    { at: 'practice', text: 'This is a real item.' },
+    { at: 'practice', when: 'correct' as const, text: 'She earned that one.' },
+    { at: 'practice', when: 'incorrect' as const, text: 'That slip is exactly what Vidhya watches for.' },
+  ];
+
+  it('reframes on a miss', () => {
+    // The plan is explicit that for this audience the miss is the LIKELY case,
+    // so it is scripted rather than left to chance.
+    expect(captionFor('practice', BRANCHED, 'incorrect')).toBe(BRANCHED[2].text);
+  });
+
+  it('congratulates on a win, without overclaiming', () => {
+    expect(captionFor('practice', BRANCHED, 'correct')).toBe(BRANCHED[1].text);
+  });
+
+  it('falls back to the unconditional caption before the outcome is known', () => {
+    // A step must still narrate while the visitor is mid-answer.
+    expect(captionFor('practice', BRANCHED, null)).toBe(BRANCHED[0].text);
+  });
+
+  it('falls back when a step branches on only one outcome', () => {
+    const partial = [
+      { at: 'practice', text: 'neutral' },
+      { at: 'practice', when: 'incorrect' as const, text: 'reframe' },
+    ];
+    expect(captionFor('practice', partial, 'correct')).toBe('neutral');
+  });
+
+  it('goes silent rather than showing the wrong branch', () => {
+    const onlyBranch = [{ at: 'practice', when: 'incorrect' as const, text: 'reframe' }];
+    expect(captionFor('practice', onlyBranch, 'correct')).toBeNull();
+  });
+
+  it('the rendered caption follows the recorded outcome', () => {
+    setDemoPersona({
+      id: 'meera-gate-la-anxious',
+      display_name: 'Meera',
+      mastery_by_concept: { eigenvalues: 0.22 },
+      recent_errors: [],
+    });
+    setDemoOutcome({ objectId: 'la-eigen-trace-det-001', correct: false });
+    render(<DemoCaption step="practice" captions={BRANCHED} />);
+    expect(screen.getByText(BRANCHED[2].text)).toBeInTheDocument();
   });
 });

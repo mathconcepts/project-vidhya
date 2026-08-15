@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 import { receiptFromServerGrade } from '@/lib/receipt';
+import { setDemoOutcome } from '@/lib/demoPersona';
 
 interface PracticeItem {
   id: string;
@@ -46,6 +47,8 @@ interface PracticeItem {
 interface AttemptResult {
   grade: { earned: number; max: number; correct: boolean; feedback: string };
   marking: { marks_correct: number; marks_wrong: number };
+  /** Revealed only after the answer is committed; never on the item view. */
+  solution_steps?: string[];
   recorded: boolean;
 }
 
@@ -129,6 +132,11 @@ export default function PracticeAttemptPage() {
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
       setResult(data as AttemptResult);
+      // Hand the graded outcome to the demo rail. The caption reframe and the
+      // re-targeted ending both depend on what actually happened — recorded
+      // from the server's grade, never inferred, because that moment is the
+      // one the whole miss choreography rests on.
+      setDemoOutcome({ objectId: item.id, correct: (data as AttemptResult).grade.correct });
     } catch (err) {
       setSubmitError((err as Error).message);
     } finally {
@@ -404,6 +412,18 @@ export default function PracticeAttemptPage() {
                     </p>
                     <p style={{ margin: '4px 0 0', opacity: 0.8 }}>{result.grade.feedback}</p>
                   </ReceiptBorder>
+                  {/* Full-step reveal. Withheld until the answer is committed —
+                      the item view never carries it — and shown either way: a
+                      student who missed needs the steps most, and one who got
+                      it right should be able to check their route rather than
+                      trust the mark. */}
+                  {!!result.solution_steps?.length && (
+                    <ol style={{ margin: '10px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {result.solution_steps.map((s, i) => (
+                        <li key={i} style={{ fontSize: 15, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{s}</li>
+                      ))}
+                    </ol>
+                  )}
                   {!result.recorded && (
                     <p style={{ margin: 0, color: 'var(--orange)', paddingTop: 4 }}>
                       Graded, but not recorded to your model (server storage unavailable).

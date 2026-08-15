@@ -227,10 +227,29 @@ function checkCaptions(card: any): void {
           `(${validAnchors.join(', ')}) — the caption would never be shown`,
       );
     }
-    if (seen.has(caption.at)) {
-      fail(card.id, `two captions anchored to "${caption.at}"; only the first would show`);
+    // `when` branches the caption on the graded outcome (D3.3's miss
+    // choreography). Uniqueness is per (anchor, when): a step may carry one
+    // unconditional caption plus one per outcome, but two captions competing
+    // for the same slot means only the first would ever show.
+    if (caption.when !== undefined && caption.when !== 'correct' && caption.when !== 'incorrect') {
+      fail(card.id, `captions[${i}].when must be "correct" or "incorrect"`);
     }
-    seen.add(caption.at);
+    // Only an atoms rail with a practice item ever produces a graded outcome.
+    // A branch on any other rail kind is dead copy that can never fire — which
+    // reads as a scripted moment that silently does not happen.
+    const hasGradedStep = card.rail?.kind === 'atoms' && !!card.rail.practice_item_id;
+    if (caption.when && !hasGradedStep) {
+      fail(
+        card.id,
+        `captions[${i}] branches on an outcome, but this rail has no graded step — ` +
+          `the reframe could never fire`,
+      );
+    }
+    const slot = `${caption.at}::${caption.when ?? ''}`;
+    if (seen.has(slot)) {
+      fail(card.id, `two captions in slot "${slot}"; only the first would show`);
+    }
+    seen.add(slot);
 
     const lower = caption.text.toLowerCase();
     const hit = PUFFERY.find((w) => lower.includes(w));

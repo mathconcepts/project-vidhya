@@ -31,7 +31,14 @@
     "from data/practice-items/. It becomes a final step after the lesson, so the",
     "rail ends on a mark the student actually earned rather than on a page they",
     "read. The validator requires it to exist, to be gradable, and to belong to the",
-    "same concept as the rail."
+    "same concept as the rail.",
+    "",
+    "A caption may carry `when: correct | incorrect` \u2014 the miss choreography (D3.3).",
+    "For this audience the miss is the LIKELY case, so it is scripted rather than",
+    "left to chance: the caption reframes, the worked steps appear, and the rail",
+    "offers the same item again so the session still closes on earned competence.",
+    "The unconditional caption at a step stays as the fallback, so a step without a",
+    "branch still narrates."
   ],
   "cards": [
     {
@@ -65,7 +72,17 @@
         },
         {
           "at": "practice",
-          "text": "This is a real item, graded on the server against an answer key the page never receives. Whatever happens next was earned."
+          "when": "correct",
+          "text": "That was a real item, graded on the server against a key this page never saw. She earned that one."
+        },
+        {
+          "at": "practice",
+          "when": "incorrect",
+          "text": "That slip is exactly what Vidhya watches for. The worked steps are on screen now, and the rail will hand her the same question again \u2014 the session closes on this, not on the miss."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives."
         }
       ]
     },
@@ -100,7 +117,17 @@
         },
         {
           "at": "practice",
-          "text": "This is a real item, graded on the server against an answer key the page never receives. Whatever happens next was earned."
+          "when": "correct",
+          "text": "Graded server-side against a key the page never receives. Nothing here was staged."
+        },
+        {
+          "at": "practice",
+          "when": "incorrect",
+          "text": "She could compute the determinant and still miss what it meant \u2014 which is why the rail comes back to this one rather than moving on."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives."
         }
       ]
     },
@@ -130,7 +157,17 @@
         },
         {
           "at": "practice",
-          "text": "This is a real item, graded on the server against an answer key the page never receives. Whatever happens next was earned."
+          "when": "correct",
+          "text": "Straight through, as expected for his profile. Notice the rail did not slow him down to prove a point."
+        },
+        {
+          "at": "practice",
+          "when": "incorrect",
+          "text": "Even a strong profile slips. The steps are up, and the same item comes back \u2014 the product does not round a miss up to a pass."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives."
         }
       ]
     },

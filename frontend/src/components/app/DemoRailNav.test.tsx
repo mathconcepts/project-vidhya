@@ -7,6 +7,7 @@ import {
   setDemoPersona,
   setDemoCaptions,
   setDemoRail,
+  setDemoOutcome,
   clearDemoPersona,
   railPosition,
 } from '@/lib/demoPersona';
@@ -119,5 +120,50 @@ describe('DemoRailNav', () => {
     renderNav();
     expect(screen.getByText(/Step 2 of 3/)).toBeInTheDocument();
     expect(screen.getByText(/Next: Individual attempts/)).toBeInTheDocument();
+  });
+});
+
+describe('miss choreography — re-targeted ending', () => {
+  const GRADED = [
+    { at: 'lesson', route: '/lesson/eigenvalues', label: 'The concept' },
+    { at: 'practice', route: '/attempt/la-eigen-trace-det-001', label: 'Try one yourself' },
+  ];
+
+  function onGradedStep() {
+    enterRail();
+    setDemoRail(GRADED);
+    pathname = '/attempt/la-eigen-trace-det-001';
+  }
+
+  it('offers the same item again after a miss, so the rail does not end on it', () => {
+    // D3.3: a nervous visitor who misses and then conquers is a stronger proof
+    // than a clean win, so the ending peak re-targets onto the missed item.
+    onGradedStep();
+    setDemoOutcome({ objectId: 'la-eigen-trace-det-001', correct: false });
+    renderNav();
+    expect(screen.getByText(/Try this one again/)).toBeInTheDocument();
+    expect(screen.queryByText(/End of this journey/)).not.toBeInTheDocument();
+  });
+
+  it('closes the journey after a win', () => {
+    onGradedStep();
+    setDemoOutcome({ objectId: 'la-eigen-trace-det-001', correct: true });
+    renderNav();
+    expect(screen.getByText(/End of this journey/)).toBeInTheDocument();
+    expect(screen.queryByText(/Try this one again/)).not.toBeInTheDocument();
+  });
+
+  it('does not re-target on a miss recorded for a different item', () => {
+    // A stale outcome from an earlier journey must not hijack this step.
+    onGradedStep();
+    setDemoOutcome({ objectId: 'some-other-item', correct: false });
+    renderNav();
+    expect(screen.queryByText(/Try this one again/)).not.toBeInTheDocument();
+  });
+
+  it('shows no retry before the visitor has answered', () => {
+    onGradedStep();
+    renderNav();
+    expect(screen.queryByText(/Try this one again/)).not.toBeInTheDocument();
   });
 });

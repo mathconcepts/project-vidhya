@@ -18,21 +18,38 @@
  * browser back button and a mid-rail reload both stay correct.
  */
 
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { getDemoPersona, getDemoCaptions, railPosition } from '@/lib/demoPersona';
+import {
+  getDemoPersona,
+  getDemoCaptions,
+  getDemoOutcome,
+  onDemoOutcomeChange,
+  railPosition,
+} from '@/lib/demoPersona';
 import { captionFor } from '@/components/app/DemoCaption';
 
 export function DemoRailNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  // Re-read the graded outcome when it lands. Hooks run before the early
+  // returns below so their order stays stable across renders.
+  const [outcome, setOutcome] = useState(() => getDemoOutcome());
+  useEffect(() => onDemoOutcomeChange(() => setOutcome(getDemoOutcome())), []);
+  useEffect(() => setOutcome(getDemoOutcome()), [location.pathname]);
 
   if (!getDemoPersona()) return null;
 
   const { current, next, index, total } = railPosition(location.pathname);
   if (!current) return null;
 
-  const caption = captionFor(current.at, getDemoCaptions());
+  const missedHere = outcome && !outcome.correct && current.route.endsWith(outcome.objectId);
+  const caption = captionFor(
+    current.at,
+    getDemoCaptions(),
+    outcome ? (outcome.correct ? 'correct' : 'incorrect') : null,
+  );
 
   return (
     <aside
@@ -73,7 +90,32 @@ export function DemoRailNav() {
         </p>
       )}
 
-      {next ? (
+      {missedHere ? (
+        // The rail re-targets its ending peak onto the thing just missed
+        // (D3.3). A nervous visitor who misses and then conquers is a stronger
+        // proof than a clean win, so the journey does not end on the miss — it
+        // offers the same item again, with the worked steps now on screen.
+        <button
+          onClick={() => navigate(0)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            minHeight: 44,
+            padding: '0 4px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 17,
+            fontWeight: 'var(--weight-semibold)',
+            color: 'var(--green-ink)',
+            font: 'inherit',
+          }}
+        >
+          Try this one again
+          <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+        </button>
+      ) : next ? (
         <button
           onClick={() => navigate(next.route)}
           style={{

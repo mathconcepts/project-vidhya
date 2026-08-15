@@ -27,20 +27,21 @@
  */
 
 import { useEffect, useState } from 'react';
-import { getDemoPersona } from '@/lib/demoPersona';
+import { getDemoPersona, getDemoOutcome, onDemoOutcomeChange } from '@/lib/demoPersona';
 import { X } from 'lucide-react';
 
 export interface DemoCaptionProps {
   /** The rail step being shown — an atom name, or 'compare'. */
   step: string;
   /** Caption scripts for the active card, anchored by step. */
-  captions?: Array<{ at: string; text: string }>;
+  captions?: Array<{ at: string; text: string; when?: 'correct' | 'incorrect' }>;
 }
 
 /** Pure lookup, exported so the anchoring rule is testable without a DOM. */
 export function captionFor(
   step: string,
-  captions?: Array<{ at: string; text: string }>,
+  captions?: Array<{ at: string; text: string; when?: 'correct' | 'incorrect' }>,
+  outcome?: 'correct' | 'incorrect' | null,
 ): string | null {
   if (!captions?.length || !step) return null;
   // The rails config anchors on atom FILE names (worked-example) while the
@@ -49,11 +50,21 @@ export function captionFor(
   // not showing is the exact failure this anchoring scheme exists to avoid.
   const norm = (s: string) => s.replace(/_/g, '-').toLowerCase();
   const target = norm(step);
-  return captions.find((c) => norm(c.at) === target)?.text ?? null;
+  const atStep = captions.filter((c) => norm(c.at) === target);
+  // An outcome-specific caption wins once the outcome is known — that is the
+  // reframe. The unconditional one is the fallback, so a step without a
+  // branch still narrates rather than going silent.
+  return (
+    (outcome ? atStep.find((c) => c.when === outcome)?.text : undefined) ??
+    atStep.find((c) => !c.when)?.text ??
+    null
+  );
 }
 
 export function DemoCaption({ step, captions }: DemoCaptionProps) {
   const [dismissed, setDismissed] = useState(false);
+  const [outcome, setOutcome] = useState(() => getDemoOutcome());
+  useEffect(() => onDemoOutcomeChange(() => setOutcome(getDemoOutcome())), []);
 
   // A new step is a new caption; a dismissal applies to the one it was aimed
   // at, not to the rest of the rail.
@@ -64,7 +75,7 @@ export function DemoCaption({ step, captions }: DemoCaptionProps) {
   // Not in a demo journey → the component does not exist for this visitor.
   if (!getDemoPersona()) return null;
 
-  const text = captionFor(step, captions);
+  const text = captionFor(step, captions, outcome ? (outcome.correct ? 'correct' : 'incorrect') : null);
   if (!text || dismissed) return null;
 
   const reduceMotion =

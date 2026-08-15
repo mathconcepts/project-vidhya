@@ -147,7 +147,7 @@ for (const s of students) {
 // person the rail is about, and attempts grade and record against that demo
 // account rather than a real student's.
 console.log('\n--- step 4b: scenario personas as demo accounts ---');
-const personaUsers: Array<{ id: string; user: any }> = [];
+const personaUsers: Array<{ id: string; user: any; role: string }> = [];
 try {
   const personaDir = 'data/personas';
   for (const file of readdirSync(personaDir)) {
@@ -156,15 +156,25 @@ try {
     const id = raw.match(/^id:\s*(\S+)/m)?.[1];
     const displayName = raw.match(/^display_name:\s*"?([^"\n]+)"?/m)?.[1] ?? id;
     if (!id) continue;
+    // A rail can land on a teacher- or admin-gated surface — the principal
+    // journey opens on the teaching dashboard. Seeding every persona as a
+    // student sent that visitor straight into a permissions refusal, which is
+    // the dead end the plan says to pull a card over. The persona declares the
+    // role its journey needs; absent means student, which is every learner.
+    const declaredRole = raw.match(/^demo_role:\s*(\S+)/m)?.[1] ?? 'student';
+    const role = ['student', 'teacher', 'admin'].includes(declaredRole) ? declaredRole : 'student';
+    if (role !== declaredRole) {
+      console.log(`  ! ${id}: demo_role "${declaredRole}" is not a demo role — seeding as student`);
+    }
     const u = upsertFromGoogle({
       google_sub: `demo-persona-${id}`,
       email: `${id}@vidhya.local`,
       name: `${displayName} (demo persona)`,
       picture: '',
     });
-    setRole({ actor_id: ownerUser.id, target_id: u.id, new_role: 'student' });
-    personaUsers.push({ id, user: u });
-    console.log(`  ${u.id}  ${id}`);
+    setRole({ actor_id: ownerUser.id, target_id: u.id, new_role: role as any });
+    personaUsers.push({ id, user: u, role });
+    console.log(`  ${u.id}  ${id}${role === 'student' ? '' : `  [${role}]`}`);
   }
 } catch (e: any) {
   console.log(`  (no personas seeded: ${e?.message ?? 'unknown'})`);
@@ -341,7 +351,13 @@ mint(studentUsers[1].user, 'student', 'student-light');
 mint(studentUsers[2].user, 'student', 'student-new');
 // Keyed by persona id, so /demo-login?role=<persona-id> signs the visitor in as
 // the person the rail narrates.
-for (const p of personaUsers) mint(p.user, 'student', p.id);
+//
+// The role has to be the persona's own, not a hardcoded 'student': the admin
+// routes resolve role from the JWT claim (src/api/auth-middleware.ts:getAuth),
+// so a token minted as a student would refuse the principal's surfaces even
+// though the seeded user row says admin. Two sources of the same truth, and
+// only one of them was being told.
+for (const p of personaUsers) mint(p.user, p.role, p.id);
 
 writeFileSync('demo/demo-tokens.json', JSON.stringify(allTokens, null, 2));
 console.log('  tokens written to demo/demo-tokens.json');

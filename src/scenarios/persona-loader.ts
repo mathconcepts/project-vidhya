@@ -40,17 +40,40 @@ export interface AnswerPolicy {
   rules: PolicyAction[];
 }
 
+/**
+ * The role the persona's demo account is seeded at.
+ *
+ * Absent means `student`, which is what every learner persona wants. It
+ * exists because a demo rail can land on a teacher- or admin-gated surface:
+ * the principal journey opens on the teaching dashboard, and the
+ * side-by-side comparison lives behind the admin scenarios page. Signing a
+ * visitor in as a student and then sending them somewhere a student cannot
+ * go is a dead end, which the plan says is grounds for pulling a card.
+ *
+ * Deliberately narrow: `owner` is not offerable. Nothing in the demo needs
+ * it, and it is the one role that can hand out other roles.
+ */
+export type PersonaDemoRole = 'student' | 'teacher' | 'admin';
+
 export interface Persona {
   schema_version: 1;
   id: string;
   display_name: string;
   description: string;
+  /** Omitted for learner personas; see PersonaDemoRole. */
+  demo_role?: PersonaDemoRole;
   seed: PersonaSeed;
   answer_policy: AnswerPolicy;
 }
 
 const REP_MODES: ReadonlySet<string> = new Set(['algebraic', 'geometric', 'numerical', 'balanced']);
 const MOTIVATION_STATES: ReadonlySet<string> = new Set(['driven', 'steady', 'flagging', 'frustrated', 'anxious']);
+const DEMO_ROLES: ReadonlySet<string> = new Set(['student', 'teacher', 'admin']);
+
+/** The seeded role for a persona, with the learner default applied. */
+export function personaDemoRole(p: Persona): PersonaDemoRole {
+  return p.demo_role ?? 'student';
+}
 
 const PERSONAS_DIR = path.join(process.cwd(), 'data', 'personas');
 
@@ -95,6 +118,14 @@ export function validatePersona(parsed: unknown, sourcePath: string): Persona {
   }
   if (typeof p.description !== 'string') {
     throw new Error(`${sourcePath}: description required`);
+  }
+  // Absent is the learner default. A present-but-wrong value is refused
+  // rather than silently downgraded — a typo that quietly seeds a principal
+  // as a student is exactly the dead end this field exists to prevent.
+  if (p.demo_role !== undefined && !DEMO_ROLES.has(p.demo_role as string)) {
+    throw new Error(
+      `${sourcePath}: demo_role must be one of ${[...DEMO_ROLES].join(', ')} (got ${String(p.demo_role)})`,
+    );
   }
 
   const seed = p.seed as Record<string, unknown> | undefined;

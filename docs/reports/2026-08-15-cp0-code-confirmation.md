@@ -332,3 +332,42 @@ still the bulk of the remaining schedule.
 - **No generator emits `interactive-spec`.** Every one of the 107 is hand-authored. Until a
   generator learns the schema, "fill a new topic with interactives" stays authoring work —
   which is worth knowing before promising a second demo vertical.
+
+---
+
+## 12. What the browser walk found (M2/M3 verification, 2026-08-15)
+
+Everything in M1–M3 was green — unit tests, three CI gates, typecheck, a
+production build — and the demo was still broken end to end. Driving the rail in
+a real Chromium found four defects in one pass, none of which any test could
+have caught:
+
+| Defect | Effect at the venue |
+|---|---|
+| `/demo` hit the one-shot welcome redirect | The deck rendered "Welcome to Vidhya". The redirect fires for a *first-time* visitor — precisely who a demo is for |
+| Exempting `/demo` alone was not enough | The tap landed on `/lesson/eigenvalues`, and the redirect fired *there*. The journey still ended on the welcome page one tap in. Fixed by exempting an active persona, wherever the rail goes |
+| `height="auto"` on an `<svg>` (`DesmosLite.tsx:98`) | Not a valid SVG length; the browser rejects the attribute |
+| `index.html` fetches Inter Tight + JetBrains Mono from Google Fonts | **Unresolved — see below** |
+
+The first two are the ones that mattered: a validator that proves every card's
+atoms exist cannot know that the router will take the visitor somewhere else.
+
+### The offline claim needs narrowing
+
+Removing the MathBox CDN tier made the *interactive path* free of external
+network dependencies, and that claim holds. The **app shell** is not:
+`frontend/index.html:18-20` preconnects and loads two font families from
+`fonts.googleapis.com`.
+
+At an offline venue on a Linux laptop the `--font-sans` stack degrades past
+`-apple-system` / `SF Pro` (Apple-only) and past `Inter Tight` (unreachable) to
+`Segoe UI` / `system-ui`. Nothing breaks functionally, but DESIGN-SYSTEM.md
+treats typography as load-bearing — "one family, type-led, hierarchy from weight
+and whitespace" — and the demo is partly an argument that the product is
+carefully made.
+
+Not fixed here: self-hosting the two families means vendoring woff2 files,
+adding `@font-face` rules, checking licences and accepting the bundle cost. That
+is a deliberate change, not a hotfix at the end of a long session. It belongs in
+the pre-demo checklist either way, because the venue smoke test the plan
+specifies ("zero external network dependencies") currently fails on fonts.

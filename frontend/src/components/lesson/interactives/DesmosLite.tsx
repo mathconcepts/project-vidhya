@@ -95,7 +95,11 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
       role="img"
       aria-label={`Plot of ${eqSrc} with ${sliderSpecs.length} parameter slider(s)`}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%" height="auto">
+      {/* `height="auto"` is not a valid SVG length — the browser rejects the
+          attribute outright ("Expected length, \"auto\""), which surfaced as a
+          console error when the rail was walked. viewBox + preserveAspectRatio
+          already do the scaling; the intrinsic ratio comes from the box. */}
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%">
         <g stroke="var(--separator)" strokeOpacity="0.6" strokeWidth="0.5">
           {Array.from({ length: 7 }, (_, i) => {
             const sx = (i / 6) * W;

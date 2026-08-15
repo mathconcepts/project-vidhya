@@ -242,3 +242,84 @@ the locked v1 schema**, starting with the concepts that demo best (eigenvalues,
 linear-transformations, determinants, vector-spaces). Schema is frozen and machine-checked
 (`validateManipulable` / `validateSimulation`, `types.ts:155-198`), so this parallelises
 cleanly across low-cost models with a validator as the gate.
+
+---
+
+## 8. Correction to §1, and what the premise really was
+
+§1 refuted *"interactives are generated but not rendered"* on the grounds that
+`InteractiveSidecar` is live-mounted. That is true of the wiring, and it is the wrong
+conclusion to draw about the product.
+
+Running the new linter across the content module found that **50 of the 101
+`interactive-spec` blocks were invalid and rendered as nothing**: 49 were missing the
+required `title` field, one had malformed JSON. `parseInteractiveSpec` rejected them,
+`InteractiveSidecar` returned `null`, and there was no error, no counter, and no test.
+
+So the original observation behind this whole plan — *"currently only static content is
+displayed"* — **was correct**. Roughly half of every lesson's interactives were invisible.
+The diagnosis was wrong (wiring), not the symptom. Two authoring styles had drifted apart:
+pretty-printed specs carrying a `title`, and minified specs without one. Only the first
+kind ever rendered.
+
+That reframes the CP0 verdict. The plan was right that something was broken and right that
+it needed fixing before a demo. It was wrong about where, and the wrong location was
+load-bearing: M1.1 would have built a component (`InteractiveLessonBlock.tsx`) against the
+multi-channel pipeline and shipped without the actual defect being touched.
+
+## 9. What was fixed on day 1
+
+| Fix | Scale | Commit |
+|---|---|---|
+| Invalid `interactive-spec` blocks repaired | 50 files | `5084a64` |
+| `lint-interactive-specs` — validates AND executes every spec | new | `5084a64` |
+| Dead MathBox CDN tier removed; `capability.ts` probe added | 5 files, 16 tests | `8a950f8` |
+| Leaked generator scaffolding removed from shipped atoms | 43 files | `94a0e02` |
+| LA manipulables + simulations authored | 6 new specs | `94a0e02` |
+| z-transform atom shift repaired, missing intuition atom authored | 4 files | `2d90f24` |
+| Unmatched code fences repaired | 41 files | `c86a3f1` |
+| `ci:content-integrity` + `ci:interactive-specs` CI gates | new | `c86a3f1` |
+
+Verification: 107/107 interactive-spec blocks valid and exercised · 783/783 atom files
+clean · backend 1967/1967 · frontend 259/259 · typecheck clean.
+
+### The offline requirement is now met by subtraction
+
+The plan's M1.2 was *"move three.js + mathbox into the build."* Removing the tier was
+strictly better: the interactive path now has **no external network dependency at all**, so
+the venue smoke test's zero-dependency assertion holds by construction rather than by
+bundling discipline. The 6-second stall is gone with it.
+
+The cost, stated plainly: there is no WebGL tier any more, so *"drag an eigenvector in 3D"*
+is not available for this demo. What replaces it is a `manipulable` on the eigenvalues
+concept — drag the four entries of a 2×2 matrix and watch trace, determinant, discriminant
+and both eigenvalues move — plus a `simulation` on the hook atom that traces the ellipse
+whose axes are the eigenvectors. Both are dependency-free and cannot fail at the venue.
+
+## 10. Revised M1 status
+
+| Item | Original | Status |
+|---|---|---|
+| 0 · code confirmation | ½ day | **done** — this report |
+| 1 · interactive wiring | (M1 bulk) | **superseded** — wiring was fine; the 50 dead specs were the real defect, fixed |
+| 2 · MathBox bundling | (M1 bulk) | **done by removal** + capability probe |
+| 3 · LA fill | (M1 bulk) | **partial** — 6 interactives authored; more LA concepts still carry only guided_walkthroughs |
+| 4 · walkthrough scripts v1 | (M1 bulk) | **not started** |
+
+M2 (`/demo` entry, journey deck, persona seeding, reset) and M3 (first-win rail, receipts
+rail, split-screen surfacing, captions, live-doubt) are untouched. Per §4 they are smaller
+than planned — the persona seeder and the split-screen reveal already exist — but they are
+still the bulk of the remaining schedule.
+
+## 11. Still open, carried forward
+
+- **Receipt objects in fixtures (§6).** Unresolved. The principal's receipts rail needs
+  seeded attempts to carry a real `{verified: true}` receipt or `ReceiptBorder` renders
+  nothing. This belongs in the fixture-coherence contract before M3 item 9 is built.
+- **147 cosmetic atom-id drifts** (`visual_analogy` vs `visual-analogy`). Tolerated by the
+  new gate on purpose; worth a single normalising pass someday, not before the demo.
+- **A real WebGL tier**, if 3D is ever wanted: needs a mathbox version that exists, the
+  `canRenderWebGLTier()` gate, and vendored same-origin assets.
+- **No generator emits `interactive-spec`.** Every one of the 107 is hand-authored. Until a
+  generator learns the schema, "fill a new topic with interactives" stays authoring work —
+  which is worth knowing before promising a second demo vertical.

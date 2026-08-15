@@ -84,7 +84,13 @@ describe('shipped caption copy', () => {
 
   it('every shipped caption anchors to a real step of its own rail', () => {
     for (const card of config.cards) {
-      const anchors = card.rail.kind === 'atoms' ? card.rail.atoms : ['compare'];
+      // Mirrors check-demo-rails' anchor resolution, per rail kind.
+      const anchors =
+        card.rail.kind === 'atoms'
+          ? card.rail.atoms
+          : card.rail.kind === 'surfaces'
+            ? card.rail.steps.map((s: { at: string }) => s.at)
+            : ['compare'];
       for (const caption of card.captions ?? []) {
         expect(anchors, `card ${card.id}`).toContain(caption.at);
       }

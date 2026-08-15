@@ -45,7 +45,7 @@ const PERSONAS = path.join(ROOT, 'data/personas');
 const CONCEPTS = path.join(ROOT, 'modules/project-vidhya-content/concepts');
 
 const AUDIENCES = new Set(['student', 'teacher', 'principal']);
-const RAIL_KINDS = new Set(['atoms', 'compare']);
+const RAIL_KINDS = new Set(['atoms', 'compare', 'surfaces']);
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 const errors: string[] = [];
@@ -151,8 +151,13 @@ function checkCaptions(card: any): void {
     return;
   }
 
+  const kind = card.rail?.kind;
   const validAnchors: string[] =
-    card.rail?.kind === 'atoms' ? (card.rail.atoms ?? []) : ['compare'];
+    kind === 'atoms'
+      ? (card.rail.atoms ?? [])
+      : kind === 'surfaces'
+        ? (card.rail.steps ?? []).map((s: any) => s?.at).filter(Boolean)
+        : ['compare'];
 
   const seen = new Set<string>();
   for (const [i, caption] of card.captions.entries()) {
@@ -183,6 +188,40 @@ function checkCaptions(card: any): void {
     }
     if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(caption.text)) {
       fail(card.id, `captions[${i}] contains emoji — the design system forbids emoji anywhere`);
+    }
+  }
+}
+
+/**
+ * A surfaces rail walks product screens in order — the principal's drill-down
+ * from an aggregate to one student's one attempt.
+ *
+ * Routes are checked for shape, not resolved against the router: the validator
+ * runs in node with no React tree to ask. What it CAN guarantee is that each
+ * step is addressable and distinctly anchored, so a caption cannot silently
+ * attach to the wrong screen and the rail cannot contain a step you can never
+ * navigate to.
+ */
+function checkSurfacesRail(card: any, rail: any): void {
+  if (!Array.isArray(rail.steps) || rail.steps.length === 0) {
+    fail(card.id, 'surfaces rail needs steps[] — an empty rail IS the dead end');
+    return;
+  }
+  const seen = new Set<string>();
+  for (const [i, step] of rail.steps.entries()) {
+    if (!step || typeof step.at !== 'string' || !step.at) {
+      fail(card.id, `steps[${i}] needs an "at" anchor for its caption`);
+      continue;
+    }
+    if (seen.has(step.at)) {
+      fail(card.id, `two steps anchored to "${step.at}" — captions could not tell them apart`);
+    }
+    seen.add(step.at);
+    if (typeof step.route !== 'string' || !step.route.startsWith('/')) {
+      fail(card.id, `steps[${i}].route must be an in-app path starting with "/"`);
+    }
+    if (typeof step.label !== 'string' || !step.label) {
+      fail(card.id, `steps[${i}] needs a label — it is what the visitor taps to advance`);
     }
   }
 }
@@ -253,6 +292,7 @@ function main(): void {
       continue;
     }
     if (rail.kind === 'atoms') checkAtomRail(card, rail);
+    else if (rail.kind === 'surfaces') checkSurfacesRail(card, rail);
     else checkCompareRail(card, rail);
     checkCaptions(card);
   }

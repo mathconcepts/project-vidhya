@@ -19,7 +19,13 @@
     "anchored to rail steps \u2014 an atom name \u2014 not to DOM selectors: a caption",
     "between screens cannot miss its target, which is the CaptionTargetMissingError",
     "the plan's error map calls out. The validator refuses a caption whose `at`",
-    "is not a step of that card's own rail."
+    "is not a step of that card's own rail.",
+    "",
+    "Rail kinds: 'atoms' walks a concept's atoms inside one lesson; 'compare'",
+    "opens the existing personalized-vs-neutral side-by-side; 'surfaces' walks an",
+    "ordered sequence of product screens, which is what the principal's",
+    "drill-down needs \u2014 aggregate, then per-student, then individual attempts.",
+    "A surfaces step's `at` is its caption anchor."
   ],
   "cards": [
     {
@@ -122,6 +128,47 @@
         {
           "at": "compare",
           "text": "Every number on this screen is tappable. Try to catch it."
+        }
+      ]
+    },
+    {
+      "id": "principal-auditing-outcomes",
+      "title": "Auditing whether any of this worked",
+      "subtitle": "Start at the batch view and drill until you hit an individual attempt.",
+      "audience": "principal",
+      "persona": "meera-gate-la-anxious",
+      "rail": {
+        "kind": "surfaces",
+        "steps": [
+          {
+            "at": "batch",
+            "route": "/teaching",
+            "label": "Batch view"
+          },
+          {
+            "at": "coverage",
+            "route": "/teacher/syllabus-coverage",
+            "label": "Taught vs mastered"
+          },
+          {
+            "at": "attempts",
+            "route": "/progress",
+            "label": "Individual attempts"
+          }
+        ]
+      },
+      "captions": [
+        {
+          "at": "batch",
+          "text": "Every number on this screen is tappable. Try to catch it \u2014 the drill-down goes all the way to one student's one attempt."
+        },
+        {
+          "at": "coverage",
+          "text": "Two bars per topic: what has been taught, and what has actually been mastered. The gap between them is the thing worth arguing about."
+        },
+        {
+          "at": "attempts",
+          "text": "This is the bottom of the drill-down. A green border here means a real verification record backs the number \u2014 where there is no border, nothing verified it, and the product says so rather than implying otherwise."
         }
       ]
     }

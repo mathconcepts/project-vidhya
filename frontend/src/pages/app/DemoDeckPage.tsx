@@ -22,7 +22,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setDemoPersona, clearDemoPersona, setDemoCaptions } from '@/lib/demoPersona';
+import { setDemoPersona, clearDemoPersona, setDemoCaptions, setDemoRail } from '@/lib/demoPersona';
 
 interface AtomRail {
   kind: 'atoms';
@@ -35,6 +35,10 @@ interface CompareRail {
   concept_id: string;
   against_persona: string;
 }
+interface SurfacesRail {
+  kind: 'surfaces';
+  steps: Array<{ at: string; route: string; label: string }>;
+}
 
 export interface DemoCard {
   id: string;
@@ -42,7 +46,7 @@ export interface DemoCard {
   subtitle?: string;
   audience: 'student' | 'teacher' | 'principal';
   persona: string;
-  rail: AtomRail | CompareRail;
+  rail: AtomRail | CompareRail | SurfacesRail;
   captions?: Array<{ at: string; text: string }>;
   persona_signal?: {
     id: string;
@@ -60,9 +64,9 @@ type LoadState =
 
 /** Where a card sends the visitor. Kept next to the type it switches on. */
 export function railDestination(card: DemoCard): string {
-  return card.rail.kind === 'compare'
-    ? '/admin/scenarios'
-    : `/lesson/${card.rail.concept_id}`;
+  if (card.rail.kind === 'compare') return '/admin/scenarios';
+  if (card.rail.kind === 'surfaces') return card.rail.steps[0]?.route ?? '/';
+  return `/lesson/${card.rail.concept_id}`;
 }
 
 export default function DemoDeckPage() {
@@ -140,6 +144,7 @@ export default function DemoDeckPage() {
                 if (card.persona_signal) setDemoPersona(card.persona_signal);
                 else clearDemoPersona();
                 setDemoCaptions(card.captions);
+                setDemoRail(card.rail.kind === 'surfaces' ? card.rail.steps : undefined);
                 navigate(railDestination(card));
               }}
               style={{

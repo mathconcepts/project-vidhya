@@ -382,3 +382,37 @@ One external font reference remains outside the app: `frontend/public/admin/
 agent/dashboard/index.html`, a standalone static admin page pulling IM Fell
 English and IBM Plex. It is not on any demo rail and not part of the SPA
 bundle, so it is left alone and recorded here rather than silently swept in.
+
+---
+
+## 13. The principal's rail — two findings from walking it
+
+The receipts rail (M3 item 9) walks `/teaching` → `/teacher/syllabus-coverage` →
+`/progress`. Walking it in a browser surfaced two problems on the skeptic's own
+path — the worst place to have them, since that rail's entire premise is "try to
+catch it".
+
+**`GET /api/teaching/roster` does not exist.** `TeacherSyllabusCoveragePage.tsx:83`
+calls it on every load; no such route is registered anywhere in `src/`. The
+frontend already `.catch(() => null)`s it, so the page degrades rather than
+breaking — but it 404s every time, and the roster count then renders as zero.
+
+Worse, the count's label printed the API path *to the visitor*:
+`${rosterIds.length} students from /api/teaching/roster`. A principal auditing
+the product would have read "0 students from /api/teaching/roster" on screen.
+Fixed to say what is true — a count, or "No roster loaded — paste student ids
+below". The missing endpoint itself is left alone: inventing a contract for a
+route nobody wrote is a bigger decision than a copy fix, and the page has a
+working manual path.
+
+**`GET /api/progress/:sessionId` returns 500 with no database.** The handler
+queries `sr_sessions`; without `DATABASE_URL` it throws rather than degrading.
+At the venue (local Docker with Postgres) this should work, so it is not
+demo-blocking — but a 500 where an honest empty state belongs is the
+honest-states law being broken by omission, and `/progress` is the last step of
+the principal's drill-down. Not fixed here; recorded so the pre-demo checklist
+covers it, and so nobody reads the green rail walk as proof that step 3 has
+data behind it.
+
+Neither is caused by the demo work. Both were invisible until the rail was
+walked.

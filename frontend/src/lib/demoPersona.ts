@@ -28,6 +28,7 @@
 
 const KEY = 'vidhya.demo.persona';
 const CAPTIONS_KEY = 'vidhya.demo.captions';
+const RAIL_KEY = 'vidhya.demo.rail';
 
 export interface DemoPersonaSignal {
   /** Persona slug, for display and for the sample-data disclosure. */
@@ -76,6 +77,7 @@ export function clearDemoPersona(): void {
   try {
     sessionStorage.removeItem(KEY);
     sessionStorage.removeItem(CAPTIONS_KEY);
+    sessionStorage.removeItem(RAIL_KEY);
   } catch {
     /* nothing to clear */
   }
@@ -133,4 +135,60 @@ export function setDemoCaptions(captions: DemoCaptionScript[] | undefined): void
   } catch {
     /* storage disabled — the rail still walks, just silently */
   }
+}
+
+export interface DemoRailStep {
+  at: string;
+  route: string;
+  label: string;
+}
+
+/**
+ * The ordered surfaces of a `surfaces` rail — the principal's drill-down from a
+ * batch aggregate to one student's one attempt.
+ *
+ * Stored per-tab like the persona and the caption script, so all three are
+ * cleared by the same reset and two devices walk independently.
+ */
+export function getDemoRail(): DemoRailStep[] | undefined {
+  try {
+    const raw = sessionStorage.getItem(RAIL_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.every((s) => s?.route && s?.at) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function setDemoRail(steps: DemoRailStep[] | undefined): void {
+  try {
+    if (!steps?.length) sessionStorage.removeItem(RAIL_KEY);
+    else sessionStorage.setItem(RAIL_KEY, JSON.stringify(steps));
+  } catch {
+    /* storage disabled — the rail still walks, just without a next affordance */
+  }
+}
+
+/**
+ * Which step of the rail the given path is on, and what follows it.
+ *
+ * Matched on the route rather than an index held in state: a visitor who taps
+ * the browser back button, or lands mid-rail from a bookmark, still gets a
+ * correct "next" instead of an off-by-one.
+ */
+export function railPosition(pathname: string): {
+  current: DemoRailStep | null;
+  next: DemoRailStep | null;
+  index: number;
+  total: number;
+} {
+  const steps = getDemoRail() ?? [];
+  const index = steps.findIndex((s) => s.route === pathname);
+  return {
+    current: index >= 0 ? steps[index] : null,
+    next: index >= 0 && index + 1 < steps.length ? steps[index + 1] : null,
+    index,
+    total: steps.length,
+  };
 }

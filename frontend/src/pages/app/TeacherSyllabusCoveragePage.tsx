@@ -251,7 +251,9 @@ export default function TeacherSyllabusCoveragePage() {
           <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
             {usePastedRoster
               ? `${pastedIds.split(',').filter(Boolean).length} pasted ids`
-              : `${rosterIds.length} students from /api/teaching/roster`}
+              : rosterIds.length
+                ? `${rosterIds.length} students`
+                : 'No roster loaded — paste student ids below'}
           </span>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer' }}>

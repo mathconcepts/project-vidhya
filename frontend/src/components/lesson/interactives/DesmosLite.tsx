@@ -95,8 +95,12 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
       role="img"
       aria-label={`Plot of ${eqSrc} with ${sliderSpecs.length} parameter slider(s)`}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%" height="auto">
-        <g stroke="#374151" strokeOpacity="0.4" strokeWidth="0.5">
+      {/* `height="auto"` is not a valid SVG length — the browser rejects the
+          attribute outright ("Expected length, \"auto\""), which surfaced as a
+          console error when the rail was walked. viewBox + preserveAspectRatio
+          already do the scaling; the intrinsic ratio comes from the box. */}
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%">
+        <g stroke="var(--separator)" strokeOpacity="0.6" strokeWidth="0.5">
           {Array.from({ length: 7 }, (_, i) => {
             const sx = (i / 6) * W;
             return <line key={`v${i}`} x1={sx} y1={0} x2={sx} y2={H} />;
@@ -108,7 +112,7 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
         </g>
         {yZero != null && <line x1={0} y1={yZero} x2={W} y2={yZero} stroke="#6b7280" strokeWidth="1" />}
         {xZero != null && <line x1={xZero} y1={0} x2={xZero} y2={H} stroke="#6b7280" strokeWidth="1" />}
-        <path d={path} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={path} fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       {sliderSpecs.length > 0 && (
         <div className="px-3 py-2 border-t space-y-1.5" style={{ borderColor: 'var(--separator)' }}>

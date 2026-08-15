@@ -7,15 +7,13 @@
  * never wears this border — enforced by construction. No receipt object, no border.
  */
 import type { ReactNode } from 'react';
+import type { Receipt } from '@/lib/receipt';
 
-/**
- * Minimal shape a caller needs to prove a piece of content is backed by a
- * real verification record. Only `verified` is read here.
- */
-export interface Receipt {
-  verified: boolean;
-  source?: string;
-}
+// The Receipt type and its constructors live in `@/lib/receipt` — that module
+// is the only place a receipt may be minted, and `source` is required there so
+// a bare `{ verified: true }` can no longer type-check at a call site. Re-
+// exported here for the many components that import it alongside the border.
+export type { Receipt };
 
 interface ReceiptBorderProps {
   receipt: Receipt | null | undefined;
@@ -66,7 +64,7 @@ export function ReceiptBorder({ receipt, children, className }: ReceiptBorderPro
         >
           ✓
         </span>
-        Verified{receipt?.source ? ` · ${receipt.source}` : ''}
+        Verified · {receipt.source}
       </span>
       {children}
     </div>

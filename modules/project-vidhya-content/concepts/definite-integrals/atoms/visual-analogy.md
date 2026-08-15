@@ -17,6 +17,3 @@ The Fundamental Theorem says: the integral from $a$ to $b$ is simply the differe
 ```gif-scene
 {"type":"function-trace","expression":"exp(-x)","x_range":[0,5],"y_range":[-0.2,1.2],"frames":30,"fps":12}
 ```
-```
-
-**FILE 3:

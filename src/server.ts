@@ -17,6 +17,8 @@ import { flywheelRoutes, setFlywheelOrchestrator } from './jobs/content-flywheel
 import { topicPageRoutes } from './api/topic-pages';
 import { streakRoutes } from './api/streak-routes';
 import { spineRoutes } from './api/spine-routes';
+import { demoRoutes } from './api/demo-routes';
+import { demoDoubtRoutes } from './api/demo-doubt-routes';
 import { adminRoutes } from './api/admin-routes';
 import { adminExperimentsRoutes } from './api/admin-experiments-routes';
 import { adminRunsRoutes } from './api/admin-runs-routes';
@@ -111,7 +113,7 @@ import { renderExamLanding } from './templates/exam-landing';
 import { renderSitemap, buildSitemapEntries } from './templates/sitemap';
 import { renderRssFeed } from './templates/rss-feed';
 import { computeFeatureFlags } from './api/feature-flags';
-import { resolveDemoRole, buildDemoLoginHtml, type DemoTokens } from './api/demo-login';
+import { resolveDemoRole, buildDemoLoginHtml, demoLoginAllowed, type DemoTokens } from './api/demo-login';
 import path from 'path';
 import fs from 'fs';
 import pg from 'pg';
@@ -175,6 +177,14 @@ for (const route of streakRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of spineRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+// Visitor-facing demo deck. The handler itself 404s unless DEMO_MODE_ENABLED
+// is true, so registering it unconditionally does not expose it.
+for (const route of demoRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of demoDoubtRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminRoutes) {
@@ -663,6 +673,15 @@ registerRoute('GET', '/demo-login', async (req, res) => {
   // object. Pre-fix this used `req.query?.role` which is always undefined,
   // causing every demo login to fall back to 'student-active' (Priya)
   // regardless of the requested role.
+  // Refuse on a production-shaped instance: real OAuth configured and no demo
+  // flag. 404 rather than 403 — an instance that does not do demo logins should
+  // not confirm that the route exists.
+  if (!demoLoginAllowed()) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+    return;
+  }
+
   const role = req.query?.get('role') ?? 'student-active';
 
   // Auto-seed in local-dev mode if tokens haven't been generated yet.
@@ -695,7 +714,7 @@ registerRoute('GET', '/demo-login', async (req, res) => {
   }
 
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(buildDemoLoginHtml(entry));
+  res.end(buildDemoLoginHtml(entry, req.query?.get('next')));
 });
 
 // ============================================================================

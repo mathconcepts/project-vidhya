@@ -26,6 +26,3 @@ The MVT guarantees they must meet. For any smooth curve joining two points, ther
 - Connect local properties (derivatives) to global ones (function values)
 
 Understanding MVT means seeing calculus not as a collection of rules, but as a unified framework where the micro (instantaneous) and macro (average) perspectives must harmonize.
-```
-
-**File 2:

@@ -33,6 +33,5 @@ If your integrand contains two functions from this list, the one appearing *earl
 This strategy works because we're **lowering the degree** of polynomials (differentiating) while moving the harder exponential or trig part to the other term. When done right, each application simplifies the problem. Some integrals (like $\int x^2 e^x \, dx$) need repeated application—but each step gets easier.
 
 **Key insight for exams:** Always check whether your final integral $\int v \, du$ is simpler than the original.
-```
 
 ---

@@ -21,6 +21,5 @@ Imagine you're standing on a hillside at position $(x, y)$ with elevation $z = f
 The **Jacobian** takes this further: it collects all partial derivatives into a matrix that fully describes how a multivariable function changes near a point. It's the multivariable equivalent of a single derivative—a complete snapshot of the rate of change in every direction.
 
 For exam problems, you'll compute partial derivatives by treating all variables except one as constants, then differentiate normally. The Jacobian appears in transformation problems and when analyzing how functions behave near critical points.
-```
 
 ---

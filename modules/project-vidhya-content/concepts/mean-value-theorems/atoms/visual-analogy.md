@@ -26,6 +26,3 @@ The slider doesn't stop at just one angle—it smoothly transitions. By continui
 ```
 
 This parabola shows both the function curve and illustrates where a tangent line can match the secant slope between any two points.
-```
-
-**File 3:

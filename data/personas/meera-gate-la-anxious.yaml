@@ -1,0 +1,53 @@
+schema_version: 1
+
+# Meera — GATE aspirant three weeks from the exam, weak in linear algebra.
+#
+# The primary demo persona for the full-feel walkthrough: the audience the
+# CEO plan names first, "students whose confidence is low". Her mastery vector
+# is deliberately low across the four linear-algebra concepts that carry a
+# complete see-it/drag-it/work-it arc, so the rail she walks is coherent —
+# a card claiming "weak in linear algebra" must sit on a profile that is
+# actually weak in linear algebra, and `scripts/check-demo-rails.ts` enforces
+# exactly that.
+#
+# This file describes a SCRIPTED demo persona. The id is a slug, not a UUID.
+# Real student data MUST NOT be pasted here — CI invariant blocks UUIDs.
+
+id: meera-gate-la-anxious
+display_name: "Meera — GATE aspirant, three weeks out, weak in linear algebra"
+description: |
+  Comfortable with calculus mechanics from her undergraduate coursework, but
+  linear algebra never clicked — she can execute row reduction and still not
+  say what a determinant means. Reads symbols as instructions to follow rather
+  than objects with behaviour, so she prefers seeing a picture move before she
+  trusts a formula. Three weeks out, she is rationing time and avoiding the
+  topic she is weakest at, which is the trap the study plan exists to break.
+
+seed:
+  representation_mode: geometric
+  motivation_state: anxious
+  knowledge_track_id: GATE-MA
+  exam_id: gate-ma
+  initial_mastery:
+    eigenvalues: 0.22
+    determinants: 0.35
+    linear-transformations: 0.28
+    orthogonality: 0.18
+  recent_misconceptions:
+    - m_determinant_is_just_a_formula
+    - m_eigenvector_must_be_unit_length
+    - m_confuses_row_and_column_space
+
+answer_policy:
+  type: scripted
+  rules:
+    # First exposure: likely to reach for the memorised-procedure distractor
+    # rather than the conceptual answer. This is what makes her designed miss
+    # in the walkthrough script land honestly instead of being staged.
+    - on: first_exposure
+      action: pick_distractor_kind
+      kind: procedural_recall
+      probability: 0.65
+    - on: default
+      action: pick_correct
+      probability_fn: mastery_plus_0_2

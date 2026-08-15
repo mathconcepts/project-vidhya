@@ -7,7 +7,8 @@
  *
  * Tier discipline (per the eng review + amendment):
  *   Tier 0  Static SVG/PNG/MP4    ~0KB     always
- *   Tier 1  MathBox.js            ~150KB   default for 3D/parametric/vector
+ *   Tier 1  MathBoxLite (SVG)     ~0KB     default for 3D/parametric/vector
+ *           (was MathBox.js/WebGL — removed 2026-08-15, see note below)
  *   Tier 2  Desmos free embed     ~250KB   slider-driven 2D
  *   Tier 3  GeoGebra applet       ~600KB   fallback only — CAS/algebra
  *   Tier 4+ Wolfram (paid)        opt-in   never a fallback
@@ -19,7 +20,7 @@
 import { lazy, ComponentType } from 'react';
 
 export type DirectiveType =
-  | 'math3d' | 'parametric' | 'vectorfield' | 'surface'   // MathBox primary
+  | 'math3d' | 'parametric' | 'vectorfield' | 'surface'   // SVG plot primary
   | 'slider' | 'graph2d'                                  // Desmos primary
   | 'cas' | 'construct'                                   // GeoGebra primary
   | 'manim'                                               // Pre-rendered MP4
@@ -33,7 +34,25 @@ export interface DirectiveProps {
 }
 
 // Lazy-load every provider so the lesson page first paint stays small.
-const MathBox    = lazy(() => import('./MathBox'));
+//
+// NOTE ON THE 3D TIER: the WebGL MathBox provider was removed (2026-08-15).
+// It loaded `mathbox@2.4.1` from unpkg, and that version has never existed on
+// the npm registry that unpkg serves from (latest published: 2.3.2-rc1), so
+// the script 404'd on every mount and the component fell through to the SVG
+// path — after first downloading ~600KB of three.js for nothing. It also
+// evaluated author-supplied expressions through `new Function()`, which the
+// interactive-spec evaluator explicitly forbids, and painted with the retired
+// navy/emerald palette. `MathBoxLite` is what students have actually been
+// seeing, so the 3D directives now route there directly and honestly.
+// Reinstating a real WebGL tier is deferred by owner decision (2026-08-15):
+// the slider-driven eigenvalue manipulable is the accepted substitute for 3D
+// orbit-drag. If it is ever revived it needs a mathbox version that exists, a
+// device-capability gate, and vendored same-origin assets so it survives an
+// offline venue. The speculative probe written alongside this removal was
+// deleted rather than left as dead code.
+const MathBoxLite = lazy(() =>
+  import('./MathBoxLite').then((m) => ({ default: m.MathBoxLite })),
+);
 const Desmos     = lazy(() => import('./Desmos'));
 const GeoGebra   = lazy(() => import('./GeoGebra'));
 const Manim      = lazy(() => import('./Manim'));
@@ -49,15 +68,15 @@ const StaticFallback = lazy(() => import('./StaticFallback'));
  * on render error via InteractiveBoundary.
  */
 export const PROVIDER_REGISTRY: Record<DirectiveType, ComponentType<DirectiveProps>[]> = {
-  // Tier 1 MathBox primary
-  math3d:      [MathBox, StaticFallback],
-  parametric:  [MathBox, Desmos, StaticFallback],
-  vectorfield: [MathBox, StaticFallback],
-  surface:     [MathBox, StaticFallback],
+  // Tier 1 SVG plot primary (dependency-free — survives an offline venue)
+  math3d:      [MathBoxLite, StaticFallback],
+  parametric:  [MathBoxLite, Desmos, StaticFallback],
+  vectorfield: [MathBoxLite, StaticFallback],
+  surface:     [MathBoxLite, StaticFallback],
 
   // Tier 2 Desmos primary
   slider:      [Desmos, StaticFallback],
-  graph2d:     [Desmos, MathBox, StaticFallback],
+  graph2d:     [Desmos, MathBoxLite, StaticFallback],
 
   // Tier 3 GeoGebra primary
   cas:         [GeoGebra, StaticFallback],
@@ -97,9 +116,16 @@ export function resolveInteractive(ref: string): any | null {
     try {
       // Vite resolves this at build time; each JSON gets eagerly imported
       // into the bundle. ~ small overhead per library entry, negligible.
-      const modules = import.meta.glob('/modules/project-vidhya-content/interactives-library/*.json', {
-        eager: true,
-      }) as Record<string, any>;
+      // Relative, NOT '/modules/...'. Vite resolves a leading-slash glob against
+      // its project root, which is `frontend/` here — so the absolute form matched
+      // nothing, returned {}, and every :::interactive{ref=} directive silently
+      // fell through to StaticFallback. Same silent-null failure class as the
+      // interactive-spec blocks; caught by checking the built bundle for a known
+      // library id rather than by any test.
+      const modules = import.meta.glob(
+        '../../../../../modules/project-vidhya-content/interactives-library/*.json',
+        { eager: true },
+      ) as Record<string, any>;
       _libraryCache = {};
       for (const [path, mod] of Object.entries(modules)) {
         const id = path.split('/').pop()!.replace(/\.json$/, '');

@@ -38,9 +38,3 @@ Instead of computing each term iteratively, we find a **closed-form formula** â€
 3. Asymptotic analysis becomes tractable
 
 The methodology is rigid and algorithmic: identify the recurrence's order, classify it (homogeneous/non-homogeneous), solve the characteristic equation, apply initial conditions. Master the pattern, and you unlock entire problem categories.
-```
-
----
-
-## **ATOM 2: Visual Analogy**
-**File:**

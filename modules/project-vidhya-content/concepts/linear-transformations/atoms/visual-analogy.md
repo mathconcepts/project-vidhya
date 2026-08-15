@@ -19,9 +19,3 @@ The key insight: the transformation **preserves relationships**. If two vectors 
 ```gif-scene
 {"type":"parametric","expression":"cos(x)*cos(t)-sin(x)*sin(t)","x_range":[-3.14159,3.14159],"y_range":[-1.5,1.5],"t_range":[0,6.28],"frames":30,"fps":12}
 ```
-```
-
----
-
-## **FILE 3: worked-example.md**
-**Path:**

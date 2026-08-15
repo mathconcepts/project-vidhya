@@ -27,9 +27,3 @@ This principle states: if you have $n$ pigeonholes and $n+1$ pigeons, at least o
 Counting principles let you solve problems about seating arrangements, password generation, selecting teams, partitioning sets, and probability calculations. They're rarely asked directly, but every probability problem leans on them — mastering counting avoids errors later.
 
 **Key insight:** Identify whether order matters (permutation) or not (combination), then apply the formula mechanically.
-```
-
----
-
-## **Atom 2: Visual Analogy**
-**Path:**

@@ -13,8 +13,10 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Eye, EyeOff, Target, ChevronDown } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCalmMode } from '@/hooks/useCalmMode';
+import { getDemoPersona } from '@/lib/demoPersona';
 import { isDemoMode } from '@/lib/demoMode';
 import { DemoRoleSwitcher } from '@/components/app/DemoRoleSwitcher';
+import { DemoRailNav } from '@/components/app/DemoRailNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSession } from '@/hooks/useSession';
 import { authFetch } from '@/lib/auth/client';
@@ -70,8 +72,20 @@ export function AppLayout() {
   }, []);
 
   useEffect(() => {
-    const exempt = ['/welcome', '/sign-in', '/rooms'];
+    // `/demo` is exempt because it IS a landing screen, and its visitor is by
+    // definition first-time — so without this the one-shot welcome redirect
+    // fires on exactly the person the deck exists for, and the first tap at a
+    // venue lands on a generic welcome page instead of the journeys.
+    const exempt = ['/welcome', '/sign-in', '/rooms', '/demo', '/demo/doubt'];
     if (exempt.includes(location.pathname)) return;
+    // A visitor mid-journey is likewise exempt, wherever the rail took them.
+    // Exempting the deck alone was not enough: the redirect then fired on the
+    // lesson the first card opens, so the journey still ended on the welcome
+    // page one tap in. Keyed on the active persona rather than on a widening
+    // route list, so the real first-visit flow for actual students is
+    // untouched. Both failures were found by walking the rail in a browser —
+    // unit tests and every CI gate were green through both of them.
+    if (getDemoPersona()) return;
     let welcomed = false;
     try { welcomed = localStorage.getItem('vidhya.demo_welcomed') === '1'; } catch { /* ignore */ }
     if (!welcomed) navigate('/welcome', { replace: true });
@@ -145,6 +159,8 @@ export function AppLayout() {
       )}
 
       {isDemoMode() && <DemoRoleSwitcher />}
+      {/* Renders only on a step of an active surfaces rail; inert otherwise. */}
+      <DemoRailNav />
 
       {/* Header */}
       {!calmMode && (

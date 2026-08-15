@@ -21,8 +21,3 @@ When the region is circular or the integrand has radial symmetry, switching to *
 ```
 
 The animation shows cross-sections of a paraboloid surface: as the parameter $t$ increases (representing the $y$-direction), each parabolic slice stacks upward to build the 3D volume.
-```
-
-## Atom 3: Worked Example
-
-**File path:**

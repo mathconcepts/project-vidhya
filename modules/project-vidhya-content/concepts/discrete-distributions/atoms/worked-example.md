@@ -69,6 +69,5 @@ Binomial problems ask: **"In a fixed number of independent trials, each with con
 ```bash
 mkdir -p /home/user/project-vidhya/modules/project-vidhya-content/concepts/discrete-distributions/atoms
 # Then write the three markdown files with the content above
-```
 
 The content is production-ready and follows all Vidhya content guidelines (KaTeX LaTeX, Bloom levels, difficulty ratings, and interactive specifications included).

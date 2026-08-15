@@ -1,0 +1,62 @@
+schema_version: 1
+
+# Devika — a principal auditing whether the platform actually taught anything.
+#
+# The CEO plan names four personas: low-confidence aspirant, near-topper,
+# teacher, principal. The first two shipped as Meera and Rahul. This is the
+# principal, and she exists because the two non-learner rails were pointing at
+# a learner: the receipts rail opens on the teaching dashboard and the
+# side-by-side opens on the admin scenarios page, and a student account
+# reaches neither. Signing a visitor in as Meera and then showing them a
+# permissions refusal is the dead end the plan says to pull a card over.
+#
+# She is seeded at `admin` rather than `teacher` because her journey spans
+# both surfaces: `/teaching` needs teacher, `/admin/scenarios` needs admin,
+# and admin outranks teacher. Not `owner` — nothing in the demo needs the one
+# role that can hand out other roles.
+#
+# Her mastery vector is present because the schema requires one, not because
+# she answers questions. She never sits an item: her rails are drill-downs
+# across product surfaces, and `answer_policy` is inert for her. The values
+# mirror a cohort-average profile so that if a future rail ever does compose a
+# lesson for her, it composes something coherent rather than something absurd.
+#
+# This file describes a SCRIPTED demo persona. The id is a slug, not a UUID.
+# Real student data MUST NOT be pasted here — CI invariant blocks UUIDs.
+
+id: devika-principal-audit
+display_name: "Devika — principal, auditing whether the numbers are real"
+description: |
+  Runs a coaching institute and has been sold dashboards before. She does not
+  want to be told the cohort improved; she wants to tap a number and land on
+  the attempt that produced it. Reads a claim as a claim until she has seen
+  the row underneath it, which is why her journey is a drill-down rather than
+  a lesson: batch view, then taught-versus-mastered, then one student's actual
+  attempts. The rail is built so that every number she can see, she can open.
+
+demo_role: admin
+
+seed:
+  representation_mode: balanced
+  motivation_state: steady
+  knowledge_track_id: GATE-MA
+  exam_id: gate-ma
+  # Cohort-average shape. Never used to pick an item for her — she does not
+  # sit items — but the schema requires a vector and an incoherent one would
+  # be a trap for whoever writes the next rail.
+  initial_mastery:
+    eigenvalues: 0.55
+    determinants: 0.6
+    linear-transformations: 0.55
+    orthogonality: 0.5
+  recent_misconceptions: []
+
+answer_policy:
+  type: scripted
+  rules:
+    # Inert for this persona: her rails contain no gradable item. Present
+    # because the schema requires it, and set to the neutral default so that
+    # it cannot script a miss she would never be asked to make.
+    - on: default
+      action: pick_correct
+      probability_fn: mastery_plus_0_2

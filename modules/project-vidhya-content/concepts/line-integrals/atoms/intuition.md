@@ -24,6 +24,5 @@ For exams, remember:
 - Evaluate $\int_C (x^2 + xy) \, ds$ by parametrizing the curve $C$ first.
 - For $\int_C \mathbf{F} \cdot d\mathbf{r}$, check if $\mathbf{F}$ is conservative (curl = 0). If yes, use the potential function—no path-dependency.
 - Circulation around a closed curve $\oint_C \mathbf{F} \cdot d\mathbf{r}$ relates to curl via Stokes' theorem.
-```
 
 ---

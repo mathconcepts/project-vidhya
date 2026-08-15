@@ -85,5 +85,5 @@ $$367 > 366 \implies \text{by Pigeonhole Principle, at least 2 students share a 
 - **Surjection requires $n \geq m$:** if you need every codomain element covered, you need at least as many inputs.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","steps":[{"prompt":"How many ways can 5 people be seated in a row such that 2 specific people (X and Y) are always adjacent?","hint":"Treat X and Y as one unit → 4 entities. Arrange in 4! ways, then multiply by the number of ways X,Y can be ordered within the unit.","answer":"48"},{"prompt":"What is the coefficient of x³y⁵ in (x+y)⁸?","hint":"Use C(8,3) = 8!/(3!·5!). The exponents must sum to 8.","answer":"56"}]}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: adjacent-seating count and a binomial coefficient","steps":[{"prompt":"How many ways can 5 people be seated in a row such that 2 specific people (X and Y) are always adjacent?","hint":"Treat X and Y as one unit → 4 entities. Arrange in 4! ways, then multiply by the number of ways X,Y can be ordered within the unit.","answer":"48"},{"prompt":"What is the coefficient of x³y⁵ in (x+y)⁸?","hint":"Use C(8,3) = 8!/(3!·5!). The exponents must sum to 8.","answer":"56"}]}
 ```

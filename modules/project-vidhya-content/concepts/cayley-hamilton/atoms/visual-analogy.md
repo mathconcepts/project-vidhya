@@ -21,9 +21,3 @@ For a $2 \times 2$ matrix, once you compute $A^2$, every higher power collapses 
 ```
 
 The animation shows how a composed transformation (like repeated matrix application) cycles according to an underlying pattern—exactly as Cayley-Hamilton predicts.
-```
-
----
-
-## FILE 3: worked-example.md
-**Path:**

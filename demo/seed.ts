@@ -24,7 +24,7 @@
  *   - Telemetry:  .data/demo-usage-log.json — owner-visible.
  */
 
-import { writeFileSync, copyFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, copyFileSync, mkdirSync, existsSync, readdirSync, readFileSync} from 'fs';
 import { issueToken } from '../src/auth/jwt';
 import {
   upsertFromGoogle,
@@ -132,6 +132,52 @@ for (const s of students) {
   studentUsers.push({ user: u, pattern: s.pattern });
   console.log(`  ${u.id}  ${s.name}${s.assignToTeacher ? '  [taught by Kavita]' : ''}`);
   logDemoEvent({ role: 'student', user_id: u.id, event: 'seed.user-created', detail: { pattern: s.pattern } });
+}
+
+// ─── 4b. scenario personas as real demo accounts ──────────────────────
+//
+// CP0 found the two demo systems disconnected: demo/seed.ts mints real logins
+// with no mastery, while data/personas/*.yaml carries mastery with no login.
+// The demo rail needs both at once — a gradable practice item requires an
+// authenticated session, and the captions name the persona whose profile the
+// lesson was composed for. Signing the visitor in as "Priya" while the rail
+// narrates "Meera" is a mismatch a skeptic would find.
+//
+// So every persona gets an account of its own. The visitor is signed in AS the
+// person the rail is about, and attempts grade and record against that demo
+// account rather than a real student's.
+console.log('\n--- step 4b: scenario personas as demo accounts ---');
+const personaUsers: Array<{ id: string; user: any; role: string }> = [];
+try {
+  const personaDir = 'data/personas';
+  for (const file of readdirSync(personaDir)) {
+    if (!file.endsWith('.yaml')) continue;
+    const raw = readFileSync(`${personaDir}/${file}`, 'utf8');
+    const id = raw.match(/^id:\s*(\S+)/m)?.[1];
+    const displayName = raw.match(/^display_name:\s*"?([^"\n]+)"?/m)?.[1] ?? id;
+    if (!id) continue;
+    // A rail can land on a teacher- or admin-gated surface — the principal
+    // journey opens on the teaching dashboard. Seeding every persona as a
+    // student sent that visitor straight into a permissions refusal, which is
+    // the dead end the plan says to pull a card over. The persona declares the
+    // role its journey needs; absent means student, which is every learner.
+    const declaredRole = raw.match(/^demo_role:\s*(\S+)/m)?.[1] ?? 'student';
+    const role = ['student', 'teacher', 'admin'].includes(declaredRole) ? declaredRole : 'student';
+    if (role !== declaredRole) {
+      console.log(`  ! ${id}: demo_role "${declaredRole}" is not a demo role — seeding as student`);
+    }
+    const u = upsertFromGoogle({
+      google_sub: `demo-persona-${id}`,
+      email: `${id}@vidhya.local`,
+      name: `${displayName} (demo persona)`,
+      picture: '',
+    });
+    setRole({ actor_id: ownerUser.id, target_id: u.id, new_role: role as any });
+    personaUsers.push({ id, user: u, role });
+    console.log(`  ${u.id}  ${id}${role === 'student' ? '' : `  [${role}]`}`);
+  }
+} catch (e: any) {
+  console.log(`  (no personas seeded: ${e?.message ?? 'unknown'})`);
 }
 
 const today = new Date();
@@ -303,6 +349,15 @@ mint(teacherUser,          'teacher', 'teacher');
 mint(studentUsers[0].user, 'student', 'student-active');
 mint(studentUsers[1].user, 'student', 'student-light');
 mint(studentUsers[2].user, 'student', 'student-new');
+// Keyed by persona id, so /demo-login?role=<persona-id> signs the visitor in as
+// the person the rail narrates.
+//
+// The role has to be the persona's own, not a hardcoded 'student': the admin
+// routes resolve role from the JWT claim (src/api/auth-middleware.ts:getAuth),
+// so a token minted as a student would refuse the principal's surfaces even
+// though the seeded user row says admin. Two sources of the same truth, and
+// only one of them was being told.
+for (const p of personaUsers) mint(p.user, p.role, p.id);
 
 writeFileSync('demo/demo-tokens.json', JSON.stringify(allTokens, null, 2));
 console.log('  tokens written to demo/demo-tokens.json');

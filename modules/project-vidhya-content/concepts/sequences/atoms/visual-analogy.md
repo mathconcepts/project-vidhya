@@ -21,6 +21,5 @@ The visual pattern below shows this beautifully: the function $\frac{\sin(x)}{x}
 ```
 
 This convergence-through-damping pattern appears everywhere in engineering: RLC circuits cooling down, signal filtering, and Fourier series convergence.
-```
 
 ---

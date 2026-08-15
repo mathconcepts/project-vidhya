@@ -593,6 +593,51 @@ async function handleGetAnnouncement(req: ParsedRequest, res: ServerResponse): P
 // Handler: "who is my teacher?" for students
 // ============================================================================
 
+/**
+ * GET /api/teaching/roster — the students assigned to the signed-in teacher.
+ *
+ * Added 2026-08-15. `TeacherSyllabusCoveragePage` has been calling this on every
+ * load since it shipped, and no such route existed — it 404'd every time. The
+ * page `.catch(() => null)`s the failure so nothing broke visibly, which is
+ * exactly why it went unnoticed: the roster count simply rendered as zero, and
+ * the label even printed the API path to the user.
+ *
+ * Shape matches what that page already accepts (`data.students`, each row keyed
+ * by `id`), so this is the endpoint the client was always written against.
+ *
+ * Admins and owners get every student rather than an empty list: they have no
+ * `teacher_of` roster of their own, and returning nothing to the roles with the
+ * MOST access reads as a bug to whoever is looking at it.
+ */
+async function handleRoster(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
+
+  const me = getUserById(auth.user.id);
+  if (!me) return sendJSON(res, { students: [] });
+
+  const isAdmin = me.role === 'admin' || me.role === 'owner';
+  if (!isAdmin && me.role !== 'teacher') {
+    // A student asking for a roster is not an error, it is just an empty one.
+    // 403 here would break the coverage page for anyone browsing it.
+    return sendJSON(res, { students: [] });
+  }
+
+  const roster = isAdmin
+    ? listUsers().filter((u) => u.role === 'student')
+    : me.teacher_of.map((id) => getUserById(id)).filter((u): u is NonNullable<typeof u> => !!u);
+
+  sendJSON(res, {
+    students: roster.map((s) => ({
+      id: s.id,
+      name: s.name,
+      // Deliberately no email: the coverage page needs identity, not contact
+      // details, and the cohort surface's PII invariant treats leaking them as
+      // a defect rather than a convenience.
+    })),
+  });
+}
+
 async function handleMyTeacher(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const auth = await requireAuth(req, res);
   if (!auth) return;
@@ -702,6 +747,7 @@ export const teachingRoutes: Array<{ method: string; path: string; handler: Rout
   { method: 'POST', path: '/api/teaching/push-to-review',    handler: handlePushToReview },
   { method: 'POST', path: '/api/teaching/announcement',      handler: handlePostAnnouncement },
   { method: 'GET',  path: '/api/teaching/announcement',      handler: handleGetAnnouncement },
+  { method: 'GET',  path: '/api/teaching/roster',            handler: handleRoster },
   { method: 'GET',  path: '/api/student/my-teacher',         handler: handleMyTeacher },
   { method: 'POST', path: '/api/student/dismiss-review',     handler: handleDismissPushedReview },
   { method: 'GET',  path: '/api/teaching/content-review',              handler: handleListContentReview },

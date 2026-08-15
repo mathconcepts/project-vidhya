@@ -56,6 +56,5 @@ When you see $x^2 + y^2$ in the integrand or region, **always consider polar coo
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Double integral in polar coordinates","steps":[{"prompt":"Step 1: What symmetry do you notice in $e^{-(x^2+y^2)}$?","hint":"The exponent involves $x^2 + y^2$. What does this quantity represent geometrically?","answer":"The integrand depends only on distance from the origin: $r = \\sqrt{x^2+y^2}$. This suggests using polar coordinates."},{"prompt":"Step 2: Write the Jacobian for the transformation from Cartesian to polar coordinates.","hint":"Remember: $x = r\\cos\\theta$, $y = r\\sin\\theta$. The area element changes by a factor equal to the absolute value of the determinant of the Jacobian matrix.","answer":"$dA = r \\, dr \\, d\\theta$ (the Jacobian factor is $r$)"},{"prompt":"Step 3: Set up the bounds. For the unit disk $x^2+y^2 \\leq 1$, what are the limits on $r$ and $\\theta$?","hint":"The radius ranges from the center to the boundary circle. The angle sweeps all the way around.","answer":"$0 \\leq r \\leq 1$ and $0 \\leq \\theta \\leq 2\\pi$"}],"caption":"Master polar coordinates: the key to solving radially symmetric integrals efficiently."}
 ```
-```
 
 DONE:multiple-integrals

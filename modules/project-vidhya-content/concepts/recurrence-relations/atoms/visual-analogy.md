@@ -31,9 +31,3 @@ The power: you don't climb day-by-day each time; you jump straight to day 30 usi
   "labels": ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"]
 }
 ```
-```
-
----
-
-## **ATOM 3: Worked Example**
-**File:**

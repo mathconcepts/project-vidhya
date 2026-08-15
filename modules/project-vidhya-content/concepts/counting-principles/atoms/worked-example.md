@@ -77,7 +77,6 @@ If the chairperson can sit in position 3 OR position 4:
 ✓ Separate constrained from free positions  
 ✓ Apply permutation formula to the free part  
 ✓ Multiply if there are multiple independent constraint cases  
-```
 
 ---
 

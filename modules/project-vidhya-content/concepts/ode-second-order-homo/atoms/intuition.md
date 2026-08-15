@@ -20,6 +20,5 @@ Since $e^{rx} \neq 0$, we must have $ar^2 + br + c = 0$ — the **characteristic
 **Why this works in exams:** The characteristic equation converts a calculus problem into pure algebra. Once you find $r_1$ and $r_2$, the general solution is always $y = c_1 e^{r_1 x} + c_2 e^{r_2 x}$ (if roots are real and distinct). No integration by parts, no integration tables — just plug the roots in.
 
 **Exam insight:** GATE problems typically give you messy coefficients to test whether you remember the formula structure, not whether you can integrate. Master the characteristic equation → master second-order homogeneous ODEs.
-```
 
 ---

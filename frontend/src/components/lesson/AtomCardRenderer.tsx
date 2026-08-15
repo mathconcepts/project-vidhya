@@ -377,9 +377,11 @@ export interface AtomCardRendererProps {
   conceptId: string;
   studentId: string | null;
   onComplete?: () => void;
+  /** Fires with the atom currently on screen. Used by the demo caption layer. */
+  onStepChange?: (atom: ContentAtom | null) => void;
 }
 
-export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete }: AtomCardRendererProps) {
+export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete, onStepChange }: AtomCardRendererProps) {
   const [index, setIndex] = useState(0);
   const [errorStreak, setErrorStreak] = useState(0);
   const [completedIdx, setCompletedIdx] = useState<Set<number>>(() => new Set());
@@ -414,6 +416,12 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
   );
 
   const current = atoms[index];
+
+  // Report the atom on screen so the demo caption layer can follow the rail.
+  // Optional and side-effect free outside a demo journey.
+  useEffect(() => {
+    onStepChange?.(atoms[index] ?? null);
+  }, [index, atoms, onStepChange]);
   const readingSeconds = useMemo(
     () => (current ? estimateReadingTime(current.content) : 0),
     [current?.id, current?.content],

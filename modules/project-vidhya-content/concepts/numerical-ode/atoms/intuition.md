@@ -31,6 +31,3 @@ You'll encounter questions about:
 - **Method comparison**: Runge-Kutta evaluates slopes more cleverly than Euler, reducing per-step error
 
 The ability to step forward along a slope—and understand the trade-offs—is the foundation of all numerical analysis.
-```
-
-**File 2:

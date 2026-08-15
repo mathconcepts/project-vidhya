@@ -243,6 +243,16 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     });
   }
 
+  // Reveal the worked solution ONLY here, in the response to a graded attempt.
+  // GET /api/practice/item deliberately withholds it — the client must never
+  // hold the answer before committing. Once the answer is in, withholding the
+  // reasoning helps nobody: a student who got it wrong needs the steps most,
+  // and a student who got it right should be able to check their route rather
+  // than trust the mark.
+  const solutionSteps = Array.isArray((obj.payload as { solutionSteps?: unknown })?.solutionSteps)
+    ? ((obj.payload as { solutionSteps: unknown[] }).solutionSteps as string[])
+    : [];
+
   return sendJSON(res, {
     grade: {
       earned: grade.earned,
@@ -251,6 +261,7 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
       feedback: grade.feedback,
     },
     marking: describeMarking(item),
+    solution_steps: solutionSteps,
     recorded,
   });
 }

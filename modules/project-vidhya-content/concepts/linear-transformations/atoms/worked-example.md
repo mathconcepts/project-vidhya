@@ -65,7 +65,6 @@ $$3 = 2 + 1 \, \checkmark$$
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Finding Ker(T) and Im(T)","steps":[{"prompt":"Step 1: To find Ker(T), set the outputs equal to zero. What equations do you need to solve?","hint":"The transformation gives $(x+y, y+z)$. Setting this to $(0, 0)$ yields two equations.","answer":"$x + y = 0$ and $y + z = 0$"},{"prompt":"Step 2: Solve for the free variable. If $y = t$, what are $x$ and $z$ in terms of $t$?","hint":"From the first equation, $x = -y = -t$. From the second, $z = -y = -t$.","answer":"$x = -t$, $z = -t$. Kernel vectors are $t(-1, 1, -1)$, giving basis $\\{(-1, 1, -1)\\}$."},{"prompt":"Step 3: For the image, express $(x+y, y+z)$ as a linear combination. Which vectors form a basis?","hint":"Write $(x+y, y+z) = x(1, 0) + y(1, 1) + z(0, 1)$. Check if all three span vectors are independent in $\\mathbb{R}^2$.","answer":"Any two of the three vectors are independent; the third is in their span. Basis: $\\{(1, 0), (1, 1)\\}$ or $\\{(1, 0), (0, 1)\\}$."},{"prompt":"Step 4: Check rank-nullity. We have nullity = 1 (Ker dimension) and rank = 2 (Im dimension). Does $1 + 2 = 3 = \\dim(\\mathbb{R}^3)$?","hint":"The rank-nullity theorem states: dimension of domain = rank + nullity.","answer":"Yes, $3 = 2 + 1$. The theorem is verified."}],"caption":"Key exam insight: Kernel finds what vanishes; image finds what can be reached. Rank-nullity is your algebra sanity check."}
 ```
-```
 
 ---
 

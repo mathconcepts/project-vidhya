@@ -27,9 +27,3 @@ At first glance, this seems abstract. But it unlocks three powerful practical to
 ### Intuitive Connection
 
 The characteristic polynomial encodes everything about a matrix's eigenvalues. Cayley-Hamilton says the matrix itself "obeys" this encoding—it's like the matrix cannot escape the constraints written by its own eigenvalues. This deep self-consistency is what makes the theorem so useful in linear algebra, differential equations, and control theory.
-```
-
----
-
-## FILE 2: visual-analogy.md
-**Path:**

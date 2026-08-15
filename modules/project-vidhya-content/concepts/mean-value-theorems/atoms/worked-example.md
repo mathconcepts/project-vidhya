@@ -66,6 +66,5 @@ EOF
 cat > /home/user/project-vidhya/modules/project-vidhya-content/concepts/mean-value-theorems/atoms/worked-example.md << 'EOF'
 [paste File 3 content above]
 EOF
-```
 
 DONE:mean-value-theorems

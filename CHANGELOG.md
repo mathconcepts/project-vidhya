@@ -4,6 +4,57 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.28.0] — 2026-08-15 — Demo mode: a walkable, offline, honest product tour
+
+**Operator action:** set `DEMO_MODE_ENABLED=true` on the venue instance only. It defaults off, and every demo surface 404s without it. Run `npm run demo:seed` to create the persona accounts.
+
+You can now hand someone a device and let them walk the product themselves, instead of narrating a screen-share. `/demo` opens a deck of four journeys — three students and a principal — and each one signs the visitor in as the person it describes, composes the lesson for that person's actual mastery, and ends somewhere real. The student journeys end on a graded question with GATE marking; miss it and the tour does not paper over it, it reframes, shows the worked steps, and re-targets its ending onto the thing you just missed.
+
+The whole tour runs with no network. Verified in a browser at zero requests to any non-localhost host, fonts included.
+
+### The numbers that matter
+
+Before-numbers measured by running this branch's gates and both test suites against `main` in a clean worktree, not estimated. Reproduce with `npm run ci:demo-rails`, `ci:interactive-specs`, `ci:content-integrity`, `npm test`, and `cd frontend && npx vitest run`.
+
+| | Before (`main`) | After | Δ |
+|---|---|---|---|
+| Interactive blocks that render | 51 of 101 | 109 of 109 | +58 |
+| Atom files with clean structure | 691 of 776 | 783 of 783 | +92 |
+| Demo journeys that walk end to end | 0 (no demo mode) | 4 of 4 | +4 |
+| External network requests on the tour | 2 font families | 0 | −2 |
+| Tests | 2210 | 2340 | +130 |
+
+Half the interactive widgets in the content library were invalid and rendered as nothing at all. No error, no counter, no failing test: the parser rejected the block and the component returned null. That is why the tour felt thin, and it is the single largest fix here.
+
+### What this means for whoever runs the demo
+
+Pick a card, hand over the device, stop talking. The captions narrate what the product is doing rather than what it is worth, and every claim on screen is one the visitor can tap into. If you want the guided version, the scripts for both audiences are in `docs/reports/2026-08-15-walkthrough-scripts-v1.md`.
+
+### Itemized changes
+
+#### Added
+
+- **`/demo` journey deck** behind `DEMO_MODE_ENABLED`, off by default, 404 rather than 403 so an instance without it does not advertise the surface.
+- **Four personas as real accounts** — two GATE students, a rank-pusher, and a principal — each carrying its own mastery vector, so a lesson opened as Meera differs from the same lesson opened as Rahul.
+- **A graded practice item on the student rails.** `/attempt/:id` grades MCQ, MSQ and numeric answers server-side with GATE marking and never ships the answer key to the browser.
+- **Practice items without a database.** Authored items are served from `data/practice-items/`, so a demo instance with no Postgres still grades honestly.
+- **Bring your own problem** — `/demo/doubt` captures a visitor's own question. It says up front that nothing is solved on screen, because the venue is offline; the answer follows afterwards, worked and verified.
+- **`GET /api/teaching/roster`** — the coverage page had been calling an endpoint that did not exist.
+
+#### Fixed
+
+- **50 interactive widgets that rendered as nothing.** Repaired, plus a linter that evaluates every formula at the edges of its own input range, so a widget that would divide by zero mid-drag fails CI instead of the demo.
+- **43 atoms leaking generator scaffolding** into what a student reads, and **41 with unmatched code fences** that swallowed the rest of the lesson.
+- **The 3D tier was loading a package version that was never published.** Removed; the eigenvalue moment is now a slider and a traced ellipse, both dependency-free.
+- **Fonts are self-hosted.** The app shell was fetching two families from Google Fonts, twice.
+- **`/api/progress/:id` no longer 500s** without a database; it reports an honest empty state.
+- **The verified-receipt border can no longer be forged.** It is minted in one place from real backing data, and a CI invariant fails on a hand-written literal anywhere else.
+
+#### For contributors
+
+- Four CI gates encode what used to be a manual walk: `ci:demo-rails` (every card walkable, including whether the persona's role can actually reach the destination), `ci:interactive-specs`, `ci:content-integrity`, and the receipt invariant.
+- `docs/reports/2026-08-15-cp0-code-confirmation.md` records what the code confirmation found, including the two premises in the original plan that turned out to be wrong, and what was deliberately deferred.
+
 ## [4.27.2] — 2026-08-08 — Bug fixes: marksPerMin sign error + motivation_state default in weekly digest
 
 **Operator action:** none.

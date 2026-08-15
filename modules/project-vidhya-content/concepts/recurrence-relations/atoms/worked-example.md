@@ -100,7 +100,6 @@ $$a_5 = \frac{1}{\sqrt{5}}(11.09 + 0.09) \approx \frac{11.18}{2.236} \approx 5$$
   "caption": "Exam insight: For Fibonacci-like recurrences, iterative computation often beats solving the characteristic equation when $n$ is small. Recognize the golden ratio root — it signals exponential growth."
 }
 ```
-```
 
 ---
 

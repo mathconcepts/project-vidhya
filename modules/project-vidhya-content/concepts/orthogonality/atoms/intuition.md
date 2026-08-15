@@ -66,3 +66,25 @@ Gram-Schmidt gives the **QR factorization**: $A = QR$ where $Q$ has orthonormal 
 | Matrix orthogonal? | Check $Q^T Q = I$ (or equivalently $QQ^T = I$) |
 | Orthonormal set? | Dot products: 0 for distinct pairs, 1 for self |
 | Apply Gram-Schmidt | Project and subtract, then normalize |
+
+---
+
+```interactive-spec
+{
+  "v": 1,
+  "kind": "manipulable",
+  "title": "Drag u and v until the dot product hits zero — that's perpendicular",
+  "inputs": [
+    {"id": "u1", "label": "u1", "min": -3, "max": 3, "step": 0.5, "initial": 3},
+    {"id": "u2", "label": "u2", "min": -3, "max": 3, "step": 0.5, "initial": 1},
+    {"id": "v1", "label": "v1", "min": -3, "max": 3, "step": 0.5, "initial": 1},
+    {"id": "v2", "label": "v2", "min": -3, "max": 3, "step": 0.5, "initial": 2}
+  ],
+  "outputs": [
+    {"label": "u · v = u1v1 + u2v2", "formula": "u1*v1 + u2*v2", "digits": 2},
+    {"label": "|u|", "formula": "sqrt(u1^2 + u2^2)", "digits": 2},
+    {"label": "|v|", "formula": "sqrt(v1^2 + v2^2)", "digits": 2}
+  ],
+  "caption": "Try to make u · v = 0 by dragging — the instant it hits zero, u and v are exactly perpendicular, whatever their lengths."
+}
+```

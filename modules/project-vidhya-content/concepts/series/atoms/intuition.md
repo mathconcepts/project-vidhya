@@ -27,7 +27,3 @@ Convergence is the gateway to power series and Taylor expansions—tools that ap
 ## The Practical Bridge
 
 When an engineer approximates $e^x \approx 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!}$, they're truncating an infinite series and betting it converges fast enough. Understanding series behaviour turns vague intuition into rigorous confidence.
-```
-
-**ATOM 2: VISUAL ANALOGY**
-File:

@@ -88,7 +88,6 @@ By exhaustive case analysis, this expression is **a tautology**—it is true for
   "caption": "Exam insight: Recognize tautologies by converting to normal form and testing systematically. Implication chains always preserve truth."
 }
 ```
-```
 
 ---
 

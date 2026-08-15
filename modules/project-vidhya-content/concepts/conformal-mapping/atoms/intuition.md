@@ -27,9 +27,3 @@ Conformal mappings are not just angles—they're local similarities. The transfo
 - Critical points (where $f'(z) = 0$) are exactly where conformality breaks down.
 
 When you see "prove this map is conformal," check both analyticity and that the derivative never vanishes on the domain of interest.
-```
-
----
-
-## **FILE 2: visual-analogy.md**
-**Path:**

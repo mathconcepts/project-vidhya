@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "_comment": [
+    "Journey card deck for the full-feel demo (/demo). Each card is one visitor's",
+    "path through the product: a persona, and an ordered rail they walk.",
+    "",
+    "Validated by scripts/check-demo-rails.ts, wired into CI as ci:demo-rails.",
+    "The validator refuses a card whose persona does not exist, whose atoms are",
+    "not on disk, or whose interactive blocks do not parse \u2014 so a card that would",
+    "dead-end in front of a visitor fails the build instead.",
+    "",
+    "Coherence rule: an atom rail's concept must appear in the persona's",
+    "initial_mastery, unless the card sets first_exposure. A card claiming 'weak",
+    "in linear algebra' sitting on a profile with no linear-algebra mastery is",
+    "the fixture incoherence the CEO plan's D3.2 calls out, and it is easy to",
+    "introduce by accident when personas and cards are edited separately.",
+    "",
+    "Captions (M3 / D3.4) narrate PRODUCT BEHAVIOUR, never puffery. They are",
+    "anchored to rail steps \u2014 an atom name \u2014 not to DOM selectors: a caption",
+    "between screens cannot miss its target, which is the CaptionTargetMissingError",
+    "the plan's error map calls out. The validator refuses a caption whose `at`",
+    "is not a step of that card's own rail.",
+    "",
+    "Rail kinds: 'atoms' walks a concept's atoms inside one lesson; 'compare'",
+    "opens the existing personalized-vs-neutral side-by-side; 'surfaces' walks an",
+    "ordered sequence of product screens, which is what the principal's",
+    "drill-down needs \u2014 aggregate, then per-student, then individual attempts.",
+    "A surfaces step's `at` is its caption anchor.",
+    "",
+    "An atoms rail may name a `practice_item_id`: an authored, server-gradable item",
+    "from data/practice-items/. It becomes a final step after the lesson, so the",
+    "rail ends on a mark the student actually earned rather than on a page they",
+    "read. The validator requires it to exist, to be gradable, and to belong to the",
+    "same concept as the rail.",
+    "",
+    "A caption may carry `when: correct | incorrect` \u2014 the miss choreography (D3.3).",
+    "For this audience the miss is the LIKELY case, so it is scripted rather than",
+    "left to chance: the caption reframes, the worked steps appear, and the rail",
+    "offers the same item again so the session still closes on earned competence.",
+    "The unconditional caption at a step stays as the fallback, so a step without a",
+    "branch still narrates.",
+    "",
+    "`invite_doubt: true` closes a rail with the bring-your-own-doubt step. It is",
+    "the collect-and-send-after form of D3.5 by design, not as a fallback: the live",
+    "path needs a network and the venue is offline, so the promise survives and the",
+    "stage gamble goes."
+  ],
+  "cards": [
+    {
+      "id": "gate-3-weeks-weak-la",
+      "title": "Three weeks to GATE, weak in linear algebra",
+      "subtitle": "Meera has been avoiding the topic she is weakest at.",
+      "audience": "student",
+      "persona": "meera-gate-la-anxious",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "eigenvalues",
+        "atoms": [
+          "hook",
+          "intuition",
+          "worked-example"
+        ],
+        "practice_item_id": "la-eigen-trace-det-001",
+        "invite_doubt": true
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "This is the first thing Meera sees. The ellipse is what the matrix does to a circle \u2014 no formula yet, just the behaviour."
+        },
+        {
+          "at": "intuition",
+          "text": "Now she can drag the matrix entries herself. Watch the eigenvalues update as she does \u2014 that is the same arithmetic she would do by hand, running live."
+        },
+        {
+          "at": "worked-example",
+          "text": "Vidhya opened on the picture because her profile prefers geometry. A student who thinks in symbols gets this step first instead."
+        },
+        {
+          "at": "practice",
+          "when": "correct",
+          "text": "That was a real item, graded on the server against a key this page never saw. She earned that one."
+        },
+        {
+          "at": "practice",
+          "when": "incorrect",
+          "text": "That slip is exactly what Vidhya watches for. The worked steps are on screen now, and the rail will hand her the same question again \u2014 the session closes on this, not on the miss."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives."
+        }
+      ]
+    },
+    {
+      "id": "just-failed-a-mock",
+      "title": "Just failed a mock",
+      "subtitle": "The determinant was a formula she could execute and not explain.",
+      "audience": "student",
+      "persona": "meera-gate-la-anxious",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "determinants",
+        "atoms": [
+          "hook",
+          "intuition",
+          "worked-example"
+        ],
+        "practice_item_id": "la-det-area-002",
+        "invite_doubt": true
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "The determinant of this matrix is 6, and the traced ellipse encloses six times the area of the circle it came from. Same fact, twice."
+        },
+        {
+          "at": "intuition",
+          "text": "She could already compute a determinant. What she could not do was say what it meant. Dragging is what closes that gap."
+        },
+        {
+          "at": "worked-example",
+          "text": "The step-through does not hand over the answer. Hint first, then the answer, then a check she can run herself."
+        },
+        {
+          "at": "practice",
+          "when": "correct",
+          "text": "Graded server-side against a key the page never receives. Nothing here was staged."
+        },
+        {
+          "at": "practice",
+          "when": "incorrect",
+          "text": "She could compute the determinant and still miss what it meant \u2014 which is why the rail comes back to this one rather than moving on."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives."
+        }
+      ]
+    },
+    {
+      "id": "topper-pushing-rank",
+      "title": "Already scoring well, pushing for rank",
+      "subtitle": "Rahul does not need the intuition pass. Watch what changes.",
+      "audience": "student",
+      "persona": "rahul-gate-rank-push",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "orthogonality",
+        "atoms": [
+          "hook",
+          "worked-example"
+        ],
+        "practice_item_id": "la-orthogonal-dot-003",
+        "invite_doubt": true
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "Rahul scores well already. Notice the rail is shorter \u2014 the intuition pass is skipped, because his profile does not need it."
+        },
+        {
+          "at": "worked-example",
+          "text": "Same concept as Meera's card, different path through it. That difference is the whole claim, and it is visible in two taps."
+        },
+        {
+          "at": "practice",
+          "when": "correct",
+          "text": "Straight through, as expected for his profile. Notice the rail did not slow him down to prove a point."
+        },
+        {
+          "at": "practice",
+          "when": "incorrect",
+          "text": "Even a strong profile slips. The steps are up, and the same item comes back \u2014 the product does not round a miss up to a pass."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives."
+        }
+      ]
+    },
+    {
+      "id": "principal-auditing-outcomes",
+      "title": "Auditing whether any of this worked",
+      "subtitle": "Start at the batch view and drill until you hit an individual attempt.",
+      "audience": "principal",
+      "persona": "devika-principal-audit",
+      "rail": {
+        "kind": "surfaces",
+        "steps": [
+          {
+            "at": "batch",
+            "route": "/teaching",
+            "label": "Batch view"
+          },
+          {
+            "at": "coverage",
+            "route": "/teacher/syllabus-coverage",
+            "label": "Taught vs mastered"
+          },
+          {
+            "at": "attempts",
+            "route": "/progress",
+            "label": "Individual attempts"
+          }
+        ]
+      },
+      "captions": [
+        {
+          "at": "batch",
+          "text": "Every number on this screen is tappable. Try to catch it \u2014 the drill-down goes all the way to one student's one attempt."
+        },
+        {
+          "at": "coverage",
+          "text": "Two bars per topic: what has been taught, and what has actually been mastered. The gap between them is the thing worth arguing about."
+        },
+        {
+          "at": "attempts",
+          "text": "This is the bottom of the drill-down. A green border here means a real verification record backs the number \u2014 where there is no border, nothing verified it, and the product says so rather than implying otherwise."
+        }
+      ]
+    }
+  ]
+}

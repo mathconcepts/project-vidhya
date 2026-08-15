@@ -54,7 +54,6 @@ $$AA^{-1} = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} = I \quad \checkmark$$
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Finding a 2×2 matrix inverse","steps":[{"prompt":"Step 1: Calculate the determinant of $A = \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$. What is $\\det(A)$?","hint":"Use the formula $\\det\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} = ad - bc$.","answer":"$\\det(A) = (1)(4) - (2)(3) = -2$"},{"prompt":"Step 2: Write the adjugate matrix by swapping the diagonal elements, negating the off-diagonal elements. What is $\\text{adj}(A)$?","hint":"For $\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$, swap 1 and 4, negate 2 and 3.","answer":"$\\text{adj}(A) = \\begin{pmatrix} 4 & -2 \\\\ -3 & 1 \\end{pmatrix}$"},{"prompt":"Step 3: Apply $A^{-1} = \\frac{1}{\\det(A)} \\cdot \\text{adj}(A)$. Compute $A^{-1}$.","hint":"Divide each entry of the adjugate by $\\det(A) = -2$.","answer":"$A^{-1} = \\begin{pmatrix} -2 & 1 \\\\ 1.5 & -0.5 \\end{pmatrix}$"}],"caption":"The adjugate method is fastest for small matrices. For large matrices in exams, recognize that $A^{-1}$ exists iff $\\det(A) \\neq 0$."}
 ```
-```
 
 ---
 

@@ -23,6 +23,5 @@ A **sequence** is simply an ordered list of numbers that follow a rule: $a_1, a_
 ## Why It Matters for GATE
 
 Convergence tests and limit calculations appear in calculus, differential equations, and series problems. Understanding when and why sequences converge lets you handle infinite series, power series solutions, and Fourier analysis with confidence.
-```
 
 ---

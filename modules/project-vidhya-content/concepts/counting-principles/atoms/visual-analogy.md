@@ -28,9 +28,3 @@ Now think of **combinations** like **choosing fruit for a smoothie**. You have 5
 ```
 
 **Exam insight:** If a problem says "arrange," "order," "line up" → permutation. If it says "select," "choose," "committee" → combination.
-```
-
----
-
-## **Atom 3: Worked Example**
-**Path:**

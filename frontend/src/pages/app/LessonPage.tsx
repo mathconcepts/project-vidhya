@@ -17,6 +17,9 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { applyDemoPersona, getDemoCaptions, getDemoPersona } from '@/lib/demoPersona';
+import { SampleDataChip } from '@/components/app/SampleDataChip';
+import { DemoCaption } from '@/components/app/DemoCaption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
 import { ConceptMathViz } from '@/components/lesson/ConceptMathViz';
@@ -499,6 +502,8 @@ export default function LessonPage() {
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
+  // Which rail step the demo caption layer is narrating. Empty outside a demo.
+  const [demoStep, setDemoStep] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [engagement, setEngagement] = useState<{ completed: number; skipped: number; reveals: number; micro?: any }>({
@@ -528,7 +533,15 @@ export default function LessonPage() {
       if (signals.mastery_by_concept) student.mastery_by_concept = signals.mastery_by_concept;
       if (signals.recent_errors) student.recent_errors = signals.recent_errors;
 
-      const body: Record<string, unknown> = { concept_id, session_id: sessionId, student };
+      // In a demo journey the chosen persona's mastery/errors override whatever
+      // the local stores accumulated — on a shared demo device those hold the
+      // PREVIOUS visitor's activity, and letting that leak into this lesson is
+      // both wrong and exactly what a skeptic would catch. No-op outside /demo.
+      const body: Record<string, unknown> = {
+        concept_id,
+        session_id: sessionId,
+        student: applyDemoPersona(student),
+      };
       if (signals.user_material_chunks) body.user_material_chunks = signals.user_material_chunks;
 
       try {
@@ -654,10 +667,21 @@ export default function LessonPage() {
             >
               ← Back
             </button>
-            <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
+              {/* This lesson was composed from a persona's fixture mastery, not
+                  from anyone's real activity. SampleDataChip's own rule is
+                  "never render real data without it once a view is in seeded
+                  mode" — demo journeys put the student surface in exactly that
+                  state, which the SEEDED_ROLES set (teacher/parent/admin) does
+                  not cover because it predates persona-driven lessons. */}
+              {getDemoPersona() && <SampleDataChip />}
+            </div>
           </div>
         </div>
+        <DemoCaption step={demoStep} captions={getDemoCaptions()} />
         <AtomCardRenderer
+          onStepChange={(a) => setDemoStep(a?.atom_type ?? '')}
           atoms={lesson.atoms}
           conceptId={concept_id}
           studentId={sessionId}

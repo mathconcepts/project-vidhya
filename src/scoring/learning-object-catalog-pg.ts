@@ -56,6 +56,7 @@
  */
 
 import pg from 'pg';
+import { FileLearningObjectCatalog } from './learning-object-catalog-file';
 import type { LearningObject, ObjectType } from '../core/interfaces';
 import type { CatalogQuery, LearningObjectCatalog } from './learning-object-catalog';
 
@@ -240,10 +241,22 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
   }
 }
 
-let _instance: PgLearningObjectCatalog | null = null;
+let _instance: LearningObjectCatalog | null = null;
 
 /** Singleton accessor — mirrors `getStudentModel()` / `getTeacherQueueRepo()`. */
 export function getLearningObjectCatalog(): LearningObjectCatalog {
-  if (!_instance) _instance = new PgLearningObjectCatalog();
+  if (_instance) return _instance;
+  // No DATABASE_URL means the pg catalog can only ever return nothing, so every
+  // gradable surface 404s and "the win is earned on a real item" has nothing
+  // behind it. An offline venue runs exactly that configuration. Fall back to
+  // authored items on disk, which grade through the same scorer.
+  _instance = process.env.DATABASE_URL
+    ? new PgLearningObjectCatalog()
+    : new FileLearningObjectCatalog();
   return _instance;
+}
+
+/** Test seam — drops the memoised catalog so env changes take effect. */
+export function __resetCatalogForTests(): void {
+  _instance = null;
 }

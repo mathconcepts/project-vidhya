@@ -27,6 +27,3 @@ Think of it this way: a continuous distribution (like the normal curve) models s
 Each distribution answers a specific **story**: Are you counting successes in $n$ fixed trials (binomial)? Rare events in time (Poisson)? Time to first win (geometric)? Matches in a sample without replacement (hypergeometric)?
 
 The key to mastery is learning to **recognize the story**, then apply the right formula.
-```
-
-**File 2:

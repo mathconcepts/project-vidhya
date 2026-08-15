@@ -1,6 +1,6 @@
 {
   "name": "project-vidhya",
-  "version": "4.27.2",
+  "version": "4.28.0",
   "description": "Project Vidhya \u2014 Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,6 +31,9 @@
     "ci:content-gate": "tsx scripts/content-ci-gate.ts",
     "ci:pg-allowlist": "tsx scripts/check-pg-allowlist.ts",
     "ci:seam-registry": "tsx scripts/check-seam-registry.ts",
+    "ci:content-integrity": "tsx scripts/check-content-integrity.ts",
+    "ci:interactive-specs": "tsx scripts/lint-interactive-specs.ts",
+    "ci:demo-rails": "tsx scripts/check-demo-rails.ts",
     "data:export": "tsx scripts/vidhya-data.ts export",
     "data:import": "tsx scripts/vidhya-data.ts import",
     "data:verify": "tsx scripts/vidhya-data.ts verify",

@@ -32,6 +32,5 @@ In GATE, differentiability questions often appear when dealing with **piecewise-
 - Do the pieces have the same slope as you approach from both sides? (Differentiability)
 
 If either fails, the function is not differentiable at that point.
-```
 
 ---

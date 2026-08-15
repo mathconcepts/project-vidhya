@@ -2,8 +2,14 @@
    SF Pro / New York are Apple system faces and are NOT redistributable, so no
    @font-face rules ship here — we resolve them through the platform stack and
    fall back to a webfont on non-Apple devices.
-   JetBrains Mono is the product's existing math/code face (frontend/index.html). */
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap");
+   JetBrains Mono is the product's existing math/code face.
+
+   Inter Tight and JetBrains Mono are self-hosted (OFL-1.1) via @fontsource,
+   imported in src/main.tsx. The Google Fonts @import that used to live here
+   was a SECOND copy of the same request already in index.html, and both failed
+   at an offline venue — leaving the stack to fall through to Segoe UI. Adding
+   a webfont here again would reintroduce a network dependency the venue
+   cannot satisfy; add it to the main.tsx import list instead. */
 
 :root {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",

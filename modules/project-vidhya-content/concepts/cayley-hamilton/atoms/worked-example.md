@@ -61,7 +61,6 @@ This matches $A^{-1} = \frac{1}{\det(A)} \text{adj}(A) = \frac{1}{2}\begin{pmatr
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Matrix power reduction via Cayley-Hamilton","steps":[{"prompt":"Step 1: Write the characteristic polynomial for $A = \\begin{pmatrix} 1 & 1 \\\\ 0 & 2 \\end{pmatrix}$. What is $\\det(\\lambda I - A)$?","hint":"Expand the determinant: $(\\lambda - 1)(\\lambda - 2) = \\lambda^2 - 3\\lambda + 2$. By Cayley-Hamilton, $A^2 - 3A + 2I = 0$.","answer":"$\\lambda^2 - 3\\lambda + 2 = 0$, so $A^2 = 3A - 2I$"},{"prompt":"Step 2: Use the recurrence $A^2 = 3A - 2I$ to compute $A^4 = (A^2)^2$. Expand $(3A - 2I)^2$.","hint":"$(3A - 2I)^2 = 9A^2 - 12A + 4I$. Now substitute $A^2 = 3A - 2I$ to eliminate the $A^2$ term.","answer":"$A^4 = 9(3A - 2I) - 12A + 4I = 27A - 18I - 12A + 4I = 15A - 14I$"},{"prompt":"Step 3: For part (b), rearrange $A^2 - 3A + 2I = 0$ to solve for $A^{-1}$. Start by factoring out $A$ on the left.","hint":"Write $A(A - 3I) = -2I$. Divide both sides by $-2$ and rearrange.","answer":"$A^{-1} = \\frac{1}{2}(3I - A)$"}],"caption":"Cayley-Hamilton reduces infinite matrix powers to a finite recurrence, and rearranging gives the inverse formula without computing the determinant explicitly."}
 ```
-```
 
 ---
 

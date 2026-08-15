@@ -43,6 +43,31 @@ const RAILS = process.argv[2]
   : path.join(ROOT, 'config/demo-rails.json');
 const PERSONAS = path.join(ROOT, 'data/personas');
 const CONCEPTS = path.join(ROOT, 'modules/project-vidhya-content/concepts');
+const PRACTICE_ITEMS = path.join(ROOT, 'data', 'practice-items');
+
+/**
+ * Every authored practice item, by id.
+ *
+ * Read here rather than imported so the validator stays dependency-light, but
+ * the checks below mirror what FileLearningObjectCatalog will actually serve:
+ * an item that exists but carries no answer key parses fine and then refuses to
+ * grade at the route, which would strand the visitor on the last step of the
+ * rail — the step whose entire purpose is an earned mark.
+ */
+function loadPracticeItems(): Map<string, any> {
+  const out = new Map<string, any>();
+  try {
+    for (const file of fs.readdirSync(PRACTICE_ITEMS)) {
+      if (!file.endsWith('.json')) continue;
+      const raw = JSON.parse(fs.readFileSync(path.join(PRACTICE_ITEMS, file), 'utf8'));
+      for (const item of raw.items ?? []) if (item?.id) out.set(item.id, item);
+    }
+  } catch {
+    /* no authored items on this deployment */
+  }
+  return out;
+}
+const PRACTICE = loadPracticeItems();
 
 const AUDIENCES = new Set(['student', 'teacher', 'principal']);
 const RAIL_KINDS = new Set(['atoms', 'compare', 'surfaces']);
@@ -109,6 +134,36 @@ function checkAtomRail(card: any, rail: any): void {
     }
   }
 
+  if (rail.practice_item_id) {
+    const item = PRACTICE.get(rail.practice_item_id);
+    if (!item) {
+      fail(card.id, `practice_item_id "${rail.practice_item_id}" is not in data/practice-items/`);
+    } else {
+      if (item.concept_id !== rail.concept_id) {
+        fail(
+          card.id,
+          `practice item "${item.id}" is for concept "${item.concept_id}" but the rail teaches ` +
+            `"${rail.concept_id}" — the rail would end on a question about something else`,
+        );
+      }
+      const hasKey =
+        typeof item.answer_index === 'number' ||
+        Array.isArray(item.answer_indices) ||
+        Array.isArray(item.answer_range);
+      if (!item.question_type || !(item.marks > 0) || !hasKey) {
+        fail(
+          card.id,
+          `practice item "${item.id}" is not gradable (needs question_type, marks > 0 and an ` +
+            `answer key) — the rail's last step would refuse to mark the visitor's answer`,
+        );
+      }
+      if (Array.isArray(item.options) && typeof item.answer_index === 'number'
+          && item.answer_index >= item.options.length) {
+        fail(card.id, `practice item "${item.id}" answer_index is outside its own options list`);
+      }
+    }
+  }
+
   if (rail.first_exposure === true) return;
   const mastery = personaMasteryKeys(card.persona);
   if (mastery && !mastery.includes(rail.concept_id)) {
@@ -154,7 +209,7 @@ function checkCaptions(card: any): void {
   const kind = card.rail?.kind;
   const validAnchors: string[] =
     kind === 'atoms'
-      ? (card.rail.atoms ?? [])
+      ? [...(card.rail.atoms ?? []), ...(card.rail.practice_item_id ? ['practice'] : [])]
       : kind === 'surfaces'
         ? (card.rail.steps ?? []).map((s: any) => s?.at).filter(Boolean)
         : ['compare'];

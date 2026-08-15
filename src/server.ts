@@ -701,7 +701,7 @@ registerRoute('GET', '/demo-login', async (req, res) => {
   }
 
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(buildDemoLoginHtml(entry));
+  res.end(buildDemoLoginHtml(entry, req.query?.get('next')));
 });
 
 // ============================================================================

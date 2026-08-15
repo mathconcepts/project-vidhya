@@ -87,7 +87,7 @@ describe('shipped caption copy', () => {
       // Mirrors check-demo-rails' anchor resolution, per rail kind.
       const anchors =
         card.rail.kind === 'atoms'
-          ? card.rail.atoms
+          ? [...card.rail.atoms, ...(card.rail.practice_item_id ? ['practice'] : [])]
           : card.rail.kind === 'surfaces'
             ? card.rail.steps.map((s: { at: string }) => s.at)
             : ['compare'];

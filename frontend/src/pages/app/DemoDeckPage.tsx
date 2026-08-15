@@ -29,6 +29,8 @@ interface AtomRail {
   concept_id: string;
   atoms: string[];
   first_exposure?: boolean;
+  /** Authored, server-gradable item the rail ends on. */
+  practice_item_id?: string;
 }
 interface CompareRail {
   kind: 'compare';
@@ -67,6 +69,39 @@ export function railDestination(card: DemoCard): string {
   if (card.rail.kind === 'compare') return '/admin/scenarios';
   if (card.rail.kind === 'surfaces') return card.rail.steps[0]?.route ?? '/';
   return `/lesson/${card.rail.concept_id}`;
+}
+
+/**
+ * The rail's navigable steps.
+ *
+ * An atoms rail with a practice item becomes two steps — the lesson, then the
+ * graded question — so it reuses DemoRailNav rather than growing a second
+ * mechanism. Captions inside the lesson stay anchored to atoms; only the
+ * between-screens hop is a rail step.
+ */
+export function railSteps(card: DemoCard): Array<{ at: string; route: string; label: string }> {
+  if (card.rail.kind === 'surfaces') return card.rail.steps;
+  if (card.rail.kind === 'atoms' && card.rail.practice_item_id) {
+    return [
+      { at: 'lesson', route: `/lesson/${card.rail.concept_id}`, label: 'The concept' },
+      { at: 'practice', route: `/attempt/${card.rail.practice_item_id}`, label: 'Try one yourself' },
+    ];
+  }
+  return [];
+}
+
+/**
+ * Entering a journey signs the visitor in AS the persona the rail narrates.
+ *
+ * A gradable item needs an authenticated session, and every persona now has its
+ * own seeded demo account — so the account and the story are the same person.
+ * This is a full navigation because /demo-login is a server route that writes
+ * the token before handing back to the SPA; sessionStorage survives it, so the
+ * persona signal set just above is still there on arrival.
+ */
+export function entryHref(card: DemoCard): string {
+  const dest = railDestination(card);
+  return `/demo-login?role=${encodeURIComponent(card.persona)}&next=${encodeURIComponent(dest)}`;
 }
 
 export default function DemoDeckPage() {
@@ -144,8 +179,10 @@ export default function DemoDeckPage() {
                 if (card.persona_signal) setDemoPersona(card.persona_signal);
                 else clearDemoPersona();
                 setDemoCaptions(card.captions);
-                setDemoRail(card.rail.kind === 'surfaces' ? card.rail.steps : undefined);
-                navigate(railDestination(card));
+                const steps = railSteps(card);
+                setDemoRail(steps.length ? steps : undefined);
+                // Sign in as the persona; the server route lands on the rail.
+                window.location.assign(entryHref(card));
               }}
               style={{
                 display: 'block',

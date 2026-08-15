@@ -10,7 +10,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import DemoDeckPage, { railDestination, type DemoCard } from './DemoDeckPage';
+import DemoDeckPage, { railDestination, railSteps, entryHref, type DemoCard } from './DemoDeckPage';
 
 const navigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -69,11 +69,18 @@ describe('DemoDeckPage states', () => {
     expect(screen.getByText(CARD.subtitle!)).toBeInTheDocument();
   });
 
-  it('navigates into the rail when a journey is chosen', async () => {
+  it('signs in as the persona on the way into the rail', async () => {
+    // A gradable step needs an authenticated session, and the account must be
+    // the person the captions name — otherwise the rail narrates Meera while
+    // recording against someone else.
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign } as unknown as Location);
     stubFetch(async () => ({ ok: true, status: 200, json: async () => ({ cards: [CARD] }) }));
     renderPage();
     await userEvent.click(await screen.findByText(CARD.title));
-    expect(navigate).toHaveBeenCalledWith('/lesson/eigenvalues');
+    expect(assign).toHaveBeenCalledWith(
+      '/demo-login?role=meera-gate-la-anxious&next=%2Flesson%2Feigenvalues',
+    );
   });
 
   it('says demo mode is off on a 404 rather than showing a generic error', async () => {
@@ -119,5 +126,29 @@ describe('DemoDeckPage states', () => {
     for (const word of ['revolutionary', 'powerful', 'amazing', 'seamless', 'best-in-class']) {
       expect(text.toLowerCase()).not.toContain(word);
     }
+  });
+});
+
+describe('railSteps', () => {
+  it('turns a practice item into a final step after the lesson', () => {
+    // Reuses DemoRailNav rather than growing a second navigation mechanism.
+    expect(
+      railSteps({ ...CARD, rail: { ...CARD.rail, practice_item_id: 'la-eigen-trace-det-001' } as never }),
+    ).toEqual([
+      { at: 'lesson', route: '/lesson/eigenvalues', label: 'The concept' },
+      { at: 'practice', route: '/attempt/la-eigen-trace-det-001', label: 'Try one yourself' },
+    ]);
+  });
+
+  it('has no steps when the rail ends on the lesson', () => {
+    expect(railSteps(CARD)).toEqual([]);
+  });
+});
+
+describe('entryHref', () => {
+  it('encodes the return path so the visitor lands on the rail, not the home page', () => {
+    expect(entryHref(CARD)).toBe(
+      '/demo-login?role=meera-gate-la-anxious&next=%2Flesson%2Feigenvalues',
+    );
   });
 });

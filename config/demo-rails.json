@@ -25,7 +25,13 @@
     "opens the existing personalized-vs-neutral side-by-side; 'surfaces' walks an",
     "ordered sequence of product screens, which is what the principal's",
     "drill-down needs \u2014 aggregate, then per-student, then individual attempts.",
-    "A surfaces step's `at` is its caption anchor."
+    "A surfaces step's `at` is its caption anchor.",
+    "",
+    "An atoms rail may name a `practice_item_id`: an authored, server-gradable item",
+    "from data/practice-items/. It becomes a final step after the lesson, so the",
+    "rail ends on a mark the student actually earned rather than on a page they",
+    "read. The validator requires it to exist, to be gradable, and to belong to the",
+    "same concept as the rail."
   ],
   "cards": [
     {
@@ -41,7 +47,8 @@
           "hook",
           "intuition",
           "worked-example"
-        ]
+        ],
+        "practice_item_id": "la-eigen-trace-det-001"
       },
       "captions": [
         {
@@ -55,6 +62,10 @@
         {
           "at": "worked-example",
           "text": "Vidhya opened on the picture because her profile prefers geometry. A student who thinks in symbols gets this step first instead."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives. Whatever happens next was earned."
         }
       ]
     },
@@ -71,7 +82,8 @@
           "hook",
           "intuition",
           "worked-example"
-        ]
+        ],
+        "practice_item_id": "la-det-area-002"
       },
       "captions": [
         {
@@ -85,6 +97,10 @@
         {
           "at": "worked-example",
           "text": "The step-through does not hand over the answer. Hint first, then the answer, then a check she can run herself."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives. Whatever happens next was earned."
         }
       ]
     },
@@ -100,7 +116,8 @@
         "atoms": [
           "hook",
           "worked-example"
-        ]
+        ],
+        "practice_item_id": "la-orthogonal-dot-003"
       },
       "captions": [
         {
@@ -110,6 +127,10 @@
         {
           "at": "worked-example",
           "text": "Same concept as Meera's card, different path through it. That difference is the whole claim, and it is visible in two taps."
+        },
+        {
+          "at": "practice",
+          "text": "This is a real item, graded on the server against an answer key the page never receives. Whatever happens next was earned."
         }
       ]
     },

@@ -24,7 +24,7 @@
  *   - Telemetry:  .data/demo-usage-log.json — owner-visible.
  */
 
-import { writeFileSync, copyFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, copyFileSync, mkdirSync, existsSync, readdirSync, readFileSync} from 'fs';
 import { issueToken } from '../src/auth/jwt';
 import {
   upsertFromGoogle,
@@ -132,6 +132,42 @@ for (const s of students) {
   studentUsers.push({ user: u, pattern: s.pattern });
   console.log(`  ${u.id}  ${s.name}${s.assignToTeacher ? '  [taught by Kavita]' : ''}`);
   logDemoEvent({ role: 'student', user_id: u.id, event: 'seed.user-created', detail: { pattern: s.pattern } });
+}
+
+// ─── 4b. scenario personas as real demo accounts ──────────────────────
+//
+// CP0 found the two demo systems disconnected: demo/seed.ts mints real logins
+// with no mastery, while data/personas/*.yaml carries mastery with no login.
+// The demo rail needs both at once — a gradable practice item requires an
+// authenticated session, and the captions name the persona whose profile the
+// lesson was composed for. Signing the visitor in as "Priya" while the rail
+// narrates "Meera" is a mismatch a skeptic would find.
+//
+// So every persona gets an account of its own. The visitor is signed in AS the
+// person the rail is about, and attempts grade and record against that demo
+// account rather than a real student's.
+console.log('\n--- step 4b: scenario personas as demo accounts ---');
+const personaUsers: Array<{ id: string; user: any }> = [];
+try {
+  const personaDir = 'data/personas';
+  for (const file of readdirSync(personaDir)) {
+    if (!file.endsWith('.yaml')) continue;
+    const raw = readFileSync(`${personaDir}/${file}`, 'utf8');
+    const id = raw.match(/^id:\s*(\S+)/m)?.[1];
+    const displayName = raw.match(/^display_name:\s*"?([^"\n]+)"?/m)?.[1] ?? id;
+    if (!id) continue;
+    const u = upsertFromGoogle({
+      google_sub: `demo-persona-${id}`,
+      email: `${id}@vidhya.local`,
+      name: `${displayName} (demo persona)`,
+      picture: '',
+    });
+    setRole({ actor_id: ownerUser.id, target_id: u.id, new_role: 'student' });
+    personaUsers.push({ id, user: u });
+    console.log(`  ${u.id}  ${id}`);
+  }
+} catch (e: any) {
+  console.log(`  (no personas seeded: ${e?.message ?? 'unknown'})`);
 }
 
 const today = new Date();
@@ -303,6 +339,9 @@ mint(teacherUser,          'teacher', 'teacher');
 mint(studentUsers[0].user, 'student', 'student-active');
 mint(studentUsers[1].user, 'student', 'student-light');
 mint(studentUsers[2].user, 'student', 'student-new');
+// Keyed by persona id, so /demo-login?role=<persona-id> signs the visitor in as
+// the person the rail narrates.
+for (const p of personaUsers) mint(p.user, 'student', p.id);
 
 writeFileSync('demo/demo-tokens.json', JSON.stringify(allTokens, null, 2));
 console.log('  tokens written to demo/demo-tokens.json');

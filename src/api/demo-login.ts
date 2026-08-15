@@ -18,8 +18,23 @@ export function postLoginPath(role: string): string {
   return '/';
 }
 
-export function buildDemoLoginHtml(entry: DemoTokenEntry): string {
-  const target = postLoginPath(entry.role);
+/**
+ * Where to land after demo-login, honouring a caller-supplied `next`.
+ *
+ * The demo deck needs the visitor to arrive at the rail they tapped, not the
+ * generic home. `next` is attacker-controllable in principle — this route has
+ * no auth of its own — so only same-origin absolute paths are accepted: it must
+ * start with a single "/" and must not begin "//" or "/\\", both of which
+ * browsers treat as protocol-relative and would turn this into an open redirect
+ * that hands a real auth token to another origin.
+ */
+export function resolveTarget(entry: DemoTokenEntry, next?: string | null): string {
+  if (typeof next === 'string' && /^\/(?![/\\])/.test(next)) return next;
+  return postLoginPath(entry.role);
+}
+
+export function buildDemoLoginHtml(entry: DemoTokenEntry, next?: string | null): string {
+  const target = resolveTarget(entry, next);
   return `<!doctype html>
 <html><head><title>Loading demo…</title></head>
 <body>

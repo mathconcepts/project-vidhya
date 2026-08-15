@@ -17,7 +17,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { applyDemoPersona, getDemoCaptions } from '@/lib/demoPersona';
+import { applyDemoPersona, getDemoCaptions, getDemoPersona } from '@/lib/demoPersona';
+import { SampleDataChip } from '@/components/app/SampleDataChip';
 import { DemoCaption } from '@/components/app/DemoCaption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
@@ -666,7 +667,16 @@ export default function LessonPage() {
             >
               ← Back
             </button>
-            <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
+              {/* This lesson was composed from a persona's fixture mastery, not
+                  from anyone's real activity. SampleDataChip's own rule is
+                  "never render real data without it once a view is in seeded
+                  mode" — demo journeys put the student surface in exactly that
+                  state, which the SEEDED_ROLES set (teacher/parent/admin) does
+                  not cover because it predates persona-driven lessons. */}
+              {getDemoPersona() && <SampleDataChip />}
+            </div>
           </div>
         </div>
         <DemoCaption step={demoStep} captions={getDemoCaptions()} />

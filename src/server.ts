@@ -18,6 +18,7 @@ import { topicPageRoutes } from './api/topic-pages';
 import { streakRoutes } from './api/streak-routes';
 import { spineRoutes } from './api/spine-routes';
 import { demoRoutes } from './api/demo-routes';
+import { demoDoubtRoutes } from './api/demo-doubt-routes';
 import { adminRoutes } from './api/admin-routes';
 import { adminExperimentsRoutes } from './api/admin-experiments-routes';
 import { adminRunsRoutes } from './api/admin-runs-routes';
@@ -181,6 +182,9 @@ for (const route of spineRoutes) {
 // Visitor-facing demo deck. The handler itself 404s unless DEMO_MODE_ENABLED
 // is true, so registering it unconditionally does not expose it.
 for (const route of demoRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of demoDoubtRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminRoutes) {

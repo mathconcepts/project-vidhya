@@ -134,6 +134,13 @@ function checkAtomRail(card: any, rail: any): void {
     }
   }
 
+  if (rail.invite_doubt && !rail.practice_item_id) {
+    // The doubt step closes a rail that already earned something. Inviting a
+    // visitor's own problem before they have seen the product answer one is the
+    // wrong order, and the step's copy assumes the graded moment happened.
+    fail(card.id, 'invite_doubt needs a practice_item_id — it closes the graded rail');
+  }
+
   if (rail.practice_item_id) {
     const item = PRACTICE.get(rail.practice_item_id);
     if (!item) {
@@ -209,7 +216,11 @@ function checkCaptions(card: any): void {
   const kind = card.rail?.kind;
   const validAnchors: string[] =
     kind === 'atoms'
-      ? [...(card.rail.atoms ?? []), ...(card.rail.practice_item_id ? ['practice'] : [])]
+      ? [
+          ...(card.rail.atoms ?? []),
+          ...(card.rail.practice_item_id ? ['practice'] : []),
+          ...(card.rail.invite_doubt ? ['doubt'] : []),
+        ]
       : kind === 'surfaces'
         ? (card.rail.steps ?? []).map((s: any) => s?.at).filter(Boolean)
         : ['compare'];

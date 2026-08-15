@@ -31,6 +31,8 @@ interface AtomRail {
   first_exposure?: boolean;
   /** Authored, server-gradable item the rail ends on. */
   practice_item_id?: string;
+  /** Close the rail by inviting the visitor's own problem. */
+  invite_doubt?: boolean;
 }
 interface CompareRail {
   kind: 'compare';
@@ -82,10 +84,14 @@ export function railDestination(card: DemoCard): string {
 export function railSteps(card: DemoCard): Array<{ at: string; route: string; label: string }> {
   if (card.rail.kind === 'surfaces') return card.rail.steps;
   if (card.rail.kind === 'atoms' && card.rail.practice_item_id) {
-    return [
+    const steps = [
       { at: 'lesson', route: `/lesson/${card.rail.concept_id}`, label: 'The concept' },
       { at: 'practice', route: `/attempt/${card.rail.practice_item_id}`, label: 'Try one yourself' },
     ];
+    if (card.rail.invite_doubt) {
+      steps.push({ at: 'doubt', route: '/demo/doubt', label: 'Bring your own problem' });
+    }
+    return steps;
   }
   return [];
 }

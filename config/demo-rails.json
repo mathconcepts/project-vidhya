@@ -38,7 +38,12 @@
     "left to chance: the caption reframes, the worked steps appear, and the rail",
     "offers the same item again so the session still closes on earned competence.",
     "The unconditional caption at a step stays as the fallback, so a step without a",
-    "branch still narrates."
+    "branch still narrates.",
+    "",
+    "`invite_doubt: true` closes a rail with the bring-your-own-doubt step. It is",
+    "the collect-and-send-after form of D3.5 by design, not as a fallback: the live",
+    "path needs a network and the venue is offline, so the promise survives and the",
+    "stage gamble goes."
   ],
   "cards": [
     {
@@ -55,7 +60,8 @@
           "intuition",
           "worked-example"
         ],
-        "practice_item_id": "la-eigen-trace-det-001"
+        "practice_item_id": "la-eigen-trace-det-001",
+        "invite_doubt": true
       },
       "captions": [
         {
@@ -100,7 +106,8 @@
           "intuition",
           "worked-example"
         ],
-        "practice_item_id": "la-det-area-002"
+        "practice_item_id": "la-det-area-002",
+        "invite_doubt": true
       },
       "captions": [
         {
@@ -144,7 +151,8 @@
           "hook",
           "worked-example"
         ],
-        "practice_item_id": "la-orthogonal-dot-003"
+        "practice_item_id": "la-orthogonal-dot-003",
+        "invite_doubt": true
       },
       "captions": [
         {

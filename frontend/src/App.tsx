@@ -77,6 +77,7 @@ const SetupWizardPage = lazy(() => import('@/pages/app/SetupWizardPage'));
 const GraphBrowserPage = lazy(() => import('@/pages/app/GraphBrowserPage'));
 const ScenariosPage = lazy(() => import('@/pages/app/ScenariosPage'));
 const DemoDeckPage = lazy(() => import('@/pages/app/DemoDeckPage'));
+const DemoDoubtPage = lazy(() => import('@/pages/app/DemoDoubtPage'));
 const BlueprintsPage = lazy(() => import('@/pages/app/BlueprintsPage'));
 const PlaybooksPage = lazy(() => import('@/pages/app/PlaybooksPage'));
 const RulesetsPage = lazy(() => import('@/pages/app/RulesetsPage'));
@@ -161,6 +162,7 @@ export default function App() {
               DEMO_MODE_ENABLED=true, so the page renders an honest
               "demo mode is off" state on any other instance. */}
           <Route path="demo" element={<DemoDeckPage />} />
+          <Route path="demo/doubt" element={<DemoDoubtPage />} />
           <Route path="institute" element={<InstitutePage />} />
           <Route path="sell-your-course" element={<SellYourCoursePage />} />
           <Route path="materials" element={<MaterialsPage />} />

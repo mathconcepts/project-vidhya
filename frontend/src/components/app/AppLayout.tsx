@@ -76,7 +76,7 @@ export function AppLayout() {
     // definition first-time — so without this the one-shot welcome redirect
     // fires on exactly the person the deck exists for, and the first tap at a
     // venue lands on a generic welcome page instead of the journeys.
-    const exempt = ['/welcome', '/sign-in', '/rooms', '/demo'];
+    const exempt = ['/welcome', '/sign-in', '/rooms', '/demo', '/demo/doubt'];
     if (exempt.includes(location.pathname)) return;
     // A visitor mid-journey is likewise exempt, wherever the rail took them.
     // Exempting the deck alone was not enough: the redirect then fired on the

@@ -27,6 +27,7 @@
  */
 
 const KEY = 'vidhya.demo.persona';
+const CAPTIONS_KEY = 'vidhya.demo.captions';
 
 export interface DemoPersonaSignal {
   /** Persona slug, for display and for the sample-data disclosure. */
@@ -74,6 +75,7 @@ export function setDemoPersona(signal: DemoPersonaSignal): void {
 export function clearDemoPersona(): void {
   try {
     sessionStorage.removeItem(KEY);
+    sessionStorage.removeItem(CAPTIONS_KEY);
   } catch {
     /* nothing to clear */
   }
@@ -101,4 +103,34 @@ export function applyDemoPersona(student: Record<string, unknown>): Record<strin
       ? persona.recent_errors
       : (student.recent_errors as unknown),
   };
+}
+
+export interface DemoCaptionScript {
+  at: string;
+  text: string;
+}
+
+/**
+ * The active journey's caption script. Same per-tab lifetime as the persona,
+ * for the same reasons: two visitors on two devices narrate independently, and
+ * the existing reset button clears both because it clears sessionStorage.
+ */
+export function getDemoCaptions(): DemoCaptionScript[] | undefined {
+  try {
+    const raw = sessionStorage.getItem(CAPTIONS_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function setDemoCaptions(captions: DemoCaptionScript[] | undefined): void {
+  try {
+    if (!captions?.length) sessionStorage.removeItem(CAPTIONS_KEY);
+    else sessionStorage.setItem(CAPTIONS_KEY, JSON.stringify(captions));
+  } catch {
+    /* storage disabled — the rail still walks, just silently */
+  }
 }

@@ -121,6 +121,72 @@ function checkAtomRail(card: any, rail: any): void {
   }
 }
 
+/**
+ * Words that turn a caption from narration into a pitch.
+ *
+ * The plan's standing law is that captions "narrate product behavior … never
+ * puffery", and the demo's whole posture is that it does not oversell. A
+ * caption is the easiest place for marketing voice to appear, because it is
+ * the one piece of copy written to be read aloud in front of a visitor.
+ */
+const PUFFERY = [
+  'revolutionary', 'seamless', 'powerful', 'amazing', 'incredible', 'magical',
+  'game-changing', 'cutting-edge', 'effortless', 'best-in-class', 'world-class',
+  'unleash', 'transform your', 'supercharge',
+];
+
+/**
+ * Captions anchor to rail STEPS, not DOM selectors.
+ *
+ * The plan's H4-5 temporal interrogation names this directly: "anchoring
+ * captions to DOM elements is where the medium risk lives; anchor to rail
+ * STEPS, not selectors, wherever possible — a caption between screens can't
+ * miss its target." Enforcing it here is what makes
+ * `CaptionTargetMissingError` structurally impossible rather than handled.
+ */
+function checkCaptions(card: any): void {
+  if (card.captions === undefined) return;
+  if (!Array.isArray(card.captions)) {
+    fail(card.id, 'captions must be an array');
+    return;
+  }
+
+  const validAnchors: string[] =
+    card.rail?.kind === 'atoms' ? (card.rail.atoms ?? []) : ['compare'];
+
+  const seen = new Set<string>();
+  for (const [i, caption] of card.captions.entries()) {
+    if (!caption || typeof caption.at !== 'string' || typeof caption.text !== 'string') {
+      fail(card.id, `captions[${i}] needs both "at" and "text"`);
+      continue;
+    }
+    if (!validAnchors.includes(caption.at)) {
+      fail(
+        card.id,
+        `captions[${i}].at "${caption.at}" is not a step of this card's rail ` +
+          `(${validAnchors.join(', ')}) — the caption would never be shown`,
+      );
+    }
+    if (seen.has(caption.at)) {
+      fail(card.id, `two captions anchored to "${caption.at}"; only the first would show`);
+    }
+    seen.add(caption.at);
+
+    const lower = caption.text.toLowerCase();
+    const hit = PUFFERY.find((w) => lower.includes(w));
+    if (hit) {
+      fail(
+        card.id,
+        `captions[${i}] contains "${hit}" — captions narrate what the product did, ` +
+          `they do not sell it`,
+      );
+    }
+    if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(caption.text)) {
+      fail(card.id, `captions[${i}] contains emoji — the design system forbids emoji anywhere`);
+    }
+  }
+}
+
 function checkCompareRail(card: any, rail: any): void {
   if (!rail.concept_id || !fs.existsSync(path.join(CONCEPTS, rail.concept_id))) {
     fail(card.id, `rail.concept_id "${rail.concept_id}" is not a concept in the content module`);
@@ -188,6 +254,7 @@ function main(): void {
     }
     if (rail.kind === 'atoms') checkAtomRail(card, rail);
     else checkCompareRail(card, rail);
+    checkCaptions(card);
   }
 
   if (errors.length > 0) {

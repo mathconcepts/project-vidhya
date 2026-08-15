@@ -6,14 +6,20 @@
     "",
     "Validated by scripts/check-demo-rails.ts, wired into CI as ci:demo-rails.",
     "The validator refuses a card whose persona does not exist, whose atoms are",
-    "not on disk, or whose interactive blocks do not parse — so a card that would",
+    "not on disk, or whose interactive blocks do not parse \u2014 so a card that would",
     "dead-end in front of a visitor fails the build instead.",
     "",
     "Coherence rule: an atom rail's concept must appear in the persona's",
     "initial_mastery, unless the card sets first_exposure. A card claiming 'weak",
     "in linear algebra' sitting on a profile with no linear-algebra mastery is",
     "the fixture incoherence the CEO plan's D3.2 calls out, and it is easy to",
-    "introduce by accident when personas and cards are edited separately."
+    "introduce by accident when personas and cards are edited separately.",
+    "",
+    "Captions (M3 / D3.4) narrate PRODUCT BEHAVIOUR, never puffery. They are",
+    "anchored to rail steps \u2014 an atom name \u2014 not to DOM selectors: a caption",
+    "between screens cannot miss its target, which is the CaptionTargetMissingError",
+    "the plan's error map calls out. The validator refuses a caption whose `at`",
+    "is not a step of that card's own rail."
   ],
   "cards": [
     {
@@ -25,8 +31,26 @@
       "rail": {
         "kind": "atoms",
         "concept_id": "eigenvalues",
-        "atoms": ["hook", "intuition", "worked-example"]
-      }
+        "atoms": [
+          "hook",
+          "intuition",
+          "worked-example"
+        ]
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "This is the first thing Meera sees. The ellipse is what the matrix does to a circle \u2014 no formula yet, just the behaviour."
+        },
+        {
+          "at": "intuition",
+          "text": "Now she can drag the matrix entries herself. Watch the eigenvalues update as she does \u2014 that is the same arithmetic she would do by hand, running live."
+        },
+        {
+          "at": "worked-example",
+          "text": "Vidhya opened on the picture because her profile prefers geometry. A student who thinks in symbols gets this step first instead."
+        }
+      ]
     },
     {
       "id": "just-failed-a-mock",
@@ -37,8 +61,26 @@
       "rail": {
         "kind": "atoms",
         "concept_id": "determinants",
-        "atoms": ["hook", "intuition", "worked-example"]
-      }
+        "atoms": [
+          "hook",
+          "intuition",
+          "worked-example"
+        ]
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "The determinant of this matrix is 6, and the traced ellipse encloses six times the area of the circle it came from. Same fact, twice."
+        },
+        {
+          "at": "intuition",
+          "text": "She could already compute a determinant. What she could not do was say what it meant. Dragging is what closes that gap."
+        },
+        {
+          "at": "worked-example",
+          "text": "The step-through does not hand over the answer. Hint first, then the answer, then a check she can run herself."
+        }
+      ]
     },
     {
       "id": "topper-pushing-rank",
@@ -49,8 +91,21 @@
       "rail": {
         "kind": "atoms",
         "concept_id": "orthogonality",
-        "atoms": ["hook", "worked-example"]
-      }
+        "atoms": [
+          "hook",
+          "worked-example"
+        ]
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "Rahul scores well already. Notice the rail is shorter \u2014 the intuition pass is skipped, because his profile does not need it."
+        },
+        {
+          "at": "worked-example",
+          "text": "Same concept as Meera's card, different path through it. That difference is the whole claim, and it is visible in two taps."
+        }
+      ]
     },
     {
       "id": "same-lesson-two-students",
@@ -62,7 +117,13 @@
         "kind": "compare",
         "concept_id": "linear-transformations",
         "against_persona": "rahul-gate-rank-push"
-      }
+      },
+      "captions": [
+        {
+          "at": "compare",
+          "text": "Every number on this screen is tappable. Try to catch it."
+        }
+      ]
     }
   ]
 }

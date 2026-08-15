@@ -17,7 +17,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { applyDemoPersona } from '@/lib/demoPersona';
+import { applyDemoPersona, getDemoCaptions } from '@/lib/demoPersona';
+import { DemoCaption } from '@/components/app/DemoCaption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
 import { ConceptMathViz } from '@/components/lesson/ConceptMathViz';
@@ -500,6 +501,8 @@ export default function LessonPage() {
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
+  // Which rail step the demo caption layer is narrating. Empty outside a demo.
+  const [demoStep, setDemoStep] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [engagement, setEngagement] = useState<{ completed: number; skipped: number; reveals: number; micro?: any }>({
@@ -666,7 +669,9 @@ export default function LessonPage() {
             <h1 style={{ margin: 0, fontSize: 'var(--text-title3)', fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)' }}>{lesson.concept_label}</h1>
           </div>
         </div>
+        <DemoCaption step={demoStep} captions={getDemoCaptions()} />
         <AtomCardRenderer
+          onStepChange={(a) => setDemoStep(a?.atom_type ?? '')}
           atoms={lesson.atoms}
           conceptId={concept_id}
           studentId={sessionId}

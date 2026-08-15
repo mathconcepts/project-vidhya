@@ -22,7 +22,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setDemoPersona, clearDemoPersona } from '@/lib/demoPersona';
+import { setDemoPersona, clearDemoPersona, setDemoCaptions } from '@/lib/demoPersona';
 
 interface AtomRail {
   kind: 'atoms';
@@ -43,6 +43,7 @@ export interface DemoCard {
   audience: 'student' | 'teacher' | 'principal';
   persona: string;
   rail: AtomRail | CompareRail;
+  captions?: Array<{ at: string; text: string }>;
   persona_signal?: {
     id: string;
     display_name: string;
@@ -138,6 +139,7 @@ export default function DemoDeckPage() {
                 // previous journey so this card cannot inherit it.
                 if (card.persona_signal) setDemoPersona(card.persona_signal);
                 else clearDemoPersona();
+                setDemoCaptions(card.captions);
                 navigate(railDestination(card));
               }}
               style={{

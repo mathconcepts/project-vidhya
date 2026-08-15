@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "_comment": [
+    "Journey card deck for the full-feel demo (/demo). Each card is one visitor's",
+    "path through the product: a persona, and an ordered rail they walk.",
+    "",
+    "Validated by scripts/check-demo-rails.ts, wired into CI as ci:demo-rails.",
+    "The validator refuses a card whose persona does not exist, whose atoms are",
+    "not on disk, or whose interactive blocks do not parse — so a card that would",
+    "dead-end in front of a visitor fails the build instead.",
+    "",
+    "Coherence rule: an atom rail's concept must appear in the persona's",
+    "initial_mastery, unless the card sets first_exposure. A card claiming 'weak",
+    "in linear algebra' sitting on a profile with no linear-algebra mastery is",
+    "the fixture incoherence the CEO plan's D3.2 calls out, and it is easy to",
+    "introduce by accident when personas and cards are edited separately."
+  ],
+  "cards": [
+    {
+      "id": "gate-3-weeks-weak-la",
+      "title": "Three weeks to GATE, weak in linear algebra",
+      "subtitle": "Meera has been avoiding the topic she is weakest at.",
+      "audience": "student",
+      "persona": "meera-gate-la-anxious",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "eigenvalues",
+        "atoms": ["hook", "intuition", "worked-example"]
+      }
+    },
+    {
+      "id": "just-failed-a-mock",
+      "title": "Just failed a mock",
+      "subtitle": "The determinant was a formula she could execute and not explain.",
+      "audience": "student",
+      "persona": "meera-gate-la-anxious",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "determinants",
+        "atoms": ["hook", "intuition", "worked-example"]
+      }
+    },
+    {
+      "id": "topper-pushing-rank",
+      "title": "Already scoring well, pushing for rank",
+      "subtitle": "Rahul does not need the intuition pass. Watch what changes.",
+      "audience": "student",
+      "persona": "rahul-gate-rank-push",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "orthogonality",
+        "atoms": ["hook", "worked-example"]
+      }
+    },
+    {
+      "id": "same-lesson-two-students",
+      "title": "The same lesson, two students",
+      "subtitle": "One concept, opened by Meera and by Rahul, side by side.",
+      "audience": "principal",
+      "persona": "meera-gate-la-anxious",
+      "rail": {
+        "kind": "compare",
+        "concept_id": "linear-transformations",
+        "against_persona": "rahul-gate-rank-push"
+      }
+    }
+  ]
+}

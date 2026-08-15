@@ -107,6 +107,16 @@ jobs:
       - name: Interactive-spec validity
         run: npm run ci:interactive-specs
 
+      # Journey card deck (M2 / D3.6). The plan's acceptance condition is
+      # "every shipped card is QA-walked end to end; a card that dead-ends is
+      # pulled, not shipped" — hand-walking that before every demo does not
+      # survive a seven-day schedule, so the walk is encoded: persona resolves,
+      # every atom exists, every interactive block in the rail parses, and the
+      # rail's concept appears in the persona's mastery vector so a card cannot
+      # claim "weak in linear algebra" over a fixture that is not.
+      - name: Demo rails walkable
+        run: npm run ci:demo-rails
+
       # Bare-Minimum Syllabus Contract (Track E3): reports concepts below
       # the declared floor. Exits 0 while ratchet=report_only; exits 1
       # (blocking) after the first floor-fill playbook completes.

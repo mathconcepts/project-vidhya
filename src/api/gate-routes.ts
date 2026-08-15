@@ -626,10 +626,37 @@ async function handleGetProgress(req: ParsedRequest, res: ServerResponse): Promi
   const sessionId = req.params.sessionId;
   if (!sessionId) return sendError(res, 400, 'Session ID required');
 
-  const pool = getPool();
+  // Degrade honestly when there is no database. This route previously threw,
+  // which surfaced as a 500 on /progress — the last step of the demo's own
+  // principal drill-down. A student with no recorded progress and a deployment
+  // with no progress store look identical from here, and both are correctly
+  // described as "nothing recorded yet"; neither is a server fault. The DB-less
+  // contract elsewhere in this codebase (PgLearningObjectCatalog, PgStudentModel)
+  // is the same: return the empty answer rather than raise.
+  const EMPTY_PROGRESS = {
+    topics: [],
+    overall: {
+      problems_attempted: 0,
+      total_correct: 0,
+      total_attempts: 0,
+      due_today: 0,
+    },
+    weakTopics: [],
+  };
+
+  let pool;
+  try {
+    pool = getPool();
+  } catch {
+    return sendJSON(res, EMPTY_PROGRESS);
+  }
+  if (!pool) return sendJSON(res, EMPTY_PROGRESS);
 
   // Per-topic mastery
-  const topicStats = await pool.query(
+  let topicStats;
+  let overall;
+  try {
+    topicStats = await pool.query(
     `SELECT
        pq.topic,
        COUNT(*) as total_problems,
@@ -646,7 +673,7 @@ async function handleGetProgress(req: ParsedRequest, res: ServerResponse): Promi
   );
 
   // Overall stats
-  const overall = await pool.query(
+    overall = await pool.query(
     `SELECT
        COUNT(DISTINCT sr.pyq_id) as problems_attempted,
        SUM(sr.correct_count) as total_correct,
@@ -654,8 +681,14 @@ async function handleGetProgress(req: ParsedRequest, res: ServerResponse): Promi
        SUM(CASE WHEN sr.next_review <= CURRENT_DATE THEN 1 ELSE 0 END) as due_today
      FROM sr_sessions sr
      WHERE sr.session_id = $1`,
-    [sessionId],
-  );
+      [sessionId],
+    );
+  } catch (e) {
+    // Reachable when DATABASE_URL points somewhere real but migrations have
+    // not run — the demo deploy's documented state. Same answer as no database.
+    console.warn('[progress] falling back to empty progress:', (e as Error).message);
+    return sendJSON(res, EMPTY_PROGRESS);
+  }
 
   // Weak topics: lowest easiness = hardest for student
   const weakTopics = topicStats.rows

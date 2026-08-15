@@ -113,7 +113,7 @@ import { renderExamLanding } from './templates/exam-landing';
 import { renderSitemap, buildSitemapEntries } from './templates/sitemap';
 import { renderRssFeed } from './templates/rss-feed';
 import { computeFeatureFlags } from './api/feature-flags';
-import { resolveDemoRole, buildDemoLoginHtml, type DemoTokens } from './api/demo-login';
+import { resolveDemoRole, buildDemoLoginHtml, demoLoginAllowed, type DemoTokens } from './api/demo-login';
 import path from 'path';
 import fs from 'fs';
 import pg from 'pg';
@@ -673,6 +673,15 @@ registerRoute('GET', '/demo-login', async (req, res) => {
   // object. Pre-fix this used `req.query?.role` which is always undefined,
   // causing every demo login to fall back to 'student-active' (Priya)
   // regardless of the requested role.
+  // Refuse on a production-shaped instance: real OAuth configured and no demo
+  // flag. 404 rather than 403 — an instance that does not do demo logins should
+  // not confirm that the route exists.
+  if (!demoLoginAllowed()) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+    return;
+  }
+
   const role = req.query?.get('role') ?? 'student-active';
 
   // Auto-seed in local-dev mode if tokens haven't been generated yet.

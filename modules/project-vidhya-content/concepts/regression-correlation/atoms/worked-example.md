@@ -67,5 +67,5 @@ And $b = r \cdot \dfrac{\sqrt{S_{yy}}}{\sqrt{S_{xx}}} = 0.8 \cdot 1 = 0.8$ — c
 - Forgetting that the product $b_{yx} \cdot b_{xy} = r^2$, useful as a check.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","steps":[{"prompt":"Given n=4, Σx=8, Σy=12, Σx²=22, Σxy=28. Compute the slope b of the regression of y on x.","hint":"Use b = (Σxy − n·x̄·ȳ) / (Σx² − n·x̄²). First find x̄ = Σx/n = 2 and ȳ = Σy/n = 3.","answer":"b = (28 − 4·2·3) / (22 − 4·4) = (28 − 24)/(22 − 16) = 4/6 = 2/3 ≈ 0.667"},{"prompt":"Now find the intercept a, and write the regression equation.","hint":"Use a = ȳ − b·x̄ with x̄=2, ȳ=3, b=2/3.","answer":"a = 3 − (2/3)·2 = 3 − 4/3 = 5/3 ≈ 1.667. Equation: ŷ = 5/3 + (2/3)x"}]}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: fitting ŷ = a + bx from summary statistics","steps":[{"prompt":"Given n=4, Σx=8, Σy=12, Σx²=22, Σxy=28. Compute the slope b of the regression of y on x.","hint":"Use b = (Σxy − n·x̄·ȳ) / (Σx² − n·x̄²). First find x̄ = Σx/n = 2 and ȳ = Σy/n = 3.","answer":"b = (28 − 4·2·3) / (22 − 4·4) = (28 − 24)/(22 − 16) = 4/6 = 2/3 ≈ 0.667"},{"prompt":"Now find the intercept a, and write the regression equation.","hint":"Use a = ȳ − b·x̄ with x̄=2, ȳ=3, b=2/3.","answer":"a = 3 − (2/3)·2 = 3 − 4/3 = 5/3 ≈ 1.667. Equation: ŷ = 5/3 + (2/3)x"}]}
 ```

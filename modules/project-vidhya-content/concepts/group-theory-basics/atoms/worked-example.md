@@ -87,5 +87,5 @@ Since $6$ does not divide $15$, **no subgroup of order 6 can exist** in $G$.
 **Also:** Every element's order must divide 15, so possible element orders are 1, 3, 5, 15.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","steps":[{"prompt":"In (ℤ₈, +₈), what is the order of the element 6? Use the formula ord(a) = n/gcd(n,a).","hint":"gcd(8, 6) = 2. So ord(6) = 8/2 = ?","answer":"4"},{"prompt":"A group G has order 28. List all possible orders of subgroups of G (by Lagrange's theorem).","hint":"Find all positive divisors of 28. 28 = 4 × 7.","answer":"1, 2, 4, 7, 14, 28"}]}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: element order in Z_n and Lagrange's theorem","steps":[{"prompt":"In (ℤ₈, +₈), what is the order of the element 6? Use the formula ord(a) = n/gcd(n,a).","hint":"gcd(8, 6) = 2. So ord(6) = 8/2 = ?","answer":"4"},{"prompt":"A group G has order 28. List all possible orders of subgroups of G (by Lagrange's theorem).","hint":"Find all positive divisors of 28. 28 = 4 × 7.","answer":"1, 2, 4, 7, 14, 28"}]}
 ```

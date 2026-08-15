@@ -44,6 +44,9 @@ const RAILS = process.argv[2]
 const PERSONAS = path.join(ROOT, 'data/personas');
 const CONCEPTS = path.join(ROOT, 'modules/project-vidhya-content/concepts');
 const PRACTICE_ITEMS = path.join(ROOT, 'data', 'practice-items');
+const SCENARIO_RUNS = process.env.VIDHYA_SCENARIO_ROOT
+  ? path.resolve(process.env.VIDHYA_SCENARIO_ROOT)
+  : path.join(ROOT, '.data', 'scenarios');
 
 /**
  * Every authored practice item, by id.
@@ -72,6 +75,79 @@ const PRACTICE = loadPracticeItems();
 const AUDIENCES = new Set(['student', 'teacher', 'principal']);
 const RAIL_KINDS = new Set(['atoms', 'compare', 'surfaces']);
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/**
+ * The role a destination demands, and the ranking used to compare it against
+ * the role the card's persona is seeded at.
+ *
+ * This exists because the deck shipped two cards that resolved, parsed, and
+ * passed every other check here, and still dead-ended: they signed the visitor
+ * in as a student and sent them to `/teaching` and `/admin/scenarios`, which
+ * answer "Teacher role required" and 403. Every part was present; the walk was
+ * impossible. Checking the parts is not checking the journey.
+ *
+ * Prefix-matched longest-first, so `/admin/scenarios` is not read as `/admin`
+ * by accident. A route with no entry is treated as reachable by anyone —
+ * absence of a rule is not evidence of a gate, and guessing would produce
+ * failures the author cannot act on.
+ */
+const ROLE_RANK: Record<string, number> = { student: 1, teacher: 2, admin: 3 };
+const ROUTE_MIN_ROLE: Array<[string, string]> = [
+  ['/admin', 'admin'],
+  ['/teaching', 'teacher'],
+  ['/teacher', 'teacher'],
+];
+
+function requiredRoleFor(route: string): string | null {
+  const hit = [...ROUTE_MIN_ROLE]
+    .sort((a, b) => b[0].length - a[0].length)
+    .find(([prefix]) => route === prefix || route.startsWith(prefix + '/'));
+  return hit ? hit[1] : null;
+}
+
+/** The role a persona's demo account is seeded at; absent means student. */
+function personaRole(personaId: string): string {
+  try {
+    const raw = fs.readFileSync(path.join(PERSONAS, `${personaId}.yaml`), 'utf8');
+    return raw.match(/^demo_role:\s*(\S+)/m)?.[1] ?? 'student';
+  } catch {
+    return 'student';
+  }
+}
+
+/**
+ * Every route a card can put the visitor on, entry included.
+ *
+ * Kept next to the reachability check rather than imported from the frontend:
+ * the page derives these for rendering, this derives them to prove the journey
+ * is walkable, and a shared helper would let a rendering change quietly relax
+ * the guard.
+ */
+function railRoutes(card: any): string[] {
+  const rail = card.rail ?? {};
+  if (rail.kind === 'surfaces') return (rail.steps ?? []).map((s: any) => s?.route).filter(Boolean);
+  if (rail.kind === 'compare') return ['/admin/scenarios'];
+  const routes = [`/lesson/${rail.concept_id}`];
+  if (rail.practice_item_id) routes.push(`/attempt/${rail.practice_item_id}`);
+  if (rail.invite_doubt) routes.push('/demo/doubt');
+  return routes;
+}
+
+function checkReachability(card: any): void {
+  const role = personaRole(card.persona);
+  for (const route of railRoutes(card)) {
+    const needed = requiredRoleFor(route);
+    if (!needed) continue;
+    if ((ROLE_RANK[role] ?? 0) < (ROLE_RANK[needed] ?? 0)) {
+      fail(
+        card.id,
+        `rail sends the visitor to "${route}", which needs role "${needed}", but persona ` +
+          `"${card.persona}" is seeded as "${role}" — the card would dead-end on a permissions ` +
+          `refusal. Give the persona "demo_role: ${needed}" or route the card somewhere it can go.`,
+      );
+    }
+  }
+}
 
 const errors: string[] = [];
 const fail = (cardId: string, msg: string) => errors.push(`  card "${cardId}"\n      ${msg}`);
@@ -329,6 +405,29 @@ function checkCompareRail(card: any, rail: any): void {
         'which demonstrates the opposite of what the card claims',
     );
   }
+  // The side-by-side lives on /admin/scenarios, which lists trial runs from
+  // disk. With no runs the visitor reaches the page and finds nothing — every
+  // part present, nothing to see. That is how this card shipped once, so it is
+  // a hard failure now rather than a thing to notice at the venue.
+  //
+  // Seeding a run needs DATABASE_URL (src/scenarios/persona-seeder.ts), which
+  // the offline venue instance does not have. Until that path exists DB-less,
+  // a compare card cannot walk, and this check says so out loud.
+  const runs = (() => {
+    try {
+      return fs.readdirSync(SCENARIO_RUNS).filter((d) => !d.startsWith('_'));
+    } catch {
+      return [];
+    }
+  })();
+  if (runs.length === 0) {
+    fail(
+      card.id,
+      'compare rail lands on /admin/scenarios, but no trial runs exist in .data/scenarios/ — ' +
+        'the visitor would reach the page and find an empty list. Seed a run (npm run demo:scenario, ' +
+        'needs DATABASE_URL) or pull the card.',
+    );
+  }
 }
 
 function main(): void {
@@ -379,6 +478,7 @@ function main(): void {
     if (rail.kind === 'atoms') checkAtomRail(card, rail);
     else if (rail.kind === 'surfaces') checkSurfacesRail(card, rail);
     else checkCompareRail(card, rail);
+    checkReachability(card);
     checkCaptions(card);
   }
 

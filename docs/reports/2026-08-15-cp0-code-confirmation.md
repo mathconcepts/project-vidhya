@@ -313,13 +313,22 @@ still the bulk of the remaining schedule.
 
 ## 11. Still open, carried forward
 
-- **Receipt objects in fixtures (§6).** Unresolved. The principal's receipts rail needs
-  seeded attempts to carry a real `{verified: true}` receipt or `ReceiptBorder` renders
-  nothing. This belongs in the fixture-coherence contract before M3 item 9 is built.
+- ~~**Receipt objects in fixtures (§6).**~~ **RESOLVED, and the diagnosis inverted.**
+  The gap was not that fixtures lacked receipts — it was that `SpinePage` already drew
+  the border over `sr_sessions` recall counts and called them "verified attempts", so
+  any seeded profile with attempts earned a promise nothing backed. Fixed by making
+  `lib/receipt.ts` the only place a receipt may be minted (`source` now required, so
+  `{verified: true}` no longer type-checks), removing the unbacked border and its copy,
+  and adding a CI invariant that fails on a receipt literal anywhere else. The skeptic
+  rail can now be built on this surface: fewer borders, every one of them tappable.
 - **147 cosmetic atom-id drifts** (`visual_analogy` vs `visual-analogy`). Tolerated by the
   new gate on purpose; worth a single normalising pass someday, not before the demo.
-- **A real WebGL tier**, if 3D is ever wanted: needs a mathbox version that exists, the
-  `canRenderWebGLTier()` gate, and vendored same-origin assets.
+- ~~**A real WebGL tier**~~ — **RESOLVED by owner decision, 2026-08-15.** The
+  slider-driven eigenvalue manipulable is the accepted substitute for 3D orbit-drag.
+  No WebGL tier for this demo. The capability probe written alongside the MathBox
+  removal was deleted rather than kept as dead code; if 3D is ever revived it needs a
+  mathbox version that exists, a device-capability gate, and vendored same-origin
+  assets. Recorded in `registry.ts` next to the removal note so it is not re-litigated.
 - **No generator emits `interactive-spec`.** Every one of the 107 is hand-authored. Until a
   generator learns the schema, "fill a new topic with interactives" stays authoring work —
   which is worth knowing before promising a second demo vertical.

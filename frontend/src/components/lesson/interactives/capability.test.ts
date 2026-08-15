@@ -45,8 +45,12 @@ function stubDeviceMemory(value: number | undefined) {
 }
 
 describe('hasWebGL', () => {
-  beforeEach(() => __resetCapabilityCache());
-  afterEach(() => vi.restoreAllMocks());
+  beforeEach(() => {
+    __resetCapabilityCache();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   it('is true when a webgl context is granted', () => {
     stubCanvas((id) => (id === 'webgl' ? { getExtension: () => null } : null));
@@ -92,7 +96,9 @@ describe('hasWebGL', () => {
 });
 
 describe('isMemoryConstrained', () => {
-  afterEach(() => stubDeviceMemory(undefined));
+  afterEach(() => {
+    stubDeviceMemory(undefined);
+  });
 
   it('is true at or below 2GB', () => {
     stubDeviceMemory(2);
@@ -137,7 +143,9 @@ describe('canRenderWebGLTier', () => {
     stubMatchMedia(false);
     stubDeviceMemory(8);
   });
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   it('is true only when every signal is favourable', () => {
     stubCanvas(() => ({ getExtension: () => null }));

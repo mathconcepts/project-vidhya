@@ -12,7 +12,7 @@
  */
 
 import { useMemo, useEffect, useState } from 'react';
-import type { DirectiveType } from './registry';
+import type { DirectiveType, DirectiveProps } from './registry';
 import { parseRange } from './plot-utils';
 
 interface MathBoxLiteAttrs {
@@ -48,7 +48,11 @@ function evaluateFn(fnSrc: string, x: number): number | null {
   }
 }
 
-export function MathBoxLite({ directive, attrs }: { directive: DirectiveType; attrs: MathBoxLiteAttrs }) {
+export function MathBoxLite({ directive, attrs }: DirectiveProps) {
+  // Providers are registered as ComponentType<DirectiveProps>, so attrs arrives
+  // as an open map; narrow it here rather than at the signature, which would
+  // break assignability for callers passing a library entry's config blob.
+  const a = attrs as MathBoxLiteAttrs;
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -60,11 +64,11 @@ export function MathBoxLite({ directive, attrs }: { directive: DirectiveType; at
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const fnSrc = (attrs.function || attrs.fn || 'x^2').trim();
-  const [xMin, xMax] = parseRange(attrs.x, [-3, 3]);
-  const [yMin, yMax] = parseRange(attrs.y, [-3, 3]);
-  const primary = attrs.color || 'var(--green)';
-  const aspect = attrs.aspect || '4 / 3';
+  const fnSrc = (a.function || a.fn || 'x^2').trim();
+  const [xMin, xMax] = parseRange(a.x, [-3, 3]);
+  const [yMin, yMax] = parseRange(a.y, [-3, 3]);
+  const primary = a.color || 'var(--green)';
+  const aspect = a.aspect || '4 / 3';
 
   const path = useMemo(() => {
     const n = 60;

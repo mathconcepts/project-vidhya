@@ -31,6 +31,8 @@
     "ci:content-gate": "tsx scripts/content-ci-gate.ts",
     "ci:pg-allowlist": "tsx scripts/check-pg-allowlist.ts",
     "ci:seam-registry": "tsx scripts/check-seam-registry.ts",
+    "ci:content-integrity": "tsx scripts/check-content-integrity.ts",
+    "ci:interactive-specs": "tsx scripts/lint-interactive-specs.ts",
     "data:export": "tsx scripts/vidhya-data.ts export",
     "data:import": "tsx scripts/vidhya-data.ts import",
     "data:verify": "tsx scripts/vidhya-data.ts verify",

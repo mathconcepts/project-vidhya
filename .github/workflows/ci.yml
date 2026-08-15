@@ -87,6 +87,26 @@ jobs:
       - name: seam-registry check
         run: npm run ci:seam-registry
 
+      # Content integrity + interactive-spec validity (2026-08-15 CP0).
+      # Both gates exist because the failures they catch are INVISIBLE at
+      # runtime: an interactive-spec that fails validation makes
+      # InteractiveSidecar return null, so a broken widget is indistinguishable
+      # from an atom that never had one (50 of 101 blocks were dead this way),
+      # and a leaked generator header or an unmatched code fence just renders
+      # as garbage at the bottom of a lesson. Neither shows up in typecheck or
+      # unit tests, because both are prose problems in the content module.
+      #
+      # ci:interactive-specs imports the renderer's own validator rather than
+      # a second copy, and additionally EVALUATES every manipulable formula
+      # across its slider range and samples every simulation expression across
+      # its t-range — so a spec that parses but divides by zero at an endpoint
+      # fails here instead of in front of a student.
+      - name: Content integrity (scaffolding leaks, fences, atom ids)
+        run: npm run ci:content-integrity
+
+      - name: Interactive-spec validity
+        run: npm run ci:interactive-specs
+
       # Bare-Minimum Syllabus Contract (Track E3): reports concepts below
       # the declared floor. Exits 0 while ratchet=report_only; exits 1
       # (blocking) after the first floor-fill playbook completes.

@@ -20,6 +20,5 @@ This is why in exams, you can't just say "the work is 5 Joules"—you must speci
 {"type":"parametric","expression":"cos(x)*(1+0.3*sin(t))","x_range":[0,6.28],"y_range":[-1.5,1.5],"t_range":[0,6.28],"frames":30,"fps":12}
 ```
 
-```
 
 ---

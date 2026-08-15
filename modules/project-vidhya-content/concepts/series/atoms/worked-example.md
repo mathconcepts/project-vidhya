@@ -48,7 +48,6 @@ Since $\lim_{n \to \infty} \frac{a_{n+1}}{a_n} = 0 < 1$, by the Ratio Test, the 
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Ratio Test with factorials","steps":[{"prompt":"Step 1: Which convergence test should we use for a series with factorials in the denominator?","hint":"Think about which test simplifies factorial ratios nicely.","answer":"The Ratio Test, because $\\frac{n!}{(n+1)!} = \\frac{1}{n+1}$ simplifies instantly."},{"prompt":"Step 2: Compute $\\frac{a_{n+1}}{a_n}$ where $a_n = \\frac{n^2 \\cdot 2^n}{n!}$.","hint":"Write $(n+1)! = (n+1) \\cdot n!$ and $2^{n+1} = 2 \\cdot 2^n$, then cancel.","answer":"$\\frac{a_{n+1}}{a_n} = \\frac{2(n+1)}{n^2}$"},{"prompt":"Step 3: What is $\\lim_{n \\to \\infty} \\frac{2(n+1)}{n^2}$?","hint":"Divide numerator and denominator by $n^2$ to find the dominant behaviour.","answer":"$\\lim_{n \\to \\infty} \\frac{2(n+1)}{n^2} = 0$, so the series converges by the Ratio Test."}],"caption":"Factorial terms always win: exponential/polynomial ÷ factorial → 0. Memorize this pattern for GATE."}
 ```
-```
 
 ---
 

@@ -29,7 +29,6 @@ GATE asks you to:
 4. Connect determinants to solutions of linear systems (Cramer's rule)
 
 The determinant is the invisible thread connecting invertibility, area scaling, and system solutions.
-```
 
 ---
 

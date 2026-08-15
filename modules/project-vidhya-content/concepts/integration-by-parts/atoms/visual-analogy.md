@@ -27,6 +27,5 @@ Look at $\int x \sin(x) \, dx$ below. The graph shows how the original function 
 ```
 
 The LIATE rule is your guide to picking the right fulcrum: put algebraic functions on the left (to differentiate) and trig/exponential on the right (to integrate).
-```
 
 ---

@@ -21,6 +21,5 @@ When two vectors point in nearly the same direction (linearly dependent), they c
 ```
 
 The circle above shows how a rotation matrix preserves areas—any shape rotates unchanged in size. For other transformations, the determinant measures exactly *how much* areas grow or shrink.
-```
 
 ---

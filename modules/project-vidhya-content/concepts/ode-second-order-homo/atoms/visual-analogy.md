@@ -26,6 +26,5 @@ The solution family $y = c_1 e^{r_1 t} + c_2 e^{r_2 t}$ shows why: different $r$
 
 The animation above shows a classic underdamped solution: oscillation amplitude decays exponentially.
 
-```
 
 ---

@@ -39,7 +39,6 @@ $$\frac{(x^2+1)^6}{12} + C$$
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Integrate x(x²+1)⁵","steps":[{"prompt":"Step 1: What should u equal to simplify this integral?","hint":"Look for the composite function—what's inside the power of 5?","answer":"u = x² + 1"},{"prompt":"Step 2: Find du in terms of dx.","hint":"Differentiate your choice of u.","answer":"du = 2x dx, so x dx = (1/2) du"},{"prompt":"Step 3: Rewrite the integral in terms of u only.","hint":"Substitute u and (1/2) du, and simplify.","answer":"∫ u⁵ · (1/2) du = (1/2) ∫ u⁵ du"},{"prompt":"Step 4: Integrate using the power rule.","hint":"Apply ∫ uⁿ du = u^(n+1)/(n+1) + C","answer":"(1/2) · u⁶/6 + C = u⁶/12 + C"},{"prompt":"Step 5: Substitute u back to get the final answer.","hint":"Replace u with x² + 1.","answer":"(x² + 1)⁶/12 + C"}],"caption":"The substitution u = x² + 1 transforms a complex-looking integral into a simple power-rule application. Always check: does the derivative of the inner function appear in the integrand?"}
 ```
-```
 
 ---
 

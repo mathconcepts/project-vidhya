@@ -7,7 +7,8 @@
  *
  * Tier discipline (per the eng review + amendment):
  *   Tier 0  Static SVG/PNG/MP4    ~0KB     always
- *   Tier 1  MathBox.js            ~150KB   default for 3D/parametric/vector
+ *   Tier 1  MathBoxLite (SVG)     ~0KB     default for 3D/parametric/vector
+ *           (was MathBox.js/WebGL — removed 2026-08-15, see note below)
  *   Tier 2  Desmos free embed     ~250KB   slider-driven 2D
  *   Tier 3  GeoGebra applet       ~600KB   fallback only — CAS/algebra
  *   Tier 4+ Wolfram (paid)        opt-in   never a fallback
@@ -19,7 +20,7 @@
 import { lazy, ComponentType } from 'react';
 
 export type DirectiveType =
-  | 'math3d' | 'parametric' | 'vectorfield' | 'surface'   // MathBox primary
+  | 'math3d' | 'parametric' | 'vectorfield' | 'surface'   // SVG plot primary
   | 'slider' | 'graph2d'                                  // Desmos primary
   | 'cas' | 'construct'                                   // GeoGebra primary
   | 'manim'                                               // Pre-rendered MP4
@@ -43,9 +44,12 @@ export interface DirectiveProps {
 // interactive-spec evaluator explicitly forbids, and painted with the retired
 // navy/emerald palette. `MathBoxLite` is what students have actually been
 // seeing, so the 3D directives now route there directly and honestly.
-// Reinstating a real WebGL tier is tracked in the CP0 report's deferred list;
-// it needs a version that exists, a `canRenderWebGLTier()` gate, and vendored
-// same-origin assets so it survives an offline venue.
+// Reinstating a real WebGL tier is deferred by owner decision (2026-08-15):
+// the slider-driven eigenvalue manipulable is the accepted substitute for 3D
+// orbit-drag. If it is ever revived it needs a mathbox version that exists, a
+// device-capability gate, and vendored same-origin assets so it survives an
+// offline venue. The speculative probe written alongside this removal was
+// deleted rather than left as dead code.
 const MathBoxLite = lazy(() =>
   import('./MathBoxLite').then((m) => ({ default: m.MathBoxLite })),
 );

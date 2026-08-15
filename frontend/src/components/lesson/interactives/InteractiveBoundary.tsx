@@ -16,6 +16,7 @@
 
 import { Component, ReactNode, useState, useEffect } from 'react';
 import { PROVIDER_REGISTRY, type DirectiveType, type DirectiveProps } from './registry';
+import { prefersReducedData } from '@/lib/mediaPreferences';
 
 interface Props {
   directive: DirectiveType;
@@ -52,14 +53,6 @@ class ProviderErrorBoundary extends Component<
   }
 }
 
-function prefersReducedData(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  try {
-    return window.matchMedia('(prefers-reduced-data: reduce)').matches;
-  } catch {
-    return false;
-  }
-}
 
 export function InteractiveBoundary({ directive, attrs }: Props) {
   const [providerIdx, setProviderIdx] = useState(0);

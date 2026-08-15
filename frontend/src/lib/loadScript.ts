@@ -13,6 +13,8 @@
  *   - Does not retry — caller decides whether to fall back
  */
 
+import { prefersReducedData } from './mediaPreferences';
+
 const inflight = new Map<string, Promise<any>>();
 
 interface LoadOptions {
@@ -22,15 +24,6 @@ interface LoadOptions {
   globalProbe: () => any;
   /** Honor prefers-reduced-data (default true). */
   honorReducedData?: boolean;
-}
-
-function isReducedData(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  try {
-    return window.matchMedia('(prefers-reduced-data: reduce)').matches;
-  } catch {
-    return false;
-  }
 }
 
 export function loadScript(src: string, opts: LoadOptions): Promise<any> {
@@ -43,7 +36,7 @@ export function loadScript(src: string, opts: LoadOptions): Promise<any> {
   if (cached) return cached;
 
   const honorReducedData = opts.honorReducedData ?? true;
-  if (honorReducedData && isReducedData()) {
+  if (honorReducedData && prefersReducedData()) {
     return Promise.reject(new Error('loadScript: prefers-reduced-data'));
   }
 

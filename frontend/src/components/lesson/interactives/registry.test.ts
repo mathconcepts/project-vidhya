@@ -35,11 +35,11 @@ describe('PROVIDER_REGISTRY — chain shape', () => {
   });
 
   it('parametric falls back through Desmos before static', () => {
-    // Provider chain order: MathBox → Desmos → StaticFallback
+    // Provider chain order: MathBoxLite → Desmos → StaticFallback
     expect(PROVIDER_REGISTRY.parametric.length).toBe(3);
   });
 
-  it('graph2d uses Desmos primary, MathBox fallback', () => {
+  it('graph2d uses Desmos primary, MathBoxLite fallback', () => {
     expect(PROVIDER_REGISTRY.graph2d.length).toBe(3);
   });
 

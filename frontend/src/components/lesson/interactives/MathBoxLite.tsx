@@ -5,8 +5,8 @@
  *
  * Theme overrides per design review:
  *   bg: transparent (atom card surface-1 shows through)
- *   primary curve: #10b981 (emerald)
- *   axes: #374151 (surface-3)
+ *   primary curve: var(--green) (mastery green, the design system's plot accent)
+ *   axes: var(--separator) (hairline, per the Clarity spacing rules)
  *
  * Reduced-motion: respects `prefers-reduced-motion: reduce`.
  */
@@ -63,7 +63,7 @@ export function MathBoxLite({ directive, attrs }: { directive: DirectiveType; at
   const fnSrc = (attrs.function || attrs.fn || 'x^2').trim();
   const [xMin, xMax] = parseRange(attrs.x, [-3, 3]);
   const [yMin, yMax] = parseRange(attrs.y, [-3, 3]);
-  const primary = attrs.color || '#10b981';
+  const primary = attrs.color || 'var(--green)';
   const aspect = attrs.aspect || '4 / 3';
 
   const path = useMemo(() => {
@@ -102,7 +102,7 @@ export function MathBoxLite({ directive, attrs }: { directive: DirectiveType; at
       style={{ aspectRatio: aspect, borderColor: 'var(--separator)' }}
     >
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
-        <g stroke="#374151" strokeOpacity="0.4" strokeWidth="0.5">
+        <g stroke="var(--separator)" strokeOpacity="0.6" strokeWidth="0.5">
           {Array.from({ length: 7 }, (_, i) => {
             const x = xMin + (i / 6) * (xMax - xMin);
             const sx = ((x - xMin) / (xMax - xMin)) * W;

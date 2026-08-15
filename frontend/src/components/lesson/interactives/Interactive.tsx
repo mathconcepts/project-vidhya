@@ -14,7 +14,13 @@ import { lazy, Suspense } from 'react';
 import { resolveInteractive } from './registry';
 import type { DirectiveProps } from './registry';
 
-const MathBox = lazy(() => import('./MathBox'));
+// The `mathbox` tier renders through the dependency-free SVG plotter. The WebGL
+// provider it used to point at was removed on 2026-08-15 — it fetched a mathbox
+// version that has never existed on npm, so it 404'd and fell through to this
+// same component on every mount. See registry.ts for the full note.
+const MathBoxLite = lazy(() =>
+  import('./MathBoxLite').then((m) => ({ default: m.MathBoxLite })),
+);
 const Desmos = lazy(() => import('./Desmos'));
 const Manim = lazy(() => import('./Manim'));
 const StaticFallback = lazy(() => import('./StaticFallback'));
@@ -52,7 +58,7 @@ export default function Interactive({ attrs }: DirectiveProps) {
 
   const Provider =
     entry.tier === 'mathbox'
-      ? MathBox
+      ? MathBoxLite
       : entry.tier === 'desmos'
         ? Desmos
         : entry.tier === 'manim'

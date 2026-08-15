@@ -8,7 +8,7 @@
  *
  * Theme overrides on the official calc:
  *   bg: surface-1 (#111827)
- *   curve: emerald (#10b981)
+ *   curve: var(--green) (mastery green)
  *
  * The DesmosLite path uses the same theme tokens via SVG.
  */
@@ -31,6 +31,10 @@ interface DesmosAttrs {
 const DESMOS_CDN = 'https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6';
 
 type LoadState = 'pending' | 'cdn' | 'lite';
+
+// Desmos' API takes a literal colour, not a CSS custom property. Keep this in
+// step with --green in frontend/src/styles/tokens/ if the token ever changes.
+const GREEN = '#34c759';
 
 export default function Desmos({ attrs }: DirectiveProps) {
   const a = attrs as DesmosAttrs;
@@ -70,7 +74,7 @@ export default function Desmos({ attrs }: DirectiveProps) {
           for (const s of sliderSpecs) {
             calc.setExpression({ id: `slider-${s.name}`, latex: `${s.name}=${s.default}`, sliderBounds: { min: String(s.min), max: String(s.max) } });
           }
-          calc.setExpression({ id: 'main', latex: `y=${eqSrc.replace(/\*\*/g, '^')}`, color: '#10b981', lineWidth: 3 });
+          calc.setExpression({ id: 'main', latex: `y=${eqSrc.replace(/\*\*/g, '^')}`, color: GREEN, lineWidth: 3 });
           calcRef.current = calc;
           setState('cdn');
         } catch {

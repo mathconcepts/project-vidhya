@@ -33,7 +33,22 @@ export interface DirectiveProps {
 }
 
 // Lazy-load every provider so the lesson page first paint stays small.
-const MathBox    = lazy(() => import('./MathBox'));
+//
+// NOTE ON THE 3D TIER: the WebGL MathBox provider was removed (2026-08-15).
+// It loaded `mathbox@2.4.1` from unpkg, and that version has never existed on
+// the npm registry that unpkg serves from (latest published: 2.3.2-rc1), so
+// the script 404'd on every mount and the component fell through to the SVG
+// path — after first downloading ~600KB of three.js for nothing. It also
+// evaluated author-supplied expressions through `new Function()`, which the
+// interactive-spec evaluator explicitly forbids, and painted with the retired
+// navy/emerald palette. `MathBoxLite` is what students have actually been
+// seeing, so the 3D directives now route there directly and honestly.
+// Reinstating a real WebGL tier is tracked in the CP0 report's deferred list;
+// it needs a version that exists, a `canRenderWebGLTier()` gate, and vendored
+// same-origin assets so it survives an offline venue.
+const MathBoxLite = lazy(() =>
+  import('./MathBoxLite').then((m) => ({ default: m.MathBoxLite })),
+);
 const Desmos     = lazy(() => import('./Desmos'));
 const GeoGebra   = lazy(() => import('./GeoGebra'));
 const Manim      = lazy(() => import('./Manim'));
@@ -49,15 +64,15 @@ const StaticFallback = lazy(() => import('./StaticFallback'));
  * on render error via InteractiveBoundary.
  */
 export const PROVIDER_REGISTRY: Record<DirectiveType, ComponentType<DirectiveProps>[]> = {
-  // Tier 1 MathBox primary
-  math3d:      [MathBox, StaticFallback],
-  parametric:  [MathBox, Desmos, StaticFallback],
-  vectorfield: [MathBox, StaticFallback],
-  surface:     [MathBox, StaticFallback],
+  // Tier 1 SVG plot primary (dependency-free — survives an offline venue)
+  math3d:      [MathBoxLite, StaticFallback],
+  parametric:  [MathBoxLite, Desmos, StaticFallback],
+  vectorfield: [MathBoxLite, StaticFallback],
+  surface:     [MathBoxLite, StaticFallback],
 
   // Tier 2 Desmos primary
   slider:      [Desmos, StaticFallback],
-  graph2d:     [Desmos, MathBox, StaticFallback],
+  graph2d:     [Desmos, MathBoxLite, StaticFallback],
 
   // Tier 3 GeoGebra primary
   cas:         [GeoGebra, StaticFallback],

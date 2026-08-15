@@ -1,0 +1,173 @@
+/**
+ * DemoDeckPage — the `/demo` entry: pick a journey, walk it.
+ *
+ * The CEO plan calls this a "journey card deck" and shows 5-6 cards. It is
+ * built here as hairline-separated rows instead, deliberately:
+ * DESIGN-SYSTEM.md's layout rule is "One focal block per screen. Everything
+ * else is plain text or hairline-separated rows directly on the canvas", and
+ * the design review's first hard-rejection criterion is "generic SaaS card
+ * grid as first impression". This screen IS the first impression, and one of
+ * its two audiences is a principal who came specifically to judge whether the
+ * product is serious. A tile mosaic is the wrong first sentence.
+ *
+ * Every state here is honest about what it knows:
+ *   - loading  : says it is loading, claims nothing
+ *   - 404      : demo mode is off on this instance — the true reason, not a
+ *                generic error, so an operator at the venue can fix it
+ *   - failure  : names that the deck could not be read
+ * There is no empty state, because the server refuses to serve an empty deck
+ * and CI refuses to ship one — an empty `/demo` in front of a visitor is the
+ * failure the whole validator exists to prevent.
+ */
+
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+interface AtomRail {
+  kind: 'atoms';
+  concept_id: string;
+  atoms: string[];
+  first_exposure?: boolean;
+}
+interface CompareRail {
+  kind: 'compare';
+  concept_id: string;
+  against_persona: string;
+}
+
+export interface DemoCard {
+  id: string;
+  title: string;
+  subtitle?: string;
+  audience: 'student' | 'teacher' | 'principal';
+  persona: string;
+  rail: AtomRail | CompareRail;
+}
+
+type LoadState =
+  | { status: 'loading' }
+  | { status: 'off' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; cards: DemoCard[] };
+
+/** Where a card sends the visitor. Kept next to the type it switches on. */
+export function railDestination(card: DemoCard): string {
+  return card.rail.kind === 'compare'
+    ? '/admin/scenarios'
+    : `/lesson/${card.rail.concept_id}`;
+}
+
+export default function DemoDeckPage() {
+  const navigate = useNavigate();
+  const [state, setState] = useState<LoadState>({ status: 'loading' });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/demo/rails')
+      .then(async (r) => {
+        if (cancelled) return;
+        if (r.status === 404) {
+          setState({ status: 'off' });
+          return;
+        }
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({}));
+          setState({ status: 'error', message: body?.error ?? `HTTP ${r.status}` });
+          return;
+        }
+        const body = await r.json();
+        setState({ status: 'ready', cards: body.cards ?? [] });
+      })
+      .catch((e) => {
+        if (!cancelled) setState({ status: 'error', message: String(e?.message ?? e) });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px 64px' }}>
+      <h1
+        style={{
+          margin: '0 0 6px',
+          fontSize: 28,
+          fontWeight: 'var(--weight-bold)',
+          letterSpacing: '-0.022em',
+          color: 'var(--text-primary)',
+        }}
+      >
+        Pick a starting point
+      </h1>
+      <p style={{ margin: '0 0 28px', fontSize: 17, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
+        Each one opens the real product as a different student. Nothing here is a slideshow.
+      </p>
+
+      {state.status === 'loading' && (
+        <p style={{ fontSize: 15, color: 'var(--text-tertiary)' }}>Loading…</p>
+      )}
+
+      {state.status === 'off' && (
+        <p style={{ fontSize: 17, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+          Demo mode is off on this instance. Set <code>DEMO_MODE_ENABLED=true</code> on the
+          venue install and reload.
+        </p>
+      )}
+
+      {state.status === 'error' && (
+        <p style={{ fontSize: 17, lineHeight: 1.5, color: 'var(--orange-ink)' }}>
+          Could not load the journeys: {state.message}
+        </p>
+      )}
+
+      {state.status === 'ready' && (
+        <div role="list">
+          {state.cards.map((card, i) => (
+            <button
+              key={card.id}
+              role="listitem"
+              onClick={() => navigate(railDestination(card))}
+              style={{
+                display: 'block',
+                width: '100%',
+                minHeight: 44,
+                textAlign: 'left',
+                padding: '18px 0',
+                background: 'transparent',
+                border: 'none',
+                borderTop: i === 0 ? 'none' : '1px solid var(--separator)',
+                cursor: 'pointer',
+                font: 'inherit',
+              }}
+            >
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: 17,
+                  fontWeight: 'var(--weight-semibold)',
+                  color: 'var(--text-primary)',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {card.title}
+              </span>
+              {card.subtitle && (
+                <span
+                  style={{
+                    display: 'block',
+                    marginTop: 3,
+                    fontSize: 15,
+                    lineHeight: 1.4,
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  {card.subtitle}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

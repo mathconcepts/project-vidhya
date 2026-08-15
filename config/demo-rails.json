@@ -180,29 +180,11 @@
       ]
     },
     {
-      "id": "same-lesson-two-students",
-      "title": "The same lesson, two students",
-      "subtitle": "One concept, opened by Meera and by Rahul, side by side.",
-      "audience": "principal",
-      "persona": "meera-gate-la-anxious",
-      "rail": {
-        "kind": "compare",
-        "concept_id": "linear-transformations",
-        "against_persona": "rahul-gate-rank-push"
-      },
-      "captions": [
-        {
-          "at": "compare",
-          "text": "Every number on this screen is tappable. Try to catch it."
-        }
-      ]
-    },
-    {
       "id": "principal-auditing-outcomes",
       "title": "Auditing whether any of this worked",
       "subtitle": "Start at the batch view and drill until you hit an individual attempt.",
       "audience": "principal",
-      "persona": "meera-gate-la-anxious",
+      "persona": "devika-principal-audit",
       "rail": {
         "kind": "surfaces",
         "steps": [

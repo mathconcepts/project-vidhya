@@ -83,6 +83,14 @@ export function railDestination(card: DemoCard): string {
  */
 export function railSteps(card: DemoCard): Array<{ at: string; route: string; label: string }> {
   if (card.rail.kind === 'surfaces') return card.rail.steps;
+  // A compare rail is one screen, but it still needs to BE a step: the deck's
+  // validator accepts a caption anchored at "compare", and a rail with no
+  // steps means railPosition() finds nothing, DemoRailNav renders null, and
+  // that caption is silently never shown. One step is what makes the anchor
+  // real rather than nominal.
+  if (card.rail.kind === 'compare') {
+    return [{ at: 'compare', route: '/admin/scenarios', label: 'Two students, one lesson' }];
+  }
   if (card.rail.kind === 'atoms' && card.rail.practice_item_id) {
     const steps = [
       { at: 'lesson', route: `/lesson/${card.rail.concept_id}`, label: 'The concept' },

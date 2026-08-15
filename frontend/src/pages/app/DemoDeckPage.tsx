@@ -22,6 +22,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setDemoPersona, clearDemoPersona } from '@/lib/demoPersona';
 
 interface AtomRail {
   kind: 'atoms';
@@ -42,6 +43,12 @@ export interface DemoCard {
   audience: 'student' | 'teacher' | 'principal';
   persona: string;
   rail: AtomRail | CompareRail;
+  persona_signal?: {
+    id: string;
+    display_name: string;
+    mastery_by_concept: Record<string, number>;
+    recent_errors: string[];
+  };
 }
 
 type LoadState =
@@ -126,7 +133,13 @@ export default function DemoDeckPage() {
             <button
               key={card.id}
               role="listitem"
-              onClick={() => navigate(railDestination(card))}
+              onClick={() => {
+                // Carry the persona into the rail, or clear a stale one from a
+                // previous journey so this card cannot inherit it.
+                if (card.persona_signal) setDemoPersona(card.persona_signal);
+                else clearDemoPersona();
+                navigate(railDestination(card));
+              }}
               style={{
                 display: 'block',
                 width: '100%',

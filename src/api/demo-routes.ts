@@ -25,6 +25,7 @@ import path from 'path';
 import type { ServerResponse } from 'http';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { loadPersona } from '../scenarios/persona-loader';
 
 interface RouteDefinition {
   method: string;
@@ -74,9 +75,41 @@ async function handleGetRails(_req: ParsedRequest, res: ServerResponse): Promise
     return;
   }
 
-  const cards = Array.isArray(config.cards) ? config.cards : [];
-  if (cards.length === 0) {
+  const rawCards = Array.isArray(config.cards) ? config.cards : [];
+  if (rawCards.length === 0) {
     sendError(res, 503, 'demo rails config contains no cards');
+    return;
+  }
+
+  // Attach each persona's learning signal from its YAML rather than duplicating
+  // it into the rails config. The client feeds this to the lesson composer via
+  // the client-supplied `student.mastery_by_concept` path, so a demo journey
+  // composes a lesson FOR someone without writing to any student table.
+  //
+  // A card whose persona fails to load is dropped rather than served without a
+  // signal: it would silently compose a generic lesson while the deck claimed a
+  // named student, which is the demo lying about itself. CI already refuses to
+  // ship such a card, so reaching this branch means the venue copy was edited.
+  const cards = [];
+  for (const card of rawCards) {
+    try {
+      const persona = loadPersona(card.persona);
+      cards.push({
+        ...card,
+        persona_signal: {
+          id: persona.id,
+          display_name: persona.display_name,
+          mastery_by_concept: persona.seed.initial_mastery,
+          recent_errors: persona.seed.recent_misconceptions,
+        },
+      });
+    } catch (e) {
+      console.warn(`[demo-rails] dropping card "${card.id}": ${(e as Error).message}`);
+    }
+  }
+
+  if (cards.length === 0) {
+    sendError(res, 503, 'no demo cards could be resolved — every persona failed to load');
     return;
   }
 

@@ -17,6 +17,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { applyDemoPersona } from '@/lib/demoPersona';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
 import { ConceptMathViz } from '@/components/lesson/ConceptMathViz';
@@ -528,7 +529,15 @@ export default function LessonPage() {
       if (signals.mastery_by_concept) student.mastery_by_concept = signals.mastery_by_concept;
       if (signals.recent_errors) student.recent_errors = signals.recent_errors;
 
-      const body: Record<string, unknown> = { concept_id, session_id: sessionId, student };
+      // In a demo journey the chosen persona's mastery/errors override whatever
+      // the local stores accumulated — on a shared demo device those hold the
+      // PREVIOUS visitor's activity, and letting that leak into this lesson is
+      // both wrong and exactly what a skeptic would catch. No-op outside /demo.
+      const body: Record<string, unknown> = {
+        concept_id,
+        session_id: sessionId,
+        student: applyDemoPersona(student),
+      };
       if (signals.user_material_chunks) body.user_material_chunks = signals.user_material_chunks;
 
       try {

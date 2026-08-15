@@ -17,9 +17,3 @@ That's conformal mapping: a transformation that can magnify and shrink different
 ```gif-scene
 {"type":"function-trace","expression":"cos(x) + 0.1*sin(2*x)","x_range":[0,3.14],"y_range":[-0.3,1.3],"frames":30,"fps":12}
 ```
-```
-
----
-
-## **FILE 3: worked-example.md**
-**Path:**

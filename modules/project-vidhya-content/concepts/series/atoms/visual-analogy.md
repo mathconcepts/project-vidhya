@@ -21,7 +21,3 @@ For the geometric series $\sum_{n=1}^{\infty} r^n$ (where each term is $r$ times
 ```
 
 This trace shows $e^x = \sum_{n=0}^{\infty} \frac{x^n}{n!}$—a real function built from an infinite series. The smooth curve is the *sum* of infinitely many polynomial terms, demonstrating that convergent series produce well-behaved functions GATE problems rely on.
-```
-
-**ATOM 3: WORKED EXAMPLE**
-File:

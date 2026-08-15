@@ -42,7 +42,3 @@ Imagine a light bulb controlled by switches. Each proposition is a switch: **ope
 ```
 
 This mental model makes equivalences intuitive: De Morgan's law simply says *how series and parallel rewire*.
-```
-
-## File 3: worked-example.md
-**Path:**

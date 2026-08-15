@@ -26,6 +26,3 @@ Integration by substitution is the antidote to composite functions. When differe
 **Trigonometric substitution** extends this: when you face radicals like $\sqrt{1-x^2}$ or $\sqrt{x^2+1}$, a strategic trig substitution (e.g., $x = \sin\theta$) converts the radical into a trig identity, dissolving the complexity.
 
 The method is not a trick—it's recognizing when the integrand encodes a derivative waiting to be released.
-```
-
-**File 2:

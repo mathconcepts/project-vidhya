@@ -22,8 +22,3 @@ Imagine a surface $z = f(x,y)$ hovering above a 2D region $R$ in the xy-plane. T
 For exam problems, the key insight is recognizing when a **change of variables** simplifies the integral. Polar coordinates $x = r\cos\theta$, $y = r\sin\theta$ (with Jacobian $dA = r \, dr \, d\theta$) transform circular regions into rectangles in $(r, \theta)$ space. Similarly, cylindrical and spherical coordinates handle problems with radial or spherical symmetry.
 
 The order of integration matters for difficulty—choose bounds that don't require splitting the region or using polar/cylindrical/spherical coordinates unless absolutely necessary.
-```
-
-## Atom 2: Visual Analogy
-
-**File path:**

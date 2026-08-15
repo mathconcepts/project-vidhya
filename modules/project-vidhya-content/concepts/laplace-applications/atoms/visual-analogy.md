@@ -21,6 +21,3 @@ By working in the s-domain, we separate the "shape" (the oscillation frequency) 
 ```gif-scene
 {"type":"function-trace","expression":"exp(-0.8*x)*sin(4*pi*x)","x_range":[0,4],"y_range":[-1,1],"frames":30,"fps":12}
 ```
-```
-
-## File 3:

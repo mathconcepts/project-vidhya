@@ -20,6 +20,3 @@ Key properties save calculation time on exams:
 - **Symmetry:** Odd and even functions simplify integrals dramatically
 
 These aren't just algebra—they're shortcuts that compress 10-minute problems into 2 minutes during the exam. The definite integral is **path-independent**: the value depends only on the function and the bounds, not on intermediate steps.
-```
-
-**FILE 2:

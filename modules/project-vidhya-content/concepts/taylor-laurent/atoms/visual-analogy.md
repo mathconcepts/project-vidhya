@@ -21,8 +21,3 @@ The key exam insight: singularities are *visible in the series*. Poles show fini
 ```
 
 The vertical asymptote at $x=1$ is the pole—exactly where the Laurent series principal part reveals an isolated singularity.
-```
-
----
-
-**FILE 3:

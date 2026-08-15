@@ -31,8 +31,3 @@ $$\sum_{v \in V} \deg(v) = 2|E|$$
 This says the sum of all degrees equals twice the number of edges. Why? Because each edge connects two vertices and contributes 1 to each endpoint's degree — counting from the vertex side double-counts every edge.
 
 **Exam relevance:** This lemma appears in nearly every GATE problem involving degree sequences, connectivity analysis, or graph properties. Memorize it cold.
-```
-
----
-
-## File 2:

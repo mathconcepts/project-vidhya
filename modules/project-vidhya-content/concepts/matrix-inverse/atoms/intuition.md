@@ -22,9 +22,3 @@ where $I$ is the identity matrix—the mathematical equivalent of "do nothing."
 Think of it geometrically: if a matrix squashes all vectors onto a line, no inverse can spread them back out across the plane. The transformation is irreversible.
 
 **Exam relevance:** Problems test inverse computation (adjugate method, Gauss-Jordan), verifying inverses exist, and using inverses to solve system. Recognize the inverse properties: $(AB)^{-1} = B^{-1}A^{-1}$ and $(A^T)^{-1} = (A^{-1})^T$.
-```
-
----
-
-## **Atom 2: Visual Analogy** 
-**File:**

@@ -35,7 +35,3 @@ For a surface $S$ with unit normal $\mathbf{n}$:
 $$\iint_S \mathbf{F} \cdot \mathbf{n} \, dS$$
 
 This integral sums the component of field $\mathbf{F}$ normal to every infinitesimal surface element $dS$. The parametric approach parameterizes $S$ and computes this sum systematically—essential for GATE problems on Divergence and Stokes' theorems.
-```
-
-## File 2: visual-analogy.md
-Path:

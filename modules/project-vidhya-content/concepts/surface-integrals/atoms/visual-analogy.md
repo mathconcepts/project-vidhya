@@ -28,7 +28,3 @@ The animation below shows how a vector field varies as you move across a paramet
 ```
 
 The oscillating curve represents field values at different points on the surface, animated over time to show the concept of flux changing based on orientation.
-```
-
-## File 3: worked-example.md
-Path:

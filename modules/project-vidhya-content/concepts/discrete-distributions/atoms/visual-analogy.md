@@ -32,6 +32,3 @@ Imagine flipping a fair coin over and over. Three questions naturally arise:
 ```
 
 Each story (fixed trials vs. time-to-first vs. sampling without replacement) unlocks a different formula. Learn to **see the coin flip story** in your problem, and the distribution follows automatically.
-```
-
-**File 3:

@@ -23,6 +23,3 @@ $$\int_a^b f(x)\,dx = \lim_{\epsilon \to 0^+} \int_a^{c-\epsilon} f(x)\,dx + \li
 **Convergence is everything.** If the limit exists and is finite, the improper integral **converges**. If the limit is infinite or doesn't exist, it **diverges**. 
 
 For GATE, this matters because functions that decay fast enough (like $e^{-x}$ or $1/x^2$) can have finite area despite extending to infinity—a counterintuitive but foundational idea. The divergence tests you'll see (p-test, comparison test, limit comparison test) all formalize this notion: when does an integral to infinity actually compute to a real number?
-```
-
-**File 2:**

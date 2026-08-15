@@ -28,6 +28,3 @@ Always look for these signals that Laplace is the right tool:
 3. The input is a standard signal (step, ramp, impulse, sine)
 
 The transform-solve-inverse workflow is faster than classical methods. After solving, use **final-value theorem** ($\lim_{t \to \infty} f(t) = \lim_{s \to 0} sF(s)$) to check if your steady-state makes physical sense.
-```
-
-## File 2:

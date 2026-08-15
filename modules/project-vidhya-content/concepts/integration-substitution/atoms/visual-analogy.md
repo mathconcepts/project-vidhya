@@ -21,6 +21,3 @@ The visualization below shows a composite function oscillating at twice the rate
 ```
 
 **Key insight:** Look for the "wrapper factor" in the derivative. If it's there, substitution is your unwrapping tool.
-```
-
-**File 3:

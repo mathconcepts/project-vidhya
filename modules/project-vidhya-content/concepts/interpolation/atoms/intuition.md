@@ -22,6 +22,3 @@ In numerical methods, interpolation serves three key purposes:
 The three main interpolation methods—**Lagrange**, **Newton divided differences**, and **Splines**—each offer trade-offs between simplicity, computational cost, and robustness. Lagrange is intuitive but can be inefficient for large datasets. Newton divided differences are progressive and elegant. Splines avoid oscillation by using low-degree pieces instead of one global polynomial.
 
 In GATE exams, interpolation questions typically ask you to evaluate at an intermediate point or analyze error bounds.
-```
-
-### File 2:

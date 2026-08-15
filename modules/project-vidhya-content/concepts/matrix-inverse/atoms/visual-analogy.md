@@ -21,9 +21,3 @@ For example, if a rotation matrix $R$ rotates a vector 45° clockwise, then $R^{
 ```
 
 Just as the wave height varies and returns, any transformation and its inverse leave you at the starting point. This reversibility is what makes inverses so powerful in solving equations—they're the mathematical "undo" button.
-```
-
----
-
-## **Atom 3: Worked Example** 
-**File:**

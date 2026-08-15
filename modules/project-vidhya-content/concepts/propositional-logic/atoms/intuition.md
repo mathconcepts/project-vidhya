@@ -26,7 +26,3 @@ Propositional logic is the formal language of true-or-false statements and how t
 **Equivalence is the key move:** two formulas are equivalent if they produce identical truth tables. For example, $p \to q \equiv \neg p \lor q$ always holds—swapping one form for the other doesn't change the meaning. Recognizing these patterns dramatically speeds up simplification in exams.
 
 **Core insight:** Master the connectives and De Morgan's laws ($\neg(p \land q) \equiv \neg p \lor \neg q$), and you can decode almost any logic problem.
-```
-
-## File 2: visual-analogy.md
-**Path:**

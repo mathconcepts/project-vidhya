@@ -27,7 +27,3 @@ In GATE graph problems, vertices might be cities, computers, or gate inputs — 
   "height": 300
 }
 ```
-
----
-
-## File 3:

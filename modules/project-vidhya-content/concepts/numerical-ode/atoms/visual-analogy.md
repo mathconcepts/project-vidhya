@@ -30,6 +30,3 @@ Below, watch how a damped oscillation evolves—like a ball bouncing on a floor 
 ```
 
 The smooth decay you see is what the solver is trying to approximate: using the current slope to predict the next point, one step at a time.
-```
-
-**File 3:

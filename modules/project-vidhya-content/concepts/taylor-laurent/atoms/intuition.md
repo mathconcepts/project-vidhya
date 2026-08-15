@@ -34,8 +34,3 @@ The negative-power terms ($n<0$) are the **principal part**—they capture what 
 3. **Series accelerates problem-solving**: Instead of computing limits or derivatives, classify by inspection.
 
 Master the mechanics first—partial fractions, geometric series, substitution—then singularity classification flows directly from the series formula.
-```
-
----
-
-**FILE 2:

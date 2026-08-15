@@ -31,8 +31,3 @@ Mathematically, this means you can compute a difficult line integral by switchin
 ## The Trade-off
 
 Line integrals follow curves (potentially complex). Double integrals integrate over regions (often simpler). Green's Theorem lets you convert between them, choosing the one that's computationally easier for your problem.
-```
-
----
-
-**FILE:

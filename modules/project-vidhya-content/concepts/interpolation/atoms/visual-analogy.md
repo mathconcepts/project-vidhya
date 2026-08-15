@@ -23,6 +23,3 @@ A **Newton divided differences** approach is the same end result, but built incr
 ```
 
 This trace shows the kind of smooth, continuous interpolated curve you create from discrete data—monotonic in character, predictable, and ready for downstream analysis.
-```
-
-### File 3:

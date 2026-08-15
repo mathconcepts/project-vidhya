@@ -19,6 +19,3 @@ This visualization shows $f(x) = 1/x^2$, a function that decays rapidly. Watch h
 ```gif-scene
 {"type":"function-trace","expression":"1/(x^2)","x_range":[0.5,10],"y_range":[0,2],"frames":40,"fps":12}
 ```
-```
-
-**File 3:**

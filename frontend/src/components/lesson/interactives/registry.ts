@@ -116,9 +116,16 @@ export function resolveInteractive(ref: string): any | null {
     try {
       // Vite resolves this at build time; each JSON gets eagerly imported
       // into the bundle. ~ small overhead per library entry, negligible.
-      const modules = import.meta.glob('/modules/project-vidhya-content/interactives-library/*.json', {
-        eager: true,
-      }) as Record<string, any>;
+      // Relative, NOT '/modules/...'. Vite resolves a leading-slash glob against
+      // its project root, which is `frontend/` here — so the absolute form matched
+      // nothing, returned {}, and every :::interactive{ref=} directive silently
+      // fell through to StaticFallback. Same silent-null failure class as the
+      // interactive-spec blocks; caught by checking the built bundle for a known
+      // library id rather than by any test.
+      const modules = import.meta.glob(
+        '../../../../../modules/project-vidhya-content/interactives-library/*.json',
+        { eager: true },
+      ) as Record<string, any>;
       _libraryCache = {};
       for (const [path, mod] of Object.entries(modules)) {
         const id = path.split('/').pop()!.replace(/\.json$/, '');

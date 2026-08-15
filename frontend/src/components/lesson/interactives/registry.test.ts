@@ -70,3 +70,19 @@ describe('resolveInteractive — library reference resolution', () => {
   // population depends on the build pipeline. The lint script
   // (scripts/lint-interactives.mjs) is what gates broken refs in CI.
 });
+
+describe('interactives library resolution', () => {
+  // Regression guard: the glob previously used a leading-slash path, which Vite
+  // resolves against its project root (frontend/). It matched nothing, returned
+  // {}, and was swallowed by a try/catch — so every :::interactive{ref=}
+  // directive fell through to StaticFallback with only a console.warn. Nothing
+  // failed; the feature was simply absent. Asserting a real library id resolves
+  // is the cheapest thing that would have caught it.
+  it('resolves a real id from the prefilled library', () => {
+    expect(resolveInteractive('parabola-explorer')).not.toBeNull();
+  });
+
+  it('returns null for an id that is not in the library', () => {
+    expect(resolveInteractive('no-such-interactive')).toBeNull();
+  });
+});

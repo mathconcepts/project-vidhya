@@ -28,6 +28,8 @@ import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } 
 import { recordAttempt } from '@/lib/gbrain/client';
 import { authFetch } from '@/lib/auth/client';
 import { InteractiveSidecar } from '@/components/lesson/interactives/InteractiveSidecar';
+import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
+import { preserveHardBreaks } from '@/lib/preserveHardBreaks';
 import {
   Sparkles, Zap, Database, CheckCircle2, XCircle, Loader2, ArrowRight,
   BookOpen, Target, GraduationCap,
@@ -468,7 +470,16 @@ export default function SmartPracticePage() {
                     {resolved.problem.explanation && (
                       <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' }}>
                         <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Explanation</p>
-                        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>{resolved.problem.explanation}</p>
+                        {/* Same defect as PracticePage: the explanation was a
+                            raw string in a <p> at 12px, so authored markdown
+                            showed as literal syntax and the text sat well under
+                            the 17px floor for anything a student reads. */}
+                        <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)' }}>
+                          <MarkdownAtomRenderer
+                            content={preserveHardBreaks(resolved.problem.explanation)}
+                            atomId={`smart-practice-solution-${resolved.problem.id ?? topic}`}
+                          />
+                        </div>
                         <InteractiveSidecar body={resolved.problem.explanation} />
                       </div>
                     )}

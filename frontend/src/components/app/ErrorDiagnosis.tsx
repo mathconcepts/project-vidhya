@@ -53,6 +53,15 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
   const [showCorrective, setShowCorrective] = useState(false);
   const [corrAnswerRevealed, setCorrAnswerRevealed] = useState(false);
 
+  // When no LLM is configured, classifyError returns a placeholder shaped like
+  // a diagnosis: "The answer was incorrect", "The approach may have seemed
+  // reasonable", "The specific error needs further analysis". Rendering that
+  // under headings like "why this was tempting" presents filler as insight,
+  // which is worse than showing nothing — it makes the product look like it
+  // analysed the mistake when it did not. `unclassified` is the marker the
+  // fallback sets; refuse to dress it up.
+  if (diagnosis.misconception_id === 'unclassified') return null;
+
   const config = ERROR_TYPE_CONFIG[diagnosis.error_type] || ERROR_TYPE_CONFIG.conceptual;
   const Icon = config.icon;
 

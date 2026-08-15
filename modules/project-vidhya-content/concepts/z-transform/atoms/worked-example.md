@@ -1,5 +1,5 @@
 ---
-id: z-transform-worked-example
+id: z-transform.worked-example
 concept_id: z-transform
 atom_type: worked_example
 bloom_level: 3

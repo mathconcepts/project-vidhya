@@ -347,12 +347,12 @@ have caught:
 | `/demo` hit the one-shot welcome redirect | The deck rendered "Welcome to Vidhya". The redirect fires for a *first-time* visitor — precisely who a demo is for |
 | Exempting `/demo` alone was not enough | The tap landed on `/lesson/eigenvalues`, and the redirect fired *there*. The journey still ended on the welcome page one tap in. Fixed by exempting an active persona, wherever the rail goes |
 | `height="auto"` on an `<svg>` (`DesmosLite.tsx:98`) | Not a valid SVG length; the browser rejects the attribute |
-| `index.html` fetches Inter Tight + JetBrains Mono from Google Fonts | **Unresolved — see below** |
+| `index.html` fetches Inter Tight + JetBrains Mono from Google Fonts | **Resolved** — self-hosted, see below |
 
 The first two are the ones that mattered: a validator that proves every card's
 atoms exist cannot know that the router will take the visitor somewhere else.
 
-### The offline claim needs narrowing
+### The offline claim needed narrowing — now it holds (RESOLVED)
 
 Removing the MathBox CDN tier made the *interactive path* free of external
 network dependencies, and that claim holds. The **app shell** is not:
@@ -366,8 +366,19 @@ treats typography as load-bearing — "one family, type-led, hierarchy from weig
 and whitespace" — and the demo is partly an argument that the product is
 carefully made.
 
-Not fixed here: self-hosting the two families means vendoring woff2 files,
-adding `@font-face` rules, checking licences and accepting the bundle cost. That
-is a deliberate change, not a hotfix at the end of a long session. It belongs in
-the pre-demo checklist either way, because the venue smoke test the plan
-specifies ("zero external network dependencies") currently fails on fonts.
+**Fixed.** Both families are now self-hosted via `@fontsource` (both OFL-1.1,
+which expressly permits it), imported in `src/main.tsx`, latin subsets only at
+the same weights the old link requested — 400/500/600/700 sans, 400/500/600
+mono. 168KB of woff2 total. A second, duplicate Google Fonts `@import` was also
+hiding in `src/styles/tokens/fonts.css`; both are gone.
+
+Verified in the browser rather than asserted: walking the rail now records
+**zero requests to any non-localhost host**, zero failed requests, zero console
+errors, and `document.fonts` reports Inter Tight 400/500/600/700 loaded. The
+venue smoke test the plan specifies — "zero external network dependencies" —
+now passes for the SPA.
+
+One external font reference remains outside the app: `frontend/public/admin/
+agent/dashboard/index.html`, a standalone static admin page pulling IM Fell
+English and IBM Plex. It is not on any demo rail and not part of the SPA
+bundle, so it is left alone and recorded here rather than silently swept in.

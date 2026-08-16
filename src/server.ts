@@ -8,7 +8,7 @@
  */
 
 import { createServer, IncomingMessage, ServerResponse } from 'http';
-import { URL } from 'url';
+import { URL, fileURLToPath } from 'url';
 import { gateRoutes, setOrchestrator } from './api/gate-routes';
 import { notebookRoutes } from './api/notebook-routes';
 import { dailyProblemRoutes } from './jobs/daily-problem';
@@ -614,9 +614,41 @@ registerRoute('POST', '/api/auth/migrate-session', async (req, res) => {
   }
 });
 
+/**
+ * The version of the build this process is running, read once at boot.
+ *
+ * Resolved relative to this file rather than to process.cwd(), because the
+ * server is started from several working directories (Docker CMD, `npx tsx`,
+ * the test runner) and a cwd-relative read would silently report 'unknown'
+ * in some of them — which is worse than useless for a check whose whole job
+ * is to tell one build from another.
+ *
+ * 'unknown' on failure, never a fabricated number: a smoke check comparing
+ * against it must fail rather than match something invented.
+ */
+const DEPLOYED_VERSION: string = (() => {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const raw = fs.readFileSync(path.resolve(here, '..', 'package.json'), 'utf8');
+    return (JSON.parse(raw) as { version?: string }).version ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+})();
+
 // Health check
 registerRoute('GET', '/health', async (_req, res) => {
-  const info: Record<string, unknown> = { status: 'ok', service: 'vidhya-api' };
+  const info: Record<string, unknown> = {
+    status: 'ok',
+    service: 'vidhya-api',
+    // The deployed build's version. Without it there is no way to ask a
+    // running instance WHICH build it is, and a post-deploy smoke check
+    // cannot tell a finished deploy from one still in flight — Render keeps
+    // serving the previous build until the new one is healthy, so every
+    // assertion passes against stale code and the check reports success.
+    // Read once at boot from package.json, the same file the release bumps.
+    version: DEPLOYED_VERSION,
+  };
 
   info.features = computeFeatureFlags();
 

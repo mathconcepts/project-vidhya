@@ -4,6 +4,47 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.32.0] — 2026-08-16 — Generation routes by what the atom actually demands
+
+**Operator action:** none. New runs route by tier automatically. The two model pickers are on `/admin/content-rd`.
+
+Generation sent every atom type to one model. That is wasteful in both directions: a retrieval prompt is a formatting job that does not need a reasoning model, and a worked example is a reasoning job that should not go to the cheapest thing available.
+
+Two tiers now, assigned by what the atom demands:
+
+| Tier | Atoms | Default |
+|---|---|---|
+| **thinking** | formal definition, worked example, micro exercise, interleaved drill, intuition, visual analogy | `claude-sonnet-4-5` |
+| **formatting** | hook, common traps, retrieval prompt, mnemonic, exam pattern | `claude-haiku-4-5` |
+
+Both are operator-selectable per run in the RunLauncher, so changing them needs no redeploy and no config edit. A run that pins a single model in `llm_models` still overrides both tiers — that is the pre-tier behaviour, and pinning is a deliberate statement about the whole batch.
+
+### The dividing line is not a guess
+
+`requiresConsensus()` already names `formal_definition` and `worked_example` as the atoms worth a second model's cross-check — the codebase's existing statement about where correctness is load-bearing. Every consensus atom is a thinking atom here, and a test enforces that so the two cannot drift apart.
+
+`micro_exercise` is thinking without being a consensus atom, because it ships an expected answer a student is marked against: a wrong one is a wrong mark. `intuition` and `visual_analogy` are thinking too — an analogy that is subtly wrong teaches a misconception that is harder to remove than absence would have been.
+
+### What is deliberately NOT operator-editable
+
+Which tier an atom type belongs to. That is a correctness judgement, and letting a run move `worked_example` to the cheap tier saves cents and buys a wrong answer in front of a student. An unrecognised atom type also defaults to **thinking**, because being wrong in the expensive direction is recoverable and being wrong in the cheap direction is not.
+
+### On Opus
+
+Sonnet, not Opus, because **no Opus model is configured** in `config/providers.yaml` — Anthropic there is `claude-sonnet-4-5` and `claude-haiku-4-5`. Naming an id the provider registry cannot resolve throws `ModelRetiredError` at generation time rather than falling back, which is the same failure the drifted model ids caused before. Adding an Opus id to `providers.yaml` makes it selectable in the picker with no code change.
+
+### Itemized changes
+
+#### Added
+
+- `src/content/concept-orchestrator/model-tiers.ts` — the classification, the defaults, and validation of operator input.
+- **Thinking model** and **Formatting model** pickers in the RunLauncher, replacing the single LLM dropdown.
+
+#### Changed
+
+- A run's `pipeline.tier_models` flows through the dispatcher into `generateConcept`. Unknown tiers are dropped with a warning rather than passed through: a run that believes it selected a model but did not is worse than one told its input was ignored.
+- The routing test's contract changed with the behaviour — `hook` now asserts the formatting tier, and a new case pins that a thinking atom keeps the stronger model without anyone selecting it.
+
 ## [4.31.0] — 2026-08-16 — Explore now opens the concept, interactives and all
 
 **Operator action:** none.

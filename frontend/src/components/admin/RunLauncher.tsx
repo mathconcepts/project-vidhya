@@ -51,7 +51,10 @@ interface FormState {
   hypothesis: string;
   exam_pack_id: string;
   topic_id: string;
+  /** Legacy whole-batch pin. Empty means "route by tier", which is the default. */
   llm_model: string;
+  thinking_model: string;
+  formatting_model: string;
   pyq_grounding: boolean;
   multi_llm_consensus: boolean;
   tier_ceiling: 'rag' | 'gemini' | 'wolfram';
@@ -79,7 +82,11 @@ const DEFAULT_FORM: FormState = {
   hypothesis: '',
   exam_pack_id: 'gate-ma',
   topic_id: '',
-  llm_model: 'gemini-2.5-flash',
+  llm_model: '',
+  // Empty means "route by tier" — the default. A non-empty llm_model is the
+  // legacy whole-batch pin and overrides both tiers.
+  thinking_model: 'claude-sonnet-4-5',
+  formatting_model: 'claude-haiku-4-5',
   pyq_grounding: true,
   multi_llm_consensus: false,
   tier_ceiling: 'wolfram',
@@ -153,7 +160,8 @@ function buildConfig(form: FormState): GenerationRunConfig {
         : undefined,
     },
     pipeline: {
-      llm_models: [form.llm_model],
+      llm_models: form.llm_model ? [form.llm_model] : [],
+      tier_models: { thinking: form.thinking_model, formatting: form.formatting_model },
       pyq_grounding: form.pyq_grounding,
       multi_llm_consensus: form.multi_llm_consensus,
     },
@@ -244,7 +252,11 @@ export function RunLauncher({ defaultExam, onLaunched, initialBlueprint }: Props
         // overwritten.
         setForm((prev) => ({
           ...prev,
-          llm_model: r.config!.pipeline?.llm_models?.[0] ?? prev.llm_model,
+          llm_model: r.config!.pipeline?.llm_models?.[0] ?? '',
+          thinking_model:
+            (r.config!.pipeline as any)?.tier_models?.thinking ?? prev.thinking_model,
+          formatting_model:
+            (r.config!.pipeline as any)?.tier_models?.formatting ?? prev.formatting_model,
           pyq_grounding: r.config!.pipeline?.pyq_grounding ?? prev.pyq_grounding,
           multi_llm_consensus: r.config!.pipeline?.multi_llm_consensus ?? prev.multi_llm_consensus,
           tier_ceiling: r.config!.verification?.tier_ceiling ?? prev.tier_ceiling,
@@ -559,20 +571,39 @@ export function RunLauncher({ defaultExam, onLaunched, initialBlueprint }: Props
         {/* Pipeline + Verification */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           <Field
-            label="LLM"
-            hint="Primary model for this run's generation. Math atoms (formal definition, worked example) also get an automatic second opinion from a different provider for consensus — this pick doesn't change that safety check, only which provider leads."
+            label="Thinking model"
+            hint="Generates the atoms where being wrong is expensive: formal definitions, worked examples, exercises with an expected answer, intuitions and analogies. Math atoms also get an automatic second opinion from a different provider — this pick doesn't change that safety check, only which model leads."
           >
             <select
-              value={form.llm_model}
-              onChange={(e) => setForm({ ...form, llm_model: e.target.value })}
+              value={form.thinking_model}
+              onChange={(e) => setForm({ ...form, thinking_model: e.target.value })}
               style={inputStyle}
             >
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
               <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
               <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
-              <option value="gpt-4o-mini">GPT-4o mini</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
               <option value="gpt-4o">GPT-4o</option>
+              <option value="gpt-4o-mini">GPT-4o mini</option>
+              <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (via OpenRouter)</option>
+              <option value="anthropic/claude-sonnet-4-5">Claude Sonnet 4.5 (via OpenRouter)</option>
+            </select>
+          </Field>
+          <Field
+            label="Formatting model"
+            hint="Generates the atoms where shape matters more than reasoning: hooks, mnemonics, retrieval prompts, trap lists. A cheaper model here is most of the saving, and none of the risk."
+          >
+            <select
+              value={form.formatting_model}
+              onChange={(e) => setForm({ ...form, formatting_model: e.target.value })}
+              style={inputStyle}
+            >
+              <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
+              <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+              <option value="gpt-4o">GPT-4o</option>
+              <option value="gpt-4o-mini">GPT-4o mini</option>
               <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (via OpenRouter)</option>
               <option value="anthropic/claude-sonnet-4-5">Claude Sonnet 4.5 (via OpenRouter)</option>
             </select>

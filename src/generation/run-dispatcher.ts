@@ -54,6 +54,7 @@ import { generateConcept } from '../content/concept-orchestrator';
 import { generateUnitsForRun } from './curriculum-unit-orchestrator';
 import { CostMeter } from './cost-meter';
 import { CONCEPT_MAP, getConceptsForTopic } from '../constants/concept-graph';
+import { sanitiseTierModels } from '../content/concept-orchestrator/model-tiers';
 import type { GenerationRunConfig, GenerationRunRow } from '../experiments/types';
 
 // Runs currently being dispatched in THIS process — guards against
@@ -135,6 +136,15 @@ async function dispatchAtomMode(run: GenerationRunRow): Promise<{ cost_usd: numb
   }
 
   const modelId = run.config.pipeline.llm_models?.[0];
+  // Per-tier models chosen by the operator in the RunLauncher. Unknown tiers
+  // are dropped with a warning rather than passed through: a run that believes
+  // it selected a model but did not is worse than one told its input was
+  // ignored. Ignored entirely when llm_models pins a single model, which is
+  // the legacy whole-batch override.
+  const { models: tierModels, warnings: tierWarnings } = sanitiseTierModels(
+    (run.config.pipeline as { tier_models?: unknown }).tier_models,
+  );
+  for (const w of tierWarnings) console.warn(`[run-dispatcher] run ${run.id}: ${w}`);
   const targetCount = Math.max(1, run.config.quota.count);
   const maxCostUsd = run.config.quota.max_cost_usd;
 
@@ -154,6 +164,7 @@ async function dispatchAtomMode(run: GenerationRunRow): Promise<{ cost_usd: numb
       topic_family: topicFamily,
       dry_run: run.config.preview ?? false,
       model_id: modelId,
+      tier_models: tierModels,
       generation_run_id: run.id,
       // Deliberately NOT passing quota.max_cost_usd as cost_cap_usd here:
       // that param is concept-cost.ts's PER-CONCEPT MONTHLY cap (shared

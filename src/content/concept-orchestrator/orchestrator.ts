@@ -32,6 +32,7 @@ import { groundForLO, groundForLOWithEmbedding, formatPyqContext } from './pyq-g
 import { canSpend, recordSpend, DEFAULT_MONTHLY_CAP_USD } from './concept-cost';
 import { scoreAtom, passesGate } from './llm-judge';
 import { compareMathAtoms, requiresConsensus } from './multi-llm-consensus';
+import { resolveModelForAtom, type TierModels } from './model-tiers';
 import { casPreVerify } from './cas-pre-verifier';
 import { appendVersion } from './atom-versions';
 import { writeArtifact, markFailed as markMediaFailed } from './media-artifacts';
@@ -170,6 +171,7 @@ export async function generateConcept(
       atom_type,
       student_context: opts.student_context,
       model_id: opts.model_id,
+      tier_models: opts.tier_models,
     });
 
     total_cost += generated.meta.cost_usd;
@@ -299,6 +301,13 @@ interface GenerateOneArgs {
    * behavior for callers that don't surface a model choice.
    */
   model_id?: string;
+  /**
+   * Operator-selected model per cognitive tier. Used when `model_id` is
+   * absent: a reasoning atom goes to the thinking model, a formatting atom to
+   * the cheaper one. See model-tiers.ts for which atom types are which and
+   * why that classification is not itself operator-editable.
+   */
+  tier_models?: TierModels;
 }
 
 async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
@@ -324,7 +333,13 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
 
   // Math atoms go through dual-model consensus.
   if (requiresConsensus(args.atom_type)) {
-    const primaryModelId = args.model_id ?? DEFAULT_MODEL_ID;
+    // Consensus atoms are thinking atoms by construction (model-tiers.ts
+    // enforces it), so this resolves to the thinking model unless the run
+    // pinned one explicitly.
+    const primaryModelId = resolveModelForAtom(args.atom_type, {
+      tierModels: args.tier_models,
+      explicitModelId: args.model_id,
+    });
     const secondaryModelId = await pickConsensusSecondary(primaryModelId);
     // Labels are historical — 'llm-claude'/'llm-gemini' now mean "primary
     // leg" / "secondary consensus leg" rather than literally Claude/Gemini,
@@ -363,7 +378,14 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
     }
   } else {
     sourceCascade.push('llm-claude');
-    content = (await callLlm(prompt, args.model_id ?? DEFAULT_MODEL_ID)) || '';
+    content =
+      (await callLlm(
+        prompt,
+        resolveModelForAtom(args.atom_type, {
+          tierModels: args.tier_models,
+          explicitModelId: args.model_id,
+        }),
+      )) || '';
   }
 
   const defaults = ATOM_TYPE_DEFAULTS[args.atom_type];

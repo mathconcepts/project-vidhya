@@ -67,6 +67,13 @@ export interface ContentAtom {
   improvement_reason?: string | null;
   /** True when content is a per-student variant (E5). */
   is_student_override?: boolean;
+  /**
+   * Set server-side (`src/content/stance-variants.ts:applyStanceVariants`)
+   * when the body actually served to this student is a stance-authored
+   * alternative. Absent means the base text was served. `applyScaffoldingFade`
+   * (T20) reads this to skip fading the 'shaken' variant — see comment there.
+   */
+  served_stance?: 'shaken' | 'assured';
   /** ISO timestamp from atom_engagements.last_seen for this student.
    * Used by the Improved badge to detect "newer than last view". */
   last_seen_at?: string;
@@ -97,7 +104,15 @@ const ATOM_ANIMATION_MAP: Record<AtomType, AnimationPreset> = {
 const PRESET_VARIANTS: Record<AnimationPreset, any> = {
   'fade-in':           { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.4 } },
   'slide-up':          { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.35 } },
-  'reveal-highlight':  { initial: { backgroundColor: 'rgba(88,86,214,0.2)' }, animate: { backgroundColor: 'rgba(88,86,214,0)' }, transition: { duration: 1.2 } },
+  // Neutral surface flash, not indigo: used by micro_exercise and exam_pattern
+  // (ATOM_ANIMATION_MAP), neither an AI/tutor surface, so indigo isn't the
+  // right semantic here — DESIGN-SYSTEM.md reserves indigo for AI/tutor/study
+  // plan only. The rgb triplet mirrors --surface-fill-strong's (120,120,128)
+  // as a literal because framer-motion's colour interpolation animates
+  // between concrete rgba values, not CSS custom properties (a var() string
+  // can't be tweened frame-to-frame), so the token can't be referenced
+  // directly here — keep this value in sync with --surface-fill-strong by hand.
+  'reveal-highlight':  { initial: { backgroundColor: 'rgba(120,120,128,0.2)' }, animate: { backgroundColor: 'rgba(120,120,128,0)' }, transition: { duration: 1.2 } },
   'step-unfold':       { initial: { y: 12, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.3, staggerChildren: 0.15 } },
   'scale-in':          { initial: { scale: 0.92, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: 0.35 } },
   'bounce-alert':      { initial: { scale: 0.8, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { type: 'spring', stiffness: 260, damping: 18 } },
@@ -139,23 +154,41 @@ function getPreset(atom: ContentAtom): AnimationPreset {
   return atom.animation_preset ?? ATOM_ANIMATION_MAP[atom.atom_type];
 }
 
-/**
- * Scaffolding fade — splits worked_example content on `---` step delimiters
- * and blanks the last min(engagement_count, steps.length-1) steps.
- * First step always stays visible.
- */
-function applyScaffoldingFade(atom: ContentAtom): { steps: string[]; blanked: number } {
-  if (atom.atom_type !== 'worked_example' || !atom.scaffold_fade) {
-    return { steps: [atom.content], blanked: 0 };
-  }
-  const parts = atom.content
+/** Splits worked_example prose on `---` step delimiters. */
+function splitSteps(content: string): string[] {
+  return content
     .split(/\n---\n/)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
-  if (parts.length <= 1) return { steps: [atom.content], blanked: 0 };
+}
+
+/**
+ * Scaffolding fade — takes already-de-specced prose (T19a: caller strips the
+ * fenced interactive-spec block first, same as DefaultAtomCard, so the raw
+ * JSON never leaks into a step box or into the `---` split) and blanks the
+ * last min(engagement_count, steps.length-1) steps. First step always stays
+ * visible.
+ */
+function applyScaffoldingFade(atom: ContentAtom, content: string): { steps: string[]; blanked: number } {
+  const parts = splitSteps(content);
+  const steps = parts.length > 0 ? parts : [content];
+  if (atom.atom_type !== 'worked_example' || !atom.scaffold_fade || steps.length <= 1) {
+    return { steps, blanked: 0 };
+  }
+  // T20: the 'shaken' stance variant is authored for a student who is
+  // revisiting precisely because the base explanation didn't land — its
+  // trailing step is typically the verification / answer-check (see
+  // eigenvalues/worked-example-shaken.md). Blanking trailing steps here would
+  // hide the answer from the one student who most needs it, inverting the
+  // fade's intent (scaffolding should build independence on material that
+  // landed, not withhold help on material that didn't). So shaken bodies are
+  // always served whole, regardless of engagement_count.
+  if (atom.served_stance === 'shaken') {
+    return { steps, blanked: 0 };
+  }
   const count = atom.engagement_count ?? 0;
-  const blanked = Math.min(count, parts.length - 1);
-  return { steps: parts, blanked };
+  const blanked = Math.min(count, steps.length - 1);
+  return { steps, blanked };
 }
 
 // ─── Engagement debounce hook ─────────────────────────────────────────────
@@ -227,26 +260,42 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
 }
 
 function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
-  const { steps, blanked } = applyScaffoldingFade(atom);
+  // T19a: strip the fenced interactive-spec block BEFORE splitting on `---`
+  // step delimiters. Without this, a spec-carrying worked_example (96/97
+  // concepts) renders the raw JSON as literal text inside the last step box,
+  // and InteractiveSidecar renders the widget a second time below it.
+  // Mirrors DefaultAtomCard's handling of the same fenced block.
+  const parsed = parseInteractiveSpec(atom.content);
+  const prose = parsed.ok ? parsed.body_without_spec : atom.content;
+  const { steps, blanked } = applyScaffoldingFade(atom, prose);
   const visibleCount = steps.length - blanked;
   return (
-    <div className="space-y-3">
-      {atom.scaffold_fade && (atom.engagement_count ?? 0) > 0 && (
-        <div className="text-xs" style={{ color: 'rgba(88,86,214,.7)' }}>
+    <div>
+      {blanked > 0 && (
+        <div className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
           You've seen this {atom.engagement_count} time(s). Try the last {blanked} step{blanked === 1 ? '' : 's'} yourself.
         </div>
       )}
+      {/*
+        T19b: DESIGN-SYSTEM.md "Layout & density" — one focal block per
+        screen, everything else plain text or hairline-separated rows on the
+        canvas, not boxes. The outer card (in the main renderer) is already
+        that one focal block, so every step here is a plain row separated by
+        a hairline top border rather than its own filled/bordered box —
+        holds whether a worked example has 2 steps or 8.
+      */}
       {steps.map((step, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
-          className={`p-3 rounded-lg border text-sm leading-relaxed${i >= visibleCount ? ' border-dashed' : ''}`}
-          style={i < visibleCount
-            ? { background: 'var(--surface-fill)', borderColor: 'var(--separator)', color: 'var(--text-primary)' }
-            : { background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)', fontStyle: 'italic' }
-          }
+          className="py-3 text-sm leading-relaxed"
+          style={{
+            borderTop: i === 0 ? 'none' : 'var(--hairline) solid var(--separator)',
+            color: i < visibleCount ? 'var(--text-primary)' : 'var(--text-tertiary)',
+            fontStyle: i < visibleCount ? 'normal' : 'italic',
+          }}
         >
           {i < visibleCount ? (
             <MarkdownAtomRenderer content={step} atomId={`${atom.id}.step.${i}`} />
@@ -328,7 +377,12 @@ function StrategyCallout({ hint }: { hint: NonNullable<ContentAtom['strategy_hin
   return (
     <div
       className="mb-3 px-3 py-2 rounded-lg border text-xs space-y-1"
-      style={{ background: 'rgba(88,86,214,.08)', borderColor: 'rgba(88,86,214,.3)', color: 'var(--indigo-ink)' }}
+      // Indigo kept deliberately: "Strategy" surfaces exam-emphasis / study-plan
+      // guidance, which DESIGN-SYSTEM.md's colour reservation explicitly names
+      // alongside AI/tutor ("AI, tutor, study plan, and nothing else"). Tokenized
+      // via --indigo-tint for the fill; the border derives its alpha from the
+      // --indigo token itself (via color-mix) rather than a hardcoded rgba.
+      style={{ background: 'var(--indigo-tint)', borderColor: 'color-mix(in srgb, var(--indigo) 30%, transparent)', color: 'var(--indigo-ink)' }}
     >
       <div
         className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] font-semibold"
@@ -528,7 +582,10 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
         >
           <div
             className="flex items-center gap-2 mb-3 text-xs uppercase tracking-wider"
-            style={{ color: 'rgba(88,86,214,.8)' }}
+            // Not indigo: this eyebrow label is generic card chrome shown for
+            // EVERY atom type (hook, intuition, common_traps, ...), not an
+            // AI/tutor/study-plan surface, so the reserved accent doesn't apply.
+            style={{ color: 'var(--text-secondary)' }}
           >
             <Icon size={14} />
             <span>{ATOM_LABEL[current.atom_type]}</span>

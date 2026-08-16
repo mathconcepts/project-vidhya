@@ -36,6 +36,7 @@ import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
 import { selectAtoms } from '../content/pedagogy-engine';
 import { applyStanceVariants } from '../content/stance-variants';
 import { deriveFraming, type LearnerStance } from '../sessions/learner-framing';
+import { MOTIVATION_STATES } from '../teaching/motivation-source';
 import type { ContentAtom, SessionContext } from '../content/content-types';
 import {
   sanitizeRecentErrors,
@@ -158,13 +159,13 @@ async function enrichAtomsWithEngagement(
  *  - prerequisite review: if there's a known weak prereq
  */
 /**
- * Motivation values the compose route will accept from a client. Matches the
- * vocabulary `deriveFraming` recognises plus the persona-fixture spellings —
- * anything else is dropped rather than forwarded.
+ * Motivation values the compose route will accept from a client. The
+ * canonical MotivationState vocabulary (src/teaching/motivation-source.ts)
+ * — anything else is dropped rather than forwarded. This used to also
+ * accept 'confident', which is not a real MotivationState and was never
+ * recognised by `deriveFraming` (dead branch, removed alongside this fix).
  */
-const ALLOWED_MOTIVATION_STATES = new Set([
-  'anxious', 'frustrated', 'flagging', 'steady', 'confident', 'driven',
-]);
+const ALLOWED_MOTIVATION_STATES = new Set<string>(MOTIVATION_STATES);
 const ALLOWED_REPRESENTATION_MODES = new Set(['geometric', 'algebraic', 'balanced']);
 
 /**
@@ -879,3 +880,6 @@ export const lessonRoutes: Array<{ method: string; path: string; handler: RouteH
   { method: 'POST', path: '/api/daily-cards', handler: handleDailyCards },
   { method: 'GET', path: '/api/lesson/formula-map/:module', handler: handleFormulaMap },
 ];
+
+/** Exposed for tests only — pins the client-motivation allowlist to the canonical vocabulary. */
+export const __testing = { ALLOWED_MOTIVATION_STATES };

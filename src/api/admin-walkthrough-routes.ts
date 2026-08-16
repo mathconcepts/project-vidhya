@@ -45,6 +45,7 @@ import { requireRole } from './auth-middleware';
 import { loadConceptAtoms, listConceptIds } from '../content/atom-loader';
 import { VARIANT_STANCES } from '../content/stance-variants';
 import { loadPersona } from '../scenarios/persona-loader';
+import { STRUGGLING_STATES, THRIVING_STATES } from '../teaching/motivation-source';
 
 interface RouteDefinition {
   method: string;
@@ -253,10 +254,10 @@ export function buildItinerary(input: {
   const bothAuthored = VARIANT_STANCES.every((s) => covered.has(s));
 
   const shakenPersona = Object.values(personas).find(
-    (p) => p && ['anxious', 'frustrated', 'flagging'].includes(String(p.motivation_state)),
+    (p) => p && (STRUGGLING_STATES as readonly string[]).includes(String(p.motivation_state)),
   );
   const assuredPersona = Object.values(personas).find(
-    (p) => p && ['driven', 'confident'].includes(String(p.motivation_state)),
+    (p) => p && (THRIVING_STATES as readonly string[]).includes(String(p.motivation_state)),
   );
 
   for (const [stance, persona] of [

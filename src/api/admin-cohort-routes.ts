@@ -21,7 +21,10 @@
  * Attention triggers (any one qualifies):
  *   1. ≥3 personalised regens in the last 7d for this student
  *   2. mastery delta over the last 14d is < -0.05 (declining)
- *   3. motivation_state in {'frustrated', 'flagging'}
+ *   3. motivation_state in STRUGGLING_STATES (frustrated, flagging, anxious —
+ *      src/teaching/motivation-source.ts). 'anxious' was missing here before
+ *      this fix even though both demo personas are anxious — a deliberate
+ *      behaviour change: anxious students now appear on this surface.
  *
  * "On track" payload is just three numbers: total students, mastered_this_week,
  * progressing_normally. No identities.
@@ -31,6 +34,7 @@ import { ServerResponse } from 'http';
 import pg from 'pg';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
+import { STRUGGLING_STATES } from '../teaching/motivation-source';
 
 const { Pool } = pg;
 
@@ -175,7 +179,7 @@ export async function computeAttention(pool: pg.Pool, exam_pack_id: string): Pro
     const reasons: AttentionReason[] = [];
     if (regenCount >= REGEN_WEEK_THRESHOLD) reasons.push('frequent_regen');
     if (trajectory < MASTERY_DECLINE_THRESHOLD) reasons.push('declining_mastery');
-    if (motivation === 'frustrated' || motivation === 'flagging') reasons.push('frustrated_or_flagging');
+    if ((STRUGGLING_STATES as readonly string[]).includes(motivation)) reasons.push('frustrated_or_flagging');
 
     if (reasons.length === 0) continue;
     cards.push({

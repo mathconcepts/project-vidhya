@@ -79,7 +79,8 @@
     "playbook:run": "tsx scripts/playbook-cli.ts run",
     "playbook:list": "tsx scripts/playbook-cli.ts list",
     "playbook:estimate": "tsx scripts/playbook-cli.ts estimate",
-    "ci:template-coverage": "tsx scripts/check-template-coverage.ts"
+    "ci:template-coverage": "tsx scripts/check-template-coverage.ts",
+    "ci:variant-agreement": "tsx scripts/check-variant-agreement.ts"
   },
   "keywords": [
     "adaptive-learning",

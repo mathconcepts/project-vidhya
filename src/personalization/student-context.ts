@@ -28,6 +28,7 @@
  */
 
 import pg from 'pg';
+import { MOTIVATION_STATES, type MotivationState } from '../teaching/motivation-source';
 
 const { Pool } = pg;
 let _pool: pg.Pool | null = null;
@@ -44,12 +45,7 @@ function getPool(): pg.Pool | null {
 
 export type RepresentationMode = 'algebraic' | 'geometric' | 'numerical' | 'balanced';
 
-export type MotivationState =
-  | 'driven'
-  | 'steady'
-  | 'flagging'
-  | 'frustrated'
-  | 'anxious';
+export type { MotivationState };
 
 /**
  * Full payload threaded into LLM prompts. Populated from existing gbrain
@@ -143,7 +139,7 @@ export async function buildStudentContext(input: BuildContextInput): Promise<Stu
   ) as RepresentationMode;
 
   const motivation_state = (
-    ['driven', 'steady', 'flagging', 'frustrated', 'anxious'].includes(smRow.motivation_state ?? '')
+    (MOTIVATION_STATES as readonly string[]).includes(smRow.motivation_state ?? '')
       ? smRow.motivation_state
       : 'steady'
   ) as MotivationState;

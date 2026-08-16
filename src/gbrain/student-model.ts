@@ -72,6 +72,8 @@ export interface StudentModel {
   };
   frustration_threshold: number;
   consecutive_failures: number;
+  /** Consecutive correct attempts in a row, mirror of consecutive_failures. */
+  correct_streak: number;
 
   // Exam
   exam_strategy: {
@@ -113,6 +115,7 @@ function emptyStudentModel(sessionId: string): StudentModel {
     },
     frustration_threshold: 3,
     consecutive_failures: 0,
+    correct_streak: 0,
     exam_strategy: {},
     updated_at: new Date().toISOString(),
   } as StudentModel;
@@ -169,7 +172,8 @@ export async function saveStudentModel(model: StudentModel): Promise<void> {
        confidence_calibration = $9,
        frustration_threshold = $10,
        consecutive_failures = $11,
-       exam_strategy = $12,
+       correct_streak = $12,
+       exam_strategy = $13,
        updated_at = NOW()
      WHERE session_id = $1`,
     [
@@ -184,6 +188,7 @@ export async function saveStudentModel(model: StudentModel): Promise<void> {
       JSON.stringify(model.confidence_calibration),
       model.frustration_threshold,
       model.consecutive_failures,
+      model.correct_streak ?? 0,
       JSON.stringify(model.exam_strategy),
     ],
   );

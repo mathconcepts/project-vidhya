@@ -30,7 +30,7 @@ vi.mock('../../gbrain/integration', () => ({
 
 process.env.DATABASE_URL = 'postgres://test';
 
-const { lessonRoutes } = await import('../lesson-routes');
+const { lessonRoutes, stanceForSnapshot, __testing } = await import('../lesson-routes');
 
 beforeEach(() => {
   mockQuery.mockReset();
@@ -288,5 +288,44 @@ describe('POST /api/daily-cards', () => {
     // and the "caught up" message should fire — but the filter test still passes
     // because we verified the endpoint accepts the shape and runs the filter.
     expect(wrap.payload).toBeDefined();
+  });
+});
+
+// ============================================================================
+// T5: ALLOWED_MOTIVATION_STATES / stanceForSnapshot — canonical vocabulary
+// ============================================================================
+
+describe('ALLOWED_MOTIVATION_STATES', () => {
+  it('matches the canonical 5-state vocabulary exactly — no confident, no drift', () => {
+    expect([...__testing.ALLOWED_MOTIVATION_STATES].sort()).toEqual(
+      ['anxious', 'driven', 'flagging', 'frustrated', 'steady'].sort(),
+    );
+    expect(__testing.ALLOWED_MOTIVATION_STATES.has('confident')).toBe(false);
+  });
+});
+
+describe('stanceForSnapshot — motivation vocabulary', () => {
+  it('anxious drives a shaken stance', () => {
+    const stance = stanceForSnapshot(
+      { motivation_state: 'anxious', mastery_by_concept: {} },
+      'derivatives-basic',
+    );
+    expect(stance).toBe('shaken');
+  });
+
+  it('driven drives an assured stance', () => {
+    const stance = stanceForSnapshot(
+      { motivation_state: 'driven', mastery_by_concept: {} },
+      'derivatives-basic',
+    );
+    expect(stance).toBe('assured');
+  });
+
+  it('an unrecognised motivation value (e.g. the old "confident") is not assured — falls back to steady', () => {
+    const stance = stanceForSnapshot(
+      { motivation_state: 'confident' as any, mastery_by_concept: {} },
+      'derivatives-basic',
+    );
+    expect(stance).toBe('steady');
   });
 });

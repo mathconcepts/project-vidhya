@@ -44,10 +44,10 @@ export function Manipulable({ spec }: Props) {
   return (
     <div
       className="rounded-xl border p-4 space-y-3"
-      style={{ borderColor: 'rgba(88,86,214,.25)', background: 'rgba(88,86,214,.05)' }}
+      style={{ borderColor: 'var(--separator)', background: 'var(--surface-fill)' }}
     >
       <header className="flex items-center gap-2">
-        <Sliders size={14} style={{ color: 'var(--indigo-ink)' }} aria-hidden />
+        <Sliders size={14} style={{ color: 'var(--text-secondary)' }} aria-hidden />
         <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
       </header>
 
@@ -62,7 +62,7 @@ export function Manipulable({ spec }: Props) {
               >
                 {inp.label}
               </label>
-              <span className="font-mono text-xs tabular-nums" style={{ color: 'var(--indigo-ink)' }}>
+              <span className="font-mono text-xs tabular-nums" style={{ color: 'var(--text-primary)' }}>
                 {vars[inp.id]?.toFixed(2)}
               </span>
             </div>
@@ -77,7 +77,7 @@ export function Manipulable({ spec }: Props) {
                 setVars({ ...vars, [inp.id]: parseFloat(e.target.value) })
               }
               className="w-full"
-              style={{ accentColor: 'var(--indigo)' }}
+              style={{ accentColor: 'var(--grey-6)' }}
               aria-valuemin={inp.min}
               aria-valuemax={inp.max}
               aria-valuenow={vars[inp.id]}

@@ -22,15 +22,14 @@ import pg from 'pg';
 import type { StudentId } from '../core/interfaces';
 import {
   InMemoryMotivationSource,
+  MOTIVATION_STATES,
   type MotivationSource,
   type MotivationState,
 } from './motivation-source';
 
 const { Pool } = pg;
 
-const VALID_STATES = new Set<MotivationState>([
-  'driven', 'steady', 'flagging', 'frustrated', 'anxious',
-]);
+const VALID_STATES = new Set<MotivationState>(MOTIVATION_STATES);
 
 export class PgMotivationSource implements MotivationSource {
   private pool: pg.Pool | null;

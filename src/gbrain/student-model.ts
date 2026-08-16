@@ -17,6 +17,7 @@ import pg from 'pg';
 import { CONCEPT_MAP, traceWeakestPrerequisite, getConceptsForTopic } from '../constants/concept-graph';
 import { MARKS_WEIGHTS } from '../engine/priority-engine';
 import { getExam } from '../curriculum/exam-loader';
+import { STRUGGLING_STATES } from '../teaching/motivation-source';
 
 const { Pool } = pg;
 
@@ -47,6 +48,12 @@ export interface SpeedEntry {
   by_difficulty: { easy: number; medium: number; hard: number };
   samples: number;
 }
+
+/**
+ * Consecutive correct answers before a struggling student is treated as
+ * steady again. One is a coin flip; two is a turn.
+ */
+export const RECOVERY_STREAK = 2;
 
 export interface StudentModel {
   id: string;
@@ -240,15 +247,31 @@ export function updateMastery(
     }
   }
 
-  // Check for consecutive failures
+  // Motivation, in both directions.
+  //
+  // Recovery used to fire only for `frustrated`, while three states count as
+  // struggling everywhere else in the system. So a student marked `anxious` or
+  // `flagging` never returned to the standard register no matter how well they
+  // did — and both demo personas are `anxious`. The product's stated promise is
+  // that every rep adds to the next; a model that cannot notice improvement is
+  // the opposite of that.
+  //
+  // Two correct in a row rather than one: a single right answer is as likely to
+  // be a lucky guess as a turn, and flipping the lesson's register on every
+  // correct answer makes the material feel unstable to read.
   if (!isCorrect) {
     model.consecutive_failures += 1;
+    model.correct_streak = 0;
     if (model.consecutive_failures >= model.frustration_threshold) {
       model.motivation_state = 'frustrated';
     }
   } else {
     model.consecutive_failures = 0;
-    if (model.motivation_state === 'frustrated') {
+    model.correct_streak = (model.correct_streak ?? 0) + 1;
+    if (
+      model.correct_streak >= RECOVERY_STREAK &&
+      (STRUGGLING_STATES as readonly string[]).includes(model.motivation_state)
+    ) {
       model.motivation_state = 'steady';
     }
   }

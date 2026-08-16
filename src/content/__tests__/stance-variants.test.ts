@@ -140,10 +140,15 @@ describe('applyStanceVariants', () => {
     expect(out[0].served_stance).toBeUndefined();
   });
 
-  it('serves the matching body and records which one', () => {
-    expect(applyStanceVariants(folded, 'shaken')[0].content).toBe('gentle hook');
-    expect(applyStanceVariants(folded, 'shaken')[0].served_stance).toBe('shaken');
-    expect(applyStanceVariants(folded, 'assured')[0].content).toBe('terse hook');
+  it('serves nothing when the concept is only PARTLY covered', () => {
+    // Changed deliberately. This fixture covers the hook but not the
+    // intuition, and serving per atom would give a shaken student gentle,
+    // then abruptly terse, then gentle again inside one lesson. Whiplash
+    // mid-concept is more disorienting than uniform base text, because the
+    // voice teaching them keeps changing with no explanation.
+    const out = applyStanceVariants(folded, 'shaken');
+    expect(out[0].content).toBe('base body of e.hook');
+    expect(out.every((a) => a.served_stance === undefined)).toBe(true);
   });
 
   it('falls back to the base body for an atom with no variant', () => {
@@ -152,6 +157,40 @@ describe('applyStanceVariants', () => {
     const intuition = out.find((a) => a.atom_type === 'intuition')!;
     expect(intuition.content).toBe('base body of e.intuition');
     expect(intuition.served_stance).toBeUndefined();
+  });
+
+  it('serves the matching body once every narrative atom is covered', () => {
+    const full = folded.map((a) =>
+      a.atom_type === 'intuition'
+        ? { ...a, stance_variants: { shaken: 'gentle intuition', assured: 'terse intuition' } }
+        : a,
+    );
+    const shaken = applyStanceVariants(full, 'shaken');
+    expect(shaken[0].content).toBe('gentle hook');
+    expect(shaken[0].served_stance).toBe('shaken');
+    expect(applyStanceVariants(full, 'assured')[0].content).toBe('terse hook');
+  });
+
+  it('ignores non-narrative atoms when deciding coverage', () => {
+    // A formal_definition has no stance variant by design. Counting it would
+    // make full coverage unreachable and switch the axis off everywhere.
+    const withDef = [
+      ...folded.map((a) =>
+        a.atom_type === 'intuition'
+          ? { ...a, stance_variants: { shaken: 'gentle intuition' } }
+          : a,
+      ),
+      {
+        id: 'e.formal',
+        concept_id: 'e',
+        atom_type: 'formal_definition',
+        bloom_level: 3,
+        difficulty: 0.4,
+        exam_ids: ['*'],
+        content: 'a definition',
+      },
+    ] as typeof folded;
+    expect(applyStanceVariants(withDef, 'shaken')[0].served_stance).toBe('shaken');
   });
 
   it('does not mutate its input', () => {

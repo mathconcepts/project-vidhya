@@ -21,8 +21,6 @@ variant_of: eigenvalues.intuition
 for_stance: assured
 ---
 
-## The invariant-subspace view
-
 $Av = \lambda v$ says $v$ spans a one-dimensional $A$-invariant subspace. That framing generalises where the arrow picture stops: eigenvectors are the $1$-dimensional case of invariant subspaces, which is what makes the spectral theorem and Jordan form the same story at different resolutions.
 
 ## What actually costs marks
@@ -35,9 +33,7 @@ $Av = \lambda v$ says $v$ spans a one-dimensional $A$-invariant subspace. That f
 
 **Real matrices can have complex eigenvalues.** A rotation has no real invariant direction. If your discriminant goes negative, that is a geometric statement, not an arithmetic slip.
 
-## Where it pays off
-
-$A = PDP^{-1}$ turns $A^k$ into $PD^kP^{-1}$, which is why eigen-decomposition surfaces in Markov chains, difference equations, and stability — the eigenvalue moduli decide whether the system decays, holds, or blows up.
+**Where it pays off.** $A = PDP^{-1}$ turns $A^k$ into $PD^kP^{-1}$, which is why eigen-decomposition surfaces in Markov chains, difference equations, and stability — the eigenvalue moduli decide whether the system decays, holds, or blows up.
 
 ```interactive-spec
 {

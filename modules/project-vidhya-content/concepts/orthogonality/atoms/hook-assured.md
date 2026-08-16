@@ -29,7 +29,7 @@ $\langle u, v\rangle = 0$ is the whole definition; everything else is consequenc
 **The facts that carry marks:**
 - An orthogonal *set* of non-zero vectors is automatically independent. Independence questions sometimes reduce to a few dot products.
 - $\operatorname{row}(A) \perp \operatorname{null}(A)$ and $\operatorname{col}(A) \perp \operatorname{null}(A^{\mathsf T})$ — the four-subspaces picture, and the reason least squares gives $A^{\mathsf T}A\hat{x} = A^{\mathsf T}b$.
-- Symmetric matrices have orthogonal eigenvectors. That is the link back to the spectral theorem.
+- Symmetric matrices have orthogonal eigenvectors. That is the link to the spectral theorem.
 - Orthogonal $\neq$ orthonormal. Gram–Schmidt gives you the first; you still have to normalise for the second, and forgetting to is the standard way to lose the mark.
 
 ```interactive-spec

@@ -103,6 +103,15 @@ export interface OrchestratorOptions {
    */
   model_id?: string;
   /**
+   * Operator-selected model per cognitive tier, used when `model_id` is not
+   * set. A reasoning atom (definition, worked example, exercise) goes to the
+   * thinking model; a formatting atom (hook, mnemonic, retrieval prompt) goes
+   * to the cheaper one. Which atom type sits in which tier is fixed in
+   * model-tiers.ts and is deliberately NOT operator-editable — putting a
+   * worked example on the cheap tier saves cents and costs a wrong answer.
+   */
+  tier_models?: { thinking?: string; formatting?: string };
+  /**
    * Parent GenerationRun id — stamped onto atom_versions rows so an
    * admin-launched run's artifacts are traceable back to it (see
    * src/generation/run-dispatcher.ts). Absent for the syllabus-driven

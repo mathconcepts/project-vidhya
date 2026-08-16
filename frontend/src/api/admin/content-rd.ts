@@ -76,6 +76,12 @@ export interface GenerationRunConfig {
   pipeline: {
     template_id?: string;
     llm_models?: string[];
+    /**
+     * Per-cognitive-tier model selection. Used when llm_models is empty.
+     * Which atom type belongs to which tier is fixed server-side in
+     * model-tiers.ts and is deliberately not operator-editable.
+     */
+    tier_models?: { thinking?: string; formatting?: string };
     pyq_grounding?: boolean;
     multi_llm_consensus?: boolean;
   };

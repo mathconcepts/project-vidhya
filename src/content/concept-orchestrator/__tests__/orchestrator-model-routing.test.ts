@@ -20,6 +20,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { DEFAULT_TIER_MODELS } from '../model-tiers';
 
 interface Call {
   model?: string;
@@ -64,18 +65,45 @@ function contentGenModels(): (string | undefined)[] {
 }
 
 describe('generateConcept → callLlm (end-to-end, single-call path)', () => {
-  it('defaults to Claude when no model_id is given — unchanged pre-multi-provider behavior', async () => {
+  it('routes a FORMATTING atom to the cheap tier when no model is pinned', async () => {
+    // Contract change (v4.32.0): generation no longer sends every atom type to
+    // one model. `hook` is shape-driven, so it goes to the formatting tier.
+    // Before this it went to DEFAULT_MODEL_ID like everything else.
     await generateConcept({
       concept_id: 'derivatives-basic',
       topic_family: 'calculus',
       atom_types: ['hook'],
       dry_run: true,
     });
-    expect(contentGenModels()).toEqual([DEFAULT_MODEL_ID]);
-    expect(DEFAULT_MODEL_ID).toBe('claude-sonnet-4-5');
+    expect(contentGenModels()).toEqual([DEFAULT_TIER_MODELS.formatting]);
+    expect(DEFAULT_TIER_MODELS.formatting).toBe('claude-haiku-4-5');
   });
 
-  it('routes a non-math atom to the operator-selected model_id', async () => {
+  it('routes a THINKING atom to the reasoning tier when no model is pinned', async () => {
+    // The half that must not regress: an atom whose correctness is
+    // load-bearing keeps the stronger model without anyone selecting it.
+    await generateConcept({
+      concept_id: 'derivatives-basic',
+      topic_family: 'calculus',
+      atom_types: ['intuition'],
+      dry_run: true,
+    });
+    expect(contentGenModels()).toEqual([DEFAULT_TIER_MODELS.thinking]);
+    expect(DEFAULT_TIER_MODELS.thinking).toBe('claude-sonnet-4-5');
+  });
+
+  it('honours a per-tier operator selection', async () => {
+    await generateConcept({
+      concept_id: 'derivatives-basic',
+      topic_family: 'calculus',
+      atom_types: ['hook'],
+      dry_run: true,
+      tier_models: { formatting: 'gpt-4o-mini' },
+    });
+    expect(contentGenModels()).toEqual(['gpt-4o-mini']);
+  });
+
+  it('lets an explicitly pinned model override the tier routing', async () => {
     await generateConcept({
       concept_id: 'derivatives-basic',
       topic_family: 'calculus',

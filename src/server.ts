@@ -25,6 +25,7 @@ import { adminRunsRoutes } from './api/admin-runs-routes';
 import { adminLedgerRoutes } from './api/admin-ledger-routes';
 import { adminExamPacksRoutes } from './api/admin-exam-packs-routes';
 import { adminHoldoutRoutes } from './api/admin-holdout-routes';
+import { adminContentMaturityRoutes } from './api/admin-content-maturity-routes';
 import { adminConceptsRoutes } from './api/admin-concepts-routes';
 import { adminScenariosRoutes } from './api/admin-scenarios-routes';
 import { adminBlueprintsRoutes } from './api/admin-blueprints-routes';
@@ -203,6 +204,9 @@ for (const route of adminExamPacksRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminHoldoutRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminContentMaturityRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminConceptsRoutes) {

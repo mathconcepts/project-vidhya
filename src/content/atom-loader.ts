@@ -23,6 +23,7 @@ import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import type { ContentAtom, AtomType } from './content-types';
 import type { ConceptMeta } from '../curriculum/types';
+import { foldStanceVariants } from './stance-variants';
 
 export class ConceptNotFoundError extends Error {
   constructor(public concept_id: string) {
@@ -40,6 +41,26 @@ const CONCEPTS_ROOT = path.resolve(
 
 function conceptDir(concept_id: string): string {
   return path.join(CONCEPTS_ROOT, concept_id);
+}
+
+/**
+ * Every concept directory present in the content module.
+ *
+ * Lives here because this module already owns where concepts are on disk;
+ * a caller re-deriving the path would be a second copy to drift. Returns an
+ * empty list when the content module is absent rather than throwing — a
+ * deployment without it should degrade, not crash on a reporting query.
+ */
+export function listConceptIds(): string[] {
+  try {
+    return fs
+      .readdirSync(CONCEPTS_ROOT, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+      .map((e) => e.name)
+      .sort();
+  } catch {
+    return [];
+  }
 }
 
 // ─── Cache ──────────────────────────────────────────────────────────────
@@ -131,11 +152,26 @@ export async function loadConceptAtoms(concept_id: string): Promise<ContentAtom[
           retention_tags: fm.retention_tags,
           estimated_minutes: fm.estimated_minutes,
           depth_weight: fm.depth_weight,
+          // Authored stance variants. These two fields mark a file as an
+          // ALTERNATIVE BODY for another atom rather than an atom of its own;
+          // foldStanceVariants() below removes them from the returned list and
+          // attaches their content to the base atom.
+          variant_of: fm.variant_of,
+          for_stance: fm.for_stance,
         });
       } catch (err) {
         console.warn(`[atom-loader] ${full}: parse error ${(err as Error).message}; skipping`);
       }
     }
+
+    // Fold variant files into their base atoms. This happens INSIDE the loader,
+    // not at a call site, so no caller can accidentally serve a variant as a
+    // standalone atom — an orphaned "you already know this" body appearing
+    // mid-lesson for a beginner is worse than having no variants at all.
+    const folded = foldStanceVariants(atoms);
+    for (const w of folded.warnings) console.warn(`[atom-loader] ${concept_id}: ${w}`);
+    atoms = folded.atoms;
+
     _atomCache!.set(concept_id, atoms);
     return atoms;
   }

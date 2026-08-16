@@ -1,9 +1,16 @@
 /**
- * REGRESSION — every existing seed atom (derivatives-basic: 9, complex-numbers: 8, eigenvalues: 8 = 25 files)
- * must render without throwing under the v3 markdown pipeline.
+ * REGRESSION — every seed atom must render without throwing under the v3
+ * markdown pipeline. The contract from the eng review: atoms NEVER fail to
+ * render. If a parser change breaks an atom, this test catches it before it
+ * ships.
  *
- * The contract from the eng review: atoms NEVER fail to render. If a parser
- * change breaks an atom, this test catches it before it ships.
+ * Base atoms (derivatives-basic: 9, complex-numbers: 8, eigenvalues: 8 = 25)
+ * are pinned, so a seed atom cannot silently disappear. Authored stance
+ * variants (`*.shaken.md` / `*.assured.md`, see src/content/stance-variants.ts)
+ * are counted dynamically — they are expected to grow as concepts gain a
+ * confident/unconfident axis, and pinning them would make every authoring
+ * change a test edit. They still get the same per-file render assertion, which
+ * is the part that actually protects a reader.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -21,6 +28,8 @@ interface AtomFile {
   file: string;
   id: string;
   body: string;
+  /** True for an authored alternative body rather than a base seed atom. */
+  isVariant: boolean;
 }
 
 function loadAtoms(): AtomFile[] {
@@ -35,6 +44,7 @@ function loadAtoms(): AtomFile[] {
         file,
         id: (data.id as string) ?? `${concept}.${file.replace('.md', '')}`,
         body: content,
+        isVariant: typeof data.variant_of === 'string' && data.variant_of.length > 0,
       });
     }
   }
@@ -44,8 +54,19 @@ function loadAtoms(): AtomFile[] {
 describe('MarkdownAtomRenderer — regression on seed atoms', () => {
   const atoms = loadAtoms();
 
-  it('loads all 25 seed atoms', () => {
-    expect(atoms.length).toBe(25);
+  it('loads all 25 base seed atoms', () => {
+    expect(atoms.filter((a) => !a.isVariant).length).toBe(25);
+  });
+
+  it('loads the authored stance variants too', () => {
+    // Not a fixed count — the point is that variants are picked up and get the
+    // same render guarantee, not that there is a particular number of them.
+    const variants = atoms.filter((a) => a.isVariant);
+    expect(variants.length).toBeGreaterThan(0);
+    for (const v of variants) {
+      expect(v.file, `${v.file} does not follow the <base>-<stance>.md convention`)
+        .toMatch(/-(shaken|assured)\.md$/);
+    }
   });
 
   it.each(atoms)('renders $concept/$file without throwing', ({ id, body }) => {

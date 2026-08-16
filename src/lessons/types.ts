@@ -335,6 +335,25 @@ export interface StudentSnapshot {
   has_materials?: boolean;
   /** Optional scope context from syllabus */
   scope?: 'mcq-fast' | 'mcq-rigorous' | 'subjective-short' | 'subjective-long' | 'oral-viva' | 'practical';
+
+  // ── Stance signal (see src/content/stance-variants.ts) ────────────────
+  //
+  // These two ride the same client-supplied fixture path that
+  // `mastery_by_concept` already uses, and for the same reason: the demo
+  // instance has no database, so a persona's state cannot come from
+  // `student_model`. Without them an anxious persona derives as 'steady' and
+  // reads the base body — which is exactly the "the personas were completely
+  // missing" symptom.
+  //
+  // Authenticated, DB-backed sessions ignore whatever a client sends here:
+  // lesson-routes derives the stance from the stored student model instead.
+  // The values only select which AUTHORED body to serve, so the worst a
+  // spoofed value can do is show the reader a differently-pitched version of
+  // the same lesson.
+  /** Fixture-supplied motivation, e.g. 'anxious' | 'driven' | 'steady'. */
+  motivation_state?: string;
+  /** Fixture-supplied representation preference. */
+  representation_mode?: 'geometric' | 'algebraic' | 'balanced';
 }
 
 // ============================================================================

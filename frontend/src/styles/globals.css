@@ -20,6 +20,146 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Atom body typography ────────────────────────────────────────────────
+ * Authored lesson content is markdown: headings, lists, tables, code. It
+ * renders through MarkdownAtomRenderer, which for a long time wrapped its
+ * output in `prose prose-sm` — Tailwind Typography class names. That plugin
+ * has never been installed (tailwind.config.cjs ships `plugins: []`, and
+ * @tailwindcss/typography is not in package.json), so those two classes
+ * emitted exactly nothing: a production build contains zero `.prose` rules.
+ *
+ * Meanwhile `@tailwind base` ships preflight, which contains
+ *   h1,h2,h3,h4,h5,h6 { font-size: inherit; font-weight: inherit }
+ *   ol,ul,menu        { list-style: none; margin: 0; padding: 0 }
+ * and nothing put them back. The result: every authored heading rendered at
+ * body weight and every bullet list lost its markers and indentation —
+ * 265 of 777 atoms use headings, 408 use lists. That is the "wall of text"
+ * a reader sees on a lesson page, and it had nothing to do with the atom's
+ * content.
+ *
+ * These rules restore structure using Clarity tokens rather than adopting
+ * the plugin, because `prose-sm` sets a 14px body and the design system's
+ * floor for anything a student reads is 17px. Scoped to .vidhya-atom-body
+ * so no other surface is affected. Lives in @layer components so Tailwind
+ * utilities on the same element still win.
+ */
+@layer components {
+  .vidhya-atom-body {
+    font-size: var(--text-body);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-body);
+    color: var(--text-primary);
+  }
+
+  .vidhya-atom-body > :first-child { margin-top: 0; }
+  .vidhya-atom-body > :last-child { margin-bottom: 0; }
+
+  .vidhya-atom-body p { margin: 0 0 var(--space-4); }
+
+  .vidhya-atom-body h1,
+  .vidhya-atom-body h2,
+  .vidhya-atom-body h3,
+  .vidhya-atom-body h4,
+  .vidhya-atom-body h5,
+  .vidhya-atom-body h6 {
+    margin: var(--space-6) 0 var(--space-3);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-title);
+    color: var(--text-primary);
+  }
+
+  .vidhya-atom-body h1 { font-size: var(--text-title2); }
+  .vidhya-atom-body h2 { font-size: var(--text-title3); }
+  /* h3 and below stay at the 17px body floor and separate by weight alone —
+     going smaller would put student-facing text under the floor. */
+  .vidhya-atom-body h3,
+  .vidhya-atom-body h4,
+  .vidhya-atom-body h5,
+  .vidhya-atom-body h6 { font-size: var(--text-body); }
+
+  .vidhya-atom-body ul,
+  .vidhya-atom-body ol {
+    margin: 0 0 var(--space-4);
+    padding-left: var(--space-6);
+  }
+  .vidhya-atom-body ul { list-style: disc; }
+  .vidhya-atom-body ol { list-style: decimal; }
+  .vidhya-atom-body li { margin: 0 0 var(--space-2); padding-left: var(--space-1); }
+  .vidhya-atom-body li > ul,
+  .vidhya-atom-body li > ol { margin: var(--space-2) 0 0; }
+  .vidhya-atom-body li::marker { color: var(--text-secondary); }
+
+  .vidhya-atom-body strong { font-weight: var(--weight-semibold); }
+  .vidhya-atom-body em { font-style: italic; }
+
+  .vidhya-atom-body blockquote {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-1) 0 var(--space-1) var(--space-4);
+    border-left: 2px solid var(--separator-opaque);
+    color: var(--text-secondary);
+  }
+
+  .vidhya-atom-body code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--surface-fill);
+    padding: 0.1em 0.35em;
+    border-radius: var(--radius-xs);
+  }
+
+  .vidhya-atom-body pre {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-sunken);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+  }
+  /* A code block already has its own surface; the inline chip styling would
+     double up on it. */
+  .vidhya-atom-body pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: var(--text-subhead);
+    line-height: var(--leading-normal);
+  }
+
+  .vidhya-atom-body hr {
+    margin: var(--space-6) 0;
+    border: 0;
+    border-top: var(--hairline) solid var(--separator);
+  }
+
+  /* Wide tables scroll inside the atom rather than pushing the page sideways. */
+  .vidhya-atom-body table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    margin: 0 0 var(--space-4);
+    border-collapse: collapse;
+    font-size: var(--text-subhead);
+  }
+  .vidhya-atom-body th,
+  .vidhya-atom-body td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    border-bottom: var(--hairline) solid var(--separator);
+  }
+  .vidhya-atom-body th {
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+  }
+
+  .vidhya-atom-body a { text-decoration: underline; }
+
+  .vidhya-atom-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+}
+
 @layer utilities {
   /* Scrollbar hide */
   .scrollbar-hide {

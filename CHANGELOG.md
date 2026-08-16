@@ -4,6 +4,71 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.29.0] — 2026-08-16 — Lessons that read like they were written for you
+
+**Operator action:** none required. Migration `038_thinking_gap_framing.sql` applies automatically on boot and is a no-op where `012` never ran. To see the new content-maturity report, open `/admin` as an admin.
+
+Three complaints from the same walkthrough, three unrelated causes. The lesson page looked like a wall of grey text, the "confident" and "unconfident" students read identical words, and the study-plan screen asked six questions before letting you ask one. None of them were content problems.
+
+### The numbers that matter
+
+Measured by running both suites and every CI gate against `main` in a clean worktree, not estimated.
+
+| | Before (`main`) | After | Δ |
+|---|---|---|---|
+| Tests | 2365 | 2461 | +96 |
+| Atom files clean | 783 | 799 | +16 |
+| Lesson bodies with working headings | 0 of 265 | 265 of 265 | +265 |
+| Lesson bodies with working list markers | 0 of 408 | 408 of 408 | +408 |
+| Demo atoms with a confident and an unconfident body | 0 of 8 | 8 of 8 | +8 |
+| Surfaces above the primary action on `/planned` | 6 | 1 | −5 |
+
+### The lesson page had no typography at all
+
+`MarkdownAtomRenderer` styled every lesson body with `prose prose-sm`. Tailwind Typography has never been installed in this repo — `tailwind.config.cjs` ships `plugins: []`, and the package is in neither `package.json` nor `node_modules` — so both class names emitted nothing. A production build contained zero `.prose` rules.
+
+What the build *did* contain was preflight:
+
+```
+h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
+ol,ul,menu{list-style:none;margin:0;padding:0}
+```
+
+and no project CSS put either back. Every authored heading rendered at body weight; every bullet list lost its markers and its indent. 265 of 777 atoms use headings and 408 use lists, which is why a well-written lesson still read as one undifferentiated block.
+
+No test could see it. jsdom renders the DOM, not the stylesheet, so all 338 frontend tests passed with the bug shipped.
+
+### Two students, one lesson
+
+The read path had no mechanism to serve a different *body* to a different student. The personalised selector reorders atoms and never rewrites them; the only content-swapping path writes per-student rewrites after three failures on the same atom in seven days, and needs a database the demo instance does not have.
+
+Atoms can now ship sibling files that are alternative bodies of themselves, each declaring the learner stance it is written for. It works with no database, nothing calls a model at request time, and a concept with no variants behaves exactly as before.
+
+A second bug made this invisible even where it existed: the stance derivation did not recognise `anxious`, the exact word the persona fixtures use, so the anxious persona resolved as neutral and read the base text.
+
+### Itemized changes
+
+#### Added
+
+- **Authored confident/unconfident lesson bodies** for all eight atoms the demo rails walk, across eigenvalues, determinants and orthogonality. Rewrites, not tone swaps: the unconfident eigenvalues intuition works three concrete vectors through a 2×2 before naming the equation; the confident one opens on invariant subspaces and spends its words on algebraic-versus-geometric multiplicity.
+- **`GET /api/admin/content-maturity`** and a card on the admin dashboard, answering a question an operator previously could not: is any of this actually personalised, or is it the generic fallback? A blocker outranks any percentage, coverage figures are visibly de-emphasised when the mechanism is switched off, and anything unmeasurable reports as unknown rather than zero.
+- **Learner framing on generated session insights.** The 15-minute session's explanation of a wrong answer now knows who it is writing for.
+
+#### Fixed
+
+- **Lesson typography.** Restored via `.vidhya-atom-body` against the Clarity tokens rather than by adopting the plugin — `prose-sm` sets a 14px body and the floor for student-facing text is 17px.
+- **Session insights were static.** The service accepted a misconception list, hashed it into the cache key, and never put it in the prompt; the frontend never sent it either, so the cache held one sentence per error type and served it to everyone forever.
+- **Session insights were invisible without a database.** The pool was built unconditionally, so the first cache query threw before reaching the model and the spinner ran out leaving nothing. No database now means no cache, not no feature.
+- **The study-plan screen.** One focal card instead of six stacked surfaces. The slider sits behind "Custom length", saved templates and starters behind one folded row, and save-as-template moved to after generation — the first moment a student can judge whether the settings were worth keeping. Nothing was removed.
+- **Eight raw pixel font sizes** on `/planned`, including 10px instructional text and an 11px button, against a 13px floor for anything interactive; seven hard-coded colours; three tap targets under 44px.
+
+#### For contributors
+
+- `ci:demo-rails` now refuses a rail whose atoms lack either stance. That failure is otherwise invisible — the renderer falls back to the base body, so the rail still walks and the demo narrates two students while showing one lesson.
+- A companion test checks the other half: that variants on disk are genuinely different prose, since the cheapest way to satisfy a file-exists gate is to copy the base file.
+- `atom-typography.test.ts` reads the CSS and the Tailwind config directly, because this class of failure is invisible to a DOM test.
+- Known drift, untouched here: the root `VERSION` file reads `4.24.0` while `package.json` and this changelog are at `4.29.0`. `VERSION` has not tracked releases for several versions and it was not clear which is authoritative, so it was left alone rather than guessed at.
+
 ## [4.28.1] — 2026-08-16 — The demo actually appears on the demo instance
 
 **Operator action:** none. `DEMO_MODE_ENABLED=true` is now set in `render.yaml` for the demo service; no manual dashboard change needed.

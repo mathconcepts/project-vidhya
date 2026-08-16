@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
+import { ContentMaturityCard } from '@/components/admin/ContentMaturityCard';
 
 interface DashboardSummary {
   deployment: {
@@ -72,6 +73,10 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto">
+      {/* Content maturity — whether students are actually getting personalised
+          content or the generic fallback. Self-hides for non-admins. */}
+      <ContentMaturityCard />
+
       {/* Journey nudge — soft pointer at the new guided view. Always visible
           for now; once we have data on uptake, can be conditionally hidden. */}
       <div>

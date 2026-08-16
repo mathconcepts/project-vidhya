@@ -2,7 +2,8 @@
  * PlannedSessionPage — "what should I do in the next N minutes?"
  *
  * Flow:
- *   1. User picks minutes available (slider or preset buttons)
+ *   1. User picks minutes available (preset chips; a slider is available
+ *      behind "Custom length" for anything the chips don't cover)
  *   2. Page POSTs to /api/student/session/plan with the budget
  *   3. Renders the plan header + ordered action cards
  *   4. User clicks an action → that action becomes active; the
@@ -20,6 +21,27 @@
  * v2.31 — ships alongside SmartPracticePage which remains the
  * free-form practice entry point. This page is for time-bounded,
  * planned sessions.
+ *
+ * Pre-plan layout, and why it looks like this:
+ *
+ *   The screen used to stack six labelled surfaces above the primary
+ *   action — a three-line explanatory paragraph, two advisory boxes, a
+ *   "YOUR TEMPLATES" section, a "TRY A STARTER TEMPLATE" grid of up to six
+ *   cards, a five-chip length picker, a slider, and a save-as-template
+ *   form — against a design system whose first rule is one focal card per
+ *   screen. Session length was settable three different ways before the
+ *   student had done anything.
+ *
+ *   Now there is one card: length chips and the generate button. The
+ *   slider sits behind "Custom length", saved templates and starters
+ *   behind a single folded row that states its own count, and
+ *   save-as-template moved to AFTER a plan exists — which is the first
+ *   moment a student can tell whether the settings were worth keeping.
+ *   Stats and exam-profile advice became quiet rows beneath the card
+ *   rather than boxes competing above it.
+ *
+ *   Nothing was deleted; everything that was on this screen is still
+ *   reachable in at most one tap.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -201,6 +223,13 @@ export default function PlannedSessionPage() {
   const [submittingCompletion, setSubmittingCompletion] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [rationaleOpen, setRationaleOpen] = useState<Record<string, boolean>>({});
+  // Everything that is not "pick a length and go" starts folded away. The
+  // pre-plan screen used to stack a header paragraph, a saved-templates
+  // section, a starter-presets grid, a five-chip picker, a slider, and a
+  // save-template form — six labelled surfaces before the student could do
+  // the one thing they came to do. See the render block for the reasoning.
+  const [showStarters, setShowStarters] = useState(false);
+  const [showCustomMinutes, setShowCustomMinutes] = useState(false);
   const [sessionSummary, setSessionSummary] = useState<{
     doneCount: number;
     totalCount: number;
@@ -557,14 +586,17 @@ export default function PlannedSessionPage() {
       {/* P5: WelcomeBackCard self-gates on lapse + account-age */}
       <WelcomeBackCard summary={gbrainSummary} user={userMeta} />
 
-      {/* Header */}
+      {/* ── Header ──────────────────────────────────────────────────────
+          One line, not a paragraph. The old copy spent three lines
+          explaining what a plan is before the student could ask for one. */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div>
-            <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>Today's plan</h1>
-            <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
-              Tell us how long you have. We'll give you the three things that move
-              your score most — in order. Show up, follow it, get better.
+            <h1 style={{ margin: '0 0 4px', fontSize: 'var(--text-title2)', fontWeight: 'var(--weight-semibold)', letterSpacing: 'var(--tracking-title)', color: 'var(--text-primary)' }}>
+              Today's plan
+            </h1>
+            <p style={{ margin: 0, fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)' }}>
+              The three things that move your score most, in order.
             </p>
           </div>
           <Link
@@ -574,11 +606,12 @@ export default function PlannedSessionPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
+              minHeight: 'var(--touch-min)',
               padding: '6px 12px',
               borderRadius: 'var(--radius-sm)',
               background: 'var(--surface-fill)',
               border: 'var(--hairline) solid var(--separator)',
-              fontSize: 'var(--text-caption)',
+              fontSize: 'var(--text-footnote)',
               color: 'var(--text-secondary)',
               textDecoration: 'none',
             }}
@@ -587,238 +620,226 @@ export default function PlannedSessionPage() {
             <Settings size={14} />
             Exam profile
             {profile && (
-              <span style={{ marginLeft: 4, padding: '1px 6px', borderRadius: 4, background: 'var(--surface-canvas)', color: 'var(--text-tertiary)', fontSize: 10, fontFamily: 'var(--font-mono)' }}>
+              <span style={{ marginLeft: 4, padding: '1px 6px', borderRadius: 4, background: 'var(--surface-canvas)', color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)' }}>
                 {profile.exams.length}
               </span>
             )}
           </Link>
         </div>
-
-        {trailingStats && trailingStats.trailing_7d_minutes > 0 && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.2)', fontSize: 'var(--text-caption)', color: 'var(--green-ink)' }}>
-            <Clock size={12} />
-            You've studied{' '}
-            <strong style={{ fontFamily: 'var(--font-mono)' }}>{trailingStats.trailing_7d_minutes}</strong> min{' '}
-            across{' '}
-            <strong style={{ fontFamily: 'var(--font-mono)' }}>{trailingStats.trailing_7d_sessions}</strong>{' '}
-            session{trailingStats.trailing_7d_sessions === 1 ? '' : 's'} this week.
-          </div>
-        )}
-
-        {profile && profile.exams.length === 0 && (
-          <div style={{ marginTop: 12, fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div>
-              Using a default exam.{' '}
-              <Link to="/exam-profile" style={{ color: 'inherit', textDecoration: 'underline' }}>Set up your exam profile</Link>{' '}
-              for plans tuned to your dates.
-            </div>
-            <div style={{ opacity: 0.7 }}>
-              Or{' '}
-              <Link to="/knowledge" style={{ color: 'inherit', textDecoration: 'underline' }}>tell us your school curriculum</Link>{' '}
-              and we'll suggest the right exams.
-            </div>
-          </div>
-        )}
-
-        {profile && profile.exams.length >= 2 && (
-          <div style={{ marginTop: 12, fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', opacity: 0.8 }}>
-            Multi-exam mode — planning across your {profile.exams.length} registered exams, weighted by proximity.
-          </div>
-        )}
       </div>
 
-      {/* Template bar — saved recurring patterns, one-tap recall */}
-      {!plan && !loading && templates.length > 0 && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>
-              <Bookmark size={12} /> Your templates
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>tap to recall</span>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {templates.map((tpl) => (
-              <div key={tpl.id} style={{ display: 'flex', alignItems: 'stretch', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                <button
-                  onClick={() => useTemplate(tpl)}
-                  style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', flex: 1 }}
-                >
-                  <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{tpl.name}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                    {tpl.minutes_available}min · {
-                      tpl.exam_selection === 'all' ? 'all exams' :
-                      tpl.exam_selection === 'primary' ? 'primary' :
-                      Array.isArray(tpl.exam_selection) ? `${tpl.exam_selection.length} exam${tpl.exam_selection.length === 1 ? '' : 's'}` :
-                      ''
-                    }{tpl.use_count > 0 ? ` · used ${tpl.use_count}×` : ''}
-                  </div>
-                </button>
-                <button
-                  onClick={() => deleteTemplateFn(tpl.id)}
-                  style={{ padding: '0 8px', borderTop: 'none', borderRight: 'none', borderBottom: 'none', borderLeft: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  title="Delete template"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* ── The focal card: pick a length, go ───────────────────────────
+          Design system: one focal card per screen. Before this, the
+          pre-plan view stacked six competing surfaces — saved templates,
+          starter presets, a five-chip picker, a slider, a generate row and
+          a save-template form — each with its own uppercase section label.
+          Minutes were settable three different ways.
 
-      {/* Preset suggestions — curated starter templates */}
-      {!plan && !loading && presets.filter(p => !p.adopted).length > 0 && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>
-              <Sparkles size={12} /> {templates.length === 0 ? 'Try a starter template' : 'More presets'}
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>tap to adopt + run</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-            {presets.filter(p => !p.adopted).slice(0, 6).map((preset) => (
-              <button
-                key={preset.slug}
-                onClick={() => adoptPreset(preset)}
-                disabled={loading}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--surface-fill)',
-                  border: 'var(--hairline) solid var(--separator)',
-                  textAlign: 'left',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.5 : 1,
-                }}
-              >
-                <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{preset.name}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                  {preset.minutes_available}min · {preset.exam_selection === 'all' ? 'all exams' : 'primary'}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.3 }}>{preset.description}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Minutes picker — hidden once a plan is loaded */}
+          Now: the chips and the button are the only things on the critical
+          path. The slider is behind "Custom", saved templates and starters
+          are behind one folded row, and saving a template moved to AFTER a
+          plan exists, which is the only moment a student knows whether the
+          settings were worth keeping. */}
       {!plan && !loading && (
-        <div>
-          <span style={{ display: 'block', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 12 }}>
-            How many minutes do you have?
+        <div
+          style={{
+            background: 'var(--surface-card)',
+            border: 'var(--hairline) solid var(--separator)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 20,
+          }}
+        >
+          <span style={{ display: 'block', fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)', marginBottom: 12 }}>
+            How long have you got?
           </span>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 8, marginBottom: 16 }}>
-            {PRESETS.map((p) => (
-              <button
-                key={p.minutes}
-                onClick={() => setMinutes(p.minutes)}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: 'var(--radius-sm)',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  border: minutes === p.minutes ? '1px solid rgba(88,86,214,.4)' : 'var(--hairline) solid var(--separator)',
-                  background: minutes === p.minutes ? 'rgba(88,86,214,.08)' : 'var(--surface-fill)',
-                  color: minutes === p.minutes ? 'var(--indigo-ink)' : 'var(--text-secondary)',
-                }}
-              >
-                <div style={{ fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Clock size={14} />{p.label}
-                </div>
-                <div style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', marginTop: 2 }}>{p.subtitle}</div>
-              </button>
-            ))}
-          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <input
-              type="range"
-              min={1}
-              max={120}
-              value={minutes}
-              onChange={(e) => setMinutes(parseInt(e.target.value, 10))}
-              style={{ flex: 1, accentColor: 'var(--indigo)' }}
-            />
-            <span style={{ fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)', width: 80, textAlign: 'right', color: 'var(--text-primary)' }}>{minutes} min</span>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={fetchPlan}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-sm)',
-                background: 'var(--indigo)',
-                color: 'var(--text-on-accent)',
-                fontWeight: 'var(--weight-semibold)',
-                fontSize: 'var(--text-body)',
-                border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.5 : 1,
-              }}
-            >
-              {loading ? 'Planning…' : 'Generate my plan'}
-            </button>
-            <button
-              onClick={() => setShowSaveTemplate(v => !v)}
-              style={{
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-sm)',
-                background: 'var(--surface-fill)',
-                border: 'var(--hairline) solid var(--separator)',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-              title="Save these settings as a template"
-            >
-              <Bookmark size={16} />
-            </button>
-          </div>
-
-          {/* Save-as-template inline form */}
-          {showSaveTemplate && (
-            <div style={{ marginTop: 12, padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)' }}>
-              <span style={{ display: 'block', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 8 }}>
-                Name this template ({minutes} min
-                {profile && profile.exams.length >= 2 ? ', all exams' :
-                 profile && profile.exams.length === 1 ? ', primary exam' : ''})
-              </span>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="text"
-                  autoFocus
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="e.g. Morning commute"
-                  maxLength={60}
-                  style={{ flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 'var(--text-caption)' }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') saveTemplate(); }}
-                />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: 8, marginBottom: 16 }}>
+            {PRESETS.map((p) => {
+              const active = minutes === p.minutes;
+              return (
                 <button
-                  onClick={saveTemplate}
-                  disabled={!templateName.trim() || savingTemplate}
+                  key={p.minutes}
+                  onClick={() => setMinutes(p.minutes)}
+                  aria-pressed={active}
                   style={{
-                    padding: '8px 12px',
+                    minHeight: 'var(--touch-min)',
+                    padding: '10px 12px',
                     borderRadius: 'var(--radius-sm)',
-                    background: 'var(--indigo)',
-                    color: 'var(--text-on-accent)',
-                    fontSize: 'var(--text-caption)',
-                    fontWeight: 'var(--weight-semibold)',
-                    border: 'none',
-                    cursor: (!templateName.trim() || savingTemplate) ? 'not-allowed' : 'pointer',
-                    opacity: (!templateName.trim() || savingTemplate) ? 0.5 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    border: active ? '1px solid var(--indigo)' : 'var(--hairline) solid var(--separator)',
+                    background: active ? 'var(--indigo-tint)' : 'var(--surface-fill)',
+                    color: active ? 'var(--indigo-ink)' : 'var(--text-secondary)',
                   }}
                 >
-                  {savingTemplate ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                  <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Clock size={14} />{p.label}
+                  </div>
+                  <div style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', marginTop: 2 }}>{p.subtitle}</div>
                 </button>
-              </div>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={fetchPlan}
+            disabled={loading}
+            style={{
+              width: '100%',
+              minHeight: 'var(--touch-min)',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--indigo)',
+              color: 'var(--text-on-accent)',
+              fontWeight: 'var(--weight-semibold)',
+              fontSize: 'var(--text-body)',
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            {loading ? 'Planning…' : `Generate my ${minutes}-minute plan`}
+          </button>
+
+          {/* Under the hood, opened only on request. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
+            <button
+              onClick={() => setShowCustomMinutes((v) => !v)}
+              aria-expanded={showCustomMinutes}
+              style={{ display: 'inline-flex', alignItems: 'center', minHeight: 'var(--touch-min)', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', textDecoration: 'underline' }}
+            >
+              {showCustomMinutes ? 'Hide custom length' : 'Custom length'}
+            </button>
+            {(templates.length > 0 || presets.filter((p) => !p.adopted).length > 0) && (
+              <button
+                onClick={() => setShowStarters((v) => !v)}
+                aria-expanded={showStarters}
+                style={{ display: 'inline-flex', alignItems: 'center', minHeight: 'var(--touch-min)', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', textDecoration: 'underline' }}
+              >
+                {showStarters
+                  ? 'Hide saved & starters'
+                  : `Saved & starters (${templates.length + presets.filter((p) => !p.adopted).length})`}
+              </button>
+            )}
+          </div>
+
+          {showCustomMinutes && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+              <input
+                type="range"
+                aria-label="Session length in minutes"
+                min={1}
+                max={120}
+                value={minutes}
+                onChange={(e) => setMinutes(parseInt(e.target.value, 10))}
+                style={{ flex: 1, accentColor: 'var(--indigo)' }}
+              />
+              <span style={{ fontSize: 'var(--text-subhead)', fontFamily: 'var(--font-mono)', width: 72, textAlign: 'right', color: 'var(--text-primary)' }}>{minutes} min</span>
+            </div>
+          )}
+
+          {showStarters && (
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {templates.length > 0 && (
+                <div>
+                  <span style={{ display: 'block', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', marginBottom: 8 }}>
+                    Your saved templates
+                  </span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {templates.map((tpl) => (
+                      <div key={tpl.id} style={{ display: 'flex', alignItems: 'stretch', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                        <button
+                          onClick={() => useTemplate(tpl)}
+                          style={{ minHeight: 'var(--touch-min)', padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', flex: 1 }}
+                        >
+                          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{tpl.name}</div>
+                          <div style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                            {tpl.minutes_available}min · {
+                              tpl.exam_selection === 'all' ? 'all exams' :
+                              tpl.exam_selection === 'primary' ? 'primary' :
+                              Array.isArray(tpl.exam_selection) ? `${tpl.exam_selection.length} exam${tpl.exam_selection.length === 1 ? '' : 's'}` :
+                              ''
+                            }{tpl.use_count > 0 ? ` · used ${tpl.use_count}×` : ''}
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => deleteTemplateFn(tpl.id)}
+                          style={{ minHeight: 'var(--touch-min)', padding: '0 10px', borderTop: 'none', borderRight: 'none', borderBottom: 'none', borderLeft: 'var(--hairline) solid var(--separator)', color: 'var(--text-tertiary)', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          title="Delete template"
+                          aria-label={`Delete template ${tpl.name}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {presets.filter((p) => !p.adopted).length > 0 && (
+                <div>
+                  <span style={{ display: 'block', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', marginBottom: 8 }}>
+                    Starter templates
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
+                    {presets.filter((p) => !p.adopted).slice(0, 6).map((preset) => (
+                      <button
+                        key={preset.slug}
+                        onClick={() => adoptPreset(preset)}
+                        disabled={loading}
+                        style={{
+                          minHeight: 'var(--touch-min)',
+                          padding: '10px 12px',
+                          borderRadius: 'var(--radius-sm)',
+                          background: 'var(--surface-fill)',
+                          border: 'var(--hairline) solid var(--separator)',
+                          textAlign: 'left',
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          opacity: loading ? 0.5 : 1,
+                        }}
+                      >
+                        <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>{preset.name}</div>
+                        <div style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                          {preset.minutes_available}min · {preset.exam_selection === 'all' ? 'all exams' : 'primary'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Quiet context rows ──────────────────────────────────────────
+          Facts and advisories, below the action rather than stacked above
+          it. Hairline-separated rows on the canvas, not cards. */}
+      {!plan && !loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {trailingStats && trailingStats.trailing_7d_minutes > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-footnote)', color: 'var(--green-ink)' }}>
+              <Clock size={12} />
+              <span>
+                <strong style={{ fontFamily: 'var(--font-mono)' }}>{trailingStats.trailing_7d_minutes}</strong> min across{' '}
+                <strong style={{ fontFamily: 'var(--font-mono)' }}>{trailingStats.trailing_7d_sessions}</strong>{' '}
+                session{trailingStats.trailing_7d_sessions === 1 ? '' : 's'} this week.
+              </span>
+            </div>
+          )}
+
+          {profile && profile.exams.length === 0 && (
+            <div style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)' }}>
+              Using a default exam.{' '}
+              <Link to="/exam-profile" style={{ color: 'var(--text-link)', textDecoration: 'underline' }}>Set up your exam profile</Link>{' '}
+              for plans tuned to your dates, or{' '}
+              <Link to="/knowledge" style={{ color: 'var(--text-link)', textDecoration: 'underline' }}>tell us your curriculum</Link>.
+            </div>
+          )}
+
+          {profile && profile.exams.length >= 2 && (
+            <div style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)' }}>
+              Planning across your {profile.exams.length} registered exams, weighted by proximity.
             </div>
           )}
         </div>
@@ -849,7 +870,7 @@ export default function PlannedSessionPage() {
           </div>
         </div>
       ) : error && (
-        <div style={{ padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(255,59,48,.06)', border: '1px solid rgba(255,59,48,.22)' }}>
+        <div style={{ padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--red-tint)', border: '1px solid var(--red)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
             <XCircle size={16} style={{ marginTop: 2, flexShrink: 0, color: 'var(--red)' }} />
             <div>
@@ -869,7 +890,7 @@ export default function PlannedSessionPage() {
           <ReviewQueueCard />
 
           {/* Plan headline */}
-          <div style={{ padding: '20px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: '1px solid rgba(88,86,214,.18)', boxShadow: 'var(--shadow-raise)' }}>
+          <div style={{ padding: '20px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', border: '1px solid var(--indigo-tint)', boxShadow: 'var(--shadow-raise)' }}>
             <div style={{ fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--indigo-ink)', opacity: 0.8, marginBottom: 4 }}>Your plan</div>
             <div style={{ fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)', marginBottom: 8 }}>{plan.headline}</div>
             <div style={{ display: 'flex', gap: 12, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -897,7 +918,7 @@ export default function PlannedSessionPage() {
             const total = plan.actions.length;
             const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
             return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--green-tint)', border: '1px solid var(--green)' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 'var(--text-caption)', color: 'var(--green-ink)', fontWeight: 'var(--weight-medium)' }}>
                     {doneCount === 0
@@ -930,17 +951,17 @@ export default function PlannedSessionPage() {
 
                 const actionCardStyle: React.CSSProperties =
                   doneState === 'done'
-                    ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.22)' }
+                    ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--green-tint)', border: '1px solid var(--green)' }
                   : doneState === 'skipped'
                     ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', opacity: 0.5 }
                   : isNext
-                    ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.25)' }
+                    ? { padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--indigo-tint)', border: '1px solid var(--indigo-tint)' }
                   : { padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)' };
 
                 return (
                   <div key={action.id} style={actionCardStyle}>
                     {isNext && (
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--indigo-ink)', marginBottom: 8 }}>
+                      <div style={{ fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-bold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--indigo-ink)', marginBottom: 8 }}>
                         Next →
                       </div>
                     )}
@@ -948,7 +969,7 @@ export default function PlannedSessionPage() {
                       <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', width: 24, paddingTop: 4, flexShrink: 0 }}>{i + 1}</div>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 4, fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}>
                             <Icon size={12} />
                             {meta.label}
                           </span>
@@ -959,7 +980,7 @@ export default function PlannedSessionPage() {
                           <div>
                             <button
                               onClick={() => setRationaleOpen(prev => ({ ...prev, [action.id]: !prev[action.id] }))}
-                              style={{ fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 2, marginBottom: 4 }}
+                              style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 2, marginBottom: 4 }}
                             >
                               Why this order
                               <ChevronDown size={12} style={{ transform: rationaleOpen[action.id] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }} />
@@ -1005,17 +1026,17 @@ export default function PlannedSessionPage() {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                   <span style={{ color: 'var(--text-tertiary)' }}>Attempts:</span>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <button onClick={() => setAttempts(action.id, Math.max(0, (outcome?.attempts ?? 0) - 1), outcome?.correct ?? 0)} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                                    <button onClick={() => setAttempts(action.id, Math.max(0, (outcome?.attempts ?? 0) - 1), outcome?.correct ?? 0)} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 'var(--text-callout)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
                                     <span style={{ width: 32, textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{outcome?.attempts ?? 0}</span>
-                                    <button onClick={() => setAttempts(action.id, (outcome?.attempts ?? 0) + 1, outcome?.correct ?? 0)} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                                    <button onClick={() => setAttempts(action.id, (outcome?.attempts ?? 0) + 1, outcome?.correct ?? 0)} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 'var(--text-callout)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                   <span style={{ color: 'var(--text-tertiary)' }}>Correct:</span>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <button onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.max(0, (outcome?.correct ?? 0) - 1))} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                                    <button onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.max(0, (outcome?.correct ?? 0) - 1))} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 'var(--text-callout)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
                                     <span style={{ width: 32, textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{outcome?.correct ?? 0}</span>
-                                    <button onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.min(outcome?.attempts ?? action.content_hint.count, (outcome?.correct ?? 0) + 1))} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                                    <button onClick={() => setAttempts(action.id, outcome?.attempts ?? 0, Math.min(outcome?.attempts ?? action.content_hint.count, (outcome?.correct ?? 0) + 1))} style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 'var(--text-callout)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                                   </div>
                                 </div>
                               </div>
@@ -1068,6 +1089,64 @@ export default function PlannedSessionPage() {
             >
               Reset
             </button>
+          </div>
+
+          {/* Save as template — moved here from the pre-plan screen. A student
+              cannot tell whether a set of settings is worth keeping until they
+              have seen what it produced, so asking before generating was both
+              premature and one more thing competing with the primary action. */}
+          <div>
+            <button
+              onClick={() => setShowSaveTemplate((v) => !v)}
+              aria-expanded={showSaveTemplate}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', textDecoration: 'underline' }}
+            >
+              <Bookmark size={14} />
+              {showSaveTemplate ? 'Cancel' : 'Save these settings as a template'}
+            </button>
+
+            {showSaveTemplate && (
+              <div style={{ marginTop: 8, padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)' }}>
+                <span style={{ display: 'block', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', marginBottom: 8 }}>
+                  Name this template ({minutes} min
+                  {profile && profile.exams.length >= 2 ? ', all exams' :
+                   profile && profile.exams.length === 1 ? ', primary exam' : ''})
+                </span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    autoFocus
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="e.g. Morning commute"
+                    maxLength={60}
+                    style={{ flex: 1, minHeight: 'var(--touch-min)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-card)', border: 'var(--hairline) solid var(--separator)', color: 'var(--text-primary)', fontSize: 'var(--text-subhead)' }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveTemplate(); }}
+                  />
+                  <button
+                    onClick={saveTemplate}
+                    disabled={!templateName.trim() || savingTemplate}
+                    aria-label="Save template"
+                    style={{
+                      minHeight: 'var(--touch-min)',
+                      padding: '8px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'var(--indigo)',
+                      color: 'var(--text-on-accent)',
+                      fontSize: 'var(--text-subhead)',
+                      fontWeight: 'var(--weight-semibold)',
+                      border: 'none',
+                      cursor: (!templateName.trim() || savingTemplate) ? 'not-allowed' : 'pointer',
+                      opacity: (!templateName.trim() || savingTemplate) ? 0.5 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {savingTemplate ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

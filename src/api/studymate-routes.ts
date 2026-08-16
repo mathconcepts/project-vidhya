@@ -88,6 +88,11 @@ async function h_answer(req: ParsedRequest, res: ServerResponse): Promise<void> 
   const studymateId = req.params?.id;
   if (!studymateId) return sendError(res, 400, 'studymate session id required');
 
+  // Anonymous session key — same header/body convention as the other handlers.
+  // Optional here: a missing id costs the explanation its personalisation, not
+  // the answer its recording.
+  const sessionId = extractSessionId(req);
+
   const body = (req.body ?? {}) as {
     problem_id?: string;
     user_answer?: string;
@@ -113,6 +118,13 @@ async function h_answer(req: ParsedRequest, res: ServerResponse): Promise<void> 
         expected_answer: body.expected_answer,
         user_answer: body.user_answer,
         top_misconceptions: body.top_misconceptions,
+        // The framing (mastery band / stance / representation mode) that makes
+        // this explanation read differently for a shaken beginner than for a
+        // confident near-master is derived from the student model inside
+        // attachThinkingGap, using this id. Deliberately not accepted from the
+        // client: the frontend must not touch scorer fields, and a supplied
+        // framing would just be a way to pick someone else's cache partition.
+        session_id: sessionId,
       }).catch(err => console.error('[studymate-routes] attachThinkingGap error:', err));
     }
 

@@ -731,7 +731,9 @@ function VersionPane({
           {v.improvement_reason}
         </div>
       )}
-      <div className="prose prose-sm max-w-none">
+      {/* No `prose` classes — the plugin is not installed; the renderer
+          carries .vidhya-atom-body itself. */}
+      <div className="max-w-none">
         <MarkdownAtomRenderer atomId={`${v.atom_id}.diff.${v.version_n}`} content={v.content} />
       </div>
     </div>

@@ -104,7 +104,7 @@ files have is the shape 566 generated files will copy.
 
 | # | Decision | Why |
 |---|---|---|
-| 1A | Prose budget: `shaken ≤ base` words, `assured ≤ base` words, headings ≤ base + 1. Extra scaffolding goes into the `guided_walkthrough` spec, not the prose. | A struggling student needs more support, not more text on screen at once. `guided_walkthrough` is already 105 of 125 interactive uses and reveals steps on demand. **Amends decision 2B**: fenced blocks stay byte-identical for `manipulable` and `simulation`; `guided_walkthrough` step counts may differ between base and variant, because that difference is the feature rather than drift. |
+| 1A | Extra scaffolding goes into the `guided_walkthrough` spec, not the prose. Prose is capped by an absolute budget (see R1A). Headings ≤ base + 1, no `h1`. | A struggling student needs more support, not more text on screen at once. `guided_walkthrough` is already 105 of 125 interactive uses and reveals steps on demand. **Amends decision 2B** — see R2A for the exact comparison rule. |
 | 2A | Coverage shows two figures — in-rollout (denominator = concepts whose topic template has a `stances` block) and course-wide (denominator = 97) — plus a distinct `rejected` count. | The current counter skips concepts with no variants. Correct today; during a 6-PR rollout it reads near-100% throughout, and a topic the judge rejected wholesale disappears rather than showing as a problem. |
 | 3A | `student-model.ts:246` uses `STRUGGLING_STATES` instead of the literal `'frustrated'`, and lifts to `'steady'` after 2 consecutive correct rather than 1. | Recovery currently fires only for `frustrated`. `anxious` and `flagging` never recover, so those students stay shaken permanently — including both demo personas. A framing that cannot notice improvement contradicts Compounding, the product's stated memorable thing. A 2-streak rather than 1 keeps the register from flipping on a lucky guess. |
 | 4A | Gate additions: opening 4-gram repeated across >20% of a topic's variants fails; `h1` inside an atom body fails; any emoji fails. Cadence carries an explicit "vary the opening move" constraint. | *"one X at a time"* already opens 3 of 8 hand-authored shaken variants (38%). A generator given one cadence paragraph 291 times will do this much harder, and prose sameness is the AI-slop failure mode no human catches across 566 files. |
@@ -116,6 +116,37 @@ files have is the shape 566 generated files will copy.
 **Stated default, not a decision to defer:** a topic whose judge rejects some
 files ships partial. 2A's `rejected` count is what makes the gap visible rather
 than silent.
+
+## Eng review re-run (against the design decisions)
+
+`/plan-eng-review`, second pass, 2026-08-16. Two of the design decisions
+specified gates that could not be built as written. Both corrected here.
+
+**The measurement that forced R1A.** Raw word counts understated the problem
+because they count LaTeX tokens. Measured on prose alone (LaTeX and fenced
+blocks stripped), variants run **2.0× to 4.6×** their base — and `assured`
+inflates as much as `shaken` (2.45×, 2.90×, 3.88×). So this is not a
+too-gentle cadence; authored variants systematically expand. They also converge
+on a house length of ~130–210 prose words *regardless of base length*
+(`determinants/intuition`, the longest base, is the only pair that shrinks, at
+0.84×). A `≤ base` rule therefore punishes concepts whose base happened to be
+terse and would have rejected 14 of the 16 authored files.
+
+| # | Correction | Why |
+|---|---|---|
+| R1A | Prose budget is **absolute per atom type**, not relative to base: `hook ≤ 130`, `intuition ≤ 200`, `worked_example ≤ 220`, measured with LaTeX and fenced blocks stripped. Budgets live in `templates/*.yaml` so a topic can raise its own. | Calibrated from the 16 authored files: passes 14, fails 2 genuine outliers (`determinants/worked-example-shaken` at 270, `orthogonality/worked-example-assured` at 229), both of which T15 regenerates anyway. Measures reading load rather than LaTeX density. |
+| R2A | The `guided_walkthrough` carve-out is **field-level, not block-level**. `kind` must match. `title`, `caption`, `steps[].prompt`, `steps[].hint` may differ. The base's sequence of `steps[].answer` (and `eqn`) must be a **subsequence** of the variant's, in order, and the final answer must be byte-identical. An unparseable spec in either file refuses the variant. | "Skip walkthroughs when comparing" would have left 105 of 125 interactive blocks ungated for answer drift — reintroducing exactly what 2B prevents, in the component 1A steers shaken students into by default. Subsequence rather than equality is what still permits inserting intermediate steps. |
+
+**Estimate correction, not a decision change:** T13 is not a three-line edit.
+`student_model` is column-per-field (`011_gbrain_cognitive_architecture.sql:8`)
+with no `correct_streak` column, so the 2-streak needs migration 035 plus the
+interface field and UPDATE statement. Idempotent and auto-applied at boot like
+034, so low risk — but a migration.
+
+**Resolved from the design review's open concern:** `Verify.tsx:118` should use
+`--surface-fill-strong` (`colors.css:36`), not green. Green carries the mastery
+meaning and would read as "already marked correct" on a control that has not
+run yet.
 
 ## What already exists
 
@@ -225,10 +256,18 @@ worth a heads-up if run in separate worktrees.
   - Files: `modules/project-vidhya-content/concepts/*/atoms/*-{shaken,assured}.md`
   - Verify: `ci:content-integrity`, `ci:content-gate`, `check-variant-agreement` all green per PR
   - Blocked by: T15 (the exemplars must pass the gates before the gates run on anything else)
-- [ ] **T9 (P1, human: ~1d / CC: ~1h)** — gates — prose budget: words ≤ base, headings ≤ base + 1
-  - Surfaced by: Design 1A — shaken variants run ~60% longer than base
-  - Files: `scripts/check-variant-agreement.ts`, cadence in `templates/*.yaml`
-  - Verify: a variant 1 word over base fails; equal passes
+- [ ] **T9 (P1, human: ~1d / CC: ~1h)** — gates — absolute prose budget per atom type + heading cap
+  - Surfaced by: Design 1A, corrected by R1A — variants run 2.0–4.6× base prose and converge on a house length independent of base
+  - Files: `scripts/check-variant-agreement.ts`, budgets in `templates/*.yaml`
+  - Verify: prose counter strips LaTeX and fenced blocks; `hook`>130 fails, 130 passes; the 2 known outliers fail
+- [ ] **T16 (P1, human: ~1d / CC: ~45min)** — gates — field-level walkthrough equivalence
+  - Surfaced by: R2A — block-level skip would leave 105 of 125 interactive blocks ungated for answer drift
+  - Files: `scripts/check-variant-agreement.ts`
+  - Verify: prompt/hint differ → pass; a base answer missing from the variant → fail; answers reordered → fail; final answer differs → fail; unparseable spec → refuse
+- [ ] **T17 (P1, human: ~2h / CC: ~15min)** — db — migration 035 adds `correct_streak`
+  - Surfaced by: R1 re-run estimate correction — `student_model` has no such column, T13 depends on it
+  - Files: `supabase/migrations/035_correct_streak.sql`, `src/gbrain/student-model.ts`
+  - Verify: idempotent (`IF NOT EXISTS`); existing rows default 0; auto-applied at boot
 - [ ] **T10 (P1, human: ~1d / CC: ~45min)** — gates — repetition, h1 and emoji checks
   - Surfaced by: Design 4A — "one X at a time" opens 3 of 8 shaken variants
   - Files: `scripts/check-variant-agreement.ts`
@@ -260,7 +299,7 @@ worth a heads-up if run in separate worktrees.
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | — |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR (PLAN) | 6 issues, 1 critical gap |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 2 | CLEAR (PLAN) | 8 issues, 1 critical gap |
 | Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAR (FULL) | score: 3/10 → 9/10, 8 decisions |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
 

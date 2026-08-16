@@ -243,6 +243,32 @@ export interface ContentAtom {
   /** True when the served content is a per-student variant from
    *  student_atom_overrides instead of the canonical atom. */
   is_student_override?: boolean;
+
+  // ── Authored stance variants (see src/content/stance-variants.ts) ──────
+  /**
+   * Set ONLY on a variant file, never on a base atom. Names the id of the
+   * atom this file is an alternative body for. The loader uses it to fold
+   * variants into their base rather than serving them as extra atoms.
+   */
+  variant_of?: string;
+  /**
+   * Set ONLY on a variant file. Which learner stance this body is written
+   * for — `shaken` or `assured`. `steady` is the base file itself; a variant
+   * declaring it would be a second base, so the loader refuses it.
+   */
+  for_stance?: 'shaken' | 'assured';
+  /**
+   * Attached by the loader to a BASE atom: stance → alternative body.
+   * Present whether or not a variant is ultimately selected, so callers can
+   * report authored coverage without re-reading the filesystem.
+   */
+  stance_variants?: Partial<Record<'shaken' | 'assured', string>>;
+  /**
+   * Set by applyStanceVariants() when an alternative body was actually
+   * served. Absent means the student read the base text. Drives the honest
+   * "written for you" disclosure and the admin coverage report.
+   */
+  served_stance?: 'shaken' | 'assured';
 }
 
 /**

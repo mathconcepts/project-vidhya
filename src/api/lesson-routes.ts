@@ -34,6 +34,8 @@ import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOv
 import { rankAtomsForLesson } from '../personalization/lesson-wire';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
 import { selectAtoms } from '../content/pedagogy-engine';
+import { applyStanceVariants } from '../content/stance-variants';
+import { deriveFraming, type LearnerStance } from '../sessions/learner-framing';
 import type { ContentAtom, SessionContext } from '../content/content-types';
 import {
   sanitizeRecentErrors,
@@ -155,6 +157,46 @@ async function enrichAtomsWithEngagement(
  *  - interleaved: a different concept in the same topic
  *  - prerequisite review: if there's a known weak prereq
  */
+/**
+ * Motivation values the compose route will accept from a client. Matches the
+ * vocabulary `deriveFraming` recognises plus the persona-fixture spellings —
+ * anything else is dropped rather than forwarded.
+ */
+const ALLOWED_MOTIVATION_STATES = new Set([
+  'anxious', 'frustrated', 'flagging', 'steady', 'confident', 'driven',
+]);
+const ALLOWED_REPRESENTATION_MODES = new Set(['geometric', 'algebraic', 'balanced']);
+
+/**
+ * Which authored body this snapshot should read.
+ *
+ * The compose route serves anonymous and demo traffic, where the only state
+ * available is what the caller sent. `deriveFraming` already encodes the
+ * mastery/motivation rules, so this adapts the snapshot into its input shape
+ * rather than restating the thresholds — one derivation drives both the
+ * lesson body and the wrong-answer explanation.
+ *
+ * No snapshot, or a snapshot with no motivation and no mastery for this
+ * concept, yields 'steady' — the base text. Absent signal must never be read
+ * as "this student is struggling".
+ */
+export function stanceForSnapshot(
+  student: LessonRequest['student'] | undefined,
+  concept_id: string,
+): LearnerStance {
+  if (!student) return 'steady';
+  const mastery = student.mastery_by_concept?.[concept_id];
+  return deriveFraming(
+    {
+      mastery_vector: mastery === undefined ? {} : { [concept_id]: { score: mastery } },
+      motivation_state: student.motivation_state ?? null,
+      representation_mode: student.representation_mode ?? null,
+      consecutive_failures: 0,
+    },
+    concept_id,
+  ).stance;
+}
+
 async function buildRelatedProblems(
   concept_id: string,
   student?: LessonRequest['student'],
@@ -297,6 +339,16 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
     if (s.recent_errors !== undefined || recentErrors.length > 0) s.recent_errors = recentErrors;
     if (s.mastery_by_topic !== undefined || Object.keys(masteryByTopic).length > 0) s.mastery_by_topic = masteryByTopic;
     if (s.mastery_by_concept !== undefined) s.mastery_by_concept = masteryByConcept;
+    // Stance signal: same rule as every other client-supplied field — a value
+    // that is not one we recognise is dropped, not passed along. deriveFraming
+    // would ignore an unknown string anyway; clearing it here means nothing
+    // downstream ever holds unvalidated client text.
+    s.motivation_state = ALLOWED_MOTIVATION_STATES.has(String(s.motivation_state))
+      ? String(s.motivation_state)
+      : undefined;
+    s.representation_mode = ALLOWED_REPRESENTATION_MODES.has(String(s.representation_mode))
+      ? (s.representation_mode as NonNullable<typeof s.representation_mode>)
+      : undefined;
     lessonReq.student = s;
   } else if (hasSignals) {
     lessonReq.student = {
@@ -384,6 +436,11 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
         },
       });
       atoms = await enrichAtomsWithEngagement(selected, lessonReq.session_id ?? null);
+      // Authored stance variants — the only content personalisation that works
+      // without a database, which is what the demo instance runs on. Applied
+      // BEFORE per-student overrides so a regenerated per-student body still
+      // wins: the more specific signal beats the more general one.
+      atoms = applyStanceVariants(atoms, stanceForSnapshot(lessonReq.student, effective_concept_id));
       // Concept-orchestrator v1: apply per-student overrides + populate
       // improved_since for the Improved badge. No-op without DB.
       atoms = await applyStudentOverrides(atoms, lessonReq.session_id ?? null);
@@ -495,6 +552,12 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
         },
       });
       atoms = await enrichAtomsWithEngagement(selected, student_id);
+      // Authored stance variants. This path has a real student model, so the
+      // stance comes from stored state rather than from anything a client sent.
+      atoms = applyStanceVariants(
+        atoms,
+        deriveFraming(studentModel as never, effective_concept_id).stance,
+      );
       // Concept-orchestrator v1 enrichment.
       atoms = await applyStudentOverrides(atoms, student_id);
       atoms = await applyImprovedSince(atoms);

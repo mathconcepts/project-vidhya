@@ -113,6 +113,14 @@ export interface MaturityFacts {
   thinking_gap_distinct_framings: number | null;
   /** Active per-student atom overrides. null = could not count. */
   active_atom_overrides: number | null;
+  /**
+   * Authored confident/unconfident bodies on disk (src/content/stance-variants.ts).
+   * Unlike everything above this needs no database, so it is the one form of
+   * content personalisation that still works on a DB-less deploy — which makes
+   * it the most useful number on this report when the rest is blocked.
+   */
+  stance_atoms_total: number;
+  stance_atoms_covered: number;
 }
 
 export function buildReport(facts: MaturityFacts, now: string): MaturityReport {
@@ -246,6 +254,37 @@ export function buildReport(facts: MaturityFacts, now: string): MaturityReport {
     });
   }
 
+  // Authored stance variants. Reported last but deliberately NOT dimmed when
+  // other signals are blocked: this is disk-backed, so it is the one thing on
+  // this report that is still true with no database.
+  if (facts.stance_atoms_total === 0) {
+    signals.push({
+      id: 'stance_variants',
+      label: 'No concepts have authored confident/unconfident bodies.',
+      severity: 'partial',
+      remedy:
+        'Every student reads identical lesson text. Add sibling atom files ' +
+        'declaring variant_of + for_stance — see src/content/stance-variants.ts. ' +
+        'This is the only content personalisation that works without a database.',
+      detail: { atoms_with_variants: 0 },
+    });
+  } else {
+    signals.push({
+      id: 'stance_variants',
+      label: `${facts.stance_atoms_covered} of ${facts.stance_atoms_total} atoms in variant-carrying concepts have both confident and unconfident bodies.`,
+      severity: facts.stance_atoms_covered === 0 ? 'partial' : 'healthy',
+      remedy:
+        facts.stance_atoms_covered === 0
+          ? 'Some variants exist but no atom has BOTH stances, so one cohort still reads the base body.'
+          : null,
+      detail: {
+        atoms_with_variants: facts.stance_atoms_total,
+        fully_covered: facts.stance_atoms_covered,
+        works_without_database: 'yes',
+      },
+    });
+  }
+
   const overall = worstSeverity(signals);
   return {
     overall,
@@ -253,6 +292,37 @@ export function buildReport(facts: MaturityFacts, now: string): MaturityReport {
     signals,
     generated_at: now,
   };
+}
+
+/**
+ * Count authored stance variants across the concepts that have any.
+ *
+ * Scoped to variant-carrying concepts rather than the whole corpus on purpose:
+ * "3 of 777" would read as a failing grade for a deliberate decision to author
+ * the axis where it earns its keep, and would push an operator toward a number
+ * nobody intends to reach.
+ */
+async function countAuthoredStanceVariants(): Promise<{
+  stance_atoms_total: number;
+  stance_atoms_covered: number;
+}> {
+  try {
+    const { listConceptIds, loadConceptAtoms } = await import('../content/atom-loader');
+    const { stanceCoverage } = await import('../content/stance-variants');
+    let total = 0;
+    let covered = 0;
+    for (const id of listConceptIds()) {
+      const atoms = await loadConceptAtoms(id);
+      if (!atoms.some((a) => a.stance_variants)) continue;
+      const c = stanceCoverage(atoms);
+      total += c.total;
+      covered += c.fully_covered;
+    }
+    return { stance_atoms_total: total, stance_atoms_covered: covered };
+  } catch (err) {
+    console.warn(`[admin-content-maturity] stance scan failed: ${(err as Error).message}`);
+    return { stance_atoms_total: 0, stance_atoms_covered: 0 };
+  }
 }
 
 /** Runs a count query, returning null when the table is absent or unreadable. */
@@ -271,6 +341,7 @@ async function safeCount(pool: Pool, sql: string, params: unknown[] = []): Promi
 
 async function gatherFacts(): Promise<MaturityFacts> {
   const pool = getSharedPool();
+  const authored = await countAuthoredStanceVariants();
   if (!pool) {
     return {
       database_configured: false,
@@ -279,6 +350,7 @@ async function gatherFacts(): Promise<MaturityFacts> {
       thinking_gap_generic: null,
       thinking_gap_distinct_framings: null,
       active_atom_overrides: null,
+      ...authored,
     };
   }
 
@@ -300,6 +372,7 @@ async function gatherFacts(): Promise<MaturityFacts> {
     thinking_gap_generic: generic,
     thinking_gap_distinct_framings: distinct,
     active_atom_overrides: overrides,
+    ...authored,
   };
 }
 

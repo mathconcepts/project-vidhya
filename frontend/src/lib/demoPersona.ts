@@ -40,6 +40,16 @@ export interface DemoPersonaSignal {
   mastery_by_concept: Record<string, number>;
   /** Misconception tags the composer uses to pick traps. */
   recent_errors: string[];
+  /**
+   * How this persona is holding up, e.g. 'anxious' | 'driven'. Selects which
+   * AUTHORED body of each atom the composer serves (see
+   * src/content/stance-variants.ts). Without it every persona derived as
+   * 'steady' and read the same base text, so the deck claimed two different
+   * students and showed one lesson.
+   */
+  motivation_state?: string;
+  /** Whether this persona reasons in pictures or in symbols. */
+  representation_mode?: 'geometric' | 'algebraic' | 'balanced';
 }
 
 function readRaw(): string | null {
@@ -106,6 +116,11 @@ export function applyDemoPersona(student: Record<string, unknown>): Record<strin
     recent_errors: persona.recent_errors?.length
       ? persona.recent_errors
       : (student.recent_errors as unknown),
+    // Only override when the persona actually carries the field, so a deck
+    // served by an older backend degrades to the base body rather than
+    // blanking a stance the caller had set for itself.
+    ...(persona.motivation_state ? { motivation_state: persona.motivation_state } : {}),
+    ...(persona.representation_mode ? { representation_mode: persona.representation_mode } : {}),
   };
 }
 

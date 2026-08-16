@@ -57,6 +57,9 @@ export interface DemoCard {
     display_name: string;
     mastery_by_concept: Record<string, number>;
     recent_errors: string[];
+    /** Selects which authored body of each atom the composer serves. */
+    motivation_state?: string;
+    representation_mode?: 'geometric' | 'algebraic' | 'balanced';
   };
 }
 

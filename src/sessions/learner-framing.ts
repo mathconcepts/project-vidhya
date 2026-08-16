@@ -92,7 +92,16 @@ export function deriveFraming(
   const motivation = (model.motivation_state ?? '').toLowerCase();
   const failures = model.consecutive_failures ?? 0;
   let stance: LearnerStance;
-  if (motivation === 'frustrated' || motivation === 'flagging' || failures >= SHAKEN_AFTER_FAILURES) {
+  // 'anxious' is what the persona fixtures use (data/personas/*.yaml) and it
+  // was missing here — an anxious persona derived as 'steady' and read the
+  // base body, which is precisely the "the personas were completely missing"
+  // symptom on the demo.
+  if (
+    motivation === 'frustrated' ||
+    motivation === 'flagging' ||
+    motivation === 'anxious' ||
+    failures >= SHAKEN_AFTER_FAILURES
+  ) {
     stance = 'shaken';
   } else if (motivation === 'confident' || motivation === 'driven' || (band === 'solid' && failures === 0)) {
     stance = 'assured';

@@ -21,6 +21,8 @@ const HEALTHY: MaturityFacts = {
   thinking_gap_generic: 10,
   thinking_gap_distinct_framings: 12,
   active_atom_overrides: 4,
+  stance_atoms_total: 24,
+  stance_atoms_covered: 8,
 };
 
 function signal(report: ReturnType<typeof buildReport>, id: string): MaturitySignal {
@@ -58,6 +60,8 @@ describe('buildReport', () => {
         thinking_gap_generic: null,
         thinking_gap_distinct_framings: null,
         active_atom_overrides: null,
+        stance_atoms_total: 24,
+        stance_atoms_covered: 8,
       },
       NOW,
     );
@@ -127,6 +131,34 @@ describe('buildReport', () => {
     }
   });
 
+  it('reports authored stance variants, which need no database', () => {
+    // This is the one form of content personalisation that survives a DB-less
+    // deploy, so it must stay legible when everything else is blocked.
+    const blocked = buildReport({ ...HEALTHY, database_configured: false }, NOW);
+    const s = signal(blocked, 'stance_variants');
+    expect(s.severity).toBe('healthy');
+    expect(s.detail?.works_without_database).toBe('yes');
+    expect(s.label).toContain('8 of 24');
+  });
+
+  it('calls a corpus with no authored variants partial, and says what to do', () => {
+    const s = signal(
+      buildReport({ ...HEALTHY, stance_atoms_total: 0, stance_atoms_covered: 0 }, NOW),
+      'stance_variants',
+    );
+    expect(s.severity).toBe('partial');
+    expect(s.remedy).toContain('variant_of');
+  });
+
+  it('does not call half-authored variants healthy', () => {
+    // Variants exist but no atom has both, so one cohort still reads the base.
+    const s = signal(
+      buildReport({ ...HEALTHY, stance_atoms_total: 24, stance_atoms_covered: 0 }, NOW),
+      'stance_variants',
+    );
+    expect(s.severity).toBe('partial');
+  });
+
   it('emits no student-identifying field anywhere in the payload', () => {
     // Surveillance invariant: counts only.
     const serialized = JSON.stringify(buildReport(HEALTHY, NOW));
@@ -144,6 +176,8 @@ describe('buildReport', () => {
         thinking_gap_generic: 10,
         thinking_gap_distinct_framings: 0,
         active_atom_overrides: 0,
+        stance_atoms_total: 0,
+        stance_atoms_covered: 0,
       },
       NOW,
     );

@@ -101,6 +101,12 @@ async function handleGetRails(_req: ParsedRequest, res: ServerResponse): Promise
           display_name: persona.display_name,
           mastery_by_concept: persona.seed.initial_mastery,
           recent_errors: persona.seed.recent_misconceptions,
+          // The stance signal. Without these two the composer derives 'steady'
+          // for every persona and serves the base body, so Meera (anxious) and
+          // Rahul (driven) read word-for-word the same lesson — which is what
+          // "the personas were completely missing" looked like on stage.
+          motivation_state: persona.seed.motivation_state,
+          representation_mode: persona.seed.representation_mode,
         },
       });
     } catch (e) {

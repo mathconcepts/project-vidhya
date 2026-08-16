@@ -33,6 +33,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseInteractiveSpec } from '../frontend/src/components/lesson/interactives/types';
+import { VARIANT_STANCES } from '../src/content/stance-variants';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -198,6 +199,34 @@ function checkAtomRail(card: any, rail: any): void {
       fail(card.id, `atom "${atom}" does not exist at ${path.relative(ROOT, file)}`);
       continue;
     }
+    // Every atom a demo rail walks must have an authored body for BOTH
+    // stances. The deck's whole claim is that two named students opening the
+    // same concept do not see the same lesson — and a missing variant does not
+    // announce itself: applyStanceVariants falls back to the base body, so the
+    // rail still walks and the demo silently shows one lesson while narrating
+    // two students. That failure is invisible on stage and obvious in CI, so
+    // it belongs here.
+    for (const stance of VARIANT_STANCES) {
+      const variant = path.join(conceptDir, 'atoms', `${atom}.${stance}.md`);
+      if (!fs.existsSync(variant)) {
+        fail(
+          card.id,
+          `atom "${atom}" has no ${stance} variant at ${path.relative(ROOT, variant)} — ` +
+            `a ${stance} persona would silently read the base body, so the deck would ` +
+            `narrate two students and show one lesson`,
+        );
+        continue;
+      }
+      const vBody = fs.readFileSync(variant, 'utf8');
+      if (!/^variant_of:\s*\S/m.test(vBody) || !new RegExp(`^for_stance:\\s*${stance}\\s*$`, 'm').test(vBody)) {
+        fail(
+          card.id,
+          `variant ${path.relative(ROOT, variant)} is missing variant_of / for_stance: ${stance} — ` +
+            `the loader would serve it as a SEPARATE atom in the lesson instead of as an alternative body`,
+        );
+      }
+    }
+
     const body = fs.readFileSync(file, 'utf8');
     if (!body.includes('```interactive-spec')) continue;
     const parsed = parseInteractiveSpec(body);

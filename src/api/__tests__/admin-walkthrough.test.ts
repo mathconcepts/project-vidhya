@@ -8,7 +8,9 @@
  * unavailable WITH the reason rather than dropped or shown as fine.
  */
 import { describe, it, expect } from 'vitest';
-import { buildItinerary, widgetKindOf, railAtomKey } from '../admin-walkthrough-routes';
+import fs from 'fs';
+import path from 'path';
+import { buildItinerary, widgetKindOf, railAtomKey, atomFramingFor } from '../admin-walkthrough-routes';
 
 const NOW = '2026-08-16T00:00:00.000Z';
 
@@ -217,5 +219,143 @@ describe('buildItinerary', () => {
     );
     expect(without.stops.some((s) => s.route.startsWith('/attempt/'))).toBe(false);
     expect(without.stops.some((s) => s.route === '/demo/doubt')).toBe(false);
+  });
+
+  describe('atom_framing — operator-only evidence for the stance pair', () => {
+    it('carries band/stance/mode plus served_stance for every atom on the unconfident stop', () => {
+      const it_ = buildItinerary(base());
+      const stop = it_.stops.find((s) => s.id === 'stance:unconfident')!;
+      expect(stop.available).toBe(true);
+      expect(stop.atom_framing).toBeDefined();
+      const byAtom = Object.fromEntries(stop.atom_framing!.map((f) => [f.atom_id, f]));
+      // Meera: mastery 0.22 on eigenvalues (< 0.35 → cold), motivation 'anxious'
+      // (a STRUGGLING_STATES member → shaken), representation_mode 'geometric'.
+      expect(byAtom.hook).toEqual({
+        atom_id: 'hook',
+        band: 'cold',
+        stance: 'shaken',
+        mode: 'geometric',
+        served_stance: 'shaken',
+      });
+      expect(byAtom.intuition.served_stance).toBe('shaken');
+    });
+
+    it('derives the opposite band/stance/mode for the confident stop from a different persona', () => {
+      const it_ = buildItinerary(base());
+      const stop = it_.stops.find((s) => s.id === 'stance:confident')!;
+      expect(stop.available).toBe(true);
+      // Rahul: mastery 0.81 (≥ 0.7 → solid), motivation 'driven' (THRIVING → assured),
+      // representation_mode 'algebraic'.
+      const byAtom = Object.fromEntries(stop.atom_framing!.map((f) => [f.atom_id, f]));
+      expect(byAtom.hook.band).toBe('solid');
+      expect(byAtom.hook.stance).toBe('assured');
+      expect(byAtom.hook.mode).toBe('algebraic');
+      expect(byAtom.hook.served_stance).toBe('assured');
+    });
+
+    it('reports served_stance: null for every atom when the concept has no full coverage, without crashing', () => {
+      // Same scenario as "marks the stance pair unavailable when only one
+      // stance is authored" — the stop is unavailable, but if a caller reads
+      // atom_framing off it anyway, it must not claim a swap that never
+      // happens.
+      const it_ = buildItinerary(base({ conceptStances: { eigenvalues: { hook: ['shaken'] } } }));
+      const stop = it_.stops.find((s) => s.id === 'stance:unconfident')!;
+      expect(stop.available).toBe(false);
+      for (const f of stop.atom_framing ?? []) {
+        expect(f.served_stance).toBeNull();
+      }
+    });
+
+    it('omits atom_framing entirely when no persona has the required motivation state', () => {
+      const it_ = buildItinerary(base({ personas: { meera: MEERA } }));
+      const confident = it_.stops.find((s) => s.id === 'stance:confident')!;
+      expect(confident.available).toBe(false);
+      expect(confident.atom_framing).toBeUndefined();
+    });
+
+    it('never appears on a stop other than the stance pair', () => {
+      const it_ = buildItinerary(base());
+      for (const s of it_.stops) {
+        if (s.id.startsWith('stance:')) continue;
+        expect(s.atom_framing).toBeUndefined();
+      }
+    });
+  });
+
+  describe('atomFramingFor — the pure per-atom computation', () => {
+    it('the same persona produces served_stance: null for an atom key missing from stancesHere', () => {
+      const out = atomFramingFor(MEERA, 'eigenvalues', { hook: ['shaken', 'assured'] }, true);
+      expect(out).toEqual([
+        { atom_id: 'hook', band: 'cold', stance: 'shaken', mode: 'geometric', served_stance: 'shaken' },
+      ]);
+    });
+
+    it('never swaps when bothAuthored is false, even if this atom individually has the stance', () => {
+      const out = atomFramingFor(MEERA, 'eigenvalues', { hook: ['shaken'] }, false);
+      expect(out[0].served_stance).toBeNull();
+    });
+
+    it('never swaps a steady-stance persona', () => {
+      const steady = { ...MEERA, motivation_state: 'steady', mastery_by_concept: { eigenvalues: 0.5 } };
+      const out = atomFramingFor(steady, 'eigenvalues', { hook: ['shaken', 'assured'] }, true);
+      expect(out[0].stance).toBe('steady');
+      expect(out[0].served_stance).toBeNull();
+    });
+  });
+});
+
+describe('surveillance: served_stance stays operator-only', () => {
+  // src/content/stance-variants.ts sets `served_stance` on an atom when it
+  // swaps in an authored variant body. Students must never see a stance
+  // label — the walkthrough surfaces it (via atom_framing above) strictly on
+  // the admin-gated GET /api/admin/walkthrough response. This test is the
+  // tripwire: if a future change threads served_stance into anything a
+  // student can reach, it must fail loudly rather than ship quietly.
+  //
+  // AtomCardRenderer.tsx is the one legitimate exception: it reads
+  // atom.served_stance to decide whether to skip the scaffolding fade (a
+  // RENDERING DECISION), never to display the word "stance" or the value
+  // itself. Its own test (WorkedExampleCard.test.tsx) pins that behaviour.
+  const ALLOWLIST = new Set<string>([
+    path.join('components', 'lesson', 'AtomCardRenderer.tsx'),
+    path.join('components', 'lesson', 'WorkedExampleCard.test.tsx'),
+  ]);
+
+  function readAllTsxFiles(dir: string): string[] {
+    const out: string[] = [];
+    if (!fs.existsSync(dir)) return out;
+    const stack = [dir];
+    while (stack.length > 0) {
+      const cur = stack.pop()!;
+      for (const entry of fs.readdirSync(cur, { withFileTypes: true })) {
+        const p = path.join(cur, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === 'node_modules' || entry.name === 'dist') continue;
+          stack.push(p);
+          continue;
+        }
+        if (/\.(tsx?|jsx?)$/.test(entry.name)) out.push(p);
+      }
+    }
+    return out;
+  }
+
+  it('appears in no frontend file outside the documented internal (non-display) allowlist', () => {
+    const frontendSrc = path.resolve(__dirname, '../../../frontend/src');
+    const files = readAllTsxFiles(frontendSrc);
+    const offenders = files
+      .filter((f) => fs.readFileSync(f, 'utf8').includes('served_stance'))
+      .map((f) => path.relative(frontendSrc, f))
+      .filter((rel) => !ALLOWLIST.has(rel));
+    expect(
+      offenders,
+      `served_stance appeared in non-allowlisted frontend file(s): ${offenders.join(', ')}. ` +
+        `If this is a deliberate, admin-gated disclosure, add it to ALLOWLIST with a reason.`,
+    ).toEqual([]);
+  });
+
+  it('the walkthrough route itself stays admin-gated (unchanged by this feature)', () => {
+    const src = fs.readFileSync(path.resolve(__dirname, '../admin-walkthrough-routes.ts'), 'utf8');
+    expect(src).toContain("requireRole(req, res, 'admin')");
   });
 });

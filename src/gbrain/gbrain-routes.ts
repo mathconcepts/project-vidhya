@@ -153,8 +153,18 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     recordProblemAttempt(problemId, isCorrect).catch(() => {});
   }
 
-  // Save updated model
-  await saveStudentModel(model);
+  // Save updated model.
+  //
+  // Best-effort for the same reason logError is: by this line the error has
+  // been classified and its explanation written, and that work is what the
+  // student is waiting to read. A storage failure should cost the persisted
+  // mastery update, not the response. On a DB-less deploy this threw and took
+  // the whole 500 with it, so every wrong answer lost its explanation.
+  try {
+    await saveStudentModel(model);
+  } catch (e) {
+    console.warn('[gbrain] saveStudentModel skipped:', (e as Error).message);
+  }
 
   // Log confidence if provided
   if (confidenceBefore !== undefined) {

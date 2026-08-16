@@ -52,6 +52,13 @@ COPY demo/ demo/
 COPY data/ data/
 # Atom-based content modules (ContentAtom v2 lessons) and seed concepts.
 COPY modules/ modules/
+# Runtime config read from process.cwd()/config. demo-rails.json is the whole
+# journey deck: src/api/demo-routes.ts reads it on every GET /api/demo/rails.
+# Without it the endpoint answers 503 "demo rails config is not available on
+# this instance", so the walkthrough is empty even with DEMO_MODE_ENABLED set —
+# which is exactly how it shipped: the flag and the file were both missing, and
+# fixing only one of them would still have produced an empty deck.
+COPY config/ config/
 # SQL migrations — read at boot by src/db/auto-migrate.ts (server.ts calls
 # it before serving traffic, gated on DATABASE_URL being set). Without this,
 # autoMigrate() finds no supabase/migrations directory and silently skips,

@@ -84,6 +84,17 @@ services:
       # access works even when GOOGLE_OAUTH_CLIENT_ID is configured.
       - key: VIDHYA_DEMO_MODE
         value: "true"
+      # The visitor-facing walkthrough deck at /demo. A SEPARATE flag from
+      # VIDHYA_DEMO_MODE on purpose: that one means "show quick-access sign-in
+      # buttons" and defaults on whenever OAuth is unconfigured, so inheriting
+      # it would expose the deck on every OAuth-less deployment. This service
+      # is the demo, so it opts in explicitly.
+      #
+      # Without this the deck is reachable but empty: /api/demo/rails 404s and
+      # the page reads "Demo mode is off on this instance" — which is what a
+      # visitor to vidhya-demo.onrender.com was getting.
+      - key: DEMO_MODE_ENABLED
+        value: "true"
 
       # ── AI tutor (STEP 1: paste one key to unlock AI chat) ──────────────
       # Get a free Gemini key at https://aistudio.google.com/apikey

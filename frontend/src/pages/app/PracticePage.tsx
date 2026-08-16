@@ -10,7 +10,10 @@ import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { getRandomMessage } from '@/lib/animations';
 import { ErrorDiagnosis } from '@/components/app/ErrorDiagnosis';
-import { ChevronLeft, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
+import { InteractiveSidecar } from '@/components/lesson/interactives/InteractiveSidecar';
+import { preserveHardBreaks } from '@/lib/preserveHardBreaks';
+import { ChevronLeft, CheckCircle, XCircle, Loader2, ArrowRight, BookOpen } from 'lucide-react';
 
 interface Problem {
   id: string;
@@ -152,7 +155,13 @@ export default function PracticePage() {
           }),
         });
         if (!isCorrect && gbrainResult?.error_diagnosis) setErrorDiagnosis(gbrainResult);
-      } catch {}
+      } catch (e) {
+        // This used to be a bare `catch {}`. The endpoint was 500ing on every
+        // wrong answer (logError wrote to Postgres unguarded), so the student
+        // silently got no explanation and nothing anywhere said so. Keep it
+        // non-fatal — the solution below still renders — but never silent.
+        console.warn('[practice] error diagnosis unavailable:', (e as Error)?.message ?? e);
+      }
     } catch {
       setPhase('result');
       setMessage('Verification unavailable — check the solution below.');
@@ -398,15 +407,63 @@ export default function PracticePage() {
               <p style={{ margin: '0 0 8px', fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
                 Solution
               </p>
-              <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)', whiteSpace: 'pre-wrap' }}>
-                {problem.explanation}
-              </p>
+              {/*
+                Rendered through the same markdown pipeline every other reading
+                surface uses (TopicPage does this already). Solutions are
+                authored with headings, numbered steps and a "why the other
+                options are wrong" section; a bare <p> with pre-wrap flattened
+                all of that into one grey block, and at 13px it sat under the
+                17px floor DESIGN-SYSTEM.md sets for anything a student reads.
+              */}
+              <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)' }}>
+                <MarkdownAtomRenderer
+                  content={preserveHardBreaks(problem.explanation)}
+                  atomId={`practice-solution-${problem.id}`}
+                />
+              </div>
+              {/* An explanation may carry an `interactive-spec` block. Without
+                  this the widget parsed and then rendered nowhere. */}
+              <InteractiveSidecar body={problem.explanation} />
               {message && (
                 <p style={{ margin: '10px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
                   {message}
                 </p>
               )}
             </div>
+
+            {/*
+              Explore the concept behind the problem.
+
+              Points at the topic page, not `/lesson/:concept_id`, and that is
+              deliberate: a PYQ carries `topic: "Linear Algebra"` — a display
+              label — and no concept id. There is no `linear-algebra` concept to
+              open (the content module has `linear-independence`,
+              `linear-transformations`, `numerical-linear-algebra`), so linking
+              straight to a lesson would manufacture a dead end. TopicPage
+              resolves, renders the concept notes through the markdown pipeline,
+              and lists the problems for the topic.
+
+              Tagging PYQs with a concept id is the change that would let this
+              open the lesson itself, interactives included. That is content
+              work, recorded rather than faked here.
+            */}
+            <Link
+              to={`/topic/${encodeURIComponent(problem.topic)}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                alignSelf: 'flex-start',
+                minHeight: 44,
+                padding: '0 4px',
+                fontSize: 'var(--text-body)',
+                fontWeight: 'var(--weight-semibold)',
+                color: 'var(--green-ink)',
+                textDecoration: 'none',
+              }}
+            >
+              <BookOpen size={16} aria-hidden="true" /> Explore {topicName}
+            </Link>
 
             {/* GBrain Error Diagnosis — wrong answers only */}
             {!isCorrect && errorDiagnosis?.error_diagnosis && (

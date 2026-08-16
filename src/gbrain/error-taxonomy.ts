@@ -254,7 +254,22 @@ Student's preferred representation: ${representationMode}`;
 // Error Logging
 // ============================================================================
 
-/** Log a classified error to the database */
+/**
+ * Log a classified error to the database.
+ *
+ * Best-effort by contract. The caller has ALREADY spent the expensive work by
+ * the time this runs — `handleAttempt` classifies the error and writes the
+ * misconception explanation before logging it — so letting a storage failure
+ * throw here destroys a diagnosis that was successfully produced, and the
+ * student sees no explanation at all.
+ *
+ * That is exactly what happened on the DB-less demo deploy: `logError` threw
+ * ECONNREFUSED against 127.0.0.1:5432, the 500 propagated, and the browser's
+ * catch swallowed it. Every wrong answer silently lost its explanation.
+ *
+ * Analytics are worth less than the answer in front of the student. A failure
+ * here is logged and swallowed; the diagnosis still reaches the caller.
+ */
 export async function logError(
   sessionId: string,
   diagnosis: ErrorDiagnosis,
@@ -266,9 +281,16 @@ export async function logError(
     confidenceBefore?: number;
   },
 ): Promise<void> {
-  const pool = getPool();
+  if (!process.env.DATABASE_URL) return;
+  let pool;
+  try {
+    pool = getPool();
+  } catch {
+    return;
+  }
   const topic = CONCEPT_MAP.get(diagnosis.concept_id)?.topic || detectTopic(context.studentAnswer || '') || 'unknown';
 
+  try {
   await pool.query(
     `INSERT INTO error_log
      (session_id, problem_id, concept_id, topic, error_type, misconception_id,
@@ -292,6 +314,11 @@ export async function logError(
       context.confidenceBefore || null,
     ],
   );
+  } catch (e) {
+    // Missing table, unreachable host, migrations not run. All of them cost the
+    // analytics row and none of them should cost the student their explanation.
+    console.warn('[error-taxonomy] logError skipped:', (e as Error).message);
+  }
 }
 
 // ============================================================================

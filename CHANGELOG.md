@@ -4,6 +4,39 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.28.1] — 2026-08-16 — The demo actually appears on the demo instance
+
+**Operator action:** none. `DEMO_MODE_ENABLED=true` is now set in `render.yaml` for the demo service; no manual dashboard change needed.
+
+The walkthrough deck at `/demo` never appeared on the deployed demo, and practice solutions rendered as a wall of grey text with no explanation after a wrong answer. Both are fixed. Neither was a content problem.
+
+### What was actually wrong
+
+The deck failed for two independent packaging reasons, and fixing either one alone still left an empty page.
+
+| | Cause | What the visitor got |
+|---|---|---|
+| 1 | `render.yaml` set `VIDHYA_DEMO_MODE` but never `DEMO_MODE_ENABLED` | "Demo mode is off on this instance" |
+| 2 | `demo/Dockerfile` never copied `config/` | 503 — the deck's own config file was not in the image |
+
+Every test passed and every content gate passed the whole time. The failure was in what got packaged, not in the code, which is why nothing caught it.
+
+Practice solutions were printed as raw text into a single paragraph at 13px, so authored structure showed as literal `**bold**` and `- bullets`, below the 17px floor for anything a student reads. And a wrong answer silently lost its explanation: the endpoint that produces the diagnosis returned 500 whenever its analytics write failed, discarding an explanation it had already computed.
+
+### Itemized changes
+
+#### Fixed
+
+- **The demo walkthrough appears on the demo deploy.** The deck's flag is set on the service, and the deck's config file ships inside the image.
+- **Practice solutions are readable.** Rendered through the same markdown pipeline the rest of the app uses, at body size. Line-per-step solutions keep their line breaks: 353 of the 620 authored explanations depend on single newlines, so a plain markdown switch would have run them together.
+- **A wrong answer keeps its explanation.** Storage failures no longer discard a computed diagnosis.
+- **No filler dressed as insight.** When no model is configured the analysis panel renders nothing instead of "the specific error needs further analysis" under a heading that claims the mistake was analysed.
+- **"Explore this concept" on the practice page**, pointing somewhere that resolves.
+
+#### For contributors
+
+- `deploy-wiring.test.ts` pins that runtime-read directories are in the image and that the demo service sets its flag, so a feature cannot ship without the file it reads.
+
 ## [4.28.0] — 2026-08-15 — Demo mode: a walkable, offline, honest product tour
 
 **Operator action:** set `DEMO_MODE_ENABLED=true` on the venue instance only. It defaults off, and every demo surface 404s without it. Run `npm run demo:seed` to create the persona accounts.

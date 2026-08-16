@@ -4,6 +4,39 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.30.0] — 2026-08-16 — One button that walks the whole demo
+
+**Operator action:** none. Sign in as an admin and open **Demo walkthrough** from `/admin`.
+
+Before a demo you had to remember which four cards existed, which concepts carried which widgets, and which two personas to switch between to make personalisation visible. That is a lot to hold while someone is watching. `/admin/walkthrough` is one button that walks all of it.
+
+### The itinerary is computed, not written down
+
+A hand-maintained tour is a list of claims that rots, and the failure lands in front of whoever the demo was for. Every stop is derived from the artefact it depends on — the rails config, the atoms on disk, the widget blocks inside them, the persona files. A stop whose dependency is missing is shown **greyed with the reason**, never dropped and never shown as if it would work, because the operator needs to know what is missing before they start walking rather than when a screen comes up empty.
+
+On this instance it produces 13 stops, all walkable, covering all three interactive kinds and both authored learner stances.
+
+### It tracks position by index, not by route
+
+The tour deliberately opens `/lesson/eigenvalues` twice — once as the unconfident student, once as the confident one — because that pair is the only way the authored variant axis is visible at all. The demo deck's rail matches position against the current route, which is right there (a visitor who hits back still gets a correct "next") but resolves both visits to the first entry and never advances. So the walkthrough carries its own index-based cursor. The codebase prefers not to grow a second navigation mechanism, so this is deliberate: bending the shared one to index matching would break the bookmark-resilience the demo rail depends on.
+
+### A bug it surfaced immediately
+
+Deriving an atom's rail name by splitting its id on `.` returned the whole id for the corpus's hyphen-joined legacy ids (`orthogonality-worked-example`). Its `guided_walkthrough` went uncounted, and the tour under-reported that lesson as having one widget when it has two. `railAtomKey()` now strips whichever separator the id uses; a test pins the hyphen case.
+
+### Itemized changes
+
+#### Added
+
+- `GET /api/admin/walkthrough` — the computed itinerary, admin-gated, counts and config only.
+- `/admin/walkthrough` — the Start button, per-stop Go buttons, and inline coverage (interactive kinds reached vs present in the corpus; stances authored).
+- A persistent bottom bar during a walkthrough showing position, what to look at, and next/back. Renders nothing when no walkthrough is running.
+- **Demo walkthrough** quick link at the top of the `/admin` grid.
+
+#### For contributors
+
+- 25 new tests. The itinerary builder is pure and dependency-injected, so availability rules are testable without a filesystem or a server.
+
 ## [4.29.2] — 2026-08-16 — The smoke check now checks out the repo it runs
 
 **Operator action:** none.

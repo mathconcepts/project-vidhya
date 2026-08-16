@@ -49,30 +49,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
-import { countProseWords } from '../frontend/src/lib/readingTime';
+import { countProseWords, ASSURED_PROSE_BUDGET } from '../src/content/prose-budget';
 import { CONCEPT_MAP } from '../src/constants/concept-graph';
 
 export type Stance = 'shaken' | 'assured';
 export const VARIANT_STANCES: Stance[] = ['shaken', 'assured'];
 
-/**
- * Prose ceilings for `assured`, in words with LaTeX and fenced blocks removed.
- *
- * `shaken` is NOT on this table — it is capped at its own base's prose length.
- * The reason is a signal, not a volume: a shaken student is never told they
- * are being given a gentler path, so the only thing they can perceive is that
- * this screen is longer than the one that already defeated them, and length
- * reads as difficulty. An absolute ceiling still permits 2.9x expansion over a
- * terse base.
- *
- * These numbers are a FLOOR-style protection for assured, where terseness is
- * the intent and the risk is inflation rather than signal.
- */
-export const ASSURED_PROSE_BUDGET: Record<string, number> = {
-  hook: 130,
-  intuition: 200,
-  worked_example: 220,
-};
+export { ASSURED_PROSE_BUDGET };
 
 /** Opening-phrase reuse allowed within one topic before it reads as a template. */
 export const REPETITION_THRESHOLD = 0.2;

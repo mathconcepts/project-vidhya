@@ -8,6 +8,16 @@ intuition:
     The transform is a change of workspace, not a new kind of number.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Take one differential equation, transform it, and show the algebra
+      collapse into a product in the new domain — one concrete instance
+      before naming the general trade of derivatives for multiplication.
+    assured: |
+      The region of convergence is where the marks are. A transform stated
+      without it is the error worth naming — lead with that, not with the
+      domain-swap idea itself.
+
 formal_definition:
   scaffold: integral-with-region
   guidance: |
@@ -23,6 +33,18 @@ worked_example:
     full — that is where the work actually is. Six steps max, separated by
     `\n---\n`. Name the table entry used at each inversion.
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      Do the three moves — transform, solve, invert — as three separate
+      visible lines, and show the partial fractions in full rather than
+      compressing them; that expansion is where the actual work is. Name the
+      table entry used for the inversion as its own line.
+    assured: |
+      Name the table entry and region needed for the inversion up front, and
+      skip the partial-fraction expansion a confident reader can do
+      mentally — but state explicitly whether the region survives the
+      operation, since that is where marks are lost silently.
 
 common_traps:
   scaffold: wrong-then-right
@@ -75,3 +97,11 @@ hook:
     transform. The contrast with solving it directly is the argument for the
     whole topic.
   bloom_floor: 1
+  stances:
+    shaken: |
+      One differential equation solved in a handful of algebraic lines after
+      the transform — show the lines themselves, not the argument for why
+      transforms work in general.
+    assured: |
+      Name the one place a shift theorem gets applied in the wrong direction
+      under exam pressure.

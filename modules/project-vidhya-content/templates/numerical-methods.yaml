@@ -8,6 +8,17 @@ intuition:
     a trade of exactness for tractability; name what is being traded.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Pick one problem with no closed form — a root, an integral — and show
+      the approximation actually being computed for one small step, before
+      naming the general trade being made. Let the number appear before the
+      abstraction of "exactness for tractability" does.
+    assured: |
+      Skip the motivation and name the convergence condition first — a
+      method applied outside it is the single most common way to get a
+      confident wrong answer, and that is the fact worth stating plainly.
+
 formal_definition:
   scaffold: iteration-with-conditions
   guidance: |
@@ -23,6 +34,18 @@ worked_example:
     convergence rate is visible rather than asserted. Six steps max, separated
     by `\n---\n`. State the stopping criterion before starting.
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      Show the first two iterations in full with the error column visible,
+      so convergence is something the reader watches happen rather than
+      something asserted. State the stopping criterion as its own line
+      before the table starts.
+    assured: |
+      State the convergence condition and the error order before touching
+      the iteration — skip re-deriving the formula. If a bracketing interval
+      is involved, confirm in one line that it actually brackets the root
+      rather than assuming the setup was valid.
 
 common_traps:
   scaffold: wrong-then-right
@@ -72,3 +95,12 @@ hook:
     answer that is obviously close. The gap between "no solution exists" and
     "here is the number" is the point.
   bloom_floor: 1
+  stances:
+    shaken: |
+      One equation with no algebraic solution, and the one number a
+      calculator gets close to — nothing about the general method yet, just
+      that gap.
+    assured: |
+      Name the exact convergence condition a method needs before it can be
+      trusted, and the plausible-looking case where that condition silently
+      fails.

@@ -16,6 +16,18 @@ intuition:
   exam_pattern_required: false
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Pick one concrete motion or area — a car speeding up, a strip of area
+      under a curve — and walk the arithmetic before the limit symbol
+      appears. Let the tangent line or the sum of strips be seen, not
+      asserted.
+    assured: |
+      Skip the motion story and go straight to where the limit process
+      breaks — a corner, a jump, a point where the derivative does not
+      exist — since that is the case a confident reader is actually tested
+      on, not the smooth one.
+
 formal_definition:
   scaffold: epsilon-delta
   guidance: |
@@ -32,6 +44,18 @@ worked_example:
     so :::verify can confirm via Wolfram.
   exam_pattern_required: true
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      Keep each step to one action — differentiate, or substitute, or
+      evaluate, never two at once — and push any explanation of why a step
+      works into the walkthrough. End on the same explicit "Answer: ..."
+      line the base atom uses, and show it being checked.
+    assured: |
+      Lead with the rule that collapses several steps — a known
+      antiderivative, a symmetry that kills half the integral, LIATE
+      ordering for parts — and name the condition that makes the shortcut
+      valid before using it.
 
 common_traps:
   scaffold: wrong-then-right
@@ -112,3 +136,11 @@ hook:
     showing where it appears on the exam. Lead with the question, not
     the formalism.
   bloom_floor: 1
+  stances:
+    shaken: |
+      One motion or one area, made concrete with a number, and the single
+      question it raises — not the history of the problem, not a promise of
+      what is coming.
+    assured: |
+      Name the exam phrasing this concept hides behind, and the one rule
+      students reach for wrongly under time pressure.

@@ -19,7 +19,7 @@
  * in agreement. If you add a rule, add its check.
  */
 
-import { ASSURED_PROSE_BUDGET } from '../../scripts/check-variant-agreement';
+import { ASSURED_PROSE_BUDGET } from './prose-budget';
 
 /**
  * Why `shaken` is capped against its own base rather than an absolute number.

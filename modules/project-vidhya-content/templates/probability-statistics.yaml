@@ -7,6 +7,16 @@ intuition:
     explicitly. Avoid Bayes-flavored language until formal_definition.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Count one small, literal sample space by hand — list the outcomes,
+      count the favourable ones — before naming any formula. Let the
+      fraction appear as a count, not as a rule stated in the abstract.
+    assured: |
+      Skip the counting and go straight to which conditional is being
+      asked for — P(A|B) is not P(B|A), and that reversal is the single
+      most common way marks are lost here, not the arithmetic.
+
 formal_definition:
   scaffold: axiom-or-distribution
   guidance: |
@@ -20,6 +30,18 @@ worked_example:
     Identify event → set up sample space or distribution → compute → answer.
     Include unit check (probability ∈ [0,1]).
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      Identify the event and set up the sample space as one separate,
+      visible step before any computation — do not fold identification and
+      computation into the same line. End with the probability-in-[0,1]
+      check shown explicitly, not just claimed.
+    assured: |
+      Name which conditional or which independence assumption the problem
+      actually rests on before computing — skip re-deriving a sample space a
+      confident reader can set up mentally. Flag the direction of the
+      conditional explicitly.
 
 common_traps:
   scaffold: wrong-then-right
@@ -58,3 +80,10 @@ interleaved_drill:
 hook:
   scaffold: surprise-result
   bloom_floor: 1
+  stances:
+    shaken: |
+      One small, countable scenario with a single surprising-but-checkable
+      number — no framing about probability in general.
+    assured: |
+      State the result that looks wrong until the conditioning is made
+      explicit — that reversal is the exam's favourite trap in this topic.

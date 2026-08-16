@@ -7,6 +7,17 @@ intuition:
     the rule.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      List three or four small cases by hand — actual counted outcomes, not
+      variables — before naming the general formula. Let the pattern be
+      something the reader notices, not something announced.
+    assured: |
+      Skip the enumeration and go straight to the distinction that flips the
+      whole formula: whether the count is ordered or not. State which
+      applies here and why, since that choice is where marks are actually
+      lost.
+
 formal_definition:
   scaffold: combinatorial-or-logical
   guidance: |
@@ -19,6 +30,18 @@ worked_example:
   guidance: |
     Plug numbers into the formula or apply the rule step by step.
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      Plug the numbers into the formula, or apply the rule, as separate
+      single-action lines — never combine "choose the formula" and
+      "evaluate it" into one line. For an induction, show the base case as
+      its own line, since that is the case most often skipped.
+    assured: |
+      Name whether order matters before writing the formula, and skip
+      re-deriving why C(n,k) or P(n,k) has the shape it does. For an
+      induction, state the base case in one line and move straight to the
+      inductive step.
 
 common_traps:
   scaffold: wrong-then-right
@@ -57,3 +80,11 @@ interleaved_drill:
 hook:
   scaffold: counting-question
   bloom_floor: 1
+  stances:
+    shaken: |
+      One small, fully countable case — enumerate it by hand — and the
+      single question it raises, nothing about the general count yet.
+    assured: |
+      Name the exact counting question where "ordered" and "unordered" give
+      different-looking but both-plausible answers, since that is where a
+      confident reader picks wrong.

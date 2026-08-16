@@ -43,9 +43,16 @@ import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import { loadConceptAtoms, listConceptIds } from '../content/atom-loader';
-import { VARIANT_STANCES } from '../content/stance-variants';
+import { VARIANT_STANCES, type VariantStance } from '../content/stance-variants';
 import { loadPersona } from '../scenarios/persona-loader';
 import { STRUGGLING_STATES, THRIVING_STATES } from '../teaching/motivation-source';
+import {
+  deriveFraming,
+  type FramingInput,
+  type MasteryBand,
+  type LearnerStance,
+  type RepresentationMode,
+} from '../sessions/learner-framing';
 
 interface RouteDefinition {
   method: string;
@@ -63,6 +70,34 @@ export interface StopPersona {
   representation_mode?: string;
 }
 
+/**
+ * Per-atom evidence for the stance pair, operator-only.
+ *
+ * `served_stance` is the exact field src/content/stance-variants.ts sets on
+ * an atom when it actually swaps in a variant body — until now nothing read
+ * it. Students must never see a stance label (being told "here is your
+ * gentler version" is the labelling that makes someone feel handled), but the
+ * demo's central claim — two personas genuinely get different lessons — had
+ * no visible evidence anywhere. This is that evidence, gated behind the same
+ * admin-only route as the rest of the walkthrough.
+ *
+ * `band` / `stance` / `mode` are the WHY (deriveFraming's output for this
+ * persona at this concept); `served_stance` is the WHAT (whether THIS atom's
+ * body actually changed). They can diverge — a `formal_definition` atom never
+ * has a variant, so it always reports `served_stance: null` even when the
+ * concept's derived stance is `shaken`, which is itself useful for an
+ * operator to see: the register only shifts on the atoms authored for it.
+ */
+export interface AtomFraming {
+  /** The rail's atom key (see railAtomKey), not the atom's full id. */
+  atom_id: string;
+  band: MasteryBand;
+  stance: LearnerStance;
+  mode: RepresentationMode;
+  /** Set only when this atom's body was actually swapped for the stance. */
+  served_stance: VariantStance | null;
+}
+
 export interface WalkthroughStop {
   id: string;
   /** One line naming what the operator should do. */
@@ -78,6 +113,12 @@ export interface WalkthroughStop {
   available: boolean;
   /** Populated only when available is false. */
   unavailable_reason?: string;
+  /**
+   * Operator-only evidence for the two stance stops: per atom, the derived
+   * framing and whether that atom's body was actually served differently.
+   * Absent on every other stop.
+   */
+  atom_framing?: AtomFraming[];
 }
 
 export interface WalkthroughItinerary {
@@ -149,6 +190,55 @@ function personaSignal(id: string): StopPersona | null {
   } catch {
     return null;
   }
+}
+
+/** Reshapes the walkthrough's persona signal into deriveFraming's input shape. */
+function framingInputFromPersona(p: StopPersona): FramingInput {
+  const mastery_vector: Record<string, { score: number }> = {};
+  for (const [conceptId, score] of Object.entries(p.mastery_by_concept)) {
+    mastery_vector[conceptId] = { score };
+  }
+  return {
+    mastery_vector,
+    motivation_state: p.motivation_state ?? null,
+    representation_mode: p.representation_mode ?? null,
+    // Not part of the persona signal — motivation_state is the stronger
+    // signal deriveFraming uses anyway, and STRUGGLING_STATES already picked
+    // this persona out for its scripted motivation, not a failure streak.
+    consecutive_failures: null,
+  };
+}
+
+/**
+ * Per-atom evidence for one persona re-opening `conceptId`: the derived
+ * framing (band/stance/mode) plus, per atom key, whether THAT atom actually
+ * got a swapped body.
+ *
+ * `stancesHere` and `bothAuthored` are passed in rather than recomputed so
+ * this mirrors exactly what already gates the stance stop's availability —
+ * two different readings of "is this covered" would be worse than one.
+ */
+export function atomFramingFor(
+  persona: StopPersona,
+  conceptId: string,
+  stancesHere: Record<string, string[]>,
+  bothAuthored: boolean,
+): AtomFraming[] {
+  const framing = deriveFraming(framingInputFromPersona(persona), conceptId);
+  return Object.keys(stancesHere)
+    .sort()
+    .map((atomKey) => ({
+      atom_id: atomKey,
+      band: framing.band,
+      stance: framing.stance,
+      mode: framing.mode,
+      served_stance:
+        framing.stance !== 'steady' &&
+        bothAuthored &&
+        stancesHere[atomKey].includes(framing.stance)
+          ? (framing.stance as VariantStance)
+          : null,
+    }));
 }
 
 /**
@@ -283,6 +373,8 @@ export function buildItinerary(input: {
       persona: persona ?? null,
       available: missing === null,
       unavailable_reason: missing ?? undefined,
+      atom_framing:
+        pairConcept && persona ? atomFramingFor(persona, pairConcept, stancesHere, bothAuthored) : undefined,
     });
   }
 

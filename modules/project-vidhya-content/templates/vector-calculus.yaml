@@ -8,6 +8,17 @@ intuition:
     spin. Give the physical reading before the partial derivatives.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Draw one small vector field and ask, at a single marked point, whether
+      it is flowing outward or circulating — source-or-sink,
+      paddle-wheel-or-not — before naming divergence or curl. Let the
+      picture answer the question first.
+    assured: |
+      Skip the field picture and name the orientation convention directly —
+      a sign flip from the wrong orientation is the single most common way
+      marks disappear here, not a misunderstanding of divergence or curl.
+
 formal_definition:
   scaffold: operator-with-domain
   guidance: |
@@ -23,6 +34,18 @@ worked_example:
     parameterization was the convenient one. Six steps max, separated by
     `\n---\n`. Carry the orientation through every step.
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      State the parameterization and its bounds as one visible step,
+      separate from the reason it was chosen — do not fold the choice and
+      its justification into the same line. Carry the orientation forward
+      explicitly at every step rather than assuming it survives.
+    assured: |
+      Confirm the curve is actually closed before reaching for Green's
+      theorem, and confirm the change of variables carries its Jacobian —
+      those two silent assumptions are where a confident reader loses the
+      mark, not the integration itself.
 
 common_traps:
   scaffold: wrong-then-right
@@ -72,3 +95,10 @@ hook:
     the divergence theorem. The gap between the two is the reason the topic
     exists.
   bloom_floor: 1
+  stances:
+    shaken: |
+      One surface integral, small enough to picture, and the one direct
+      computation it would take — nothing about the shortcut yet.
+    assured: |
+      Name the exact case where the divergence-theorem shortcut looks
+      applicable but the surface is not actually closed.

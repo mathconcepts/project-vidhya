@@ -7,6 +7,16 @@ intuition:
     multiplication = rotation+scale. Avoid algebraic manipulation first.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Multiply one specific complex number by i and watch it land 90 degrees
+      around on the Argand plane before any algebra — the rotation should be
+      seen as a picture, not deduced from i^2 = -1.
+    assured: |
+      Skip straight to where a sign or a quadrant is lost — the argument of
+      a complex number is not just arctan(b/a); the quadrant has to come
+      from the picture, and that is the actual trap in this topic.
+
 formal_definition:
   scaffold: cartesian-and-polar
   guidance: |
@@ -20,6 +30,18 @@ worked_example:
     Convert form → operate (add/multiply/conjugate) → convert back.
     Six steps max.
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      Keep the three moves — convert, operate, convert back — as three
+      distinct lines with nothing folded together. Write the i^2 = -1
+      substitution as its own visible line rather than absorbing it
+      silently, and make the modulus check explicit at the end.
+    assured: |
+      If the operation is multiplication or division, work in polar form
+      directly and skip the Cartesian expansion entirely — say why polar is
+      faster here. Flag the quadrant of the argument explicitly rather than
+      reading it off arctan alone.
 
 common_traps:
   scaffold: wrong-then-right
@@ -71,3 +93,10 @@ interleaved_drill:
 hook:
   scaffold: rotation-question
   bloom_floor: 1
+  stances:
+    shaken: |
+      One number, one multiplication by i, and the single rotation it
+      produces — nothing about the plane in general yet.
+    assured: |
+      Name the one place a correct modulus and a correct argument still
+      combine into a wrong quadrant.

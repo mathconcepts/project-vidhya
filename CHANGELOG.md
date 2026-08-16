@@ -4,6 +4,33 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.29.2] — 2026-08-16 — The smoke check now checks out the repo it runs
+
+**Operator action:** none.
+
+v4.29.1 moved the smoke check's wait loop into `scripts/wait-for-http.sh` and added a version gate reading `package.json`. The workflow had never needed `actions/checkout`, because every step had been inline `curl`. It still did not have one, so the first run after that change died in six seconds:
+
+```
+bash: scripts/wait-for-http.sh: No such file or directory
+exit code 127
+```
+
+before reaching the service at all.
+
+That is the third failure in this file with the same shape: a change that could only be validated in production. The fix adds the checkout step; the guard is the part that matters.
+
+`src/__tests__/workflow-checkout.test.ts` parses every workflow and fails when a job's `run:` steps reference a repo path with no `actions/checkout` above them. It reads the repo's own top-level entries rather than a hard-coded list, so a new directory is covered the day it appears, and it skips URL lines first — `$URL/api/demo/rails` contains `demo/`, which is also a directory here, and a guard that flags every HTTP call is a guard people switch off. Verified by deleting the checkout step: the test fails and names the file, the job, the step, and the exit code.
+
+### Itemized changes
+
+#### Fixed
+
+- `prod-smoke.yml` runs `actions/checkout` before the steps that need repo files.
+
+#### For contributors
+
+- Workflows are now linted for checkout discipline in the normal test suite.
+
 ## [4.29.1] — 2026-08-16 — The deploy check was lying about the deploy
 
 **Operator action:** none.

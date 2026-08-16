@@ -4,6 +4,49 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.29.1] — 2026-08-16 — The deploy check was lying about the deploy
+
+**Operator action:** none.
+
+The post-deploy smoke check reported success against a service it had never reached, and could not tell a finished deploy from one still in flight. Both are fixed. It caught nothing for weeks because production happened to be healthy every time it ran.
+
+### The wait loop was a no-op exactly when it mattered
+
+```bash
+CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$URL/" || echo 000)
+case "$CODE" in
+  5*|000) echo "waiting..."; sleep 20 ;;
+  *)      echo "service answering: $CODE"; exit 0 ;;
+esac
+```
+
+When curl never gets a response it prints its own `000` for `%{http_code}` **and** exits non-zero, so `|| echo 000` appended a second one and the variable held `000000`. That matches neither `5*` nor `000`, so it fell to the catch-all and reported `service answering: 000000`. The wait was skipped in the one situation it exists for, and the next step died on a curl timeout with an opaque `exit code 28`.
+
+Two changes address the class, not the instance:
+
+- **The allowlist is inverted.** Only an explicit 2xx/3xx/4xx counts as an answer; 5xx, `000`, `000000`, empty, and anything unforeseen all wait. An unrecognised value now fails safe instead of reporting success.
+- **The logic is a file, so it can be tested.** `scripts/wait-for-http.sh` takes a `CURL_BIN` override, and 10 tests drive every branch — including the literal `000000` that started this. Logic that lives only inside a workflow step can only be tested in production.
+
+The same shape appeared in three assertions: `[ "$CODE" != "404" ]` passes when `CODE` is `000`, so an unreachable host read as "the route exists". All three now match an explicit allowlist of healthy statuses.
+
+### It could not tell which build it was checking
+
+Render keeps serving the previous build until the new one is healthy, so every assertion could pass against stale code while the workflow reported the new release verified. `/health` now returns the running build's `version`, read at boot from `package.json`, and the smoke check waits for it to match the commit being checked out. Version skew is reported as a warning rather than a hard failure, so the remaining results stay visible instead of being masked behind one red step.
+
+### Itemized changes
+
+#### Added
+
+- `scripts/wait-for-http.sh` — testable liveness wait with an inverted status allowlist.
+- `version` on `GET /health`, resolved relative to the module rather than the working directory, since the server starts from several. Reports `unknown` on failure rather than a fabricated number.
+- A smoke step that waits for the deployed version to match the commit under test.
+
+#### Fixed
+
+- The smoke check's wait loop treating an unreachable host as a healthy service.
+- Three route assertions treating a network failure as a passing route.
+- A single transient timeout killing the whole job under `bash -e`; the fetches now retry and report which request failed.
+
 ## [4.29.0] — 2026-08-16 — Lessons that read like they were written for you
 
 **Operator action:** none required. Migration `038_thinking_gap_framing.sql` applies automatically on boot and is a no-op where `012` never ran. To see the new content-maturity report, open `/admin` as an admin.

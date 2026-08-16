@@ -45,25 +45,58 @@ jobs:
           echo "url=${{ github.event.inputs.base_url || 'https://vidhya-demo.onrender.com' }}" >> "$GITHUB_OUTPUT"
           echo "wait=${{ github.event.inputs.wait_minutes || '10' }}" >> "$GITHUB_OUTPUT"
 
+      # The wait loop lives in scripts/wait-for-http.sh so it can be tested.
+      # It was four lines inline here and it was wrong: `curl ... || echo 000`
+      # produced `000000` on a failed request, which matched neither the 5xx
+      # nor the 000 case and fell through as "the service answered". The wait
+      # was a no-op in exactly the situation it exists for. It went green for
+      # weeks because the service happened to be up, then failed the first
+      # time it was pointed at a deploy still in flight.
+      # See src/__tests__/wait-for-http.test.ts.
       - name: Wait for the service to answer
         run: |
+          bash scripts/wait-for-http.sh \
+            '${{ steps.cfg.outputs.url }}' \
+            $(( ${{ steps.cfg.outputs.wait }} * 60 ))
+
+      # The check that actually answers "did MY build deploy".
+      #
+      # Every other assertion here can pass against the PREVIOUS build, because
+      # Render keeps serving it until the new one is healthy. A run started
+      # seconds after a merge therefore verifies stale code and reports
+      # success — which is the same shape of false green as the wait loop bug
+      # above, one layer up.
+      #
+      # /health now reports the running build's version, so this waits for the
+      # deployed version to match the version in the commit being checked out.
+      - name: The deployed build is this commit's build
+        run: |
           URL='${{ steps.cfg.outputs.url }}'
+          WANT=$(node -p "require('./package.json').version")
+          echo "expecting version $WANT"
           DEADLINE=$(( $(date +%s) + ${{ steps.cfg.outputs.wait }} * 60 ))
-          # Render cold-starts and rebuilds; 502/503 while spinning up is normal.
-          until [ "$(date +%s)" -ge "$DEADLINE" ]; do
-            CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$URL/" || echo 000)
-            case "$CODE" in
-              5*|000) echo "waiting... ($CODE)"; sleep 20 ;;
-              *) echo "service answering: $CODE"; exit 0 ;;
-            esac
+          while :; do
+            GOT=$(curl -s --max-time 25 "$URL/health" 2>/dev/null \
+                  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).version??"")}catch{console.log("")}})')
+            if [ "$GOT" = "$WANT" ]; then echo "deployed version: $GOT"; exit 0; fi
+            echo "deployed version is '${GOT:-unreadable}', waiting for $WANT"
+            [ "$(date +%s)" -ge "$DEADLINE" ] && break
+            sleep 20
           done
-          echo "::error::Service never answered a non-5xx within ${{ steps.cfg.outputs.wait }} minutes"
-          exit 1
+          # Not a hard failure: an older deploy is a real, reportable state, and
+          # on the daily cron a version skew usually means someone landed to
+          # main without deploying. Say so loudly and keep checking the rest,
+          # rather than masking every downstream result behind one red step.
+          echo "::warning::Deployed version '${GOT:-unreadable}' does not match this commit's $WANT — the checks below describe an older build"
 
       - name: The app shell is served
         run: |
           URL='${{ steps.cfg.outputs.url }}'
-          BODY=$(curl -s --max-time 25 "$URL/")
+          # --retry covers a single transient blip. Without it one timed-out
+          # request killed the whole job under `bash -e`, which is how the
+          # broken wait above surfaced as an opaque "exit code 28".
+          BODY=$(curl -s --max-time 25 --retry 3 --retry-delay 5 --retry-connrefused "$URL/") || {
+            echo "::error::/ could not be fetched at all (curl exit $?)"; exit 1; }
           echo "$BODY" | head -c 200
           echo "$BODY" | grep -qi '<!doctype html' \
             || { echo "::error::/ did not return the SPA shell"; exit 1; }
@@ -71,7 +104,10 @@ jobs:
       - name: Demo deck is reachable and populated
         run: |
           URL='${{ steps.cfg.outputs.url }}'
-          CODE=$(curl -s -o /tmp/rails.json -w '%{http_code}' --max-time 25 "$URL/api/demo/rails")
+          # `|| true` so a curl failure surfaces as a 000 we can report, rather
+          # than killing the step under `bash -e` with an opaque exit code.
+          CODE=$(curl -s -o /tmp/rails.json -w '%{http_code}' --max-time 25 --retry 3 --retry-delay 5 "$URL/api/demo/rails" || true)
+          [ "$CODE" = "000" ] && { echo "::error::/api/demo/rails unreachable (no HTTP response)"; exit 1; }
           echo "HTTP $CODE"; cat /tmp/rails.json | head -c 400; echo
           # 404 = DEMO_MODE_ENABLED unset on the service.
           # 503 = config/demo-rails.json missing from the image.
@@ -90,27 +126,43 @@ jobs:
       - name: Roster route exists (v4.28.0+)
         run: |
           URL='${{ steps.cfg.outputs.url }}'
-          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$URL/api/teaching/roster")
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 --retry 3 --retry-delay 5 "$URL/api/teaching/roster" || true)
           echo "HTTP $CODE"
           # Auth-gated, so 401/403 is the healthy answer. 404 means the route is
           # absent, i.e. the deployed build predates the fix.
-          [ "$CODE" != "404" ] || { echo "::error::/api/teaching/roster 404 — deployed build predates v4.28.0"; exit 1; }
+          #
+          # Matched against an ALLOWLIST rather than `!= 404`: a 000 from an
+          # unreachable host is also "not 404", so the old form reported a
+          # network failure as a passing route.
+          case "$CODE" in
+            200|401|403) ;;
+            404) echo "::error::/api/teaching/roster 404 — deployed build predates v4.28.0"; exit 1 ;;
+            *) echo "::error::/api/teaching/roster returned $CODE — not a healthy answer"; exit 1 ;;
+          esac
 
       - name: Progress degrades instead of 500ing
         run: |
           URL='${{ steps.cfg.outputs.url }}'
-          CODE=$(curl -s -o /tmp/prog.json -w '%{http_code}' --max-time 25 "$URL/api/progress/prod-smoke-probe")
+          CODE=$(curl -s -o /tmp/prog.json -w '%{http_code}' --max-time 25 --retry 3 --retry-delay 5 "$URL/api/progress/prod-smoke-probe" || true)
           echo "HTTP $CODE"; head -c 200 /tmp/prog.json; echo
           # A session id that cannot exist. Before the fix this threw a 500 when
           # the store was unreachable; the honest answer is an empty shape.
-          [ "$CODE" != "500" ] || { echo "::error::/api/progress 500 — the degradation fix is not deployed"; exit 1; }
+          case "$CODE" in
+            200|401|403|404) ;;
+            500) echo "::error::/api/progress 500 — the degradation fix is not deployed"; exit 1 ;;
+            *) echo "::error::/api/progress returned $CODE — not a healthy answer"; exit 1 ;;
+          esac
 
       - name: Practice item route exists
         run: |
           URL='${{ steps.cfg.outputs.url }}'
-          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$URL/api/practice/item/la-eigen-trace-det-001")
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 --retry 3 --retry-delay 5 "$URL/api/practice/item/la-eigen-trace-det-001" || true)
           echo "HTTP $CODE"
-          [ "$CODE" != "404" ] || { echo "::error::/api/practice/item 404 — deployed build predates the graded-item work"; exit 1; }
+          case "$CODE" in
+            200|401|403) ;;
+            404) echo "::error::/api/practice/item 404 — deployed build predates the graded-item work"; exit 1 ;;
+            *) echo "::error::/api/practice/item returned $CODE — not a healthy answer"; exit 1 ;;
+          esac
 
       - name: Summary
         if: always()
@@ -119,7 +171,11 @@ jobs:
             echo "### Production smoke — ${{ steps.cfg.outputs.url }}"
             echo ""
             echo "Checks discriminate old build vs new, not just liveness:"
+            echo "- \`/health.version\` matching this commit proves THIS build is live, not the previous one"
             echo "- \`/api/demo/rails\` populated proves the flag is set AND config/ is in the image"
-            echo "- \`/api/teaching/roster\` not-404 proves the v4.28.0 route shipped"
+            echo "- \`/api/teaching/roster\` healthy proves the v4.28.0 route shipped"
             echo "- \`/api/progress/...\` not-500 proves the degradation fix shipped"
+            echo ""
+            echo "Every status is matched against an allowlist, so an unreachable host"
+            echo "fails instead of passing as \"not a 404\"." 
           } >> "$GITHUB_STEP_SUMMARY"

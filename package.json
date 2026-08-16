@@ -1,6 +1,6 @@
 {
   "name": "project-vidhya",
-  "version": "4.29.0",
+  "version": "4.29.1",
   "description": "Project Vidhya \u2014 Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

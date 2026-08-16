@@ -14,7 +14,7 @@
 #
 # The fenced interactive block is copied verbatim from the base atom so the
 # widget cannot drift between variants; only prose differs.
-id: orthogonality-intuition-assured
+id: orthogonality.intuition.assured
 concept_id: orthogonality
 atom_type: intuition
 bloom_level: 2

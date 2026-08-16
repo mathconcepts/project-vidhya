@@ -36,19 +36,15 @@
  */
 
 import { ServerResponse } from 'http';
-import pg from 'pg';
+import type { Pool } from 'pg';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import { allFramingSignatures } from '../sessions/learner-framing';
-
-const { Pool } = pg;
-let _pool: pg.Pool | null = null;
-function getPool(): pg.Pool | null {
-  if (_pool) return _pool;
-  if (!process.env.DATABASE_URL) return null;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
-  return _pool;
-}
+// The shared storage-boundary pool, not a hand-rolled one — new call sites go
+// through src/storage/ so the pg-import ratchet keeps shrinking. Returns null
+// without DATABASE_URL, which is a first-class state for this route: "no
+// database" is the single most important thing it has to report.
+import { getSharedPool } from '../storage/pool';
 
 interface RouteDefinition {
   method: string;
@@ -260,7 +256,7 @@ export function buildReport(facts: MaturityFacts, now: string): MaturityReport {
 }
 
 /** Runs a count query, returning null when the table is absent or unreadable. */
-async function safeCount(pool: pg.Pool, sql: string, params: unknown[] = []): Promise<number | null> {
+async function safeCount(pool: Pool, sql: string, params: unknown[] = []): Promise<number | null> {
   try {
     const { rows } = await pool.query(sql, params);
     const n = Number(rows[0]?.n);
@@ -274,7 +270,7 @@ async function safeCount(pool: pg.Pool, sql: string, params: unknown[] = []): Pr
 }
 
 async function gatherFacts(): Promise<MaturityFacts> {
-  const pool = getPool();
+  const pool = getSharedPool();
   if (!pool) {
     return {
       database_configured: false,

@@ -18,7 +18,7 @@ import {
   cadenceFor,
 } from '../stance-cadence';
 import { NARRATIVE_ATOM_TYPES } from '../stance-variants';
-import { ASSURED_PROSE_BUDGET } from '../../../scripts/check-variant-agreement';
+import { ASSURED_PROSE_BUDGET } from '../variant-agreement';
 
 describe('the cadence states what the gate enforces', () => {
   it('tells the writer to go shorter, which is what the gate checks', () => {

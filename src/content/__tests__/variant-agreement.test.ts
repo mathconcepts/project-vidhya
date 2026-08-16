@@ -27,7 +27,7 @@ import {
   checkPair,
   repeatedPhrases,
   MIN_FILES_FOR_REPETITION,
-} from '../../scripts/check-variant-agreement';
+} from '../variant-agreement';
 
 const wt = (steps: Array<{ prompt: string; hint?: string; answer: string }>) =>
   JSON.stringify({ v: 1, kind: 'guided_walkthrough', title: 't', steps });

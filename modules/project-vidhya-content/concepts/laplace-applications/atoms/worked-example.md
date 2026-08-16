@@ -61,5 +61,3 @@ The current rises from $0$ A at $t=0$ toward the steady-state value of $\frac{V}
 1. **intuition.md** - Explains how Laplace transforms convert calculus problems to algebra, with exam strategy tips
 2. **visual-analogy.md** - Uses damped oscillation as an analogy, with animated GIF showing exponential decay
 3. **worked-example.md** - Complete GATE-style RL circuit problem with step-by-step solution and guided walkthrough
-
-DONE:laplace-applications

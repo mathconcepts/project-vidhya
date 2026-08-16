@@ -52,10 +52,6 @@ $$(AB)^T = \begin{pmatrix} 1 & 4 \\ 2 & -2 \\ 5 & 5 \end{pmatrix}$$
 ```
 
 ---
-
-These three atoms are ready to be written to disk at their respective paths. The content follows GATE exam standards with:
 - Intuition atom building conceptual foundation
 - Visual analogy with parametric gif-scene showing matrix transformation
 - Worked example with full solution and interactive guided walkthrough
-
-DONE:matrix-operations

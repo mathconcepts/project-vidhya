@@ -45,5 +45,3 @@ $$\det(A) = (-1)(5) + (2)(-5) + 0 = -5 - 10 = -15$$
 ---
 
 **Summary:** All three atoms have been prepared with proper formatting, KaTeX math notation, and an interactive walkthrough for the worked example. The visual_analogy includes the requested gif-scene block showing how a unit circle (det=±1 transformation) represents area-preserving rotation.
-
-DONE:determinants

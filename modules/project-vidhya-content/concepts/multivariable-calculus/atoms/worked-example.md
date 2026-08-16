@@ -69,7 +69,3 @@ So the gradient at $(1, 2)$ is $\nabla f(1, 2) = [14, 14]$.
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Compute partial derivatives and Jacobian","steps":[{"prompt":"Step 1: To find $\\frac{\\partial f}{\\partial x}$ of $f(x,y) = x^2y + 3xy^2 - 2x + y$, what do you treat as a constant?","hint":"Partial derivatives with respect to $x$ mean we treat the other variable as a constant. Differentiate each term with $x$ as the variable.","answer":"Treat $y$ as a constant. Then: $\\frac{\\partial f}{\\partial x} = 2xy + 3y^2 - 2$"},{"prompt":"Step 2: Now find $\\frac{\\partial f}{\\partial y}$ by treating $x$ as a constant. Differentiate each term with respect to $y$.","hint":"Apply power rule to each term, remembering $x$ is constant now. The $-2x$ term has no $y$, so it vanishes.","answer":"$\\frac{\\partial f}{\\partial y} = x^2 + 6xy + 1$"},{"prompt":"Step 3: Evaluate both partial derivatives at the point $(1, 2)$.","hint":"Substitute $x = 1$ and $y = 2$ into both expressions. $\\frac{\\partial f}{\\partial x}|_{(1,2)} = 2(1)(2) + 3(4) - 2$","answer":"At $(1,2)$: $\\frac{\\partial f}{\\partial x} = 14$ and $\\frac{\\partial f}{\\partial y} = 14$. The gradient is $\\nabla f = [14, 14]$."}],"caption":"The Jacobian for a scalar function is the gradient vector. Partial derivatives are its components."}
 ```
-
----
-
-**DONE:multivariable-calculus**

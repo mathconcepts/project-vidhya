@@ -54,5 +54,3 @@ $$\det(A) = 2 \cdot \tfrac52 \cdot (-3) = \boxed{-15}$$
 ---
 
 **Summary:** All three atoms have been prepared with proper formatting, KaTeX math notation, and an interactive walkthrough for the worked example. The visual_analogy includes the requested gif-scene block showing how a unit circle (det=±1 transformation) represents area-preserving rotation.
-
-DONE:determinants

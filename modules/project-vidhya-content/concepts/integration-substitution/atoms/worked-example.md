@@ -47,5 +47,3 @@ The three atom files are ready to be written to the concept directory. Due to a 
 1. **intuition.md** – Conceptual overview of u-substitution and trigonometric substitution (213 words)
 2. **visual-analogy.md** – Unwrapping analogy with gif-scene visualization of composite function (142 words + animated GIF)
 3. **worked-example.md** – GATE-style problem with step-by-step solution and interactive guided walkthrough
-
-DONE:integration-substitution

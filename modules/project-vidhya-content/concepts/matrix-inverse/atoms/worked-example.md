@@ -61,7 +61,3 @@ $$AA^{-1} = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} = I \quad \checkmark$$
 - **Intuition**: Conceptual understanding of matrix inverse, existence condition, and exam relevance (227 words)
 - **Visual Analogy**: Clay-mold analogy with parametric gif-scene showing amplitude modulation to represent transformation/inverse (156 words)
 - **Worked Example**: Full GATE-style 2×2 matrix inverse problem using the adjugate method with verification, plus interactive walkthrough
-
-All files should be written to their respective paths in `modules/project-vidhya-content/concepts/matrix-inverse/atoms/`.
-
-DONE:matrix-inverse

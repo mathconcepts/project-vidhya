@@ -81,6 +81,41 @@ function checkFile(file: string): void {
     }
   });
 
+  // ---- 1b. leaked generation artifacts ---------------------------------
+  //
+  // The generator's own bookkeeping was reaching students. 29 atoms carried a
+  // trailing `DONE:<concept>` marker, and three carried a sentence addressed
+  // to whoever ran the job — "Copy these three files to their respective
+  // paths. The content is ready for Vidhya's curriculum system." — rendered at
+  // the bottom of a worked example, in the lesson, to a student revising for
+  // an exam.
+  //
+  // Distinct from check 1: scaffolding leaks are authoring placeholders inside
+  // the body, these are the model talking to the operator after it. Both are
+  // "text that was never meant to be read by a student", which is why they
+  // live in the same gate.
+  lines.forEach((line, i) => {
+    const t = line.trim();
+    if (/^\*{0,2}DONE:[a-z0-9-]+\*{0,2}$/.test(t)) {
+      problems.push({
+        file: rel,
+        line: i + 1,
+        message: `leaked generation marker: ${JSON.stringify(t)} — the generator's bookkeeping, not lesson content`,
+      });
+    }
+    if (
+      /(copy these .{0,30}files to their respective paths|written to their respective paths|ready to be written to disk|content is ready for)/i.test(
+        t,
+      )
+    ) {
+      problems.push({
+        file: rel,
+        line: i + 1,
+        message: `generation sign-off addressed to the operator, not the student: ${JSON.stringify(t.slice(0, 60))}`,
+      });
+    }
+  });
+
   // ---- 2. unbalanced code fences ---------------------------------------
   const fences = lines.filter((l) => l.trim().startsWith('```')).length;
   if (fences % 2 !== 0) {

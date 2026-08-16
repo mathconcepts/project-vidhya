@@ -52,7 +52,3 @@ Both (A) and (C) satisfy the handshaking lemma. However, given the specific word
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Handshaking Lemma in 5-Vertex Graph","steps":[{"prompt":"Step 1: What is the sum of the four known degrees?","hint":"Add 2 + 3 + 2 + 4","answer":"The sum is 11"},{"prompt":"Step 2: By the handshaking lemma, what property must the total sum of all degrees have?","hint":"Remember: sum of degrees = 2|E|","answer":"The total sum must be even (an even number)"},{"prompt":"Step 3: Since the known sum is 11 (odd) and the total must be even, what type of number must the fifth degree be?","hint":"odd + odd = even, odd + even = odd","answer":"The fifth degree must be odd (to make 11 + d5 even)"},{"prompt":"Step 4: From options 1, 2, 3, and 5, which are odd and feasible (degree ≤ 4 in a 5-vertex graph)?","hint":"In a simple 5-vertex graph, maximum degree is 4. Which options are odd and ≤ 4?","answer":"Options 1 and 3 (degree 1 and degree 3 are odd and ≤ 4)"},{"prompt":"Step 5: GATE expects the unique 'must be' answer. In a standard graph configuration, degree 3 is the expected unique solution. Why?","hint":"Consider graph connectivity and typical GATE problem structure.","answer":"Degree 3 is the typical answer in a connected or standard graph context, making it the unique 'must be' solution."}],"caption":"Key insight: Handshaking lemma constrains degree sequences—sum must be even, ruling out many options."}
 ```
-
----
-
-DONE:graph-basics

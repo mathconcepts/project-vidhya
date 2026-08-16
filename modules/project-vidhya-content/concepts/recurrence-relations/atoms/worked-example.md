@@ -110,5 +110,3 @@ $$a_5 = \frac{1}{\sqrt{5}}(11.09 + 0.09) \approx \frac{11.18}{2.236} \approx 5$$
 4. **Initial condition** application
 
 For exam speed, when $n \leq 5$, compute iteratively. For large $n$, use the closed form.
-
-DONE:recurrence-relations

@@ -38,7 +38,7 @@ $$\mathbf{u} \cdot \mathbf{v} = (3)(1) + (1)(-3) = 0$$
 
 Zero. Draw those two arrows and they meet at a square corner.
 
-That is the whole definition:
+Zero dot product, right angle. Nothing else to it:
 
 $$\mathbf{u} \cdot \mathbf{v} = 0 \iff \mathbf{u} \perp \mathbf{v}$$
 

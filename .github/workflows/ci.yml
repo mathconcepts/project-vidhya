@@ -117,6 +117,16 @@ jobs:
       - name: Template coverage (every concept topic has a cadence)
         run: npm run ci:template-coverage
 
+      # A stance variant is a rewrite of already-verified content, so this
+      # checks the parts a machine can check exactly and leaves the judge only
+      # the question it cannot: does the prose still assert the same maths.
+      # Interactive blocks byte-identical (except walkthroughs, where the
+      # scaffolding may differ but every answer must survive in order),
+      # struggling variants no longer than what they replace, no oversized
+      # headings, and no construction repeating across a topic's concepts.
+      - name: Variant agreement (stance variants vs their base atoms)
+        run: npm run ci:variant-agreement
+
       # Journey card deck (M2 / D3.6). The plan's acceptance condition is
       # "every shipped card is QA-walked end to end; a card that dead-ends is
       # pulled, not shipped" — hand-walking that before every demo does not

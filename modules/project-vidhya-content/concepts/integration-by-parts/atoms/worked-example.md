@@ -53,7 +53,3 @@ $$= e^x(x^2 - 2x + 2 + 2x - 2) = x^2 e^x \quad \checkmark$$
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Solve: ∫x² eˣ dx using integration by parts (repeated)","steps":[{"prompt":"Step 1: Use LIATE to choose u and dv. What should u be?","hint":"LIATE: Logarithmic, Inverse trig, Algebraic, Trigonometric, Exponential. Which appears first in our integrand x²·eˣ?","answer":"u = x² (algebraic comes before exponential in LIATE)"},{"prompt":"Step 2: If u = x², what is dv and v?","hint":"Once u = x² and du = 2x dx, the remaining part is e^x dx","answer":"dv = e^x dx, so v = e^x"},{"prompt":"Step 3: Write the integration by parts formula: ∫u dv = uv - ∫v du","hint":"Plug in: u = x², v = e^x, du = 2x dx","answer":"∫x² e^x dx = x² e^x - ∫e^x · 2x dx = x² e^x - 2∫x e^x dx"},{"prompt":"Step 4: Now solve ∫x e^x dx using integration by parts again","hint":"Let u = x, dv = e^x dx. Then du = dx, v = e^x. Use the formula.","answer":"∫x e^x dx = x e^x - ∫e^x dx = x e^x - e^x"},{"prompt":"Step 5: Substitute back to get the final answer","hint":"Replace ∫x e^x dx in Step 3's result with (x e^x - e^x)","answer":"∫x² e^x dx = x² e^x - 2(x e^x - e^x) = e^x(x² - 2x + 2) + C"}],"caption":"Key insight: Repeated application of LIATE reduces polynomial degree step-by-step until only exponential/trig remains, which is integrable directly."}
 ```
-
----
-
-DONE:integration-by-parts

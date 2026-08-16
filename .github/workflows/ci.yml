@@ -107,6 +107,16 @@ jobs:
       - name: Interactive-spec validity
         run: npm run ci:interactive-specs
 
+      # Every concept's topic must resolve to an authoring template. The
+      # lookup (template-loader.ts:114-122) returns null on a miss and
+      # generation carries on un-guided, so a missing template produces atoms
+      # written to no cadence at all and says nothing. 52 of 97 concepts were
+      # in that state, hidden behind three near-miss topic_family names and
+      # five topics with no template. Silent is the failure mode; this makes
+      # it loud.
+      - name: Template coverage (every concept topic has a cadence)
+        run: npm run ci:template-coverage
+
       # Journey card deck (M2 / D3.6). The plan's acceptance condition is
       # "every shipped card is QA-walked end to end; a card that dead-ends is
       # pulled, not shipped" — hand-walking that before every demo does not

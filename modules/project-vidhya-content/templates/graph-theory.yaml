@@ -1,0 +1,73 @@
+topic_family: graph-theory
+
+intuition:
+  scaffold: small-graph-by-hand
+  guidance: |
+    Draw a graph with five or six vertices and read the property straight off
+    the picture before defining it. Graph theory is one of the few topics
+    where the object and the diagram are the same thing; use that.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: vertex-edge-condition
+  guidance: |
+    Define in terms of vertices, edges and a condition. State whether the
+    graph is directed, whether loops and multi-edges are allowed, and whether
+    it must be connected. Most disagreements in this topic are definitional.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: construct-then-verify
+  guidance: |
+    Build or examine a specific graph, then check the condition vertex by
+    vertex or edge by edge. Six steps max, separated by `\n---\n`. Where a
+    theorem gives a counting shortcut, verify it against the direct count once.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: confusing Euler (edges) with Hamiltonian (vertices); assuming a
+    necessary condition is sufficient; miscounting degree at a loop; treating
+    a drawing's crossings as a property of the graph rather than the drawing.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: labelled-diagram
+  guidance: |
+    ASCII or plotted graph with vertices labelled and the relevant edges
+    highlighted. For colouring and connectivity, show the failing case beside
+    the succeeding one.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Mix graphs that satisfy the property with near-misses that fail one
+    hypothesis. Recognising which hypothesis broke is the skill.
+  bloom_floor: 4
+
+hook:
+  scaffold: when-naive-fails
+  guidance: |
+    Open with a question that looks like it needs exhaustive search and
+    collapses to a degree count. Königsberg is the canonical one; prefer a
+    fresher instance where the material allows.
+  bloom_floor: 1

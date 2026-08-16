@@ -1,0 +1,71 @@
+topic_family: differential-equations
+
+intuition:
+  scaffold: rate-of-change-story
+  guidance: |
+    Name the quantity and what drives its rate of change before writing any
+    symbol. Cooling, decay, current in an RL circuit. The equation is a
+    sentence about how fast something moves; say the sentence first.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: order-linearity-form
+  guidance: |
+    State order, linearity, and whether it is homogeneous, in that sequence.
+    Give the standard form the solution method assumes and say explicitly
+    what has to be true for that form to apply.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: classify-then-solve
+  guidance: |
+    Classify first, name the method, then solve. Six steps max, separated by
+    `\n---\n`. Always verify by substituting back into the original equation
+    and show that substitution.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: losing the constant of integration; dividing by a factor that can
+    be zero without saying so; applying an integrating factor before the
+    equation is in standard form; forgetting the particular solution.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: slope-field
+  guidance: |
+    Slope fields and solution curves through them. Show why different initial
+    conditions pick out different curves from the same field.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Mix equation types so the student must classify before choosing a method.
+    Classification is the skill being drilled, not the integration.
+  bloom_floor: 4
+
+hook:
+  scaffold: when-naive-fails
+  guidance: |
+    Open with a quantity whose rate depends on its own current value, and show
+    that guessing a formula does not work. That is the whole subject.
+  bloom_floor: 1

@@ -1,0 +1,74 @@
+topic_family: numerical-methods
+
+intuition:
+  scaffold: exact-vs-computable
+  guidance: |
+    Start from a problem with no closed form, or one too expensive to solve
+    exactly, and show the approximation as the response. Every method here is
+    a trade of exactness for tractability; name what is being traded.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: iteration-with-conditions
+  guidance: |
+    Give the iteration or formula, its convergence condition, and its error
+    order. All three, in that order. A method quoted without its convergence
+    condition is the most common way to get a wrong answer confidently.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: tabulated-iterations
+  guidance: |
+    Table of iterations with the value and the error at each step, so the
+    convergence rate is visible rather than asserted. Six steps max, separated
+    by `\n---\n`. State the stopping criterion before starting.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: applying a method outside its convergence condition; a bracketing
+    interval that does not bracket a root; confusing absolute with relative
+    error; carrying too few digits and blaming the method.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: convergence-plot
+  guidance: |
+    Show successive iterates converging on the axis, or the interpolating
+    curve against the true function with the error band between them. Make
+    the error the visible quantity.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Mix problems where a method converges with ones where it diverges or
+    stalls. Checking the condition before applying the method is the skill
+    being drilled.
+  bloom_floor: 4
+
+hook:
+  scaffold: when-naive-fails
+  guidance: |
+    Open with an equation that has no algebraic solution and a calculator
+    answer that is obviously close. The gap between "no solution exists" and
+    "here is the number" is the point.
+  bloom_floor: 1

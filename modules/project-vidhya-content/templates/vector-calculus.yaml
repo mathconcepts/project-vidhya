@@ -1,0 +1,74 @@
+topic_family: vector-calculus
+
+intuition:
+  scaffold: field-then-operator
+  guidance: |
+    Draw the field before naming the operator. Divergence is whether the field
+    is a source or a sink at a point; curl is whether a paddle wheel would
+    spin. Give the physical reading before the partial derivatives.
+  bloom_floor: 2
+
+formal_definition:
+  scaffold: operator-with-domain
+  guidance: |
+    Define the operator in Cartesian components, then state the smoothness the
+    definition assumes. For the integral theorems, name the orientation
+    convention explicitly — most errors here are sign errors.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: parameterize-then-integrate
+  guidance: |
+    Choose the parameterization, state its bounds, and say why that
+    parameterization was the convenient one. Six steps max, separated by
+    `\n---\n`. Carry the orientation through every step.
+  bloom_floor: 3
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: wrong orientation giving a sign flip; using Green's theorem on a
+    curve that is not closed; forgetting the Jacobian on a change of
+    variables; confusing the scalar and vector line integrals.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: arrow-field
+  guidance: |
+    Arrow plots for the field, with the curve or surface drawn on top and its
+    orientation marked. The picture must show the orientation, not just the
+    shape, because orientation is where the marks are lost.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Mix problems where the theorem shortcut applies with ones where it does
+    not, so the student has to check the hypotheses rather than pattern-match
+    on the shape of the integral.
+  bloom_floor: 4
+
+hook:
+  scaffold: when-naive-fails
+  guidance: |
+    Open with a surface integral that is unpleasant directly and immediate via
+    the divergence theorem. The gap between the two is the reason the topic
+    exists.
+  bloom_floor: 1

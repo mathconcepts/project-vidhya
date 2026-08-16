@@ -170,7 +170,14 @@ export function MarkdownAtomRenderer({ content, atomId }: MarkdownAtomRendererPr
     }
   }, [content, atomId]);
 
-  return <div className="prose prose-sm max-w-none vidhya-atom-body">{tree}</div>;
+  // `prose prose-sm` used to sit here. @tailwindcss/typography is not
+  // installed (tailwind.config.cjs: `plugins: []`), so both were dead class
+  // names — a production build emitted zero `.prose` rules while preflight
+  // flattened every heading and stripped every list marker. The real styling
+  // is `.vidhya-atom-body` in styles/globals.css, written against the Clarity
+  // tokens. Do not re-add `prose-sm`: it sets a 14px body, under the 17px
+  // floor for student-facing text.
+  return <div className="max-w-none vidhya-atom-body">{tree}</div>;
 }
 
 // ─── Helper for `:::interactive{ref=name}` library references

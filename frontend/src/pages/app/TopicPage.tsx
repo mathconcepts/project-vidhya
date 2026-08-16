@@ -170,7 +170,9 @@ export default function TopicPage() {
                 style={{ overflow: 'hidden' }}
               >
                 <div style={{ padding: '0 16px 16px', borderTop: 'var(--hairline) solid var(--separator)' }}>
-                  <div className="prose prose-sm max-w-none" style={{ paddingTop: 12 }}>
+                  {/* No `prose` classes — @tailwindcss/typography is not installed.
+                      MarkdownAtomRenderer carries .vidhya-atom-body itself. */}
+                  <div className="max-w-none" style={{ paddingTop: 12 }}>
                     <MarkdownAtomRenderer
                       content={getPersonalizedPreamble(mastery) + notes}
                       atomId={`topic-notes-${topicId}`}

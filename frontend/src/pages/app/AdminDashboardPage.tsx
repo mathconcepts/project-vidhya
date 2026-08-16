@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  Play,
   Crown, Shield, Activity, Users, MessageCircle, Smartphone, Key,
   CheckCircle2, Circle, AlertTriangle, TrendingDown, Brain,
   ArrowRight, Loader2, RefreshCw, Sparkles, Settings, FileText, Server,
@@ -360,6 +361,7 @@ export default function AdminDashboardPage() {
           <div className="space-y-2">
             <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Admin pages</p>
             <div className="grid grid-cols-2 gap-2">
+              <QuickLink href="/admin/walkthrough" label="Demo walkthrough" icon={Play} />
               <QuickLink href="/admin/users" label="User management" icon={Users} />
               <QuickLink href="/admin/features" label="Feature flags" icon={Settings} />
               <QuickLink href="/admin/content-studio" label="Content studio" icon={FileText} />

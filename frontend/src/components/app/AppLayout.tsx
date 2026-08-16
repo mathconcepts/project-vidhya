@@ -17,6 +17,7 @@ import { getDemoPersona } from '@/lib/demoPersona';
 import { isDemoMode } from '@/lib/demoMode';
 import { DemoRoleSwitcher } from '@/components/app/DemoRoleSwitcher';
 import { DemoRailNav } from '@/components/app/DemoRailNav';
+import { WalkthroughBar } from '@/components/app/WalkthroughBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSession } from '@/hooks/useSession';
 import { authFetch } from '@/lib/auth/client';
@@ -161,6 +162,8 @@ export function AppLayout() {
       {isDemoMode() && <DemoRoleSwitcher />}
       {/* Renders only on a step of an active surfaces rail; inert otherwise. */}
       <DemoRailNav />
+      {/* Renders nothing unless an admin walkthrough is running. */}
+      <WalkthroughBar />
 
       {/* Header */}
       {!calmMode && (

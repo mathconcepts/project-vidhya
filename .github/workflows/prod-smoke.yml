@@ -39,6 +39,14 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
+      # Required since the checks stopped being pure inline curl: the wait loop
+      # is scripts/wait-for-http.sh and the version gate reads package.json.
+      # Without this the job dies with `No such file or directory` (exit 127)
+      # before it ever reaches the service — which is exactly what happened on
+      # the first run after those two were introduced.
+      - name: Check out the commit under test
+        uses: actions/checkout@v4
+
       - name: Resolve target
         id: cfg
         run: |

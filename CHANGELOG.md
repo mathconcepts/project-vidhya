@@ -4,6 +4,43 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.31.0] — 2026-08-16 — Explore now opens the concept, interactives and all
+
+**Operator action:** none.
+
+"Explore this concept" on a practice question pointed at the topic page, and the code said why: a PYQ carries `topic: "Linear Algebra"` — a display label — and no concept id, so linking straight to a lesson would have manufactured a dead end.
+
+That was right, and it had a cost nobody had named. The interactive widgets live on the **lesson** page — `InteractiveSidecar` is mounted inside `AtomCardRenderer`, which the topic page does not use — so Explore never reached a single slider, animation, or walkthrough. Every practice question led to prose.
+
+`GET /api/concepts/resolve` closes it without faking anything: the topic label normalises onto the concept graph's own topic key, and the concept the question actually names wins. When nothing resolves, the link stays on the topic page — the dead end the original comment refused to create is still refused.
+
+| Question | Opens |
+|---|---|
+| Find the eigenvalues of A | `eigenvalues` — 3 interactives |
+| Compute the determinant | `determinants` — 3 interactives |
+| Apply Gram-Schmidt for an orthonormal basis | `gram-schmidt` — 1 interactive |
+| What is the rank of this matrix | `rank-nullity` |
+| *(unknown topic)* | falls back to `/topic/...` |
+
+### Two precision bugs found while building it
+
+Both would have put a wrong concept name next to a question in front of an audience.
+
+- **Substring matching.** "orthonormal" contains "normal", so *"obtain an orthonormal basis"* resolved to `jordan-normal-form`. Matching is now word-boundary anchored, with a trailing `\w*` so inflected forms still match.
+- **Widgets outranking specificity.** *"Find the trace of the product AB"* fully names `trace`, and only distinctively names one word of `inner-product-spaces` — which had a widget, and so won. A lesson that moves is now a tiebreak, never a reason to answer the wrong question.
+
+A third rule was added rather than fixed: a keyword owned by exactly one concept in the topic identifies it on its own, so *"What is the rank of this matrix?"* reaches `rank-nullity` instead of a generic fallback.
+
+### Itemized changes
+
+#### Added
+
+- `GET /api/concepts/resolve?topic=&q=` — ranked concept resolution with the match reason in the payload, so a wrong-looking link is diagnosable from the response.
+
+#### Changed
+
+- The practice page's Explore link opens `/lesson/<concept>` when a concept resolves and names the payoff ("Explore eigenvalues · 3 interactives"), and keeps the topic link otherwise. Non-blocking and failure-tolerant: if the resolver never answers, behaviour is exactly what it was.
+
 ## [4.30.0] — 2026-08-16 — One button that walks the whole demo
 
 **Operator action:** none. Sign in as an admin and open **Demo walkthrough** from `/admin`.

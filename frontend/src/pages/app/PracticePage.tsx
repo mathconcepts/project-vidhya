@@ -59,6 +59,18 @@ export default function PracticePage() {
   const [errorDiagnosis, setErrorDiagnosis] = useState<any>(null);
   const startTime = useRef(Date.now());
 
+  /**
+   * The concept this question is about, resolved server-side from the topic
+   * label plus the question text. Null until it answers, and null forever if
+   * nothing resolves — in which case the Explore link stays on the topic page.
+   */
+  const [exploreConcept, setExploreConcept] = useState<{
+    concept_id: string | null;
+    concept_name: string | null;
+    interactive_kinds: string[];
+    match: string;
+  } | null>(null);
+
   useEffect(() => {
     if (!problemId) return;
     startTime.current = Date.now();
@@ -75,6 +87,32 @@ export default function PracticePage() {
       })
       .finally(() => setLoading(false));
   }, [problemId]);
+
+  // Resolve the concept behind this question so Explore can open its lesson
+  // (and therefore its interactives) instead of the prose-only topic page.
+  // Deliberately non-blocking and failure-tolerant: if this never answers, the
+  // link falls back to exactly the behaviour it had before.
+  useEffect(() => {
+    if (!problem) return;
+    let cancelled = false;
+    setExploreConcept(null);
+    const qs = new URLSearchParams({ topic: problem.topic, q: problem.question_text ?? '' });
+    apiFetch<{
+      concept_id: string | null;
+      concept_name: string | null;
+      interactive_kinds: string[];
+      match: string;
+    }>(`/api/concepts/resolve?${qs.toString()}`)
+      .then((r) => {
+        if (!cancelled) setExploreConcept(r);
+      })
+      .catch(() => {
+        /* keep the topic-page link */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [problem]);
 
   useEffect(() => {
     if (!problem) return;
@@ -434,21 +472,29 @@ export default function PracticePage() {
             {/*
               Explore the concept behind the problem.
 
-              Points at the topic page, not `/lesson/:concept_id`, and that is
-              deliberate: a PYQ carries `topic: "Linear Algebra"` — a display
-              label — and no concept id. There is no `linear-algebra` concept to
-              open (the content module has `linear-independence`,
-              `linear-transformations`, `numerical-linear-algebra`), so linking
-              straight to a lesson would manufacture a dead end. TopicPage
-              resolves, renders the concept notes through the markdown pipeline,
-              and lists the problems for the topic.
+              This used to point at `/topic/<label>` and the comment here said
+              why: a PYQ carries `topic: "Linear Algebra"` — a display label —
+              and no concept id, so linking straight to a lesson would have
+              manufactured a dead end.
 
-              Tagging PYQs with a concept id is the change that would let this
-              open the lesson itself, interactives included. That is content
-              work, recorded rather than faked here.
+              That was right, and it had a cost: the interactive widgets live on
+              the LESSON page (InteractiveSidecar is mounted inside
+              AtomCardRenderer, which the topic page does not use), so Explore
+              never reached a single slider, animation, or walkthrough.
+
+              `/api/concepts/resolve` closes it without faking anything. It maps
+              the topic label onto the concept graph and picks the concept the
+              question actually names, preferring one whose lesson has widgets
+              only as a tiebreak. When it cannot identify a concept it returns
+              null and we keep the topic link — the dead end is still refused,
+              it is just no longer the only option.
             */}
             <Link
-              to={`/topic/${encodeURIComponent(problem.topic)}`}
+              to={
+                exploreConcept?.concept_id
+                  ? `/lesson/${encodeURIComponent(exploreConcept.concept_id)}`
+                  : `/topic/${encodeURIComponent(problem.topic)}`
+              }
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -462,7 +508,18 @@ export default function PracticePage() {
                 textDecoration: 'none',
               }}
             >
-              <BookOpen size={16} aria-hidden="true" /> Explore {topicName}
+              <BookOpen size={16} aria-hidden="true" />{' '}
+              {exploreConcept?.concept_id
+                ? `Explore ${exploreConcept.concept_name ?? exploreConcept.concept_id}`
+                : `Explore ${topicName}`}
+              {/* Name the payoff rather than implying one. An empty list means
+                  the lesson is prose, and saying so beats a silent letdown. */}
+              {exploreConcept?.interactive_kinds?.length ? (
+                <span style={{ fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-regular)', color: 'var(--text-secondary)' }}>
+                  · {exploreConcept.interactive_kinds.length} interactive
+                  {exploreConcept.interactive_kinds.length === 1 ? '' : 's'}
+                </span>
+              ) : null}
             </Link>
 
             {/* GBrain Error Diagnosis — wrong answers only */}

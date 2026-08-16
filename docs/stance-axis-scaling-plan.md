@@ -89,6 +89,34 @@ has no per-concept coupling, so 566 new files work the day they land.
 | 5A | Mutation tests on all three content gates | A gate you have not watched fail is a gate with no evidence it works. |
 | 6A | Judge failure fails closed, draft kept outside the content tree | A missing variant is an already-tested state. An unchecked file that looks checked is not. |
 
+## Design decisions
+
+From `/plan-design-review`, 2026-08-16. Eight issues, all resolved. Overall
+design completeness 3/10 → 9/10.
+
+The measurement that drove most of them: the shaken variants are **~60% longer**
+than their base atoms (`hook` 81→125 w, `intuition` 258→411 w,
+`worked_example` 311→497 w) and add up to three `h2` headings, each rendering at
+20px with 24px of top margin. `framingInstructions` describes that student as
+*"close to giving up"* and asks for *"one concrete, immediately doable
+correction."* The authored variants expand instead. Whatever shape these 16
+files have is the shape 566 generated files will copy.
+
+| # | Decision | Why |
+|---|---|---|
+| 1A | Prose budget: `shaken ≤ base` words, `assured ≤ base` words, headings ≤ base + 1. Extra scaffolding goes into the `guided_walkthrough` spec, not the prose. | A struggling student needs more support, not more text on screen at once. `guided_walkthrough` is already 105 of 125 interactive uses and reveals steps on demand. **Amends decision 2B**: fenced blocks stay byte-identical for `manipulable` and `simulation`; `guided_walkthrough` step counts may differ between base and variant, because that difference is the feature rather than drift. |
+| 2A | Coverage shows two figures — in-rollout (denominator = concepts whose topic template has a `stances` block) and course-wide (denominator = 97) — plus a distinct `rejected` count. | The current counter skips concepts with no variants. Correct today; during a 6-PR rollout it reads near-100% throughout, and a topic the judge rejected wholesale disappears rather than showing as a problem. |
+| 3A | `student-model.ts:246` uses `STRUGGLING_STATES` instead of the literal `'frustrated'`, and lifts to `'steady'` after 2 consecutive correct rather than 1. | Recovery currently fires only for `frustrated`. `anxious` and `flagging` never recover, so those students stay shaken permanently — including both demo personas. A framing that cannot notice improvement contradicts Compounding, the product's stated memorable thing. A 2-streak rather than 1 keeps the register from flipping on a lucky guess. |
+| 4A | Gate additions: opening 4-gram repeated across >20% of a topic's variants fails; `h1` inside an atom body fails; any emoji fails. Cadence carries an explicit "vary the opening move" constraint. | *"one X at a time"* already opens 3 of 8 hand-authored shaken variants (38%). A generator given one cadence paragraph 291 times will do this much harder, and prose sameness is the AI-slop failure mode no human catches across 566 files. |
+| 5A | Variants never render `ReceiptBorder`. | A judge pass verifies the variant does not contradict its base. It makes no claim about whether the base is correct. The receipt border is the product's one visual promise; attaching it to a weaker check is how it stops meaning anything. A base atom's own receipt is inherited unchanged. |
+| 6A+ | Fix `GuidedWalkthrough` (type to the 17px floor, 44px target, drop reserved indigo, add `prefers-reduced-motion`) **and** sweep reserved indigo from `Manipulable:80`, `DesmosLite:130`, `Verify:118`. | Four design-system non-negotiables broken in the component 1A makes load-bearing: the revealed answer renders at 12px behind a ~26px button in the reserved AI accent, with no reduced-motion support. Scope extended to all four call sites by operator decision. `Verify:118` needs care — green there may read as "already marked correct"; prefer a neutral fill. |
+| 7A | Regenerate the 3 demo concepts through the new pipeline as its first end-to-end run; diff against the hand-authored originals and keep the better file each time. | The 16 exemplars fail two of the gates derived from them (the `h1` in `orthogonality/worked-example-shaken`, and the 38% repetition). Regenerating resolves that and proves generator + judge + gates on content that can be judged at a glance, before 566 files. Originals stay in git as the comparison. |
+| 8A | `served_stance` stays invisible to students; the operator walkthrough surfaces it per atom as `band / stance / mode`. | Telling a student they got the gentler version is the labelling that makes someone feel handled. But the demo's central claim needs evidence, and `served_stance` is that evidence sitting unread. Different audiences, different answers. |
+
+**Stated default, not a decision to defer:** a topic whose judge rejects some
+files ships partial. 2A's `rejected` count is what makes the gap visible rather
+than silent.
+
 ## What already exists
 
 | Piece | Reused or rebuilt |
@@ -196,3 +224,55 @@ worth a heads-up if run in separate worktrees.
   - Surfaced by: the objective — scale the accepted cadence to the rest of the course
   - Files: `modules/project-vidhya-content/concepts/*/atoms/*-{shaken,assured}.md`
   - Verify: `ci:content-integrity`, `ci:content-gate`, `check-variant-agreement` all green per PR
+  - Blocked by: T15 (the exemplars must pass the gates before the gates run on anything else)
+- [ ] **T9 (P1, human: ~1d / CC: ~1h)** — gates — prose budget: words ≤ base, headings ≤ base + 1
+  - Surfaced by: Design 1A — shaken variants run ~60% longer than base
+  - Files: `scripts/check-variant-agreement.ts`, cadence in `templates/*.yaml`
+  - Verify: a variant 1 word over base fails; equal passes
+- [ ] **T10 (P1, human: ~1d / CC: ~45min)** — gates — repetition, h1 and emoji checks
+  - Surfaced by: Design 4A — "one X at a time" opens 3 of 8 shaken variants
+  - Files: `scripts/check-variant-agreement.ts`
+  - Verify: a topic with 3 of 8 sharing an opening 4-gram fails and names them
+- [ ] **T11 (P1, human: ~1d / CC: ~40min)** — interactives — GuidedWalkthrough to design-system compliance
+  - Surfaced by: Design 6A — 12px answer, ~26px target, reserved indigo, no reduced-motion
+  - Files: `frontend/src/components/lesson/interactives/GuidedWalkthrough.tsx`
+  - Verify: answer/hint/prompt at 17px; button ≥ 44px; no `var(--indigo)`; honours `prefers-reduced-motion`
+- [ ] **T12 (P2, human: ~4h / CC: ~30min)** — interactives — sweep reserved indigo from the remaining three
+  - Surfaced by: Design 6A extended — operator chose to clear the rule in this PR
+  - Files: `Manipulable.tsx:80`, `DesmosLite.tsx:130`, `Verify.tsx:118`
+  - Verify: no `var(--indigo)` outside AI/tutor surfaces; Verify's fill does not read as "correct"
+- [ ] **T13 (P1, human: ~3h / CC: ~20min)** — student-model — recover from every struggling state
+  - Surfaced by: Design 3A — `anxious` and `flagging` never recover; both demo personas are `anxious`
+  - Files: `src/gbrain/student-model.ts:244-249`
+  - Verify: an anxious student with 2 correct in a row derives as `steady`; 1 correct does not flip it
+- [ ] **T14 (P2, human: ~4h / CC: ~30min)** — admin — two-figure coverage + rejected count + served_stance on walkthrough
+  - Surfaced by: Design 2A and 8A
+  - Files: `src/api/admin-content-maturity-routes.ts`, `ContentMaturityCard.tsx`, `src/api/admin-walkthrough-routes.ts`
+  - Verify: in-rollout and course-wide differ during a partial rollout; no student-facing stance label
+- [ ] **T15 (P1, human: ~1d / CC: ~1h)** — content — regenerate the 3 demo concepts as the pipeline pilot
+  - Surfaced by: Design 7A — the 16 exemplars fail two gates derived from them
+  - Files: `modules/project-vidhya-content/concepts/{eigenvalues,determinants,orthogonality}/atoms/`
+  - Verify: all 16 regenerated files pass every gate; per-file diff reviewed against the originals
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 | — | — |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR (PLAN) | 6 issues, 1 critical gap |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAR (FULL) | score: 3/10 → 9/10, 8 decisions |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
+
+**VERDICT:** ENG + DESIGN CLEARED — ready to implement.
+
+**Outside voice:** not run. Codex is not installed in this environment, and the
+documented fallback (a Claude subagent) is not authorised in this session
+without an explicit request. Two-model agreement is absent from both reviews.
+
+**Residual critical gap (from eng review):** a judge false-negative — the
+equivalence judge approving a variant that does contradict its base — has no
+second line of defence. The structural gate cannot see it. Per-topic PR review
+is the only mitigation, accepted knowingly.
+
+NO UNRESOLVED DECISIONS

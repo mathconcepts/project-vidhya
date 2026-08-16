@@ -15,8 +15,19 @@
  *
  *   concepts/eigenvalues/atoms/
  *     intuition.md            ← base. Served to a steady student.
- *     intuition.shaken.md     ← variant_of: eigenvalues.intuition
- *     intuition.assured.md      for_stance: shaken | assured
+ *     intuition-shaken.md     ← variant_of: eigenvalues.intuition
+ *     intuition-assured.md      for_stance: shaken | assured
+ *
+ * The hyphen is not cosmetic: check-content-integrity.ts requires that dots in
+ * an atom id are hyphens in its filename, so `intuition.shaken.md` is rejected
+ * while id `eigenvalues.intuition.shaken` in `intuition-shaken.md` is correct.
+ *
+ * A variant's own id follows that convention rather than inheriting the base
+ * atom's. Two base atoms in the demo corpus declare ids the integrity gate only
+ * tolerates as legacy drift (`determinants.worked_example`,
+ * `orthogonality-worked-example`); propagating those into new files would
+ * spread the drift instead of stopping at it. `variant_of` carries the link and
+ * does not have to match the variant's id.
  *
  * Properties that made this the right shape:
  *

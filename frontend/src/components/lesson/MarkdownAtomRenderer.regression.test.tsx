@@ -64,8 +64,8 @@ describe('MarkdownAtomRenderer — regression on seed atoms', () => {
     const variants = atoms.filter((a) => a.isVariant);
     expect(variants.length).toBeGreaterThan(0);
     for (const v of variants) {
-      expect(v.file, `${v.file} does not follow the <base>.<stance>.md convention`)
-        .toMatch(/\.(shaken|assured)\.md$/);
+      expect(v.file, `${v.file} does not follow the <base>-<stance>.md convention`)
+        .toMatch(/-(shaken|assured)\.md$/);
     }
   });
 

@@ -207,7 +207,7 @@ function checkAtomRail(card: any, rail: any): void {
     // two students. That failure is invisible on stage and obvious in CI, so
     // it belongs here.
     for (const stance of VARIANT_STANCES) {
-      const variant = path.join(conceptDir, 'atoms', `${atom}.${stance}.md`);
+      const variant = path.join(conceptDir, 'atoms', `${atom}-${stance}.md`);
       if (!fs.existsSync(variant)) {
         fail(
           card.id,

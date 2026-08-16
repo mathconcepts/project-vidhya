@@ -11,7 +11,7 @@
 #
 # The fenced interactive block below is copied verbatim from the base
 # atom so the widget cannot drift between variants; only prose differs.
-id: orthogonality-worked-example.shaken
+id: orthogonality.worked-example.shaken
 concept_id: orthogonality
 atom_type: worked_example
 bloom_level: 3

@@ -1,0 +1,125 @@
+name: Production smoke
+
+# Post-deploy smoke check against the live demo instance.
+#
+# Why this exists: v4.28.0 shipped a demo walkthrough that was completely
+# absent in production for two packaging reasons (a flag that was never set on
+# the service, and a config file that was never copied into the image). Every
+# unit test passed, all three content gates passed, and the feature was still
+# missing, because nothing ever asked the deployed URL a question.
+#
+# The checks below are chosen to DISCRIMINATE between the old build and the new
+# one, not merely to prove the service is up. A 200 on `/` says almost nothing;
+# `/api/demo/rails` returning four cards can only happen when the flag is set
+# AND config/demo-rails.json is inside the image.
+#
+# Runs on demand, and on a schedule so a silently-reverted deploy surfaces
+# without anyone remembering to look. It talks to a public URL only: no secrets,
+# no auth, nothing to leak.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Base URL to smoke test
+        required: false
+        default: https://vidhya-demo.onrender.com
+      wait_minutes:
+        description: How long to wait for a deploy to finish before failing
+        required: false
+        default: '10'
+  schedule:
+    # 09:00 UTC daily. Catches a rolled-back or crashed deploy.
+    - cron: '0 9 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve target
+        id: cfg
+        run: |
+          echo "url=${{ github.event.inputs.base_url || 'https://vidhya-demo.onrender.com' }}" >> "$GITHUB_OUTPUT"
+          echo "wait=${{ github.event.inputs.wait_minutes || '10' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the service to answer
+        run: |
+          URL='${{ steps.cfg.outputs.url }}'
+          DEADLINE=$(( $(date +%s) + ${{ steps.cfg.outputs.wait }} * 60 ))
+          # Render cold-starts and rebuilds; 502/503 while spinning up is normal.
+          until [ "$(date +%s)" -ge "$DEADLINE" ]; do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$URL/" || echo 000)
+            case "$CODE" in
+              5*|000) echo "waiting... ($CODE)"; sleep 20 ;;
+              *) echo "service answering: $CODE"; exit 0 ;;
+            esac
+          done
+          echo "::error::Service never answered a non-5xx within ${{ steps.cfg.outputs.wait }} minutes"
+          exit 1
+
+      - name: The app shell is served
+        run: |
+          URL='${{ steps.cfg.outputs.url }}'
+          BODY=$(curl -s --max-time 25 "$URL/")
+          echo "$BODY" | head -c 200
+          echo "$BODY" | grep -qi '<!doctype html' \
+            || { echo "::error::/ did not return the SPA shell"; exit 1; }
+
+      - name: Demo deck is reachable and populated
+        run: |
+          URL='${{ steps.cfg.outputs.url }}'
+          CODE=$(curl -s -o /tmp/rails.json -w '%{http_code}' --max-time 25 "$URL/api/demo/rails")
+          echo "HTTP $CODE"; cat /tmp/rails.json | head -c 400; echo
+          # 404 = DEMO_MODE_ENABLED unset on the service.
+          # 503 = config/demo-rails.json missing from the image.
+          # Both shipped at once in v4.28.0 and produced an empty walkthrough.
+          if [ "$CODE" = "404" ]; then
+            echo "::error::/api/demo/rails 404 — DEMO_MODE_ENABLED is not set on this service"; exit 1
+          fi
+          if [ "$CODE" = "503" ]; then
+            echo "::error::/api/demo/rails 503 — config/demo-rails.json is not in the image"; exit 1
+          fi
+          [ "$CODE" = "200" ] || { echo "::error::unexpected status $CODE"; exit 1; }
+          COUNT=$(python3 -c "import json;print(len(json.load(open('/tmp/rails.json'))['cards']))")
+          echo "cards: $COUNT"
+          [ "$COUNT" -ge 1 ] || { echo "::error::deck served zero cards"; exit 1; }
+
+      - name: Roster route exists (v4.28.0+)
+        run: |
+          URL='${{ steps.cfg.outputs.url }}'
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$URL/api/teaching/roster")
+          echo "HTTP $CODE"
+          # Auth-gated, so 401/403 is the healthy answer. 404 means the route is
+          # absent, i.e. the deployed build predates the fix.
+          [ "$CODE" != "404" ] || { echo "::error::/api/teaching/roster 404 — deployed build predates v4.28.0"; exit 1; }
+
+      - name: Progress degrades instead of 500ing
+        run: |
+          URL='${{ steps.cfg.outputs.url }}'
+          CODE=$(curl -s -o /tmp/prog.json -w '%{http_code}' --max-time 25 "$URL/api/progress/prod-smoke-probe")
+          echo "HTTP $CODE"; head -c 200 /tmp/prog.json; echo
+          # A session id that cannot exist. Before the fix this threw a 500 when
+          # the store was unreachable; the honest answer is an empty shape.
+          [ "$CODE" != "500" ] || { echo "::error::/api/progress 500 — the degradation fix is not deployed"; exit 1; }
+
+      - name: Practice item route exists
+        run: |
+          URL='${{ steps.cfg.outputs.url }}'
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$URL/api/practice/item/la-eigen-trace-det-001")
+          echo "HTTP $CODE"
+          [ "$CODE" != "404" ] || { echo "::error::/api/practice/item 404 — deployed build predates the graded-item work"; exit 1; }
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Production smoke — ${{ steps.cfg.outputs.url }}"
+            echo ""
+            echo "Checks discriminate old build vs new, not just liveness:"
+            echo "- \`/api/demo/rails\` populated proves the flag is set AND config/ is in the image"
+            echo "- \`/api/teaching/roster\` not-404 proves the v4.28.0 route shipped"
+            echo "- \`/api/progress/...\` not-500 proves the degradation fix shipped"
+          } >> "$GITHUB_STEP_SUMMARY"

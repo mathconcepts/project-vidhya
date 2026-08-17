@@ -37,6 +37,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import type {
   SampleCheck,
   SampleIteration,
@@ -64,6 +65,18 @@ const _store = createFlatFileStore<StoreShape>({
   path: STORE_PATH,
   defaultShape: () => ({ sample_checks: [], iterations: [], cross_links: [] }),
 });
+
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('sample-checks', durableCollection<SampleCheck>({
+  collection: 'sample-checks',
+  idOf: (i) => (i as any).id,
+  readLocal: () => _store.read().sample_checks ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), sample_checks: items } as never),
+}));
+  _durable.mirror();
 
 // ============================================================================
 // ID + token generation
@@ -164,6 +177,7 @@ export function createSampleCheck(input: CreateSampleCheckInput): SampleCheck {
   }
 
   _store.write(store);
+  _durable.mirror();
   return sample;
 }
 
@@ -186,6 +200,7 @@ export function closeSampleSuperseded(
   s.closed_reason = `Superseded${superseded_by_sample_id ? ` by ${superseded_by_sample_id}` : ''}.`;
   s.superseded_by_sample_id = superseded_by_sample_id;
   _store.write(store);
+  _durable.mirror();
   return s;
 }
 
@@ -211,6 +226,7 @@ export function closeSampleResolved(sample_id: string, closed_by: string): Sampl
   s.closed_at = new Date().toISOString();
   s.closed_reason = `All ${s.feedback_stats.total} feedback items reached terminal state.`;
   _store.write(store);
+  _durable.mirror();
   return s;
 }
 
@@ -290,6 +306,7 @@ export function refreshAllSampleStats(): void {
     updateStatsInStore(s);
   }
   _store.write(store);
+  _durable.mirror();
 }
 
 // ============================================================================
@@ -320,6 +337,7 @@ export function carryForwardDecision(
   it.carry_forward_decisions.push({ feedback_id, decision, rationale });
 
   _store.write(store);
+  _durable.mirror();
   return it;
 }
 
@@ -361,6 +379,7 @@ export function createCrossExamLink(input: CreateCrossExamLinkInput): CrossExamL
   };
   store.cross_links.push(link);
   _store.write(store);
+  _durable.mirror();
   return link;
 }
 
@@ -386,6 +405,7 @@ export function updateCrossLinkStatus(
     link.target_applied_in_release = applied_in_release;
   }
   _store.write(store);
+  _durable.mirror();
   return link;
 }
 

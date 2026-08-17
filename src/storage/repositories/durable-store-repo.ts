@@ -125,6 +125,144 @@ export function makeDurableStore<T>(spec: DurableCollection<T>): DurableStore<T>
   return getSharedPool() ? new PgDurableStore<T>(spec) : new NullDurableStore<T>(spec.table);
 }
 
+// ---------------------------------------------------------------------------
+// Shared-table collections (migration 043)
+// ---------------------------------------------------------------------------
+
+/**
+ * A collection stored in `durable_records` rather than its own table.
+ *
+ * For the ~17 flat-file stores holding irreplaceable data. They are all read
+ * the same way — load everything for a scope, operate in memory, write back —
+ * and none of them queries across records in SQL. See 043 for the reasoning.
+ */
+export interface SharedCollection<T> {
+  /** Discriminator. Must be stable; changing it orphans existing rows. */
+  collection: string;
+  idOf(item: T): string;
+  /** Per-owner key, where the collection has one (a user or student id). */
+  scopeOf?(item: T): string | null;
+}
+
+export interface SharedStore<T> {
+  /** Replace everything in the collection (optionally within one scope). */
+  mirror(items: T[], scope?: string): Promise<void>;
+  /**
+   * Add or update ONE record, touching nothing else.
+   *
+   * This is why the notebook does not use `mirror`. It logs every chat
+   * question, photo, lesson view and attempt, so an engaged student's history
+   * grows without bound — and rewriting all of it on each interaction gets
+   * slower in exactly the case you most want to work.
+   */
+  put(item: T): Promise<void>;
+  load(scope?: string): Promise<T[] | null>;
+  describe(): string;
+}
+
+class NullSharedStore<T> implements SharedStore<T> {
+  constructor(private name: string) {}
+  async mirror(): Promise<void> {}
+  async put(): Promise<void> {}
+  async load(): Promise<T[] | null> { return null; }
+  describe(): string { return `none (DB-less — ${this.name} lives only on local disk)`; }
+}
+
+class PgSharedStore<T> implements SharedStore<T> {
+  constructor(private spec: SharedCollection<T>) {}
+
+  private row(item: T): [string, string, string | null, string] {
+    return [
+      this.spec.collection,
+      this.spec.idOf(item),
+      this.spec.scopeOf ? this.spec.scopeOf(item) : null,
+      JSON.stringify(item),
+    ];
+  }
+
+  async put(item: T): Promise<void> {
+    const pool = getSharedPool();
+    if (!pool) return;
+    try {
+      await pool.query(
+        `INSERT INTO durable_records (collection, id, scope, record, updated_at)
+         VALUES ($1, $2, $3, $4, now())
+         ON CONFLICT (collection, id) DO UPDATE
+           SET scope = EXCLUDED.scope, record = EXCLUDED.record, updated_at = now()`,
+        this.row(item),
+      );
+    } catch (err) {
+      console.error(`[durable:${this.spec.collection}] put failed (non-fatal):`, (err as Error).message);
+    }
+  }
+
+  async mirror(items: T[], scope?: string): Promise<void> {
+    const pool = getSharedPool();
+    if (!pool) return;
+    const client = await pool.connect().catch(() => null);
+    if (!client) return;
+    try {
+      await client.query('BEGIN');
+      for (const item of items) {
+        await client.query(
+          `INSERT INTO durable_records (collection, id, scope, record, updated_at)
+           VALUES ($1, $2, $3, $4, now())
+           ON CONFLICT (collection, id) DO UPDATE
+             SET scope = EXCLUDED.scope, record = EXCLUDED.record, updated_at = now()`,
+          this.row(item),
+        );
+      }
+      // Deletions must propagate, or the next hydration resurrects a record
+      // someone removed. Scoped when a scope is given, so mirroring one
+      // student cannot wipe another's.
+      const ids = items.map((i) => this.spec.idOf(i));
+      const where = scope === undefined
+        ? 'collection = $1'
+        : 'collection = $1 AND scope IS NOT DISTINCT FROM $2';
+      const params: unknown[] = scope === undefined ? [this.spec.collection] : [this.spec.collection, scope];
+      if (ids.length > 0) {
+        params.push(ids);
+        await client.query(`DELETE FROM durable_records WHERE ${where} AND NOT (id = ANY($${params.length}::text[]))`, params);
+      } else {
+        await client.query(`DELETE FROM durable_records WHERE ${where}`, params);
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error(`[durable:${this.spec.collection}] mirror failed (non-fatal):`, (err as Error).message);
+    } finally {
+      client.release();
+    }
+  }
+
+  async load(scope?: string): Promise<T[] | null> {
+    const pool = getSharedPool();
+    if (!pool) return null;
+    try {
+      const { rows } = scope === undefined
+        ? await pool.query('SELECT record FROM durable_records WHERE collection = $1', [this.spec.collection])
+        : await pool.query(
+            'SELECT record FROM durable_records WHERE collection = $1 AND scope IS NOT DISTINCT FROM $2',
+            [this.spec.collection, scope],
+          );
+      if (rows.length === 0) return null;
+      return rows.map((r: { record: unknown }) =>
+        (typeof r.record === 'string' ? JSON.parse(r.record) : r.record) as T,
+      );
+    } catch (err) {
+      // Null, not [] — an unreachable database must never read as "empty".
+      console.error(`[durable:${this.spec.collection}] load failed:`, (err as Error).message);
+      return null;
+    }
+  }
+
+  describe(): string { return `postgres:durable_records[${this.spec.collection}]`; }
+}
+
+export function makeSharedStore<T>(spec: SharedCollection<T>): SharedStore<T> {
+  return getSharedPool() ? new PgSharedStore<T>(spec) : new NullSharedStore<T>(spec.collection);
+}
+
 /**
  * Restore a local collection from its mirror, but never over live data.
  *

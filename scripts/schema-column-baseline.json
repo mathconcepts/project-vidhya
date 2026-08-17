@@ -28,6 +28,7 @@
     "chunk_index",
     "cohort_key",
     "collected_at",
+    "collection",
     "completed",
     "completed_at",
     "completion_rate",
@@ -224,6 +225,7 @@
     "run_id",
     "scaffold",
     "scheduled_at",
+    "scope",
     "score",
     "sections",
     "selected_concept",
@@ -319,14 +321,16 @@
     "year"
   ],
   "$reviewed": {
+    "collection": "043_durable_records — discriminator naming WHICH flat-file store a row came from ('retention-items', 'exams', 'teacher-announcements'). A table-name substitute, not an attribute of anybody. Structural.",
     "errored": "040_pedagogy_shadow_log — diagnostic flag on the Tier 4 shadow log, distinguishing \"the judge could not answer\" from \"the content scored zero\". Not student-scoped: the row is keyed by curriculum unit, carries no student or session id, and the table is explicitly truncatable.",
-    "org_id": "041_auth_user_records — tenant id, already present throughout the schema. Not per-student.",
     "google_sub": "041_auth_user_records — Google subject claim. Personal identity data, but NOT new collection: it is already in .data/users.json on every deploy today. This migration makes existing data durable, it does not gather anything more.",
     "is_owner": "041_auth_user_records — single owner flag, replacing the file-level owner_id. A role bit, not a behavioural attribute.",
-    "record": "041_auth_user_records — the whole User object as JSONB. A blob is a HOLE in a column-name gate: fields added inside it get none of this scrutiny. Closed by the User-field allowlist in src/__tests__/unit/auth/user-store-durability.test.ts, which fails when User grows a field nobody reviewed.",
-    "priority": "042_durable_content_stores — feedback triage level (low/medium/high). Operator workflow metadata, set by a reviewer, not observed from a student.",
-    "submitted_by": "042_durable_content_stores — user_id of whoever filed a feedback item. This DOES link a person to what they reported, and it is the most sensitive column in 042. Kept because feedback triage is a conversation: an operator has to be able to follow up, and duplicate-detection needs to know two reports came from different people. NOT new collection — the field already exists in .data/feedback.json on every deploy. Promoted to a column only so listFeedback can filter on it.",
     "mapping_id": "042_durable_content_stores — which curriculum-to-exam mapping produced a unit. Content identifier, no person in it.",
+    "org_id": "041_auth_user_records — tenant id, already present throughout the schema. Not per-student.",
+    "priority": "042_durable_content_stores — feedback triage level (low/medium/high). Operator workflow metadata, set by a reviewer, not observed from a student.",
+    "record": "041_auth_user_records — the whole User object as JSONB. A blob is a HOLE in a column-name gate: fields added inside it get none of this scrutiny. Closed by the User-field allowlist in src/__tests__/unit/auth/user-store-durability.test.ts, which fails when User grows a field nobody reviewed.",
+    "scope": "043_durable_records — per-owner partition key, usually a student_id or user_id, so that mirroring one student's records cannot delete another's. This DOES associate rows with a person, and it is the sensitive column in 043. Kept because without it every write would have to rewrite the whole cohort's data, which both leaks more and scales worse. It is an identifier for partitioning only — nothing reads it as a signal about the student, and the surveillance invariants still forbid src/api/* and the frontend from importing the personalization scorers that would. The records themselves are the same objects already sitting in .data today: this migration makes existing data survive a restart, it does not collect anything new.",
+    "submitted_by": "042_durable_content_stores — user_id of whoever filed a feedback item. This DOES link a person to what they reported, and it is the most sensitive column in 042. Kept because feedback triage is a conversation: an operator has to be able to follow up, and duplicate-detection needs to know two reports came from different people. NOT new collection — the field already exists in .data/feedback.json on every deploy. Promoted to a column only so listFeedback can filter on it.",
     "unit_id": "042_durable_content_stores — which content unit a generated body belongs to. Content identifier, no person in it."
   }
 }

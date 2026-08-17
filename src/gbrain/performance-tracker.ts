@@ -22,6 +22,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 
 // ============================================================================
 // Types
@@ -45,6 +46,30 @@ const _store = createFlatFileStore<StoreShape>({
   path: '.data/gbrain-trajectory.json',
   defaultShape: () => ({ points: [] }),
 });
+
+/**
+ * Durable mirror (migration 043).
+ *
+ * This is the only record that mastery moved at all. Everything else stores
+ * where a student is now; the trajectory is what says they got there — which
+ * is what plateau/breakthrough/decline detection reads, and what a parent
+ * asking "is this working?" is actually asking for. A wiped `.data` resets
+ * every student to 'cold-start' with no way to recover the history.
+ *
+ * Mirrored per student rather than wholesale: one attempt writes one point,
+ * and rewriting the entire cohort's trajectory each time gets slower exactly
+ * as the cohort grows.
+ */
+const _durable = registerDurable('mastery-trajectory', durableCollection<MasteryPoint>({
+  collection: 'mastery-trajectory',
+  // The dedup window replaces a point with one carrying a new `at`, so the
+  // timestamp belongs in the key — a scoped mirror then deletes the row the
+  // replacement superseded.
+  idOf: (p) => `${p.student_id}:${p.concept_id}:${p.at}`,
+  scopeOf: (p) => p.student_id,
+  readLocal: () => _store.read().points,
+  writeLocal: (points) => _store.write({ points }),
+}));
 
 export type TrajectoryPattern =
   | 'plateau'
@@ -99,6 +124,11 @@ export function logMasteryPoint(
     else s.points.push(point);
     return s;
   });
+
+  _durable.mirrorScope(
+    student_id,
+    _store.read().points.filter(p => p.student_id === student_id),
+  );
 }
 
 // ============================================================================

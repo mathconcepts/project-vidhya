@@ -16,6 +16,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import type {
   Exam,
   ExamCreateSeed,
@@ -34,6 +35,37 @@ const store = createFlatFileStore<ExamRegistry>({
   path: '.data/exams.json',
   defaultShape: () => ({ version: 1, exams: {} }),
 });
+
+/**
+ * Durable mirror (migration 043).
+ *
+ * Exams here are admin-authored: syllabus, local data uploads, provenance for
+ * every field. Nothing regenerates them, and `.data` does not survive the host
+ * sleeping — so an operator's afternoon of exam setup was one restart from
+ * gone.
+ *
+ * The registry is a map keyed by exam id; `Exam.id` already carries that key,
+ * so the two projections below are lossless in both directions.
+ */
+const _durable = registerDurable('exams', durableCollection<Exam>({
+  collection: 'exams',
+  idOf: (e) => e.id,
+  readLocal: () => Object.values(store.read().exams),
+  writeLocal: (exams) => store.write({
+    version: 1,
+    exams: Object.fromEntries(exams.map((e) => [e.id, e])),
+  }),
+}));
+
+/**
+ * Every mutation goes through here so no write site can forget the mirror.
+ * The alternative — a `_durable.mirror()` after each `store.update` — is one
+ * missed call away from a store that looks durable and is not.
+ */
+function mutate(fn: (state: ExamRegistry) => void): void {
+  store.update(fn);
+  _durable.mirror();
+}
 
 // ============================================================================
 // Unique ID generation
@@ -147,7 +179,7 @@ export function createExam(seed: ExamCreateSeed, admin_user_id: string): Exam {
 
   exam.completeness = computeCompleteness(exam);
 
-  store.update(state => { state.exams[id] = exam; });
+  mutate(state => { state.exams[id] = exam; });
   return exam;
 }
 
@@ -181,7 +213,7 @@ export function updateExam(params: {
   const nowIso = new Date().toISOString();
   let updated: Exam | null = null;
 
-  store.update(state => {
+  mutate(state => {
     const current = state.exams[params.id];
     if (!current) return;
 
@@ -220,7 +252,7 @@ export function updateExam(params: {
 
 export function deleteExam(id: string): boolean {
   let existed = false;
-  store.update(state => {
+  mutate(state => {
     if (state.exams[id]) {
       delete state.exams[id];
       existed = true;
@@ -266,7 +298,7 @@ export function addLocalData(params: {
   };
 
   let ok = false;
-  store.update(state => {
+  mutate(state => {
     const exam = state.exams[params.exam_id];
     if (!exam) return;
     exam.local_data.push(entry);
@@ -279,7 +311,7 @@ export function addLocalData(params: {
 
 export function removeLocalData(exam_id: string, entry_id: string): boolean {
   let removed = false;
-  store.update(state => {
+  mutate(state => {
     const exam = state.exams[exam_id];
     if (!exam) return;
     const before = exam.local_data.length;

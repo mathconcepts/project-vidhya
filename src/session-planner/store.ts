@@ -19,6 +19,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import type {
   SessionPlan, PlanExecution, ActionOutcome,
 } from './types';
@@ -33,6 +34,19 @@ const _store = createFlatFileStore<StoreShape>({
   defaultShape: () => ({ plans: [] }),
 });
 
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('session-plans', durableCollection<SessionPlan>({
+  collection: 'session-plans',
+  idOf: (i) => i.id,
+  scopeOf: (i) => (i as any).student_id ?? null,
+  readLocal: () => _store.read().plans ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), plans: items } as never),
+}));
+  _durable.mirror();
+
 // Soft cap: keep last N plans per student. Older plans are pruned
 // lazily on writes so the store doesn't grow unbounded across months.
 const MAX_PLANS_PER_STUDENT = 50;
@@ -41,6 +55,7 @@ export function savePlan(plan: SessionPlan): void {
   const store = _store.read();
   store.plans.push(plan);
   _store.write({ plans: prunePlans(store.plans) });
+  _durable.mirror();
 }
 
 function prunePlans(plans: SessionPlan[]): SessionPlan[] {
@@ -110,6 +125,7 @@ export function recordExecution(
   const updated: SessionPlan = { ...plan, execution };
   store.plans[idx] = updated;
   _store.write({ plans: prunePlans(store.plans) });
+  _durable.mirror();
   return updated;
 }
 
@@ -263,4 +279,5 @@ export function projectSrStatsFromExecutions(
 /** Test-only reset. */
 export function _resetPlanStore(): void {
   _store.write({ plans: [] });
+  _durable.mirror();
 }

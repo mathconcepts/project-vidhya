@@ -967,6 +967,47 @@ async function main() {
         console.error(`[server] ${label} hydration error (non-fatal):`, (err as Error).message);
       }
     }
+
+    // And the rest of the stores that hold something nobody can recompute —
+    // review schedules, mastery trajectories, exams, teacher work (migration
+    // 043). Each registers itself when its module loads, so they have to be
+    // imported before the registry can be walked; importing them here rather
+    // than at the top of the file keeps boot lazy for the DB-less path.
+    try {
+      const { hydrateAllDurable } = await import('./storage/durable-flat-file');
+      await Promise.all([
+        import('./gbrain/retention-scheduler'),
+        import('./gbrain/performance-tracker'),
+        import('./session-planner/store'),
+        import('./session-planner/exam-profile-store'),
+        import('./session-planner/practice-session-log'),
+        import('./session-planner/template-store'),
+        import('./attention/store'),
+        import('./sample-check/store'),
+        import('./course/promoter'),
+        import('./marketing/blog-store'),
+        import('./marketing/campaign-store'),
+        import('./exams/exam-store'),
+        import('./exams/exam-group-store'),
+        import('./syllabus-bridge/feedback-store'),
+        import('./api/teaching-routes'),
+      ]);
+
+      const results = await hydrateAllDurable();
+      const restored = results.filter((r) => r.hydrated);
+      // One line for the ordinary case, detail only where something moved —
+      // a boot log that prints sixteen "nothing to do" lines gets skimmed,
+      // and then a real restore goes unnoticed.
+      for (const r of restored) {
+        console.log(`[server] Restored ${r.count} ${r.name} record(s) from the durable store`);
+      }
+      console.log(
+        `[server] Durable stores: ${restored.length}/${results.length} restored, ` +
+          `${results.length - restored.length} already had local data or had nothing to restore`,
+      );
+    } catch (err) {
+      console.error('[server] Durable store hydration error (non-fatal):', (err as Error).message);
+    }
   }
 
   // ── Embedder (provider-agnostic — Gemini default, OpenAI fallback) ─────

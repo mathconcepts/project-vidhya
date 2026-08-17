@@ -33,6 +33,7 @@
 import path from 'path';
 import fs from 'fs';
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { makeSharedStore } from '../storage/repositories/durable-store-repo';
 import { CONCEPT_MAP, ALL_CONCEPTS } from '../constants/concept-graph';
 
 // ============================================================================
@@ -96,6 +97,72 @@ function createStoreFor(user_id: string) {
       manual_tags: {},
     }),
   });
+}
+
+// ============================================================================
+// Durable mirror (migration 043)
+// ============================================================================
+//
+// This file's own header calls the notebook "THE student's record —
+// everything they've thought about, asked about, or practiced". It lived at
+// .data/notebooks/{user_id}.json, and Render's free tier wipes .data whenever
+// the service sleeps. A student's entire learning history had a lifespan
+// measured in hours of inactivity.
+//
+// Row per ENTRY, not per notebook. Entries are appended on every chat
+// question, photo, lesson view and attempt, so an engaged student's history
+// grows without bound; mirroring the whole notebook per interaction would get
+// slower in exactly the case you most want to work. One insert per entry
+// instead.
+
+const _entries = makeSharedStore<NotebookEntry>({
+  collection: 'notebook-entries',
+  idOf: (e) => e.id,
+  scopeOf: (e) => e.user_id,
+});
+
+/** Fire-and-forget. Logging an interaction must never fail on the mirror. */
+function mirrorEntry(entry: NotebookEntry): void {
+  void Promise.resolve().then(() => _entries.put(entry)).catch(() => {});
+}
+
+/** Re-mirror one student's whole notebook — after an edit or a deletion. */
+function mirrorNotebook(user_id: string): void {
+  void Promise.resolve()
+    .then(() => _entries.mirror(createStoreFor(user_id).read().entries, user_id))
+    .catch(() => {});
+}
+
+/**
+ * Restore one student's notebook when their file is gone.
+ *
+ * Per-student rather than global: notebooks are separate files, so there is
+ * no single "is it empty" question to ask at boot. Called lazily the first
+ * time a student's notebook is read, which is the only moment we know which
+ * student to restore.
+ */
+export async function hydrateNotebook(user_id: string): Promise<{
+  hydrated: boolean; count: number; reason: string;
+}> {
+  const store = createStoreFor(user_id);
+  const local = store.read();
+  if (local.entries.length > 0) {
+    return { hydrated: false, count: local.entries.length, reason: 'local notebook already has entries' };
+  }
+  const durable = await _entries.load(user_id);
+  if (!durable) return { hydrated: false, count: 0, reason: 'no durable entries to restore from' };
+  if (durable.length === 0) return { hydrated: false, count: 0, reason: 'durable store is empty' };
+
+  store.write({
+    ...local,
+    entries: durable.sort((a, b) => a.created_at.localeCompare(b.created_at)),
+  });
+  return { hydrated: true, count: durable.length, reason: 'restored from durable store' };
+}
+
+/** Where a notebook's durable copy lives, for diagnostics. */
+export function describeNotebookStore(): string {
+  return _entries.describe();
 }
 
 // ============================================================================
@@ -213,6 +280,7 @@ export function addEntry(params: {
     }
   });
 
+  mirrorEntry(entry);
   return entry;
 }
 
@@ -233,6 +301,7 @@ export function overrideConceptTag(params: {
     entry.content.topic = (CONCEPT_MAP.get(params.concept_id) as any)?.topic;
     state.manual_tags[params.entry_id] = params.concept_id;
   });
+  mirrorNotebook(params.user_id);
   return { ok: true };
 }
 
@@ -241,6 +310,8 @@ export function deleteEntry(user_id: string, entry_id: string): { ok: boolean } 
     state.entries = state.entries.filter(e => e.id !== entry_id);
     delete state.manual_tags[entry_id];
   });
+  // Whole-notebook, not put(): a deletion has to propagate as a removal.
+  mirrorNotebook(user_id);
   return { ok: true };
 }
 

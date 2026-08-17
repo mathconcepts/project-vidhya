@@ -31,6 +31,7 @@ import {
   listPushedReviews,
 } from '../auth/user-store';
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import {
   summarizeCohort,
@@ -170,6 +171,64 @@ const briefSnapshotStore = createFlatFileStore<BriefSnapshotStore>({
   defaultShape: () => ({ version: 1, snapshots: [] }),
 });
 
+// ============================================================================
+// Durable mirrors (migration 043)
+//
+// All three of these hold teacher work: what a teacher told their class, what
+// a teacher flagged as wrong, and the weekly cohort readings the brief diffs
+// against. None of it regenerates, and `.data` does not survive the host
+// sleeping — so an announcement posted on Friday was gone by Monday, and the
+// brief's week-over-week delta silently restarted from nothing.
+// ============================================================================
+
+/**
+ * The announcement file keys by teacher and stores no teacher id inside the
+ * record, so the durable row carries it — otherwise `idOf` would have nothing
+ * to key on and restoring could not rebuild the map.
+ */
+interface DurableAnnouncement extends AnnouncementRecord { teacher_id: string; }
+
+const _durableAnnouncements = registerDurable(
+  'teacher-announcements',
+  durableCollection<DurableAnnouncement>({
+    collection: 'teacher-announcements',
+    idOf: (a) => a.teacher_id,
+    scopeOf: (a) => a.teacher_id,
+    readLocal: () =>
+      Object.entries(announcementStore.read().by_teacher).map(([teacher_id, rec]) => ({
+        teacher_id, ...rec,
+      })),
+    writeLocal: (rows) =>
+      announcementStore.write({
+        version: 1,
+        by_teacher: Object.fromEntries(
+          rows.map(({ teacher_id, ...rec }) => [teacher_id, rec]),
+        ),
+      }),
+  }),
+);
+
+const _durableContentReview = registerDurable(
+  'content-review',
+  durableCollection<ContentReviewItem>({
+    collection: 'content-review',
+    idOf: (i) => i.id,
+    readLocal: () => contentReviewStore.read(),
+    writeLocal: (items) => contentReviewStore.write(items),
+  }),
+);
+
+const _durableBriefSnapshots = registerDurable(
+  'teacher-brief-snapshots',
+  durableCollection<BriefSnapshot>({
+    collection: 'teacher-brief-snapshots',
+    idOf: (s) => `${s.teacher_id}:${s.iso_week}:${s.cohort_fingerprint}`,
+    scopeOf: (s) => s.teacher_id,
+    readLocal: () => briefSnapshotStore.read().snapshots,
+    writeLocal: (snapshots) => briefSnapshotStore.write({ version: 1, snapshots }),
+  }),
+);
+
 function isoWeekOf(date: Date): string {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dayNum = d.getUTCDay() || 7;
@@ -292,7 +351,13 @@ async function handleWeeklyBrief(req: ParsedRequest, res: ServerResponse): Promi
     .slice(0, 5);
 
   // Save current week's snapshot for next week's delta. Cap at 50.
-  briefSnapshotStore.write(prev => {
+  //
+  // `update`, not `write`. This was `write(prev => ...)`, but write() takes a
+  // state rather than a mutator, so it was serialising a function —
+  // JSON.stringify of one is undefined, and writeFileSync throws on that.
+  // Every request to this endpoint failed on this line, and no snapshot was
+  // ever stored, which is why the week-over-week delta never appeared.
+  briefSnapshotStore.update(prev => {
     const next = [...prev.snapshots];
     const existingIdx = next.findIndex(
       s =>
@@ -309,8 +374,9 @@ async function handleWeeklyBrief(req: ParsedRequest, res: ServerResponse): Promi
     };
     if (existingIdx >= 0) next[existingIdx] = snap;
     else next.push(snap);
-    return { ...prev, snapshots: next.slice(-50) };
+    prev.snapshots = next.slice(-50);
   });
+  _durableBriefSnapshots.mirror();
 
   // Compose the one-line opening
   const deltaPct = Math.round(delta * 100);
@@ -561,6 +627,7 @@ async function handlePostAnnouncement(req: ParsedRequest, res: ServerResponse): 
     posted_at: new Date().toISOString(),
   };
   announcementStore.write(state);
+  _durableAnnouncements.mirror();
 
   sendJSON(res, { ok: true });
 }
@@ -714,6 +781,7 @@ async function handleApproveContentReview(req: ParsedRequest, res: ServerRespons
     reviewed_at: new Date().toISOString(),
   };
   contentReviewStore.write(items);
+  _durableContentReview.mirror();
   sendJSON(res, { ok: true, item: items[idx] });
 }
 
@@ -735,6 +803,7 @@ async function handleRejectContentReview(req: ParsedRequest, res: ServerResponse
     reviewed_at: new Date().toISOString(),
   };
   contentReviewStore.write(items);
+  _durableContentReview.mirror();
   sendJSON(res, { ok: true, item: items[idx] });
 }
 

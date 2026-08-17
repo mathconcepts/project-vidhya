@@ -27,6 +27,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 
 export interface PracticeSessionEntry {
   student_id: string;
@@ -50,6 +51,19 @@ const _store = createFlatFileStore<StoreShape>({
   defaultShape: () => ({ entries: [] }),
 });
 
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('practice-sessions', durableCollection<PracticeSessionEntry>({
+  collection: 'practice-sessions',
+  idOf: (i) => (i as any).id,
+  scopeOf: (i) => (i as any).student_id ?? null,
+  readLocal: () => _store.read().entries ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), entries: items } as never),
+}));
+  _durable.mirror();
+
 const PRUNE_AFTER_DAYS = 30;
 
 export function logPracticeSession(entry: PracticeSessionEntry): void {
@@ -63,6 +77,7 @@ export function logPracticeSession(entry: PracticeSessionEntry): void {
     return !isNaN(t) && t >= cutoff;
   });
   _store.write({ entries: kept });
+  _durable.mirror();
 }
 
 export function sumTrailingPracticeMinutes(
@@ -102,6 +117,7 @@ export function countTrailingSessions(
 /** Test-only reset. */
 export function _resetPracticeSessionLog(): void {
   _store.write({ entries: [] });
+  _durable.mirror();
 }
 
 /**

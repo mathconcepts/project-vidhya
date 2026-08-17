@@ -15,6 +15,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import type { ContentFeedback, FeedbackSummary, FeedbackRating } from './types';
 import { getGeneratedContent, saveGeneratedContent } from './store';
 
@@ -24,6 +25,24 @@ const _feedback = createFlatFileStore<StoreShape>({
   path: '.data/syllabus-bridge-feedback.json',
   defaultShape: () => ({ entries: [] }),
 });
+
+/**
+ * Durable mirror (migration 043).
+ *
+ * The second student-feedback store — separate from `src/feedback/`, which
+ * migration 042 covered. This one is the per-content rating that decides
+ * whether a piece gets regenerated, so losing it silently un-flags content
+ * students already told us was wrong, and the regen never happens.
+ *
+ * Append-only in practice, so one row per rating rather than a full rewrite.
+ */
+const _durable = registerDurable('bridge-content-feedback', durableCollection<ContentFeedback>({
+  collection: 'bridge-content-feedback',
+  idOf: (e) => e.feedback_id,
+  scopeOf: (e) => e.content_id,
+  readLocal: () => _feedback.read().entries,
+  writeLocal: (entries) => _feedback.write({ entries }),
+}));
 
 const ALL_RATINGS: FeedbackRating[] = [
   'helpful', 'not-helpful', 'wrong', 'unclear', 'too-easy', 'too-hard',
@@ -36,6 +55,7 @@ export function saveFeedback(entry: ContentFeedback): void {
     s.entries.push(entry);
     return s;
   });
+  _durable.put(entry);
   // After saving, re-evaluate whether the parent content is now flagged.
   const summary = computeSummary(entry.content_id);
   if (summary.needs_regen) {

@@ -89,6 +89,18 @@ interface FeedbackOverview {
 // Constants
 // ============================================================================
 
+/**
+ * A batch is worth polling only while it can still change.
+ *
+ * Deliberately an allowlist of the two IN-FLIGHT states, not a denylist of
+ * terminal ones. `src/syllabus-bridge/types.ts` owns the status union and it
+ * has grown twice; each time it grew, a denylist here would have started
+ * polling a finished batch every two seconds forever.
+ */
+function isBatchInFlight(status: string): boolean {
+  return status === 'queued' || status === 'running';
+}
+
 const STEPS = [
   { id: 1, label: 'Pick mapping',      icon: BookOpen },
   { id: 2, label: 'Review gap',        icon: AlertTriangle },
@@ -175,14 +187,18 @@ export default function SyllabusBridgePage() {
 
   // ---- Poll active batch every 2s while running ----
   useEffect(() => {
-    if (!activeBatch || activeBatch.status === 'completed' || activeBatch.status === 'failed') return;
+    // Poll only while the batch can still change. Checking for the two
+    // IN-FLIGHT states rather than enumerating terminal ones means a new
+    // terminal status can never reintroduce an endless poll — which is what
+    // 'cancelled' and 'aborted' did while this read `!== completed && !== failed`.
+    if (!activeBatch || !isBatchInFlight(activeBatch.status)) return;
     const t = setInterval(async () => {
       try {
         const r = await authFetch(`/api/syllabus-bridge/batches/${activeBatch.batch_id}`);
         if (r.ok) {
           const { batch } = await r.json();
           setActiveBatch(batch);
-          if (batch.status === 'completed' || batch.status === 'failed') {
+          if (!isBatchInFlight(batch.status)) {
             if (selectedMappingId) refreshAll(selectedMappingId);
           }
         }

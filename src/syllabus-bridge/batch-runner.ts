@@ -17,6 +17,43 @@ import type {
 } from './types';
 import { saveBatch, saveGeneratedContent } from './store';
 import { getMapping, getConcept } from './registry';
+import { CostMeter, RunBudgetExceeded } from '../generation/cost-meter';
+
+/**
+ * Ceiling for one batch, in USD.
+ *
+ * The regenerate-flagged endpoint resubmits every unit students have marked
+ * wrong three times, so batch size is set by accumulated feedback rather
+ * than by an operator choosing a number. Before this existed the loop had no
+ * ceiling at all — it accumulated `total_cost_estimate_usd` and never read it.
+ * That was survivable only because generation was broken and every unit cost
+ * exactly zero.
+ */
+export const DEFAULT_BATCH_CAP_USD = Number(process.env.VIDHYA_BRIDGE_BATCH_CAP_USD ?? 2);
+
+/** Worst-case spend for one unit, used for the pre-call check. */
+function estimateUnitCost(unit: ContentUnit): number {
+  const maxTokens = Math.min(2000, unit.estimated_tokens * 2);
+  // Priced against the most expensive provider the router might pick, so the
+  // estimate is a ceiling rather than a hopeful average.
+  return estimateCost('anthropic', maxTokens);
+}
+
+/**
+ * Record actual spend for accounting.
+ *
+ * `CostMeter.add()` throws once the cap is breached. Here that throw would be
+ * wrong: the pre-call check already decided this unit was affordable, and the
+ * unit has already succeeded. Letting it propagate would mark completed work
+ * as failed. The cap is enforced before the call; this call only accounts.
+ */
+function recordSpend(meter: CostMeter, generated: GeneratedContent): void {
+  try {
+    meter.add({ model: generated.model ?? 'unknown', flat_usd: generated.cost_usd ?? 0 });
+  } catch (err) {
+    if (!(err instanceof RunBudgetExceeded)) throw err;
+  }
+}
 
 // ============================================================================
 // Public entry point
@@ -28,7 +65,11 @@ import { getMapping, getConcept } from './registry';
  * We deliberately do NOT throw on individual failures — one bad unit
  * shouldn't poison the whole batch. Errors are recorded per-result.
  */
-export async function runBatch(batch: BatchRequest, planUnits: ContentUnit[]): Promise<void> {
+export async function runBatch(
+  batch: BatchRequest,
+  planUnits: ContentUnit[],
+  opts: { maxCostUsd?: number; llm?: LLMDeps } = {},
+): Promise<void> {
   const mapping = getMapping(batch.mapping_id);
   if (!mapping) {
     batch.status = 'failed';
@@ -38,12 +79,35 @@ export async function runBatch(batch: BatchRequest, planUnits: ContentUnit[]): P
     return;
   }
 
+  const cap = opts.maxCostUsd ?? DEFAULT_BATCH_CAP_USD;
+  const meter = new CostMeter({ max_cost_usd: cap });
+
   batch.status = 'running';
   batch.started_at = new Date().toISOString();
   saveBatch(batch);
 
   for (const unit of planUnits) {
     if (!batch.unit_ids.includes(unit.unit_id)) continue;
+
+    // ── The cap is enforced HERE, before the call, and outside the try ──
+    //
+    // Not by letting CostMeter.add() throw. A RunBudgetExceeded raised
+    // inside generateUnit would have to survive two catches to stop
+    // anything: the `.catch(() => null)` on tryRealLLM, and the per-unit
+    // catch below that marks one unit failed and continues the loop. It
+    // survives neither, so a throw-based cap would spend the whole batch
+    // and report nothing unusual.
+    //
+    // Refusing to make the call needs no exception to survive anything.
+    if (estimateUnitCost(unit) > meter.remaining()) {
+      batch.status = 'aborted';
+      batch.error =
+        `cost cap reached: $${meter.totalUsd().toFixed(4)} of $${cap.toFixed(2)} spent, ` +
+        `next unit needs ~$${estimateUnitCost(unit).toFixed(4)}`;
+      batch.completed_at = new Date().toISOString();
+      saveBatch(batch);
+      return;
+    }
 
     // Find or create a result row for this unit
     let result = batch.results.find(r => r.unit_id === unit.unit_id);
@@ -53,7 +117,8 @@ export async function runBatch(batch: BatchRequest, planUnits: ContentUnit[]): P
     }
 
     try {
-      const generated = await generateUnit(unit, mapping, batch.for_student_id);
+      const generated = await generateUnit(unit, mapping, batch.for_student_id, opts.llm);
+      recordSpend(meter, generated);
       saveGeneratedContent(generated);
 
       result.status = 'success';
@@ -87,6 +152,7 @@ async function generateUnit(
   unit: ContentUnit,
   mapping: BridgeMapping,
   for_student_id?: string,
+  llm?: LLMDeps,
 ): Promise<GeneratedContent> {
   // Look up the mapping entry + the underlying curriculum concepts
   const entry = mapping.entries.find(e => e.id === unit.mapping_entry_id);
@@ -110,8 +176,11 @@ async function generateUnit(
     });
   }
 
-  // Try real LLM first; fall back to mock on any error
-  const llmResult = await tryRealLLM(prompt, unit).catch(() => null);
+  // Try real LLM first; fall back to mock on any error. The mock body is
+  // never served — syllabus-bridge-routes.ts refuses to hand out a unit whose
+  // source is 'mock'. It exists so a failed generation is recorded and
+  // retryable rather than lost.
+  const llmResult = await tryRealLLM(prompt, unit, llm).catch(() => null);
   const final = llmResult ?? generateMock(unit, entry, conceptDetails);
 
   return {
@@ -204,39 +273,91 @@ function buildTitle(
 // Real LLM (graceful failure to mock)
 // ============================================================================
 
-async function tryRealLLM(prompt: string, unit: ContentUnit): Promise<{
+/**
+ * Model this pipeline generates with. Must be an id `config/providers.yaml`
+ * declares — `resolveProviderForModel` does a literal string match, so a
+ * near-miss id throws instead of falling back.
+ */
+export const BRIDGE_MODEL_ID = 'claude-sonnet-4-5';
+
+/** Injected for tests. Production passes nothing and the real client is used. */
+export interface LLMDeps {
+  generate(prompt: string, maxTokens: number): Promise<{
+    text: string; model: string; tokens_used: number;
+  } | null>;
+}
+
+/**
+ * Call the real model.
+ *
+ * ── This used to be structurally dead ───────────────────────────────────
+ *
+ * It built the client as `new LLMClient({})`. The constructor iterates
+ * `Object.entries(this.config.providers || {})` to create adapters, so an
+ * empty config created ZERO of them; `generate()` then found no adapter for
+ * any route and threw, every time, and the catch below turned that into a
+ * mock body. Adding an API key did not help, because the key was never the
+ * thing that was missing.
+ *
+ * It also passed `provider`, which `generate()` never reads — routing is by
+ * `model` / `taskType`. `kag-concept-generator.ts` has always called this
+ * correctly; this now matches it.
+ */
+async function tryRealLLM(
+  prompt: string,
+  unit: ContentUnit,
+  deps?: LLMDeps,
+): Promise<{
   body: string; source: 'gemini' | 'anthropic' | 'openai'; model: string;
   tokens_used: number; cost_usd: number;
 } | null> {
-  // Detect any available provider key. If none, skip real LLM.
+  const maxTokens = Math.min(2000, unit.estimated_tokens * 2);
+
+  // Which provider actually served the call is decided by the router, not
+  // here. This only decides whether it is worth trying at all.
   const hasGemini    = !!process.env.GEMINI_API_KEY;
   const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
   const hasOpenAI    = !!process.env.OPENAI_API_KEY;
-  if (!hasGemini && !hasAnthropic && !hasOpenAI) return null;
+  if (!deps && !hasGemini && !hasAnthropic && !hasOpenAI) return null;
 
   try {
-    const { LLMClient } = await import('../llm/index');
-    const client: any = new LLMClient({});
+    let out: { text: string; model: string; tokens_used: number } | null;
+
+    if (deps) {
+      out = await deps.generate(prompt, maxTokens);
+    } else {
+      const { LLMClient } = await import('../llm/index');
+      const { loadLlmConfig } = await import('../llm/registry');
+      // loadLlmConfig() reads config/providers.yaml and returns a populated
+      // provider set, which is what makes adapters exist.
+      const client: any = new LLMClient(loadLlmConfig());
+      const resp: any = await client.generate({
+        messages: [{ role: 'user', content: prompt }],
+        taskType: 'content-generation',
+        model: BRIDGE_MODEL_ID,
+        maxTokens,
+        maxRetries: 0,
+      });
+      const text = (resp?.content ?? resp?.text ?? '').trim();
+      out = text
+        ? {
+            text,
+            model: resp?.servedModel ?? resp?.model ?? BRIDGE_MODEL_ID,
+            tokens_used:
+              resp?.usage?.outputTokens ?? resp?.tokensUsed ?? Math.ceil(text.length / 4),
+          }
+        : null;
+    }
+
+    if (!out?.text) return null;
     const provider: 'gemini' | 'anthropic' | 'openai' =
-      hasGemini ? 'gemini' : hasAnthropic ? 'anthropic' : 'openai';
-
-    const resp: any = await client.generate({
-      provider,
-      prompt,
-      maxTokens: Math.min(2000, unit.estimated_tokens * 2),
-    });
-
-    const body = typeof resp === 'string' ? resp : (resp?.text ?? resp?.content ?? '');
-    if (!body) return null;
-    const tokens = typeof resp === 'string'
-      ? Math.ceil(body.length / 4)
-      : (resp?.tokensUsed ?? Math.ceil(body.length / 4));
+      hasAnthropic ? 'anthropic' : hasGemini ? 'gemini' : 'openai';
     return {
-      body,
+      body: out.text,
       source: provider,
-      model: resp?.model ?? provider,
-      tokens_used: tokens,
-      cost_usd: estimateCost(provider, tokens),
+      model: out.model,
+      tokens_used: out.tokens_used,
+      cost_usd: estimateCost(provider, out.tokens_used),
     };
   } catch {
     return null; // fall through to mock

@@ -284,18 +284,55 @@ async function handleGetBatch(req: ParsedRequest, res: ServerResponse) {
 
 // ----- Content -----
 
+/**
+ * A unit whose generation fell back to the mock body.
+ *
+ * `generateMock` writes readable prose — "1. Set up the equation. 2. Apply
+ * the standard formula." with `_[intuitive analogy]_` placeholders — and
+ * tags it `source: 'mock'`. Nothing read that tag, so placeholder bodies went
+ * out through the same path as real ones and rendered to students as if they
+ * were lessons. The italic "this is a mock body" line inside the text was the
+ * only signal, and it reads as a rendering bug rather than as an absence.
+ *
+ * Mock rows are kept rather than deleted: they record that a unit was
+ * attempted and failed, which is what makes it retryable.
+ */
+export function isServable(c: { source?: string }): boolean {
+  return c.source !== 'mock';
+}
+
+/** What the client gets instead of a placeholder body. */
+function notGeneratedPayload(c: { unit_id: string; unit_type?: string }) {
+  return {
+    unit_id: c.unit_id,
+    unit_type: c.unit_type,
+    generated: false,
+    reason: 'generation has not produced real content for this unit yet',
+  };
+}
+
 async function handleListContentForMapping(req: ParsedRequest, res: ServerResponse) {
   const { id } = req.params;
   const m = getMapping(id);
   if (!m) return sendError(res, 404, `Mapping '${id}' not found`);
-  const items = listGeneratedContentForMapping(id);
-  sendJSON(res, { mapping_id: id, content: items });
+  const all = listGeneratedContentForMapping(id);
+  const items = all.filter(isServable);
+  // Report the ungenerated ones as an explicit, countable absence rather than
+  // omitting them silently — an operator needs to see that 6 of 9 units have
+  // no real content, not a list that looks complete at 3.
+  const pending = all.filter((c) => !isServable(c)).map(notGeneratedPayload);
+  sendJSON(res, { mapping_id: id, content: items, pending_generation: pending });
 }
 
 async function handleGetContent(req: ParsedRequest, res: ServerResponse) {
   const { id } = req.params;
   const c = getGeneratedContent(id);
   if (!c) return sendError(res, 404, `Content '${id}' not found`);
+  if (!isServable(c)) {
+    // 409, not 404: the row exists and the operator can act on it by
+    // regenerating. A 404 would say "no such unit", which is false.
+    return sendError(res, 409, 'Content for this unit has not been generated yet', notGeneratedPayload(c));
+  }
   sendJSON(res, { content: c });
 }
 

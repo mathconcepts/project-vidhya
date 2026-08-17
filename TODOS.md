@@ -226,3 +226,34 @@ now names Claude explicitly. Wrong either way.
 object or subscribe to the event and read it. Deliberately not done during a
 ship: it changes a return shape every caller of the LLM client shares, and
 that is not a change to rush on the way to production.
+
+## A corrupt .data file still loses data, mirror or not
+
+**Trigger:** before describing migrations 041-043 as "your data is safe" to
+anyone. They make data survive a WIPE. They do not make it survive
+CORRUPTION, and the difference is invisible from the outside.
+
+**What:** `createFlatFileStore.read()` returns the empty default shape when a
+file exists but will not parse — the same value it returns for a file that was
+never written. Verified: writing `{ this is not json` to a store's path makes
+`read()` return `{items: []}` with no throw.
+
+For a mirrored store the consequence now reaches further than it used to. The
+next write persists the empty shape locally and then mirrors it, and
+`mirror()` deletes every row not in the list it was handed. So one unparseable
+file empties the durable copy that existed to protect it.
+
+**Not a regression:** before 043 there was no durable copy, so corruption was
+total loss then too. It is a limit on what the durable stores promise, not a
+new way to lose data.
+
+**Done so far:** `read()` now logs loudly on both the parse failure and the
+shape-check failure, so the event is visible instead of silent. Behaviour is
+unchanged on purpose — returning the default is what all 30 call sites expect,
+and throwing would take the server down over one bad file.
+
+**The real fix:** distinguish "absent" from "unparseable" in the return, and
+have the durable layer refuse to mirror a delete-everything when the local
+read was the unparseable kind. That needs a signal `read()` does not currently
+carry, touching a helper shared by 30 call sites — deliberately not attempted
+on the way to a production deploy.

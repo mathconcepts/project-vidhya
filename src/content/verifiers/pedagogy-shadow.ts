@@ -67,6 +67,16 @@ export interface PedagogyDistribution {
   would_block_at(threshold: number): number;
 }
 
+/**
+ * The threshold the gate uses today, mirrored here for the readout.
+ *
+ * Duplicated deliberately rather than imported: `pedagogy-verifier.ts` pulls
+ * in the LLM runtime at module load, and this module is meant to stay pure so
+ * the criterion is testable with no provider and no database. A test asserts
+ * the two agree.
+ */
+export const DEFAULT_SHADOW_THRESHOLD = 0.65;
+
 /** Minimum scored rows before the distribution is treated as informative. */
 export const MIN_SCORED_FOR_CRITERION = 30;
 

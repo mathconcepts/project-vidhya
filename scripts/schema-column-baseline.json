@@ -81,6 +81,7 @@
     "error_pct",
     "error_tag",
     "error_type",
+    "errored",
     "evaluated_at",
     "event_type",
     "exam_date",
@@ -308,5 +309,8 @@
     "wolfram_calls",
     "working_memory_est",
     "year"
-  ]
+  ],
+  "$reviewed": {
+    "errored": "040_pedagogy_shadow_log — diagnostic flag on the Tier 4 shadow log, distinguishing \"the judge could not answer\" from \"the content scored zero\". Not student-scoped: the row is keyed by curriculum unit, carries no student or session id, and the table is explicitly truncatable."
+  }
 }

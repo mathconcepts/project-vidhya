@@ -336,6 +336,21 @@ export async function generateUnit(
     const unitContent = reviewRows.map((r) => `## ${r.atom_id}\n\n${r.content}`).join('\n\n---\n\n');
     const result = await pedagogyVerifier.verify(unitContent, { concept_id: spec.concept_id });
     pedagogyScore = result.score;
+
+    // Shadow log. This is the one place the Tier 4 gate is actually consulted,
+    // so it is the only place that can tell you what switching the gate on
+    // would do. Fire-and-forget: a lost diagnostic row must never fail a
+    // generation run. rowFromResult reads the error case off the reason
+    // string, because verify() reports score 0 for "judge threw" and for
+    // "content is bad" alike, and averaging those together is how you end up
+    // arguing for a threshold of zero.
+    void (async () => {
+      try {
+        const { rowFromResult } = await import('../content/verifiers/pedagogy-shadow');
+        const { getPedagogyShadowRepo } = await import('../storage/repositories/pedagogy-shadow-repo');
+        await getPedagogyShadowRepo().append(rowFromResult(unitId, result, spec.concept_id));
+      } catch { /* diagnostic only */ }
+    })();
   } catch (err) {
     // Non-fatal — log and continue. Score stays null until the next nightly
     // recompute (hooked up in PR #34's admin UI).

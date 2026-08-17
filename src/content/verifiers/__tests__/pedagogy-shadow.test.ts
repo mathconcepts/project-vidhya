@@ -141,3 +141,48 @@ describe('would_block_at', () => {
     expect(summarize([]).observed).toBe(0);
   });
 });
+
+describe('the mirrored threshold does not drift from the verifier', () => {
+  it('matches the verifier default', async () => {
+    const { DEFAULT_SHADOW_THRESHOLD } = await import('../pedagogy-shadow');
+    const src = await import('node:fs').then((fs) =>
+      fs.readFileSync('src/content/verifiers/pedagogy-verifier.ts', 'utf-8'),
+    );
+    const m = src.match(/const DEFAULT_THRESHOLD = ([\d.]+)/);
+    expect(m, 'pedagogy-verifier no longer declares DEFAULT_THRESHOLD').toBeTruthy();
+    expect(Number(m![1])).toBe(DEFAULT_SHADOW_THRESHOLD);
+  });
+});
+
+describe('the file-backed repo round-trips', () => {
+  it('stores and returns rows, newest first', async () => {
+    const os = await import('node:os');
+    const p = await import('node:path');
+    const fsm = await import('node:fs');
+    const dir = fsm.mkdtempSync(p.join(os.tmpdir(), 'ped-shadow-'));
+    const { FilePedagogyShadowRepo } = await import('../../../storage/repositories/pedagogy-shadow-repo');
+    const repo = new FilePedagogyShadowRepo(p.join(dir, 'shadow.json'));
+
+    expect(await repo.all()).toEqual([]);
+    await repo.append(scored(0.7, 'a'));
+    await repo.append(errored('b'));
+    const rows = await repo.all();
+    expect(rows).toHaveLength(2);
+    expect(rows[0].target_id).toBe('b');
+    // And the criterion reads it without special-casing the backend.
+    expect(summarize(rows).scored).toBe(1);
+    fsm.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('returns an empty list rather than throwing when the file is corrupt', async () => {
+    const os = await import('node:os');
+    const p = await import('node:path');
+    const fsm = await import('node:fs');
+    const dir = fsm.mkdtempSync(p.join(os.tmpdir(), 'ped-shadow-bad-'));
+    const f = p.join(dir, 'shadow.json');
+    fsm.writeFileSync(f, '{ not json');
+    const { FilePedagogyShadowRepo } = await import('../../../storage/repositories/pedagogy-shadow-repo');
+    expect(await new FilePedagogyShadowRepo(f).all()).toEqual([]);
+    fsm.rmSync(dir, { recursive: true, force: true });
+  });
+});

@@ -4,6 +4,117 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.33.0] — 2026-08-17 — The gates tell the truth, and the data survives the night
+
+**Operator action:** migrations `040`–`043` apply automatically on boot. No new
+ENV vars are required. `VIDHYA_PEDAGOGY_GATE` and `VIDHYA_PEDAGOGY_THRESHOLD`
+stay optional and off.
+
+Two things were quietly false. The content gates reported problems that did not
+exist and missed the ones that did, so nobody could tell whether the library was
+thin or the measuring stick was bent. And every student record outside Postgres
+lived in `.data`, which the host wipes when the service sleeps — review
+schedules, notebooks, mastery trajectories, exams an operator spent an afternoon
+on, all gone by Monday with nothing in the log to say so.
+
+This release fixes the measuring stick and makes the records durable. It also
+turns on generation that never actually ran: the syllabus bridge built its LLM
+client with an empty provider set, so every call threw and silently fell back to
+a mock, and the mock was served as if it were real content.
+
+### The numbers that matter
+
+Measured by running both suites and `npm run ci:syllabus-floor` on `origin/main`
+and on this release, in a clean worktree.
+
+| | Before | After | Δ |
+|---|---|---|---|
+| Floor-gate findings | 282 | 112 | −170 |
+| ...of which explainer gaps | 97 | 15 | −82 |
+| ...of which missing strategy cards | 88 | 0 | −88 |
+| ...of which real practice gaps | 97 | 97 | 0 |
+| Backend tests | 2,171 | 2,499 | +328 |
+| Test files | 252 | 275 | +23 |
+| CI gates | 8 | 10 | +2 |
+
+The middle three rows are the point. 170 of the 282 things the gate complained
+about were content that already existed and the gate could not see, because it
+read the wrong key out of the explainer bundle and compared teaching-tip ids
+against a differently-prefixed set. The 97 practice gaps did not move, because
+those are real: there genuinely are no verified practice items for those
+concepts, and now that is the only thing the report says.
+
+### What this means for whoever runs the demo
+
+You can trust a green gate now, and you can trust a red one. The floor report
+names 97 concepts short on practice problems and nothing else, which is a
+work list rather than a wall of noise. Content generated through the bridge is
+real model output or it is refused with a 409 — a mock body can no longer reach
+a student, and a run stops at its spend cap instead of discovering the cap
+afterwards. And if the host sleeps over the weekend, the review schedules and
+notebooks are still there on Monday.
+
+### Itemized changes
+
+#### Added
+
+- Durable storage for every record that nothing can recompute: review
+  schedules, notebooks, mastery trajectories, session plans, exam profiles,
+  practice logs, plan templates, attention coverage, sample checks, live
+  courses, marketing articles and campaigns, exams, exam groups, content
+  feedback, and the three teacher stores. Restored on boot when the host has
+  wiped local disk.
+- A readout at `/api/admin/pedagogy-shadow` that says what turning the Tier 4
+  quality gate on would actually refuse today, and whether there is enough
+  scored content for the answer to mean anything.
+- A stance axis for concepts: a pinned explanatory stance per session, and a
+  cadence every topic resolves to, so a concept is not explained two different
+  ways to the same student.
+- A variant generator and an LLM judge with a labelled eval set, for producing
+  alternative explanations of a concept and rejecting the ones that changed its
+  meaning.
+- Two CI gates: template coverage, and agreement between generated variants.
+
+#### Changed
+
+- The golden content set checked in CI grew from 3 concepts to all 97 (196
+  atoms), with existing gaps grandfathered so only new ones fail.
+- New database columns are now denied by default. Adding one requires a
+  reviewed entry, which is where someone asks whether a new per-student
+  attribute should exist at all.
+- The version file, stale at 4.24.0 for eight releases, now matches the version
+  everything else reports.
+
+#### Fixed
+
+- Syllabus-bridge generation produced mock content on every call, because its
+  LLM client was constructed with no providers and the resulting failure fell
+  through to the mock path. Real content is generated; content that is not real
+  is refused rather than served.
+- A batch now stops when it reaches its spend cap, checked before the call
+  rather than discovered after it.
+- The plan screen priced a batch at one model's rate while the spend cap
+  charged another's — an estimate ten times under the number that stops the
+  run. Both now read one table, and the screen names the model it was priced
+  at.
+- Batches that ended by cancellation or at the spend cap left the wizard with
+  no way forward: the step's Next button waited for two specific end states and
+  ignored the other two.
+- A store file that exists but cannot be parsed read as empty and said nothing.
+  It still reads as empty, but it now says so, because the next write copies
+  that emptiness over the durable record.
+- 30 atoms carried generation artifacts in their bodies; they are stripped, and
+  a gate refuses their return.
+- Reading-time estimates counted embedded JSON as prose.
+
+#### For contributors
+
+- The floor gate had four separate defects and reported plausible numbers
+  throughout. Every counter it produces now has a test that fails when the
+  counter is broken.
+- Both content gates were verified by breaking them on purpose and confirming
+  they fail.
+
 ## [4.32.0] — 2026-08-16 — Generation routes by what the atom actually demands
 
 **Operator action:** none. New runs route by tier automatically. The two model pickers are on `/admin/content-rd`.

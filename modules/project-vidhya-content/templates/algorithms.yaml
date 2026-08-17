@@ -7,6 +7,17 @@ intuition:
     state each step changes. Avoid Big-O until formal_definition.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Trace the smallest input where the behaviour is non-trivial — three or
+      four elements — and update the state after each individual step, not
+      after each pass through the loop. Let the invariant hold in front of the
+      reader rather than being told it does.
+    assured: |
+      Skip the trace and go straight to the loop invariant: what has to stay
+      true at the top of every iteration, and where the bound is off by one.
+      Name the exact index at which a careless bound would first go wrong.
+
 formal_definition:
   scaffold: pseudocode
   guidance: |
@@ -18,6 +29,18 @@ worked_example:
   guidance: |
     Trace through with a table showing variables at each step. Six steps max.
   bloom_floor: 3
+
+  stances:
+    shaken: |
+      One row per step in the trace table, never per pass — a row that
+      silently advances two steps reads as a step the reader was expected to
+      fill in themselves. Keep invariant commentary out of the table and put
+      it in the walkthrough's hints, where it unfolds on request.
+    assured: |
+      Go straight to the invariant and the termination argument; skip
+      re-tracing steps a confident reader can run mentally. Name the loop
+      bound precisely — the off-by-one is the actual trap here, not the
+      algorithm's logic.
 
 common_traps:
   scaffold: wrong-then-right
@@ -57,3 +80,11 @@ interleaved_drill:
 hook:
   scaffold: when-naive-fails
   bloom_floor: 1
+  stances:
+    shaken: |
+      One tiny input, three or four elements, where the naive first guess
+      already breaks — nothing about why yet, just the break.
+    assured: |
+      Name the exact input class where the naive approach's complexity blows
+      up, not just that it becomes slow — the growth rate is the content,
+      not the anecdote.

@@ -25,6 +25,53 @@ export interface MotivationSource {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// Canonical vocabulary — the single source of truth every other call
+// site must import instead of re-typing the literal list.
+//
+// The vocabulary was hand-typed in ~8 places across the codebase with
+// four different (drifted) memberships — two of those divergences were
+// live defects (an unreachable 'confident' branch that isn't a real
+// MotivationState, and a cohort-attention filter that silently dropped
+// 'anxious'). MOTIVATION_LANE is a Record total over MotivationState:
+// if a 6th state is ever added to the union above without adding a case
+// here, TypeScript raises a compile error (missing property) rather than
+// letting the new state silently fall through unclassified everywhere
+// STRUGGLING_STATES / THRIVING_STATES is used. That totality check is the
+// whole point of this module.
+// ────────────────────────────────────────────────────────────────────
+
+type MotivationLane = 'thriving' | 'neutral' | 'struggling';
+
+const MOTIVATION_LANE: Record<MotivationState, MotivationLane> = {
+  driven: 'thriving',
+  steady: 'neutral',
+  flagging: 'struggling',
+  frustrated: 'struggling',
+  anxious: 'struggling',
+};
+
+function statesInLane(lane: MotivationLane): MotivationState[] {
+  return (Object.keys(MOTIVATION_LANE) as MotivationState[]).filter(
+    (state) => MOTIVATION_LANE[state] === lane,
+  );
+}
+
+/** All five canonical motivation states, in declaration order. */
+export const MOTIVATION_STATES: readonly MotivationState[] = Object.freeze(
+  Object.keys(MOTIVATION_LANE) as MotivationState[],
+);
+
+/** States that mean a student needs attention/support. */
+export const STRUGGLING_STATES: readonly MotivationState[] = Object.freeze(
+  statesInLane('struggling'),
+);
+
+/** States that mean a student is doing well and can be given rigour/pace. */
+export const THRIVING_STATES: readonly MotivationState[] = Object.freeze(
+  statesInLane('thriving'),
+);
+
+// ────────────────────────────────────────────────────────────────────
 // In-memory implementation
 // ────────────────────────────────────────────────────────────────────
 

@@ -14,6 +14,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import type { ExamGroup, ExamGroupSeed } from './types';
 import { getExam } from './exam-store';
 import { EXAMS as STATIC_EXAMS } from '../syllabus/exam-catalog';
@@ -27,6 +28,33 @@ const store = createFlatFileStore<ExamGroupRegistry>({
   path: '.data/exam-groups.json',
   defaultShape: () => ({ version: 1, groups: {} }),
 });
+
+/**
+ * Durable mirror (migration 043).
+ *
+ * Groups are the operator's own taxonomy over the exam catalogue — which
+ * exams belong together, the tagline and benefits a student reads on the
+ * landing page. Hand-authored, nothing recomputes them, and `.data` is wiped
+ * whenever the host sleeps.
+ *
+ * Mirrored whole rather than per-row: the registry is small and changes only
+ * when an admin edits it, so the simpler shape costs nothing here.
+ */
+const _durable = registerDurable('exam-groups', durableCollection<ExamGroup>({
+  collection: 'exam-groups',
+  idOf: (g) => g.id,
+  readLocal: () => Object.values(store.read().groups),
+  writeLocal: (groups) => store.write({
+    version: 1,
+    groups: Object.fromEntries(groups.map((g) => [g.id, g])),
+  }),
+}));
+
+/** Every mutation mirrors, so no write site can forget to. */
+function mutate(fn: (state: ExamGroupRegistry) => void): void {
+  store.update(fn);
+  _durable.mirror();
+}
 
 // ============================================================================
 // Unique ID
@@ -65,7 +93,7 @@ export function createGroup(seed: ExamGroupSeed, admin_user_id: string): ExamGro
     is_archived: false,
   };
 
-  store.update(state => { state.groups[id] = group; });
+  mutate(state => { state.groups[id] = group; });
   return group;
 }
 
@@ -91,7 +119,7 @@ export function updateGroup(params: {
   const nowIso = new Date().toISOString();
   let updated: ExamGroup | null = null;
 
-  store.update(state => {
+  mutate(state => {
     const current = state.groups[params.id];
     if (!current) return;
     const merged: ExamGroup = {
@@ -111,7 +139,7 @@ export function updateGroup(params: {
 
 export function deleteGroup(id: string): boolean {
   let existed = false;
-  store.update(state => {
+  mutate(state => {
     if (state.groups[id]) {
       delete state.groups[id];
       existed = true;

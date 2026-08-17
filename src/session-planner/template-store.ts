@@ -20,6 +20,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 
 export interface PlanTemplate {
   /** Stable id: "TPL-<8 char>" */
@@ -62,6 +63,18 @@ const _store = createFlatFileStore<StoreShape>({
   defaultShape: () => ({ templates: [] }),
 });
 
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('plan-templates', durableCollection<PlanTemplate>({
+  collection: 'plan-templates',
+  idOf: (i) => (i as any).id,
+  scopeOf: (i) => (i as any).student_id ?? null,
+  readLocal: () => _store.read().templates ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), templates: items } as never),
+}));
+
 const MAX_TEMPLATES_PER_STUDENT = 20;
 
 function shortId(): string {
@@ -86,6 +99,7 @@ export function createTemplate(
   };
   store.templates.push(t);
   _store.write(store);
+  _durable.mirror();
   return t;
 }
 
@@ -109,6 +123,7 @@ export function deleteTemplate(id: string, student_id: string): boolean {
   }
   store.templates.splice(idx, 1);
   _store.write(store);
+  _durable.mirror();
   return true;
 }
 
@@ -123,9 +138,11 @@ export function markTemplateUsed(id: string): void {
   t.use_count += 1;
   t.last_used_at = new Date().toISOString();
   _store.write(store);
+  _durable.mirror();
 }
 
 /** Test-only reset. */
 export function _resetTemplateStore(): void {
   _store.write({ templates: [] });
+  _durable.mirror();
 }

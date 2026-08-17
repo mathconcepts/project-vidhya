@@ -1,0 +1,104 @@
+topic_family: differential-equations
+
+intuition:
+  scaffold: rate-of-change-story
+  guidance: |
+    Name the quantity and what drives its rate of change before writing any
+    symbol. Cooling, decay, current in an RL circuit. The equation is a
+    sentence about how fast something moves; say the sentence first.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Name one physical quantity — a cooling cup, a decaying sample, current
+      in a circuit — and say in plain words what its rate of change depends
+      on before any equation appears. Let the differential equation arrive
+      as the translation of that sentence, not the starting point.
+    assured: |
+      Skip the story and go to the case where a factor divided out could be
+      zero — that silent division is where a solution branch quietly
+      disappears, and it is the one thing worth naming without re-deriving
+      the method.
+
+formal_definition:
+  scaffold: order-linearity-form
+  guidance: |
+    State order, linearity, and whether it is homogeneous, in that sequence.
+    Give the standard form the solution method assumes and say explicitly
+    what has to be true for that form to apply.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: classify-then-solve
+  guidance: |
+    Classify first, name the method, then solve. Six steps max, separated by
+    `\n---\n`. Always verify by substituting back into the original equation
+    and show that substitution.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      Classify, then solve, as two separate visible lines — do not fold the
+      classification into the first line of solving. Show the final
+      substitution-back check as its own step, since that is the only proof
+      the reader gets that the solution is right.
+    assured: |
+      Confirm the equation is already in standard form before naming the
+      method — applying an integrating factor to a non-standard form is the
+      actual failure mode here, not the integration. Do not re-derive the
+      standard solution formula.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: losing the constant of integration; dividing by a factor that can
+    be zero without saying so; applying an integrating factor before the
+    equation is in standard form; forgetting the particular solution.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: slope-field
+  guidance: |
+    Slope fields and solution curves through them. Show why different initial
+    conditions pick out different curves from the same field.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Mix equation types so the student must classify before choosing a method.
+    Classification is the skill being drilled, not the integration.
+  bloom_floor: 4
+
+hook:
+  scaffold: when-naive-fails
+  guidance: |
+    Open with a quantity whose rate depends on its own current value, and show
+    that guessing a formula does not work. That is the whole subject.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One quantity whose rate depends on its own current value, made
+      concrete with real numbers, and nothing about why guessing a formula
+      fails yet — just the one instance.
+    assured: |
+      Name the exact place a constant of integration or a particular
+      solution gets dropped under exam time pressure — that is the mark,
+      not the method.

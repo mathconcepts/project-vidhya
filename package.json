@@ -1,7 +1,7 @@
 {
   "name": "project-vidhya",
-  "version": "4.32.0",
-  "description": "Project Vidhya \u2014 Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
+  "version": "4.33.0",
+  "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -43,6 +43,9 @@
     "content:generate": "tsx src/jobs/job-cli.ts content-generation",
     "content:generate:auto": "bash scripts/run-content-generation.sh",
     "content:setup": "tsx src/jobs/setup-cli.ts",
+    "variants:pending": "tsx scripts/generate-variants.ts --dry-run",
+    "variants:generate": "tsx scripts/generate-variants.ts",
+    "variants:eval": "tsx scripts/eval-judge.ts",
     "content:verify": "tsx src/jobs/job-cli.ts wolfram-verify",
     "content:verify:legacy": "tsx scripts/verify-wolfram-batch.ts",
     "content:bundle": "tsx scripts/build-bundle.ts",
@@ -55,7 +58,7 @@
     "smoke:all": "npm run smoke:stdio && npm run smoke:sdk-compat && npm run smoke:live-llm",
     "snapshot": "bash scripts/snapshot.sh",
     "snapshot:list": "bash scripts/snapshot-list.sh",
-    "demo:setup": "npm ci && cd frontend && npm ci && cd .. && npm run demo:seed && echo '\\nDemo ready \u2014 run: npm run demo:start'",
+    "demo:setup": "npm ci && cd frontend && npm ci && cd .. && npm run demo:seed && echo '\\nDemo ready — run: npm run demo:start'",
     "demo:seed": "tsx demo/seed.ts",
     "demo:seed-media": "tsx demo/seed-media.ts",
     "demo:generate-audio": "tsx demo/generate-demo-audio.ts",
@@ -78,7 +81,9 @@
     "ci:playbook-convention": "tsx scripts/check-playbook-convention.ts",
     "playbook:run": "tsx scripts/playbook-cli.ts run",
     "playbook:list": "tsx scripts/playbook-cli.ts list",
-    "playbook:estimate": "tsx scripts/playbook-cli.ts estimate"
+    "playbook:estimate": "tsx scripts/playbook-cli.ts estimate",
+    "ci:template-coverage": "tsx scripts/check-template-coverage.ts",
+    "ci:variant-agreement": "tsx scripts/check-variant-agreement.ts"
   },
   "keywords": [
     "adaptive-learning",

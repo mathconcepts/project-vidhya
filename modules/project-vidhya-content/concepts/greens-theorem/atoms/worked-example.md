@@ -47,7 +47,3 @@ $$\oint_C (2xy + x^2) \, dx + (x^2 + y^2) \, dy = \boxed{0}$$
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Green's Theorem circulation integral","steps":[{"prompt":"Step 1: What are P and Q from the line integral form?","hint":"Look at the coefficients of dx and dy in the original integral.","answer":"P = 2xy + x² and Q = x² + y²"},{"prompt":"Step 2: What is ∂Q/∂x?","hint":"Take the partial derivative of x² + y² with respect to x.","answer":"∂Q/∂x = 2x"},{"prompt":"Step 3: What is ∂P/∂y?","hint":"Take the partial derivative of 2xy + x² with respect to y.","answer":"∂P/∂y = 2x"},{"prompt":"Step 4: What is (∂Q/∂x) - (∂P/∂y) and why does this matter?","hint":"Subtract the result from Step 3 from Step 2. What does this tell you about the field?","answer":"0. The curl is zero everywhere, meaning the field is conservative and circulation is always zero."}],"caption":"Green's Theorem converts boundary circulation to interior curl—when curl is zero, circulation vanishes."}
 ```
-
----
-
-DONE:greens-theorem

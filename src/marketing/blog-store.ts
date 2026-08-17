@@ -20,6 +20,7 @@
 
 import crypto from 'crypto';
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import type {
   Article, ArticleStatus, ArticleCategory, ArticleMarketingMeta,
   ArticleReviewEntry, ArticleLineageEntry,
@@ -36,6 +37,17 @@ const _store = createFlatFileStore<StoreShape>({
   path: STORE_PATH,
   defaultShape: () => ({ articles: [] }),
 });
+
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('marketing-articles', durableCollection<Article>({
+  collection: 'marketing-articles',
+  idOf: (i) => (i as any).id,
+  readLocal: () => _store.read().articles ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), articles: items } as never),
+}));
 
 // ============================================================================
 // Helpers
@@ -124,6 +136,7 @@ export function createArticle(input: CreateArticleInput, actor: string): Article
 
   store.articles.push(article);
   _store.write(store);
+  _durable.mirror();
   return article;
 }
 
@@ -231,6 +244,7 @@ export function updateArticle(
   }
 
   _store.write(store);
+  _durable.mirror();
   return article;
 }
 
@@ -284,6 +298,7 @@ export function publishArticle(id: string, actor: string, note?: string): Articl
   });
 
   _store.write(store);
+  _durable.mirror();
   return article;
 }
 
@@ -307,6 +322,7 @@ export function markStale(id: string, actor: string, reason: string): Article | 
   });
 
   _store.write(store);
+  _durable.mirror();
   return article;
 }
 
@@ -327,6 +343,7 @@ export function archiveArticle(id: string, actor: string, note?: string): Articl
   });
 
   _store.write(store);
+  _durable.mirror();
   return article;
 }
 
@@ -394,5 +411,6 @@ function _transition(
   });
 
   _store.write(store);
+  _durable.mirror();
   return article;
 }

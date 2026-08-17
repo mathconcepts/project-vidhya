@@ -56,9 +56,27 @@ export function createFlatFileStore<T>(config: FlatFileStoreConfig<T>): FlatFile
       if (!fs.existsSync(absPath)) return config.defaultShape();
       const raw = fs.readFileSync(absPath, 'utf-8');
       const parsed = JSON.parse(raw);
-      if (config.isValid && !config.isValid(parsed)) return config.defaultShape();
+      if (config.isValid && !config.isValid(parsed)) {
+        console.error(`[flat-file-store] ${absPath} failed its shape check — reading as EMPTY.`);
+        return config.defaultShape();
+      }
       return parsed as T;
-    } catch {
+    } catch (err) {
+      // Loud, because the consequence is not local to this read. A file that
+      // exists but will not parse returns the same empty shape as a file that
+      // was never written, the next write persists that emptiness, and for a
+      // store with a durable mirror the emptiness is then copied over the
+      // backup. Silent recovery turns one corrupt file into deleted data with
+      // nothing in the log to explain it.
+      //
+      // Behaviour is deliberately unchanged — returning the default is what
+      // every caller expects, and throwing here would take the server down on
+      // a single bad file. This only makes it visible.
+      console.error(
+        `[flat-file-store] ${absPath} exists but could not be read — treating as EMPTY. ` +
+          `Data in this file is not recoverable from a mirror once the next write lands. ` +
+          `Cause: ${(err as Error).message}`,
+      );
       return config.defaultShape();
     }
   }

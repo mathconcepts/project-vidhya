@@ -43,11 +43,16 @@ interface MappingDetail { id: string; display_name: string; entries: MappingEntr
 interface PlanPreview {
   mapping_id: string; total_units: number;
   total_estimated_tokens: number; estimated_cost_usd: number;
+  /** Which model the server priced this at. Named there, not here. */
+  pricing_label?: string;
 }
 
 interface BatchRequest {
   batch_id: string; mapping_id: string; unit_ids: string[];
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+  // Mirrors BatchStatus in src/syllabus-bridge/types.ts. 'aborted' is what a
+  // batch becomes when it stops at the spend cap, and omitting it here made
+  // TypeScript agree with code that could never see the state.
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'aborted';
   submitted_at: string; for_student_id?: string;
   total_units: number; completed_units: number; failed_units: number;
   total_cost_estimate_usd: number; error?: string;
@@ -88,6 +93,18 @@ interface FeedbackOverview {
 // ============================================================================
 // Constants
 // ============================================================================
+
+/**
+ * A batch is worth polling only while it can still change.
+ *
+ * Deliberately an allowlist of the two IN-FLIGHT states, not a denylist of
+ * terminal ones. `src/syllabus-bridge/types.ts` owns the status union and it
+ * has grown twice; each time it grew, a denylist here would have started
+ * polling a finished batch every two seconds forever.
+ */
+function isBatchInFlight(status: string): boolean {
+  return status === 'queued' || status === 'running';
+}
 
 const STEPS = [
   { id: 1, label: 'Pick mapping',      icon: BookOpen },
@@ -175,14 +192,18 @@ export default function SyllabusBridgePage() {
 
   // ---- Poll active batch every 2s while running ----
   useEffect(() => {
-    if (!activeBatch || activeBatch.status === 'completed' || activeBatch.status === 'failed') return;
+    // Poll only while the batch can still change. Checking for the two
+    // IN-FLIGHT states rather than enumerating terminal ones means a new
+    // terminal status can never reintroduce an endless poll — which is what
+    // 'cancelled' and 'aborted' did while this read `!== completed && !== failed`.
+    if (!activeBatch || !isBatchInFlight(activeBatch.status)) return;
     const t = setInterval(async () => {
       try {
         const r = await authFetch(`/api/syllabus-bridge/batches/${activeBatch.batch_id}`);
         if (r.ok) {
           const { batch } = await r.json();
           setActiveBatch(batch);
-          if (batch.status === 'completed' || batch.status === 'failed') {
+          if (!isBatchInFlight(batch.status)) {
             if (selectedMappingId) refreshAll(selectedMappingId);
           }
         }
@@ -280,7 +301,12 @@ export default function SyllabusBridgePage() {
     (step === 1 && !!selectedMappingId) ||
     (step === 2 && !!plan) ||
     (step === 3) ||
-    (step === 4 && !!activeBatch && (activeBatch.status === 'completed' || activeBatch.status === 'failed'))
+    // Any terminal status unblocks Next, not just the two happy-ish ones.
+    // Naming 'completed' and 'failed' explicitly left 'cancelled' and
+    // 'aborted' stranded: both are final, so the poll stops and the button
+    // never enables, and the operator is stuck on this step with no way
+    // forward. Same allowlist the poll uses, so the two cannot drift.
+    (step === 4 && !!activeBatch && !isBatchInFlight(activeBatch.status))
   );
 
   if (loading) {
@@ -415,7 +441,7 @@ export default function SyllabusBridgePage() {
               </div>
               <div>
                 <div className="text-2xl font-bold" style={{ color: 'var(--green-ink)' }}>${plan.estimated_cost_usd.toFixed(4)}</div>
-                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>est. cost (Gemini Flash)</div>
+                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>est. cost ({plan.pricing_label ?? 'see server'})</div>
               </div>
             </div>
 

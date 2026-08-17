@@ -7,6 +7,21 @@ intuition:
     Then connect to the algebraic representation.
   bloom_floor: 2
 
+  stances:
+    shaken: |
+      Open on concrete numbers, not on the general object. Pick one small
+      matrix or one pair of vectors, do the arithmetic in full, and let the
+      symbol arrive after the reader has already seen the thing happen.
+      Close by naming the single idea to hold onto, and make it the idea that
+      unlocks the rest of the topic rather than a summary of what was said.
+      No praise, no reassurance, and no mention of how the reader might be
+      feeling. A small win steadies someone; being told they are struggling
+      does not.
+    assured: |
+      Assume the mechanics. Spend the space on the distinction that actually
+      costs marks — where two neighbouring ideas are not interchangeable, or
+      where a condition is necessary and nowhere near sufficient. Give a
+      counterexample rather than a restatement. Do not re-derive anything.
 formal_definition:
   scaffold: matrix-form
   guidance: |
@@ -21,6 +36,18 @@ worked_example:
     eigenvectors → verify Av = λv. Six steps max, separated by `\n---\n`.
   bloom_floor: 3
 
+  stances:
+    shaken: |
+      Keep the body skeletal: the problem, the step headings, the display
+      maths, the boxed answer. Every "why" belongs in the walkthrough's
+      prompts and hints, where it unfolds one step at a time when the reader
+      asks for it. Split a step in two rather than explaining it at length on
+      the page. Make the final check explicit and show it being run.
+    assured: |
+      The efficient route, and the trap on it. Where a shortcut exists — trace
+      and determinant, a symmetry, a row operation that collapses the work —
+      lead with it and say what has to be true for it to apply. Skip the
+      arithmetic a confident reader can do in their head.
 common_traps:
   scaffold: wrong-then-right
   guidance: |
@@ -74,3 +101,12 @@ interleaved_drill:
 hook:
   scaffold: transformation-question
   bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete instance, small enough to verify by hand in a few seconds.
+      No motivation section, no history, no promise about what the topic will
+      unlock later. The reader is here after getting things wrong; the useful
+      move is one thing that works, immediately.
+    assured: |
+      State the sharpest form of the idea and the one place it is commonly
+      misapplied. A confident reader does not need to be sold the topic.

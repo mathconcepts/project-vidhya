@@ -81,5 +81,3 @@ If the chairperson can sit in position 3 OR position 4:
 ---
 
 All three atoms are now ready to be written to their respective file paths. The content follows GATE exam standards, includes proper KaTeX formatting, and incorporates the interactive guided walkthrough for the worked example.
-
-DONE:counting-principles

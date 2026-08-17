@@ -8,9 +8,15 @@ import { describe, it, expect } from 'vitest';
 import {
   buildReport,
   worstSeverity,
+  computeStanceFigures,
+  countFilesRecursive,
   type MaturityFacts,
   type MaturitySignal,
+  type StanceFigureConcept,
 } from '../admin-content-maturity-routes';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 const NOW = '2026-08-16T00:00:00.000Z';
 
@@ -21,8 +27,11 @@ const HEALTHY: MaturityFacts = {
   thinking_gap_generic: 10,
   thinking_gap_distinct_framings: 12,
   active_atom_overrides: 4,
-  stance_atoms_total: 24,
-  stance_atoms_covered: 8,
+  stance_rollout_total: 10,
+  stance_rollout_covered: 10,
+  stance_course_total: 10,
+  stance_course_covered: 10,
+  stance_rejected_drafts: 0,
 };
 
 function signal(report: ReturnType<typeof buildReport>, id: string): MaturitySignal {
@@ -60,8 +69,11 @@ describe('buildReport', () => {
         thinking_gap_generic: null,
         thinking_gap_distinct_framings: null,
         active_atom_overrides: null,
-        stance_atoms_total: 24,
-        stance_atoms_covered: 8,
+        stance_rollout_total: 10,
+        stance_rollout_covered: 10,
+        stance_course_total: 40,
+        stance_course_covered: 8,
+        stance_rejected_drafts: 0,
       },
       NOW,
     );
@@ -131,34 +143,6 @@ describe('buildReport', () => {
     }
   });
 
-  it('reports authored stance variants, which need no database', () => {
-    // This is the one form of content personalisation that survives a DB-less
-    // deploy, so it must stay legible when everything else is blocked.
-    const blocked = buildReport({ ...HEALTHY, database_configured: false }, NOW);
-    const s = signal(blocked, 'stance_variants');
-    expect(s.severity).toBe('healthy');
-    expect(s.detail?.works_without_database).toBe('yes');
-    expect(s.label).toContain('8 of 24');
-  });
-
-  it('calls a corpus with no authored variants partial, and says what to do', () => {
-    const s = signal(
-      buildReport({ ...HEALTHY, stance_atoms_total: 0, stance_atoms_covered: 0 }, NOW),
-      'stance_variants',
-    );
-    expect(s.severity).toBe('partial');
-    expect(s.remedy).toContain('variant_of');
-  });
-
-  it('does not call half-authored variants healthy', () => {
-    // Variants exist but no atom has both, so one cohort still reads the base.
-    const s = signal(
-      buildReport({ ...HEALTHY, stance_atoms_total: 24, stance_atoms_covered: 0 }, NOW),
-      'stance_variants',
-    );
-    expect(s.severity).toBe('partial');
-  });
-
   it('emits no student-identifying field anywhere in the payload', () => {
     // Surveillance invariant: counts only.
     const serialized = JSON.stringify(buildReport(HEALTHY, NOW));
@@ -176,8 +160,11 @@ describe('buildReport', () => {
         thinking_gap_generic: 10,
         thinking_gap_distinct_framings: 0,
         active_atom_overrides: 0,
-        stance_atoms_total: 0,
-        stance_atoms_covered: 0,
+        stance_rollout_total: 0,
+        stance_rollout_covered: 0,
+        stance_course_total: 0,
+        stance_course_covered: 0,
+        stance_rejected_drafts: 3,
       },
       NOW,
     );
@@ -185,6 +172,157 @@ describe('buildReport', () => {
       if (s.severity !== 'healthy') {
         expect(s.remedy, `signal ${s.id} has no remedy`).toBeTruthy();
       }
+    }
+  });
+
+  describe('stance_rollout — figure 1, "is anything actually in rollout"', () => {
+    it('renders 0-of-0 as "not started", never 100% and never a crash', () => {
+      const s = signal(buildReport({ ...HEALTHY, stance_rollout_total: 0, stance_rollout_covered: 0 }, NOW), 'stance_rollout');
+      expect(s.severity).toBe('unknown');
+      expect(s.label).toContain('not started');
+      expect(s.label).not.toContain('100');
+      expect(Number.isFinite(s.detail?.concepts_in_rollout)).toBe(true);
+    });
+
+    it('reports a fully-covered rollout as healthy', () => {
+      const s = signal(buildReport({ ...HEALTHY, stance_rollout_total: 5, stance_rollout_covered: 5 }, NOW), 'stance_rollout');
+      expect(s.severity).toBe('healthy');
+      expect(s.label).toContain('5 of 5');
+    });
+
+    it('reports a partially-covered rollout as partial, with a remedy', () => {
+      const s = signal(buildReport({ ...HEALTHY, stance_rollout_total: 5, stance_rollout_covered: 2 }, NOW), 'stance_rollout');
+      expect(s.severity).toBe('partial');
+      expect(s.label).toContain('2 of 5');
+      expect(s.remedy).toBeTruthy();
+    });
+  });
+
+  describe('stance_course_wide — figure 2, the denominator that cannot lie', () => {
+    it('differs from the rollout figure during a partial topic-by-topic rollout', () => {
+      // The whole point of splitting this into two figures: a rollout that
+      // looks "done" (5 of 5 opted-in concepts) must not imply the course is
+      // done (40 concepts total, most untouched).
+      const r = buildReport(
+        { ...HEALTHY, stance_rollout_total: 5, stance_rollout_covered: 5, stance_course_total: 40, stance_course_covered: 5 },
+        NOW,
+      );
+      const rollout = signal(r, 'stance_rollout');
+      const course = signal(r, 'stance_course_wide');
+      expect(rollout.severity).toBe('healthy');
+      expect(rollout.label).toContain('5 of 5');
+      expect(course.severity).toBe('partial');
+      expect(course.label).toContain('5 of 40');
+      expect(rollout.label).not.toEqual(course.label);
+    });
+
+    it('never reports the course-wide denominator as just the variant-carrying subset', () => {
+      // Old behaviour: scoping the denominator to concepts that already had
+      // variants. New behaviour: the denominator is every authored concept.
+      const s = signal(buildReport({ ...HEALTHY, stance_course_total: 777, stance_course_covered: 3 }, NOW), 'stance_course_wide');
+      expect(s.label).toContain('3 of 777');
+      expect(s.severity).toBe('partial');
+    });
+  });
+
+  describe('stance_rejected — figure 3, drafts the equivalence judge refused', () => {
+    it('surfaces a nonzero rejected count with a remedy pointing at the drafts directory', () => {
+      const s = signal(buildReport({ ...HEALTHY, stance_rejected_drafts: 4 }, NOW), 'stance_rejected');
+      expect(s.severity).toBe('partial');
+      expect(s.label).toContain('4');
+      expect(s.remedy).toContain('.data/variant-drafts');
+    });
+
+    it('reports zero rejected drafts as healthy, not as unmeasurable', () => {
+      const s = signal(buildReport({ ...HEALTHY, stance_rejected_drafts: 0 }, NOW), 'stance_rejected');
+      expect(s.severity).toBe('healthy');
+      expect(s.detail?.rejected_drafts).toBe(0);
+    });
+
+    it('singularises a count of one', () => {
+      const s = signal(buildReport({ ...HEALTHY, stance_rejected_drafts: 1 }, NOW), 'stance_rejected');
+      expect(s.label).toContain('1 authored draft ');
+      expect(s.label).not.toContain('1 authored drafts');
+    });
+  });
+});
+
+describe('computeStanceFigures — pure figure computation', () => {
+  const narrativeAtoms = (variants: { shaken?: boolean; assured?: boolean } = {}) => [
+    { atom_type: 'hook', stance_variants: variants.shaken || variants.assured ? {
+      ...(variants.shaken ? { shaken: 'body' } : {}),
+      ...(variants.assured ? { assured: 'body' } : {}),
+    } : undefined },
+  ];
+
+  it('is 0-of-0 when no topic has opted in, even with a large corpus', () => {
+    const concepts: StanceFigureConcept[] = [
+      { id: 'a', topic: 'calculus', atoms: narrativeAtoms({ shaken: true, assured: true }) },
+      { id: 'b', topic: 'linear-algebra', atoms: narrativeAtoms() },
+    ];
+    const out = computeStanceFigures({ concepts, topicsWithStances: new Set() });
+    expect(out.stance_rollout_total).toBe(0);
+    expect(out.stance_rollout_covered).toBe(0);
+    expect(out.stance_course_total).toBe(2);
+    expect(out.stance_course_covered).toBe(1);
+  });
+
+  it('rollout is a subset of course-wide and can differ from it during a partial rollout', () => {
+    const concepts: StanceFigureConcept[] = [
+      { id: 'a', topic: 'calculus', atoms: narrativeAtoms({ shaken: true, assured: true }) },
+      { id: 'b', topic: 'calculus', atoms: narrativeAtoms() }, // opted in, not yet covered
+      { id: 'c', topic: 'linear-algebra', atoms: narrativeAtoms({ shaken: true, assured: true }) }, // not opted in
+    ];
+    const out = computeStanceFigures({ concepts, topicsWithStances: new Set(['calculus']) });
+    expect(out.stance_rollout_total).toBe(2); // a, b — calculus only
+    expect(out.stance_rollout_covered).toBe(1); // a only
+    expect(out.stance_course_total).toBe(3); // a, b, c
+    expect(out.stance_course_covered).toBe(2); // a, c
+  });
+
+  it('excludes concepts with no authored atoms from both denominators', () => {
+    const concepts: StanceFigureConcept[] = [{ id: 'empty', topic: 'calculus', atoms: [] }];
+    const out = computeStanceFigures({ concepts, topicsWithStances: new Set(['calculus']) });
+    expect(out.stance_course_total).toBe(0);
+    expect(out.stance_rollout_total).toBe(0);
+  });
+
+  it('does not count a concept as covered when only one stance is authored', () => {
+    const concepts: StanceFigureConcept[] = [
+      { id: 'half', topic: 'calculus', atoms: narrativeAtoms({ shaken: true }) },
+    ];
+    const out = computeStanceFigures({ concepts, topicsWithStances: new Set(['calculus']) });
+    expect(out.stance_rollout_covered).toBe(0);
+    expect(out.stance_course_covered).toBe(0);
+  });
+
+  it('a concept with no topic mapping never counts toward rollout', () => {
+    const concepts: StanceFigureConcept[] = [
+      { id: 'orphan', topic: undefined, atoms: narrativeAtoms({ shaken: true, assured: true }) },
+    ];
+    const out = computeStanceFigures({ concepts, topicsWithStances: new Set(['calculus']) });
+    expect(out.stance_rollout_total).toBe(0);
+    expect(out.stance_course_total).toBe(1);
+    expect(out.stance_course_covered).toBe(1);
+  });
+});
+
+describe('countFilesRecursive — the rejected-drafts count', () => {
+  it('returns 0 for a directory that does not exist, not an error', () => {
+    expect(countFilesRecursive(path.join(os.tmpdir(), 'vidhya-test-does-not-exist-' + Date.now()))).toBe(0);
+  });
+
+  it('counts files recursively, ignoring directories themselves', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vidhya-variant-drafts-'));
+    try {
+      fs.writeFileSync(path.join(dir, 'a.md'), 'x');
+      const sub = path.join(dir, 'eigenvalues');
+      fs.mkdirSync(sub);
+      fs.writeFileSync(path.join(sub, 'b.md'), 'x');
+      fs.writeFileSync(path.join(sub, 'c.md'), 'x');
+      expect(countFilesRecursive(dir)).toBe(3);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 });

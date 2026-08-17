@@ -104,23 +104,47 @@ function getConceptFloor(manifest: FloorManifest, conceptId: string): ConceptFlo
 // Measure actuals
 // ---------------------------------------------------------------------------
 
-function loadExplainersJson(): Record<string, unknown[]> | null {
+/**
+ * Explainers, keyed by concept id, always as an array.
+ *
+ * ── This read was wrong in two ways at once ─────────────────────────────
+ *
+ * The shipped file is `{version, generated_at, total, by_concept}` and the
+ * old code returned that whole object, so `explainers['eigenvalues']` was
+ * `undefined` for every concept. `by_concept[id]` is also a SINGLE OBJECT,
+ * not an array, so fixing only the path would have swapped `undefined` for a
+ * non-iterable and kept every count at zero.
+ *
+ * Both shapes are normalised here, and the legacy flat-array form is still
+ * accepted, so a regenerated bundle in either layout keeps working.
+ */
+export function loadExplainersJson(): Record<string, unknown[]> | null {
   const p = path.join(ROOT, 'frontend/public/data/explainers.json');
   if (!fs.existsSync(p)) return null;
   try {
     const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
-    // Group by concept_id
     const byConceptId: Record<string, unknown[]> = {};
+
+    const push = (atom: unknown) => {
+      const cid = (atom as { concept_id?: string })?.concept_id;
+      if (!cid) return;
+      byConceptId[cid] = byConceptId[cid] ?? [];
+      byConceptId[cid].push(atom);
+    };
+
     if (Array.isArray(data)) {
-      for (const atom of data) {
-        const cid = (atom as { concept_id?: string }).concept_id;
-        if (cid) {
-          byConceptId[cid] = byConceptId[cid] ?? [];
-          byConceptId[cid].push(atom);
-        }
+      for (const atom of data) push(atom);
+      return byConceptId;
+    }
+    if (typeof data === 'object' && data !== null) {
+      const source = (data as { by_concept?: Record<string, unknown> }).by_concept ?? data;
+      for (const [cid, value] of Object.entries(source)) {
+        // Skip the bundle's own metadata keys when falling back to `data`.
+        if (['version', 'generated_at', 'total', 'by_concept'].includes(cid)) continue;
+        const list = Array.isArray(value) ? value : [value];
+        byConceptId[cid] = list;
       }
-    } else if (typeof data === 'object' && data !== null) {
-      return data as Record<string, unknown[]>;
+      return byConceptId;
     }
     return byConceptId;
   } catch {
@@ -128,7 +152,40 @@ function loadExplainersJson(): Record<string, unknown[]> | null {
   }
 }
 
-function loadTeachingTipsIndex(): Set<string> {
+/**
+ * Concept ids that have at least one verified practice item authored.
+ *
+ * Practice items live in `data/practice-items/*.json`, not in the explainer
+ * bundle. The old code looked for `atom_type: 'micro_exercise' | 'mcq' |
+ * 'worked_example'` rows inside explainers.json, where no such rows have ever
+ * existed — so the practice count was structurally zero regardless of how
+ * many items were authored.
+ */
+function loadPracticeCounts(): Map<string, number> {
+  const dir = path.join(ROOT, 'data', 'practice-items');
+  const counts = new Map<string, number>();
+  if (!fs.existsSync(dir)) return counts;
+
+  for (const file of fs.readdirSync(dir)) {
+    if (!file.endsWith('.json')) continue;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf-8'));
+      const items: unknown[] = Array.isArray(parsed) ? parsed : (parsed.items ?? []);
+      for (const item of items) {
+        const it = item as { concept_id?: string; verification_method?: string };
+        // "Verified" means an authored verification method is recorded. An
+        // item with no method is display-only and must not inflate the floor.
+        if (!it.concept_id || !it.verification_method) continue;
+        counts.set(it.concept_id, (counts.get(it.concept_id) ?? 0) + 1);
+      }
+    } catch {
+      // A malformed bank contributes nothing rather than crashing the gate.
+    }
+  }
+  return counts;
+}
+
+export function loadTeachingTipsIndex(): Set<string> {
   const coursesDir = path.join(ROOT, 'data/courses');
   const conceptsWithTips = new Set<string>();
 
@@ -138,9 +195,13 @@ function loadTeachingTipsIndex(): Set<string> {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       if (entry.isDirectory()) walkDir(path.join(dir, entry.name));
       if (entry.name === 'teaching-tips.md') {
-        // The parent topic name is used as a proxy for the concept group
-        const topic = path.basename(path.dirname(path.join(dir, entry.name)));
-        conceptsWithTips.add(topic);
+        // Directories are numbered — `01-linear-algebra`, `05-probability-
+        // statistics`. Store the topic WITHOUT the ordering prefix, because
+        // that is what the concept graph's `topic` field holds. The old code
+        // stored `01-linear-algebra` and matched it against
+        // `conceptId.split('-')[0]` (`"eigenvalues"`), which could never hit.
+        const dirName = path.basename(path.dirname(path.join(dir, entry.name)));
+        conceptsWithTips.add(dirName.replace(/^\d+-/, ''));
       }
     }
   };
@@ -148,27 +209,40 @@ function loadTeachingTipsIndex(): Set<string> {
   return conceptsWithTips;
 }
 
-async function measureActual(conceptId: string, explainersJson: Record<string, unknown[]> | null, teachingTips: Set<string>): Promise<ConceptActual> {
-  // Count explainers from the bundle
+/** An explainer counts when it is not a placeholder and actually says something. */
+export function isRealExplainer(a: {
+  model?: string;
+  deep_explanation?: string;
+  canonical_definition?: string;
+}): boolean {
+  if (a?.model === 'placeholder') return false;
+  // Deliberately NOT `atom_type !== undefined`. Explainer entries carry no
+  // atom_type field at all — an explainer IS the entry — so that test
+  // rejected all 82 real explainers and reported every concept as empty.
+  const body = `${a?.deep_explanation ?? ''}${a?.canonical_definition ?? ''}`.trim();
+  return body.length > 0;
+}
+
+export async function measureActual(
+  conceptId: string,
+  explainersJson: Record<string, unknown[]> | null,
+  teachingTips: Set<string>,
+  practiceCounts: Map<string, number> = new Map(),
+  conceptTopic?: string,
+): Promise<ConceptActual> {
   const atoms = explainersJson?.[conceptId] ?? [];
-  const nonPlaceholderExplainers = (atoms as Array<{ model?: string; atom_type?: string }>)
-    .filter((a) => a.model !== 'placeholder' && a.atom_type !== undefined);
+  const realExplainers = (atoms as Array<Parameters<typeof isRealExplainer>[0]>)
+    .filter(isRealExplainer);
 
-  // Count verified practice items from bundle (simplified: count micro_exercise + mcq atoms)
-  const practiceAtoms = (atoms as Array<{ atom_type?: string; machine_verified?: boolean; verification_status?: string }>)
-    .filter((a) => ['micro_exercise', 'mcq', 'worked_example'].includes(a.atom_type ?? ''));
-  const verifiedPractice = practiceAtoms.filter(
-    (a) => a.machine_verified || a.verification_status === 'cross_checked',
-  );
-
-  // Strategy card: check if a teaching-tips entry exists for this concept's topic
-  const topicPrefix = conceptId.split('-')[0];
-  const hasStrategyCard = teachingTips.has(conceptId) || teachingTips.has(topicPrefix);
+  // Strategy card: teaching tips are authored per TOPIC, so match on the
+  // concept's topic, falling back to its own id for concept-level tips.
+  const hasStrategyCard =
+    teachingTips.has(conceptId) || (conceptTopic ? teachingTips.has(conceptTopic) : false);
 
   return {
     concept_id: conceptId,
-    explainer_count: nonPlaceholderExplainers.length,
-    verified_practice_count: verifiedPractice.length,
+    explainer_count: realExplainers.length,
+    verified_practice_count: practiceCounts.get(conceptId) ?? 0,
     has_strategy_card: hasStrategyCard,
   };
 }
@@ -185,13 +259,20 @@ async function main(): Promise<void> {
   const concepts = ALL_CONCEPTS.filter((c) => c.id !== examId);
   const explainersJson = loadExplainersJson();
   const teachingTips = loadTeachingTipsIndex();
+  const practiceCounts = loadPracticeCounts();
 
   const violations: SyllabusFloorViolation[] = [];
   let checkedCount = 0;
 
   for (const concept of concepts) {
     const floor = getConceptFloor(manifest, concept.id);
-    const actual = await measureActual(concept.id, explainersJson, teachingTips);
+    const actual = await measureActual(
+      concept.id,
+      explainersJson,
+      teachingTips,
+      practiceCounts,
+      (concept as { topic?: string }).topic,
+    );
     checkedCount++;
 
     const deficits: string[] = [];
@@ -244,7 +325,12 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((e) => {
-  console.error('[check-syllabus-floor] Fatal error:', e);
-  process.exit(1);
-});
+// Only run when invoked as a CLI. Without this guard, importing the module to
+// test its measurement functions executes main() and calls process.exit(1),
+// which kills the test runner rather than failing a test.
+if (process.argv[1]?.endsWith('check-syllabus-floor.ts')) {
+  main().catch((e) => {
+    console.error('[check-syllabus-floor] Fatal error:', e);
+    process.exit(1);
+  });
+}

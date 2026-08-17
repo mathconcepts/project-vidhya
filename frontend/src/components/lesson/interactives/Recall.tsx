@@ -35,12 +35,12 @@ export default function Recall({ attrs }: DirectiveProps) {
       className="my-3 w-full p-4 rounded-md border transition-colors text-left"
       style={{
         background: 'var(--surface-card)',
-        borderColor: flipped ? 'rgba(88,86,214,.4)' : 'var(--separator)',
+        borderColor: flipped ? 'var(--text-tertiary)' : 'var(--separator)',
       }}
     >
       <div
         className="text-xs uppercase tracking-wider mb-1"
-        style={{ color: 'rgba(88,86,214,.8)' }}
+        style={{ color: 'var(--text-secondary)' }}
       >
         {flipped ? 'Answer' : 'Recall'}
       </div>

@@ -72,5 +72,3 @@ Notice that rank 1 means all rows are scalar multiples of each other (here, rows
 ---
 
 **Error encountered:** The Write tool permission handler is misconfigured on this system. The atoms above are ready to be written to the file paths specified. To complete this task, you'll need to create these three markdown files in `modules/project-vidhya-content/concepts/rank-nullity/atoms/` with the content shown above.
-
-DONE:rank-nullity

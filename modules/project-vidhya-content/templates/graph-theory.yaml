@@ -1,0 +1,104 @@
+topic_family: graph-theory
+
+intuition:
+  scaffold: small-graph-by-hand
+  guidance: |
+    Draw a graph with five or six vertices and read the property straight off
+    the picture before defining it. Graph theory is one of the few topics
+    where the object and the diagram are the same thing; use that.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Draw the graph with five or six vertices and read the property off the
+      picture before defining it. Count degrees or trace the path by hand,
+      on the drawing, not in words.
+    assured: |
+      Skip the drawing and name the condition that is necessary but not
+      sufficient here — a graph can satisfy the obvious count and still fail
+      the property, and that gap is the actual exam trap, not the
+      definition.
+
+formal_definition:
+  scaffold: vertex-edge-condition
+  guidance: |
+    Define in terms of vertices, edges and a condition. State whether the
+    graph is directed, whether loops and multi-edges are allowed, and whether
+    it must be connected. Most disagreements in this topic are definitional.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: construct-then-verify
+  guidance: |
+    Build or examine a specific graph, then check the condition vertex by
+    vertex or edge by edge. Six steps max, separated by `\n---\n`. Where a
+    theorem gives a counting shortcut, verify it against the direct count once.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      Build or draw the specific graph as one step, then check the condition
+      vertex by vertex as separate, visible steps — never both in one line.
+      Where a counting theorem gives a shortcut, still show the direct count
+      once, so the shortcut is verified rather than trusted.
+    assured: |
+      Use the counting shortcut directly and skip the vertex-by-vertex
+      verification a confident reader does not need — but state which
+      necessary condition the shortcut actually checks, since mistaking
+      necessary for sufficient is the trap here.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Common: confusing Euler (edges) with Hamiltonian (vertices); assuming a
+    necessary condition is sufficient; miscounting degree at a loop; treating
+    a drawing's crossings as a property of the graph rather than the drawing.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: labelled-diagram
+  guidance: |
+    ASCII or plotted graph with vertices labelled and the relevant edges
+    highlighted. For colouring and connectivity, show the failing case beside
+    the succeeding one.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Mix graphs that satisfy the property with near-misses that fail one
+    hypothesis. Recognising which hypothesis broke is the skill.
+  bloom_floor: 4
+
+hook:
+  scaffold: when-naive-fails
+  guidance: |
+    Open with a question that looks like it needs exhaustive search and
+    collapses to a degree count. Königsberg is the canonical one; prefer a
+    fresher instance where the material allows.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      Draw one small graph and ask the single question whose answer is
+      visible by counting on the picture — no exhaustive search, no history.
+    assured: |
+      Name the question that looks like it needs exhaustive search and
+      collapses to one count — and the necessary condition that makes that
+      collapse work, which is easy to mistake for sufficient.

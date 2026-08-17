@@ -65,5 +65,3 @@ This matches $A^{-1} = \frac{1}{\det(A)} \text{adj}(A) = \frac{1}{2}\begin{pmatr
 ---
 
 **Key Exam Insight:** Cayley-Hamilton Theorem eliminates the need for brute-force matrix multiplication and offers a formula for inverse that bypasses determinant computation—both time-savers in timed exams.
-
-DONE:cayley-hamilton

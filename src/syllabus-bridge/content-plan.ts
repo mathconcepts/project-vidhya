@@ -26,6 +26,7 @@
 import type {
   BridgeMapping, BridgeMappingEntry, ContentPlan, ContentUnit, ContentUnitType,
 } from './types';
+import { estimateCost, BRIDGE_PROVIDER } from './pricing';
 
 const TOKENS_PER_UNIT: Record<ContentUnitType, number> = {
   'foundation-explainer': 800,
@@ -87,9 +88,12 @@ function clampDifficulty(jump: number, unitType: ContentUnitType): 1 | 2 | 3 | 4
 }
 
 /**
- * Rough cost estimate at ~$0.30 per 1M tokens (Gemini Flash pricing).
- * Used by the UI to show "this batch will cost ~$0.05".
+ * What this batch will cost, quoted at the rate the cap actually enforces.
+ *
+ * This used to hardcode $0.30/1M (Gemini Flash) while the cap charged
+ * Anthropic rates, so the operator approved a number ten times smaller than
+ * the one that would stop their run. Both sides now read `pricing.ts`.
  */
 export function estimateCostUsd(plan: ContentPlan): number {
-  return Number((plan.total_estimated_tokens / 1_000_000 * 0.30).toFixed(4));
+  return Number(estimateCost(BRIDGE_PROVIDER, plan.total_estimated_tokens).toFixed(4));
 }

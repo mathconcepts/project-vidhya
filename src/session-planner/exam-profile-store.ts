@@ -18,6 +18,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 
 export interface ExamRegistration {
   exam_id: string;
@@ -88,6 +89,18 @@ const _store = createFlatFileStore<StoreShape>({
   defaultShape: () => ({ profiles: [] }),
 });
 
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('student-exam-profiles', durableCollection<StudentExamProfile>({
+  collection: 'student-exam-profiles',
+  idOf: (i) => (i as any).student_id,
+  scopeOf: (i) => (i as any).student_id,
+  readLocal: () => _store.read().profiles ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), profiles: items } as never),
+}));
+
 // ============================================================================
 
 export function getProfile(student_id: string): StudentExamProfile | null {
@@ -119,6 +132,7 @@ export function upsertProfile(student_id: string, exams: ExamRegistration[]): St
   if (idx < 0) store.profiles.push(record);
   else store.profiles[idx] = record;
   _store.write(store);
+  _durable.mirror();
   return record;
 }
 
@@ -139,4 +153,5 @@ export function removeExam(student_id: string, exam_id: string): StudentExamProf
 /** Test-only reset. */
 export function _resetExamProfileStore(): void {
   _store.write({ profiles: [] });
+  _durable.mirror();
 }

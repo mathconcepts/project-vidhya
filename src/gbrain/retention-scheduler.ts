@@ -36,6 +36,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import { recordShadow } from './fsrs-shadow';
 
 // ============================================================================
@@ -67,6 +68,27 @@ const _store = createFlatFileStore<StoreShape>({
   path: '.data/gbrain-retention.json',
   defaultShape: () => ({ items: [] }),
 });
+
+/**
+ * Durable mirror (migration 043).
+ *
+ * These are the LIVE review schedules — after-each-attempt.ts calls
+ * recordEncounter on every attempt — and they lived only in `.data`, which
+ * Render's free tier wipes when the service sleeps. Every student's spaced
+ * repetition therefore restarted from zero after any quiet period, which
+ * silently undoes the one mechanism long-term retention depends on.
+ *
+ * The `fsrs_cards` table from migration 029 does NOT cover this: it is a
+ * different scheduler on a different path that the live attempt flow does
+ * not write.
+ */
+const _durable = registerDurable('retention-items', durableCollection<RetentionItem>({
+  collection: 'retention-items',
+  idOf: (i) => `${i.student_id}:${i.concept_id}`,
+  scopeOf: (i) => i.student_id,
+  readLocal: () => _store.read().items,
+  writeLocal: (items) => _store.write({ items }),
+}));
 
 // ============================================================================
 // SM-2 core
@@ -194,6 +216,12 @@ export function recordEncounter(
     else s.items.push(result);
     return s;
   });
+
+  // Persist the schedule beyond the next restart. One row, not the whole
+  // collection: an active cohort touches this on every attempt, and
+  // rewriting every student's schedule per attempt gets slower exactly as
+  // usage grows.
+  _durable.put(result);
 
   // Wave 12 / A7 shadow mode: log what FSRS would have scheduled.
   // Fire-and-forget; the SM-2 write above is UNCHANGED.

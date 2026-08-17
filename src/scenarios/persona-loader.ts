@@ -18,9 +18,10 @@
 import fs from 'fs';
 import path from 'path';
 import { parse as parseYaml } from 'yaml';
+import { MOTIVATION_STATES, type MotivationState } from '../teaching/motivation-source';
 
 export type RepresentationMode = 'algebraic' | 'geometric' | 'numerical' | 'balanced';
-export type MotivationState = 'driven' | 'steady' | 'flagging' | 'frustrated' | 'anxious';
+export type { MotivationState };
 
 export interface PersonaSeed {
   representation_mode: RepresentationMode;
@@ -67,7 +68,7 @@ export interface Persona {
 }
 
 const REP_MODES: ReadonlySet<string> = new Set(['algebraic', 'geometric', 'numerical', 'balanced']);
-const MOTIVATION_STATES: ReadonlySet<string> = new Set(['driven', 'steady', 'flagging', 'frustrated', 'anxious']);
+const VALID_MOTIVATION_STATES: ReadonlySet<string> = new Set(MOTIVATION_STATES);
 const DEMO_ROLES: ReadonlySet<string> = new Set(['student', 'teacher', 'admin']);
 
 /** The seeded role for a persona, with the learner default applied. */
@@ -135,7 +136,7 @@ export function validatePersona(parsed: unknown, sourcePath: string): Persona {
   if (!REP_MODES.has(seed.representation_mode as string)) {
     throw new Error(`${sourcePath}: seed.representation_mode invalid`);
   }
-  if (!MOTIVATION_STATES.has(seed.motivation_state as string)) {
+  if (!VALID_MOTIVATION_STATES.has(seed.motivation_state as string)) {
     throw new Error(`${sourcePath}: seed.motivation_state invalid`);
   }
   if (typeof seed.knowledge_track_id !== 'string') {

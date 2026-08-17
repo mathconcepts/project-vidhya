@@ -23,6 +23,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import type { LiveCourse, CourseVersion, PromotionRecord, PromotionBumpLevel, CourseStatus, LineageView } from './types';
 import type { SampleCheck, SampleSnapshot } from '../sample-check/types';
 import { getSampleCheck, listCrossLinksFromFeedback } from '../sample-check/store';
@@ -45,6 +46,17 @@ const _store = createFlatFileStore<StoreShape>({
   path: STORE_PATH,
   defaultShape: () => ({ courses: [], promotion_records: [] }),
 });
+
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('live-courses', durableCollection<LiveCourse>({
+  collection: 'live-courses',
+  idOf: (i) => (i as any).id,
+  readLocal: () => _store.read().courses ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), courses: items } as never),
+}));
 
 function nano(n = 8): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -367,6 +379,7 @@ export function promoteToCourse(input: PromoteInput): PromoteResult {
 
   store.promotion_records.push(record);
   _store.write(store);
+  _durable.mirror();
 
   return { course, record, created_new_version: true };
 }
@@ -505,6 +518,7 @@ export function rollbackCourse(
     currentRecord.rolled_back_reason = reason;
   }
   _store.write(store);
+  _durable.mirror();
 
   // Promote the target content forward as a new patch-level version
   return promoteToCourse({

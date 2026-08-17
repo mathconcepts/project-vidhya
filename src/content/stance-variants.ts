@@ -117,6 +117,20 @@ export function foldStanceVariants(entries: ContentAtom[]): FoldResult {
 }
 
 /**
+ * Atom types that carry a stance variant.
+ *
+ * `formal_definition` is deliberately absent: a definition does not have a
+ * confident and an unconfident form. `micro_exercise` is absent too, since an
+ * exercise with a marked answer gains nothing from register and doubles the
+ * surface for a wrong mark.
+ */
+export const NARRATIVE_ATOM_TYPES: readonly string[] = Object.freeze([
+  'hook',
+  'intuition',
+  'worked_example',
+]);
+
+/**
  * Swap in the authored body for this student's stance.
  *
  * Pure and total: returns a new array, mutates nothing, and falls back to the
@@ -128,6 +142,24 @@ export function foldStanceVariants(entries: ContentAtom[]): FoldResult {
  */
 export function applyStanceVariants(atoms: ContentAtom[], stance: LearnerStance): ContentAtom[] {
   if (stance === 'steady') return atoms;
+
+  // All-or-nothing across the narrative atoms of a concept.
+  //
+  // Applying per atom looks harmless and is not. During a topic-by-topic
+  // rollout a concept can easily end up with a variant for its hook and its
+  // worked example but not its intuition — the judge rejected one, or the
+  // batch was interrupted. The student then reads gentle, gentle, abruptly
+  // terse, gentle. That mid-lesson register whiplash is more disorienting
+  // than uniform base text, because the voice teaching them keeps changing
+  // without explanation.
+  //
+  // Only the narrative atoms are considered. A `formal_definition` has no
+  // stance variant by design, so counting it would make full coverage
+  // unreachable and disable the axis everywhere.
+  const narrative = atoms.filter((a) => NARRATIVE_ATOM_TYPES.includes(a.atom_type));
+  const covered = narrative.filter((a) => a.stance_variants?.[stance]);
+  if (narrative.length > 0 && covered.length < narrative.length) return atoms;
+
   return atoms.map((a) => {
     const body = a.stance_variants?.[stance];
     if (!body) return a;

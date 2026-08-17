@@ -80,7 +80,7 @@ export default function Verify({ attrs }: DirectiveProps) {
     }
     if (status === 'pending') {
       return (
-        <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--indigo-ink)' }}>
+        <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
           <Loader2 size={14} className="animate-spin" /> Checking…
         </span>
       );
@@ -115,7 +115,7 @@ export default function Verify({ attrs }: DirectiveProps) {
           type="submit"
           disabled={status === 'pending' || !input.trim()}
           className="px-3 py-1.5 rounded text-sm font-semibold disabled:opacity-40"
-          style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
+          style={{ background: 'var(--surface-fill-strong)', color: 'var(--text-primary)' }}
         >
           Check
         </button>

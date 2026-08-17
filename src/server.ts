@@ -39,6 +39,7 @@ import { scoringRoutes } from './api/scoring-routes';
 import { readinessRoutes, setReadinessCatalog } from './api/readiness-routes';
 import { practiceRoutes } from './api/practice-routes';
 import { fsrsShadowRoutes } from './api/fsrs-shadow-routes';
+import { pedagogyShadowRoutes } from './api/pedagogy-shadow-routes';
 import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
 import { adminPresetsRoutes } from './api/admin-presets-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
@@ -254,6 +255,9 @@ for (const route of practiceRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of fsrsShadowRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of pedagogyShadowRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminPresetsRoutes) {
@@ -928,6 +932,82 @@ async function main() {
       console.error('[server] Static PYQ seed error (non-fatal):', (err as Error).message);
     }
     await migratePool.end();
+
+    // Restore user accounts if the host wiped .data while we were asleep.
+    // Must run AFTER auto-migrate (the table has to exist) and BEFORE the
+    // listener accepts traffic, because every read path in auth/user-store.ts
+    // is synchronous and cannot await this itself.
+    try {
+      const { hydrateFromDurableStore } = await import('./auth/user-store');
+      const r = await hydrateFromDurableStore();
+      console.log(
+        r.hydrated
+          ? `[server] Restored ${r.users} user record(s) from the durable store`
+          : `[server] User store not hydrated — ${r.reason}`,
+      );
+    } catch (err) {
+      console.error('[server] User hydration error (non-fatal):', (err as Error).message);
+    }
+
+    // Same restore for the other two stores the host wipes: student feedback,
+    // and the generated bridge content that cost model spend to produce.
+    // Each is independent — one failing must not skip the others.
+    for (const [label, load] of [
+      ['Feedback', () => import('./feedback/store').then((m) => m.hydrateFeedbackStore())],
+      ['Bridge content', () => import('./syllabus-bridge/store').then((m) => m.hydrateGeneratedContent())],
+    ] as const) {
+      try {
+        const r = await load();
+        console.log(
+          r.hydrated
+            ? `[server] Restored ${r.count} ${label.toLowerCase()} record(s) from the durable store`
+            : `[server] ${label} store not hydrated — ${r.reason}`,
+        );
+      } catch (err) {
+        console.error(`[server] ${label} hydration error (non-fatal):`, (err as Error).message);
+      }
+    }
+
+    // And the rest of the stores that hold something nobody can recompute —
+    // review schedules, mastery trajectories, exams, teacher work (migration
+    // 043). Each registers itself when its module loads, so they have to be
+    // imported before the registry can be walked; importing them here rather
+    // than at the top of the file keeps boot lazy for the DB-less path.
+    try {
+      const { hydrateAllDurable } = await import('./storage/durable-flat-file');
+      await Promise.all([
+        import('./gbrain/retention-scheduler'),
+        import('./gbrain/performance-tracker'),
+        import('./session-planner/store'),
+        import('./session-planner/exam-profile-store'),
+        import('./session-planner/practice-session-log'),
+        import('./session-planner/template-store'),
+        import('./attention/store'),
+        import('./sample-check/store'),
+        import('./course/promoter'),
+        import('./marketing/blog-store'),
+        import('./marketing/campaign-store'),
+        import('./exams/exam-store'),
+        import('./exams/exam-group-store'),
+        import('./syllabus-bridge/feedback-store'),
+        import('./api/teaching-routes'),
+      ]);
+
+      const results = await hydrateAllDurable();
+      const restored = results.filter((r) => r.hydrated);
+      // One line for the ordinary case, detail only where something moved —
+      // a boot log that prints sixteen "nothing to do" lines gets skimmed,
+      // and then a real restore goes unnoticed.
+      for (const r of restored) {
+        console.log(`[server] Restored ${r.count} ${r.name} record(s) from the durable store`);
+      }
+      console.log(
+        `[server] Durable stores: ${restored.length}/${results.length} restored, ` +
+          `${results.length - restored.length} already had local data or had nothing to restore`,
+      );
+    } catch (err) {
+      console.error('[server] Durable store hydration error (non-fatal):', (err as Error).message);
+    }
   }
 
   // ── Embedder (provider-agnostic — Gemini default, OpenAI fallback) ─────

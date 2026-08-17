@@ -14,6 +14,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import * as _fs from 'fs';
 import type { CumulativeCoverage } from './types';
 
@@ -29,6 +30,18 @@ const _store = createFlatFileStore<StoreShape>({
   path: STORE_PATH,
   defaultShape: () => ({ coverage: [] }),
 });
+
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('attention-coverage', durableCollection<CumulativeCoverage>({
+  collection: 'attention-coverage',
+  idOf: (i) => `${i.student_id}:${i.concept_id}`,
+  scopeOf: (i) => i.student_id,
+  readLocal: () => _store.read().coverage ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), coverage: items } as never),
+}));
 
 // ============================================================================
 
@@ -134,6 +147,7 @@ export async function recordSession(user_id: string, minutes: number): Promise<C
   record.trailing_7d_sessions += 1;
   record.updated_at = new Date().toISOString();
   _store.write(store);
+  _durable.mirror();
 
   // Primary path: write to the timestamped practice log. Failure is
   // non-fatal — the inline counter is a degraded fallback.
@@ -195,6 +209,7 @@ export function markDeferred(
   }
   record.updated_at = now;
   _store.write(store);
+  _durable.mirror();
   return record;
 }
 
@@ -215,6 +230,7 @@ export function clearDeferred(
   );
   record.updated_at = new Date().toISOString();
   _store.write(store);
+  _durable.mirror();
 }
 
 /**

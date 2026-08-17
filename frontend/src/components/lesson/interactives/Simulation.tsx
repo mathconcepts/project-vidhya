@@ -94,7 +94,7 @@ export function Simulation({ spec }: Props) {
   return (
     <div
       className="rounded-xl border p-4 space-y-3"
-      style={{ borderColor: 'rgba(88,86,214,.25)', background: 'rgba(88,86,214,.05)' }}
+      style={{ borderColor: 'var(--separator)', background: 'var(--surface-fill)' }}
     >
       <header className="flex items-center justify-between gap-2">
         <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
@@ -132,7 +132,7 @@ export function Simulation({ spec }: Props) {
       >
         <Axes viewBox={viewBox} projector={projector} />
         {pathD && (
-          <path d={pathD} stroke="var(--indigo-ink)" strokeWidth={2} fill="none" />
+          <path d={pathD} stroke="var(--ink)" strokeWidth={2} fill="none" />
         )}
         {head && (
           <circle

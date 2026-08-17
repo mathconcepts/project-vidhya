@@ -17,6 +17,7 @@ import pg from 'pg';
 import { CONCEPT_MAP, traceWeakestPrerequisite, getConceptsForTopic } from '../constants/concept-graph';
 import { MARKS_WEIGHTS } from '../engine/priority-engine';
 import { getExam } from '../curriculum/exam-loader';
+import { STRUGGLING_STATES } from '../teaching/motivation-source';
 
 const { Pool } = pg;
 
@@ -48,6 +49,12 @@ export interface SpeedEntry {
   samples: number;
 }
 
+/**
+ * Consecutive correct answers before a struggling student is treated as
+ * steady again. One is a coin flip; two is a turn.
+ */
+export const RECOVERY_STREAK = 2;
+
 export interface StudentModel {
   id: string;
   session_id: string;
@@ -72,6 +79,8 @@ export interface StudentModel {
   };
   frustration_threshold: number;
   consecutive_failures: number;
+  /** Consecutive correct attempts in a row, mirror of consecutive_failures. */
+  correct_streak: number;
 
   // Exam
   exam_strategy: {
@@ -113,6 +122,7 @@ function emptyStudentModel(sessionId: string): StudentModel {
     },
     frustration_threshold: 3,
     consecutive_failures: 0,
+    correct_streak: 0,
     exam_strategy: {},
     updated_at: new Date().toISOString(),
   } as StudentModel;
@@ -169,7 +179,8 @@ export async function saveStudentModel(model: StudentModel): Promise<void> {
        confidence_calibration = $9,
        frustration_threshold = $10,
        consecutive_failures = $11,
-       exam_strategy = $12,
+       correct_streak = $12,
+       exam_strategy = $13,
        updated_at = NOW()
      WHERE session_id = $1`,
     [
@@ -184,6 +195,7 @@ export async function saveStudentModel(model: StudentModel): Promise<void> {
       JSON.stringify(model.confidence_calibration),
       model.frustration_threshold,
       model.consecutive_failures,
+      model.correct_streak ?? 0,
       JSON.stringify(model.exam_strategy),
     ],
   );
@@ -235,15 +247,31 @@ export function updateMastery(
     }
   }
 
-  // Check for consecutive failures
+  // Motivation, in both directions.
+  //
+  // Recovery used to fire only for `frustrated`, while three states count as
+  // struggling everywhere else in the system. So a student marked `anxious` or
+  // `flagging` never returned to the standard register no matter how well they
+  // did — and both demo personas are `anxious`. The product's stated promise is
+  // that every rep adds to the next; a model that cannot notice improvement is
+  // the opposite of that.
+  //
+  // Two correct in a row rather than one: a single right answer is as likely to
+  // be a lucky guess as a turn, and flipping the lesson's register on every
+  // correct answer makes the material feel unstable to read.
   if (!isCorrect) {
     model.consecutive_failures += 1;
+    model.correct_streak = 0;
     if (model.consecutive_failures >= model.frustration_threshold) {
       model.motivation_state = 'frustrated';
     }
   } else {
     model.consecutive_failures = 0;
-    if (model.motivation_state === 'frustrated') {
+    model.correct_streak = (model.correct_streak ?? 0) + 1;
+    if (
+      model.correct_streak >= RECOVERY_STREAK &&
+      (STRUGGLING_STATES as readonly string[]).includes(model.motivation_state)
+    ) {
       model.motivation_state = 'steady';
     }
   }

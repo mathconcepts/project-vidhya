@@ -24,6 +24,7 @@ import path from 'path';
 import { requireRole } from './auth-middleware';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { MOTIVATION_STATES } from '../teaching/motivation-source';
 
 const DATA_DIR = process.env.AGGREGATE_DATA_DIR || path.resolve(process.cwd(), '.data');
 const AGGREGATE_FILE = process.env.AGGREGATE_STORE_PATH || path.join(DATA_DIR, 'aggregate.json');
@@ -102,7 +103,6 @@ function saveState(state: AggregateState) {
 
 const KEBAB_RE = /^[a-z0-9-]+$/;
 const SNAKE_RE = /^[a-z_]+$/;
-const MOTIVATION_STATES = ['driven', 'steady', 'flagging', 'frustrated', 'anxious'];
 
 function sanitizeEvent(e: any): any | null {
   if (!e || typeof e !== 'object') return null;
@@ -112,7 +112,7 @@ function sanitizeEvent(e: any): any | null {
   if (typeof conceptVal === 'string' && conceptVal.length < 80 && KEBAB_RE.test(conceptVal)) clean.concept_id = conceptVal;
   if (typeof e.error_type === 'string' && e.error_type.length < 40 && SNAKE_RE.test(e.error_type)) clean.error_type = e.error_type;
   if (typeof e.topic === 'string' && e.topic.length < 80 && KEBAB_RE.test(e.topic)) clean.topic = e.topic;
-  if (typeof e.motivation_state === 'string' && MOTIVATION_STATES.includes(e.motivation_state)) clean.motivation_state = e.motivation_state;
+  if (typeof e.motivation_state === 'string' && (MOTIVATION_STATES as readonly string[]).includes(e.motivation_state)) clean.motivation_state = e.motivation_state;
   if (typeof e.misconception_id === 'string' && e.misconception_id.length < 80 && KEBAB_RE.test(e.misconception_id)) clean.misconception_id = e.misconception_id;
   // Accept both `misconception_description` and `misconception_example`
   const descVal = e.misconception_description || e.misconception_example;

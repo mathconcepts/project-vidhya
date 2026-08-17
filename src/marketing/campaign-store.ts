@@ -14,6 +14,7 @@
  */
 
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 import { getArticle } from './blog-store';
 import { generateSocialCards, createLandingVariant } from './sync-engine';
 import type { Campaign, SocialPlatform } from './types';
@@ -29,6 +30,17 @@ const _store = createFlatFileStore<StoreShape>({
   path: STORE_PATH,
   defaultShape: () => ({ campaigns: [] }),
 });
+
+/**
+ * Durable mirror (migration 043). This collection holds work nothing can
+ * recompute, and `.data` is wiped whenever the free-tier host sleeps.
+ */
+const _durable = registerDurable('marketing-campaigns', durableCollection<Campaign>({
+  collection: 'marketing-campaigns',
+  idOf: (i) => (i as any).id,
+  readLocal: () => _store.read().campaigns ?? [],
+  writeLocal: (items) => _store.write({ ..._store.read(), campaigns: items } as never),
+}));
 
 function shortId(prefix: string): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -81,6 +93,7 @@ export function createCampaign(input: CreateCampaignInput): Campaign {
   const store = _store.read();
   store.campaigns.push(campaign);
   _store.write(store);
+  _durable.mirror();
   return campaign;
 }
 
@@ -128,6 +141,7 @@ export function launchCampaign(campaign_id: string): Campaign {
   campaign.status = 'live';
   campaign.launched_at = new Date().toISOString();
   _store.write(store);
+  _durable.mirror();
   return campaign;
 }
 
@@ -138,6 +152,7 @@ export function concludeCampaign(campaign_id: string): Campaign {
   campaign.status = 'concluded';
   campaign.concluded_at = new Date().toISOString();
   _store.write(store);
+  _durable.mirror();
   return campaign;
 }
 

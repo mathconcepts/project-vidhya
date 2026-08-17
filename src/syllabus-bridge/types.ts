@@ -113,7 +113,19 @@ export interface ContentPlan {
 // Batch — a submitted generation job over one or more units
 // ============================================================================
 
-export type BatchStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type BatchStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'aborted';
+
+/**
+ * States a batch never leaves. Anything polling a batch must stop on these,
+ * or it polls forever — which is what happened to 'cancelled' before
+ * 'aborted' was added and the poll condition was widened to use this set.
+ */
+export const TERMINAL_BATCH_STATUSES: readonly BatchStatus[] = [
+  'completed',
+  'failed',
+  'cancelled',
+  'aborted',
+];
 
 export interface BatchRequest {
   batch_id: string;

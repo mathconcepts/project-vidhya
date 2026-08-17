@@ -118,7 +118,7 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
         <div className="px-3 py-2 border-t space-y-1.5" style={{ borderColor: 'var(--separator)' }}>
           {sliderSpecs.map((s) => (
             <div key={s.name} className="flex items-center gap-2 text-xs">
-              <span className="font-mono w-4" style={{ color: 'var(--indigo-ink)' }}>{s.name}</span>
+              <span className="font-mono w-4" style={{ color: 'var(--text-secondary)' }}>{s.name}</span>
               <input
                 type="range"
                 min={s.min}
@@ -127,7 +127,7 @@ export function DesmosLite({ attrs }: { attrs: DesmosLiteAttrs }) {
                 value={vars[s.name] ?? s.default}
                 onChange={(e) => setVars((v) => ({ ...v, [s.name]: Number(e.target.value) }))}
                 className="flex-1"
-                style={{ accentColor: 'var(--indigo)' }}
+                style={{ accentColor: 'var(--grey-6)' }}
                 aria-label={`Slider for ${s.name}`}
               />
               <span className="font-mono tabular-nums w-12 text-right" style={{ color: 'var(--text-secondary)' }}>

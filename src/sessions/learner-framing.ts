@@ -27,6 +27,8 @@
  * not a person.
  */
 
+import { STRUGGLING_STATES, THRIVING_STATES } from '../teaching/motivation-source';
+
 /** How much of this concept the student has actually got. */
 export type MasteryBand = 'cold' | 'building' | 'solid';
 
@@ -95,15 +97,21 @@ export function deriveFraming(
   // 'anxious' is what the persona fixtures use (data/personas/*.yaml) and it
   // was missing here — an anxious persona derived as 'steady' and read the
   // base body, which is precisely the "the personas were completely missing"
-  // symptom on the demo.
+  // symptom on the demo. Membership comes from the canonical
+  // STRUGGLING_STATES / THRIVING_STATES lanes (src/teaching/motivation-source.ts)
+  // rather than a hand-typed list, so this can never drift from the
+  // vocabulary again. 'confident' was never a real MotivationState — that
+  // branch was dead code and has been removed (verified against
+  // data/personas/*.yaml: no persona uses it).
   if (
-    motivation === 'frustrated' ||
-    motivation === 'flagging' ||
-    motivation === 'anxious' ||
+    (STRUGGLING_STATES as readonly string[]).includes(motivation) ||
     failures >= SHAKEN_AFTER_FAILURES
   ) {
     stance = 'shaken';
-  } else if (motivation === 'confident' || motivation === 'driven' || (band === 'solid' && failures === 0)) {
+  } else if (
+    (THRIVING_STATES as readonly string[]).includes(motivation) ||
+    (band === 'solid' && failures === 0)
+  ) {
     stance = 'assured';
   } else {
     stance = 'steady';

@@ -37,6 +37,44 @@ const _store = createFlatFileStore<FeedbackStoreShape>({
   defaultShape: () => ({ feedback: [], applied_changes: [] }),
 });
 
+/**
+ * Read and write go through these two, not through `_store` directly.
+ *
+ * The file is the synchronous read path — every export in this module is
+ * sync and the API routes depend on that — and Postgres is the durable one.
+ * Render's free tier wipes `.data` when the service sleeps, so before this
+ * existed, feedback submitted on Tuesday did not exist on Wednesday. See
+ * src/storage/repositories/durable-store-repo.ts.
+ */
+function readStore(): FeedbackStoreShape { return _store.read(); }
+
+function writeStore(s: FeedbackStoreShape): void {
+  _store.write(s);
+  void mirrorFeedback(s);
+}
+
+function mirrorFeedback(s: FeedbackStoreShape): Promise<void> {
+  // Fire-and-forget. Submitting feedback must not fail because the mirror is
+  // unreachable — the local write has already succeeded by this point.
+  return import('./durable')
+    .then((m) => m.mirrorAll(s))
+    .catch(() => {});
+}
+
+/**
+ * Restore feedback from the durable store when the local file is gone.
+ * Called once at server boot, before routes accept traffic — every read here
+ * is synchronous and cannot await a query itself.
+ */
+export async function hydrateFeedbackStore(): Promise<{
+  hydrated: boolean; count: number; reason: string;
+}> {
+  const { hydrate } = await import('./durable');
+  // Writes straight to the file, NOT through writeStore — mirroring what we
+  // just read back to where we read it from is a pointless round trip.
+  return hydrate(readStore(), (next) => _store.write(next));
+}
+
 // ============================================================================
 // Id generation — short, URL-safe, no external dep
 // ============================================================================
@@ -89,7 +127,7 @@ export function submitFeedback(input: SubmitFeedbackInput): FeedbackItem {
     status: 'submitted',
     corroboration_count: 0,
   };
-  const store = _store.read();
+  const store = readStore();
   store.feedback.push(item);
 
   // Compute corroboration: count existing open items with same target +
@@ -103,7 +141,7 @@ export function submitFeedback(input: SubmitFeedbackInput): FeedbackItem {
     }
   }
 
-  _store.write(store);
+  writeStore(store);
   return item;
 }
 
@@ -154,7 +192,7 @@ export function listFeedback(filter?: {
   priority?: FeedbackPriority;
   user_id?: string;
 }): FeedbackItem[] {
-  const items = _store.read().feedback;
+  const items = readStore().feedback;
   return items.filter(i => {
     if (filter?.exam_id && i.target.exam_id !== filter.exam_id) return false;
     if (filter?.status && i.status !== filter.status) return false;
@@ -166,11 +204,11 @@ export function listFeedback(filter?: {
 }
 
 export function getFeedback(id: string): FeedbackItem | null {
-  return _store.read().feedback.find(i => i.id === id) ?? null;
+  return readStore().feedback.find(i => i.id === id) ?? null;
 }
 
 export function listAppliedChanges(exam_id?: string): AppliedChange[] {
-  const changes = _store.read().applied_changes;
+  const changes = readStore().applied_changes;
   return exam_id ? changes.filter(c => c.exam_id === exam_id) : changes;
 }
 
@@ -184,7 +222,7 @@ export function triageFeedback(
   priority: FeedbackPriority,
   admin_notes?: string,
 ): FeedbackItem | null {
-  const store = _store.read();
+  const store = readStore();
   const item = store.feedback.find(i => i.id === id);
   if (!item) return null;
   if (item.status !== 'submitted') return item;
@@ -194,7 +232,7 @@ export function triageFeedback(
   item.triaged_at = new Date().toISOString();
   item.triaged_by = triaged_by;
   if (admin_notes) item.admin_notes = admin_notes;
-  _store.write(store);
+  writeStore(store);
   return item;
 }
 
@@ -203,7 +241,7 @@ export function approveFeedback(
   approved_by: string,
   admin_notes?: string,
 ): FeedbackItem | null {
-  const store = _store.read();
+  const store = readStore();
   const item = store.feedback.find(i => i.id === id);
   if (!item) return null;
   if (item.status !== 'triaged' && item.status !== 'submitted') return item;
@@ -212,7 +250,7 @@ export function approveFeedback(
   item.approved_at = new Date().toISOString();
   item.approved_by = approved_by;
   if (admin_notes) item.admin_notes = admin_notes;
-  _store.write(store);
+  writeStore(store);
   return item;
 }
 
@@ -221,7 +259,7 @@ export function rejectFeedback(
   rejected_by: string,
   reason: string,
 ): FeedbackItem | null {
-  const store = _store.read();
+  const store = readStore();
   const item = store.feedback.find(i => i.id === id);
   if (!item) return null;
   if (item.status === 'applied') return item;
@@ -230,7 +268,7 @@ export function rejectFeedback(
   item.triaged_at = item.triaged_at ?? new Date().toISOString();
   item.triaged_by = rejected_by;
   item.rejection_reason = reason;
-  _store.write(store);
+  writeStore(store);
   return item;
 }
 
@@ -239,7 +277,7 @@ export function markDuplicate(
   canonical_id: string,
   admin_user_id: string,
 ): FeedbackItem | null {
-  const store = _store.read();
+  const store = readStore();
   const item = store.feedback.find(i => i.id === id);
   const canonical = store.feedback.find(i => i.id === canonical_id);
   if (!item || !canonical) return null;
@@ -248,7 +286,7 @@ export function markDuplicate(
   item.triaged_at = item.triaged_at ?? new Date().toISOString();
   item.triaged_by = admin_user_id;
   canonical.corroboration_count++;
-  _store.write(store);
+  writeStore(store);
   return item;
 }
 
@@ -263,7 +301,7 @@ export function applyFeedback(
   change_description: string,
   diff_summary?: string,
 ): { item: FeedbackItem; change: AppliedChange } | null {
-  const store = _store.read();
+  const store = readStore();
   const item = store.feedback.find(i => i.id === id);
   if (!item) return null;
   if (item.status !== 'approved') return null;
@@ -284,7 +322,7 @@ export function applyFeedback(
     diff_summary,
   };
   store.applied_changes.push(change);
-  _store.write(store);
+  writeStore(store);
   return { item, change };
 }
 

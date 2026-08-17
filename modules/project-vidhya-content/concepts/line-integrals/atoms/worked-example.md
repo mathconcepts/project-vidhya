@@ -56,5 +56,3 @@ The parametrization is crucial. Once you have $\mathbf{r}(t)$, compute $|d\mathb
 ---
 
 **Summary:** Three GATE-quality atoms (intuition, visual_analogy, worked_example) for the Line Integrals concept are ready. The visual_analogy includes an animated parametric gif-scene showing an oscillating path. The worked_example includes a full four-step solution and an interactive guided walkthrough for exam practice.
-
-DONE:line-integrals

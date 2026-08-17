@@ -36,6 +36,8 @@ import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
 import { selectAtoms } from '../content/pedagogy-engine';
 import { applyStanceVariants } from '../content/stance-variants';
 import { deriveFraming, type LearnerStance } from '../sessions/learner-framing';
+import { stanceForConcept } from '../sessions/stance-pin';
+import { MOTIVATION_STATES } from '../teaching/motivation-source';
 import type { ContentAtom, SessionContext } from '../content/content-types';
 import {
   sanitizeRecentErrors,
@@ -158,13 +160,13 @@ async function enrichAtomsWithEngagement(
  *  - prerequisite review: if there's a known weak prereq
  */
 /**
- * Motivation values the compose route will accept from a client. Matches the
- * vocabulary `deriveFraming` recognises plus the persona-fixture spellings —
- * anything else is dropped rather than forwarded.
+ * Motivation values the compose route will accept from a client. The
+ * canonical MotivationState vocabulary (src/teaching/motivation-source.ts)
+ * — anything else is dropped rather than forwarded. This used to also
+ * accept 'confident', which is not a real MotivationState and was never
+ * recognised by `deriveFraming` (dead branch, removed alongside this fix).
  */
-const ALLOWED_MOTIVATION_STATES = new Set([
-  'anxious', 'frustrated', 'flagging', 'steady', 'confident', 'driven',
-]);
+const ALLOWED_MOTIVATION_STATES = new Set<string>(MOTIVATION_STATES);
 const ALLOWED_REPRESENTATION_MODES = new Set(['geometric', 'algebraic', 'balanced']);
 
 /**
@@ -440,7 +442,15 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       // without a database, which is what the demo instance runs on. Applied
       // BEFORE per-student overrides so a regenerated per-student body still
       // wins: the more specific signal beats the more general one.
-      atoms = applyStanceVariants(atoms, stanceForSnapshot(lessonReq.student, effective_concept_id));
+      // Pinned for the length of the concept: recovery can flip the derived
+      // stance mid-read, and rewriting every body underneath a student who
+      // just answered two correctly is not how that improvement should show up.
+      atoms = applyStanceVariants(
+        atoms,
+        stanceForConcept(lessonReq.session_id, effective_concept_id, () =>
+          stanceForSnapshot(lessonReq.student, effective_concept_id),
+        ),
+      );
       // Concept-orchestrator v1: apply per-student overrides + populate
       // improved_since for the Improved badge. No-op without DB.
       atoms = await applyStudentOverrides(atoms, lessonReq.session_id ?? null);
@@ -556,7 +566,9 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       // stance comes from stored state rather than from anything a client sent.
       atoms = applyStanceVariants(
         atoms,
-        deriveFraming(studentModel as never, effective_concept_id).stance,
+        stanceForConcept(student_id, effective_concept_id, () =>
+          deriveFraming(studentModel as never, effective_concept_id).stance,
+        ),
       );
       // Concept-orchestrator v1 enrichment.
       atoms = await applyStudentOverrides(atoms, student_id);
@@ -879,3 +891,6 @@ export const lessonRoutes: Array<{ method: string; path: string; handler: RouteH
   { method: 'POST', path: '/api/daily-cards', handler: handleDailyCards },
   { method: 'GET', path: '/api/lesson/formula-map/:module', handler: handleFormulaMap },
 ];
+
+/** Exposed for tests only — pins the client-motivation allowlist to the canonical vocabulary. */
+export const __testing = { ALLOWED_MOTIVATION_STATES };

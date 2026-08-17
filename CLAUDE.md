@@ -699,6 +699,74 @@ Fixed with `src/generation/run-dispatcher.ts` (`dispatchRun(runId)`):
 
 **Still out of scope:** the cron-driven flywheel (`content-flywheel.ts`'s `runFlywheel()`) has its own separate PYQ-problem generator (`generateProblem`/`verifyAndPublish`, not `generateConcept`) and its own hardcoded `gemini-2.5-flash` — untouched, since it's a different generation pipeline entirely, not part of the RunLauncher/dropdown path. `config.pipeline.multi_llm_consensus` (a boolean the suggester randomly toggles as an experiment idea) still isn't read anywhere — consensus is still purely atom-type-driven (`requiresConsensus()`), not operator-toggleable.
 
+---
+
+### Durable stores + honest gates (v4.33.0)
+
+Two classes of quiet falsehood, closed together.
+
+**The gates were measuring wrong.** `scripts/check-syllabus-floor.ts` had four
+independent defects and still produced plausible-looking numbers: it read the
+top level of the explainer bundle instead of `by_concept`, treated a
+single-object payload as unindexable, required an `atom_type` field real
+explainers do not carry, and compared teaching-tip ids against a set whose keys
+carry a `NN-` prefix. Net effect: 282 reported findings on `main`, of which 170
+were content that existed and the gate could not see. Now 112, and every
+counter it produces has a test that fails when that counter is broken. Practice
+gaps (97) did not move — those are real.
+
+Two more gates joined CI (10 total): `ci:template-coverage` and
+`ci:variant-agreement`. The golden content set grew from 3 concepts to all 97
+(196 atoms), with existing gaps grandfathered in
+`scripts/golden-answer-key-baseline.json` so only NEW gaps fail.
+
+Schema columns are now **deny-by-default** against
+`scripts/schema-column-baseline.json` — adding one requires a reviewed entry,
+which is where someone asks whether a per-student attribute should exist at
+all. A JSONB `record` column is a hole in a column-name gate, so the blobs are
+additionally guarded by per-type field allowlists in the durability tests.
+
+**Records outside Postgres did not survive the host sleeping.** Migrations
+041/042/043 back the flat-file stores:
+
+- `041_auth_user_records` — user accounts
+- `042_durable_content_stores` — feedback + generated bridge content
+- `043_durable_records` — one `durable_records` table with a `collection`
+  discriminator for the remaining ~17 stores holding irreplaceable data
+
+`src/storage/durable-flat-file.ts` is the wiring reduced to four lines, and it
+enforces the three rules once rather than per store: mirroring is
+fire-and-forget, hydration NEVER writes over a populated local store, and a
+failed read returns `null` rather than `[]` so an unreachable database cannot
+read as "there is nothing here". `hydrateAllDurable()` runs at boot.
+
+Wired: retention schedules, mastery trajectories, notebooks (row-per-entry —
+an engaged student's history grows without bound), session plans, exam
+profiles, practice logs, plan templates, attention coverage, sample checks,
+live courses, marketing articles and campaigns, exams, exam groups, bridge
+content feedback, and the three teacher stores. Left on disk deliberately and
+documented in TODOS.md: recomputable aggregates and single-run scratch state.
+
+**Generation actually generates.** `src/syllabus-bridge/batch-runner.ts` built
+`new LLMClient({})` — zero adapters, so every call threw and fell through to a
+mock that was then served as real content. Fixed; `isServable()` refuses
+anything whose `source` is `'mock'` with a 409. Spend is capped BEFORE the
+call, not discovered after (a thrown cap could not survive the nested catches).
+`src/syllabus-bridge/pricing.ts` is now the only price table — the plan screen
+and the cap had drifted 10x apart, each internally consistent.
+
+**Other surfaces:** stance pinned per session (`src/sessions/stance-pin.ts`),
+a cadence every topic resolves to (`src/content/stance-cadence.ts`), a variant
+generator + LLM judge with a labelled eval set (`src/generation/`), and the
+Tier 4 shadow readout at `GET /api/admin/pedagogy-shadow` which reports what
+flipping `VIDHYA_PEDAGOGY_GATE=on` would refuse today.
+
+**Known-unrun:** `npm run variants:eval` (the judge against its labelled set)
+and live bridge generation have never executed against a real model in this
+environment — `openrouter.ai` is blocked by proxy policy and no provider key is
+set. Both reach only offline operator scripts, not any student-facing path.
+Tracked in TODOS.md.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

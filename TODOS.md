@@ -38,32 +38,40 @@ correctly lives in `templates/<topic>.yaml`; measurement is the separate
 reason the blueprint might earn it later). See
 `docs/stance-axis-scaling-plan.md`.
 
-## Auth user store is single-instance only
+## Flat-file stores are single-instance only
 
 **Trigger:** before any deploy that runs more than one server instance.
 
-**What:** finish the async migration of `src/auth/user-store.ts`.
+**What:** finish the async migration for the three stores now mirrored to
+Postgres — `auth/user-store.ts`, `feedback/store.ts`,
+`syllabus-bridge/store.ts`.
 
-**Status:** the data-loss half is FIXED (migration 041 +
-`storage/repositories/auth-user-repo.ts`). Accounts now mirror to Postgres on
-every write and are restored at boot when `.data` has been wiped. What remains
-is the concurrency half.
+**Status:** the DATA-LOSS half is fixed (migrations 041 and 042). User
+accounts, student feedback and generated bridge content all mirror on write
+and restore at boot when `.data` has been wiped. What remains is concurrency.
 
 **Why it is still open:** the file is the read path and it is per-instance.
-Two servers each hold their own `users.json` and hydrate only at boot, so a
-signup on instance A is invisible to instance B until B restarts. Render's
-free tier is single-instance, so this is not a live bug — it becomes one the
-day the service scales.
+Two servers each hold their own copy and hydrate only at boot, so a write on
+instance A is invisible to B until B restarts. Render's free tier is
+single-instance, so this is not a live bug — it becomes one the day the
+service scales out.
 
-**Why it was not done now:** all 17 exports are synchronous and Postgres is
-not. Making them async is a breaking change through 13 production files
-including every auth route, on two modules carrying `@ts-nocheck` so the
-compiler helps with none of it. That is a reviewed change, not a loop task.
+**Why it was not done:** every export in these modules is synchronous and
+Postgres is not. `user-store.ts` alone has 17 sync exports across 13
+production files including every auth route, on modules carrying
+`@ts-nocheck`. That is a reviewed change, not a loop task.
 
-**Where to start:** the mirror already exists and round-trips, so the work is
-mechanical — make `readStore()` async, follow the type errors, and delete the
-file path once every caller awaits. `src/sessions/session-store.ts` is the
-model for the finished shape.
+**Where to start:** the mirrors exist and round-trip, so the work is
+mechanical — make the read path async, follow the type errors, drop the file
+once every caller awaits. `src/sessions/session-store.ts` is the model for the
+finished shape, and `src/storage/repositories/durable-store-repo.ts` already
+holds the table mapping.
+
+**Also still file-only:** roughly nine other `createFlatFileStore` call sites
+(exams, attention, sample-check, admin-orchestrator, exam-builder, content
+telemetry, teaching turns). None were audited for whether they hold anything
+worth keeping. That audit is the honest next step, not an assumption that they
+are fine.
 
 ## The circumstance filter has no empty-set fallback
 

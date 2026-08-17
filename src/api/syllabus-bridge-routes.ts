@@ -19,6 +19,7 @@
  */
 
 import { ServerResponse } from 'http';
+import { BRIDGE_PRICING_LABEL } from '../syllabus-bridge/pricing';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import {
@@ -116,6 +117,10 @@ async function handleGetMappingPlan(req: ParsedRequest, res: ServerResponse) {
     total_units: plan.units.length,
     total_estimated_tokens: plan.total_estimated_tokens,
     estimated_cost_usd: cost,
+    // Named by the server, so the screen cannot advertise a provider the
+    // estimate was not computed at. It said "Gemini Flash" while the cap
+    // charged Anthropic rates.
+    pricing_label: BRIDGE_PRICING_LABEL,
     grouped_by_entry: groupedByEntry,
   });
 }

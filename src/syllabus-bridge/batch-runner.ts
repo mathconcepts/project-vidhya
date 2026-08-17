@@ -16,6 +16,7 @@ import type {
   Curriculum, BridgeMappingEntry, BridgeMapping,
 } from './types';
 import { saveBatch, saveGeneratedContent } from './store';
+import { estimateCost, BRIDGE_PROVIDER } from './pricing';
 import { getMapping, getConcept } from './registry';
 import { CostMeter, RunBudgetExceeded } from '../generation/cost-meter';
 
@@ -31,12 +32,18 @@ import { CostMeter, RunBudgetExceeded } from '../generation/cost-meter';
  */
 export const DEFAULT_BATCH_CAP_USD = Number(process.env.VIDHYA_BRIDGE_BATCH_CAP_USD ?? 2);
 
-/** Worst-case spend for one unit, used for the pre-call check. */
-function estimateUnitCost(unit: ContentUnit): number {
+/**
+ * Worst-case spend for one unit, used for the pre-call check.
+ *
+ * Exported so a test can assert it quotes the same rate the operator was
+ * shown before approving the batch. Those two numbers disagreed by 10x once.
+ */
+export function estimateUnitCost(unit: ContentUnit): number {
   const maxTokens = Math.min(2000, unit.estimated_tokens * 2);
-  // Priced against the most expensive provider the router might pick, so the
-  // estimate is a ceiling rather than a hopeful average.
-  return estimateCost('anthropic', maxTokens);
+  // Token count is the ceiling (max, not expected) and the rate is the
+  // provider the bridge actually requests, so this over-estimates rather
+  // than letting a run slip past the cap.
+  return estimateCost(BRIDGE_PROVIDER, maxTokens);
 }
 
 /**
@@ -364,15 +371,6 @@ async function tryRealLLM(
   }
 }
 
-function estimateCost(provider: 'gemini' | 'anthropic' | 'openai', tokens: number): number {
-  // Rough per-million-token output prices (mid-tier models)
-  const rate: Record<typeof provider, number> = {
-    'gemini':    0.30,
-    'anthropic': 3.00,
-    'openai':    2.50,
-  };
-  return Number(((tokens / 1_000_000) * rate[provider]).toFixed(5));
-}
 
 // ============================================================================
 // Mock generation — deterministic, useful for dev

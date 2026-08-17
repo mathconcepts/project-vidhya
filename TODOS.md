@@ -192,3 +192,37 @@ source of truth with Postgres as the mirror — not the other way round.
 promoting the hot collections (retention, trajectory) to real tables that the
 application reads from directly instead of hydrating into a file. The second
 is the better end state; the first is the cheap stopgap.
+
+## Generation cost is attributed to a provider that may not have served it
+
+**Trigger:** before trusting the spend cap's numbers, or before the cost meter
+gates anything a customer pays for.
+
+**What:** `src/syllabus-bridge/batch-runner.ts` decides which provider to
+record by asking which API key is present, not which provider answered:
+
+```ts
+const provider = hasAnthropic ? 'anthropic' : hasGemini ? 'gemini' : 'openai';
+```
+
+`LLMClient` picks the route itself and can fall back. So on a deploy with two
+keys set, a call the router sent to Gemini gets recorded as Anthropic and
+priced at Anthropic's rate by `estimateCost(provider, tokens)`.
+
+**Why it matters and how much:** `cost_usd` feeds `recordSpend`, so the run's
+accumulated spend — the number the cap is compared against — can be wrong in
+either direction. Bounded, because the pre-call check uses
+`estimateUnitCost(unit)` rather than the accumulated total, so the cap still
+refuses before an over-budget call. The damage is reporting accuracy, not
+runaway spend.
+
+**Not a regression:** main has the same shape with the branches in the other
+order. This branch flipped the precedence to match `BRIDGE_MODEL_ID`, which
+now names Claude explicitly. Wrong either way.
+
+**The fix:** `LLMClient` already knows the answer — it emits
+`generate:complete` with `provider: current.provider` and calls
+`logRoutingDecision({ servedProvider })`. Either surface that on the response
+object or subscribe to the event and read it. Deliberately not done during a
+ship: it changes a return shape every caller of the LLM client shares, and
+that is not a change to rush on the way to production.

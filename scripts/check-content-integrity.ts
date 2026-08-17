@@ -34,7 +34,15 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const CONCEPTS = path.join(ROOT, 'modules/project-vidhya-content/concepts');
+/**
+ * The corpus to check. Overridable by argument so the gate can be pointed at a
+ * mutated copy — a gate nobody has watched fail is a gate nobody knows works,
+ * and the only honest way to know is to break something on purpose and confirm
+ * it exits non-zero. See src/__tests__/gate-mutation.test.ts.
+ */
+const CONCEPTS = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.join(ROOT, 'modules/project-vidhya-content/concepts');
 
 /**
  * Headers the generator leaves behind. Deliberately anchored to line start and
@@ -129,7 +137,7 @@ function checkFile(file: string): void {
   // ---- 3. declared id must match filename -------------------------------
   const idMatch = text.match(/^id:\s*(\S+)/m);
   if (!idMatch) return; // not every markdown file under concepts/ is an atom
-  const declared = norm(idMatch.group?.[1] ?? idMatch[1]).replace(/["']/g, '');
+  const declared = norm(idMatch[1]).replace(/["']/g, '');
   const concept = norm(path.basename(path.dirname(path.dirname(file))));
   const filename = norm(path.basename(file, '.md'));
 

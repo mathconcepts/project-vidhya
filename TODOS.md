@@ -143,3 +143,52 @@ retracted.
 **Both pipelines must be named:** `content-flywheel.ts` (the cron flywheel)
 and `wolfram-verify-job.ts` are separate consumers with separate logic. Fixing
 one leaves the other conflating.
+
+## The flat-file stores left on disk on purpose
+
+**Trigger:** anyone reading migration 043 and asking "why not all of them?"
+
+**What:** eleven of the 30 `createFlatFileStore` call sites are NOT mirrored,
+and that is a decision rather than an omission. Recorded here so the next
+audit does not re-derive it.
+
+**Recomputable — mirroring them would store a cache:**
+
+- `src/content/telemetry.ts` — derived from the events it counts
+- `src/curriculum/quality-aggregator.ts` — rolls up verification results that
+  are themselves persisted
+
+**Working state of a single run — a lost one is re-runnable:**
+
+- `src/admin-orchestrator/agent.ts` and its `task-store.ts`
+- `src/exam-builder/event-log.ts`
+- `src/marketing/sync-engine.ts`
+- `src/syllabus-bridge/store.ts`'s batch half. Its *content* half IS mirrored
+  (migration 042) because generating it cost model spend; the batch record
+  that produced it did not.
+
+**Wired but hydrated differently:** notebooks. Each student's notebook is its
+own file (`.data/notebooks/{user_id}.json`), so there is no single collection
+for `hydrateAllDurable` to walk. `hydrateNotebook(user_id)` restores one on
+first read instead. If notebooks ever move into a single file, fold them into
+the boot sweep.
+
+**If this changes:** the list of what IS wired is asserted in
+`src/__tests__/unit/storage/durable-flat-file.test.ts`, so adding a store
+there without registering it fails CI rather than failing at the next restart.
+
+## The single-instance assumption under durable_records
+
+**Trigger:** before running more than one server process against one database.
+
+**What:** `mirror()` deletes rows in the collection (or scope) that are not in
+the set it was handed, so two instances with divergent local files would take
+turns deleting each other's records.
+
+**Why it is acceptable today:** Render runs one instance, and the file is the
+source of truth with Postgres as the mirror — not the other way round.
+
+**What it needs:** either a last-writer-wins timestamp check on delete, or
+promoting the hot collections (retention, trajectory) to real tables that the
+application reads from directly instead of hydrating into a file. The second
+is the better end state; the first is the cheap stopgap.

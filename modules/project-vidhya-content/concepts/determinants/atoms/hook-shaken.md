@@ -23,7 +23,7 @@ for_stance: shaken
 
 Take the unit square — corners $(0,0)$, $(1,0)$, $(0,1)$, $(1,1)$. Area $1$.
 
-Apply a matrix. The new area is the **determinant**.
+Apply a matrix. The new signed area is the **determinant**.
 
 Tripled? $\det = 3$. Flipped over? Negative. Collapsed to a line? $\det = 0$ — not invertible.
 

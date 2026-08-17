@@ -76,7 +76,6 @@ const _durable = registerDurable('sample-checks', durableCollection<SampleCheck>
   readLocal: () => _store.read().sample_checks ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), sample_checks: items } as never),
 }));
-  _durable.mirror();
 
 // ============================================================================
 // ID + token generation

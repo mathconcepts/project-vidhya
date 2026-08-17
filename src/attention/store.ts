@@ -42,7 +42,6 @@ const _durable = registerDurable('attention-coverage', durableCollection<Cumulat
   readLocal: () => _store.read().coverage ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), coverage: items } as never),
 }));
-  _durable.mirror();
 
 // ============================================================================
 

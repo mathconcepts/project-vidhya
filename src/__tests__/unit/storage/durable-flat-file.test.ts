@@ -222,6 +222,54 @@ describe('the stores are actually wired to it', () => {
 
 // ---------------------------------------------------------------------------
 
+describe('importing a store does not touch the durable store', () => {
+  it('no mirror, no put, nothing — module load is not a write', async () => {
+    /**
+     * This is not tidiness. `mirror()` DELETES rows the list it was handed
+     * does not contain, and boot imports every store module in order to walk
+     * the registry. A mirror at module scope therefore runs with whatever the
+     * local file happens to hold — which, on the exact boot where the host
+     * wiped `.data`, is nothing. It would empty the durable store moments
+     * before hydration tried to read it, destroying the data this migration
+     * exists to protect, on the one boot where it mattered.
+     *
+     * Nine stores shipped with exactly that line. Behavioural rather than a
+     * source grep, because the next version of the mistake will not look the
+     * same.
+     */
+    vi.resetModules();
+    rec.calls.length = 0;
+
+    await Promise.all([
+      import('../../../gbrain/retention-scheduler'),
+      import('../../../gbrain/performance-tracker'),
+      import('../../../session-planner/store'),
+      import('../../../session-planner/exam-profile-store'),
+      import('../../../session-planner/practice-session-log'),
+      import('../../../session-planner/template-store'),
+      import('../../../attention/store'),
+      import('../../../sample-check/store'),
+      import('../../../course/promoter'),
+      import('../../../marketing/blog-store'),
+      import('../../../marketing/campaign-store'),
+      import('../../../exams/exam-store'),
+      import('../../../exams/exam-group-store'),
+      import('../../../syllabus-bridge/feedback-store'),
+      import('../../../api/teaching-routes'),
+    ]);
+    await settle();
+
+    expect(
+      rec.calls,
+      'A store wrote to the durable store at module load. On the boot after the\n' +
+        'host wiped .data this would mirror an empty file — deleting every durable\n' +
+        'record before hydration could restore it.',
+    ).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
 describe('the registry knows about every store that was supposed to be wired', () => {
   /**
    * The irreplaceable tier, by name. Deleting a `registerDurable` call fails

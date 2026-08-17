@@ -41,7 +41,6 @@ const _durable = registerDurable('marketing-campaigns', durableCollection<Campai
   readLocal: () => _store.read().campaigns ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), campaigns: items } as never),
 }));
-  _durable.mirror();
 
 function shortId(prefix: string): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';

@@ -100,7 +100,6 @@ const _durable = registerDurable('student-exam-profiles', durableCollection<Stud
   readLocal: () => _store.read().profiles ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), profiles: items } as never),
 }));
-  _durable.mirror();
 
 // ============================================================================
 

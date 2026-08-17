@@ -57,7 +57,6 @@ const _durable = registerDurable('live-courses', durableCollection<LiveCourse>({
   readLocal: () => _store.read().courses ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), courses: items } as never),
 }));
-  _durable.mirror();
 
 function nano(n = 8): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';

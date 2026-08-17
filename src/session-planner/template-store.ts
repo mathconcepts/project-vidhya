@@ -74,7 +74,6 @@ const _durable = registerDurable('plan-templates', durableCollection<PlanTemplat
   readLocal: () => _store.read().templates ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), templates: items } as never),
 }));
-  _durable.mirror();
 
 const MAX_TEMPLATES_PER_STUDENT = 20;
 

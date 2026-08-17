@@ -45,7 +45,6 @@ const _durable = registerDurable('session-plans', durableCollection<SessionPlan>
   readLocal: () => _store.read().plans ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), plans: items } as never),
 }));
-  _durable.mirror();
 
 // Soft cap: keep last N plans per student. Older plans are pruned
 // lazily on writes so the store doesn't grow unbounded across months.

@@ -48,7 +48,6 @@ const _durable = registerDurable('marketing-articles', durableCollection<Article
   readLocal: () => _store.read().articles ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), articles: items } as never),
 }));
-  _durable.mirror();
 
 // ============================================================================
 // Helpers

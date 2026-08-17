@@ -62,7 +62,6 @@ const _durable = registerDurable('practice-sessions', durableCollection<Practice
   readLocal: () => _store.read().entries ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), entries: items } as never),
 }));
-  _durable.mirror();
 
 const PRUNE_AFTER_DAYS = 30;
 

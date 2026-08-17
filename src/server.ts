@@ -948,6 +948,25 @@ async function main() {
     } catch (err) {
       console.error('[server] User hydration error (non-fatal):', (err as Error).message);
     }
+
+    // Same restore for the other two stores the host wipes: student feedback,
+    // and the generated bridge content that cost model spend to produce.
+    // Each is independent — one failing must not skip the others.
+    for (const [label, load] of [
+      ['Feedback', () => import('./feedback/store').then((m) => m.hydrateFeedbackStore())],
+      ['Bridge content', () => import('./syllabus-bridge/store').then((m) => m.hydrateGeneratedContent())],
+    ] as const) {
+      try {
+        const r = await load();
+        console.log(
+          r.hydrated
+            ? `[server] Restored ${r.count} ${label.toLowerCase()} record(s) from the durable store`
+            : `[server] ${label} store not hydrated — ${r.reason}`,
+        );
+      } catch (err) {
+        console.error(`[server] ${label} hydration error (non-fatal):`, (err as Error).message);
+      }
+    }
   }
 
   // ── Embedder (provider-agnostic — Gemini default, OpenAI fallback) ─────

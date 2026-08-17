@@ -147,6 +147,7 @@
     "llm_agreement",
     "llm_tokens",
     "longest_streak",
+    "mapping_id",
     "marks",
     "mastery",
     "mastery_share",
@@ -183,6 +184,7 @@
     "prepared_for_pyq_ids",
     "prerequisite_alerts",
     "prerequisite_id",
+    "priority",
     "priority_score",
     "problem",
     "problem_id",
@@ -259,6 +261,7 @@
     "student_response",
     "studymate_id",
     "submitted_at",
+    "submitted_by",
     "suggestions",
     "superseded_by",
     "taken_at",
@@ -288,6 +291,7 @@
     "trace_id",
     "trigger_reason",
     "ts_ms",
+    "unit_id",
     "updated_at",
     "url",
     "usd_estimate",
@@ -319,6 +323,10 @@
     "org_id": "041_auth_user_records — tenant id, already present throughout the schema. Not per-student.",
     "google_sub": "041_auth_user_records — Google subject claim. Personal identity data, but NOT new collection: it is already in .data/users.json on every deploy today. This migration makes existing data durable, it does not gather anything more.",
     "is_owner": "041_auth_user_records — single owner flag, replacing the file-level owner_id. A role bit, not a behavioural attribute.",
-    "record": "041_auth_user_records — the whole User object as JSONB. A blob is a HOLE in a column-name gate: fields added inside it get none of this scrutiny. Closed by the User-field allowlist in src/__tests__/unit/auth/user-store-durability.test.ts, which fails when User grows a field nobody reviewed."
+    "record": "041_auth_user_records — the whole User object as JSONB. A blob is a HOLE in a column-name gate: fields added inside it get none of this scrutiny. Closed by the User-field allowlist in src/__tests__/unit/auth/user-store-durability.test.ts, which fails when User grows a field nobody reviewed.",
+    "priority": "042_durable_content_stores — feedback triage level (low/medium/high). Operator workflow metadata, set by a reviewer, not observed from a student.",
+    "submitted_by": "042_durable_content_stores — user_id of whoever filed a feedback item. This DOES link a person to what they reported, and it is the most sensitive column in 042. Kept because feedback triage is a conversation: an operator has to be able to follow up, and duplicate-detection needs to know two reports came from different people. NOT new collection — the field already exists in .data/feedback.json on every deploy. Promoted to a column only so listFeedback can filter on it.",
+    "mapping_id": "042_durable_content_stores — which curriculum-to-exam mapping produced a unit. Content identifier, no person in it.",
+    "unit_id": "042_durable_content_stores — which content unit a generated body belongs to. Content identifier, no person in it."
   }
 }

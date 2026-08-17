@@ -932,6 +932,22 @@ async function main() {
       console.error('[server] Static PYQ seed error (non-fatal):', (err as Error).message);
     }
     await migratePool.end();
+
+    // Restore user accounts if the host wiped .data while we were asleep.
+    // Must run AFTER auto-migrate (the table has to exist) and BEFORE the
+    // listener accepts traffic, because every read path in auth/user-store.ts
+    // is synchronous and cannot await this itself.
+    try {
+      const { hydrateFromDurableStore } = await import('./auth/user-store');
+      const r = await hydrateFromDurableStore();
+      console.log(
+        r.hydrated
+          ? `[server] Restored ${r.users} user record(s) from the durable store`
+          : `[server] User store not hydrated — ${r.reason}`,
+      );
+    } catch (err) {
+      console.error('[server] User hydration error (non-fatal):', (err as Error).message);
+    }
   }
 
   // ── Embedder (provider-agnostic — Gemini default, OpenAI fallback) ─────

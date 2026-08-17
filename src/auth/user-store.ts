@@ -73,7 +73,74 @@ const _store = createFlatFileStore<Store>({
 });
 
 function readStore(): Store { return _store.read(); }
-function writeStore(s: Store): void { _store.write(s); }
+
+/**
+ * Persist the store.
+ *
+ * The file remains the read path — every exported function here is
+ * synchronous and thirteen production files depend on that, so the file is
+ * what a sync read can reach. The Postgres mirror is what survives the host
+ * wiping `.data`, which on Render's free tier happens every time the service
+ * sleeps. See src/storage/repositories/auth-user-repo.ts.
+ *
+ * The mirror is fire-and-forget on purpose. A signup must not fail because
+ * the mirror is unreachable; the file write has already succeeded by then,
+ * so the in-process view is correct either way.
+ */
+function writeStore(s: Store): void {
+  _store.write(s);
+  void mirrorToDurableStore(s);
+}
+
+function mirrorToDurableStore(s: Store): Promise<void> {
+  return import('../storage/repositories/auth-user-repo')
+    .then(({ getAuthUserRepo }) => getAuthUserRepo().upsertAll(s as never))
+    .catch(() => {});
+}
+
+/**
+ * Restore user records from Postgres when the file is gone.
+ *
+ * Called once at server boot, before routes accept traffic — it has to be
+ * here rather than lazily inside `readStore()` because that function is
+ * synchronous and a Postgres query is not.
+ *
+ * Only ever writes when the file has nothing in it. A file with users is the
+ * live state and outranks the mirror; overwriting it would turn a stale
+ * mirror into data loss of exactly the kind this exists to prevent.
+ */
+export async function hydrateFromDurableStore(): Promise<{
+  hydrated: boolean;
+  users: number;
+  reason: string;
+}> {
+  const current = readStore();
+  const localCount = Object.keys(current.users ?? {}).length;
+  if (localCount > 0) {
+    return { hydrated: false, users: localCount, reason: 'local store already has users' };
+  }
+
+  const { getAuthUserRepo } = await import('../storage/repositories/auth-user-repo');
+  const durable = await getAuthUserRepo().loadAll();
+  if (!durable) {
+    return { hydrated: false, users: 0, reason: 'no durable records to restore from' };
+  }
+
+  const count = Object.keys(durable.users ?? {}).length;
+  if (count === 0) {
+    return { hydrated: false, users: 0, reason: 'durable store is empty' };
+  }
+
+  // Straight to the file, NOT through writeStore — mirroring what we just
+  // read back to where we read it from is a pointless round trip.
+  _store.write({
+    version: current.version ?? 1,
+    org_id: durable.org_id ?? ORG_ID,
+    owner_id: durable.owner_id ?? null,
+    users: durable.users as never,
+  });
+  return { hydrated: true, users: count, reason: 'restored from durable store' };
+}
 
 // ============================================================================
 // Lookups

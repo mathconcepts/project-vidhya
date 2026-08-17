@@ -111,6 +111,7 @@
     "generation_meta",
     "generation_run_id",
     "git_sha",
+    "google_sub",
     "hit_count",
     "html_content",
     "hypothesis",
@@ -122,6 +123,7 @@
     "intent",
     "interactives_enabled",
     "interval_days",
+    "is_owner",
     "item_id",
     "item_key",
     "keys",
@@ -166,6 +168,7 @@
     "next_review",
     "object_id",
     "options",
+    "org_id",
     "org_name",
     "override_content",
     "page_count",
@@ -200,6 +203,7 @@
     "raw_user_meta_data",
     "reason",
     "reasoning",
+    "record",
     "recorded_at",
     "regen_abandon_rate",
     "repetitions",
@@ -311,6 +315,10 @@
     "year"
   ],
   "$reviewed": {
-    "errored": "040_pedagogy_shadow_log — diagnostic flag on the Tier 4 shadow log, distinguishing \"the judge could not answer\" from \"the content scored zero\". Not student-scoped: the row is keyed by curriculum unit, carries no student or session id, and the table is explicitly truncatable."
+    "errored": "040_pedagogy_shadow_log — diagnostic flag on the Tier 4 shadow log, distinguishing \"the judge could not answer\" from \"the content scored zero\". Not student-scoped: the row is keyed by curriculum unit, carries no student or session id, and the table is explicitly truncatable.",
+    "org_id": "041_auth_user_records — tenant id, already present throughout the schema. Not per-student.",
+    "google_sub": "041_auth_user_records — Google subject claim. Personal identity data, but NOT new collection: it is already in .data/users.json on every deploy today. This migration makes existing data durable, it does not gather anything more.",
+    "is_owner": "041_auth_user_records — single owner flag, replacing the file-level owner_id. A role bit, not a behavioural attribute.",
+    "record": "041_auth_user_records — the whole User object as JSONB. A blob is a HOLE in a column-name gate: fields added inside it get none of this scrutiny. Closed by the User-field allowlist in src/__tests__/unit/auth/user-store-durability.test.ts, which fails when User grows a field nobody reviewed."
   }
 }

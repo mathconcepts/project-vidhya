@@ -46,41 +46,101 @@ function readAllTextFiles(dir: string, filterExt: string[]): string[] {
 
 // ----------------------------------------------------------------------------
 
-describe('surveillance invariant 1: no new schema columns', () => {
-  it('no migration in this PR introduces a column named personalized_*, tracked_*, behavior_*, or student_context_*', () => {
-    const migrationsDir = path.join(REPO_ROOT, 'supabase', 'migrations');
-    const files = fs.existsSync(migrationsDir)
-      ? fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql'))
-      : [];
+/**
+ * Invariant 1 — new schema columns are DENIED BY DEFAULT.
+ *
+ * ── Why this was inverted ───────────────────────────────────────────────
+ *
+ * It used to be a denylist of four name prefixes: `personalized_*`,
+ * `tracked_*`, `behavior_*`, `student_context_*`. That stops the columns
+ * someone names naively and waves through the ones named well. A plan to add
+ * `language_of_instruction`, `bandwidth_tier` and `device_class` — bandwidth
+ * and device being socioeconomic proxies, the most sensitive attribute class
+ * in the product — would have passed CI green, because none of those names
+ * match any of those four patterns.
+ *
+ * A guardrail written against a naming convention protects the convention,
+ * not the concept.
+ *
+ * ── How the inversion is affordable ─────────────────────────────────────
+ *
+ * There are 307 distinct column names across 40 migrations, so hand-reviewing
+ * them to build a true allowlist is a day of work that mostly re-blesses
+ * existing schema. Instead this uses the ratchet shape the repo already runs
+ * twice (`pg-import-allowlist.json`, `fork-test-lint-baseline.json`): the
+ * current 307 are grandfathered into a baseline file, and anything NOT in it
+ * fails. The list may shrink freely; growing it takes an explicit diff to a
+ * file whose header says what the reviewer is being asked to decide.
+ *
+ * The denylist is kept ON TOP of the ratchet, because those four shapes stay
+ * forbidden even with an explicit diff.
+ */
+describe('surveillance invariant 1: new schema columns are denied by default', () => {
+  const migrationsDir = path.join(REPO_ROOT, 'supabase', 'migrations');
+  const BASELINE_PATH = path.join(REPO_ROOT, 'scripts', 'schema-column-baseline.json');
 
-    const SUSPECT_PATTERNS = [
-      /personalized_\w+/i,
-      /\btracked_\w+/i,
-      /\bbehavior_\w+/i,
-      /\bstudent_context_\w+/i,  // Phase B: student-context lives in-memory only
-    ];
+  /** Column declarations, as `<name> <TYPE>` at the start of a line. */
+  const COLUMN_DECL = /^([a-z_][a-z0-9_]*)\s+(TEXT|UUID|INT|INTEGER|BIGINT|BOOLEAN|NUMERIC|FLOAT|JSONB|TIMESTAMPTZ|DATE|SERIAL)/i;
 
-    const offenders: Array<{ file: string; line: number; text: string; pattern: string }> = [];
-    for (const f of files) {
-      const content = fs.readFileSync(path.join(migrationsDir, f), 'utf8');
-      const lines = content.split('\n');
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        // Skip comments
-        if (line.trim().startsWith('--')) continue;
-        for (const re of SUSPECT_PATTERNS) {
-          if (re.test(line)) {
-            offenders.push({ file: f, line: i + 1, text: line.trim(), pattern: re.source });
-          }
-        }
-      }
+  function declaredColumns(): Array<{ file: string; line: number; name: string; text: string }> {
+    if (!fs.existsSync(migrationsDir)) return [];
+    const out: Array<{ file: string; line: number; name: string; text: string }> = [];
+    for (const f of fs.readdirSync(migrationsDir).filter((x) => x.endsWith('.sql'))) {
+      const lines = fs.readFileSync(path.join(migrationsDir, f), 'utf8').split('\n');
+      lines.forEach((line, i) => {
+        const s = line.trim();
+        if (!s || s.startsWith('--')) return;
+        const m = s.match(COLUMN_DECL);
+        if (m) out.push({ file: f, line: i + 1, name: m[1], text: s });
+      });
     }
+    return out;
+  }
+
+  it('every column in every migration is on the reviewed baseline', () => {
+    const baseline = new Set<string>(JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8')).columns);
+    const unlisted = declaredColumns().filter((c) => !baseline.has(c.name));
+
     expect(
-      offenders,
-      'No schema column should match personalized_*, tracked_*, or behavior_*. ' +
-        'If this surveillance-tag is intentional, document it in the PR and update this test.\n' +
-        offenders.map((o) => `  ${o.file}:${o.line}  ${o.text}`).join('\n'),
+      unlisted.map((c) => `${c.file}:${c.line}  ${c.name}`),
+      'A migration declares a column that is not on scripts/schema-column-baseline.json.\n' +
+        'This is deliberate friction. Before adding the name to that file, ask whether a new\n' +
+        'per-student attribute should exist at all — that question is the whole point of the\n' +
+        'gate. Add it in the SAME PR as the migration so the two are reviewed together.',
     ).toEqual([]);
+  });
+
+  it('still refuses the four surveillance-shaped names outright', () => {
+    // These stay forbidden even WITH an explicit baseline entry. The ratchet
+    // asks "should this exist?"; this asks nothing, it just says no.
+    const FORBIDDEN = [
+      /^personalized_/i,
+      /^tracked_/i,
+      /^behavior_/i,
+      /^student_context_/i,
+    ];
+    const offenders = declaredColumns().filter((c) => FORBIDDEN.some((re) => re.test(c.name)));
+    expect(
+      offenders.map((o) => `${o.file}:${o.line}  ${o.text}`),
+      'These name shapes are refused regardless of the baseline.',
+    ).toEqual([]);
+  });
+
+  it('the baseline is a real snapshot, not an empty file that passes vacuously', () => {
+    // A baseline of [] would make the first test pass only if the scanner
+    // found nothing — which is also what a broken scanner looks like.
+    const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
+    expect(baseline.columns.length).toBeGreaterThan(100);
+    expect(declaredColumns().length).toBeGreaterThan(100);
+  });
+
+  it('would catch the circumstance columns that motivated this inversion', () => {
+    // The regression, stated as data: these three names defeat the old
+    // denylist and must be caught by the new ratchet.
+    const baseline = new Set<string>(JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8')).columns);
+    for (const name of ['language_of_instruction', 'bandwidth_tier', 'device_class']) {
+      expect(baseline.has(name), `${name} must not already be grandfathered`).toBe(false);
+    }
   });
 });
 

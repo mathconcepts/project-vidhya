@@ -64,16 +64,21 @@ jobs:
       # Content gate (realignment plan D4.2): atoms-dir/concept-id check,
       # retired-id grep, placeholder ratchet, golden-set answer keys.
       #
-      # CONTENT_CI_STRICT flip rule (placeholder sequencing, spec-locked):
-      # the 82 shipped placeholder explainers are grandfathered as the
-      # ratchet baseline — CI fails only if the count INCREASES. After the
-      # first real generation run lands, flip CONTENT_CI_STRICT to 'true'
-      # IN THE SAME COMMIT that lands the real explainers.json; the gate
-      # then requires zero placeholders. The gate is never permanently red
-      # and --allow-placeholder never becomes routine.
+      # CONTENT_CI_STRICT is now 'true' — the flip the rule below always
+      # called for. The 82 grandfathered placeholders are gone (all 82
+      # explainers carry model: gate-em-concept-files with real bodies), so
+      # the allowance had become dead slack: the gate reported
+      # "0 placeholder explainers (allowed 82)" and would have waved through
+      # 82 new ones in silence. Strict mode requires zero, and passes today.
+      #
+      # Original rule, kept because it explains the sequencing: the shipped
+      # placeholders were grandfathered as the ratchet baseline, CI failed
+      # only if the count INCREASED, and the flip was owed in the same commit
+      # that landed the real explainers.json. The gate is never permanently
+      # red and --allow-placeholder never becomes routine.
       - name: Content gate (golden set + placeholder ratchet + atoms-dir)
         env:
-          CONTENT_CI_STRICT: 'false'
+          CONTENT_CI_STRICT: 'true'
         run: npm run ci:content-gate
 
       # pg-import allowlist ratchet (CEO plan Phase 0 §5.1): fails if a file

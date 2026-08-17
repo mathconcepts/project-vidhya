@@ -38,46 +38,32 @@ correctly lives in `templates/<topic>.yaml`; measurement is the separate
 reason the blueprint might earn it later). See
 `docs/stance-axis-scaling-plan.md`.
 
-## Auth user records survive only until the host sleeps
+## Auth user store is single-instance only
 
-**Trigger:** before any deploy where users register through the Telegram,
-WhatsApp or operator surfaces and are expected to still exist tomorrow.
+**Trigger:** before any deploy that runs more than one server instance.
 
-**What:** give `src/auth/user-store.ts` a durable backing store.
+**What:** finish the async migration of `src/auth/user-store.ts`.
 
-**Why:** it is flat-file only — `.data/users.json`, via `createFlatFileStore`
-— with no Postgres path at all, and Render's free tier wipes `.data` on sleep.
-Accounts created through `src/modules/auth/index.ts`, `telegram-adapter.ts`,
-`whatsapp-adapter.ts` and the operator dashboard do not survive the night.
-Its own docblock anticipates this: "Scales comfortably to ~10,000 users.
-Beyond that, swap this module for a Postgres-backed implementation."
+**Status:** the data-loss half is FIXED (migration 041 +
+`storage/repositories/auth-user-repo.ts`). Accounts now mirror to Postgres on
+every write and are restored at boot when `.data` has been wiped. What remains
+is the concurrency half.
 
-**Why it is not a backend swap.** All 17 exported functions are SYNCHRONOUS
-(`getUserById`, `upsertFromGoogle`, `setRole`, `linkChannel`, …) and Postgres
-is not. Making them async is a breaking API change through 13 production files
-including every auth route, on a module carrying `@ts-nocheck`. That is not a
-30-minute change and it should not land unreviewed.
+**Why it is still open:** the file is the read path and it is per-instance.
+Two servers each hold their own `users.json` and hydrate only at boot, so a
+signup on instance A is invisible to instance B until B restarts. Render's
+free tier is single-instance, so this is not a live bug — it becomes one the
+day the service scales.
 
-**Where to start:** `src/sessions/session-store.ts` already solved the same
-problem and is the model — Postgres when `DATABASE_URL` is set, flat file when
-it is not, decided once at module load. But it had async methods from the
-start. Two shapes worth weighing before writing code:
+**Why it was not done now:** all 17 exports are synchronous and Postgres is
+not. Making them async is a breaking change through 13 production files
+including every auth route, on two modules carrying `@ts-nocheck` so the
+compiler helps with none of it. That is a reviewed change, not a loop task.
 
-  (a) Full async migration. Honest, matches every other repo, breaks 13 files.
-  (b) Write-through: keep the sync API reading an in-memory map, hydrate it
-      from Postgres at boot, mirror every mutation to Postgres. No signature
-      changes, no caller churn, and the data survives restart. Weaker under
-      multi-instance deploys, which Render free tier does not do.
-
-Put persistence in `src/storage/repositories/` either way. The pg-import
-allowlist "may only SHRINK … or grow via an explicit, reviewable diff", and
-its stated intent is migration onto that boundary — see
-`pedagogy-shadow-repo.ts` for the pattern.
-
-**Depends on:** nothing. **Blocked by:** a call on (a) vs (b).
-
-**Found by:** `/plan-eng-review` Step 0, 2026-08-17, while scoping T15. It is
-not one of the seven demo objections; it surfaced sideways.
+**Where to start:** the mirror already exists and round-trips, so the work is
+mechanical — make `readStore()` async, follow the type errors, and delete the
+file path once every caller awaits. `src/sessions/session-store.ts` is the
+model for the finished shape.
 
 ## The circumstance filter has no empty-set fallback
 

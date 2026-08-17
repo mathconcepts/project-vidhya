@@ -17,15 +17,22 @@
  *      CONTENT_CI_STRICT=true the allowance is ZERO — Giri flips that env
  *      in .github/workflows/ci.yml in the same commit that lands the
  *      first real explainers.json (placeholder sequencing rule).
- *   D. golden set v0 (committed data only, 21 checks):
+ *   D. golden set (committed data only):
  *      - the 15 MCQs in data/courses/gate-em/topics/01-linear-algebra/
  *        mcqs.json each carry a non-empty correct_answer present in options
- *      - the 3 seed concepts (derivatives-basic, eigenvalues,
- *        complex-numbers) resolve through the atom loader without error,
- *        and their worked-example / micro-exercise answer keys extract
- *        non-empty (\boxed{...} / <summary>Answer</summary> block).
- *      Growing to the full 24-item LA chapter when the Cowork artifact is
- *      staged remains a TODO (spec).
+ *      - EVERY concept resolves through the atom loader, and every
+ *        worked_example / micro_exercise atom yields an answer key
+ *        (\boxed{...} / <summary>Answer</summary> block).
+ *
+ *      This used to name three seed concepts. Three of ninety-seven is a
+ *      spot check, not an eval, and it is why nobody knew that 31 of 196
+ *      answer-bearing atoms ship with no answer a student can find. Those 31
+ *      are grandfathered in scripts/golden-answer-key-baseline.json so full
+ *      coverage could land without authoring 31 keys first; the list may only
+ *      shrink, and shrinking it is real content work.
+ *
+ *      The check also fails when it finds ZERO atoms, because a loader that
+ *      stops resolving content would otherwise make this pass vacuously.
  *   E. prerequisite-DAG cycle check (CEO plan Phase 0, §6) — the concept
  *      graph's prerequisite edges must form a DAG. A cycle silently breaks
  *      topologicalSort() (Kahn's algorithm just drops the cyclic nodes,
@@ -45,7 +52,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /** Placeholder ratchet baseline — the grandfathered shipped state. */
 const PLACEHOLDER_BASELINE = 82;
 
-const GOLDEN_CONCEPTS = ['derivatives-basic', 'eigenvalues', 'complex-numbers'];
 
 /**
  * Retired ids, assembled so this file never contains the literal strings
@@ -226,43 +232,83 @@ function extractAnswerBlock(text: string): string | null {
   return inner.length > 0 ? inner : null;
 }
 
+/**
+ * Answer-bearing atoms that carry no extractable key today.
+ *
+ * The golden set used to name three concepts. Three of ninety-seven is a spot
+ * check, not an eval, and it is why nobody knew that 31 of 196 worked examples
+ * and exercises ship with no answer a student can find.
+ *
+ * Coverage now walks every concept. The 31 are grandfathered here so full
+ * coverage could land without first authoring 31 answer keys; anything NOT on
+ * the list fails. The list may only shrink, and shrinking it is real work
+ * worth doing — every entry is a student-facing exercise with no visible
+ * answer.
+ */
+function loadAnswerKeyBaseline(): Set<string> {
+  const p = path.join(ROOT, 'scripts', 'golden-answer-key-baseline.json');
+  if (!fs.existsSync(p)) return new Set();
+  try {
+    return new Set<string>(JSON.parse(fs.readFileSync(p, 'utf-8')).missing_answer_keys ?? []);
+  } catch {
+    return new Set();
+  }
+}
+
 async function checkGoldenConcepts(): Promise<void> {
-  for (const conceptId of GOLDEN_CONCEPTS) {
+  const baseline = loadAnswerKeyBaseline();
+  const conceptIds = ALL_CONCEPTS.map((c) => c.id);
+  let checkedAtoms = 0;
+  let grandfathered = 0;
+
+  for (const conceptId of conceptIds) {
+    let atoms;
     try {
-      const atoms = await loadConceptAtoms(conceptId);
+      atoms = await loadConceptAtoms(conceptId);
       await loadConceptMeta(conceptId);
-      if (atoms.length === 0) {
-        fail('golden-atoms', `${conceptId}: loader returned zero atoms`);
-        continue;
-      }
-
-      const workedExamples = atoms.filter((a) => a.atom_type === 'worked_example');
-      if (workedExamples.length === 0) {
-        fail('golden-atoms', `${conceptId}: no worked_example atom`);
-      }
-      for (const atom of workedExamples) {
-        const key = extractBoxed(atom.content ?? '');
-        if (!key) {
-          fail('golden-atoms', `${conceptId}/${atom.id}: no non-empty \\boxed{...} answer key`);
-        }
-      }
-
-      const microExercises = atoms.filter((a) => a.atom_type === 'micro_exercise');
-      if (microExercises.length === 0) {
-        fail('golden-atoms', `${conceptId}: no micro_exercise atom`);
-      }
-      for (const atom of microExercises) {
-        const key = extractAnswerBlock(atom.content ?? '');
-        if (!key) {
-          fail('golden-atoms', `${conceptId}/${atom.id}: no non-empty <summary>Answer</summary> block`);
-        }
-      }
     } catch (e: any) {
       fail('golden-atoms', `${conceptId}: atom loader threw — ${e?.message}`);
+      continue;
+    }
+    // A concept with no atoms on disk is a content gap the syllabus-floor
+    // gate reports; it is not a broken answer key, so it is not this check's
+    // business.
+    if (!atoms || atoms.length === 0) continue;
+
+    const graded: Array<{ atom: (typeof atoms)[number]; extract: (c: string) => string | null; want: string }> = [
+      ...atoms
+        .filter((a) => a.atom_type === 'worked_example')
+        .map((atom) => ({ atom, extract: extractBoxed, want: '\\boxed{...} answer key' })),
+      ...atoms
+        .filter((a) => a.atom_type === 'micro_exercise')
+        .map((atom) => ({ atom, extract: extractAnswerBlock, want: '<summary>Answer</summary> block' })),
+    ];
+
+    for (const { atom, extract, want } of graded) {
+      checkedAtoms++;
+      if (extract(atom.content ?? '')) continue;
+      const key = `${conceptId}/${atom.id}`;
+      if (baseline.has(key)) {
+        grandfathered++;
+        continue;
+      }
+      fail('golden-atoms', `${key}: no non-empty ${want}`);
     }
   }
+
+  if (checkedAtoms === 0) {
+    // Zero checked means the loader stopped resolving atoms, which would make
+    // this check pass vacuously — the exact shape of false green the mutation
+    // suite exists to prevent.
+    fail('golden-atoms', 'no answer-bearing atoms found at all — the loader is not resolving content');
+    return;
+  }
   if (failures.every((f) => !f.startsWith('[golden-atoms]'))) {
-    ok('golden-atoms', `${GOLDEN_CONCEPTS.join(', ')} resolve with non-empty answer keys`);
+    ok(
+      'golden-atoms',
+      `${conceptIds.length} concepts, ${checkedAtoms} answer-bearing atoms checked ` +
+        `(${grandfathered} grandfathered without keys)`,
+    );
   }
 }
 

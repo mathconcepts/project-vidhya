@@ -68,3 +68,4 @@ __pycache__/
 # Local-only Docker Compose overrides (port remaps, dev mounts, etc.)
 docker-compose.override.yml
 docker-compose.override.yaml
+*.tsbuildinfo

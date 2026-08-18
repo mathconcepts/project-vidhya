@@ -238,6 +238,69 @@ describe('orchestrator state machine', () => {
     expect(ok.processed_at).toBeTruthy();
   });
 
+  it('onJobProcessed returning { retry: true } (pending_retry) skips the processed_at stamp and is re-attempted next pass', async () => {
+    const specs = [spec('limits-jee', 'a'), spec('limits-jee', 'b')];
+    const { customIdFor } = await import('../jsonl-builder');
+    const ids = specs.map((s) => customIdFor('run-r6', s));
+    const persistence = createInMemoryPersistence({
+      runs: [newRun('run-r6', { batch_state: 'processing', batch_id: 'b', batch_provider: 'gemini' })],
+      jobs: specs.map((s, i) => ({
+        run_id: 'run-r6', custom_id: ids[i], atom_spec: s, status: 'succeeded' as const,
+        result: { i }, error: null, submitted_at: null, processed_at: null,
+      })),
+    });
+    const onJobProcessed = vi.fn(async (_run_id: string, job: { custom_id: string }) => {
+      if (job.custom_id === ids[0]) return { retry: true }; // held for a later sweep
+      return undefined;
+    });
+    const orch = createBatchOrchestrator({ persistence, adapter: makeAdapter(), jsonlDir: tmp, onJobProcessed });
+
+    const r1 = await orch.step('run-r6');
+    // The held job means the run is not complete yet.
+    expect(r1.kind).toBe('still_pending');
+    const afterFirst = await persistence.listJobs('run-r6');
+    const held = afterFirst.find((j) => j.custom_id === ids[0])!;
+    expect(held.processed_at).toBeNull();
+    expect(held.error).toBeNull(); // NOT a failure — no error written either
+    const done = afterFirst.find((j) => j.custom_id === ids[1])!;
+    expect(done.processed_at).toBeTruthy();
+
+    // Next poll pass: the held job is presented to the hook again (it's
+    // still `processed_at IS NULL`) — this time it resolves normally.
+    onJobProcessed.mockImplementationOnce(async () => undefined);
+    const r2 = await orch.step('run-r6');
+    expect(onJobProcessed).toHaveBeenCalledTimes(3); // 2 first pass + 1 retry of the held job
+    expect(onJobProcessed.mock.calls[2][1].custom_id).toBe(ids[0]);
+    expect(r2).toMatchObject({ kind: 'transitioned', from: 'processing', to: 'complete' });
+    const afterSecond = await persistence.listJobs('run-r6');
+    expect(afterSecond.find((j) => j.custom_id === ids[0])!.processed_at).toBeTruthy();
+  });
+
+  it('a terminal (non-retry) hook resolution still stamps processed_at once — not re-attempted', async () => {
+    const specs = [spec('limits-jee', 'a')];
+    const { customIdFor } = await import('../jsonl-builder');
+    const ids = specs.map((s) => customIdFor('run-r7', s));
+    const persistence = createInMemoryPersistence({
+      runs: [newRun('run-r7', { batch_state: 'processing', batch_id: 'b', batch_provider: 'gemini' })],
+      jobs: specs.map((s, i) => ({
+        run_id: 'run-r7', custom_id: ids[i], atom_spec: s, status: 'succeeded' as const,
+        result: { i }, error: null, submitted_at: null, processed_at: null,
+      })),
+    });
+    const onJobProcessed = vi.fn(async () => undefined);
+    const orch = createBatchOrchestrator({ persistence, adapter: makeAdapter(), jsonlDir: tmp, onJobProcessed });
+
+    const r1 = await orch.step('run-r7');
+    expect(r1).toMatchObject({ kind: 'transitioned', from: 'processing', to: 'complete' });
+    expect(onJobProcessed).toHaveBeenCalledTimes(1);
+
+    // Run is terminal now — a further step() call short-circuits before
+    // ever re-invoking the hook.
+    const r2 = await orch.step('run-r7');
+    expect(r2).toMatchObject({ kind: 'terminal', state: 'complete' });
+    expect(onJobProcessed).toHaveBeenCalledTimes(1);
+  });
+
   it('poll → expired flips to failed with provider_timeout', async () => {
     const persistence = createInMemoryPersistence({
       runs: [newRun('run-x', { batch_state: 'submitted', batch_id: 'b', batch_provider: 'gemini' })],

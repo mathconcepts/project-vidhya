@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-04-19T10:22:09.583Z",
+  "exported_at": "2026-08-18T07:00:18.974Z",
   "concepts": [
     {
       "id": "sequences",
@@ -337,6 +337,184 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "vector-spaces"
+      ]
+    },
+    {
+      "id": "trace",
+      "topic": "linear-algebra",
+      "label": "Trace of a Matrix",
+      "description": "Trace definition, properties, connection to eigenvalues",
+      "difficulty_base": 0.2,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "matrix-operations",
+        "eigenvalues"
+      ]
+    },
+    {
+      "id": "linear-independence",
+      "topic": "linear-algebra",
+      "label": "Linear Independence",
+      "description": "Linear independence, dependence, span, basis",
+      "difficulty_base": 0.35,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "vector-spaces"
+      ]
+    },
+    {
+      "id": "null-space-column-space",
+      "topic": "linear-algebra",
+      "label": "Null Space & Column Space",
+      "description": "Null space (kernel), column space (range), row space",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "rank-nullity",
+        "linear-independence"
+      ]
+    },
+    {
+      "id": "symmetric-matrices",
+      "topic": "linear-algebra",
+      "label": "Symmetric Matrices",
+      "description": "Real eigenvalues, orthogonal eigenvectors, spectral decomposition",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "eigenvalues",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "inner-product-spaces",
+      "topic": "linear-algebra",
+      "label": "Inner Product Spaces",
+      "description": "Inner products, norms, Cauchy-Schwarz inequality",
+      "difficulty_base": 0.5,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "vector-spaces"
+      ]
+    },
+    {
+      "id": "gram-schmidt",
+      "topic": "linear-algebra",
+      "label": "Gram-Schmidt Process",
+      "description": "Orthogonalization; constructing orthonormal bases from linearly independent sets",
+      "difficulty_base": 0.55,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "inner-product-spaces",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "change-of-basis",
+      "topic": "linear-algebra",
+      "label": "Change of Basis",
+      "description": "Change-of-basis matrix; representing vectors and transformations in new coordinates",
+      "difficulty_base": 0.55,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "linear-independence",
+        "linear-transformations"
+      ]
+    },
+    {
+      "id": "lu-factorization",
+      "topic": "linear-algebra",
+      "label": "LU Factorization",
+      "description": "LU decomposition; forward and backward substitution for solving Ax=b",
+      "difficulty_base": 0.5,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "systems-of-equations",
+        "matrix-operations"
+      ]
+    },
+    {
+      "id": "least-squares",
+      "topic": "linear-algebra",
+      "label": "Least Squares",
+      "description": "Least squares solutions to overdetermined systems; normal equations AᵀAx = Aᵀb",
+      "difficulty_base": 0.55,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "systems-of-equations",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "quadratic-forms",
+      "topic": "linear-algebra",
+      "label": "Quadratic Forms",
+      "description": "Quadratic forms xᵀAx; classification by eigenvalue signs and Sylvester criterion",
+      "difficulty_base": 0.6,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "symmetric-matrices",
+        "eigenvalues"
+      ]
+    },
+    {
+      "id": "positive-definite-matrices",
+      "topic": "linear-algebra",
+      "label": "Positive Definite Matrices",
+      "description": "Positive definite, semidefinite, negative definite; tests and applications",
+      "difficulty_base": 0.6,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "quadratic-forms"
+      ]
+    },
+    {
+      "id": "spectral-theorem",
+      "topic": "linear-algebra",
+      "label": "Spectral Theorem",
+      "description": "Spectral decomposition A = QΛQᵀ for symmetric matrices; matrix functions",
+      "difficulty_base": 0.65,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "symmetric-matrices",
+        "diagonalization"
+      ]
+    },
+    {
+      "id": "svd",
+      "topic": "linear-algebra",
+      "label": "Singular Value Decomposition",
+      "description": "SVD A = UΣVᵀ; singular values; rank; low-rank approximation",
+      "difficulty_base": 0.7,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "eigenvalues",
+        "symmetric-matrices",
+        "orthogonality"
+      ]
+    },
+    {
+      "id": "jordan-normal-form",
+      "topic": "linear-algebra",
+      "label": "Jordan Normal Form",
+      "description": "Jordan canonical form; Jordan blocks; minimal polynomial for defective matrices",
+      "difficulty_base": 0.75,
+      "gate_frequency": "low",
+      "prerequisites": [
+        "eigenvalues",
+        "diagonalization"
+      ]
+    },
+    {
+      "id": "matrix-norms",
+      "topic": "linear-algebra",
+      "label": "Matrix Norms & Condition Number",
+      "description": "Matrix norms (1, 2, Frobenius, infinity); condition number κ(A); ill-conditioning",
+      "difficulty_base": 0.6,
+      "gate_frequency": "low",
+      "prerequisites": [
+        "svd",
+        "eigenvalues"
       ]
     },
     {
@@ -929,5 +1107,5 @@
       ]
     }
   ],
-  "total": 82
+  "total": 97
 }

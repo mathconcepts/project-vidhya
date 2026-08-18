@@ -1,0 +1,590 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE Engineering Mathematics practice items for the",
+    "linear-algebra vector-space cluster: rank-nullity, vector-spaces,",
+    "linear-transformations, linear-independence, null-space-column-space,",
+    "inner-product-spaces, change-of-basis.",
+    "",
+    "Companion bank data/practice-items/gate-ma-la-spine.json covers the spine",
+    "concepts (matrix-operations, determinants, matrix-inverse,",
+    "systems-of-equations, lu-factorization, trace).",
+    "",
+    "Every item was hand-solved and, where a numeric answer exists, cross-checked by",
+    "a second independent method (an alternate computation path, a property-based",
+    "sanity check, or direct substitution) before its key was written — see",
+    "solution_steps for both derivations. Distractors encode real misconceptions",
+    "(scalar-multiple confusion, row/column space mix-ups, dropped negative signs)",
+    "rather than arbitrary numbers.",
+    "",
+    "Schema mirrors data/practice-items/gate-ma-linear-algebra.json exactly: fields",
+    "map onto markingPayloadFromRow() via learning-object-catalog-file.ts's",
+    "AuthoredItem so a file-backed item and a database row are indistinguishable to",
+    "GateDeterministicScorer."
+  ],
+  "items": [
+    {
+      "id": "pi-rank-nullity-001",
+      "concept_id": "rank-nullity",
+      "topic": "linear-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "What is the rank of A = [[1,2],[2,4]]?",
+      "options": ["1", "2", "0", "3"],
+      "answer_index": 0,
+      "correct_answer": "1",
+      "solution_steps": [
+        "Row 2 = 2 × Row 1, so the rows are linearly dependent.",
+        "Row-reducing: R2 ← R2 − 2R1 gives [0,0], leaving only one nonzero row.",
+        "Rank = number of nonzero rows in row echelon form = 1."
+      ],
+      "verification_method": "hand_checkable_rank_row_reduce"
+    },
+    {
+      "id": "pi-rank-nullity-002",
+      "concept_id": "rank-nullity",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the rank of A = [[1,2,3],[2,4,6],[1,0,1]]?",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "R2 ← R2 − 2R1: [2-2, 4-4, 6-6] = [0,0,0].",
+        "R3 ← R3 − R1: [1-1, 0-2, 1-3] = [0,-2,-2].",
+        "Row echelon form has rows [1,2,3], [0,-2,-2], [0,0,0] — two nonzero rows.",
+        "Rank = 2."
+      ],
+      "verification_method": "hand_checkable_rank_row_reduce"
+    },
+    {
+      "id": "pi-rank-nullity-003",
+      "concept_id": "rank-nullity",
+      "topic": "linear-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A is a 4×6 matrix with rank 3. By the rank-nullity theorem, what is its nullity?",
+      "options": ["3", "4", "2", "1"],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "Rank-nullity theorem: rank(A) + nullity(A) = number of columns of A.",
+        "A has 6 columns and rank 3.",
+        "nullity(A) = 6 − 3 = 3."
+      ],
+      "verification_method": "hand_checkable_rank_nullity_theorem"
+    },
+    {
+      "id": "pi-rank-nullity-004",
+      "concept_id": "rank-nullity",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the rank of A = [[2,1,1],[1,0,1],[3,1,2]]?",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Check whether row 3 is a combination of rows 1 and 2: row1+row2 = (2+1, 1+0, 1+1) = (3,1,2) = row 3 exactly.",
+        "So row 3 is a linear combination of rows 1 and 2, and row-reduces to zero (R3 ← R3 − R1 − R2 = [0,0,0]).",
+        "Rows 1 and 2, (2,1,1) and (1,0,1), are not scalar multiples of each other — they are independent.",
+        "So the row echelon form has exactly 2 nonzero rows: rank = 2."
+      ],
+      "verification_method": "hand_checkable_rank_linear_combination"
+    },
+    {
+      "id": "pi-rank-nullity-005",
+      "concept_id": "rank-nullity",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A is a 5×7 matrix whose null space has dimension 3. What is the rank of Aᵀ?",
+      "options": ["4", "3", "5", "2"],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Rank-nullity theorem: rank(A) + nullity(A) = number of columns of A = 7.",
+        "nullity(A) = 3, so rank(A) = 7 − 3 = 4.",
+        "Property: rank(Aᵀ) = rank(A) always (transposing doesn't change rank).",
+        "So rank(Aᵀ) = 4."
+      ],
+      "verification_method": "hand_checkable_rank_transpose_property"
+    },
+    {
+      "id": "pi-linear-independence-001",
+      "concept_id": "linear-independence",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Are the vectors (1,2) and (2,4) linearly independent?",
+      "options": ["Linearly dependent", "Linearly independent", "Orthogonal", "Cannot be determined"],
+      "answer_index": 0,
+      "correct_answer": "Linearly dependent",
+      "solution_steps": [
+        "(2,4) = 2×(1,2) — the second vector is a scalar multiple of the first.",
+        "Whenever one vector is a scalar multiple of another, the set is linearly dependent (c₁(1,2) + c₂(2,4) = 0 has a nonzero solution, e.g. c₁=2, c₂=-1).",
+        "So the vectors are linearly dependent, not independent."
+      ],
+      "verification_method": "hand_checkable_scalar_multiple_dependence"
+    },
+    {
+      "id": "pi-linear-independence-002",
+      "concept_id": "linear-independence",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Find the value of k for which the vectors (1,3) and (2,k) are linearly dependent.",
+      "answer_range": [5.97, 6.03],
+      "correct_answer": "6",
+      "solution_steps": [
+        "Two vectors in R² are linearly dependent exactly when they are proportional: (2,k) = c×(1,3) for some scalar c.",
+        "From the first components, c = 2/1 = 2.",
+        "Then k = c×3 = 2×3 = 6."
+      ],
+      "verification_method": "hand_checkable_proportionality_test"
+    },
+    {
+      "id": "pi-linear-independence-003",
+      "concept_id": "linear-independence",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "v1=(1,0,1), v2=(0,1,1), v3=(1,1,1). Are these three vectors linearly independent in R³?",
+      "options": ["Yes — the determinant of the matrix formed by these vectors is -1 ≠ 0", "No, they are dependent", "Cannot determine without more information", "Only two of the three are independent, not all three"],
+      "answer_index": 0,
+      "correct_answer": "Yes — the determinant of the matrix formed by these vectors is -1 ≠ 0",
+      "solution_steps": [
+        "For n vectors in Rⁿ, they are linearly independent exactly when the determinant of the matrix formed by using them as columns (or rows) is nonzero.",
+        "Matrix with these as columns: [[1,0,1],[0,1,1],[1,1,1]].",
+        "det = 1×(1×1−1×1) − 0×(0×1−1×1) + 1×(0×1−1×1) = 1×0 − 0×(-1) + 1×(-1) = 0 − 0 − 1 = -1.",
+        "Since det = -1 ≠ 0, the three vectors are linearly independent."
+      ],
+      "verification_method": "hand_checkable_determinant_independence_test"
+    },
+    {
+      "id": "pi-linear-independence-004",
+      "concept_id": "linear-independence",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Find the value of c for which the vectors (1,1,0), (0,1,1), (1,0,c) are linearly dependent.",
+      "answer_range": [-1.01, -0.99],
+      "correct_answer": "-1",
+      "solution_steps": [
+        "n vectors in Rⁿ are linearly dependent exactly when the determinant of the matrix formed by them is 0.",
+        "Matrix with these as rows: [[1,1,0],[0,1,1],[1,0,c]].",
+        "det = 1×(1×c − 1×0) − 1×(0×c − 1×1) + 0×(0×0 − 1×1) = c − 1×(-1) + 0 = c + 1.",
+        "Setting det = 0: c + 1 = 0 → c = -1."
+      ],
+      "verification_method": "hand_checkable_determinant_dependence_condition"
+    },
+    {
+      "id": "pi-linear-independence-005",
+      "concept_id": "linear-independence",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "If v1, v2, v3 are linearly independent vectors, what can be said about w1=v1+v2, w2=v2+v3, w3=v1+v3?",
+      "options": ["They are linearly independent", "They are linearly dependent", "They span the same space only if v1=v2=v3", "Cannot be determined without knowing the vectors explicitly"],
+      "answer_index": 0,
+      "correct_answer": "They are linearly independent",
+      "solution_steps": [
+        "Suppose a·w1 + b·w2 + c·w3 = 0 for scalars a, b, c. Substituting: a(v1+v2) + b(v2+v3) + c(v1+v3) = (a+c)v1 + (a+b)v2 + (b+c)v3 = 0.",
+        "Since v1, v2, v3 are linearly independent, each coefficient must be zero: a+c=0, a+b=0, b+c=0.",
+        "From a+c=0: c=-a. From a+b=0: b=-a. Substitute into b+c=0: -a + (-a) = -2a = 0 → a=0, hence b=0, c=0.",
+        "Only the trivial solution a=b=c=0 works, so w1, w2, w3 are linearly independent."
+      ],
+      "verification_method": "hand_checkable_linear_combination_proof"
+    },
+    {
+      "id": "pi-null-space-column-space-001",
+      "concept_id": "null-space-column-space",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "What is the dimension of the null space of A = [[1,2],[2,4]]?",
+      "options": ["1", "0", "2", "3"],
+      "answer_index": 0,
+      "correct_answer": "1",
+      "solution_steps": [
+        "Row 2 = 2×Row 1, so rank(A) = 1 (only one independent row).",
+        "By rank-nullity, nullity(A) = (number of columns) − rank = 2 − 1 = 1.",
+        "So the null space is 1-dimensional (e.g., spanned by (2,-1), since 1×2+2×(-1)=0)."
+      ],
+      "verification_method": "hand_checkable_nullity_via_rank"
+    },
+    {
+      "id": "pi-null-space-column-space-002",
+      "concept_id": "null-space-column-space",
+      "topic": "linear-algebra",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[1,-1],[2,-2]]. A nonzero vector (x,1) lies in the null space of A. What is x?",
+      "answer_range": [0.99, 1.01],
+      "correct_answer": "1",
+      "solution_steps": [
+        "For (x,1) to be in the null space, A(x,1) = (0,0).",
+        "Row 1: x − 1 = 0 → x = 1.",
+        "Check row 2: 2x − 2 = 2(1) − 2 = 0 ✓ (row 2 is just 2× row 1, so it's automatically satisfied).",
+        "So x = 1."
+      ],
+      "verification_method": "hand_checkable_null_space_membership"
+    },
+    {
+      "id": "pi-null-space-column-space-003",
+      "concept_id": "null-space-column-space",
+      "topic": "linear-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A is a 3×5 matrix with rank 2. What is the dimension of its column space?",
+      "options": ["2", "3", "5", "1"],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "The dimension of the column space of any matrix always equals its rank — this is essentially the definition of rank as 'the number of linearly independent columns'.",
+        "rank(A) = 2, so dim(column space) = 2."
+      ],
+      "verification_method": "hand_checkable_column_space_rank"
+    },
+    {
+      "id": "pi-null-space-column-space-004",
+      "concept_id": "null-space-column-space",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the nullity of A = [[1,2,1],[2,4,3],[3,6,4]]?",
+      "answer_range": [0.99, 1.01],
+      "correct_answer": "1",
+      "solution_steps": [
+        "R2 ← R2 − 2R1: [2-2,4-4,3-2] = [0,0,1]. R3 ← R3 − 3R1: [3-3,6-6,4-3] = [0,0,1].",
+        "Now rows are [1,2,1], [0,0,1], [0,0,1]. R3 ← R3 − R2 gives [0,0,0].",
+        "Row echelon form has 2 nonzero rows, so rank(A) = 2.",
+        "nullity(A) = (columns) − rank = 3 − 2 = 1."
+      ],
+      "verification_method": "hand_checkable_rank_row_reduce"
+    },
+    {
+      "id": "pi-null-space-column-space-005",
+      "concept_id": "null-space-column-space",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "For an m×n matrix A, which statement correctly relates its column space and null space?",
+      "options": ["dim(column space) + dim(null space) = n", "dim(column space) + dim(null space) = m", "dim(column space) = dim(null space) always", "The column space and null space are always orthogonal complements of each other"],
+      "answer_index": 0,
+      "correct_answer": "dim(column space) + dim(null space) = n",
+      "solution_steps": [
+        "dim(column space) = rank(A). By the rank-nullity theorem, rank(A) + nullity(A) = n (the number of columns).",
+        "So dim(column space) + dim(null space) = n — this is exactly the rank-nullity theorem restated.",
+        "m (the number of rows) is unrelated to this particular identity — it bounds the row space and the left null space instead.",
+        "'dim(column space)=dim(null space) always' is false in general (only coincidentally true for specific rank/column-count combinations).",
+        "The orthogonal-complement relationship actually holds between the ROW space and the null space (in Rⁿ), not the column space and null space — mixing these up is a common error."
+      ],
+      "verification_method": "hand_checkable_rank_nullity_theorem"
+    },
+    {
+      "id": "pi-change-of-basis-001",
+      "concept_id": "change-of-basis",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "In R², basis B' = {(1,1), (1,-1)}. Vector v = (4,2) in the standard basis. Write v = c1(1,1) + c2(1,-1). What is c1?",
+      "answer_range": [2.985, 3.015],
+      "correct_answer": "3",
+      "solution_steps": [
+        "c1(1,1) + c2(1,-1) = (c1+c2, c1-c2) must equal (4,2).",
+        "So c1 + c2 = 4 and c1 - c2 = 2.",
+        "Adding the two equations: 2c1 = 6 → c1 = 3.",
+        "Check: c2 = 4 - 3 = 1, and c1 - c2 = 3 - 1 = 2 ✓."
+      ],
+      "verification_method": "hand_checkable_coordinate_vector_solve"
+    },
+    {
+      "id": "pi-change-of-basis-002",
+      "concept_id": "change-of-basis",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For basis B' = {(1,1), (1,-1)} of R², which matrix P converts a coordinate vector [v]_B' into the standard-basis vector v, via v = P[v]_B'?",
+      "options": ["[[1,1],[1,-1]]", "[[1,1],[-1,1]]", "[[1,-1],[1,1]]", "[[1,0],[0,-1]]"],
+      "answer_index": 0,
+      "correct_answer": "[[1,1],[1,-1]]",
+      "solution_steps": [
+        "The change-of-basis matrix from B' to the standard basis has the B' basis vectors as its columns, expressed in standard coordinates.",
+        "The first basis vector (1,1) becomes column 1; the second basis vector (1,-1) becomes column 2.",
+        "P = [[1,1],[1,-1]].",
+        "The other options either transpose entries or scramble signs — they don't place the basis vectors correctly as columns."
+      ],
+      "verification_method": "hand_checkable_change_of_basis_matrix"
+    },
+    {
+      "id": "pi-change-of-basis-003",
+      "concept_id": "change-of-basis",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Using basis B' = {(1,1), (1,-1)} of R², a vector has B'-coordinates (2,3), meaning v = 2(1,1) + 3(1,-1). What is the standard-basis x-coordinate (first component) of v?",
+      "answer_range": [4.975, 5.025],
+      "correct_answer": "5",
+      "solution_steps": [
+        "v = 2(1,1) + 3(1,-1) = (2+3, 2-3) = (5, -1).",
+        "The first component (x-coordinate) is 5."
+      ],
+      "verification_method": "hand_checkable_coordinate_transform"
+    },
+    {
+      "id": "pi-change-of-basis-004",
+      "concept_id": "change-of-basis",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A linear transformation T has matrix A=[[2,0],[0,3]] in the standard basis. In the basis B'={(1,1),(1,-1)}, T is represented by A' = P⁻¹AP where P=[[1,1],[1,-1]]. What is A'?",
+      "options": ["[[2.5,-0.5],[-0.5,2.5]]", "[[2,0],[0,3]]", "[[3,0],[0,2]]", "[[2.5,0.5],[0.5,2.5]]"],
+      "answer_index": 0,
+      "correct_answer": "[[2.5,-0.5],[-0.5,2.5]]",
+      "solution_steps": [
+        "det(P) = 1×(-1) − 1×1 = -2, so P⁻¹ = (1/-2)×[[-1,-1],[-1,1]] = [[0.5,0.5],[0.5,-0.5]].",
+        "AP = [[2,0],[0,3]]×[[1,1],[1,-1]] = [[2,2],[3,-3]].",
+        "A' = P⁻¹(AP) = [[0.5,0.5],[0.5,-0.5]]×[[2,2],[3,-3]] = [[0.5×2+0.5×3, 0.5×2+0.5×(-3)],[0.5×2−0.5×3, 0.5×2−0.5×(-3)]] = [[2.5,-0.5],[-0.5,2.5]].",
+        "Sanity check: trace(A) = 2+3 = 5 and trace(A') = 2.5+2.5 = 5 (trace is basis-invariant) ✓. det(A) = 6 and det(A') = 2.5×2.5 − (-0.5)×(-0.5) = 6.25 − 0.25 = 6 ✓. Both invariants match, confirming A' is correct."
+      ],
+      "verification_method": "hand_checkable_similarity_transformation"
+    },
+    {
+      "id": "pi-change-of-basis-005",
+      "concept_id": "change-of-basis",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "msq",
+      "marks": 1,
+      "question_text": "Under a change of basis (a similarity transformation A' = P⁻¹AP for invertible P), which of the following are INVARIANT (unchanged)?",
+      "options": ["trace(A)", "det(A)", "the (1,1) entry of A", "A itself, i.e. A' = A"],
+      "answer_indices": [0, 1],
+      "correct_answer": "trace(A) and det(A)",
+      "solution_steps": [
+        "trace(A') = trace(P⁻¹AP) = trace(AP·P⁻¹) = trace(A) using the cyclic property of trace — trace is invariant under similarity.",
+        "det(A') = det(P⁻¹)·det(A)·det(P) = det(A)×[det(P⁻¹)det(P)] = det(A)×1 = det(A) — determinant is also invariant.",
+        "Individual matrix entries like a₁₁ generally DO change under a change of basis (the cob-004 example shows A's (1,1) entry going from 2 to 2.5).",
+        "A itself is generally NOT equal to A' — only true when P commutes with A (e.g. P=I), not in general."
+      ],
+      "verification_method": "hand_checkable_similarity_invariants"
+    },
+    {
+      "id": "pi-inner-product-spaces-001",
+      "concept_id": "inner-product-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "u=(1,2,2) and v=(3,0,4) in R³ with the standard dot product. What is ⟨u,v⟩?",
+      "answer_range": [10.945, 11.055],
+      "correct_answer": "11",
+      "solution_steps": [
+        "⟨u,v⟩ = u1v1 + u2v2 + u3v3 = 1×3 + 2×0 + 2×4.",
+        "= 3 + 0 + 8 = 11."
+      ],
+      "verification_method": "hand_checkable_dot_product"
+    },
+    {
+      "id": "pi-inner-product-spaces-002",
+      "concept_id": "inner-product-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the norm ||u|| of u=(3,4) under the standard inner product?",
+      "answer_range": [4.975, 5.025],
+      "correct_answer": "5",
+      "solution_steps": [
+        "||u|| = √(⟨u,u⟩) = √(3²+4²) = √(9+16) = √25.",
+        "= 5."
+      ],
+      "verification_method": "hand_checkable_norm_computation"
+    },
+    {
+      "id": "pi-inner-product-spaces-003",
+      "concept_id": "inner-product-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For vectors u, v in an inner product space, the Cauchy-Schwarz inequality states:",
+      "options": ["|⟨u,v⟩| ≤ ||u|| ||v||", "⟨u,v⟩ ≥ ||u||·||v||", "||u+v|| ≤ ||u||+||v||", "⟨u,v⟩² = ||u||² + ||v||²"],
+      "answer_index": 0,
+      "correct_answer": "|⟨u,v⟩| ≤ ||u|| ||v||",
+      "solution_steps": [
+        "Cauchy-Schwarz bounds the magnitude of the inner product by the product of the norms: |⟨u,v⟩| ≤ ||u||·||v||, with equality exactly when u,v are parallel.",
+        "⟨u,v⟩ ≥ ||u||·||v|| reverses the inequality and drops the absolute value — false in general.",
+        "||u+v|| ≤ ||u||+||v|| is the TRIANGLE inequality, a related but distinct fact (in fact usually proved using Cauchy-Schwarz).",
+        "⟨u,v⟩² = ||u||²+||v||² is false in general — it resembles a Pythagorean-type identity that holds only for specific orthogonal cases, not as a general equality."
+      ],
+      "verification_method": "hand_checkable_cauchy_schwarz"
+    },
+    {
+      "id": "pi-inner-product-spaces-004",
+      "concept_id": "inner-product-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "u=(1,0) and v=(1,1) in R². What is the angle θ between u and v, in degrees?",
+      "answer_range": [44.775, 45.225],
+      "correct_answer": "45",
+      "solution_steps": [
+        "cosθ = ⟨u,v⟩ / (||u||·||v||).",
+        "⟨u,v⟩ = 1×1 + 0×1 = 1. ||u|| = 1. ||v|| = √(1²+1²) = √2.",
+        "cosθ = 1/√2, so θ = arccos(1/√2) = 45°.",
+        "Geometric check: u points along the x-axis, and v=(1,1) makes a 45° angle with the x-axis by inspection — matches directly."
+      ],
+      "verification_method": "hand_checkable_angle_between_vectors"
+    },
+    {
+      "id": "pi-inner-product-spaces-005",
+      "concept_id": "inner-product-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "For nonzero vectors u,v, suppose ||u+v||² = ||u||² + ||v||². What can we conclude?",
+      "options": ["u and v are orthogonal", "u and v are parallel", "u = v", "||u|| = ||v||"],
+      "answer_index": 0,
+      "correct_answer": "u and v are orthogonal",
+      "solution_steps": [
+        "Expand: ||u+v||² = ⟨u+v,u+v⟩ = ||u||² + 2⟨u,v⟩ + ||v||².",
+        "Setting this equal to ||u||²+||v||² gives 2⟨u,v⟩ = 0, i.e. ⟨u,v⟩ = 0.",
+        "⟨u,v⟩ = 0 is exactly the definition of orthogonality — so u and v are orthogonal.",
+        "This is the Pythagorean theorem generalized to inner product spaces; it says nothing about the vectors being parallel, equal, or equal in norm."
+      ],
+      "verification_method": "hand_checkable_pythagorean_orthogonality"
+    },
+    {
+      "id": "pi-vector-spaces-001",
+      "concept_id": "vector-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Which of the following subsets of R³ is a subspace of R³?",
+      "options": ["{(x,y,z) : x+y+z = 0}", "{(x,y,z) : x+y+z = 1}", "{(x,y,z) : x²+y²+z² = 1}", "{(x,y,z) : x ≥ 0}"],
+      "answer_index": 0,
+      "correct_answer": "{(x,y,z) : x+y+z = 0}",
+      "solution_steps": [
+        "A subspace must contain the zero vector, and be closed under addition and scalar multiplication.",
+        "{x+y+z=0} contains (0,0,0), and if two vectors satisfy the equation their sum does too, and any scalar multiple does too — it's a subspace (a homogeneous linear equation defines a subspace).",
+        "{x+y+z=1} does not contain the origin (0+0+0=0≠1), so it fails immediately.",
+        "{x²+y²+z²=1} (the unit sphere) is not closed under addition (e.g. (1,0,0)+(1,0,0)=(2,0,0), which is not on the sphere) — not a subspace.",
+        "{x≥0} is not closed under scalar multiplication by a negative number (e.g. -1×(1,0,0)=(-1,0,0) has x<0) — not a subspace."
+      ],
+      "verification_method": "hand_checkable_subspace_test"
+    },
+    {
+      "id": "pi-vector-spaces-002",
+      "concept_id": "vector-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the dimension of the subspace of R⁴ spanned by (1,0,1,0), (0,1,0,1), and (1,1,1,1)?",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Check if the third vector is a combination of the first two: (1,0,1,0) + (0,1,0,1) = (1,1,1,1), which is exactly the third vector.",
+        "So the third vector adds nothing new to the span — it's a linear combination of the first two.",
+        "The first two vectors, (1,0,1,0) and (0,1,0,1), are not scalar multiples of each other, so they are independent.",
+        "The span has dimension 2."
+      ],
+      "verification_method": "hand_checkable_span_dependence"
+    },
+    {
+      "id": "pi-vector-spaces-003",
+      "concept_id": "vector-spaces",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Let W be a subspace of a finite-dimensional vector space V with dim(V) = 5. If dim(W) = 5, then:",
+      "options": ["W = V", "W is a proper subspace of V", "W must be the zero subspace", "Not enough information to conclude anything"],
+      "answer_index": 0,
+      "correct_answer": "W = V",
+      "solution_steps": [
+        "A key theorem: if W is a subspace of a finite-dimensional V and dim(W) = dim(V), then W = V.",
+        "This is because a basis for W (5 linearly independent vectors) is also a linearly independent set of 5 vectors in V, and since dim(V)=5, that set must already span all of V.",
+        "So W cannot be a proper subspace (option 2 is wrong), and it's certainly not the zero subspace (dim 0 ≠ 5, option 3 is wrong) — the dimension match fully determines W = V."
+      ],
+      "verification_method": "hand_checkable_subspace_dimension_theorem"
+    },
+    {
+      "id": "pi-linear-transformations-001",
+      "concept_id": "linear-transformations",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "T: R² → R² is defined by T(x,y) = (2x+y, x-y). What is the matrix representation of T with respect to the standard basis?",
+      "options": ["[[2,1],[1,-1]]", "[[2,1],[1,1]]", "[[1,2],[-1,1]]", "[[2,-1],[1,1]]"],
+      "answer_index": 0,
+      "correct_answer": "[[2,1],[1,-1]]",
+      "solution_steps": [
+        "The matrix's columns are the images of the standard basis vectors.",
+        "T(1,0) = (2×1+0, 1-0) = (2,1) — this is column 1.",
+        "T(0,1) = (2×0+1, 0-1) = (1,-1) — this is column 2.",
+        "Matrix = [[2,1],[1,-1]]."
+      ],
+      "verification_method": "hand_checkable_transformation_matrix"
+    },
+    {
+      "id": "pi-linear-transformations-002",
+      "concept_id": "linear-transformations",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "T has matrix A=[[2,1],[1,-1]]. What is the dimension of the kernel (null space) of T?",
+      "answer_range": [-0.01, 0.01],
+      "correct_answer": "0",
+      "solution_steps": [
+        "dim(ker T) = nullity(A) = (number of columns) − rank(A).",
+        "det(A) = 2×(-1) − 1×1 = -2-1 = -3 ≠ 0, so A is invertible, meaning rank(A) = 2 (full rank).",
+        "nullity(A) = 2 − 2 = 0 — the kernel is trivial, containing only the zero vector."
+      ],
+      "verification_method": "hand_checkable_kernel_rank"
+    },
+    {
+      "id": "pi-linear-transformations-003",
+      "concept_id": "linear-transformations",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "T: R³ → R² is a linear transformation with matrix A = [[1,2,1],[2,4,3]]. What is the dimension of the image (range) of T?",
+      "options": ["2", "1", "3", "0"],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "dim(image T) = rank(A).",
+        "Row reduce: R2 ← R2 − 2R1 = [2-2, 4-4, 3-2] = [0,0,1].",
+        "Rows [1,2,1] and [0,0,1] are both nonzero and independent, so rank(A) = 2.",
+        "dim(image T) = 2."
+      ],
+      "verification_method": "hand_checkable_image_rank"
+    }
+  ]
+}

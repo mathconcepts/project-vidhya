@@ -38,11 +38,13 @@
  *     `DEFAULT_EXAM_RELEVANCE`; the ProtoCATSelector reads this from
  *     `payload.examRelevance` (see proto-cat-selector.ts), so it's threaded
  *     through the payload rather than dropped.
- *   - `difficulty` is a 0..1 FLOAT, not the Elo scale (`600..2400`) the
+ *   - `difficulty` is a 0..1 FLOAT, not the Elo scale (`800..2200`) the
  *     rest of the readiness stack uses (see `expectedSuccess`/`eloFromSuccess`
- *     in src/gbrain/elo.ts). This module linearly rescales 0..1 → 600..2400
- *     so `ProtoCATSelector`'s `diffMin`/`diffMax` (already Elo-scale) filter
- *     correctly against this table without every caller re-deriving the map.
+ *     in src/gbrain/elo.ts). `difficultyToElo` (src/scoring/difficulty-elo.ts
+ *     — shared with `FileLearningObjectCatalog`, T21) linearly rescales
+ *     0..1 → 800..2200 so `ProtoCATSelector`'s `diffMin`/`diffMax`
+ *     (already Elo-scale) filter correctly against this table without
+ *     every caller re-deriving the map.
  *   - `concept_id` is free-text, not a foreign key into concept-graph.ts —
  *     `query({ skillId })` matches it as an exact string equality, same
  *     assumption `ConceptGraphCurriculumRepo` and `ProtoCATSelector` already
@@ -55,37 +57,18 @@
  * a query failure is caught and logged, never surfaced as a 500.
  */
 
-import pg from 'pg';
+import type pg from 'pg';
 import { FileLearningObjectCatalog } from './learning-object-catalog-file';
+import { CompositeLearningObjectCatalog } from './learning-object-catalog-composite';
+import { difficultyToElo, eloToDifficultyBounds, DEFAULT_EXAM_RELEVANCE } from './difficulty-elo';
 import type { LearningObject, ObjectType } from '../core/interfaces';
 import type { CatalogQuery, LearningObjectCatalog } from './learning-object-catalog';
-
-const { Pool } = pg;
-
-/** Elo-scale bounds this catalog rescales the 0..1 `difficulty` column into. */
-const ELO_FLOOR = 600;
-const ELO_CEILING = 2400;
+import { getSharedPool } from '../storage/pool';
 
 /** Defaults used where `generated_problems` has no corresponding column. */
 export const DEFAULT_MAX_MARKS = 4;
 export const DEFAULT_EST_MINUTES = 3;
-export const DEFAULT_EXAM_RELEVANCE = 0.5;
-
-function difficultyToElo(d: number): number {
-  const clamped = Math.max(0, Math.min(1, d));
-  return ELO_FLOOR + clamped * (ELO_CEILING - ELO_FLOOR);
-}
-
-function eloToDifficultyBounds(diffMin?: number, diffMax?: number): { lo: number; hi: number } {
-  // Inverse of difficultyToElo, clamped to [0, 1]. Callers pass Elo-scale
-  // bounds (proto-cat-selector.ts); we translate to the 0..1 column scale
-  // for the SQL WHERE clause.
-  const toFrac = (e: number) => Math.max(0, Math.min(1, (e - ELO_FLOOR) / (ELO_CEILING - ELO_FLOOR)));
-  return {
-    lo: diffMin !== undefined ? toFrac(diffMin) : 0,
-    hi: diffMax !== undefined ? toFrac(diffMax) : 1,
-  };
-}
+export { DEFAULT_EXAM_RELEVANCE };
 
 interface GeneratedProblemRow {
   id: string;
@@ -168,10 +151,11 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
   private pool: pg.Pool | null;
 
   constructor() {
-    const connectionString = process.env.DATABASE_URL;
-    // No DATABASE_URL → no pool at all. Every method short-circuits to the
-    // empty-catalog response without ever attempting a connection.
-    this.pool = connectionString ? new Pool({ connectionString, max: 5 }) : null;
+    // T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now
+    // the one shared pool (src/storage/pool.ts). No DATABASE_URL → no
+    // pool at all. Every method short-circuits to the empty-catalog
+    // response without ever attempting a connection.
+    this.pool = getSharedPool();
   }
 
   async query(q: CatalogQuery): Promise<LearningObject[]> {
@@ -243,15 +227,25 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
 
 let _instance: LearningObjectCatalog | null = null;
 
-/** Singleton accessor — mirrors `getStudentModel()` / `getTeacherQueueRepo()`. */
+/**
+ * Singleton accessor — mirrors `getStudentModel()` / `getTeacherQueueRepo()`.
+ *
+ * T21 (outside-voice amendment 1, docs/designs/linear-algebra-realtime-and-
+ * math-academy-plan.md): this used to be strictly file-XOR-pg on
+ * DATABASE_URL — with a database configured, the 3 (soon 123+) committed
+ * items in data/practice-items/ became invisible, because the pg catalog
+ * only ever reads `generated_problems`. D4 (set DATABASE_URL on the demo
+ * deploy) would have made every authored item unservable. With
+ * DATABASE_URL set, both sources are composed instead: file items stay
+ * the source of truth for authored content on every deploy shape, and a
+ * generated_problems row wins only on an actual id collision.
+ */
 export function getLearningObjectCatalog(): LearningObjectCatalog {
   if (_instance) return _instance;
-  // No DATABASE_URL means the pg catalog can only ever return nothing, so every
-  // gradable surface 404s and "the win is earned on a real item" has nothing
-  // behind it. An offline venue runs exactly that configuration. Fall back to
-  // authored items on disk, which grade through the same scorer.
+  // No DATABASE_URL means the pg catalog can only ever return nothing, so
+  // there is nothing to compose with — the file catalog IS the catalog.
   _instance = process.env.DATABASE_URL
-    ? new PgLearningObjectCatalog()
+    ? new CompositeLearningObjectCatalog(new FileLearningObjectCatalog(), new PgLearningObjectCatalog())
     : new FileLearningObjectCatalog();
   return _instance;
 }

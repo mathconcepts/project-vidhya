@@ -13,23 +13,21 @@
  *   computeExamStrategy(...)   — Generate personalized exam playbook
  */
 
-import pg from 'pg';
 import { CONCEPT_MAP, traceWeakestPrerequisite, getConceptsForTopic } from '../constants/concept-graph';
 import { MARKS_WEIGHTS } from '../engine/priority-engine';
 import { getExam } from '../curriculum/exam-loader';
 import { STRUGGLING_STATES } from '../teaching/motivation-source';
+import { getSharedPool } from '../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: any = null;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5, ...})` — now
+// the one shared pool (src/storage/pool.ts). This is the legacy student
+// model, still the highest-traffic module in the codebase (every route
+// that calls getOrCreateStudentModel/saveStudentModel goes through it) —
+// exactly the kind of module the connection-budget audit targeted.
 function getPool() {
-  if (_pool) return _pool;
-  _pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 5,
-    idleTimeoutMillis: 30_000,
-  });
-  return _pool;
+  const pool = getSharedPool();
+  if (!pool) throw new Error('[student-model] DATABASE_URL not configured');
+  return pool;
 }
 
 // ============================================================================
@@ -41,6 +39,27 @@ export interface MasteryEntry {
   attempts: number;
   correct: number;
   last_update: string; // ISO date
+  /**
+   * T8 (Milestone A — A8) provenance marker, stored inside the EXISTING
+   * `mastery_vector` JSONB column rather than as a new column (the schema
+   * gate — scripts/schema-column-baseline.json — is deny-by-default on new
+   * columns; a distinct value inside an already-baselined JSONB column
+   * needs no new baseline entry).
+   *
+   * `'warmup_placed'` means this entry was written by the diagnostic
+   * warmup's persist-priors endpoint (src/readiness/warmup-onboarding.ts)
+   * as an INFERRED placement, not a real graded attempt — the receipt-
+   * culture distinction the frontier view (T13) renders as a hollow/tinted
+   * "placed" dot rather than solid "mastered" green. Undefined (the
+   * default, and every entry written before this field existed) means
+   * ordinary attempt-demonstrated mastery — no migration needed, absence
+   * IS the "demonstrated" state.
+   *
+   * `updateMastery()` below clears this the moment a REAL attempt lands on
+   * the same concept — "one practice session confirms it" (the warmup
+   * result screen's own footnote) is enforced in code, not just copy.
+   */
+  provenance?: 'warmup_placed';
 }
 
 export interface SpeedEntry {
@@ -236,6 +255,13 @@ export function updateMastery(
 
   entry.score = Math.max(0, Math.min(1, entry.score + surprise));
   entry.last_update = new Date().toISOString();
+
+  // A real attempt just happened — this is now demonstrated mastery, not an
+  // inferred warmup placement. Clear the marker so T13's frontier flips the
+  // dot from "placed" to genuinely mastered/in-progress on the very next
+  // read, matching the warmup result screen's own promise ("one practice
+  // session confirms it").
+  delete entry.provenance;
 
   model.mastery_vector[conceptId] = entry;
 

@@ -66,6 +66,11 @@ import {
   summarize,
   type WarmupState,
 } from '../readiness/diagnostic-warmup';
+import {
+  spineConceptLabels,
+  applyWarmupPriors,
+  type PerConceptWarmupResult,
+} from '../readiness/warmup-onboarding';
 import { InMemoryCatalog, type LearningObjectCatalog } from '../scoring/learning-object-catalog';
 import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg';
 import { getStudentModel } from '../gbrain/student-model-pg';
@@ -77,11 +82,19 @@ import { ConceptGraphCurriculumRepo } from '../curriculum/curriculum-repo';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import {
   makeSyllabusAwareReadinessEngine,
+  rationaleIndicatesRedirect,
   type SyllabusContextProvider,
 } from '../readiness/syllabus-aware-engine';
-import { getAtomContentChecker } from '../readiness/atom-content-checker';
+import { getCompositeContentChecker } from '../readiness/composite-content-checker';
+import { makeDueReviewSource } from '../readiness/due-cards';
 import { getProfile } from '../session-planner/exam-profile-store';
 import type { Action } from '../core/interfaces';
+import {
+  recordArmSelection,
+  recordDiagnoseFallback,
+  recordObjectIdOutcome,
+  recordRedirectFired,
+} from '../readiness/metrics';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -188,6 +201,105 @@ async function handleWarmupApply(req: ParsedRequest, res: ServerResponse): Promi
 }
 
 // ────────────────────────────────────────────────────────────────────
+// GET /api/readiness/warmup/spine — the curated onboarding concept list
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * T8/OV2-8. Single source of truth for the onboarding UI's concept
+ * sequence — the frontend fetches this rather than hardcoding the 5
+ * curated spine ids + labels, so the two can never drift from
+ * src/readiness/warmup-onboarding.ts's WARMUP_SPINE_CONCEPTS. Static,
+ * anonymous-friendly (no auth required — the warmup itself works
+ * anonymously, matching the Wave 4 endpoints above).
+ */
+async function handleWarmupSpine(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+  return sendJSON(res, { concepts: spineConceptLabels() });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// POST /api/readiness/warmup/persist — write placement priors
+// ────────────────────────────────────────────────────────────────────
+
+interface PersistBodyResult {
+  skill_id?: unknown;
+  converged?: unknown;
+  ability_estimate?: unknown;
+  probes_used?: unknown;
+  predicted_success_at_close?: unknown;
+}
+
+function parsePersistResults(raw: unknown): PerConceptWarmupResult[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: PerConceptWarmupResult[] = [];
+  for (const item of raw as PersistBodyResult[]) {
+    if (typeof item?.skill_id !== 'string' || !item.skill_id) return null;
+    if (typeof item.ability_estimate !== 'number' || !Number.isFinite(item.ability_estimate)) return null;
+    out.push({
+      skillId: item.skill_id,
+      converged: Boolean(item.converged),
+      abilityEstimate: item.ability_estimate,
+      probesUsed: typeof item.probes_used === 'number' ? item.probes_used : 0,
+      predictedSuccessAtClose:
+        typeof item.predicted_success_at_close === 'number' ? item.predicted_success_at_close : 0,
+    });
+  }
+  return out;
+}
+
+/**
+ * T8 (A8, amendment 7): "the missing persist-priors endpoint (warmup apply
+ * currently persists nothing)". Takes the per-concept WarmupReport
+ * summaries the client collected while walking the curated spine (see
+ * handleWarmupApply's `summary` field above) and writes them as priors via
+ * applyWarmupPriors(). Auth-gated the same way as next-action.
+ *
+ * Red-team fix 1 (CRITICAL): unlike next-action, this endpoint IS reachable
+ * by an anonymous caller in practice — /warmup/next and /warmup/apply above
+ * are deliberately anonymous-friendly (matching the platform's
+ * anonymous-first design), and nothing gates entry into the warmup flow on
+ * being signed in (KnowledgeHomePage's CTA and PlannedSessionPage's
+ * WarmupEntryCard both offer it to anonymous visitors, and /warmup itself
+ * has no route guard). So an anonymous student can walk the entire
+ * diagnostic and only discover here, at the very last step, that there is
+ * no resolvable student id to persist against — requireRole() 401s, same
+ * as it does for any other unauthenticated caller. That is intentional
+ * (an anonymous placement has nowhere durable to live), but it is NOT a
+ * corner case: it is the default outcome for an anonymous visitor who
+ * completes the warmup without having signed in first. The client
+ * (frontend/src/pages/app/WarmupPage.tsx + warmup-logic.ts's
+ * classifyPersistFailure) is responsible for routing a 401 here to an
+ * honest "sign in to save your placement" phase rather than an
+ * infinitely-retriable generic error, and for keeping the results around
+ * (localStorage + in-memory) so a later sign-in can still save them.
+ *
+ * Idempotent: applyWarmupPriors() upserts with GREATEST(), so calling this
+ * twice with the same (or a subset of the same) results never regresses
+ * an existing higher rating/n — the §11 states-table "double-apply" case.
+ */
+async function handleWarmupPersist(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const user = await requireRole(req, res, 'student', 'teacher', 'admin');
+  if (!user) return;
+
+  const body = (req.body ?? {}) as Record<string, any>;
+  const results = parsePersistResults(body.results);
+  if (!results) {
+    return sendJSON(res, { error: 'results (array of {skill_id, ability_estimate, ...}) is required' }, 400);
+  }
+
+  try {
+    const out = await applyWarmupPriors(user.userId, results);
+    return sendJSON(res, out);
+  } catch (err) {
+    // Persist failures are recoverable client-side — the §11 states table's
+    // "Couldn't save your placement — your answers are kept, tap to retry"
+    // case. Never a 500 that loses the student's answers; the client still
+    // holds the same `results` and can retry.
+    console.error('[readiness] warmup/persist failed:', (err as Error).message);
+    return sendJSON(res, { error: 'placement save failed', recorded: false }, 502);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Type guard — refuses bogus state from untrusted clients
 // ────────────────────────────────────────────────────────────────────
 
@@ -286,12 +398,19 @@ function buildReadinessEngine() {
     selector,
     policy,
     syllabus,
-    // U1-5: the LA-chain on-ramp. Only ever redirects to a prerequisite
-    // when every node in the gap chain has real explainer content on
-    // disk (src/readiness/content-gate.ts) — currently true for
-    // Linear Algebra and nothing else, by content coverage, not by
-    // any topic/exam literal in the engine.
-    content: getAtomContentChecker(),
+    // T5 (A1): the LA-chain on-ramp, now gated on BOTH real explainer
+    // content (src/readiness/atom-content-checker.ts) AND a gradable
+    // catalog item (src/readiness/composite-content-checker.ts) — a
+    // concept with a lesson but nothing to practice still starves the
+    // next arm the redirect lands the student in. Currently true for
+    // Linear Algebra and nothing else, by content coverage, not by any
+    // topic/exam literal in the engine.
+    content: getCompositeContentChecker(catalog),
+    // T12 (OV2-D1): the real due-card scan (fsrs_cards WHERE due_at<=now
+    // AND reps>0), mapped to servable items over the same catalog. Wiring
+    // this seam is what stops a fresh student from getting a bogus
+    // "recall at 0%" retain on an item they've never attempted.
+    dueCards: makeDueReviewSource(catalog),
   });
 }
 
@@ -355,6 +474,9 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
     // rows, no attempts, no FSRS cards) — this is the DB-less / fresh
     // student case, not an error.
     if (action.kind === 'diagnose' && !action.objectId) {
+      recordArmSelection('diagnose');
+      recordObjectIdOutcome(false);
+      recordDiagnoseFallback();
       return sendJSON(res, {
         action,
         expected_score: null,
@@ -362,12 +484,18 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
       });
     }
 
+    recordArmSelection(action.kind);
+    recordObjectIdOutcome(Boolean(action.objectId));
+    if (rationaleIndicatesRedirect(action.rationale)) recordRedirectFired();
+
     return sendJSON(res, {
       action: await attachMarking(action),
       expected_score: null,
     });
   } catch (err) {
     console.error('[readiness] next-action failed:', (err as Error).message);
+    recordObjectIdOutcome(false);
+    recordDiagnoseFallback();
     return sendJSON(res, {
       action: null,
       expected_score: null,
@@ -412,8 +540,10 @@ async function handleExpectedScore(req: ParsedRequest, res: ServerResponse): Pro
 }
 
 export const readinessRoutes: RouteDefinition[] = [
+  { method: 'GET', path: '/api/readiness/warmup/spine', handler: handleWarmupSpine },
   { method: 'POST', path: '/api/readiness/warmup/next', handler: handleWarmupNext },
   { method: 'POST', path: '/api/readiness/warmup/apply', handler: handleWarmupApply },
+  { method: 'POST', path: '/api/readiness/warmup/persist', handler: handleWarmupPersist },
   { method: 'GET', path: '/api/readiness/next-action', handler: handleNextAction },
   { method: 'GET', path: '/api/readiness/expected-score', handler: handleExpectedScore },
 ];

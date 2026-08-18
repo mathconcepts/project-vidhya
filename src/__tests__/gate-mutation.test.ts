@@ -147,6 +147,52 @@ describe('check-content-integrity fails on what it claims to catch', () => {
     expect(r.code, r.out).toBe(0);
   });
 
+  it('catches a leaked tool/agent error message', () => {
+    // Real leak from rank-nullity's worked-example.md: the authoring tool's
+    // own permission-handler failure, rendered in the lesson.
+    const r = runGate(
+      'check-content-integrity.ts',
+      makeCorpus(
+        'toolerror',
+        `${CLEAN_BODY}\n\n**Error encountered:** The Write tool permission handler is misconfigured on this system. The atoms above are ready to be written to the file paths specified.`,
+      ),
+    );
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/tool\/agent error/i);
+  });
+
+  it('does NOT trip on legitimate math prose that uses the word "error" or "write"', () => {
+    // A word-level match here would refuse every stats/numerical-methods
+    // atom in the corpus. The rule needs the specific vocabulary of a tool
+    // failure report, not the bare words.
+    const r = runGate(
+      'check-content-integrity.ts',
+      makeCorpus(
+        'mathprose',
+        `${CLEAN_BODY}\n\nThe standard error shrinks as sample size grows, and round-off error compounds across iterations. We write the matrix in row-echelon form before reading off the rank.`,
+      ),
+    );
+    expect(r.code, r.out).toBe(0);
+  });
+
+  it.each([
+    // Near-miss variants of the sign-off/tool-error leak, found on a corpus
+    // sweep across taylor-laurent, integration-substitution,
+    // discrete-distributions, counting-principles, and conformal-mapping —
+    // each phrased just differently enough from the rank-nullity original to
+    // slip past the first version of checks 1b/1c.
+    ['ready to be written to the file paths', 'These three atoms are ready to be written to the file paths. The content includes:'],
+    ['ready to be written to the concept directory', 'The three atom files are ready to be written to the concept directory. Due to a system permission configuration issue, I have provided the complete content above.'],
+    ['now ready to be written to their respective file paths', 'All three atoms are now ready to be written to their respective file paths.'],
+    ['permission handler, no "misconfigured"', 'Fix the permission handler configuration to allow Write/Bash tool calls, or run this command manually.'],
+    ['permission handler before "Write tool"', 'Due to permission handler configuration issues with the Write tool, I am unable to directly create these files on disk.'],
+    ['self-reported inability to create files, no "permission handler"', 'I am unable to directly create these files on disk, so the content is provided above instead.'],
+  ])('catches the near-miss leak variant: %s', (_label, leak) => {
+    const r = runGate('check-content-integrity.ts', makeCorpus(`nearmiss-${_label.replace(/\W+/g, '-')}`, `${CLEAN_BODY}\n\n${leak}`));
+    expect(r.code, r.out).toBe(1);
+    expect(r.out).toMatch(/operator|tool\/agent error/i);
+  });
+
   it('refuses an empty corpus rather than reporting success', () => {
     // "Nothing to check" passing as "everything is clean" is the exact
     // false-green this whole file exists to prevent.

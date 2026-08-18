@@ -767,6 +767,130 @@ environment — `openrouter.ai` is blocked by proxy policy and no provider key i
 set. Both reach only offline operator scripts, not any student-facing path.
 Tracked in TODOS.md.
 
+---
+
+### Linear Algebra real-time loop + Math Academy layer (v4.34.0)
+
+Closes the adaptive loop for all 26 Linear Algebra concepts end-to-end: warmup
+placement → live frontier view → gradable practice with implicit-credit
+propagation → checkpoint quizzes → mock exams, all server-graded and
+DB-backed. Plan doc: `docs/designs/linear-algebra-realtime-and-math-academy-plan.md`.
+
+**Warmup onboarding.** `src/readiness/warmup-onboarding.ts` — a 5-spine-concept
+bracketing diagnostic at `/warmup` (`WARMUP_SPINE_CONCEPTS`, `COMPETENCE_THRESHOLD`),
+`computePlacement()` + `inferPlacedAncestors()` to derive a placement result,
+and `applyWarmupPriors()` to persist priors — only for CONVERGED concepts, never
+guessed. Anonymous visitors get an honest sign-in path: a 401 on the persist
+call surfaces a real sign-in step with the student's answers preserved, rather
+than silently discarding the warmup or fabricating a success.
+
+**Frontier spine.** `frontend/src/components/knowledge/FrontierSpine.tsx` — the
+knowledge-frontier view: 4 clusters, mastered rollups, placed-vs-demonstrated
+dots, a "You are here" focal card. Runs on the real GATE-MA prerequisite DAG
+via `src/constants/concept-graph.ts`'s concept tree (97 concepts, regenerated
+at build time — no drift between client and server graphs).
+
+**Checkpoint quiz + XP.** `src/api/quiz-routes.ts` — `GET
+/api/practice/xp/summary`, `POST /api/practice/quiz/start`, `POST
+/api/practice/quiz/:id/submit`. `src/scoring/xp.ts` defines the constants:
+`QUIZ_XP_THRESHOLD_MINUTES=100`, `QUIZ_LENGTH=6`, `QUIZ_POOL_MULTIPLE=2`,
+`QUIZ_NO_REPEAT_WINDOW_DAYS=14`, `QUIZ_SECONDS_PER_ITEM=80`; `xpForAttempt()`
+mirrors the signed marks ratio actually earned (can be negative under GATE
+negative marking). The XP meter is **per-cycle, not lifetime** — it re-arms at
+0/100 after each submitted quiz (`xpSinceBaseline()` reads the student's most
+recent `quiz_sessions.submitted_at` as the baseline; an in-progress quiz never
+moves it). `src/readiness/quiz-pool.ts` assembles the pool from due FSRS
+reviews + frontier concepts minus the no-repeat window, and refuses (422) below
+either the 2× depth gate or the XP threshold — both enforced server-side, not
+just as a frontend display rule. Quizzes grade through the same
+`GateDeterministicScorer` and `StudentModel.update()` attempt path as ordinary
+practice (Elo + FSRS + FIRe + dedup all apply identically). `frontend/src/components/app/TimerPrimitive.tsx`
+now runs **two registers** — exam mode and quiz mode — so expiry auto-submits
+whatever was actually answered instead of hitting a stale-closure bug that
+submitted everything as skipped.
+
+**FIRe layer.** `src/gbrain/fire.ts` — FIRe-lite ("Fractional Implicit
+Repetition", Skycak) implicit-credit propagation over 47 hand-justified
+`encompasses:` edges in `data/curriculum/gate-ma.yml` (depth-capped at
+`FIRE_MAX_DEPTH=2`). A correct attempt on an advanced concept blends a
+discounted credit toward its encompassed concepts' FSRS stability (`CREDIT_DISCOUNT`);
+an incorrect one applies a bounded penalty upward (never dropping stability
+below `max(0.5, stability × 0.5)`). Pure module, no DB/clock ownership — gated
+behind `process.env.VIDHYA_FIRE === 'on'` and applied only from
+`src/gbrain/student-model-pg.ts`'s `update()` transaction. `src/readiness/compression-bonus.ts`
+adds compression-aware task selection capped below the retain floor, and
+`src/readiness/due-cards.ts` provides the real due-card scan (`makeDueReviewSource`)
+that quiz-pool and readiness routes both read from.
+
+**Content floor.** 123 newly verified Linear Algebra practice items (126
+gradable items total, up from 3 product-wide), 15 hand-authored explainers,
+138 new stance-variant files (156 stance pairs total). `enforce_topics:
+[linear-algebra]` on `scripts/check-syllabus-floor.ts` makes the floor a
+blocking CI gate for this exam pack — every item's answer key was recomputed
+by hand via a second method and spot-checked against Wolfram before the gate
+went live.
+
+**Mock exams.** Migration `047_mock_exams.sql` gives `mock_exams` a real
+migration (it was previously created by runtime SQL inside
+`generateMockExam()`, bypassing the schema-column deny-by-default gate).
+Grading moved fully server-side and exams are bound to the authenticated
+owner via `owner_user_id` — previously any student could read another
+session's keyed exam (IDOR). The `questions` column (which holds the full
+answer key) is server-only; `GET /api/gbrain/mock-exam/:sessionId` always
+strips it before serving, mirroring `GET /api/practice/item/:id`'s leak
+discipline. `status` gates idempotent submission — only the first submit call
+transitions `in_progress → submitted` and grades; later calls replay the
+persisted `analysis`.
+
+**Chat guardrails.** `src/lib/chat-spend.ts` — a durable daily spend cap
+(`getDailySpendCapUsd()`, default read from `VIDHYA_CHAT_DAILY_SPEND_CAP_USD`,
+default $5) backed by a flat-file store (`VIDHYA_CHAT_SPEND_FILE`, mirrors the
+v4.33.0 durable-store pattern) plus a per-session rate limit in
+`src/api/chat-routes.ts` (`VIDHYA_CHAT_RATE_LIMIT` / `VIDHYA_CHAT_RATE_LIMIT_WINDOW_SEC`).
+Ships ahead of any live provider key being set.
+
+**Shared connection pool.** `src/storage/pool.ts` is now THE shared Postgres
+pool (`getSharedPool()`, `SHARED_POOL_MAX=10`) — ~65 modules that each built
+their own lazy `pg.Pool` (with drifted `max` values: 3, 5, 5, 10 across
+different copies) now build on this one seam. `npm run ci:connection-budget`
+(`scripts/check-connection-budget.ts`) fails CI on a new per-call `new
+Pool(...)` appearing inside an exported function on the request path. A short
+documented exception list (advisory-lock holders, the throwaway health-probe
+pool, one-shot CLI scripts) lives in the file header. `docs/ops/render-database-url.md`
+is the operator-facing rule: any module on the shared pool that takes an
+advisory lock, session variable, or `LISTEN/NOTIFY` requires `DATABASE_URL` to
+point at a direct connection or session-mode pooler, never transaction-mode
+pooling (Supabase's pooler defaults to transaction mode, which silently
+breaks advisory-lock semantics).
+
+**Migrations 044–047** (auto-applied on boot):
+- `044_pyq_concept_id.sql` — adds nullable `concept_id` to `pyq_questions`
+  (previously only a coarse `topic` column existed, so concept-scoped PYQ
+  queries returned nothing for all 26 LA concepts).
+- `045_fsrs_skill_and_fire.sql` — adds nullable `skill_id` to `fsrs_cards` so
+  FIRe's credit/penalty propagation and the due-card scan can find every
+  existing card for a concept without a separate lookup function.
+- `046_xp_quiz.sql` — `xp_events` (append-only XP ledger, `UNIQUE (student_id,
+  object_id, ts_ms)` idempotency mirroring `attempt_dedup`) and
+  `quiz_sessions`.
+- `047_mock_exams.sql` — real, reviewed migration for `mock_exams` (see
+  above), plus `owner_user_id` for ownership binding.
+
+**Key new files:** `src/readiness/warmup-onboarding.ts`,
+`frontend/src/components/knowledge/FrontierSpine.tsx`, `src/api/quiz-routes.ts`,
+`src/scoring/xp.ts`, `src/readiness/quiz-pool.ts`, `src/gbrain/fire.ts`,
+`src/readiness/compression-bonus.ts`, `src/readiness/due-cards.ts`,
+`src/lib/chat-spend.ts`, `src/storage/pool.ts`, `src/api/mock-exam-routes.ts`,
+`frontend/src/components/app/TimerPrimitive.tsx`, `docs/ops/render-database-url.md`.
+
+**New env vars:** `VIDHYA_FIRE` (`on` to activate FIRe credit propagation, off
+by default), `VIDHYA_CHAT_DAILY_SPEND_CAP_USD` (default 5), `VIDHYA_CHAT_RATE_LIMIT`
++ `VIDHYA_CHAT_RATE_LIMIT_WINDOW_SEC`, `VIDHYA_CHAT_SPEND_FILE` (spend-store
+path override).
+
+**Tests:** Backend 2,499 → 3,285 (+786). Frontend 393 → 486 (+93). CI gates
+10 → 12 (`ci:template-coverage`, `ci:variant-agreement`).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

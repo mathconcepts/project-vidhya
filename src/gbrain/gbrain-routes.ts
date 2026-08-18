@@ -15,7 +15,7 @@
  */
 
 import { ServerResponse } from 'http';
-import pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 import {
   getOrCreateStudentModel,
   saveStudentModel,
@@ -46,7 +46,6 @@ import {
   fillContentGaps,
   gbrainHealthCheck,
   dailyIntelligence,
-  generateMockExam,
   weeklyDigest,
   mineMisconceptions,
   seedRagCache,
@@ -55,8 +54,6 @@ import {
 import { auditStudent, formatAuditMarkdown } from './operations/student-audit';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
-
-const { Pool } = pg;
 
 interface RouteDefinition {
   method: string;
@@ -166,14 +163,24 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     console.warn('[gbrain] saveStudentModel skipped:', (e as Error).message);
   }
 
-  // Log confidence if provided
+  // Log confidence if provided.
+  //
+  // T16 (D4 / OV2 #10): this used to build a fresh `new pg.Pool({...})`
+  // (no `max`, so pg's default of 10) on EVERY attempt that carried a
+  // confidenceBefore rating — and never closed it (no `.end()`), so
+  // every such request left the pool object behind. A busy exam-prep
+  // session logs confidence on most attempts, making this the highest-
+  // volume per-call offender found in the T16 audit. Now borrows the
+  // one shared pool (src/storage/pool.ts) instead.
   if (confidenceBefore !== undefined) {
-    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-    await pool.query(
-      `INSERT INTO confidence_log (session_id, problem_id, concept_id, confidence_before, was_correct, time_taken_ms)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [sessionId, problemId || null, concept, confidenceBefore, isCorrect, timeTakenMs || null],
-    ).catch(() => {});
+    const pool = getSharedPool();
+    if (pool) {
+      await pool.query(
+        `INSERT INTO confidence_log (session_id, problem_id, concept_id, confidence_before, was_correct, time_taken_ms)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [sessionId, problemId || null, concept, confidenceBefore, isCorrect, timeTakenMs || null],
+      ).catch(() => {});
+    }
   }
 
   sendJSON(res, {
@@ -442,15 +449,11 @@ async function handleDailyIntelligence(req: ParsedRequest, res: ServerResponse):
   } catch (err) { sendError(res, 500, (err as Error).message); }
 }
 
-async function handleMockExam(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const { sessionId } = req.params;
-  const exam = req.query.get('exam') || 'gate';
-  if (!sessionId) return sendError(res, 400, 'sessionId required');
-  try {
-    const result = await generateMockExam(sessionId, exam);
-    sendJSON(res, result);
-  } catch (err) { sendError(res, 500, (err as Error).message); }
-}
+// GET /api/gbrain/mock-exam/:sessionId and POST /api/gbrain/mock-exam/:id/submit
+// moved to src/api/mock-exam-routes.ts (T22/ENG-D3) — the old handler here
+// returned each question's correct_answer straight to the client and
+// graded client-side; the new route redacts the answer key and grades
+// server-side via the same deterministic scorer the practice path uses.
 
 async function handleWeeklyDigest(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const { sessionId } = req.params;
@@ -563,7 +566,6 @@ export const gbrainRoutes: RouteDefinition[] = [
   { method: 'POST', path: '/api/gbrain/content-gap/fill', handler: handleContentGapFill },
   { method: 'GET', path: '/api/gbrain/health', handler: handleGbrainHealth },
   { method: 'POST', path: '/api/gbrain/daily-intelligence', handler: handleDailyIntelligence },
-  { method: 'GET', path: '/api/gbrain/mock-exam/:sessionId', handler: handleMockExam },
   { method: 'GET', path: '/api/gbrain/weekly-digest/:sessionId', handler: handleWeeklyDigest },
   { method: 'GET', path: '/api/gbrain/misconceptions', handler: handleMineMisconceptions },
   { method: 'POST', path: '/api/gbrain/seed-rag', handler: handleSeedRag },

@@ -197,19 +197,37 @@ Respond in EXACTLY this JSON format (no markdown, no code fences):
 // Verification + Publishing
 // ============================================================================
 
-async function verifyAndPublish(problem: GeneratedProblem): Promise<{ verified: boolean; tier?: string }> {
+async function verifyAndPublish(
+  problem: GeneratedProblem,
+): Promise<{ verified: boolean; tier?: string; outcome: 'verified' | 'failed' | 'inconclusive' }> {
   if (!_orchestrator) {
     console.error('[flywheel] Orchestrator not set');
-    return { verified: false };
+    return { verified: false, outcome: 'failed' };
   }
 
   try {
     const answerText = `${problem.correct_answer}) ${problem.options[problem.correct_answer]}`;
     const result = await _orchestrator.verify(problem.question_text, answerText);
 
+    // Tri-state (T7 precondition — see TODOS.md): the tiered orchestrator's
+    // 'inconclusive' means Wolfram (or whichever tier was reached) had no
+    // opinion — outage, timeout, no answer — not that the content is wrong.
+    // Treating it like a genuine failure discards perfectly good generated
+    // problems on a bad network day. Neither branch publishes; the
+    // difference is entirely in how it's reported, since this pipeline has
+    // no pending-problems store to hold the item in — it is simply
+    // regenerated on a later flywheel tick, which IS the retry.
+    if (result.overallStatus === 'inconclusive') {
+      console.warn(
+        `[flywheel] Verification inconclusive (arbiter unavailable, tier=${result.tierUsed}) — ` +
+        `not publishing, not rejecting; will retry on a later run`,
+      );
+      return { verified: false, tier: result.tierUsed, outcome: 'inconclusive' };
+    }
+
     if (result.overallStatus !== 'verified' || result.overallConfidence < MIN_CONFIDENCE) {
       console.log(`[flywheel] Problem rejected: status=${result.overallStatus}, confidence=${result.overallConfidence.toFixed(2)}, tier=${result.tierUsed}`);
-      return { verified: false, tier: result.tierUsed };
+      return { verified: false, tier: result.tierUsed, outcome: 'failed' };
     }
 
     // Insert into pyq_questions
@@ -259,10 +277,10 @@ async function verifyAndPublish(problem: GeneratedProblem): Promise<{ verified: 
     );
 
     console.log(`[flywheel] Published: ${problem.topic} (${problem.difficulty}) via ${result.tierUsed}, pyq_id=${pyqId}`);
-    return { verified: true, tier: result.tierUsed };
+    return { verified: true, tier: result.tierUsed, outcome: 'verified' };
   } catch (err) {
     console.error('[flywheel] Verify/publish error:', (err as Error).message);
-    return { verified: false };
+    return { verified: false, outcome: 'failed' };
   }
 }
 
@@ -548,8 +566,8 @@ function escapeHtml(str: string): string {
 // Main Pipeline
 // ============================================================================
 
-async function runFlywheel(): Promise<{ generated: number; verified: number; topics: string[]; run_id?: string }> {
-  const results = { generated: 0, verified: 0, topics: [] as string[], run_id: undefined as string | undefined };
+async function runFlywheel(): Promise<{ generated: number; verified: number; inconclusive: number; topics: string[]; run_id?: string }> {
+  const results = { generated: 0, verified: 0, inconclusive: 0, topics: [] as string[], run_id: undefined as string | undefined };
 
   // Wrap every flywheel tick in a GenerationRun so the artifacts produced
   // are traceable. Default config: gate-ma, BATCH_SIZE atoms, full-tier
@@ -579,16 +597,21 @@ async function runFlywheel(): Promise<{ generated: number; verified: number; top
       if (!problem) continue;
       results.generated++;
 
-      const { verified } = await verifyAndPublish(problem);
+      const { verified, outcome } = await verifyAndPublish(problem);
       if (verified) {
         results.verified++;
         results.topics.push(topic);
         if (run) await incrementRunArtifacts(run.id, 1).catch(() => undefined);
+      } else if (outcome === 'inconclusive') {
+        // Not published, not rejected — the arbiter was unavailable, not the
+        // content wrong. Counted separately so the batch summary doesn't
+        // read as a content-quality signal it isn't.
+        results.inconclusive++;
       }
     }
 
     if (run) await markRunComplete(run.id).catch(() => undefined);
-    console.log(`[flywheel] Batch complete: ${results.verified}/${results.generated} verified (${results.topics.join(', ')})${run ? ` [run=${run.id}]` : ''}`);
+    console.log(`[flywheel] Batch complete: ${results.verified}/${results.generated} verified, ${results.inconclusive} inconclusive (arbiter unavailable) (${results.topics.join(', ')})${run ? ` [run=${run.id}]` : ''}`);
     return results;
   } catch (err: any) {
     if (run) await markRunFailed(run.id, err?.message ?? 'unknown error').catch(() => undefined);
@@ -641,3 +664,6 @@ export { runFlywheel };
 export const flywheelRoutes: RouteDefinition[] = [
   { method: 'POST', path: '/api/flywheel/generate', handler: handleFlywheelGenerate },
 ];
+
+/** Test-only seam — exercises the tri-state verify/publish branch without a real LLM call. */
+export const __testing = { verifyAndPublish };

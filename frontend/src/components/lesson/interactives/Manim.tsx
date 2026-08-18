@@ -12,8 +12,8 @@
  * (saves bandwidth on slow connections).
  */
 
-import { useEffect, useState } from 'react';
 import type { DirectiveProps } from './registry';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface ManimAttrs {
   src: string;
@@ -27,16 +27,7 @@ interface ManimAttrs {
 export default function Manim({ attrs }: DirectiveProps) {
   const a = attrs as Partial<ManimAttrs>;
   const src = a.src;
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+  const reducedMotion = usePrefersReducedMotion();
 
   if (!src) {
     throw new Error('Manim: missing required src attribute');

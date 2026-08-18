@@ -17,7 +17,10 @@ export type Board =
   | 'ICSE'        // Indian Certificate of Secondary Education
   | 'KAR-PUE'     // Karnataka Pre-University Education
   | 'MAH-HSC'     // Maharashtra HSC Board
-  | 'TN-HSE';     // Tamil Nadu Higher Secondary
+  | 'TN-HSE'      // Tamil Nadu Higher Secondary
+  | 'GATE';       // GATE (postgraduate entrance) — not a school board, grouped
+                   // separately in listTracksByBoard() rather than nested
+                   // under a school board it has no relationship to.
 
 export type Grade = 'class-11' | 'class-12';
 
@@ -42,6 +45,19 @@ export interface KnowledgeTrack {
   suggested_exam_ids: string[];
   /** One-line student-facing description */
   description: string;
+  /**
+   * A9 (Milestone A). When set, `getTrackConcepts()`
+   * (src/api/knowledge-routes.ts) sources this track's concept list from
+   * `getConceptsForTopic()` in the real concept-graph (data/curriculum/gate-ma.yml)
+   * instead of the coarse exam-adapter `getSyllabusTopicIds()` list. Exam
+   * adapters expose ~10 topic-level ids (e.g. "linear-algebra",
+   * "transform-theory"); the concept graph exposes the granular concept ids
+   * (e.g. "eigenvalues", "determinants") that `student_skill_elo` /
+   * `fsrs_cards` / the readiness engine actually key mastery on. Tracks
+   * without this field keep the original exam-adapter-topic behavior
+   * unchanged.
+   */
+  concept_graph_topic?: string;
 }
 
 const BOARD_NAMES: Record<Board, string> = {
@@ -50,6 +66,7 @@ const BOARD_NAMES: Record<Board, string> = {
   'KAR-PUE': 'Karnataka PUE',
   'MAH-HSC': 'Maharashtra HSC',
   'TN-HSE':  'Tamil Nadu HSE',
+  'GATE':    'GATE',
 };
 
 const GRADE_NAMES: Record<Grade, string> = {
@@ -156,6 +173,30 @@ export const KNOWLEDGE_TRACKS: KnowledgeTrack[] = [
     'Tamil Nadu HSE Class 12 math.'),
   track('TN-HSE', 'class-12', 'biology', [EXAM.NEET_BIO],
     'Tamil Nadu HSE Class 12 biology.'),
+
+  // GATE-MA — postgraduate engineering-mathematics track (A9, Milestone A).
+  // Not board/grade/subject-shaped like the school tracks above (GATE is a
+  // postgraduate entrance, not a school-board curriculum), so it's built
+  // directly rather than through track(). Its id is exactly "GATE-MA"
+  // because that's the literal `knowledge_track_id` the demo persona
+  // (data/personas/meera-gate-la-anxious.yaml) and the persona seeder
+  // already write — before this entry, that id resolved to nothing and
+  // every knowledge-track card for Meera rendered blank. `EXAM.GATE`
+  // (EXM-GATE-MATH-SAMPLE) was declared in this file since before this
+  // change but never referenced anywhere — this is that "never used".
+  {
+    id: 'GATE-MA',
+    board: 'GATE',
+    board_name: 'GATE',
+    grade: 'class-12',
+    grade_name: 'Postgraduate entrance',
+    subject: 'mathematics',
+    subject_name: 'Engineering Mathematics',
+    display_name: 'GATE Engineering Mathematics',
+    suggested_exam_ids: [EXAM.GATE],
+    description: 'GATE Engineering Mathematics — linear algebra, calculus, and the full postgraduate syllabus.',
+    concept_graph_topic: 'linear-algebra',
+  },
 ];
 
 // ============================================================================

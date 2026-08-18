@@ -20,6 +20,7 @@ import { openTurn, closeTurn, type MasterySnapshot } from '../modules/teaching';
 import { classifyIntent } from '../content/router';
 import { checkRateLimit } from '../lib/rate-limit';
 import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-budget';
+import { checkChatSpendCap, recordCapTrip, recordChatSpend, estimateChatCostUsd } from '../lib/chat-spend';
 import { getLlmForRole } from '../llm/runtime';
 import { resolveAtom, resolveAtomFromMessage, streamAtomContent } from './atom-responder';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
@@ -203,6 +204,65 @@ ${topicList ? `## ${examName} Topics\n${topicList}\n` : ''}${curriculumGuidance}
 }
 
 // ============================================================================
+// T19 — chat off-corpus guardrails
+// ============================================================================
+//
+// Three independent protections around the LLM fallback path, all gated
+// BEFORE the fallback runs (the atom-first path itself never needed
+// protecting — pre-authored content costs no LLM tokens):
+//
+//   1. Per-session rate limit — src/lib/rate-limit.ts's 'chat' bucket
+//      (default 30/min, matches every other chat-shaped endpoint in this
+//      file's DEFAULT_LIMITS table). Env-overridable per this deployment's
+//      traffic via VIDHYA_CHAT_RATE_LIMIT (messages) and
+//      VIDHYA_CHAT_RATE_LIMIT_WINDOW_SEC (window, default 60s) — set one
+//      without the other and the missing half falls back to the default.
+//   2. Durable daily USD spend cap — src/lib/chat-spend.ts. Deployment-wide,
+//      survives `.data` wipes (migration 043's durable_records).
+//   3. Atom-first invariant — resolveChatResponsePath() below. An atom match
+//      ALWAYS wins regardless of LLM availability or spend-cap state; the
+//      LLM fallback is reachable only on an atom miss. Locked by
+//      src/api/__tests__/chat-response-path.test.ts.
+
+/** VIDHYA_CHAT_RATE_LIMIT messages per VIDHYA_CHAT_RATE_LIMIT_WINDOW_SEC
+ * seconds (default window 60s). Returns undefined (falls back to
+ * DEFAULT_LIMITS['chat']) when the count var isn't set or isn't a positive
+ * number — a malformed window var alone doesn't disable the override, it
+ * just uses the 60s default window. */
+export function chatRateLimitOverride(): { capacity: number; refill_per_sec: number } | undefined {
+  const rawCapacity = process.env.VIDHYA_CHAT_RATE_LIMIT;
+  if (!rawCapacity) return undefined;
+  const capacity = Number(rawCapacity);
+  if (!Number.isFinite(capacity) || capacity <= 0) return undefined;
+  const rawWindow = process.env.VIDHYA_CHAT_RATE_LIMIT_WINDOW_SEC;
+  const windowSec = rawWindow && Number.isFinite(Number(rawWindow)) && Number(rawWindow) > 0
+    ? Number(rawWindow)
+    : 60;
+  return { capacity, refill_per_sec: capacity / windowSec };
+}
+
+export type ChatResponsePath = 'atom' | 'no_llm_configured' | 'spend_cap_tripped' | 'llm_stream';
+
+/**
+ * The one decision point for "what does this chat turn actually serve."
+ * Pulled out as a pure function — rather than left as inline if/else in
+ * handleChat — specifically so the atom-first invariant can be pinned by a
+ * unit test without standing up the whole route (DB, vector store, GBrain
+ * task reasoner, SSE response). `hasAtom` always wins: the LLM fallback
+ * (and both its guardrails) is reachable only when `hasAtom` is false.
+ */
+export function resolveChatResponsePath(opts: {
+  hasAtom: boolean;
+  llmAvailable: boolean;
+  spendCapAllowed: boolean;
+}): ChatResponsePath {
+  if (opts.hasAtom) return 'atom';
+  if (!opts.llmAvailable) return 'no_llm_configured';
+  if (!opts.spendCapAllowed) return 'spend_cap_tripped';
+  return 'llm_stream';
+}
+
+// ============================================================================
 // Routes
 // ============================================================================
 
@@ -226,7 +286,7 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
   const _actor_id = _actor_for_limits ? _actor_for_limits.user.id : sessionId;
 
   // Rate limit FIRST — cheaper to reject than the budget check.
-  const rl = checkRateLimit('chat', _actor_id);
+  const rl = checkRateLimit('chat', _actor_id, chatRateLimitOverride());
   if (!rl.allowed) {
     res.writeHead(429, {
       'Content-Type': 'application/json',
@@ -391,6 +451,10 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
   // Track response length for token-usage reconciliation; populated
   // by the streaming loop, read by recordUsage at the tail.
   let _response_chars = 0;
+  // T19 — whether the LLM fallback path actually ran this turn (as opposed
+  // to atom-served or refused before any LLM call). Read at the tail to
+  // decide whether to accrue spend into the durable daily cap counter.
+  let _llm_call_made = false;
   try {
     const auth = await getCurrentUser(req);
     const student_id = auth ? auth.user.id : `anon_${sessionId}`;
@@ -469,7 +533,17 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
          resolveAtom(_reasonerInstructions?.selected_concept, _reasonerInstructions?.action))
       : null;
 
-    if (atom) {
+    // T19 spend-cap check — read-only, computed once regardless of which
+    // path we take below (resolveChatResponsePath ignores it entirely when
+    // an atom matched, per the atom-first invariant).
+    const _spend_check = checkChatSpendCap();
+    const _chat_path = resolveChatResponsePath({
+      hasAtom: !!atom,
+      llmAvailable: !_llm_unavailable,
+      spendCapAllowed: _spend_check.allowed,
+    });
+
+    if (_chat_path === 'atom') {
       // Atom served — no LLM tokens consumed; release the reservation.
       cancelReservation(_actor_id, _est_total_tokens);
       res.write(`data: ${JSON.stringify({ type: 'atom', concept: atom.conceptId, atomType: atom.atomType })}\n\n`);
@@ -478,7 +552,7 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
         _response_chars = fullResponse.length;
         res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
       }
-    } else if (_llm_unavailable) {
+    } else if (_chat_path === 'no_llm_configured') {
       // No pre-authored atom AND no LLM configured. Cancel the token
       // reservation and send a descriptive error frame so the frontend
       // shows a useful message rather than an empty bubble.
@@ -487,11 +561,25 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
         type: 'error',
         content: 'The AI tutor needs an API key to answer questions outside the pre-authored content. Please configure a provider in Settings or contact the admin.',
       })}\n\n`);
+    } else if (_chat_path === 'spend_cap_tripped') {
+      // No pre-authored atom, an LLM IS configured, but this deployment's
+      // durable daily spend cap is already hit (src/lib/chat-spend.ts).
+      // Graceful, honest refusal — the atom-first path was already tried
+      // above and came up empty, so this message is about what's still
+      // available, not a dead end. Cancel the reservation (no LLM call
+      // happens) and log the trip with today's total.
+      cancelReservation(_actor_id, _est_total_tokens);
+      recordCapTrip();
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        content: "The AI tutor has reached this deployment's daily budget for questions outside the pre-authored lessons. Pre-authored lesson content is still available — try asking about a specific syllabus topic. The budget resets at UTC midnight.",
+      })}\n\n`);
     } else {
       // Stream response via runtime LLM helper. The helper handles the
       // per-provider streaming protocol (SSE for Gemini/Anthropic/OpenAI,
       // NDJSON for Ollama) and yields plain text chunks regardless of
       // provider.
+      _llm_call_made = true;
       const streamInput: any = {
         text: message,
         system: gbrainPrompt,
@@ -598,11 +686,25 @@ async function handleChat(req: ParsedRequest, res: ServerResponse): Promise<void
   // (≈ 1 token per 4 chars). Add the input estimate to capture both
   // sides of the call. If a future Gemini SDK version returns a usage
   // object, swap this for the exact value.
+  let _output_tokens_est = 0;
   try {
-    const _output_tokens_est = Math.ceil(_response_chars / 4);
+    _output_tokens_est = Math.ceil(_response_chars / 4);
     const _actual = _est_input_tokens + _output_tokens_est;
     recordUsage(_actor_id, _actual, _est_total_tokens);
   } catch { /* swallow — budget tracking must not break the request */ }
+
+  // T19 — accrue this call's estimated cost into the durable daily spend
+  // counter. Only when the LLM path actually ran (atom-served and refused
+  // turns spent $0 and already released their reservation above). Same
+  // token estimates the per-user budget reconciliation above uses, priced
+  // through src/lib/chat-spend.ts's estimator. Non-fatal: spend tracking
+  // must never break the chat response itself.
+  if (_llm_call_made && llm) {
+    try {
+      const _cost_usd = estimateChatCostUsd(llm.model_id, _est_input_tokens, _output_tokens_est);
+      recordChatSpend(_cost_usd);
+    } catch { /* swallow — spend tracking must not break the request */ }
+  }
 
   res.end();
 }

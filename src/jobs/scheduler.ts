@@ -208,14 +208,16 @@ register('resonanceScorer', DAY_MS, async () => {
   if (!process.env.DATABASE_URL) {
     return { status: 'skipped', reason: 'no_db' };
   }
-  const pg = await import('pg');
-  const pool = new pg.default.Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
-  try {
-    const r = await runResonanceJob(pool, { window_days: 7 });
-    return { status: 'ran', ...r };
-  } finally {
-    await pool.end().catch(() => {});
-  }
+  // T16 (D4 / OV2 #10): was its own `new Pool({max:3})` built and closed
+  // on every nightly run — now borrows the one shared pool
+  // (src/storage/pool.ts). No `.end()` here: closing the shared pool
+  // would shut it down for every other module in the process, not just
+  // this job.
+  const { getSharedPool } = await import('../storage/pool');
+  const pool = getSharedPool();
+  if (!pool) return { status: 'skipped', reason: 'no_db' };
+  const r = await runResonanceJob(pool, { window_days: 7 });
+  return { status: 'ran', ...r };
 });
 
 register('abEvaluator', DAY_MS, async () => {

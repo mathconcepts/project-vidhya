@@ -26,6 +26,7 @@ import { resolveGiveaway } from '../exams/exam-group-store';
 import { getExam } from '../exams/exam-store';
 import { EXAMS as STATIC_EXAMS } from '../syllabus/exam-catalog';
 import { computeCoverage, coverageLabel, coverageTier } from '../gbrain/cross-exam-coverage';
+import { totalXpMinutes } from '../gbrain/xp-store';
 
 // ============================================================================
 
@@ -220,7 +221,7 @@ async function handleCompounding(req: ParsedRequest, res: ServerResponse): Promi
   }
 
   // Pull the student model for mastery + attempt history.
-  const model = getOrCreateStudentModel(auth.user.id);
+  const model = await getOrCreateStudentModel(auth.user.id);
   if (!model) {
     return sendJSON(res, { should_show: false, headline: '' });
   }
@@ -275,16 +276,28 @@ async function handleCompounding(req: ParsedRequest, res: ServerResponse): Promi
     subline = 'You\'re building momentum. Every problem teaches the system more about how you think.';
   }
 
+  // T14 (B5, DR-4): "XP detail folds into CompoundingCard's existing
+  // expanded grid — NO third card." Personal-only (src/gbrain/xp-store.ts
+  // floors negative net history at 0 before this ever reaches a response);
+  // best-effort — a lookup failure just omits the row, never breaks the
+  // rest of the card.
+  const focusedWorkMinutes = await totalXpMinutes(auth.user.id).catch(() => null);
+
+  const details = [
+    { label: 'problems', value: problems30d, hint: 'last 30 days' },
+    { label: 'concepts', value: conceptsMastered, hint: 'mastered (≥85%)' },
+    { label: 'concepts seen', value: totalConcepts },
+    { label: 'streak', value: '—', hint: 'coming soon' },
+  ];
+  if (focusedWorkMinutes !== null) {
+    details.push({ label: 'focused work', value: focusedWorkMinutes, hint: 'min' });
+  }
+
   return sendJSON(res, {
     should_show: true,
     headline,
     subline,
-    details: [
-      { label: 'problems', value: problems30d, hint: 'last 30 days' },
-      { label: 'concepts', value: conceptsMastered, hint: 'mastered (≥85%)' },
-      { label: 'concepts seen', value: totalConcepts },
-      { label: 'streak', value: '—', hint: 'coming soon' },
-    ],
+    details,
   });
 }
 

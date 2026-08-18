@@ -7,7 +7,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { PgLearningObjectCatalog, getLearningObjectCatalog } from '../learning-object-catalog-pg';
+import { PgLearningObjectCatalog, getLearningObjectCatalog, __resetCatalogForTests } from '../learning-object-catalog-pg';
+import { CompositeLearningObjectCatalog } from '../learning-object-catalog-composite';
 
 describe('PgLearningObjectCatalog — DB-less', () => {
   const originalUrl = process.env.DATABASE_URL;
@@ -71,5 +72,16 @@ describe('PgLearningObjectCatalog — DB-less', () => {
     const rows = await catalog.query({ skillId: 'eigenvalues' });
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => r.nodeId === 'eigenvalues')).toBe(true);
+  });
+
+  it('getLearningObjectCatalog() composes file + pg when DATABASE_URL IS set (T21)', async () => {
+    // T21: this used to be strictly file-XOR-pg on DATABASE_URL — with a
+    // database configured, authored file items became invisible. The
+    // singleton must now hand back a composite, not a bare pg catalog.
+    process.env.DATABASE_URL = 'postgres://fake:fake@localhost:5432/fake';
+    __resetCatalogForTests();
+    const catalog = getLearningObjectCatalog();
+    expect(catalog).toBeInstanceOf(CompositeLearningObjectCatalog);
+    __resetCatalogForTests();
   });
 });

@@ -9,8 +9,9 @@
  * Empty tasks fallback: "Free study day!" + topic grid
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { AnimatePresence, motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
@@ -120,9 +121,7 @@ export function Home() {
   const [rateError, setRateError] = useState(false);
   const ratingInFlight = useRef(false);
 
-  const prefersReducedMotion = useMemo(() =>
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  , []);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const isTaskCompleted = (idx: number): boolean =>
     dailyPlan?.completed?.some(c => c.task_idx === idx) || false;

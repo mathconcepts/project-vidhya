@@ -20,6 +20,10 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { authFetch } from '@/lib/auth/client';
 import { Compass, ArrowRight, Sparkles, RefreshCw, BookOpen, Loader2 } from 'lucide-react';
+import { FocusedWorkStrip } from '@/components/app/FocusedWorkStrip';
+import { Card } from '@/components/ui/Card';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 
 type ActionKind = 'diagnose' | 'teach' | 'practice' | 'retain';
 
@@ -69,6 +73,7 @@ export function NextBestActionCard() {
   const [next, setNext] = useState<NextActionResponse | null>(null);
   const [score, setScore] = useState<ExpectedScoreResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     let cancelled = false;
@@ -90,19 +95,17 @@ export function NextBestActionCard() {
     return () => { cancelled = true; };
   }, []);
 
-  const cardStyle: React.CSSProperties = {
-    borderRadius: 'var(--radius-md)',
-    border: 'var(--hairline) solid var(--separator)',
-    background: 'var(--surface-card)',
-    boxShadow: 'var(--shadow-raise)',
-    padding: 16,
-  };
+  const cardBorderStyle: React.CSSProperties = { border: 'var(--hairline) solid var(--separator)' };
 
   if (loading) {
     return (
-      <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
+      <Card
+        radius="var(--radius-md)"
+        padding={16}
+        style={{ ...cardBorderStyle, display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)' }}
+      >
         <Loader2 size={14} className="animate-spin" /> Finding your next best action…
-      </div>
+      </Card>
     );
   }
 
@@ -118,37 +121,35 @@ export function NextBestActionCard() {
 
   if (isBuildingBaseline) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        style={cardStyle}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <Compass size={16} style={{ color: 'var(--text-secondary)' }} />
-          <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Next best action</h2>
-        </div>
-        <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
-          Building your baseline — answer a few questions to unlock this.
-        </p>
-        <Link
-          to="/smart-practice"
-          style={{
-            marginTop: 12,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 12px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'var(--indigo)',
-            color: 'var(--text-on-accent)',
-            fontSize: 'var(--text-caption)',
-            fontWeight: 'var(--weight-semibold)',
-            textDecoration: 'none',
-          }}
-        >
-          Answer a few questions <ArrowRight size={14} />
-        </Link>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: framerDuration(DUR_FAST_S, reducedMotion) }}>
+        <Card radius="var(--radius-md)" padding={16} style={cardBorderStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <Compass size={16} style={{ color: 'var(--text-secondary)' }} />
+            <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Next best action</h2>
+          </div>
+          <p style={{ margin: 0, fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)' }}>
+            Building your baseline — answer a few questions to unlock this.
+          </p>
+          <Link
+            to="/smart-practice"
+            style={{
+              marginTop: 12,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--indigo)',
+              color: 'var(--text-on-accent)',
+              fontSize: 'var(--text-caption)',
+              fontWeight: 'var(--weight-semibold)',
+              textDecoration: 'none',
+            }}
+          >
+            Answer a few questions <ArrowRight size={14} />
+          </Link>
+          <FocusedWorkStrip />
+        </Card>
       </motion.div>
     );
   }
@@ -158,48 +159,47 @@ export function NextBestActionCard() {
   const cta = ctaFor(action!);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      style={cardStyle}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <Icon size={16} style={{ color: meta.color }} />
-        <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Next best action</h2>
-        <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: 'auto', color: meta.color }}>
-          {meta.label}
-        </span>
-      </div>
-
-      <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{action!.rationale}</p>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, gap: 12 }}>
-        <Link
-          to={cta.to}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 12px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'var(--indigo)',
-            color: 'var(--text-on-accent)',
-            fontSize: 'var(--text-caption)',
-            fontWeight: 'var(--weight-semibold)',
-            textDecoration: 'none',
-          }}
-        >
-          {cta.label} <ArrowRight size={14} />
-        </Link>
-        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', flexShrink: 0 }}>~{action!.estMinutes} min</span>
-      </div>
-
-      {readinessLine && (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>
-          {readinessLine}
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: framerDuration(DUR_FAST_S, reducedMotion) }}>
+      <Card radius="var(--radius-md)" padding={16} style={cardBorderStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <Icon size={16} style={{ color: meta.color }} />
+          <h2 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Next best action</h2>
+          <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: 'auto', color: meta.color }}>
+            {meta.label}
+          </span>
         </div>
-      )}
+
+        <p style={{ margin: 0, fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{action!.rationale}</p>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, gap: 12 }}>
+          <Link
+            to={cta.to}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--indigo)',
+              color: 'var(--text-on-accent)',
+              fontSize: 'var(--text-caption)',
+              fontWeight: 'var(--weight-semibold)',
+              textDecoration: 'none',
+            }}
+          >
+            {cta.label} <ArrowRight size={14} />
+          </Link>
+          <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)', flexShrink: 0 }}>~{action!.estMinutes} min</span>
+        </div>
+
+        {readinessLine && (
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: 'var(--hairline) solid var(--separator)', fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)' }}>
+            {readinessLine}
+          </div>
+        )}
+
+        <FocusedWorkStrip />
+      </Card>
     </motion.div>
   );
 }

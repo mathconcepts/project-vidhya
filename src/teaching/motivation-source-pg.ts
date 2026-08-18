@@ -18,7 +18,7 @@
  * next-action; the policy's 'default' modality ranking handles null.
  */
 
-import pg from 'pg';
+import type pg from 'pg';
 import type { StudentId } from '../core/interfaces';
 import {
   InMemoryMotivationSource,
@@ -26,8 +26,7 @@ import {
   type MotivationSource,
   type MotivationState,
 } from './motivation-source';
-
-const { Pool } = pg;
+import { getSharedPool } from '../storage/pool';
 
 const VALID_STATES = new Set<MotivationState>(MOTIVATION_STATES);
 
@@ -35,8 +34,11 @@ export class PgMotivationSource implements MotivationSource {
   private pool: pg.Pool | null;
 
   constructor() {
-    const connectionString = process.env.DATABASE_URL;
-    this.pool = connectionString ? new Pool({ connectionString, max: 2 }) : null;
+    // T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:2})` — now
+    // the one shared pool (src/storage/pool.ts). This class is itself a
+    // module-level lazy singleton (getMotivationSource() below), so the
+    // constructor only runs once per process either way.
+    this.pool = getSharedPool();
   }
 
   async stateFor(studentId: StudentId): Promise<MotivationState | null> {

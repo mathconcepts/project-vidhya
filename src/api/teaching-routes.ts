@@ -127,7 +127,7 @@ async function loadCohortForTeacher(teacher_id: string) {
   const models: any[] = [];
   for (const s of students) {
     try {
-      const m = await getOrCreateStudentModel(s.id, s.id);
+      const m = await getOrCreateStudentModel(s.id);
       models.push(m);
     } catch {
       models.push(null);
@@ -283,7 +283,7 @@ async function handleWeeklyBrief(req: ParsedRequest, res: ServerResponse): Promi
       const student = getUserById(id);
       if (!student) return null;
       try {
-        const model = await getOrCreateStudentModel(student.id, student.id);
+        const model = await getOrCreateStudentModel(student.id);
         return { student, model };
       } catch {
         return null;

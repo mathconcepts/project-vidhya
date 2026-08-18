@@ -26,6 +26,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface ImprovedBadgeProps {
   /** ISO timestamp from atom_versions.generated_at on the active version. */
@@ -35,8 +36,6 @@ interface ImprovedBadgeProps {
   /** Plain-English what-changed copy from the active version. */
   reason?: string | null;
 }
-
-const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 function shouldShow(improvedSince?: string, lastSeenAt?: string): boolean {
   if (!improvedSince) return false;
@@ -50,17 +49,8 @@ function shouldShow(improvedSince?: string, lastSeenAt?: string): boolean {
 
 export function ImprovedBadge({ improvedSince, lastSeenAt, reason }: ImprovedBadgeProps) {
   const [open, setOpen] = useState(false);
-  const [reduced, setReduced] = useState(false);
+  const reduced = usePrefersReducedMotion();
   const ref = useRef<HTMLSpanElement | null>(null);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia(REDUCED_MOTION_QUERY);
-    setReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
 
   // Click-outside-closes contract for tap-friendly mobile UX.
   useEffect(() => {

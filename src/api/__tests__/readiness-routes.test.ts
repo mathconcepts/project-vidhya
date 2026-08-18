@@ -39,6 +39,7 @@ vi.mock('../../gbrain/student-model-pg', () => ({
 }));
 
 const { readinessRoutes } = await import('../readiness-routes');
+const { readinessMetricsSnapshot, resetReadinessMetrics } = await import('../../readiness/metrics');
 
 function makeReq(query: Record<string, string> = {}) {
   const params = new URLSearchParams(query);
@@ -76,6 +77,7 @@ const expectedScoreHandler = readinessRoutes.find(
 beforeEach(() => {
   mockRequireRole.mockReset();
   delete process.env.DATABASE_URL;
+  resetReadinessMetrics();
 });
 
 describe('GET /api/readiness/next-action — DB-less', () => {
@@ -108,6 +110,30 @@ describe('GET /api/readiness/next-action — DB-less', () => {
     await nextActionHandler(makeReq({ time_budget_min: 'not-a-number' }), r.res);
     expect(r.status).toBe(200);
     expect(r.payload.action).toBeDefined();
+  });
+
+  // ── T15: metrics recording ───────────────────────────────────────
+
+  it('T15: records a diagnose-fallback when the engine throws (DB-less)', async () => {
+    mockRequireRole.mockResolvedValueOnce({ userId: 'student-1', role: 'student' });
+    const r = makeRes();
+    await nextActionHandler(makeReq({}), r.res);
+
+    const snap = readinessMetricsSnapshot();
+    expect(snap.diagnose_fallback).toBe(1);
+    expect(snap.next_action_without_object_id).toBe(1);
+    expect(snap.next_action_with_object_id).toBe(0);
+  });
+
+  it('T15: does not record any counters when auth fails', async () => {
+    mockRequireRole.mockResolvedValueOnce(null);
+    const r = makeRes();
+    await nextActionHandler(makeReq({}), r.res);
+
+    const snap = readinessMetricsSnapshot();
+    expect(snap.diagnose_fallback).toBe(0);
+    expect(snap.next_action_with_object_id).toBe(0);
+    expect(snap.next_action_without_object_id).toBe(0);
   });
 });
 

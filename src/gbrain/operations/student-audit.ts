@@ -7,14 +7,11 @@
  * and drop-off investigations.
  */
 
-import pg from 'pg';
 import { getOrCreateStudentModel, getMasterySummary, getTopicMastery } from '../student-model';
 import { getErrorPatternReport } from '../error-taxonomy';
 import { generateAttemptSequence, generateScoreMaximizationPlan, EXAM_CONFIGS } from '../exam-strategy';
 import { CONCEPT_MAP, traceWeakestPrerequisite } from '../../constants/concept-graph';
 import { TOPIC_NAMES, MARKS_WEIGHTS } from '../../engine/priority-engine';
-
-const { Pool } = pg;
 
 export interface StudentAuditReport {
   session_id: string;
@@ -51,8 +48,14 @@ export interface StudentAuditReport {
 }
 
 export async function auditStudent(sessionId: string): Promise<StudentAuditReport> {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  try {
+  // T16 audit (D4 / OV2 #10): a `new Pool({connectionString: DATABASE_URL})`
+  // — no `max`, so the pg default of 10 — used to be built AND torn down
+  // here on every single audit call (CLI run or GET /api/gbrain/audit
+  // request), yet nothing in this function ever queried it: every actual
+  // read below goes through `getOrCreateStudentModel` / `getErrorPatternReport`,
+  // each of which owns its own lazily-cached pool. It was dead weight,
+  // not a working connection — removed outright rather than migrated.
+  {
     const model = await getOrCreateStudentModel(sessionId);
     const errorReport = await getErrorPatternReport(sessionId, 30);
     const mastery = getMasterySummary(model);
@@ -143,8 +146,6 @@ export async function auditStudent(sessionId: string): Promise<StudentAuditRepor
       strategic_recommendations,
       action_plan,
     };
-  } finally {
-    await pool.end();
   }
 }
 

@@ -103,10 +103,22 @@ export function armWeightsForPhase(phase: PrepPhase): ArmWeights {
 // 30% through the syllabus shouldn't see Calc 2 if Calc 1 isn't there.
 // ────────────────────────────────────────────────────────────────────
 
+/**
+ * @param prefetchedMastery T5/§7 perf seam: an optional pre-fetched
+ *   `ConceptId → MasteryState` lookup covering the prereqs this call will
+ *   need. When a concept's state is present here, it's used instead of an
+ *   awaited `studentModel.masteryState()` round-trip — the caller (e.g.
+ *   `SyllabusAwareReadinessEngine`) is expected to have batch-fetched it
+ *   via a `BatchMasteryStudentModel` (src/gbrain/student-model-pg.ts).
+ *   Omitting this param (or a miss on a given id) falls back to the
+ *   original per-call behavior, so every existing caller/test is
+ *   unaffected.
+ */
 export async function eligibleNodes(
   candidates: ReadonlyArray<ConceptId>,
   studentId: StudentId,
   deps: { curriculum: CurriculumRepo; studentModel: Pick<StudentModel, 'masteryState'> },
+  prefetchedMastery?: ReadonlyMap<ConceptId, MasteryState>,
 ): Promise<ConceptId[]> {
   const result: ConceptId[] = [];
   for (const id of candidates) {
@@ -119,7 +131,7 @@ export async function eligibleNodes(
     }
     let allOk = true;
     for (const p of prereqs) {
-      const state = await deps.studentModel.masteryState(studentId, p);
+      const state = prefetchedMastery?.get(p) ?? await deps.studentModel.masteryState(studentId, p);
       // 'practicing' / 'mastered' / 'at-risk' all unblock; 'not-started' / 'learning' block.
       if (state === 'not-started' || state === 'learning') {
         allOk = false;

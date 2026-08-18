@@ -20,6 +20,13 @@ RUN cd frontend && npm ci
 # Copy source
 COPY . .
 
+# Regenerate the DB-less static bundles (concept-graph.json, pyq-bank.json)
+# from the current code/YAML BEFORE the frontend build, so Vite's public/ →
+# dist/ copy ships a fresh client concept graph instead of whatever was last
+# committed. Must run from /app (repo root) — export-bundles.ts's OUT_DIR is
+# process.cwd()-relative (frontend/public/data).
+RUN npx tsx scripts/export-bundles.ts
+
 # Build frontend (Vite outputs to frontend/dist/)
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY

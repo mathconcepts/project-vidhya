@@ -37,7 +37,9 @@ import { adminDecisionsRoutes } from './api/admin-decisions-routes';
 import { adminCohortRoutes } from './api/admin-cohort-routes';
 import { scoringRoutes } from './api/scoring-routes';
 import { readinessRoutes, setReadinessCatalog } from './api/readiness-routes';
+import { adminReadinessMetricsRoutes } from './api/admin-readiness-metrics-routes';
 import { practiceRoutes } from './api/practice-routes';
+import { quizRoutes } from './api/quiz-routes';
 import { fsrsShadowRoutes } from './api/fsrs-shadow-routes';
 import { pedagogyShadowRoutes } from './api/pedagogy-shadow-routes';
 import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
@@ -53,6 +55,7 @@ import { trendCollectorRoutes } from './jobs/trend-collector';
 import { contentPrioritizerRoutes } from './jobs/content-prioritizer';
 import { feedbackScorerRoutes } from './jobs/feedback-scorer';
 import { gbrainRoutes } from './gbrain/gbrain-routes';
+import { mockExamRoutes } from './api/mock-exam-routes';
 import { geminiProxyRoutes } from './api/gemini-proxy';
 import { aggregateRoutes } from './api/aggregate';
 import { contentRoutes } from './api/content-routes';
@@ -251,7 +254,13 @@ for (const route of scoringRoutes) {
 for (const route of readinessRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
+for (const route of adminReadinessMetricsRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
 for (const route of practiceRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of quizRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of fsrsShadowRoutes) {
@@ -297,6 +306,9 @@ for (const route of feedbackScorerRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of gbrainRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of mockExamRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of geminiProxyRoutes) {
@@ -955,6 +967,11 @@ async function main() {
     for (const [label, load] of [
       ['Feedback', () => import('./feedback/store').then((m) => m.hydrateFeedbackStore())],
       ['Bridge content', () => import('./syllabus-bridge/store').then((m) => m.hydrateGeneratedContent())],
+      // T19: durable daily chat-spend counter. Its own explicit hydrate call
+      // (rather than the generic registry loop below) so the fail-safe
+      // warning on a failed restore stays co-located with the store, in
+      // src/lib/chat-spend.ts.
+      ['Chat spend cap', () => import('./lib/chat-spend').then((m) => m.hydrateChatSpendStore())],
     ] as const) {
       try {
         const r = await load();
@@ -1079,10 +1096,15 @@ Solve carefully:`;
   }
 
   // ── Vector store (pgvector-backed for persistence across cold starts) ──
+  // T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5, ...})`,
+  // held for the whole process lifetime by PgVectorStore and queried on
+  // every Tier 1 RAG verification lookup — one of the hottest paths in
+  // the app. Now borrows the one shared pool (src/storage/pool.ts)
+  // instead of adding a second max:5 pool to the process's budget.
   let vectorStore;
   if (dbUrl) {
-    const pg = await import('pg');
-    const pool = new pg.default.Pool({ connectionString: dbUrl, max: 5, idleTimeoutMillis: 30_000 });
+    const { getSharedPool } = await import('./storage/pool');
+    const pool = getSharedPool();
     const pgStore = new PgVectorStore(pool);
     await pgStore.initialize();
     vectorStore = pgStore;
@@ -1201,6 +1223,19 @@ Solve carefully:`;
         startScheduler();
       } catch (e: any) {
         console.error(`[server] scheduler start failed: ${e?.message}`);
+      }
+    })();
+
+    // T6/D3: keep the legacy `student_model` read model (mastery_vector,
+    // prerequisite_alerts) in sync with every attempt recorded through the
+    // canonical Elo+FSRS write path. Idempotent — safe even if boot wiring
+    // runs this block more than once. See src/gbrain/derived-model-sync.ts.
+    void (async () => {
+      try {
+        const { registerDerivedModelSync } = await import('./gbrain/derived-model-sync.js');
+        registerDerivedModelSync();
+      } catch (e: any) {
+        console.error(`[server] derived-model-sync registration failed: ${e?.message}`);
       }
     })();
 

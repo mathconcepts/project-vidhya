@@ -104,7 +104,7 @@ async function handleDashboardSummary(req: ParsedRequest, res: ServerResponse): 
   const models: any[] = [];
   for (const s of students) {
     try {
-      const m = await getOrCreateStudentModel(s.id, s.id);
+      const m = await getOrCreateStudentModel(s.id);
       models.push(m);
     } catch {
       models.push(null);

@@ -4,6 +4,103 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.34.0] — 2026-08-18 — Any topic, live — and the engine remembers what you practice
+
+**Operator action:** migrations `044`–`047` apply automatically on boot. Optional
+new ENV vars: `VIDHYA_FIRE=on` (implicit-credit propagation),
+`VIDHYA_CHAT_DAILY_SPEND_CAP_USD` (default 5), `VIDHYA_CHAT_RATE_LIMIT`.
+Before demo day: set the Supabase `DATABASE_URL` (session-mode pooler) on
+Render per `docs/ops/render-database-url.md`, and a chat provider key if
+off-corpus tutoring is wanted.
+
+The demo felt canned because the adaptive loop was starved, not because the
+content was fake. Three gradable practice items existed in the whole product, a
+built prerequisite redirect was unreachable, two student models never spoke to
+each other, and 150 real exam questions were invisible to the session planner.
+This release closes that loop for all 26 Linear Algebra concepts and adds the
+memory layer on top: practicing an advanced concept now grants discounted
+review credit to the simpler concepts inside it, and the planner prefers the
+task that knocks out the most due reviews.
+
+### The numbers that matter
+
+Measured by running both suites and `scripts/check-syllabus-floor.ts` on
+`origin/main` and on this release.
+
+| | Before | After | Δ |
+|---|---|---|---|
+| Gradable practice items (whole product) | 3 | 126 | +123 |
+| LA concepts meeting the content floor | — (not enforced) | 26 of 26 (blocking CI) | enforced |
+| Stance-variant atom pairs | 18 | 156 | +138 |
+| Backend tests | 2,499 | 3,285 | +786 |
+| Frontend tests | 393 | 486 | +93 |
+| CI gates | 10 | 12 | +2 |
+
+Every one of the 123 new practice items was independently verified — every
+answer key recomputed by hand via a second method and spot-checked against
+Wolfram — before its floor was flipped to a blocking CI contract for
+linear-algebra. The floor cannot silently regress now.
+
+### What this means for whoever runs the demo
+
+A new student takes a two-minute warmup (five spine concepts, no grades, "not
+a test") and lands on a frontier view that shows exactly where they are. Every
+practice attempt moves Elo and memory schedules; overdue reviews resurface on
+their own; a checkpoint quiz offers itself after 100 minutes of focused work
+and never interrupts. Every topic in Linear Algebra serves real, gradable,
+verified items — there is no path in the demo that dead-ends on missing
+content. Anxious and confident students read genuinely different prose for the
+same mathematics on all 26 concepts.
+
+### Itemized changes
+
+#### Added
+- Warmup onboarding at `/warmup`: 5-concept bracketing diagnostic, placement
+  result, priors persisted only for converged concepts; anonymous visitors get
+  an honest sign-in path with answers preserved.
+- Knowledge-frontier spine view: 4 clusters, mastered rollups,
+  placed-vs-demonstrated dots, "You are here" focal card; GATE-MA knowledge
+  track on the real prerequisite DAG.
+- Checkpoint quizzes + personal XP: server-graded, offered every 100 focused
+  minutes (repeating cycle), 14-day no-repeat pool protection, honest
+  empty state when the pool is thin; the focused-work strip speaks minutes.
+- FIRe-lite credit propagation over 47 hand-justified `encompasses:` edges
+  (gated behind `VIDHYA_FIRE`), compression-aware task selection capped below
+  the retain floor, and a real due-card scan.
+- 123 verified LA practice items, 15 hand-authored explainers, 138
+  stance-variant files; `enforce_topics: [linear-algebra]` makes the floor a
+  blocking gate.
+- Chat guardrails ahead of a provider key: durable daily spend cap,
+  per-session rate limit, and a CI-pinned atom-first invariant.
+- Ops runbook (`docs/ops/render-database-url.md`) + `ci:connection-budget`
+  gate; 29 modules consolidated onto one shared connection pool.
+
+#### Fixed
+- Mock exams no longer send answer keys to the browser and are graded
+  server-side, bound to the authenticated owner (any student could previously
+  read another session's keyed exam).
+- Quiz/exam timer expiry now submits the answers the student actually gave
+  (a stale closure previously submitted everything as skipped).
+- A grading failure mid-submit no longer bricks the session — the claim
+  reverts so a retry can re-grade.
+- MSQ answers actually reach the mock-exam grader; NAT questions are
+  answerable in checkpoint quizzes.
+- 150 seeded exam questions gained `concept_id` and are visible to the
+  planner; the deployed lesson bundle path resolves in containers; the client
+  concept graph regenerates at build time (97 concepts, no drift).
+- The `/api/student/compounding` card can actually render (a missing `await`
+  made it permanently empty); leaked authoring artifacts removed from six
+  concepts' worked examples with the integrity gate hardened against the
+  whole phrasing family.
+- A per-attempt database-connection leak in the gbrain attempt route.
+
+#### Changed
+- `student_model` (legacy) now derives from the canonical Elo+FSRS write path
+  via the attempts bus; mastery thresholds recalibrated for a thin catalog.
+- Student-facing text respects the 17px reading floor across all new
+  surfaces; shared reduced-motion hook and motion tokens replace nine ad-hoc
+  copies; dead components removed.
+
 ## [4.33.0] — 2026-08-17 — The gates tell the truth, and the data survives the night
 
 **Operator action:** migrations `040`–`043` apply automatically on boot. No new

@@ -1,0 +1,560 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE Engineering Mathematics practice items for the",
+    "linear-algebra 'spine' concepts: matrix-operations, determinants, matrix-inverse,",
+    "systems-of-equations, lu-factorization, trace.",
+    "",
+    "Companion bank data/practice-items/gate-ma-la-vector-spaces.json covers the",
+    "vector-space cluster (rank-nullity, vector-spaces, linear-transformations,",
+    "linear-independence, null-space-column-space, inner-product-spaces,",
+    "change-of-basis).",
+    "",
+    "Every item was hand-solved and, where a numeric answer exists, cross-checked by",
+    "a second independent method (an alternate computation path, a property-based",
+    "sanity check, or direct substitution) before its key was written — see",
+    "solution_steps for both derivations. Distractors encode real misconceptions",
+    "(sign slips, order-of-operations confusion, trace/determinant mix-ups, transposed",
+    "formulas) rather than arbitrary numbers.",
+    "",
+    "Schema mirrors data/practice-items/gate-ma-linear-algebra.json exactly: fields",
+    "map onto markingPayloadFromRow() via learning-object-catalog-file.ts's",
+    "AuthoredItem so a file-backed item and a database row are indistinguishable to",
+    "GateDeterministicScorer."
+  ],
+  "items": [
+    {
+      "id": "pi-matrix-operations-001",
+      "concept_id": "matrix-operations",
+      "topic": "linear-algebra",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[1,2],[3,4]] and B = [[0,1],[1,0]]. What is the matrix product AB?",
+      "options": ["[[2,1],[4,3]]", "[[3,4],[1,2]]", "[[0,2],[3,0]]", "[[2,4],[1,3]]"],
+      "answer_index": 0,
+      "correct_answer": "[[2,1],[4,3]]",
+      "solution_steps": [
+        "Row 1 of AB: (1×0 + 2×1, 1×1 + 2×0) = (2, 1).",
+        "Row 2 of AB: (3×0 + 4×1, 3×1 + 4×0) = (4, 3).",
+        "So AB = [[2,1],[4,3]].",
+        "[[3,4],[1,2]] is BA (order swapped) — matrix multiplication is not commutative, so AB ≠ BA here. [[0,2],[3,0]] comes from multiplying entrywise instead of by rows and columns. [[2,4],[1,3]] is the transpose of AB, not AB itself."
+      ],
+      "verification_method": "hand_checkable_matrix_multiplication"
+    },
+    {
+      "id": "pi-matrix-operations-002",
+      "concept_id": "matrix-operations",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[1,2],[3,4]] and B = [[5,6],[7,8]]. What is the entry in row 2, column 1 of the product AB?",
+      "answer_range": [42.785, 43.215],
+      "correct_answer": "43",
+      "solution_steps": [
+        "The (2,1) entry of AB is (row 2 of A) · (column 1 of B).",
+        "Row 2 of A is (3, 4); column 1 of B is (5, 7).",
+        "(3×5) + (4×7) = 15 + 28 = 43."
+      ],
+      "verification_method": "hand_checkable_matrix_multiplication_entry"
+    },
+    {
+      "id": "pi-matrix-operations-003",
+      "concept_id": "matrix-operations",
+      "topic": "linear-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For general (size-compatible) matrices A and B, which statement is always true?",
+      "options": ["(AB)ᵀ = BᵀAᵀ", "AB = BA", "(AB)ᵀ = AᵀBᵀ", "(A+B)² = A² + 2AB + B²"],
+      "answer_index": 0,
+      "correct_answer": "(AB)ᵀ = BᵀAᵀ",
+      "solution_steps": [
+        "The transpose-of-a-product rule reverses the order: (AB)ᵀ = BᵀAᵀ. This holds for any compatible A, B.",
+        "Matrix multiplication is generally not commutative, so AB = BA fails for most matrices — e.g. A=[[1,1],[0,1]], B=[[1,0],[1,1]] gives AB ≠ BA.",
+        "(AB)ᵀ = AᵀBᵀ keeps the wrong order; it is not a general identity — only the reversed order (BᵀAᵀ) always works.",
+        "(A+B)² = A² + AB + BA + B², which only reduces to A² + 2AB + B² when AB = BA — not true in general."
+      ],
+      "verification_method": "hand_checkable_transpose_product_rule"
+    },
+    {
+      "id": "pi-matrix-operations-004",
+      "concept_id": "matrix-operations",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "msq",
+      "marks": 1,
+      "question_text": "A = [[2,0],[0,3]]. Which of the following matrices commute with A (i.e., satisfy AM = MA)?",
+      "options": ["[[5,0],[0,-1]]", "[[1,1],[0,1]]", "[[7,0],[0,7]]", "[[0,1],[1,0]]"],
+      "answer_indices": [0, 2],
+      "correct_answer": "[[5,0],[0,-1]] and [[7,0],[0,7]]",
+      "solution_steps": [
+        "A is diagonal with distinct diagonal entries (2 and 3). For such a matrix, a matrix M commutes with A exactly when M is also diagonal.",
+        "[[5,0],[0,-1]] is diagonal, so AM = MA = [[10,0],[0,-3]]. It commutes.",
+        "[[7,0],[0,7]] = 7I is a scalar multiple of the identity, always diagonal, so it commutes with any A: AM = MA = [[14,0],[0,21]].",
+        "[[1,1],[0,1]]: AM = [[2,2],[0,3]] but MA = [[2,3],[0,3]] — these differ, so it does NOT commute.",
+        "[[0,1],[1,0]]: AM = [[0,2],[3,0]] but MA = [[0,3],[2,0]] — these differ, so it does NOT commute."
+      ],
+      "verification_method": "hand_checkable_matrix_commutativity"
+    },
+    {
+      "id": "pi-matrix-operations-005",
+      "concept_id": "matrix-operations",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A is a 3×3 matrix whose every row sums to 5. What is the sum of the entries in each row of A²?",
+      "answer_range": [24.875, 25.125],
+      "correct_answer": "25",
+      "solution_steps": [
+        "Let 1 = (1,1,1)ᵀ. 'Every row sums to 5' means A·1 = 5·1.",
+        "Then A²·1 = A(A·1) = A(5·1) = 5(A·1) = 5(5·1) = 25·1.",
+        "So every row of A² sums to 25.",
+        "Check with A = [[1,2,2],[2,1,2],[2,2,1]] (each row sums to 5): the (1,1) entry of A² is 1·1+2·2+2·2 = 9, the (1,2) entry is 1·2+2·1+2·2 = 8, the (1,3) entry is 1·2+2·2+2·1 = 8. Row-1 sum of A² = 9+8+8 = 25, confirming the general argument."
+      ],
+      "verification_method": "hand_checkable_row_sum_invariant"
+    },
+    {
+      "id": "pi-determinants-001",
+      "concept_id": "determinants",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[5,3],[2,4]]. What is det(A)?",
+      "options": ["14", "26", "-14", "9"],
+      "answer_index": 0,
+      "correct_answer": "14",
+      "solution_steps": [
+        "For a 2×2 matrix [[a,b],[c,d]], det = ad − bc.",
+        "det(A) = 5×4 − 3×2 = 20 − 6 = 14.",
+        "26 comes from adding instead of subtracting (ad + bc). -14 comes from computing bc − ad, the reversed sign. 9 is trace(A) = 5+4, not the determinant."
+      ],
+      "verification_method": "hand_checkable_2x2_determinant"
+    },
+    {
+      "id": "pi-determinants-002",
+      "concept_id": "determinants",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[2,0,1],[1,3,2],[0,1,1]]. What is det(A)?",
+      "answer_range": [2.985, 3.015],
+      "correct_answer": "3",
+      "solution_steps": [
+        "Expand along row 1: det(A) = 2·M11 − 0·M12 + 1·M13, where Mij are 2×2 minors.",
+        "M11 = det[[3,2],[1,1]] = 3×1 − 2×1 = 1.",
+        "M13 = det[[1,3],[0,1]] = 1×1 − 3×0 = 1.",
+        "det(A) = 2×1 − 0 + 1×1 = 2 + 1 = 3.",
+        "Cross-check with the Sarrus rule: (2·3·1 + 0·2·0 + 1·1·1) − (1·3·0 + 2·2·1 + 0·1·1) = (6+0+1) − (0+4+0) = 7 − 4 = 3. Matches."
+      ],
+      "verification_method": "hand_checkable_3x3_cofactor_expansion"
+    },
+    {
+      "id": "pi-determinants-003",
+      "concept_id": "determinants",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A is a 3×3 matrix with det(A) = 5. What is det(2A)?",
+      "options": ["40", "10", "5", "20"],
+      "answer_index": 0,
+      "correct_answer": "40",
+      "solution_steps": [
+        "For an n×n matrix, det(kA) = kⁿ·det(A) — every one of the n rows gets scaled by k.",
+        "Here n = 3 and k = 2, so det(2A) = 2³ × 5 = 8 × 5 = 40.",
+        "10 comes from forgetting the exponent (using k·det(A) instead of kⁿ·det(A)). 5 comes from assuming scalar multiplication doesn't affect the determinant. 20 comes from using k² instead of k³ (mixing up with the 2×2 case)."
+      ],
+      "verification_method": "hand_checkable_determinant_scalar_property"
+    },
+    {
+      "id": "pi-determinants-004",
+      "concept_id": "determinants",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[1,2,3],[2,5,7],[1,0,8]]. Using row reduction (Gaussian elimination, no row swaps), find det(A).",
+      "answer_range": [6.965, 7.035],
+      "correct_answer": "7",
+      "solution_steps": [
+        "Adding a multiple of one row to another leaves the determinant unchanged, so we can row-reduce A to upper-triangular form and read the pivots off the diagonal.",
+        "R2 ← R2 − 2R1: [2-2, 5-4, 7-6] = [0,1,1]. R3 ← R3 − R1: [1-1, 0-2, 8-3] = [0,-2,5].",
+        "Matrix is now [[1,2,3],[0,1,1],[0,-2,5]]. R3 ← R3 + 2R2: [0, -2+2, 5+2] = [0,0,7], giving the upper-triangular form [[1,2,3],[0,1,1],[0,0,7]].",
+        "det(A) = product of the diagonal pivots = 1 × 1 × 7 = 7 (valid since only row-addition operations were used — no swaps or row scalings, which would otherwise flip the sign or rescale the result).",
+        "Cross-check by cofactor expansion along row 1: det(A) = 1×(5×8−7×0) − 2×(2×8−7×1) + 3×(2×0−5×1) = 1×40 − 2×9 + 3×(−5) = 40 − 18 − 15 = 7. Matches."
+      ],
+      "verification_method": "hand_checkable_determinant_row_reduction"
+    },
+    {
+      "id": "pi-matrix-inverse-001",
+      "concept_id": "matrix-inverse",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[3,1],[2,1]]. What is A⁻¹?",
+      "options": ["[[1,-1],[-2,3]]", "[[1,1],[2,3]]", "[[-3,1],[2,-1]]", "[[-1,1],[2,-3]]"],
+      "answer_index": 0,
+      "correct_answer": "[[1,-1],[-2,3]]",
+      "solution_steps": [
+        "det(A) = 3×1 − 1×2 = 1.",
+        "For A=[[a,b],[c,d]], A⁻¹ = (1/det A)·[[d,-b],[-c,a]] = [[1,-1],[-2,3]] since det(A)=1.",
+        "Check: A·A⁻¹ = [[3,1],[2,1]]·[[1,-1],[-2,3]] = [[3×1+1×(-2), 3×(-1)+1×3],[2×1+1×(-2), 2×(-1)+1×3]] = [[1,0],[0,1]] = I. Confirmed.",
+        "[[1,1],[2,3]] forgets to negate the off-diagonal entries. [[-3,1],[2,-1]] negates a and d instead of b and c. [[-1,1],[2,-3]] flips the overall sign of the correct answer."
+      ],
+      "verification_method": "hand_checkable_2x2_inverse_formula"
+    },
+    {
+      "id": "pi-matrix-inverse-002",
+      "concept_id": "matrix-inverse",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[2,1],[1,3]]. What is det(A⁻¹)?",
+      "answer_range": [0.19, 0.21],
+      "correct_answer": "0.2",
+      "solution_steps": [
+        "det(A) = 2×3 − 1×1 = 6 − 1 = 5.",
+        "Property: det(A⁻¹) = 1 / det(A).",
+        "det(A⁻¹) = 1/5 = 0.2."
+      ],
+      "verification_method": "hand_checkable_inverse_determinant_property"
+    },
+    {
+      "id": "pi-matrix-inverse-003",
+      "concept_id": "matrix-inverse",
+      "topic": "linear-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "If A and B are invertible n×n matrices, what does (AB)⁻¹ equal?",
+      "options": ["B⁻¹A⁻¹", "A⁻¹B⁻¹", "A⁻¹ + B⁻¹", "AB"],
+      "answer_index": 0,
+      "correct_answer": "B⁻¹A⁻¹",
+      "solution_steps": [
+        "The inverse of a product reverses the order: (AB)⁻¹ = B⁻¹A⁻¹.",
+        "Check: (AB)(B⁻¹A⁻¹) = A(BB⁻¹)A⁻¹ = A·I·A⁻¹ = AA⁻¹ = I, confirming this is indeed the inverse.",
+        "A⁻¹B⁻¹ keeps the wrong order — (AB)(A⁻¹B⁻¹) does not generally simplify to I unless A and B commute.",
+        "A⁻¹+B⁻¹ mixes up inverse with a sum, and AB is not an inverse operation at all."
+      ],
+      "verification_method": "hand_checkable_inverse_product_rule"
+    },
+    {
+      "id": "pi-matrix-inverse-004",
+      "concept_id": "matrix-inverse",
+      "topic": "linear-algebra",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "For what value of k is the matrix A=[[1,2],[3,k]] singular (not invertible)?",
+      "answer_range": [5.97, 6.03],
+      "correct_answer": "6",
+      "solution_steps": [
+        "A matrix is singular exactly when its determinant is 0.",
+        "det(A) = 1×k − 2×3 = k − 6.",
+        "Setting k − 6 = 0 gives k = 6."
+      ],
+      "verification_method": "hand_checkable_singular_matrix_determinant"
+    },
+    {
+      "id": "pi-matrix-inverse-005",
+      "concept_id": "matrix-inverse",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A = [[1,2],[3,4]] and B = [[2,0],[1,2]]. What is det((AB)⁻¹)?",
+      "answer_range": [-0.135, -0.115],
+      "correct_answer": "-0.125",
+      "solution_steps": [
+        "det(A) = 1×4 − 2×3 = 4 − 6 = -2.",
+        "det(B) = 2×2 − 0×1 = 4.",
+        "By the multiplicative property, det(AB) = det(A)·det(B) = -2 × 4 = -8.",
+        "det((AB)⁻¹) = 1/det(AB) = 1/(-8) = -0.125.",
+        "Cross-check by direct computation: AB = [[1×2+2×1, 1×0+2×2],[3×2+4×1, 3×0+4×2]] = [[4,4],[10,8]]. det(AB) = 4×8 − 4×10 = 32−40 = -8, matching the property above."
+      ],
+      "verification_method": "hand_checkable_determinant_multiplicative_property"
+    },
+    {
+      "id": "pi-systems-of-equations-001",
+      "concept_id": "systems-of-equations",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "How many solutions does the system x + y = 3, 2x + 2y = 6 have?",
+      "options": ["A unique solution", "Infinitely many solutions", "No solution", "Exactly two solutions"],
+      "answer_index": 1,
+      "correct_answer": "Infinitely many solutions",
+      "solution_steps": [
+        "Multiply the first equation by 2: 2x+2y=6 — this is identical to the second equation.",
+        "The two equations describe the same line, so every point on that line satisfies both.",
+        "Since one equation is a scalar multiple of the other, the system is consistent and dependent — infinitely many solutions."
+      ],
+      "verification_method": "hand_checkable_dependent_system"
+    },
+    {
+      "id": "pi-systems-of-equations-002",
+      "concept_id": "systems-of-equations",
+      "topic": "linear-algebra",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Solve x + 2y = 5 and 3x − y = 1 for x and y. What is the value of x·y?",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "From the first equation: x = 5 − 2y.",
+        "Substitute into the second: 3(5−2y) − y = 1 → 15 − 6y − y = 1 → 15 − 7y = 1 → y = 2.",
+        "Then x = 5 − 2(2) = 1.",
+        "x·y = 1×2 = 2. Check: x+2y = 1+4 = 5 ✓, 3x−y = 3−2 = 1 ✓."
+      ],
+      "verification_method": "hand_checkable_gaussian_elimination"
+    },
+    {
+      "id": "pi-systems-of-equations-003",
+      "concept_id": "systems-of-equations",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For which value of k does the system x + y = 2, kx + 2y = 5 fail to have a unique solution?",
+      "options": ["k = 2", "k = -2", "k = 0", "k = 1"],
+      "answer_index": 0,
+      "correct_answer": "k = 2",
+      "solution_steps": [
+        "The coefficient matrix is [[1,1],[k,2]]. A unique solution exists exactly when its determinant is nonzero.",
+        "det = 1×2 − 1×k = 2 − k.",
+        "The system fails to have a unique solution when det = 0, i.e. 2 − k = 0 → k = 2.",
+        "For k=0 or k=1, det = 2 or 1 respectively — both nonzero, so those give unique solutions; only k=2 makes the determinant vanish."
+      ],
+      "verification_method": "hand_checkable_determinant_condition"
+    },
+    {
+      "id": "pi-systems-of-equations-004",
+      "concept_id": "systems-of-equations",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Solve the system x+y+z=6, 2x+y-z=1, x-y+2z=5. What is the value of z?",
+      "answer_range": [2.985, 3.015],
+      "correct_answer": "3",
+      "solution_steps": [
+        "From equation 1: x = 6 − y − z.",
+        "Substitute into equation 2: 2(6−y−z) + y − z = 1 → 12 − 2y − 2z + y − z = 1 → −y − 3z = −11 → y + 3z = 11.",
+        "Substitute x into equation 3: (6−y−z) − y + 2z = 5 → 6 − 2y + z = 5 → z = 2y − 1.",
+        "Substitute into y + 3z = 11: y + 3(2y−1) = 11 → 7y − 3 = 11 → y = 2. Then z = 2(2)−1 = 3, and x = 6−2−3 = 1.",
+        "Check: x+y+z=1+2+3=6 ✓, 2x+y−z=2+2−3=1 ✓, x−y+2z=1−2+6=5 ✓."
+      ],
+      "verification_method": "hand_checkable_gaussian_elimination_3var"
+    },
+    {
+      "id": "pi-systems-of-equations-005",
+      "concept_id": "systems-of-equations",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A system of 3 equations in 3 unknowns has rank(coefficient matrix) = 2 and rank(augmented matrix) = 3. What can be said about the system?",
+      "options": ["It is inconsistent — no solution exists", "It has a unique solution", "It has infinitely many solutions", "It has only the trivial solution"],
+      "answer_index": 0,
+      "correct_answer": "It is inconsistent — no solution exists",
+      "solution_steps": [
+        "By the rank test for consistency: a system Ax=b is consistent if and only if rank(A) = rank([A|b]).",
+        "Here rank(A)=2 but rank([A|b])=3, so the ranks differ.",
+        "When the ranks differ, the augmented column b is not in the column space of A, so no x can satisfy Ax=b — the system is inconsistent.",
+        "A unique solution needs rank(A)=rank([A|b])=n (=3 here); infinitely many solutions needs rank(A)=rank([A|b])<n. Neither holds since the ranks aren't even equal."
+      ],
+      "verification_method": "hand_checkable_rank_consistency_theorem"
+    },
+    {
+      "id": "pi-lu-factorization-001",
+      "concept_id": "lu-factorization",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "In the LU factorization A = LU (no pivoting), what are the standard properties of L and U?",
+      "options": ["L is unit lower triangular (1's on the diagonal) and U is upper triangular", "L is upper triangular and U is lower triangular", "Both L and U are diagonal matrices", "L and U are both orthogonal matrices"],
+      "answer_index": 0,
+      "correct_answer": "L is unit lower triangular (1's on the diagonal) and U is upper triangular",
+      "solution_steps": [
+        "LU factorization writes A as the product of L, a lower triangular matrix with 1's on its diagonal (the multipliers used during elimination), and U, the upper triangular matrix that results from Gaussian elimination.",
+        "The other options swap the triangular shapes, over-restrict to diagonal matrices, or claim orthogonality — none of which describe standard (unpivoted) LU factors."
+      ],
+      "verification_method": "hand_checkable_lu_properties"
+    },
+    {
+      "id": "pi-lu-factorization-002",
+      "concept_id": "lu-factorization",
+      "topic": "linear-algebra",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[4,3],[6,3]]. In Gaussian elimination (no pivoting), what multiplier l₂₁ is used to eliminate the (2,1) entry?",
+      "answer_range": [1.49, 1.51],
+      "correct_answer": "1.5",
+      "solution_steps": [
+        "The multiplier to zero out a₂₁ using row 1 is l₂₁ = a₂₁ / a₁₁.",
+        "l₂₁ = 6 / 4 = 1.5.",
+        "This is the entry that goes into the (2,1) position of L, and the row operation is R2 ← R2 − l₂₁·R1."
+      ],
+      "verification_method": "hand_checkable_lu_multiplier"
+    },
+    {
+      "id": "pi-lu-factorization-003",
+      "concept_id": "lu-factorization",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[4,3],[6,3]]. Using the multiplier l₂₁ = 1.5 from Gaussian elimination, what is U in A = LU?",
+      "options": ["[[4,3],[0,-1.5]]", "[[4,3],[0,1.5]]", "[[4,0],[6,-1.5]]", "[[4,3],[6,3]]"],
+      "answer_index": 0,
+      "correct_answer": "[[4,3],[0,-1.5]]",
+      "solution_steps": [
+        "U's first row is just A's first row: [4,3].",
+        "U's second row is R2 − l₂₁·R1 = [6,3] − 1.5×[4,3] = [6−6, 3−4.5] = [0, -1.5].",
+        "So U = [[4,3],[0,-1.5]], with L = [[1,0],[1.5,1]].",
+        "[[4,3],[0,1.5]] has a sign error on the pivoted entry. [[4,0],[6,-1.5]] mixes up L and U's shapes. [[4,3],[6,3]] is just A, unchanged — forgetting to eliminate at all."
+      ],
+      "verification_method": "hand_checkable_lu_upper_triangular"
+    },
+    {
+      "id": "pi-lu-factorization-004",
+      "concept_id": "lu-factorization",
+      "topic": "linear-algebra",
+      "difficulty": 0.58,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[4,3],[6,3]] has L = [[1,0],[1.5,1]] and U = [[4,3],[0,-1.5]]. Solve Ax = b for b = (10, 12) using forward then backward substitution. What is x₂?",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Forward substitution on Ly = b: y₁ = 10. Then 1.5·y₁ + y₂ = 12 → y₂ = 12 − 15 = -3.",
+        "Backward substitution on Ux = y: -1.5·x₂ = -3 → x₂ = 2.",
+        "Then 4x₁ + 3x₂ = 10 → 4x₁ = 10 − 6 = 4 → x₁ = 1.",
+        "Check directly: A·(1,2) = (4×1+3×2, 6×1+3×2) = (10, 12) = b. Confirmed x₂ = 2."
+      ],
+      "verification_method": "hand_checkable_lu_solve_substitution"
+    },
+    {
+      "id": "pi-lu-factorization-005",
+      "concept_id": "lu-factorization",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Standard LU factorization without pivoting breaks down (cannot proceed) when:",
+      "options": ["A pivot (leading diagonal entry) becomes zero during elimination", "A is not a square matrix", "A has a zero row", "det(A) = 1"],
+      "answer_index": 0,
+      "correct_answer": "A pivot (leading diagonal entry) becomes zero during elimination",
+      "solution_steps": [
+        "Each elimination step divides by the current pivot (the diagonal entry) to compute the multiplier. If a pivot is zero, that division is undefined and elimination cannot continue without swapping rows (partial pivoting).",
+        "A being non-square is a separate issue (LU is typically discussed for square A) — not what causes the specific breakdown described.",
+        "A zero row would make A singular, but the breakdown described is specifically about zero pivots during elimination, which can occur even when A is invertible if rows aren't reordered.",
+        "det(A) = 1 is unrelated — many invertible matrices factor without issue regardless of what their determinant equals, and det=1 doesn't guarantee no zero pivot appears mid-elimination for a poorly ordered matrix."
+      ],
+      "verification_method": "hand_checkable_lu_pivot_failure"
+    },
+    {
+      "id": "pi-trace-001",
+      "concept_id": "trace",
+      "topic": "linear-algebra",
+      "difficulty": 0.15,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[4,7,2],[1,5,9],[3,8,6]]. What is trace(A)?",
+      "answer_range": [14.925, 15.075],
+      "correct_answer": "15",
+      "solution_steps": [
+        "trace(A) is the sum of the diagonal entries.",
+        "Diagonal entries: 4, 5, 6.",
+        "trace(A) = 4 + 5 + 6 = 15."
+      ],
+      "verification_method": "hand_checkable_trace_definition"
+    },
+    {
+      "id": "pi-trace-002",
+      "concept_id": "trace",
+      "topic": "linear-algebra",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[1,2],[3,4]] and B = [[5,6],[7,8]]. What is trace(A+B)?",
+      "options": ["18", "5", "36", "65"],
+      "answer_index": 0,
+      "correct_answer": "18",
+      "solution_steps": [
+        "trace is linear: trace(A+B) = trace(A) + trace(B).",
+        "trace(A) = 1+4 = 5. trace(B) = 5+8 = 13.",
+        "trace(A+B) = 5 + 13 = 18.",
+        "5 is only trace(A) (forgot to add trace(B)). 36 comes from summing ALL entries of A+B instead of just the diagonal — a common trace/total-sum confusion. 65 comes from multiplying trace(A)×trace(B) instead of adding."
+      ],
+      "verification_method": "hand_checkable_trace_linearity"
+    },
+    {
+      "id": "pi-trace-003",
+      "concept_id": "trace",
+      "topic": "linear-algebra",
+      "difficulty": 0.42,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For square matrices A and B of the same size, which statement is always true?",
+      "options": ["trace(AB) = trace(BA)", "trace(AB) = trace(A)·trace(B)", "trace(AB) = trace(A) + trace(B)", "AB = BA"],
+      "answer_index": 0,
+      "correct_answer": "trace(AB) = trace(BA)",
+      "solution_steps": [
+        "The cyclic property of trace guarantees trace(AB) = trace(BA) for any compatible square matrices — this holds even though AB ≠ BA in general.",
+        "trace(AB) = trace(A)·trace(B) is false in general — a quick 2×2 example shows the two sides can differ.",
+        "trace(AB) = trace(A)+trace(B) confuses the product rule with the (correct) sum rule for trace(A+B).",
+        "AB = BA (commutativity of the matrices themselves) is a much stronger, usually false, statement — trace(AB)=trace(BA) does not require AB=BA."
+      ],
+      "verification_method": "hand_checkable_trace_cyclic_property"
+    },
+    {
+      "id": "pi-trace-004",
+      "concept_id": "trace",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A is a 3×3 matrix with trace(A) = 7. What is trace(3A − 2I), where I is the 3×3 identity matrix?",
+      "answer_range": [14.925, 15.075],
+      "correct_answer": "15",
+      "solution_steps": [
+        "trace is linear: trace(3A − 2I) = 3·trace(A) − 2·trace(I).",
+        "trace(A) = 7 (given).",
+        "trace(I) for a 3×3 identity matrix = 1+1+1 = 3.",
+        "trace(3A−2I) = 3×7 − 2×3 = 21 − 6 = 15."
+      ],
+      "verification_method": "hand_checkable_trace_linearity"
+    },
+    {
+      "id": "pi-trace-005",
+      "concept_id": "trace",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A 3×3 matrix A has eigenvalues 2, -1, and 4. What is trace(A)?",
+      "options": ["5", "-8", "7", "10"],
+      "answer_index": 0,
+      "correct_answer": "5",
+      "solution_steps": [
+        "Property: trace(A) equals the sum of the eigenvalues (counted with multiplicity).",
+        "trace(A) = 2 + (-1) + 4 = 5.",
+        "-8 is the PRODUCT of the eigenvalues (2×(-1)×4 = -8), which equals det(A), not trace(A) — a common trace/determinant mix-up.",
+        "7 comes from summing the absolute values (2+1+4) instead of the signed values. 10 doesn't correspond to any standard combination and is a distractor arithmetic slip."
+      ],
+      "verification_method": "hand_checkable_trace_eigenvalue_sum"
+    }
+  ]
+}

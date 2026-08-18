@@ -33,8 +33,16 @@ export interface OrchestratorOpts {
   jsonlDir?: string;
   /** Per-job cost estimate (USD). Used by prepareBatch. */
   estimatePerJobUsd?: (spec: AtomSpec) => number;
-  /** Hook called after each successful processing of a single result row. */
-  onJobProcessed?: (run_id: string, job: JobRow) => Promise<void>;
+  /**
+   * Hook called after each successful processing of a single result row.
+   * Return `{ retry: true }` when the job is deliberately HELD for a later
+   * sweep (e.g. a tri-state verifier came back inconclusive) rather than
+   * finished — that skips the `processed_at` stamp so the job is picked
+   * up again on the next poll pass. Any other return value (or void) marks
+   * the row processed. Throwing is unrelated to retry — it marks the row's
+   * `error` and also leaves `processed_at` unset, same as always.
+   */
+  onJobProcessed?: (run_id: string, job: JobRow) => Promise<{ retry?: boolean } | void>;
 }
 
 export type StepResult =
@@ -247,14 +255,22 @@ export function createBatchOrchestrator(opts: OrchestratorOpts) {
     const jobs = await loadJobs(run.id);
     const unprocessed = jobs.filter((j) => j.processed_at === null && j.status !== 'pending');
     for (const job of unprocessed) {
+      let hookResult: { retry?: boolean } | void = undefined;
       try {
-        if (opts.onJobProcessed) await opts.onJobProcessed(run.id, job);
+        if (opts.onJobProcessed) hookResult = await opts.onJobProcessed(run.id, job);
       } catch (err) {
         // Per-job failure shouldn't kill the whole batch. Mark the job's
         // error and move on; operator can retry just this job later.
         await persistence.setJobResult(run.id, job.custom_id, {
           error: `processing_hook_failed: ${(err as Error).message}`,
         });
+        continue;
+      }
+      if (hookResult && hookResult.retry) {
+        // Deliberately held for a later sweep (e.g. a tri-state verifier
+        // came back inconclusive) — NOT a failure, so no `error` is
+        // written either. Leaving processed_at unset means this exact job
+        // is re-attempted from scratch on the next poll pass.
         continue;
       }
       await persistence.setJobResult(run.id, job.custom_id, {

@@ -1,6 +1,6 @@
 {
   "name": "project-vidhya",
-  "version": "4.33.0",
+  "version": "4.34.0",
   "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,10 +30,12 @@
     "lint:fork-test": "node scripts/fork-test-lint.mjs",
     "ci:content-gate": "tsx scripts/content-ci-gate.ts",
     "ci:pg-allowlist": "tsx scripts/check-pg-allowlist.ts",
+    "ci:connection-budget": "tsx scripts/check-connection-budget.ts",
     "ci:seam-registry": "tsx scripts/check-seam-registry.ts",
     "ci:content-integrity": "tsx scripts/check-content-integrity.ts",
     "ci:interactive-specs": "tsx scripts/lint-interactive-specs.ts",
     "ci:demo-rails": "tsx scripts/check-demo-rails.ts",
+    "export:bundles": "tsx scripts/export-bundles.ts",
     "data:export": "tsx scripts/vidhya-data.ts export",
     "data:import": "tsx scripts/vidhya-data.ts import",
     "data:verify": "tsx scripts/vidhya-data.ts verify",
@@ -61,6 +63,7 @@
     "demo:setup": "npm ci && cd frontend && npm ci && cd .. && npm run demo:seed && echo '\\nDemo ready — run: npm run demo:start'",
     "demo:seed": "tsx demo/seed.ts",
     "demo:seed-media": "tsx demo/seed-media.ts",
+    "demo:seed-history": "tsx demo/seed-history.ts",
     "demo:generate-audio": "tsx demo/generate-demo-audio.ts",
     "demo:reset": "tsx demo/reset.ts",
     "local": "bash scripts/local-install.sh",
@@ -83,7 +86,8 @@
     "playbook:list": "tsx scripts/playbook-cli.ts list",
     "playbook:estimate": "tsx scripts/playbook-cli.ts estimate",
     "ci:template-coverage": "tsx scripts/check-template-coverage.ts",
-    "ci:variant-agreement": "tsx scripts/check-variant-agreement.ts"
+    "ci:variant-agreement": "tsx scripts/check-variant-agreement.ts",
+    "ci:practice-items": "tsx scripts/check-practice-items.ts"
   },
   "keywords": [
     "adaptive-learning",

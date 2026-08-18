@@ -6,8 +6,16 @@
  *   frontend/public/data/concept-graph.json — 82 concepts + edges
  *   frontend/public/data/pyq-bank.json       — all PYQs from DB (or seed)
  *
- * Run: npx tsx scripts/export-bundles.ts
- * Auto-runs in frontend build via predistribution step.
+ * Run: npx tsx scripts/export-bundles.ts (or `npm run export:bundles`)
+ *
+ * Wired into the Docker build (both Dockerfile and demo/Dockerfile) as an
+ * explicit `RUN npx tsx scripts/export-bundles.ts` step in the builder
+ * stage, executed BEFORE `npx vite build` so Vite copies the freshly
+ * regenerated frontend/public/data/*.json into frontend/dist/data/ as part
+ * of its normal public/ → dist/ copy. There is no npm-lifecycle prebuild
+ * hook — the export script's OUT_DIR is process.cwd()-relative
+ * (frontend/public/data), so it must run from the repo root, which an
+ * npm --prefix frontend prebuild would not guarantee.
  */
 
 import fs from 'fs';

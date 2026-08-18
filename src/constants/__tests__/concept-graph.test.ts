@@ -107,3 +107,62 @@ describe('concept-graph.ts (thin YAML loader)', () => {
     }
   });
 });
+
+// ── T11 (B1): encompasses: edges — schema shape ────────────────────────────
+
+describe('concept-graph.ts — encompasses: schema (T11/B1)', () => {
+  it('when present, encompasses is an array of {id, weight}', () => {
+    for (const c of ALL_CONCEPTS) {
+      if (c.encompasses === undefined) continue;
+      expect(Array.isArray(c.encompasses)).toBe(true);
+      for (const e of c.encompasses) {
+        expect(typeof e.id).toBe('string');
+        expect(e.id.length).toBeGreaterThan(0);
+        expect(typeof e.weight).toBe('number');
+      }
+    }
+  });
+
+  it('every encompasses id resolves to a real concept', () => {
+    for (const c of ALL_CONCEPTS) {
+      for (const e of c.encompasses ?? []) {
+        expect(CONCEPT_MAP.has(e.id)).toBe(true);
+      }
+    }
+  });
+
+  it('no concept encompasses itself', () => {
+    for (const c of ALL_CONCEPTS) {
+      for (const e of c.encompasses ?? []) {
+        expect(e.id).not.toBe(c.id);
+      }
+    }
+  });
+
+  it('spot check: eigenvalues encompasses determinants (~0.7) and systems-of-equations (~0.5)', () => {
+    const node = CONCEPT_MAP.get('eigenvalues')!;
+    const byId = new Map((node.encompasses ?? []).map((e) => [e.id, e.weight]));
+    expect(byId.get('determinants')).toBeCloseTo(0.7, 5);
+    expect(byId.get('systems-of-equations')).toBeCloseTo(0.5, 5);
+  });
+
+  it('spot check: gram-schmidt encompasses inner-product-spaces (~0.8)', () => {
+    const node = CONCEPT_MAP.get('gram-schmidt')!;
+    const byId = new Map((node.encompasses ?? []).map((e) => [e.id, e.weight]));
+    expect(byId.get('inner-product-spaces')).toBeCloseTo(0.8, 5);
+  });
+
+  it('spot check: matrix-inverse encompasses determinants (~0.6) and matrix-operations (~0.85)', () => {
+    const node = CONCEPT_MAP.get('matrix-inverse')!;
+    const byId = new Map((node.encompasses ?? []).map((e) => [e.id, e.weight]));
+    expect(byId.get('determinants')).toBeCloseTo(0.6, 5);
+    expect(byId.get('matrix-operations')).toBeCloseTo(0.85, 5);
+  });
+
+  it('spot check: svd encompasses eigenvalues (~0.7) and orthogonality (~0.6)', () => {
+    const node = CONCEPT_MAP.get('svd')!;
+    const byId = new Map((node.encompasses ?? []).map((e) => [e.id, e.weight]));
+    expect(byId.get('eigenvalues')).toBeCloseTo(0.7, 5);
+    expect(byId.get('orthogonality')).toBeCloseTo(0.6, 5);
+  });
+});

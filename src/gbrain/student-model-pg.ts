@@ -23,7 +23,8 @@
  * the student model knowing about them (§5.8).
  */
 
-import pg from 'pg';
+import type pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 import {
   applyAttempt,
   newItemDifficulty,
@@ -51,14 +52,18 @@ import type {
   StudentModel,
 } from '../core/interfaces';
 import { publishAttemptRecorded } from '../events/attempts-bus';
+import { downClosureFor, upClosureFor, computeImplicitReviews } from './fire';
 
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now the
+// one shared pool (src/storage/pool.ts). Every method here calls this
+// unconditionally (no DATABASE_URL pre-check), matching the prior
+// behavior where a Pool was always constructed and only failed at query
+// time — the only change is the failure now happens at getPool() with an
+// explicit message instead of inside pg's connection attempt.
 function getPool(): pg.Pool {
-  if (_pool) return _pool;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
+  const pool = getSharedPool();
+  if (!pool) throw new Error('[student-model-pg] DATABASE_URL not configured');
+  return pool;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -67,19 +72,85 @@ function getPool(): pg.Pool {
 // difficulty is enough to move from learning → practicing.
 // ────────────────────────────────────────────────────────────────────
 
-const MASTERY_THRESHOLDS = {
+export const MASTERY_THRESHOLDS = {
   notStartedN: 1,        // <1 attempt
-  learningN: 5,          // <5 attempts → still learning
+  // T4 (Milestone A): was 5. content-gate.ts:67-69 and syllabus-context.ts:124
+  // both treat 'not-started' | 'learning' as BLOCKING a prereq edge, so with
+  // a thin catalog (few items per skill) a threshold of 5 meant every prereq
+  // stayed locked for most students most of the time — every eligible node
+  // deadlocked back to the fallback set. Lowered to 2: still "at least one
+  // real attempt beyond the first" before a skill is presumed learned enough
+  // to unblock what depends on it, but reachable with the catalog's actual
+  // item density.
+  learningN: 2,           // <2 attempts → still learning
   practicingRating: 1400,
   masteredRating: 1700,
   atRiskRetrievability: 0.5,   // FSRS recall <0.5 on a once-mastered skill
 };
 
 // ────────────────────────────────────────────────────────────────────
+// Shared pure helper — the SAME derivation masteryState() and the batch
+// masteryStates() both use, so the two paths can never drift. Thresholds
+// unchanged (T4/A6 owns tuning those); this is purely an extraction.
+// ────────────────────────────────────────────────────────────────────
+
+export interface AbilitySnapshot {
+  rating: number;
+  n: number;
+}
+
+export interface CardSnapshot {
+  stability: number;
+  lastReviewAt: string;
+}
+
+export function deriveMasteryState(
+  ability: AbilitySnapshot,
+  cardsForSkill: ReadonlyArray<CardSnapshot>,
+  now: Date,
+): MasteryState {
+  if (ability.n < MASTERY_THRESHOLDS.notStartedN) return 'not-started';
+  if (ability.n < MASTERY_THRESHOLDS.learningN) return 'learning';
+
+  if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) {
+    // Check whether any cards' recall has decayed below threshold — an
+    // at-risk skill is one whose memory is leaking even though the
+    // ability is good.
+    for (const c of cardsForSkill) {
+      const card: FsrsCard = {
+        stability: c.stability,
+        difficulty: 5,
+        lastReviewAt: c.lastReviewAt,
+        reps: 0, lapses: 0,
+        dueAt: new Date().toISOString(),
+      };
+      if (recallProbability(card, now) < MASTERY_THRESHOLDS.atRiskRetrievability) {
+        return 'at-risk';
+      }
+    }
+    return 'mastered';
+  }
+  if (ability.rating >= MASTERY_THRESHOLDS.practicingRating) return 'practicing';
+  return 'learning';
+}
+
+/**
+ * Optional capability seam: a `StudentModel` that can answer mastery for
+ * MANY skills in a bounded number of round-trips. `SyllabusAwareReadinessEngine`
+ * duck-types for this (see syllabus-aware-engine.ts's prefetchMastery) and
+ * falls back to per-skill `masteryState()` calls when it's absent — every
+ * other `StudentModel` implementation (test fakes included) keeps working
+ * unchanged.
+ */
+export interface BatchMasteryStudentModel {
+  masteryStates(studentId: StudentId, skillIds: ReadonlyArray<SkillId>): Promise<Map<SkillId, MasteryState>>;
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Implementation
 // ────────────────────────────────────────────────────────────────────
 
-export class PgStudentModel implements StudentModel {
+export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
   async abilityFor(studentId: StudentId, skillId: SkillId): Promise<Ability> {
     const { rows } = await getPool().query(
       'SELECT rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = $2',
@@ -94,39 +165,47 @@ export class PgStudentModel implements StudentModel {
 
   async masteryState(studentId: StudentId, skillId: SkillId): Promise<MasteryState> {
     const ability = await this.abilityFor(studentId, skillId);
-    if (ability.n < MASTERY_THRESHOLDS.notStartedN) return 'not-started';
-    if (ability.n < MASTERY_THRESHOLDS.learningN) return 'learning';
+    // T4 (Milestone A): the 'at-risk' card query that used to live here hit
+    // `SELECT id FROM objects_for_skill($2)` — a function that exists NOWHERE
+    // in any migration — behind a swallowed `.catch()`, so cards were always
+    // `[]` and 'at-risk' was unreachable dead code, not a real guardrail.
+    // Deleted rather than backed by a real function: OV2-D5 supersedes it with
+    // `fsrs_cards.skill_id TEXT` (written on every card upsert from
+    // `attempt.skillId`), which gives a real per-skill card join. Until that
+    // column lands (later lane), we pass no cards — deriveMasteryState's
+    // at-risk loop stays dormant and a mastered skill reports 'mastered',
+    // identical for the single and batch paths.
+    return deriveMasteryState({ rating: ability.rating, n: ability.n }, [], new Date());
+  }
 
-    // Look at how this skill's recent FSRS cards are doing — an at-risk
-    // skill is one whose memory is leaking even though the ability is good.
-    const { rows: cards } = await getPool().query(
-      `SELECT stability, last_review_at
-         FROM fsrs_cards
-        WHERE student_id = $1 AND object_id IN (
-          SELECT id FROM objects_for_skill($2)
-        )`,
-      [studentId, skillId],
-    ).catch(() => ({ rows: [] as any[] }));   // tolerate missing helper view
+  /**
+   * Batch mastery lookup — T5/§7 perf fix. `eligibleNodes()` needs
+   * `masteryState()` for up to ~140 (candidate × prereq) pairs per
+   * request; called one-at-a-time that's 140 Pg round-trips. This does
+   * it in exactly ONE query. Like `masteryState()` above, no per-skill
+   * FSRS cards are fetched yet — the at-risk join needs
+   * `fsrs_cards.skill_id` (OV2-D5, later lane); when that column lands,
+   * both this method and `masteryState()` gain the same card fetch.
+   */
+  async masteryStates(studentId: StudentId, skillIds: ReadonlyArray<SkillId>): Promise<Map<SkillId, MasteryState>> {
+    const result = new Map<SkillId, MasteryState>();
+    if (skillIds.length === 0) return result;
 
-    if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) {
-      // Check whether any cards' recall has decayed below threshold.
-      const now = new Date();
-      for (const c of cards) {
-        const card: FsrsCard = {
-          stability: Number(c.stability),
-          difficulty: 5,
-          lastReviewAt: (c.last_review_at instanceof Date ? c.last_review_at : new Date(c.last_review_at)).toISOString(),
-          reps: 0, lapses: 0,
-          dueAt: new Date().toISOString(),
-        };
-        if (recallProbability(card, now) < MASTERY_THRESHOLDS.atRiskRetrievability) {
-          return 'at-risk';
-        }
-      }
-      return 'mastered';
+    const { rows } = await getPool().query(
+      'SELECT skill_id, rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = ANY($2::text[])',
+      [studentId, skillIds],
+    );
+    const abilityBySkill = new Map<SkillId, AbilitySnapshot>();
+    for (const r of rows) {
+      abilityBySkill.set(r.skill_id, { rating: Number(r.rating), n: Number(r.n) });
     }
-    if (ability.rating >= MASTERY_THRESHOLDS.practicingRating) return 'practicing';
-    return 'learning';
+
+    const now = new Date();
+    for (const skillId of skillIds) {
+      const ability = abilityBySkill.get(skillId) ?? { rating: newStudentAbility(studentId, skillId).rating, n: 0 };
+      result.set(skillId, deriveMasteryState(ability, [], now));
+    }
+    return result;
   }
 
   async retrievability(studentId: StudentId, objectId: ObjectId): Promise<number> {
@@ -181,22 +260,32 @@ export class PgStudentModel implements StudentModel {
 
   async update(attempt: Attempt): Promise<void> {
     const pool = getPool();
-    // ── idempotency ─────────────────────────────────────────────────
-    // INSERT ON CONFLICT DO NOTHING; xmax = 0 means we did the insert.
-    const dedupResult = await pool.query(
-      `INSERT INTO attempt_dedup (student_id, object_id, ts_ms)
-       VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING student_id`,
-      [attempt.studentId, attempt.objectId, attempt.ts],
-    );
-    if (dedupResult.rowCount === 0) {
-      // already-processed duplicate — silently ignore
-      return;
-    }
 
     // ── Elo update (joint student × item) ────────────────────────────
     const client = await pool.connect();
+    let deduped = false;
     try {
       await client.query('BEGIN');
+
+      // ── idempotency (T6/ENG-D4.2: moved INSIDE the transaction) ────
+      // Previously this INSERT ran on the pool, outside BEGIN/COMMIT: a
+      // rolled-back attempt (e.g. the Elo/FSRS work below throwing) left
+      // its dedup row committed anyway, permanently blocking every retry
+      // of that (studentId, objectId, ts) — the row never came back even
+      // though nothing else was ever persisted. Inside the tx, a ROLLBACK
+      // undoes the dedup insert along with everything else, so a retry
+      // with the same ts is not blocked.
+      const dedupResult = await client.query(
+        `INSERT INTO attempt_dedup (student_id, object_id, ts_ms)
+         VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING student_id`,
+        [attempt.studentId, attempt.objectId, attempt.ts],
+      );
+      if (dedupResult.rowCount === 0) {
+        // already-processed duplicate — commit the no-op tx and bail.
+        await client.query('COMMIT');
+        deduped = true;
+        return;
+      }
 
       const sRes = await client.query(
         'SELECT rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = $2 FOR UPDATE',
@@ -255,27 +344,26 @@ export class PgStudentModel implements StudentModel {
         card = reviewCard(existing, rating, now).card;
       }
       await client.query(
-        `INSERT INTO fsrs_cards (student_id, object_id, stability, difficulty, last_review_at, due_at, reps, lapses)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO fsrs_cards (student_id, object_id, stability, difficulty, last_review_at, due_at, reps, lapses, skill_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          ON CONFLICT (student_id, object_id)
          DO UPDATE SET stability = EXCLUDED.stability,
                        difficulty = EXCLUDED.difficulty,
                        last_review_at = EXCLUDED.last_review_at,
                        due_at = EXCLUDED.due_at,
                        reps = EXCLUDED.reps,
-                       lapses = EXCLUDED.lapses`,
+                       lapses = EXCLUDED.lapses,
+                       skill_id = EXCLUDED.skill_id`,
         [attempt.studentId, attempt.objectId, card.stability, card.difficulty,
-         card.lastReviewAt, card.dueAt, card.reps, card.lapses],
+         card.lastReviewAt, card.dueAt, card.reps, card.lapses, attempt.skillId],
       );
 
-      // ── persist error tags (best-effort; table may not exist in older deploys)
-      if (attempt.errorTags && attempt.errorTags.length > 0) {
-        await client.query(
-          `INSERT INTO attempt_error_tags (student_id, object_id, ts_ms, error_tag, recorded_at)
-           SELECT $1, $2, $3, unnest($4::text[]), now()
-           ON CONFLICT DO NOTHING`,
-          [attempt.studentId, attempt.objectId, attempt.ts, attempt.errorTags],
-        ).catch(() => { /* table optional */ });
+      // ── FIRe-lite propagation (T11/B2, gated VIDHYA_FIRE=on) ─────────
+      // Always AFTER the primary card upsert above, and always inside the
+      // same transaction (ENG-D1) — a partial propagation must roll back
+      // with everything else, never leave the attempt "half applied".
+      if (process.env.VIDHYA_FIRE === 'on') {
+        await this.propagateFire(client, attempt, now);
       }
 
       await client.query('COMMIT');
@@ -286,8 +374,105 @@ export class PgStudentModel implements StudentModel {
       client.release();
     }
 
+    if (deduped) return;
+
+    // ── persist error tags (T6/ENG-D4.2: moved AFTER COMMIT, best-effort) ──
+    // Previously this ran INSIDE the transaction with a swallowed `.catch()`:
+    // a failure here (e.g. table missing on an older deploy) aborted the
+    // open Postgres transaction, so the subsequent COMMIT silently became a
+    // ROLLBACK — Elo + FSRS writes were lost even though update() had
+    // already reported success. Error tags are non-critical telemetry; they
+    // now write best-effort after the attempt is durably committed, and a
+    // failure here is LOGGED (not silently swallowed) rather than able to
+    // touch the primary write path at all.
+    if (attempt.errorTags && attempt.errorTags.length > 0) {
+      try {
+        await pool.query(
+          `INSERT INTO attempt_error_tags (student_id, object_id, ts_ms, error_tag, recorded_at)
+           SELECT $1, $2, $3, unnest($4::text[]), now()
+           ON CONFLICT DO NOTHING`,
+          [attempt.studentId, attempt.objectId, attempt.ts, attempt.errorTags],
+        );
+      } catch (err) {
+        console.error(
+          `[student-model-pg] best-effort error-tag persist failed for student=${attempt.studentId} object=${attempt.objectId}:`,
+          err,
+        );
+      }
+    }
+
     // ── telemetry (post-commit so subscribers see persisted state) ──
     publishAttemptRecorded(attempt);
+  }
+
+  /**
+   * T11/B2: FIRe-lite propagation. Runs INSIDE the caller's open
+   * transaction, strictly after the primary attempted card's upsert
+   * (OV2-D6 lock-order discipline: student-elo → item-elo → primary card
+   * → FIRe). Fetches existing cards for the closure concepts with a
+   * deterministic `ORDER BY object_id` lock order so concurrent attempts
+   * can't deadlock, applies `computeImplicitReviews` (pure, src/gbrain/fire.ts)
+   * per row, and writes every change back in ONE batched UPDATE.
+   *
+   * The attempted card itself is excluded (its skill_id is never in its
+   * own closure — `buildEncompassingClosure` excludes the start concept —
+   * and the `object_id != $3` filter below is a second, defensive guard
+   * against ever touching it here).
+   */
+  private async propagateFire(client: pg.PoolClient, attempt: Attempt, now: Date): Promise<void> {
+    const closure = attempt.correct ? downClosureFor(attempt.skillId) : upClosureFor(attempt.skillId);
+    if (closure.size === 0) return; // no encompassing edges — non-LA concepts are a no-op
+
+    const closureSkillIds = [...closure.keys()];
+    const rowsRes = await client.query(
+      `SELECT object_id, skill_id, stability, difficulty, last_review_at, reps, lapses, due_at
+         FROM fsrs_cards
+        WHERE student_id = $1 AND skill_id = ANY($2::text[]) AND object_id != $3
+        ORDER BY object_id
+        FOR UPDATE`,
+      [attempt.studentId, closureSkillIds, attempt.objectId],
+    );
+    if (rowsRes.rows.length === 0) return; // no existing cards to nudge — no-op
+
+    const objectIds: string[] = [];
+    const stabilities: number[] = [];
+    const dueAts: string[] = [];
+
+    for (const row of rowsRes.rows) {
+      const card: FsrsCard = {
+        stability: Number(row.stability),
+        difficulty: Number(row.difficulty),
+        lastReviewAt: (row.last_review_at instanceof Date ? row.last_review_at : new Date(row.last_review_at)).toISOString(),
+        reps: Number(row.reps),
+        lapses: Number(row.lapses),
+        dueAt: (row.due_at instanceof Date ? row.due_at : new Date(row.due_at)).toISOString(),
+      };
+      // One-entry map: the credit for `row.skill_id` is looked up from the
+      // real closure regardless of how many physical cards share it — the
+      // SAME per-concept credit is applied to EACH of that concept's cards
+      // (not split across them; see fire.ts's granularity doc comment).
+      const singleCardMap = new Map<string, FsrsCard>([[row.skill_id, card]]);
+      const [result] = computeImplicitReviews(
+        { skillId: attempt.skillId, correct: attempt.correct },
+        singleCardMap,
+        now,
+      );
+      if (!result) continue;
+      objectIds.push(row.object_id);
+      stabilities.push(result.newCard.stability);
+      dueAts.push(result.newCard.dueAt);
+    }
+
+    if (objectIds.length === 0) return;
+
+    await client.query(
+      `UPDATE fsrs_cards AS f
+          SET stability = u.stability,
+              due_at = u.due_at::timestamptz
+         FROM unnest($2::text[], $3::float8[], $4::text[]) AS u(object_id, stability, due_at)
+        WHERE f.student_id = $1 AND f.object_id = u.object_id`,
+      [attempt.studentId, objectIds, stabilities, dueAts],
+    );
   }
 }
 

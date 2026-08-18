@@ -1,0 +1,713 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the decompositions",
+    "cluster of linear algebra: orthogonality, Gram-Schmidt, quadratic forms,",
+    "positive definite matrices, SVD, least squares, and matrix norms.",
+    "",
+    "Every item was solved by hand (twice, via independent methods where",
+    "possible — e.g. direct multiplication vs. characteristic-polynomial factoring,",
+    "or Sylvester's criterion vs. explicit eigenvalue signs) before its key was",
+    "written. Matrices are chosen with clean integer or simple-fraction values so",
+    "a student (or a reviewer) can re-derive every answer by hand.",
+    "",
+    "Shape mirrors gate-ma-linear-algebra.json exactly (same AuthoredItem schema",
+    "consumed by FileLearningObjectCatalog / GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-orthogonality-001",
+      "concept_id": "orthogonality",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Which of the following matrices is orthogonal (QᵀQ = I)?",
+      "options": [
+        "(1/√2)·[[1, -1], [1, 1]]",
+        "[[1, 1], [1, 1]]",
+        "[[2, 0], [0, 2]]",
+        "[[1, 0], [1, 1]]"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(1/√2)·[[1, -1], [1, 1]]",
+      "solution_steps": [
+        "Let Q = (1/√2)[[1,-1],[1,1]]. Then QᵀQ = (1/2)[[1,1],[-1,1]]·[[1,-1],[1,1]] = (1/2)[[1+1, -1+1],[-1+1, 1+1]] = (1/2)[[2,0],[0,2]] = I. So Q is orthogonal.",
+        "[[1,1],[1,1]] is singular (columns are identical, not even linearly independent), so it cannot be orthogonal.",
+        "[[2,0],[0,2]]ᵀ[[2,0],[0,2]] = [[4,0],[0,4]] ≠ I — columns have length 2, not 1.",
+        "[[1,0],[1,1]]ᵀ[[1,0],[1,1]] = [[1,1],[0,1]]·[[1,0],[1,1]] = [[2,1],[1,1]] ≠ I."
+      ],
+      "verification_method": "hand_checkable_orthogonal_matrix_id"
+    },
+    {
+      "id": "pi-orthogonality-002",
+      "concept_id": "orthogonality",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Find the scalar t such that the projection of b = (3, 4) onto a = (1, 2) equals t·a.",
+      "answer_range": [2.188, 2.212],
+      "correct_answer": "11/5",
+      "solution_steps": [
+        "The scalar projection coefficient formula is t = (a·b)/(a·a).",
+        "a·b = 1·3 + 2·4 = 3 + 8 = 11. a·a = 1² + 2² = 1 + 4 = 5.",
+        "t = 11/5 = 2.2.",
+        "Check: t·a = 2.2·(1,2) = (2.2, 4.4). The residual b − t·a = (3-2.2, 4-4.4) = (0.8, -0.4) should be orthogonal to a: (0.8)(1) + (-0.4)(2) = 0.8-0.8 = 0 — confirmed."
+      ],
+      "verification_method": "hand_checkable_vector_projection"
+    },
+    {
+      "id": "pi-orthogonality-003",
+      "concept_id": "orthogonality",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about orthogonal matrices Q are true?",
+      "options": [
+        "Q satisfies QᵀQ = QQᵀ = I",
+        "The columns of Q form an orthonormal set",
+        "The determinant of an orthogonal matrix is always +1",
+        "Orthogonal matrices preserve vector lengths: ‖Qx‖ = ‖x‖ for every x",
+        "The inverse of an orthogonal matrix equals its transpose"
+      ],
+      "answer_indices": [0, 1, 3, 4],
+      "correct_answer": "QᵀQ=QQᵀ=I; orthonormal columns; length-preserving; Q⁻¹=Qᵀ",
+      "solution_steps": [
+        "(a),(e) TRUE: QᵀQ=I is the defining property, and it directly implies Q⁻¹ = Qᵀ (and then QQᵀ=I follows too, since Q⁻¹Q=I means QQ⁻¹=I also, i.e. QQᵀ=I).",
+        "(b) TRUE: QᵀQ=I written entry-wise says (column i)·(column j) = δᵢⱼ, i.e. columns are unit length and pairwise orthogonal — orthonormal.",
+        "(c) FALSE: det(Q)² = det(Qᵀ)det(Q) = det(QᵀQ) = det(I) = 1, so det(Q) = ±1, not always +1 — a reflection matrix like [[1,0],[0,-1]] is orthogonal with determinant -1.",
+        "(d) TRUE: ‖Qx‖² = (Qx)ᵀ(Qx) = xᵀQᵀQx = xᵀIx = xᵀx = ‖x‖²."
+      ],
+      "verification_method": "hand_checkable_orthogonal_matrix_properties"
+    },
+    {
+      "id": "pi-orthogonality-004",
+      "concept_id": "orthogonality",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Let a = (3, 4). The projection matrix onto span{a} is P = (aaᵀ)/(aᵀa). Find the (1,1) entry of P.",
+      "answer_range": [0.35, 0.37],
+      "correct_answer": "9/25",
+      "solution_steps": [
+        "aaᵀ = (3,4)(3,4)ᵀ = [[9,12],[12,16]]. aᵀa = 3²+4² = 9+16 = 25.",
+        "P = (1/25)[[9,12],[12,16]], so the (1,1) entry is 9/25 = 0.36.",
+        "Cross-check via the projection property Pa = a (a already lies on the line it's projected onto): Pa = (1/25)[[9,12],[12,16]]·(3,4)ᵀ = (1/25)[9·3+12·4, 12·3+16·4] = (1/25)[27+48, 36+64] = (1/25)[75,100] = (3,4) = a — confirmed.",
+        "Second cross-check via the orthogonal complement: b=(4,-3) is orthogonal to a (a·b = 3·4+4·(-3) = 0), so Pb should be 0. Pb = (1/25)[[9,12],[12,16]]·(4,-3)ᵀ = (1/25)[9·4+12·(-3), 12·4+16·(-3)] = (1/25)[36-36, 48-48] = (0,0) — confirmed, P annihilates vectors orthogonal to a."
+      ],
+      "verification_method": "hand_checkable_projection_matrix"
+    },
+    {
+      "id": "pi-gram-schmidt-001",
+      "concept_id": "gram-schmidt",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Using Gram-Schmidt on v1 = (1,1), v2 = (1,0), with u1 = v1, what is u2 (before normalization)?",
+      "options": ["(0.5, -0.5)", "(1, -1)", "(-0.5, 0.5)", "(0, 0.5)"],
+      "answer_index": 0,
+      "correct_answer": "(0.5, -0.5)",
+      "solution_steps": [
+        "u2 = v2 - proj_{u1}(v2), where proj_{u1}(v2) = (u1·v2 / u1·u1)·u1.",
+        "u1·v2 = 1·1 + 1·0 = 1. u1·u1 = 1² + 1² = 2. So proj_{u1}(v2) = (1/2)(1,1) = (0.5, 0.5).",
+        "u2 = (1,0) - (0.5,0.5) = (0.5, -0.5).",
+        "Check orthogonality: u1·u2 = 1·0.5 + 1·(-0.5) = 0.5-0.5 = 0 — confirmed orthogonal to u1."
+      ],
+      "verification_method": "hand_checkable_gram_schmidt_step"
+    },
+    {
+      "id": "pi-gram-schmidt-002",
+      "concept_id": "gram-schmidt",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Continuing from u2 = (0.5, -0.5) (the second Gram-Schmidt vector for v1=(1,1), v2=(1,0)), find the x-component of the normalized vector e2 = u2/‖u2‖.",
+      "answer_range": [0.697, 0.7172],
+      "correct_answer": "0.7071",
+      "solution_steps": [
+        "‖u2‖ = √(0.5² + (-0.5)²) = √(0.25+0.25) = √0.5 ≈ 0.70711.",
+        "e2 = u2/‖u2‖ = (0.5, -0.5)/0.70711 ≈ (0.70711, -0.70711).",
+        "The x-component is ≈ 0.7071 (= 1/√2).",
+        "Check: e2 should be a unit vector — 0.7071² + 0.7071² ≈ 0.5+0.5 = 1 — confirmed."
+      ],
+      "verification_method": "hand_checkable_gram_schmidt_normalize"
+    },
+    {
+      "id": "pi-gram-schmidt-003",
+      "concept_id": "gram-schmidt",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Gram-Schmidt applied to a linearly independent set {v1,...,vn} produces an orthonormal set {e1,...,en} such that...",
+      "options": [
+        "span{e1,...,ek} = span{v1,...,vk} for every k from 1 to n",
+        "eₖ is a linear combination of v1,...,vn (all n vectors) for every k",
+        "the eᵢ's need not be unit vectors",
+        "the process changes the span of the whole set {v1,...,vn}"
+      ],
+      "answer_index": 0,
+      "correct_answer": "span{e1,...,ek} = span{v1,...,vk} for every k",
+      "solution_steps": [
+        "By construction, u_k = v_k minus its projections onto u1,...,u_{k-1}, so u_k (and hence e_k) is a combination of v_1,...,v_k ONLY — never later vectors v_{k+1},...,v_n.",
+        "This means span{e1,...,ek} = span{u1,...,uk} = span{v1,...,vk} at every intermediate step k, which is exactly what makes Gram-Schmidt useful for building nested orthonormal bases.",
+        "The 'orthoNORMAL' in Gram-Schmidt specifically requires each eᵢ to be normalized to unit length, and the overall span of the full set {e1,...,en} equals span{v1,...,vn} unchanged — only the basis representation changes, not the subspace."
+      ],
+      "verification_method": "hand_checkable_gram_schmidt_span_property"
+    },
+    {
+      "id": "pi-gram-schmidt-004",
+      "concept_id": "gram-schmidt",
+      "topic": "linear-algebra",
+      "difficulty": 0.72,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "v1 = (1,0,0), v2 = (1,1,0), v3 = (1,1,2). Apply Gram-Schmidt; find ‖u3‖ (the norm of the third orthogonal vector, before normalization).",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "u1 = v1 = (1,0,0).",
+        "u2 = v2 - proj_{u1}(v2) = (1,1,0) - (1/1)(1,0,0) = (0,1,0), since u1·v2 = 1, u1·u1 = 1.",
+        "u3 = v3 - proj_{u1}(v3) - proj_{u2}(v3). u1·v3 = 1, so proj_{u1}(v3) = (1,0,0). u2·v3 = 1, so proj_{u2}(v3) = (0,1,0). u3 = (1,1,2) - (1,0,0) - (0,1,0) = (0,0,2).",
+        "‖u3‖ = √(0²+0²+2²) = 2.",
+        "Check: u1, u2, u3 are pairwise orthogonal (dot products all 0), and u1+u2+u3 = (1,0,0)+(0,1,0)+(0,0,2) = (1,1,2) = v3 — confirmed the reconstruction is consistent."
+      ],
+      "verification_method": "hand_checkable_gram_schmidt_three_vectors"
+    },
+    {
+      "id": "pi-gram-schmidt-005",
+      "concept_id": "gram-schmidt",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about Gram-Schmidt orthogonalization are true?",
+      "options": [
+        "Applying Gram-Schmidt to the columns of a matrix A produces the Q factor of the QR decomposition A = QR",
+        "The resulting orthonormal vectors depend on the order in which the original vectors are processed",
+        "Gram-Schmidt requires the input vectors to already be orthogonal",
+        "If the input vectors are linearly dependent, the process produces a zero vector at some step",
+        "The output of Gram-Schmidt is always identical regardless of the ordering of the input vectors"
+      ],
+      "answer_indices": [0, 1, 3],
+      "correct_answer": "Produces Q in QR decomposition; order-dependent output; dependent inputs yield a zero vector at some step",
+      "solution_steps": [
+        "(a) TRUE: this is exactly how the QR decomposition is constructed — Q's columns are the Gram-Schmidt orthonormal vectors, and R records the projection coefficients.",
+        "(b) TRUE and (e) FALSE: reordering v1,...,vn generally changes which subspaces span{v1,...,vk} the process is forced to match at each step, so a different order gives a genuinely different orthonormal basis (though it still spans the same overall space).",
+        "(c) FALSE: Gram-Schmidt is specifically designed to work on any linearly INDEPENDENT (not necessarily orthogonal) set — that's the whole point of the algorithm.",
+        "(d) TRUE: if v_k is a linear combination of v_1,...,v_{k-1}, then subtracting off all its projections onto u_1,...,u_{k-1} leaves exactly the zero vector at step k."
+      ],
+      "verification_method": "hand_checkable_gram_schmidt_qr_properties"
+    },
+    {
+      "id": "pi-quadratic-forms-001",
+      "concept_id": "quadratic-forms",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "The quadratic form Q(x,y) = 2x² + 4xy + 3y² corresponds to xᵀAx for which symmetric matrix A?",
+      "options": [
+        "[[2, 2], [2, 3]]",
+        "[[2, 4], [4, 3]]",
+        "[[2, 1], [1, 3]]",
+        "[[4, 2], [2, 3]]"
+      ],
+      "answer_index": 0,
+      "correct_answer": "[[2, 2], [2, 3]]",
+      "solution_steps": [
+        "For A=[[a,b],[b,c]], xᵀAx = a·x² + 2b·xy + c·y².",
+        "Matching coefficients: a=2 (x² coefficient), c=3 (y² coefficient), and 2b = 4 (xy coefficient) so b=2 — the off-diagonal entry is HALF the xy-coefficient, since it's counted twice (once as (1,2), once as (2,1)).",
+        "So A = [[2,2],[2,3]]. Check: xᵀAx = 2x² + 2xy + 2xy + 3y² = 2x² + 4xy + 3y² — matches Q exactly.",
+        "The wrong option [[2,4],[4,3]] is the classic error of using the full xy-coefficient as the off-diagonal entry instead of splitting it in half."
+      ],
+      "verification_method": "hand_checkable_quadratic_form_matrix"
+    },
+    {
+      "id": "pi-quadratic-forms-002",
+      "concept_id": "quadratic-forms",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Classify the quadratic form Q(x,y) = 2x² + 4xy + 3y² (matrix A = [[2,2],[2,3]]).",
+      "options": ["Positive definite", "Negative definite", "Indefinite", "Positive semidefinite"],
+      "answer_index": 0,
+      "correct_answer": "Positive definite",
+      "solution_steps": [
+        "Leading principal minors of A: D1 = 2 > 0. D2 = det(A) = 2·3 - 2·2 = 6-4 = 2 > 0.",
+        "By Sylvester's criterion, all leading principal minors positive means A is positive definite.",
+        "Cross-check via eigenvalues: trace=5, det=2, characteristic equation λ²-5λ+2=0 has roots λ=(5±√17)/2 — since the sum (5) and product (2) are both positive, both roots must be positive, confirming positive definiteness."
+      ],
+      "verification_method": "hand_checkable_quadratic_form_classify"
+    },
+    {
+      "id": "pi-quadratic-forms-003",
+      "concept_id": "quadratic-forms",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "For Q(x,y,z) = x² + 2y² + 3z² + 2xy, the matrix is A = [[1,1,0],[1,2,0],[0,0,3]]. Find D3, the determinant of A (the third leading principal minor).",
+      "answer_range": [2.985, 3.015],
+      "correct_answer": "3",
+      "solution_steps": [
+        "A is block diagonal: the top-left 2x2 block [[1,1],[1,2]] and the 1x1 block [3], since the z row/column has no interaction with x,y.",
+        "det of a block-diagonal matrix is the product of the block determinants: det([[1,1],[1,2]]) = 1·2-1·1 = 1, and det([3]) = 3.",
+        "D3 = det(A) = 1 · 3 = 3.",
+        "Cross-check via cofactor expansion along the third row: det(A) = 3·det([[1,1],[1,2]]) - 0 + 0 = 3·1 = 3 — matches."
+      ],
+      "verification_method": "hand_checkable_sylvester_criterion"
+    },
+    {
+      "id": "pi-quadratic-forms-004",
+      "concept_id": "quadratic-forms",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "For which range of the real parameter t is Q(x,y) = x² + 2txy + 4y² positive definite?",
+      "options": ["-2 < t < 2", "-4 < t < 4", "t > 0", "t² < 2"],
+      "answer_index": 0,
+      "correct_answer": "-2 < t < 2",
+      "solution_steps": [
+        "The matrix is A = [[1,t],[t,4]]. Leading principal minors: D1 = 1 > 0 for all t (always satisfied).",
+        "D2 = det(A) = 1·4 - t·t = 4 - t². For positive definiteness we need D2 > 0, i.e. 4 - t² > 0, i.e. t² < 4.",
+        "t² < 4 is equivalent to -2 < t < 2.",
+        "Check a boundary case: at t=2, D2 = 4-4 = 0, so A is only positive SEMIdefinite there (eigenvalue 0 appears), confirming the strict inequality -2<t<2 (not ≤) is required for positive definiteness."
+      ],
+      "verification_method": "hand_checkable_quadratic_form_parametric"
+    },
+    {
+      "id": "pi-quadratic-forms-005",
+      "concept_id": "quadratic-forms",
+      "topic": "linear-algebra",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 1,
+      "question_text": "Which of the following statements about quadratic forms xᵀAx (A symmetric) are true?",
+      "options": [
+        "xᵀAx is positive definite iff all eigenvalues of A are positive",
+        "xᵀAx is positive semidefinite iff all eigenvalues of A are non-negative",
+        "Sylvester's criterion requires checking only the determinant of the full matrix A",
+        "An indefinite quadratic form has both positive and negative eigenvalues",
+        "Every quadratic form xᵀAx can be classified using only the trace of A"
+      ],
+      "answer_indices": [0, 1, 3],
+      "correct_answer": "PD iff all eigenvalues positive; PSD iff all eigenvalues non-negative; indefinite has mixed-sign eigenvalues",
+      "solution_steps": [
+        "(a),(b) TRUE: since A=QΛQᵀ, xᵀAx = (Qᵀx)ᵀΛ(Qᵀx) = Σλᵢyᵢ² where y=Qᵀx ranges over all of ℝⁿ as x does — this sum is always positive (or non-negative) exactly when every λᵢ is positive (or non-negative).",
+        "(c) FALSE: Sylvester's criterion requires ALL leading principal minors D1, D2, ..., Dn to be positive, not just the full determinant Dn — pi-quadratic-forms-003's block matrix would need D1 and D2 checked too, not just D3.",
+        "(d) TRUE: by the same Σλᵢyᵢ² decomposition, mixing a positive and a negative eigenvalue lets the form take both positive and negative values.",
+        "(e) FALSE: trace only gives the sum of eigenvalues, which is not enough to determine their individual signs — e.g. trace=1 is consistent with eigenvalues (2,-1) [indefinite] or (0.5,0.5) [positive semidefinite]."
+      ],
+      "verification_method": "hand_checkable_quadratic_form_properties"
+    },
+    {
+      "id": "pi-positive-definite-matrices-001",
+      "concept_id": "positive-definite-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Is A = [[4, 2], [2, 3]] positive definite?",
+      "options": [
+        "Yes — both leading principal minors (4 and 8) are positive",
+        "Yes — because its diagonal entries (4 and 3) are positive",
+        "No — off-diagonal entries are nonzero",
+        "No — the determinant test only applies to diagonal matrices"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes — both leading principal minors (4 and 8) are positive",
+      "solution_steps": [
+        "D1 = 4 > 0. D2 = det(A) = 4·3 - 2·2 = 12-4 = 8 > 0.",
+        "By Sylvester's criterion, both leading principal minors positive means A is positive definite.",
+        "Option (b)'s reasoning is a common trap: positive diagonal entries alone do NOT guarantee positive definiteness — see pi-positive-definite-matrices-003 for a counterexample where diagonal entries are positive but the matrix is not positive definite."
+      ],
+      "verification_method": "hand_checkable_positive_definite_minors"
+    },
+    {
+      "id": "pi-positive-definite-matrices-002",
+      "concept_id": "positive-definite-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[5, 2], [2, 2]] is positive definite. Find its smallest eigenvalue.",
+      "answer_range": [0.99, 1.01],
+      "correct_answer": "1",
+      "solution_steps": [
+        "trace(A) = 5+2 = 7, det(A) = 5·2 - 2·2 = 10-4 = 6.",
+        "Characteristic equation: λ² - 7λ + 6 = 0, which factors as (λ-6)(λ-1) = 0, giving eigenvalues 6 and 1.",
+        "Both eigenvalues (6, 1) are positive, confirming A is positive definite (consistent with D1=5>0, D2=6>0 via Sylvester's criterion).",
+        "The smallest eigenvalue is 1."
+      ],
+      "verification_method": "hand_checkable_positive_definite_eigenvalue"
+    },
+    {
+      "id": "pi-positive-definite-matrices-003",
+      "concept_id": "positive-definite-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Is A = [[1, 2], [2, 1]] positive definite?",
+      "options": [
+        "No — the second leading principal minor is -3 < 0",
+        "Yes — diagonal entries are positive",
+        "No — the matrix is not symmetric",
+        "Yes — trace is positive"
+      ],
+      "answer_index": 0,
+      "correct_answer": "No — the second leading principal minor is -3 < 0",
+      "solution_steps": [
+        "D1 = 1 > 0, but D2 = det(A) = 1·1 - 2·2 = 1-4 = -3 < 0.",
+        "Since not all leading principal minors are positive, A is NOT positive definite (Sylvester's criterion fails at D2).",
+        "Cross-check via eigenvalues: trace=2, det=-3, characteristic equation λ²-2λ-3=0 factors as (λ-3)(λ+1)=0, giving eigenvalues 3 and -1 — mixed signs mean A is actually indefinite, confirming it is not positive definite.",
+        "A IS symmetric (the (1,2) and (2,1) entries both equal 2), so option (c)'s reasoning is factually wrong even though positive diagonal entries alone (option b) are also insufficient."
+      ],
+      "verification_method": "hand_checkable_positive_definite_negative_example"
+    },
+    {
+      "id": "pi-positive-definite-matrices-004",
+      "concept_id": "positive-definite-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A = [[4, 2], [2, 3]] is positive definite. Its Cholesky decomposition is A = LLᵀ with L = [[l11, 0], [l21, l22]]. Find l22.",
+      "answer_range": [1.4042, 1.4242],
+      "correct_answer": "1.4142",
+      "solution_steps": [
+        "l11 = √a11 = √4 = 2.",
+        "l21 = a21/l11 = 2/2 = 1.",
+        "l22 = √(a22 - l21²) = √(3 - 1²) = √2 ≈ 1.4142.",
+        "Check by reconstructing LLᵀ: L = [[2,0],[1,√2]], LLᵀ = [[2,0],[1,√2]]·[[2,1],[0,√2]] = [[4, 2],[2, 1+2]] = [[4,2],[2,3]] — matches A exactly, confirming the Cholesky decomposition."
+      ],
+      "verification_method": "hand_checkable_cholesky_decomposition"
+    },
+    {
+      "id": "pi-positive-definite-matrices-005",
+      "concept_id": "positive-definite-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about positive definite matrices are true?",
+      "options": [
+        "All eigenvalues of a positive definite matrix are strictly positive",
+        "A positive definite matrix is always invertible",
+        "The determinant of a positive definite matrix is always positive",
+        "A positive definite matrix can have a zero entry on its diagonal",
+        "Every symmetric matrix with positive diagonal entries is positive definite"
+      ],
+      "answer_indices": [0, 1, 2],
+      "correct_answer": "Eigenvalues strictly positive; always invertible; determinant always positive",
+      "solution_steps": [
+        "(a) TRUE by definition (or equivalently, xᵀAx>0 for all x≠0 forces every eigenvalue positive, taking x to be an eigenvector).",
+        "(b) TRUE: since 0 is never an eigenvalue (all eigenvalues > 0), det(A) = product of eigenvalues ≠ 0, so A is invertible.",
+        "(c) TRUE: det(A) equals the product of the (all positive) eigenvalues, which is itself positive.",
+        "(d) FALSE: the (i,i) diagonal entry of A equals eᵢᵀAeᵢ where eᵢ is the i-th standard basis vector; positive definiteness requires this to be strictly positive for every i, so no diagonal entry can be zero.",
+        "(e) FALSE: pi-positive-definite-matrices-003's A=[[1,2],[2,1]] has positive diagonal entries (1,1) but is not positive definite (D2=-3<0) — a direct counterexample."
+      ],
+      "verification_method": "hand_checkable_positive_definite_properties"
+    },
+    {
+      "id": "pi-svd-001",
+      "concept_id": "svd",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "The singular values of a matrix A are related to the eigenvalues of AᵀA by which formula?",
+      "options": ["σᵢ = √(λᵢ), where λᵢ are eigenvalues of AᵀA", "σᵢ = λᵢ", "σᵢ = λᵢ²", "σᵢ = 1/λᵢ"],
+      "answer_index": 0,
+      "correct_answer": "σᵢ = √(λᵢ), where λᵢ are eigenvalues of AᵀA",
+      "solution_steps": [
+        "AᵀA is symmetric positive semidefinite, so its eigenvalues λᵢ are always ≥ 0.",
+        "By definition, the singular values of A are the (non-negative) square roots of the eigenvalues of AᵀA: σᵢ = √λᵢ.",
+        "This is well-defined precisely because AᵀA's eigenvalues are never negative, so the square root is always real."
+      ],
+      "verification_method": "hand_checkable_svd_singular_value_formula"
+    },
+    {
+      "id": "pi-svd-002",
+      "concept_id": "svd",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[2, 2], [1, 1]]. Find the largest singular value of A (i.e. √λ_max of AᵀA).",
+      "answer_range": [3.1464, 3.1782],
+      "correct_answer": "3.1623",
+      "solution_steps": [
+        "AᵀA = [[2,1],[2,1]]·[[2,2],[1,1]] = [[2·2+1·1, 2·2+1·1],[2·2+1·1, 2·2+1·1]] = [[5,5],[5,5]].",
+        "trace(AᵀA) = 10, det(AᵀA) = 25-25 = 0, so the characteristic equation λ²-10λ = 0 gives eigenvalues λ = 10, 0.",
+        "The largest singular value is σ_max = √10 ≈ 3.1623.",
+        "Cross-check: A's rows are proportional (row1 = 2·row2), so rank(A) = 1, consistent with exactly one nonzero singular value (√10) and one zero singular value."
+      ],
+      "verification_method": "hand_checkable_svd_singular_value_compute"
+    },
+    {
+      "id": "pi-svd-003",
+      "concept_id": "svd",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "By the Eckart-Young theorem, the best rank-1 approximation (in Frobenius norm) of a matrix A is obtained by...",
+      "options": [
+        "keeping only the largest singular value term σ1·u1v1ᵀ and discarding the rest of the SVD sum",
+        "averaging all the singular value terms",
+        "keeping only the smallest singular value term",
+        "rounding all entries of A to the nearest integer"
+      ],
+      "answer_index": 0,
+      "correct_answer": "keeping only the largest singular value term σ1·u1v1ᵀ",
+      "solution_steps": [
+        "Writing the full SVD as A = Σᵢ σᵢ uᵢvᵢᵀ (sorted so σ1 ≥ σ2 ≥ ... ≥ 0), the Eckart-Young theorem states that truncating this sum to its first k terms gives the best rank-k approximation to A in Frobenius (and spectral) norm.",
+        "For k=1, that means keeping only the σ1·u1v1ᵀ term — the direction of largest 'stretch' — and discarding the rest.",
+        "This is the theoretical basis for low-rank compression / denoising via SVD."
+      ],
+      "verification_method": "hand_checkable_svd_low_rank_approx"
+    },
+    {
+      "id": "pi-svd-004",
+      "concept_id": "svd",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A = [[2, 2], [1, 1]] has singular values √10 and 0. Compute ‖A‖_F² (the squared Frobenius norm) using its singular values.",
+      "answer_range": [9.95, 10.05],
+      "correct_answer": "10",
+      "solution_steps": [
+        "A key SVD identity: ‖A‖_F² = Σᵢ σᵢ², the sum of the squared singular values.",
+        "‖A‖_F² = (√10)² + 0² = 10 + 0 = 10.",
+        "Cross-check by direct computation: ‖A‖_F² = sum of squares of all entries = 2²+2²+1²+1² = 4+4+1+1 = 10 — matches exactly."
+      ],
+      "verification_method": "hand_checkable_svd_frobenius_norm"
+    },
+    {
+      "id": "pi-svd-005",
+      "concept_id": "svd",
+      "topic": "linear-algebra",
+      "difficulty": 0.72,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about the singular value decomposition (SVD) are true?",
+      "options": [
+        "The singular values of A are the square roots of the eigenvalues of AᵀA (equivalently of AAᵀ)",
+        "The number of nonzero singular values equals rank(A)",
+        "SVD applies only to square matrices",
+        "The largest singular value equals the spectral (2-norm) norm of A",
+        "U and V in A = UΣVᵀ are always the same matrix"
+      ],
+      "answer_indices": [0, 1, 3],
+      "correct_answer": "Singular values from AᵀA eigenvalues; count = rank; largest singular value = spectral norm",
+      "solution_steps": [
+        "(a) TRUE by definition (see pi-svd-001); AᵀA and AAᵀ always share the same nonzero eigenvalues.",
+        "(b) TRUE: pi-svd-002's rank-1 matrix has exactly one nonzero singular value (√10), matching rank(A)=1.",
+        "(c) FALSE: SVD is defined for ANY m×n matrix, square or rectangular — this generality is one of its main advantages over eigendecomposition.",
+        "(d) TRUE: ‖A‖₂ = max_{‖x‖=1} ‖Ax‖ = σ_max, the largest singular value, by definition of the spectral (operator 2-) norm.",
+        "(e) FALSE: U (left singular vectors, eigenvectors of AAᵀ) and V (right singular vectors, eigenvectors of AᵀA) are generally different matrices, and even have different dimensions when A is rectangular."
+      ],
+      "verification_method": "hand_checkable_svd_properties"
+    },
+    {
+      "id": "pi-least-squares-001",
+      "concept_id": "least-squares",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For an overdetermined system Ax = b with no exact solution, the least-squares solution x̂ satisfies which equation?",
+      "options": ["AᵀA x̂ = Aᵀb", "A x̂ = b", "AAᵀ x̂ = b", "Aᵀ x̂ = Aᵀb"],
+      "answer_index": 0,
+      "correct_answer": "AᵀA x̂ = Aᵀb",
+      "solution_steps": [
+        "The least-squares solution minimizes ‖Ax-b‖², and setting the gradient of this quadratic to zero gives the normal equations AᵀAx = Aᵀb.",
+        "This is solvable for x̂ whenever A has full column rank (so AᵀA is invertible): x̂ = (AᵀA)⁻¹Aᵀb.",
+        "Ax=b generally has no solution (that's the whole premise of 'overdetermined'), so it is not what x̂ satisfies exactly."
+      ],
+      "verification_method": "hand_checkable_normal_equations"
+    },
+    {
+      "id": "pi-least-squares-002",
+      "concept_id": "least-squares",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Fit y = mx + c by least squares to the points (0,1), (1,3), (2,4). Find the slope m.",
+      "answer_range": [1.49, 1.51],
+      "correct_answer": "1.5",
+      "solution_steps": [
+        "A = [[0,1],[1,1],[2,1]], b = [1,3,4]ᵀ. AᵀA = [[0·0+1·1+2·2, 0·1+1·1+2·1],[..., 1+1+1]] = [[5,3],[3,3]]. Aᵀb = [0·1+1·3+2·4, 1+3+4]ᵀ = [11,8]ᵀ.",
+        "Solve [[5,3],[3,3]]·[m,c]ᵀ = [11,8]ᵀ. det = 5·3-3·3 = 6. m = (11·3-3·8)/6 = (33-24)/6 = 9/6 = 1.5.",
+        "Cross-check with the standard slope formula: with n=3, Σx=3, Σy=8, Σxy=11, Σx²=5, m = (nΣxy - ΣxΣy)/(nΣx² - (Σx)²) = (3·11-3·8)/(3·5-9) = (33-24)/6 = 1.5 — matches.",
+        "The slope is 1.5."
+      ],
+      "verification_method": "hand_checkable_least_squares_slope"
+    },
+    {
+      "id": "pi-least-squares-003",
+      "concept_id": "least-squares",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Continuing the least-squares fit y = mx + c to (0,1), (1,3), (2,4) (with m = 1.5 from AᵀAx̂=Aᵀb), find the intercept c.",
+      "answer_range": [1.1566, 1.1767],
+      "correct_answer": "7/6",
+      "solution_steps": [
+        "From the same solve as pi-least-squares-002: c = (5·8-3·11)/6 = (40-33)/6 = 7/6 ≈ 1.16667.",
+        "Cross-check with the standard formula: c = (Σy - mΣx)/n = (8 - 1.5·3)/3 = (8-4.5)/3 = 3.5/3 = 7/6 — matches.",
+        "So the least-squares line is y = 1.5x + 7/6."
+      ],
+      "verification_method": "hand_checkable_least_squares_intercept"
+    },
+    {
+      "id": "pi-least-squares-004",
+      "concept_id": "least-squares",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Using the least-squares fit y = 1.5x + 7/6 to (0,1), (1,3), (2,4), compute the sum of the three residuals rᵢ = yᵢ - ŷᵢ.",
+      "answer_range": [-0.01, 0.01],
+      "correct_answer": "0",
+      "solution_steps": [
+        "Predicted values: ŷ(0) = 7/6 ≈ 1.1667, ŷ(1) = 1.5+7/6 ≈ 2.6667, ŷ(2) = 3+7/6 ≈ 4.1667.",
+        "Residuals: r1 = 1-1.1667 = -0.1667, r2 = 3-2.6667 = 0.3333, r3 = 4-4.1667 = -0.1667.",
+        "Sum: -0.1667+0.3333-0.1667 = 0 (exactly, since -1/6 + 1/3 - 1/6 = -1/6+2/6-1/6 = 0).",
+        "This is not a coincidence: the normal equations AᵀAx̂=Aᵀb guarantee the residual vector r=b-Ax̂ is orthogonal to every column of A, and here the first column of A is all 1's — so the residuals must sum to exactly zero."
+      ],
+      "verification_method": "hand_checkable_least_squares_residual_orthogonality"
+    },
+    {
+      "id": "pi-least-squares-005",
+      "concept_id": "least-squares",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about least-squares solutions are true?",
+      "options": [
+        "The least-squares solution minimizes ‖Ax-b‖₂, the Euclidean norm of the residual",
+        "The normal equations AᵀAx=Aᵀb always have a solution when A has full column rank",
+        "The residual vector b-Ax̂ is always orthogonal to the column space of A",
+        "Least squares requires the system Ax=b to be square (same number of equations as unknowns)",
+        "If A has full column rank, then AᵀA is invertible"
+      ],
+      "answer_indices": [0, 1, 2, 4],
+      "correct_answer": "Minimizes residual norm; solvable with full column rank; residual orthogonal to col(A); AᵀA invertible with full column rank",
+      "solution_steps": [
+        "(a) TRUE: this is the definition of the least-squares problem.",
+        "(b) TRUE and (e) TRUE: full column rank means AᵀA is invertible (a symmetric positive definite matrix), so x̂=(AᵀA)⁻¹Aᵀb always exists and is unique.",
+        "(c) TRUE: the normal equations AᵀAx̂=Aᵀb rearrange to Aᵀ(b-Ax̂)=0, meaning the residual is orthogonal to every column of A, i.e. to all of col(A) — verified numerically in pi-least-squares-004.",
+        "(d) FALSE: least squares is specifically designed for OVERDETERMINED systems (more equations/rows than unknowns/columns), like the 3-equations-2-unknowns line fit above."
+      ],
+      "verification_method": "hand_checkable_least_squares_properties"
+    },
+    {
+      "id": "pi-matrix-norms-001",
+      "concept_id": "matrix-norms",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[3, 4], [0, 0]]. Find the Frobenius norm ‖A‖_F.",
+      "answer_range": [4.975, 5.025],
+      "correct_answer": "5",
+      "solution_steps": [
+        "‖A‖_F = √(Σ over all entries of aᵢⱼ²) = √(3² + 4² + 0² + 0²) = √(9+16) = √25 = 5."
+      ],
+      "verification_method": "hand_checkable_frobenius_norm"
+    },
+    {
+      "id": "pi-matrix-norms-002",
+      "concept_id": "matrix-norms",
+      "topic": "linear-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[1, -2], [3, 4]]. What is ‖A‖₁ (the maximum absolute column sum)?",
+      "options": ["6", "7", "4", "3"],
+      "answer_index": 0,
+      "correct_answer": "6",
+      "solution_steps": [
+        "‖A‖₁ = max over columns of the sum of absolute values in that column.",
+        "Column 1: |1|+|3| = 4. Column 2: |-2|+|4| = 6.",
+        "The maximum is 6 (from column 2)."
+      ],
+      "verification_method": "hand_checkable_one_norm"
+    },
+    {
+      "id": "pi-matrix-norms-003",
+      "concept_id": "matrix-norms",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[2, -3, 1], [0, 4, -1], [5, 0, 2]]. Find ‖A‖∞ (the maximum absolute row sum).",
+      "answer_range": [6.965, 7.035],
+      "correct_answer": "7",
+      "solution_steps": [
+        "‖A‖∞ = max over rows of the sum of absolute values in that row.",
+        "Row 1: |2|+|-3|+|1| = 6. Row 2: |0|+|4|+|-1| = 5. Row 3: |5|+|0|+|2| = 7.",
+        "The maximum is 7 (from row 3)."
+      ],
+      "verification_method": "hand_checkable_infinity_norm"
+    },
+    {
+      "id": "pi-matrix-norms-004",
+      "concept_id": "matrix-norms",
+      "topic": "linear-algebra",
+      "difficulty": 0.75,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A = [[4, 0], [3, 5]]. Find the 2-norm condition number κ₂(A) = σ_max/σ_min.",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "AᵀA = [[4,3],[0,5]]·[[4,0],[3,5]] = [[16+9, 15],[15, 25]] = [[25,15],[15,25]].",
+        "trace(AᵀA) = 50, det(AᵀA) = 625-225 = 400. Characteristic equation λ²-50λ+400=0, discriminant = 2500-1600=900, √900=30, so λ = (50±30)/2 = 40 or 10.",
+        "Singular values: σ_max = √40, σ_min = √10. κ₂(A) = √40/√10 = √(40/10) = √4 = 2.",
+        "Cross-check using AAᵀ instead (same nonzero eigenvalues guaranteed for square A): AAᵀ = [[4,0],[3,5]]·[[4,3],[0,5]] = [[16,12],[12,34]], trace=50, det=16·34-12·12=544-144=400 — same trace and det, confirming eigenvalues 40, 10 and κ₂(A)=2."
+      ],
+      "verification_method": "hand_checkable_condition_number"
+    },
+    {
+      "id": "pi-matrix-norms-005",
+      "concept_id": "matrix-norms",
+      "topic": "linear-algebra",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 1,
+      "question_text": "Which of the following statements about matrix norms and condition numbers are true?",
+      "options": [
+        "The Frobenius norm ‖A‖_F equals the square root of the sum of squares of all entries of A",
+        "The condition number κ(A) = ‖A‖‖A⁻¹‖ is always ≥ 1",
+        "A matrix with a large condition number is said to be well-conditioned",
+        "For a symmetric matrix, ‖A‖₂ equals the largest absolute eigenvalue of A",
+        "The 1-norm of a matrix is the maximum absolute row sum"
+      ],
+      "answer_indices": [0, 1, 3],
+      "correct_answer": "Frobenius norm formula; condition number ≥1; symmetric matrix 2-norm = largest |eigenvalue|",
+      "solution_steps": [
+        "(a) TRUE: this is the defining formula, verified numerically in pi-matrix-norms-001.",
+        "(b) TRUE: κ(A) = ‖A‖‖A⁻¹‖ ≥ ‖AA⁻¹‖ = ‖I‖ = 1, by the submultiplicative property of induced matrix norms.",
+        "(c) FALSE: a LARGE condition number means A is ILL-conditioned (sensitive to small perturbations in input); a condition number near 1 means well-conditioned.",
+        "(d) TRUE: for symmetric A, singular values equal |eigenvalues| (since A²'s eigenvalues are eigenvalues² of A), so the largest singular value (=‖A‖₂) is the largest |eigenvalue|.",
+        "(e) FALSE: the 1-norm is the maximum absolute COLUMN sum (see pi-matrix-norms-002); the maximum absolute row sum is the ∞-norm (see pi-matrix-norms-003) — these are commonly swapped by mistake."
+      ],
+      "verification_method": "hand_checkable_matrix_norm_properties"
+    }
+  ]
+}

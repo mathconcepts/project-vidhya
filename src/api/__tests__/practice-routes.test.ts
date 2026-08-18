@@ -81,16 +81,19 @@ function fakeStudentModel(updates: Attempt[], failUpdate = false): StudentModel 
 describe('POST /api/practice/attempt', () => {
   const updates: Attempt[] = [];
   const recalibrations: Array<{ id: string; correct: boolean }> = [];
+  const xpAwards: any[] = [];
 
   beforeEach(() => {
     updates.length = 0;
     recalibrations.length = 0;
+    xpAwards.length = 0;
     mockRequireRole.mockReset();
     mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
     setPracticeDepsForTests({
       catalog: () => new InMemoryCatalog([MARKED_MCQ, MARKED_MSQ, MARKED_NAT, UNMARKED]),
       studentModel: () => fakeStudentModel(updates),
       recordProblemAttempt: async (id, correct) => { recalibrations.push({ id, correct }); },
+      awardXp: async (award) => { xpAwards.push(award); },
     });
   });
 
@@ -193,6 +196,61 @@ describe('POST /api/practice/attempt', () => {
     expect(r.payload.grade.correct).toBe(true);
     expect(r.payload.recorded).toBe(false);
     expect(recalibrations).toHaveLength(0);   // no recalibration off an unrecorded attempt
+  });
+
+  // ── T14 (B5): XP awarding ────────────────────────────────────────────
+
+  it('awards XP scaled to the estMinutes on a correct attempt', async () => {
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 2 }, ts: 5000 }), r.res);
+    expect(r.status).toBe(200);
+    expect(xpAwards).toHaveLength(1);
+    expect(xpAwards[0]).toMatchObject({
+      studentId: 'student-1', objectId: 'mcq-1', skillId: 'eigenvalues', source: 'practice', tsMs: 5000,
+    });
+    expect(xpAwards[0].xpAmount).toBe(3); // estMinutes=3, full credit
+  });
+
+  it('awards negative XP for a wrong MCQ (mirrors the negative mark)', async () => {
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 0 } }), r.res);
+    expect(r.status).toBe(200);
+    expect(xpAwards).toHaveLength(1);
+    expect(xpAwards[0].xpAmount).toBeLessThan(0);
+  });
+
+  it('never awards XP on a skip', async () => {
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { skipped: true } }), r.res);
+    expect(r.status).toBe(200);
+    expect(xpAwards).toHaveLength(0);
+  });
+
+  it('xp_minutes_awarded is populated only for a positive award (DR-4: never a negative award line)', async () => {
+    const correctRes = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 2 } }), correctRes.res);
+    expect(correctRes.payload.xp_minutes_awarded).toBe(3);
+
+    const wrongRes = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 0 } }), wrongRes.res);
+    expect(wrongRes.payload.xp_minutes_awarded).toBeNull();
+
+    const skipRes = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { skipped: true } }), skipRes.res);
+    expect(skipRes.payload.xp_minutes_awarded).toBeNull();
+  });
+
+  it('never awards XP when the attempt was not recorded (DB-less)', async () => {
+    setPracticeDepsForTests({
+      catalog: () => new InMemoryCatalog([MARKED_MCQ]),
+      studentModel: () => fakeStudentModel(updates, true),
+      recordProblemAttempt: async (id, correct) => { recalibrations.push({ id, correct }); },
+      awardXp: async (award) => { xpAwards.push(award); },
+    });
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 2 } }), r.res);
+    expect(r.payload.recorded).toBe(false);
+    expect(xpAwards).toHaveLength(0);
   });
 });
 

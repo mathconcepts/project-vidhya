@@ -10,22 +10,17 @@
  * live in `teacher-queue.ts` and operate on rows this module returns.
  */
 
-import pg from 'pg';
 import { randomUUID } from 'crypto';
 import type { GradingReview, TeacherQueueRepo, ReviewStatus } from './teacher-queue';
 import type { GradeResult } from '../core/interfaces';
+import { getSharedPool } from '../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: any = null;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5, ...})` — now
+// the one shared pool (src/storage/pool.ts).
 function getPool() {
-  if (_pool) return _pool;
-  _pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 5,
-    idleTimeoutMillis: 30_000,
-  });
-  return _pool;
+  const pool = getSharedPool();
+  if (!pool) throw new Error('[teacher-queue-pg] DATABASE_URL not configured');
+  return pool;
 }
 
 // ────────────────────────────────────────────────────────────────────

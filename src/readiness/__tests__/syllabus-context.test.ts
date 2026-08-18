@@ -2,7 +2,7 @@
  * Tests for src/readiness/syllabus-context.ts — Wave 5 pure helpers.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   inferPhase,
   weeksToExam,
@@ -155,5 +155,39 @@ describe('eligibleNodes', () => {
       studentModel: modelWith({ pre_b: 'mastered', pre_c: 'learning' }),
     });
     expect(r).toEqual(['a', 'b']);
+  });
+
+  // ── T5/§7: prefetchedMastery perf seam ──────────────────────────
+
+  it('uses a prefetched mastery map instead of calling masteryState()', async () => {
+    const masteryState = vi.fn(async () => 'not-started' as MasteryState);
+    const r = await eligibleNodes(
+      ['calc2'],
+      's',
+      { curriculum: repo([N('calc2', ['calc1'])]), studentModel: { masteryState } },
+      new Map([['calc1', 'practicing']]),
+    );
+    expect(r).toEqual(['calc2']);
+    expect(masteryState).not.toHaveBeenCalled();
+  });
+
+  it('falls back to masteryState() for ids missing from the prefetch map', async () => {
+    const masteryState = vi.fn(async (_s: string, k: string) => (k === 'calc1' ? 'practicing' : 'not-started') as MasteryState);
+    const r = await eligibleNodes(
+      ['calc2'],
+      's',
+      { curriculum: repo([N('calc2', ['calc1'])]), studentModel: { masteryState } },
+      new Map(), // empty prefetch — every lookup falls back
+    );
+    expect(r).toEqual(['calc2']);
+    expect(masteryState).toHaveBeenCalledWith('s', 'calc1');
+  });
+
+  it('omitting prefetchedMastery preserves the original per-call behavior (backward compatible)', async () => {
+    const r = await eligibleNodes(['calc2'], 's', {
+      curriculum: repo([N('calc2', ['calc1'])]),
+      studentModel: modelWith({ calc1: 'practicing' }),
+    });
+    expect(r).toEqual(['calc2']);
   });
 });

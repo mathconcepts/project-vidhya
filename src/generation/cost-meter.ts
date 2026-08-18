@@ -56,6 +56,21 @@ const PRICES: Record<string, ModelPrice> = {
 // second, driftable copy of the same assumption.
 export const WOLFRAM_PER_CALL_USD = 0.001; // assumed enterprise rate; adjust as needed
 
+/**
+ * Whether `model` has a real entry in the price table (or is the flat-rate
+ * `wolfram` pseudo-model). Exists so callers that need to distinguish "priced
+ * at $0 because we know it's free" from "priced at $0 because the model id
+ * isn't recognized" can do so — `priceForCall` deliberately collapses that
+ * distinction (see its "unknown model" comment: returning 0 rather than
+ * guessing is correct for a generation run's cost ledger). A caller enforcing
+ * a spend CAP needs the opposite default — treating an unrecognized model as
+ * free would let the cap go unenforced the moment a model id drifts or a new
+ * one ships. `src/lib/chat-spend.ts` is that caller.
+ */
+export function isKnownModel(model: string): boolean {
+  return model === 'wolfram' || Object.prototype.hasOwnProperty.call(PRICES, model);
+}
+
 export function priceForCall(opts: {
   model: string;
   input_tokens?: number;

@@ -248,6 +248,45 @@ describe('timeout handling', () => {
   });
 });
 
+describe('tri-state verification outcome (T7 precondition)', () => {
+  it('an inconclusive result is queued for re-verify, distinct from a genuine failure', async () => {
+    writeBundle([{ id: 'p1', question_text: 'q1', correct_answer: '1' }]);
+    mockVerify.mockResolvedValue({
+      verified: false, status: 'inconclusive', wolfram_answer: null, latency_ms: 5,
+      error: 'HTTP 503',
+    });
+
+    const final = await runJob();
+    expect(final?.state).toBe('completed');
+    expect(final?.progress.done).toBe(1);
+    // Never marked verified, and never treated as a hard rejection — it's
+    // simply not yet resolved, same as before this policy landed, but now
+    // distinguishable in the checkpoint/logs from a genuine disagreement.
+    expect(readBundle().problems[0].wolfram_verified).toBeUndefined();
+    expect(mockSolve).not.toHaveBeenCalled(); // no step harvest for an unresolved item
+  });
+
+  it('a genuine disagreement is recorded as failed, not inconclusive', async () => {
+    writeBundle([{ id: 'p1', question_text: '2+2', correct_answer: '5' }]);
+    mockVerify.mockResolvedValue({
+      verified: false, status: 'failed', wolfram_answer: '4', latency_ms: 5,
+    });
+
+    const final = await runJob();
+    expect(final?.state).toBe('completed');
+    expect(readBundle().problems[0].wolfram_verified).toBeUndefined();
+  });
+
+  it('a mocked result with no status field (pre-tri-state shape) still behaves as before — falls through to the unverified branch', async () => {
+    writeBundle([{ id: 'p1', question_text: '2+2', correct_answer: '5' }]);
+    mockVerify.mockResolvedValue({ verified: false, wolfram_answer: '4', latency_ms: 5 });
+
+    const final = await runJob();
+    expect(final?.state).toBe('completed');
+    expect(readBundle().problems[0].wolfram_verified).toBeUndefined();
+  });
+});
+
 describe('shouldSkipProblem heuristics (mirrors scripts/verify-wolfram-batch.ts)', () => {
   it('skips missing/empty/long/narrative answers', () => {
     expect(shouldSkipProblem({ id: 'x' })).toBe('no-correct-answer');

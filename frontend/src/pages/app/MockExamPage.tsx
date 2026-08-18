@@ -2,23 +2,39 @@
  * MockExamPage — full-length timed mock exam with GBrain calibration.
  *
  * Flow: Start → Review → Answer each question with timer → Submit → Post-analysis
+ *
+ * T22 (ENG-D3): this page used to receive every question's `correct_answer`
+ * up front and grade itself client-side, self-reporting `isCorrect` back to
+ * the server. Both are gone: `GET /api/gbrain/mock-exam/:sessionId` now
+ * returns a render-safe question list (options only, no answer key — same
+ * index-based options shape PracticeAttemptPage uses), and submission goes
+ * through `POST /api/gbrain/mock-exam/:exam_id/submit`, which grades
+ * server-side via the same deterministic scorer the practice path uses.
+ * The timer chip is now the shared TimerPrimitive under its EXAM register
+ * (full exam chrome preserved — red past the last 10 minutes, same as
+ * before — this is the "MockExamPage's binary-red timer flip migrates to
+ * the shared primitive under its exam register" item from T22/DR-3).
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { apiFetch } from '@/hooks/useApi';
+import { authFetch } from '@/lib/auth/client';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { Clock, Flag, Loader2, Play } from 'lucide-react';
+import { Flag, Loader2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { TimerPrimitive } from '@/components/app/TimerPrimitive';
 
 interface Question {
   id: string;
-  question_text: string;
-  options?: Record<string, string> | string;
-  correct_answer: string;
+  question_text: string | null;
+  /** Index-ordered options (render-safe — no answer key). null = not gradable / free-text display only. */
+  options: string[] | null;
+  gradable: boolean;
+  question_type: 'mcq' | 'msq' | 'nat' | null;
   topic: string;
-  difficulty: string | number;
-  marks: number;
+  difficulty: string | number | null;
+  marks: number | null;
   source?: string;
 }
 
@@ -32,6 +48,21 @@ interface MockExam {
   section_breakdown: Record<string, number>;
 }
 
+interface SubmitResult {
+  exam_id: string;
+  total: number;
+  correct: number;
+  wrong: number;
+  skipped: number;
+  ungraded: number;
+  marks: number;
+  max_marks: number;
+  accuracy: number;
+  by_topic: Record<string, { correct: number; attempted: number; marks: number }>;
+  late: boolean;
+  recorded: boolean;
+}
+
 type Phase = 'ready' | 'in-progress' | 'submitting' | 'results';
 
 export default function MockExamPage() {
@@ -40,32 +71,52 @@ export default function MockExamPage() {
   const [phase, setPhase] = useState<Phase>('ready');
   const [loading, setLoading] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | null>>({});
+  // Per-question response: mcq → selected option index; msq → array of
+  // selected indices; nat → the raw string typed.
+  const [answers, setAnswers] = useState<Record<string, number | number[] | string | null>>({});
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<SubmitResult | null>(null);
   const startedAt = useRef(0);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     trackEvent('page_view', { page: 'mock-exam' });
   }, []);
 
+  // Adversarial-review fix (CRITICAL, same idiom as CheckpointQuizPage):
+  // this effect only re-runs on [phase], so calling `handleSubmit`
+  // directly from inside it would use the STALE closure captured when
+  // the timer started (`answers` still `{}` at that point) — every expiry
+  // auto-submit would grade as if the student answered nothing, no matter
+  // what they actually selected. `latestSubmitRef` is refreshed every
+  // render to the current `handleSubmit` (closing over current `answers`).
+  const latestSubmitRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    latestSubmitRef.current = handleSubmit;
+  });
+
   useEffect(() => {
     if (phase !== 'in-progress') return;
     const interval = setInterval(() => {
       setTimeRemaining(prev => {
-        if (prev <= 1) { handleSubmit(); return 0; }
+        if (prev <= 1) { latestSubmitRef.current(); return 0; }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const handleStart = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<MockExam>(`/api/gbrain/mock-exam/${sessionId}`);
-      setExam(data);
+      const r = await authFetch(`/api/gbrain/mock-exam/${sessionId}`);
+      const data = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
+      setExam(data as MockExam);
       setTimeRemaining(data.time_limit_minutes * 60);
+      setAnswers({});
+      setCurrentQ(0);
       setPhase('in-progress');
       startedAt.current = Date.now();
       trackEvent('mock_exam_start', { exam_id: data.exam_id, total_questions: data.total_questions });
@@ -76,68 +127,55 @@ export default function MockExamPage() {
     }
   };
 
-  const handleAnswer = (qId: string, answer: string | null) => {
-    setAnswers(prev => ({ ...prev, [qId]: answer }));
+  const handleAnswer = (qId: string, value: number | number[] | string | null) => {
+    setAnswers(prev => ({ ...prev, [qId]: value }));
+  };
+
+  /** MSQ toggle: flips membership of `i` in the question's selected-indices array. */
+  const toggleMsqOption = (qId: string, i: number) => {
+    setAnswers(prev => {
+      const current = Array.isArray(prev[qId]) ? (prev[qId] as number[]) : [];
+      const next = current.includes(i) ? current.filter(x => x !== i) : [...current, i];
+      return { ...prev, [qId]: next.length > 0 ? next : null };
+    });
   };
 
   const handleSubmit = async () => {
-    if (!exam) return;
+    if (!exam || submittingRef.current) return;
+    submittingRef.current = true;
     setPhase('submitting');
     trackEvent('mock_exam_submit', { exam_id: exam.exam_id, elapsed: Date.now() - startedAt.current });
 
-    const scheme = exam.marks_scheme;
-    let correct = 0, wrong = 0, skipped = 0, marks = 0;
-    const byTopic: Record<string, { correct: number; attempted: number; marks: number }> = {};
+    const responses = exam.questions
+      .filter(q => q.gradable)
+      .map(q => {
+        const a = answers[q.id];
+        if (a === undefined || a === null || a === '') return { id: q.id }; // skipped
+        if (q.question_type === 'nat') {
+          const num = Number(a);
+          return Number.isFinite(num) ? { id: q.id, value: num } : { id: q.id };
+        }
+        if (q.question_type === 'msq') {
+          return Array.isArray(a) && a.length > 0 ? { id: q.id, selectedIndices: a } : { id: q.id };
+        }
+        return typeof a === 'number' ? { id: q.id, selectedIndex: a } : { id: q.id };
+      });
 
-    for (const q of exam.questions) {
-      const studentAnswer = answers[q.id];
-      byTopic[q.topic] = byTopic[q.topic] || { correct: 0, attempted: 0, marks: 0 };
-
-      if (!studentAnswer) {
-        skipped++;
-        continue;
-      }
-      byTopic[q.topic].attempted++;
-
-      const isCorrect = studentAnswer === q.correct_answer;
-      if (isCorrect) {
-        correct++;
-        marks += scheme.correct;
-        byTopic[q.topic].correct++;
-        byTopic[q.topic].marks += scheme.correct;
-      } else {
-        wrong++;
-        marks += scheme.wrong;
-        byTopic[q.topic].marks += scheme.wrong;
-      }
-
-      apiFetch('/api/gbrain/attempt', {
+    try {
+      const r = await authFetch(`/api/gbrain/mock-exam/${exam.exam_id}/submit`, {
         method: 'POST',
-        body: JSON.stringify({
-          sessionId,
-          problem: q.question_text,
-          studentAnswer,
-          correctAnswer: q.correct_answer,
-          conceptId: q.topic,
-          isCorrect,
-          difficulty: typeof q.difficulty === 'number' ? q.difficulty : 0.5,
-          problemId: q.id,
-        }),
-      }).catch(() => {});
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, responses }),
+      });
+      const data = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
+      setResults(data as SubmitResult);
+    } catch (err) {
+      alert('Could not submit exam: ' + (err as Error).message);
+    } finally {
+      submittingRef.current = false;
+      setPhase('results');
     }
-
-    setResults({
-      exam_id: exam.exam_id,
-      total: exam.questions.length,
-      correct, wrong, skipped,
-      marks,
-      max_marks: exam.questions.length * scheme.correct,
-      accuracy: correct + wrong > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0,
-      time_taken_sec: Math.round((Date.now() - startedAt.current) / 1000),
-      by_topic: byTopic,
-    });
-
-    setPhase('results');
   };
 
   // ── Ready screen ──────────────────────────────────────────────
@@ -154,13 +192,7 @@ export default function MockExamPage() {
         </div>
 
         {/* Info card */}
-        <div style={{
-          padding: '20px 16px',
-          borderRadius: 'var(--radius-lg)',
-          background: 'var(--surface-card)',
-          boxShadow: 'var(--shadow-card)',
-          textAlign: 'center',
-        }}>
+        <Card elevated style={{ padding: '20px 16px', textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 32, paddingBottom: 16, marginBottom: 16, borderBottom: 'var(--hairline) solid var(--separator)' }}>
             <div>
               <p style={{ margin: 0, fontSize: 28, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>180</p>
@@ -175,7 +207,7 @@ export default function MockExamPage() {
           <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-normal)' }}>
             Syllabus-weighted, mastery-calibrated. Difficulty biased to your Zone of Proximal Development.
           </p>
-        </div>
+        </Card>
 
         {/* Rules */}
         <div style={{
@@ -207,11 +239,11 @@ export default function MockExamPage() {
   // ── In progress ──────────────────────────────────────────────
   if (phase === 'in-progress' && exam) {
     const q = exam.questions[currentQ];
-    const answered = Object.values(answers).filter(Boolean).length;
-    const mins = Math.floor(timeRemaining / 60);
-    const secs = timeRemaining % 60;
-    const options = typeof q.options === 'string' ? JSON.parse(q.options || '{}') : (q.options || {});
-    const isLowTime = timeRemaining < 600;
+    const answered = Object.values(answers).filter(v => {
+      if (v === null || v === undefined || v === '') return false;
+      if (Array.isArray(v)) return v.length > 0; // msq: an emptied selection is not "answered"
+      return true;
+    }).length;
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -229,53 +261,54 @@ export default function MockExamPage() {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-xs)',
-            background: isLowTime ? 'rgba(255,59,48,.1)' : 'var(--surface-fill)',
-            fontFamily: 'var(--font-mono)',
-            fontWeight: 'var(--weight-bold)',
-            fontSize: 'var(--text-footnote)',
-            color: isLowTime ? 'var(--red)' : 'var(--text-primary)',
-          }}>
-            <Clock size={13} />
-            {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-          </div>
+          <TimerPrimitive
+            totalSeconds={exam.time_limit_minutes * 60}
+            remainingSeconds={timeRemaining}
+            register="exam"
+            lowThresholdSeconds={600}
+          />
           <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
             {currentQ + 1} / {exam.questions.length} · {answered} answered
           </span>
         </div>
 
         {/* Question card */}
-        <div style={{
-          padding: '16px',
-          borderRadius: 'var(--radius-lg)',
-          background: 'var(--surface-card)',
-          boxShadow: 'var(--shadow-card)',
-        }}>
+        <Card elevated padding={16}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <span style={{ fontSize: 'var(--text-caption2)', fontFamily: 'var(--font-mono)', color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {q.topic}
             </span>
             <span style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
-              {q.source === 'generated' ? 'GBrain' : 'PYQ'} · {q.marks || 2}m
+              {q.source === 'generated' ? 'GBrain' : 'PYQ'} · {q.marks ?? 2}m
             </span>
           </div>
           <p style={{ margin: '0 0 16px', fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-normal)', whiteSpace: 'pre-wrap' }}>
             {q.question_text}
           </p>
 
-          {Object.keys(options).length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {Object.entries(options).map(([key, value]) => {
-                const isSelected = answers[q.id] === key;
+          {!q.gradable && (
+            <p style={{ margin: '0 0 12px', fontSize: 'var(--text-caption)', color: 'var(--orange-ink)' }}>
+              This item isn't deterministically gradable — it won't count toward your marks.
+            </p>
+          )}
+
+          {q.options && q.options.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role={q.question_type === 'msq' ? 'group' : 'radiogroup'}>
+              {q.question_type === 'msq' && (
+                <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+                  Select every correct option — full marks only for the exact set.
+                </p>
+              )}
+              {q.options.map((opt, i) => {
+                const isSelected = q.question_type === 'msq'
+                  ? Array.isArray(answers[q.id]) && (answers[q.id] as number[]).includes(i)
+                  : answers[q.id] === i;
                 return (
                   <button
-                    key={key}
-                    onClick={() => handleAnswer(q.id, isSelected ? null : key)}
+                    key={i}
+                    role={q.question_type === 'msq' ? 'checkbox' : 'radio'}
+                    aria-checked={isSelected}
+                    onClick={() => q.question_type === 'msq' ? toggleMsqOption(q.id, i) : handleAnswer(q.id, isSelected ? null : i)}
                     style={{
                       width: '100%',
                       textAlign: 'left',
@@ -290,8 +323,8 @@ export default function MockExamPage() {
                       transition: 'border-color var(--dur-fast) var(--ease-standard)',
                     }}
                   >
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--weight-bold)', marginRight: 8 }}>{key}.</span>
-                    {value as string}
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--weight-bold)', marginRight: 8 }}>{String.fromCharCode(65 + i)}.</span>
+                    {opt}
                   </button>
                 );
               })}
@@ -299,7 +332,7 @@ export default function MockExamPage() {
           ) : (
             <input
               type="text"
-              value={answers[q.id] || ''}
+              value={typeof answers[q.id] === 'string' ? (answers[q.id] as string) : ''}
               onChange={e => handleAnswer(q.id, e.target.value || null)}
               placeholder="Enter your answer…"
               style={{
@@ -316,7 +349,7 @@ export default function MockExamPage() {
               }}
             />
           )}
-        </div>
+        </Card>
 
         {/* Navigation */}
         <div style={{ display: 'flex', gap: 8 }}>
@@ -385,33 +418,36 @@ export default function MockExamPage() {
         <div style={{ padding: '12px', borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)' }}>
           <p style={{ margin: '0 0 8px', fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Jump to</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4 }}>
-            {exam.questions.map((qq, i) => (
-              <button
-                key={qq.id}
-                onClick={() => setCurrentQ(i)}
-                style={{
-                  height: 28,
-                  borderRadius: 6,
-                  border: 'none',
-                  fontSize: 10,
-                  fontWeight: 'var(--weight-bold)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-mono)',
-                  background: i === currentQ
-                    ? 'var(--indigo)'
-                    : answers[qq.id]
-                    ? 'rgba(52,199,89,.15)'
-                    : 'var(--surface-card)',
-                  color: i === currentQ
-                    ? '#fff'
-                    : answers[qq.id]
-                    ? 'var(--green-ink)'
-                    : 'var(--text-tertiary)',
-                }}
-              >
-                {i + 1}
-              </button>
-            ))}
+            {exam.questions.map((qq, i) => {
+              const isAnswered = answers[qq.id] !== null && answers[qq.id] !== undefined && answers[qq.id] !== '';
+              return (
+                <button
+                  key={qq.id}
+                  onClick={() => setCurrentQ(i)}
+                  style={{
+                    height: 28,
+                    borderRadius: 6,
+                    border: 'none',
+                    fontSize: 10,
+                    fontWeight: 'var(--weight-bold)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                    background: i === currentQ
+                      ? 'var(--indigo)'
+                      : isAnswered
+                      ? 'rgba(52,199,89,.15)'
+                      : 'var(--surface-card)',
+                    color: i === currentQ
+                      ? '#fff'
+                      : isAnswered
+                      ? 'var(--green-ink)'
+                      : 'var(--text-tertiary)',
+                  }}
+                >
+                  {i + 1}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -432,7 +468,7 @@ export default function MockExamPage() {
 
   // ── Results ──────────────────────────────────────────────
   if (phase === 'results' && results) {
-    const pct = Math.round((results.marks / results.max_marks) * 100);
+    const pct = results.max_marks > 0 ? Math.round((results.marks / results.max_marks) * 100) : 0;
     const scoreColor = pct >= 50 ? 'var(--green-ink)' : pct >= 25 ? 'var(--orange)' : 'var(--red)';
     const scoreBg = pct >= 50 ? 'rgba(52,199,89,.1)' : pct >= 25 ? 'rgba(255,159,10,.1)' : 'rgba(255,59,48,.1)';
 
@@ -457,6 +493,21 @@ export default function MockExamPage() {
           <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)' }}>
             out of {results.max_marks} marks · {pct}%
           </p>
+          {results.late && (
+            <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--orange-ink)' }}>
+              Time's up — what you answered is graded.
+            </p>
+          )}
+          {results.ungraded > 0 && (
+            <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+              {results.ungraded} question{results.ungraded === 1 ? '' : 's'} couldn't be graded and {results.ungraded === 1 ? "wasn't" : "weren't"} counted.
+            </p>
+          )}
+          {!results.recorded && (
+            <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--orange-ink)' }}>
+              Graded, but not recorded (server storage unavailable).
+            </p>
+          )}
         </div>
 
         {/* Stats grid */}
@@ -474,12 +525,12 @@ export default function MockExamPage() {
         </div>
 
         {/* Topic breakdown */}
-        <div style={{ padding: '14px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)' }}>
+        <Card radius="var(--radius-md)" style={{ padding: '14px 16px' }}>
           <p style={{ margin: '0 0 10px', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', fontWeight: 'var(--weight-semibold)' }}>
             Topic breakdown
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {Object.entries(results.by_topic).map(([topic, s]: [string, any]) => (
+            {Object.entries(results.by_topic).map(([topic, s]) => (
               <div key={topic} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>
                   {topic.replace(/-/g, ' ')}
@@ -494,7 +545,7 @@ export default function MockExamPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* GBrain insight */}
         <div style={{

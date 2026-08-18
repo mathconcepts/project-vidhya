@@ -424,11 +424,29 @@ async function updateProblemStats(problemId: string): Promise<void> {
   );
 }
 
+/**
+ * `generated_problems.id` is a UUID column. T21 (outside-voice amendment 4):
+ * authored items served through `FileLearningObjectCatalog` (and now the
+ * composite catalog) carry TEXT ids like `la-eigen-trace-det-001`, which a
+ * bare `WHERE id = $1` fails to cast against a UUID column — every attempt
+ * on an authored item threw here and was only silently swallowed by the
+ * caller's `.catch()`. Recognizing the id shape up front and no-op'ing for
+ * non-UUID ids fixes the error AND the log noise: authored items have no
+ * empirical-difficulty column to update in the first place.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Record that a student answered a generated problem (for empirical difficulty calibration) */
 export async function recordProblemAttempt(
   problemId: string,
   wasCorrect: boolean,
 ): Promise<void> {
+  if (!UUID_RE.test(problemId)) {
+    // A file-authored item (or any other non-UUID id) — nothing to
+    // recalibrate, and nothing to log; this is the expected shape for
+    // those items, not an error condition.
+    return;
+  }
   const pool = getPool();
   await pool.query(
     `UPDATE generated_problems SET

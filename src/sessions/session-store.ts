@@ -107,6 +107,33 @@ export interface SessionStore {
   markCompleted(studymateId: string, stat: string): Promise<void>;
 }
 
+// ─── Difficulty bucket mapping (T3 / A2) ───────────────────────────────────
+//
+// pyq_questions.difficulty is TEXT CHECK (difficulty IN ('easy','medium',
+// 'hard')) — see supabase/migrations/001_rag_schema.sql:45. Callers pass a
+// NUMERIC maxDifficulty (0..1, the same convention used for
+// concept.difficulty_base elsewhere in the app), so a literal
+// `difficulty <= $2` comparison against the TEXT column throws. Bucket
+// boundaries match the established numeric<->bucket convention already
+// used across the codebase (gbrain/problem-generator.ts,
+// content/resolver.ts, gbrain/student-model.ts): <0.33 easy, <0.66 medium,
+// else hard. "difficulty <= maxDifficulty" becomes "bucket is easy, or
+// (maxDifficulty allows medium and) bucket is medium, or ... " — i.e. every
+// bucket at or below maxDifficulty's own bucket.
+export function difficultyBucketsUpTo(maxDifficulty: number): Array<'easy' | 'medium' | 'hard'> {
+  if (maxDifficulty < 0.33) return ['easy'];
+  if (maxDifficulty < 0.66) return ['easy', 'medium'];
+  return ['easy', 'medium', 'hard'];
+}
+
+// Inverse of the above, for turning a stored TEXT bucket back into the
+// numeric difficulty SessionProblemRow.difficulty (and every other
+// difficulty-consuming caller) expects — same easy/medium/hard midpoints
+// FlatFileStore.fetchProblemsForConcept already uses below.
+export function numericDifficultyFromBucket(bucket: string | null | undefined): number {
+  return bucket === 'easy' ? 0.25 : bucket === 'hard' ? 0.75 : 0.5;
+}
+
 // ─── Postgres backend ─────────────────────────────────────────────────────
 
 class PostgresStore implements SessionStore {
@@ -120,18 +147,23 @@ class PostgresStore implements SessionStore {
     maxDifficulty: number,
     excludeIds: Set<string>,
   ): Promise<SessionProblemRow | null> {
+    // concept_id (migration 044), question_text, correct_answer are the
+    // real pyq_questions columns — `concept_id`/`question`/`expected_answer`
+    // never existed (base schema: supabase/migrations/001_rag_schema.sql:
+    // 36-50), and `difficulty` is TEXT, not numeric. See difficultyBucketsUpTo
+    // above for the bucket-mapping rationale.
     const { rows } = await this.pool.query<{
-      id: string; topic: string; difficulty: number;
-      question: string; expected_answer: string; source: string; source_url?: string;
+      id: string; topic: string; difficulty: string;
+      question_text: string; correct_answer: string; source: string; source_url?: string;
     }>(
-      `SELECT id, topic, difficulty, question, expected_answer, source, source_url
+      `SELECT id, topic, difficulty, question_text, correct_answer, source, source_url
        FROM pyq_questions
        WHERE concept_id = $1
-         AND difficulty <= $2
+         AND difficulty = ANY($2::text[])
          AND id != ALL($3::uuid[])
        ORDER BY RANDOM()
        LIMIT 1`,
-      [conceptId, maxDifficulty, [...excludeIds]],
+      [conceptId, difficultyBucketsUpTo(maxDifficulty), [...excludeIds]],
     );
     if (!rows[0]) return null;
     const r = rows[0];
@@ -139,9 +171,9 @@ class PostgresStore implements SessionStore {
       problem_id: r.id,
       concept_id: conceptId,
       topic: r.topic,
-      difficulty: r.difficulty,
-      question: r.question,
-      expected_answer: r.expected_answer,
+      difficulty: numericDifficultyFromBucket(r.difficulty),
+      question: r.question_text,
+      expected_answer: r.correct_answer,
       source: r.source,
       source_url: r.source_url,
     };
@@ -191,6 +223,10 @@ class PostgresStore implements SessionStore {
   }
 
   async getSessionProblems(studymateId: string) {
+    // KNOWN BUG, out of scope for T3: pq.question / pq.expected_answer are
+    // the same wrong column names fetchProblemsForConcept had — pyq_questions
+    // has question_text/correct_answer instead — so this query throws too.
+    // Not touched here; T3's scope is fetchProblemsForConcept + concept_id.
     const { rows } = await this.pool.query(
       `SELECT ssp.studymate_id, ssp.problem_id, ssp.concept_id, ssp.position,
               ssp.user_answer, ssp.was_correct, ssp.gap_text, ssp.answered_at,

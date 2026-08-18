@@ -147,6 +147,34 @@ describe('check-content-integrity fails on what it claims to catch', () => {
     expect(r.code, r.out).toBe(0);
   });
 
+  it('catches a leaked tool/agent error message', () => {
+    // Real leak from rank-nullity's worked-example.md: the authoring tool's
+    // own permission-handler failure, rendered in the lesson.
+    const r = runGate(
+      'check-content-integrity.ts',
+      makeCorpus(
+        'toolerror',
+        `${CLEAN_BODY}\n\n**Error encountered:** The Write tool permission handler is misconfigured on this system. The atoms above are ready to be written to the file paths specified.`,
+      ),
+    );
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/tool\/agent error/i);
+  });
+
+  it('does NOT trip on legitimate math prose that uses the word "error" or "write"', () => {
+    // A word-level match here would refuse every stats/numerical-methods
+    // atom in the corpus. The rule needs the specific vocabulary of a tool
+    // failure report, not the bare words.
+    const r = runGate(
+      'check-content-integrity.ts',
+      makeCorpus(
+        'mathprose',
+        `${CLEAN_BODY}\n\nThe standard error shrinks as sample size grows, and round-off error compounds across iterations. We write the matrix in row-echelon form before reading off the rank.`,
+      ),
+    );
+    expect(r.code, r.out).toBe(0);
+  });
+
   it('refuses an empty corpus rather than reporting success', () => {
     // "Nothing to check" passing as "everything is clean" is the exact
     // false-green this whole file exists to prevent.

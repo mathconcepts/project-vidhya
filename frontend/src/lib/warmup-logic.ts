@@ -56,6 +56,67 @@ export const WARMUP_SAVE_ERROR_COPY =
 export const WARMUP_LOAD_ERROR_COPY = "Couldn't load your next question — tap to retry.";
 export const WARMUP_EARLY_READY_COPY = 'Your starting line is ready.';
 
+/**
+ * Red-team fix 1 (CRITICAL): an anonymous visitor can complete the entire
+ * warmup — /warmup/next and /warmup/apply are anonymous-friendly by design
+ * — but POST /api/readiness/warmup/persist requires a signed-in student.
+ * The old code funneled a 401 there into WARMUP_SAVE_ERROR_COPY, whose
+ * "tap to retry" is a lie for this case: retrying the same anonymous
+ * request can never succeed. This copy is honest about what's actually
+ * true — the answers are NOT lost, but saving them needs an account.
+ */
+export const WARMUP_SIGNIN_REQUIRED_COPY =
+  "Sign in to save your placement — your answers are kept.";
+export const WARMUP_SIGNIN_CTA_LABEL = 'Sign in';
+export const WARMUP_SIGNIN_RETRY_LABEL = 'Already signed in? Save now';
+
+/**
+ * Classifies a failed POST /api/readiness/warmup/persist response into the
+ * UI phase it should route to. 401 (no resolvable student — anonymous
+ * caller) is categorically different from every other failure: it is not
+ * transient, so it gets its own 'sign-in' phase instead of the generic,
+ * infinitely-retriable 'save-error' phase. Any other status (5xx, network
+ * hiccup surfaced as a thrown error before a status exists, etc.) keeps
+ * the existing retry behaviour — those genuinely can succeed on retry.
+ */
+export type PersistFailureKind = 'sign-in' | 'save-error';
+
+export function classifyPersistFailure(status: number | null | undefined): PersistFailureKind {
+  return status === 401 ? 'sign-in' : 'save-error';
+}
+
+/** localStorage key for warmup results that finished but couldn't be
+ *  persisted because the caller was anonymous. Lets the student sign in,
+ *  come back to /warmup, and have their answers saved automatically
+ *  instead of re-taking the whole diagnostic. */
+export const WARMUP_PENDING_RESULTS_KEY = 'vidhya.warmup.pendingResults.v1';
+
+export function savePendingWarmupResults(results: unknown): void {
+  try {
+    localStorage.setItem(WARMUP_PENDING_RESULTS_KEY, JSON.stringify(results));
+  } catch {
+    /* private mode / storage full — the in-memory resultsRef in
+       WarmupPage still holds the answers for this tab session. */
+  }
+}
+
+export function loadPendingWarmupResults<T = unknown>(): T | null {
+  try {
+    const raw = localStorage.getItem(WARMUP_PENDING_RESULTS_KEY);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingWarmupResults(): void {
+  try {
+    localStorage.removeItem(WARMUP_PENDING_RESULTS_KEY);
+  } catch {
+    /* nothing to clean up if storage isn't available */
+  }
+}
+
 export type PlacementDot = 'placed' | 'frontier' | 'later';
 
 export interface PlacementRow {

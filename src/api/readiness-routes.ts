@@ -251,11 +251,26 @@ function parsePersistResults(raw: unknown): PerConceptWarmupResult[] | null {
  * currently persists nothing)". Takes the per-concept WarmupReport
  * summaries the client collected while walking the curated spine (see
  * handleWarmupApply's `summary` field above) and writes them as priors via
- * applyWarmupPriors(). Auth-gated the same way as next-action — the
- * platform is anonymous-first, but by the time priors are being persisted
- * the caller has SOME resolvable student id (the same JWT-based identity
- * next-action already requires), matching amendment 6's "session↔user
- * mapping" scoping.
+ * applyWarmupPriors(). Auth-gated the same way as next-action.
+ *
+ * Red-team fix 1 (CRITICAL): unlike next-action, this endpoint IS reachable
+ * by an anonymous caller in practice — /warmup/next and /warmup/apply above
+ * are deliberately anonymous-friendly (matching the platform's
+ * anonymous-first design), and nothing gates entry into the warmup flow on
+ * being signed in (KnowledgeHomePage's CTA and PlannedSessionPage's
+ * WarmupEntryCard both offer it to anonymous visitors, and /warmup itself
+ * has no route guard). So an anonymous student can walk the entire
+ * diagnostic and only discover here, at the very last step, that there is
+ * no resolvable student id to persist against — requireRole() 401s, same
+ * as it does for any other unauthenticated caller. That is intentional
+ * (an anonymous placement has nowhere durable to live), but it is NOT a
+ * corner case: it is the default outcome for an anonymous visitor who
+ * completes the warmup without having signed in first. The client
+ * (frontend/src/pages/app/WarmupPage.tsx + warmup-logic.ts's
+ * classifyPersistFailure) is responsible for routing a 401 here to an
+ * honest "sign in to save your placement" phase rather than an
+ * infinitely-retriable generic error, and for keeping the results around
+ * (localStorage + in-memory) so a later sign-in can still save them.
  *
  * Idempotent: applyWarmupPriors() upserts with GREATEST(), so calling this
  * twice with the same (or a subset of the same) results never regresses

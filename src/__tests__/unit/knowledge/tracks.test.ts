@@ -101,12 +101,36 @@ describe('knowledge/tracks', () => {
   });
 
   describe('id format consistency', () => {
-    it('every track id matches BOARD-GRADE_NUM-SUBJECT_PREFIX format', () => {
+    it('every school-board track id matches BOARD-GRADE_NUM-SUBJECT_PREFIX format', () => {
+      // GATE-MA (A9, Milestone A) is deliberately excluded: it's a
+      // postgraduate entrance track, not a board/grade/subject-shaped
+      // school curriculum — see the concept_graph_topic doc comment on
+      // KnowledgeTrack in ../../../knowledge/tracks.ts.
       for (const t of listTracks()) {
+        if (t.id === 'GATE-MA') continue;
         // e.g. "CBSE-12-MATH" or "KAR-PUE-12-BIOL"
         // Format: <BOARD>-<GRADE_NUM>-<SUBJECT_PREFIX_4>
         expect(t.id).toMatch(/^[A-Z][A-Z\-]+-1[12]-[A-Z]{4}$/);
       }
+    });
+  });
+
+  describe('GATE-MA (A9)', () => {
+    it('resolves and points at the real linear-algebra concept graph', () => {
+      const t = getTrack('GATE-MA');
+      expect(t).not.toBeNull();
+      expect(t?.concept_graph_topic).toBe('linear-algebra');
+      expect(t?.suggested_exam_ids).toContain('EXM-GATE-MATH-SAMPLE');
+    });
+
+    it('is grouped under its own GATE board, not nested inside a school board', () => {
+      const grouped = listTracksByBoard();
+      const gate = grouped.find(g => g.board === 'GATE');
+      expect(gate).toBeDefined();
+      const ids = gate!.grades.flatMap(g => g.subjects.map(s => s.id));
+      expect(ids).toContain('GATE-MA');
+      const cbse = grouped.find(g => g.board === 'CBSE');
+      expect(cbse!.grades.flatMap(g => g.subjects.map(s => s.id))).not.toContain('GATE-MA');
     });
   });
 });

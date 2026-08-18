@@ -20,6 +20,23 @@
  *
  * Also tracks per-arm selection counts and the diagnose-fallback count
  * ("building your baseline" — cold-start / DB-less / error responses).
+ *
+ * A9 note (amendment 11 — "exam scoping for (a) arrives with A9's GATE-MA
+ * track"): these counters are global, in-process, and unscoped by exam —
+ * `recordObjectIdOutcome()` / `recordArmSelection()` don't know which exam
+ * (or track) the calling request was for. That's a real gap: metric (a)
+ * alone is trivially satisfiable while only linear-algebra has gradable
+ * items, because a non-LA student's fallback response is indistinguishable
+ * from an LA student's real one in the aggregate. Scoping this properly
+ * means threading an `exam_id` (or track id) from `handleNextAction`
+ * (src/api/readiness-routes.ts) through every `record*` call here AND
+ * splitting `Counters` into a `Record<examId, Counters>` (plus the admin
+ * route, src/api/admin-readiness-metrics-routes.ts, gaining an `?exam=`
+ * filter) — a real seam exists (every call site already has `user.userId`
+ * and, via GATE-MA, a resolvable track/exam), but wiring it is a second
+ * change with its own blast radius across the counters' shape and the
+ * admin consumer, deliberately left for a follow-up rather than bundled
+ * into this track-only PR.
  */
 
 import type { ActionKind } from '../core/interfaces';

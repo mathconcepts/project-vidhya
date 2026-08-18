@@ -106,6 +106,13 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
   const exam = req.query.get('exam') || 'gate';
   if (!sessionId) return sendError(res, 400, 'sessionId required');
 
+  // A student may only generate a mock exam for THEIR OWN session — never
+  // an arbitrary path param (IDOR). Teachers/admins are exempt: they
+  // legitimately generate mock exams for students they don't own.
+  if (user.role === 'student' && sessionId !== user.userId) {
+    return sendError(res, 403, 'cannot generate a mock exam for another session');
+  }
+
   let assembled: Awaited<ReturnType<typeof generateMockExamProd>>;
   try {
     assembled = await deps.generateMockExam(sessionId, exam);
@@ -152,17 +159,16 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
   const existing = await deps.getMockExam(examId).catch(() => null);
   if (!existing) return sendError(res, 404, `unknown mock exam: ${examId}`);
 
-  const body = (req.body ?? {}) as Record<string, unknown>;
-  // Best-effort ownership continuity: if the client names the session it
-  // generated the exam under, it must match. Loose by design — this
-  // legacy GBrain surface has no formal session<->user binding elsewhere
-  // (tracked as a follow-up, not silently assumed) — but this closes the
-  // straightforward case of grading against a session_id that was never
-  // used to create this exam.
-  if (typeof body.session_id === 'string' && body.session_id !== existing.sessionId) {
+  // Ownership is enforced against the STORED exam's sessionId vs the
+  // authenticated caller — never against a client-supplied body field
+  // (omitting session_id from the body must NOT skip this check; that was
+  // the IDOR). Teachers/admins are exempt — they legitimately generate and
+  // grade mock exams for students they don't own.
+  if (user.role === 'student' && existing.sessionId !== user.userId) {
     return sendError(res, 404, `unknown mock exam: ${examId}`);
   }
 
+  const body = (req.body ?? {}) as Record<string, unknown>;
   const now = deps.now();
   const claim = await deps.claimMockExamSubmission(examId, now.getTime());
   if (!claim) return sendError(res, 404, `unknown mock exam: ${examId}`);

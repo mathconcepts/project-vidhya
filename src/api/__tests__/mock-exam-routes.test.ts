@@ -92,11 +92,70 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
   });
   afterEach(() => setMockExamDepsForTests(null));
 
-  it('requires auth', async () => {
+  it('requires auth — denies the request and never touches generation when requireRole rejects', async () => {
+    // requireRole is fully mocked here (as production requireRole would
+    // have already sent the 401 and returned null), so this locks the
+    // HANDLER's OWN denial behavior: it must return immediately without
+    // ever reaching generation/persistence — this would still pass a
+    // weaker "requireRole was called" assertion even if the `if (!user)
+    // return;` guard were deleted, since it never inspects what the
+    // handler does with a null user.
     mockRequireRole.mockResolvedValue(null);
+    const generateMock = vi.fn();
+    const createMock = vi.fn();
+    setMockExamDepsForTests({ generateMockExam: generateMock, createMockExam: createMock });
     const r = makeRes();
     await generateHandler(makeReq(null, { sessionId: 's1' }), r.res);
     expect(mockRequireRole).toHaveBeenCalled();
+    expect(generateMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
+    expect(r.payload).toBeNull(); // no response body was ever written — the handler returned before touching res
+  });
+
+  it('blocks a student from generating a mock exam under another session id (IDOR)', async () => {
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+    const generateMock = vi.fn();
+    setMockExamDepsForTests({ generateMockExam: generateMock });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'someone-elses-session' }), r.res);
+    expect(r.status).toBe(403);
+    expect(generateMock).not.toHaveBeenCalled();
+  });
+
+  it('allows a student to generate a mock exam under their OWN session id', async () => {
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+    const store = makeFakeStore();
+    setMockExamDepsForTests({
+      generateMockExam: async () => ({
+        exam_id: 'mock-1', exam_name: 'GATE', time_limit_minutes: 180,
+        total_questions: 1, marks_scheme: { correct: 2, wrong: -0.67 },
+        questions: [PYQ_Q], section_breakdown: {},
+      } as any),
+      createMockExam: store.createMockExam, getMockExam: store.getMockExam,
+      claimMockExamSubmission: store.claimMockExamSubmission, finalizeMockExamSubmission: store.finalizeMockExamSubmission,
+      now: () => NOW,
+    });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'student-1' }), r.res);
+    expect(r.status).toBe(200);
+  });
+
+  it('allows a teacher to generate a mock exam for a session that is not their own', async () => {
+    mockRequireRole.mockResolvedValue({ userId: 'teacher-1', role: 'teacher' });
+    const store = makeFakeStore();
+    setMockExamDepsForTests({
+      generateMockExam: async () => ({
+        exam_id: 'mock-1', exam_name: 'GATE', time_limit_minutes: 180,
+        total_questions: 1, marks_scheme: { correct: 2, wrong: -0.67 },
+        questions: [PYQ_Q], section_breakdown: {},
+      } as any),
+      createMockExam: store.createMockExam, getMockExam: store.getMockExam,
+      claimMockExamSubmission: store.claimMockExamSubmission, finalizeMockExamSubmission: store.finalizeMockExamSubmission,
+      now: () => NOW,
+    });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'some-student-session' }), r.res);
+    expect(r.status).toBe(200);
   });
 
   it('NEVER leaks correct_answer / answer_index / answer_indices / answer_range to the client', async () => {
@@ -113,7 +172,7 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
       now: () => NOW,
     });
     const r = makeRes();
-    await generateHandler(makeReq(null, { sessionId: 's1' }), r.res);
+    await generateHandler(makeReq(null, { sessionId: 'student-1' }), r.res);
     expect(r.status).toBe(200);
 
     const raw = JSON.stringify(r.payload);
@@ -141,9 +200,9 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
   });
   afterEach(() => setMockExamDepsForTests(null));
 
-  async function seededExam() {
+  async function seededExam(sessionId = 'student-1') {
     const store = makeFakeStore();
-    await store.createMockExam({ id: 'mock-1', sessionId: 's1', examKey: 'gate', questions: [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED], timeLimitMinutes: 180 });
+    await store.createMockExam({ id: 'mock-1', sessionId, examKey: 'gate', questions: [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED], timeLimitMinutes: 180 });
     return store;
   }
 
@@ -201,11 +260,42 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
     expect(r.status).toBe(404);
   });
 
-  it('404s when a supplied session_id does not match the exam it was created under', async () => {
-    const store = await seededExam();
+  it('blocks a student from submitting to another session\'s exam (IDOR) even with session_id OMITTED from the body', async () => {
+    // exam belongs to 'someone-elses-session'; the authenticated caller is 'student-1'.
+    const store = await seededExam('someone-elses-session');
     setMockExamDepsForTests({ ...store, now: () => NOW });
     const r = makeRes();
-    await submitHandler(makeReq({ session_id: 'someone-elses-session', responses: [] }, { id: 'mock-1' }), r.res);
+    // No session_id field at all — the old body-volunteered check would
+    // have silently skipped ownership entirely here.
+    await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
     expect(r.status).toBe(404);
+  });
+
+  it('blocks a student from submitting to another session\'s exam even when the body LIES about session_id', async () => {
+    const store = await seededExam('someone-elses-session');
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    const r = makeRes();
+    // Body claims ownership of the right session — must not be trusted.
+    await submitHandler(makeReq({ session_id: 'someone-elses-session', responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    expect(r.status).toBe(404);
+  });
+
+  it('allows a teacher to grade a submission for an exam that is not their own session', async () => {
+    mockRequireRole.mockResolvedValue({ userId: 'teacher-1', role: 'teacher' });
+    const store = await seededExam('some-student-session');
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    const r = makeRes();
+    await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.correct).toBe(1);
+  });
+
+  it('allows a student to submit to their OWN session\'s exam', async () => {
+    const store = await seededExam('student-1');
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    const r = makeRes();
+    await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.correct).toBe(1);
   });
 });

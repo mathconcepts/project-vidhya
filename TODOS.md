@@ -4,6 +4,33 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Post-LA scaling of the Math-Academy layer
+
+**Trigger:** LA lift evidence in the effectiveness ledger (the `fire_v1_gate_ma`
+experiment resolving) AND catalog depth exceeding ~10 practice items per
+concept.
+
+**What:** two mechanisms that only pay off after Linear Algebra proves the
+pattern: (a) encompassing edges (`encompasses:` in `data/curriculum/gate-ma.yml`)
+for the remaining 71 concepts, and (b) interleaving / non-interference task
+ordering in the readiness engine.
+
+**Why:** both are core Math Academy mechanisms (see
+`docs/designs/linear-algebra-realtime-and-math-academy-plan.md`). Encompassing
+edges beyond LA multiply FIRe's review compression across the whole graph;
+interleaving needs item volume that does not exist below ~10/concept, which is
+also why quizzes carry a content-depth gate.
+
+**Where to start:** the LA edge-authoring guide and validation CI from B1 apply
+unchanged — scaling is authoring, not architecture. Interleaving slots into
+`ProtoCATSelector` scoring (`src/scoring/proto-cat-selector.ts`) as a
+similarity penalty between consecutively served items.
+
+**Effort:** XL human / L with CC, spread over months. **Priority:** P3.
+
+**Deferred from:** `/plan-ceo-review` 2026-08-18 (D7/OV review), branch
+`claude/linear-algebra-realtime-demo-evwq4b`.
+
 ## Blueprint stance axis for cadence attribution
 
 **Trigger:** a second cadence worth testing against the first, and session

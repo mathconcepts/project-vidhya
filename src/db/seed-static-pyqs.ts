@@ -27,6 +27,7 @@ import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
 import { gateMcqNegativeMarksFallback } from '../syllabus/exam-catalog';
+import { mapPyqTagsToConceptId, mapPyqTextToConceptId } from './pyq-concept-mapper';
 
 const TOPICS_DIR = path.resolve(process.cwd(), 'data/courses/gate-em/topics');
 
@@ -63,6 +64,11 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
   });
 
   let seededCount = 0;
+  // concept_id mapping summary (T3 / A2) — counted across both the fresh
+  // INSERT path and the migration-035 backfill below; never silently
+  // dropped, so an operator can see coverage without querying the DB.
+  let mappedCount = 0;
+  let unmappedCount = 0;
 
   for (const dirName of topicDirs) {
     const mcqsPath = path.join(TOPICS_DIR, dirName, 'mcqs.json');
@@ -80,6 +86,27 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
     const topic = DIR_TO_CANONICAL_TOPIC[fileSlug] || fileSlug;
     const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
     if (questions.length === 0) continue;
+
+    // Backfill concept_id on rows already seeded by a PAST server boot,
+    // BEFORE the skip-guard below `continue`s past this whole topic.
+    // Tags aren't persisted to pyq_questions (INSERT never wrote them), so
+    // matching against already-seeded rows has to go by exact question_text
+    // — the same text this file would insert, and the only field the
+    // mapper's text-keyword fallback also works from. Idempotent: only
+    // touches rows still NULL.
+    for (const q of questions) {
+      const conceptId = mapPyqTagsToConceptId(topic, q.tags) ?? mapPyqTextToConceptId(topic, q.question);
+      if (!conceptId) continue;
+      try {
+        await pool.query(
+          `UPDATE pyq_questions SET concept_id = $1
+             WHERE topic = $2 AND question_text = $3 AND concept_id IS NULL`,
+          [conceptId, topic, q.question],
+        );
+      } catch (err) {
+        console.error(`[seed-static-pyqs] Backfill failed for ${dirName}/${q.id}:`, (err as Error).message);
+      }
+    }
 
     // Idempotency: skip this topic once it already has real-PYQ rows —
     // avoids re-inserting the same 15 questions on every restart.
@@ -99,12 +126,14 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
     const examId = parsed.exam_id || 'gate-engineering-maths';
 
     for (const q of questions) {
+      const conceptId = mapPyqTagsToConceptId(topic, q.tags) ?? mapPyqTextToConceptId(topic, q.question);
+      if (conceptId) mappedCount++; else unmappedCount++;
       try {
         await pool.query(
           `INSERT INTO pyq_questions
              (exam_id, year, question_text, options, correct_answer, explanation,
-              topic, difficulty, marks, negative_marks, source)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'official_pyq')`,
+              topic, difficulty, marks, negative_marks, source, concept_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'official_pyq', $11)`,
           [
             examId,
             q.year ?? null,
@@ -119,6 +148,7 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
             // hardcoded `-0.33` literal (was duplicated with the identical
             // fallback in src/api/gate-routes.ts's staticProblemsForTopic()).
             q.negative_marks ?? gateMcqNegativeMarksFallback(q.marks ?? 1),
+            conceptId,
           ],
         );
         seededCount++;
@@ -128,8 +158,34 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
     }
   }
 
+  // Migration 035's 11 hand-inserted Tier-3 linear-algebra rows have no
+  // `tags` (raw SQL, not authored via mcqs.json) — backfill them via the
+  // text-keyword fallback only. Runs unconditionally (idempotent: only
+  // touches rows still NULL), independent of the topic-directory loop
+  // above since these rows aren't seeded from a static file.
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, question_text FROM pyq_questions
+         WHERE topic = 'linear-algebra' AND source = 'generated_tier3' AND concept_id IS NULL`,
+    );
+    for (const row of rows) {
+      const conceptId = mapPyqTextToConceptId('linear-algebra', row.question_text);
+      if (!conceptId) { unmappedCount++; continue; }
+      mappedCount++;
+      await pool.query(`UPDATE pyq_questions SET concept_id = $1 WHERE id = $2`, [conceptId, row.id]);
+    }
+  } catch (err) {
+    console.error('[seed-static-pyqs] Migration-035 backfill failed:', (err as Error).message);
+  }
+
   if (seededCount > 0) {
     console.log(`[seed-static-pyqs] Seeded ${seededCount} official PYQ(s) from static files`);
+  }
+  if (mappedCount > 0 || unmappedCount > 0) {
+    console.log(
+      `[seed-static-pyqs] concept_id mapping: ${mappedCount} mapped, ${unmappedCount} unmapped ` +
+      `(unmapped rows stay NULL — never guessed; see src/db/pyq-concept-mapper.ts)`,
+    );
   }
 
   return seededCount;

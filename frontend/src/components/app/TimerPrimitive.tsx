@@ -62,7 +62,7 @@ export function TimerPrimitive({ totalSeconds, remainingSeconds, register, lowTh
 
   const light = register === 'light';
   const background = isLow
-    ? (light ? 'var(--orange-tint)' : 'rgba(255,59,48,.1)')
+    ? (light ? 'var(--orange-tint)' : 'var(--red-tint)')
     : 'var(--surface-fill)';
   const color = isLow
     ? (light ? 'var(--orange-ink)' : 'var(--red)')

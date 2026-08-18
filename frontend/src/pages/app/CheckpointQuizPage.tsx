@@ -64,6 +64,12 @@ export default function CheckpointQuizPage() {
   const [responses, setResponses] = useState<Record<string, Response>>({});
   const [remainingSec, setRemainingSec] = useState(0);
   const [result, setResult] = useState<QuizResult | null>(null);
+  // NAT free-text display value (mirrors PracticeAttemptPage's natValue) —
+  // kept separate from `responses` so an in-progress/invalid keystroke
+  // ("-", ".", "") still renders in the field without recording a bogus
+  // response; a valid finite number is the only thing that reaches
+  // setResponse.
+  const [natInput, setNatInput] = useState('');
   const submittingRef = useRef(false);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -81,6 +87,13 @@ export default function CheckpointQuizPage() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, quiz]);
+
+  // Reset the NAT free-text field when the current item changes — otherwise
+  // a stale number would linger on screen after advancing even though
+  // `responses` (correctly) holds nothing for the new item yet.
+  useEffect(() => {
+    setNatInput('');
+  }, [quiz?.items[currentIdx]?.object_id]);
 
   async function handleStart() {
     setPhase('starting');
@@ -172,7 +185,7 @@ export default function CheckpointQuizPage() {
           onClick={handleStart}
           disabled={phase === 'starting'}
           style={{
-            padding: '12px 0', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: '#fff',
+            padding: '12px 0', borderRadius: 'var(--radius-sm)', background: 'var(--green)', color: 'var(--text-on-accent)',
             border: 'none', fontFamily: 'var(--font-sans)', fontWeight: 'var(--weight-semibold)', fontSize: 17,
             cursor: phase === 'starting' ? 'wait' : 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -308,7 +321,7 @@ export default function CheckpointQuizPage() {
                   width: '100%', minHeight: 44, textAlign: 'left', padding: '10px 12px',
                   borderRadius: 'var(--radius-sm)',
                   border: `1px solid ${isPicked(i) ? 'var(--green)' : 'var(--separator)'}`,
-                  background: isPicked(i) ? 'var(--green-tint, rgba(52,199,89,.08))' : 'var(--surface-fill)',
+                  background: isPicked(i) ? 'var(--green-tint)' : 'var(--surface-fill)',
                   color: isPicked(i) ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontSize: 15, fontFamily: 'var(--font-sans)', cursor: 'pointer',
                   fontWeight: isPicked(i) ? 'var(--weight-medium)' : undefined,
@@ -321,6 +334,32 @@ export default function CheckpointQuizPage() {
           </div>
         )}
 
+        {!current.options && current.question_type === 'nat' && (
+          <input
+            type="number"
+            step="any"
+            inputMode="decimal"
+            value={natInput}
+            onChange={(e) => {
+              setNatInput(e.target.value);
+              const num = Number(e.target.value);
+              if (e.target.value.trim() !== '' && Number.isFinite(num)) {
+                setResponse({ value: num });
+              }
+            }}
+            placeholder="Numeric answer…"
+            style={{
+              width: '100%', minHeight: 44, padding: '10px 12px',
+              borderRadius: 'var(--radius-sm)',
+              border: 'var(--hairline) solid var(--separator)',
+              background: 'var(--surface-fill)',
+              color: 'var(--text-primary)',
+              fontSize: 15, fontFamily: 'var(--font-sans)',
+              outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+        )}
+
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={goNext}
@@ -328,7 +367,7 @@ export default function CheckpointQuizPage() {
             style={{
               flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
               background: canAdvance ? 'var(--green)' : 'var(--surface-fill)',
-              color: canAdvance ? '#fff' : 'var(--text-tertiary)', border: 'none',
+              color: canAdvance ? 'var(--text-on-accent)' : 'var(--text-tertiary)', border: 'none',
               fontFamily: 'var(--font-sans)', fontWeight: 'var(--weight-semibold)', fontSize: 15,
               cursor: canAdvance ? 'pointer' : 'not-allowed',
             }}

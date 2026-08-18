@@ -223,7 +223,7 @@ function FrontierSheet({ node, onClose }: { node: FrontierNode; onClose: () => v
       aria-label={`${node.name} details`}
       style={{
         background: 'var(--surface-card)', borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
-        boxShadow: '0 -1px 0 rgba(0,0,0,.06), 0 -20px 60px rgba(0,0,0,.18)',
+        boxShadow: 'var(--shadow-sheet)',
         padding: '16px 20px 20px', marginTop: 8,
       }}
     >
@@ -245,7 +245,7 @@ function FrontierSheet({ node, onClose }: { node: FrontierNode; onClose: () => v
           Builds on:{' '}
           {node.builds_on.map((b, i) => (
             <span key={b.id} style={{ color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)' }}>
-              {b.label}{b.met ? ' ✓' : ''}{i < node.builds_on.length - 1 ? ', ' : ''}
+              {b.label}{b.met ? ' (met)' : ''}{i < node.builds_on.length - 1 ? ', ' : ''}
             </span>
           ))}
         </p>

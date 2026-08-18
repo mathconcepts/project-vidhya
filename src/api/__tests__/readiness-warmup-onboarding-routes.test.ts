@@ -16,6 +16,20 @@ vi.mock('../auth-middleware', () => ({
   requireRole: (...args: any[]) => mockRequireRole(...args),
 }));
 
+// Spy on the one side-effecting dependency handleWarmupPersist calls after
+// auth passes, so an "auth denied" test can assert it was never reached —
+// not just that requireRole ran. Defaults to the REAL implementation (every
+// other test in this file depends on its actual DB-less/placement behavior)
+// so only the auth-denial test needs to override it.
+const mockApplyWarmupPriors = vi.fn();
+vi.mock('../../readiness/warmup-onboarding', async () => {
+  const actual = await vi.importActual<typeof import('../../readiness/warmup-onboarding')>(
+    '../../readiness/warmup-onboarding',
+  );
+  mockApplyWarmupPriors.mockImplementation(actual.applyWarmupPriors);
+  return { ...actual, applyWarmupPriors: (...args: unknown[]) => mockApplyWarmupPriors(...args) };
+});
+
 const { readinessRoutes } = await import('../readiness-routes');
 const { WARMUP_SPINE_CONCEPTS } = await import('../../readiness/warmup-onboarding');
 
@@ -53,6 +67,9 @@ const persistHandler = readinessRoutes.find(
 
 beforeEach(() => {
   mockRequireRole.mockReset();
+  // mockClear (not mockReset): clears call history but keeps the default
+  // pass-through-to-actual implementation installed in the vi.mock factory.
+  mockApplyWarmupPriors.mockClear();
   delete process.env.DATABASE_URL;
 });
 
@@ -71,11 +88,25 @@ describe('GET /api/readiness/warmup/spine', () => {
 });
 
 describe('POST /api/readiness/warmup/persist', () => {
-  it('requires auth', async () => {
-    mockRequireRole.mockResolvedValueOnce(null);
+  it('requires auth: denies the request (non-200) and never reaches the persist path', async () => {
+    // Simulate what the REAL requireRole does on denial (auth-middleware.ts:
+    // requireAuth/requireRole writes 401/403 itself before returning null) —
+    // a mock that just resolves null without touching `res` would let this
+    // test pass even if the route forgot its `if (!user) return;` guard,
+    // since `res` would then be left at the harness's default 200.
+    mockRequireRole.mockImplementationOnce(async (_req: unknown, res: ServerResponse) => {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return null;
+    });
     const r = makeRes();
     await persistHandler(makeReq({ results: [] }), r.res);
     expect(mockRequireRole).toHaveBeenCalled();
+    expect(r.status).not.toBe(200);
+    expect(r.status).toBe(401);
+    // The route must not have fallen through to the priors write after a
+    // denied auth check.
+    expect(mockApplyWarmupPriors).not.toHaveBeenCalled();
   });
 
   it('rejects a missing/malformed results array', async () => {

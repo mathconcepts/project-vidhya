@@ -49,8 +49,6 @@ vi.mock('../../../storage/repositories/durable-store-repo', async (importOrigina
   };
 });
 
-const settle = () => new Promise((r) => setTimeout(r, 20));
-
 let tmpFile: string;
 let origEnvFile: string | undefined;
 let origEnvCap: string | undefined;
@@ -197,12 +195,18 @@ describe('durable round-trip (mirror / hydrate)', () => {
   it('recordChatSpend mirrors the updated day into the durable store', async () => {
     const { recordChatSpend } = await import('../../../lib/chat-spend');
     recordChatSpend(1.23);
-    await settle();
 
-    const mirrorCall = rec.calls.find((c) => c.op === 'mirror' && c.collection === 'chat-spend');
-    expect(mirrorCall, 'recordChatSpend did not mirror to the durable store').toBeDefined();
+    // mirror() is deliberately fire-and-forget (durable-flat-file.ts rule 1)
+    // and returns no promise to await, so poll deterministically for the
+    // recorded call instead of sleeping a fixed duration that could race
+    // under CI load.
+    const mirrorCall = await vi.waitFor(() => {
+      const call = rec.calls.find((c) => c.op === 'mirror' && c.collection === 'chat-spend');
+      expect(call, 'recordChatSpend did not mirror to the durable store').toBeDefined();
+      return call!;
+    });
     const today = new Date().toISOString().slice(0, 10);
-    expect((mirrorCall!.items as Array<{ date_utc: string; spent_usd: number }>))
+    expect((mirrorCall.items as Array<{ date_utc: string; spent_usd: number }>))
       .toEqual([expect.objectContaining({ date_utc: today, spent_usd: expect.closeTo(1.23, 6) })]);
   });
 
@@ -210,10 +214,12 @@ describe('durable round-trip (mirror / hydrate)', () => {
     const { recordCapTrip } = await import('../../../lib/chat-spend');
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     recordCapTrip();
-    await settle();
-    const mirrorCall = rec.calls.find((c) => c.op === 'mirror' && c.collection === 'chat-spend');
-    expect(mirrorCall).toBeDefined();
-    expect((mirrorCall!.items as Array<{ trip_count: number }>)[0].trip_count).toBe(1);
+    const mirrorCall = await vi.waitFor(() => {
+      const call = rec.calls.find((c) => c.op === 'mirror' && c.collection === 'chat-spend');
+      expect(call).toBeDefined();
+      return call!;
+    });
+    expect((mirrorCall.items as Array<{ trip_count: number }>)[0].trip_count).toBe(1);
   });
 
   it('hydrateChatSpendStore restores when the local store is empty', async () => {

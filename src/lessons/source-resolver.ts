@@ -66,15 +66,35 @@ interface ContentBundle {
 
 let _bundle: ContentBundle | null = null;
 
+/**
+ * Candidate paths, in priority order. Mirrors src/content/resolver.ts's
+ * loadBundle() — the deployed image (both Dockerfile and demo/Dockerfile)
+ * never ships frontend/public/, only the Vite-built frontend/dist/ (which
+ * gets public/ copied into it at build time), so that candidate MUST be
+ * checked first or every deployed lesson silently loses its bundle.
+ */
+function bundleCandidatePaths(): string[] {
+  return [
+    // Production (Vite-built): public/ → dist/ at build time
+    path.resolve(process.cwd(), 'frontend/dist/data/content-bundle.json'),
+    // Dev
+    path.resolve(process.cwd(), 'frontend/public/data/content-bundle.json'),
+    path.resolve(process.cwd(), '../frontend/public/data/content-bundle.json'),
+    path.resolve(process.cwd(), 'public/data/content-bundle.json'),
+  ];
+}
+
 function loadBundle(): ContentBundle {
   if (_bundle) return _bundle;
   const bundle: ContentBundle = { problems: [], explainers: {} };
   try {
-    const bundlePath = path.resolve(process.cwd(), 'frontend/public/data/content-bundle.json');
-    if (fs.existsSync(bundlePath)) {
-      const raw = JSON.parse(fs.readFileSync(bundlePath, 'utf-8'));
-      bundle.problems = Array.isArray(raw.problems) ? raw.problems : [];
-      bundle.explainers = raw.explainers || {};
+    for (const bundlePath of bundleCandidatePaths()) {
+      if (fs.existsSync(bundlePath)) {
+        const raw = JSON.parse(fs.readFileSync(bundlePath, 'utf-8'));
+        bundle.problems = Array.isArray(raw.problems) ? raw.problems : [];
+        bundle.explainers = raw.explainers || {};
+        break;
+      }
     }
   } catch {
     // Stay safe — empty bundle just means composer uses fallbacks

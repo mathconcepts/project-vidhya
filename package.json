@@ -62,6 +62,7 @@
     "demo:setup": "npm ci && cd frontend && npm ci && cd .. && npm run demo:seed && echo '\\nDemo ready — run: npm run demo:start'",
     "demo:seed": "tsx demo/seed.ts",
     "demo:seed-media": "tsx demo/seed-media.ts",
+    "demo:seed-history": "tsx demo/seed-history.ts",
     "demo:generate-audio": "tsx demo/generate-demo-audio.ts",
     "demo:reset": "tsx demo/reset.ts",
     "local": "bash scripts/local-install.sh",

@@ -46,7 +46,6 @@ import {
   fillContentGaps,
   gbrainHealthCheck,
   dailyIntelligence,
-  generateMockExam,
   weeklyDigest,
   mineMisconceptions,
   seedRagCache,
@@ -442,15 +441,11 @@ async function handleDailyIntelligence(req: ParsedRequest, res: ServerResponse):
   } catch (err) { sendError(res, 500, (err as Error).message); }
 }
 
-async function handleMockExam(req: ParsedRequest, res: ServerResponse): Promise<void> {
-  const { sessionId } = req.params;
-  const exam = req.query.get('exam') || 'gate';
-  if (!sessionId) return sendError(res, 400, 'sessionId required');
-  try {
-    const result = await generateMockExam(sessionId, exam);
-    sendJSON(res, result);
-  } catch (err) { sendError(res, 500, (err as Error).message); }
-}
+// GET /api/gbrain/mock-exam/:sessionId and POST /api/gbrain/mock-exam/:id/submit
+// moved to src/api/mock-exam-routes.ts (T22/ENG-D3) — the old handler here
+// returned each question's correct_answer straight to the client and
+// graded client-side; the new route redacts the answer key and grades
+// server-side via the same deterministic scorer the practice path uses.
 
 async function handleWeeklyDigest(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const { sessionId } = req.params;
@@ -563,7 +558,6 @@ export const gbrainRoutes: RouteDefinition[] = [
   { method: 'POST', path: '/api/gbrain/content-gap/fill', handler: handleContentGapFill },
   { method: 'GET', path: '/api/gbrain/health', handler: handleGbrainHealth },
   { method: 'POST', path: '/api/gbrain/daily-intelligence', handler: handleDailyIntelligence },
-  { method: 'GET', path: '/api/gbrain/mock-exam/:sessionId', handler: handleMockExam },
   { method: 'GET', path: '/api/gbrain/weekly-digest/:sessionId', handler: handleWeeklyDigest },
   { method: 'GET', path: '/api/gbrain/misconceptions', handler: handleMineMisconceptions },
   { method: 'POST', path: '/api/gbrain/seed-rag', handler: handleSeedRag },

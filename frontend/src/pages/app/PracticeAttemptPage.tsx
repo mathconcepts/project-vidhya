@@ -50,6 +50,8 @@ interface AttemptResult {
   /** Revealed only after the answer is committed; never on the item view. */
   solution_steps?: string[];
   recorded: boolean;
+  /** T14 (B5, DR-4): populated only for a positive award — never a negative "-N min" line. */
+  xp_minutes_awarded?: number | null;
 }
 
 const fmt = (n: number) => {
@@ -427,6 +429,14 @@ export default function PracticeAttemptPage() {
                   {!result.recorded && (
                     <p style={{ margin: 0, color: 'var(--orange)', paddingTop: 4 }}>
                       Graded, but not recorded to your model (server storage unavailable).
+                    </p>
+                  )}
+                  {/* DR-4: one quiet line, no toast, no floating number — and
+                      only ever positive (a wrong-MCQ's negative XP event is
+                      written server-side but never shown here). */}
+                  {!!result.xp_minutes_awarded && result.xp_minutes_awarded > 0 && (
+                    <p style={{ margin: 0, color: 'var(--green-ink)', paddingTop: 4 }}>
+                      +{result.xp_minutes_awarded} min of focused work
                     </p>
                   )}
                   <Link to="/planned" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--green-ink)', textDecoration: 'none', paddingTop: 4 }}>

@@ -94,8 +94,13 @@ VOLUME ["/app/.data"]
 
 # Seed-then-serve. demo:seed is idempotent (upsertFromGoogle updates
 # existing users by google_sub rather than duplicating), so restarts
-# with a populated disk are safe.
+# with a populated disk are safe. demo:seed-history (T20) writes Elo/
+# FSRS/XP persona history onto the demo accounts demo:seed just created —
+# it applies its own migrations first (needs Postgres tables the server's
+# boot-time autoMigrate() hasn't created yet at this point in the chain)
+# and degrades to an honest no-op skip when DATABASE_URL isn't set, so it
+# never aborts this chain on a DB-less deploy.
 #
 # JWT_SECRET is required; Render's render.yaml sets it via generateValue.
 # Locally, pass it via -e or --env-file.
-CMD ["sh", "-c", "npm run demo:seed && npm run demo:seed-media && npx tsx src/server.ts"]
+CMD ["sh", "-c", "npm run demo:seed && npm run demo:seed-media && npm run demo:seed-history && npx tsx src/server.ts"]

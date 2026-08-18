@@ -39,6 +39,7 @@ import { scoringRoutes } from './api/scoring-routes';
 import { readinessRoutes, setReadinessCatalog } from './api/readiness-routes';
 import { adminReadinessMetricsRoutes } from './api/admin-readiness-metrics-routes';
 import { practiceRoutes } from './api/practice-routes';
+import { quizRoutes } from './api/quiz-routes';
 import { fsrsShadowRoutes } from './api/fsrs-shadow-routes';
 import { pedagogyShadowRoutes } from './api/pedagogy-shadow-routes';
 import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
@@ -54,6 +55,7 @@ import { trendCollectorRoutes } from './jobs/trend-collector';
 import { contentPrioritizerRoutes } from './jobs/content-prioritizer';
 import { feedbackScorerRoutes } from './jobs/feedback-scorer';
 import { gbrainRoutes } from './gbrain/gbrain-routes';
+import { mockExamRoutes } from './api/mock-exam-routes';
 import { geminiProxyRoutes } from './api/gemini-proxy';
 import { aggregateRoutes } from './api/aggregate';
 import { contentRoutes } from './api/content-routes';
@@ -258,6 +260,9 @@ for (const route of adminReadinessMetricsRoutes) {
 for (const route of practiceRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
+for (const route of quizRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
 for (const route of fsrsShadowRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
@@ -301,6 +306,9 @@ for (const route of feedbackScorerRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of gbrainRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of mockExamRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of geminiProxyRoutes) {

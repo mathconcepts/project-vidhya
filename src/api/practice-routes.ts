@@ -66,6 +66,8 @@ import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg'
 import { getStudentModel } from '../gbrain/student-model-pg';
 import { recordProblemAttempt } from '../gbrain/problem-generator';
 import type { Attempt, StudentModel } from '../core/interfaces';
+import { xpForAttempt } from '../scoring/xp';
+import { awardXp as awardXpProd, type XpAward } from '../gbrain/xp-store';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -77,12 +79,15 @@ interface PracticeDeps {
   catalog: () => LearningObjectCatalog;
   studentModel: () => StudentModel;
   recordProblemAttempt: (problemId: string, wasCorrect: boolean) => Promise<void>;
+  /** T14 (B5): personal XP ledger. Best-effort — see src/gbrain/xp-store.ts. */
+  awardXp: (award: XpAward) => Promise<void>;
 }
 
 const productionDeps: PracticeDeps = {
   catalog: getLearningObjectCatalog,
   studentModel: getStudentModel,
   recordProblemAttempt,
+  awardXp: awardXpProd,
 };
 
 let deps: PracticeDeps = productionDeps;
@@ -236,11 +241,24 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     recorded = false;
     console.error('[practice] attempt not recorded (student model unavailable):', (err as Error).message);
   }
+  // T14 (B5): "+N min of focused work" award line (DR-4) — populated only
+  // for a positive award on a recorded, non-skipped attempt. A zero/negative
+  // award is still WRITTEN to the ledger (see awardXp below) but never
+  // surfaced here — DR-4's "negative XP events are never surfaced to
+  // students" applies to this per-attempt line, not just the running meter.
+  let xpMinutesAwarded: number | null = null;
   if (recorded && !response.skipped) {
     // Empirical-difficulty recalibration; skipped attempts carry no signal.
     await deps.recordProblemAttempt(objectId, attempt.correct).catch((err: Error) => {
       console.error('[practice] empirical-difficulty update failed (non-fatal):', err.message);
     });
+    // "1 XP ≈ 1 minute of focused effort ... none on skip" — the award only
+    // ever happens on a graded, non-skipped, RECORDED attempt. Best-effort
+    // by construction (xp-store.ts swallows its own failures); never blocks
+    // or alters the grading response above.
+    const xpAmount = xpForAttempt({ earned: grade.earned, max: grade.max }, obj.estMinutes);
+    await deps.awardXp({ studentId: user.userId, objectId, skillId: attempt.skillId, xpAmount, source: 'practice', tsMs: ts });
+    if (xpAmount > 0) xpMinutesAwarded = xpAmount;
   }
 
   // Reveal the worked solution ONLY here, in the response to a graded attempt.
@@ -263,6 +281,7 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     marking: describeMarking(item),
     solution_steps: solutionSteps,
     recorded,
+    xp_minutes_awarded: xpMinutesAwarded,
   });
 }
 

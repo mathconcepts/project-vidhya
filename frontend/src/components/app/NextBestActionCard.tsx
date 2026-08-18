@@ -20,6 +20,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { authFetch } from '@/lib/auth/client';
 import { Compass, ArrowRight, Sparkles, RefreshCw, BookOpen, Loader2 } from 'lucide-react';
+import { FocusedWorkStrip } from '@/components/app/FocusedWorkStrip';
 
 type ActionKind = 'diagnose' | 'teach' | 'practice' | 'retain';
 
@@ -149,6 +150,7 @@ export function NextBestActionCard() {
         >
           Answer a few questions <ArrowRight size={14} />
         </Link>
+        <FocusedWorkStrip />
       </motion.div>
     );
   }
@@ -200,6 +202,8 @@ export function NextBestActionCard() {
           {readinessLine}
         </div>
       )}
+
+      <FocusedWorkStrip />
     </motion.div>
   );
 }

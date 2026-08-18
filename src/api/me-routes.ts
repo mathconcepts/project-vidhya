@@ -221,7 +221,7 @@ async function handleCompounding(req: ParsedRequest, res: ServerResponse): Promi
   }
 
   // Pull the student model for mastery + attempt history.
-  const model = getOrCreateStudentModel(auth.user.id);
+  const model = await getOrCreateStudentModel(auth.user.id);
   if (!model) {
     return sendJSON(res, { should_show: false, headline: '' });
   }

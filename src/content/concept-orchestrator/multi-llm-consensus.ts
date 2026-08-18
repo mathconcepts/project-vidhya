@@ -83,7 +83,15 @@ function extractAnswer(body: string): string | null {
   return m ? m[1].trim() : null;
 }
 
-function normaliseAnswer(s: string): string {
+/**
+ * Exported so other answer-comparison call sites can reuse the exact same
+ * normalization instead of drifting a near-copy — e.g. the practice-item
+ * factory's dual-model answer-check (src/generation/practice-item-factory/
+ * answer-check.ts, T7 / E9 / ENG-D4 item 8: "compareMathAtoms FAILS OPEN
+ * ... not reusable as a gate; only pickConsensusSecondary/
+ * consensusProvidersAreDistinct + answer normalizers only").
+ */
+export function normaliseAnswer(s: string): string {
   return s.toLowerCase().replace(/\s+/g, '').replace(/\*\*/g, '^').replace(/[{}\[\]]/g, '');
 }
 

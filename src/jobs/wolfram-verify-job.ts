@@ -160,9 +160,33 @@ async function run(ctx: JobContext): Promise<void> {
         throw new ProviderTimeoutError(`wolfram timeout for ${p.id}: ${result.error}`);
       }
 
+      // Tri-state: 'inconclusive' means the ARBITER had no opinion (outage,
+      // no key, timeout-that-slipped-through, empty result) — it is not a
+      // content verdict and must not read like one. Recorded under its own
+      // `outcome` field (never named `status` — that key already belongs to
+      // the checkpoint's own done/failed/skipped state) so operators can
+      // tell "Wolfram is down" apart from "the answer is wrong" in the
+      // checkpoint + logs. Both leave `wolfram_verified` unset, so the item
+      // is naturally a re-verify candidate on the next full job run — this
+      // is what "queued for re-verify, not demoted/discarded" means here;
+      // there is no separate rejected-items store to demote it out of.
+      if (result.status === 'inconclusive') {
+        ctx.log(
+          `${p.id}: Wolfram inconclusive (arbiter unavailable/no answer: ` +
+          `${result.error ?? 'no answer'}) — queued for re-verify, not rejected`,
+        );
+        return {
+          verified: false,
+          outcome: 'inconclusive',
+          wolfram_answer: result.wolfram_answer ?? null,
+          ...(result.error ? { error: result.error } : {}),
+        };
+      }
+
       if (!result.verified) {
         return {
           verified: false,
+          outcome: 'failed',
           wolfram_answer: result.wolfram_answer ?? null,
           ...(result.error ? { error: result.error } : {}),
         };
@@ -205,7 +229,7 @@ async function run(ctx: JobContext): Promise<void> {
         }
       }
 
-      return { verified: true, steps_cached };
+      return { verified: true, outcome: 'verified', steps_cached };
     },
   );
 

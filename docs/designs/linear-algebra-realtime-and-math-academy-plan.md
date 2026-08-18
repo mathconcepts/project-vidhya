@@ -952,30 +952,30 @@ shows a due-review knock-out and a quiz offer for Meera.
 
 Synthesized from findings; run with Claude Code, checkbox as you ship.
 
-- [ ] **T1 (P1, human ~1h / CC ~5min)** — lessons — Fix deployed bundle path (`source-resolver.ts:73` candidate list) — *Surfaced by: system audit* — Verify: container smoke shows bundle explainer.
-- [ ] **T2 (P1, human ~2h / CC ~10min)** — build — Wire `export-bundles.ts` into build + CI drift check — *Section 1/audit* — Verify: client graph 97/26.
-- [ ] **T3 (P1, human ~0.5d / CC ~15min)** — db — PYQ `concept_id` backfill in seeder (+idempotent update) — *audit* — Verify: `fetchProblemsForConcept('eigenvalues')` ≥ 1.
-- [ ] **T4 (P1, human ~1h / CC ~10min)** — gbrain — `masteryState` threshold recalibration + `objects_for_skill` resolution — *audit F5/F9* — Verify: threshold unit table.
-- [ ] **T5 (P1, human ~1d / CC ~30min)** — readiness — Prereq redirect reachability (content-backed trigger + allowedNodes scoping + batched mastery fetch) — *audit F1, §7* — Verify: fresh-student LA on-ramp integration test.
-- [ ] **T6 (P1, human ~3d / CC ~2h)** — student-model — Unify per D3 (attempts-bus subscriber feeds derived model) — *F1.1* — Verify: one attempt moves Elo+FSRS+alerts.
-- [ ] **T7 (P1, human ~2w / CC ~1-2d)** — content — Wolfram inconclusive policy fix (tri-state `verifyProblemWithWolfram` return + both consumers), then 123-item LA factory run + commit + floor green — *§2, A7, ENG-D4* — Verify: CI re-grade + strict-parse + floor report.
-- [ ] **T8 (P1, human ~3d / CC ~2h)** — frontend — Warmup onboarding UI — *A8* — Verify: e2e fresh-student flow.
-- [ ] **T9 (P2, human ~2d / CC ~1h)** — knowledge — GATE-MA track + DAG concept tree — *A9* — Verify: Meera's KnowledgeHome renders.
-- [ ] **T10 (P1-B, human ~1w / CC ~1d)** — curriculum — `encompasses:` edges (LA) + loader + validation — *B1* — Verify: graph CI.
-- [ ] **T11 (P1-B, human ~1w / CC ~4h)** — gbrain — FIRe-lite propagation module + wiring per D3/D5 — *B2* — Verify: property suite.
-- [ ] **T12 (P2-B, human ~3d / CC ~2h)** — readiness — Compression-aware expectedGain + teachCandidate ordering — *B3* — Verify: domino ranking test.
-- [ ] **T13 (P2-B, human ~3d / CC ~2h)** — frontend — Frontier view — *B4* — Verify: states coverage.
-- [ ] **T14 (P2-B, human ~1w / CC ~4h)** — practice — XP events + timed quiz (migration 044, flag-gated) — *B5* — Verify: marking + leak + timer tests.
-- [ ] **T15 (P1, human ~2h / CC ~15min)** — observability — next-action objectId-rate metric + consume `getAtomFallbackCounts` — *§8* — Verify: admin surface shows both.
-- [ ] **T16 (P1, deploy config)** — ops — Set Supabase `DATABASE_URL` on the Render demo service (D4) before demo day — *F1.2* — Verify: seeded persona attempt shows `recorded: true` on the deployed URL.
-- [ ] **T17 (P2, human ~1w / CC ~1d)** — content — Stance variants for all 26 LA concepts via the factory — *D7* — Verify: `served_stance` differs per persona on every LA concept.
-- [ ] **T18 (P2, human ~1w / CC ~1d)** — content — Interactive-spec blocks for the 23 uncovered LA concepts, human-reviewed — *D7* — Verify: each LA concept renders ≥1 interactive off-rail.
-- [ ] **T19 (P2, human ~3d / CC ~2h + config)** — chat — Off-corpus provider key + per-session rate limit + daily spend cap — *D7* — Verify: off-corpus answer streams on deployed URL; cap trips refuse gracefully.
-- [ ] **T20 (P1-demo, human ~2d / CC ~1h)** — demo — Persona multi-day history seeding so B mechanisms demo live — *D9* — Verify: walkthrough shows due-review knock-out + quiz offer.
-- [ ] **T21 (P1, human ~1d / CC ~1h)** — scoring — Composite catalog (file + Pg) so authored items survive `DATABASE_URL` — *OV-1* — Verify: item serves with DB configured.
-- [ ] **T22 (P2, human ~1d / CC ~1h)** — gbrain — Mock-exam server-side grading + real `mock_exams` migration (answer-key leak fix) + migrate its timer to the shared primitive (exam register) — *ENG-D3, DR-3* — Verify: leak test on the mock-exam payload.
-- [ ] **T23 (P2, human ~0.5d / CC ~30min)** — frontend — Student-facing text-floor fixes (NextBestActionCard rationale, PracticeAttempt solution steps, KnowledgeHome why_next) — *DR-T1* — Verify: no sub-15px reading content on student surfaces.
-- [ ] **T24 (P2, human ~2d / CC ~2h)** — frontend — Component hygiene: shared usePrefersReducedMotion hook, ui/ primitive adoption in new + existing student surfaces, dead-code removal (app/MasteryRing), ProgressBar extension for the focused-work strip, PracticeAttempt selected-state fix — *DR-T2, §11* — Verify: no framer duration literals in new surfaces; grep shows one MasteryRing.
+- [x] **T1 (P1, human ~1h / CC ~5min)** — lessons — Fix deployed bundle path (`source-resolver.ts:73` candidate list) — *Surfaced by: system audit* — Verify: container smoke shows bundle explainer.
+- [x] **T2 (P1, human ~2h / CC ~10min)** — build — Wire `export-bundles.ts` into build + CI drift check — *Section 1/audit* — Verify: client graph 97/26.
+- [x] **T3 (P1, human ~0.5d / CC ~15min)** — db — PYQ `concept_id` backfill in seeder (+idempotent update) — *audit* — Verify: `fetchProblemsForConcept('eigenvalues')` ≥ 1.
+- [x] **T4 (P1, human ~1h / CC ~10min)** — gbrain — `masteryState` threshold recalibration + `objects_for_skill` resolution — *audit F5/F9* — Verify: threshold unit table.
+- [x] **T5 (P1, human ~1d / CC ~30min)** — readiness — Prereq redirect reachability (content-backed trigger + allowedNodes scoping + batched mastery fetch) — *audit F1, §7* — Verify: fresh-student LA on-ramp integration test.
+- [x] **T6 (P1, human ~3d / CC ~2h)** — student-model — Unify per D3 (attempts-bus subscriber feeds derived model) — *F1.1* — Verify: one attempt moves Elo+FSRS+alerts.
+- [x] **T7 (P1, human ~2w / CC ~1-2d)** — content — Wolfram inconclusive policy fix (tri-state `verifyProblemWithWolfram` return + both consumers), then 123-item LA factory run + commit + floor green — *§2, A7, ENG-D4* — Verify: CI re-grade + strict-parse + floor report.
+- [x] **T8 (P1, human ~3d / CC ~2h)** — frontend — Warmup onboarding UI — *A8* — Verify: e2e fresh-student flow.
+- [x] **T9 (P2, human ~2d / CC ~1h)** — knowledge — GATE-MA track + DAG concept tree — *A9* — Verify: Meera's KnowledgeHome renders.
+- [x] **T10 (P1-B, human ~1w / CC ~1d)** — curriculum — `encompasses:` edges (LA) + loader + validation — *B1* — Verify: graph CI.
+- [x] **T11 (P1-B, human ~1w / CC ~4h)** — gbrain — FIRe-lite propagation module + wiring per D3/D5 — *B2* — Verify: property suite.
+- [x] **T12 (P2-B, human ~3d / CC ~2h)** — readiness — Compression-aware expectedGain + teachCandidate ordering — *B3* — Verify: domino ranking test.
+- [x] **T13 (P2-B, human ~3d / CC ~2h)** — frontend — Frontier view — *B4* — Verify: states coverage.
+- [x] **T14 (P2-B, human ~1w / CC ~4h)** — practice — XP events + timed quiz (migration 044, flag-gated) — *B5* — Verify: marking + leak + timer tests.
+- [x] **T15 (P1, human ~2h / CC ~15min)** — observability — next-action objectId-rate metric + consume `getAtomFallbackCounts` — *§8* — Verify: admin surface shows both.
+- [x] **T16 (P1, deploy config)** — ops — Set Supabase `DATABASE_URL` on the Render demo service (D4) before demo day — *F1.2* — Verify: seeded persona attempt shows `recorded: true` on the deployed URL. — **in-repo half shipped (pool audit, ci:connection-budget, runbook); the Render env-var set is the remaining operator step.**
+- [x] **T17 (P2, human ~1w / CC ~1d)** — content — Stance variants for all 26 LA concepts via the factory — *D7* — Verify: `served_stance` differs per persona on every LA concept.
+- [x] **T18 (P2, human ~1w / CC ~1d)** — content — Interactive-spec blocks for the 23 uncovered LA concepts, human-reviewed — *D7* — Verify: each LA concept renders ≥1 interactive off-rail.
+- [x] **T19 (P2, human ~3d / CC ~2h + config)** — chat — Off-corpus provider key + per-session rate limit + daily spend cap — *D7* — Verify: off-corpus answer streams on deployed URL; cap trips refuse gracefully. — **in-repo guardrails shipped (spend cap, rate limit, atom-first lock); the provider key is the remaining operator step.**
+- [x] **T20 (P1-demo, human ~2d / CC ~1h)** — demo — Persona multi-day history seeding so B mechanisms demo live — *D9* — Verify: walkthrough shows due-review knock-out + quiz offer.
+- [x] **T21 (P1, human ~1d / CC ~1h)** — scoring — Composite catalog (file + Pg) so authored items survive `DATABASE_URL` — *OV-1* — Verify: item serves with DB configured.
+- [x] **T22 (P2, human ~1d / CC ~1h)** — gbrain — Mock-exam server-side grading + real `mock_exams` migration (answer-key leak fix) + migrate its timer to the shared primitive (exam register) — *ENG-D3, DR-3* — Verify: leak test on the mock-exam payload.
+- [x] **T23 (P2, human ~0.5d / CC ~30min)** — frontend — Student-facing text-floor fixes (NextBestActionCard rationale, PracticeAttempt solution steps, KnowledgeHome why_next) — *DR-T1* — Verify: no sub-15px reading content on student surfaces.
+- [x] **T24 (P2, human ~2d / CC ~2h)** — frontend — Component hygiene: shared usePrefersReducedMotion hook, ui/ primitive adoption in new + existing student surfaces, dead-code removal (app/MasteryRing), ProgressBar extension for the focused-work strip, PracticeAttempt selected-state fix — *DR-T2, §11* — Verify: no framer duration literals in new surfaces; grep shows one MasteryRing.
 
 ## Test coverage map (eng review)
 

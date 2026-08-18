@@ -204,16 +204,22 @@ async function xpSinceBaseline(studentId: string): Promise<number> {
   return deps.xpEarnedSince(studentId, baselineMs);
 }
 
+interface AssembledQuizPool {
+  catalog: LearningObjectCatalog;
+  studentModel: StudentModel & Partial<BatchMasteryStudentModel>;
+  pool: QuizPoolCandidate[];
+}
+
 /**
- * Combines the XP-cycle gate with the pool-depth gate — BOTH must clear
- * for a quiz to be a real, startable offer. `xpMinutes` is threaded in
- * (rather than re-fetched) so callers that already resolved it — the XP
- * summary endpoint — don't pay for a second baseline query.
+ * Shared pool-assembly step: due FSRS reviews + frontier concepts, minus
+ * the no-repeat window (src/readiness/quiz-pool.ts's assembleQuizPool).
+ * Both computeQuizOffer (the XP-summary preview) and handleQuizStart (the
+ * actual start) must build this identically — a divergence here would let
+ * the offer say "eligible" while start refuses, or vice versa.
  */
-async function computeQuizOffer(studentId: string, xpMinutes: number): Promise<QuizOffer> {
+async function buildQuizPool(studentId: string, now: Date): Promise<AssembledQuizPool> {
   const catalog = deps.catalog();
   const studentModel = deps.studentModel();
-  const now = deps.now();
 
   const [dueRows, frontierRows, recentlyReviewed] = await Promise.all([
     deps.dueCards(studentId, now, {}),
@@ -221,11 +227,24 @@ async function computeQuizOffer(studentId: string, xpMinutes: number): Promise<Q
     deps.recentlyReviewed(studentId, now, QUIZ_NO_REPEAT_WINDOW_DAYS),
   ]);
 
-  const pool = assembleQuizPool(
+  const pool: QuizPoolCandidate[] = assembleQuizPool(
     dueRows.map((r) => ({ objectId: r.objectId, skillId: r.nodeId ?? null })),
     frontierRows,
     recentlyReviewed,
   );
+
+  return { catalog, studentModel, pool };
+}
+
+/**
+ * Combines the XP-cycle gate with the pool-depth gate — BOTH must clear
+ * for a quiz to be a real, startable offer. `xpMinutes` is threaded in
+ * (rather than re-fetched) so callers that already resolved it — the XP
+ * summary endpoint — don't pay for a second baseline query.
+ */
+async function computeQuizOffer(studentId: string, xpMinutes: number): Promise<QuizOffer> {
+  const now = deps.now();
+  const { pool } = await buildQuizPool(studentId, now);
 
   const poolOk = quizIsEligible(pool.length, QUIZ_LENGTH);
   const xpOk = meetsQuizThreshold(xpMinutes);
@@ -296,8 +315,6 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
   const user = await requireRole(req, res, 'student', 'teacher', 'admin');
   if (!user) return;
 
-  const catalog = deps.catalog();
-  const studentModel = deps.studentModel();
   const now = deps.now();
 
   // Both gates enforced server-side — the frontend's meter/offer switch
@@ -309,17 +326,7 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
     return sendError(res, 422, 'Checkpoint unlocks as you practise more');
   }
 
-  const [dueRows, frontierRows, recentlyReviewed] = await Promise.all([
-    deps.dueCards(user.userId, now, {}),
-    frontierCandidates(user.userId, catalog, studentModel),
-    deps.recentlyReviewed(user.userId, now, QUIZ_NO_REPEAT_WINDOW_DAYS),
-  ]);
-
-  const pool: QuizPoolCandidate[] = assembleQuizPool(
-    dueRows.map((r) => ({ objectId: r.objectId, skillId: r.nodeId ?? null })),
-    frontierRows,
-    recentlyReviewed,
-  );
+  const { catalog, pool } = await buildQuizPool(user.userId, now);
 
   if (!quizIsEligible(pool.length, QUIZ_LENGTH)) {
     return sendError(res, 422, 'Checkpoint unlocks as you practise more');

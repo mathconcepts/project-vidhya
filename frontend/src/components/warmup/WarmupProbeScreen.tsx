@@ -134,7 +134,7 @@ export function WarmupProbeScreen({
       </Card>
 
       {showFraming && (
-        <p style={{ margin: 0, textAlign: 'center', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+        <p style={{ margin: 0, textAlign: 'center', fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
           {WARMUP_FRAMING_COPY}
         </p>
       )}

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authFetch } from '@/lib/auth/client';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface XpSummary {
   total_minutes: number;
@@ -56,7 +57,7 @@ export function FocusedWorkStrip() {
             <span style={{ fontSize: 15, color: 'var(--text-primary)' }}>
               Checkpoint quiz ready · {summary.quiz_offer.quiz_length ?? 6} questions · whenever you are
             </span>
-            <span style={{ fontSize: 'var(--text-caption)', color: 'var(--green-ink)', fontWeight: 'var(--weight-semibold)', flexShrink: 0, marginLeft: 8 }}>
+            <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--green-ink)', fontWeight: 'var(--weight-semibold)', flexShrink: 0, marginLeft: 8 }}>
               Start →
             </span>
           </Link>
@@ -93,23 +94,16 @@ export function FocusedWorkStrip() {
 
   return (
     <div style={stripWrapStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Focused work</span>
-        <span style={{ fontSize: 'var(--text-caption)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', color: 'var(--text-primary)', fontWeight: 'var(--weight-semibold)' }}>
-          {summary.total_minutes} / {summary.threshold_minutes} min
-        </span>
-      </div>
-      <div style={{ height: 3, borderRadius: 'var(--radius-capsule)', background: 'var(--surface-fill)', overflow: 'hidden' }}>
-        <div
-          style={{
-            width: `${pct}%`,
-            height: '100%',
-            background: 'var(--green)',
-            borderRadius: 'var(--radius-capsule)',
-            transition: shouldAnimate ? 'width var(--dur-slow) var(--ease-standard)' : 'none',
-          }}
-        />
-      </div>
+      <ProgressBar
+        value={pct}
+        tone="mastery"
+        height={3}
+        label="Focused work"
+        trailing={`${summary.total_minutes} / ${summary.threshold_minutes} min`}
+        labelRegister="supporting"
+        monoTrailing
+        disableTransition={!shouldAnimate}
+      />
     </div>
   );
 }

@@ -16,19 +16,19 @@
  * "revealed" treatment, not the mastery-green "correct" treatment.
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Lightbulb, Eye, BookOpen } from 'lucide-react';
 import type { GuidedWalkthroughSpec } from './types';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { EASE_STANDARD, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 
-// Exported for tests: the token curve (--ease-standard) and --dur-fast
-// (180ms, expressed in seconds for framer-motion), and the pure function
-// that collapses it to ~1ms under prefers-reduced-motion — same contract
-// as the CSS tokens in styles/tokens/motion.css.
-export const EASE_STANDARD = [0.32, 0.72, 0, 1] as const;
-export const DUR_FAST_S = 0.18;
+// Re-exported for this component's existing tests; the source of truth now
+// lives in lib/motion-tokens.ts so every framer-motion surface (not just
+// this one) shares the same token-backed durations (T24).
+export { EASE_STANDARD, DUR_FAST_S };
 export function revealTransitionDuration(reducedMotion: boolean): number {
-  return reducedMotion ? 0.001 : DUR_FAST_S;
+  return framerDuration(DUR_FAST_S, reducedMotion);
 }
 
 interface Props {
@@ -188,19 +188,3 @@ export function GuidedWalkthrough({ spec }: Props) {
   );
 }
 
-// ============================================================================
-// prefers-reduced-motion hook — same pattern as Simulation.tsx
-// ============================================================================
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mql.addEventListener?.('change', handler);
-    return () => mql.removeEventListener?.('change', handler);
-  }, []);
-  return reduced;
-}

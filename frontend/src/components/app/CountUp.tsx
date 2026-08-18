@@ -3,6 +3,7 @@
  * Duration: 800ms with easeOut. Respects reduced motion.
  */
 import { useEffect, useState } from 'react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface CountUpProps {
   target: number;
@@ -14,9 +15,10 @@ interface CountUpProps {
 
 export function CountUp({ target, duration = 800, suffix = '', className = '', style }: CountUpProps) {
   const [value, setValue] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (reducedMotion) {
       setValue(target);
       return;
     }
@@ -38,7 +40,7 @@ export function CountUp({ target, duration = 800, suffix = '', className = '', s
 
     raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
+  }, [target, duration, reducedMotion]);
 
   return <span className={className} style={style}>{value}{suffix}</span>;
 }

@@ -22,6 +22,7 @@ import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
 } from 'lucide-react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 const VISUAL_PREF_KEY = 'vidhya.show_visually';
 
@@ -321,11 +322,9 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
  * Renders nothing when atom has no media. Honors prefers-reduced-motion for the GIF.
  */
 export function MediaSidecar({ atom }: { atom: ContentAtom }) {
+  const reduceMotion = usePrefersReducedMotion();
   const media = atom.media;
   if (!media || (!media.gif_url && !media.audio_url)) return null;
-  const reduceMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   return (
     <div className="mt-4 space-y-3">
       {media.gif_url && (

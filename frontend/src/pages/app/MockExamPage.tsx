@@ -22,6 +22,7 @@ import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import { Flag, Loader2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { TimerPrimitive } from '@/components/app/TimerPrimitive';
 
 interface Question {
@@ -166,13 +167,7 @@ export default function MockExamPage() {
         </div>
 
         {/* Info card */}
-        <div style={{
-          padding: '20px 16px',
-          borderRadius: 'var(--radius-lg)',
-          background: 'var(--surface-card)',
-          boxShadow: 'var(--shadow-card)',
-          textAlign: 'center',
-        }}>
+        <Card elevated style={{ padding: '20px 16px', textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 32, paddingBottom: 16, marginBottom: 16, borderBottom: 'var(--hairline) solid var(--separator)' }}>
             <div>
               <p style={{ margin: 0, fontSize: 28, fontWeight: 'var(--weight-bold)', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>180</p>
@@ -187,7 +182,7 @@ export default function MockExamPage() {
           <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-normal)' }}>
             Syllabus-weighted, mastery-calibrated. Difficulty biased to your Zone of Proximal Development.
           </p>
-        </div>
+        </Card>
 
         {/* Rules */}
         <div style={{
@@ -249,12 +244,7 @@ export default function MockExamPage() {
         </div>
 
         {/* Question card */}
-        <div style={{
-          padding: '16px',
-          borderRadius: 'var(--radius-lg)',
-          background: 'var(--surface-card)',
-          boxShadow: 'var(--shadow-card)',
-        }}>
+        <Card elevated padding={16}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <span style={{ fontSize: 'var(--text-caption2)', fontFamily: 'var(--font-mono)', color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {q.topic}
@@ -323,7 +313,7 @@ export default function MockExamPage() {
               }}
             />
           )}
-        </div>
+        </Card>
 
         {/* Navigation */}
         <div style={{ display: 'flex', gap: 8 }}>
@@ -499,7 +489,7 @@ export default function MockExamPage() {
         </div>
 
         {/* Topic breakdown */}
-        <div style={{ padding: '14px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)' }}>
+        <Card radius="var(--radius-md)" style={{ padding: '14px 16px' }}>
           <p style={{ margin: '0 0 10px', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', fontWeight: 'var(--weight-semibold)' }}>
             Topic breakdown
           </p>
@@ -519,7 +509,7 @@ export default function MockExamPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* GBrain insight */}
         <div style={{

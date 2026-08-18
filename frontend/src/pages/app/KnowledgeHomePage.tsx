@@ -19,9 +19,13 @@ import { authFetch } from '@/lib/auth/client';
 import { CompoundingCard } from '@/components/app/CompoundingCard';
 import { useSession } from '@/hooks/useSession';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ListRow } from '@/components/ui/ListRow';
 import { ChevronRight } from 'lucide-react';
 import { FrontierSpine } from '@/components/knowledge/FrontierSpine';
 import type { FrontierNode, FrontierClusterSummary } from '@/lib/frontier-logic';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { EASE_STANDARD, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 
 interface TrackProgress { mastered: number; total: number; pct: number; track_id: string }
 interface ConceptTree { nodes: FrontierNode[]; edges: Array<{ from: string; to: string }>; clusters: FrontierClusterSummary[] }
@@ -36,6 +40,7 @@ export default function KnowledgeHomePage() {
   const [progress, setProgress] = useState<TrackProgress | null>(null);
   const [tree, setTree] = useState<ConceptTree | null>(null);
   const [phase, setPhase] = useState<Phase>('loading');
+  const reducedMotion = usePrefersReducedMotion();
   const bridgeShown = localStorage.getItem('vidhya.ke_bridge_shown') === '1';
   const [noExams, setNoExams] = useState(false);
 
@@ -105,21 +110,13 @@ export default function KnowledgeHomePage() {
       </div>
 
       {phase === 'error' && (
-        <button
-          type="button"
+        <ListRow
+          title="Couldn't load your map — pull to retry"
           onClick={() => trackId && loadTree(trackId)}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            minHeight: 'var(--touch-min)', width: '100%', padding: '0 2px',
-            background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
-            borderBottom: 'var(--hairline) solid var(--separator)',
-          }}
-        >
-          <span style={{ fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)' }}>
-            Couldn't load your map — pull to retry
-          </span>
-          <ChevronRight size={16} color="var(--text-tertiary)" />
-        </button>
+          padding="0 2px"
+          last
+          trailing={<ChevronRight size={16} color="var(--text-tertiary)" />}
+        />
       )}
 
       {phase === 'empty' && (
@@ -152,28 +149,23 @@ export default function KnowledgeHomePage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-            style={{
-              padding: '16px',
-              borderRadius: 'var(--radius-lg)',
-              background: 'var(--surface-card)',
-              boxShadow: 'var(--shadow-card)',
-              border: '1px solid rgba(88,86,214,.2)',
-            }}
+            transition={{ duration: framerDuration(DUR_FAST_S, reducedMotion), ease: EASE_STANDARD }}
             onAnimationComplete={() => localStorage.setItem('vidhya.ke_bridge_shown', '1')}
           >
-            <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Milestone
-            </p>
-            <p style={{ margin: '0 0 4px', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
-              You've mastered {progress!.pct}% of {trackName || 'your curriculum'}
-            </p>
-            <p style={{ margin: '0 0 14px', fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-normal)' }}>
-              Ready to test yourself on the full exam?
-            </p>
-            <Button size="sm" tone="tutor" onClick={() => navigate('/onboard')}>
-              Set your exam date <ChevronRight size={14} />
-            </Button>
+            <Card padding={16} elevated style={{ border: '1px solid rgba(88,86,214,.2)' }}>
+              <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--indigo-ink)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Milestone
+              </p>
+              <p style={{ margin: '0 0 4px', fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
+                You've mastered {progress!.pct}% of {trackName || 'your curriculum'}
+              </p>
+              <p style={{ margin: '0 0 14px', fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-normal)' }}>
+                Ready to test yourself on the full exam?
+              </p>
+              <Button size="sm" tone="tutor" onClick={() => navigate('/onboard')}>
+                Set your exam date <ChevronRight size={14} />
+              </Button>
+            </Card>
           </motion.div>
         )}
       </AnimatePresence>

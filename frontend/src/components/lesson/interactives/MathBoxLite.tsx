@@ -11,9 +11,10 @@
  * Reduced-motion: respects `prefers-reduced-motion: reduce`.
  */
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import type { DirectiveType, DirectiveProps } from './registry';
 import { parseRange } from './plot-utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface MathBoxLiteAttrs {
   function?: string;
@@ -53,16 +54,7 @@ export function MathBoxLite({ directive, attrs }: DirectiveProps) {
   // as an open map; narrow it here rather than at the signature, which would
   // break assignability for callers passing a library entry's config blob.
   const a = attrs as MathBoxLiteAttrs;
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+  const reducedMotion = usePrefersReducedMotion();
 
   const fnSrc = (a.function || a.fn || 'x^2').trim();
   const [xMin, xMax] = parseRange(a.x, [-3, 3]);

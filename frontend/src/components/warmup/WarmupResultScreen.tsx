@@ -78,7 +78,7 @@ export function WarmupResultScreen({
                     {row.label}
                   </span>
                   {DOT_CAPTION[row.dot] && (
-                    <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>
+                    <span style={{ fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>
                       {DOT_CAPTION[row.dot]}
                     </span>
                   )}
@@ -93,7 +93,7 @@ export function WarmupResultScreen({
         </Button>
       </Card>
 
-      <p style={{ margin: 0, textAlign: 'center', fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>
+      <p style={{ margin: 0, textAlign: 'center', fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>
         {WARMUP_RESULT_FOOTNOTE}
       </p>
     </div>

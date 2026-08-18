@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ListRow } from '@/components/ui/ListRow';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import {
   groupByCluster,
@@ -102,7 +103,6 @@ export function FrontierSpine({ nodes, clusters, onLearn }: FrontierSpineProps) 
                       key={n.id}
                       node={n}
                       last={i === youAreHere.length - 1}
-                      bold
                       onOpenSheet={() => setSheetFor(n)}
                     />
                   ))}
@@ -124,15 +124,24 @@ export function FrontierSpine({ nodes, clusters, onLearn }: FrontierSpineProps) 
                 <p style={{ margin: '14px 2px 2px', fontSize: 'var(--text-footnote)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-caps)', color: 'var(--text-secondary)' }}>
                   {group.label}
                 </p>
-                {restOfGroup.map((n, i) => (
-                  <FrontierRow
-                    key={n.id}
-                    node={n}
-                    last={i === restOfGroup.length - 1}
-                    dimmed={n.dot === 'later'}
-                    onOpenSheet={() => setSheetFor(n)}
-                  />
-                ))}
+                {restOfGroup.map((n, i) => {
+                  const { accessibleName, trailingLabel } = frontierRowMeta(n);
+                  return (
+                    <ListRow
+                      key={n.id}
+                      title={n.name}
+                      onClick={() => setSheetFor(n)}
+                      last={i === restOfGroup.length - 1}
+                      padding="0 2px"
+                      muted={n.dot === 'later'}
+                      ariaLabel={accessibleName}
+                      leading={<span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 999, flex: '0 0 10px', ...DOT_STYLE[n.dot] }} />}
+                      trailing={trailingLabel && (
+                        <span style={{ fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>{trailingLabel}</span>
+                      )}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
@@ -146,22 +155,37 @@ export function FrontierSpine({ nodes, clusters, onLearn }: FrontierSpineProps) 
   );
 }
 
+/**
+ * Shared row copy: the accessible name folds the "why" reason in when it's
+ * more than boilerplate (§11 a11y: "Diagonalization, after eigenvalues"),
+ * and the trailing visible label is the short status word/phrase.
+ */
+function frontierRowMeta(node: FrontierNode): { accessibleName: string; trailingLabel: string } {
+  const accessibleName = node.why && node.why !== 'mastered' && node.why !== 'in progress'
+    ? `${node.name}, ${node.why}`
+    : node.name;
+  const trailingLabel =
+    node.dot === 'placed' ? 'placed' : node.dot === 'later' ? node.why : node.dot === 'frontier' ? 'ready now' : '';
+  return { accessibleName, trailingLabel };
+}
+
+/**
+ * Renders only the bold "You are here" focal-card rows. These live inside
+ * the screen's ONE focal Card (not the bare canvas), and need the semibold
+ * emphasis weight ui/ListRow's title doesn't parametrize — a genuine
+ * semantic difference from the plain hairline rows below, which use
+ * ListRow directly (T24; see report for the full adoption/skip rationale).
+ */
 function FrontierRow({
   node,
   last,
-  bold = false,
-  dimmed = false,
   onOpenSheet,
 }: {
   node: FrontierNode;
   last: boolean;
-  bold?: boolean;
-  dimmed?: boolean;
   onOpenSheet: () => void;
 }) {
-  const accessibleName = node.why && node.why !== 'mastered' && node.why !== 'in progress'
-    ? `${node.name}, ${node.why}`
-    : node.name;
+  const { accessibleName, trailingLabel } = frontierRowMeta(node);
   return (
     <button
       type="button"
@@ -179,14 +203,14 @@ function FrontierRow({
       <span
         style={{
           flex: 1, fontSize: 'var(--text-body)', letterSpacing: 'var(--tracking-body)',
-          fontWeight: bold ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-          color: dimmed ? 'var(--text-secondary)' : 'var(--text-primary)',
+          fontWeight: 'var(--weight-semibold)',
+          color: 'var(--text-primary)',
         }}
       >
         {node.name}
       </span>
-      <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>
-        {node.dot === 'placed' ? 'placed' : node.dot === 'later' ? node.why : node.dot === 'frontier' ? 'ready now' : ''}
+      <span style={{ fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>
+        {trailingLabel}
       </span>
     </button>
   );
@@ -231,7 +255,7 @@ function FrontierSheet({ node, onClose }: { node: FrontierNode; onClose: () => v
         </p>
       )}
       {node.dot === 'placed' && (
-        <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+        <p style={{ margin: '6px 0 0', fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>
           Placed by your warmup — one practice session confirms it.
         </p>
       )}

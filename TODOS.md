@@ -120,30 +120,6 @@ four, and the expensive half cannot be generated from the syllabus alone.
 **Depends on:** a named author. This is a sourcing problem inside an
 engineering timeline, and no estimate is meaningful until someone owns it.
 
-## The verifier conflates "Wolfram is down" with "the answer is wrong"
-
-**Trigger:** before re-running the Wolfram sweep and publishing verification
-rates.
-
-**What:** decide what `inconclusive` means, and apply it in both pipelines.
-
-**Why:** `src/verification/verifiers/wolfram.ts` returns `status:
-'inconclusive'` on service unavailability — a timeout, a 5xx, a rate limit.
-`src/jobs/content-flywheel.ts` then rejects anything that is not exactly
-`'verified'`. So an outage at the arbiter reads as a content failure and the
-item is discarded. The only Wolfram run on disk shows 6 verified, 2 disagreed
-and 11 errors out of 19, so this is not a rare path — it is most of them.
-
-Publishing a verified-rate before this policy exists publishes a number that
-mixes content quality with third-party uptime, and it will have to be
-retracted.
-
-**Order matters:** this precedes the re-run, not the other way round.
-
-**Both pipelines must be named:** `content-flywheel.ts` (the cron flywheel)
-and `wolfram-verify-job.ts` are separate consumers with separate logic. Fixing
-one leaves the other conflating.
-
 ## The flat-file stores left on disk on purpose
 
 **Trigger:** anyone reading migration 043 and asking "why not all of them?"

@@ -258,16 +258,55 @@ export function answersAgree(expected: string, wolframAnswer: string): boolean {
 }
 
 /**
+ * Tri-state verification outcome. 'inconclusive' means the ARBITER could not
+ * render a verdict (no API key, outage, timeout, empty result) — it says
+ * nothing about whether the content is correct. 'failed' means Wolfram DID
+ * return an answer and it disagrees with ours — a genuine content problem.
+ * Conflating the two (both used to collapse to `verified: false`) makes an
+ * outage read as a content failure; see TODOS.md / T7 precondition.
+ */
+export type WolframVerificationStatus = 'verified' | 'failed' | 'inconclusive';
+
+export interface WolframVerificationResult {
+  /** Kept for backward compatibility: true only when status === 'verified'. */
+  verified: boolean;
+  status: WolframVerificationStatus;
+  wolfram_answer: string | null;
+  latency_ms: number;
+  error?: string;
+}
+
+/**
  * Verify a generated problem: does Wolfram's answer agree with ours?
+ *
+ * Returns status:'inconclusive' — never 'failed' — whenever Wolfram itself
+ * could not produce a usable answer (missing key, HTTP/network error,
+ * timeout, or a response with no parseable answer pod). status:'failed' is
+ * reserved for the case where Wolfram DID answer and the answers disagree.
  */
 export async function verifyProblemWithWolfram(
   problemText: string,
   expectedAnswer: string,
-): Promise<{ verified: boolean; wolfram_answer: string | null; latency_ms: number; error?: string }> {
+): Promise<WolframVerificationResult> {
   const result = await wolframSolve(problemText);
-  if (!result.available) return { verified: false, wolfram_answer: null, latency_ms: 0, error: result.error };
-  if (!result.answer) return { verified: false, wolfram_answer: null, latency_ms: result.latency_ms, error: 'Wolfram returned no answer' };
+  if (!result.available) {
+    return { verified: false, status: 'inconclusive', wolfram_answer: null, latency_ms: 0, error: result.error };
+  }
+  if (!result.answer) {
+    return {
+      verified: false,
+      status: 'inconclusive',
+      wolfram_answer: null,
+      latency_ms: result.latency_ms,
+      error: result.error ?? 'Wolfram returned no answer',
+    };
+  }
 
-  const verified = answersAgree(expectedAnswer, result.answer);
-  return { verified, wolfram_answer: result.answer, latency_ms: result.latency_ms };
+  const agree = answersAgree(expectedAnswer, result.answer);
+  return {
+    verified: agree,
+    status: agree ? 'verified' : 'failed',
+    wolfram_answer: result.answer,
+    latency_ms: result.latency_ms,
+  };
 }

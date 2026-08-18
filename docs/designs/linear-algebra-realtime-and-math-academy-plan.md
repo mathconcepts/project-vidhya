@@ -617,6 +617,133 @@ above; where they conflict with earlier task text, **this section wins**.
     regrows as a routine operation. A session exhausting a concept's items is a
     suggestion, not a dead end.
 
+## Engineering review corrections (ENG-D1..D4, verified against code)
+
+`/plan-eng-review` fact-checked every integration seam. Where this section
+conflicts with earlier text, **this section wins.**
+
+**ENG-D1 — FIRe lives INSIDE the `PgStudentModel.update()` transaction** (not a
+bus subscriber). Verified: the attempts-bus fires post-commit, isolates only
+synchronous throws (`attempts-bus.ts:49-53`, listener type is `void` — an async
+subscriber's rejection escapes), and the dedup key blocks replay, so a failed
+propagation would be silently unrecoverable. A5's *derived-model* refresh stays
+on the bus (best-effort is acceptable for a read model); B2's propagation is a
+batched write inside BEGIN/COMMIT.
+
+**ENG-D2 — Compression cap is 1.3, not 1.8.** Verified: a surfaced overdue
+retain's gain floor is `1.0 + (1 − RETAIN_RECALL_THRESHOLD=0.7) = 1.3`
+(`next-best-action.ts:216,227` — the formula lives in `pickDueReview`, not
+:124), and the comparator already favors retain on ties (:75-81). Practice
+`expectedGain ∈ [1.0, 1.3)`. Also verified: `armWeightsForPhase` multipliers
+are applied POST-selection to the surfaced value only
+(`syllabus-aware-engine.ts:85`) — they never re-rank; property tests target
+`DefaultReadinessEngine.nextBestAction` directly.
+
+**ENG-D3 — B5 coexists with MockExam; T22 fixes its leak.** A timed exam
+already ships (`MockExamPage.tsx` + `GET /api/gbrain/mock-exam/:sessionId` →
+`moat-operations.ts:347-436`). B5 remains the new server-graded quiz on the
+deterministic-scorer path. **T22 (new, P2):** `generateMockExam` returns
+`correct_answer` to the client and grades client-side — move grading
+server-side; also `mock_exams` is created by runtime SQL
+(`moat-operations.ts:403-414`), bypassing the schema column gate — give it a
+real migration. B5 must NOT copy that pattern.
+
+**ENG-D4 — corrections slate (all adopted):**
+
+1. **A2 is bigger than a backfill.** `pyq_questions` has NO `tags` and NO
+   `concept_id` column (base schema `001_rag_schema.sql:36-50`; the topic label
+   lives in `topic`). A2 = (a) migration adding `concept_id TEXT` (+ baseline
+   entry — already present in the column baseline), (b) seeder maps
+   topic/question content → concept id at seed time, with the idempotent UPDATE
+   running BEFORE the `existingCount` skip-guard (`seed-static-pyqs.ts:84-97`
+   `continue`s past the whole topic), (c) migration 035's 11 LA rows mapped
+   too, (d) **fix `fetchProblemsForConcept`** (`src/sessions/session-store.ts:127-134`)
+   which references four wrong/absent columns (`concept_id`, `question`,
+   `expected_answer`, numeric compare on `difficulty TEXT`) — it currently
+   THROWS, it doesn't return empty.
+2. **A5 absorbs two latent transaction bugs** in `student-model-pg.ts`: the
+   `attempt_error_tags` insert's swallowed `.catch()` INSIDE the open tx
+   (:272-279 — a failure aborts the tx, turning COMMIT into silent ROLLBACK
+   while `update()` reports success and publishes the event), and the
+   `attempt_dedup` insert living OUTSIDE the tx (:186-194 — a rolled-back
+   attempt is permanently deduped-out). Fix: move dedup inside the tx; handle
+   error-tags without swallowing inside the tx. Note `update()` also writes
+   `item_difficulty_elo` — FIRe propagation must not disturb item ratings.
+3. **B2's mechanism is pinned:** FSRS has NO fractional rating API
+   (`Rating = 1|2|3|4`). FIRe credit = direct `stability` adjustment with
+   `dueAt` recomputed via `intervalForRetention` (the two are coupled;
+   `recallProbability` ignores `dueAt`, so due-date-only writes are invisible).
+   Penalty = bounded stability reduction, same recompute.
+4. **A4's hook is a Dockerfile step**, not an npm `prebuild`: the production
+   image runs `npx vite build` directly (`Dockerfile:26-29`), bypassing npm
+   lifecycle scripts, and a frontend-cwd prebuild would break
+   `export-bundles.ts`'s cwd-relative OUT_DIR. Add
+   `RUN npx tsx scripts/export-bundles.ts` before the vite build (public/ →
+   dist/ is copied by vite) + the CI equality check.
+5. **A1 needs a composite content-checker adapter:** `ContentExistenceChecker`
+   is a one-method conceptId-only interface (`content-gate.ts:34-42`); "atoms +
+   catalog coverage" = a new adapter beside `atom-content-checker.ts`, not a
+   config change. `hasContent()` today checks atoms only.
+6. **T20 prerequisites:** the persona seeder's `ON CONFLICT (user_id)`
+   (`persona-seeder.ts:96`) targets a column with NO unique constraint
+   (`011:47` is unique on session_id only) — re-seeding throws. Fix constraint
+   or conflict target first; add the missing PRNG/determinism seam
+   (`futureExamDate()`/`new Date()` are time-dependent today). Persona ids are
+   TEXT-compatible with `student_skill_elo`/`fsrs_cards.student_id` ✓.
+7. **B1's cycle check needs parameterizing:** `assertNoPrerequisiteCycles`
+   hardcodes the `prerequisites` field name (`prereq-cycles.ts:16-19`); add a
+   field-name param or a remapping shim for `encompasses`. Good news verified:
+   the YAML loader whitelists fields, so adding `encompasses:` keys is safe —
+   silently ignored until the new loader lands.
+8. **A7 writes its own dual-model answer-key check.** `requiresConsensus()` is
+   a 2-value type predicate; `compareMathAtoms` FAILS OPEN (`agreed: true`) for
+   anything not worked_example/formal_definition, disagreement never blocks by
+   design, and the logic is inlined in `orchestrator.ts:335-378`. Reuse
+   `pickConsensusSecondary`/`consensusProvidersAreDistinct` + answer
+   normalizers only. Refuse-on-single-leg: if no second distinct provider is
+   available, the factory REFUSES the item (the atom path's ship-anyway
+   fallback is not acceptable here). Also: raise the batch `max_output_tokens`
+   (2048 today) for item+solution payloads; a factory bug emitting invalid JSON
+   currently LOWERS the floor count silently (`check-syllabus-floor.ts:181-183`)
+   — add a strict-parse CI step over `data/practice-items/*.json`; and stamp
+   honest `verification_method` values (note `catalog-file.ts:105` hardcodes
+   `'human_verified'` as the served verification label — fix to derive from
+   `verification_method`).
+9. **D6 needs a manifest key, not a value flip:** `ratchet` is a single global
+   `'report_only'|'blocking'` (`check-syllabus-floor.ts:49-53`); per-topic
+   scoping doesn't exist. Add `enforce_topics: [linear-algebra]` to
+   `gate-ma.floor.yml` + corresponding script logic.
+10. **Item count corrected: 123 net-new, not 130.** LA floor = 24×5 + 2×3
+    (`vector-spaces` and `linear-transformations` override to 3) = 126, minus
+    3 existing.
+11. **B5 idempotency is per-item:** the real key is `(studentId, objectId, ts)`
+    (`attempt-dedup.ts:30-32`) — no quiz dimension exists. Quiz submits send a
+    stable per-item ts; add a `quiz_sessions`-level idempotency key in the new
+    migration for the submission record itself.
+12. **The XP/no-peer-comparison invariant must be WRITTEN, not extended:**
+    invariant 10 only asserts `ATTENTION_CAP` + 4 PII field names in
+    `admin-cohort-routes.ts`. B5 adds a new invariant test: XP fields never
+    appear in cohort/peer payloads. New columns for migration 044 go into
+    `scripts/schema-column-baseline.json` IN THE SAME PR (`xp_amount`,
+    `total_xp`, `quiz_id`, `awarded_at`, `deadline_at`, `item_ids`, `graded_at`
+    etc.); prefer already-baselined names (`student_id`, `status`,
+    `started_at`, `submitted_at`, `score`) where honest.
+13. **A6's phantom is a FUNCTION, not a view** (`objects_for_skill($2)` at
+    `student-model-pg.ts:105`) — either ship a set-returning function in its
+    own migration (sequenced against 044) or delete the dead at-risk branch;
+    `'at-risk'` is unreachable today.
+14. **eligibleNodes batching confirmed in A1's scope** (97 `getNode` + 140
+    `masteryState` awaits per request today).
+15. **Migration hygiene:** 044 is next ✓; `035` is duplicated on main (two
+    files) — do not repeat; number A6's function and B5's tables explicitly
+    (044 = quiz/XP, 045 = objects_for_skill or A2's concept_id — assign in
+    implementation order, one number per file).
+
+**T22 — Mock-exam leak fix (ENG-D3)** *(P2, human ~1d / CC ~1h)*
+Server-side grading for `/api/gbrain/mock-exam`; stop returning
+`correct_answer` pre-submission; real migration for `mock_exams`. Verify: leak
+test mirroring the practice-item pattern.
+
 **T20 — Demo persona history seeding (D9)** *(P1 for demo day, human ~2d / CC ~1h)*
 Extend the persona seeder (`src/scenarios/persona-seeder.ts`, namespaced UUID
 discipline unchanged) to write plausible multi-day Elo/FSRS/XP history for the
@@ -635,7 +762,7 @@ Synthesized from findings; run with Claude Code, checkbox as you ship.
 - [ ] **T4 (P1, human ~1h / CC ~10min)** — gbrain — `masteryState` threshold recalibration + `objects_for_skill` resolution — *audit F5/F9* — Verify: threshold unit table.
 - [ ] **T5 (P1, human ~1d / CC ~30min)** — readiness — Prereq redirect reachability (content-backed trigger + allowedNodes scoping + batched mastery fetch) — *audit F1, §7* — Verify: fresh-student LA on-ramp integration test.
 - [ ] **T6 (P1, human ~3d / CC ~2h)** — student-model — Unify per D3 (attempts-bus subscriber feeds derived model) — *F1.1* — Verify: one attempt moves Elo+FSRS+alerts.
-- [ ] **T7 (P1, human ~2w / CC ~1-2d)** — content — Wolfram inconclusive policy fix, then 130-item LA factory run + commit + floor green — *§2, A7* — Verify: CI re-grade + floor report.
+- [ ] **T7 (P1, human ~2w / CC ~1-2d)** — content — Wolfram inconclusive policy fix (tri-state `verifyProblemWithWolfram` return + both consumers), then 123-item LA factory run + commit + floor green — *§2, A7, ENG-D4* — Verify: CI re-grade + strict-parse + floor report.
 - [ ] **T8 (P1, human ~3d / CC ~2h)** — frontend — Warmup onboarding UI — *A8* — Verify: e2e fresh-student flow.
 - [ ] **T9 (P2, human ~2d / CC ~1h)** — knowledge — GATE-MA track + DAG concept tree — *A9* — Verify: Meera's KnowledgeHome renders.
 - [ ] **T10 (P1-B, human ~1w / CC ~1d)** — curriculum — `encompasses:` edges (LA) + loader + validation — *B1* — Verify: graph CI.
@@ -650,6 +777,48 @@ Synthesized from findings; run with Claude Code, checkbox as you ship.
 - [ ] **T19 (P2, human ~3d / CC ~2h + config)** — chat — Off-corpus provider key + per-session rate limit + daily spend cap — *D7* — Verify: off-corpus answer streams on deployed URL; cap trips refuse gracefully.
 - [ ] **T20 (P1-demo, human ~2d / CC ~1h)** — demo — Persona multi-day history seeding so B mechanisms demo live — *D9* — Verify: walkthrough shows due-review knock-out + quiz offer.
 - [ ] **T21 (P1, human ~1d / CC ~1h)** — scoring — Composite catalog (file + Pg) so authored items survive `DATABASE_URL` — *OV-1* — Verify: item serves with DB configured.
+- [ ] **T22 (P2, human ~1d / CC ~1h)** — gbrain — Mock-exam server-side grading + real `mock_exams` migration (answer-key leak fix) — *ENG-D3* — Verify: leak test on the mock-exam payload.
+
+## Test coverage map (eng review)
+
+```
+CODE PATHS                                          USER FLOWS
+[+] FIRe propagation (in-tx, B2)                    [+] Warmup onboarding (A8)
+  ├── [PLANNED ★★★] credit decreasing/bounded/       ├── [PLANNED →E2E] fresh student → probes →
+  │    idempotent/no-op-without-edges (property)     │    placement → real next-action objectId
+  ├── [PLANNED ★★★] penalty bounded, encompassing    ├── [PLANNED] abandon mid-warmup (stateless re-entry)
+  │    direction only                                └── [PLANNED] empty probe band → early end
+  └── [PLANNED ★★★] dedup replay → zero propagation
+[+] Compression scoring (B3)                        [+] Practice → graded → mastery moves (A5/A7)
+  ├── [PLANNED ★★★] cap 1.3; overdue retain wins     ├── [PLANNED →E2E] attempt moves Elo+FSRS+alerts
+  └── [PLANNED ★★ ] domino ranking case              └── [PLANNED] DB-less → recorded:false banner
+[+] Composite catalog (T21)                         [+] Quiz (B5)
+  ├── [PLANNED ★★★] file+Pg merge, DB-wins collision ├── [PLANNED ★★★] leak test (no answer fields)
+  └── [PLANNED ★★★] DATABASE_URL set → file item      ├── [PLANNED] timer expiry auto-submit; late flag
+       still serves                                  ├── [PLANNED] double-submit idempotent (per-item ts)
+[+] Redirect reachability (A1)                       └── [PLANNED] pool below 2x → honest empty state
+  ├── [PLANNED ★★★] content-starved eligible set    [+] Frontier view (B4): states coverage
+  │    fires redirect (production wiring)           [+] Mock-exam leak fix (T22): leak test
+  └── [PLANNED ★★ ] batched mastery fetch parity
+[+] Factory (A7): strict-parse CI, deriveMarking refusals, dual-model refuse-on-single-leg,
+     CI re-grade of every committed item, floor gate enforce_topics
+[+] A2: fetchProblemsForConcept regression test (currently THROWS — CRITICAL regression coverage)
+[+] Graph (B1): encompassing schema + cycle validation (parameterized), loader ignores-unknown pin
+COVERAGE TARGET: every planned branch above lands WITH its test in the same PR (repo norm).
+```
+
+## Worktree parallelization (eng review)
+
+| Lane | Tasks | Shared modules | Depends on |
+|---|---|---|---|
+| A | T1, T2, T3+A2-migration, T4 | lessons/, scripts/, db/, gbrain/ (disjoint files) | — |
+| B | T5 (redirect+batch), T15 | readiness/, api/readiness-routes | — |
+| C | T6 (model unify), then T11 (FIRe), then T12 (cap/compression) | gbrain/student-model*, events/ | C sequential; T12 also touches readiness/ → after B merges |
+| D | T7 factory (pilot → 123 items), T21, T17, T18 | generation/batch, data/practice-items, scoring/catalog | T21 first; content lands incrementally |
+| E | T8 (warmup UI), T9 (track), T13 (frontier) | frontend/ | T8 needs D's pilot items for probes |
+| F | T14 (quiz/XP), T22, T20 | api/practice-routes, gbrain/moat-operations, scenarios/ | T14 after C (attempt path stable) |
+
+Launch A + B + D in parallel worktrees. C after B merges. E after D's pilot. F last. Conflict flag: C and F both touch the attempt path — keep sequential.
 
 ## GSTACK REVIEW REPORT
 

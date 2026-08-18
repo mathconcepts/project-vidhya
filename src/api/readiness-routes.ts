@@ -77,11 +77,18 @@ import { ConceptGraphCurriculumRepo } from '../curriculum/curriculum-repo';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import {
   makeSyllabusAwareReadinessEngine,
+  rationaleIndicatesRedirect,
   type SyllabusContextProvider,
 } from '../readiness/syllabus-aware-engine';
 import { getCompositeContentChecker } from '../readiness/composite-content-checker';
 import { getProfile } from '../session-planner/exam-profile-store';
 import type { Action } from '../core/interfaces';
+import {
+  recordArmSelection,
+  recordDiagnoseFallback,
+  recordObjectIdOutcome,
+  recordRedirectFired,
+} from '../readiness/metrics';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -357,6 +364,9 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
     // rows, no attempts, no FSRS cards) — this is the DB-less / fresh
     // student case, not an error.
     if (action.kind === 'diagnose' && !action.objectId) {
+      recordArmSelection('diagnose');
+      recordObjectIdOutcome(false);
+      recordDiagnoseFallback();
       return sendJSON(res, {
         action,
         expected_score: null,
@@ -364,12 +374,18 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
       });
     }
 
+    recordArmSelection(action.kind);
+    recordObjectIdOutcome(Boolean(action.objectId));
+    if (rationaleIndicatesRedirect(action.rationale)) recordRedirectFired();
+
     return sendJSON(res, {
       action: await attachMarking(action),
       expected_score: null,
     });
   } catch (err) {
     console.error('[readiness] next-action failed:', (err as Error).message);
+    recordObjectIdOutcome(false);
+    recordDiagnoseFallback();
     return sendJSON(res, {
       action: null,
       expected_score: null,

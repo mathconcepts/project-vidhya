@@ -39,11 +39,18 @@ For GATE (65 questions, 180 min):
 {
   "exam_id": "mock-gate-2026-04-19-abc123",
   "time_limit_minutes": 180,
-  "questions": [ { "id", "question_text", "options", "correct_answer", "topic", "difficulty", "marks" } ],
-  "section_breakdown": { "linear-algebra": 10, "calculus": 10, ... },
-  "post_analysis_hook": "/api/gbrain/mock-exam/<id>/analyze"
+  "questions": [ { "id", "question_text", "options", "topic", "difficulty", "marks", "gradable" } ],
+  "section_breakdown": { "linear-algebra": 10, "calculus": 10, ... }
 }
 ```
+
+Note (T22/ENG-D3): the answer key (`correct_answer` / index) is NEVER
+included in this response — it's server-only until submission. Grade with
+`POST /api/gbrain/mock-exam/<exam_id>/submit` (student-authenticated,
+`{ responses: [{ id, selectedIndex? }] }`), which returns the graded
+`analysis` and updates the student model. The old `post_analysis_hook`
+field pointed at a `/analyze` endpoint that was never implemented — removed
+rather than left dangling.
 
 ## Post-Analysis
 

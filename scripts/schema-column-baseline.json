@@ -6,6 +6,7 @@
     "abstraction_comfort",
     "acted_at",
     "active",
+    "analysis",
     "answer",
     "answer_text",
     "answered_at",
@@ -89,6 +90,7 @@
     "event_type",
     "exam_date",
     "exam_id",
+    "exam_key",
     "exam_pack_id",
     "exam_strategy",
     "exam_tags",
@@ -204,6 +206,7 @@
     "quality",
     "query_text",
     "question_text",
+    "questions",
     "quiz_id",
     "ran_at",
     "rated_at",
@@ -287,6 +290,7 @@
     "tier2_ms",
     "tier3_ms",
     "tier_used",
+    "time_limit_minutes",
     "time_taken_ms",
     "times_correct",
     "times_served",
@@ -350,6 +354,10 @@
     "graded_at": "046_xp_quiz / 047_mock_exams — when server-side grading completed. Operational timestamp, same class as the already-baselined submitted_at/started_at.",
     "awarded_at": "046_xp_quiz — when an xp_events row was written. Operational timestamp.",
     "quiz_id": "046_xp_quiz — reserved name (not a live column in the shipped 046 shape; quiz_sessions.id serves this role). Grandfathered defensively so a future FK column reusing the same name does not need a second review.",
-    "total_xp": "046_xp_quiz — reserved name for a possible future cached-total column; today the total is computed on read (src/gbrain/xp-store.ts), never stored. Grandfathered defensively."
+    "total_xp": "046_xp_quiz — reserved name for a possible future cached-total column; today the total is computed on read (src/gbrain/xp-store.ts), never stored. Grandfathered defensively.",
+    "exam_key": "047_mock_exams — which named exam config (gate/bitsat/...) a mock exam was drawn from. Content/config identifier, not a student attribute.",
+    "questions": "047_mock_exams — the SERVER-ONLY full question set including each answer key. Never serialized to the client pre-submission (leak test in src/api/__tests__/mock-exam-routes.test.ts mirrors the practice-item pattern). Real migration replacing the prior runtime-SQL CREATE TABLE that bypassed this gate entirely (T22/ENG-D3).",
+    "time_limit_minutes": "047_mock_exams — the exam configs own fixed duration (EXAM_CONFIGS). Config value, not observed behaviour.",
+    "analysis": "047_mock_exams — the graded breakdown (earned/max/per-topic), mirroring 046 quiz_sessions.result. Stored so a double-submit replays the same graded analysis instead of re-grading a possibly-different payload."
   }
 }

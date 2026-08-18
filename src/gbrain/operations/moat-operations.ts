@@ -382,8 +382,16 @@ export async function generateMockExam(sessionId: string, examKey: string = 'gat
 
       const remaining = n - pyq.length;
       if (remaining > 0) {
+        // T22 (ENG-D3): also pull the migration 032/033 marking columns —
+        // previously this hardcoded `2 as marks` and pulled nothing else,
+        // so a generated_problems-sourced question could never be
+        // deterministically graded server-side even when the row actually
+        // carried real marking. Rows without it (pre-032, or unmarked
+        // material) still come back with these columns NULL — normalized
+        // to "ungraded" by src/gbrain/mock-exam-grading.ts, never guessed.
         const { rows: gen } = await pool.query(
-          `SELECT id, question_text, correct_answer, topic, concept_id, difficulty, 2 as marks
+          `SELECT id, question_text, correct_answer, topic, concept_id, difficulty,
+                  question_type, marks, answer_index, answer_indices, answer_range, options
            FROM generated_problems
            WHERE topic = $1 AND verified = true AND difficulty BETWEEN $2 AND $3
            ORDER BY RANDOM() LIMIT $4`,
@@ -399,24 +407,13 @@ export async function generateMockExam(sessionId: string, examKey: string = 'gat
 
   const examId = `mock-${examKey}-${Date.now()}-${sessionId.slice(0, 6)}`;
 
-  // Save mock exam metadata
-  await pool.query(
-    `CREATE TABLE IF NOT EXISTS mock_exams (
-       id TEXT PRIMARY KEY,
-       session_id TEXT NOT NULL,
-       exam_key TEXT NOT NULL,
-       questions JSONB NOT NULL,
-       time_limit_minutes INT NOT NULL,
-       created_at TIMESTAMPTZ DEFAULT NOW(),
-       submitted_at TIMESTAMPTZ,
-       analysis JSONB
-     )`
-  ).catch(() => {});
-  await pool.query(
-    `INSERT INTO mock_exams (id, session_id, exam_key, questions, time_limit_minutes) VALUES ($1, $2, $3, $4, $5)`,
-    [examId, sessionId, examKey, JSON.stringify(questions), examConfig.total_time_minutes]
-  ).catch(() => {});
-
+  // T22 (ENG-D3): this function no longer touches mock_exams at all — the
+  // route layer (src/api/mock-exam-routes.ts) owns persistence via the
+  // real migration-backed src/gbrain/mock-exam-store.ts, and owns
+  // redacting the answer key before this data ever reaches a client.
+  // generateMockExam() stays a pure(ish) "assemble the question set"
+  // function so its query logic is reusable/testable independent of
+  // storage or leak discipline.
   return {
     exam_id: examId,
     exam_name: examConfig.name,
@@ -431,7 +428,6 @@ export async function generateMockExam(sessionId: string, examKey: string = 'gat
       acc[q.topic] = (acc[q.topic] || 0) + 1;
       return acc;
     }, {}),
-    post_analysis_hook: `/api/gbrain/mock-exam/${examId}/analyze`,
   };
 }
 

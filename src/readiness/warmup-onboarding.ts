@@ -201,13 +201,26 @@ export async function applyWarmupPriors(
     return { placed, frontier: frontierConceptId, recorded: false };
   }
 
-  let pool: InstanceType<typeof import('pg').default.Pool> | null = null;
+  // T16 (D4 / OV2 #10): this used to build its OWN `new Pool({max:3})` on
+  // every single persist request — a fresh, never-closed-until-.end()
+  // connection pool per warmup completion, the textbook per-call offender
+  // the connection-budget audit went looking for. Now it borrows the one
+  // process-wide shared pool (src/storage/pool.ts) instead. Crucially:
+  // do NOT `.end()` a pool you borrowed — that shuts it down for every
+  // other module in the process, not just this call.
+  let pool: import('pg').Pool | null = null;
   try {
     // Late imports: keep this module importable (and its pure functions
     // testable) with zero DB driver / pool side effects when nothing here
     // is called from a DB-less path.
-    const pg = await import('pg');
-    pool = new pg.default.Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
+    const { getSharedPool } = await import('../storage/pool');
+    pool = getSharedPool();
+    if (!pool) {
+      // DATABASE_URL was set a moment ago (checked above) but isn't now,
+      // or the shared pool otherwise declined — degrade honestly rather
+      // than crash.
+      return { placed, frontier: frontierConceptId, recorded: false };
+    }
     const { getOrCreateStudentModel, saveStudentModel } = await import('../gbrain/student-model');
 
     const abilityByConcept = new Map(results.map((r) => [r.skillId, r.abilityEstimate]));
@@ -257,9 +270,10 @@ export async function applyWarmupPriors(
   } catch (err) {
     console.error(`[warmup-onboarding] persist failed for student=${studentId}:`, (err as Error).message);
     return { placed, frontier: frontierConceptId, recorded: false };
-  } finally {
-    if (pool) await pool.end().catch(() => {});
   }
+  // No `finally { pool.end() }` — the shared pool is process-lifetime and
+  // is closed (if ever) by the process shutdown path, not by an
+  // individual caller.
 }
 
 /** Re-exported for callers that only have the wire-format WarmupReport

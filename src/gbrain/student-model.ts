@@ -13,23 +13,21 @@
  *   computeExamStrategy(...)   — Generate personalized exam playbook
  */
 
-import pg from 'pg';
 import { CONCEPT_MAP, traceWeakestPrerequisite, getConceptsForTopic } from '../constants/concept-graph';
 import { MARKS_WEIGHTS } from '../engine/priority-engine';
 import { getExam } from '../curriculum/exam-loader';
 import { STRUGGLING_STATES } from '../teaching/motivation-source';
+import { getSharedPool } from '../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: any = null;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5, ...})` — now
+// the one shared pool (src/storage/pool.ts). This is the legacy student
+// model, still the highest-traffic module in the codebase (every route
+// that calls getOrCreateStudentModel/saveStudentModel goes through it) —
+// exactly the kind of module the connection-budget audit targeted.
 function getPool() {
-  if (_pool) return _pool;
-  _pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 5,
-    idleTimeoutMillis: 30_000,
-  });
-  return _pool;
+  const pool = getSharedPool();
+  if (!pool) throw new Error('[student-model] DATABASE_URL not configured');
+  return pool;
 }
 
 // ============================================================================

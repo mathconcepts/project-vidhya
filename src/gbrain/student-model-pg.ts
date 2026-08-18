@@ -23,7 +23,8 @@
  * the student model knowing about them (§5.8).
  */
 
-import pg from 'pg';
+import type pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 import {
   applyAttempt,
   newItemDifficulty,
@@ -53,13 +54,16 @@ import type {
 import { publishAttemptRecorded } from '../events/attempts-bus';
 import { downClosureFor, upClosureFor, computeImplicitReviews } from './fire';
 
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now the
+// one shared pool (src/storage/pool.ts). Every method here calls this
+// unconditionally (no DATABASE_URL pre-check), matching the prior
+// behavior where a Pool was always constructed and only failed at query
+// time — the only change is the failure now happens at getPool() with an
+// explicit message instead of inside pg's connection attempt.
 function getPool(): pg.Pool {
-  if (_pool) return _pool;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
+  const pool = getSharedPool();
+  if (!pool) throw new Error('[student-model-pg] DATABASE_URL not configured');
+  return pool;
 }
 
 // ────────────────────────────────────────────────────────────────────

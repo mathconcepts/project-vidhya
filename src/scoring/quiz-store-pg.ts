@@ -15,15 +15,18 @@
  * already provides via `attempt_dedup`.
  */
 
-import pg from 'pg';
+import type pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now the
+// one shared pool (src/storage/pool.ts). Every exported function below
+// documents "throws on DB-less" as its contract (callers decide the
+// honest fallback), so a missing DATABASE_URL still throws here — just
+// with an explicit message instead of a query later failing to connect.
 function getPool(): pg.Pool {
-  if (_pool) return _pool;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
+  const pool = getSharedPool();
+  if (!pool) throw new Error('[quiz-store-pg] DATABASE_URL not configured');
+  return pool;
 }
 
 export interface QuizSessionRow {

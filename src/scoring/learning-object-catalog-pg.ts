@@ -57,14 +57,13 @@
  * a query failure is caught and logged, never surfaced as a 500.
  */
 
-import pg from 'pg';
+import type pg from 'pg';
 import { FileLearningObjectCatalog } from './learning-object-catalog-file';
 import { CompositeLearningObjectCatalog } from './learning-object-catalog-composite';
 import { difficultyToElo, eloToDifficultyBounds, DEFAULT_EXAM_RELEVANCE } from './difficulty-elo';
 import type { LearningObject, ObjectType } from '../core/interfaces';
 import type { CatalogQuery, LearningObjectCatalog } from './learning-object-catalog';
-
-const { Pool } = pg;
+import { getSharedPool } from '../storage/pool';
 
 /** Defaults used where `generated_problems` has no corresponding column. */
 export const DEFAULT_MAX_MARKS = 4;
@@ -152,10 +151,11 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
   private pool: pg.Pool | null;
 
   constructor() {
-    const connectionString = process.env.DATABASE_URL;
-    // No DATABASE_URL → no pool at all. Every method short-circuits to the
-    // empty-catalog response without ever attempting a connection.
-    this.pool = connectionString ? new Pool({ connectionString, max: 5 }) : null;
+    // T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now
+    // the one shared pool (src/storage/pool.ts). No DATABASE_URL → no
+    // pool at all. Every method short-circuits to the empty-catalog
+    // response without ever attempting a connection.
+    this.pool = getSharedPool();
   }
 
   async query(q: CatalogQuery): Promise<LearningObject[]> {

@@ -17,18 +17,20 @@
  * and unit-testable with a plain stub function.
  */
 
-import pg from 'pg';
+import type pg from 'pg';
 import { recallProbability, type FsrsCard } from '../gbrain/fsrs';
 import type { DueReviewCandidate } from '../core/interfaces';
 import type { LearningObjectCatalog } from '../scoring/learning-object-catalog';
+import { getSharedPool } from '../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
-function getPool(): pg.Pool {
-  if (_pool) return _pool;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now the
+// one shared pool (src/storage/pool.ts). Every call site below already
+// guards on `!process.env.DATABASE_URL` before reaching here, so a null
+// return only happens if DATABASE_URL was cleared between that check and
+// this call — treated the same as any other query failure (degrade to
+// empty, never crash).
+function getPool(): pg.Pool | null {
+  return getSharedPool();
 }
 
 export interface DueCardRow {
@@ -49,7 +51,9 @@ export async function dueCards(studentId: string, now: Date): Promise<DueCardRow
   if (!process.env.DATABASE_URL) return [];
 
   try {
-    const { rows } = await getPool().query(
+    const pool = getPool();
+    if (!pool) return [];
+    const { rows } = await pool.query(
       `SELECT object_id, skill_id, stability, last_review_at, reps
          FROM fsrs_cards
         WHERE student_id = $1 AND due_at <= $2 AND reps > 0
@@ -87,8 +91,10 @@ export async function recentlyReviewedObjectIds(
 ): Promise<Set<string>> {
   if (!process.env.DATABASE_URL) return new Set();
   try {
+    const pool = getPool();
+    if (!pool) return new Set();
     const since = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
-    const { rows } = await getPool().query(
+    const { rows } = await pool.query(
       `SELECT object_id FROM fsrs_cards WHERE student_id = $1 AND last_review_at >= $2`,
       [studentId, since.toISOString()],
     );

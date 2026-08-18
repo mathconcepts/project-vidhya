@@ -89,6 +89,17 @@ jobs:
       - name: pg-import allowlist ratchet
         run: npm run ci:pg-allowlist
 
+      # Connection-budget ratchet (T16 / D4 / OV2 correction #10): fails if
+      # a NEW `new Pool(...)` call site appears inside an exported
+      # function/constructor without the codebase's lazy-singleton
+      # memoization guard nearby — the per-call-pool failure mode that
+      # pg-import-allowlist above can't see (it only checks WHETHER a file
+      # imports 'pg', not HOW OFTEN it constructs a Pool). Complements, does
+      # not replace, that check. See scripts/check-connection-budget.ts and
+      # docs/ops/render-database-url.md for the audit this closed.
+      - name: Connection-budget ratchet
+        run: npm run ci:connection-budget
+
       - name: seam-registry check
         run: npm run ci:seam-registry
 

@@ -15,7 +15,7 @@
  */
 
 import { ServerResponse } from 'http';
-import pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 import {
   getOrCreateStudentModel,
   saveStudentModel,
@@ -54,8 +54,6 @@ import {
 import { auditStudent, formatAuditMarkdown } from './operations/student-audit';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
-
-const { Pool } = pg;
 
 interface RouteDefinition {
   method: string;
@@ -165,14 +163,24 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     console.warn('[gbrain] saveStudentModel skipped:', (e as Error).message);
   }
 
-  // Log confidence if provided
+  // Log confidence if provided.
+  //
+  // T16 (D4 / OV2 #10): this used to build a fresh `new pg.Pool({...})`
+  // (no `max`, so pg's default of 10) on EVERY attempt that carried a
+  // confidenceBefore rating — and never closed it (no `.end()`), so
+  // every such request left the pool object behind. A busy exam-prep
+  // session logs confidence on most attempts, making this the highest-
+  // volume per-call offender found in the T16 audit. Now borrows the
+  // one shared pool (src/storage/pool.ts) instead.
   if (confidenceBefore !== undefined) {
-    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-    await pool.query(
-      `INSERT INTO confidence_log (session_id, problem_id, concept_id, confidence_before, was_correct, time_taken_ms)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [sessionId, problemId || null, concept, confidenceBefore, isCorrect, timeTakenMs || null],
-    ).catch(() => {});
+    const pool = getSharedPool();
+    if (pool) {
+      await pool.query(
+        `INSERT INTO confidence_log (session_id, problem_id, concept_id, confidence_before, was_correct, time_taken_ms)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [sessionId, problemId || null, concept, confidenceBefore, isCorrect, timeTakenMs || null],
+      ).catch(() => {});
+    }
   }
 
   sendJSON(res, {

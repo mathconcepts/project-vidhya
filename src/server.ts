@@ -1096,10 +1096,15 @@ Solve carefully:`;
   }
 
   // ── Vector store (pgvector-backed for persistence across cold starts) ──
+  // T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5, ...})`,
+  // held for the whole process lifetime by PgVectorStore and queried on
+  // every Tier 1 RAG verification lookup — one of the hottest paths in
+  // the app. Now borrows the one shared pool (src/storage/pool.ts)
+  // instead of adding a second max:5 pool to the process's budget.
   let vectorStore;
   if (dbUrl) {
-    const pg = await import('pg');
-    const pool = new pg.default.Pool({ connectionString: dbUrl, max: 5, idleTimeoutMillis: 30_000 });
+    const { getSharedPool } = await import('./storage/pool');
+    const pool = getSharedPool();
     const pgStore = new PgVectorStore(pool);
     await pgStore.initialize();
     vectorStore = pgStore;

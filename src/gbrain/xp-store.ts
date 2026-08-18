@@ -22,15 +22,16 @@
  *     baseline before calling this.
  */
 
-import pg from 'pg';
+import type pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
-function getPool(): pg.Pool {
-  if (_pool) return _pool;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
+// T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now the
+// one shared pool (src/storage/pool.ts). Every call site below already
+// guards on `!process.env.DATABASE_URL` before reaching here, so this
+// only returns null if DATABASE_URL was cleared between that check and
+// this call — treated the same as any other query failure below.
+function getPool(): pg.Pool | null {
+  return getSharedPool();
 }
 
 export interface XpAward {
@@ -51,7 +52,9 @@ export interface XpAward {
 export async function awardXp(award: XpAward): Promise<void> {
   if (!process.env.DATABASE_URL) return;
   try {
-    await getPool().query(
+    const pool = getPool();
+    if (!pool) return;
+    await pool.query(
       `INSERT INTO xp_events (student_id, object_id, skill_id, xp_amount, source, ts_ms)
        VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (student_id, object_id, ts_ms) DO NOTHING`,
@@ -72,7 +75,9 @@ export async function awardXp(award: XpAward): Promise<void> {
 export async function totalXpMinutes(studentId: string): Promise<number> {
   if (!process.env.DATABASE_URL) return 0;
   try {
-    const { rows } = await getPool().query(
+    const pool = getPool();
+    if (!pool) return 0;
+    const { rows } = await pool.query(
       `SELECT COALESCE(SUM(xp_amount), 0) AS total FROM xp_events WHERE student_id = $1`,
       [studentId],
     );
@@ -93,7 +98,9 @@ export async function totalXpMinutes(studentId: string): Promise<number> {
 export async function xpEarnedSince(studentId: string, sinceMs: number | null): Promise<number> {
   if (!process.env.DATABASE_URL) return 0;
   try {
-    const { rows } = await getPool().query(
+    const pool = getPool();
+    if (!pool) return 0;
+    const { rows } = await pool.query(
       sinceMs === null
         ? `SELECT COALESCE(SUM(xp_amount), 0) AS total FROM xp_events WHERE student_id = $1`
         : `SELECT COALESCE(SUM(xp_amount), 0) AS total FROM xp_events WHERE student_id = $1 AND awarded_at > $2`,

@@ -17,6 +17,14 @@
  *     visual-analogy.md contained a worked example, so the concept had no
  *     intuition atom at all and nothing noticed.
  *
+ * A third leak class joined the gate later, found in rank-nullity's
+ * worked-example.md: the AUTHORING TOOL'S OWN error report — "**Error
+ * encountered:** The Write tool permission handler is misconfigured on this
+ * system..." — rendered at the bottom of a worked example, in the lesson, to
+ * a student. Distinct from both above: not scaffolding bleeding across atoms,
+ * not a sign-off addressed to the operator, but the tool talking about
+ * itself. See check 1c.
+ *
  * Check 2 compares each atom's declared `id` against its filename. The variant
  * form is legal and must stay legal: `worked-example-product-rule.md` declaring
  * `derivatives-basic.worked-example.product-rule` is correct — dots in the id
@@ -120,6 +128,39 @@ function checkFile(file: string): void {
         file: rel,
         line: i + 1,
         message: `generation sign-off addressed to the operator, not the student: ${JSON.stringify(t.slice(0, 60))}`,
+      });
+    }
+  });
+
+  // ---- 1c. leaked tool/agent error messages -----------------------------
+  //
+  // A third flavor, distinct from both above: not scaffolding left inside
+  // the body, not a sign-off addressed to the operator, but the AUTHORING
+  // TOOL'S OWN error report about itself. Found in rank-nullity's
+  // worked-example.md: "**Error encountered:** The Write tool permission
+  // handler is misconfigured on this system. The atoms above are ready to
+  // be written to the file paths specified. To complete this task, you'll
+  // need to create these three markdown files...", rendered in a worked
+  // example, in the lesson, to a student.
+  //
+  // Anchored to the specific vocabulary of a tool/agent failure report
+  // (permission handler, the capitalised "Write tool", an explicit
+  // "error encountered" label) rather than bare words like "error" or
+  // "write" alone, which appear constantly in legitimate math prose
+  // ("round-off error", "standard error", "we write the matrix as...").
+  // A false positive here would refuse real content; a loose word match
+  // would refuse it on every stats atom in the corpus.
+  lines.forEach((line, i) => {
+    const t = line.trim();
+    if (
+      /(\*{0,2}error encountered\*{0,2}\s*:|permission handler is misconfigured|\bwrite tool\b[^.]{0,60}\b(misconfigured|permission|handler)\b|you'll need to create these .{0,30}(markdown )?files)/i.test(
+        t,
+      )
+    ) {
+      problems.push({
+        file: rel,
+        line: i + 1,
+        message: `leaked tool/agent error message: ${JSON.stringify(t.slice(0, 60))} — the authoring tool's own failure report, not lesson content`,
       });
     }
   });

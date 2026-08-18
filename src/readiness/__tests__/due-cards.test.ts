@@ -57,6 +57,19 @@ describe('dueCards', () => {
     expect(params[1]).toBe(now.toISOString());
   });
 
+  it('caps the scan with a LIMIT so an account with hundreds of overdue cards cannot balloon the query', async () => {
+    process.env.DATABASE_URL = 'postgres://test/test';
+    mockQuery.mockResolvedValueOnce({ rows: [] });
+    const { dueCards } = await import('../due-cards');
+    await dueCards('s1', new Date());
+
+    const [sql, params] = mockQuery.mock.calls[0];
+    expect(String(sql)).toContain('LIMIT $3');
+    expect(typeof params[2]).toBe('number');
+    expect(params[2]).toBeGreaterThan(0);
+    expect(params[2]).toBeLessThanOrEqual(100);
+  });
+
   it('maps rows to the DueCardRow shape', async () => {
     process.env.DATABASE_URL = 'postgres://test/test';
     mockQuery.mockResolvedValueOnce({
@@ -155,6 +168,35 @@ describe('makeDueReviewSource', () => {
     const result = await source('s1', new Date('2026-06-20T00:00:00.000Z'), { allowedNodes: ['eigenvalues'] });
     expect(result).toHaveLength(1);
     expect(result[0].nodeId).toBe('eigenvalues');
+  });
+
+  it('batches catalog lookups concurrently instead of awaiting them one at a time', async () => {
+    process.env.DATABASE_URL = 'postgres://test/test';
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { object_id: 'o1', skill_id: 'eigenvalues', stability: 5, last_review_at: '2026-06-01T00:00:00.000Z', reps: 3 },
+        { object_id: 'o2', skill_id: 'eigenvalues', stability: 5, last_review_at: '2026-06-01T00:00:00.000Z', reps: 3 },
+        { object_id: 'o3', skill_id: 'eigenvalues', stability: 5, last_review_at: '2026-06-01T00:00:00.000Z', reps: 3 },
+      ],
+    });
+    const { makeDueReviewSource } = await import('../due-cards');
+
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const getById = vi.fn(async (id: string) => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await Promise.resolve();
+      inFlight--;
+      return makeObject({ id, nodeId: 'eigenvalues' });
+    });
+    const catalog = { query: async () => [], getById };
+    const source = makeDueReviewSource(catalog);
+    const result = await source('s1', new Date('2026-06-20T00:00:00.000Z'), {});
+
+    expect(getById).toHaveBeenCalledTimes(3);
+    expect(maxInFlight).toBeGreaterThan(1); // proves the lookups overlapped, not sequential
+    expect(result).toHaveLength(3);
   });
 
   it('returns [] when the catalog has no getById', async () => {

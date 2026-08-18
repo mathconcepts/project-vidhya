@@ -382,9 +382,16 @@ async function gradeQuizItems(
   let earned = 0;
   let max = 0;
 
+  // Prefetch every item's payload concurrently (mirrors handleQuizStart's
+  // existing `Promise.all(chosen.map(...))` prefetch) — the grading/update
+  // loop below stays sequential (each iteration's StudentModel.update /
+  // awardXp genuinely depends on the previous one committing), but there's
+  // no reason the N catalog reads that feed it should also be N round trips.
+  const objs = await Promise.all(itemIds.map((id) => (catalog.getById ? catalog.getById(id) : Promise.resolve(null))));
+
   for (let i = 0; i < itemIds.length; i++) {
     const objectId = itemIds[i];
-    const obj = catalog.getById ? await catalog.getById(objectId) : null;
+    const obj = objs[i];
     if (!obj) continue; // deleted/demoted since the quiz started — skip rather than guess
 
     const itemOrReason = gateItemFromPayload(objectId, obj.payload);

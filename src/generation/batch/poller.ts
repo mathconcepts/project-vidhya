@@ -19,6 +19,7 @@ import type { JobRow } from './persistence';
 import { getRun } from '../run-orchestrator';
 import { dispatchPracticeItemJob } from '../practice-item-factory/batch-dispatch';
 import { practiceItemBankPath, writePracticeItemBank } from '../practice-item-factory/writer';
+import type { AuthoredItem } from '../../scoring/learning-object-catalog-file';
 
 /**
  * Minimal shape `handleJobProcessed` needs from a GenerationRunRow — kept
@@ -60,11 +61,22 @@ export async function handleJobProcessed(
   run_id: string,
   job: JobRow,
   deps: JobProcessedDeps = defaultJobProcessedDeps,
-): Promise<void> {
+  runCache?: Map<string, RunLookupResult | null>,
+  bankAccumulator?: Map<string, AuthoredItem[]>,
+): Promise<{ retry?: boolean } | void> {
   let examPackId: string | undefined;
   let practiceItemSpecs: unknown;
   try {
-    const run = await deps.getRun(run_id);
+    // T-poller-perf: a poll pass can carry many jobs for the SAME run
+    // (every atom/item in one generation batch). Without a cache, each
+    // job re-fetches an identical generation_runs row. `runCache` — when
+    // threaded in by the caller (see `runOnJobProcessedWithCache` below,
+    // scoped to one `pollAllInFlightBatches()` invocation) — makes every
+    // job after the first for a given run a free in-memory hit. A failed
+    // lookup is deliberately NOT cached, so a transient DB hiccup on job 1
+    // doesn't poison every later job in the same pass.
+    const run = runCache?.has(run_id) ? runCache.get(run_id)! : await deps.getRun(run_id);
+    runCache?.set(run_id, run);
     examPackId = run?.exam_pack_id;
     practiceItemSpecs = run?.config?.target?.practice_item_specs;
   } catch (err) {
@@ -95,8 +107,23 @@ export async function handleJobProcessed(
         return;
       }
       const bankPath = practiceItemBankPath(examPackId, result.spec.topic);
-      deps.writePracticeItemBank(bankPath, [result.item]);
-      console.log(`${logPrefix}: wrote ${result.item.id} → ${bankPath} (${result.reason})`);
+      if (bankAccumulator) {
+        // T-poller-perf: a poll pass can write many items into the SAME
+        // bank file (every item generated for one exam/topic). Queue this
+        // item instead of doing a full read-merge-write per item — the
+        // caller (`pollAllInFlightBatches`) flushes each accumulated bank
+        // exactly once at the end of the pass, via the same atomic
+        // write-then-rename `writePracticeItemBank` already uses.
+        const list = bankAccumulator.get(bankPath) ?? [];
+        list.push(result.item);
+        bankAccumulator.set(bankPath, list);
+        console.log(`${logPrefix}: queued ${result.item.id} → ${bankPath} (${result.reason}) [flushed at end of pass]`);
+      } else {
+        // No accumulator threaded in (e.g. a direct/legacy caller) — fall
+        // back to the original immediate write, unchanged.
+        deps.writePracticeItemBank(bankPath, [result.item]);
+        console.log(`${logPrefix}: wrote ${result.item.id} → ${bankPath} (${result.reason})`);
+      }
       return;
     }
     case 'refused':
@@ -106,14 +133,41 @@ export async function handleJobProcessed(
       console.warn(`${logPrefix}: parse failed — ${result.reason}`);
       return;
     case 'pending_retry':
+      // Held for a later sweep, not finished — signal the orchestrator to
+      // skip stamping processed_at so this exact job is retried on the
+      // next poll pass instead of silently being treated as done forever.
       console.log(`${logPrefix}: pending retry — ${result.reason}`);
-      return;
+      return { retry: true };
+  }
+}
+
+/**
+ * Writes every accumulated bank's items exactly once, via the same
+ * atomic write-then-rename `writePracticeItemBank` a per-item write
+ * already used. Exported (rather than inlined into `pollAllInFlightBatches`)
+ * so the flush step itself is independently testable.
+ */
+export function flushPracticeItemBankAccumulator(
+  accumulator: ReadonlyMap<string, AuthoredItem[]>,
+  writeFn: typeof writePracticeItemBank = writePracticeItemBank,
+): void {
+  for (const [bankPath, items] of accumulator) {
+    if (items.length === 0) continue;
+    writeFn(bankPath, items);
   }
 }
 
 // Single shared orchestrator per process — adapter + persistence are
-// safe to share across calls.
+// safe to share across calls. `_runCacheForCurrentPass` and
+// `_bankAccumulatorForCurrentPass` are each scoped to a single
+// `pollAllInFlightBatches()` call (set just before, cleared/flushed just
+// after) so `handleJobProcessed` can dedupe `getRun` lookups and batch
+// bank writes across the many jobs a single pass may process, without the
+// orchestrator itself (constructed once, long-lived) needing to know
+// about either.
 let _orch: ReturnType<typeof createBatchOrchestrator> | null = null;
+let _runCacheForCurrentPass: Map<string, RunLookupResult | null> | null = null;
+let _bankAccumulatorForCurrentPass: Map<string, AuthoredItem[]> | null = null;
 
 function getOrchestrator() {
   if (_orch) return _orch;
@@ -122,11 +176,24 @@ function getOrchestrator() {
     adapter: createGeminiBatchAdapter(),
     onJobProcessed: async (run_id, job) => {
       try {
-        await handleJobProcessed(run_id, job);
+        // Propagate handleJobProcessed's return value (in particular
+        // `{ retry: true }` for a pending_retry outcome) so the
+        // orchestrator knows to skip the processed_at stamp — see
+        // process_()'s doc comment. An unrelated exception below is
+        // swallowed exactly as before (never turns into a retry signal;
+        // the orchestrator's own catch marks the row's `error` instead).
+        return await handleJobProcessed(
+          run_id,
+          job,
+          defaultJobProcessedDeps,
+          _runCacheForCurrentPass ?? undefined,
+          _bankAccumulatorForCurrentPass ?? undefined,
+        );
       } catch (err) {
-        // Ingestion must never take down the poll loop — the per-row
-        // processed_at write already happened; a failure here is logged
-        // and the job is simply not written to a bank this pass.
+        // Ingestion must never take down the poll loop — a failure here
+        // is logged and the job is simply not written to a bank this
+        // pass; it still gets marked processed (unchanged pre-existing
+        // behavior for genuine hook failures, distinct from pending_retry).
         console.error(`[batch-poller] onJobProcessed failed for run=${run_id} custom_id=${job.custom_id}: ${(err as Error).message}`);
       }
     },
@@ -137,9 +204,32 @@ function getOrchestrator() {
 /**
  * One pass: drive every in-flight run forward by one step.
  * Returns a per-run summary.
+ *
+ * Bank-write batching note: items queued via the accumulator are flushed
+ * to disk once at the END of the pass (in `finally`, so a mid-pass error
+ * in one run doesn't lose items already queued for other runs) rather
+ * than after each individual job, trading a narrow window — a crash
+ * between a job's `processed_at` stamp and the end-of-pass flush would
+ * lose that item — for far fewer read-merge-write cycles on hot bank
+ * files during a large batch. The next poll pass's `resumeQueuedRuns`-
+ * style resilience does not cover this narrow window; it is an accepted
+ * trade-off, not an oversight.
  */
 export async function pollAllInFlightBatches(): Promise<Array<{ run_id: string; result: StepResult }>> {
-  return await getOrchestrator().pollAllInFlight();
+  const cache = new Map<string, RunLookupResult | null>();
+  const bankAccumulator = new Map<string, AuthoredItem[]>();
+  _runCacheForCurrentPass = cache;
+  _bankAccumulatorForCurrentPass = bankAccumulator;
+  try {
+    return await getOrchestrator().pollAllInFlight();
+  } finally {
+    // Only clear if nothing else has replaced it (defensive against a
+    // theoretical re-entrant call) — in practice this pass owns the slot
+    // start-to-finish since JS has no true parallelism here.
+    if (_runCacheForCurrentPass === cache) _runCacheForCurrentPass = null;
+    if (_bankAccumulatorForCurrentPass === bankAccumulator) _bankAccumulatorForCurrentPass = null;
+    flushPracticeItemBankAccumulator(bankAccumulator);
+  }
 }
 
 /**

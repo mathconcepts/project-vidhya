@@ -402,6 +402,32 @@ describe('POST /api/practice/quiz/:id/submit', () => {
     expect(updates).toHaveLength(items.length);
   });
 
+  it('prefetches all item payloads concurrently rather than one at a time before grading', async () => {
+    const { items, deps } = await startedQuiz();
+
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const instrumentedCatalog: any = {
+      ...deps.catalog(),
+      getById: vi.fn(async (id: string) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await Promise.resolve();
+        inFlight--;
+        return deps.catalog().getById!(id);
+      }),
+    };
+
+    setQuizDepsForTests({ ...deps, catalog: () => instrumentedCatalog, now: () => NOW });
+    const responses = items.map((it) => ({ object_id: it.id, selectedIndex: 1 }));
+    const r = makeRes();
+    await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), r.res);
+
+    expect(r.status).toBe(200);
+    expect(instrumentedCatalog.getById).toHaveBeenCalledTimes(items.length);
+    expect(maxInFlight).toBeGreaterThan(1); // proves the lookups overlapped, not sequential
+  });
+
   it('404s an unknown quiz id', async () => {
     const { deps } = await startedQuiz();
     setQuizDepsForTests({ ...deps, now: () => NOW });

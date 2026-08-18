@@ -68,7 +68,7 @@ function getPool(): pg.Pool {
 // difficulty is enough to move from learning → practicing.
 // ────────────────────────────────────────────────────────────────────
 
-const MASTERY_THRESHOLDS = {
+export const MASTERY_THRESHOLDS = {
   notStartedN: 1,        // <1 attempt
   // T4 (Milestone A): was 5. content-gate.ts:67-69 and syllabus-context.ts:124
   // both treat 'not-started' | 'learning' as BLOCKING a prereq edge, so with
@@ -90,17 +90,17 @@ const MASTERY_THRESHOLDS = {
 // unchanged (T4/A6 owns tuning those); this is purely an extraction.
 // ────────────────────────────────────────────────────────────────────
 
-interface AbilitySnapshot {
+export interface AbilitySnapshot {
   rating: number;
   n: number;
 }
 
-interface CardSnapshot {
+export interface CardSnapshot {
   stability: number;
   lastReviewAt: string;
 }
 
-function deriveMasteryState(
+export function deriveMasteryState(
   ability: AbilitySnapshot,
   cardsForSkill: ReadonlyArray<CardSnapshot>,
   now: Date,

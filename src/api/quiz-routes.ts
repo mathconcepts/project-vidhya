@@ -121,8 +121,14 @@ export function setQuizDepsForTests(override: Partial<QuizDeps> | null): void {
 
 /** Cap on how many concepts get a frontier catalog probe per pool build — bounded cost, not a hot path. */
 const FRONTIER_CONCEPT_SCAN_CAP = 30;
-/** Catalog items pulled per frontier concept. */
-const FRONTIER_ITEMS_PER_CONCEPT = 3;
+/**
+ * Catalog items pulled per frontier concept. Exported so demo seeding
+ * (src/scenarios/demo-history-seeder.ts, T20) can reason about an upper
+ * bound on quiz-pool size from touched-concept count alone, without a
+ * live database — `touchedConcepts * FRONTIER_ITEMS_PER_CONCEPT` is the
+ * maximum possible frontier contribution regardless of no-repeat exclusions.
+ */
+export const FRONTIER_ITEMS_PER_CONCEPT = 3;
 
 async function frontierCandidates(
   studentId: string,

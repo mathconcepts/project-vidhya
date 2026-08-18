@@ -148,6 +148,23 @@ export async function claimMockExamSubmission(id: string, nowMs: number): Promis
   return { fresh: false, row: existing };
 }
 
+/**
+ * Adversarial-review fix (same shape as quiz-store-pg.ts's revertClaim):
+ * reverts the `in_progress → submitted` transition when grading throws
+ * before `finalizeMockExamSubmission` runs, so a retry can re-enter the
+ * fresh-grading path instead of permanently replaying an empty analysis
+ * as `recorded: true`. Guarded to the exact claim just made.
+ */
+export async function revertClaim(id: string, expectedSubmittedAtMs: number): Promise<boolean> {
+  const { rows } = await getPool().query(
+    `UPDATE mock_exams SET status = 'in_progress', submitted_at = NULL
+       WHERE id = $1 AND status = 'submitted' AND submitted_at = $2 AND graded_at IS NULL
+       RETURNING id`,
+    [id, new Date(expectedSubmittedAtMs).toISOString()],
+  );
+  return rows.length > 0;
+}
+
 export async function finalizeMockExamSubmission(
   id: string,
   outcome: { late: boolean; score: number; maxMarks: number; analysis: unknown; gradedAtMs: number },

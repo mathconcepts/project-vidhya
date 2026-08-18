@@ -80,7 +80,7 @@ import {
 } from '../scoring/xp';
 import { awardXp, xpEarnedSince } from '../gbrain/xp-store';
 import {
-  claimSubmission, createQuizSession, finalizeQuizSubmission, getLastSubmittedQuizAt, getQuizSession,
+  claimSubmission, createQuizSession, finalizeQuizSubmission, getLastSubmittedQuizAt, getQuizSession, revertClaim,
 } from '../scoring/quiz-store-pg';
 import type { DueReviewCandidate } from '../core/interfaces';
 
@@ -105,6 +105,7 @@ export interface QuizDeps {
   getQuizSession: typeof getQuizSession;
   claimSubmission: typeof claimSubmission;
   finalizeQuizSubmission: typeof finalizeQuizSubmission;
+  revertClaim: typeof revertClaim;
   now: () => Date;
   rng: () => number;
   newQuizId: () => string;
@@ -123,6 +124,7 @@ const productionDeps: QuizDeps = {
   getQuizSession,
   claimSubmission,
   finalizeQuizSubmission,
+  revertClaim,
   now: () => new Date(),
   rng: () => Math.random(),
   newQuizId: () => `quiz-${randomUUID()}`,
@@ -483,6 +485,20 @@ async function handleQuizSubmit(req: ParsedRequest, res: ServerResponse): Promis
     grading = await gradeQuizItems(user.userId, claim.row.itemIds, claim.row.startedAtMs, responsesByObjectId, catalog, studentModel);
   } catch (err) {
     console.error('[quiz] grading failed:', (err as Error).message);
+    // Adversarial-review fix: claimSubmission (above) already committed
+    // the in_progress → submitted transition BEFORE grading ran. Left
+    // alone, this throw would brick the quiz permanently — every retry
+    // would hit the `!claim.fresh` replay branch and return an empty
+    // result as `recorded: true`, with no way to ever actually grade it.
+    // Revert the claim so a retry re-enters the fresh-grading path.
+    try {
+      const reverted = await deps.revertClaim(quizId, claim.row.submittedAtMs ?? now.getTime());
+      if (!reverted) {
+        console.error(`[quiz] revert-after-grading-failure found no matching claimed row for quiz=${quizId} — it may be stuck as 'submitted' with no result`);
+      }
+    } catch (revertErr) {
+      console.error(`[quiz] revert-after-grading-failure itself threw for quiz=${quizId} (quiz is likely stuck as 'submitted'):`, (revertErr as Error).message);
+    }
     return sendError(res, 500, 'quiz grading failed');
   }
 

@@ -71,8 +71,9 @@ export default function MockExamPage() {
   const [phase, setPhase] = useState<Phase>('ready');
   const [loading, setLoading] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
-  // Per-question response: mcq/msq → selected option index; nat → the raw string typed.
-  const [answers, setAnswers] = useState<Record<string, number | string | null>>({});
+  // Per-question response: mcq → selected option index; msq → array of
+  // selected indices; nat → the raw string typed.
+  const [answers, setAnswers] = useState<Record<string, number | number[] | string | null>>({});
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [results, setResults] = useState<SubmitResult | null>(null);
   const startedAt = useRef(0);
@@ -114,8 +115,17 @@ export default function MockExamPage() {
     }
   };
 
-  const handleAnswer = (qId: string, value: number | string | null) => {
+  const handleAnswer = (qId: string, value: number | number[] | string | null) => {
     setAnswers(prev => ({ ...prev, [qId]: value }));
+  };
+
+  /** MSQ toggle: flips membership of `i` in the question's selected-indices array. */
+  const toggleMsqOption = (qId: string, i: number) => {
+    setAnswers(prev => {
+      const current = Array.isArray(prev[qId]) ? (prev[qId] as number[]) : [];
+      const next = current.includes(i) ? current.filter(x => x !== i) : [...current, i];
+      return { ...prev, [qId]: next.length > 0 ? next : null };
+    });
   };
 
   const handleSubmit = async () => {
@@ -132,6 +142,9 @@ export default function MockExamPage() {
         if (q.question_type === 'nat') {
           const num = Number(a);
           return Number.isFinite(num) ? { id: q.id, value: num } : { id: q.id };
+        }
+        if (q.question_type === 'msq') {
+          return Array.isArray(a) && a.length > 0 ? { id: q.id, selectedIndices: a } : { id: q.id };
         }
         return typeof a === 'number' ? { id: q.id, selectedIndex: a } : { id: q.id };
       });
@@ -214,7 +227,11 @@ export default function MockExamPage() {
   // ── In progress ──────────────────────────────────────────────
   if (phase === 'in-progress' && exam) {
     const q = exam.questions[currentQ];
-    const answered = Object.values(answers).filter(v => v !== null && v !== undefined && v !== '').length;
+    const answered = Object.values(answers).filter(v => {
+      if (v === null || v === undefined || v === '') return false;
+      if (Array.isArray(v)) return v.length > 0; // msq: an emptied selection is not "answered"
+      return true;
+    }).length;
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -264,15 +281,22 @@ export default function MockExamPage() {
           )}
 
           {q.options && q.options.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role="radiogroup">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role={q.question_type === 'msq' ? 'group' : 'radiogroup'}>
+              {q.question_type === 'msq' && (
+                <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+                  Select every correct option — full marks only for the exact set.
+                </p>
+              )}
               {q.options.map((opt, i) => {
-                const isSelected = answers[q.id] === i;
+                const isSelected = q.question_type === 'msq'
+                  ? Array.isArray(answers[q.id]) && (answers[q.id] as number[]).includes(i)
+                  : answers[q.id] === i;
                 return (
                   <button
                     key={i}
-                    role="radio"
+                    role={q.question_type === 'msq' ? 'checkbox' : 'radio'}
                     aria-checked={isSelected}
-                    onClick={() => handleAnswer(q.id, isSelected ? null : i)}
+                    onClick={() => q.question_type === 'msq' ? toggleMsqOption(q.id, i) : handleAnswer(q.id, isSelected ? null : i)}
                     style={{
                       width: '100%',
                       textAlign: 'left',

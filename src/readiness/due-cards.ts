@@ -41,11 +41,30 @@ export interface DueCardRow {
   reps: number;
 }
 
+// The two consumers of this scan (src/api/quiz-routes.ts's pool assembly and
+// next-best-action.ts's retain arm via makeDueReviewSource) each need only a
+// small slice of "what's due right now":
+//   - quiz-pool assembly needs the pool to reach QUIZ_POOL_MULTIPLE (2) ×
+//     QUIZ_LENGTH (6) = 12 total candidates (due + frontier combined) before
+//     it's even eligible to offer a quiz (src/readiness/quiz-pool.ts).
+//   - the retain arm scans for the single lowest-recall card among rows
+//     below RETAIN_RECALL_THRESHOLD — it doesn't need every overdue card,
+//     just enough that the most urgent one (oldest by due_at, the query's
+//     existing ORDER BY) is very unlikely to be missed.
+// 50 gives both consumers generous headroom (4x the quiz pool's floor) while
+// bounding the row count — and therefore the per-row catalog lookups below —
+// for a student who has let hundreds of cards go overdue.
+const DUE_CARDS_SCAN_LIMIT = 50;
+
 /**
  * Cards due for review right now: `due_at <= now` AND `reps > 0` (never-
  * seen cards are never "due" — there is nothing to retain yet). DB-less
  * deploys, and any query failure, degrade to `[]` — an empty retain pool
  * is honest ("nothing due"), never a fabricated one.
+ *
+ * Capped at `DUE_CARDS_SCAN_LIMIT` (ordered by `due_at ASC`, so the cap
+ * always drops the LEAST urgent rows first) — see the constant's doc
+ * comment for why that number is enough for both consumers.
  */
 export async function dueCards(studentId: string, now: Date): Promise<DueCardRow[]> {
   if (!process.env.DATABASE_URL) return [];
@@ -57,8 +76,9 @@ export async function dueCards(studentId: string, now: Date): Promise<DueCardRow
       `SELECT object_id, skill_id, stability, last_review_at, reps
          FROM fsrs_cards
         WHERE student_id = $1 AND due_at <= $2 AND reps > 0
-        ORDER BY due_at ASC`,
-      [studentId, now.toISOString()],
+        ORDER BY due_at ASC
+        LIMIT $3`,
+      [studentId, now.toISOString(), DUE_CARDS_SCAN_LIMIT],
     );
     return rows.map((row: any) => ({
       objectId: String(row.object_id),
@@ -127,13 +147,23 @@ export function makeDueReviewSource(
     if (!catalog.getById) return []; // catalog can't resolve by id — nothing servable to report
 
     const allowedSet = opts.allowedNodes ? new Set(opts.allowedNodes) : null;
+    const eligibleRows = rows.filter(
+      row => row.skillId !== null && (!allowedSet || allowedSet.has(row.skillId)),
+    );
+    if (eligibleRows.length === 0) return [];
+
+    // Batch the per-row catalog lookups (was a sequential `await` in the
+    // loop below — N round trips end to end). The rows are already capped
+    // at DUE_CARDS_SCAN_LIMIT above, so this fans out a bounded number of
+    // concurrent lookups rather than growing unboundedly with a student's
+    // due-card count.
+    const getById = catalog.getById!;
+    const objs = await Promise.all(eligibleRows.map(row => getById(row.objectId)));
+
     const results: DueReviewCandidate[] = [];
-
-    for (const row of rows) {
-      if (row.skillId === null) continue;
-      if (allowedSet && !allowedSet.has(row.skillId)) continue;
-
-      const obj = await catalog.getById(row.objectId);
+    for (let i = 0; i < eligibleRows.length; i++) {
+      const row = eligibleRows[i];
+      const obj = objs[i];
       if (!obj) continue; // unservable — skip rather than dead-end the student
 
       const card: FsrsCard = {

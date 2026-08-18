@@ -15,29 +15,59 @@
  *   - src/storage/ is exempt (it's the pool boundary itself)
  *   - an entry in scripts/connection-budget-allowlist.json suppresses a
  *     specific file:line without suppressing others
+ *
+ * Isolation: every scenario except "passes cleanly against the current
+ * repo tree" runs against a throwaway OS temp tree (via
+ * CONNECTION_BUDGET_SCAN_ROOT) and a throwaway allowlist copy (via
+ * CONNECTION_BUDGET_ALLOWLIST_PATH) — see the script's own doc comment.
+ * Neither the real src/ tree nor the real allowlist JSON is ever written
+ * to, so a crash mid-test can't pollute the repo and two runs (e.g. CI
+ * shards) can't collide on the same shared file.
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 const SCRIPT = path.resolve(process.cwd(), 'scripts/check-connection-budget.ts');
-const SCRATCH_DIR = path.resolve(process.cwd(), 'src/_scratch_connection_budget_test');
 
-function runScript() {
-  return spawnSync('npx', ['tsx', SCRIPT], { encoding: 'utf-8', timeout: 25_000 });
+function runScript(env: Record<string, string> = {}) {
+  return spawnSync('npx', ['tsx', SCRIPT], {
+    encoding: 'utf-8',
+    timeout: 25_000,
+    env: { ...process.env, ...env },
+  });
 }
 
-function writeScratch(name: string, content: string): string {
-  fs.mkdirSync(SCRATCH_DIR, { recursive: true });
-  const file = path.join(SCRATCH_DIR, name);
-  fs.writeFileSync(file, content, 'utf-8');
-  return file;
+/** A fresh, isolated `<tmp>/src` tree + a fresh, isolated allowlist file. */
+function makeIsolatedTree(allowlistFiles: string[] = []) {
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'conn-budget-test-'));
+  const srcRoot = path.join(tmpRoot, 'src');
+  fs.mkdirSync(srcRoot, { recursive: true });
+  const allowlistPath = path.join(tmpRoot, 'allowlist.json');
+  fs.writeFileSync(allowlistPath, JSON.stringify({ files: allowlistFiles }), 'utf-8');
+
+  return {
+    srcRoot,
+    allowlistPath,
+    env: { CONNECTION_BUDGET_SCAN_ROOT: srcRoot, CONNECTION_BUDGET_ALLOWLIST_PATH: allowlistPath },
+    write(name: string, content: string): string {
+      const file = path.join(srcRoot, name);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, content, 'utf-8');
+      return file;
+    },
+    cleanup() {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    },
+  };
 }
 
+const cleanups: Array<() => void> = [];
 afterEach(() => {
-  if (fs.existsSync(SCRATCH_DIR)) fs.rmSync(SCRATCH_DIR, { recursive: true, force: true });
+  while (cleanups.length) cleanups.pop()!();
 });
 
 describe('check-connection-budget', () => {
@@ -48,7 +78,9 @@ describe('check-connection-budget', () => {
   });
 
   it('fails on an un-guarded new Pool(...) inside an exported function', () => {
-    writeScratch(
+    const tree = makeIsolatedTree();
+    cleanups.push(tree.cleanup);
+    tree.write(
       'offender.ts',
       [
         "import pg from 'pg';",
@@ -59,13 +91,15 @@ describe('check-connection-budget', () => {
       ].join('\n'),
     );
 
-    const r = runScript();
+    const r = runScript(tree.env);
     expect(r.status).toBe(1);
-    expect(r.stderr).toContain('src/_scratch_connection_budget_test/offender.ts');
+    expect(r.stderr).toContain('src/offender.ts');
   });
 
   it('fails on an un-guarded new Pool(...) inside a PRIVATE (non-exported) function reached only through an exported table — the gbrain-routes.ts shape', () => {
-    writeScratch(
+    const tree = makeIsolatedTree();
+    cleanups.push(tree.cleanup);
+    tree.write(
       'private-handler.ts',
       [
         "import pg from 'pg';",
@@ -79,13 +113,15 @@ describe('check-connection-budget', () => {
       ].join('\n'),
     );
 
-    const r = runScript();
+    const r = runScript(tree.env);
     expect(r.status).toBe(1);
-    expect(r.stderr).toContain('src/_scratch_connection_budget_test/private-handler.ts');
+    expect(r.stderr).toContain('src/private-handler.ts');
   });
 
   it('does not flag the lazy-singleton memoization guard shape, any variable name', () => {
-    writeScratch(
+    const tree = makeIsolatedTree();
+    cleanups.push(tree.cleanup);
+    tree.write(
       'safe-singleton.ts',
       [
         "import pg from 'pg';",
@@ -98,15 +134,15 @@ describe('check-connection-budget', () => {
       ].join('\n'),
     );
 
-    const r = runScript();
+    const r = runScript(tree.env);
     expect(r.status).toBe(0);
   });
 
   it('does not flag a file under src/storage/', () => {
-    fs.mkdirSync(path.resolve(process.cwd(), 'src/storage/_scratch_connection_budget_test'), { recursive: true });
-    const file = path.resolve(process.cwd(), 'src/storage/_scratch_connection_budget_test/offender.ts');
-    fs.writeFileSync(
-      file,
+    const tree = makeIsolatedTree();
+    cleanups.push(tree.cleanup);
+    tree.write(
+      'storage/offender.ts',
       [
         "import pg from 'pg';",
         'export async function handleThing() {',
@@ -114,22 +150,16 @@ describe('check-connection-budget', () => {
         '  return pool.query("SELECT 1");',
         '}',
       ].join('\n'),
-      'utf-8',
     );
 
-    try {
-      const r = runScript();
-      expect(r.status).toBe(0);
-    } finally {
-      fs.rmSync(path.resolve(process.cwd(), 'src/storage/_scratch_connection_budget_test'), { recursive: true, force: true });
-    }
+    const r = runScript(tree.env);
+    expect(r.status).toBe(0);
   });
 
   it('an allowlist entry suppresses only its own file:line', () => {
-    const allowlistPath = path.resolve(process.cwd(), 'scripts/connection-budget-allowlist.json');
-    const original = fs.readFileSync(allowlistPath, 'utf-8');
-    const originalParsed = JSON.parse(original);
-    writeScratch(
+    const tree = makeIsolatedTree(['src/flagged-but-allowlisted.ts:3']);
+    cleanups.push(tree.cleanup);
+    tree.write(
       'flagged-but-allowlisted.ts',
       [
         "import pg from 'pg';",
@@ -140,25 +170,37 @@ describe('check-connection-budget', () => {
       ].join('\n'),
     );
 
-    try {
-      // Extend, don't replace — the real allowlist already has reviewed
-      // entries for pre-existing findings (§5 of the T16 runbook); wiping
-      // them out would make THIS test the thing that fails, not the
-      // scratch file it's actually exercising.
-      fs.writeFileSync(
-        allowlistPath,
-        JSON.stringify({
-          files: [
-            ...(originalParsed.files ?? []),
-            'src/_scratch_connection_budget_test/flagged-but-allowlisted.ts:3',
-          ],
-        }),
-        'utf-8',
-      );
-      const r = runScript();
-      expect(r.status).toBe(0);
-    } finally {
-      fs.writeFileSync(allowlistPath, original, 'utf-8');
-    }
+    const r = runScript(tree.env);
+    expect(r.status).toBe(0);
+  });
+
+  it('an allowlist entry does NOT suppress a different, unlisted violation in the same isolated tree', () => {
+    const tree = makeIsolatedTree(['src/flagged-but-allowlisted.ts:3']);
+    cleanups.push(tree.cleanup);
+    tree.write(
+      'flagged-but-allowlisted.ts',
+      [
+        "import pg from 'pg';",
+        'export async function handleThing() {',
+        '  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });', // line 3, allowlisted
+        '  return pool.query("SELECT 1");',
+        '}',
+      ].join('\n'),
+    );
+    tree.write(
+      'also-flagged.ts',
+      [
+        "import pg from 'pg';",
+        'export async function handleOther() {',
+        '  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });', // NOT allowlisted
+        '  return pool.query("SELECT 1");',
+        '}',
+      ].join('\n'),
+    );
+
+    const r = runScript(tree.env);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('src/also-flagged.ts');
+    expect(r.stderr).not.toContain('src/flagged-but-allowlisted.ts');
   });
 });

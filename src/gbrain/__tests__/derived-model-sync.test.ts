@@ -48,8 +48,10 @@ describe('derived-model-sync', () => {
     delete process.env.DATABASE_URL;
     const { onAttemptRecordedSyncEntry } = await import('../derived-model-sync');
     onAttemptRecordedSyncEntry(ATTEMPT);
-    // Give the (never-started) async work a tick to prove nothing fires.
-    await new Promise(r => setTimeout(r, 0));
+    // The DB-less guard returns before any await, so the fire-and-forget
+    // promise settles after a single microtask tick — flush that (not a
+    // fixed-duration sleep) before asserting nothing fired.
+    await Promise.resolve();
     expect(mockGetOrCreate).not.toHaveBeenCalled();
     process.env.DATABASE_URL = 'postgres://test/test';
   });
@@ -60,7 +62,7 @@ describe('derived-model-sync', () => {
     const { onAttemptRecordedSyncEntry } = await import('../derived-model-sync');
     const result = onAttemptRecordedSyncEntry(ATTEMPT);
     expect(result).toBeUndefined();
-    await new Promise(r => setTimeout(r, 0));
+    await vi.waitFor(() => expect(mockSaveStudentModel).toHaveBeenCalled());
   });
 
   it('refreshes mastery_vector + prerequisite_alerts via getOrCreateStudentModel -> updateMastery -> saveStudentModel', async () => {
@@ -71,7 +73,11 @@ describe('derived-model-sync', () => {
 
     const { onAttemptRecordedSyncEntry } = await import('../derived-model-sync');
     onAttemptRecordedSyncEntry(ATTEMPT);
-    await new Promise(r => setTimeout(r, 0));
+
+    // Deterministic wait: poll until the fire-and-forget chain has reached
+    // its final step, instead of sleeping a fixed duration that could race
+    // under CI load.
+    await vi.waitFor(() => expect(mockSaveStudentModel).toHaveBeenCalled());
 
     expect(mockGetOrCreate).toHaveBeenCalledWith(ATTEMPT.studentId);
     expect(mockUpdateMastery).toHaveBeenCalledWith(
@@ -95,7 +101,7 @@ describe('derived-model-sync', () => {
     // a rejected Promise the caller is expected to handle.
     expect(() => onAttemptRecordedSyncEntry(ATTEMPT)).not.toThrow();
 
-    await new Promise(r => setTimeout(r, 10));
+    await vi.waitFor(() => expect(consoleErr).toHaveBeenCalled());
 
     expect(unhandled).not.toHaveBeenCalled();
     expect(consoleErr).toHaveBeenCalledWith(
@@ -121,7 +127,7 @@ describe('derived-model-sync', () => {
     expect(__attemptListenerCount()).toBe(1);
 
     publishAttemptRecorded(ATTEMPT);
-    await new Promise(r => setTimeout(r, 0));
+    await vi.waitFor(() => expect(mockSaveStudentModel).toHaveBeenCalled());
     expect(mockGetOrCreate).toHaveBeenCalledTimes(1); // not double-fired
 
     __clearAttemptListeners();

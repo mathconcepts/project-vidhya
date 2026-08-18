@@ -60,6 +60,17 @@
  * design (src/storage/pool.ts IS the one shared pool; its own
  * `checkConnectivity()` deliberately builds a short-lived throwaway
  * pool per call, by design, documented in that file).
+ *
+ * Test isolation: `CONNECTION_BUDGET_SCAN_ROOT` and
+ * `CONNECTION_BUDGET_ALLOWLIST_PATH` override the scan root and the
+ * allowlist file respectively (both default to the real repo paths above
+ * when unset — production/CI behavior is unchanged). This exists so
+ * `src/__tests__/unit/scripts/check-connection-budget.test.ts` can point
+ * a run at a throwaway OS temp tree + a throwaway allowlist copy instead
+ * of writing scratch fixtures into the real `src/` and mutating the real
+ * allowlist JSON in place — a crash mid-test can no longer leave stray
+ * files in the repo, and two test runs can no longer collide on the same
+ * shared file.
  */
 
 import fs from 'fs';
@@ -67,8 +78,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_ROOT = path.join(ROOT, 'src');
-const ALLOWLIST_PATH = path.join(ROOT, 'scripts/connection-budget-allowlist.json');
+const SRC_ROOT = process.env.CONNECTION_BUDGET_SCAN_ROOT
+  ? path.resolve(process.env.CONNECTION_BUDGET_SCAN_ROOT)
+  : path.join(ROOT, 'src');
+const ALLOWLIST_PATH = process.env.CONNECTION_BUDGET_ALLOWLIST_PATH
+  ? path.resolve(process.env.CONNECTION_BUDGET_ALLOWLIST_PATH)
+  : path.join(ROOT, 'scripts/connection-budget-allowlist.json');
+// Violations are reported relative to SRC_ROOT's parent, so a report reads
+// "src/foo.ts:12" in both the real repo (REL_BASE === ROOT) and an
+// isolated test tree rooted at "<tmp>/src" (REL_BASE === "<tmp>").
+const REL_BASE = path.dirname(SRC_ROOT);
 const STORAGE_PREFIX = 'src/storage/';
 
 // `new Pool(`, `new pg.Pool(`, `new pg.default.Pool(`, etc. — any `new`
@@ -118,7 +137,7 @@ function hasNearbyGuard(lines: string[], matchIdx: number): boolean {
 function findViolations(): Violation[] {
   const violations: Violation[] = [];
   for (const file of walkFiles(SRC_ROOT)) {
-    const rel = path.relative(ROOT, file).replace(/\\/g, '/');
+    const rel = path.relative(REL_BASE, file).replace(/\\/g, '/');
     if (rel.startsWith(STORAGE_PREFIX)) continue; // the boundary itself
 
     const content = fs.readFileSync(file, 'utf-8');

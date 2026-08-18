@@ -27,9 +27,11 @@ ratchet: report_only   # change to 'blocking' after first green floor-fill run
 # violation even while the global ratchet above stays report_only. This is
 # how "any topic, all cases" becomes a machine-checked contract one topic at
 # a time, without flipping every other topic to blocking before it's ready.
-# Add linear-algebra in the same commit that lands the 123 practice items
-# (T7 / A7 of docs/designs/linear-algebra-realtime-and-math-academy-plan.md).
-enforce_topics: []
+# linear-algebra: added in the same commit that cleared its floor — 123
+# verified practice items + 15 hand-authored explainers (T7 / A7 / D6 of
+# docs/designs/linear-algebra-realtime-and-math-academy-plan.md).
+enforce_topics:
+  - linear-algebra
 
 # Per-concept overrides (pure-theory concepts may have no practice floor)
 overrides:

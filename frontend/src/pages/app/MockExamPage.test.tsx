@@ -114,3 +114,69 @@ describe('MockExamPage — MSQ', () => {
     expect(body.responses).toEqual([{ id: 'q-msq-1' }]);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// Adversarial-review fix (CRITICAL): timer-expiry stale closure
+// ────────────────────────────────────────────────────────────────────
+//
+// Identical pre-existing idiom to CheckpointQuizPage's countdown effect:
+// it only re-runs on [phase], so without the latestSubmitRef fix,
+// `handleSubmit` inside it would be the closure captured when the timer
+// started (`answers` still `{}`) — an expiry auto-submit would grade as
+// if the student answered nothing. This locks the fix.
+
+const MCQ_EXAM = {
+  exam_id: 'exam-timer-1',
+  exam_name: 'GATE Mock',
+  time_limit_minutes: 2 / 60, // 2 seconds
+  total_questions: 1,
+  marks_scheme: { correct: 2, wrong: -0.66 },
+  section_breakdown: {},
+  questions: [
+    {
+      id: 'q-mcq-1',
+      question_text: 'Which is prime?',
+      options: ['4', '5', '9'],
+      gradable: true,
+      question_type: 'mcq' as const,
+      topic: 'number-theory',
+      difficulty: 'medium',
+      marks: 2,
+    },
+  ],
+};
+
+describe('MockExamPage — timer expiry submits the real answer, not a stale skip', () => {
+  it('an answer selected before expiry is what gets submitted when the clock runs out', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_EXAM)) // GET exam
+      .mockResolvedValueOnce(jsonResponse({ // POST submit
+        exam_id: 'exam-timer-1', total: 1, correct: 1, wrong: 0, skipped: 0, ungraded: 0,
+        marks: 2, max_marks: 2, accuracy: 1, by_topic: {}, late: true, recorded: true,
+      }));
+    // Real timers throughout — see the identical note in
+    // CheckpointQuizPage.test.tsx (the interval is registered by a
+    // useEffect that fires during the render/click above, so switching
+    // to fake timers afterward wouldn't touch it). time_limit_minutes is
+    // set to 2 seconds specifically so this test's real wait stays short.
+    await renderPage();
+
+    fireEvent.click(screen.getByText('Start Mock Exam'));
+    await waitFor(() => expect(screen.getByText('Which is prime?')).toBeInTheDocument());
+
+    // Pick option "5" (index 1) — this is the render whose closure MUST
+    // be the one the expiry auto-submit uses.
+    const radios = screen.getAllByRole('radio');
+    fireEvent.click(radios[1]);
+    expect(radios[1]).toHaveAttribute('aria-checked', 'true');
+
+    // Wait for the real countdown (2s) to expire and auto-submit.
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(2), { timeout: 4000 });
+    const submitCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/submit'));
+    expect(submitCall).toBeDefined();
+    const body = JSON.parse((submitCall![1] as RequestInit).body as string);
+    // The real pick — NOT { id: 'q-mcq-1' } (skipped).
+    expect(body.responses).toEqual([{ id: 'q-mcq-1', selectedIndex: 1 }]);
+  }, 8000);
+});

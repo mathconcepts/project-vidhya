@@ -73,12 +73,28 @@ export default function CheckpointQuizPage() {
   const submittingRef = useRef(false);
   const reducedMotion = usePrefersReducedMotion();
 
+  // Adversarial-review fix (CRITICAL): the countdown effect below only
+  // re-runs on [phase, quiz] — it does NOT re-run every time `responses`
+  // changes as the student answers questions. Calling `handleSubmit`
+  // directly from inside it would call the STALE closure captured when
+  // the effect first ran (phase 'in-quiz', responses still `{}`), so an
+  // expiry auto-submit would send `{skipped:true}` for every item no
+  // matter what the student actually picked — silently contradicting the
+  // framing screen's "Running over won't lose you marks." `latestSubmitRef`
+  // is kept pointed at the current render's `handleSubmit` (which closes
+  // over the current `responses`) on every render, so the interval always
+  // calls the up-to-date version.
+  const latestSubmitRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    latestSubmitRef.current = handleSubmit;
+  });
+
   useEffect(() => {
     if (phase !== 'in-quiz' || !quiz) return;
     const interval = setInterval(() => {
       setRemainingSec((prev) => {
         if (prev <= 1) {
-          handleSubmit(); // expiry auto-submits what was answered
+          latestSubmitRef.current(); // expiry auto-submits what was actually answered
           return 0;
         }
         return prev - 1;

@@ -83,11 +83,23 @@ export default function MockExamPage() {
     trackEvent('page_view', { page: 'mock-exam' });
   }, []);
 
+  // Adversarial-review fix (CRITICAL, same idiom as CheckpointQuizPage):
+  // this effect only re-runs on [phase], so calling `handleSubmit`
+  // directly from inside it would use the STALE closure captured when
+  // the timer started (`answers` still `{}` at that point) — every expiry
+  // auto-submit would grade as if the student answered nothing, no matter
+  // what they actually selected. `latestSubmitRef` is refreshed every
+  // render to the current `handleSubmit` (closing over current `answers`).
+  const latestSubmitRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    latestSubmitRef.current = handleSubmit;
+  });
+
   useEffect(() => {
     if (phase !== 'in-progress') return;
     const interval = setInterval(() => {
       setTimeRemaining(prev => {
-        if (prev <= 1) { handleSubmit(); return 0; }
+        if (prev <= 1) { latestSubmitRef.current(); return 0; }
         return prev - 1;
       });
     }, 1000);

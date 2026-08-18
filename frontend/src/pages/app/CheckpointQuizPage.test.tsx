@@ -108,3 +108,67 @@ describe('CheckpointQuizPage — NAT items', () => {
     expect(screen.getByText('Finish')).toBeDisabled();
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// Adversarial-review fix (CRITICAL): timer-expiry stale closure
+// ────────────────────────────────────────────────────────────────────
+//
+// The countdown interval's effect only re-runs on [phase, quiz], so
+// without the latestSubmitRef fix, `handleSubmit` inside it would always
+// be the closure captured at quiz start — with `responses` still `{}` —
+// meaning an expiry auto-submit sent `{skipped:true}` for every item
+// regardless of what the student actually picked. This locks the fix:
+// the answer selected before expiry reaches the server, not a skip.
+
+const MCQ_QUIZ = {
+  quiz_id: 'quiz-timer-1',
+  deadline_at: new Date(Date.now() + 2_000).toISOString(),
+  time_budget_sec: 2,
+  items: [
+    {
+      object_id: 'obj-mcq-1',
+      topic: 'eigenvalues',
+      question_text: 'Which is an eigenvalue?',
+      gradable: true,
+      question_type: 'mcq' as const,
+      marks: 2,
+      options: ['1', '2', '3'],
+      marking: { marks_correct: 2, marks_wrong: -0.66 },
+    },
+  ],
+};
+
+describe('CheckpointQuizPage — timer expiry submits the real answer, not a stale skip', () => {
+  it('an answer selected before expiry is what gets submitted when the clock runs out', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_QUIZ)) // POST start
+      .mockResolvedValueOnce(jsonResponse({ // POST submit
+        earned: 2, max: 2, correct: 1, wrong: 0, skipped: 0, per_item: [], late: true, recorded: true,
+      }));
+    // Real timers throughout — the countdown's setInterval is registered
+    // by a useEffect that fires DURING the initial render/click above, so
+    // switching to fake timers afterward would leave that real interval
+    // running unaffected. time_budget_sec is set to 2s specifically so
+    // this test's real wall-clock wait stays short.
+    await renderPage();
+
+    fireEvent.click(screen.getByText('Start checkpoint'));
+    await waitFor(() => expect(screen.getByText('Which is an eigenvalue?')).toBeInTheDocument());
+
+    // Pick option "2" (index 1) — this is the render whose closure MUST
+    // be the one the expiry auto-submit uses.
+    const radios = screen.getAllByRole('radio');
+    fireEvent.click(radios[1]);
+    expect(radios[1]).toHaveAttribute('aria-checked', 'true');
+
+    // Wait for the real countdown (time_budget_sec: 2) to expire and
+    // auto-submit.
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(2), { timeout: 4000 });
+    const submitCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/submit'));
+    expect(submitCall).toBeDefined();
+    const body = JSON.parse((submitCall![1] as RequestInit).body as string);
+    // The real pick — NOT { object_id: 'obj-mcq-1', skipped: true }.
+    expect(body.responses).toEqual([{ object_id: 'obj-mcq-1', selectedIndex: 1 }]);
+  }, 8000);
+});

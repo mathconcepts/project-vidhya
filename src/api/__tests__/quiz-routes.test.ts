@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ServerResponse } from 'http';
 import { InMemoryCatalog } from '../../scoring/learning-object-catalog';
 import type { Attempt, LearningObject, StudentModel, MasteryState, DueReviewCandidate } from '../../core/interfaces';
-import { QUIZ_LENGTH, QUIZ_SECONDS_PER_ITEM } from '../../scoring/xp';
+import { QUIZ_LENGTH, QUIZ_SECONDS_PER_ITEM, QUIZ_XP_THRESHOLD_MINUTES } from '../../scoring/xp';
 
 const mockRequireRole = vi.fn();
 vi.mock('../auth-middleware', () => ({
@@ -79,7 +79,35 @@ function makeFakeQuizStore() {
       Object.assign(row, { late: outcome.late, score: outcome.score, maxMarks: outcome.maxMarks, result: outcome.result, gradedAtMs: outcome.gradedAtMs });
       return { ...row };
     },
+    // Mirrors quiz-store-pg.ts's getLastSubmittedQuizAt: MAX(submitted_at)
+    // among status='submitted' rows for the student, scanning the SAME
+    // in-memory sessions this fake store already tracks — an in-progress
+    // (never-submitted) row is never a candidate.
+    getLastSubmittedQuizAt: async (studentId: string): Promise<number | null> => {
+      let max: number | null = null;
+      for (const row of sessions.values()) {
+        if (row.studentId !== studentId) continue;
+        if (row.status !== 'submitted' || row.submittedAtMs === null) continue;
+        if (max === null || row.submittedAtMs > max) max = row.submittedAtMs;
+      }
+      return max;
+    },
     sessions,
+  };
+}
+
+/** Fake XP ledger — mirrors xp-store.ts's xpEarnedSince (awarded_at > sinceMs, or lifetime when null). */
+function makeFakeXpLedger() {
+  const events: Array<{ studentId: string; amount: number; awardedAtMs: number }> = [];
+  return {
+    events,
+    awardXp: async (a: any) => { events.push({ studentId: a.studentId, amount: a.xpAmount, awardedAtMs: a.tsMs }); },
+    xpEarnedSince: async (studentId: string, sinceMs: number | null): Promise<number> => {
+      const total = events
+        .filter((e) => e.studentId === studentId && (sinceMs === null || e.awardedAtMs > sinceMs))
+        .reduce((sum, e) => sum + e.amount, 0);
+      return Math.max(0, Math.round(total));
+    },
   };
 }
 
@@ -112,7 +140,8 @@ describe('GET /api/practice/xp/summary', () => {
     setQuizDepsForTests({
       catalog: () => catalog,
       studentModel: () => fakeStudentModel([], new Map()),
-      totalXpMinutes: async () => 64,
+      getLastSubmittedQuizAt: async () => null,
+      xpEarnedSince: async () => 64,
       dueCards: async () => [],
       recentlyReviewed: async () => new Set(),
       now: () => NOW,
@@ -126,7 +155,7 @@ describe('GET /api/practice/xp/summary', () => {
     expect(r.payload.quiz_offer.reason).toMatch(/practise more/i);
   });
 
-  it('reports eligible once due+frontier pool reaches 2x the quiz length', async () => {
+  it('reports eligible once due+frontier pool reaches 2x the quiz length AND the XP cycle threshold is met', async () => {
     // Frontier pulls up to 3 items PER touched concept — spread across
     // several concepts (like the real 26-concept LA catalog) rather than
     // relying on one concept alone to clear the 2x gate.
@@ -137,7 +166,8 @@ describe('GET /api/practice/xp/summary', () => {
     setQuizDepsForTests({
       catalog: () => catalog,
       studentModel: () => fakeStudentModel([], masteryMap),
-      totalXpMinutes: async () => 100,
+      getLastSubmittedQuizAt: async () => null,
+      xpEarnedSince: async () => 100,
       dueCards: async () => [],
       recentlyReviewed: async () => new Set(),
       now: () => NOW,
@@ -146,6 +176,44 @@ describe('GET /api/practice/xp/summary', () => {
     await summaryHandler(makeReq(null), r.res);
     expect(r.payload.quiz_offer.eligible).toBe(true);
     expect(r.payload.quiz_offer.quiz_length).toBe(QUIZ_LENGTH);
+  });
+
+  it('pool ready but XP cycle not yet at threshold — still not eligible', async () => {
+    const concepts = ['eigenvalues', 'determinants', 'orthogonality', 'linear-transformations', 'rank-nullity'];
+    const items = concepts.flatMap((c, ci) => [0, 1, 2].map((j) => mcqItem(`g${ci}-${j}`, c)));
+    const catalog = new InMemoryCatalog(items);
+    const masteryMap = new Map(concepts.map((c) => [c, 'practicing' as const]));
+    setQuizDepsForTests({
+      catalog: () => catalog,
+      studentModel: () => fakeStudentModel([], masteryMap),
+      getLastSubmittedQuizAt: async () => null,
+      xpEarnedSince: async () => 64, // ready on pool, not yet on XP
+      dueCards: async () => [],
+      recentlyReviewed: async () => new Set(),
+      now: () => NOW,
+    });
+    const r = makeRes();
+    await summaryHandler(makeReq(null), r.res);
+    expect(r.payload.total_minutes).toBe(64);
+    expect(r.payload.quiz_offer.eligible).toBe(false);
+  });
+
+  it('baseline query behavior with zero submitted quizzes is unchanged: cycle total = lifetime total', async () => {
+    const ledger = makeFakeXpLedger();
+    ledger.events.push({ studentId: 'student-1', amount: 30, awardedAtMs: NOW.getTime() - 20 * 86_400_000 });
+    ledger.events.push({ studentId: 'student-1', amount: 34, awardedAtMs: NOW.getTime() - 1 * 86_400_000 });
+    setQuizDepsForTests({
+      catalog: () => new InMemoryCatalog([]),
+      studentModel: () => fakeStudentModel([], new Map()),
+      getLastSubmittedQuizAt: async () => null, // never submitted a quiz
+      xpEarnedSince: ledger.xpEarnedSince,
+      dueCards: async () => [],
+      recentlyReviewed: async () => new Set(),
+      now: () => NOW,
+    });
+    const r = makeRes();
+    await summaryHandler(makeReq(null), r.res);
+    expect(r.payload.total_minutes).toBe(64); // 30 + 34, full lifetime sum — no baseline to exclude anything
   });
 });
 
@@ -167,6 +235,10 @@ describe('POST /api/practice/quiz/start', () => {
       studentModel: () => fakeStudentModel([], masteryMap),
       dueCards: async () => [] as DueReviewCandidate[],
       recentlyReviewed: async () => new Set<string>(),
+      // These tests are about the POOL gate specifically — keep the XP
+      // cycle gate satisfied so it's never the reason for a refusal here.
+      getLastSubmittedQuizAt: async () => null,
+      xpEarnedSince: async () => 100,
       now: () => NOW,
       rng: () => 0.42,
       newQuizId: () => 'quiz-1',
@@ -184,8 +256,18 @@ describe('POST /api/practice/quiz/start', () => {
       studentModel: () => fakeStudentModel([], new Map()),
       dueCards: async () => [],
       recentlyReviewed: async () => new Set(),
+      getLastSubmittedQuizAt: async () => null,
+      xpEarnedSince: async () => 100, // XP gate satisfied — this test isolates the pool gate
       now: () => NOW,
     });
+    const r = makeRes();
+    await startHandler(makeReq({}), r.res);
+    expect(r.status).toBe(422);
+  });
+
+  it('refuses with 422 below the XP cycle threshold — even with a huge pool', async () => {
+    const deps = bigPoolDeps();
+    setQuizDepsForTests({ ...deps, xpEarnedSince: async () => 64 });
     const r = makeRes();
     await startHandler(makeReq({}), r.res);
     expect(r.status).toBe(422);
@@ -219,6 +301,8 @@ describe('POST /api/practice/quiz/start', () => {
       studentModel: () => fakeStudentModel([], masteryMap),
       dueCards: async () => [],
       recentlyReviewed: async () => new Set(items.map((i) => i.id)), // everything recently seen
+      getLastSubmittedQuizAt: async () => null,
+      xpEarnedSince: async () => 100,
       now: () => NOW,
     });
     const r = makeRes();
@@ -333,5 +417,138 @@ describe('POST /api/practice/quiz/:id/submit', () => {
     const r = makeRes();
     await submitHandler(makeReq({ responses: [] }, { id: 'quiz-x' }), r.res);
     expect(r.status).toBe(404);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// "Quiz every N XP" is a REPEATING cadence (B5) — the meter must re-arm
+// after each submitted quiz, gated on XP earned since the most recent
+// quiz_sessions.submitted_at rather than a one-time lifetime threshold.
+// ────────────────────────────────────────────────────────────────────
+
+describe('XP cycle re-arms after a submitted quiz', () => {
+  beforeEach(() => {
+    mockRequireRole.mockReset();
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+  });
+  afterEach(() => setQuizDepsForTests(null));
+
+  const POOL_CONCEPTS = ['eigenvalues', 'determinants', 'orthogonality', 'linear-transformations', 'rank-nullity'];
+
+  function readyPoolDeps(store: ReturnType<typeof makeFakeQuizStore>, ledger: ReturnType<typeof makeFakeXpLedger>) {
+    const items = POOL_CONCEPTS.flatMap((c, ci) => [0, 1, 2].map((j) => mcqItem(`z${ci}-${j}`, c)));
+    const catalog = new InMemoryCatalog(items);
+    const masteryMap = new Map(POOL_CONCEPTS.map((c) => [c, 'practicing' as const]));
+    return {
+      catalog: () => catalog,
+      studentModel: () => fakeStudentModel([], masteryMap),
+      dueCards: async () => [] as DueReviewCandidate[],
+      recentlyReviewed: async () => new Set<string>(), // pool always ready — isolates the XP-cycle behavior
+      getLastSubmittedQuizAt: store.getLastSubmittedQuizAt,
+      xpEarnedSince: ledger.xpEarnedSince,
+      awardXp: ledger.awardXp,
+      recordProblemAttempt: async () => {},
+      createQuizSession: store.createQuizSession,
+      getQuizSession: store.getQuizSession,
+      claimSubmission: store.claimSubmission,
+      finalizeQuizSubmission: store.finalizeQuizSubmission,
+      rng: () => 0.42,
+      newQuizId: () => 'quiz-cycle-1',
+    };
+  }
+
+  it('(a) the meter resets after a submitted quiz and re-fills from there', async () => {
+    const store = makeFakeQuizStore();
+    const ledger = makeFakeXpLedger();
+    const t0 = NOW.getTime();
+
+    // Pre-quiz: well past the threshold (no baseline yet — lifetime sum).
+    ledger.events.push({ studentId: 'student-1', amount: 60, awardedAtMs: t0 - 5 * 86_400_000 });
+    ledger.events.push({ studentId: 'student-1', amount: 50, awardedAtMs: t0 - 1 * 86_400_000 });
+
+    const beforeSubmit = makeRes();
+    setQuizDepsForTests({ ...readyPoolDeps(store, ledger), now: () => new Date(t0) });
+    await summaryHandler(makeReq(null), beforeSubmit.res);
+    expect(beforeSubmit.payload.total_minutes).toBe(110);
+    expect(beforeSubmit.payload.quiz_offer.eligible).toBe(true);
+
+    // Submit a quiz at t0 — this becomes the new baseline.
+    await store.createQuizSession({ id: 'quiz-cycle-1', studentId: 'student-1', itemIds: ['z0-0'], startedAtMs: t0, deadlineAtMs: t0 + 60_000 });
+    await store.claimSubmission('quiz-cycle-1', t0);
+
+    // A SMALL amount of XP lands AFTER the submission — well under threshold.
+    ledger.events.push({ studentId: 'student-1', amount: 12, awardedAtMs: t0 + 60_000 });
+
+    const afterSubmit = makeRes();
+    setQuizDepsForTests({ ...readyPoolDeps(store, ledger), now: () => new Date(t0 + 2 * 86_400_000) });
+    await summaryHandler(makeReq(null), afterSubmit.res);
+    expect(afterSubmit.payload.total_minutes).toBe(12); // NOT 122 — the pre-submission 110 is excluded
+    expect(afterSubmit.payload.quiz_offer.eligible).toBe(false);
+  });
+
+  it('(b) a second quiz offer appears once the NEW cycle reaches 100 XP again', async () => {
+    const store = makeFakeQuizStore();
+    const ledger = makeFakeXpLedger();
+    const t0 = NOW.getTime();
+
+    await store.createQuizSession({ id: 'quiz-cycle-1', studentId: 'student-1', itemIds: ['z0-0'], startedAtMs: t0, deadlineAtMs: t0 + 60_000 });
+    await store.claimSubmission('quiz-cycle-1', t0);
+
+    // Post-submission XP crawls up to exactly the threshold over several days.
+    ledger.events.push({ studentId: 'student-1', amount: 40, awardedAtMs: t0 + 1 * 86_400_000 });
+    ledger.events.push({ studentId: 'student-1', amount: 40, awardedAtMs: t0 + 2 * 86_400_000 });
+
+    const midCycle = makeRes();
+    setQuizDepsForTests({ ...readyPoolDeps(store, ledger), now: () => new Date(t0 + 3 * 86_400_000) });
+    await summaryHandler(makeReq(null), midCycle.res);
+    expect(midCycle.payload.total_minutes).toBe(80);
+    expect(midCycle.payload.quiz_offer.eligible).toBe(false);
+
+    ledger.events.push({ studentId: 'student-1', amount: 20, awardedAtMs: t0 + 4 * 86_400_000 });
+
+    const nextOffer = makeRes();
+    setQuizDepsForTests({ ...readyPoolDeps(store, ledger), now: () => new Date(t0 + 5 * 86_400_000) });
+    await summaryHandler(makeReq(null), nextOffer.res);
+    expect(nextOffer.payload.total_minutes).toBe(QUIZ_XP_THRESHOLD_MINUTES);
+    expect(nextOffer.payload.quiz_offer.eligible).toBe(true);
+
+    // The re-armed offer is also enforced at quiz/start, not just display.
+    const start = makeRes();
+    await startHandler(makeReq({}), start.res);
+    expect(start.status).toBe(200);
+  });
+
+  it('(c) an in-progress (never-submitted) quiz does NOT move the baseline', async () => {
+    const store = makeFakeQuizStore();
+    const ledger = makeFakeXpLedger();
+    const t0 = NOW.getTime();
+
+    ledger.events.push({ studentId: 'student-1', amount: 45, awardedAtMs: t0 - 10 * 86_400_000 });
+
+    // Started but never submitted.
+    await store.createQuizSession({ id: 'quiz-abandoned', studentId: 'student-1', itemIds: ['z0-0'], startedAtMs: t0 - 5 * 86_400_000, deadlineAtMs: t0 - 5 * 86_400_000 + 60_000 });
+
+    const r = makeRes();
+    setQuizDepsForTests({ ...readyPoolDeps(store, ledger), now: () => new Date(t0) });
+    await summaryHandler(makeReq(null), r.res);
+
+    // Baseline must still be null (no SUBMITTED quiz exists) — the abandoned
+    // in-progress row is invisible to getLastSubmittedQuizAt, so the
+    // pre-existing 45 XP is still counted, not silently dropped.
+    expect(r.payload.total_minutes).toBe(45);
+    expect(await store.getLastSubmittedQuizAt('student-1')).toBeNull();
+  });
+
+  it('(d) zero submitted quizzes: baseline is null, cycle total = lifetime total (unchanged behavior)', async () => {
+    const store = makeFakeQuizStore();
+    const ledger = makeFakeXpLedger();
+    ledger.events.push({ studentId: 'student-1', amount: 25, awardedAtMs: NOW.getTime() - 40 * 86_400_000 });
+    ledger.events.push({ studentId: 'student-1', amount: 39, awardedAtMs: NOW.getTime() - 3 * 86_400_000 });
+
+    const r = makeRes();
+    setQuizDepsForTests({ ...readyPoolDeps(store, ledger), now: () => NOW });
+    await summaryHandler(makeReq(null), r.res);
+    expect(await store.getLastSubmittedQuizAt('student-1')).toBeNull();
+    expect(r.payload.total_minutes).toBe(64);
   });
 });

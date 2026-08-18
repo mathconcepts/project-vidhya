@@ -81,6 +81,24 @@ export async function getQuizSession(id: string): Promise<QuizSessionRow | null>
 }
 
 /**
+ * The most recent completed quiz's `submitted_at`, or null if the student
+ * has never submitted one — the baseline the "quiz every N XP" cadence
+ * resets against (T14 follow-up: the meter must re-arm after each quiz,
+ * not gate on a one-time lifetime total). Deliberately scoped to
+ * `status = 'submitted'` — an in-progress (never-submitted) quiz must
+ * never move the baseline, or abandoning a quiz mid-way would silently
+ * reset the student's meter for nothing.
+ */
+export async function getLastSubmittedQuizAt(studentId: string): Promise<number | null> {
+  const { rows } = await getPool().query(
+    `SELECT MAX(submitted_at) AS last_submitted_at FROM quiz_sessions WHERE student_id = $1 AND status = 'submitted'`,
+    [studentId],
+  );
+  const raw = rows[0]?.last_submitted_at;
+  return raw ? new Date(raw).getTime() : null;
+}
+
+/**
  * Attempts the in_progress → submitted transition. Returns `{ fresh: true, row }`
  * when THIS call performed it (caller should grade + persist via
  * `finalizeQuizSubmission`); `{ fresh: false, row }` when the session was

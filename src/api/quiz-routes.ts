@@ -7,14 +7,27 @@
  *     either the meter ("64 / 100 min") or, once the threshold is reached,
  *     the checkpoint-quiz offer row (DR-3) in the same card slot.
  *
+ *     `total_minutes` is NOT a lifetime total — it's XP earned SINCE the
+ *     student's most recently SUBMITTED quiz (`quiz_sessions.submitted_at`;
+ *     `xpSinceBaseline()` below). "Quiz every N XP" (B5) is a REPEATING
+ *     cadence: after a quiz is submitted, the meter must re-arm at 0/100
+ *     and refill toward the next offer, not stay pinned at "past threshold"
+ *     forever. A student who has never submitted a quiz has no baseline —
+ *     their cycle total is their lifetime total, which is what the
+ *     original one-time-threshold behavior looked like before this existed.
+ *     An IN-PROGRESS (never-submitted) quiz must never move the baseline —
+ *     see `getLastSubmittedQuizAt`'s `status = 'submitted'` filter.
+ *
  *   POST /api/practice/quiz/start          — student-authenticated
  *     Assembles the pool (due FSRS reviews + frontier concepts, minus the
  *     14-day no-repeat window — src/readiness/quiz-pool.ts), refuses with
- *     422 below the 2× depth gate (amendment #9), else samples QUIZ_LENGTH
- *     items, commits a quiz_sessions row, and returns a RENDER-SAFE item
- *     list — no answer_index / answer_indices / answer_range / correct
- *     answer ever leaves this endpoint (mirrors GET /api/practice/item/:id's
- *     leak discipline).
+ *     422 below the 2× depth gate (amendment #9) OR below the cycle's XP
+ *     threshold (`xpSinceBaseline() < QUIZ_XP_THRESHOLD_MINUTES` — both
+ *     gates enforced server-side, not just as a frontend display rule),
+ *     else samples QUIZ_LENGTH items, commits a quiz_sessions row, and
+ *     returns a RENDER-SAFE item list — no answer_index / answer_indices /
+ *     answer_range / correct answer ever leaves this endpoint (mirrors
+ *     GET /api/practice/item/:id's leak discipline).
  *
  *   POST /api/practice/quiz/:id/submit    — student-authenticated
  *     Grades every item via the SAME GateDeterministicScorer used by
@@ -62,10 +75,13 @@ import {
   QUIZ_NO_REPEAT_WINDOW_DAYS,
   QUIZ_SECONDS_PER_ITEM,
   QUIZ_XP_THRESHOLD_MINUTES,
+  meetsQuizThreshold,
   xpForAttempt,
 } from '../scoring/xp';
-import { awardXp, totalXpMinutes } from '../gbrain/xp-store';
-import { claimSubmission, createQuizSession, finalizeQuizSubmission, getQuizSession } from '../scoring/quiz-store-pg';
+import { awardXp, xpEarnedSince } from '../gbrain/xp-store';
+import {
+  claimSubmission, createQuizSession, finalizeQuizSubmission, getLastSubmittedQuizAt, getQuizSession,
+} from '../scoring/quiz-store-pg';
 import type { DueReviewCandidate } from '../core/interfaces';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
@@ -80,7 +96,10 @@ export interface QuizDeps {
   recordProblemAttempt: (problemId: string, wasCorrect: boolean) => Promise<void>;
   dueCards: (studentId: string, now: Date, opts: { allowedNodes?: string[] }) => Promise<DueReviewCandidate[]>;
   recentlyReviewed: (studentId: string, now: Date, windowDays: number) => Promise<Set<string>>;
-  totalXpMinutes: (studentId: string) => Promise<number>;
+  /** The current cycle's baseline: the most recent SUBMITTED quiz's submitted_at (ms), or null if none. */
+  getLastSubmittedQuizAt: (studentId: string) => Promise<number | null>;
+  /** XP awarded since a given baseline (ms), or lifetime when baseline is null. */
+  xpEarnedSince: (studentId: string, sinceMs: number | null) => Promise<number>;
   awardXp: typeof awardXp;
   createQuizSession: typeof createQuizSession;
   getQuizSession: typeof getQuizSession;
@@ -97,7 +116,8 @@ const productionDeps: QuizDeps = {
   recordProblemAttempt,
   dueCards: (studentId, now, opts) => makeDueReviewSource(getLearningObjectCatalog())(studentId, now, opts),
   recentlyReviewed: recentlyReviewedObjectIds,
-  totalXpMinutes,
+  getLastSubmittedQuizAt,
+  xpEarnedSince,
   awardXp,
   createQuizSession,
   getQuizSession,
@@ -169,9 +189,28 @@ interface QuizOffer {
   reason?: string;
   quiz_length?: number;
   pool_size?: number;
+  xp_since_baseline?: number;
 }
 
-async function computeQuizOffer(studentId: string): Promise<QuizOffer> {
+/**
+ * The current cycle's XP total: resolves the baseline (most recent
+ * SUBMITTED quiz, if any) then sums XP awarded since it. A student who
+ * has never submitted a quiz has no baseline — `getLastSubmittedQuizAt`
+ * returns null and `xpEarnedSince` falls back to the lifetime sum, so
+ * "no quiz yet" behaves exactly like the pre-cycle-baseline behavior.
+ */
+async function xpSinceBaseline(studentId: string): Promise<number> {
+  const baselineMs = await deps.getLastSubmittedQuizAt(studentId);
+  return deps.xpEarnedSince(studentId, baselineMs);
+}
+
+/**
+ * Combines the XP-cycle gate with the pool-depth gate — BOTH must clear
+ * for a quiz to be a real, startable offer. `xpMinutes` is threaded in
+ * (rather than re-fetched) so callers that already resolved it — the XP
+ * summary endpoint — don't pay for a second baseline query.
+ */
+async function computeQuizOffer(studentId: string, xpMinutes: number): Promise<QuizOffer> {
   const catalog = deps.catalog();
   const studentModel = deps.studentModel();
   const now = deps.now();
@@ -188,14 +227,18 @@ async function computeQuizOffer(studentId: string): Promise<QuizOffer> {
     recentlyReviewed,
   );
 
-  if (!quizIsEligible(pool.length, QUIZ_LENGTH)) {
+  const poolOk = quizIsEligible(pool.length, QUIZ_LENGTH);
+  const xpOk = meetsQuizThreshold(xpMinutes);
+
+  if (!poolOk || !xpOk) {
     return {
       eligible: false,
       reason: 'Checkpoint unlocks as you practise more',
       pool_size: pool.length,
+      xp_since_baseline: xpMinutes,
     };
   }
-  return { eligible: true, quiz_length: QUIZ_LENGTH, pool_size: pool.length };
+  return { eligible: true, quiz_length: QUIZ_LENGTH, pool_size: pool.length, xp_since_baseline: xpMinutes };
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -206,14 +249,21 @@ async function handleXpSummary(req: ParsedRequest, res: ServerResponse): Promise
   const user = await requireRole(req, res, 'student', 'teacher', 'admin');
   if (!user) return;
 
-  const totalMinutes = await deps.totalXpMinutes(user.userId);
-  const quizOffer = await computeQuizOffer(user.userId).catch((err) => {
+  // total_minutes IS the current cycle's total (since the last submitted
+  // quiz, or lifetime if none) — the strip's "64 / 100 min" reads this
+  // same number computeQuizOffer below gates on, so the meter and the
+  // offer can never disagree about where the student stands.
+  const cycleMinutes = await xpSinceBaseline(user.userId).catch((err) => {
+    console.error('[quiz] xpSinceBaseline failed, degrading to 0:', (err as Error).message);
+    return 0;
+  });
+  const quizOffer = await computeQuizOffer(user.userId, cycleMinutes).catch((err) => {
     console.error('[quiz] offer computation failed, degrading to not-eligible:', (err as Error).message);
-    return { eligible: false, reason: 'Checkpoint unlocks as you practise more' } as QuizOffer;
+    return { eligible: false, reason: 'Checkpoint unlocks as you practise more', xp_since_baseline: cycleMinutes } as QuizOffer;
   });
 
   return sendJSON(res, {
-    total_minutes: totalMinutes,
+    total_minutes: cycleMinutes,
     threshold_minutes: QUIZ_XP_THRESHOLD_MINUTES,
     quiz_offer: quizOffer,
   });
@@ -249,6 +299,15 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
   const catalog = deps.catalog();
   const studentModel = deps.studentModel();
   const now = deps.now();
+
+  // Both gates enforced server-side — the frontend's meter/offer switch
+  // is a display convenience, not the authority. A client that somehow
+  // calls start() before its own cycle has reached the threshold (stale
+  // state, a race, a hand-crafted request) gets the same honest refusal.
+  const cycleMinutes = await xpSinceBaseline(user.userId);
+  if (!meetsQuizThreshold(cycleMinutes)) {
+    return sendError(res, 422, 'Checkpoint unlocks as you practise more');
+  }
 
   const [dueRows, frontierRows, recentlyReviewed] = await Promise.all([
     deps.dueCards(user.userId, now, {}),

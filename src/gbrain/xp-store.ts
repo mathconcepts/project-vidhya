@@ -5,8 +5,21 @@
  * without a database.
  *
  * DB-less deploys degrade honestly: `awardXp` no-ops (matches the rest of
- * the practice path's "grade honestly, recorded:false" contract) and
- * `totalXpMinutes` reads 0 — never a fabricated meter value.
+ * the practice path's "grade honestly, recorded:false" contract) and both
+ * read functions return 0 — never a fabricated meter value.
+ *
+ * Two read functions, two different jobs:
+ *   - `totalXpMinutes` — lifetime total. Used where "lifetime" is the
+ *     actual question (e.g. CompoundingCard's "focused work" achievement
+ *     stat in src/api/me-routes.ts).
+ *   - `xpEarnedSince` — the CURRENT quiz cycle's total, i.e. XP awarded
+ *     after a given baseline timestamp (or everything, if `sinceMs` is
+ *     null — a student who has never submitted a quiz has no baseline
+ *     yet, so their cycle total IS their lifetime total). This is what
+ *     the "quiz every N XP" cadence (B5) actually gates on — see
+ *     src/api/quiz-routes.ts's `xpSinceBaseline()`, which pairs this with
+ *     `quiz-store-pg.ts`'s `getLastSubmittedQuizAt` to resolve the
+ *     baseline before calling this.
  */
 
 import pg from 'pg';
@@ -67,6 +80,29 @@ export async function totalXpMinutes(studentId: string): Promise<number> {
     return Math.max(0, Math.round(total));
   } catch (err) {
     console.error(`[xp-store] total lookup failed for student=${studentId}, degrading to 0:`, (err as Error).message);
+    return 0;
+  }
+}
+
+/**
+ * XP awarded strictly AFTER `sinceMs` (exclusive on `awarded_at`), or the
+ * full lifetime total when `sinceMs` is null. Floors at 0 — same "a
+ * mistake never shows as a negative meter" discipline as `totalXpMinutes`.
+ * DB-less / query failure → 0.
+ */
+export async function xpEarnedSince(studentId: string, sinceMs: number | null): Promise<number> {
+  if (!process.env.DATABASE_URL) return 0;
+  try {
+    const { rows } = await getPool().query(
+      sinceMs === null
+        ? `SELECT COALESCE(SUM(xp_amount), 0) AS total FROM xp_events WHERE student_id = $1`
+        : `SELECT COALESCE(SUM(xp_amount), 0) AS total FROM xp_events WHERE student_id = $1 AND awarded_at > $2`,
+      sinceMs === null ? [studentId] : [studentId, new Date(sinceMs).toISOString()],
+    );
+    const total = Number(rows[0]?.total ?? 0);
+    return Math.max(0, Math.round(total));
+  } catch (err) {
+    console.error(`[xp-store] xpEarnedSince lookup failed for student=${studentId}, degrading to 0:`, (err as Error).message);
     return 0;
   }
 }

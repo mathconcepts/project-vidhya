@@ -23,6 +23,7 @@ import { loadBundledAdapters, getExamAdapter } from '../exam-builder/registry';
 import { getOrCreateStudentModel } from '../gbrain/student-model';
 import { getTopicsForExam } from '../curriculum/topic-adapter';
 import { CONCEPT_MAP, getConceptsForTopic, topologicalSort } from '../constants/concept-graph';
+import { LA_FRONTIER_CLUSTERS, CLUSTER_BY_CONCEPT } from '../constants/la-frontier-clusters';
 
 interface RouteDefinition {
   method: string;
@@ -338,24 +339,60 @@ async function handleConceptTree(req: ParsedRequest, res: ServerResponse): Promi
     }
 
     const provenance = entry?.provenance ?? null;
+    // T13 (DR-1): the FOUR-state visual dot, distinct from the 3-value
+    // `status` API field. 'mastered' (solid green) only for demonstrated
+    // mastery; a warmup-inferred placement renders 'placed' (hollow/
+    // tinted) even though it satisfies the SAME `status: 'mastered'` for
+    // gating purposes — the receipt-culture distinction is visual, not
+    // functional (placed concepts still unlock their dependents).
+    const dot: 'mastered' | 'placed' | 'frontier' | 'later' =
+      status === 'mastered'
+        ? (provenance === 'warmup_placed' ? 'placed' : 'mastered')
+        : status === 'in-progress' ? 'frontier' : 'later';
+
+    const cluster = CLUSTER_BY_CONCEPT.get(c.id) ?? null;
 
     return {
       id: c.id,
       name: c.label,
       status,
+      dot,
       why: whyLine(status, unmetPrereqLabels),
       score: Math.round(score * 100),
-      // T8: distinguishes a warmup-inferred placement from a demonstrated
-      // (real-attempt) mastery entry — see MasteryEntry.provenance in
-      // src/gbrain/student-model.ts. Undefined/'attempt' both mean
-      // "demonstrated"; a future consumer can render 'warmup_placed'
-      // distinctly (T13 does, via the dot/cluster fields it adds here).
+      // T8/T13: distinguishes a warmup-inferred placement from a
+      // demonstrated (real-attempt) mastery entry — see MasteryEntry.provenance
+      // in src/gbrain/student-model.ts. Undefined/'attempt' both mean
+      // "demonstrated"; only 'warmup_placed' renders the "placed" dot.
       provenance,
       has_prerequisite_alert: alerts.has(c.id),
+      cluster_id: cluster?.id ?? null,
+      cluster_label: cluster?.label ?? null,
+      // T13: per-concept bottom sheet content ("Builds on: eigenvalues,
+      // determinants ✓") — real prereqs only, never the synthetic chain.
+      builds_on: directPrereqIds.map(pid => ({
+        id: pid,
+        label: labelById.get(pid) ?? pid,
+        met: (mv[pid]?.score ?? 0) >= MASTERY_MASTERED,
+      })),
     };
   });
 
-  sendJSON(res, { nodes, edges, track_id: id });
+  // T13: cluster rollups for the collapsed "Matrix operations · 6 of 6"
+  // header — a node counts toward "done" whether its dot is 'mastered' or
+  // 'placed' (both unlock dependents; the collapse question is "is there
+  // anything left to DO here", not "was it proven"). Only populated for
+  // clusters that actually have members among this track's concepts (a
+  // non-LA / non-graph-backed track yields an empty array, not an error).
+  const clusters = LA_FRONTIER_CLUSTERS
+    .map(cluster => {
+      const members = nodes.filter(n => n.cluster_id === cluster.id);
+      if (members.length === 0) return null;
+      const done = members.filter(n => n.dot === 'mastered' || n.dot === 'placed').length;
+      return { id: cluster.id, label: cluster.label, count: members.length, done_count: done };
+    })
+    .filter((c): c is { id: string; label: string; count: number; done_count: number } => c !== null);
+
+  sendJSON(res, { nodes, edges, clusters, track_id: id });
 }
 
 export const knowledgeRoutes: RouteDefinition[] = [

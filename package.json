@@ -34,6 +34,7 @@
     "ci:content-integrity": "tsx scripts/check-content-integrity.ts",
     "ci:interactive-specs": "tsx scripts/lint-interactive-specs.ts",
     "ci:demo-rails": "tsx scripts/check-demo-rails.ts",
+    "export:bundles": "tsx scripts/export-bundles.ts",
     "data:export": "tsx scripts/vidhya-data.ts export",
     "data:import": "tsx scripts/vidhya-data.ts import",
     "data:verify": "tsx scripts/vidhya-data.ts verify",

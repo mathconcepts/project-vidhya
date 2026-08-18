@@ -30,6 +30,19 @@ RUN cd frontend && npm ci
 COPY frontend/ frontend/
 COPY src/ src/
 COPY tsconfig*.json ./
+# scripts/ + data/ — needed to regenerate the DB-less static bundles below
+# (export-bundles.ts reads data/curriculum/gate-ma.yml via concept-graph.ts
+# and writes frontend/public/data/*.json, which Vite then copies into
+# frontend/dist/data/ as part of its normal public/ → dist/ copy).
+COPY scripts/ scripts/
+COPY data/ data/
+
+# Regenerate the DB-less static bundles from the current code/YAML BEFORE
+# the frontend build, so the deployed demo ships a fresh client concept
+# graph instead of whatever was last committed to frontend/public/data/.
+# Must run from /build (this stage's WORKDIR) — export-bundles.ts's
+# OUT_DIR is process.cwd()-relative (frontend/public/data).
+RUN npx tsx scripts/export-bundles.ts
 
 RUN cd frontend && npm run build
 

@@ -3,9 +3,10 @@
  * engine with prereq filtering + phase-aware arm weights.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { makeSyllabusAwareReadinessEngine } from '../syllabus-aware-engine';
 import type { ContentExistenceChecker } from '../content-gate';
+import type { BatchMasteryStudentModel } from '../../gbrain/student-model-pg';
 import type {
   CurriculumNode, CurriculumRepo, ItemSelector, LearningObject,
   MasteryState, StudentModel, TeachingPolicy,
@@ -167,6 +168,114 @@ describe('SyllabusAwareReadinessEngine', () => {
     expect(action.kind).toBe('teach');
     expect(action.nodeId).toBe('calc2');
     expect(action.rationale).not.toMatch(/Not ready for/);
+  });
+
+  // ── T5 (A1 marquee fix): the redirect must fire even when `eligible`
+  // is NON-EMPTY but content-starved — the old bug filtered only on
+  // prereq-eligibility and stopped there, so this branch was dead.
+
+  it('T5: redirects when eligible is non-empty but every eligible node is content-starved', async () => {
+    // 'root' has NO prereqs, so it's always prereq-eligible — but it has
+    // no content. 'eigenvalues' is blocked on 'determinants', which DOES
+    // have content. The old code would have used `eligible = ['root']`
+    // outright (content irrelevant); T5 must see 'root' lacks content,
+    // find no content-backed eligible node, and redirect instead.
+    const root = NODE('root');
+    const eigen = NODE('eigenvalues', ['determinants']);
+    const det = NODE('determinants');
+    const wexDet = OBJ('wex_det', 'determinants', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: model({ determinants: 'not-started' }),
+      curriculum: repo([root, eigen, det], [wexDet]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+      // 'root' is prereq-eligible but content-less; 'determinants' is not
+      // prereq-eligible as a direct candidate (it isn't in allowedNodes)
+      // but IS the fully content-backed redirect target for 'eigenvalues'.
+      content: contentAllowing(['determinants']),
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['root', 'eigenvalues'],
+    });
+    expect(action.kind).toBe('teach');
+    expect(action.nodeId).toBe('determinants');
+    expect(action.rationale).toMatch(/Not ready for eigenvalues yet — determinants first/);
+  });
+
+  it('T5: uses the content-backed eligible node directly when one exists (no redirect needed)', async () => {
+    const root = NODE('root'); // eligible AND content-backed
+    const decoy = NODE('decoy'); // eligible but content-less
+    const wexRoot = OBJ('wex_root', 'root', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: model(),
+      curriculum: repo([root, decoy], [wexRoot]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+      content: contentAllowing(['root']),
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['decoy', 'root'],
+    });
+    expect(action.kind).toBe('teach');
+    expect(action.nodeId).toBe('root');
+    expect(action.rationale).not.toMatch(/Not ready for/);
+  });
+
+  // ── T5/§7: batch mastery prefetch ────────────────────────────────
+
+  it('T5: uses BatchMasteryStudentModel.masteryStates() instead of per-call masteryState() when available', async () => {
+    const masteryStates = vi.fn(async () => new Map([['calc1', 'practicing']]));
+    const masteryState = vi.fn(async () => 'not-started' as const);
+    const batchModel: StudentModel & BatchMasteryStudentModel = {
+      async abilityFor() { return { rating: 1500, confidence: 0.5, n: 10 }; },
+      masteryState,
+      async retrievability() { return 0.9; },
+      async errorProfile() { return { weights: {}, n: 0 }; },
+      async update() {},
+      masteryStates,
+    };
+    const calc2 = NODE('calc2', ['calc1']);
+    const wex = OBJ('wex_c2', 'calc2', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: batchModel,
+      curriculum: repo([NODE('calc1'), calc2], [wex]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['calc2'],
+    });
+    expect(masteryStates).toHaveBeenCalledWith('s', expect.arrayContaining(['calc2', 'calc1']));
+    expect(masteryState).not.toHaveBeenCalled();
+    // calc1 came back 'practicing' from the batch call → calc2 unblocked.
+    expect(action.kind).toBe('teach');
+    expect(action.nodeId).toBe('calc2');
+  });
+
+  it('T5: falls back to per-call masteryState() when the StudentModel does not implement masteryStates()', async () => {
+    // `model()` (the file's default fake) has no `masteryStates` — this
+    // locks in that omitting the capability is a safe no-op, not a break.
+    const calc2 = NODE('calc2', ['calc1']);
+    const wex = OBJ('wex_c2', 'calc2', 'worked_example');
+    const engine = makeSyllabusAwareReadinessEngine({
+      studentModel: model({ calc1: 'practicing' }),
+      curriculum: repo([NODE('calc1'), calc2], [wex]),
+      selector: selectorReturning(null),
+      policy,
+      syllabus: syllabus(6),
+    });
+    const action = await engine.nextBestAction('s', {
+      timeBudgetMin: 5,
+      allowedNodes: ['calc2'],
+    });
+    expect(action.kind).toBe('teach');
+    expect(action.nodeId).toBe('calc2');
   });
 
   it('allows the teach action when prereqs are practicing', async () => {

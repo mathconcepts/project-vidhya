@@ -77,11 +77,18 @@ import { ConceptGraphCurriculumRepo } from '../curriculum/curriculum-repo';
 import { ALL_CONCEPTS } from '../constants/concept-graph';
 import {
   makeSyllabusAwareReadinessEngine,
+  rationaleIndicatesRedirect,
   type SyllabusContextProvider,
 } from '../readiness/syllabus-aware-engine';
-import { getAtomContentChecker } from '../readiness/atom-content-checker';
+import { getCompositeContentChecker } from '../readiness/composite-content-checker';
 import { getProfile } from '../session-planner/exam-profile-store';
 import type { Action } from '../core/interfaces';
+import {
+  recordArmSelection,
+  recordDiagnoseFallback,
+  recordObjectIdOutcome,
+  recordRedirectFired,
+} from '../readiness/metrics';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -286,12 +293,14 @@ function buildReadinessEngine() {
     selector,
     policy,
     syllabus,
-    // U1-5: the LA-chain on-ramp. Only ever redirects to a prerequisite
-    // when every node in the gap chain has real explainer content on
-    // disk (src/readiness/content-gate.ts) — currently true for
-    // Linear Algebra and nothing else, by content coverage, not by
-    // any topic/exam literal in the engine.
-    content: getAtomContentChecker(),
+    // T5 (A1): the LA-chain on-ramp, now gated on BOTH real explainer
+    // content (src/readiness/atom-content-checker.ts) AND a gradable
+    // catalog item (src/readiness/composite-content-checker.ts) — a
+    // concept with a lesson but nothing to practice still starves the
+    // next arm the redirect lands the student in. Currently true for
+    // Linear Algebra and nothing else, by content coverage, not by any
+    // topic/exam literal in the engine.
+    content: getCompositeContentChecker(catalog),
   });
 }
 
@@ -355,6 +364,9 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
     // rows, no attempts, no FSRS cards) — this is the DB-less / fresh
     // student case, not an error.
     if (action.kind === 'diagnose' && !action.objectId) {
+      recordArmSelection('diagnose');
+      recordObjectIdOutcome(false);
+      recordDiagnoseFallback();
       return sendJSON(res, {
         action,
         expected_score: null,
@@ -362,12 +374,18 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
       });
     }
 
+    recordArmSelection(action.kind);
+    recordObjectIdOutcome(Boolean(action.objectId));
+    if (rationaleIndicatesRedirect(action.rationale)) recordRedirectFired();
+
     return sendJSON(res, {
       action: await attachMarking(action),
       expected_score: null,
     });
   } catch (err) {
     console.error('[readiness] next-action failed:', (err as Error).message);
+    recordObjectIdOutcome(false);
+    recordDiagnoseFallback();
     return sendJSON(res, {
       action: null,
       expected_score: null,

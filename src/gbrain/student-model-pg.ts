@@ -84,10 +84,68 @@ const MASTERY_THRESHOLDS = {
 };
 
 // ────────────────────────────────────────────────────────────────────
+// Shared pure helper — the SAME derivation masteryState() and the batch
+// masteryStates() both use, so the two paths can never drift. Thresholds
+// unchanged (T4/A6 owns tuning those); this is purely an extraction.
+// ────────────────────────────────────────────────────────────────────
+
+interface AbilitySnapshot {
+  rating: number;
+  n: number;
+}
+
+interface CardSnapshot {
+  stability: number;
+  lastReviewAt: string;
+}
+
+function deriveMasteryState(
+  ability: AbilitySnapshot,
+  cardsForSkill: ReadonlyArray<CardSnapshot>,
+  now: Date,
+): MasteryState {
+  if (ability.n < MASTERY_THRESHOLDS.notStartedN) return 'not-started';
+  if (ability.n < MASTERY_THRESHOLDS.learningN) return 'learning';
+
+  if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) {
+    // Check whether any cards' recall has decayed below threshold — an
+    // at-risk skill is one whose memory is leaking even though the
+    // ability is good.
+    for (const c of cardsForSkill) {
+      const card: FsrsCard = {
+        stability: c.stability,
+        difficulty: 5,
+        lastReviewAt: c.lastReviewAt,
+        reps: 0, lapses: 0,
+        dueAt: new Date().toISOString(),
+      };
+      if (recallProbability(card, now) < MASTERY_THRESHOLDS.atRiskRetrievability) {
+        return 'at-risk';
+      }
+    }
+    return 'mastered';
+  }
+  if (ability.rating >= MASTERY_THRESHOLDS.practicingRating) return 'practicing';
+  return 'learning';
+}
+
+/**
+ * Optional capability seam: a `StudentModel` that can answer mastery for
+ * MANY skills in a bounded number of round-trips. `SyllabusAwareReadinessEngine`
+ * duck-types for this (see syllabus-aware-engine.ts's prefetchMastery) and
+ * falls back to per-skill `masteryState()` calls when it's absent — every
+ * other `StudentModel` implementation (test fakes included) keeps working
+ * unchanged.
+ */
+export interface BatchMasteryStudentModel {
+  masteryStates(studentId: StudentId, skillIds: ReadonlyArray<SkillId>): Promise<Map<SkillId, MasteryState>>;
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Implementation
 // ────────────────────────────────────────────────────────────────────
 
-export class PgStudentModel implements StudentModel {
+export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
   async abilityFor(studentId: StudentId, skillId: SkillId): Promise<Ability> {
     const { rows } = await getPool().query(
       'SELECT rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = $2',
@@ -102,21 +160,47 @@ export class PgStudentModel implements StudentModel {
 
   async masteryState(studentId: StudentId, skillId: SkillId): Promise<MasteryState> {
     const ability = await this.abilityFor(studentId, skillId);
-    if (ability.n < MASTERY_THRESHOLDS.notStartedN) return 'not-started';
-    if (ability.n < MASTERY_THRESHOLDS.learningN) return 'learning';
-
-    // T4 (Milestone A): the 'at-risk' branch that used to live here queried
+    // T4 (Milestone A): the 'at-risk' card query that used to live here hit
     // `SELECT id FROM objects_for_skill($2)` — a function that exists NOWHERE
-    // in any migration — behind a swallowed `.catch()`, so `cards` was
-    // always `[]` and 'at-risk' was unreachable dead code, not a real
-    // guardrail. Deleted rather than backed by a real function: OV2-D5
-    // supersedes it with `fsrs_cards.skill_id TEXT` (written on every card
-    // upsert from `attempt.skillId`), which gives a real per-skill card join
-    // instead of a synthetic view. 'at-risk' returns once that column lands
-    // in a later lane; until then a mastered skill just reports 'mastered'.
-    if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) return 'mastered';
-    if (ability.rating >= MASTERY_THRESHOLDS.practicingRating) return 'practicing';
-    return 'learning';
+    // in any migration — behind a swallowed `.catch()`, so cards were always
+    // `[]` and 'at-risk' was unreachable dead code, not a real guardrail.
+    // Deleted rather than backed by a real function: OV2-D5 supersedes it with
+    // `fsrs_cards.skill_id TEXT` (written on every card upsert from
+    // `attempt.skillId`), which gives a real per-skill card join. Until that
+    // column lands (later lane), we pass no cards — deriveMasteryState's
+    // at-risk loop stays dormant and a mastered skill reports 'mastered',
+    // identical for the single and batch paths.
+    return deriveMasteryState({ rating: ability.rating, n: ability.n }, [], new Date());
+  }
+
+  /**
+   * Batch mastery lookup — T5/§7 perf fix. `eligibleNodes()` needs
+   * `masteryState()` for up to ~140 (candidate × prereq) pairs per
+   * request; called one-at-a-time that's 140 Pg round-trips. This does
+   * it in exactly ONE query. Like `masteryState()` above, no per-skill
+   * FSRS cards are fetched yet — the at-risk join needs
+   * `fsrs_cards.skill_id` (OV2-D5, later lane); when that column lands,
+   * both this method and `masteryState()` gain the same card fetch.
+   */
+  async masteryStates(studentId: StudentId, skillIds: ReadonlyArray<SkillId>): Promise<Map<SkillId, MasteryState>> {
+    const result = new Map<SkillId, MasteryState>();
+    if (skillIds.length === 0) return result;
+
+    const { rows } = await getPool().query(
+      'SELECT skill_id, rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = ANY($2::text[])',
+      [studentId, skillIds],
+    );
+    const abilityBySkill = new Map<SkillId, AbilitySnapshot>();
+    for (const r of rows) {
+      abilityBySkill.set(r.skill_id, { rating: Number(r.rating), n: Number(r.n) });
+    }
+
+    const now = new Date();
+    for (const skillId of skillIds) {
+      const ability = abilityBySkill.get(skillId) ?? { rating: newStudentAbility(studentId, skillId).rating, n: 0 };
+      result.set(skillId, deriveMasteryState(ability, [], now));
+    }
+    return result;
   }
 
   async retrievability(studentId: StudentId, objectId: ObjectId): Promise<number> {

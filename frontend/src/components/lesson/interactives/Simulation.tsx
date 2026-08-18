@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { evalFormula, type SimulationSpec } from './types';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 const SVG_W = 320;
 const SVG_H = 200;
@@ -235,19 +236,3 @@ function Axes({
   );
 }
 
-// ============================================================================
-// prefers-reduced-motion hook
-// ============================================================================
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mql.addEventListener?.('change', handler);
-    return () => mql.removeEventListener?.('change', handler);
-  }, []);
-  return reduced;
-}

@@ -28,6 +28,7 @@
 
 import { useEffect, useState } from 'react';
 import { getDemoPersona, getDemoOutcome, onDemoOutcomeChange } from '@/lib/demoPersona';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { X } from 'lucide-react';
 
 export interface DemoCaptionProps {
@@ -64,6 +65,7 @@ export function captionFor(
 export function DemoCaption({ step, captions }: DemoCaptionProps) {
   const [dismissed, setDismissed] = useState(false);
   const [outcome, setOutcome] = useState(() => getDemoOutcome());
+  const reduceMotion = usePrefersReducedMotion();
   useEffect(() => onDemoOutcomeChange(() => setOutcome(getDemoOutcome())), []);
 
   // A new step is a new caption; a dismissal applies to the one it was aimed
@@ -77,10 +79,6 @@ export function DemoCaption({ step, captions }: DemoCaptionProps) {
 
   const text = captionFor(step, captions, outcome ? (outcome.correct ? 'correct' : 'incorrect') : null);
   if (!text || dismissed) return null;
-
-  const reduceMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   return (
     <aside

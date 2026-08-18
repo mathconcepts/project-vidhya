@@ -27,6 +27,7 @@ import {
   Target, AlertTriangle, Compass, RefreshCw,
 } from 'lucide-react';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
+import { Card } from '@/components/ui/Card';
 import { receiptFromServerGrade } from '@/lib/receipt';
 import { setDemoOutcome } from '@/lib/demoPersona';
 
@@ -205,11 +206,8 @@ export default function PracticeAttemptPage() {
       )}
 
       {item && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <Card radius="var(--radius-md)" padding={20} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-caption2)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>
               <Target size={12} />
@@ -278,7 +276,23 @@ export default function PracticeAttemptPage() {
           )}
 
           {item.gradable && item.options && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }} role={item.question_type === 'mcq' ? 'radiogroup' : 'group'}>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+              role={item.question_type === 'mcq' ? 'radiogroup' : 'group'}
+              aria-label={item.question_text ?? undefined}
+              onKeyDown={(e) => {
+                if (!item.options) return;
+                const focusable = Array.from((e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>('button'));
+                const idx = focusable.findIndex((el) => el === document.activeElement);
+                if ((e.key === 'ArrowDown' || e.key === 'ArrowRight') && idx >= 0) {
+                  e.preventDefault();
+                  focusable[(idx + 1) % focusable.length]?.focus();
+                } else if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && idx >= 0) {
+                  e.preventDefault();
+                  focusable[(idx - 1 + focusable.length) % focusable.length]?.focus();
+                }
+              }}
+            >
               {item.question_type === 'msq' && (
                 <p style={{ margin: 0, fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>Select every correct option — full marks only for the exact set.</p>
               )}
@@ -295,7 +309,7 @@ export default function PracticeAttemptPage() {
                     padding: '10px 12px',
                     borderRadius: 'var(--radius-sm)',
                     border: `var(--hairline) solid ${isPicked(i) ? 'var(--text-secondary)' : 'var(--separator)'}`,
-                    background: isPicked(i) ? 'var(--surface-fill)' : 'var(--surface-fill)',
+                    background: isPicked(i) ? 'var(--surface-fill)' : 'transparent',
                     color: isPicked(i) ? 'var(--text-primary)' : 'var(--text-secondary)',
                     fontSize: 'var(--text-body)',
                     fontFamily: 'var(--font-sans)',
@@ -446,6 +460,7 @@ export default function PracticeAttemptPage() {
               </div>
             </motion.div>
           )}
+        </Card>
         </motion.div>
       )}
     </div>

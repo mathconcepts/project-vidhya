@@ -23,6 +23,8 @@ import { ArrowLeft, Compass, Loader2, SkipForward } from 'lucide-react';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 import { receiptFromServerGrade } from '@/lib/receipt';
 import { TimerPrimitive } from '@/components/app/TimerPrimitive';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 
 interface QuizItem {
   object_id: string;
@@ -63,6 +65,7 @@ export default function CheckpointQuizPage() {
   const [remainingSec, setRemainingSec] = useState(0);
   const [result, setResult] = useState<QuizResult | null>(null);
   const submittingRef = useRef(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     if (phase !== 'in-quiz' || !quiz) return;
@@ -258,7 +261,7 @@ export default function CheckpointQuizPage() {
         key={current.object_id}
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.18 }}
+        transition={{ duration: framerDuration(DUR_FAST_S, reducedMotion) }}
         style={{ borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>

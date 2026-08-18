@@ -535,7 +535,7 @@ User flow:
 | A7 factory | provider outage mid-run | Y (resume ledger) | Y | n/a (operator) | Y |
 | A7 verify | Wolfram outage | Y (inconclusive≠fail) | Y | n/a | Y |
 | A1 redirect | no content-backed chain | Y (null→diagnose+reason) | Y | honest baseline card | Y |
-| A5 subscriber | derived write fails | Y (isolated) | Y | nothing (primary intact) | Y |
+| A5 subscriber | derived write fails | Y (subscriber self-catches its async work — the bus isolates sync throws only, per OV2-7) | Y | nothing (primary intact) | Y |
 | B2 FIRe | YAML cycle | Y (boot refusal) | Y | n/a | Y |
 | B2 FIRe | dup replay | Y (dedup PK) | Y | nothing | Y |
 | B5 quiz | expiry mid-answer | Y (server deadline) | Y | "time up" + graded partial | Y |
@@ -739,6 +739,71 @@ real migration. B5 must NOT copy that pattern.
     (044 = quiz/XP, 045 = objects_for_skill or A2's concept_id — assign in
     implementation order, one number per file).
 
+## Second outside voice (eng round) — adopted corrections (OV2-D1..D4)
+
+A second fresh-context reviewer attacked the corrected plan; 11 findings, all
+adopted. Where this conflicts with earlier text, **this section wins.**
+
+1. **Build the due-card scan (P1, prerequisite for retain/B3/B5/T20).**
+   `pickDueReview` (`next-best-action.ts:201-229`) never queries `fsrs_cards`
+   — it asks the catalog for easy items and checks `retrievability`, which is
+   **0 for never-seen items** (`student-model-pg.ts:137`). Once A7's items
+   land, fresh students would get bogus "Review now — recall at 0%" retains on
+   items they've never seen. New: a per-student due-card query
+   (`fsrs_cards WHERE student_id=$1 AND due_at <= now()`), retain candidates
+   only from cards with `reps > 0`, mapped to servable items. B3's due-ness,
+   B5's sampling, and T20's knock-out all read from this scan.
+2. **T20 seeds the demo AUTH identities** (`user_<sha256>` ids from
+   `demo/seed.ts` via `upsertFromGoogle`), not the `0aded0a0-` scenario
+   namespace — routes key on the JWT id, so persona-UUID history is invisible
+   to logged-in Meera. Guard: seeder refuses any id not minted by demo
+   seeding. Scenario personas keep their namespace for scenario runs.
+3. **The export/build fix targets `demo/Dockerfile`** — the deployed demo
+   builds from it (`render.yaml:70`), its builder stage runs `npm run build`
+   (lifecycle NOT bypassed there) but copies neither `scripts/` nor `data/`.
+   Fix: copy both into the builder stage + run the export before vite build;
+   apply root-Dockerfile parity; A3's container smoke runs against
+   demo/Dockerfile.
+4. **T21 reconciles catalog units:** pg difficulty→Elo is `600 + 1800·d`, file
+   is `800 + 1400·d` (file's "mirrors pg" comment is false); `examRelevance`
+   defaults 0.5 (pg) vs 1.0 (file) — a 2× selection bias for file items in
+   `scoreCandidate`. One shared mapping module. Also fix
+   `recordProblemAttempt` (`problem-generator.ts:428`): `WHERE id = $1`
+   against a UUID column errors on every TEXT-id authored item — guard by id
+   shape or widen the column.
+5. **B2's join path:** `fsrs_cards` has no concept column. Migration adds
+   `fsrs_cards.skill_id TEXT` (+ schema-column-baseline entry, same PR),
+   written on every card upsert from `attempt.skillId`; credit distribution
+   and the due-card scan both join on it. Supersedes the `objects_for_skill`
+   approach — A6 deletes the dead at-risk branch instead (no new SQL function).
+6. **FIRe lock discipline:** propagation writes inside the tx acquire rows in
+   deterministic `ORDER BY object_id` (and after the existing
+   student-elo → item-elo → primary-card sequence) so concurrent attempts
+   can't deadlock and void valid attempts.
+7. **A5 subscriber contract:** the bus isolates only synchronous throws —
+   the derived-model subscriber is a sync entry that launches its async work
+   with an internal `.catch()` (logged with student+object id). The Failure
+   Modes Registry row is corrected accordingly.
+8. **A8 scope locked (OV2-D3):** warmup brackets 4–6 curated LA spine
+   concepts (~15–25 probes); ancestors inferred from placement; the persist
+   endpoint writes priors with `n` set to clear `'learning'` ONLY when the
+   bracket converged, stamped with warmup provenance so A6's thresholds stay
+   meaningful. Full 26-concept adaptive placement deferred (TODO trigger:
+   post-LA scaling).
+9. **Quiz no-repeat source (OV2-D4):** exclude items with
+   `fsrs_cards.last_review_at` within 14 days + within-quiz-session dedup. NO
+   new serve-log table — rendered-but-unattempted items are not tracked, by
+   surveillance-discipline choice.
+10. **T16 is a sized ops task, not "just config":** audit the ~53 lazy
+    `new Pool(max:5)` singletons against Supabase connection limits (shared
+    pool or reduced max); advisory-lock paths (`batch/pg-persistence.ts:151`)
+    require session-mode pooling — document the connection string choice;
+    deploy-time verification includes a connection-count check.
+11. **T19 re-estimated:** chat has no spend metering today
+    (`rate-limit-tracker` is passive; `cost-meter` is per-generation-run). The
+    daily cap needs a durable counter (durable-records store, survives `.data/`
+    resets). Estimate: human ~1w / CC ~4h.
+
 **T22 — Mock-exam leak fix (ENG-D3)** *(P2, human ~1d / CC ~1h)*
 Server-side grading for `/api/gbrain/mock-exam`; stop returning
 `correct_answer` pre-submission; real migration for `mock_exams`. Verify: leak
@@ -824,14 +889,14 @@ Launch A + B + D in parallel worktrees. C after B merges. E after D's pilot. F l
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
-| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | issues_resolved | mode: HOLD_SCOPE; 9 decisions locked (D1–D9); 13 outside-voice findings, 13 adopted; 0 critical gaps open |
-| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — (Codex not installed; Claude subagent served as outside voice) | — |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | — | not yet run |
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | clean | mode: HOLD_SCOPE; decisions D1–D9 locked; 13 outside-voice findings adopted; 0 critical gaps |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — (Codex not installed; Claude subagents served as outside voices, 2 rounds) | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | clean | 26 verified findings folded (ENG-D1..D4 + OV2 1–11); 0 critical gaps open; coverage map + parallelization lanes written |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | recommended before B4/B5 UI |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
 
-**CROSS-MODEL:** Outside voice (fresh-context Claude subagent) challenged the reviewed plan; 12 substantive findings confirmed against code and adopted (D8), 1 stale (decisions had locked mid-run). The one genuine strategic tension — "Milestone B is invisible on demo day" — resolved by keeping B and adding demo-persona history seeding (D9/T20).
+**CROSS-MODEL:** Three independent fresh-context challenges ran (CEO round: 13 findings; eng verification: 2 agents, line-level fact-check; eng round: 11 findings). Every confirmed finding was adopted via explicit user decision — headline catches: file-vs-Pg catalog exclusivity (T21), dead prereq redirect trigger (A1), FIRe transaction/granularity/lock-order design (ENG-D1, OV2-5/6), compression cap arithmetic (1.8→1.3, ENG-D2), the retain arm's missing due-card scan (OV2-1), demo identity mismatch (OV2-2), and the deployed-image Dockerfile mismatch (OV2-3). No unresolved cross-model tension remains.
 
-**VERDICT:** CEO CLEARED — scope locked (B via A + D7 content streams), all review findings and outside-voice amendments absorbed. Eng review required before implementation ships.
+**VERDICT:** CEO + ENG CLEARED — ready to implement in the parallelization lanes; run `/plan-design-review` before the B4/B5 UI work.
 
 NO UNRESOLVED DECISIONS

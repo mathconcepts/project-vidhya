@@ -49,6 +49,14 @@ ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS score NUMERIC;
 ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS max_marks NUMERIC;
 ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS graded_at TIMESTAMPTZ;
 
+-- The ALTER path above adds `status` WITHOUT the CHECK constraint the
+-- CREATE TABLE branch declares inline — a pre-existing ad-hoc table would
+-- otherwise end up constrained differently depending on which path created
+-- it. Idempotent (matches the repo's DO-block convention elsewhere).
+DO $$ BEGIN
+  ALTER TABLE mock_exams ADD CONSTRAINT mock_exams_status_check CHECK (status IN ('in_progress', 'submitted'));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- =============================================================================
 -- End of 047_mock_exams.sql
 -- =============================================================================

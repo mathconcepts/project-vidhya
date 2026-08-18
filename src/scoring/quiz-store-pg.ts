@@ -123,6 +123,35 @@ export async function claimSubmission(id: string, nowMs: number): Promise<{ fres
   return { fresh: false, row: existing };
 }
 
+/**
+ * Adversarial-review fix: reverts a fresh claim's `in_progress → submitted`
+ * transition when grading THROWS before `finalizeQuizSubmission` runs.
+ * Without this, `claimSubmission`'s optimistic claim above commits the
+ * 'submitted' status unconditionally — a grading exception leaves the row
+ * permanently stuck 'submitted' with `result IS NULL`, so every retry
+ * lands on the `{ fresh: false }` replay branch in quiz-routes.ts and
+ * replays an empty result as `recorded: true`, bricking the quiz forever
+ * (the client can never get a real grade, and can never resubmit).
+ *
+ * Guarded on `submitted_at = $2 AND graded_at IS NULL` so this can only
+ * revert the EXACT claim the caller just made (never a different, already-
+ * finished submission — the atomic `WHERE status = 'in_progress'` guard in
+ * `claimSubmission` already makes a second concurrent claim impossible in
+ * practice, but the extra guard costs nothing and documents the intent).
+ * Returns false if the guarded row wasn't found (e.g. finalize actually
+ * DID land between the grading throw and this call, or the row somehow
+ * moved on) — the caller must log this loudly rather than assume success.
+ */
+export async function revertClaim(id: string, expectedSubmittedAtMs: number): Promise<boolean> {
+  const { rows } = await getPool().query(
+    `UPDATE quiz_sessions SET status = 'in_progress', submitted_at = NULL
+       WHERE id = $1 AND status = 'submitted' AND submitted_at = $2 AND graded_at IS NULL
+       RETURNING id`,
+    [id, new Date(expectedSubmittedAtMs).toISOString()],
+  );
+  return rows.length > 0;
+}
+
 /** Persists the graded outcome after a fresh claim. */
 export async function finalizeQuizSubmission(
   id: string,

@@ -169,6 +169,21 @@ let _orch: ReturnType<typeof createBatchOrchestrator> | null = null;
 let _runCacheForCurrentPass: Map<string, RunLookupResult | null> | null = null;
 let _bankAccumulatorForCurrentPass: Map<string, AuthoredItem[]> | null = null;
 
+// Red-team fix 2 (INFORMATIONAL): `_runCacheForCurrentPass` and
+// `_bankAccumulatorForCurrentPass` above are module-level mutable state,
+// shared by every caller of `pollAllInFlightBatches()` — the boot-time
+// `resumeAllInFlightBatches()` and the scheduler's 5-min cron tick both
+// call it, and a slow pass can still be running when the next cron tick
+// fires. Two overlapping passes would each stomp the other's cache/
+// accumulator reference in the `finally` block (whichever pass finishes
+// first nulls out the slot the other pass is still using), silently
+// dropping or duplicating dedup/bank-write state. `_inFlightPollPromise`
+// closes that: a second caller while a pass is already running gets the
+// SAME promise (awaits the pass already in flight) instead of starting a
+// concurrent one, so only one pass ever owns the cache/accumulator slots
+// at a time.
+let _inFlightPollPromise: Promise<Array<{ run_id: string; result: StepResult }>> | null = null;
+
 function getOrchestrator() {
   if (_orch) return _orch;
   _orch = createBatchOrchestrator({
@@ -214,21 +229,44 @@ function getOrchestrator() {
  * files during a large batch. The next poll pass's `resumeQueuedRuns`-
  * style resilience does not cover this narrow window; it is an accepted
  * trade-off, not an oversight.
+ *
+ * Reentrancy (red-team fix 2): boot resume and the 5-min cron tick call
+ * this same function, and a slow pass can still be running when the next
+ * one is triggered. Rather than let two passes each own a `_runCache...`/
+ * `_bankAccumulator...` slot and clobber each other, a second call while
+ * one is already in flight AWAITS the SAME promise instead of starting a
+ * concurrent pass — logged so it's visible in server logs, not silent.
  */
 export async function pollAllInFlightBatches(): Promise<Array<{ run_id: string; result: StepResult }>> {
+  if (_inFlightPollPromise) {
+    console.log('[batch-poller] a poll pass is already in flight — awaiting it instead of starting a concurrent pass');
+    return _inFlightPollPromise;
+  }
+
   const cache = new Map<string, RunLookupResult | null>();
   const bankAccumulator = new Map<string, AuthoredItem[]>();
   _runCacheForCurrentPass = cache;
   _bankAccumulatorForCurrentPass = bankAccumulator;
+
+  const pass = (async () => {
+    try {
+      return await getOrchestrator().pollAllInFlight();
+    } finally {
+      // This pass is the sole owner of these slots for its whole
+      // lifetime now (the reentrancy guard above prevents a second pass
+      // from ever starting while this one holds them), so the identity
+      // check is just defense-in-depth, not load-bearing.
+      if (_runCacheForCurrentPass === cache) _runCacheForCurrentPass = null;
+      if (_bankAccumulatorForCurrentPass === bankAccumulator) _bankAccumulatorForCurrentPass = null;
+      flushPracticeItemBankAccumulator(bankAccumulator);
+    }
+  })();
+
+  _inFlightPollPromise = pass;
   try {
-    return await getOrchestrator().pollAllInFlight();
+    return await pass;
   } finally {
-    // Only clear if nothing else has replaced it (defensive against a
-    // theoretical re-entrant call) — in practice this pass owns the slot
-    // start-to-finish since JS has no true parallelism here.
-    if (_runCacheForCurrentPass === cache) _runCacheForCurrentPass = null;
-    if (_bankAccumulatorForCurrentPass === bankAccumulator) _bankAccumulatorForCurrentPass = null;
-    flushPracticeItemBankAccumulator(bankAccumulator);
+    if (_inFlightPollPromise === pass) _inFlightPollPromise = null;
   }
 }
 

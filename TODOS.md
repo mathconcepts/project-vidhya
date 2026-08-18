@@ -260,3 +260,48 @@ have the durable layer refuse to mirror a delete-everything when the local
 read was the unparseable kind. That needs a signal `read()` does not currently
 carry, touching a helper shared by 30 call sites — deliberately not attempted
 on the way to a production deploy.
+
+## Practice-item batch runs need real verifier deps wired at the poller call site
+
+**Trigger:** before anything populates `config.target.practice_item_specs`
+(i.e. before a real practice-item `GenerationRun` can be launched — nothing
+creates one today).
+
+**What:** `src/generation/batch/poller.ts`'s `getOrchestrator()` calls
+`handleJobProcessed` → `deps.dispatchPracticeItemJob(job.atom_spec, job.result)`
+with only two arguments — the third, `PracticeItemDispatchDeps`, is never
+passed, so it defaults to `{}` on every real poll pass. `solveSecondary` and
+`wolframCheck` are always undefined in production.
+
+**Why it matters:** `dispatchPracticeItemJob` (`src/generation/practice-item-
+factory/batch-dispatch.ts`) is fail-closed by design when a verifier isn't
+wired: mcq/msq refuse terminally (correct, and unaffected by this TODO — a
+refusal is a valid terminal outcome). nat items used to return `pending_retry`
+in the same structural-absence case, which is NOT terminal — it tells the
+orchestrator to skip stamping `processed_at` and try again next pass. Since no
+future pass ever populates `deps.wolframCheck` on its own, a run containing
+even one nat spec would poll forever and never reach `'complete'`.
+
+**Fixed here (adversarial-review pass):** the structural case (no
+`wolframCheck` at all) now refuses terminally, same shape as the mcq/msq
+`solveSecondary` check — a run with unwired deps can finish (with everything
+refused) instead of hanging. The genuinely transient case — Wolfram itself
+gets called and returns `status: 'inconclusive'` — is unchanged and still
+`pending_retry`, because that one really might succeed on a later pass.
+
+**What's still open:** mcq/msq/nat items generated via the batch path will
+ALL refuse until this dep is actually wired, so practice-item batch runs are
+honest-but-useless in production today — refusing instead of hanging is
+strictly better, but it is not the same as working. The real fix is wiring
+`solveSecondary` (via `resolveDistinctSecondaryModel` in `answer-check.ts`,
+which already exists and reuses the atom pipeline's provider-routing) and
+`wolframCheck` (via the existing `verifyProblemWithWolfram` /
+`src/services/wolfram-service.ts`) into the `onJobProcessed` closure in
+`poller.ts`'s `getOrchestrator()`, threaded down to `handleJobProcessed`'s
+`deps` parameter alongside the existing `getRun`/`dispatchPracticeItemJob`/
+`writePracticeItemBank`.
+
+**Where to start:** `src/generation/batch/poller.ts`'s `defaultJobProcessedDeps`
+and `getOrchestrator()`'s `onJobProcessed` closure; the verifier factories
+themselves are one import away in `answer-check.ts` and
+`src/services/wolfram-service.ts`.

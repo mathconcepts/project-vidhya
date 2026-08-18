@@ -10,13 +10,20 @@
  */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authFetch } from '@/lib/auth/client';
+import { authFetch, getToken } from '@/lib/auth/client';
 import { WarmupProbeScreen, type WarmupProbe } from '@/components/warmup/WarmupProbeScreen';
 import { WarmupResultScreen } from '@/components/warmup/WarmupResultScreen';
 import {
   WARMUP_SAVE_ERROR_COPY,
   WARMUP_LOAD_ERROR_COPY,
+  WARMUP_SIGNIN_REQUIRED_COPY,
+  WARMUP_SIGNIN_CTA_LABEL,
+  WARMUP_SIGNIN_RETRY_LABEL,
   WARMUP_COMPLETED_KEY,
+  classifyPersistFailure,
+  savePendingWarmupResults,
+  loadPendingWarmupResults,
+  clearPendingWarmupResults,
   type SpineConcept,
 } from '@/lib/warmup-logic';
 
@@ -44,7 +51,7 @@ function toClientProbe(raw: any): ClientProbe {
   };
 }
 
-type Phase = 'loading' | 'probe' | 'saving' | 'save-error' | 'load-error' | 'result';
+type Phase = 'loading' | 'probe' | 'saving' | 'save-error' | 'sign-in' | 'load-error' | 'result';
 
 export default function WarmupPage() {
   const navigate = useNavigate();
@@ -66,21 +73,44 @@ export default function WarmupPage() {
 
   const persist = useCallback(async (results: PersistResultEntry[]) => {
     setPhase('saving');
+    // noClearOn401: an anonymous caller has no token to clear, and a
+    // caller with a stale token should keep it around — the sign-in
+    // phase below, not authFetch's ghost-JWT cleanup, is what routes
+    // this case, and clearing here would just make the eventual real
+    // sign-in indistinguishable from "never had a session".
+    let status = 0;
     try {
       const r = await authFetch('/api/readiness/warmup/persist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ results }),
+        noClearOn401: true,
       });
+      status = r.status;
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
       setPlacement({ placed: data.placed ?? [], frontier: data.frontier ?? null });
       setPhase('result');
+      clearPendingWarmupResults();
       try { localStorage.setItem(WARMUP_COMPLETED_KEY, '1'); } catch { /* private mode */ }
     } catch {
-      // §11 states table: "Couldn't save your placement — your answers
-      // are kept, tap to retry." resultsRef still holds every answer.
-      setPhase('save-error');
+      // Red-team fix 1: a 401 here means the platform's anonymous-first
+      // warmup ran to completion but there's no signed-in student to
+      // save the placement against. That is not transient — retrying
+      // the identical unauthenticated request can never succeed, so it
+      // gets its own honest phase instead of a "tap to retry" that lies.
+      // The results are kept in localStorage (in addition to resultsRef,
+      // which already survives in memory) so returning to /warmup after
+      // signing in can save them without re-taking the diagnostic.
+      const kind = classifyPersistFailure(status || null);
+      if (kind === 'sign-in') {
+        savePendingWarmupResults(results);
+        setPhase('sign-in');
+      } else {
+        // §11 states table: "Couldn't save your placement — your answers
+        // are kept, tap to retry." resultsRef still holds every answer.
+        setPhase('save-error');
+      }
     }
   }, []);
 
@@ -142,7 +172,20 @@ export default function WarmupPage() {
     }
   }, [startConcept]);
 
-  useEffect(() => { void loadSpineAndStart(); }, [loadSpineAndStart]);
+  // Red-team fix 1: if a prior anonymous run left results stranded by a
+  // 401 at persist, and the student now has a token (they signed in and
+  // came back to /warmup), save those results instead of making them
+  // re-take the whole diagnostic. Cheap and only runs once on mount.
+  useEffect(() => {
+    const pending = loadPendingWarmupResults<PersistResultEntry[]>();
+    if (pending && pending.length > 0 && getToken()) {
+      resultsRef.current = pending;
+      void persist(pending);
+      return;
+    }
+    void loadSpineAndStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleAnswer(selectedIndex: number) {
     if (!probe || pending) return;
@@ -233,6 +276,14 @@ export default function WarmupPage() {
     void persist(resultsRef.current);
   }
 
+  function handleGoToSignIn() {
+    // Results already live in resultsRef (this tab) and localStorage
+    // (survives navigation/reload) — SignInPage has no returnTo wiring
+    // today, so the recovery path is the mount-time pending-results
+    // check above, not a redirect back here.
+    navigate('/sign-in');
+  }
+
   return (
     <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', width: '100%', padding: '20px 20px 40px' }}>
       {phase === 'result' && placement && (
@@ -247,6 +298,10 @@ export default function WarmupPage() {
 
       {phase === 'save-error' && (
         <RetryPanel copy={WARMUP_SAVE_ERROR_COPY} onRetry={handleRetryPersist} />
+      )}
+
+      {phase === 'sign-in' && (
+        <SignInPanel onSignIn={handleGoToSignIn} onRetryPersist={handleRetryPersist} />
       )}
 
       {phase === 'load-error' && (
@@ -292,6 +347,48 @@ function RetryPanel({ copy, onRetry }: { copy: string; onRetry: () => void }) {
         }}
       >
         Tap to retry
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Red-team fix 1 — the honest 401 phase. Distinct from RetryPanel: there
+ * is no "tap to retry" promise here, because retrying the same
+ * unauthenticated request cannot ever succeed. The answers are kept
+ * (resultsRef.current in memory + localStorage via
+ * savePendingWarmupResults), so the only actionable move is signing in;
+ * a secondary action covers the case where the student already signed in
+ * elsewhere (another tab, or came back via browser-back) without this
+ * page having remounted yet.
+ */
+function SignInPanel({ onSignIn, onRetryPersist }: { onSignIn: () => void; onRetryPersist: () => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', paddingTop: 40 }}>
+      <p style={{ margin: 0, fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)', textAlign: 'center' }}>
+        {WARMUP_SIGNIN_REQUIRED_COPY}
+      </p>
+      <button
+        type="button"
+        onClick={onSignIn}
+        style={{
+          minHeight: 'var(--touch-min)', padding: '0 20px', borderRadius: 'var(--radius-sm)',
+          background: 'var(--green)', color: 'var(--text-on-accent, #fff)', border: 'none',
+          fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-subhead)', cursor: 'pointer',
+        }}
+      >
+        {WARMUP_SIGNIN_CTA_LABEL}
+      </button>
+      <button
+        type="button"
+        onClick={onRetryPersist}
+        style={{
+          minHeight: 'var(--touch-min)', padding: '0 12px', borderRadius: 'var(--radius-sm)',
+          background: 'transparent', color: 'var(--text-secondary)', border: 'none',
+          fontWeight: 'var(--weight-medium)', fontSize: 'var(--text-subhead)', cursor: 'pointer',
+        }}
+      >
+        {WARMUP_SIGNIN_RETRY_LABEL}
       </button>
     </div>
   );

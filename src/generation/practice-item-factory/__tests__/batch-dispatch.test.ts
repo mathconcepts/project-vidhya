@@ -154,12 +154,20 @@ describe('dispatchPracticeItemJob — mcq/msq dual-model consensus', () => {
 });
 
 describe('dispatchPracticeItemJob — nat / wolfram', () => {
-  it('holds for later (pending_retry) when no wolframCheck is wired — never refused', async () => {
+  // Adversarial-review fix: a STRUCTURAL absence of wolframCheck (nothing
+  // wired a verifier for this run at all — today's reality, since
+  // poller.ts never threads a third deps arg) must refuse TERMINALLY, not
+  // pending_retry. pending_retry means "the orchestrator will not stamp
+  // processed_at, try again next pass" — but no future pass ever populates
+  // deps.wolframCheck on its own, so the old behavior polled a nat spec
+  // forever and blocked the whole run from ever reaching 'complete'.
+  it('refuses TERMINALLY (not pending_retry) when no wolframCheck is wired at all — naming the unwired dep', async () => {
     const result = await dispatchPracticeItemJob(natAtomSpec(), validNatJson, {});
-    expect(result.outcome).toBe('pending_retry');
+    expect(result.outcome).toBe('refused');
+    expect(result.reason).toMatch(/wolframCheck/);
   });
 
-  it('holds for later on a wolfram-inconclusive result — the T7 tri-state policy', async () => {
+  it('holds for later on a wolfram-inconclusive result (dep IS wired, this ONE check was transient) — the T7 tri-state policy', async () => {
     const wolframCheck = vi.fn().mockResolvedValue({ status: 'inconclusive', wolfram_answer: null });
     const result = await dispatchPracticeItemJob(natAtomSpec(), validNatJson, { wolframCheck });
     expect(result.outcome).toBe('pending_retry');

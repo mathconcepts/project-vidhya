@@ -34,7 +34,7 @@ import { sendJSON, sendError } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import { generateMockExam as generateMockExamProd } from '../gbrain/operations/moat-operations';
 import {
-  createMockExam, getMockExam, claimMockExamSubmission, finalizeMockExamSubmission,
+  createMockExam, getMockExam, claimMockExamSubmission, finalizeMockExamSubmission, revertClaim,
   sessionOwner, claimUnclaimedSessionRows, claimMockExamOwner,
   type MockExamRow,
 } from '../gbrain/mock-exam-store';
@@ -54,6 +54,7 @@ export interface MockExamDeps {
   getMockExam: typeof getMockExam;
   claimMockExamSubmission: typeof claimMockExamSubmission;
   finalizeMockExamSubmission: typeof finalizeMockExamSubmission;
+  revertClaim: typeof revertClaim;
   sessionOwner: typeof sessionOwner;
   claimUnclaimedSessionRows: typeof claimUnclaimedSessionRows;
   claimMockExamOwner: typeof claimMockExamOwner;
@@ -66,6 +67,7 @@ const productionDeps: MockExamDeps = {
   getMockExam,
   claimMockExamSubmission,
   finalizeMockExamSubmission,
+  revertClaim,
   sessionOwner,
   claimUnclaimedSessionRows,
   claimMockExamOwner,
@@ -229,7 +231,26 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
   const responsesByObj: Record<string, MockExamResponse> = {};
   for (const q of normalized) responsesByObj[q.id] = responsesById.get(q.id);
 
-  const grading = await gradeMockExam(normalized, responsesByObj);
+  let grading: Awaited<ReturnType<typeof gradeMockExam>>;
+  try {
+    grading = await gradeMockExam(normalized, responsesByObj);
+  } catch (err) {
+    console.error('[mock-exam] grading failed:', (err as Error).message);
+    // Adversarial-review fix (same shape as quiz-routes.ts): the claim
+    // above already committed in_progress → submitted BEFORE grading ran.
+    // Without reverting, this throw would brick the exam permanently —
+    // every retry hits the `!claim.fresh` replay branch and returns an
+    // empty analysis as `recorded: true`, with no path to ever grade it.
+    try {
+      const reverted = await deps.revertClaim(examId, claim.row.submittedAtMs ?? now.getTime());
+      if (!reverted) {
+        console.error(`[mock-exam] revert-after-grading-failure found no matching claimed row for exam=${examId} — it may be stuck as 'submitted' with no result`);
+      }
+    } catch (revertErr) {
+      console.error(`[mock-exam] revert-after-grading-failure itself threw for exam=${examId} (exam is likely stuck as 'submitted'):`, (revertErr as Error).message);
+    }
+    return sendError(res, 500, 'mock exam grading failed');
+  }
   const deadlineMs = claim.row.createdAtMs + claim.row.timeLimitMinutes * 60 * 1000;
   const late = now.getTime() > deadlineMs;
 

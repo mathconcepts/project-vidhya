@@ -79,6 +79,16 @@ function makeFakeQuizStore() {
       Object.assign(row, { late: outcome.late, score: outcome.score, maxMarks: outcome.maxMarks, result: outcome.result, gradedAtMs: outcome.gradedAtMs });
       return { ...row };
     },
+    // Mirrors quiz-store-pg.ts's revertClaim guard: only reverts the EXACT
+    // claim just made (same submittedAtMs, not yet graded).
+    revertClaim: async (id: string, expectedSubmittedAtMs: number): Promise<boolean> => {
+      const row = sessions.get(id);
+      if (!row) return false;
+      if (row.status !== 'submitted' || row.submittedAtMs !== expectedSubmittedAtMs || row.gradedAtMs !== null) return false;
+      row.status = 'in_progress';
+      row.submittedAtMs = null;
+      return true;
+    },
     // Mirrors quiz-store-pg.ts's getLastSubmittedQuizAt: MAX(submitted_at)
     // among status='submitted' rows for the student, scanning the SAME
     // in-memory sessions this fake store already tracks — an in-progress
@@ -340,8 +350,9 @@ describe('POST /api/practice/quiz/:id/submit', () => {
       getQuizSession: store.getQuizSession,
       claimSubmission: store.claimSubmission,
       finalizeQuizSubmission: store.finalizeQuizSubmission,
+      revertClaim: store.revertClaim,
     };
-    return { items, updates, xpAwards, deps, startedAtMs };
+    return { items, updates, xpAwards, deps, startedAtMs, store };
   }
 
   it('grades every item via the deterministic scorer and feeds StudentModel.update with a fixed per-item ts', async () => {
@@ -400,6 +411,74 @@ describe('POST /api/practice/quiz/:id/submit', () => {
     expect(second.payload.replayed).toBe(true);
     // No additional StudentModel.update calls on replay.
     expect(updates).toHaveLength(items.length);
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Adversarial-review fix: claim-before-grade brick
+  // ────────────────────────────────────────────────────────────────────
+  //
+  // claimSubmission commits in_progress → submitted BEFORE grading runs.
+  // Without a revert-on-throw, a grading exception would leave the row
+  // stuck 'submitted' forever with result: null — every retry hitting the
+  // `!claim.fresh` replay branch and returning an empty result as
+  // `recorded: true`. This locks: the row goes back to 'in_progress' on a
+  // grading throw, and a subsequent retry re-grades for real.
+  describe('grading throw reverts the claim instead of bricking the quiz', () => {
+    it('a grading exception returns 500 and puts the row back to in_progress (not stuck submitted)', async () => {
+      const { items, deps, store } = await startedQuiz();
+      const throwingCatalog: any = {
+        ...deps.catalog(),
+        getById: vi.fn(async () => { throw new Error('catalog boom'); }),
+      };
+      setQuizDepsForTests({ ...deps, catalog: () => throwingCatalog, now: () => NOW });
+
+      const responses = items.map((it) => ({ object_id: it.id, selectedIndex: 1 }));
+      const r = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), r.res);
+
+      expect(r.status).toBe(500);
+      const row = await store.getQuizSession('quiz-x');
+      expect(row!.status).toBe('in_progress');
+      expect(row!.submittedAtMs).toBeNull();
+      expect(row!.result).toBeNull();
+    });
+
+    it('a retry after a reverted grading failure actually re-grades — not a bricked replay', async () => {
+      const { items, deps, updates, store } = await startedQuiz();
+      const throwingCatalog: any = {
+        ...deps.catalog(),
+        getById: vi.fn(async () => { throw new Error('catalog boom'); }),
+      };
+      setQuizDepsForTests({ ...deps, catalog: () => throwingCatalog, now: () => NOW });
+
+      const responses = items.map((it, i) => ({ object_id: it.id, selectedIndex: i === 0 ? 1 : 0 }));
+      const failed = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), failed.res);
+      expect(failed.status).toBe(500);
+      expect(updates).toHaveLength(0); // nothing was recorded on the failed attempt
+
+      // Fix the transient failure (catalog is healthy again) and retry.
+      setQuizDepsForTests({ ...deps, catalog: () => deps.catalog(), now: () => NOW });
+      const retried = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), retried.res);
+
+      expect(retried.status).toBe(200);
+      expect(retried.payload.replayed).toBeUndefined(); // a REAL grade, not a stale replay
+      expect(retried.payload.correct).toBe(1);
+      expect(updates).toHaveLength(items.length);
+      expect((await store.getQuizSession('quiz-x'))!.status).toBe('submitted');
+    });
+
+    it('the successful (non-throwing) path never calls revertClaim', async () => {
+      const { items, deps } = await startedQuiz();
+      const revertClaim = vi.fn(deps.revertClaim as any);
+      setQuizDepsForTests({ ...deps, revertClaim, now: () => NOW });
+      const responses = items.map((it) => ({ object_id: it.id, selectedIndex: 1 }));
+      const r = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), r.res);
+      expect(r.status).toBe(200);
+      expect(revertClaim).not.toHaveBeenCalled();
+    });
   });
 
   it('prefetches all item payloads concurrently rather than one at a time before grading', async () => {

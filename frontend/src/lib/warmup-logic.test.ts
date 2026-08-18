@@ -1,10 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   buildSegmentProgress,
   buildResultCopy,
   isSelectionCorrect,
+  classifyPersistFailure,
+  savePendingWarmupResults,
+  loadPendingWarmupResults,
+  clearPendingWarmupResults,
   WARMUP_SKIP_LANDING_COPY,
   WARMUP_EARLY_READY_COPY,
+  WARMUP_SAVE_ERROR_COPY,
+  WARMUP_SIGNIN_REQUIRED_COPY,
   type SpineConcept,
 } from './warmup-logic';
 
@@ -81,5 +87,57 @@ describe('buildResultCopy', () => {
     const r = buildResultCopy(SPINE, SPINE.map((c) => c.id), null, true);
     expect(r.placementLine).not.toContain('undefined');
     expect(r.placementLine.length).toBeGreaterThan(0);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// Red-team fix 1: anonymous warmup persist dead-end
+// ────────────────────────────────────────────────────────────────────
+
+describe('classifyPersistFailure', () => {
+  it('routes a 401 (anonymous caller) to the sign-in phase, never the generic retry', () => {
+    expect(classifyPersistFailure(401)).toBe('sign-in');
+  });
+
+  it('routes every other failure to the existing (genuinely retriable) save-error path', () => {
+    expect(classifyPersistFailure(500)).toBe('save-error');
+    expect(classifyPersistFailure(502)).toBe('save-error');
+    expect(classifyPersistFailure(400)).toBe('save-error');
+    // A thrown network error (no HTTP status at all) is also transient —
+    // it must not be mistaken for the un-retriable 401 case.
+    expect(classifyPersistFailure(null)).toBe('save-error');
+    expect(classifyPersistFailure(undefined)).toBe('save-error');
+  });
+
+  it('the two copy strings are distinct — the sign-in phase never reuses the un-retriable promise', () => {
+    expect(WARMUP_SIGNIN_REQUIRED_COPY).not.toBe(WARMUP_SAVE_ERROR_COPY);
+    expect(WARMUP_SIGNIN_REQUIRED_COPY.toLowerCase()).toContain('sign in');
+    // The save-error copy is allowed to say "tap to retry" (it is
+    // genuinely retriable); the sign-in copy must not promise that.
+    expect(WARMUP_SIGNIN_REQUIRED_COPY.toLowerCase()).not.toContain('retry');
+  });
+});
+
+describe('pending warmup results storage', () => {
+  beforeEach(() => {
+    clearPendingWarmupResults();
+  });
+
+  it('round-trips results saved before sign-in so they survive the 401', () => {
+    const results = [
+      { skill_id: 'determinants', converged: true, ability_estimate: 1120, probes_used: 3, predicted_success_at_close: 0.7 },
+    ];
+    savePendingWarmupResults(results);
+    expect(loadPendingWarmupResults()).toEqual(results);
+  });
+
+  it('returns null when nothing is pending', () => {
+    expect(loadPendingWarmupResults()).toBeNull();
+  });
+
+  it('clears cleanly after a successful persist', () => {
+    savePendingWarmupResults([{ skill_id: 'x' }]);
+    clearPendingWarmupResults();
+    expect(loadPendingWarmupResults()).toBeNull();
   });
 });

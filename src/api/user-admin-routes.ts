@@ -165,7 +165,7 @@ async function handleTeacherRoster(req: ParsedRequest, res: ServerResponse): Pro
       // Note: session_id is the GBrain key, but in the Roles v2.8 system
       // each signed-in user has their own student_id which we treat as
       // the session_id for model lookup
-      const model = await getOrCreateStudentModel(student.id, student.id);
+      const model = await getOrCreateStudentModel(student.id);
       entry = modelToTeacherRosterEntry(student.id, model);
     } catch {
       entry = modelToTeacherRosterEntry(student.id, null);
@@ -204,7 +204,7 @@ async function handleCohortSummary(req: ParsedRequest, res: ServerResponse): Pro
   const models: any[] = [];
   for (const s of students) {
     try {
-      const m = await getOrCreateStudentModel(s.id, s.id);
+      const m = await getOrCreateStudentModel(s.id);
       models.push(m);
     } catch {
       models.push(null);

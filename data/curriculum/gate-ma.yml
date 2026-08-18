@@ -203,6 +203,11 @@ concepts:
     gate_frequency: high
     prerequisites:
       - matrix-operations
+    encompasses:
+      # Cofactor expansion is repeated matrix-entry arithmetic — a
+      # determinant problem drills multiplication/addition heavily.
+      - id: matrix-operations
+        weight: 0.6
   - id: matrix-inverse
     topic: linear-algebra
     label: Matrix Inverse
@@ -211,6 +216,13 @@ concepts:
     gate_frequency: high
     prerequisites:
       - determinants
+    encompasses:
+      # The adjugate/cofactor inverse method IS a determinant computation.
+      - id: determinants
+        weight: 0.6
+      # Verifying AA⁻¹ = I and computing cofactors is dense matrix arithmetic.
+      - id: matrix-operations
+        weight: 0.85
   - id: systems-of-equations
     topic: linear-algebra
     label: Systems of Linear Equations
@@ -219,6 +231,13 @@ concepts:
     gate_frequency: high
     prerequisites:
       - matrix-inverse
+    encompasses:
+      # Row operations during elimination are elementary matrix arithmetic.
+      - id: matrix-operations
+        weight: 0.5
+      # Solving via x = A⁻¹b is one of the standard solution techniques.
+      - id: matrix-inverse
+        weight: 0.35
   - id: rank-nullity
     topic: linear-algebra
     label: Rank & Nullity
@@ -227,6 +246,11 @@ concepts:
     gate_frequency: high
     prerequisites:
       - systems-of-equations
+    encompasses:
+      # Row-reducing to echelon form to read off rank IS the Gaussian
+      # elimination process from systems-of-equations.
+      - id: systems-of-equations
+        weight: 0.6
   - id: vector-spaces
     topic: linear-algebra
     label: Vector Spaces
@@ -235,6 +259,10 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - rank-nullity
+    encompasses:
+      # Dimension/basis arguments lean directly on the rank-nullity theorem.
+      - id: rank-nullity
+        weight: 0.4
   - id: linear-transformations
     topic: linear-algebra
     label: Linear Transformations
@@ -243,6 +271,13 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - vector-spaces
+    encompasses:
+      # Kernel/image arguments are subspace-membership reasoning.
+      - id: vector-spaces
+        weight: 0.5
+      # Matrix representation of a transformation is matrix arithmetic.
+      - id: matrix-operations
+        weight: 0.4
   - id: eigenvalues
     topic: linear-algebra
     label: Eigenvalues & Eigenvectors
@@ -252,6 +287,13 @@ concepts:
     prerequisites:
       - determinants
       - systems-of-equations
+    encompasses:
+      # The characteristic polynomial IS det(A - λI).
+      - id: determinants
+        weight: 0.7
+      # Finding eigenvectors means solving (A - λI)v = 0.
+      - id: systems-of-equations
+        weight: 0.5
   - id: diagonalization
     topic: linear-algebra
     label: Diagonalization
@@ -261,6 +303,13 @@ concepts:
     prerequisites:
       - eigenvalues
       - vector-spaces
+    encompasses:
+      # Diagonalizing requires computing eigenvalues/eigenvectors first.
+      - id: eigenvalues
+        weight: 0.8
+      # Checking the eigenvector set spans (forms a basis) needs independence.
+      - id: linear-independence
+        weight: 0.4
   - id: cayley-hamilton
     topic: linear-algebra
     label: Cayley-Hamilton Theorem
@@ -269,6 +318,13 @@ concepts:
     gate_frequency: high
     prerequisites:
       - eigenvalues
+    encompasses:
+      # The theorem is stated in terms of the characteristic polynomial.
+      - id: eigenvalues
+        weight: 0.5
+      # That characteristic polynomial is itself a determinant expansion.
+      - id: determinants
+        weight: 0.4
   - id: orthogonality
     topic: linear-algebra
     label: Orthogonality
@@ -277,6 +333,10 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - vector-spaces
+    encompasses:
+      # Orthogonal complements and projections are subspace reasoning.
+      - id: vector-spaces
+        weight: 0.45
   - id: trace
     topic: linear-algebra
     label: Trace of a Matrix
@@ -286,6 +346,13 @@ concepts:
     prerequisites:
       - matrix-operations
       - eigenvalues
+    encompasses:
+      # Trace is literally a sum over diagonal entries produced by matrix ops.
+      - id: matrix-operations
+        weight: 0.5
+      # trace(A) = Σλᵢ problems require finding the eigenvalues first.
+      - id: eigenvalues
+        weight: 0.4
   - id: linear-independence
     topic: linear-algebra
     label: Linear Independence
@@ -294,6 +361,10 @@ concepts:
     gate_frequency: high
     prerequisites:
       - vector-spaces
+    encompasses:
+      # Testing independence is a span/basis argument over a vector space.
+      - id: vector-spaces
+        weight: 0.5
   - id: null-space-column-space
     topic: linear-algebra
     label: Null Space & Column Space
@@ -303,6 +374,16 @@ concepts:
     prerequisites:
       - rank-nullity
       - linear-independence
+    encompasses:
+      # dim(null space) + dim(column space) = n IS the rank-nullity theorem.
+      - id: rank-nullity
+        weight: 0.6
+      # A column-space basis is found by keeping independent columns.
+      - id: linear-independence
+        weight: 0.5
+      # The null space is exactly the solution set of Ax = 0.
+      - id: systems-of-equations
+        weight: 0.4
   - id: symmetric-matrices
     topic: linear-algebra
     label: Symmetric Matrices
@@ -312,6 +393,13 @@ concepts:
     prerequisites:
       - eigenvalues
       - orthogonality
+    encompasses:
+      # The headline result is about a symmetric matrix's eigenvalues.
+      - id: eigenvalues
+        weight: 0.6
+      # Its eigenvectors are shown/used to be orthogonal.
+      - id: orthogonality
+        weight: 0.5
   - id: inner-product-spaces
     topic: linear-algebra
     label: Inner Product Spaces
@@ -320,6 +408,10 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - vector-spaces
+    encompasses:
+      # Inner products are defined and reasoned about over a vector space.
+      - id: vector-spaces
+        weight: 0.5
   - id: gram-schmidt
     topic: linear-algebra
     label: Gram-Schmidt Process
@@ -329,6 +421,16 @@ concepts:
     prerequisites:
       - inner-product-spaces
       - orthogonality
+    encompasses:
+      # Every step is an inner-product (projection) computation.
+      - id: inner-product-spaces
+        weight: 0.8
+      # The whole point of the algorithm is producing orthogonal vectors.
+      - id: orthogonality
+        weight: 0.5
+      # It starts from — and implicitly re-verifies — a linearly independent set.
+      - id: linear-independence
+        weight: 0.4
   - id: change-of-basis
     topic: linear-algebra
     label: Change of Basis
@@ -338,6 +440,13 @@ concepts:
     prerequisites:
       - linear-independence
       - linear-transformations
+    encompasses:
+      # The new coordinate vectors must themselves form an independent set.
+      - id: linear-independence
+        weight: 0.4
+      # The change-of-basis matrix is itself a linear transformation.
+      - id: linear-transformations
+        weight: 0.5
   - id: lu-factorization
     topic: linear-algebra
     label: LU Factorization
@@ -347,6 +456,13 @@ concepts:
     prerequisites:
       - systems-of-equations
       - matrix-operations
+    encompasses:
+      # Forward/backward substitution solves two triangular systems.
+      - id: systems-of-equations
+        weight: 0.6
+      # Verifying LU = A and applying the factors is matrix multiplication.
+      - id: matrix-operations
+        weight: 0.5
   - id: least-squares
     topic: linear-algebra
     label: Least Squares
@@ -356,6 +472,13 @@ concepts:
     prerequisites:
       - systems-of-equations
       - orthogonality
+    encompasses:
+      # The normal equations are themselves solved as a linear system.
+      - id: systems-of-equations
+        weight: 0.5
+      # Least squares IS the orthogonal projection onto the column space.
+      - id: orthogonality
+        weight: 0.5
   - id: quadratic-forms
     topic: linear-algebra
     label: Quadratic Forms
@@ -365,6 +488,13 @@ concepts:
     prerequisites:
       - symmetric-matrices
       - eigenvalues
+    encompasses:
+      # The matrix in xᵀAx is required to be symmetric.
+      - id: symmetric-matrices
+        weight: 0.6
+      # Classification is read directly off the sign of the eigenvalues.
+      - id: eigenvalues
+        weight: 0.5
   - id: positive-definite-matrices
     topic: linear-algebra
     label: Positive Definite Matrices
@@ -373,6 +503,13 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - quadratic-forms
+    encompasses:
+      # Definiteness IS a classification of the associated quadratic form.
+      - id: quadratic-forms
+        weight: 0.7
+      # The eigenvalue-sign test is the most common definiteness check.
+      - id: eigenvalues
+        weight: 0.4
   - id: spectral-theorem
     topic: linear-algebra
     label: Spectral Theorem
@@ -382,6 +519,13 @@ concepts:
     prerequisites:
       - symmetric-matrices
       - diagonalization
+    encompasses:
+      # The theorem is specifically about symmetric matrices.
+      - id: symmetric-matrices
+        weight: 0.7
+      # A = QΛQᵀ is an orthogonal diagonalization.
+      - id: diagonalization
+        weight: 0.6
   - id: svd
     topic: linear-algebra
     label: Singular Value Decomposition
@@ -392,6 +536,16 @@ concepts:
       - eigenvalues
       - symmetric-matrices
       - orthogonality
+    encompasses:
+      # Singular values are sqrt of the eigenvalues of AᵀA.
+      - id: eigenvalues
+        weight: 0.7
+      # U and V are constructed to be orthogonal matrices.
+      - id: orthogonality
+        weight: 0.6
+      # AᵀA / AAᵀ are symmetric and are the matrices actually diagonalized.
+      - id: symmetric-matrices
+        weight: 0.5
   - id: jordan-normal-form
     topic: linear-algebra
     label: Jordan Normal Form
@@ -401,6 +555,13 @@ concepts:
     prerequisites:
       - eigenvalues
       - diagonalization
+    encompasses:
+      # Generalized eigenvectors are built from ordinary eigenvalue computation.
+      - id: eigenvalues
+        weight: 0.6
+      # Jordan form is the direct generalization when diagonalization fails.
+      - id: diagonalization
+        weight: 0.5
   - id: matrix-norms
     topic: linear-algebra
     label: Matrix Norms & Condition Number
@@ -410,6 +571,13 @@ concepts:
     prerequisites:
       - svd
       - eigenvalues
+    encompasses:
+      # The 2-norm and condition number are read directly off singular values.
+      - id: svd
+        weight: 0.6
+      # The spectral radius (dominant |eigenvalue|) bounds several norms.
+      - id: eigenvalues
+        weight: 0.4
   - id: ode-first-order
     topic: differential-equations
     label: First Order ODEs

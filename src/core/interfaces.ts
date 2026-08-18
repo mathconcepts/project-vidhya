@@ -245,11 +245,42 @@ export interface TeachingPolicy {
 // L6 — Readiness Engine (GBrain core)    [plugin: policies]
 // ────────────────────────────────────────────────────────────────────
 
+/**
+ * T12 (OV2-D1): one already-servable candidate for the Retain arm, fully
+ * resolved (real object, real recall) — the injected `dueCards` seam on
+ * `ReadinessEngineDeps` returns these, not raw FSRS rows, so
+ * `DefaultReadinessEngine` never needs to know about SQL, FSRS math, or
+ * the catalog. Production composes this in `src/readiness/due-cards.ts` /
+ * `src/api/readiness-routes.ts`; tests can stub it with a plain function.
+ */
+export interface DueReviewCandidate {
+  objectId: ObjectId;
+  nodeId: ConceptId;
+  estMinutes: number;
+  /** FSRS recall probability at "now", already computed. */
+  recall: number;
+}
+
 export interface ReadinessEngineDeps {
   studentModel: StudentModel;
   curriculum: CurriculumRepo;
   selector: ItemSelector;
   policy: TeachingPolicy;
+  /**
+   * T12 (OV2-D1): the real due-card scan (fsrs_cards WHERE due_at<=now AND
+   * reps>0), mapped to servable objects. Optional — omitting it preserves
+   * the pre-T12 selector-based retain path (`ItemSelector` asked for an
+   * easy-band item + `StudentModel.retrievability()`), which unit tests
+   * that stub only the base four deps still exercise unchanged. When
+   * provided, it is the ONLY source `pickDueReview` consults — a fresh
+   * student with items they've never attempted gets zero due-card
+   * candidates, never a bogus "recall at 0%" retain.
+   */
+  dueCards?(
+    studentId: StudentId,
+    now: Date,
+    opts: { allowedNodes?: ConceptId[] },
+  ): Promise<DueReviewCandidate[]>;
 }
 
 export interface ReadinessEngine {

@@ -45,7 +45,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ALL_CONCEPTS } from '../src/constants/concept-graph';
 import { loadConceptAtoms, loadConceptMeta } from '../src/content/atom-loader';
-import { findPrerequisiteCycle } from '../src/curriculum/prereq-cycles';
+import { findPrerequisiteCycle, findGraphCycle } from '../src/curriculum/prereq-cycles';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -323,6 +323,25 @@ function checkPrerequisiteCycles(): void {
   }
 }
 
+// ─── F. encompassing-graph cycle check (T11/B1) ─────────────────────────
+// Note: concept-graph.ts's loader already asserts this at import time (a
+// cyclic encompasses: edit crashes the whole script, same as a cyclic
+// prerequisite would above) — this is the same belt-and-suspenders named,
+// reportable check as checkPrerequisiteCycles, for when that assertion is
+// ever relaxed to non-fatal.
+function checkEncompassingCycles(): void {
+  const withEdges = ALL_CONCEPTS.filter((c) => (c.encompasses ?? []).length > 0);
+  const cycle = findGraphCycle(ALL_CONCEPTS, (n) => (n.encompasses ?? []).map((e) => e.id));
+  if (cycle) {
+    fail('encompassing-cycle-check', `encompassing graph has a cycle: ${cycle.join(' -> ')}`);
+  } else {
+    ok(
+      'encompassing-cycle-check',
+      `${withEdges.length} concepts declare encompassing edges; graph is acyclic`,
+    );
+  }
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -333,6 +352,7 @@ async function main(): Promise<void> {
   checkGoldenMcqs();
   await checkGoldenConcepts();
   checkPrerequisiteCycles();
+  checkEncompassingCycles();
 
   if (failures.length > 0) {
     console.error(`\nFAIL — ${failures.length} violation(s):`);

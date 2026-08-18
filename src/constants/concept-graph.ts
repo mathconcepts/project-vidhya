@@ -27,7 +27,21 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
-import { assertNoPrerequisiteCycles } from '../curriculum/prereq-cycles';
+import { assertNoPrerequisiteCycles, assertNoGraphCycles } from '../curriculum/prereq-cycles';
+
+/**
+ * T11 (Milestone B — B1). A concept X "encompasses" concept Y with weight
+ * `w ∈ (0,1]` when a random X problem implicitly practices Y (Skycak's
+ * semantics — `w` ≈ the fraction/probability of that implicit practice).
+ * Distinct from `prerequisites`: encompassed topics are USUALLY
+ * prerequisites but need not be, and the edge is directional the other
+ * way in FIRe's credit-propagation sense (see fire.ts) — mastering the
+ * more advanced X gives partial credit toward the simpler Y.
+ */
+export interface EncompassingEdge {
+  id: string;
+  weight: number;
+}
 
 export interface ConceptNode {
   id: string;
@@ -37,6 +51,8 @@ export interface ConceptNode {
   difficulty_base: number;
   gate_frequency: 'high' | 'medium' | 'low' | 'rare';
   prerequisites: string[];
+  /** Optional — only the 26 linear-algebra concepts declare these today. */
+  encompasses?: EncompassingEdge[];
 }
 
 // Resolved relative to THIS module's own location (not process.cwd()) —
@@ -102,6 +118,7 @@ function loadConceptsFromYaml(yamlPath: string): ConceptNode[] {
       prerequisites: Array.isArray(raw_node.prerequisites)
         ? raw_node.prerequisites.filter((p: any) => typeof p === 'string')
         : [],
+      encompasses: parseEncompasses(raw_node.encompasses, id, yamlPath),
     };
   });
 
@@ -119,13 +136,67 @@ function loadConceptsFromYaml(yamlPath: string): ConceptNode[] {
         );
       }
     }
+    for (const edge of node.encompasses ?? []) {
+      if (!ids.has(edge.id)) {
+        throw new Error(
+          `concept-graph.ts: ${yamlPath} concept "${node.id}" declares encompasses ` +
+          `"${edge.id}" which is not a known concept id.`,
+        );
+      }
+      if (edge.id === node.id) {
+        throw new Error(
+          `concept-graph.ts: ${yamlPath} concept "${node.id}" declares encompasses ` +
+          `pointing at itself.`,
+        );
+      }
+    }
   }
 
   // Fail fast, loudly, on a broken DAG rather than let topologicalSort()
   // silently drop the cyclic nodes from its result (see prereq-cycles.ts).
   assertNoPrerequisiteCycles(nodes);
 
+  // T11 (B1): the encompassing graph carries the same "must not cycle"
+  // invariant as prerequisites (FIRe's depth-capped closure walk in
+  // fire.ts would loop forever on a cycle, same failure class
+  // topologicalSort() has for prerequisites). Parameterized cycle check
+  // (prereq-cycles.ts's assertNoGraphCycles) — same DFS, different edge
+  // field, distinct error type so a broken encompasses: edit doesn't read
+  // like a prerequisite bug.
+  assertNoGraphCycles(nodes, (n) => (n.encompasses ?? []).map((e) => e.id), 'encompasses');
+
   return nodes;
+}
+
+/**
+ * Parses + validates the optional `encompasses:` list for one concept.
+ * Weights must be in (0,1]; malformed entries are a data bug (thrown),
+ * not silently dropped — an author's typo in a weight should fail CI
+ * loudly, not quietly produce a smaller/wrong closure.
+ */
+function parseEncompasses(raw: any, conceptId: string, yamlPath: string): EncompassingEdge[] | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  if (!Array.isArray(raw)) {
+    throw new Error(
+      `concept-graph.ts: ${yamlPath} concept "${conceptId}": "encompasses" must be a list.`,
+    );
+  }
+  return raw.map((entry: any, i: number) => {
+    const id = entry?.id;
+    const weight = Number(entry?.weight);
+    if (typeof id !== 'string' || id.length === 0) {
+      throw new Error(
+        `concept-graph.ts: ${yamlPath} concept "${conceptId}" encompasses[${i}] missing a string "id".`,
+      );
+    }
+    if (!Number.isFinite(weight) || weight <= 0 || weight > 1) {
+      throw new Error(
+        `concept-graph.ts: ${yamlPath} concept "${conceptId}" encompasses "${id}": weight must be ` +
+        `in (0,1], got ${entry?.weight}.`,
+      );
+    }
+    return { id, weight };
+  });
 }
 
 // ============================================================================

@@ -81,6 +81,7 @@ import {
   type SyllabusContextProvider,
 } from '../readiness/syllabus-aware-engine';
 import { getCompositeContentChecker } from '../readiness/composite-content-checker';
+import { makeDueReviewSource } from '../readiness/due-cards';
 import { getProfile } from '../session-planner/exam-profile-store';
 import type { Action } from '../core/interfaces';
 import {
@@ -301,6 +302,11 @@ function buildReadinessEngine() {
     // Linear Algebra and nothing else, by content coverage, not by any
     // topic/exam literal in the engine.
     content: getCompositeContentChecker(catalog),
+    // T12 (OV2-D1): the real due-card scan (fsrs_cards WHERE due_at<=now
+    // AND reps>0), mapped to servable items over the same catalog. Wiring
+    // this seam is what stops a fresh student from getting a bogus
+    // "recall at 0%" retain on an item they've never attempted.
+    dueCards: makeDueReviewSource(catalog),
   });
 }
 

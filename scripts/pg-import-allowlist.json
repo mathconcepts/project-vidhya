@@ -55,6 +55,7 @@
   "src/personalization/scorers/user-error-match.ts",
   "src/personalization/scorers/user-mastery-match.ts",
   "src/personalization/student-context.ts",
+  "src/readiness/due-cards.ts",
   "src/scenarios/persona-seeder.ts",
   "src/scoring/learning-object-catalog-pg.ts",
   "src/scoring/teacher-queue-pg.ts",

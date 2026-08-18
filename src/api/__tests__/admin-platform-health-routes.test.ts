@@ -108,6 +108,13 @@ describe('GET /api/admin/platform-health auth gate', () => {
     expect(out.body.quota_calls_24h).toHaveProperty('total_cost_usd');
     expect(out.body).toHaveProperty('kill_switch_engaged');
     expect(out.body).toHaveProperty('nightly_cron_enabled');
+    // T19 — chat spend cap visibility. Counts only, never a session id, user
+    // id, or message.
+    expect(out.body).toHaveProperty('chat_spend');
+    expect(typeof out.body.chat_spend.spent_today_usd).toBe('number');
+    expect(typeof out.body.chat_spend.cap_usd).toBe('number');
+    expect(typeof out.body.chat_spend.cap_tripped_today).toBe('number');
+    expect(['ok', 'tripped']).toContain(out.body.chat_spend.cap_status);
   });
 });
 

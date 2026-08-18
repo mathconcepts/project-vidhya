@@ -967,6 +967,11 @@ async function main() {
     for (const [label, load] of [
       ['Feedback', () => import('./feedback/store').then((m) => m.hydrateFeedbackStore())],
       ['Bridge content', () => import('./syllabus-bridge/store').then((m) => m.hydrateGeneratedContent())],
+      // T19: durable daily chat-spend counter. Its own explicit hydrate call
+      // (rather than the generic registry loop below) so the fail-safe
+      // warning on a failed restore stays co-located with the store, in
+      // src/lib/chat-spend.ts.
+      ['Chat spend cap', () => import('./lib/chat-spend').then((m) => m.hydrateChatSpendStore())],
     ] as const) {
       try {
         const r = await load();

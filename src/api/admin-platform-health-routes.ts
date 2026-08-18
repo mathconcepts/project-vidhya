@@ -33,6 +33,7 @@ import type { Role } from '../auth/types';
 import { listJobs, jobsDir } from '../jobs/job-runner';
 import { preflightDatabase } from '../jobs/db-preflight';
 import { loadProvidersRegistry, checkPriceStaleness, type PriceStaleness } from '../llm/registry';
+import { getChatSpendStatus } from '../lib/chat-spend';
 
 const ADMIN_ROLES: Role[] = ['admin', 'owner', 'institution'];
 
@@ -167,11 +168,23 @@ async function handlePlatformHealth(req: ParsedRequest, res: ServerResponse): Pr
     provider_price_staleness = [];
   }
 
+  // T19 — durable daily chat-spend cap status (src/lib/chat-spend.ts).
+  // Counts only: today's estimated USD spend, the configured cap, and how
+  // many refusals it caused today. No session id, user id, or message
+  // content ever passes through this endpoint (surveillance invariants).
+  const chat_spend = getChatSpendStatus();
+
   sendJSON(res, {
     generated_at: new Date().toISOString(),
     db,
     jobs: listJobs(),
     quota_calls_24h: readQuotaLedger24h(),
+    chat_spend: {
+      spent_today_usd: chat_spend.spent_today_usd,
+      cap_usd: chat_spend.cap_usd,
+      cap_tripped_today: chat_spend.trip_count_today,
+      cap_status: chat_spend.allowed ? 'ok' : 'tripped',
+    },
     cost_tracking: 'estimated',
     cost_tracking_note:
       'Costs are per-atom-type / per-call estimates already used elsewhere for generation budget ' +

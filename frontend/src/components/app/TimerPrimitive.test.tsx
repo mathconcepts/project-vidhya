@@ -50,7 +50,7 @@ describe('TimerPrimitive', () => {
 
     rerender(<TimerPrimitive totalSeconds={3600} remainingSeconds={500} register="exam" />);
     chip = container.firstElementChild as HTMLElement;
-    expect(chip.style.background).toBe('rgba(255, 59, 48, 0.1)');
+    expect(chip.style.background).toBe('var(--red-tint)');
     expect(chip.style.color).toBe('var(--red)');
   });
 

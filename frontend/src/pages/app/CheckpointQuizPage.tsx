@@ -162,7 +162,7 @@ export default function CheckpointQuizPage() {
         </div>
 
         {error && (
-          <p style={{ margin: 0, fontSize: 'var(--text-caption)', color: 'var(--red)' }}>{error}</p>
+          <p style={{ margin: 0, fontSize: 'var(--text-subhead)', color: 'var(--red)' }}>{error}</p>
         )}
 
         <button
@@ -207,12 +207,12 @@ export default function CheckpointQuizPage() {
             </p>
           </ReceiptBorder>
           {result.late && (
-            <p style={{ margin: '8px 0 0', fontSize: 'var(--text-caption)', color: 'var(--orange-ink)' }}>
+            <p style={{ margin: '8px 0 0', fontSize: 'var(--text-subhead)', color: 'var(--orange-ink)' }}>
               Time's up — what you answered is graded.
             </p>
           )}
           {!result.recorded && (
-            <p style={{ margin: '8px 0 0', fontSize: 'var(--text-caption)', color: 'var(--orange-ink)' }}>
+            <p style={{ margin: '8px 0 0', fontSize: 'var(--text-subhead)', color: 'var(--orange-ink)' }}>
               Graded, but not recorded to your model (server storage unavailable).
             </p>
           )}
@@ -248,7 +248,7 @@ export default function CheckpointQuizPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+        <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--text-tertiary)' }}>
           {currentIdx + 1} of {quiz.items.length}
         </span>
         <TimerPrimitive totalSeconds={quiz.time_budget_sec} remainingSeconds={remainingSec} register="light" />

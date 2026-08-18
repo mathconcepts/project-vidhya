@@ -231,7 +231,7 @@ function FrontierSheet({ node, onClose }: { node: FrontierNode; onClose: () => v
         </p>
       )}
       {node.dot === 'placed' && (
-        <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+        <p style={{ margin: '6px 0 0', fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>
           Placed by your warmup — one practice session confirms it.
         </p>
       )}

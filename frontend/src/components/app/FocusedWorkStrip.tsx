@@ -56,7 +56,7 @@ export function FocusedWorkStrip() {
             <span style={{ fontSize: 15, color: 'var(--text-primary)' }}>
               Checkpoint quiz ready · {summary.quiz_offer.quiz_length ?? 6} questions · whenever you are
             </span>
-            <span style={{ fontSize: 'var(--text-caption)', color: 'var(--green-ink)', fontWeight: 'var(--weight-semibold)', flexShrink: 0, marginLeft: 8 }}>
+            <span style={{ fontSize: 'var(--text-footnote)', color: 'var(--green-ink)', fontWeight: 'var(--weight-semibold)', flexShrink: 0, marginLeft: 8 }}>
               Start →
             </span>
           </Link>

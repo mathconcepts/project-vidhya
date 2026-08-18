@@ -1,5 +1,6 @@
 /**
- * Tests for src/api/mock-exam-routes.ts — T22 (ENG-D3).
+ * Tests for src/api/mock-exam-routes.ts — T22 (ENG-D3), plus the ownership-
+ * binding follow-up fix.
  *
  * Everything is injected through setMockExamDepsForTests() — no Postgres,
  * no JWT. requireRole is mocked. Covers: the leak discipline on
@@ -7,6 +8,15 @@
  * server-side grading via the deterministic scorer for BOTH pyq- and
  * generated-sourced questions, honest handling of ungraded questions,
  * lateness, and double-submit idempotency.
+ *
+ * Ownership binding (the real shape, NOT sessionId===user.userId): a mock
+ * exam's `owner_user_id` is the authenticated caller that generated it.
+ * `session_id` is a SEPARATE mastery-calibration key that legitimately
+ * differs from the caller's own id (MockExamPage.tsx sources it from the
+ * anonymous useSession() localStorage UUID) — so "sessionId !== userId for
+ * the SAME student" must work end-to-end, and the real IDOR is "a
+ * DIFFERENT student reaches an exam/session they don't own", never a
+ * mismatch between sessionId and userId by itself.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -51,13 +61,18 @@ const GEN_Q_UNMARKED = {
   correct_answer: 'free text answer', difficulty: 0.4,
 };
 
+const NOW = new Date('2026-08-18T10:00:00.000Z');
+
+/** In-memory stand-in for mock-exam-store.ts, ownership functions included. */
 function makeFakeStore() {
   const rows = new Map<string, MockExamRow>();
   return {
+    rows,
     createMockExam: async (params: any) => {
       const row: MockExamRow = {
-        id: params.id, sessionId: params.sessionId, examKey: params.examKey, questions: params.questions,
-        timeLimitMinutes: params.timeLimitMinutes, status: 'in_progress', late: false, score: null, maxMarks: null,
+        id: params.id, sessionId: params.sessionId, ownerUserId: params.ownerUserId ?? null,
+        examKey: params.examKey, questions: params.questions, timeLimitMinutes: params.timeLimitMinutes,
+        status: 'in_progress', late: false, score: null, maxMarks: null,
         createdAtMs: NOW.getTime(), submittedAtMs: null, gradedAtMs: null, analysis: null,
       };
       rows.set(row.id, row);
@@ -79,11 +94,34 @@ function makeFakeStore() {
       Object.assign(row, { late: outcome.late, score: outcome.score, maxMarks: outcome.maxMarks, analysis: outcome.analysis, gradedAtMs: outcome.gradedAtMs });
       return { ...row };
     },
-    rows,
+    // Ownership seam — mirrors mock-exam-store.ts's real atomic-claim semantics.
+    sessionOwner: async (sessionId: string) => {
+      for (const row of rows.values()) {
+        if (row.sessionId === sessionId && row.ownerUserId !== null) return row.ownerUserId;
+      }
+      return null;
+    },
+    claimUnclaimedSessionRows: async (sessionId: string, userId: string) => {
+      for (const row of rows.values()) {
+        if (row.sessionId === sessionId && row.ownerUserId === null) row.ownerUserId = userId;
+      }
+    },
+    claimMockExamOwner: async (id: string, userId: string) => {
+      const row = rows.get(id);
+      if (!row) return null;
+      if (row.ownerUserId === null) { row.ownerUserId = userId; return userId; }
+      return row.ownerUserId;
+    },
   };
 }
 
-const NOW = new Date('2026-08-18T10:00:00.000Z');
+function examConfig(questions: unknown[] = [PYQ_Q]) {
+  return async () => ({
+    exam_id: 'mock-1', exam_name: 'GATE', time_limit_minutes: 180,
+    total_questions: questions.length, marks_scheme: { correct: 2, wrong: -0.67 },
+    questions, section_breakdown: {},
+  } as any);
+}
 
 describe('GET /api/gbrain/mock-exam/:sessionId', () => {
   beforeEach(() => {
@@ -103,76 +141,109 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
     mockRequireRole.mockResolvedValue(null);
     const generateMock = vi.fn();
     const createMock = vi.fn();
-    setMockExamDepsForTests({ generateMockExam: generateMock, createMockExam: createMock });
+    const sessionOwnerMock = vi.fn();
+    setMockExamDepsForTests({ generateMockExam: generateMock, createMockExam: createMock, sessionOwner: sessionOwnerMock });
     const r = makeRes();
     await generateHandler(makeReq(null, { sessionId: 's1' }), r.res);
     expect(mockRequireRole).toHaveBeenCalled();
     expect(generateMock).not.toHaveBeenCalled();
     expect(createMock).not.toHaveBeenCalled();
+    expect(sessionOwnerMock).not.toHaveBeenCalled();
     expect(r.payload).toBeNull(); // no response body was ever written — the handler returned before touching res
   });
 
-  it('blocks a student from generating a mock exam under another session id (IDOR)', async () => {
-    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
-    const generateMock = vi.fn();
-    setMockExamDepsForTests({ generateMockExam: generateMock });
+  it('a student generating under sessionId !== their own userId succeeds (sessionId is the calibration key, not an identity check)', async () => {
+    const store = makeFakeStore();
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, now: () => NOW });
     const r = makeRes();
-    await generateHandler(makeReq(null, { sessionId: 'someone-elses-session' }), r.res);
+    // 'student-1' is the authenticated caller; 'anon-uuid-xyz' is their
+    // browser's anonymous useSession() id — a genuinely different string,
+    // exactly the real MockExamPage.tsx shape.
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), r.res);
+    expect(r.status).toBe(200);
+    expect(store.rows.get('mock-1')!.ownerUserId).toBe('student-1');
+    expect(store.rows.get('mock-1')!.sessionId).toBe('anon-uuid-xyz');
+  });
+
+  it('the SAME student can generate again under a session they already established ownership of', async () => {
+    const store = makeFakeStore();
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, now: () => NOW });
+
+    const first = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), first.res);
+    expect(first.status).toBe(200);
+
+    const second = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), second.res);
+    expect(second.status).toBe(200);
+  });
+
+  it('blocks a DIFFERENT student from generating under a session another student already owns (IDOR)', async () => {
+    const store = makeFakeStore();
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, now: () => NOW });
+
+    // student-1 establishes ownership of this session first.
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+    await generateHandler(makeReq(null, { sessionId: 'shared-anon-uuid' }), makeRes().res);
+
+    // student-2 tries to reuse/guess the same sessionId.
+    mockRequireRole.mockResolvedValue({ userId: 'student-2', role: 'student' });
+    const generateMock = vi.fn();
+    setMockExamDepsForTests({ ...store, generateMockExam: generateMock, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'shared-anon-uuid' }), r.res);
     expect(r.status).toBe(403);
+    expect(generateMock).not.toHaveBeenCalled(); // never even reaches generation
+  });
+
+  it('legacy NULL-owner row: the first authenticated GET claims it, locking out a later different student', async () => {
+    const store = makeFakeStore();
+    // Simulate a pre-fix row: created before owner_user_id existed.
+    await store.createMockExam({
+      id: 'legacy-1', sessionId: 'legacy-session', ownerUserId: null, examKey: 'gate',
+      questions: [PYQ_Q], timeLimitMinutes: 180,
+    });
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, now: () => NOW });
+
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'legacy-session' }), r.res);
+    expect(r.status).toBe(200);
+    // The PRE-EXISTING legacy row got claimed, not just the new one.
+    expect(store.rows.get('legacy-1')!.ownerUserId).toBe('student-1');
+
+    // A different student is now locked out of that session.
+    mockRequireRole.mockResolvedValue({ userId: 'student-2', role: 'student' });
+    const generateMock = vi.fn();
+    setMockExamDepsForTests({ ...store, generateMockExam: generateMock, now: () => NOW });
+    const r2 = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'legacy-session' }), r2.res);
+    expect(r2.status).toBe(403);
     expect(generateMock).not.toHaveBeenCalled();
   });
 
-  it('allows a student to generate a mock exam under their OWN session id', async () => {
+  it('allows a teacher to generate under a session another student already owns (exempt from ownership)', async () => {
+    const store = makeFakeStore();
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, now: () => NOW });
     mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
-    const store = makeFakeStore();
-    setMockExamDepsForTests({
-      generateMockExam: async () => ({
-        exam_id: 'mock-1', exam_name: 'GATE', time_limit_minutes: 180,
-        total_questions: 1, marks_scheme: { correct: 2, wrong: -0.67 },
-        questions: [PYQ_Q], section_breakdown: {},
-      } as any),
-      createMockExam: store.createMockExam, getMockExam: store.getMockExam,
-      claimMockExamSubmission: store.claimMockExamSubmission, finalizeMockExamSubmission: store.finalizeMockExamSubmission,
-      now: () => NOW,
-    });
-    const r = makeRes();
-    await generateHandler(makeReq(null, { sessionId: 'student-1' }), r.res);
-    expect(r.status).toBe(200);
-  });
+    await generateHandler(makeReq(null, { sessionId: 'student-session' }), makeRes().res);
 
-  it('allows a teacher to generate a mock exam for a session that is not their own', async () => {
     mockRequireRole.mockResolvedValue({ userId: 'teacher-1', role: 'teacher' });
-    const store = makeFakeStore();
-    setMockExamDepsForTests({
-      generateMockExam: async () => ({
-        exam_id: 'mock-1', exam_name: 'GATE', time_limit_minutes: 180,
-        total_questions: 1, marks_scheme: { correct: 2, wrong: -0.67 },
-        questions: [PYQ_Q], section_breakdown: {},
-      } as any),
-      createMockExam: store.createMockExam, getMockExam: store.getMockExam,
-      claimMockExamSubmission: store.claimMockExamSubmission, finalizeMockExamSubmission: store.finalizeMockExamSubmission,
-      now: () => NOW,
-    });
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, now: () => NOW });
     const r = makeRes();
-    await generateHandler(makeReq(null, { sessionId: 'some-student-session' }), r.res);
+    await generateHandler(makeReq(null, { sessionId: 'student-session' }), r.res);
     expect(r.status).toBe(200);
   });
 
   it('NEVER leaks correct_answer / answer_index / answer_indices / answer_range to the client', async () => {
     const store = makeFakeStore();
     setMockExamDepsForTests({
-      generateMockExam: async () => ({
-        exam_id: 'mock-1', exam_name: 'GATE', time_limit_minutes: 180,
-        total_questions: 3, marks_scheme: { correct: 2, wrong: -0.67 },
-        questions: [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED],
-        section_breakdown: { eigenvalues: 1, determinants: 2 },
-      } as any),
-      createMockExam: store.createMockExam, getMockExam: store.getMockExam,
-      claimMockExamSubmission: store.claimMockExamSubmission, finalizeMockExamSubmission: store.finalizeMockExamSubmission,
+      generateMockExam: examConfig([PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED]),
+      ...store,
       now: () => NOW,
     });
     const r = makeRes();
-    await generateHandler(makeReq(null, { sessionId: 'student-1' }), r.res);
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), r.res);
     expect(r.status).toBe(200);
 
     const raw = JSON.stringify(r.payload);
@@ -200,9 +271,12 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
   });
   afterEach(() => setMockExamDepsForTests(null));
 
-  async function seededExam(sessionId = 'student-1') {
+  async function seededExam(ownerUserId: string | null = 'student-1') {
     const store = makeFakeStore();
-    await store.createMockExam({ id: 'mock-1', sessionId, examKey: 'gate', questions: [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED], timeLimitMinutes: 180 });
+    await store.createMockExam({
+      id: 'mock-1', sessionId: 'anon-uuid-xyz', ownerUserId, examKey: 'gate',
+      questions: [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED], timeLimitMinutes: 180,
+    });
     return store;
   }
 
@@ -260,9 +334,8 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
     expect(r.status).toBe(404);
   });
 
-  it('blocks a student from submitting to another session\'s exam (IDOR) even with session_id OMITTED from the body', async () => {
-    // exam belongs to 'someone-elses-session'; the authenticated caller is 'student-1'.
-    const store = await seededExam('someone-elses-session');
+  it('blocks a student from submitting to an exam owned by a DIFFERENT student (IDOR) even with session_id OMITTED from the body', async () => {
+    const store = await seededExam('other-student');
     setMockExamDepsForTests({ ...store, now: () => NOW });
     const r = makeRes();
     // No session_id field at all — the old body-volunteered check would
@@ -271,18 +344,44 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
     expect(r.status).toBe(404);
   });
 
-  it('blocks a student from submitting to another session\'s exam even when the body LIES about session_id', async () => {
-    const store = await seededExam('someone-elses-session');
+  it('blocks a student from submitting to another student\'s exam even when the body LIES about session_id', async () => {
+    const store = await seededExam('other-student');
     setMockExamDepsForTests({ ...store, now: () => NOW });
     const r = makeRes();
-    // Body claims ownership of the right session — must not be trusted.
-    await submitHandler(makeReq({ session_id: 'someone-elses-session', responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    // Body claims the right session — must not be trusted; ownership is
+    // enforced against the stored owner_user_id only.
+    await submitHandler(makeReq({ session_id: 'anon-uuid-xyz', responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
     expect(r.status).toBe(404);
   });
 
-  it('allows a teacher to grade a submission for an exam that is not their own session', async () => {
+  it('legacy NULL-owner exam: the submitting student claims it and grades normally', async () => {
+    const store = await seededExam(null);
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    const r = makeRes();
+    await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.correct).toBe(1);
+    expect(store.rows.get('mock-1')!.ownerUserId).toBe('student-1');
+  });
+
+  it('legacy NULL-owner exam already claimed by another student blocks a second student from submitting', async () => {
+    const store = await seededExam(null);
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+
+    // student-1 claims it via a first submit.
+    await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), makeRes().res);
+    expect(store.rows.get('mock-1')!.ownerUserId).toBe('student-1');
+
+    // student-2 now tries the same exam id.
+    mockRequireRole.mockResolvedValue({ userId: 'student-2', role: 'student' });
+    const r = makeRes();
+    await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    expect(r.status).toBe(404);
+  });
+
+  it('allows a teacher to grade a submission for an exam owned by a student (exempt from ownership)', async () => {
     mockRequireRole.mockResolvedValue({ userId: 'teacher-1', role: 'teacher' });
-    const store = await seededExam('some-student-session');
+    const store = await seededExam('some-student');
     setMockExamDepsForTests({ ...store, now: () => NOW });
     const r = makeRes();
     await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
@@ -290,7 +389,7 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
     expect(r.payload.correct).toBe(1);
   });
 
-  it('allows a student to submit to their OWN session\'s exam', async () => {
+  it('allows a student to submit to their OWN exam', async () => {
     const store = await seededExam('student-1');
     setMockExamDepsForTests({ ...store, now: () => NOW });
     const r = makeRes();

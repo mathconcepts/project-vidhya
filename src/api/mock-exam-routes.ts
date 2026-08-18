@@ -35,6 +35,7 @@ import { requireRole } from './auth-middleware';
 import { generateMockExam as generateMockExamProd } from '../gbrain/operations/moat-operations';
 import {
   createMockExam, getMockExam, claimMockExamSubmission, finalizeMockExamSubmission,
+  sessionOwner, claimUnclaimedSessionRows, claimMockExamOwner,
   type MockExamRow,
 } from '../gbrain/mock-exam-store';
 import {
@@ -53,6 +54,9 @@ export interface MockExamDeps {
   getMockExam: typeof getMockExam;
   claimMockExamSubmission: typeof claimMockExamSubmission;
   finalizeMockExamSubmission: typeof finalizeMockExamSubmission;
+  sessionOwner: typeof sessionOwner;
+  claimUnclaimedSessionRows: typeof claimUnclaimedSessionRows;
+  claimMockExamOwner: typeof claimMockExamOwner;
   now: () => Date;
 }
 
@@ -62,6 +66,9 @@ const productionDeps: MockExamDeps = {
   getMockExam,
   claimMockExamSubmission,
   finalizeMockExamSubmission,
+  sessionOwner,
+  claimUnclaimedSessionRows,
+  claimMockExamOwner,
   now: () => new Date(),
 };
 
@@ -106,11 +113,27 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
   const exam = req.query.get('exam') || 'gate';
   if (!sessionId) return sendError(res, 400, 'sessionId required');
 
-  // A student may only generate a mock exam for THEIR OWN session — never
-  // an arbitrary path param (IDOR). Teachers/admins are exempt: they
-  // legitimately generate mock exams for students they don't own.
-  if (user.role === 'student' && sessionId !== user.userId) {
-    return sendError(res, 403, 'cannot generate a mock exam for another session');
+  // Ownership binding, NOT sessionId===user.userId (that check 403'd every
+  // real student — MockExamPage.tsx's sessionId is the anonymous
+  // useSession() localStorage UUID, unrelated to the authenticated id).
+  // A student may only generate under a session this SAME authenticated
+  // caller already owns, or one nobody owns yet:
+  //   - claim any pre-fix/unclaimed rows under this session for THIS caller
+  //     (a no-op if there are none, or if they're already claimed);
+  //   - re-read the session's owner — if it's now someone ELSE, this
+  //     caller lost the race (or the session already belonged to another
+  //     student before this fix shipped) → 403;
+  //   - otherwise (owner is this caller, or still nobody — a brand-new
+  //     session) proceed, and the newly-created row below is stamped with
+  //     this caller's id regardless.
+  // Teachers/admins are exempt: they legitimately generate mock exams for
+  // students they don't own, and their generated rows are owned by THEM.
+  if (user.role === 'student') {
+    await deps.claimUnclaimedSessionRows(sessionId, user.userId);
+    const owner = await deps.sessionOwner(sessionId);
+    if (owner !== null && owner !== user.userId) {
+      return sendError(res, 403, 'cannot generate a mock exam for another session');
+    }
   }
 
   let assembled: Awaited<ReturnType<typeof generateMockExamProd>>;
@@ -125,6 +148,7 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
     saved = await deps.createMockExam({
       id: assembled.exam_id,
       sessionId,
+      ownerUserId: user.userId,
       examKey: exam,
       questions: assembled.questions,
       timeLimitMinutes: assembled.time_limit_minutes,
@@ -159,13 +183,24 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
   const existing = await deps.getMockExam(examId).catch(() => null);
   if (!existing) return sendError(res, 404, `unknown mock exam: ${examId}`);
 
-  // Ownership is enforced against the STORED exam's sessionId vs the
+  // Ownership is enforced against the STORED exam's owner_user_id vs the
   // authenticated caller — never against a client-supplied body field
   // (omitting session_id from the body must NOT skip this check; that was
-  // the IDOR). Teachers/admins are exempt — they legitimately generate and
-  // grade mock exams for students they don't own.
-  if (user.role === 'student' && existing.sessionId !== user.userId) {
-    return sendError(res, 404, `unknown mock exam: ${examId}`);
+  // the original IDOR), and never against sessionId (the anonymous
+  // useSession() UUID, unrelated to the authenticated id — see
+  // src/gbrain/mock-exam-store.ts's header comment). A legacy pre-fix row
+  // with no owner yet may be claimed by whichever authenticated student
+  // reaches it first; if that claim loses a race (someone else's claim
+  // landed first), treat it exactly like any other ownership mismatch.
+  // Teachers/admins are exempt — they legitimately generate and grade
+  // mock exams for students they don't own.
+  if (user.role === 'student') {
+    const owner = existing.ownerUserId === null
+      ? await deps.claimMockExamOwner(examId, user.userId)
+      : existing.ownerUserId;
+    if (owner !== user.userId) {
+      return sendError(res, 404, `unknown mock exam: ${examId}`);
+    }
   }
 
   const body = (req.body ?? {}) as Record<string, unknown>;

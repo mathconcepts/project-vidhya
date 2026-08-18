@@ -16,15 +16,31 @@
 -- that flips `in_progress` → `submitted` grades; every later call for the
 -- same exam id replays the persisted `analysis` instead of re-grading.
 --
+-- `owner_user_id` (added in a follow-up review pass, same migration file —
+-- no data existed in production yet) is the AUTHENTICATED caller
+-- (`user.userId`) that generated the exam — the real IDOR-closing identity.
+-- It is deliberately a SEPARATE concept from `session_id`: `session_id` is
+-- the mastery-calibration key `generateMockExam()` reads to pick questions,
+-- and the only caller today (MockExamPage.tsx) sources it from the
+-- anonymous-mode `useSession()` localStorage UUID — which is NOT, and is
+-- not guaranteed to ever become, the same value as the authenticated
+-- `user.userId`. Binding ownership to `session_id === user.userId` would
+-- 403 every real logged-in student. `owner_user_id` is nullable: a row
+-- from before this column existed (or from a beta window with no owner
+-- ever stamped) has no owner yet — the FIRST authenticated GET/submit for
+-- that exam claims it (see src/api/mock-exam-routes.ts), after which it is
+-- permanently bound.
+--
 -- Idempotent. Additive. No data migration (any pre-existing ad-hoc table
 -- from the old runtime CREATE TABLE has the same core columns and is left
--- alone — IF NOT EXISTS is a no-op against it, and the new `status` column
--- backfills NULL-safe via its DEFAULT).
+-- alone — IF NOT EXISTS is a no-op against it, and the new `status` /
+-- `owner_user_id` columns backfill NULL-safe via their DEFAULT/nullability).
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS mock_exams (
   id                  TEXT PRIMARY KEY,
   session_id          TEXT NOT NULL,
+  owner_user_id       TEXT,
   exam_key            TEXT NOT NULL,
   questions           JSONB NOT NULL,
   time_limit_minutes  INT NOT NULL,
@@ -48,6 +64,7 @@ ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS late BOOLEAN NOT NULL DEFAULT FA
 ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS score NUMERIC;
 ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS max_marks NUMERIC;
 ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS graded_at TIMESTAMPTZ;
+ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS owner_user_id TEXT;
 
 -- The ALTER path above adds `status` WITHOUT the CHECK constraint the
 -- CREATE TABLE branch declares inline — a pre-existing ad-hoc table would

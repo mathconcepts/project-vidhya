@@ -24,8 +24,18 @@
  */
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { isRealExplainer, measureActual, loadTeachingTipsIndex, loadExplainersJson } from '../../scripts/check-syllabus-floor';
+import {
+  isRealExplainer,
+  measureActual,
+  loadTeachingTipsIndex,
+  loadExplainersJson,
+  evaluateFloor,
+  loadPracticeCounts,
+  PracticeItemParseError,
+  SyllabusFloorViolation,
+} from '../../scripts/check-syllabus-floor';
 
 const ROOT = process.cwd();
 
@@ -137,5 +147,119 @@ describe('against the real corpus', () => {
     const topics = loadTeachingTipsIndex();
     const a = await measureActual('eigenvalues', {}, topics, new Map(), 'linear-algebra');
     expect(a.has_strategy_card).toBe(true);
+  });
+});
+
+describe('loadPracticeCounts — a malformed bank fails loudly (D6 / OV-8)', () => {
+  let tmpDir: string;
+
+  function writeFile(name: string, contents: string): void {
+    fs.writeFileSync(path.join(tmpDir, name), contents);
+  }
+
+  it('counts items with a verification_method, per concept', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'practice-items-'));
+    try {
+      writeFile('gate-ma-la.json', JSON.stringify({
+        items: [
+          { id: 'a', concept_id: 'eigenvalues', verification_method: 'wolfram_verified' },
+          { id: 'b', concept_id: 'eigenvalues', verification_method: 'dual_model_consensus' },
+          { id: 'c', concept_id: 'determinants', verification_method: 'wolfram_verified' },
+          // No verification_method — display-only, must not count.
+          { id: 'd', concept_id: 'eigenvalues' },
+        ],
+      }));
+      const counts = loadPracticeCounts(tmpDir);
+      expect(counts.get('eigenvalues')).toBe(2);
+      expect(counts.get('determinants')).toBe(1);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('throws PracticeItemParseError on invalid JSON instead of silently contributing zero', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'practice-items-'));
+    try {
+      writeFile('broken.json', '{ this is not json');
+      expect(() => loadPracticeCounts(tmpDir)).toThrow(PracticeItemParseError);
+      try {
+        loadPracticeCounts(tmpDir);
+        expect.unreachable();
+      } catch (err) {
+        expect(err).toBeInstanceOf(PracticeItemParseError);
+        expect((err as PracticeItemParseError).file).toBe('broken.json');
+        expect((err as Error).message).toContain('broken.json');
+      }
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('a valid bank alongside a broken one still fails the whole load (never silently drops the broken file to zero)', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'practice-items-'));
+    try {
+      writeFile('good.json', JSON.stringify({
+        items: [{ id: 'a', concept_id: 'eigenvalues', verification_method: 'wolfram_verified' }],
+      }));
+      writeFile('bad.json', 'not json at all');
+      expect(() => loadPracticeCounts(tmpDir)).toThrow(PracticeItemParseError);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('evaluateFloor — D6 per-topic enforcement', () => {
+  const manifest = {
+    defaults: { explainers: 1, practice_items: 5, strategy_card: true },
+    ratchet: 'report_only' as const,
+    enforce_topics: ['linear-algebra'],
+  };
+  const concepts = [
+    { id: 'eigenvalues', topic: 'linear-algebra' },
+    { id: 'sequences', topic: 'calculus' },
+  ];
+  // Both concepts have zero of everything — both violate the floor.
+  const explainersJson = {};
+  const teachingTips = new Set<string>();
+  const practiceCounts = new Map<string, number>();
+
+  it('blocks when a violation falls on an enforced topic, even under ratchet=report_only', async () => {
+    const evalResult = await evaluateFloor(manifest, concepts, explainersJson, teachingTips, practiceCounts);
+    expect(evalResult.violations.length).toBe(2);
+    expect(evalResult.enforcedViolations.map((v) => v.concept_id)).toEqual(['eigenvalues']);
+    expect(evalResult.reportOnlyViolations.map((v) => v.concept_id)).toEqual(['sequences']);
+    expect(evalResult.shouldBlock).toBe(true);
+  });
+
+  it('does not block when enforce_topics is empty and ratchet is report_only', async () => {
+    const noEnforce = { ...manifest, enforce_topics: [] };
+    const evalResult = await evaluateFloor(noEnforce, concepts, explainersJson, teachingTips, practiceCounts);
+    expect(evalResult.enforcedViolations.length).toBe(0);
+    expect(evalResult.reportOnlyViolations.length).toBe(2);
+    expect(evalResult.shouldBlock).toBe(false);
+  });
+
+  it('blocks everything when the global ratchet is blocking, independent of enforce_topics', async () => {
+    const blocking = { ...manifest, ratchet: 'blocking' as const, enforce_topics: [] };
+    const evalResult = await evaluateFloor(blocking, concepts, explainersJson, teachingTips, practiceCounts);
+    expect(evalResult.shouldBlock).toBe(true);
+  });
+
+  it('a concept meeting the floor never contributes a violation of either kind', async () => {
+    const met = new Map([['eigenvalues', 5], ['sequences', 5]]);
+    const metExplainers = {
+      eigenvalues: [{ model: 'x', deep_explanation: 'body' }],
+      sequences: [{ model: 'x', deep_explanation: 'body' }],
+    };
+    const tips = new Set(['linear-algebra', 'calculus']);
+    const evalResult = await evaluateFloor(manifest, concepts, metExplainers, tips, met);
+    expect(evalResult.violations).toEqual([]);
+    expect(evalResult.shouldBlock).toBe(false);
+  });
+
+  it('produces real SyllabusFloorViolation instances', async () => {
+    const evalResult = await evaluateFloor(manifest, concepts, explainersJson, teachingTips, practiceCounts);
+    expect(evalResult.violations[0]).toBeInstanceOf(SyllabusFloorViolation);
   });
 });

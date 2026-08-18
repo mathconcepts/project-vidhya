@@ -496,3 +496,67 @@ describe('surveillance invariant 7: /admin/scenarios is admin-gated', () => {
     ).toBe(true);
   });
 });
+
+// ----------------------------------------------------------------------------
+
+describe('surveillance invariant 11: XP is personal-only — no leagues, no peer/rank fields', () => {
+  // T14 (B5): "Personal XP; no leagues" (locked plan decision D2). Invariant
+  // 10 already covers the cohort surface generally; this writes the XP-
+  // specific promise explicitly per ENG-D4 #12: xp_* fields must never
+  // appear in any cohort/peer/admin-aggregate payload, and no XP route may
+  // emit a rank/percentile/leaderboard shape to a student either.
+  const FORBIDDEN_SHAPES = [
+    /\brank\s*:/i,
+    /\bpercentile\s*:/i,
+    /\bleaderboard\b/i,
+    /\bpeer_\w+\s*:/i,
+    /\bcohort_avg\w*\s*:/i,
+    /\bvs_average\b/i,
+  ];
+
+  it('admin-cohort-routes.ts never echoes an xp_* field', () => {
+    const file = path.join(REPO_ROOT, 'src', 'api', 'admin-cohort-routes.ts');
+    if (!fs.existsSync(file)) return;
+    const src = fs.readFileSync(file, 'utf8');
+    expect(
+      /\bxp_\w+\s*:/i.test(src),
+      'admin-cohort-routes.ts must not surface any xp_* field — XP stays personal-only, ' +
+        'never part of the cohort-attention payload.',
+    ).toBe(false);
+  });
+
+  it('the quiz/XP API routes never emit rank, percentile, leaderboard, or peer-comparison fields', () => {
+    const candidates = [
+      path.join(REPO_ROOT, 'src', 'api', 'quiz-routes.ts'),
+      path.join(REPO_ROOT, 'src', 'gbrain', 'xp-store.ts'),
+    ];
+    const offenders: string[] = [];
+    for (const file of candidates) {
+      if (!fs.existsSync(file)) continue;
+      const src = fs.readFileSync(file, 'utf8');
+      for (const re of FORBIDDEN_SHAPES) {
+        if (re.test(src)) offenders.push(`${path.relative(REPO_ROOT, file)}: ${re}`);
+      }
+    }
+    expect(
+      offenders,
+      'XP/quiz surfaces must stay personal-only — no rank/percentile/leaderboard/peer fields.',
+    ).toEqual([]);
+  });
+
+  it('migration 046 (xp_events/quiz_sessions) declares no per-student columns beyond the owning id', () => {
+    const file = path.join(REPO_ROOT, 'supabase', 'migrations', '046_xp_quiz.sql');
+    if (!fs.existsSync(file)) return;
+    const sql = fs
+      .readFileSync(file, 'utf8')
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('--'))
+      .join('\n');
+    // student_id is expected exactly once per table as the owning key —
+    // anything shaped like a SECOND identity column (peer_id, compared_to,
+    // cohort_id) is what this guards against.
+    const FORBIDDEN = [/\bpeer_id\b/i, /\bcompared_to\b/i, /\bcohort_id\b/i, /\brank\b/i];
+    const offenders = FORBIDDEN.filter((re) => re.test(sql));
+    expect(offenders, 'migration 046 must not introduce peer/rank/cohort columns.').toEqual([]);
+  });
+});

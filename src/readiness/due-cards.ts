@@ -70,6 +70,36 @@ export async function dueCards(studentId: string, now: Date): Promise<DueCardRow
 }
 
 /**
+ * Object ids reviewed within the last `windowDays` days, for ANY skill —
+ * the quiz pool-protection no-repeat window (T14 / plan §"Outside-voice
+ * amendments" #9, OV2-D4). A quiz must never re-serve an item the student
+ * saw recently, whether that item is currently "due" or not — this is a
+ * DIFFERENT question than `dueCards()` above (which asks "what needs
+ * retaining right now"); this asks "what has this student's eyes been on
+ * lately, regardless of schedule." DB-less / query failure degrades to an
+ * empty set — an unfiltered pool is the honest fallback (the caller's own
+ * pool-size floor still protects against a degenerate small quiz).
+ */
+export async function recentlyReviewedObjectIds(
+  studentId: string,
+  now: Date,
+  windowDays: number,
+): Promise<Set<string>> {
+  if (!process.env.DATABASE_URL) return new Set();
+  try {
+    const since = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
+    const { rows } = await getPool().query(
+      `SELECT object_id FROM fsrs_cards WHERE student_id = $1 AND last_review_at >= $2`,
+      [studentId, since.toISOString()],
+    );
+    return new Set(rows.map((r: any) => String(r.object_id)));
+  } catch (err) {
+    console.error(`[due-cards] recently-reviewed scan failed for student=${studentId}, degrading to empty:`, (err as Error).message);
+    return new Set();
+  }
+}
+
+/**
  * Composes the raw scan above with a catalog into the exact function
  * shape `ReadinessEngineDeps.dueCards` expects (`src/core/interfaces.ts`).
  * Production wiring (`src/api/readiness-routes.ts`) passes this straight

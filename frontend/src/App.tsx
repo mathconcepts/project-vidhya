@@ -45,6 +45,7 @@ const MarketingLanding = lazy(() => import('@/pages/app/MarketingLanding'));
 const MaterialsPage = lazy(() => import('@/pages/app/MaterialsPage'));
 const SmartPracticePage = lazy(() => import('@/pages/app/SmartPracticePage'));
 const PracticeAttemptPage = lazy(() => import('@/pages/app/PracticeAttemptPage'));
+const CheckpointQuizPage = lazy(() => import('@/pages/app/CheckpointQuizPage'));
 const PlannedSessionPage = lazy(() => import('@/pages/app/PlannedSessionPage'));
 const ExamProfilePage = lazy(() => import('@/pages/app/ExamProfilePage'));
 const KnowledgePickerPage = lazy(() => import('@/pages/app/KnowledgePickerPage'));
@@ -169,6 +170,7 @@ export default function App() {
           <Route path="materials" element={<MaterialsPage />} />
           <Route path="smart-practice" element={<SmartPracticePage />} />
           <Route path="attempt/:objectId" element={<PracticeAttemptPage />} />
+          <Route path="checkpoint" element={<CheckpointQuizPage />} />
           <Route path="planned" element={<PlannedSessionPage />} />
           <Route path="exam-profile" element={<ExamProfilePage />} />
           <Route path="knowledge" element={<KnowledgePickerPage />} />

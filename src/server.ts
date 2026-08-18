@@ -39,6 +39,7 @@ import { scoringRoutes } from './api/scoring-routes';
 import { readinessRoutes, setReadinessCatalog } from './api/readiness-routes';
 import { adminReadinessMetricsRoutes } from './api/admin-readiness-metrics-routes';
 import { practiceRoutes } from './api/practice-routes';
+import { quizRoutes } from './api/quiz-routes';
 import { fsrsShadowRoutes } from './api/fsrs-shadow-routes';
 import { pedagogyShadowRoutes } from './api/pedagogy-shadow-routes';
 import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
@@ -256,6 +257,9 @@ for (const route of adminReadinessMetricsRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of practiceRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of quizRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of fsrsShadowRoutes) {

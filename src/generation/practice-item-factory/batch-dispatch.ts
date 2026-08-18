@@ -32,7 +32,19 @@ export interface WolframCheckFn {
 export interface PracticeItemDispatchDeps {
   /** mcq/msq second leg. null/omitted = no live wiring yet → those items refuse (fail-closed). */
   solveSecondary?: SolveFn | null;
-  /** nat Wolfram check. null/omitted = held for a later run, not refused (tri-state honesty). */
+  /**
+   * nat Wolfram check. null/omitted means the STRUCTURAL case — this run
+   * has no verifier wired at all (today: always, since
+   * src/generation/batch/poller.ts never passes a third `deps` arg to
+   * `dispatchPracticeItemJob` — see that file and TODOS.md) — and refuses
+   * terminally, same fail-closed shape as `solveSecondary` above. This is
+   * deliberately DIFFERENT from Wolfram itself being called and returning
+   * `status: 'inconclusive'`, which is the genuinely transient case (the
+   * dependency exists, the specific check just couldn't resolve this once)
+   * and still returns `pending_retry`. Conflating the two — as the code
+   * used to — means a run with no wolframCheck wired polls a nat spec
+   * forever instead of ever reaching a terminal state.
+   */
   wolframCheck?: WolframCheckFn | null;
 }
 
@@ -106,10 +118,15 @@ export async function dispatchPracticeItemJob(
 
   if (spec.format === 'nat') {
     if (!deps.wolframCheck) {
+      // Structural absence: nothing wired a verifier for this run at all
+      // (see this field's doc comment). Terminal refusal — same
+      // fail-closed shape as the mcq/msq `solveSecondary` check below —
+      // NOT pending_retry, which would poll this spec forever since no
+      // future pass will ever populate `deps.wolframCheck` on its own.
       return {
-        outcome: 'pending_retry',
+        outcome: 'refused',
         spec,
-        reason: 'no wolframCheck wired for this run — held for a later sweep, not refused',
+        reason: 'no wolframCheck wired for this run — refusing rather than retrying forever (structural: see TODOS.md)',
       };
     }
     const check = await deps.wolframCheck(response.question_text, response.correct_answer ?? '');

@@ -33,17 +33,31 @@ export class PrerequisiteCycleError extends Error {
 }
 
 /**
- * Finds one cycle in the prerequisite graph, if any exists. Returns the
- * cycle as an ordered list of ids (first id repeated at the end) or `null`
- * if the graph is a valid DAG. Deterministic: walks nodes in input order,
- * so the same broken data always reports the same cycle.
- *
- * Edges not present in `nodes` (a prerequisite id with no matching node)
- * are ignored here — that is a *different* failure class (an unknown
- * concept_id), already caught by the exam-loader / concept-graph loader's
- * own validation, and is not this function's job to report.
+ * T11 (B1): a second edge type (`encompasses`) needs the identical cycle
+ * check the prerequisite DAG already runs, but over a different field and
+ * (unlike `prerequisites`) weighted edges. Rather than duplicate the DFS,
+ * `findGraphCycle` takes an edge-id accessor so any `{id}`-shaped node list
+ * can be checked against any edge field. `findPrerequisiteCycle` below is
+ * kept byte-identical in signature/behavior (back-compat for its existing
+ * callers) by delegating to this with `n => n.prerequisites`.
  */
-export function findPrerequisiteCycle(nodes: CycleCheckNode[]): string[] | null {
+export type EdgeIdAccessor<T> = (node: T) => readonly string[];
+
+/**
+ * Finds one cycle in a directed graph, if any exists. Returns the cycle as
+ * an ordered list of ids (first id repeated at the end) or `null` if the
+ * graph is a valid DAG. Deterministic: walks nodes in input order, so the
+ * same broken data always reports the same cycle.
+ *
+ * Edge targets not present in `nodes` (an id with no matching node) are
+ * ignored here — that is a *different* failure class (an unknown id),
+ * already caught by each loader's own id-resolution validation, and is not
+ * this function's job to report.
+ */
+export function findGraphCycle<T extends { id: string }>(
+  nodes: readonly T[],
+  getEdgeIds: EdgeIdAccessor<T>,
+): string[] | null {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const state = new Map<string, 'visiting' | 'done'>();
 
@@ -65,9 +79,9 @@ export function findPrerequisiteCycle(nodes: CycleCheckNode[]): string[] | null 
       state.set(id, 'visiting');
       stack.push(id);
       const node = byId.get(id);
-      for (const prereqId of node?.prerequisites ?? []) {
-        if (!byId.has(prereqId)) continue; // unknown id — not this function's concern
-        const found = dfs(prereqId);
+      for (const edgeId of (node ? getEdgeIds(node) : [])) {
+        if (!byId.has(edgeId)) continue; // unknown id — not this function's concern
+        const found = dfs(edgeId);
         if (found) return found;
       }
       stack.pop();
@@ -79,8 +93,56 @@ export function findPrerequisiteCycle(nodes: CycleCheckNode[]): string[] | null 
   return null;
 }
 
+/**
+ * Finds one cycle in the prerequisite graph, if any exists. Returns the
+ * cycle as an ordered list of ids (first id repeated at the end) or `null`
+ * if the graph is a valid DAG. Deterministic: walks nodes in input order,
+ * so the same broken data always reports the same cycle.
+ *
+ * Edges not present in `nodes` (a prerequisite id with no matching node)
+ * are ignored here — that is a *different* failure class (an unknown
+ * concept_id), already caught by the exam-loader / concept-graph loader's
+ * own validation, and is not this function's job to report.
+ */
+export function findPrerequisiteCycle(nodes: CycleCheckNode[]): string[] | null {
+  return findGraphCycle(nodes, (n) => n.prerequisites);
+}
+
 /** Throws {@link PrerequisiteCycleError} if the graph has a cycle. */
 export function assertNoPrerequisiteCycles(nodes: CycleCheckNode[]): void {
   const cycle = findPrerequisiteCycle(nodes);
   if (cycle) throw new PrerequisiteCycleError(cycle);
+}
+
+/** Same shape as {@link PrerequisiteCycleError}, for a non-prerequisite edge
+ *  type so a broken `encompasses:` edit doesn't read like a prerequisite bug. */
+export class GraphCycleError extends Error {
+  readonly cycle: string[];
+  readonly edgeLabel: string;
+
+  constructor(cycle: string[], edgeLabel: string) {
+    super(
+      `"${edgeLabel}" graph has a cycle: ${cycle.join(' -> ')}. ` +
+      `Every "${edgeLabel}" edge must resolve to strictly "simpler" concepts — ` +
+      `break the cycle by removing or redirecting one of these edges.`,
+    );
+    this.name = 'GraphCycleError';
+    this.cycle = cycle;
+    this.edgeLabel = edgeLabel;
+  }
+}
+
+/**
+ * Generic assertion for any other edge type sharing the same DAG
+ * invariant (T11: `encompasses`). `edgeLabel` names the field in the
+ * thrown error so a broken `encompasses:` edit doesn't read like a
+ * prerequisite bug.
+ */
+export function assertNoGraphCycles<T extends { id: string }>(
+  nodes: readonly T[],
+  getEdgeIds: EdgeIdAccessor<T>,
+  edgeLabel: string,
+): void {
+  const cycle = findGraphCycle(nodes, getEdgeIds);
+  if (cycle) throw new GraphCycleError(cycle, edgeLabel);
 }

@@ -51,6 +51,7 @@ import type {
   StudentModel,
 } from '../core/interfaces';
 import { publishAttemptRecorded } from '../events/attempts-bus';
+import { downClosureFor, upClosureFor, computeImplicitReviews } from './fire';
 
 const { Pool } = pg;
 
@@ -339,18 +340,27 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
         card = reviewCard(existing, rating, now).card;
       }
       await client.query(
-        `INSERT INTO fsrs_cards (student_id, object_id, stability, difficulty, last_review_at, due_at, reps, lapses)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO fsrs_cards (student_id, object_id, stability, difficulty, last_review_at, due_at, reps, lapses, skill_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          ON CONFLICT (student_id, object_id)
          DO UPDATE SET stability = EXCLUDED.stability,
                        difficulty = EXCLUDED.difficulty,
                        last_review_at = EXCLUDED.last_review_at,
                        due_at = EXCLUDED.due_at,
                        reps = EXCLUDED.reps,
-                       lapses = EXCLUDED.lapses`,
+                       lapses = EXCLUDED.lapses,
+                       skill_id = EXCLUDED.skill_id`,
         [attempt.studentId, attempt.objectId, card.stability, card.difficulty,
-         card.lastReviewAt, card.dueAt, card.reps, card.lapses],
+         card.lastReviewAt, card.dueAt, card.reps, card.lapses, attempt.skillId],
       );
+
+      // ── FIRe-lite propagation (T11/B2, gated VIDHYA_FIRE=on) ─────────
+      // Always AFTER the primary card upsert above, and always inside the
+      // same transaction (ENG-D1) — a partial propagation must roll back
+      // with everything else, never leave the attempt "half applied".
+      if (process.env.VIDHYA_FIRE === 'on') {
+        await this.propagateFire(client, attempt, now);
+      }
 
       await client.query('COMMIT');
     } catch (err) {
@@ -389,6 +399,76 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
 
     // ── telemetry (post-commit so subscribers see persisted state) ──
     publishAttemptRecorded(attempt);
+  }
+
+  /**
+   * T11/B2: FIRe-lite propagation. Runs INSIDE the caller's open
+   * transaction, strictly after the primary attempted card's upsert
+   * (OV2-D6 lock-order discipline: student-elo → item-elo → primary card
+   * → FIRe). Fetches existing cards for the closure concepts with a
+   * deterministic `ORDER BY object_id` lock order so concurrent attempts
+   * can't deadlock, applies `computeImplicitReviews` (pure, src/gbrain/fire.ts)
+   * per row, and writes every change back in ONE batched UPDATE.
+   *
+   * The attempted card itself is excluded (its skill_id is never in its
+   * own closure — `buildEncompassingClosure` excludes the start concept —
+   * and the `object_id != $3` filter below is a second, defensive guard
+   * against ever touching it here).
+   */
+  private async propagateFire(client: pg.PoolClient, attempt: Attempt, now: Date): Promise<void> {
+    const closure = attempt.correct ? downClosureFor(attempt.skillId) : upClosureFor(attempt.skillId);
+    if (closure.size === 0) return; // no encompassing edges — non-LA concepts are a no-op
+
+    const closureSkillIds = [...closure.keys()];
+    const rowsRes = await client.query(
+      `SELECT object_id, skill_id, stability, difficulty, last_review_at, reps, lapses, due_at
+         FROM fsrs_cards
+        WHERE student_id = $1 AND skill_id = ANY($2::text[]) AND object_id != $3
+        ORDER BY object_id
+        FOR UPDATE`,
+      [attempt.studentId, closureSkillIds, attempt.objectId],
+    );
+    if (rowsRes.rows.length === 0) return; // no existing cards to nudge — no-op
+
+    const objectIds: string[] = [];
+    const stabilities: number[] = [];
+    const dueAts: string[] = [];
+
+    for (const row of rowsRes.rows) {
+      const card: FsrsCard = {
+        stability: Number(row.stability),
+        difficulty: Number(row.difficulty),
+        lastReviewAt: (row.last_review_at instanceof Date ? row.last_review_at : new Date(row.last_review_at)).toISOString(),
+        reps: Number(row.reps),
+        lapses: Number(row.lapses),
+        dueAt: (row.due_at instanceof Date ? row.due_at : new Date(row.due_at)).toISOString(),
+      };
+      // One-entry map: the credit for `row.skill_id` is looked up from the
+      // real closure regardless of how many physical cards share it — the
+      // SAME per-concept credit is applied to EACH of that concept's cards
+      // (not split across them; see fire.ts's granularity doc comment).
+      const singleCardMap = new Map<string, FsrsCard>([[row.skill_id, card]]);
+      const [result] = computeImplicitReviews(
+        { skillId: attempt.skillId, correct: attempt.correct },
+        singleCardMap,
+        now,
+      );
+      if (!result) continue;
+      objectIds.push(row.object_id);
+      stabilities.push(result.newCard.stability);
+      dueAts.push(result.newCard.dueAt);
+    }
+
+    if (objectIds.length === 0) return;
+
+    await client.query(
+      `UPDATE fsrs_cards AS f
+          SET stability = u.stability,
+              due_at = u.due_at::timestamptz
+         FROM unnest($2::text[], $3::float8[], $4::text[]) AS u(object_id, stability, due_at)
+        WHERE f.student_id = $1 AND f.object_id = u.object_id`,
+      [attempt.studentId, objectIds, stabilities, dueAts],
+    );
   }
 }
 

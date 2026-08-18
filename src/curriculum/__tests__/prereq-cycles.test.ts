@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { findPrerequisiteCycle, assertNoPrerequisiteCycles, PrerequisiteCycleError } from '../prereq-cycles';
+import {
+  findPrerequisiteCycle,
+  assertNoPrerequisiteCycles,
+  PrerequisiteCycleError,
+  findGraphCycle,
+  assertNoGraphCycles,
+  GraphCycleError,
+} from '../prereq-cycles';
 import { ALL_CONCEPTS } from '../../constants/concept-graph';
 
 describe('findPrerequisiteCycle', () => {
@@ -68,5 +75,98 @@ describe('assertNoPrerequisiteCycles', () => {
       expect((err as PrerequisiteCycleError).cycle).toEqual(['a', 'b', 'a']);
       expect((err as Error).message).toContain('a -> b -> a');
     }
+  });
+});
+
+// ── T11: parameterized cycle check (generalizes over any edge field) ──────
+
+describe('findGraphCycle (parameterized edge accessor)', () => {
+  it('agrees with findPrerequisiteCycle when given the prerequisites accessor', () => {
+    const nodes = [
+      { id: 'a', prerequisites: ['b'] },
+      { id: 'b', prerequisites: ['a'] },
+    ];
+    expect(findGraphCycle(nodes, (n) => n.prerequisites)).toEqual(
+      findPrerequisiteCycle(nodes),
+    );
+  });
+
+  it('detects a cycle over a DIFFERENT edge field (encompasses-shaped)', () => {
+    const nodes = [
+      { id: 'x', encompasses: [{ id: 'y', weight: 0.5 }] },
+      { id: 'y', encompasses: [{ id: 'x', weight: 0.3 }] },
+    ];
+    const cycle = findGraphCycle(nodes, (n) => n.encompasses.map((e) => e.id));
+    expect(cycle).toEqual(['x', 'y', 'x']);
+  });
+
+  it('returns null for an acyclic weighted-edge graph', () => {
+    const nodes = [
+      { id: 'a', encompasses: [] as { id: string; weight: number }[] },
+      { id: 'b', encompasses: [{ id: 'a', weight: 0.7 }] },
+      { id: 'c', encompasses: [{ id: 'a', weight: 0.5 }, { id: 'b', weight: 0.6 }] },
+    ];
+    expect(findGraphCycle(nodes, (n) => n.encompasses.map((e) => e.id))).toBeNull();
+  });
+
+  it('ignores edges to unknown ids (a different failure class)', () => {
+    const nodes = [{ id: 'a', encompasses: [{ id: 'ghost', weight: 0.5 }] }];
+    expect(findGraphCycle(nodes, (n) => n.encompasses.map((e) => e.id))).toBeNull();
+  });
+});
+
+describe('assertNoGraphCycles', () => {
+  it('does not throw on an acyclic graph', () => {
+    expect(() =>
+      assertNoGraphCycles([{ id: 'a', tags: [] as string[] }], (n) => n.tags, 'tags'),
+    ).not.toThrow();
+  });
+
+  it('throws GraphCycleError naming the edge field and cycle', () => {
+    const nodes = [
+      { id: 'x', encompasses: [{ id: 'y' }] },
+      { id: 'y', encompasses: [{ id: 'x' }] },
+    ];
+    try {
+      assertNoGraphCycles(nodes, (n) => n.encompasses.map((e) => e.id), 'encompasses');
+      expect.fail('expected a throw');
+    } catch (err) {
+      expect(err).toBeInstanceOf(GraphCycleError);
+      expect((err as GraphCycleError).cycle).toEqual(['x', 'y', 'x']);
+      expect((err as GraphCycleError).edgeLabel).toBe('encompasses');
+      expect((err as Error).message).toContain('"encompasses"');
+      expect((err as Error).message).toContain('x -> y -> x');
+    }
+  });
+});
+
+describe('the real GATE-MA encompassing graph (T11/B1, loaded from gate-ma.yml)', () => {
+  it('is acyclic', () => {
+    expect(
+      findGraphCycle(ALL_CONCEPTS, (n) => (n.encompasses ?? []).map((e) => e.id)),
+    ).toBeNull();
+  });
+
+  it('every weight is in (0,1]', () => {
+    for (const c of ALL_CONCEPTS) {
+      for (const e of c.encompasses ?? []) {
+        expect(e.weight).toBeGreaterThan(0);
+        expect(e.weight).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it('is scoped to linear-algebra: only LA concepts declare encompassing edges', () => {
+    const withEdges = ALL_CONCEPTS.filter((c) => (c.encompasses ?? []).length > 0);
+    expect(withEdges.length).toBeGreaterThan(0);
+    for (const c of withEdges) {
+      expect(c.topic).toBe('linear-algebra');
+    }
+  });
+
+  it('declares between 40 and 80 total edges (plan target)', () => {
+    const total = ALL_CONCEPTS.reduce((sum, c) => sum + (c.encompasses?.length ?? 0), 0);
+    expect(total).toBeGreaterThanOrEqual(40);
+    expect(total).toBeLessThanOrEqual(80);
   });
 });

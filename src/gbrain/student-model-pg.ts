@@ -76,10 +76,68 @@ const MASTERY_THRESHOLDS = {
 };
 
 // ────────────────────────────────────────────────────────────────────
+// Shared pure helper — the SAME derivation masteryState() and the batch
+// masteryStates() both use, so the two paths can never drift. Thresholds
+// unchanged (T4/A6 owns tuning those); this is purely an extraction.
+// ────────────────────────────────────────────────────────────────────
+
+interface AbilitySnapshot {
+  rating: number;
+  n: number;
+}
+
+interface CardSnapshot {
+  stability: number;
+  lastReviewAt: string;
+}
+
+function deriveMasteryState(
+  ability: AbilitySnapshot,
+  cardsForSkill: ReadonlyArray<CardSnapshot>,
+  now: Date,
+): MasteryState {
+  if (ability.n < MASTERY_THRESHOLDS.notStartedN) return 'not-started';
+  if (ability.n < MASTERY_THRESHOLDS.learningN) return 'learning';
+
+  if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) {
+    // Check whether any cards' recall has decayed below threshold — an
+    // at-risk skill is one whose memory is leaking even though the
+    // ability is good.
+    for (const c of cardsForSkill) {
+      const card: FsrsCard = {
+        stability: c.stability,
+        difficulty: 5,
+        lastReviewAt: c.lastReviewAt,
+        reps: 0, lapses: 0,
+        dueAt: new Date().toISOString(),
+      };
+      if (recallProbability(card, now) < MASTERY_THRESHOLDS.atRiskRetrievability) {
+        return 'at-risk';
+      }
+    }
+    return 'mastered';
+  }
+  if (ability.rating >= MASTERY_THRESHOLDS.practicingRating) return 'practicing';
+  return 'learning';
+}
+
+/**
+ * Optional capability seam: a `StudentModel` that can answer mastery for
+ * MANY skills in a bounded number of round-trips. `SyllabusAwareReadinessEngine`
+ * duck-types for this (see syllabus-aware-engine.ts's prefetchMastery) and
+ * falls back to per-skill `masteryState()` calls when it's absent — every
+ * other `StudentModel` implementation (test fakes included) keeps working
+ * unchanged.
+ */
+export interface BatchMasteryStudentModel {
+  masteryStates(studentId: StudentId, skillIds: ReadonlyArray<SkillId>): Promise<Map<SkillId, MasteryState>>;
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Implementation
 // ────────────────────────────────────────────────────────────────────
 
-export class PgStudentModel implements StudentModel {
+export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
   async abilityFor(studentId: StudentId, skillId: SkillId): Promise<Ability> {
     const { rows } = await getPool().query(
       'SELECT rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = $2',
@@ -99,6 +157,11 @@ export class PgStudentModel implements StudentModel {
 
     // Look at how this skill's recent FSRS cards are doing — an at-risk
     // skill is one whose memory is leaking even though the ability is good.
+    // NOTE: objects_for_skill(...) is a phantom function — no migration
+    // defines it (tracked by A6/T4) — so this always throws and is
+    // caught to `[]` in every deploy today; the at-risk branch is
+    // unreachable in practice. Left as-is: fixing/removing it is A6's
+    // scope, not T5's.
     const { rows: cards } = await getPool().query(
       `SELECT stability, last_review_at
          FROM fsrs_cards
@@ -108,25 +171,45 @@ export class PgStudentModel implements StudentModel {
       [studentId, skillId],
     ).catch(() => ({ rows: [] as any[] }));   // tolerate missing helper view
 
-    if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) {
-      // Check whether any cards' recall has decayed below threshold.
-      const now = new Date();
-      for (const c of cards) {
-        const card: FsrsCard = {
-          stability: Number(c.stability),
-          difficulty: 5,
-          lastReviewAt: (c.last_review_at instanceof Date ? c.last_review_at : new Date(c.last_review_at)).toISOString(),
-          reps: 0, lapses: 0,
-          dueAt: new Date().toISOString(),
-        };
-        if (recallProbability(card, now) < MASTERY_THRESHOLDS.atRiskRetrievability) {
-          return 'at-risk';
-        }
-      }
-      return 'mastered';
+    const cardSnapshots: CardSnapshot[] = cards.map((c: any) => ({
+      stability: Number(c.stability),
+      lastReviewAt: (c.last_review_at instanceof Date ? c.last_review_at : new Date(c.last_review_at)).toISOString(),
+    }));
+    return deriveMasteryState({ rating: ability.rating, n: ability.n }, cardSnapshots, new Date());
+  }
+
+  /**
+   * Batch mastery lookup — T5/§7 perf fix. `eligibleNodes()` needs
+   * `masteryState()` for up to ~140 (candidate × prereq) pairs per
+   * request; called one-at-a-time that's 140 Pg round-trips. This does
+   * it in exactly ONE query: `objects_for_skill` is the same phantom
+   * function `masteryState()` silently no-ops on (see the comment
+   * above — A6's fix, not T5's), so the batch path skips straight to
+   * "no cards for any skill" instead of spending N doomed round-trips
+   * finding that out N times. Behaviorally identical to calling
+   * `masteryState()` per skill today; the moment A6 makes
+   * `objects_for_skill` real, both this method and `masteryState()`
+   * need the same follow-up (tracked there, not here).
+   */
+  async masteryStates(studentId: StudentId, skillIds: ReadonlyArray<SkillId>): Promise<Map<SkillId, MasteryState>> {
+    const result = new Map<SkillId, MasteryState>();
+    if (skillIds.length === 0) return result;
+
+    const { rows } = await getPool().query(
+      'SELECT skill_id, rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = ANY($2::text[])',
+      [studentId, skillIds],
+    );
+    const abilityBySkill = new Map<SkillId, AbilitySnapshot>();
+    for (const r of rows) {
+      abilityBySkill.set(r.skill_id, { rating: Number(r.rating), n: Number(r.n) });
     }
-    if (ability.rating >= MASTERY_THRESHOLDS.practicingRating) return 'practicing';
-    return 'learning';
+
+    const now = new Date();
+    for (const skillId of skillIds) {
+      const ability = abilityBySkill.get(skillId) ?? { rating: newStudentAbility(studentId, skillId).rating, n: 0 };
+      result.set(skillId, deriveMasteryState(ability, [], now));
+    }
+    return result;
   }
 
   async retrievability(studentId: StudentId, objectId: ObjectId): Promise<number> {

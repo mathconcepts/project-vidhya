@@ -79,7 +79,7 @@ import {
   makeSyllabusAwareReadinessEngine,
   type SyllabusContextProvider,
 } from '../readiness/syllabus-aware-engine';
-import { getAtomContentChecker } from '../readiness/atom-content-checker';
+import { getCompositeContentChecker } from '../readiness/composite-content-checker';
 import { getProfile } from '../session-planner/exam-profile-store';
 import type { Action } from '../core/interfaces';
 
@@ -286,12 +286,14 @@ function buildReadinessEngine() {
     selector,
     policy,
     syllabus,
-    // U1-5: the LA-chain on-ramp. Only ever redirects to a prerequisite
-    // when every node in the gap chain has real explainer content on
-    // disk (src/readiness/content-gate.ts) — currently true for
-    // Linear Algebra and nothing else, by content coverage, not by
-    // any topic/exam literal in the engine.
-    content: getAtomContentChecker(),
+    // T5 (A1): the LA-chain on-ramp, now gated on BOTH real explainer
+    // content (src/readiness/atom-content-checker.ts) AND a gradable
+    // catalog item (src/readiness/composite-content-checker.ts) — a
+    // concept with a lesson but nothing to practice still starves the
+    // next arm the redirect lands the student in. Currently true for
+    // Linear Algebra and nothing else, by content coverage, not by any
+    // topic/exam literal in the engine.
+    content: getCompositeContentChecker(catalog),
   });
 }
 

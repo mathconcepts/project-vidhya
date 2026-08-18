@@ -1208,6 +1208,19 @@ Solve carefully:`;
       }
     })();
 
+    // T6/D3: keep the legacy `student_model` read model (mastery_vector,
+    // prerequisite_alerts) in sync with every attempt recorded through the
+    // canonical Elo+FSRS write path. Idempotent — safe even if boot wiring
+    // runs this block more than once. See src/gbrain/derived-model-sync.ts.
+    void (async () => {
+      try {
+        const { registerDerivedModelSync } = await import('./gbrain/derived-model-sync.js');
+        registerDerivedModelSync();
+      } catch (e: any) {
+        console.error(`[server] derived-model-sync registration failed: ${e?.message}`);
+      }
+    })();
+
     // Resume any batch-generation runs that were in flight when this
     // process last died (DB-backed state machine — see src/generation/
     // batch/poller.ts). One pass on boot; the cron scheduler picks up

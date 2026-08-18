@@ -255,22 +255,32 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
 
   async update(attempt: Attempt): Promise<void> {
     const pool = getPool();
-    // ── idempotency ─────────────────────────────────────────────────
-    // INSERT ON CONFLICT DO NOTHING; xmax = 0 means we did the insert.
-    const dedupResult = await pool.query(
-      `INSERT INTO attempt_dedup (student_id, object_id, ts_ms)
-       VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING student_id`,
-      [attempt.studentId, attempt.objectId, attempt.ts],
-    );
-    if (dedupResult.rowCount === 0) {
-      // already-processed duplicate — silently ignore
-      return;
-    }
 
     // ── Elo update (joint student × item) ────────────────────────────
     const client = await pool.connect();
+    let deduped = false;
     try {
       await client.query('BEGIN');
+
+      // ── idempotency (T6/ENG-D4.2: moved INSIDE the transaction) ────
+      // Previously this INSERT ran on the pool, outside BEGIN/COMMIT: a
+      // rolled-back attempt (e.g. the Elo/FSRS work below throwing) left
+      // its dedup row committed anyway, permanently blocking every retry
+      // of that (studentId, objectId, ts) — the row never came back even
+      // though nothing else was ever persisted. Inside the tx, a ROLLBACK
+      // undoes the dedup insert along with everything else, so a retry
+      // with the same ts is not blocked.
+      const dedupResult = await client.query(
+        `INSERT INTO attempt_dedup (student_id, object_id, ts_ms)
+         VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING student_id`,
+        [attempt.studentId, attempt.objectId, attempt.ts],
+      );
+      if (dedupResult.rowCount === 0) {
+        // already-processed duplicate — commit the no-op tx and bail.
+        await client.query('COMMIT');
+        deduped = true;
+        return;
+      }
 
       const sRes = await client.query(
         'SELECT rating, n FROM student_skill_elo WHERE student_id = $1 AND skill_id = $2 FOR UPDATE',
@@ -342,22 +352,39 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
          card.lastReviewAt, card.dueAt, card.reps, card.lapses],
       );
 
-      // ── persist error tags (best-effort; table may not exist in older deploys)
-      if (attempt.errorTags && attempt.errorTags.length > 0) {
-        await client.query(
-          `INSERT INTO attempt_error_tags (student_id, object_id, ts_ms, error_tag, recorded_at)
-           SELECT $1, $2, $3, unnest($4::text[]), now()
-           ON CONFLICT DO NOTHING`,
-          [attempt.studentId, attempt.objectId, attempt.ts, attempt.errorTags],
-        ).catch(() => { /* table optional */ });
-      }
-
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
       throw err;
     } finally {
       client.release();
+    }
+
+    if (deduped) return;
+
+    // ── persist error tags (T6/ENG-D4.2: moved AFTER COMMIT, best-effort) ──
+    // Previously this ran INSIDE the transaction with a swallowed `.catch()`:
+    // a failure here (e.g. table missing on an older deploy) aborted the
+    // open Postgres transaction, so the subsequent COMMIT silently became a
+    // ROLLBACK — Elo + FSRS writes were lost even though update() had
+    // already reported success. Error tags are non-critical telemetry; they
+    // now write best-effort after the attempt is durably committed, and a
+    // failure here is LOGGED (not silently swallowed) rather than able to
+    // touch the primary write path at all.
+    if (attempt.errorTags && attempt.errorTags.length > 0) {
+      try {
+        await pool.query(
+          `INSERT INTO attempt_error_tags (student_id, object_id, ts_ms, error_tag, recorded_at)
+           SELECT $1, $2, $3, unnest($4::text[]), now()
+           ON CONFLICT DO NOTHING`,
+          [attempt.studentId, attempt.objectId, attempt.ts, attempt.errorTags],
+        );
+      } catch (err) {
+        console.error(
+          `[student-model-pg] best-effort error-tag persist failed for student=${attempt.studentId} object=${attempt.objectId}:`,
+          err,
+        );
+      }
     }
 
     // ── telemetry (post-commit so subscribers see persisted state) ──

@@ -5,6 +5,8 @@ import {
   buildJsonl,
   renderPrompt,
   stableStringify,
+  maxOutputTokensFor,
+  PRACTICE_ITEM_ATOM_TYPE,
 } from '../jsonl-builder';
 import type { AtomSpec } from '../types';
 
@@ -109,6 +111,39 @@ describe('buildJsonl (determinism)', () => {
     const row = JSON.parse(buildJsonl('anthropic', jobs).trim());
     expect(row.params.model).toBeTruthy();
     expect(Array.isArray(row.params.messages)).toBe(true);
+  });
+});
+
+describe('maxOutputTokensFor — per-spec-kind (E9 practice-item factory)', () => {
+  it('atoms keep the existing 2048 default', () => {
+    expect(maxOutputTokensFor(SPEC_A)).toBe(2048);
+  });
+
+  it('practice-item specs get the higher 8192 cap', () => {
+    const practiceItemSpec: AtomSpec = { ...SPEC_A, atom_type: PRACTICE_ITEM_ATOM_TYPE };
+    expect(maxOutputTokensFor(practiceItemSpec)).toBe(8192);
+  });
+
+  it('gemini rows honor the per-spec-kind cap', () => {
+    const practiceItemSpec: AtomSpec = { ...SPEC_A, atom_type: PRACTICE_ITEM_ATOM_TYPE };
+    const jobs = buildJobs('run-1', [practiceItemSpec]);
+    const row = JSON.parse(buildJsonl('gemini', jobs).trim());
+    expect(row.request.generation_config.max_output_tokens).toBe(8192);
+
+    const atomJobs = buildJobs('run-1', [SPEC_A]);
+    const atomRow = JSON.parse(buildJsonl('gemini', atomJobs).trim());
+    expect(atomRow.request.generation_config.max_output_tokens).toBe(2048);
+  });
+
+  it('anthropic rows honor the per-spec-kind cap', () => {
+    const practiceItemSpec: AtomSpec = { ...SPEC_A, atom_type: PRACTICE_ITEM_ATOM_TYPE };
+    const jobs = buildJobs('run-1', [practiceItemSpec]);
+    const row = JSON.parse(buildJsonl('anthropic', jobs).trim());
+    expect(row.params.max_tokens).toBe(8192);
+
+    const atomJobs = buildJobs('run-1', [SPEC_A]);
+    const atomRow = JSON.parse(buildJsonl('anthropic', atomJobs).trim());
+    expect(atomRow.params.max_tokens).toBe(2048);
   });
 });
 

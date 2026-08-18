@@ -647,7 +647,15 @@ async function callLlm(prompt: string, modelId: string): Promise<string> {
   }
 }
 
-async function pickConsensusSecondary(primaryModelId: string): Promise<string | null> {
+/**
+ * Exported (not just via __testing) so other consensus-needing callers can
+ * reuse the SAME provider-routing decision rather than re-deriving it —
+ * e.g. the practice-item factory's answer-check module (T7 / E9,
+ * docs/designs/linear-algebra-realtime-and-math-academy-plan.md, ENG-D4
+ * item 8: "A7 writes its own dual-model answer-key check... Reuse
+ * pickConsensusSecondary/consensusProvidersAreDistinct").
+ */
+export async function pickConsensusSecondary(primaryModelId: string): Promise<string | null> {
   try {
     const { loadLlmConfig } = await import('../../llm/registry');
     // loadLlmConfig already filters to providers that are enabled AND have a
@@ -695,7 +703,7 @@ async function pickConsensusSecondary(primaryModelId: string): Promise<string | 
  * degraded-consensus handling in generateOne already covers that path —
  * this just makes sure it's never invisible-same-provider degradation).
  */
-async function consensusProvidersAreDistinct(primaryModelId: string, secondaryModelId: string): Promise<boolean> {
+export async function consensusProvidersAreDistinct(primaryModelId: string, secondaryModelId: string): Promise<boolean> {
   try {
     const { loadLlmConfig } = await import('../../llm/registry');
     const config = loadLlmConfig();

@@ -119,6 +119,21 @@ export interface GenerationRunConfig {
       atom_kinds: string[];
       retrieval_days?: number[];
     }>;
+    /**
+     * E9 practice-item factory (docs/designs/linear-algebra-realtime-and-
+     * math-academy-plan.md, A7/T7). Presence of this array is what
+     * src/generation/batch/poller.ts's onJobProcessed uses to detect a
+     * practice-item run and route its jobs through
+     * src/generation/practice-item-factory/batch-dispatch.ts instead of
+     * the atom no-op — the run-level config is the discriminator, NOT a
+     * new field on AtomSpec (see batch-dispatch.ts's header comment).
+     */
+    practice_item_specs?: Array<{
+      concept_id: string;
+      format: 'mcq' | 'msq' | 'nat';
+      difficulty: number;
+      topic: string;
+    }>;
   };
   pipeline: {
     template_id?: string;

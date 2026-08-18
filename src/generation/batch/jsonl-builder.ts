@@ -47,6 +47,34 @@ export function buildJobs(run_id: string, specs: AtomSpec[]): BatchJob[] {
 }
 
 /**
+ * `atom_type` label the practice-item factory (E9) uses on its AtomSpecs.
+ * Not a new discriminator field on AtomSpec — atom_type already exists for
+ * every spec; this is simply a value the real atom pipeline never emits
+ * (see src/content/concept-orchestrator/orchestrator.ts's ALL_ATOM_TYPES),
+ * so it's a safe, additive way to recognize a practice-item job by its
+ * existing shape rather than by adding a field.
+ */
+export const PRACTICE_ITEM_ATOM_TYPE = 'practice_item';
+
+/** Atom-type payloads (definitions, worked examples, …) fit in 2048 tokens. */
+const MAX_OUTPUT_TOKENS_ATOMS = 2048;
+/**
+ * Practice items need question_text + solution_steps + an answer key in one
+ * JSON payload — 2048 was tight enough that a truncated response silently
+ * LOWERED the floor count (the parse failure looked identical to "no item
+ * generated"; see scripts/check-syllabus-floor.ts's loud-parse-failure fix
+ * and src/generation/practice-item-factory/parse.ts's strict refusal).
+ */
+const MAX_OUTPUT_TOKENS_PRACTICE_ITEMS = 8192;
+
+/** Per-spec-kind output token cap. Atoms keep their existing 2048 default. */
+export function maxOutputTokensFor(spec: AtomSpec): number {
+  return spec.atom_type === PRACTICE_ITEM_ATOM_TYPE
+    ? MAX_OUTPUT_TOKENS_PRACTICE_ITEMS
+    : MAX_OUTPUT_TOKENS_ATOMS;
+}
+
+/**
  * Build the JSONL bytes for a given provider. Every adapter wraps each
  * job in its own request envelope; this dispatch keeps the builder
  * provider-aware without leaking provider-specific code into the
@@ -61,6 +89,7 @@ export function buildJsonl(provider: BatchProvider, jobs: BatchJob[]): string {
 }
 
 function buildRow(provider: BatchProvider, job: BatchJob): string {
+  const maxOutputTokens = maxOutputTokensFor(job.atom_spec);
   switch (provider) {
     case 'gemini':
       return stableStringify({
@@ -73,7 +102,7 @@ function buildRow(provider: BatchProvider, job: BatchJob): string {
           generation_config: {
             temperature: 0,
             top_p: 1,
-            max_output_tokens: 2048,
+            max_output_tokens: maxOutputTokens,
             response_mime_type: 'application/json',
           },
         },
@@ -95,7 +124,7 @@ function buildRow(provider: BatchProvider, job: BatchJob): string {
         custom_id: job.custom_id,
         params: {
           model: 'claude-haiku-4-5',
-          max_tokens: 2048,
+          max_tokens: maxOutputTokens,
           messages: [{ role: 'user', content: renderPrompt(job.atom_spec) }],
         },
       });

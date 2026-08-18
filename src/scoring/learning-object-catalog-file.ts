@@ -35,7 +35,12 @@ const ITEMS_DIR = path.join(process.cwd(), 'data', 'practice-items');
 /** Mirrors DEFAULT_EST_MINUTES in the pg catalog so the two agree on unstated fields. */
 const DEFAULT_EST_MINUTES = 3;
 
-interface AuthoredItem {
+/**
+ * Exported so producers of this exact shape (the practice-item factory's
+ * assemble.ts, src/generation/practice-item-factory/) can target it
+ * directly instead of duplicating the field list.
+ */
+export interface AuthoredItem {
   id: string;
   concept_id: string;
   topic?: string;

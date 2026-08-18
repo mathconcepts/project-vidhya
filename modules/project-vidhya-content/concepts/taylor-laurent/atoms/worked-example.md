@@ -74,11 +74,3 @@ The Laurent expansion **automatically encodes singularity classification**:
 
 For GATE residue theorem problems, extract $a_{-1}$ from the principal part—no further computation needed.
 ```
-
----
-
-These three atoms are ready to be written to the file paths. The content includes:
-
-1. **intuition.md** - Conceptual foundation (215 words, Bloom 2)
-2. **visual-analogy.md** - Zoom-in analogy with function-trace gif-scene of $1/(1-x)$ showing the pole (98 words, Bloom 2)
-3. **worked-example.md** - Full GATE-style problem with partial fractions, Laurent expansion in annulus, singularity classification, plus guided_walkthrough interactive (Bloom 3)

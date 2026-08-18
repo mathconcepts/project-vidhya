@@ -500,31 +500,162 @@ New things → tests:
 - **1-year question:** a new engineer reading `gate-ma.yml` sees two edge types
   with names from published literature and a plan doc explaining why. Clear.
 
-## Section 11 — Design & UX (UI scope detected)
+## Section 11 — Design & UX specification (rewritten by /plan-design-review, DR-1..4 + DR-T1..2)
 
-User flow:
+Wireframes: `docs/designs/linear-algebra-wireframes.html` (built from the real
+Clarity tokens — these ARE the visual reference for T8/T13/T14). Classification:
+APP UI — calm hierarchy, hairline rows on canvas, cards only when the card is
+the interaction. Where this conflicts with earlier text, this section wins
+(it supersedes the pre-review flow diagram, which assumed 4–8 probes).
+
+User flow (corrected for the OV2-8 warmup scope):
 
 ```
- first visit ──▶ Warmup (4–8 probes, progress dots) ──▶ Frontier view
-                     │ skip allowed                        │
-                     ▼                                     ▼
-              PlannedSession ◀── NextBestActionCard ──▶ /attempt/:id ──▶ graded result
-                     │                                     │ every N XP
-                     ▼                                     ▼
-                 Lesson (atoms) ◀── prereq on-ramp     Timed quiz ──▶ quiz result
+ first visit ──▶ Warmup: 4–6 spine concepts, 15–25 probes ──▶ Placement result ──▶ Frontier
+                   │ "Stop here" (partial placement)                                 │
+                   │ "Skip" → A1 on-ramp ("we'll start at the beginning")            ▼
+              PlannedSession ◀── NextBestActionCard(+focused-work strip) ──▶ /attempt/:id
+                     │                          │ meter full → quiz OFFER row        │
+                     ▼                          ▼                                    ▼
+                 Lesson (atoms)         Checkpoint quiz ──▶ quiz result       graded result
 ```
 
-- **States coverage:** every new surface ships LOADING / EMPTY / ERROR / SUCCESS /
-  PARTIAL. The honest empty states already in the codebase ("building your
-  baseline") remain the pattern — but after this plan they should be rare.
-- **Clarity system:** green = mastery/primary only; indigo = AI only; XP meter is
-  a plain progress element, no confetti/shimmer/pulse (retired list); 17px body
-  floor; one focal card per screen (quiz = the focal card during quiz); 44px
-  targets; `prefers-reduced-motion` honored on timer animations.
-- **Emotional arc:** warmup must feel like placement, not judgment (Meera is the
-  anxious persona — copy review needed; retain-mode "validating" tone already
-  exists in ProtoCAT). Frontier view celebrates the boundary, not the gaps.
-- **Recommendation:** run `/plan-design-review` before implementing B4/B5 UI.
+**DR-1 — Frontier (B4/A9, wireframe 3).** Never draw the graph. Topological
+vertical spine in 4 labeled clusters (Matrix operations → Determinants &
+systems → Eigen-theory → Decompositions); each concept a 44px hairline row with
+a status DOT (no padlocks, no icons): solid green = demonstrated mastery;
+hollow/tinted green = warmup-inferred, captioned "placed" (NEVER rendered as
+proven — receipt-culture rule; detail copy: "Placed by your warmup — one
+practice session confirms it"); ink-outline = frontier; grey = later, with the
+prerequisite as the label ("after eigenvalues" — `locked` is renamed in copy
+everywhere). "You are here" is the screen's ONE focal card (frontier concepts +
+one green CTA), auto-scrolled into view on load. Mastered clusters collapse to
+one-line rollups ("Matrix operations · 6 of 6"). Cross-branch edges appear only
+in a per-concept bottom sheet ("Builds on: eigenvalues, determinants ✓"), never
+drawn globally. Vertical scroll only. **KnowledgeHomePage demotion is in B4's
+scope:** the existing four stacked shadow-cards become hairline rows so the
+frontier is the only focal element. Full node-link rendering stays in the admin
+graph browser.
+
+**DR-2 — Warmup (A8, wireframes 1–2).** Progress is per-CONCEPT: a 5-segment
+bar + "Concept 2 of 5 · Determinants" (never a 25-dot row). NO per-probe
+verdicts — answer → quiet advance, ≤180ms crossfade via the shared
+reduced-motion hook. "I haven't learned this yet" is a first-class answer
+option (placement signal, styled secondary). "Stop here" early-exit is always
+visible in the nav and triggers partial placement. The RESULT screen leads with
+competence: headline "You're solid through {concept}", one placement line
+("We'll start you at {concept} — the interesting part"), row list with
+placed-vs-start-here dots, ONE green CTA ("Start practising"). No score, no
+per-item review, no Elo number, no red anywhere in the warmup flow. Load-bearing
+copy (verbatim, voice-reviewed):
+- Framing (pre-probe 1): "This isn't a test. We expect you to miss some —
+  that's how we find your starting line. Nothing here is graded."
+- Probe meta: "not graded" (right-aligned, 13px).
+- Early-exit: "Stop here — use what you've learned so far".
+- Result footnote: "Placement is a starting point, not a grade. It adjusts as
+  you work."
+- Skip landing: "We'll start at the beginning."
+
+**DR-3 — Checkpoint quiz (B5, wireframe 4).** The quiz is an OFFERED row, never
+an interrupt: when the meter fills, a quiet row appears ("Checkpoint quiz
+ready · 6 questions · whenever you are"); declining costs nothing, no shame
+state, the offer persists. Header: "Checkpoint", never "Exam". ONE shared timer
+primitive, two registers: MockExam keeps full exam chrome; the quiz gets the
+light register — mono digits (system rule: timers are mono), grey static
+capsule, ORANGE (`--orange-tint`/`--orange-ink`) below 20% remaining; never
+red, never pulsing, no per-second color shifts. This standardizes on
+DiagnosticPage's multi-stop treatment; MockExamPage's binary-red flip migrates
+to the shared primitive under its exam register (with T22). Timer changes
+announce via `aria-live="polite"` at register transitions only. Pre-quiz
+framing: "6 questions · about 8 minutes · GATE is timed — this is practice for
+the clock. Running over won't lose you marks." Sub-timer line: "running over
+won't lose marks". Expiry: "Time's up — what you answered is graded" (warm,
+never "you failed to finish"); late submits per the eng spec (graded, flagged,
+no bonus). Question card reuses PracticeAttemptPage's vocabulary wholesale
+(meta row, marking chip, option buttons, Submit+Skip, ReceiptBorder result).
+
+**DR-4 — Focused work, not XP (B5, wireframe 5).** The student-facing form
+speaks MINUTES ("XP" stays the internal unit in code/API): a hairline-topped
+strip INSIDE the focal NextBestActionCard (like the existing readiness line) —
+label "Focused work", 3px track (`--surface-fill`) with GREEN fill (mastery
+semantic; never indigo), mono tabular figures "64 / 100 min". Fills once on
+entry (`--dur-slow`, shared hook), then still. Award moment: one quiet line on
+the graded result ("+3 min of focused work") — no toasts, no floating numbers,
+no levels, no badges, and negative-XP events are never surfaced to students. At
+threshold the strip's slot becomes the quiz offer row. XP detail folds into
+CompoundingCard's existing expanded grid — NO third motivation card.
+
+**Information hierarchy (first / second / third), per screen:**
+- Warmup probe: question (17px+, the focal element) → answer options (44px) →
+  concept-progress line (13px, top, quiet).
+- Placement result: competence headline → placement line + rows → green CTA.
+- Frontier: "You are here" card → its CTA → mastered rollups above (collapsed) →
+  later clusters below (dimmed). Focused-work strip never first on any screen.
+- Quiz: question → options → timer (secondary, corner) → "2 of 6".
+- Quiz result: marks earned → one line of what it confirmed/unlocked → next
+  action.
+
+**Interaction states (what the student SEES):**
+
+| Surface | LOADING | EMPTY | ERROR | SUCCESS | PARTIAL |
+|---|---|---|---|---|---|
+| Warmup | ≤100ms optimistic advance between probes (no spinner flash) | no probe for band → early "Your starting line is ready" | "Couldn't save your placement — your answers are kept, tap to retry" | result screen (DR-2) | "Stop here" → same result screen from answered concepts |
+| Frontier | skeleton rows (existing 80px pattern) | no placement → "Take the 2-minute warmup to light this up" + CTA | inline row "Couldn't load your map — pull to retry" (NEW — page has none today) | spine view | placement on 4/26 → placed dots only where known, rest "after …" |
+| Quiz offer | — | pool below 2× quiz length → row reads "Checkpoint unlocks as you practise more" (visible, not hidden) | — | "Checkpoint quiz ready · whenever you are" | — |
+| Quiz | pre-quiz framing screen | — | submit error: inline red caption, answer kept, Submit retries (existing pattern) | result: marks + confirmed line + next action | expiry: answered items graded, "Time's up —" framing; skipped marked no-cost |
+| Focused-work strip | renders at last known value | 0 min: "Your first focused minutes land here" | hidden on fetch error (strip, not card) | fill-once animation | mid-goal value |
+
+**Journey storyboard (Meera, anxious, 11pm):** warmup framing (fear → "not a
+test" relief) → probes (no verdicts; "haven't learned this yet" removes bluff
+pressure) → result (competence-first — the relief beat) → frontier ("you are
+here" positions her; no wall of padlocks) → practice (existing graded flow,
+warm retain copy — "Quick refresh: determinants · worth 2 marks", never
+"recall at 0% and falling"; retain rationale copy joins the OV2-1 due-scan
+work) → meter fills (progress she can feel in minutes) → quiz OFFER (her
+choice — agency beat) → checkpoint (light register, mercy visible) → result
+(marks + confirmed). Celebration stays where the system allows it: exactly
+once, on completing the day's plan.
+
+**Sanctioned motion (complete list — everything else is still):** probe
+crossfade (≤180ms), focused-work fill-once on entry (`--dur-slow`), frontier
+auto-scroll to "You are here" (`--ease-standard`). All three route through the
+shared `usePrefersReducedMotion` hook (T24); framer-motion duration literals
+are banned in new surfaces (they bypass the token collapse).
+
+**Responsive & a11y:** 390px-first; ≥768px the frontier spine center-columns at
+`--content-max` (clusters never go multi-column — vertical order IS the
+semantics). All rows/options ≥44px. Quiz options: `role=radiogroup`/`radio`
+with arrow-key nav (fix the existing selected-state no-op ternary,
+PracticeAttemptPage:296, and give selection a real
+`--surface-fill`+border-color change). Frontier rows are buttons (sheet
+trigger) with the reason text in the accessible name ("Diagonalization, after
+eigenvalues"). Timer: `aria-live=polite` at register changes only. Contrast:
+`--green-ink`/`--orange-ink` on white for all sub-17px text (4.5:1). Bottom
+padding reserves space for WalkthroughBar (fixed bottom bar, zIndex 60) on all
+new surfaces.
+
+**Design-debt work pulled into scope (DR-T1/T2):**
+- **T23** — student-facing text-floor fixes: NextBestActionCard rationale
+  12px→15px supporting, PracticeAttemptPage solution steps 15px→17px,
+  KnowledgeHome `why_next` 13px→15px. (Admin-page clusters stay out.)
+- **T24** — component hygiene, full: shared `usePrefersReducedMotion` hook
+  (replaces 8+ ad-hoc copies); new surfaces import `ui/` primitives (Card,
+  ListRow revived); delete dead `components/app/MasteryRing.tsx`; migrate the
+  hand-rolled card in NextBestActionCard/PracticeAttemptPage/KnowledgeHome/
+  MockExam to `ui/Card`; extend `ui/ProgressBar` for the focused-work strip
+  (no fifth bar).
+- **T17 addendum:** the stance-variant review rubric gains a voice-compliance
+  line (no hype, no guilt, second person) — 140 generated files get voice
+  review, not only pedagogy review.
+- **T20 addendum:** the seeded demo state must assert the RENDERED shape:
+  Meera's frontier shows ≥2 collapsed mastered clusters, mixed
+  demonstrated/placed dots, dimmed later rows, mid-meter focused work, and one
+  due review — a believable mid-journey screen exercising every visual state.
+
+**AI-slop guards (explicit):** no stat-tile mosaics for XP; frontier is rows on
+canvas, not a card grid; system-font stack is a deliberate Clarity/HIG choice
+(documented exception to the generic "no system-ui" heuristic); the three
+sanctioned motions are the complete motion budget.
 
 ---
 
@@ -842,7 +973,9 @@ Synthesized from findings; run with Claude Code, checkbox as you ship.
 - [ ] **T19 (P2, human ~3d / CC ~2h + config)** — chat — Off-corpus provider key + per-session rate limit + daily spend cap — *D7* — Verify: off-corpus answer streams on deployed URL; cap trips refuse gracefully.
 - [ ] **T20 (P1-demo, human ~2d / CC ~1h)** — demo — Persona multi-day history seeding so B mechanisms demo live — *D9* — Verify: walkthrough shows due-review knock-out + quiz offer.
 - [ ] **T21 (P1, human ~1d / CC ~1h)** — scoring — Composite catalog (file + Pg) so authored items survive `DATABASE_URL` — *OV-1* — Verify: item serves with DB configured.
-- [ ] **T22 (P2, human ~1d / CC ~1h)** — gbrain — Mock-exam server-side grading + real `mock_exams` migration (answer-key leak fix) — *ENG-D3* — Verify: leak test on the mock-exam payload.
+- [ ] **T22 (P2, human ~1d / CC ~1h)** — gbrain — Mock-exam server-side grading + real `mock_exams` migration (answer-key leak fix) + migrate its timer to the shared primitive (exam register) — *ENG-D3, DR-3* — Verify: leak test on the mock-exam payload.
+- [ ] **T23 (P2, human ~0.5d / CC ~30min)** — frontend — Student-facing text-floor fixes (NextBestActionCard rationale, PracticeAttempt solution steps, KnowledgeHome why_next) — *DR-T1* — Verify: no sub-15px reading content on student surfaces.
+- [ ] **T24 (P2, human ~2d / CC ~2h)** — frontend — Component hygiene: shared usePrefersReducedMotion hook, ui/ primitive adoption in new + existing student surfaces, dead-code removal (app/MasteryRing), ProgressBar extension for the focused-work strip, PracticeAttempt selected-state fix — *DR-T2, §11* — Verify: no framer duration literals in new surfaces; grep shows one MasteryRing.
 
 ## Test coverage map (eng review)
 
@@ -890,13 +1023,13 @@ Launch A + B + D in parallel worktrees. C after B merges. E after D's pilot. F l
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | clean | mode: HOLD_SCOPE; decisions D1–D9 locked; 13 outside-voice findings adopted; 0 critical gaps |
-| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — (Codex not installed; Claude subagents served as outside voices, 2 rounds) | — |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | clean | 26 verified findings folded (ENG-D1..D4 + OV2 1–11); 0 critical gaps open; coverage map + parallelization lanes written |
-| Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | recommended before B4/B5 UI |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — (Codex not installed; Claude subagents served as outside voices, 3 rounds) | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | clean | 26 verified findings folded (ENG-D1..D4 + OV2 1–11); 0 critical gaps open; coverage map + parallelization lanes |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | clean | score 5/10 → 9/10; 16 outside-voice findings absorbed; DR-1..4 + DR-T1..2 adopted; Section 11 rewritten as the full design spec; wireframes at `docs/designs/linear-algebra-wireframes.html` |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
 
-**CROSS-MODEL:** Three independent fresh-context challenges ran (CEO round: 13 findings; eng verification: 2 agents, line-level fact-check; eng round: 11 findings). Every confirmed finding was adopted via explicit user decision — headline catches: file-vs-Pg catalog exclusivity (T21), dead prereq redirect trigger (A1), FIRe transaction/granularity/lock-order design (ENG-D1, OV2-5/6), compression cap arithmetic (1.8→1.3, ENG-D2), the retain arm's missing due-card scan (OV2-1), demo identity mismatch (OV2-2), and the deployed-image Dockerfile mismatch (OV2-3). No unresolved cross-model tension remains.
+**CROSS-MODEL:** Four independent fresh-context challenges ran (CEO: 13 findings; eng verification: 2 line-level fact-check agents; eng: 11 findings; design: 16 findings + a frontend-pattern audit). Every confirmed finding was adopted via explicit user decision. Headline catches: file-vs-Pg catalog exclusivity (T21), dead prereq redirect trigger (A1), FIRe transaction/granularity/lock-order (ENG-D1, OV2-5/6), compression cap 1.8→1.3 (ENG-D2), the retain arm's missing due-card scan (OV2-1), demo identity mismatch (OV2-2), the deployed-image Dockerfile mismatch (OV2-3), and the design round's stale-warmup-scope / undesigned-result-screen / DAG-on-mobile / inferred-vs-proven-mastery set (DR-2, DR-1). No unresolved cross-model tension remains.
 
-**VERDICT:** CEO + ENG CLEARED — ready to implement in the parallelization lanes; run `/plan-design-review` before the B4/B5 UI work.
+**VERDICT:** CEO + ENG + DESIGN CLEARED — ready to implement in the parallelization lanes (design specs in Section 11 + wireframes; run `/design-review` on the live app after implementation for visual QA).
 
 NO UNRESOLVED DECISIONS

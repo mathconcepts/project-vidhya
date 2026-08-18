@@ -1,0 +1,223 @@
+<!-- Vidhya Clarity wireframes v2 — plan-design-review, LA real-time plan (PR #106)
+     Incorporates outside-design-voice findings 1-16. Built from the real Clarity tokens. -->
+<title>LA Loop Wireframes</title>
+<style>
+  :root{
+    --grey-1:#f5f5f7;--grey-2:#fff;--grey-3:#efeff4;--grey-4:#e5e5ea;--grey-6:#8e8e93;--ink:#1d1d1f;
+    --green:#34c759;--green-ink:#248a3d;--green-tint:rgba(52,199,89,.12);
+    --indigo:#5856d6;--indigo-ink:#4340b5;--indigo-tint:rgba(88,86,214,.12);
+    --orange:#ff9f0a;--orange-ink:#b25000;--orange-tint:rgba(255,159,10,.14);
+    --surface-fill:rgba(120,120,128,.12);--text-secondary:rgba(60,60,67,.6);--text-tertiary:rgba(60,60,67,.35);
+    --separator:rgba(60,60,67,.16);
+    --shadow-card:0 1px 3px rgba(0,0,0,.06),0 8px 24px -12px rgba(0,0,0,.12);
+    --shadow-raise:0 1px 2px rgba(0,0,0,.05),0 0 0 .5px rgba(0,0,0,.04);
+  }
+  body{background:#e9e9ee;color:var(--ink);font-family:"Inter Tight",-apple-system,"SF Pro Text",Inter,sans-serif;
+       margin:0;padding:28px 16px;-webkit-font-smoothing:antialiased}
+  .board{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;max-width:1900px;margin:0 auto}
+  .frame{width:390px;flex:0 0 390px}
+  .frame h2{font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 4px 6px}
+  .frame p.note{font-size:13px;color:var(--text-secondary);margin:0 0 10px 6px;line-height:1.45}
+  .phone{background:var(--grey-1);border-radius:28px;border:1px solid var(--grey-4);overflow:hidden;box-shadow:var(--shadow-card)}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;
+       background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--separator)}
+  .nav b{font-size:17px;letter-spacing:-.01em}
+  .nav span{font-size:13px;color:var(--text-secondary)}
+  .screen{padding:16px 20px 28px;display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--grey-2);border-radius:16px;border:.5px solid var(--separator);box-shadow:var(--shadow-card);padding:20px}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+  .title{font-size:22px;font-weight:700;letter-spacing:-.018em;line-height:1.25;margin:6px 0 4px}
+  .body{font-size:17px;letter-spacing:-.01em;line-height:1.45}
+  .support{font-size:15px;color:var(--text-secondary);line-height:1.45}
+  .metadata{font-size:13px;color:var(--text-tertiary)}
+  .mono{font-family:"SF Mono","JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  .btn{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:12px;
+       font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .btn.green{background:var(--green);color:#fff}
+  .btn.quiet{background:var(--surface-fill);color:var(--ink)}
+  .link{font-size:15px;color:var(--indigo-ink);font-weight:500}
+  .seg{display:flex;gap:4px}
+  .seg i{flex:1;height:3px;border-radius:999px;background:var(--grey-4)}
+  .seg i.done{background:var(--green)}
+  .seg i.now{background:var(--ink)}
+  .opt{min-height:44px;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;
+       border:1px solid var(--separator);background:var(--grey-2);font-size:17px;letter-spacing:-.01em}
+  .opt.sel{border-color:var(--ink);background:var(--surface-fill);font-weight:500}
+  .hair{border:0;border-top:.5px solid var(--separator);margin:4px 0}
+  .rowline{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:2px 0}
+  .crow{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 2px;border-bottom:.5px solid var(--separator)}
+  .crow:last-child{border-bottom:0}
+  .crow .name{font-size:17px;letter-spacing:-.01em;flex:1}
+  .crow .why{font-size:13px;color:var(--text-tertiary)}
+  .dot{width:10px;height:10px;border-radius:999px;flex:0 0 10px}
+  .dot.solid{background:var(--green)}
+  .dot.placed{background:var(--green-tint);border:1.5px solid var(--green)}
+  .dot.frontier{background:var(--grey-2);border:1.5px solid var(--ink)}
+  .dot.later{background:var(--grey-4)}
+  .dot.shaky{background:var(--orange-tint);border:1.5px solid var(--orange)}
+  .cluster{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);
+           margin:14px 2px 2px}
+  .timerbar{display:flex;align-items:center;justify-content:space-between;
+       background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);
+       border-bottom:.5px solid var(--separator);padding:8px 20px}
+  .clockcap{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;font-weight:700;font-size:13px}
+  .clockcap.ok{background:var(--surface-fill);color:var(--ink)}
+  .clockcap.warn{background:var(--orange-tint);color:var(--orange-ink)}
+  .xpstrip{display:flex;align-items:center;gap:10px;border-top:.5px solid var(--separator);margin-top:14px;padding-top:12px}
+  .xpbar{flex:1;height:3px;border-radius:999px;background:var(--surface-fill);overflow:hidden}
+  .xpbar i{display:block;height:100%;width:64%;background:var(--green);border-radius:999px}
+  .caption-note{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+  .sheet{background:var(--grey-2);border-radius:16px 16px 0 0;box-shadow:0 -1px 0 rgba(0,0,0,.06),0 -20px 60px rgba(0,0,0,.18);
+         padding:16px 20px 20px;margin:8px -20px -28px}
+</style>
+<div class="board">
+
+<!-- ============ 1. WARMUP PROBE ============ -->
+<div class="frame">
+  <h2>1 · Warmup probe (A8)</h2>
+  <p class="note">Redesigned for the locked 15–25 probe scope: progress is per-CONCEPT (segmented bar + "Concept 2 of 5"), never a 25-dot row. No per-probe verdicts — answer → quiet advance (≤180ms crossfade). "I haven't learned this yet" is a first-class answer. Early exit is always visible.</p>
+  <div class="phone">
+    <div class="nav"><b>Your starting line</b><span class="link">Stop here</span></div>
+    <div class="screen">
+      <div class="seg"><i class="done"></i><i class="now"></i><i></i><i></i><i></i></div>
+      <div class="rowline" style="min-height:auto">
+        <span class="metadata">Concept 2 of 5 · Determinants</span>
+        <span class="metadata">not graded</span>
+      </div>
+      <div class="card">
+        <div class="body" style="margin:2px 0 14px">If det(A) = 4 and det(B) = 3, what is det(AB)?</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="opt">7</div>
+          <div class="opt sel">12</div>
+          <div class="opt">64</div>
+          <div class="opt" style="color:var(--text-secondary)">I haven't learned this yet</div>
+        </div>
+        <div class="btn green" style="margin-top:14px">Continue</div>
+      </div>
+      <div class="metadata" style="text-align:center">This isn't a test. Missing some is how we find your starting line.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. WARMUP RESULT ============ -->
+<div class="frame">
+  <h2>2 · Placement result (A8)</h2>
+  <p class="note">The most emotionally loaded screen: leads with competence, one placement line, one green CTA. No score, no per-item review, no red, no Elo number. Inferred mastery is labeled "placed", never shown as proven.</p>
+  <div class="phone">
+    <div class="nav"><b>Your starting line</b><span></span></div>
+    <div class="screen">
+      <div class="card">
+        <div class="eyebrow" style="color:var(--green-ink)">Placement complete</div>
+        <div class="title">You're solid through determinants.</div>
+        <div class="support">We'll start you at eigenvalues — the interesting part.</div>
+        <hr class="hair" style="margin:14px 0">
+        <div class="crow"><span class="dot placed"></span><span class="name">Matrix operations</span><span class="why">placed</span></div>
+        <div class="crow"><span class="dot placed"></span><span class="name">Determinants</span><span class="why">placed</span></div>
+        <div class="crow"><span class="dot frontier"></span><span class="name">Eigenvalues</span><span class="why">start here</span></div>
+        <div class="btn green" style="margin-top:12px">Start practising</div>
+      </div>
+      <div class="metadata" style="text-align:center">"Placed" is our estimate from your warmup — one practice session confirms it.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3. FRONTIER ============ -->
+<div class="frame">
+  <h2>3 · Knowledge frontier (B4/A9)</h2>
+  <p class="note">Never draws the graph. Topological spine in 4 labeled clusters; 44px hairline rows with status DOTS (no padlocks, no "locked" — the prerequisite is the label). "You are here" is the single focal card, auto-scrolled into view. Mastered clusters collapse to rollups. Cross-edges live in a per-concept detail sheet only.</p>
+  <div class="phone">
+    <div class="nav"><b>Linear Algebra</b><span class="mono metadata">7 of 26</span></div>
+    <div class="screen">
+      <div class="rowline" style="min-height:auto;padding:0 2px">
+        <span class="support" style="font-weight:600">Matrix operations · 6 of 6</span>
+        <span class="dot solid"></span>
+      </div>
+      <div class="card">
+        <div class="eyebrow" style="color:var(--green-ink)">You are here</div>
+        <div class="crow"><span class="dot shaky"></span><span class="name" style="font-weight:600">Determinants</span><span class="why">worth a refresh</span></div>
+        <div class="crow"><span class="dot frontier"></span><span class="name" style="font-weight:600">Eigenvalues</span><span class="why">ready now</span></div>
+        <div class="btn green" style="margin-top:12px">Learn eigenvalues</div>
+      </div>
+      <div class="cluster">Eigen-theory</div>
+      <div>
+        <div class="crow"><span class="dot later"></span><span class="name" style="color:var(--text-secondary)">Diagonalization</span><span class="why">after eigenvalues</span></div>
+        <div class="crow"><span class="dot later"></span><span class="name" style="color:var(--text-secondary)">Symmetric matrices</span><span class="why">after eigenvalues</span></div>
+      </div>
+      <div class="cluster">Decompositions</div>
+      <div>
+        <div class="crow"><span class="dot later"></span><span class="name" style="color:var(--text-secondary)">SVD</span><span class="why">after eigen-theory</span></div>
+        <div class="crow"><span class="dot later"></span><span class="name" style="color:var(--text-secondary)">Jordan form</span><span class="why">after diagonalization</span></div>
+      </div>
+      <div class="sheet">
+        <div class="eyebrow" style="margin-bottom:6px">Diagonalization</div>
+        <div class="support">Builds on: <b style="color:var(--ink)">eigenvalues</b>, <b style="color:var(--ink)">determinants ✓</b></div>
+        <div class="caption-note">One step away — finish eigenvalues to unlock. Tap any row for this sheet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4. CHECKPOINT QUIZ ============ -->
+<div class="frame">
+  <h2>4 · Checkpoint quiz (B5)</h2>
+  <p class="note">"Checkpoint", never "Exam" — the light register of a shared timer primitive (MockExam keeps full exam chrome). Timer: mono, grey, static; ORANGE below 20% remaining; never red, never pulsing. Reuses the PracticeAttempt card + options wholesale. Pre-framed: running over loses nothing.</p>
+  <div class="phone">
+    <div class="nav"><b>Checkpoint</b><span class="metadata">2 of 6</span></div>
+    <div class="timerbar">
+      <span class="clockcap ok mono">◷ 06:42</span>
+      <span class="metadata">running over won't lose marks</span>
+    </div>
+    <div class="screen">
+      <div class="card">
+        <div class="rowline" style="min-height:auto">
+          <span class="eyebrow">Eigenvalues · MCQ</span>
+          <span class="mono metadata" style="background:var(--surface-fill);padding:3px 8px;border-radius:6px">+2 marks</span>
+        </div>
+        <div class="body" style="margin:10px 0 14px">The eigenvalues of a 2×2 matrix sum to 7 and multiply to 10. The trace is:</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="opt">5</div>
+          <div class="opt sel">7</div>
+          <div class="opt">10</div>
+          <div class="opt">17</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <div class="btn green" style="flex:1">Submit</div>
+          <div class="btn quiet" style="padding:0 18px">Skip</div>
+        </div>
+      </div>
+      <div class="metadata" style="text-align:center">GATE is timed — this is practice for the clock, with the stakes removed.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 5. HOME: FOCUSED-WORK STRIP + QUIZ OFFER ============ -->
+<div class="frame">
+  <h2>5 · Focused work, not XP (B5)</h2>
+  <p class="note">The meter speaks MINUTES (1 XP ≈ 1 min stays internal): hairline strip inside the focal card — 3px green track, mono figures, fills once on entry then still. At threshold the strip becomes a quiet quiz OFFER row (never a modal). No third motivation card; details fold into CompoundingCard.</p>
+  <div class="phone">
+    <div class="nav"><b>Today</b><span></span></div>
+    <div class="screen">
+      <div class="card">
+        <div class="rowline" style="min-height:auto">
+          <span class="eyebrow" style="color:var(--green-ink)">Practice · next best action</span>
+          <span class="metadata">~6 min</span>
+        </div>
+        <div class="body" style="margin:8px 0 4px;font-weight:600">Eigenvalues — trace &amp; determinant shortcuts</div>
+        <div class="support">Solving these also refreshes determinants, which is due today.</div>
+        <div class="btn green" style="margin-top:12px">Start</div>
+        <div class="xpstrip">
+          <span class="metadata" style="color:var(--ink)">Focused work</span>
+          <div class="xpbar"><i></i></div>
+          <span class="mono metadata" style="color:var(--ink);font-weight:600">64 / 100 min</span>
+        </div>
+      </div>
+      <div class="rowline" style="padding:0 4px">
+        <span class="support">Checkpoint quiz ready · 6 questions · whenever you are</span>
+        <span class="link">Begin</span>
+      </div>
+      <div class="metadata" style="padding:0 4px">Offer persists quietly; declining costs nothing. Award moments are one line on the graded result ("+3 min of focused work") — no toasts, no floating numbers.</div>
+    </div>
+  </div>
+</div>
+
+</div>

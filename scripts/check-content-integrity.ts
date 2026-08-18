@@ -25,6 +25,23 @@
  * not a sign-off addressed to the operator, but the tool talking about
  * itself. See check 1c.
  *
+ * A sweep for that phrasing turned up FOUR more worked-example.md files
+ * (taylor-laurent, integration-substitution, discrete-distributions,
+ * counting-principles, conformal-mapping — five, not four) carrying
+ * near-miss variants neither check 1b nor 1c caught: "ready to be written to
+ * the file paths" / "...the concept directory" / "...their respective file
+ * paths" (1b only knew "...to disk" and "...to their respective paths", not
+ * "file paths"), "Fix the permission handler configuration..." and "Due to
+ * permission handler configuration issues with the Write tool..." (1c only
+ * knew "permission handler IS MISCONFIGURED", and required "Write tool"
+ * *before* the failure word — these have "permission handler" first), and
+ * "I am unable to directly create these files on disk" (a negated-failure
+ * construction 1c had no pattern for at all). Both checks are now anchored
+ * on the shorter, order-independent phrases actually shared across all these
+ * variants — "ready to be written to", bare "permission handler", "unable to
+ * ... create these files" — rather than the longer literal sentences that
+ * only matched the first file found.
+ *
  * Check 2 compares each atom's declared `id` against its filename. The variant
  * form is legal and must stay legal: `worked-example-product-rule.md` declaring
  * `derivatives-basic.worked-example.product-rule` is correct — dots in the id
@@ -120,7 +137,7 @@ function checkFile(file: string): void {
       });
     }
     if (
-      /(copy these .{0,30}files to their respective paths|written to their respective paths|ready to be written to disk|content is ready for)/i.test(
+      /(copy these .{0,30}files to their respective paths|written to their respective paths|ready to be written to\b|content is ready for)/i.test(
         t,
       )
     ) {
@@ -144,16 +161,27 @@ function checkFile(file: string): void {
   // example, in the lesson, to a student.
   //
   // Anchored to the specific vocabulary of a tool/agent failure report
-  // (permission handler, the capitalised "Write tool", an explicit
-  // "error encountered" label) rather than bare words like "error" or
-  // "write" alone, which appear constantly in legitimate math prose
-  // ("round-off error", "standard error", "we write the matrix as...").
-  // A false positive here would refuse real content; a loose word match
-  // would refuse it on every stats atom in the corpus.
+  // (bare "permission handler", the capitalised "Write tool" paired loosely
+  // with a failure word in EITHER order, an explicit "error encountered"
+  // label, a self-reported inability to create files) rather than bare
+  // words like "error" or "write" alone, which appear constantly in
+  // legitimate math prose ("round-off error", "standard error", "we write
+  // the matrix as..."). A false positive here would refuse real content; a
+  // loose word match would refuse it on every stats atom in the corpus.
+  //
+  // "permission handler" alone is deliberately the broadest anchor here: a
+  // sweep found it phrased as "...is misconfigured", "Fix the permission
+  // handler configuration...", and "Due to permission handler configuration
+  // issues with the Write tool..." — three different sentence shapes, only
+  // the first of which named "misconfigured" or put "Write tool" first. The
+  // two-word phrase itself is unambiguous authoring-tool jargon; no GATE
+  // topic (including probability/combinatorics, which is the nearest
+  // adjacent vocabulary — "permutation", not "permission") has a legitimate
+  // reason to use it.
   lines.forEach((line, i) => {
     const t = line.trim();
     if (
-      /(\*{0,2}error encountered\*{0,2}\s*:|permission handler is misconfigured|\bwrite tool\b[^.]{0,60}\b(misconfigured|permission|handler)\b|you'll need to create these .{0,30}(markdown )?files)/i.test(
+      /(\*{0,2}error encountered\*{0,2}\s*:|\bpermission handler\b|\bwrite tool\b[^.]{0,60}\b(misconfigured|permission|handler)\b|\b(misconfigured|permission|handler)\b[^.]{0,60}\bwrite tool\b|\bunable to (directly )?create (these|the) (files|atoms)\b|you'll need to create these .{0,30}(markdown )?files|these files should be created at)/i.test(
         t,
       )
     ) {

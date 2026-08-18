@@ -76,8 +76,4 @@ If the chairperson can sit in position 3 OR position 4:
 ✓ Identify constraints (fixed elements)  
 ✓ Separate constrained from free positions  
 ✓ Apply permutation formula to the free part  
-✓ Multiply if there are multiple independent constraint cases  
-
----
-
-All three atoms are now ready to be written to their respective file paths. The content follows GATE exam standards, includes proper KaTeX formatting, and incorporates the interactive guided walkthrough for the worked example.
+✓ Multiply if there are multiple independent constraint cases

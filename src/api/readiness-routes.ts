@@ -66,6 +66,11 @@ import {
   summarize,
   type WarmupState,
 } from '../readiness/diagnostic-warmup';
+import {
+  spineConceptLabels,
+  applyWarmupPriors,
+  type PerConceptWarmupResult,
+} from '../readiness/warmup-onboarding';
 import { InMemoryCatalog, type LearningObjectCatalog } from '../scoring/learning-object-catalog';
 import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg';
 import { getStudentModel } from '../gbrain/student-model-pg';
@@ -193,6 +198,90 @@ async function handleWarmupApply(req: ParsedRequest, res: ServerResponse): Promi
     ability_estimate: converged ? finalAbility(newState) : null,
     summary: summarize(newState),
   });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// GET /api/readiness/warmup/spine — the curated onboarding concept list
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * T8/OV2-8. Single source of truth for the onboarding UI's concept
+ * sequence — the frontend fetches this rather than hardcoding the 5
+ * curated spine ids + labels, so the two can never drift from
+ * src/readiness/warmup-onboarding.ts's WARMUP_SPINE_CONCEPTS. Static,
+ * anonymous-friendly (no auth required — the warmup itself works
+ * anonymously, matching the Wave 4 endpoints above).
+ */
+async function handleWarmupSpine(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+  return sendJSON(res, { concepts: spineConceptLabels() });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// POST /api/readiness/warmup/persist — write placement priors
+// ────────────────────────────────────────────────────────────────────
+
+interface PersistBodyResult {
+  skill_id?: unknown;
+  converged?: unknown;
+  ability_estimate?: unknown;
+  probes_used?: unknown;
+  predicted_success_at_close?: unknown;
+}
+
+function parsePersistResults(raw: unknown): PerConceptWarmupResult[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: PerConceptWarmupResult[] = [];
+  for (const item of raw as PersistBodyResult[]) {
+    if (typeof item?.skill_id !== 'string' || !item.skill_id) return null;
+    if (typeof item.ability_estimate !== 'number' || !Number.isFinite(item.ability_estimate)) return null;
+    out.push({
+      skillId: item.skill_id,
+      converged: Boolean(item.converged),
+      abilityEstimate: item.ability_estimate,
+      probesUsed: typeof item.probes_used === 'number' ? item.probes_used : 0,
+      predictedSuccessAtClose:
+        typeof item.predicted_success_at_close === 'number' ? item.predicted_success_at_close : 0,
+    });
+  }
+  return out;
+}
+
+/**
+ * T8 (A8, amendment 7): "the missing persist-priors endpoint (warmup apply
+ * currently persists nothing)". Takes the per-concept WarmupReport
+ * summaries the client collected while walking the curated spine (see
+ * handleWarmupApply's `summary` field above) and writes them as priors via
+ * applyWarmupPriors(). Auth-gated the same way as next-action — the
+ * platform is anonymous-first, but by the time priors are being persisted
+ * the caller has SOME resolvable student id (the same JWT-based identity
+ * next-action already requires), matching amendment 6's "session↔user
+ * mapping" scoping.
+ *
+ * Idempotent: applyWarmupPriors() upserts with GREATEST(), so calling this
+ * twice with the same (or a subset of the same) results never regresses
+ * an existing higher rating/n — the §11 states-table "double-apply" case.
+ */
+async function handleWarmupPersist(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const user = await requireRole(req, res, 'student', 'teacher', 'admin');
+  if (!user) return;
+
+  const body = (req.body ?? {}) as Record<string, any>;
+  const results = parsePersistResults(body.results);
+  if (!results) {
+    return sendJSON(res, { error: 'results (array of {skill_id, ability_estimate, ...}) is required' }, 400);
+  }
+
+  try {
+    const out = await applyWarmupPriors(user.userId, results);
+    return sendJSON(res, out);
+  } catch (err) {
+    // Persist failures are recoverable client-side — the §11 states table's
+    // "Couldn't save your placement — your answers are kept, tap to retry"
+    // case. Never a 500 that loses the student's answers; the client still
+    // holds the same `results` and can retry.
+    console.error('[readiness] warmup/persist failed:', (err as Error).message);
+    return sendJSON(res, { error: 'placement save failed', recorded: false }, 502);
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -436,8 +525,10 @@ async function handleExpectedScore(req: ParsedRequest, res: ServerResponse): Pro
 }
 
 export const readinessRoutes: RouteDefinition[] = [
+  { method: 'GET', path: '/api/readiness/warmup/spine', handler: handleWarmupSpine },
   { method: 'POST', path: '/api/readiness/warmup/next', handler: handleWarmupNext },
   { method: 'POST', path: '/api/readiness/warmup/apply', handler: handleWarmupApply },
+  { method: 'POST', path: '/api/readiness/warmup/persist', handler: handleWarmupPersist },
   { method: 'GET', path: '/api/readiness/next-action', handler: handleNextAction },
   { method: 'GET', path: '/api/readiness/expected-score', handler: handleExpectedScore },
 ];

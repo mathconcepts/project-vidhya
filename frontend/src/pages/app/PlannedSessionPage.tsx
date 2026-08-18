@@ -50,6 +50,7 @@ import { authFetch } from '@/lib/auth/client';
 import { DemoBanner } from '@/components/DemoBanner';
 import { WelcomeBackCard } from '@/components/app/WelcomeBackCard';
 import { NextBestActionCard } from '@/components/app/NextBestActionCard';
+import { WarmupEntryCard } from '@/components/app/WarmupEntryCard';
 import { trackPageView, trackAction } from '@/lib/beacon';
 import {
   Clock, BookOpen, Play, CheckCircle2, XCircle, Loader2,
@@ -582,6 +583,10 @@ export default function PlannedSessionPage() {
 
       {/* Wave 7: NextBestActionCard is the dominant top-of-page surface */}
       <NextBestActionCard />
+
+      {/* T8 (A8): self-gates on "no attempt history yet" — additive, does
+          not touch NextBestActionCard's own fetch/render. */}
+      <WarmupEntryCard />
 
       {/* P5: WelcomeBackCard self-gates on lapse + account-age */}
       <WelcomeBackCard summary={gbrainSummary} user={userMeta} />

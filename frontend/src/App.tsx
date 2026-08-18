@@ -46,6 +46,7 @@ const MaterialsPage = lazy(() => import('@/pages/app/MaterialsPage'));
 const SmartPracticePage = lazy(() => import('@/pages/app/SmartPracticePage'));
 const PracticeAttemptPage = lazy(() => import('@/pages/app/PracticeAttemptPage'));
 const PlannedSessionPage = lazy(() => import('@/pages/app/PlannedSessionPage'));
+const WarmupPage = lazy(() => import('@/pages/app/WarmupPage'));
 const ExamProfilePage = lazy(() => import('@/pages/app/ExamProfilePage'));
 const KnowledgePickerPage = lazy(() => import('@/pages/app/KnowledgePickerPage'));
 const KnowledgeHomePage = lazy(() => import('@/pages/app/KnowledgeHomePage'));
@@ -170,6 +171,11 @@ export default function App() {
           <Route path="smart-practice" element={<SmartPracticePage />} />
           <Route path="attempt/:objectId" element={<PracticeAttemptPage />} />
           <Route path="planned" element={<PlannedSessionPage />} />
+          {/* T8 (A8) — diagnostic warmup onboarding: 4-6 curated LA spine
+              concepts, ~15-25 probes, seeds Elo priors. Entry surfaced by
+              WarmupEntryCard on PlannedSessionPage / KnowledgeHomePage for
+              students with no attempt history. */}
+          <Route path="warmup" element={<WarmupPage />} />
           <Route path="exam-profile" element={<ExamProfilePage />} />
           <Route path="knowledge" element={<KnowledgePickerPage />} />
           <Route path="knowledge-home" element={<KnowledgeHomePage />} />

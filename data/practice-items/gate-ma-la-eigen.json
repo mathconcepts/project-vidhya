@@ -1,0 +1,610 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the eigen-theory",
+    "cluster of linear algebra: eigenvalues, diagonalization, Cayley-Hamilton,",
+    "symmetric matrices, the spectral theorem, and Jordan normal form.",
+    "",
+    "Every item was solved by hand (twice, via independent methods where",
+    "possible — e.g. block-triangular expansion vs. direct determinant expansion,",
+    "or spectral reconstruction vs. the standard 2x2 inverse formula) before its",
+    "key was written. Matrices are chosen with clean integer or simple-fraction",
+    "spectra so a student (or a reviewer) can re-derive every answer by hand.",
+    "",
+    "Shape mirrors gate-ma-linear-algebra.json exactly (same AuthoredItem schema",
+    "consumed by FileLearningObjectCatalog / GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-eigenvalues-001",
+      "concept_id": "eigenvalues",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[3, 4], [0, -2]]. What are the eigenvalues of A?",
+      "options": ["λ = 3 and λ = -2", "λ = 4 and λ = -2", "λ = 3 and λ = 4", "λ = -3 and λ = 2"],
+      "answer_index": 0,
+      "correct_answer": "λ = 3 and λ = -2",
+      "solution_steps": [
+        "A is upper triangular, and for a triangular matrix the eigenvalues are exactly the diagonal entries.",
+        "The diagonal entries of A are 3 and -2, so the eigenvalues are λ = 3 and λ = -2.",
+        "Check via the characteristic polynomial: det(A - λI) = (3-λ)(-2-λ) - 4·0 = (3-λ)(-2-λ), which has roots λ = 3, -2.",
+        "Cross-check: trace(A) = 3 + (-2) = 1, and det(A) = 3·(-2) - 4·0 = -6; indeed 3 + (-2) = 1 and 3·(-2) = -6."
+      ],
+      "verification_method": "hand_checkable_triangular_diagonal"
+    },
+    {
+      "id": "pi-eigenvalues-002",
+      "concept_id": "eigenvalues",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[4, 1, 1], [0, 3, 0], [0, -2, 1]]. Find the sum of the squares of the eigenvalues of A.",
+      "answer_range": [25.87, 26.13],
+      "correct_answer": "26",
+      "solution_steps": [
+        "Expand det(A - λI) along the first column, which has two zero entries below the top: det(A-λI) = (4-λ)·det([[3-λ,0],[-2,1-λ]]).",
+        "The 2x2 minor is triangular in λ: det([[3-λ,0],[-2,1-λ]]) = (3-λ)(1-λ).",
+        "So det(A-λI) = (4-λ)(3-λ)(1-λ) = 0, giving eigenvalues λ = 4, 3, 1.",
+        "Cross-check via block structure: A is block upper-triangular with blocks [4] and [[3,0],[-2,1]]; the 2x2 block is lower triangular with diagonal entries 3, 1 — same eigenvalues.",
+        "Sum of squares = 4² + 3² + 1² = 16 + 9 + 1 = 26."
+      ],
+      "verification_method": "hand_checkable_char_poly_block"
+    },
+    {
+      "id": "pi-eigenvalues-003",
+      "concept_id": "eigenvalues",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "For a general real square matrix A, which of the following statements are always true?",
+      "options": [
+        "A and Aᵀ have the same eigenvalues",
+        "If A is invertible, the eigenvalues of A⁻¹ are the reciprocals of the eigenvalues of A",
+        "The eigenvalues of A + B equal the eigenvalues of A plus the eigenvalues of B, matched in order",
+        "Every eigenvalue of a real matrix must itself be a real number",
+        "The sum of the eigenvalues of A equals trace(A)"
+      ],
+      "answer_indices": [0, 1, 4],
+      "correct_answer": "A and Aᵀ share eigenvalues; eigenvalues of A⁻¹ are reciprocals; sum of eigenvalues = trace(A)",
+      "solution_steps": [
+        "det(A - λI) = det((A - λI)ᵀ) = det(Aᵀ - λI), since transposing doesn't change a determinant — so A and Aᵀ share the same characteristic polynomial, hence the same eigenvalues. (a) is TRUE.",
+        "If Av = λv with λ ≠ 0, then A⁻¹v = (1/λ)v, so eigenvalues of A⁻¹ are reciprocals of A's eigenvalues. (b) is TRUE.",
+        "(c) is FALSE in general: A and B need to commute (and be simultaneously diagonalizable) for eigenvalues to add this way — e.g. A=[[0,1],[0,0]], B=[[0,0],[1,0]] each have eigenvalues {0,0}, but A+B=[[0,1],[1,0]] has eigenvalues {1,-1}, not {0,0}.",
+        "(d) is FALSE: a real matrix can have complex eigenvalues, e.g. a rotation matrix [[0,-1],[1,0]] has eigenvalues ±i.",
+        "(e) is TRUE: expanding det(A-λI) shows the coefficient of λⁿ⁻¹ is -trace(A), and the sum of the roots of the characteristic polynomial equals trace(A) by Vieta's formulas."
+      ],
+      "verification_method": "hand_checkable_eigen_properties"
+    },
+    {
+      "id": "pi-diagonalization-001",
+      "concept_id": "diagonalization",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[2, 1], [0, 3]]. Is A diagonalizable over the reals?",
+      "options": [
+        "Yes — A has two distinct eigenvalues (2 and 3), guaranteeing 2 linearly independent eigenvectors",
+        "No — A is not symmetric",
+        "Yes — every triangular matrix is diagonalizable",
+        "No — repeated eigenvalues are required for a matrix to be diagonalizable"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes — two distinct eigenvalues guarantee diagonalizability",
+      "solution_steps": [
+        "A is upper triangular, so its eigenvalues are its diagonal entries: λ = 2 and λ = 3.",
+        "Eigenvectors from distinct eigenvalues are always linearly independent, so a 2x2 matrix with 2 distinct eigenvalues always has 2 independent eigenvectors.",
+        "Two independent eigenvectors for a 2x2 matrix means A is diagonalizable: A = PDP⁻¹ with D = diag(2,3).",
+        "Note option (c) is a false general claim — triangular matrices with a repeated eigenvalue can fail to be diagonalizable (see pi-diagonalization-003); it happens to be true here only because the eigenvalues are distinct."
+      ],
+      "verification_method": "hand_checkable_distinct_eigenvalues"
+    },
+    {
+      "id": "pi-diagonalization-002",
+      "concept_id": "diagonalization",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[1, 1], [0, 2]]. Using diagonalization, find the (1,2) entry of A³.",
+      "answer_range": [6.965, 7.035],
+      "correct_answer": "7",
+      "solution_steps": [
+        "Eigenvalues (triangular matrix): λ = 1, 2. For λ=1: (A-I)v=0 gives [[0,1],[0,1]]v=0, so v=(1,0). For λ=2: (A-2I)v=0 gives [[-1,1],[0,0]]v=0, so v=(1,1).",
+        "So A = PDP⁻¹ with P = [[1,1],[0,1]], D = diag(1,2), and P⁻¹ = [[1,-1],[0,1]] (det P = 1).",
+        "A³ = PD³P⁻¹ = [[1,1],[0,1]]·diag(1,8)·[[1,-1],[0,1]] = [[1,8],[0,8]]·[[1,-1],[0,1]] = [[1,7],[0,8]].",
+        "Cross-check by direct multiplication: A² = [[1,3],[0,4]], and A³ = A²·A = [[1,3],[0,4]]·[[1,1],[0,2]] = [[1,7],[0,8]] — matches.",
+        "The (1,2) entry of A³ is 7."
+      ],
+      "verification_method": "hand_checkable_diagonalization_powers"
+    },
+    {
+      "id": "pi-diagonalization-003",
+      "concept_id": "diagonalization",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[2, 1], [0, 2]]. Is A diagonalizable?",
+      "options": [
+        "No — algebraic multiplicity of λ=2 is 2 but its geometric multiplicity is only 1",
+        "Yes — every triangular matrix is diagonalizable",
+        "No — eigenvalues are not distinct, and that alone always blocks diagonalizability",
+        "Yes — a repeated eigenvalue of value 2 poses no obstruction here"
+      ],
+      "answer_index": 0,
+      "correct_answer": "No — algebraic multiplicity 2, geometric multiplicity 1",
+      "solution_steps": [
+        "A is triangular with a repeated eigenvalue λ = 2 (algebraic multiplicity 2).",
+        "Compute the eigenspace: A - 2I = [[0,1],[0,0]], which has rank 1, so nullity (geometric multiplicity) = 2 - 1 = 1.",
+        "Since geometric multiplicity (1) < algebraic multiplicity (2), A does not have enough independent eigenvectors and is NOT diagonalizable.",
+        "Option (c)'s reasoning is a common but false shortcut: repeated eigenvalues do not automatically block diagonalizability (e.g. the identity matrix has a repeated eigenvalue and is diagonalizable) — it is specifically the geometric-multiplicity shortfall that matters."
+      ],
+      "verification_method": "hand_checkable_geometric_multiplicity"
+    },
+    {
+      "id": "pi-diagonalization-004",
+      "concept_id": "diagonalization",
+      "topic": "linear-algebra",
+      "difficulty": 0.65,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[3, 2], [1, 4]] is diagonalizable with eigenvalues 5 and 2. Find trace(A⁻¹).",
+      "answer_range": [0.69, 0.71],
+      "correct_answer": "0.7",
+      "solution_steps": [
+        "Verify the eigenvalues: trace(A) = 3+4 = 7, det(A) = 3·4 - 2·1 = 10; characteristic equation λ²-7λ+10=0 factors as (λ-5)(λ-2)=0, so eigenvalues are 5 and 2 — confirmed.",
+        "Eigenvalues of A⁻¹ are the reciprocals of A's eigenvalues: 1/5 and 1/2.",
+        "trace(A⁻¹) = 1/5 + 1/2 = 0.2 + 0.5 = 0.7.",
+        "Cross-check with the direct 2x2 inverse formula: A⁻¹ = (1/det A)[[4,-2],[-1,3]] = (1/10)[[4,-2],[-1,3]], so trace(A⁻¹) = (4+3)/10 = 0.7 — matches."
+      ],
+      "verification_method": "hand_checkable_similarity_inverse_eigs"
+    },
+    {
+      "id": "pi-diagonalization-005",
+      "concept_id": "diagonalization",
+      "topic": "linear-algebra",
+      "difficulty": 0.78,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about diagonalization of an n×n real matrix A are true?",
+      "options": [
+        "If A has n distinct eigenvalues, then A is diagonalizable",
+        "If A is diagonalizable, then A must have n distinct eigenvalues",
+        "Similar matrices always have the same eigenvalues",
+        "If A is diagonalizable, then so is Aᵀ",
+        "Every diagonalizable matrix is invertible"
+      ],
+      "answer_indices": [0, 2, 3],
+      "correct_answer": "Distinct eigenvalues imply diagonalizable; similar matrices share eigenvalues; A diagonalizable implies Aᵀ diagonalizable",
+      "solution_steps": [
+        "(a) TRUE: n distinct eigenvalues give n linearly independent eigenvectors, which form a basis, so A is diagonalizable.",
+        "(b) FALSE: the identity matrix I is diagonalizable (trivially, I = I·I·I⁻¹) but has a single repeated eigenvalue 1 with multiplicity n, not n distinct eigenvalues.",
+        "(c) TRUE: if B = P⁻¹AP, then det(B-λI) = det(P⁻¹(A-λI)P) = det(P⁻¹)det(A-λI)det(P) = det(A-λI), so A and B share a characteristic polynomial.",
+        "(d) TRUE: if A = PDP⁻¹, then Aᵀ = (P⁻¹)ᵀ D Pᵀ = (Pᵀ)⁻¹ D Pᵀ, which is exactly a diagonalization of Aᵀ using Pᵀ.",
+        "(e) FALSE: the zero matrix is diagonalizable (it's already diagonal, D=0) but is not invertible."
+      ],
+      "verification_method": "hand_checkable_diagonalization_properties"
+    },
+    {
+      "id": "pi-cayley-hamilton-001",
+      "concept_id": "cayley-hamilton",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[2, 1], [1, 2]]. By the Cayley-Hamilton theorem, A² equals which expression?",
+      "options": ["4A - 3I", "3A - 4I", "4A + 3I", "A + 3I"],
+      "answer_index": 0,
+      "correct_answer": "4A - 3I",
+      "solution_steps": [
+        "The characteristic polynomial of A is λ² - trace(A)λ + det(A) = λ² - 4λ + 3 (trace = 2+2 = 4, det = 2·2 - 1·1 = 3).",
+        "By the Cayley-Hamilton theorem, A satisfies its own characteristic equation: A² - 4A + 3I = 0, so A² = 4A - 3I.",
+        "Direct check: A² = [[2,1],[1,2]]² = [[5,4],[4,5]]. And 4A - 3I = [[8,4],[4,8]] - [[3,0],[0,3]] = [[5,4],[4,5]] — matches."
+      ],
+      "verification_method": "hand_checkable_cayley_hamilton_basic"
+    },
+    {
+      "id": "pi-cayley-hamilton-002",
+      "concept_id": "cayley-hamilton",
+      "topic": "linear-algebra",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[3, 1], [2, 4]]. Using the Cayley-Hamilton theorem, find the (1,1) entry of A⁻¹.",
+      "answer_range": [0.39, 0.41],
+      "correct_answer": "0.4",
+      "solution_steps": [
+        "trace(A) = 3+4 = 7, det(A) = 3·4 - 1·2 = 10. Characteristic equation: λ² - 7λ + 10 = 0.",
+        "Cayley-Hamilton: A² - 7A + 10I = 0. Divide through by A (A is invertible since det ≠ 0): A - 7I + 10A⁻¹ = 0, so A⁻¹ = (7I - A)/10.",
+        "7I - A = [[7,0],[0,7]] - [[3,1],[2,4]] = [[4,-1],[-2,3]], so A⁻¹ = (1/10)[[4,-1],[-2,3]].",
+        "Cross-check with the standard 2x2 inverse formula: A⁻¹ = (1/det A)[[4,-1],[-2,3]] = (1/10)[[4,-1],[-2,3]] — matches exactly.",
+        "The (1,1) entry is 4/10 = 0.4."
+      ],
+      "verification_method": "hand_checkable_cayley_hamilton_inverse"
+    },
+    {
+      "id": "pi-cayley-hamilton-003",
+      "concept_id": "cayley-hamilton",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[0, 1, 0], [0, 0, 1], [6, -11, 6]] has characteristic polynomial λ³ - 6λ² + 11λ - 6 (eigenvalues 1, 2, 3). By the Cayley-Hamilton theorem, how is A³ expressed in terms of A², A, and I?",
+      "options": [
+        "A³ = 6A² - 11A + 6I",
+        "A³ = -6A² + 11A - 6I",
+        "A³ = 6A² + 11A + 6I",
+        "A³ = 6A² - 11A - 6I"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A³ = 6A² - 11A + 6I",
+      "solution_steps": [
+        "The characteristic polynomial is λ³ - 6λ² + 11λ - 6 = 0. Check: sum of roots 1+2+3=6 (matches coefficient 6), sum of pairwise products 1·2+1·3+2·3=11 (matches), product 1·2·3=6 (matches constant term with sign).",
+        "By Cayley-Hamilton, A itself satisfies this equation: A³ - 6A² + 11A - 6I = 0.",
+        "Rearranging: A³ = 6A² - 11A + 6I.",
+        "This is exactly how Cayley-Hamilton is used in practice — it lets any power Aⁿ (n ≥ matrix size) be reduced to a combination of lower powers, without computing A³ by brute-force matrix multiplication."
+      ],
+      "verification_method": "hand_checkable_cayley_hamilton_cubic"
+    },
+    {
+      "id": "pi-cayley-hamilton-004",
+      "concept_id": "cayley-hamilton",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A = [[1, 2], [2, 1]]. Using the Cayley-Hamilton theorem to reduce A⁴ to a linear combination of A and I, find trace(A⁴).",
+      "answer_range": [81.59, 82.41],
+      "correct_answer": "82",
+      "solution_steps": [
+        "trace(A) = 2, det(A) = 1-4 = -3. Characteristic equation: λ² - 2λ - 3 = 0, i.e. (λ-3)(λ+1)=0, so eigenvalues are 3 and -1.",
+        "Cayley-Hamilton: A² = 2A + 3I.",
+        "A⁴ = (A²)² = (2A+3I)² = 4A² + 12A + 9I = 4(2A+3I) + 12A + 9I = 8A + 12I + 12A + 9I = 20A + 21I.",
+        "trace(A⁴) = 20·trace(A) + 21·2 = 20·2 + 42 = 40 + 42 = 82.",
+        "Cross-check via eigenvalues directly: eigenvalues of A⁴ are 3⁴=81 and (-1)⁴=1, so trace(A⁴) = 81+1 = 82 — matches."
+      ],
+      "verification_method": "hand_checkable_cayley_hamilton_power_reduction"
+    },
+    {
+      "id": "pi-cayley-hamilton-005",
+      "concept_id": "cayley-hamilton",
+      "topic": "linear-algebra",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 1,
+      "question_text": "Which of the following statements about the Cayley-Hamilton theorem are true?",
+      "options": [
+        "Every square matrix satisfies its own characteristic polynomial",
+        "The theorem lets Aⁿ (for n at least the matrix size) be rewritten as a linear combination of lower powers of A",
+        "The minimal polynomial of A always equals its characteristic polynomial",
+        "When det(A) ≠ 0, the theorem shows A⁻¹ can be written as a polynomial in A",
+        "The Cayley-Hamilton theorem holds only for symmetric matrices"
+      ],
+      "answer_indices": [0, 1, 3],
+      "correct_answer": "Every square matrix satisfies its char. poly.; enables power reduction; A⁻¹ expressible as polynomial in A when invertible",
+      "solution_steps": [
+        "(a) TRUE: this is the statement of the theorem itself — for any square matrix A, p(A) = 0 where p(λ) = det(A-λI).",
+        "(b) TRUE: p(A)=0 rearranges to express Aⁿ (n = matrix size) via lower powers, and this can be applied repeatedly for any higher power.",
+        "(c) FALSE: the minimal polynomial divides the characteristic polynomial but need not equal it — e.g. A = I₂ has characteristic polynomial (λ-1)² but minimal polynomial λ-1.",
+        "(d) TRUE: from p(A) = Aⁿ + c_{n-1}A^{n-1} + ... + c_0 I = 0 with c_0 = ±det(A) ≠ 0, isolating I gives I as a combination of powers of A times A, so A⁻¹ is a polynomial in A.",
+        "(e) FALSE: the theorem holds for every square matrix over a field, symmetric or not — the companion-matrix example above (pi-cayley-hamilton-003) is not symmetric."
+      ],
+      "verification_method": "hand_checkable_cayley_hamilton_properties"
+    },
+    {
+      "id": "pi-symmetric-matrices-001",
+      "concept_id": "symmetric-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Which of the following matrices is symmetric?",
+      "options": ["[[1, 2], [2, 3]]", "[[1, 2], [3, 4]]", "[[1, 2], [0, 3]]", "[[0, 1], [-1, 0]]"],
+      "answer_index": 0,
+      "correct_answer": "[[1, 2], [2, 3]]",
+      "solution_steps": [
+        "A matrix A is symmetric iff A = Aᵀ, i.e. the (i,j) entry equals the (j,i) entry for every i,j.",
+        "[[1,2],[2,3]]: the (1,2) entry is 2 and the (2,1) entry is 2 — they match, so this matrix is symmetric.",
+        "[[1,2],[3,4]] has (1,2)=2 ≠ (2,1)=3; [[1,2],[0,3]] has (1,2)=2 ≠ (2,1)=0; [[0,1],[-1,0]] has (1,2)=1 ≠ (2,1)=-1 (this one is skew-symmetric, Aᵀ=-A, not symmetric)."
+      ],
+      "verification_method": "hand_checkable_symmetric_matrix_id"
+    },
+    {
+      "id": "pi-symmetric-matrices-002",
+      "concept_id": "symmetric-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[3, 4], [4, -3]] is symmetric. Find the product of its eigenvalues.",
+      "answer_range": [-25.125, -24.875],
+      "correct_answer": "-25",
+      "solution_steps": [
+        "The product of the eigenvalues of any square matrix equals det(A).",
+        "det(A) = 3·(-3) - 4·4 = -9 - 16 = -25.",
+        "Cross-check via the characteristic polynomial: trace(A)=0, so λ²  - 0·λ + (-25) = 0, i.e. λ² = 25, giving λ = 5, -5. Their product is 5·(-5) = -25 — matches."
+      ],
+      "verification_method": "hand_checkable_symmetric_det_eigs"
+    },
+    {
+      "id": "pi-symmetric-matrices-003",
+      "concept_id": "symmetric-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[2, 2], [2, -1]] is symmetric with eigenvalues 3 and -2, and corresponding eigenvectors (2,1) and (1,-2). What is the dot product of these two eigenvectors?",
+      "options": ["0", "5", "-3", "4"],
+      "answer_index": 0,
+      "correct_answer": "0",
+      "solution_steps": [
+        "Verify the eigenvector for λ=3: (A-3I)v=0 gives [[-1,2],[2,-4]]v=0, i.e. -v1+2v2=0, so v=(2,1) works.",
+        "Verify the eigenvector for λ=-2: (A+2I)v=0 gives [[4,2],[2,1]]v=0, i.e. 4v1+2v2=0, so v=(1,-2) works.",
+        "Dot product: (2,1)·(1,-2) = 2·1 + 1·(-2) = 2 - 2 = 0.",
+        "This is exactly the spectral theorem's guarantee: eigenvectors of a real symmetric matrix belonging to distinct eigenvalues are always orthogonal."
+      ],
+      "verification_method": "hand_checkable_orthogonal_eigenvectors"
+    },
+    {
+      "id": "pi-symmetric-matrices-004",
+      "concept_id": "symmetric-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about real symmetric matrices are true?",
+      "options": [
+        "All eigenvalues of a real symmetric matrix are real",
+        "Eigenvectors of a symmetric matrix corresponding to distinct eigenvalues are orthogonal",
+        "A real symmetric matrix is always positive definite",
+        "A real symmetric matrix is always diagonalizable by an orthogonal matrix",
+        "The determinant of a symmetric matrix is always non-negative"
+      ],
+      "answer_indices": [0, 1, 3],
+      "correct_answer": "Real eigenvalues; orthogonal eigenvectors for distinct eigenvalues; orthogonally diagonalizable",
+      "solution_steps": [
+        "(a) TRUE: for symmetric A, if Av=λv then λ = (v*Av)/(v*v), and v*Av is real for real symmetric A, so λ must be real.",
+        "(b) TRUE: proved via v1ᵀAv2 = λ1 v1ᵀv2 = v1ᵀAᵀv2 = (Av1)ᵀv2 = λ2 v1ᵀv2, so (λ1-λ2)v1ᵀv2=0, and since λ1≠λ2, v1ᵀv2=0.",
+        "(c) FALSE: pi-symmetric-matrices-002's matrix [[3,4],[4,-3]] is symmetric but has eigenvalues 5 and -5, not all positive — not positive definite.",
+        "(d) TRUE: this is the spectral theorem — A = QΛQᵀ with Q orthogonal, for every real symmetric A.",
+        "(e) FALSE: [[3,4],[4,-3]] again is a counterexample — det = -25 < 0."
+      ],
+      "verification_method": "hand_checkable_symmetric_properties"
+    },
+    {
+      "id": "pi-symmetric-matrices-005",
+      "concept_id": "symmetric-matrices",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[2, 1, 1], [1, 2, 1], [1, 1, 2]] is symmetric with eigenvalues 4, 1, and 1. Find the geometric multiplicity of the eigenvalue λ = 1 (i.e., the number of linearly independent eigenvectors for λ = 1).",
+      "answer_range": [1.99, 2.01],
+      "correct_answer": "2",
+      "solution_steps": [
+        "By the spectral theorem, every real symmetric matrix is diagonalizable, so for any eigenvalue, geometric multiplicity always equals algebraic multiplicity.",
+        "λ=1 has algebraic multiplicity 2 (given), so its geometric multiplicity must also be 2.",
+        "Direct verification: A - I = [[1,1,1],[1,1,1],[1,1,1]], which has rank 1 (all rows identical), so nullity = 3 - 1 = 2 — matches.",
+        "Cross-check on the eigenvalues themselves: trace(A) = 2+2+2 = 6 = 4+1+1, and det(A) = 2(4-1)-1(2-1)+1(1-2) = 6-1-1 = 4 = 4·1·1 — both consistent with the given eigenvalues."
+      ],
+      "verification_method": "hand_checkable_spectral_theorem_rank_nullity"
+    },
+    {
+      "id": "pi-spectral-theorem-001",
+      "concept_id": "spectral-theorem",
+      "topic": "linear-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "The spectral theorem states that every real symmetric matrix A can be written as A = QΛQᵀ where...",
+      "options": [
+        "Q is orthogonal (QᵀQ = I) and Λ is diagonal with real eigenvalues",
+        "Q is orthogonal and Λ is upper triangular",
+        "Q is any invertible matrix and Λ is diagonal",
+        "Q is symmetric and Λ is diagonal"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Q is orthogonal and Λ is diagonal with real eigenvalues",
+      "solution_steps": [
+        "The spectral theorem's precise statement: for a real symmetric A, there exists an orthogonal matrix Q (columns are orthonormal eigenvectors) and a diagonal matrix Λ (the real eigenvalues) with A = QΛQᵀ.",
+        "This is a strictly stronger guarantee than ordinary diagonalizability A = PDP⁻¹ — here P=Q can always be chosen orthogonal, so P⁻¹ = Pᵀ is free (no matrix inversion needed), and the diagonal entries are guaranteed real."
+      ],
+      "verification_method": "hand_checkable_spectral_theorem_statement"
+    },
+    {
+      "id": "pi-spectral-theorem-002",
+      "concept_id": "spectral-theorem",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[2, 2], [2, -1]] has eigenvalues 3 and -2 (spectral decomposition applies since A is symmetric). Find trace(A³).",
+      "answer_range": [18.905, 19.095],
+      "correct_answer": "19",
+      "solution_steps": [
+        "By the spectral theorem, A = QΛQᵀ with Λ = diag(3,-2), so A³ = QΛ³Qᵀ has eigenvalues 3³=27 and (-2)³=-8.",
+        "trace(A³) = 27 + (-8) = 19.",
+        "Cross-check by direct multiplication: A² = [[2,2],[2,-1]]² = [[8,2],[2,5]] (trace 13 = 3²+(-2)² = 9+4, matches). A³ = A²·A = [[8,2],[2,5]]·[[2,2],[2,-1]] = [[20,14],[14,-1]], trace = 20 + (-1) = 19 — matches."
+      ],
+      "verification_method": "hand_checkable_spectral_decomposition_power"
+    },
+    {
+      "id": "pi-spectral-theorem-003",
+      "concept_id": "spectral-theorem",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[2, 2], [2, -1]] has eigenvalues 3 and -2. Which of the following, computed via the matrix-function formula f(A) = Q f(Λ) Qᵀ, is NOT well-defined as a real matrix?",
+      "options": ["√A", "A⁻¹", "A²", "eᴬ"],
+      "answer_index": 0,
+      "correct_answer": "√A",
+      "solution_steps": [
+        "The spectral theorem lets f(A) be defined as Qf(Λ)Qᵀ by applying the scalar function f to each eigenvalue.",
+        "√A would require √3 and √(-2); √(-2) is not a real number, so √A is not defined as a real matrix here.",
+        "A⁻¹ needs 1/3 and 1/(-2), both defined since no eigenvalue is 0. A² needs 3² and (-2)², both fine. eᴬ needs e³ and e⁻², both fine for any real eigenvalue.",
+        "This illustrates why the domain of f matters: f(A) is only real-defined when f is defined on every eigenvalue of A."
+      ],
+      "verification_method": "hand_checkable_matrix_function_domain"
+    },
+    {
+      "id": "pi-spectral-theorem-004",
+      "concept_id": "spectral-theorem",
+      "topic": "linear-algebra",
+      "difficulty": 0.78,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A = [[5, 4], [4, -1]] has eigenvalues 7 and -3 with orthonormal eigenvectors (2,1)/√5 and (1,-2)/√5. Using the spectral decomposition A⁻¹ = (1/7)·uuᵀ + (-1/3)·wwᵀ (u=(2,1)/√5, w=(1,-2)/√5), find the (1,1) entry of A⁻¹.",
+      "answer_range": [0.0376, 0.0577],
+      "correct_answer": "1/21",
+      "solution_steps": [
+        "uuᵀ = (1/5)[[4,2],[2,1]], so (1,1) entry of uuᵀ is 4/5. wwᵀ = (1/5)[[1,-2],[-2,4]], so (1,1) entry of wwᵀ is 1/5.",
+        "(1,1) entry of A⁻¹ = (1/7)·(4/5) + (-1/3)·(1/5) = 4/35 - 1/15. Common denominator 105: 4/35 = 12/105, 1/15 = 7/105, so the entry is 12/105 - 7/105 = 5/105 = 1/21.",
+        "Cross-check with the standard 2x2 formula: eigenvalues 7,-3 give trace=4, det=7·(-3)=-21, matching trace(A)=5+(-1)=4 and det(A)=5·(-1)-4·4=-21. A⁻¹ = (1/det)[[-1,-4],[-4,5]] = (1/-21)[[-1,-4],[-4,5]], whose (1,1) entry is -1/-21 = 1/21 — matches.",
+        "1/21 ≈ 0.047619."
+      ],
+      "verification_method": "hand_checkable_spectral_decomposition_inverse"
+    },
+    {
+      "id": "pi-spectral-theorem-005",
+      "concept_id": "spectral-theorem",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about the spectral theorem are true?",
+      "options": [
+        "The spectral theorem applies to every real symmetric matrix",
+        "The matrix Q in A = QΛQᵀ can always be chosen orthogonal",
+        "The spectral theorem guarantees that A is invertible",
+        "f(A) = Qf(Λ)Qᵀ lets matrix functions like eᴬ be computed via scalar function evaluations on the eigenvalues",
+        "The spectral theorem applies equally well to any square matrix, symmetric or not"
+      ],
+      "answer_indices": [0, 1, 3],
+      "correct_answer": "Applies to symmetric matrices; Q orthogonal; enables matrix-function evaluation via scalar functions on eigenvalues",
+      "solution_steps": [
+        "(a) TRUE, (b) TRUE — these are exactly the theorem's statement (see pi-spectral-theorem-001).",
+        "(c) FALSE: A can be symmetric with a zero eigenvalue (e.g. [[1,1],[1,1]], eigenvalues 0 and 2), which is singular — the spectral theorem says nothing about invertibility.",
+        "(d) TRUE: f(A) = Q f(Λ) Qᵀ is exactly the mechanism used in pi-spectral-theorem-003 and pi-spectral-theorem-004.",
+        "(e) FALSE: a general (non-symmetric) real matrix need not even have real eigenvalues, let alone an orthogonal eigenvector basis — the spectral theorem specifically requires symmetry."
+      ],
+      "verification_method": "hand_checkable_spectral_theorem_properties"
+    },
+    {
+      "id": "pi-jordan-normal-form-001",
+      "concept_id": "jordan-normal-form",
+      "topic": "linear-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A = [[3, 1], [0, 3]] has a repeated eigenvalue λ = 3 with geometric multiplicity 1. What is its Jordan normal form?",
+      "options": [
+        "[[3, 1], [0, 3]] — a single 2x2 Jordan block",
+        "[[3, 0], [0, 3]] — diagonal",
+        "[[3, 0], [1, 3]]",
+        "[[3, 1], [1, 3]]"
+      ],
+      "answer_index": 0,
+      "correct_answer": "[[3, 1], [0, 3]] — a single 2x2 Jordan block",
+      "solution_steps": [
+        "A has eigenvalue 3 with algebraic multiplicity 2 (repeated diagonal entry of a triangular matrix) but geometric multiplicity 1 (given), so A is defective — not diagonalizable.",
+        "For a defective eigenvalue with algebraic multiplicity 2 and geometric multiplicity 1, there is exactly one Jordan block of size 2 for that eigenvalue.",
+        "The standard convention places the eigenvalue on the diagonal and 1's on the superdiagonal: J = [[3,1],[0,3]] — which A already is.",
+        "The diagonal option [[3,0],[0,3]] would only be correct if the geometric multiplicity were 2 (fully diagonalizable), which it is not here."
+      ],
+      "verification_method": "hand_checkable_jordan_block_identification"
+    },
+    {
+      "id": "pi-jordan-normal-form-002",
+      "concept_id": "jordan-normal-form",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the Jordan normal form of A = [[3, -1], [1, 5]].",
+      "options": ["[[4, 1], [0, 4]]", "[[4, 0], [0, 4]]", "[[3, 1], [0, 5]]", "[[4, 0], [1, 4]]"],
+      "answer_index": 0,
+      "correct_answer": "[[4, 1], [0, 4]]",
+      "solution_steps": [
+        "trace(A) = 3+5 = 8, det(A) = 3·5 - (-1)·1 = 15+1 = 16. Characteristic equation: λ² - 8λ + 16 = (λ-4)² = 0, giving a repeated eigenvalue λ = 4 (algebraic multiplicity 2).",
+        "Check the geometric multiplicity: A - 4I = [[-1,-1],[1,1]]. Row 2 = -(Row 1), so rank = 1, and nullity = 2-1 = 1.",
+        "Geometric multiplicity (1) < algebraic multiplicity (2), so A is defective — the Jordan form is a single 2x2 block: J = [[4,1],[0,4]].",
+        "[[4,0],[0,4]] would be A's Jordan form only if A were diagonalizable (geometric multiplicity 2), which it isn't."
+      ],
+      "verification_method": "hand_checkable_jordan_normal_form"
+    },
+    {
+      "id": "pi-jordan-normal-form-003",
+      "concept_id": "jordan-normal-form",
+      "topic": "linear-algebra",
+      "difficulty": 0.68,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A = [[2, 0, 0], [0, 2, 0], [1, 1, 5]]. Is A diagonalizable, and what is its Jordan normal form?",
+      "options": [
+        "Yes — the geometric multiplicity of λ=2 is 2 (equal to its algebraic multiplicity); Jordan form is diag(2, 2, 5)",
+        "No — a repeated eigenvalue always forces a 2x2 Jordan block; Jordan form is [[2,1,0],[0,2,0],[0,0,5]]",
+        "No — A is not symmetric, so it cannot be diagonalized",
+        "Yes, but only over the complex numbers"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes — geometric multiplicity of λ=2 is 2; Jordan form is diag(2,2,5)",
+      "solution_steps": [
+        "A is lower triangular, so its eigenvalues are its diagonal entries: 2, 2, 5. λ=2 has algebraic multiplicity 2, λ=5 has multiplicity 1.",
+        "Check the geometric multiplicity of λ=2: A - 2I = [[0,0,0],[0,0,0],[1,1,3]], which has rank 1, so nullity = 3-1 = 2.",
+        "Geometric multiplicity (2) equals algebraic multiplicity (2) for λ=2, and λ=5 is simple, so EVERY eigenvalue is non-defective: A is fully diagonalizable, with Jordan form diag(2,2,5) — all blocks size 1.",
+        "This is the key misconception the wrong options rely on: a repeated eigenvalue does NOT by itself force a nontrivial Jordan block — it is specifically a geometric-multiplicity shortfall that does, and here there is none."
+      ],
+      "verification_method": "hand_checkable_jordan_diagonalizable_repeated_eig"
+    },
+    {
+      "id": "pi-jordan-normal-form-004",
+      "concept_id": "jordan-normal-form",
+      "topic": "linear-algebra",
+      "difficulty": 0.75,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about the Jordan normal form are true?",
+      "options": [
+        "Every square matrix over the complex numbers has a Jordan normal form",
+        "The Jordan normal form of a matrix is unique up to reordering of the Jordan blocks",
+        "A matrix is diagonalizable if and only if all of its Jordan blocks have size 1",
+        "The number of Jordan blocks for an eigenvalue λ equals its algebraic multiplicity",
+        "The size of the largest Jordan block for λ can be found from the multiplicity of (x-λ) as a factor of the minimal polynomial"
+      ],
+      "answer_indices": [0, 1, 2, 4],
+      "correct_answer": "Every complex matrix has a Jordan form (unique up to block order); diagonalizable iff all blocks size 1; largest block size from minimal polynomial multiplicity",
+      "solution_steps": [
+        "(a) TRUE: this is the fundamental theorem of Jordan normal form — every matrix over an algebraically closed field (like ℂ) is similar to a Jordan matrix.",
+        "(b) TRUE: the multiset of Jordan blocks is a complete similarity invariant, unique up to the order the blocks are listed.",
+        "(c) TRUE: a matrix is diagonalizable exactly when every Jordan block is 1x1, i.e. geometric multiplicity equals algebraic multiplicity for every eigenvalue (see pi-jordan-normal-form-003).",
+        "(d) FALSE: the number of Jordan blocks for λ equals its GEOMETRIC multiplicity (dim of the eigenspace), not its algebraic multiplicity — pi-jordan-normal-form-003's A has algebraic multiplicity 2 for λ=2 but that produces two 1x1 blocks, not one block of size 2.",
+        "(e) TRUE: the minimal polynomial's factor (x-λ)^k has k equal to the size of the LARGEST Jordan block for λ, a standard structural fact."
+      ],
+      "verification_method": "hand_checkable_jordan_properties"
+    },
+    {
+      "id": "pi-jordan-normal-form-005",
+      "concept_id": "jordan-normal-form",
+      "topic": "linear-algebra",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[5, 1, 0], [0, 5, 1], [0, 0, 5]] has eigenvalue 5 with algebraic multiplicity 3. Find the geometric multiplicity of λ = 5 (equivalently, the number of Jordan blocks for this eigenvalue).",
+      "answer_range": [0.99, 1.01],
+      "correct_answer": "1",
+      "solution_steps": [
+        "A - 5I = [[0,1,0],[0,0,1],[0,0,0]].",
+        "Row-reduce: rows [0,1,0] and [0,0,1] are independent, and row [0,0,0] contributes nothing, so rank(A-5I) = 2.",
+        "Geometric multiplicity = nullity(A-5I) = 3 - 2 = 1.",
+        "So there is exactly 1 Jordan block for λ=5, and since algebraic multiplicity is 3, that single block must have size 3 — consistent with A already being a single 3x3 Jordan block."
+      ],
+      "verification_method": "hand_checkable_jordan_geometric_multiplicity"
+    }
+  ]
+}

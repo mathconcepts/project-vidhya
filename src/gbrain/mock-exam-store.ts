@@ -10,15 +10,17 @@
  * the same exam id replays the persisted `analysis`.
  */
 
-import pg from 'pg';
+import type pg from 'pg';
+import { getSharedPool } from '../storage/pool';
 
-const { Pool } = pg;
-
-let _pool: pg.Pool | null = null;
+// T16-follow-up (D4 / OV2 #10): was its own dedicated `new Pool({max:5})`
+// — now the one shared pool (src/storage/pool.ts). No session-scoped needs
+// here (no advisory locks, no LISTEN/NOTIFY), so this has no reason to be
+// on the exception list in that file's header comment.
 function getPool(): pg.Pool {
-  if (_pool) return _pool;
-  _pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  return _pool;
+  const pool = getSharedPool();
+  if (!pool) throw new Error('[mock-exam-store] DATABASE_URL not configured');
+  return pool;
 }
 
 export interface MockExamRow {

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generated_at": "2026-08-09T15:34:20.667Z",
-  "total": 82,
+  "total": 97,
   "by_concept": {
     "sequences": {
       "concept_id": "sequences",
@@ -3700,6 +3700,866 @@
       "exam_tip": "**Why it matters in GATE MA:** Shortest-path questions appear in 8–15% of GATE graph problems. GATE asks: \"Apply Dijkstra to [small graph] and find shortest paths\" (NAT: numerical result), or \"Verify that Bellman-Ford handles negative weights\" (theoretical). Questions rarely ask for algorithm pseudocode but often require tracing through steps or understanding when algorithms work/fail.\n\nGATE shortest-path questions split into three types:\n1. **Algorithm application** (Dijkstra/Bellman-Ford on small graphs): Trace the algorithm and report final distances. Usually NAT (numerical output).\n2. **Algorithm selection** (\"Which algorithm for [this problem]?\"): Requires understanding when each algorithm applies (positive vs. negative weights).\n3. **Correctness / theoretical** (\"Under what conditions does algorithm X work?\"): Understand assumptions and failure modes.",
       "generated_at": "2026-08-09T15:34:20.660Z",
       "model": "gate-em-concept-files"
+    },
+    "trace": {
+      "concept_id": "trace",
+      "topic": "linear-algebra",
+      "label": "Trace of a Matrix",
+      "gate_frequency": "high",
+      "canonical_definition": "The trace of a square matrix A is the sum of its diagonal entries, equal to the sum of its eigenvalues (counted with multiplicity).",
+      "deep_explanation": "The trace of a matrix is deceptively simple to compute — just add the diagonal — yet it packs deep structural information. For a square matrix $A \\in \\mathbb{R}^{n\\times n}$:\n$$\\text{tr}(A) = \\sum_{i=1}^n a_{ii}$$\n\nWhat makes trace powerful is that it equals the sum of eigenvalues, $\\text{tr}(A) = \\sum_i \\lambda_i$, even though eigenvalues themselves require solving a polynomial to find. This connection comes from the coefficients of the characteristic polynomial $\\det(A-\\lambda I)$: the coefficient of $\\lambda^{n-1}$ is always $-\\text{tr}(A)$, no matter how complicated $A$ looks.\n\nTrace has clean algebraic properties: it is linear, $\\text{tr}(A+B)=\\text{tr}(A)+\\text{tr}(B)$ and $\\text{tr}(cA)=c\\,\\text{tr}(A)$. Crucially, it is cyclic: $\\text{tr}(AB)=\\text{tr}(BA)$ for any compatible matrices — even though $AB \\neq BA$ in general! This cyclic property is why trace is invariant under similarity transformations: $\\text{tr}(P^{-1}AP) = \\text{tr}(APP^{-1}) = \\text{tr}(A)$. That is a big deal — trace is a property of the *linear transformation* itself, not of the particular basis (coordinate matrix) used to represent it. Determinant shares this basis-independence.\n\nOn GATE, trace is mostly a fast sanity check: after computing eigenvalues, verify their sum matches the diagonal sum. It also shows up as a shortcut — if you are only asked for $\\text{tr}(A^2)$ or a similar quantity, you may not need the full eigen-decomposition.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Find $\\text{tr}(A)$ for $A = \\begin{pmatrix} 3 & 1 \\\\ 2 & 5 \\end{pmatrix}$.",
+          "solution": "The trace is the sum of the diagonal entries: $\\text{tr}(A) = a_{11} + a_{22} = 3 + 5 = 8$.",
+          "answer": "8"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "For $A = \\begin{pmatrix} 4 & 1 \\\\ 2 & 3 \\end{pmatrix}$, verify that $\\text{tr}(A)$ equals the sum of the eigenvalues of $A$.",
+          "solution": "Diagonal sum: $\\text{tr}(A) = 4 + 3 = 7$.\n\nNow find the eigenvalues via the characteristic polynomial:\n$$\\det(A-\\lambda I) = (4-\\lambda)(3-\\lambda) - (1)(2) = \\lambda^2 - 7\\lambda + 10 = 0$$\nFactoring: $(\\lambda-5)(\\lambda-2)=0 \\implies \\lambda = 5, 2$.\n\nSum of eigenvalues: $5+2 = 7$, matching the diagonal sum exactly.",
+          "answer": "$\\text{tr}(A) = 7$, confirmed by both the diagonal sum and the eigenvalue sum ($5+2=7$)."
+        },
+        {
+          "difficulty": "hard",
+          "problem": "For $A = \\begin{pmatrix}1 & 2\\\\3 & 4\\end{pmatrix}$ and $B=\\begin{pmatrix}0&1\\\\1&0\\end{pmatrix}$, compute $\\text{tr}(AB)$ and $\\text{tr}(BA)$, and check whether $\\text{tr}(AB) = \\text{tr}(A)\\cdot\\text{tr}(B)$.",
+          "solution": "Compute $AB$: $\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}\\begin{pmatrix}0&1\\\\1&0\\end{pmatrix} = \\begin{pmatrix}2&1\\\\4&3\\end{pmatrix}$, so $\\text{tr}(AB) = 2+3 = 5$.\n\nCompute $BA$: $\\begin{pmatrix}0&1\\\\1&0\\end{pmatrix}\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix} = \\begin{pmatrix}3&4\\\\1&2\\end{pmatrix}$, so $\\text{tr}(BA) = 3+2 = 5$.\n\nIndeed $\\text{tr}(AB)=\\text{tr}(BA)=5$, confirming the cyclic property. But $\\text{tr}(A)\\cdot\\text{tr}(B) = 5 \\cdot 0 = 0 \\neq 5$, so trace is emphatically NOT multiplicative.",
+          "answer": "$\\text{tr}(AB) = \\text{tr}(BA) = 5$; but $\\text{tr}(A)\\cdot\\text{tr}(B) = 0 \\neq 5$."
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Believing trace(AB) = trace(A)·trace(B).",
+          "corrective": "Trace is not multiplicative. Only two identities hold: trace(A+B)=trace(A)+trace(B) (additive) and trace(AB)=trace(BA) (cyclic) — trace(A)·trace(B) is generally a different number."
+        },
+        {
+          "id": "mc-02",
+          "description": "Confusing trace with determinant.",
+          "corrective": "Trace = sum of eigenvalues; determinant = product of eigenvalues. These are two separate invariants coming from different coefficients of the characteristic polynomial."
+        },
+        {
+          "id": "mc-03",
+          "description": "Trying to compute the trace of a non-square matrix.",
+          "corrective": "Trace is only defined for square matrices — there is no diagonal to sum otherwise."
+        },
+        {
+          "id": "mc-04",
+          "description": "Assuming trace(cA) = c^n · trace(A) for an n×n matrix.",
+          "corrective": "Trace is linear: trace(cA) = c · trace(A), a single power of c, not c^n. (Determinant is the one that scales as c^n.)"
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review the definition of a square matrix and its diagonal entries.",
+        "Review eigenvalues — trace connects directly to their sum via the characteristic polynomial."
+      ],
+      "exam_tip": "GATE trace questions are usually 1-mark speed checks combined with eigenvalue identities (trace = Σλᵢ, det = Πλᵢ). Also watch for similarity-invariance: trace(P⁻¹AP) = trace(A) is a fast way to verify a change-of-basis or diagonalization computation.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "linear-independence": {
+      "concept_id": "linear-independence",
+      "topic": "linear-algebra",
+      "label": "Linear Independence",
+      "gate_frequency": "high",
+      "canonical_definition": "A set of vectors is linearly independent if the only scalar combination summing to the zero vector uses all-zero coefficients; otherwise it is dependent.",
+      "deep_explanation": "A set of vectors $\\{v_1,\\dots,v_k\\}$ is linearly independent when the only way to combine them to get the zero vector is trivially — all coefficients zero:\n$$c_1v_1+c_2v_2+\\cdots+c_kv_k=0 \\implies c_1=c_2=\\cdots=c_k=0$$\nIf some nontrivial combination also equals zero, the set is dependent — meaning at least one vector is redundant, expressible as a combination of the others.\n\nGeometrically, two vectors are dependent exactly when they lie on the same line through the origin (one is a scalar multiple of the other). Three vectors in $\\mathbb{R}^3$ are dependent exactly when they lie in a common plane through the origin — you cannot \"reach\" the third dimension using only those three directions if they are coplanar.\n\nThe practical test: stack the vectors as columns of a matrix $M$. If $M$ is square, independence holds iff $\\det(M)\\neq 0$ iff $M$ is invertible iff $\\text{rank}(M)=n$ (full rank). If $M$ is not square, row-reduce: independence holds iff every column is a pivot column (no free variables).\n\nA useful shortcut: any set of more than $n$ vectors in $\\mathbb{R}^n$ is automatically dependent — there simply are not enough dimensions to keep them all \"new\" directions. GATE often hides this fact inside a longer-looking problem: count the vectors and the ambient dimension before grinding through determinants.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Are the vectors $(2,3)$ and $(4,6)$ linearly independent?",
+          "solution": "Method 1 (ratio check): $\\frac{4}{2}=2$ and $\\frac{6}{3}=2$ — the same ratio, so $(4,6) = 2\\cdot(2,3)$, a scalar multiple.\n\nMethod 2 (determinant): stack as columns, $M=\\begin{pmatrix}2&4\\\\3&6\\end{pmatrix}$, $\\det(M) = 2\\cdot6 - 4\\cdot3 = 12-12=0$.\n\nBoth methods agree: the vectors are dependent.",
+          "answer": "No — they are linearly dependent, since $(4,6) = 2\\cdot(2,3)$."
+        },
+        {
+          "difficulty": "medium",
+          "problem": "For which value of $m$ are the vectors $(1,2,0)$, $(0,1,2)$, $(m,0,1)$ linearly dependent in $\\mathbb{R}^3$?",
+          "solution": "Method 1 (determinant): form $M$ with these as columns and expand along the first row.\n$$\\det\\begin{pmatrix}1&0&m\\\\2&1&0\\\\0&2&1\\end{pmatrix} = 1(1\\cdot1-0\\cdot2) - 0(\\dots) + m(2\\cdot2-1\\cdot0) = 1 + 4m$$\nDependence requires $\\det=0$: $1+4m=0 \\implies m=-\\tfrac14$.\n\nMethod 2 (row reduction, treating the vectors as rows of a matrix):\n$$\\begin{pmatrix}1&2&0\\\\0&1&2\\\\m&0&1\\end{pmatrix} \\xrightarrow{R_3-mR_1} \\begin{pmatrix}1&2&0\\\\0&1&2\\\\0&-2m&1\\end{pmatrix} \\xrightarrow{R_3+2mR_2} \\begin{pmatrix}1&2&0\\\\0&1&2\\\\0&0&1+4m\\end{pmatrix}$$\nRank drops below 3 (dependence) exactly when the last pivot $1+4m=0$, giving $m=-\\tfrac14$ again.",
+          "answer": "$m = -\\dfrac{1}{4}$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "Suppose $v_1,v_2,v_3$ are linearly independent vectors. Determine whether $w_1=v_1-v_2$, $w_2=v_2-v_3$, $w_3=v_3-v_1$ are linearly independent.",
+          "solution": "Method 1 (direct combination): notice $w_1+w_2+w_3 = (v_1-v_2)+(v_2-v_3)+(v_3-v_1) = 0$. This is a nontrivial combination (coefficients $1,1,1$, not all zero) summing to the zero vector, so $\\{w_1,w_2,w_3\\}$ is dependent.\n\nMethod 2 (coefficient-matrix determinant): write each $w_i$ in the $v_1,v_2,v_3$ basis as rows of a matrix $N$:\n$$N = \\begin{pmatrix}1&-1&0\\\\0&1&-1\\\\-1&0&1\\end{pmatrix}, \\qquad \\det(N) = 1(1\\cdot1-(-1)\\cdot0) - (-1)(0\\cdot1-(-1)(-1)) + 0 = 1 + (0-1) = 0$$\n$\\det(N)=0$ confirms the $w_i$'s are dependent (since $v_1,v_2,v_3$ are independent, dependence of the $w_i$'s is equivalent to $\\det(N)=0$).",
+          "answer": "Linearly dependent, since $w_1+w_2+w_3=0$ (a nontrivial zero combination)."
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Judging independence by whether vectors 'look different' instead of checking for scalar multiples or solving the combination equation.",
+          "corrective": "Always test algebraically: set up c1v1+...+ckvk=0 and solve for the c's, or compute a determinant/rank — visual dissimilarity does not guarantee independence."
+        },
+        {
+          "id": "mc-02",
+          "description": "Sign errors during cofactor expansion of a 3×3 determinant when testing independence of three vectors in R³.",
+          "corrective": "Keep the alternating +,−,+ sign pattern explicit for each cofactor, and recompute using row reduction as a second, independent check."
+        },
+        {
+          "id": "mc-03",
+          "description": "Believing n nonzero vectors in R^n are automatically independent.",
+          "corrective": "Nonzero-ness is necessary but far from sufficient — e.g., (1,0) and (2,0) are both nonzero but dependent (parallel). Always verify with determinant/rank."
+        },
+        {
+          "id": "mc-04",
+          "description": "Confusing 'spanning' with 'independence'.",
+          "corrective": "A spanning set covers the whole space but can have redundant (dependent) vectors; an independent set has no redundancy but might not span. A basis needs both."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review determinants (for square coefficient matrices).",
+        "Review row reduction and matrix rank."
+      ],
+      "exam_tip": "GATE often gives exactly n vectors in R^n and asks for independence via det=0, or slips in n+1 vectors (automatically dependent by the dimension-counting shortcut) as a fast trick question.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "null-space-column-space": {
+      "concept_id": "null-space-column-space",
+      "topic": "linear-algebra",
+      "label": "Null Space & Column Space",
+      "gate_frequency": "high",
+      "canonical_definition": "The null space of A is {x : Ax = 0}; the column space is the span of A's columns — the set of all Ax.",
+      "deep_explanation": "For a matrix $A \\in \\mathbb{R}^{m\\times n}$, two complementary subspaces describe everything about the linear map $x\\mapsto Ax$.\n\nThe **null space** (kernel) lives in the *domain* $\\mathbb{R}^n$:\n$$\\text{null}(A) = \\{x \\in \\mathbb{R}^n : Ax = 0\\}$$\nIt captures every input direction that gets \"crushed\" to zero — directions the transformation is blind to.\n\nThe **column space** (range) lives in the *codomain* $\\mathbb{R}^m$:\n$$\\text{col}(A) = \\{Ax : x \\in \\mathbb{R}^n\\} = \\text{span of the columns of } A$$\nIt is everything the transformation can actually output.\n\nThese two subspaces are linked by the **Rank-Nullity Theorem**:\n$$\\text{rank}(A) + \\text{nullity}(A) = n$$\nwhere $\\text{rank}(A) = \\dim(\\text{col}(A))$ and $\\text{nullity}(A)=\\dim(\\text{null}(A))$. Intuitively: every one of the $n$ input dimensions either survives as an independent output direction (contributing to rank) or gets absorbed into the null space.\n\nPractically, row-reduce $A$ to RREF. Pivot columns of the *original* $A$ (not the RREF!) form a basis for the column space. Free variables in the RREF give a basis for the null space — one basis vector per free variable, found by setting that free variable to 1 and the rest to 0.\n\nGATE frequently tests this relationship in reverse: given a rank, find the nullity, or given a subspace dimension, deduce whether the map can be onto its codomain.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Find the null space of $A = \\begin{pmatrix}2&4\\\\1&2\\end{pmatrix}$.",
+          "solution": "Row 2 is $\\tfrac12$ of Row 1, so $A$ has rank 1. Solving $Ax=0$: $2x_1+4x_2=0 \\implies x_1=-2x_2$, and the second row gives the same equation.\n\nSo $\\text{null}(A) = \\text{span}\\{(-2,1)\\}$, a 1-dimensional line.\n\nCheck via rank-nullity: rank$(A)=1$, $n=2$ columns, so nullity $=2-1=1$ — matches.",
+          "answer": "$\\text{null}(A) = \\text{span}\\{(-2,1)\\}$, dimension 1."
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Find a basis for the column space of $A = \\begin{pmatrix}1&2&3\\\\2&4&7\\\\1&2&4\\end{pmatrix}$.",
+          "solution": "Method 1 (direct dependency check): columns $c_1=(1,2,1)$, $c_2=(2,4,2)=2c_1$ (dependent on $c_1$), $c_3=(3,7,4)$. Since $c_3$ is not a scalar multiple of $c_1$ (ratios $3/1=3$ vs $7/2=3.5$ differ), $\\{c_1,c_3\\}$ is independent, so it spans the column space.\n\nMethod 2 (RREF pivot columns): row-reduce $A$: $R_2-2R_1 \\to (0,0,1)$; $R_3-R_1\\to(0,0,1)$; $R_3-R_2\\to(0,0,0)$. Pivots land in columns 1 and 3 of the RREF, so the pivot columns of the ORIGINAL $A$ are $c_1=(1,2,1)$ and $c_3=(3,7,4)$ — matching Method 1.",
+          "answer": "$\\{(1,2,1),\\,(3,7,4)\\}$, so $\\text{rank}(A)=2$."
+        },
+        {
+          "difficulty": "hard",
+          "problem": "A $4\\times6$ matrix $A$ has rank 3. Find $\\dim(\\text{null}(A))$, and determine whether $\\text{col}(A)$ can equal all of $\\mathbb{R}^4$.",
+          "solution": "Method 1 (rank-nullity theorem): nullity $= n - \\text{rank} = 6-3 = 3$.\n\nMethod 2 (free-variable count): in an RREF with 3 pivot columns out of 6, there are $6-3=3$ free variables — each contributes one basis vector to the null space, so nullity $=3$ again, matching.\n\nFor the column space: $\\dim(\\text{col}(A)) = \\text{rank}(A) = 3 < 4 = \\dim(\\mathbb{R}^4)$, so $\\text{col}(A)$ is a proper subspace of $\\mathbb{R}^4$ — it cannot equal all of $\\mathbb{R}^4$ (the map is not onto).",
+          "answer": "Nullity $=3$; the column space cannot equal $\\mathbb{R}^4$ since its dimension (3) is less than 4."
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Confusing null space (a subspace of the domain R^n) with column space (a subspace of the codomain R^m).",
+          "corrective": "Null space lives in the space x comes from; column space lives in the space Ax lands in. For non-square A these are different-dimensional spaces entirely."
+        },
+        {
+          "id": "mc-02",
+          "description": "Believing null(A) = {0} means A is invertible.",
+          "corrective": "null(A)={0} only means A is injective (one-to-one). Invertibility additionally requires A to be square AND full rank (equivalently, also onto)."
+        },
+        {
+          "id": "mc-03",
+          "description": "Mixing up which dimension (m or n) rank-nullity uses.",
+          "corrective": "Rank-nullity always uses n, the number of COLUMNS (domain dimension): rank(A) + nullity(A) = n, regardless of how many rows A has."
+        },
+        {
+          "id": "mc-04",
+          "description": "Assuming the column space of a non-square matrix can always equal the full codomain R^m.",
+          "corrective": "Column space dimension equals rank(A), which is capped at min(m,n) — if rank(A) < m, the column space is a strict subspace of R^m."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review rank and row reduction (RREF).",
+        "Review linear independence and span."
+      ],
+      "exam_tip": "GATE frequently pairs a nullity computation with rank via the rank-nullity theorem, and tests recognizing that null-space dimension equals the number of free variables in the RREF.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "symmetric-matrices": {
+      "concept_id": "symmetric-matrices",
+      "topic": "linear-algebra",
+      "label": "Symmetric Matrices",
+      "gate_frequency": "high",
+      "canonical_definition": "A symmetric matrix satisfies A = Aᵀ; its eigenvalues are always real and eigenvectors for distinct eigenvalues are orthogonal.",
+      "deep_explanation": "A matrix $A$ is symmetric if $A=A^T$, meaning $a_{ij}=a_{ji}$ for every pair of indices. This single algebraic condition has powerful consequences that GATE tests relentlessly.\n\n**Real eigenvalues:** unlike a general real matrix (which can have complex eigenvalues), a symmetric matrix's eigenvalues are always real. This follows from a short proof combining $\\bar v^TAv=\\bar v^TA^Tv$ with conjugation of the eigenvalue equation $Av=\\lambda v$.\n\n**Orthogonal eigenvectors:** eigenvectors corresponding to *distinct* eigenvalues of a symmetric matrix are automatically orthogonal — no extra work needed. If $Av_1=\\lambda_1v_1$ and $Av_2=\\lambda_2v_2$ with $\\lambda_1\\neq\\lambda_2$, then $v_1^Tv_2=0$ falls out directly from $v_1^TAv_2=v_2^TAv_1$ (using symmetry) combined with $\\lambda_1\\neq\\lambda_2$.\n\n**No defectiveness:** for symmetric matrices, geometric multiplicity always equals algebraic multiplicity for every eigenvalue. This means symmetric matrices are always diagonalizable, and in fact orthogonally diagonalizable — exactly what the Spectral Theorem formalizes as $A=Q\\Lambda Q^T$.\n\nThese properties make symmetric matrices the best-behaved matrices in linear algebra, and they show up everywhere: covariance matrices, the Hessian in optimization, adjacency matrices of undirected graphs, and Gram matrices $A^TA$.\n\nRecognize special symmetric structures — like $A=aI+bJ$ (identity plus an all-ones matrix) — to shortcut eigenvalue computation via known building-block eigenvalues instead of grinding through a full characteristic polynomial.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Is $A=\\begin{pmatrix}5&-2\\\\-2&5\\end{pmatrix}$ symmetric, and what does that guarantee about its eigenvalues?",
+          "solution": "$A^T=A$ since $a_{12}=a_{21}=-2$, so $A$ is symmetric — guaranteeing real eigenvalues.\n\nVerify directly: $\\det(A-\\lambda I) = (5-\\lambda)^2-4=0 \\implies 5-\\lambda=\\pm2 \\implies \\lambda=3,7$. Both are real, confirming the guarantee.",
+          "answer": "Yes, symmetric; eigenvalues are guaranteed real, and indeed $\\lambda=3,7$."
+        },
+        {
+          "difficulty": "medium",
+          "problem": "For symmetric $A=\\begin{pmatrix}1&2\\\\2&4\\end{pmatrix}$, verify that eigenvectors for its two distinct eigenvalues are orthogonal.",
+          "solution": "Characteristic polynomial: $(1-\\lambda)(4-\\lambda)-4=\\lambda^2-5\\lambda=0 \\implies \\lambda=0,5$.\n\nFor $\\lambda=0$: $(A)v=0 \\implies v_1+2v_2=0 \\implies v=(2,-1)$.\nFor $\\lambda=5$: $(A-5I)v=0 \\implies -4v_1+2v_2=0 \\implies v_2=2v_1 \\implies v=(1,2)$.\n\nDot product check: $(2,-1)\\cdot(1,2) = 2-2 = 0$ — orthogonal, as guaranteed.\n\nCross-check the eigenvalues via trace/det: $\\text{tr}(A)=1+4=5=0+5$ ✓, $\\det(A)=4-4=0=0\\cdot5$ ✓.",
+          "answer": "Orthogonal: $(2,-1)\\cdot(1,2)=0$."
+        },
+        {
+          "difficulty": "hard",
+          "problem": "$A=\\begin{pmatrix}4&1&1\\\\1&4&1\\\\1&1&4\\end{pmatrix}$ is symmetric. Using $A=3I+J$ (where $J$ is the $3\\times3$ all-ones matrix, with known eigenvalues $3$ once and $0$ twice), find all three eigenvalues of $A$ without expanding the full characteristic polynomial.",
+          "solution": "$J$'s eigenvalues are $3$ (for eigenvector $(1,1,1)$) and $0,0$ (for the plane orthogonal to $(1,1,1)$). Since $A=3I+J$, each eigenvalue of $A$ is $3+(\\text{eigenvalue of }J)$: $3+3=6$, and $3+0=3$ (twice). So $A$'s eigenvalues are $6,3,3$.\n\nVerify via trace: $\\text{tr}(A)=4+4+4=12=6+3+3$ ✓.\n\nVerify via determinant (direct cofactor expansion): $\\det(A)=4(16-1)-1(4-1)+1(1-4)=60-3-3=54$. And $6\\cdot3\\cdot3=54$ ✓ — matches.",
+          "answer": "$\\lambda = 6,\\,3,\\,3$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Believing all real matrices have real eigenvalues.",
+          "corrective": "Only symmetric (or more generally, Hermitian) matrices are guaranteed real eigenvalues. A general real matrix can have complex-conjugate eigenvalue pairs, e.g. a rotation matrix."
+        },
+        {
+          "id": "mc-02",
+          "description": "Assuming repeated eigenvalues of a symmetric matrix might not have enough independent eigenvectors.",
+          "corrective": "For symmetric matrices, geometric multiplicity always equals algebraic multiplicity — you can always find a full orthogonal eigenbasis, even for repeated eigenvalues."
+        },
+        {
+          "id": "mc-03",
+          "description": "Checking symmetry by comparing only a few entries instead of every pair a_ij, a_ji.",
+          "corrective": "Symmetry requires a_ij = a_ji for EVERY pair i≠j — check the whole matrix, not just a couple of entries that happen to look symmetric."
+        },
+        {
+          "id": "mc-04",
+          "description": "Assuming orthogonal eigenvectors alone implies the matrix must be symmetric.",
+          "corrective": "Symmetric ⇒ orthogonal eigenvectors (for distinct eigenvalues), but the converse used loosely is unsafe — treat symmetry as the property you check directly, not something you infer from eigenvector orthogonality alone."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review eigenvalues and eigenvectors.",
+        "Review the definition of an orthogonal set of vectors (dot product = 0)."
+      ],
+      "exam_tip": "GATE loves symmetric matrices because they guarantee real eigenvalues and orthogonal eigenvectors — recognizing special structure (e.g., aI+bJ, or a repeated off-diagonal pattern) lets you shortcut eigenvalue computation via trace/determinant instead of the full characteristic polynomial.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "inner-product-spaces": {
+      "concept_id": "inner-product-spaces",
+      "topic": "linear-algebra",
+      "label": "Inner Product Spaces",
+      "gate_frequency": "medium",
+      "canonical_definition": "An inner product ⟨·,·⟩ is a bilinear, symmetric, positive-definite function on vectors satisfying ⟨u,u⟩ ≥ 0 with equality iff u = 0, inducing a norm ‖u‖ = √⟨u,u⟩.",
+      "deep_explanation": "An inner product $\\langle\\cdot,\\cdot\\rangle$ generalizes the familiar dot product to a broader class of vector spaces, while keeping three defining properties: symmetry $\\langle u,v\\rangle=\\langle v,u\\rangle$, bilinearity (linear in each argument), and positive-definiteness $\\langle u,u\\rangle\\geq0$ with equality only when $u=0$.\n\nFrom an inner product you get a **norm** for free: $\\|u\\|=\\sqrt{\\langle u,u\\rangle}$, measuring vector \"length.\" On $\\mathbb{R}^n$ with the standard dot product, $\\langle u,v\\rangle=\\sum_i u_iv_i$ and $\\|u\\|=\\sqrt{\\sum_i u_i^2}$, matching ordinary Euclidean geometry.\n\nThe single most important inequality here is **Cauchy-Schwarz**:\n$$|\\langle u,v\\rangle| \\le \\|u\\|\\,\\|v\\|$$\nwith equality exactly when $u$ and $v$ are parallel (scalar multiples). This inequality is what makes \"angle\" well-defined in any inner product space, since it guarantees\n$$\\cos\\theta = \\frac{\\langle u,v\\rangle}{\\|u\\|\\|v\\|} \\in [-1,1]$$\nalways makes sense.\n\nOrthogonality — $\\langle u,v\\rangle=0$ — generalizes perpendicularity, and it obeys the **Pythagorean identity**: if $u\\perp v$ then $\\|u+v\\|^2=\\|u\\|^2+\\|v\\|^2$. Conversely, observing this identity for two vectors *proves* they are orthogonal (in real inner product spaces) — a handy diagnostic GATE likes to hide inside a longer question.\n\nInner product spaces are the foundation Gram-Schmidt, projections, least squares, and the spectral theorem all build on — orthogonality is the recurring theme throughout linear algebra's most useful results.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "For $u=(2,1,2)$ and $v=(1,3,-2)$ in $\\mathbb{R}^3$ with the standard dot product, compute $\\langle u,v\\rangle$ and $\\|u\\|$.",
+          "solution": "$\\langle u,v\\rangle = 2\\cdot1+1\\cdot3+2\\cdot(-2)=2+3-4=1$.\n\n$\\|u\\|=\\sqrt{2^2+1^2+2^2}=\\sqrt{4+1+4}=\\sqrt9=3$.\n\nRecheck component by component: $2\\cdot1=2$, $1\\cdot3=3$, $2\\cdot(-2)=-4$; sum $=1$ ✓. Norm: $4+1+4=9$, $\\sqrt9=3$ ✓.",
+          "answer": "$\\langle u,v\\rangle = 1$, $\\|u\\|=3$."
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Verify the Cauchy-Schwarz inequality $|\\langle u,v\\rangle|\\le\\|u\\|\\|v\\|$ for $u=(1,2)$ and $v=(2,-1)$.",
+          "solution": "$\\langle u,v\\rangle = 1\\cdot2+2\\cdot(-1)=2-2=0$, so $|\\langle u,v\\rangle|=0$.\n\n$\\|u\\|=\\sqrt5$, $\\|v\\|=\\sqrt5$, so $\\|u\\|\\|v\\|=5$.\n\n$0\\le5$ — the inequality holds.\n\nCross-check via the angle formula: $\\cos\\theta = \\langle u,v\\rangle/(\\|u\\|\\|v\\|) = 0/5=0 \\implies \\theta=90°$, confirming $u\\perp v$, consistent with $\\langle u,v\\rangle=0$.",
+          "answer": "Holds: $0 \\le 5$ (in fact $u\\perp v$)."
+        },
+        {
+          "difficulty": "hard",
+          "problem": "For $u,v$ with $\\|u\\|=3$, $\\|v\\|=4$, and the angle between them $60°$, compute $\\|u+v\\|$.",
+          "solution": "Method 1 (bilinear expansion): $\\|u+v\\|^2=\\|u\\|^2+2\\langle u,v\\rangle+\\|v\\|^2$, where $\\langle u,v\\rangle=\\|u\\|\\|v\\|\\cos\\theta=3\\cdot4\\cdot\\tfrac12=6$.\n$$\\|u+v\\|^2 = 9+2(6)+16 = 37 \\implies \\|u+v\\|=\\sqrt{37}$$\n\nMethod 2 (explicit coordinates): place $u=(3,0)$ and $v=(4\\cos60°,4\\sin60°)=(2,2\\sqrt3)$. Then $u+v=(5,2\\sqrt3)$, so $\\|u+v\\|^2=25+12=37$, again $\\|u+v\\|=\\sqrt{37}$.",
+          "answer": "$\\|u+v\\| = \\sqrt{37}$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Assuming 'inner product' always means the standard dot product.",
+          "corrective": "The dot product is the standard inner product on R^n, but the definition is more general (weighted or function-space inner products exist) — on GATE MA it is almost always the dot product, but know the axioms it must satisfy."
+        },
+        {
+          "id": "mc-02",
+          "description": "Forgetting the norm is √⟨u,u⟩, dropping the square root.",
+          "corrective": "‖u‖ = √⟨u,u⟩, not ⟨u,u⟩ itself — ⟨u,u⟩ is the squared norm."
+        },
+        {
+          "id": "mc-03",
+          "description": "Sign errors computing ⟨u,v⟩ when components are negative.",
+          "corrective": "Multiply component-wise carefully and track signs; recompute term by term as an independent check."
+        },
+        {
+          "id": "mc-04",
+          "description": "Treating Cauchy-Schwarz as an equality rather than an inequality.",
+          "corrective": "Cauchy-Schwarz is |⟨u,v⟩| ≤ ‖u‖‖v‖, with equality only when u,v are parallel — most vector pairs satisfy it strictly."
+        },
+        {
+          "id": "mc-05",
+          "description": "Confusing ⟨u,v⟩=0 (orthogonality) with ‖u‖=0 or ‖v‖=0 (a zero vector).",
+          "corrective": "Orthogonality says nothing about vector length — two nonzero vectors can easily have zero inner product."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review dot product and vector norms.",
+        "Review basic trigonometry (cosine of standard angles)."
+      ],
+      "exam_tip": "GATE tests Cauchy-Schwarz and the angle formula cosθ = ⟨u,v⟩/(‖u‖‖v‖) most often as NAT/MCQ; also watch for ‖u+v‖²=‖u‖²+‖v‖², which signals orthogonality (the Pythagorean identity in inner product spaces).",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "gram-schmidt": {
+      "concept_id": "gram-schmidt",
+      "topic": "linear-algebra",
+      "label": "Gram-Schmidt Process",
+      "gate_frequency": "medium",
+      "canonical_definition": "The Gram-Schmidt process converts a linearly independent set into an orthogonal (then orthonormal) set spanning the same subspace, by successively subtracting projections onto prior vectors.",
+      "deep_explanation": "Given a linearly independent set $\\{v_1,\\dots,v_k\\}$, Gram-Schmidt builds an orthogonal set $\\{u_1,\\dots,u_k\\}$ spanning the *same* subspace, one vector at a time, by peeling off the \"already-covered\" directions:\n$$u_1 = v_1, \\qquad u_k = v_k - \\sum_{j=1}^{k-1}\\text{proj}_{u_j}(v_k)$$\nwhere the projection of $v$ onto $u$ is\n$$\\text{proj}_u(v) = \\frac{\\langle v,u\\rangle}{\\langle u,u\\rangle}\\,u$$\nEach new $u_k$ is exactly $v_k$ with every component along the previously-built $u_1,\\dots,u_{k-1}$ subtracted out — what remains is, by construction, orthogonal to all of them. Divide each $u_k$ by its norm to get an orthonormal basis $e_k=u_k/\\|u_k\\|$.\n\nThe subtle point that trips students up: you must project onto the already-*orthogonalized* $u_j$'s, not the original $v_j$'s. Using $v_j$ instead is a different (and error-prone) construction — the classical algorithm's correctness relies on each $u_j$ already being orthogonal to all earlier vectors.\n\nWhy this matters: Gram-Schmidt is the constructive proof that every finite-dimensional inner product space has an orthonormal basis, and it is the algorithm behind the QR decomposition ($A=QR$, with $Q$'s columns the orthonormalized vectors and $R$ upper triangular holding the projection coefficients).\n\nOn GATE, expect multi-step NAT chains: find $u_2$, then normalize to get $e_2$, then find $u_3$. Keep exact fractions throughout — rounding early compounds errors — and use the final orthogonality dot products as a free correctness check.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Apply Gram-Schmidt to $v_1=(3,4)$, $v_2=(1,0)$ in $\\mathbb{R}^2$. Using $u_1=v_1$, find $u_2$ (before normalizing).",
+          "solution": "$u_1=(3,4)$, $u_1\\cdot u_1 = 9+16=25$.\n\n$\\text{proj}_{u_1}(v_2) = \\dfrac{v_2\\cdot u_1}{u_1\\cdot u_1}u_1 = \\dfrac{3\\cdot1+4\\cdot0}{25}(3,4) = \\dfrac{3}{25}(3,4) = \\left(\\tfrac{9}{25},\\tfrac{12}{25}\\right)$.\n\n$u_2 = v_2 - \\text{proj}_{u_1}(v_2) = \\left(1-\\tfrac9{25},\\,0-\\tfrac{12}{25}\\right) = \\left(\\tfrac{16}{25},-\\tfrac{12}{25}\\right)$.\n\nCheck: $u_1\\cdot u_2 = 3\\cdot\\tfrac{16}{25}+4\\cdot\\left(-\\tfrac{12}{25}\\right) = \\tfrac{48}{25}-\\tfrac{48}{25}=0$ — orthogonal, as required.",
+          "answer": "$u_2 = \\left(\\dfrac{16}{25}, -\\dfrac{12}{25}\\right)$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Continuing from $u_1=(3,4)$, $u_2=\\left(\\tfrac{16}{25},-\\tfrac{12}{25}\\right)$, find the unit vector $e_2=u_2/\\|u_2\\|$.",
+          "solution": "$\\|u_2\\| = \\sqrt{\\left(\\tfrac{16}{25}\\right)^2+\\left(\\tfrac{12}{25}\\right)^2} = \\dfrac{\\sqrt{256+144}}{25}=\\dfrac{\\sqrt{400}}{25}=\\dfrac{20}{25}=\\dfrac45$.\n\n$e_2 = u_2 / \\tfrac45 = \\left(\\tfrac{16}{25}\\cdot\\tfrac54, -\\tfrac{12}{25}\\cdot\\tfrac54\\right) = \\left(\\tfrac45,-\\tfrac35\\right)$.\n\nCross-check via simplification: $u_2 = \\tfrac{4}{25}(4,-3)$, and $(4,-3)$ has norm $5$, so the unit vector is $(4,-3)/5=(4/5,-3/5)$ — matches. Also $\\left(\\tfrac45\\right)^2+\\left(\\tfrac35\\right)^2=\\tfrac{16}{25}+\\tfrac9{25}=1$ ✓.",
+          "answer": "$e_2 = \\left(\\dfrac45, -\\dfrac35\\right)$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "$v_1=(1,1,1)$, $v_2=(0,1,1)$, $v_3=(0,0,1)$ in $\\mathbb{R}^3$. Apply Gram-Schmidt with $u_1=v_1$; find $\\|u_3\\|$ (norm of the third orthogonal vector, before normalizing).",
+          "solution": "$u_1=(1,1,1)$, $u_1\\cdot u_1=3$.\n\n$u_2 = v_2 - \\tfrac{v_2\\cdot u_1}{3}u_1 = (0,1,1) - \\tfrac{2}{3}(1,1,1) = \\left(-\\tfrac23,\\tfrac13,\\tfrac13\\right)$, with $u_2\\cdot u_2 = \\tfrac49+\\tfrac19+\\tfrac19=\\tfrac69=\\tfrac23$.\n\n$u_3 = v_3 - \\tfrac{v_3\\cdot u_1}{3}u_1 - \\tfrac{v_3\\cdot u_2}{2/3}u_2$. Here $v_3\\cdot u_1=1$, giving coefficient $\\tfrac13$; $v_3\\cdot u_2=\\tfrac13$, giving coefficient $\\tfrac{1/3}{2/3}=\\tfrac12$.\n\n$u_3 = (0,0,1) - \\tfrac13(1,1,1) - \\tfrac12\\left(-\\tfrac23,\\tfrac13,\\tfrac13\\right) = \\left(0,-\\tfrac12,\\tfrac12\\right)$ after simplifying each coordinate.\n\n$\\|u_3\\| = \\sqrt{0+\\tfrac14+\\tfrac14}=\\sqrt{\\tfrac12}=\\tfrac1{\\sqrt2}$.\n\nIndependent check (orthogonality): $u_3\\cdot u_1 = -\\tfrac12+\\tfrac12=0$ ✓; $u_3\\cdot u_2 = -\\tfrac12\\cdot\\tfrac13+\\tfrac12\\cdot\\tfrac13=0$ ✓ — both confirm correctness.",
+          "answer": "$\\|u_3\\| = \\dfrac{1}{\\sqrt2} = \\dfrac{\\sqrt2}{2} \\approx 0.7071$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Subtracting the projection onto only the FIRST previous vector, forgetting to subtract projections onto every earlier u_j.",
+          "corrective": "u_k must subtract proj onto EVERY previous orthogonalized vector u_1,...,u_{k-1}, not just u_1."
+        },
+        {
+          "id": "mc-02",
+          "description": "Projecting v_k onto the original v_j's instead of the already-orthogonalized u_j's.",
+          "corrective": "Classical Gram-Schmidt always projects onto the u_j's built so far — they are already mutually orthogonal, which is what makes the subtraction work cleanly."
+        },
+        {
+          "id": "mc-03",
+          "description": "Forgetting to normalize (divide by the norm) when an orthoNORMAL (not just orthogonal) basis is requested.",
+          "corrective": "Orthogonal means only perpendicular; orthonormal additionally requires unit length — read the question carefully for which is asked."
+        },
+        {
+          "id": "mc-04",
+          "description": "Flipping the projection formula, e.g. using ⟨u,v⟩/⟨v,v⟩ instead of ⟨v,u⟩/⟨u,u⟩.",
+          "corrective": "proj_u(v) = (⟨v,u⟩/⟨u,u⟩)u — the denominator is always the norm-squared of the vector you're projecting ONTO."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review inner products and projections (proj_u v = (v·u/u·u)u).",
+        "Review orthogonality (dot product = 0)."
+      ],
+      "exam_tip": "GATE Gram-Schmidt problems are usually multi-step NAT chains (find u2, then normalize, then find u3) — carry exact fractions through without rounding early, and always sanity-check orthogonality of the final vectors via a dot product.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "change-of-basis": {
+      "concept_id": "change-of-basis",
+      "topic": "linear-algebra",
+      "label": "Change of Basis",
+      "gate_frequency": "medium",
+      "canonical_definition": "A change-of-basis matrix P converts coordinate vectors between two bases; if columns of P are the new basis vectors expressed in the old basis, then [v]_old = P[v]_new.",
+      "deep_explanation": "Every vector has infinitely many coordinate representations, depending on which basis you measure it against. If $B=\\{b_1,\\dots,b_n\\}$ is a basis for $\\mathbb{R}^n$, the **change-of-basis matrix** $P$ has the $b_i$'s as its columns, and it converts $B$-coordinates back to standard coordinates:\n$$v = P\\,[v]_B \\quad\\Longleftrightarrow\\quad [v]_B = P^{-1}v$$\nThis makes intuitive sense: applying $P$ to the standard basis vector $e_i$ should recover $b_i$ itself — and indeed $Pe_i$ is just $P$'s $i$-th column, $b_i$.\n\nFor linear transformations, the picture is richer: if $T$ has matrix $A$ in the standard basis, its matrix in basis $B$ is\n$$[T]_B = P^{-1}AP$$\nThis is a **similarity transformation**, and it is the central idea behind diagonalization — choosing $B$ to be a basis of eigenvectors makes $[T]_B$ diagonal.\n\nSimilarity transformations preserve certain invariants regardless of which basis you are in: trace, determinant, eigenvalues, and rank are identical for $A$ and $P^{-1}AP$. These invariants are excellent sanity checks — after computing $P^{-1}AP$ by hand, verify its trace and determinant match $A$'s before trusting the rest of the entries.\n\nGATE tests both directions of the coordinate conversion and, more conceptually, asks which quantities survive a change of basis and which (like the individual matrix entries) do not.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "In $\\mathbb{R}^2$, basis $B=\\{(1,2),(2,3)\\}$. Vector $v=(5,8)$ in the standard basis. Find the $B$-coordinates $(c_1,c_2)$ such that $v=c_1(1,2)+c_2(2,3)$.",
+          "solution": "Method 1 (substitution): $c_1+2c_2=5$ and $2c_1+3c_2=8$. From the first, $c_1=5-2c_2$; substituting: $2(5-2c_2)+3c_2=8 \\implies 10-c_2=8 \\implies c_2=2$, so $c_1=1$.\n\nMethod 2 (matrix inverse): $P=\\begin{pmatrix}1&2\\\\2&3\\end{pmatrix}$, $\\det P=3-4=-1$, so $P^{-1}=\\begin{pmatrix}-3&2\\\\2&-1\\end{pmatrix}$. Then $[v]_B = P^{-1}v = \\begin{pmatrix}-3&2\\\\2&-1\\end{pmatrix}\\begin{pmatrix}5\\\\8\\end{pmatrix}=\\begin{pmatrix}-15+16\\\\10-8\\end{pmatrix}=\\begin{pmatrix}1\\\\2\\end{pmatrix}$ — matches.",
+          "answer": "$(c_1,c_2) = (1,2)$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "For basis $B=\\{(1,2),(2,3)\\}$ of $\\mathbb{R}^2$, find the change-of-basis matrix $P$ such that $[v]_{\\text{standard}} = P[v]_B$.",
+          "solution": "$P$ is the matrix whose columns are the basis vectors: $P=\\begin{pmatrix}1&2\\\\2&3\\end{pmatrix}$.\n\nVerify by direct application: $P(1,0)^T = (1,2)^T$, the first basis vector ✓. $P(0,1)^T=(2,3)^T$, the second basis vector ✓.",
+          "answer": "$P = \\begin{pmatrix}1&2\\\\2&3\\end{pmatrix}$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "A linear transformation $T$ has matrix $A=\\begin{pmatrix}3&1\\\\0&2\\end{pmatrix}$ in the standard basis. In the basis $B=\\{(1,2),(2,3)\\}$, find $[T]_B = P^{-1}AP$.",
+          "solution": "Using $P=\\begin{pmatrix}1&2\\\\2&3\\end{pmatrix}$, $P^{-1}=\\begin{pmatrix}-3&2\\\\2&-1\\end{pmatrix}$ (from the earlier example):\n\n$AP = \\begin{pmatrix}3&1\\\\0&2\\end{pmatrix}\\begin{pmatrix}1&2\\\\2&3\\end{pmatrix} = \\begin{pmatrix}5&9\\\\4&6\\end{pmatrix}$.\n\n$P^{-1}(AP) = \\begin{pmatrix}-3&2\\\\2&-1\\end{pmatrix}\\begin{pmatrix}5&9\\\\4&6\\end{pmatrix} = \\begin{pmatrix}-15+8&-27+12\\\\10-4&18-6\\end{pmatrix} = \\begin{pmatrix}-7&-15\\\\6&12\\end{pmatrix}$.\n\nVerify invariants: $\\text{tr}(A)=3+2=5$; $\\text{tr}([T]_B)=-7+12=5$ ✓. $\\det(A)=6-0=6$; $\\det([T]_B)=(-7)(12)-(-15)(6)=-84+90=6$ ✓. Both match, confirming correctness.",
+          "answer": "$[T]_B = \\begin{pmatrix}-7&-15\\\\6&12\\end{pmatrix}$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Using P instead of P⁻¹ (or vice versa) when converting between coordinate systems.",
+          "corrective": "v = P[v]_B goes FROM B-coordinates TO standard; [v]_B = P⁻¹v goes the other way. Write down which direction you need before picking P or P⁻¹."
+        },
+        {
+          "id": "mc-02",
+          "description": "Believing the linear transformation itself changes under a change of basis.",
+          "corrective": "The transformation T is the same map; only its MATRIX REPRESENTATION changes. Trace, determinant, and eigenvalues (similarity invariants) stay fixed."
+        },
+        {
+          "id": "mc-03",
+          "description": "Building P with basis vectors as rows instead of columns.",
+          "corrective": "By convention, the change-of-basis matrix has each new basis vector as a COLUMN, expressed in the old basis's coordinates."
+        },
+        {
+          "id": "mc-04",
+          "description": "Arithmetic slips inverting a 2×2 matrix (forgetting to divide by the determinant).",
+          "corrective": "For [[a,b],[c,d]], the inverse is (1/(ad-bc))·[[d,-b],[-c,a]] — always divide by the determinant, and swap/negate as shown."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review matrix inverses (2×2 shortcut: [[a,b],[c,d]]⁻¹ = 1/(ad-bc)·[[d,-b],[-c,a]]).",
+        "Review basis and linear independence."
+      ],
+      "exam_tip": "GATE tests both directions — coordinates→standard and standard→coordinates — and often checks that trace/determinant/eigenvalues stay invariant under the similarity transformation P⁻¹AP, a fast sanity check for NAT answers.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "lu-factorization": {
+      "concept_id": "lu-factorization",
+      "topic": "linear-algebra",
+      "label": "LU Factorization",
+      "gate_frequency": "medium",
+      "canonical_definition": "LU factorization writes A = LU with L unit-lower-triangular (multipliers from Gaussian elimination) and U upper-triangular (the row-echelon result), enabling fast forward/back substitution.",
+      "deep_explanation": "LU factorization records the bookkeeping of Gaussian elimination so that solving $Ax=b$ for many different $b$'s becomes cheap. Given $A=LU$, with $L$ unit lower-triangular (1's on the diagonal) and $U$ upper-triangular (the row-echelon result of elimination), solving $Ax=b$ splits into two easy triangular solves:\n$$Ly=b \\quad\\text{(forward substitution)}, \\qquad Ux=y \\quad\\text{(back substitution)}$$\nEach entry $l_{ij}$ (for $i>j$) of $L$ is exactly the multiplier used in Gaussian elimination to zero out the $(i,j)$ entry — $l_{ij}=$ (value being eliminated)/(pivot above it) — recorded *before* it gets subtracted away, rather than discarded.\n\nLU factorization without row pivoting exists exactly when every leading principal minor of $A$ is nonzero — equivalently, no pivot ever turns out to be zero during elimination. When a zero pivot is encountered, row swaps (partial pivoting, giving $PA=LU$) are needed to proceed; a purely \"no-pivoting\" LU simply does not exist for that matrix.\n\nWhy bother separating $L$ and $U$ at all, instead of just row-reducing directly? Because once you have them, solving for a *new* right-hand side $b$ costs only $O(n^2)$ (two triangular solves) instead of $O(n^3)$ for full elimination from scratch — a huge saving when the same system needs solving repeatedly with different data.\n\nGATE typically walks through the full pipeline: find $L$ and $U$, then solve via forward/back substitution for a specific $b$.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "For $A=\\begin{pmatrix}2&1\\\\6&5\\end{pmatrix}$, find the multiplier $l_{21}$ used in Gaussian elimination (no pivoting) to eliminate the $(2,1)$ entry, and hence find $U$.",
+          "solution": "$l_{21} = a_{21}/a_{11} = 6/2=3$.\n\n$\\text{Row}_2^{\\text{new}} = \\text{Row}_2 - l_{21}\\cdot\\text{Row}_1 = (6,5)-3(2,1) = (0,2)$.\n\n$U = \\begin{pmatrix}2&1\\\\0&2\\end{pmatrix}$, $L=\\begin{pmatrix}1&0\\\\3&1\\end{pmatrix}$.\n\nVerify: $LU = \\begin{pmatrix}1&0\\\\3&1\\end{pmatrix}\\begin{pmatrix}2&1\\\\0&2\\end{pmatrix} = \\begin{pmatrix}2&1\\\\6&5\\end{pmatrix} = A$ ✓.",
+          "answer": "$l_{21}=3$, $U=\\begin{pmatrix}2&1\\\\0&2\\end{pmatrix}$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Using $L=\\begin{pmatrix}1&0\\\\3&1\\end{pmatrix}$, $U=\\begin{pmatrix}2&1\\\\0&2\\end{pmatrix}$ (from $A=\\begin{pmatrix}2&1\\\\6&5\\end{pmatrix}$), solve $Ax=b$ for $b=(3,11)$ via forward then back substitution.",
+          "solution": "Forward solve $Ly=b$: $y_1=3$ (since $L_{11}=1$). $3y_1+y_2=11 \\implies 9+y_2=11 \\implies y_2=2$.\n\nBack solve $Ux=y$: $2x_2=2 \\implies x_2=1$. $2x_1+x_2=3 \\implies 2x_1+1=3 \\implies x_1=1$.\n\nVerify directly: $Ax = \\begin{pmatrix}2&1\\\\6&5\\end{pmatrix}\\begin{pmatrix}1\\\\1\\end{pmatrix}=\\begin{pmatrix}3\\\\11\\end{pmatrix}=b$ ✓.",
+          "answer": "$x = (1,1)$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "For which value of $a$ does $A=\\begin{pmatrix}a&2\\\\4&3\\end{pmatrix}$ have NO LU factorization without row pivoting, because the very first pivot would be zero?",
+          "solution": "Method 1 (leading-minor theorem): LU without pivoting exists iff every leading principal minor is nonzero. The first leading minor is $D_1=a_{11}=a$, so we need $a\\neq0$; the factorization breaks down exactly at $a=0$.\n\nMethod 2 (direct elimination attempt): the multiplier is $l_{21}=a_{21}/a_{11}=4/a$ — this division is undefined precisely when $a=0$, confirming the same breakdown point.",
+          "answer": "$a = 0$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Believing every square matrix has an LU factorization without pivoting.",
+          "corrective": "It fails whenever some leading principal minor is zero (a pivot would vanish during elimination) — row pivoting (PA=LU) is then required."
+        },
+        {
+          "id": "mc-02",
+          "description": "Putting the pivot value instead of 1 on L's diagonal.",
+          "corrective": "By convention L is UNIT lower-triangular — its diagonal is always 1, with the multipliers l_ij (i>j) filling the entries below."
+        },
+        {
+          "id": "mc-03",
+          "description": "Solving Ly=b starting from the last equation, as if L were upper triangular.",
+          "corrective": "L is LOWER triangular, so forward substitution starts from the FIRST equation (y1) and works down; back substitution (for Ux=y) starts from the LAST equation."
+        },
+        {
+          "id": "mc-04",
+          "description": "Recording the negative of the multiplier in L instead of the multiplier itself.",
+          "corrective": "Elimination computes Row_i − l_ij·Row_j; L stores +l_ij directly (not −l_ij), even though the elimination step subtracts."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review Gaussian elimination and row operations.",
+        "Review forward and back substitution for triangular systems."
+      ],
+      "exam_tip": "GATE LU questions are usually multi-part NAT chains — compute L and U first, then solve Ax=b via substitution; a fast check is verifying LU=A (or at least a couple of entries) before proceeding to substitution.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "least-squares": {
+      "concept_id": "least-squares",
+      "topic": "linear-algebra",
+      "label": "Least Squares",
+      "gate_frequency": "medium",
+      "canonical_definition": "The least-squares solution x̂ to an overdetermined system Ax=b minimizes ‖Ax−b‖² and satisfies the normal equations AᵀAx̂ = Aᵀb.",
+      "deep_explanation": "When a system $Ax=b$ has no exact solution — typically because there are more equations than unknowns (an overdetermined system) — least squares finds the $\\hat x$ that gets as close as possible, minimizing the squared error $\\|Ax-b\\|^2$.\n\nGeometrically, $b$ generally does not lie in the column space of $A$. The best approximation $A\\hat x$ is the orthogonal *projection* of $b$ onto $\\text{col}(A)$ — the closest point in that subspace to $b$. The residual $r=b-A\\hat x$ is therefore orthogonal to every column of $A$, giving the defining condition $A^Tr=0$, i.e. $A^T(b-A\\hat x)=0$, which rearranges to the **normal equations**:\n$$A^TA\\,\\hat x = A^Tb$$\nAs long as $A$ has full column rank, $A^TA$ is invertible and $\\hat x=(A^TA)^{-1}A^Tb$ is unique.\n\nThe classic application is line-fitting: for data points $(x_i,y_i)$, fitting $y=mx+c$ sets up $A$ with columns $(x_i)$ and $(1)$, solving for $(m,c)$ via the normal equations. A handy built-in check: when the model includes an intercept term, the residuals always sum to exactly zero, $\\sum_i r_i=0$ — verify this after computing residuals to catch arithmetic slips.\n\nOn GATE, least-squares problems are usually multi-part NAT chains — set up $A^TA$ and $A^Tb$, solve the 2×2 system for slope then intercept, then compute a residual or error quantity from the fitted line.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Fit $y=mx+c$ by least squares to $(0,2),(1,2),(2,5)$. Set up the normal equations $A^TA\\hat x=A^Tb$ and find $m$.",
+          "solution": "$A=\\begin{pmatrix}0&1\\\\1&1\\\\2&1\\end{pmatrix}$, $b=(2,2,5)^T$.\n\n$A^TA = \\begin{pmatrix}5&3\\\\3&3\\end{pmatrix}$, $A^Tb=\\begin{pmatrix}12\\\\9\\end{pmatrix}$ (since $A^Tb$ row 1 $=0\\cdot2+1\\cdot2+2\\cdot5=12$, row 2 $=2+2+5=9$).\n\nSolving $5m+3c=12$ and $3m+3c=9$: subtracting gives $2m=3 \\implies m=1.5$.\n\nCheck with the direct slope formula: $m=\\dfrac{n\\Sigma xy-\\Sigma x\\Sigma y}{n\\Sigma x^2-(\\Sigma x)^2}=\\dfrac{3(12)-3(9)}{3(5)-9}=\\dfrac{36-27}{6}=\\dfrac96=1.5$ — matches.",
+          "answer": "$m = 1.5$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Continuing the fit $y=1.5x+c$ to $(0,2),(1,2),(2,5)$, find the intercept $c$, and verify with $c=\\bar y - m\\bar x$.",
+          "solution": "From $3m+3c=9$ with $m=1.5$: $4.5+3c=9 \\implies c=1.5$.\n\nVerify: $\\bar x = (0+1+2)/3=1$, $\\bar y=(2+2+5)/3=3$. $c=\\bar y-m\\bar x = 3-1.5(1)=1.5$ — matches.",
+          "answer": "$c = 1.5$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "Using the fit $y=1.5x+1.5$ to $(0,2),(1,2),(2,5)$, compute $\\sum_i r_i^2$, where $r_i=y_i-\\hat y_i$.",
+          "solution": "$\\hat y(0)=1.5$, $r_1=2-1.5=0.5$.\n$\\hat y(1)=3$, $r_2=2-3=-1$.\n$\\hat y(2)=4.5$, $r_3=5-4.5=0.5$.\n\n$\\sum r_i^2 = 0.25+1+0.25=1.5$.\n\nIndependent check: $\\sum r_i = 0.5-1+0.5=0$, matching the built-in least-squares property that residuals sum to zero when an intercept is included — confirms no sign error.",
+          "answer": "$\\sum r_i^2 = 1.5$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Believing the least-squares line passes through all the data points exactly.",
+          "corrective": "It minimizes TOTAL squared error across all points; it generally does not pass through any single point exactly (unless the data is perfectly linear)."
+        },
+        {
+          "id": "mc-02",
+          "description": "Not checking that A has full column rank before solving the normal equations.",
+          "corrective": "AᵀA is invertible only when A has full column rank; otherwise the normal equations have infinitely many least-squares solutions."
+        },
+        {
+          "id": "mc-03",
+          "description": "Sign or transpose errors computing Aᵀb.",
+          "corrective": "Aᵀb turns the columns of A into rows before the dot product with b — recompute each entry as a separate dot product of an A-column with b."
+        },
+        {
+          "id": "mc-04",
+          "description": "Forgetting the residuals sum to zero when the model includes an intercept.",
+          "corrective": "Σr_i = 0 is a free built-in check whenever a constant term is fit — always verify it after computing residuals."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review matrix transpose and matrix multiplication.",
+        "Review solving 2×2 linear systems."
+      ],
+      "exam_tip": "GATE least-squares questions are typically NAT chains (find m, then c, then a residual/error quantity) — after solving, sanity-check using Σrᵢ=0 (with intercept) or by verifying AᵀAx̂=Aᵀb directly.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "quadratic-forms": {
+      "concept_id": "quadratic-forms",
+      "topic": "linear-algebra",
+      "label": "Quadratic Forms",
+      "gate_frequency": "medium",
+      "canonical_definition": "A quadratic form Q(x) = xᵀAx (A symmetric) is classified by the signs of A's eigenvalues: positive definite (all >0), negative definite (all <0), indefinite (mixed).",
+      "deep_explanation": "A quadratic form is a homogeneous degree-2 polynomial in several variables, always writable as $Q(x)=x^TAx$ for a *symmetric* matrix $A$ — cross-term coefficients split evenly between the corresponding off-diagonal entries of $A$ (a coefficient of $2xy$ becomes a $1$ in both the $(1,2)$ and $(2,1)$ positions).\n\nBecause $A$ is symmetric, the Spectral Theorem applies: $A=Q\\Lambda Q^T$, and substituting shows $Q(x)$, expressed in the eigenvector coordinates $y=Q^Tx$, becomes simply $\\sum_i\\lambda_iy_i^2$ — a sum of squares weighted by eigenvalues. This is why the *signs* of the eigenvalues alone classify the form:\n\n- **Positive definite**: all $\\lambda_i>0$ — $Q(x)>0$ for every nonzero $x$.\n- **Negative definite**: all $\\lambda_i<0$.\n- **Indefinite**: mixed signs.\n- **Semidefinite**: some eigenvalue is exactly zero, the rest share a sign.\n\nComputing all eigenvalues is often overkill. **Sylvester's criterion** offers a shortcut for positive-definiteness: check that every *leading principal minor* of $A$ is strictly positive ($D_1>0, D_2>0,\\dots,D_n>0$). For a 2×2 matrix this is just $a_{11}>0$ and $\\det(A)>0$ — much faster than solving a characteristic polynomial, especially when a parameter is involved and you need a range of values.\n\nGATE frequently asks for the range of a parameter $t$ making a quadratic form positive definite — Sylvester's criterion on the determinant condition solves this in one line.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Write $Q(x,y)=3x^2-2xy+3y^2$ as $x^TAx$ for a symmetric matrix $A$.",
+          "solution": "The cross-term coefficient $-2$ splits evenly between the two off-diagonal entries: $A=\\begin{pmatrix}3&-1\\\\-1&3\\end{pmatrix}$.\n\nVerify: $x^TAx = 3x^2 + (-1)xy + (-1)yx + 3y^2 = 3x^2-2xy+3y^2$ ✓ (matches, since $-1xy-1yx=-2xy$).",
+          "answer": "$A = \\begin{pmatrix}3&-1\\\\-1&3\\end{pmatrix}$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Classify $Q(x,y)=3x^2-2xy+3y^2$ (matrix $A=\\begin{pmatrix}3&-1\\\\-1&3\\end{pmatrix}$) using both the eigenvalue test and Sylvester's criterion.",
+          "solution": "Eigenvalues: $(3-\\lambda)^2-1=0 \\implies 3-\\lambda=\\pm1 \\implies \\lambda=2,4$. Both positive.\n\nSylvester: $D_1=3>0$, $D_2=\\det(A)=9-1=8>0$. Both leading minors positive.\n\nBoth tests agree: positive definite.",
+          "answer": "Positive definite (eigenvalues $2,4>0$; leading minors $3,8>0$)."
+        },
+        {
+          "difficulty": "hard",
+          "problem": "For which values of the real parameter $t$ is $Q(x,y)=x^2+2txy+9y^2$ positive definite?",
+          "solution": "$A=\\begin{pmatrix}1&t\\\\t&9\\end{pmatrix}$. Sylvester: $D_1=1>0$ always. $D_2=\\det(A)=9-t^2>0 \\implies t^2<9 \\implies -3<t<3$.\n\nBoundary check: at $t=3$, $A=\\begin{pmatrix}1&3\\\\3&9\\end{pmatrix}$, $\\det(A)=9-9=0$ — one eigenvalue is $0$, so it is only positive SEMI-definite there, confirming $t=3$ is excluded (open interval). At the interior point $t=0$, $A=\\begin{pmatrix}1&0\\\\0&9\\end{pmatrix}$ is diagonal with eigenvalues $1,9>0$, confirming interior values do work.",
+          "answer": "$-3 < t < 3$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Forgetting to split the cross-term coefficient by 2 when building A from Q(x,y).",
+          "corrective": "The coefficient of x_iy_j (i≠j) in Q splits evenly onto BOTH A_ij and A_ji, since each contributes once to xᵀAx."
+        },
+        {
+          "id": "mc-02",
+          "description": "'Positive diagonal entries ⇒ positive definite.'",
+          "corrective": "False — off-diagonal entries matter too. E.g. A=[[1,5],[5,1]] has positive diagonal but eigenvalues 6 and −4 (indefinite). Always use Sylvester's criterion or eigenvalues, never diagonal signs alone."
+        },
+        {
+          "id": "mc-03",
+          "description": "Confusing positive SEMI-definite (eigenvalues ≥ 0) with positive definite (eigenvalues strictly > 0).",
+          "corrective": "Semidefinite allows a zero eigenvalue (Q(x)=0 for some nonzero x); definite requires Q(x)>0 for every nonzero x, strictly."
+        },
+        {
+          "id": "mc-04",
+          "description": "Checking only the full determinant Dn in Sylvester's criterion, skipping the smaller leading minors.",
+          "corrective": "Sylvester's criterion requires EVERY leading principal minor D1,...,Dn to be positive, not just the last one."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review symmetric matrices and eigenvalues.",
+        "Review Sylvester's criterion (leading principal minors)."
+      ],
+      "exam_tip": "GATE parameter-range questions (find t for positive definiteness) are efficiently solved via Sylvester's criterion on leading minors rather than full eigenvalue computation — much faster under time pressure.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "positive-definite-matrices": {
+      "concept_id": "positive-definite-matrices",
+      "topic": "linear-algebra",
+      "label": "Positive Definite Matrices",
+      "gate_frequency": "medium",
+      "canonical_definition": "A symmetric matrix A is positive definite if xᵀAx > 0 for every nonzero vector x, equivalently if all its eigenvalues are strictly positive.",
+      "deep_explanation": "A symmetric matrix $A$ is **positive definite** when $x^TAx>0$ for every nonzero vector $x$ — equivalently, every eigenvalue of $A$ is strictly positive. This single property underlies convexity in optimization (a positive definite Hessian means a strict local minimum), covariance matrices in statistics, and stability in differential equations.\n\nThree equivalent tests, each useful in different situations:\n1. **Eigenvalue test**: all $\\lambda_i>0$ (conceptually cleanest, computationally slower).\n2. **Sylvester's criterion**: every leading principal minor $D_1,\\dots,D_n>0$ (fast, especially for parameter ranges).\n3. **Cholesky existence**: $A=LL^T$ for some real lower-triangular $L$ with positive diagonal entries exists *if and only if* $A$ is positive definite. If, while computing Cholesky, you would need $\\sqrt{\\text{negative number}}$, that failure itself proves $A$ is not positive definite.\n\nComputing Cholesky by hand: $l_{11}=\\sqrt{a_{11}}$, then each subsequent $l_{ij}$ and $l_{ii}$ follows directly from matching entries of $LL^T$ to $A$ column by column.\n\nA dangerous shortcut students take: assuming positive diagonal entries alone guarantee positive definiteness. They do not — off-diagonal entries can still make $x^TAx$ negative for some $x$ (e.g., $A=\\begin{pmatrix}1&5\\\\5&1\\end{pmatrix}$ has positive diagonal but is indefinite, since its eigenvalues are $6$ and $-4$).\n\nGATE often disguises a positive-definiteness question as a Cholesky-decomposition NAT problem — the moment a square root of a negative number would be required, the answer is simply that A is not positive definite.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Is $A=\\begin{pmatrix}3&1\\\\1&3\\end{pmatrix}$ positive definite?",
+          "solution": "Sylvester: $D_1=3>0$, $D_2=9-1=8>0$ — positive definite.\n\nVerify via eigenvalues: $(3-\\lambda)^2-1=0 \\implies \\lambda=2,4$, both positive — confirms.",
+          "answer": "Yes, positive definite."
+        },
+        {
+          "difficulty": "medium",
+          "problem": "$A=\\begin{pmatrix}9&3\\\\3&5\\end{pmatrix}$ is positive definite. Find its Cholesky decomposition $A=LL^T$ with $L=\\begin{pmatrix}l_{11}&0\\\\l_{21}&l_{22}\\end{pmatrix}$.",
+          "solution": "$l_{11}=\\sqrt{9}=3$. $l_{21}=a_{21}/l_{11}=3/3=1$. $l_{22}=\\sqrt{a_{22}-l_{21}^2}=\\sqrt{5-1}=2$.\n\nVerify by multiplying back: $LL^T=\\begin{pmatrix}3&0\\\\1&2\\end{pmatrix}\\begin{pmatrix}3&1\\\\0&2\\end{pmatrix}=\\begin{pmatrix}9&3\\\\3&5\\end{pmatrix}=A$ ✓.",
+          "answer": "$L = \\begin{pmatrix}3&0\\\\1&2\\end{pmatrix}$ (i.e. $l_{11}=3,\\,l_{21}=1,\\,l_{22}=2$)"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "For $A=\\begin{pmatrix}9&3\\\\3&5\\end{pmatrix}$ (Cholesky $L=\\begin{pmatrix}3&0\\\\1&2\\end{pmatrix}$ found above), independently verify positive definiteness via the eigenvalue test and find the smallest eigenvalue.",
+          "solution": "Characteristic polynomial: $(9-\\lambda)(5-\\lambda)-9=0 \\implies \\lambda^2-14\\lambda+36=0 \\implies \\lambda=\\dfrac{14\\pm\\sqrt{196-144}}{2}=7\\pm\\sqrt{13}$.\n\n$\\sqrt{13}\\approx3.606$, so $\\lambda\\approx10.61$ or $3.39$ — both positive, confirming positive definiteness (consistent with Cholesky existing).\n\nCross-check: $\\text{tr}(A)=9+5=14=(7+\\sqrt{13})+(7-\\sqrt{13})$ ✓; $\\det(A)=45-9=36=(7+\\sqrt{13})(7-\\sqrt{13})=49-13=36$ ✓.",
+          "answer": "Smallest eigenvalue $=7-\\sqrt{13} \\approx 3.39$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "'Positive diagonal entries ⇒ positive definite.'",
+          "corrective": "Must verify via Sylvester's criterion or the eigenvalue test — off-diagonal entries can make the form negative for some direction even with a positive diagonal."
+        },
+        {
+          "id": "mc-02",
+          "description": "Assuming Cholesky decomposition exists for any symmetric matrix.",
+          "corrective": "Cholesky (A=LLᵀ, real L, positive diagonal) exists if and only if A is positive definite — a negative number under a square root during the computation proves it is NOT positive definite."
+        },
+        {
+          "id": "mc-03",
+          "description": "Asking about positive-definiteness of a non-symmetric matrix.",
+          "corrective": "Positive definiteness is defined for symmetric matrices (using xᵀAx); GATE always supplies a symmetric A for this concept — check symmetry first."
+        },
+        {
+          "id": "mc-04",
+          "description": "Checking only the largest leading minor (Dn = det(A)) instead of all of them.",
+          "corrective": "Sylvester's criterion requires D1, D2, ..., Dn ALL strictly positive — a positive determinant alone is not sufficient (e.g. two negative eigenvalues also give a positive determinant in 2×2)."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review Sylvester's criterion and leading principal minors.",
+        "Review eigenvalues of symmetric matrices."
+      ],
+      "exam_tip": "GATE often asks Cholesky-decomposition NAT questions as a proxy for testing positive definiteness — if any l_ii would require a square root of a negative number, the matrix is NOT positive definite.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "spectral-theorem": {
+      "concept_id": "spectral-theorem",
+      "topic": "linear-algebra",
+      "label": "Spectral Theorem",
+      "gate_frequency": "medium",
+      "canonical_definition": "The Spectral Theorem states every real symmetric matrix A can be written as A = QΛQᵀ, where Q is orthogonal and Λ is diagonal (eigenvalues).",
+      "deep_explanation": "The Spectral Theorem is the payoff of everything symmetric matrices guarantee: every real symmetric $A$ can be written as\n$$A = Q\\Lambda Q^T$$\nwhere $Q$ is orthogonal ($QQ^T=Q^TQ=I$, columns are orthonormal eigenvectors) and $\\Lambda$ is diagonal (the eigenvalues). Unlike general diagonalization $A=PDP^{-1}$ — which needs $P^{-1}$, potentially messy to compute — here $Q^{-1}=Q^T$, a transpose, always available for free.\n\nThis decomposition turns matrix functions into scalar functions applied entrywise to eigenvalues:\n$$f(A) = Qf(\\Lambda)Q^T, \\qquad f(\\Lambda)=\\text{diag}(f(\\lambda_1),\\dots,f(\\lambda_n))$$\nSo $A^n=Q\\Lambda^nQ^T$ (raise each eigenvalue to the $n$-th power), $A^{-1}=Q\\Lambda^{-1}Q^T$ (if all $\\lambda_i\\neq0$), and even $e^A=Qe^\\Lambda Q^T$ — all without repeated matrix multiplication.\n\nAn equivalent \"sum of rank-1 pieces\" view is often more useful for hand computation:\n$$A = \\sum_{i=1}^n \\lambda_i\\,v_iv_i^T$$\nwhere $v_i$ are the orthonormal eigenvectors. Each term $v_iv_i^T$ is the projection matrix onto the $i$-th eigenspace, and $A$ is literally a weighted sum of these projections.\n\nCommon shortcuts: for a symmetric $2\\times2$ or $3\\times3$ with easily-found eigenvalues/eigenvectors, computing $A^2$ or $A^3$ via the spectral sum is often faster than direct matrix multiplication, especially with a large exponent. Verify eigenvector orthogonality and $Av=\\lambda v$ as your correctness check before trusting the reconstructed matrix.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "$A=\\begin{pmatrix}7&2\\\\2&4\\end{pmatrix}$ is symmetric with eigenvalues $8$ and $3$. Verify these eigenvalues using trace and determinant, and directly.",
+          "solution": "$\\text{tr}(A)=7+4=11=8+3$ ✓. $\\det(A)=28-4=24=8\\cdot3$ ✓.\n\nDirect check: $(7-\\lambda)(4-\\lambda)-4=\\lambda^2-11\\lambda+24=(\\lambda-8)(\\lambda-3)=0 \\implies \\lambda=8,3$ — matches.",
+          "answer": "Confirmed: eigenvalues are $8$ and $3$."
+        },
+        {
+          "difficulty": "medium",
+          "problem": "For $A=\\begin{pmatrix}7&2\\\\2&4\\end{pmatrix}$ with eigenvalue $8$ (eigenvector $(2,1)$) and $3$ (eigenvector $(-1,2)$), verify orthogonality and find the orthonormal $Q$ for $A=Q\\Lambda Q^T$.",
+          "solution": "Orthogonality: $(2,1)\\cdot(-1,2)=-2+2=0$ ✓.\n\nNormalize: $\\|(2,1)\\|=\\sqrt5$, $\\|(-1,2)\\|=\\sqrt5$. $Q=\\begin{pmatrix}2/\\sqrt5&-1/\\sqrt5\\\\1/\\sqrt5&2/\\sqrt5\\end{pmatrix}$, $\\Lambda=\\text{diag}(8,3)$.\n\nVerify the eigen-relation: $A(2,1)^T = (7\\cdot2+2\\cdot1,\\;2\\cdot2+4\\cdot1)=(16,8)=8(2,1)^T$ ✓.",
+          "answer": "$Q = \\begin{pmatrix}2/\\sqrt5&-1/\\sqrt5\\\\1/\\sqrt5&2/\\sqrt5\\end{pmatrix}$, $\\Lambda=\\text{diag}(8,3)$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "Using the spectral decomposition of $A=\\begin{pmatrix}7&2\\\\2&4\\end{pmatrix}$ ($\\Lambda=\\text{diag}(8,3)$), compute $A^2$ via $A^2=Q\\Lambda^2Q^T$ and check against direct matrix multiplication.",
+          "solution": "Spectral method: $A^2 = 64\\,v_1v_1^T + 9\\,v_2v_2^T$ with unit eigenvectors $v_1=(2,1)/\\sqrt5$, $v_2=(-1,2)/\\sqrt5$.\n\n$64\\cdot\\tfrac15\\begin{pmatrix}4&2\\\\2&1\\end{pmatrix} = \\begin{pmatrix}256/5&128/5\\\\128/5&64/5\\end{pmatrix}$; $9\\cdot\\tfrac15\\begin{pmatrix}1&-2\\\\-2&4\\end{pmatrix}=\\begin{pmatrix}9/5&-18/5\\\\-18/5&36/5\\end{pmatrix}$.\n\nSum: $\\begin{pmatrix}265/5&110/5\\\\110/5&100/5\\end{pmatrix} = \\begin{pmatrix}53&22\\\\22&20\\end{pmatrix}$.\n\nDirect method: $A^2 = \\begin{pmatrix}7&2\\\\2&4\\end{pmatrix}\\begin{pmatrix}7&2\\\\2&4\\end{pmatrix} = \\begin{pmatrix}49+4&14+8\\\\14+8&4+16\\end{pmatrix}=\\begin{pmatrix}53&22\\\\22&20\\end{pmatrix}$ — matches exactly.",
+          "answer": "$A^2 = \\begin{pmatrix}53&22\\\\22&20\\end{pmatrix}$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Believing the spectral theorem applies to any square matrix.",
+          "corrective": "It requires A to be symmetric (real case) or Hermitian (complex case). A general non-symmetric matrix may not even be diagonalizable — use Jordan form instead."
+        },
+        {
+          "id": "mc-02",
+          "description": "Forgetting Q must have unit-length (normalized) eigenvectors, not just orthogonal ones.",
+          "corrective": "Q must satisfy QQᵀ=I, which requires each column to have norm 1 — orthogonal alone is not enough, they must be orthoNORMAL."
+        },
+        {
+          "id": "mc-03",
+          "description": "Mixing up Q and Qᵀ when reconstructing A = QΛQᵀ.",
+          "corrective": "Write out which factor is transposed carefully: A = QΛQᵀ, so the LEFT Q is un-transposed and the RIGHT one is transposed."
+        },
+        {
+          "id": "mc-04",
+          "description": "Applying f(A) = Qf(Λ)Qᵀ by applying f to A's entries directly instead of to the eigenvalues in Λ.",
+          "corrective": "f is applied to each diagonal entry of Λ (the eigenvalues) individually, not entrywise to A itself — e.g. A² is NOT the entrywise square of A."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review symmetric matrices (guarantee real eigenvalues, orthogonal eigenvectors).",
+        "Review orthogonal matrices (QQᵀ=I) and matrix diagonalization."
+      ],
+      "exam_tip": "GATE spectral-theorem questions often ask for f(A) = Aⁿ, A⁻¹, or similar via QΛQᵀ — compute f(λ) on each eigenvalue and reconstruct, much faster than repeated matrix multiplication for large exponents.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "svd": {
+      "concept_id": "svd",
+      "topic": "linear-algebra",
+      "label": "Singular Value Decomposition",
+      "gate_frequency": "medium",
+      "canonical_definition": "The SVD writes any matrix A = UΣVᵀ, with U, V orthogonal and Σ diagonal containing the non-negative singular values σᵢ, ordered decreasingly.",
+      "deep_explanation": "The Singular Value Decomposition generalizes the spectral theorem to *any* matrix — even non-square, even non-symmetric:\n$$A = U\\Sigma V^T$$\nwhere $U$ ($m\\times m$) and $V$ ($n\\times n$) are orthogonal, and $\\Sigma$ ($m\\times n$) is diagonal with non-negative entries $\\sigma_1\\geq\\sigma_2\\geq\\cdots\\geq0$, the **singular values**.\n\nWhere do singular values come from? $A^TA$ is always symmetric positive semidefinite (its eigenvalues $\\lambda_i\\geq0$ always), and $\\sigma_i=\\sqrt{\\lambda_i}$. The columns of $V$ are the (orthonormal) eigenvectors of $A^TA$; the columns of $U$ can be recovered as $u_i=Av_i/\\sigma_i$. For a small matrix, computing the SVD by hand almost always means: form $A^TA$ (or $AA^T$, whichever is smaller), find its eigenvalues and eigenvectors, take square roots.\n\nThe **Eckart-Young theorem** says the best rank-$k$ approximation of $A$ (minimizing Frobenius-norm error among all rank-$k$ matrices) is obtained by keeping only the top $k$ singular-value terms of the sum $A=\\sum_i\\sigma_iu_iv_i^T$ and discarding the rest — a strikingly simple truncation rule. The approximation error equals $\\sqrt{\\sum_{i>k}\\sigma_i^2}$, computable directly from the discarded singular values without ever forming the approximation matrix.\n\nAlso key: $\\|A\\|_F^2=\\sum_i\\sigma_i^2$ (Frobenius norm is the \"energy\" spread across all singular values), while $\\|A\\|_2=\\sigma_1$ (the induced 2-norm is just the largest one).\n\nGATE keeps SVD problems small — expect a $2\\times2$ eigenvalue computation on $A^TA$, not a full decomposition.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Find the singular values of $A=\\begin{pmatrix}3&0\\\\0&1\\end{pmatrix}$.",
+          "solution": "$A$ is diagonal, so its singular values are just its diagonal entries' absolute values, sorted: $\\sigma_1=3,\\sigma_2=1$.\n\nVerify via $A^TA=\\begin{pmatrix}9&0\\\\0&1\\end{pmatrix}$ (diagonal, so its eigenvalues are its diagonal entries $9,1$); singular values $=\\sqrt9=3,\\sqrt1=1$ — matches.",
+          "answer": "$\\sigma_1=3,\\;\\sigma_2=1$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "$A=\\begin{pmatrix}1&1\\\\1&-1\\end{pmatrix}$. Find the singular values of $A$ using $A^TA$.",
+          "solution": "$A$ is symmetric here ($A^T=A$), so $A^TA=A^2=\\begin{pmatrix}1&1\\\\1&-1\\end{pmatrix}\\begin{pmatrix}1&1\\\\1&-1\\end{pmatrix}=\\begin{pmatrix}2&0\\\\0&2\\end{pmatrix}=2I$.\n\nEigenvalues of $A^TA$: $2,2$. Singular values: $\\sqrt2,\\sqrt2$.\n\nIndependent check: $A/\\sqrt2=\\begin{pmatrix}1/\\sqrt2&1/\\sqrt2\\\\1/\\sqrt2&-1/\\sqrt2\\end{pmatrix}$ is a Householder reflection (orthogonal matrix, since its columns are unit and orthogonal), confirming $A$ is exactly $\\sqrt2$ times an orthogonal matrix — consistent with equal singular values $\\sqrt2,\\sqrt2$.",
+          "answer": "$\\sigma_1=\\sigma_2=\\sqrt2$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "For $A=\\begin{pmatrix}3&0\\\\0&1\\end{pmatrix}$ (singular values $3,1$), find the best rank-1 approximation $A_1$ (Eckart-Young) and compute $\\|A-A_1\\|_F$.",
+          "solution": "$A = 3\\begin{pmatrix}1&0\\\\0&0\\end{pmatrix} + 1\\begin{pmatrix}0&0\\\\0&1\\end{pmatrix}$ (SVD is trivial since $A$ is already diagonal).\n\nBest rank-1 approximation keeps only the largest singular-value term: $A_1 = 3\\begin{pmatrix}1&0\\\\0&0\\end{pmatrix}=\\begin{pmatrix}3&0\\\\0&0\\end{pmatrix}$.\n\n$A-A_1=\\begin{pmatrix}0&0\\\\0&1\\end{pmatrix}$, so $\\|A-A_1\\|_F=\\sqrt{0+0+0+1}=1$.\n\nVerify via the Eckart-Young formula directly: error $=\\sqrt{\\sum_{i>1}\\sigma_i^2}=\\sqrt{1^2}=1$ — matches.",
+          "answer": "$A_1=\\begin{pmatrix}3&0\\\\0&0\\end{pmatrix}$, $\\|A-A_1\\|_F = 1$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Confusing singular values with eigenvalues of A itself.",
+          "corrective": "Singular values come from AᵀA (always ≥ 0); eigenvalues of A can be negative or complex. They coincide only when A is symmetric positive semidefinite."
+        },
+        {
+          "id": "mc-02",
+          "description": "Forgetting to take the square root — reporting eigenvalues of AᵀA as the singular values.",
+          "corrective": "Singular values σᵢ = √(eigenvalue of AᵀA), not the eigenvalue itself."
+        },
+        {
+          "id": "mc-03",
+          "description": "Believing the best rank-k approximation is found by zeroing out entries of A directly.",
+          "corrective": "The Eckart-Young best rank-k approximation truncates the SVD sum A=Σσᵢuᵢvᵢᵀ to its top k terms — it is NOT obtained by editing A's raw entries."
+        },
+        {
+          "id": "mc-04",
+          "description": "Allowing a negative singular value or wrong ordering.",
+          "corrective": "Singular values are always non-negative and conventionally listed in decreasing order σ1 ≥ σ2 ≥ ... ≥ 0."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review eigenvalues of symmetric matrices (AᵀA is always symmetric PSD).",
+        "Review the Frobenius norm ‖A‖_F=√(Σaᵢⱼ²)."
+      ],
+      "exam_tip": "GATE SVD questions often reduce to an eigenvalue problem on the small AᵀA (or AAᵀ, whichever is smaller) — compute that 2×2 (or 3×3) eigenvalue problem directly rather than attempting the full U,Σ,V decomposition unless asked.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "jordan-normal-form": {
+      "concept_id": "jordan-normal-form",
+      "topic": "linear-algebra",
+      "label": "Jordan Normal Form",
+      "gate_frequency": "low",
+      "canonical_definition": "The Jordan normal form writes A = PJP⁻¹ where J is block-diagonal with Jordan blocks (λ on diagonal, 1's on superdiagonal), used when geometric multiplicity is less than algebraic.",
+      "deep_explanation": "Not every matrix is diagonalizable. When a repeated eigenvalue's **geometric multiplicity** (dimension of its eigenspace, $\\dim\\text{null}(A-\\lambda I)$) falls short of its **algebraic multiplicity** (its multiplicity as a root of the characteristic polynomial), the matrix is called *defective* — there simply are not enough independent eigenvectors to build a full eigenbasis.\n\nThe Jordan Normal Form is the best substitute: every square matrix $A$ is similar to a block-diagonal matrix $J=P^{-1}AP$ made of **Jordan blocks**:\n$$J_k(\\lambda) = \\begin{pmatrix}\\lambda&1&&\\\\&\\lambda&\\ddots&\\\\&&\\ddots&1\\\\&&&\\lambda\\end{pmatrix}$$\n— $\\lambda$ on the diagonal, 1's on the superdiagonal, everything else zero.\n\nThe key counting rule, worth memorizing cold: **the number of Jordan blocks for eigenvalue $\\lambda$ equals its geometric multiplicity** (not the algebraic multiplicity!), and the block sizes must sum to the algebraic multiplicity. So if $\\lambda$ has algebraic multiplicity 3 and geometric multiplicity 2, you get two blocks whose sizes add to 3 — necessarily one of size 2 and one of size 1.\n\nA diagonalizable matrix is simply the special case where every eigenvalue's geometric multiplicity already equals its algebraic multiplicity — every Jordan block collapses to size 1, and $J$ is purely diagonal.\n\nGATE's Jordan-form questions are really just: find eigenvalues, compute nullity$(A-\\lambda I)$ for repeats, and use that nullity to determine block count and size.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "$A=\\begin{pmatrix}4&1\\\\0&4\\end{pmatrix}$ has a repeated eigenvalue $\\lambda=4$ (algebraic multiplicity 2). Find its geometric multiplicity and Jordan normal form.",
+          "solution": "Geometric multiplicity $=\\dim\\text{null}(A-4I)$. $A-4I=\\begin{pmatrix}0&1\\\\0&0\\end{pmatrix}$: solving $(A-4I)v=0$ gives $v_2=0$, $v_1$ free — a 1-dimensional null space.\n\nSince geometric mult (1) $<$ algebraic mult (2), $A$ is defective — a single $2\\times2$ Jordan block: $J=\\begin{pmatrix}4&1\\\\0&4\\end{pmatrix}$.\n\nDirect inspection confirms: $A$ is already exactly in the Jordan-block pattern (equal diagonal, single 1 on the superdiagonal), so $J=A$ here — no further transformation needed.",
+          "answer": "Geometric multiplicity 1; $J=\\begin{pmatrix}4&1\\\\0&4\\end{pmatrix}$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Find the Jordan normal form of $A=\\begin{pmatrix}4&-1\\\\1&2\\end{pmatrix}$.",
+          "solution": "Characteristic polynomial: $(4-\\lambda)(2-\\lambda)-(-1)(1) = \\lambda^2-6\\lambda+9=(\\lambda-3)^2=0 \\implies \\lambda=3$ (algebraic multiplicity 2).\n\n$A-3I=\\begin{pmatrix}1&-1\\\\1&-1\\end{pmatrix}$ — rows identical, rank 1, so nullity $=2-1=1$: geometric multiplicity 1 $<$ algebraic 2, defective.\n\n$J=\\begin{pmatrix}3&1\\\\0&3\\end{pmatrix}$.\n\nVerify: $\\text{tr}(A)=4+2=6=3+3$ ✓; $\\det(A)=8-(-1)=9=3\\cdot3$ ✓.",
+          "answer": "$J = \\begin{pmatrix}3&1\\\\0&3\\end{pmatrix}$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "$A=\\begin{pmatrix}4&0&0\\\\0&4&0\\\\1&1&4\\end{pmatrix}$ has triple eigenvalue $\\lambda=4$ (algebraic multiplicity 3). Find the geometric multiplicity and the Jordan normal form.",
+          "solution": "$A-4I=\\begin{pmatrix}0&0&0\\\\0&0&0\\\\1&1&0\\end{pmatrix}$. Row-reducing: only one independent nonzero row, $(1,1,0)$, so rank $=1$, nullity $=3-1=2$: geometric multiplicity 2.\n\nWith algebraic multiplicity 3 and geometric multiplicity 2, there are 2 Jordan blocks (equal to geometric multiplicity) with sizes summing to 3: one block of size 2, one of size 1.\n\n$J = \\begin{pmatrix}4&1&0\\\\0&4&0\\\\0&0&4\\end{pmatrix}$.\n\nVerify: $\\text{tr}(A)=4+4+4=12=\\text{tr}(J)$ ✓, and the block-count rule (2 blocks = geometric multiplicity 2) is consistent with the computed nullity.",
+          "answer": "Geometric multiplicity 2; $J = \\begin{pmatrix}4&1&0\\\\0&4&0\\\\0&0&4\\end{pmatrix}$ (one $2\\times2$ block + one $1\\times1$ block)"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Assuming algebraic multiplicity always equals geometric multiplicity.",
+          "corrective": "False for defective matrices — the gap between algebraic and geometric multiplicity is exactly what forces a nontrivial (size > 1) Jordan block."
+        },
+        {
+          "id": "mc-02",
+          "description": "Assuming the number of Jordan blocks equals the algebraic multiplicity.",
+          "corrective": "The number of Jordan blocks for an eigenvalue equals its GEOMETRIC multiplicity (dimension of the eigenspace), not the algebraic multiplicity."
+        },
+        {
+          "id": "mc-03",
+          "description": "Placing the 1's on the sub-diagonal instead of the super-diagonal.",
+          "corrective": "The standard (GATE) convention places the 1's just ABOVE the diagonal (superdiagonal) in each Jordan block."
+        },
+        {
+          "id": "mc-04",
+          "description": "Invoking Jordan blocks even when the matrix is actually diagonalizable.",
+          "corrective": "If geometric multiplicity equals algebraic multiplicity for every eigenvalue, the matrix is diagonalizable and its Jordan form is simply the diagonal matrix of eigenvalues — no nontrivial blocks needed."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review algebraic vs geometric multiplicity of eigenvalues.",
+        "Review the rank-nullity theorem (nullity of A−λI gives geometric multiplicity)."
+      ],
+      "exam_tip": "GATE Jordan-form questions almost always reduce to: find eigenvalues, then compute nullity(A−λI) for each repeated eigenvalue — that nullity directly tells you the number of Jordan blocks for that eigenvalue.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "matrix-norms": {
+      "concept_id": "matrix-norms",
+      "topic": "linear-algebra",
+      "label": "Matrix Norms & Condition Number",
+      "gate_frequency": "low",
+      "canonical_definition": "Matrix norms measure a matrix's size: ‖A‖₁ = max column sum, ‖A‖∞ = max row sum, ‖A‖_F = √(Σaᵢⱼ²), and the condition number κ(A) = ‖A‖‖A⁻¹‖.",
+      "deep_explanation": "Matrix norms extend the idea of vector \"length\" to matrices, giving a single number that measures how much a matrix can stretch vectors. The three most common norms:\n$$\\|A\\|_1 = \\max_j \\sum_i |a_{ij}| \\quad\\text{(max absolute column sum)}$$\n$$\\|A\\|_\\infty = \\max_i \\sum_j |a_{ij}| \\quad\\text{(max absolute row sum)}$$\n$$\\|A\\|_F = \\sqrt{\\sum_{i,j} a_{ij}^2} \\quad\\text{(Frobenius norm — treat all entries as one long vector)}$$\n\nThe **induced 2-norm** (spectral norm) is different in character: $\\|A\\|_2=\\sigma_{\\max}$, the largest singular value of $A$ — it measures the maximum possible stretch factor $\\|Ax\\|/\\|x\\|$ over all directions $x$.\n\nThe **condition number** $\\kappa(A)=\\|A\\|\\cdot\\|A^{-1}\\|$ (using the 2-norm, this is $\\sigma_{\\max}/\\sigma_{\\min}$) measures how sensitive solving $Ax=b$ is to small errors in $b$ or $A$ — a large condition number means a \"nearly singular,\" ill-conditioned system where tiny input errors blow up into large output errors. $\\kappa(A)=1$ is perfectly conditioned (achieved by orthogonal matrices); $\\kappa(A)\\to\\infty$ as $A$ approaches singularity.\n\nA useful identity: $\\|A\\|_1=\\|A^T\\|_\\infty$ — transposing swaps the row-sum and column-sum norms, a fast way to double-check either computation.\n\nOn GATE, these are quick recall-and-compute questions: memorize which norm uses rows vs. columns, and remember the 2-norm/condition-number questions always route through singular values (via $A^TA$), not through the raw entries of $A$.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "For $A=\\begin{pmatrix}2&-1\\\\3&4\\end{pmatrix}$, find $\\|A\\|_F$.",
+          "solution": "$\\|A\\|_F = \\sqrt{2^2+(-1)^2+3^2+4^2} = \\sqrt{4+1+9+16}=\\sqrt{30}$.\n\nVerify via $\\text{tr}(A^TA)$: $A^TA = \\begin{pmatrix}2&3\\\\-1&4\\end{pmatrix}\\begin{pmatrix}2&-1\\\\3&4\\end{pmatrix} = \\begin{pmatrix}13&10\\\\10&17\\end{pmatrix}$, $\\text{tr}(A^TA)=13+17=30$, so $\\|A\\|_F=\\sqrt{30}$ — matches.",
+          "answer": "$\\|A\\|_F = \\sqrt{30}$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "For $A=\\begin{pmatrix}2&-1\\\\3&4\\end{pmatrix}$, find $\\|A\\|_1$ (max absolute column sum) and $\\|A\\|_\\infty$ (max absolute row sum).",
+          "solution": "Column sums: col 1: $|2|+|3|=5$; col 2: $|-1|+|4|=5$. $\\|A\\|_1=\\max(5,5)=5$.\n\nRow sums: row 1: $|2|+|-1|=3$; row 2: $|3|+|4|=7$. $\\|A\\|_\\infty=\\max(3,7)=7$.\n\nVerify via the identity $\\|A\\|_1=\\|A^T\\|_\\infty$: $A^T=\\begin{pmatrix}2&3\\\\-1&4\\end{pmatrix}$, row sums $|2|+|3|=5$ and $|-1|+|4|=5$, max $=5=\\|A\\|_1$ ✓.",
+          "answer": "$\\|A\\|_1=5$, $\\|A\\|_\\infty=7$"
+        },
+        {
+          "difficulty": "hard",
+          "problem": "For $A=\\begin{pmatrix}3&0\\\\4&5\\end{pmatrix}$, find the 2-norm condition number $\\kappa_2(A)=\\sigma_{\\max}/\\sigma_{\\min}$.",
+          "solution": "$A^TA = \\begin{pmatrix}3&4\\\\0&5\\end{pmatrix}\\begin{pmatrix}3&0\\\\4&5\\end{pmatrix} = \\begin{pmatrix}25&20\\\\20&25\\end{pmatrix}$.\n\nEigenvalues: $(25-\\lambda)^2-400=0 \\implies 25-\\lambda=\\pm20 \\implies \\lambda=5,45$.\n\nSingular values: $\\sigma=\\sqrt5,\\;\\sigma=\\sqrt{45}=3\\sqrt5$. $\\kappa_2(A)=\\dfrac{3\\sqrt5}{\\sqrt5}=3$.\n\nVerify via trace/det on $A^TA$: $\\text{tr}=25+25=50=5+45$ ✓; $\\det=625-400=225=5\\cdot45$ ✓ — confirms the eigenvalues.",
+          "answer": "$\\kappa_2(A) = 3$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Confusing the 1-norm (max column sum) with the ∞-norm (max row sum).",
+          "corrective": "1-norm looks down COLUMNS (sum then max over columns); ∞-norm looks across ROWS (sum then max over rows) — a very common mix-up under time pressure."
+        },
+        {
+          "id": "mc-02",
+          "description": "Believing ‖A‖₂ equals the largest entry of A.",
+          "corrective": "The 2-norm (spectral norm) is the LARGEST SINGULAR VALUE of A, computed via AᵀA — not simply the biggest number appearing in the matrix."
+        },
+        {
+          "id": "mc-03",
+          "description": "Computing condition number as det(A) or a single norm value alone.",
+          "corrective": "κ(A) = ‖A‖·‖A⁻¹‖ (or σ_max/σ_min for the 2-norm) — it is a RATIO comparing two norms, not one number by itself."
+        },
+        {
+          "id": "mc-04",
+          "description": "Mixing up which properties the Frobenius vs. induced norms satisfy.",
+          "corrective": "The Frobenius norm is submultiplicative (‖AB‖_F ≤ ‖A‖_F‖B‖_F) but is NOT an induced (operator) norm like ‖·‖₁, ‖·‖∞, ‖·‖₂ — keep the two norm families distinct."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review absolute row/column sums and matrix transpose.",
+        "Review singular values (via AᵀA eigenvalues) for the 2-norm and condition number."
+      ],
+      "exam_tip": "GATE matrix-norm questions are quick 1-2 mark MCQ/NAT — memorize the three definitions (1-norm=col sum, ∞-norm=row sum, Frobenius=√Σaᵢⱼ²) cold, and remember condition-number questions almost always use the 2-norm (via singular values), not 1 or ∞.",
+      "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
     }
   }
 }

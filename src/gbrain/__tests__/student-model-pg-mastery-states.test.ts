@@ -46,8 +46,8 @@ describe('PgStudentModel.masteryStates', () => {
     expect(result.get('algebra')).toBe('not-started');
   });
 
-  it('derives learning for n below the learning threshold (5)', async () => {
-    mockQuery.mockResolvedValue({ rows: [{ skill_id: 'algebra', rating: 1500, n: 3 }] });
+  it('derives learning for n below the learning threshold (2, per T4 recalibration)', async () => {
+    mockQuery.mockResolvedValue({ rows: [{ skill_id: 'algebra', rating: 1500, n: 1 }] });
     const model = new PgStudentModel();
     const result = await model.masteryStates('s1', ['algebra']);
     expect(result.get('algebra')).toBe('learning');

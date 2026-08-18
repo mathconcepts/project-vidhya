@@ -28,18 +28,12 @@ import type {
   CatalogQuery,
 } from './learning-object-catalog';
 import type { LearningObject, ObjectType } from '../core/interfaces';
+import { difficultyToElo, DEFAULT_EXAM_RELEVANCE } from './difficulty-elo';
 
 const ITEMS_DIR = path.join(process.cwd(), 'data', 'practice-items');
 
-/** Mirrors DEFAULT_* in the pg catalog so the two agree on unstated fields. */
+/** Mirrors DEFAULT_EST_MINUTES in the pg catalog so the two agree on unstated fields. */
 const DEFAULT_EST_MINUTES = 3;
-const DEFAULT_EXAM_RELEVANCE = 1;
-
-/** Same mapping the pg catalog uses: 0..1 difficulty onto the Elo scale. */
-function difficultyToElo(d: number): number {
-  const clamped = Math.max(0, Math.min(1, Number.isFinite(d) ? d : 0.5));
-  return 800 + clamped * 1400;
-}
 
 interface AuthoredItem {
   id: string;
@@ -90,6 +84,22 @@ function markingPayload(item: AuthoredItem): Record<string, unknown> {
   return out;
 }
 
+/**
+ * Derive the SERVED `verification` label (the closed 3-value enum on
+ * `LearningObject`) from the item's own `verification_method` string,
+ * rather than hardcoding every authored item to `human_verified`. That
+ * hardcode was harmless while every shipped item was hand-checked, but
+ * the T7 factory pipeline (src/generation/practice-item-factory/) stamps
+ * `verification_method: 'wolfram_verified'` for numerically-checked items
+ * — those ARE a CAS pass and must be labelled `cas_passed`, not quietly
+ * downgraded to `human_verified` (the receipt law: never blur the two).
+ * Every other method (hand_checkable_*, dual_model_consensus, authored,
+ * or absent) is the weaker human/consensus-verified claim.
+ */
+export function verificationLabelFor(method: string | undefined): LearningObject['verification'] {
+  return method === 'wolfram_verified' ? 'cas_passed' : 'human_verified';
+}
+
 function toLearningObject(item: AuthoredItem): LearningObject {
   return {
     id: item.id,
@@ -98,11 +108,7 @@ function toLearningObject(item: AuthoredItem): LearningObject {
     difficulty: difficultyToElo(Number(item.difficulty ?? 0.5)),
     estMinutes: DEFAULT_EST_MINUTES,
     prereqs: [],
-    // Authored items are hand-checked by construction — every one carries a
-    // solution a reader can verify without trusting us. That is a weaker claim
-    // than a CAS pass, so it is recorded as human_verified rather than
-    // cas_passed; the receipt law means the difference must not be blurred.
-    verification: 'human_verified',
+    verification: verificationLabelFor(item.verification_method),
     payload: {
       skillId: item.concept_id,
       topic: item.topic ?? null,

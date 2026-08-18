@@ -83,6 +83,24 @@
       "verification_method": "hand_checkable_orthogonal_matrix_properties"
     },
     {
+      "id": "pi-orthogonality-004",
+      "concept_id": "orthogonality",
+      "topic": "linear-algebra",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Let a = (3, 4). The projection matrix onto span{a} is P = (aaᵀ)/(aᵀa). Find the (1,1) entry of P.",
+      "answer_range": [0.35, 0.37],
+      "correct_answer": "9/25",
+      "solution_steps": [
+        "aaᵀ = (3,4)(3,4)ᵀ = [[9,12],[12,16]]. aᵀa = 3²+4² = 9+16 = 25.",
+        "P = (1/25)[[9,12],[12,16]], so the (1,1) entry is 9/25 = 0.36.",
+        "Cross-check via the projection property Pa = a (a already lies on the line it's projected onto): Pa = (1/25)[[9,12],[12,16]]·(3,4)ᵀ = (1/25)[9·3+12·4, 12·3+16·4] = (1/25)[27+48, 36+64] = (1/25)[75,100] = (3,4) = a — confirmed.",
+        "Second cross-check via the orthogonal complement: b=(4,-3) is orthogonal to a (a·b = 3·4+4·(-3) = 0), so Pb should be 0. Pb = (1/25)[[9,12],[12,16]]·(4,-3)ᵀ = (1/25)[9·4+12·(-3), 12·4+16·(-3)] = (1/25)[36-36, 48-48] = (0,0) — confirmed, P annihilates vectors orthogonal to a."
+      ],
+      "verification_method": "hand_checkable_projection_matrix"
+    },
+    {
       "id": "pi-gram-schmidt-001",
       "concept_id": "gram-schmidt",
       "topic": "linear-algebra",

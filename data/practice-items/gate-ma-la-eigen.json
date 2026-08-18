@@ -80,6 +80,24 @@
       "verification_method": "hand_checkable_eigen_properties"
     },
     {
+      "id": "pi-eigenvalues-004",
+      "concept_id": "eigenvalues",
+      "topic": "linear-algebra",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A = [[4, -2], [1, 1]] has eigenvalues λ1 and λ2. Find 1/λ1 + 1/λ2 without computing λ1, λ2 individually — use trace(A) and det(A) directly.",
+      "answer_range": [0.8233, 0.8434],
+      "correct_answer": "5/6",
+      "solution_steps": [
+        "For a 2x2 matrix, 1/λ1 + 1/λ2 = (λ1+λ2)/(λ1λ2) = trace(A)/det(A), since λ1+λ2 = trace(A) and λ1λ2 = det(A) for any square matrix.",
+        "trace(A) = 4+1 = 5. det(A) = 4·1 - (-2)·1 = 4+2 = 6. So 1/λ1+1/λ2 = 5/6 ≈ 0.8333.",
+        "Cross-check by finding the eigenvalues directly: characteristic equation λ² - 5λ + 6 = 0 factors as (λ-2)(λ-3) = 0, giving λ1=2, λ2=3.",
+        "1/2 + 1/3 = 3/6 + 2/6 = 5/6 — matches the trace/det shortcut exactly, confirming the formula without needing to solve for eigenvalues at all."
+      ],
+      "verification_method": "hand_checkable_eigenvalue_reciprocal_sum"
+    },
+    {
       "id": "pi-diagonalization-001",
       "concept_id": "diagonalization",
       "topic": "linear-algebra",

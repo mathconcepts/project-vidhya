@@ -69,7 +69,15 @@ function getPool(): pg.Pool {
 
 const MASTERY_THRESHOLDS = {
   notStartedN: 1,        // <1 attempt
-  learningN: 5,          // <5 attempts → still learning
+  // T4 (Milestone A): was 5. content-gate.ts:67-69 and syllabus-context.ts:124
+  // both treat 'not-started' | 'learning' as BLOCKING a prereq edge, so with
+  // a thin catalog (few items per skill) a threshold of 5 meant every prereq
+  // stayed locked for most students most of the time — every eligible node
+  // deadlocked back to the fallback set. Lowered to 2: still "at least one
+  // real attempt beyond the first" before a skill is presumed learned enough
+  // to unblock what depends on it, but reachable with the catalog's actual
+  // item density.
+  learningN: 2,           // <2 attempts → still learning
   practicingRating: 1400,
   masteredRating: 1700,
   atRiskRetrievability: 0.5,   // FSRS recall <0.5 on a once-mastered skill
@@ -97,34 +105,16 @@ export class PgStudentModel implements StudentModel {
     if (ability.n < MASTERY_THRESHOLDS.notStartedN) return 'not-started';
     if (ability.n < MASTERY_THRESHOLDS.learningN) return 'learning';
 
-    // Look at how this skill's recent FSRS cards are doing — an at-risk
-    // skill is one whose memory is leaking even though the ability is good.
-    const { rows: cards } = await getPool().query(
-      `SELECT stability, last_review_at
-         FROM fsrs_cards
-        WHERE student_id = $1 AND object_id IN (
-          SELECT id FROM objects_for_skill($2)
-        )`,
-      [studentId, skillId],
-    ).catch(() => ({ rows: [] as any[] }));   // tolerate missing helper view
-
-    if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) {
-      // Check whether any cards' recall has decayed below threshold.
-      const now = new Date();
-      for (const c of cards) {
-        const card: FsrsCard = {
-          stability: Number(c.stability),
-          difficulty: 5,
-          lastReviewAt: (c.last_review_at instanceof Date ? c.last_review_at : new Date(c.last_review_at)).toISOString(),
-          reps: 0, lapses: 0,
-          dueAt: new Date().toISOString(),
-        };
-        if (recallProbability(card, now) < MASTERY_THRESHOLDS.atRiskRetrievability) {
-          return 'at-risk';
-        }
-      }
-      return 'mastered';
-    }
+    // T4 (Milestone A): the 'at-risk' branch that used to live here queried
+    // `SELECT id FROM objects_for_skill($2)` — a function that exists NOWHERE
+    // in any migration — behind a swallowed `.catch()`, so `cards` was
+    // always `[]` and 'at-risk' was unreachable dead code, not a real
+    // guardrail. Deleted rather than backed by a real function: OV2-D5
+    // supersedes it with `fsrs_cards.skill_id TEXT` (written on every card
+    // upsert from `attempt.skillId`), which gives a real per-skill card join
+    // instead of a synthetic view. 'at-risk' returns once that column lands
+    // in a later lane; until then a mastered skill just reports 'mastered'.
+    if (ability.rating >= MASTERY_THRESHOLDS.masteredRating) return 'mastered';
     if (ability.rating >= MASTERY_THRESHOLDS.practicingRating) return 'practicing';
     return 'learning';
   }

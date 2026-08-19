@@ -40,14 +40,14 @@ function makeFakePool() {
 }
 
 describe('seedStaticPyqQuestions — concept_id wiring', () => {
-  it('inserts all 150 static PYQs, each with a concept_id column (null or a real concept)', async () => {
+  it('inserts all 164 static PYQs, each with a concept_id column (null or a real concept)', async () => {
     const { pool, calls } = makeFakePool();
     const seeded = await seedStaticPyqQuestions(pool as any);
 
-    expect(seeded).toBe(150);
+    expect(seeded).toBe(164);
 
     const inserts = calls.filter(c => c.sql.includes('INSERT INTO pyq_questions'));
-    expect(inserts.length).toBe(150);
+    expect(inserts.length).toBe(164);
 
     // Every INSERT carries exactly 11 params, concept_id last.
     for (const call of inserts) {
@@ -56,13 +56,22 @@ describe('seedStaticPyqQuestions — concept_id wiring', () => {
 
     const withConcept = inserts.filter(c => c.params[10] !== null);
     const withoutConcept = inserts.filter(c => c.params[10] === null);
-    // Verified count (see pyq-concept-mapper.test.ts): 148/150 resolve,
-    // 2 stay honestly unmapped (differential-equations de-006, an
-    // order/degree question; probability-statistics ps-013, a
+    // Verified count (see pyq-concept-mapper.test.ts): 148/150 of the
+    // original bank resolve, 2 stay honestly unmapped (differential-equations
+    // de-006, an order/degree question; probability-statistics ps-013, a
     // Chebyshev-inequality question — neither has a confident single-concept
-    // match in the mapper).
-    expect(withConcept.length).toBe(148);
-    expect(withoutConcept.length).toBe(2);
+    // match in the mapper). 14 new linear-algebra exam-style questions
+    // (la-016..la-029, covering the 7 previously-uncovered LA concepts:
+    // inner-product-spaces, gram-schmidt, lu-factorization,
+    // positive-definite-matrices, svd, jordan-normal-form, matrix-norms)
+    // add 12 more resolved (via secondary tags already in TAG_MAPS —
+    // their new primary tags aren't wired into the mapper yet, that's a
+    // separate lane's job) and 2 more honestly unmapped (la-016, la-017 —
+    // inner-product-spaces questions whose only overlapping tag,
+    // "orthogonality", isn't a recognized TAG_MAPS key either).
+    // 148+12=160, 2+2=4.
+    expect(withConcept.length).toBe(160);
+    expect(withoutConcept.length).toBe(4);
   });
 
   it('runs a per-question backfill UPDATE for every topic before the skip-guard', async () => {
@@ -71,8 +80,8 @@ describe('seedStaticPyqQuestions — concept_id wiring', () => {
 
     const backfillUpdates = calls.filter(c => c.sql.includes('UPDATE pyq_questions SET concept_id') && c.sql.includes('question_text'));
     // One backfill attempt per question that resolves a concept_id, across
-    // all 10 topics — same 148 that resolve on the INSERT path.
-    expect(backfillUpdates.length).toBe(148);
+    // all 10 topics — same 160 that resolve on the INSERT path (see above).
+    expect(backfillUpdates.length).toBe(160);
   });
 
   it('queries migration 035\'s untagged linear-algebra rows for a separate backfill', async () => {
@@ -90,10 +99,17 @@ describe('seedStaticPyqQuestions — concept_id wiring', () => {
     await seedStaticPyqQuestions(pool as any);
 
     const laInserts = calls.filter(c => c.sql.includes('INSERT INTO pyq_questions') && c.params[6] === 'linear-algebra');
-    expect(laInserts.length).toBe(15);
+    // 15 original + 14 new (la-016..la-029, see the header comment above).
+    expect(laInserts.length).toBe(29);
     const conceptIds = laInserts.map(c => c.params[10]);
     expect(conceptIds).toContain('eigenvalues');
     expect(conceptIds).toContain('rank-nullity');
-    expect(conceptIds.every(id => typeof id === 'string')).toBe(true);
+    // 27 of the 29 resolve to a real concept id string; la-016 and la-017
+    // (inner-product-spaces) stay honestly null — see the header comment
+    // above for why (their only overlapping tag isn't a recognized
+    // TAG_MAPS key yet). Never a silent guess.
+    const nonNull = conceptIds.filter((id) => id !== null);
+    expect(nonNull.length).toBe(27);
+    expect(nonNull.every(id => typeof id === 'string')).toBe(true);
   });
 });

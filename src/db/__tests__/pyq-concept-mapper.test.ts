@@ -63,10 +63,18 @@ describe('mapPyqTagsToConceptId — linear-algebra, spot-checked against real qu
   it('la-015 (quadratic form matrix) → quadratic-forms', () => {
     expect(mapPyqTagsToConceptId('linear-algebra', ['quadratic-forms', 'symmetric-matrix', 'matrices', 'linear-algebra'])).toBe('quadratic-forms');
   });
-  it('all 15 linear-algebra PYQs (from data/courses/gate-em/topics/01-linear-algebra) resolve — none stay null', () => {
+  it('the original 15 linear-algebra PYQs (from data/courses/gate-em/topics/01-linear-algebra) resolve — none stay null', () => {
     const { topic, questions } = loadTopicMcqs('01-linear-algebra');
-    const unresolved = questions.filter((q: any) => mapPyqTagsToConceptId(topic, q.tags) === null);
+    const original15 = questions.filter((q: any) => !q.id.startsWith('la-0') || Number(q.id.slice(3)) <= 15);
+    const unresolved = original15.filter((q: any) => mapPyqTagsToConceptId(topic, q.tags) === null);
     expect(unresolved.map((q: any) => q.id)).toEqual([]);
+  });
+  it('la-016..la-029 (14 new exam-style questions for the 7 previously-uncovered concepts) mostly resolve via secondary tags, but the mapper has not been taught their new PRIMARY tags yet — that is a separate lane\'s job (see CLAUDE.md §"Gap 1"), so la-016/la-017 (inner-product-spaces) honestly stay null rather than guess', () => {
+    const { topic, questions } = loadTopicMcqs('01-linear-algebra');
+    const newBatch = questions.filter((q: any) => q.id.startsWith('la-0') && Number(q.id.slice(3)) >= 16);
+    expect(newBatch.length).toBe(14);
+    const unresolved = newBatch.filter((q: any) => mapPyqTagsToConceptId(topic, q.tags) === null);
+    expect(unresolved.map((q: any) => q.id)).toEqual(['la-016', 'la-017']);
   });
 });
 

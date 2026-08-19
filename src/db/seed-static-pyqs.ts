@@ -52,6 +52,21 @@ const DIR_TO_CANONICAL_TOPIC: Record<string, string> = Object.fromEntries(
   Object.entries(TOPIC_DIR_ALIAS).map(([canonical, dirSlug]) => [dirSlug, canonical]),
 );
 
+/**
+ * How many consecutive failing queries mean the database is unreachable
+ * rather than one row being awkward.
+ *
+ * This loop issues one UPDATE per question — 164 of them. When the
+ * connection itself is broken (a TLS handshake that will never succeed, for
+ * instance), every one fails at roughly half a second, so the boot spends
+ * ~87 seconds failing before it can bind a port. Observed on 2026-08-19:
+ * the platform's port scan gave up first, marked the deploy failed, and
+ * kept serving the previous instance — which made a corrected environment
+ * variable look like it had been ignored. A broken connection should
+ * degrade the seed, not the deploy.
+ */
+const MAX_CONSECUTIVE_DB_FAILURES = 3;
+
 export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
   if (!fs.existsSync(TOPICS_DIR)) return 0;
 
@@ -69,6 +84,10 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
   // dropped, so an operator can see coverage without querying the DB.
   let mappedCount = 0;
   let unmappedCount = 0;
+
+  // Reset per call, not per module: a later boot with a working database
+  // must get a full run, not inherit an earlier one's verdict.
+  let consecutiveFailures = 0;
 
   for (const dirName of topicDirs) {
     const mcqsPath = path.join(TOPICS_DIR, dirName, 'mcqs.json');
@@ -111,8 +130,19 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
           [conceptId, conceptIds, topic, q.question],
         );
       } catch (err) {
+        consecutiveFailures += 1;
+        if (consecutiveFailures >= MAX_CONSECUTIVE_DB_FAILURES) {
+          console.error(
+            `[seed-static-pyqs] ${consecutiveFailures} consecutive query failures ` +
+              `(${(err as Error).message}) — the database is unreachable, not the rows. ` +
+              `Abandoning the backfill so boot can finish and the server can bind its port; ` +
+              `it is idempotent and picks up where it left off on the next boot.`,
+          );
+          return seededCount;
+        }
         console.error(`[seed-static-pyqs] Backfill failed for ${dirName}/${q.id}:`, (err as Error).message);
       }
+      consecutiveFailures = 0;
     }
 
     // Idempotency: skip this topic once it already has real-PYQ rows —

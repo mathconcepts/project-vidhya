@@ -690,6 +690,16 @@ registerRoute('GET', '/health', async (_req, res) => {
 
   // DB ping (only if configured)
   if (process.env.DATABASE_URL) {
+    // What the PROCESS sees, reported next to the error because a
+    // certificate failure looks identical whichever cause is behind it and
+    // none of them are visible from outside the container. See
+    // src/lib/db-tls-status.ts for the reasoning and the privacy boundary.
+    const { describeDatabaseTls } = await import('./lib/db-tls-status');
+    info.database_tls = describeDatabaseTls(
+      process.env.DATABASE_URL,
+      process.env.NODE_EXTRA_CA_CERTS,
+      (f) => fs.readFileSync(f, 'utf8'),
+    );
     try {
       const pg = await import('pg');
       const client = new pg.default.Client({ connectionString: process.env.DATABASE_URL });

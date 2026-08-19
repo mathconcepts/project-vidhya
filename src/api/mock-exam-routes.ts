@@ -115,6 +115,17 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
   const exam = req.query.get('exam') || 'gate';
   if (!sessionId) return sendError(res, 400, 'sessionId required');
 
+  // DB-less deploys (demo, boot-before-migrate) can't run the ownership
+  // lookups or the persistence step below — fail honestly up front rather
+  // than letting the underlying store throw its internal
+  // "DATABASE_URL not configured" message out through the 500 catch
+  // further down, which would leak an implementation detail straight to
+  // the student. Explicit env check (not error-message sniffing) mirrors
+  // src/readiness/warmup-onboarding.ts's DB-less guard.
+  if (!process.env.DATABASE_URL) {
+    return sendError(res, 503, 'mock exam unavailable — try again shortly');
+  }
+
   // Ownership binding, NOT sessionId===user.userId (that check 403'd every
   // real student — MockExamPage.tsx's sessionId is the anonymous
   // useSession() localStorage UUID, unrelated to the authenticated id).
@@ -131,10 +142,20 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
   // Teachers/admins are exempt: they legitimately generate mock exams for
   // students they don't own, and their generated rows are owned by THEM.
   if (user.role === 'student') {
-    await deps.claimUnclaimedSessionRows(sessionId, user.userId);
-    const owner = await deps.sessionOwner(sessionId);
-    if (owner !== null && owner !== user.userId) {
-      return sendError(res, 403, 'cannot generate a mock exam for another session');
+    // Fail CLOSED, not open: this ownership check is a security control
+    // (it's what fixed the IDOR where any student could read another
+    // student's keyed session). A DB error here must never be treated as
+    // "no owner found yet, proceed" — that would silently reopen the same
+    // hole this code exists to close.
+    try {
+      await deps.claimUnclaimedSessionRows(sessionId, user.userId);
+      const owner = await deps.sessionOwner(sessionId);
+      if (owner !== null && owner !== user.userId) {
+        return sendError(res, 403, 'cannot generate a mock exam for another session');
+      }
+    } catch (err) {
+      console.error('[mock-exam] ownership lookup failed:', (err as Error).message);
+      return sendError(res, 503, 'mock exam unavailable — try again shortly');
     }
   }
 

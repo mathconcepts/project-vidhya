@@ -370,12 +370,31 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
   // The XP-cycle gate is NOT weakened for the concept-scoped case — a
   // concept-scoped checkpoint is still a checkpoint, not a separate
   // "practice test" tier with its own rules.
-  const cycleMinutes = await xpSinceBaseline(user.userId);
+  // A failed read is NOT "0 XP" — "we cannot check your progress right now"
+  // and "you have not practised enough yet" are different statements to a
+  // student, and only the second is true when the threshold genuinely isn't
+  // met. Degrading to 0 here would silently misreport the former as the
+  // latter (falling through to the 422 below), so an unreadable cycle total
+  // must fail the request outright instead.
+  let cycleMinutes: number;
+  try {
+    cycleMinutes = await xpSinceBaseline(user.userId);
+  } catch (err) {
+    console.error('[quiz] xpSinceBaseline failed:', (err as Error).message);
+    return sendError(res, 503, 'checkpoint quiz unavailable — try again shortly');
+  }
   if (!meetsQuizThreshold(cycleMinutes)) {
     return sendError(res, 422, 'Checkpoint unlocks as you practise more');
   }
 
-  const { catalog, pool } = await buildQuizPool(user.userId, now, conceptId);
+  let pool: AssembledQuizPool['pool'];
+  let catalog: AssembledQuizPool['catalog'];
+  try {
+    ({ catalog, pool } = await buildQuizPool(user.userId, now, conceptId));
+  } catch (err) {
+    console.error('[quiz] pool assembly failed:', (err as Error).message);
+    return sendError(res, 503, 'checkpoint quiz unavailable — try again shortly');
+  }
 
   if (!quizIsEligible(pool.length, QUIZ_LENGTH)) {
     return sendError(res, 422, 'Checkpoint unlocks as you practise more');

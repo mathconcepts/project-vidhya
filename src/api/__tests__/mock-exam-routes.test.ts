@@ -146,11 +146,57 @@ function examConfig(questions: unknown[] = [PYQ_Q]) {
 }
 
 describe('GET /api/gbrain/mock-exam/:sessionId', () => {
+  let originalDb: string | undefined;
+
   beforeEach(() => {
     mockRequireRole.mockReset();
     mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+    originalDb = process.env.DATABASE_URL;
+    // Every pre-existing test in this block exercises the (deps-injected,
+    // Postgres-free) generation path assuming a DB is configured — only
+    // the new DB-less guard test below deletes this. Default it here so
+    // the new early-return guard doesn't flip every other test to 503.
+    process.env.DATABASE_URL = 'postgres://nowhere';
   });
-  afterEach(() => setMockExamDepsForTests(null));
+  afterEach(() => {
+    setMockExamDepsForTests(null);
+    if (originalDb === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = originalDb;
+  });
+
+  it('503s with no DATABASE_URL, before ever reaching generation, and never leaks the internal store message', async () => {
+    delete process.env.DATABASE_URL;
+    const store = makeFakeStore();
+    const generateMock = vi.fn();
+    setMockExamDepsForTests({ ...store, generateMockExam: generateMock, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), r.res);
+    expect(r.status).toBe(503);
+    expect(generateMock).not.toHaveBeenCalled();
+    const raw = JSON.stringify(r.payload);
+    // The leak this test guards against: mock-exam-store.ts throws the
+    // literal string '[mock-exam-store] DATABASE_URL not configured', and
+    // the pre-fix 500 catch echoed err.message straight to the client.
+    expect(raw).not.toContain('DATABASE_URL');
+  });
+
+  it('an ownership-lookup failure (DATABASE_URL set, but the lookup itself throws) is a 503 and fails CLOSED — generation never runs', async () => {
+    process.env.DATABASE_URL = 'postgres://nowhere';
+    const generateMock = vi.fn();
+    setMockExamDepsForTests({
+      generateMockExam: generateMock,
+      claimUnclaimedSessionRows: async () => { throw new Error('[mock-exam-store] DATABASE_URL not configured'); },
+      sessionOwner: async () => { throw new Error('should not be reached'); },
+      now: () => NOW,
+    });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), r.res);
+    expect(r.status).toBe(503);
+    // Fail-closed property: a DB error in the ownership check must never
+    // be treated as "no owner found, proceed" — this is the exact IDOR
+    // this check exists to prevent from reopening.
+    expect(generateMock).not.toHaveBeenCalled();
+  });
 
   it('requires auth — denies the request and never touches generation when requireRole rejects', async () => {
     // requireRole is fully mocked here (as production requireRole would

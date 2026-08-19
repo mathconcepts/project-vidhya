@@ -180,3 +180,112 @@ describe('MockExamPage — timer expiry submits the real answer, not a stale ski
     expect(body.responses).toEqual([{ id: 'q-mcq-1', selectedIndex: 1 }]);
   }, 8000);
 });
+
+// ────────────────────────────────────────────────────────────────────
+// Regression lock: both failure paths render an in-page error surface
+// instead of a browser alert(), and a failed submit never discards the
+// student's mid-exam state.
+// ────────────────────────────────────────────────────────────────────
+
+const MCQ_EXAM_LONG = {
+  exam_id: 'exam-submit-fail',
+  exam_name: 'GATE Mock',
+  time_limit_minutes: 180, // generous — this suite is not testing timer expiry
+  total_questions: 1,
+  marks_scheme: { correct: 2, wrong: -0.66 },
+  section_breakdown: {},
+  questions: [
+    {
+      id: 'q-mcq-fail',
+      question_text: 'Which is prime?',
+      options: ['4', '5', '9'],
+      gradable: true,
+      question_type: 'mcq' as const,
+      topic: 'number-theory',
+      difficulty: 'medium',
+      marks: 2,
+    },
+  ],
+};
+
+describe('MockExamPage — start failure renders in-page, never alert()', () => {
+  it('shows the server error message inline and does not call window.alert', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch).mockResolvedValueOnce(
+      jsonResponse({ error: 'mock exam unavailable — try again shortly' }, false)
+    );
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    await renderPage();
+    fireEvent.click(screen.getByText('Start Mock Exam'));
+
+    await waitFor(() =>
+      expect(screen.getByText('mock exam unavailable — try again shortly')).toBeInTheDocument()
+    );
+    expect(alertSpy).not.toHaveBeenCalled();
+
+    alertSpy.mockRestore();
+  });
+});
+
+describe('MockExamPage — submit failure keeps the exam intact for a retry', () => {
+  it('renders an error inline, leaves the answer + exam in progress, and a retry succeeds', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_EXAM_LONG)) // GET exam succeeds
+      .mockResolvedValueOnce(jsonResponse({ error: 'mock exam unavailable — try again shortly' }, false)) // submit fails
+      .mockResolvedValueOnce(jsonResponse({ // retry submit succeeds
+        exam_id: 'exam-submit-fail', total: 1, correct: 1, wrong: 0, skipped: 0, ungraded: 0,
+        marks: 2, max_marks: 2, accuracy: 1, by_topic: {}, late: false, recorded: true,
+      }));
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    await renderPage();
+    fireEvent.click(screen.getByText('Start Mock Exam'));
+    await waitFor(() => expect(screen.getByText('Which is prime?')).toBeInTheDocument());
+
+    const radios = screen.getAllByRole('radio');
+    fireEvent.click(radios[1]); // pick '5'
+    expect(radios[1]).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.click(screen.getByText('Submit Exam'));
+    await waitFor(() =>
+      expect(screen.getByText('mock exam unavailable — try again shortly')).toBeInTheDocument()
+    );
+    expect(alertSpy).not.toHaveBeenCalled();
+
+    // The exam is still in progress — the question and the student's
+    // selected answer were never discarded by the failed submit.
+    expect(screen.getByText('Which is prime?')).toBeInTheDocument();
+    expect(screen.getAllByRole('radio')[1]).toHaveAttribute('aria-checked', 'true');
+
+    // Retry re-runs the same submit and succeeds.
+    fireEvent.click(screen.getByText('Retry submit'));
+    await waitFor(() => expect(screen.getByText('Take Another Mock')).toBeInTheDocument());
+
+    const submitCalls = vi.mocked(authFetch).mock.calls.filter(([url]) => String(url).includes('/submit'));
+    expect(submitCalls).toHaveLength(2);
+    const retryBody = JSON.parse((submitCalls[1][1] as RequestInit).body as string);
+    // The retry still carries the answer picked before the first (failed) submit.
+    expect(retryBody.responses).toEqual([{ id: 'q-mcq-fail', selectedIndex: 1 }]);
+
+    alertSpy.mockRestore();
+  });
+});
+
+describe('MockExamPage — internals-looking messages fall back to a generic sentence', () => {
+  it('never renders a raw exception string that starts with a bracketed module tag', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch).mockResolvedValueOnce(
+      jsonResponse({ error: '[mock-exam-store] write failed: ECONNRESET' }, false)
+    );
+
+    await renderPage();
+    fireEvent.click(screen.getByText('Start Mock Exam'));
+
+    await waitFor(() =>
+      expect(screen.getByText('Could not start your exam — try again shortly.')).toBeInTheDocument()
+    );
+    expect(screen.queryByText(/mock-exam-store/)).not.toBeInTheDocument();
+  });
+});

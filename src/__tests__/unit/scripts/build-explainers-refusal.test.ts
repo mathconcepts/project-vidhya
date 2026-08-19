@@ -18,10 +18,14 @@ import path from 'node:path';
 
 const SCRIPT = path.resolve(process.cwd(), 'scripts/build-explainers.ts');
 
+// Repo-pinned tsx, not `npx tsx` — a cold npx cache installs from the network
+// and writes its warning to stderr (see check-la-walkthrough.test.ts).
+const TSX_BIN = path.resolve(process.cwd(), 'node_modules/.bin/tsx');
+
 function runScript(args: string[], cwd: string) {
   const env = { ...process.env };
   delete env.GEMINI_API_KEY;
-  return spawnSync('npx', ['tsx', SCRIPT, ...args], {
+  return spawnSync(TSX_BIN, [SCRIPT, ...args], {
     cwd,
     env,
     encoding: 'utf-8',

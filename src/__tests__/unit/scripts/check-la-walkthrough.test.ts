@@ -27,10 +27,21 @@ import { ALL_CONCEPTS } from '../../../constants/concept-graph';
 
 const SCRIPT = path.resolve(process.cwd(), 'scripts/check-la-walkthrough.ts');
 
+/**
+ * Spawn through the repo's OWN pinned tsx binary, never `npx tsx`.
+ *
+ * `npx` resolves tsx from the network when the cache is cold and announces it
+ * on STDERR ("npm warn exec The following package was not found..."), which is
+ * indistinguishable from the script's own stderr to a test that asserts silence
+ * — green locally where tsx is already resolved, red on a cold CI runner.
+ * tsx is a pinned devDependency, so the local binary always exists here.
+ */
+const TSX_BIN = path.resolve(process.cwd(), 'node_modules/.bin/tsx');
+
 const LA_CONCEPT_IDS: string[] = ALL_CONCEPTS.filter((c) => c.topic === 'linear-algebra').map((c) => c.id);
 
 function runScript(args: string[], cwd: string, extraEnv: Record<string, string>) {
-  return spawnSync('npx', ['tsx', SCRIPT, ...args], {
+  return spawnSync(TSX_BIN, [SCRIPT, ...args], {
     encoding: 'utf-8',
     timeout: 60_000,
     cwd,
@@ -254,7 +265,7 @@ describe('check-la-walkthrough', () => {
 
 describe('against the real repo (no fixture — default paths)', () => {
   it('runs cleanly and reports on every real linear-algebra concept', () => {
-    const r = spawnSync('npx', ['tsx', SCRIPT, '--report-only'], {
+    const r = spawnSync(TSX_BIN, [SCRIPT, '--report-only'], {
       encoding: 'utf-8',
       timeout: 60_000,
       cwd: process.cwd(),

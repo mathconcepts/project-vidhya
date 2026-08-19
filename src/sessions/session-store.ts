@@ -152,13 +152,21 @@ class PostgresStore implements SessionStore {
     // never existed (base schema: supabase/migrations/001_rag_schema.sql:
     // 36-50), and `difficulty` is TEXT, not numeric. See difficultyBucketsUpTo
     // above for the bucket-mapping rationale.
+    //
+    // concept_ids (migration 048) is matched too: `$1 = ANY(concept_ids)`
+    // surfaces a question whose PRIMARY concept is something else but that
+    // genuinely also covers this concept — e.g. a singular-matrix question
+    // primary-mapped to 'determinants' still surfaces under 'matrix-inverse'
+    // practice, since det(A)=0 IS "no inverse", not a different topic. A
+    // pre-048 row with concept_ids still NULL falls back to the concept_id
+    // equality alone (ANY(NULL) is NULL, never true, so it costs nothing).
     const { rows } = await this.pool.query<{
       id: string; topic: string; difficulty: string;
       question_text: string; correct_answer: string; source: string; source_url?: string;
     }>(
       `SELECT id, topic, difficulty, question_text, correct_answer, source, source_url
        FROM pyq_questions
-       WHERE concept_id = $1
+       WHERE (concept_id = $1 OR $1 = ANY(concept_ids))
          AND difficulty = ANY($2::text[])
          AND id != ALL($3::uuid[])
        ORDER BY RANDOM()
@@ -335,8 +343,17 @@ class FlatFileStore implements SessionStore {
     excludeIds: Set<string>,
   ): Promise<SessionProblemRow | null> {
     const all = loadBundleProblems();
+    // concept_ids (migration 048 / export-bundles.ts) is the full set a
+    // question covers, primary first — matched here the same way the
+    // Postgres backend matches `$1 = ANY(concept_ids)`, so a
+    // secondary-concept question (e.g. a singular-matrix question
+    // primary-mapped to 'determinants') surfaces under 'matrix-inverse'
+    // practice too, on the DB-less demo path exactly like the DB path.
     const matchTarget = (p: any) =>
-      p.concept_id === conceptId || (!p.concept_id && p.topic === conceptId) || p.topic === conceptId;
+      p.concept_id === conceptId
+      || (Array.isArray(p.concept_ids) && p.concept_ids.includes(conceptId))
+      || (!p.concept_id && p.topic === conceptId)
+      || p.topic === conceptId;
 
     const candidates = all.filter((p: any) => {
       if (!matchTarget(p)) return false;

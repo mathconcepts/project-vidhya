@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "exported_at": "2026-08-19T01:59:25.934Z",
+  "exported_at": "2026-08-19T02:19:01.279Z",
   "problems": [
     {
       "id": "la-001",
@@ -3668,6 +3668,10 @@
       "correct_answer": "A",
       "explanation": "For matrix A = [[2,1],[1,2]], the characteristic equation is det(A - λI) = 0.\n(2-λ)² - 1 = 0 → λ² - 4λ + 3 = 0 → (λ-1)(λ-3) = 0.\nEigenvalues: λ₁ = 1, λ₂ = 3.",
       "topic": "linear-algebra",
+      "concept_id": "eigenvalues",
+      "concept_ids": [
+        "eigenvalues"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -3688,6 +3692,10 @@
       "correct_answer": "B",
       "explanation": "Row reduce: R2 → R2 - 2R1, R3 → R3 - R1:\n[[1, 2, 3], [0, 0, 0], [0, 0, 1]]\nSwap R2 and R3: [[1, 2, 3], [0, 0, 1], [0, 0, 0]]\nTwo non-zero rows → Rank = 2.",
       "topic": "linear-algebra",
+      "concept_id": "rank-nullity",
+      "concept_ids": [
+        "rank-nullity"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -3708,6 +3716,10 @@
       "correct_answer": "B",
       "explanation": "For an n×n matrix, det(kA) = kⁿ det(A).\nHere n=3, k=2: det(2A) = 2³ × 5 = 8 × 5 = 40.",
       "topic": "linear-algebra",
+      "concept_id": "determinants",
+      "concept_ids": [
+        "determinants"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -3728,6 +3740,11 @@
       "correct_answer": "C",
       "explanation": "Augmented matrix: [[1,1,1,6],[1,2,3,14],[1,4,7,30]]\nR2→R2-R1: [[1,1,1,6],[0,1,2,8],[0,3,6,24]]\nR3→R3-3R2: [[1,1,1,6],[0,1,2,8],[0,0,0,0]]\nRank(A) = Rank([A|b]) = 2 < 3 variables → infinitely many solutions.",
       "topic": "linear-algebra",
+      "concept_id": "systems-of-equations",
+      "concept_ids": [
+        "systems-of-equations",
+        "rank-nullity"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -3748,6 +3765,11 @@
       "correct_answer": "A",
       "explanation": "Product of eigenvalues = det(A).\ndet = 1 × (9-1) = 1 × 8 = 8.\n(Eigenvalues are 1, 2, 4 which multiply to 8.)",
       "topic": "linear-algebra",
+      "concept_id": "eigenvalues",
+      "concept_ids": [
+        "eigenvalues",
+        "determinants"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4668,6 +4690,10 @@
       "correct_answer": "A",
       "explanation": "The matrix is upper triangular. Eigenvalues of a triangular matrix are the diagonal entries: 3 and 3.",
       "topic": "linear-algebra",
+      "concept_id": "eigenvalues",
+      "concept_ids": [
+        "eigenvalues"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4688,6 +4714,10 @@
       "correct_answer": "B",
       "explanation": "Row reduce: R2 = R2 - 4*R1, R3 = R3 - 7*R1. R3 becomes [0,0,0]. Two non-zero rows remain, so rank = 2.",
       "topic": "linear-algebra",
+      "concept_id": "rank-nullity",
+      "concept_ids": [
+        "rank-nullity"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4708,6 +4738,12 @@
       "correct_answer": "C",
       "explanation": "det(A) = 0 means A is singular. The system is either inconsistent (no solution) or has infinitely many solutions, depending on b.",
       "topic": "linear-algebra",
+      "concept_id": "determinants",
+      "concept_ids": [
+        "determinants",
+        "matrix-inverse",
+        "systems-of-equations"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,

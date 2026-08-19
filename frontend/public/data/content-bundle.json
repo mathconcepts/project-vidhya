@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "generated_at": "2026-08-19T01:59:26.676Z",
+  "generated_at": "2026-08-19T02:19:02.185Z",
   "problems": [
     {
       "id": "la-001",
@@ -928,7 +928,6 @@
       "source": "GATE-EM-Topic-MCQs",
       "verified": true,
       "fingerprint": "6210c861fbbcc7e2",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -1862,7 +1861,6 @@
       "source": "GATE-EM-Topic-MCQs",
       "verified": true,
       "fingerprint": "9f03f2081141734c",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -3820,13 +3818,16 @@
       "correct_answer": "A",
       "explanation": "For matrix A = [[2,1],[1,2]], the characteristic equation is det(A - λI) = 0.\n(2-λ)² - 1 = 0 → λ² - 4λ + 3 = 0 → (λ-1)(λ-3) = 0.\nEigenvalues: λ₁ = 1, λ₂ = 3.",
       "topic": "linear-algebra",
+      "concept_id": "eigenvalues",
+      "concept_ids": [
+        "eigenvalues"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "e2c31d8cf23fc536",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -3842,13 +3843,16 @@
       "correct_answer": "B",
       "explanation": "Row reduce: R2 → R2 - 2R1, R3 → R3 - R1:\n[[1, 2, 3], [0, 0, 0], [0, 0, 1]]\nSwap R2 and R3: [[1, 2, 3], [0, 0, 1], [0, 0, 0]]\nTwo non-zero rows → Rank = 2.",
       "topic": "linear-algebra",
+      "concept_id": "rank-nullity",
+      "concept_ids": [
+        "rank-nullity"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "5cc0556db73fbf80",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -3864,13 +3868,16 @@
       "correct_answer": "B",
       "explanation": "For an n×n matrix, det(kA) = kⁿ det(A).\nHere n=3, k=2: det(2A) = 2³ × 5 = 8 × 5 = 40.",
       "topic": "linear-algebra",
+      "concept_id": "determinants",
+      "concept_ids": [
+        "determinants"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "db2f5628954a5c2c",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -3886,13 +3893,17 @@
       "correct_answer": "C",
       "explanation": "Augmented matrix: [[1,1,1,6],[1,2,3,14],[1,4,7,30]]\nR2→R2-R1: [[1,1,1,6],[0,1,2,8],[0,3,6,24]]\nR3→R3-3R2: [[1,1,1,6],[0,1,2,8],[0,0,0,0]]\nRank(A) = Rank([A|b]) = 2 < 3 variables → infinitely many solutions.",
       "topic": "linear-algebra",
+      "concept_id": "systems-of-equations",
+      "concept_ids": [
+        "systems-of-equations",
+        "rank-nullity"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "0e704055b263bb48",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -3908,13 +3919,17 @@
       "correct_answer": "A",
       "explanation": "Product of eigenvalues = det(A).\ndet = 1 × (9-1) = 1 × 8 = 8.\n(Eigenvalues are 1, 2, 4 which multiply to 8.)",
       "topic": "linear-algebra",
+      "concept_id": "eigenvalues",
+      "concept_ids": [
+        "eigenvalues",
+        "determinants"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "3c782f1e4eaba864",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -3936,7 +3951,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "ff163dc1f2c65b2f",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -3958,7 +3972,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "5057326fbecb7b52",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -3980,7 +3993,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "1cb2be9007d8c4d8",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4002,7 +4014,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "362c799968f7a09f",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4024,7 +4035,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "b8be7b471ac5aebf",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4046,7 +4056,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "ab95c83dd3134684",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -4068,7 +4077,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "0b3968d1b020b862",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -4090,7 +4098,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "2639a514ece373cc",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -4112,7 +4119,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "a55642def3b064f1",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -4134,7 +4140,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "d35bd34a86d90e99",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -4156,7 +4161,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "0328d0a9988abc35",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -4178,7 +4182,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "2aeba861135ab653",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -4200,7 +4203,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "95509316988743b4",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -4222,7 +4224,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "79661ca2af5d1493",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -4244,7 +4245,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "20d9ebfc92a61805",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -4266,7 +4266,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "9433e9f709bc2e5d",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -4288,7 +4287,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "055f7d87a570d950",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -4310,7 +4308,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "569c6ce11ae05fc1",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -4332,7 +4329,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "1ed3b74ce6d93fd7",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -4354,7 +4350,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "3253b5adacd5dd05",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -4376,7 +4371,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "ef58a290ffb020ab",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4398,7 +4392,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "44690b507cad34c3",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4420,7 +4413,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "a21e2f68e70930c8",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4442,7 +4434,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "f1fc6d259ad92531",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4464,7 +4455,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "1d17be48a91e5ac0",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4486,7 +4476,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "f31ada530f17f749",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -4508,7 +4497,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "5510f7a10387fe32",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -4530,7 +4518,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "ef8498f5d50abc4e",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -4552,7 +4539,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "84aed2023d6e325c",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -4574,7 +4560,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "61e579489076b7dc",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -4596,7 +4581,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "e896675aa9c3b04a",
-      "concept_id": "discrete-mathematics",
       "wolfram_verified": false
     },
     {
@@ -4618,7 +4602,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "093c9055fb65a90f",
-      "concept_id": "discrete-mathematics",
       "wolfram_verified": false
     },
     {
@@ -4640,7 +4623,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "9ab475c24b35a702",
-      "concept_id": "discrete-mathematics",
       "wolfram_verified": false
     },
     {
@@ -4662,7 +4644,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "60b264eb160600ed",
-      "concept_id": "discrete-mathematics",
       "wolfram_verified": false
     },
     {
@@ -4684,7 +4665,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "b11ff54a33670e81",
-      "concept_id": "discrete-mathematics",
       "wolfram_verified": false
     },
     {
@@ -4706,7 +4686,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "a571a0ebf3321ce0",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -4728,7 +4707,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "69aa86b48f94b572",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -4750,7 +4728,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "a909b9c1ea9add44",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -4772,7 +4749,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "776c632549318cd5",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -4794,7 +4770,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "3f309f75a3f0a217",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -4816,7 +4791,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "e4756cd0b72a9a06",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4838,7 +4812,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "3e2e37f6f92ec95d",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4860,7 +4833,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "9d68bbe732359982",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4882,7 +4854,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "57962a4faa53915b",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4904,7 +4875,6 @@
       "source": "GATE-PYQs-Seed",
       "verified": true,
       "fingerprint": "98e3d253e6bc8722",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -4920,13 +4890,16 @@
       "correct_answer": "A",
       "explanation": "The matrix is upper triangular. Eigenvalues of a triangular matrix are the diagonal entries: 3 and 3.",
       "topic": "linear-algebra",
+      "concept_id": "eigenvalues",
+      "concept_ids": [
+        "eigenvalues"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "4abe06d68c95f92e",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -4942,13 +4915,16 @@
       "correct_answer": "B",
       "explanation": "Row reduce: R2 = R2 - 4*R1, R3 = R3 - 7*R1. R3 becomes [0,0,0]. Two non-zero rows remain, so rank = 2.",
       "topic": "linear-algebra",
+      "concept_id": "rank-nullity",
+      "concept_ids": [
+        "rank-nullity"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "157f534f1d12142c",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -4964,13 +4940,18 @@
       "correct_answer": "C",
       "explanation": "det(A) = 0 means A is singular. The system is either inconsistent (no solution) or has infinitely many solutions, depending on b.",
       "topic": "linear-algebra",
+      "concept_id": "determinants",
+      "concept_ids": [
+        "determinants",
+        "matrix-inverse",
+        "systems-of-equations"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "8a110b3ea09264b6",
-      "concept_id": "linear-algebra",
       "wolfram_verified": false
     },
     {
@@ -4992,7 +4973,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "fd41fa4847e86d77",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -5014,7 +4994,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "733b60d9bb1cd098",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -5036,7 +5015,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "79be74f212eb9d4a",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -5058,7 +5036,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "b5f35b9d11140b5d",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -5080,7 +5057,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "ef45fccf3f60a038",
-      "concept_id": "differential-equations",
       "wolfram_verified": false
     },
     {
@@ -5102,7 +5078,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "4c696e60a1327a94",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -5124,7 +5099,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "ae22e37fac8d1652",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -5146,7 +5120,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "67b97dc7f91655a8",
-      "concept_id": "complex-variables",
       "wolfram_verified": false
     },
     {
@@ -5168,7 +5141,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "76fac79ba2c02437",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -5190,7 +5162,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "7e448edf3be210f9",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -5212,7 +5183,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "7902298a54818831",
-      "concept_id": "probability-statistics",
       "wolfram_verified": false
     },
     {
@@ -5234,7 +5204,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "afd1f9707d537036",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -5256,7 +5225,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "a7b0908fe1b54f2c",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -5278,7 +5246,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "3629d2a646fd0a76",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -5300,7 +5267,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "48649462fc4be939",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -5322,7 +5288,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "0f8c3c78eb555c81",
-      "concept_id": "transform-theory",
       "wolfram_verified": false
     },
     {
@@ -5344,7 +5309,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "30a6116c437d6fac",
-      "concept_id": "discrete-mathematics",
       "wolfram_verified": false
     },
     {
@@ -5366,7 +5330,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "e3c752c531ba39ff",
-      "concept_id": "discrete-mathematics",
       "wolfram_verified": false
     },
     {
@@ -5388,7 +5351,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "381c56e8a0970fb5",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -5410,7 +5372,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "87b82aa1ba3e3453",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -5432,7 +5393,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "313734c6b99a3c42",
-      "concept_id": "graph-theory",
       "wolfram_verified": false
     },
     {
@@ -5454,7 +5414,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "a34ecdc00279d6e7",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -5476,7 +5435,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "e85f6980c35acd3d",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -5498,7 +5456,6 @@
       "source": "Supabase-PYQs-Seed",
       "verified": true,
       "fingerprint": "79a0911a11750beb",
-      "concept_id": "calculus",
       "wolfram_verified": false
     },
     {
@@ -5522,122 +5479,10 @@
       "license": "public-domain",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "eigenvalues"
+      ],
       "fingerprint": "05363096095137c1"
-    },
-    {
-      "id": "gate-2024-partial-derivatives-1",
-      "question_text": "If f(x,y)=x²y+xy², then ∂f/∂x at (1,2) equals:",
-      "correct_answer": "8",
-      "options": {
-        "A": "4",
-        "B": "6",
-        "C": "8",
-        "D": "10"
-      },
-      "explanation": "∂f/∂x=2xy+y². At (1,2): 2(1)(2)+4=8.",
-      "topic": "calculus",
-      "concept_id": "partial-derivatives",
-      "difficulty": 0.25,
-      "marks": 1,
-      "year": 2024,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2024/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "344a2eef41c29970"
-    },
-    {
-      "id": "gate-2024-first-order-linear-2",
-      "question_text": "The integrating factor for dy/dx + 2xy = x is:",
-      "correct_answer": "e^(x²)",
-      "options": {
-        "A": "e^x",
-        "B": "e^(x²)",
-        "C": "e^(2x)",
-        "D": "x²"
-      },
-      "explanation": "IF = e^(∫P dx) = e^(∫2x dx) = e^(x²).",
-      "topic": "differential-equations",
-      "concept_id": "first-order-linear",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2024,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2024/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "1ff54365eacdb529"
-    },
-    {
-      "id": "gate-2023-matrix-rank-3",
-      "question_text": "The rank of matrix [[1,2,3],[4,5,6],[7,8,9]] is:",
-      "correct_answer": "2",
-      "options": {
-        "A": "1",
-        "B": "2",
-        "C": "3",
-        "D": "0"
-      },
-      "explanation": "R3-R2 = R2-R1 → two independent rows → rank 2.",
-      "topic": "linear-algebra",
-      "concept_id": "matrix-rank",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2023,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "30d60846c11265f3"
-    },
-    {
-      "id": "gate-2023-bayes-theorem-4",
-      "question_text": "A test is 95% accurate for a disease with 1% prevalence. Given a positive test, probability of having the disease is:",
-      "correct_answer": "0.161",
-      "options": {
-        "A": "0.161",
-        "B": "0.95",
-        "C": "0.5",
-        "D": "0.01"
-      },
-      "explanation": "P(D|+)=P(+|D)P(D)/P(+)=(.95)(.01)/[(.95)(.01)+(.05)(.99)]≈0.161.",
-      "topic": "probability-statistics",
-      "concept_id": "bayes-theorem",
-      "difficulty": 0.75,
-      "marks": 2,
-      "year": 2023,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "8f1d9526113ae35c"
-    },
-    {
-      "id": "gate-2023-cauchy-riemann-5",
-      "question_text": "If f(z)=u+iv is analytic with u=x²-y², then v is (up to constant):",
-      "correct_answer": "2xy",
-      "options": {
-        "A": "2xy",
-        "B": "-2xy",
-        "C": "x²+y²",
-        "D": "xy"
-      },
-      "explanation": "∂u/∂x=2x=∂v/∂y → v=2xy+g(x). ∂u/∂y=-2y=-∂v/∂x → g'(x)=0.",
-      "topic": "complex-variables",
-      "concept_id": "cauchy-riemann",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2023,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "f75f61dc5b87a3fd"
     },
     {
       "id": "gate-2023-laplace-transform-6",
@@ -5660,53 +5505,10 @@
       "license": "public-domain",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "laplace-transform"
+      ],
       "fingerprint": "feee045ad170ec7a"
-    },
-    {
-      "id": "gate-2023-simpson-rule-7",
-      "question_text": "Simpson's 1/3 rule requires number of intervals to be:",
-      "correct_answer": "Even",
-      "options": {
-        "A": "Odd",
-        "B": "Even",
-        "C": "Multiple of 3",
-        "D": "Any positive"
-      },
-      "explanation": "Simpson's 1/3 fits pairs of intervals with parabolas → needs even count.",
-      "topic": "numerical-methods",
-      "concept_id": "simpson-rule",
-      "difficulty": 0.25,
-      "marks": 1,
-      "year": 2023,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2023/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "2da566382e9f8ce6"
-    },
-    {
-      "id": "gate-2022-combinatorics-8",
-      "question_text": "Number of ways to arrange MISSISSIPPI letters:",
-      "correct_answer": "34650",
-      "options": {
-        "A": "11!",
-        "B": "34650",
-        "C": "9!",
-        "D": "11!/4!"
-      },
-      "explanation": "11!/(4!·4!·2!)=34650 (4 S's, 4 I's, 2 P's).",
-      "topic": "discrete-mathematics",
-      "concept_id": "combinatorics",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2022,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2022/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "258f117bb67182c8"
     },
     {
       "id": "gate-2022-graph-coloring-9",
@@ -5729,53 +5531,10 @@
       "license": "public-domain",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "graph-coloring"
+      ],
       "fingerprint": "d4d03e10189ce2df"
-    },
-    {
-      "id": "gate-2022-gradient-10",
-      "question_text": "If φ=x²yz, then ∇φ at (1,1,1) is:",
-      "correct_answer": "2i+j+k",
-      "options": {
-        "A": "i+j+k",
-        "B": "2i+j+k",
-        "C": "2i+2j+k",
-        "D": "i+2j+k"
-      },
-      "explanation": "∇φ=(2xyz, x²z, x²y). At (1,1,1): (2,1,1).",
-      "topic": "vector-calculus",
-      "concept_id": "gradient",
-      "difficulty": 0.25,
-      "marks": 1,
-      "year": 2022,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2022/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "a21f2e84d812f67e"
-    },
-    {
-      "id": "gate-2022-taylor-series-11",
-      "question_text": "Third-order Taylor expansion of sin(x) around 0 is:",
-      "correct_answer": "x - x³/6",
-      "options": {
-        "A": "1 + x - x²/2",
-        "B": "x - x³/6",
-        "C": "x + x³/6",
-        "D": "1 - x²/2"
-      },
-      "explanation": "sin(0)=0, cos(0)=1, -sin(0)=0, -cos(0)=-1 → x - x³/6.",
-      "topic": "calculus",
-      "concept_id": "taylor-series",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2022,
-      "source": "gate-curated",
-      "source_url": "https://gate.iitk.ac.in/papers/2022/math/",
-      "license": "public-domain",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "02a3d21e980aa137"
     },
     {
       "id": "openstax-derivatives-basic-0",
@@ -5792,6 +5551,9 @@
       "license": "CC-BY-4.0",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "derivatives-basic"
+      ],
       "fingerprint": "e2863a27807feee9"
     },
     {
@@ -5809,47 +5571,10 @@
       "license": "CC-BY-4.0",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "definite-integrals"
+      ],
       "fingerprint": "594ff4220b52600b"
-    },
-    {
-      "id": "openstax-taylor-series-2",
-      "question_text": "The first three non-zero terms of the Maclaurin series for e^x are:",
-      "correct_answer": "1 + x + x²/2",
-      "options": {
-        "A": "1 + x + x²/2",
-        "B": "x + x² + x³/6",
-        "C": "1 + x² + x⁴/24",
-        "D": "x + x²/2 + x³/6"
-      },
-      "explanation": "e^x = Σ x^n/n! → 1 + x + x²/2! + x³/3! + ...",
-      "topic": "calculus",
-      "concept_id": "taylor-series",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2022,
-      "source": "openstax",
-      "source_url": "https://openstax.org/books/calculus-volume-2/pages/6-3-taylor-and-maclaurin-series",
-      "license": "CC-BY-4.0",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "2fc0e2844db145c7"
-    },
-    {
-      "id": "openstax-partial-derivatives-3",
-      "question_text": "If z = x²y + sin(xy), find ∂z/∂y.",
-      "correct_answer": "x² + x·cos(xy)",
-      "explanation": "∂/∂y of x²y is x². ∂/∂y of sin(xy) is x·cos(xy).",
-      "topic": "calculus",
-      "concept_id": "partial-derivatives",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2022,
-      "source": "openstax",
-      "source_url": "https://openstax.org/books/calculus-volume-3/pages/4-3-partial-derivatives",
-      "license": "CC-BY-4.0",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "dca079e4ab543f88"
     },
     {
       "id": "openstax-series-4",
@@ -5872,6 +5597,9 @@
       "license": "CC-BY-4.0",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "series"
+      ],
       "fingerprint": "595eb1ae0b6d0aa2"
     },
     {
@@ -5889,6 +5617,9 @@
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "determinants"
+      ],
       "fingerprint": "57f91bc1e4d67e8a"
     },
     {
@@ -5912,30 +5643,10 @@
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "diagonalization"
+      ],
       "fingerprint": "792742f86b3185af"
-    },
-    {
-      "id": "ocw-second-order-linear-2",
-      "question_text": "The general solution of y'' - 3y' + 2y = 0 is:",
-      "correct_answer": "y = C₁e^x + C₂e^(2x)",
-      "options": {
-        "A": "y = C₁e^x + C₂e^(2x)",
-        "B": "y = C₁e^(-x) + C₂e^(-2x)",
-        "C": "y = (C₁ + C₂x)e^x",
-        "D": "y = C₁cos(x) + C₂sin(x)"
-      },
-      "explanation": "Char eq: r² - 3r + 2 = 0 → r = 1, 2 → y = C₁e^x + C₂e^(2x).",
-      "topic": "differential-equations",
-      "concept_id": "second-order-linear",
-      "difficulty": 0.5,
-      "marks": 2,
-      "year": 2010,
-      "source": "mit-ocw",
-      "source_url": "https://ocw.mit.edu/courses/18-03-differential-equations-spring-2010",
-      "license": "CC-BY-NC-SA-4.0",
-      "verified": true,
-      "wolfram_verified": false,
-      "fingerprint": "8336b342cd5427d5"
     },
     {
       "id": "ocw-counting-principles-3",
@@ -5952,6 +5663,9 @@
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "counting-principles"
+      ],
       "fingerprint": "6c844a5ac6299995"
     },
     {
@@ -5975,6 +5689,9 @@
       "license": "CC-BY-NC-SA-4.0",
       "verified": true,
       "wolfram_verified": false,
+      "concept_ids": [
+        "graph-connectivity"
+      ],
       "fingerprint": "84eebaedde1389b0"
     }
   ],
@@ -10551,26 +10268,24 @@
     "vector-calculus": "# Vector Calculus — GATE Engineering Mathematics\n\n## Introduction\n\nVector Calculus extends calculus to vector fields. It's essential for engineering applications in fluid mechanics, electromagnetism, and heat transfer. GATE weightage: ~8–10%.\n\n---\n\n## 1. Vector Operations\n\nA vector field $\\mathbf{F} = P\\hat{i} + Q\\hat{j} + R\\hat{k}$ assigns a vector to each point in space.\n\n### Gradient (∇f)\n\nFor scalar field $f(x,y,z)$:\n$$\\nabla f = \\frac{\\partial f}{\\partial x}\\hat{i} + \\frac{\\partial f}{\\partial y}\\hat{j} + \\frac{\\partial f}{\\partial z}\\hat{k}$$\n\n- Points in direction of steepest ascent\n- Magnitude = rate of steepest ascent\n\n### Divergence (∇·F)\n\n$$\\nabla \\cdot \\mathbf{F} = \\frac{\\partial P}{\\partial x} + \\frac{\\partial Q}{\\partial y} + \\frac{\\partial R}{\\partial z}$$\n\n- Scalar quantity\n- Measures \"outflow\" at a point\n- $\\nabla \\cdot \\mathbf{F} = 0$ → solenoidal (incompressible) field\n\n### Curl (∇×F)\n\n$$\\nabla \\times \\mathbf{F} = \\begin{vmatrix} \\hat{i} & \\hat{j} & \\hat{k} \\\\ \\partial/\\partial x & \\partial/\\partial y & \\partial/\\partial z \\\\ P & Q & R \\end{vmatrix}$$\n\n$$= \\left(\\frac{\\partial R}{\\partial y} - \\frac{\\partial Q}{\\partial z}\\right)\\hat{i} - \\left(\\frac{\\partial R}{\\partial x} - \\frac{\\partial P}{\\partial z}\\right)\\hat{j} + \\left(\\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y}\\right)\\hat{k}$$\n\n- Vector quantity\n- Measures rotation/vorticity\n- $\\nabla \\times \\mathbf{F} = 0$ → irrotational field\n\n### Laplacian\n\n$$\\nabla^2 f = \\frac{\\partial^2 f}{\\partial x^2} + \\frac{\\partial^2 f}{\\partial y^2} + \\frac{\\partial^2 f}{\\partial z^2}$$\n\n---\n\n## 2. Key Identities\n\n$$\\nabla \\times (\\nabla f) = \\mathbf{0} \\quad \\text{(curl of gradient = 0)}$$\n$$\\nabla \\cdot (\\nabla \\times \\mathbf{F}) = 0 \\quad \\text{(divergence of curl = 0)}$$\n$$\\nabla \\times (\\nabla \\times \\mathbf{F}) = \\nabla(\\nabla \\cdot \\mathbf{F}) - \\nabla^2\\mathbf{F}$$\n\n---\n\n## 3. Line Integrals\n\n$$\\int_C \\mathbf{F} \\cdot d\\mathbf{r} = \\int_C (P\\,dx + Q\\,dy + R\\,dz)$$\n\n**Conservative Field\n\n…"
   },
   "stats": {
-    "total_problems": 249,
+    "total_problems": 237,
     "total_explainers": 97,
     "total_topic_notes": 10,
     "wolfram_verified": 0,
     "by_topic": {
-      "linear-algebra": 27,
-      "calculus": 74,
-      "differential-equations": 25,
-      "complex-variables": 24,
-      "probability-statistics": 24,
+      "linear-algebra": 26,
+      "calculus": 70,
+      "differential-equations": 23,
+      "complex-variables": 23,
+      "probability-statistics": 23,
       "transform-theory": 24,
-      "discrete-mathematics": 24,
-      "graph-theory": 25,
-      "numerical-methods": 1,
-      "vector-calculus": 1
+      "discrete-mathematics": 23,
+      "graph-theory": 25
     },
     "by_difficulty": {
-      "easy": 118,
-      "medium": 108,
-      "hard": 23
+      "easy": 115,
+      "medium": 100,
+      "hard": 22
     }
   }
 }

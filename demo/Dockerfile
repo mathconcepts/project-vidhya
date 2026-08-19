@@ -103,4 +103,9 @@ VOLUME ["/app/.data"]
 #
 # JWT_SECRET is required; Render's render.yaml sets it via generateValue.
 # Locally, pass it via -e or --env-file.
-CMD ["sh", "-c", "npm run demo:seed && npm run demo:seed-media && npm run demo:seed-history && npx tsx src/server.ts"]
+# Seed, then serve. The seeds are chained with `;` and each carries its own
+# `||` notice rather than `&&`: seeding is a nice-to-have, serving is not.
+# Under `&&` a single failing seed exited the container with status 1 and the
+# server never started — a dead demo instead of a demo missing its sample
+# history. `exec` hands PID 1 to the server so it receives Render's signals.
+CMD ["sh", "-c", "npm run demo:seed || echo '[boot] demo:seed failed — continuing without fresh demo accounts'; npm run demo:seed-media || echo '[boot] demo:seed-media failed — continuing without rendered media'; npm run demo:seed-history || echo '[boot] demo:seed-history failed — continuing without persona history'; exec npx tsx src/server.ts"]

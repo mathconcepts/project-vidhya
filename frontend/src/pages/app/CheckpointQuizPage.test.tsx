@@ -37,10 +37,10 @@ const NAT_QUIZ = {
   ],
 };
 
-async function renderPage() {
+async function renderPage(initialEntries: string[] = ['/checkpoint']) {
   const Page = (await import('./CheckpointQuizPage')).default;
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <Page />
     </MemoryRouter>,
   );
@@ -106,6 +106,48 @@ describe('CheckpointQuizPage — NAT items', () => {
     const input = screen.getByPlaceholderText('Numeric answer…');
     fireEvent.change(input, { target: { value: '-' } });
     expect(screen.getByText('Finish')).toBeDisabled();
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// Concept-scoped entry — /checkpoint?concept=<id> (walkthrough Test leg)
+// ────────────────────────────────────────────────────────────────────
+
+describe('CheckpointQuizPage — concept-scoped entry', () => {
+  it('threads ?concept= through as concept_id in the start request body', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch).mockResolvedValueOnce(jsonResponse(NAT_QUIZ));
+    await renderPage(['/checkpoint?concept=eigenvalues']);
+
+    fireEvent.click(screen.getByText('Start checkpoint'));
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(1));
+
+    const startCall = vi.mocked(authFetch).mock.calls[0];
+    expect(startCall[0]).toBe('/api/practice/quiz/start');
+    const body = JSON.parse((startCall[1] as RequestInit).body as string);
+    expect(body).toEqual({ concept_id: 'eigenvalues' });
+  });
+
+  it('omits concept_id entirely when there is no ?concept= param — unscoped stays unscoped', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch).mockResolvedValueOnce(jsonResponse(NAT_QUIZ));
+    await renderPage(['/checkpoint']);
+
+    fireEvent.click(screen.getByText('Start checkpoint'));
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(1));
+
+    const startCall = vi.mocked(authFetch).mock.calls[0];
+    const body = JSON.parse((startCall[1] as RequestInit).body as string);
+    expect(body).toEqual({});
+  });
+
+  it('a concept-scoped start still honors the honest 422 refusal, same as unscoped', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch).mockResolvedValueOnce(jsonResponse({ error: 'Checkpoint unlocks as you practise more' }, false));
+    await renderPage(['/checkpoint?concept=eigenvalues']);
+
+    fireEvent.click(screen.getByText('Start checkpoint'));
+    await waitFor(() => expect(screen.getByText('Checkpoint unlocks as you practise more')).toBeInTheDocument());
   });
 });
 

@@ -135,7 +135,21 @@ services:
       - key: DEFAULT_EXAM_ID
         sync: false
       # Supabase database (optional: enables GBrain student model persistence)
+      #
+      # Use the SESSION-mode pooler string (port 5432, not the 6543
+      # transaction-mode one — advisory locks break silently under it, see
+      # docs/ops/render-database-url.md) and end it with `?sslmode=require`.
+      # Without an sslmode the driver opens a plaintext connection and the
+      # pooler refuses it; with it, verification succeeds thanks to
+      # NODE_EXTRA_CA_CERTS below.
       - key: DATABASE_URL
         sync: false
+      # Trust Supabase's root CA so `sslmode=require` verifies rather than
+      # erroring on the chain. Node reads this at process start and adds the
+      # file to its default trust store, so every pg.Pool in the process gets
+      # it without any per-module ssl config. The certificate ships in the
+      # image (certs/, copied by demo/Dockerfile) and is public material.
+      - key: NODE_EXTRA_CA_CERTS
+        value: /app/certs/supabase-prod-ca-2021.crt
       - key: SUPABASE_DB_URL
         sync: false

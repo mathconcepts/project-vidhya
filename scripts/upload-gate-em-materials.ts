@@ -10,6 +10,17 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { mapPyqToConceptIds } from '../src/db/pyq-concept-mapper';
+import { TOPIC_DIR_ALIAS } from '../src/db/seed-static-pyqs';
+
+// Inverse of TOPIC_DIR_ALIAS (canonical -> dirSlug), same as
+// scripts/export-bundles.ts's DIR_TO_CANONICAL_TOPIC: the concept mapper's
+// TAG_MAPS keys are the canonical post-alias topic ids ('transforms' /
+// 'discrete'), not the raw content-file topic ('transform-theory' /
+// 'discrete-mathematics') normalizeTopic() below preserves.
+const DIR_TO_CANONICAL_TOPIC: Record<string, string> = Object.fromEntries(
+  Object.entries(TOPIC_DIR_ALIAS).map(([canonical, dirSlug]) => [dirSlug, canonical]),
+);
 
 const ROOT_DIR = process.cwd();
 const FE_DATA = path.resolve(ROOT_DIR, 'frontend/public/data');
@@ -155,15 +166,27 @@ async function main() {
           const raw = JSON.parse(fs.readFileSync(mcqFile, 'utf-8'));
           const questions = raw.questions || (Array.isArray(raw) ? raw : []);
           for (const q of questions) {
+            const questionText = q.question || q.question_text || '';
+            const fileTopic = q.topic || d.replace(/^\d+-/, '');
+            // Concept mapping (multi-concept mapping fix, mirrors
+            // scripts/export-bundles.ts's seedPYQs()): q.concept_id was
+            // ALWAYS undefined before — the source mcqs.json files have no
+            // such field — so no exam question in this bundle was
+            // discoverable by concept. mapPyqToConceptIds runs the same
+            // "never a guess" tag/text mapper the DB seed path uses,
+            // against the canonical (post-TOPIC_DIR_ALIAS) topic id.
+            const canonicalTopic = DIR_TO_CANONICAL_TOPIC[fileTopic] || fileTopic;
+            const conceptIds = mapPyqToConceptIds(canonicalTopic, q.tags, questionText);
             const problem = {
               id: q.id || `mcq-${d}-${topicMcqCount}`,
               year: q.year || 2024,
-              question_text: q.question || q.question_text || '',
+              question_text: questionText,
               options: q.options || {},
               correct_answer: q.correct_answer || 'A',
               explanation: q.explanation || q.solution || '',
-              topic: normalizeTopic(q.topic || d.replace(/^\d+-/, '')),
-              concept_id: q.concept_id,
+              topic: normalizeTopic(fileTopic),
+              concept_id: conceptIds[0] ?? undefined,
+              concept_ids: conceptIds.length > 0 ? conceptIds : undefined,
               difficulty: normalizeDifficulty(q.difficulty),
               marks: q.marks || 2,
               negative_marks: q.negative_marks || -0.67,

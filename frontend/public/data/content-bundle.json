@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "generated_at": "2026-08-19T02:19:02.185Z",
+  "generated_at": "2026-08-19T02:30:41.235Z",
   "problems": [
     {
       "id": "la-001",
@@ -401,6 +401,378 @@
       "source": "GATE-EM-Topic-MCQs",
       "verified": true,
       "fingerprint": "558bbe99898e5334",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-016",
+      "year": 2024,
+      "question_text": "In R³ with the standard inner product, u = (1,1,0) and v = (1,0,1). What is the angle between u and v?",
+      "options": {
+        "A": "30°",
+        "B": "45°",
+        "C": "60°",
+        "D": "90°"
+      },
+      "correct_answer": "C",
+      "explanation": "Method 1 — cosine formula: ⟨u,v⟩ = 1×1 + 1×0 + 0×1 = 1. ||u|| = √(1+1+0) = √2. ||v|| = √(1+0+1) = √2.\ncosθ = ⟨u,v⟩/(||u|| ||v||) = 1/(√2×√2) = 1/2  →  θ = arccos(1/2) = 60°.\n\nMethod 2 — cross product (independent check): u×v = (1×1−0×0, 0×1−1×1, 1×0−1×1) = (1, -1, -1).\n|u×v| = √(1+1+1) = √3. sinθ = |u×v|/(||u|| ||v||) = √3/2  →  θ = arcsin(√3/2) = 60°.\n\nVerification: both the cosine route and the (independent) cross-product route agree on 60° ✓.",
+      "topic": "linear-algebra",
+      "concept_id": "inner-product-spaces",
+      "concept_ids": [
+        "inner-product-spaces"
+      ],
+      "difficulty": 0.25,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "d161c5959beceeb7",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-017",
+      "year": 2024,
+      "question_text": "For vectors u, v in an inner product space with ||u|| = 5, ||v|| = 12, and ||u+v|| = 13, what is ⟨u,v⟩?",
+      "options": {
+        "A": "0",
+        "B": "30",
+        "C": "60",
+        "D": "-30"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — expand the norm identity: ||u+v||² = ⟨u+v,u+v⟩ = ||u||² + 2⟨u,v⟩ + ||v||².\n169 = 25 + 2⟨u,v⟩ + 144 = 169 + 2⟨u,v⟩  →  2⟨u,v⟩ = 0  →  ⟨u,v⟩ = 0.\n\nMethod 2 — explicit construction (independent check): 5² + 12² = 25+144 = 169 = 13², the classic 5-12-13 Pythagorean triple. Take concrete orthogonal vectors u=(5,0), v=(0,12) satisfying the given norms exactly: ⟨u,v⟩ = 5×0+0×12 = 0, and ||u+v|| = ||(5,12)|| = √(25+144) = 13 ✓ — matches all three given norms with ⟨u,v⟩=0.\n\nBoth methods agree: ⟨u,v⟩ = 0, i.e. u and v are orthogonal (this is the Pythagorean theorem generalized to inner product spaces).",
+      "topic": "linear-algebra",
+      "concept_id": "inner-product-spaces",
+      "concept_ids": [
+        "inner-product-spaces",
+        "orthogonality"
+      ],
+      "difficulty": 0.5,
+      "marks": 2,
+      "negative_marks": -0.67,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "13ecb4220f1ea383",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-018",
+      "year": 2024,
+      "question_text": "Apply Gram-Schmidt to v1 = (1,0,0), v2 = (2,3,4), with u1 = v1, to get an orthogonal set {u1,u2} spanning the same subspace. What is u2?",
+      "options": {
+        "A": "(0,3,4)",
+        "B": "(2,3,4)",
+        "C": "(0,3,-4)",
+        "D": "(-2,3,4)"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — the Gram-Schmidt formula: u2 = v2 − proj_{u1}(v2), where proj_{u1}(v2) = (⟨v2,u1⟩/⟨u1,u1⟩)·u1.\n⟨v2,u1⟩ = 2×1+3×0+4×0 = 2. ⟨u1,u1⟩ = 1. proj_{u1}(v2) = 2×(1,0,0) = (2,0,0).\nu2 = (2,3,4) − (2,0,0) = (0,3,4).\n\nMethod 2 — direct verification (independent of the projection formula): check u1·u2 = (1,0,0)·(0,3,4) = 0 ✓ (orthogonal), and check u2 is a linear combination of v1,v2 by writing u2 = v2 − 2v1 = (2,3,4) − (2,0,0) = (0,3,4) — a plain subtraction that matches the formula's output exactly.\n\nBoth the projection formula and the direct-subtraction check confirm u2 = (0,3,4).",
+      "topic": "linear-algebra",
+      "concept_id": "gram-schmidt",
+      "concept_ids": [
+        "gram-schmidt",
+        "orthogonality",
+        "vector-spaces"
+      ],
+      "difficulty": 0.25,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "d16f213878204daf",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-019",
+      "year": 2024,
+      "question_text": "In Gram-Schmidt orthogonalization of a basis {v1, v2, v3} of R³ into an orthogonal set {u1, u2, u3}, which of the following is guaranteed?",
+      "options": {
+        "A": "span{u1,...,uk} = span{v1,...,vk} for every k",
+        "B": "uk = vk for every k",
+        "C": "The u's have the same norm as the v's",
+        "D": "u1 must be the zero vector"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — general argument: u1 = v1, so span{u1} = span{v1} trivially. u2 = v2 − proj_{u1}(v2) is v2 minus a multiple of u1 = v1, so u2 is a linear combination of v1 and v2 only — hence span{u1,u2} = span{v1,v2}. The same reasoning extends inductively to k=3: each uk is built only from v1,...,vk, never later vectors, so the nested spans always match.\n\nMethod 2 — concrete check (independent): take v1=(1,0,0), v2=(1,1,0), v3=(1,1,1). u1=(1,0,0). proj_{u1}(v2) = (1,0,0), so u2 = (0,1,0). span{u1,u2} = {(x,y,0)}, and span{v1,v2} = {a(1,0,0)+b(1,1,0)} = {(a+b,b,0)} = {(x,y,0)} — the two spans match exactly for k=2, confirming the general claim empirically.\n\nSo option A is the correct guarantee; B, C, D each fail in general (e.g. u2 ≠ v2 above, ||u2||=1≠||v2||=√2, and u1=v1≠0 here).",
+      "topic": "linear-algebra",
+      "concept_id": "gram-schmidt",
+      "concept_ids": [
+        "gram-schmidt",
+        "vector-spaces",
+        "linear-independence"
+      ],
+      "difficulty": 0.5,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "de5cf5c63426c96a",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-020",
+      "year": 2024,
+      "question_text": "For A = [[2,3],[4,7]], write A = LU with L unit lower triangular (L11=L22=1) and U upper triangular. What is L21, the (2,1) entry of L?",
+      "options": {
+        "A": "2",
+        "B": "0.5",
+        "C": "-2",
+        "D": "4"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — elimination multiplier: to zero out the (2,1) entry using row 1, the multiplier is a21/a11 = 4/2 = 2, and this multiplier IS L21 by construction. So L21 = 2, and U's second row becomes [4,7] − 2×[2,3] = [0,1], giving U = [[2,3],[0,1]].\n\nMethod 2 — direct multiplication check (independent): with L = [[1,0],[2,1]] and U = [[2,3],[0,1]], compute L×U = [[1×2+0×0, 1×3+0×1],[2×2+1×0, 2×3+1×1]] = [[2,3],[4,7]] = A ✓ — reconstructs A exactly.\n\nBoth methods confirm L21 = 2.",
+      "topic": "linear-algebra",
+      "concept_id": "lu-factorization",
+      "concept_ids": [
+        "lu-factorization",
+        "matrix-operations"
+      ],
+      "difficulty": 0.25,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "0e8d9e11915779e9",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-021",
+      "year": 2024,
+      "question_text": "Given A = [[1,1,1],[2,3,5],[4,6,8]], LU factorization (no pivoting needed) yields U with diagonal entries 1, 1, -2. What is det(A)?",
+      "options": {
+        "A": "-2",
+        "B": "2",
+        "C": "-6",
+        "D": "8"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — via LU: for A = LU with L unit lower triangular, det(L) = 1 (product of its diagonal, all 1's), and det(U) = product of U's diagonal = 1×1×(-2) = -2. So det(A) = det(L)×det(U) = 1×(-2) = -2.\n\nMethod 2 — direct cofactor expansion (independent check): det(A) = 1×(3×8−5×6) − 1×(2×8−5×4) + 1×(2×6−3×4) = 1×(24-30) − 1×(16-20) + 1×(12-12) = -6 − (-4) + 0 = -6+4+0 = -2.\n\nBoth methods agree: det(A) = -2. (This also matches the elimination: eliminating column 1 gives rows [0,1,3] and [0,2,4]; eliminating column 2 with multiplier 2 gives [0,0,4-6]=[0,0,-2], confirming U's stated diagonal.)",
+      "topic": "linear-algebra",
+      "concept_id": "lu-factorization",
+      "concept_ids": [
+        "lu-factorization",
+        "determinants",
+        "matrix-operations"
+      ],
+      "difficulty": 0.75,
+      "marks": 2,
+      "negative_marks": -0.67,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "eabc8d1be03ff581",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-022",
+      "year": 2024,
+      "question_text": "Is A = [[2,1],[1,2]] positive definite?",
+      "options": {
+        "A": "Yes — all leading principal minors are positive (2 and 3)",
+        "B": "No — trace is positive but det is negative",
+        "C": "Yes, but only positive semi-definite",
+        "D": "No — the matrix is not symmetric"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — Sylvester's criterion (leading principal minors): D1 = 2 > 0. D2 = det(A) = 2×2 − 1×1 = 3 > 0. Both leading principal minors are positive, so A is positive definite.\n\nMethod 2 — eigenvalues (independent check): characteristic equation (2-λ)² − 1 = 0  →  2-λ = ±1  →  λ = 3 or λ = 1. Both eigenvalues are strictly positive, which independently confirms positive definiteness.\n\nBoth Sylvester's criterion and the direct eigenvalue computation agree: A is positive definite. (A IS symmetric — the (1,2) and (2,1) entries both equal 1 — so option D's premise is also false.)",
+      "topic": "linear-algebra",
+      "concept_id": "positive-definite-matrices",
+      "concept_ids": [
+        "positive-definite-matrices",
+        "eigenvalues",
+        "symmetric-matrices"
+      ],
+      "difficulty": 0.25,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "07b638a06195f719",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-023",
+      "year": 2024,
+      "question_text": "For A = [[4,2],[2,k]] to be positive definite, k must satisfy:",
+      "options": {
+        "A": "k > 1",
+        "B": "k > 4",
+        "C": "k < 1",
+        "D": "k > 2"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — Sylvester's criterion: D1 = 4 > 0 (always true). D2 = det(A) = 4k − 4. Requiring D2 > 0 gives 4k − 4 > 0, i.e. k > 1.\n\nMethod 2 — eigenvalue sum/product (independent check): the characteristic equation is λ² − (4+k)λ + (4k−4) = 0. For both roots to be positive, Vieta's formulas require the sum (4+k) > 0 AND the product (4k−4) > 0. For k > 1, sum = 4+k > 5 > 0 ✓ and product = 4k-4 > 0 ✓ — both conditions hold exactly when k > 1, matching the Sylvester result.\n\nBoth methods agree: A is positive definite exactly when k > 1.",
+      "topic": "linear-algebra",
+      "concept_id": "positive-definite-matrices",
+      "concept_ids": [
+        "positive-definite-matrices",
+        "eigenvalues",
+        "symmetric-matrices"
+      ],
+      "difficulty": 0.5,
+      "marks": 2,
+      "negative_marks": -0.67,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "a5fb5c6bb3eaba20",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-024",
+      "year": 2024,
+      "question_text": "What is σ1, the largest singular value of A = [[2,0],[0,-3]]?",
+      "options": {
+        "A": "3",
+        "B": "2",
+        "C": "-3",
+        "D": "6"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — via AᵀA: AᵀA = [[2,0],[0,-3]]ᵀ[[2,0],[0,-3]] = [[4,0],[0,9]] (already diagonal). Eigenvalues of AᵀA are 4 and 9, so singular values are √4=2 and √9=3. Sorted descending: σ1 = 3.\n\nMethod 2 — direct property (independent check): for a diagonal matrix, the singular values are simply the absolute values of the diagonal entries, sorted in descending order: |2|=2 and |-3|=3, so σ1 = 3.\n\nBoth the AᵀA-eigenvalue route and the direct diagonal-matrix property agree: σ1 = 3.",
+      "topic": "linear-algebra",
+      "concept_id": "svd",
+      "concept_ids": [
+        "svd",
+        "eigenvalues"
+      ],
+      "difficulty": 0.25,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "70c390d2ee4035c3",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-025",
+      "year": 2024,
+      "question_text": "For the rank-1 matrix A = [[1,2],[2,4]], what is its largest (nonzero) singular value σ1?",
+      "options": {
+        "A": "5",
+        "B": "25",
+        "C": "√5",
+        "D": "10"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — via AᵀA (A is symmetric here, so AᵀA = A²): A² = [[1,2],[2,4]]×[[1,2],[2,4]] = [[1+4, 2+8],[2+8, 4+16]] = [[5,10],[10,20]]. trace = 25, det = 5×20−10×10 = 0. Characteristic equation λ²−25λ=0  →  λ=25 or λ=0. So singular values are √25=5 and √0=0. σ1 = 5.\n\nMethod 2 — Frobenius norm identity (independent check): ||A||_F² = Σσᵢ² must equal the sum of squares of all entries of A: 1²+2²+2²+4² = 1+4+4+16 = 25. And σ1²+σ2² = 5²+0² = 25 — matches exactly.\n\nBoth methods confirm σ1 = 5 (consistent with rank(A)=1, since row 2 = 2×row 1, giving exactly one nonzero singular value).",
+      "topic": "linear-algebra",
+      "concept_id": "svd",
+      "concept_ids": [
+        "svd",
+        "eigenvalues",
+        "rank-nullity"
+      ],
+      "difficulty": 0.75,
+      "marks": 2,
+      "negative_marks": -0.67,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "47284def8ea06cbd",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-026",
+      "year": 2024,
+      "question_text": "A 2×2 matrix A has a single eigenvalue λ=2 with algebraic multiplicity 2, but only one linearly independent eigenvector (geometric multiplicity 1). What is the Jordan normal form of A?",
+      "options": {
+        "A": "[[2,1],[0,2]]",
+        "B": "[[2,0],[0,2]]",
+        "C": "[[2,0],[0,-2]]",
+        "D": "[[1,0],[0,2]]"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — direct rule: geometric multiplicity (1) is less than algebraic multiplicity (2), so A is defective — not diagonalizable. A defective 2×2 eigenvalue always yields exactly one Jordan block of size 2: J = [[2,1],[0,2]].\n\nMethod 2 — elimination by contradiction (independent check): if the Jordan form were the diagonal option B = [[2,0],[0,2]] = 2I, then A − 2I would be the zero matrix, meaning EVERY nonzero vector is an eigenvector — that would make the geometric multiplicity 2, contradicting the given geometric multiplicity of 1. So B is impossible, which independently forces the single 2×2 block answer, A.\n\nBoth the direct classification rule and the proof-by-contradiction check confirm the Jordan form is [[2,1],[0,2]].",
+      "topic": "linear-algebra",
+      "concept_id": "jordan-normal-form",
+      "concept_ids": [
+        "jordan-normal-form",
+        "eigenvalues",
+        "diagonalization"
+      ],
+      "difficulty": 0.5,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "2f42fb6b71930ea8",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-027",
+      "year": 2024,
+      "question_text": "Find the Jordan normal form of A = [[4,1],[-1,2]].",
+      "options": {
+        "A": "[[3,1],[0,3]]",
+        "B": "[[3,0],[0,3]]",
+        "C": "[[4,0],[0,2]]",
+        "D": "[[2,1],[0,4]]"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — eigenvalues + eigenspace: characteristic equation (4-λ)(2-λ) − (1)(-1) = λ²-6λ+9 = (λ-3)² = 0, giving a repeated eigenvalue λ=3. A−3I = [[1,1],[-1,-1]] has row 2 = −row 1, so rank 1, nullity 1: geometric multiplicity (1) < algebraic multiplicity (2), so A is defective with a single Jordan block of size 2. Jordan form: [[3,1],[0,3]].\n\nMethod 2 — trace/det invariant check (independent of the eigenvector computation): trace(A) = 4+2 = 6 = 3+3 ✓, det(A) = 4×2−1×(-1) = 9 = 3×3 ✓. Both similarity invariants match the double eigenvalue 3, corroborating the eigenvalue computation; combined with the rank check on A-3I, this confirms the answer.\n\nBoth checks agree: Jordan form is [[3,1],[0,3]].",
+      "topic": "linear-algebra",
+      "concept_id": "jordan-normal-form",
+      "concept_ids": [
+        "jordan-normal-form",
+        "eigenvalues"
+      ],
+      "difficulty": 0.75,
+      "marks": 2,
+      "negative_marks": -0.67,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "3c0e9fa426e17d96",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-028",
+      "year": 2024,
+      "question_text": "For A = [[1,-2],[3,4]], what is ||A||₁ (the induced 1-norm, i.e. the maximum absolute column sum)?",
+      "options": {
+        "A": "6",
+        "B": "7",
+        "C": "4",
+        "D": "3"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — direct definition: column 1 sum = |1|+|3| = 4. column 2 sum = |-2|+|4| = 6. The maximum is 6.\n\nMethod 2 — transpose identity (independent check): ||A||₁ = ||Aᵀ||∞ (the 1-norm of A equals the ∞-norm of Aᵀ). Aᵀ = [[1,3],[-2,4]]; row sums of Aᵀ: row 1 = |1|+|3| = 4, row 2 = |-2|+|4| = 6, so ||Aᵀ||∞ = 6 — matches exactly.\n\nBoth the direct column-sum computation and the transpose-norm identity confirm ||A||₁ = 6.",
+      "topic": "linear-algebra",
+      "concept_id": "matrix-norms",
+      "concept_ids": [
+        "matrix-norms",
+        "matrix-operations"
+      ],
+      "difficulty": 0.25,
+      "marks": 1,
+      "negative_marks": -0.33,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "17a4dbfcf3c01e8a",
+      "wolfram_verified": false
+    },
+    {
+      "id": "la-029",
+      "year": 2024,
+      "question_text": "What is the spectral norm (largest singular value) ||A||₂ of A = [[0,2],[2,0]]?",
+      "options": {
+        "A": "2",
+        "B": "4",
+        "C": "0",
+        "D": "2√2"
+      },
+      "correct_answer": "A",
+      "explanation": "Method 1 — via AᵀA: A is symmetric, so AᵀA = A² = [[0,2],[2,0]]×[[0,2],[2,0]] = [[4,0],[0,4]]. Eigenvalues of AᵀA are 4 and 4, so singular values are √4=2 and √4=2. ||A||₂ = σ_max = 2.\n\nMethod 2 — |eigenvalues of A| (independent, valid since A is symmetric): trace(A)=0, det(A) = 0×0−2×2 = -4. Characteristic equation λ²−4=0  →  λ=±2. For a symmetric matrix, singular values equal |eigenvalues|: |2|=2, |-2|=2 — matches the AᵀA computation exactly.\n\nBoth methods agree: ||A||₂ = 2.",
+      "topic": "linear-algebra",
+      "concept_id": "matrix-norms",
+      "concept_ids": [
+        "matrix-norms",
+        "svd",
+        "symmetric-matrices",
+        "eigenvalues"
+      ],
+      "difficulty": 0.75,
+      "marks": 2,
+      "negative_marks": -0.67,
+      "source": "GATE-EM-Topic-MCQs",
+      "verified": true,
+      "fingerprint": "95870eeec49deaf7",
       "wolfram_verified": false
     },
     {
@@ -10268,12 +10640,12 @@
     "vector-calculus": "# Vector Calculus — GATE Engineering Mathematics\n\n## Introduction\n\nVector Calculus extends calculus to vector fields. It's essential for engineering applications in fluid mechanics, electromagnetism, and heat transfer. GATE weightage: ~8–10%.\n\n---\n\n## 1. Vector Operations\n\nA vector field $\\mathbf{F} = P\\hat{i} + Q\\hat{j} + R\\hat{k}$ assigns a vector to each point in space.\n\n### Gradient (∇f)\n\nFor scalar field $f(x,y,z)$:\n$$\\nabla f = \\frac{\\partial f}{\\partial x}\\hat{i} + \\frac{\\partial f}{\\partial y}\\hat{j} + \\frac{\\partial f}{\\partial z}\\hat{k}$$\n\n- Points in direction of steepest ascent\n- Magnitude = rate of steepest ascent\n\n### Divergence (∇·F)\n\n$$\\nabla \\cdot \\mathbf{F} = \\frac{\\partial P}{\\partial x} + \\frac{\\partial Q}{\\partial y} + \\frac{\\partial R}{\\partial z}$$\n\n- Scalar quantity\n- Measures \"outflow\" at a point\n- $\\nabla \\cdot \\mathbf{F} = 0$ → solenoidal (incompressible) field\n\n### Curl (∇×F)\n\n$$\\nabla \\times \\mathbf{F} = \\begin{vmatrix} \\hat{i} & \\hat{j} & \\hat{k} \\\\ \\partial/\\partial x & \\partial/\\partial y & \\partial/\\partial z \\\\ P & Q & R \\end{vmatrix}$$\n\n$$= \\left(\\frac{\\partial R}{\\partial y} - \\frac{\\partial Q}{\\partial z}\\right)\\hat{i} - \\left(\\frac{\\partial R}{\\partial x} - \\frac{\\partial P}{\\partial z}\\right)\\hat{j} + \\left(\\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y}\\right)\\hat{k}$$\n\n- Vector quantity\n- Measures rotation/vorticity\n- $\\nabla \\times \\mathbf{F} = 0$ → irrotational field\n\n### Laplacian\n\n$$\\nabla^2 f = \\frac{\\partial^2 f}{\\partial x^2} + \\frac{\\partial^2 f}{\\partial y^2} + \\frac{\\partial^2 f}{\\partial z^2}$$\n\n---\n\n## 2. Key Identities\n\n$$\\nabla \\times (\\nabla f) = \\mathbf{0} \\quad \\text{(curl of gradient = 0)}$$\n$$\\nabla \\cdot (\\nabla \\times \\mathbf{F}) = 0 \\quad \\text{(divergence of curl = 0)}$$\n$$\\nabla \\times (\\nabla \\times \\mathbf{F}) = \\nabla(\\nabla \\cdot \\mathbf{F}) - \\nabla^2\\mathbf{F}$$\n\n---\n\n## 3. Line Integrals\n\n$$\\int_C \\mathbf{F} \\cdot d\\mathbf{r} = \\int_C (P\\,dx + Q\\,dy + R\\,dz)$$\n\n**Conservative Field\n\n…"
   },
   "stats": {
-    "total_problems": 237,
+    "total_problems": 251,
     "total_explainers": 97,
     "total_topic_notes": 10,
     "wolfram_verified": 0,
     "by_topic": {
-      "linear-algebra": 26,
+      "linear-algebra": 40,
       "calculus": 70,
       "differential-equations": 23,
       "complex-variables": 23,
@@ -10283,9 +10655,9 @@
       "graph-theory": 25
     },
     "by_difficulty": {
-      "easy": 115,
-      "medium": 100,
-      "hard": 22
+      "easy": 121,
+      "medium": 104,
+      "hard": 26
     }
   }
 }

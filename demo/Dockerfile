@@ -78,6 +78,10 @@ COPY config/ config/
 # so pyq_questions/generated_problems/etc. never get created even once a
 # real DATABASE_URL is configured.
 COPY supabase/ supabase/
+# Supabase's public root CA. NODE_EXTRA_CA_CERTS (render.yaml) points here so
+# `sslmode=require` can verify the pooler's certificate instead of failing
+# with "self-signed certificate in certificate chain". See certs/README.md.
+COPY certs/ certs/
 COPY --from=frontend-builder /build/frontend/dist frontend/dist
 COPY tsconfig*.json ./
 

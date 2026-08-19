@@ -27,7 +27,7 @@ import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
 import { gateMcqNegativeMarksFallback } from '../syllabus/exam-catalog';
-import { mapPyqTagsToConceptId, mapPyqTextToConceptId } from './pyq-concept-mapper';
+import { mapPyqTagsToConceptId, mapPyqTagsToConceptIds, mapPyqTextToConceptId } from './pyq-concept-mapper';
 
 const TOPICS_DIR = path.resolve(process.cwd(), 'data/courses/gate-em/topics');
 
@@ -87,21 +87,28 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
     const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
     if (questions.length === 0) continue;
 
-    // Backfill concept_id on rows already seeded by a PAST server boot,
-    // BEFORE the skip-guard below `continue`s past this whole topic.
-    // Tags aren't persisted to pyq_questions (INSERT never wrote them), so
-    // matching against already-seeded rows has to go by exact question_text
-    // — the same text this file would insert, and the only field the
-    // mapper's text-keyword fallback also works from. Idempotent: only
-    // touches rows still NULL.
+    // Backfill concept_id / concept_ids on rows already seeded by a PAST
+    // server boot, BEFORE the skip-guard below `continue`s past this whole
+    // topic. Tags aren't persisted to pyq_questions (INSERT never wrote
+    // them), so matching against already-seeded rows has to go by exact
+    // question_text — the same text this file would insert, and the only
+    // field the mapper's text-keyword fallback also works from. Guard is
+    // `concept_id IS NULL OR concept_ids IS NULL` (not just concept_id) so
+    // a row seeded by a PRE-concept_ids deploy — concept_id already set,
+    // concept_ids never written — gets concept_ids backfilled too, on the
+    // very next boot after this column existed. Fully idempotent: once
+    // both columns are non-null the row never matches again.
     for (const q of questions) {
-      const conceptId = mapPyqTagsToConceptId(topic, q.tags) ?? mapPyqTextToConceptId(topic, q.question);
+      const tagConceptIds = mapPyqTagsToConceptIds(topic, q.tags);
+      const conceptId = tagConceptIds[0] ?? mapPyqTextToConceptId(topic, q.question);
       if (!conceptId) continue;
+      const conceptIds = tagConceptIds.length > 0 ? tagConceptIds : [conceptId];
       try {
         await pool.query(
-          `UPDATE pyq_questions SET concept_id = $1
-             WHERE topic = $2 AND question_text = $3 AND concept_id IS NULL`,
-          [conceptId, topic, q.question],
+          `UPDATE pyq_questions SET concept_id = $1, concept_ids = $2
+             WHERE topic = $3 AND question_text = $4
+               AND (concept_id IS NULL OR concept_ids IS NULL)`,
+          [conceptId, conceptIds, topic, q.question],
         );
       } catch (err) {
         console.error(`[seed-static-pyqs] Backfill failed for ${dirName}/${q.id}:`, (err as Error).message);
@@ -126,14 +133,16 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
     const examId = parsed.exam_id || 'gate-engineering-maths';
 
     for (const q of questions) {
-      const conceptId = mapPyqTagsToConceptId(topic, q.tags) ?? mapPyqTextToConceptId(topic, q.question);
+      const tagConceptIds = mapPyqTagsToConceptIds(topic, q.tags);
+      const conceptId = tagConceptIds[0] ?? mapPyqTextToConceptId(topic, q.question);
+      const conceptIds = tagConceptIds.length > 0 ? tagConceptIds : (conceptId ? [conceptId] : []);
       if (conceptId) mappedCount++; else unmappedCount++;
       try {
         await pool.query(
           `INSERT INTO pyq_questions
              (exam_id, year, question_text, options, correct_answer, explanation,
-              topic, difficulty, marks, negative_marks, source, concept_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'official_pyq', $11)`,
+              topic, difficulty, marks, negative_marks, source, concept_id, concept_ids)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'official_pyq', $11, $12)`,
           [
             examId,
             q.year ?? null,
@@ -149,6 +158,7 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
             // fallback in src/api/gate-routes.ts's staticProblemsForTopic()).
             q.negative_marks ?? gateMcqNegativeMarksFallback(q.marks ?? 1),
             conceptId,
+            conceptIds.length > 0 ? conceptIds : null,
           ],
         );
         seededCount++;
@@ -166,13 +176,21 @@ export async function seedStaticPyqQuestions(pool: pg.Pool): Promise<number> {
   try {
     const { rows } = await pool.query(
       `SELECT id, question_text FROM pyq_questions
-         WHERE topic = 'linear-algebra' AND source = 'generated_tier3' AND concept_id IS NULL`,
+         WHERE topic = 'linear-algebra' AND source = 'generated_tier3'
+           AND (concept_id IS NULL OR concept_ids IS NULL)`,
     );
     for (const row of rows) {
       const conceptId = mapPyqTextToConceptId('linear-algebra', row.question_text);
       if (!conceptId) { unmappedCount++; continue; }
       mappedCount++;
-      await pool.query(`UPDATE pyq_questions SET concept_id = $1 WHERE id = $2`, [conceptId, row.id]);
+      // Text-keyword rules only ever yield a single concept (no
+      // author-curated tag order to derive a secondary concept from — see
+      // pyq-concept-mapper.ts's header comment), so concept_ids is a
+      // one-element array here, not a guess at additional concepts.
+      await pool.query(
+        `UPDATE pyq_questions SET concept_id = $1, concept_ids = $2 WHERE id = $3`,
+        [conceptId, [conceptId], row.id],
+      );
     }
   } catch (err) {
     console.error('[seed-static-pyqs] Migration-035 backfill failed:', (err as Error).message);

@@ -47,6 +47,19 @@ beforeEach(() => {
           expected_answer: 'cos x',
           source: 'bundle',
         },
+        // Multi-concept (migration 048): primary concept is 'determinants',
+        // but concept_ids also names 'matrix-inverse' — a singular-matrix
+        // question genuinely tests both (det(A)=0 IS "no inverse").
+        {
+          id: 'p-singular-matrix-1',
+          concept_id: 'determinants',
+          concept_ids: ['determinants', 'matrix-inverse'],
+          topic: 'linear-algebra',
+          difficulty: 0.5,
+          question_text: 'A is singular. Which is always true?',
+          expected_answer: 'det(A) = 0',
+          source: 'bundle',
+        },
       ],
       explainers: {},
     }),
@@ -98,6 +111,28 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
       new Set(['p-derivative-easy-1', 'p-derivative-mid-1']),
     );
     expect(result).toBeNull();
+  });
+
+  it('surfaces a question under a SECONDARY concept via concept_ids, not just its primary concept_id', async () => {
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+    const problem = await store.fetchProblemsForConcept('matrix-inverse', 1.0, new Set());
+    expect(problem).not.toBeNull();
+    expect(problem!.problem_id).toBe('p-singular-matrix-1');
+    // Result mapping mirrors the PostgresStore convention: concept_id in
+    // the returned SessionProblemRow is the row's own primary, not the
+    // concept queried for.
+    expect(problem!.concept_id).toBe('determinants');
+  });
+
+  it('still finds a question by its own primary concept_id even when concept_ids is present', async () => {
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+    const problem = await store.fetchProblemsForConcept('determinants', 1.0, new Set());
+    expect(problem).not.toBeNull();
+    expect(problem!.problem_id).toBe('p-singular-matrix-1');
   });
 
   it('returns null for concept with no problems', async () => {

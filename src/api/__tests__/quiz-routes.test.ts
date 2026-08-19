@@ -319,6 +319,96 @@ describe('POST /api/practice/quiz/start', () => {
     await startHandler(makeReq({}), r.res);
     expect(r.status).toBe(422);
   });
+
+  describe('concept-scoped start (walkthrough Test leg)', () => {
+    it('400s on an unknown concept_id before touching the pool', async () => {
+      setQuizDepsForTests(bigPoolDeps());
+      const r = makeRes();
+      await startHandler(makeReq({ concept_id: 'definitely-not-a-real-concept-xyz' }), r.res);
+      expect(r.status).toBe(400);
+      expect(r.payload.error).toMatch(/unknown concept/i);
+    });
+
+    it('scopes the pool to just that concept — items from other concepts never appear', async () => {
+      // Enough items in ONE concept to clear the depth gate on its own,
+      // plus plenty of items in OTHER concepts that must be excluded.
+      // 'trace' is a real GATE-MA concept id distinct from every id in
+      // POOL_CONCEPTS, so there's no accidental overlap between the two
+      // item sets below.
+      const scopedItems = Array.from({ length: QUIZ_LENGTH * 2 }, (_, i) => mcqItem(`s${i}`, 'trace'));
+      const otherItems = POOL_CONCEPTS.flatMap((c, ci) => [0, 1, 2].map((j) => mcqItem(`o${ci}-${j}`, c)));
+      const catalog = new InMemoryCatalog([...scopedItems, ...otherItems]);
+      const store = makeFakeQuizStore();
+      setQuizDepsForTests({
+        catalog: () => catalog,
+        studentModel: () => fakeStudentModel([], new Map()),
+        dueCards: async () => [],
+        recentlyReviewed: async () => new Set(),
+        getLastSubmittedQuizAt: async () => null,
+        xpEarnedSince: async () => 100,
+        now: () => NOW,
+        rng: () => 0.42,
+        newQuizId: () => 'quiz-scoped',
+        createQuizSession: store.createQuizSession,
+        getQuizSession: store.getQuizSession,
+        claimSubmission: store.claimSubmission,
+        finalizeQuizSubmission: store.finalizeQuizSubmission,
+      });
+      const r = makeRes();
+      await startHandler(makeReq({ concept_id: 'trace' }), r.res);
+      expect(r.status).toBe(200);
+      expect(r.payload.items).toHaveLength(QUIZ_LENGTH);
+      for (const item of r.payload.items) {
+        expect(item.object_id.startsWith('s')).toBe(true); // scopedItems' id prefix — never an 'o' (other-concept) item
+      }
+    });
+
+    it('still refuses with 422 below the pool-depth gate when the concept alone cannot fill a quiz', async () => {
+      const catalog = new InMemoryCatalog([mcqItem('single', 'trace')]); // 1 item — nowhere near 2x QUIZ_LENGTH
+      setQuizDepsForTests({
+        catalog: () => catalog,
+        studentModel: () => fakeStudentModel([], new Map()),
+        dueCards: async () => [],
+        recentlyReviewed: async () => new Set(),
+        getLastSubmittedQuizAt: async () => null,
+        xpEarnedSince: async () => 100,
+        now: () => NOW,
+      });
+      const r = makeRes();
+      await startHandler(makeReq({ concept_id: 'trace' }), r.res);
+      expect(r.status).toBe(422);
+    });
+
+    it('does NOT weaken the XP-cycle gate for a concept-scoped start — same 422 as unscoped', async () => {
+      const scopedItems = Array.from({ length: QUIZ_LENGTH * 2 }, (_, i) => mcqItem(`s${i}`, 'trace'));
+      const catalog = new InMemoryCatalog(scopedItems);
+      setQuizDepsForTests({
+        catalog: () => catalog,
+        studentModel: () => fakeStudentModel([], new Map()),
+        dueCards: async () => [],
+        recentlyReviewed: async () => new Set(),
+        getLastSubmittedQuizAt: async () => null,
+        xpEarnedSince: async () => 64, // below QUIZ_XP_THRESHOLD_MINUTES
+        now: () => NOW,
+      });
+      const r = makeRes();
+      await startHandler(makeReq({ concept_id: 'trace' }), r.res);
+      expect(r.status).toBe(422);
+    });
+
+    it('an absent or blank concept_id is unscoped — byte-identical to the pre-existing pool build', async () => {
+      const deps = bigPoolDeps();
+      setQuizDepsForTests(deps);
+      const rAbsent = makeRes();
+      await startHandler(makeReq({}), rAbsent.res);
+      expect(rAbsent.status).toBe(200);
+
+      setQuizDepsForTests(deps);
+      const rBlank = makeRes();
+      await startHandler(makeReq({ concept_id: '  ' }), rBlank.res);
+      expect(rBlank.status).toBe(200);
+    });
+  });
 });
 
 describe('POST /api/practice/quiz/:id/submit', () => {

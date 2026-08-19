@@ -4,16 +4,16 @@
     "src/api/blog-routes.ts:22",
     "src/api/funnel-routes.ts:20",
     "src/api/notification-routes.ts:21",
-    "src/server.ts:130",
-    "src/server.ts:931",
+    "src/server.ts:131",
+    "src/server.ts:935",
     "src/sessions/session-store.ts:142"
   ],
   "_reasoning": {
     "src/api/blog-routes.ts:22": "Module-top-level `const pool = new pg.Pool(...)` — constructed exactly once, when the module is first imported (Node's module cache). No `max` set (pg default: 10). Follow-up: migrate to getSharedPool() — flagged as a priority item in the T16 audit because three near-identical top-level pools (this one, funnel-routes, notification-routes) plus server.ts's ssrPool sum to 40 default-sized connections that exist purely because each file wrote its own copy instead of sharing one.",
     "src/api/funnel-routes.ts:20": "Same pattern and same follow-up as blog-routes.ts:22.",
     "src/api/notification-routes.ts:21": "Same pattern and same follow-up as blog-routes.ts:22.",
-    "src/server.ts:130": "`ssrPool`, module-top-level, constructed once at import for server-rendered page routes. Same pattern as the three api/*-routes.ts pools above; same follow-up.",
-    "src/server.ts:931": "`migratePool`, built once inside main() at boot to run auto-migrate + the static PYQ seed, then never referenced again (and never `.end()`-ed) for the rest of the process's life. Small (`max: 2`) and boot-only, so low severity, but it is a real leaked handle — follow-up: either close it after the boot sequence finishes, or run boot-time migration/seed through getSharedPool() instead.",
+    "src/server.ts:131": "`ssrPool`, module-top-level, constructed once at import for server-rendered page routes. Same pattern as the three api/*-routes.ts pools above; same follow-up.",
+    "src/server.ts:935": "`migratePool`, built once inside main() at boot to run auto-migrate + the static PYQ seed, then never referenced again (and never `.end()`-ed) for the rest of the process's life. Small (`max: 2`) and boot-only, so low severity, but it is a real leaked handle — follow-up: either close it after the boot sequence finishes, or run boot-time migration/seed through getSharedPool() instead.",
     "src/sessions/session-store.ts:142": "`PostgresStore`'s constructor. The class itself is a safe lazy singleton (`getSessionStore()` in the same file only calls `new PostgresStore()` once, behind an `if (!_store)` guard) — but that guard lives in a DIFFERENT function than the constructor, which is exactly the shape the heuristic can't see (see this script's header comment re: motivation-source-pg.ts, which had the identical shape before being migrated). No `max` set (pg default: 10), and this is genuinely one of the hottest paths in the app (every session read/write). Highest-priority follow-up on this list — migrating it is the natural next module after this pass's readiness/scoring/gbrain-student-model/quiz-xp-store set."
   }
 }

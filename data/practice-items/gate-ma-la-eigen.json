@@ -32,7 +32,8 @@
         "Check via the characteristic polynomial: det(A - λI) = (3-λ)(-2-λ) - 4·0 = (3-λ)(-2-λ), which has roots λ = 3, -2.",
         "Cross-check: trace(A) = 3 + (-2) = 1, and det(A) = 3·(-2) - 4·0 = -6; indeed 3 + (-2) = 1 and 3·(-2) = -6."
       ],
-      "verification_method": "hand_checkable_triangular_diagonal"
+      "verification_method": "hand_checkable_triangular_diagonal",
+      "also_tests": ["determinants"]
     },
     {
       "id": "pi-eigenvalues-002",
@@ -95,7 +96,8 @@
         "Cross-check by finding the eigenvalues directly: characteristic equation λ² - 5λ + 6 = 0 factors as (λ-2)(λ-3) = 0, giving λ1=2, λ2=3.",
         "1/2 + 1/3 = 3/6 + 2/6 = 5/6 — matches the trace/det shortcut exactly, confirming the formula without needing to solve for eigenvalues at all."
       ],
-      "verification_method": "hand_checkable_eigenvalue_reciprocal_sum"
+      "verification_method": "hand_checkable_eigenvalue_reciprocal_sum",
+      "also_tests": ["determinants"]
     },
     {
       "id": "pi-diagonalization-001",
@@ -180,7 +182,8 @@
         "trace(A⁻¹) = 1/5 + 1/2 = 0.2 + 0.5 = 0.7.",
         "Cross-check with the direct 2x2 inverse formula: A⁻¹ = (1/det A)[[4,-2],[-1,3]] = (1/10)[[4,-2],[-1,3]], so trace(A⁻¹) = (4+3)/10 = 0.7 — matches."
       ],
-      "verification_method": "hand_checkable_similarity_inverse_eigs"
+      "verification_method": "hand_checkable_similarity_inverse_eigs",
+      "also_tests": ["matrix-inverse"]
     },
     {
       "id": "pi-diagonalization-005",
@@ -243,7 +246,8 @@
         "Cross-check with the standard 2x2 inverse formula: A⁻¹ = (1/det A)[[4,-1],[-2,3]] = (1/10)[[4,-1],[-2,3]] — matches exactly.",
         "The (1,1) entry is 4/10 = 0.4."
       ],
-      "verification_method": "hand_checkable_cayley_hamilton_inverse"
+      "verification_method": "hand_checkable_cayley_hamilton_inverse",
+      "also_tests": ["matrix-inverse"]
     },
     {
       "id": "pi-cayley-hamilton-003",
@@ -347,7 +351,8 @@
         "det(A) = 3·(-3) - 4·4 = -9 - 16 = -25.",
         "Cross-check via the characteristic polynomial: trace(A)=0, so λ²  - 0·λ + (-25) = 0, i.e. λ² = 25, giving λ = 5, -5. Their product is 5·(-5) = -25 — matches."
       ],
-      "verification_method": "hand_checkable_symmetric_det_eigs"
+      "verification_method": "hand_checkable_symmetric_det_eigs",
+      "also_tests": ["determinants"]
     },
     {
       "id": "pi-symmetric-matrices-003",
@@ -410,7 +415,8 @@
         "Direct verification: A - I = [[1,1,1],[1,1,1],[1,1,1]], which has rank 1 (all rows identical), so nullity = 3 - 1 = 2 — matches.",
         "Cross-check on the eigenvalues themselves: trace(A) = 2+2+2 = 6 = 4+1+1, and det(A) = 2(4-1)-1(2-1)+1(1-2) = 6-1-1 = 4 = 4·1·1 — both consistent with the given eigenvalues."
       ],
-      "verification_method": "hand_checkable_spectral_theorem_rank_nullity"
+      "verification_method": "hand_checkable_spectral_theorem_rank_nullity",
+      "also_tests": ["rank-nullity"]
     },
     {
       "id": "pi-spectral-theorem-001",
@@ -554,7 +560,8 @@
         "Geometric multiplicity (1) < algebraic multiplicity (2), so A is defective — the Jordan form is a single 2x2 block: J = [[4,1],[0,4]].",
         "[[4,0],[0,4]] would be A's Jordan form only if A were diagonalizable (geometric multiplicity 2), which it isn't."
       ],
-      "verification_method": "hand_checkable_jordan_normal_form"
+      "verification_method": "hand_checkable_jordan_normal_form",
+      "also_tests": ["rank-nullity"]
     },
     {
       "id": "pi-jordan-normal-form-003",
@@ -578,7 +585,8 @@
         "Geometric multiplicity (2) equals algebraic multiplicity (2) for λ=2, and λ=5 is simple, so EVERY eigenvalue is non-defective: A is fully diagonalizable, with Jordan form diag(2,2,5) — all blocks size 1.",
         "This is the key misconception the wrong options rely on: a repeated eigenvalue does NOT by itself force a nontrivial Jordan block — it is specifically a geometric-multiplicity shortfall that does, and here there is none."
       ],
-      "verification_method": "hand_checkable_jordan_diagonalizable_repeated_eig"
+      "verification_method": "hand_checkable_jordan_diagonalizable_repeated_eig",
+      "also_tests": ["rank-nullity"]
     },
     {
       "id": "pi-jordan-normal-form-004",
@@ -622,7 +630,8 @@
         "Geometric multiplicity = nullity(A-5I) = 3 - 2 = 1.",
         "So there is exactly 1 Jordan block for λ=5, and since algebraic multiplicity is 3, that single block must have size 3 — consistent with A already being a single 3x3 Jordan block."
       ],
-      "verification_method": "hand_checkable_jordan_geometric_multiplicity"
+      "verification_method": "hand_checkable_jordan_geometric_multiplicity",
+      "also_tests": ["rank-nullity"]
     }
   ]
 }

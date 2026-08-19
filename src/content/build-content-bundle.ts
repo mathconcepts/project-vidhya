@@ -27,8 +27,81 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { ALL_CONCEPTS } from '../constants/concept-graph';
 
 const TOPIC_NOTES_EXCERPT_CHARS = 2000;
+
+/**
+ * Every real concept id (src/constants/concept-graph.ts, loaded from
+ * data/curriculum/gate-ma.yml). The only thing a `concept_id` /
+ * `concept_ids` entry is ever allowed to be — never a topic label
+ * ('linear-algebra'), never a plausible-looking-but-unregistered id
+ * ('matrix-rank' — the real one is 'rank-nullity'). Both of those exact
+ * bugs shipped into content-bundle.json before this guard existed: the
+ * topic-label one from this file's own `concept_id: p.concept_id ||
+ * p.topic` fallback (removed below), the unregistered one from raw
+ * corpus JSONL passed through unchecked. `InvalidConceptIdError` below is
+ * how both are refused going forward.
+ */
+const VALID_CONCEPT_IDS = new Set(ALL_CONCEPTS.map((c) => c.id));
+
+export class InvalidConceptIdError extends Error {
+  constructor(
+    public readonly conceptId: string,
+    public readonly problemId: string | undefined,
+    public readonly source: string,
+  ) {
+    super(
+      `Invalid concept id "${conceptId}" on problem "${problemId ?? '(no id)'}" (source: ${source}) — ` +
+      `not a real concept in ALL_CONCEPTS (src/constants/concept-graph.ts). A topic label or an ` +
+      `unregistered id must never be written as a concept_id/concept_ids entry.`,
+    );
+    this.name = 'InvalidConceptIdError';
+  }
+}
+
+/**
+ * Throws InvalidConceptIdError the moment ANY concept id a problem is
+ * about to carry — its scalar `concept_id` primary or any entry of its
+ * `concept_ids` array — isn't a real, registered concept. Called before
+ * every push in `collectProblems` below, for every source (pyq-bank.json,
+ * scraped corpus JSONL, CI-generated batches): "every concept id written
+ * into either bundle" means every source, not just the ones this lane
+ * authored. Callers catch this per-item (see collectProblems) so ONE bad
+ * row is refused and skipped — logged, not silently dropped — without
+ * aborting the rest of that source's otherwise-valid problems.
+ */
+export function validateConceptIds(problem: { id?: string; concept_id?: unknown; concept_ids?: unknown }, source: string): void {
+  if (typeof problem.concept_id === 'string' && !VALID_CONCEPT_IDS.has(problem.concept_id)) {
+    throw new InvalidConceptIdError(problem.concept_id, problem.id, source);
+  }
+  if (Array.isArray(problem.concept_ids)) {
+    for (const conceptId of problem.concept_ids) {
+      if (typeof conceptId === 'string' && !VALID_CONCEPT_IDS.has(conceptId)) {
+        throw new InvalidConceptIdError(conceptId, problem.id, source);
+      }
+    }
+  }
+}
+
+/**
+ * Some sources (scraped corpus JSONL, older generated batches) only ever
+ * carried a single scalar `concept_id`, never a `concept_ids` array — that
+ * field didn't exist yet when they were produced. Synthesize the
+ * one-element array from the already-known scalar rather than leaving it
+ * absent: it states nothing new (concept_ids[0] === concept_id, same
+ * "primary first" contract every other source honors), and it's what lets
+ * a concept_ids-only consumer (e.g. buildPyqConceptIndex,
+ * src/db/pyq-bank-index.ts) find a single-concept corpus problem too. A
+ * problem with no concept_id at all (unmapped) is left untouched — this
+ * never guesses a concept, only restates one already present.
+ */
+function withConceptIdsFallback<T extends { concept_id?: unknown; concept_ids?: unknown }>(p: T): T {
+  if (!p.concept_ids && typeof p.concept_id === 'string') {
+    return { ...p, concept_ids: [p.concept_id] };
+  }
+  return p;
+}
 
 export interface BuildContentBundleOptions {
   /** Defaults to <cwd>/frontend/public/data */
@@ -78,22 +151,41 @@ function collectProblems(feDataDir: string, rawDir: string, genDir: string, log:
   if (fs.existsSync(pyqPath)) {
     try {
       const pyq = JSON.parse(fs.readFileSync(pyqPath, 'utf-8'));
+      let skippedInvalid = 0;
       for (const p of pyq.problems || []) {
         const fp = fingerprint(p);
         if (seen.has(fp)) continue;
-        seen.add(fp);
-        problems.push({
+        // p.concept_id / p.concept_ids pass through EXACTLY as pyq-bank.json
+        // wrote them (src/db/pyq-concept-mapper.ts's mapper output — real
+        // concepts only, or absent when honestly unmapped). Previously this
+        // spot fell back to `p.concept_id || p.topic`, which is exactly how
+        // the topic label 'linear-algebra' ended up written as a fake
+        // concept id: a "discoverability" shortcut that silently lied about
+        // what the question tests. An unmapped question now stays
+        // concept_id-less here too, same as it already is in pyq-bank.json —
+        // never guessed.
+        const candidate = withConceptIdsFallback({
           ...p,
-          // Legacy problems often lack concept_id — use topic as fallback so they're discoverable
-          concept_id: p.concept_id || p.topic,
           difficulty: normalizeDifficulty(p.difficulty),
           source: p.source || 'pyq-bank',
           verified: true,
           wolfram_verified: p.wolfram_verified || false,
           fingerprint: fp,
         });
+        try {
+          validateConceptIds(candidate, 'pyq-bank.json');
+        } catch (err) {
+          if (err instanceof InvalidConceptIdError) {
+            log(`  ⚠ pyq-bank.json: refusing "${candidate.id}" — ${err.message}`);
+            skippedInvalid++;
+            continue;
+          }
+          throw err;
+        }
+        seen.add(fp);
+        problems.push(candidate);
       }
-      log(`  ✓ pyq-bank.json: ${pyq.problems?.length || 0} problems`);
+      log(`  ✓ pyq-bank.json: ${(pyq.problems?.length || 0) - skippedInvalid} problems${skippedInvalid ? ` (${skippedInvalid} refused for an invalid concept id)` : ''}`);
     } catch (err) {
       log(`  ⚠ pyq-bank.json: ${(err as Error).message}`);
     }
@@ -106,19 +198,26 @@ function collectProblems(feDataDir: string, rawDir: string, genDir: string, log:
       const content = fs.readFileSync(path.join(rawDir, file), 'utf-8');
       const lines = content.split('\n').filter(Boolean);
       let added = 0;
+      let refusedInvalid = 0;
       for (const line of lines) {
         try {
           const rec = JSON.parse(line);
           if (rec.kind !== 'problem') continue;
           const meta = rec.metadata || {};
           if (!meta.question_text && !rec.raw_text) continue;
-          const p = {
+          const p = withConceptIdsFallback({
             id: meta.id || fingerprint(meta),
             question_text: meta.question_text || rec.raw_text,
             correct_answer: meta.correct_answer || '',
             options: meta.options,
             explanation: meta.explanation,
             topic: meta.topic,
+            // meta.concept_id comes straight from the scraper/annotator with
+            // no guarantee it's a real registered concept — validated below
+            // before this row is allowed into the bundle at all. These
+            // sources never carry a concept_ids array of their own (only
+            // ever one concept per scraped item), so withConceptIdsFallback
+            // synthesizes the one-element array from it.
             concept_id: meta.concept_id,
             difficulty: normalizeDifficulty(meta.difficulty),
             marks: meta.marks || 2,
@@ -128,17 +227,29 @@ function collectProblems(feDataDir: string, rawDir: string, genDir: string, log:
             license: rec.license,
             verified: true,
             wolfram_verified: false,
-          };
+          });
           const fp = fingerprint(p);
           if (seen.has(fp) || !p.correct_answer) continue;
+          try {
+            validateConceptIds(p, file);
+          } catch (err) {
+            if (err instanceof InvalidConceptIdError) {
+              log(`  ⚠ ${file}: refusing "${p.id}" — ${err.message}`);
+              refusedInvalid++;
+              continue;
+            }
+            throw err;
+          }
           seen.add(fp);
           problems.push({ ...p, fingerprint: fp });
           added++;
         } catch {
-          /* skip malformed line */
+          /* skip malformed line — invalid concept ids are already caught
+             and logged above, so anything reaching here is a genuine
+             JSON/shape problem, same as before this change. */
         }
       }
-      log(`  ✓ ${file}: +${added} problems`);
+      log(`  ✓ ${file}: +${added} problems${refusedInvalid ? ` (${refusedInvalid} refused for an invalid concept id)` : ''}`);
     }
   }
 
@@ -149,20 +260,32 @@ function collectProblems(feDataDir: string, rawDir: string, genDir: string, log:
       try {
         const gen = JSON.parse(fs.readFileSync(path.join(genDir, file), 'utf-8'));
         let added = 0;
+        let refusedInvalid = 0;
         for (const p of gen.problems || []) {
           if (!p.verified) continue; // skip unverified
           const fp = fingerprint(p);
           if (seen.has(fp)) continue;
-          seen.add(fp);
-          problems.push({
+          const candidate = withConceptIdsFallback({
             ...p,
             difficulty: normalizeDifficulty(p.difficulty),
             source: 'generated',
             fingerprint: fp,
           });
+          try {
+            validateConceptIds(candidate, file);
+          } catch (err) {
+            if (err instanceof InvalidConceptIdError) {
+              log(`  ⚠ ${file}: refusing "${candidate.id}" — ${err.message}`);
+              refusedInvalid++;
+              continue;
+            }
+            throw err;
+          }
+          seen.add(fp);
+          problems.push(candidate);
           added++;
         }
-        log(`  ✓ ${file}: +${added} verified generated problems`);
+        log(`  ✓ ${file}: +${added} verified generated problems${refusedInvalid ? ` (${refusedInvalid} refused for an invalid concept id)` : ''}`);
       } catch (err) {
         log(`  ⚠ ${file}: ${(err as Error).message}`);
       }

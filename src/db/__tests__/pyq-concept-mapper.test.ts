@@ -16,6 +16,7 @@ import {
   mapPyqTagsToConceptId,
   mapPyqTagsToConceptIds,
   mapPyqTextToConceptId,
+  mapPyqTextToConceptIds,
   mapPyqToConceptId,
   mapPyqToConceptIds,
 } from '../pyq-concept-mapper';
@@ -151,6 +152,37 @@ describe('mapPyqTextToConceptId — migration 035\'s 11 untagged linear-algebra 
   });
 });
 
+describe('mapPyqTextToConceptIds — the 8 SQL-seeded linear-algebra rows (no tags column at all)', () => {
+  // Exact question_text as it appears in the exported bundle (verified
+  // against frontend/public/data/pyq-bank.json before writing the rules).
+  const cases: Array<[string, string, string[]]> = [
+    ['sql-GATE-PYQs-Seed-1', 'The eigenvalues of the matrix [[2, 1], [1, 2]] are:', ['eigenvalues']],
+    ['sql-GATE-PYQs-Seed-2', 'The rank of the matrix [[1, 2, 3], [2, 4, 6], [1, 2, 4]] is:', ['rank-nullity']],
+    ['sql-GATE-PYQs-Seed-3', 'If A is a 3×3 matrix with det(A) = 5, then det(2A) is:', ['determinants']],
+    ['sql-GATE-PYQs-Seed-4', 'The system of equations x + y + z = 6, x + 2y + 3z = 14, x + 4y + 7z = 30 has:', ['systems-of-equations', 'rank-nullity']],
+    ['sql-GATE-PYQs-Seed-5', 'The product of eigenvalues of [[1, 0, 0], [0, 3, -1], [0, -1, 3]] is:', ['eigenvalues', 'determinants']],
+    ['sql-Supabase-PYQs-Seed-1', 'The eigenvalues of the matrix [[3, 1], [0, 3]] are', ['eigenvalues']],
+    ['sql-Supabase-PYQs-Seed-2', 'The rank of the matrix [[1,2,3],[4,5,6],[7,8,9]] is', ['rank-nullity']],
+    ['sql-Supabase-PYQs-Seed-3', 'If A is an n×n matrix with det(A) = 0, then the system Ax = b', ['determinants', 'matrix-inverse', 'systems-of-equations']],
+  ];
+
+  for (const [id, text, expected] of cases) {
+    it(`${id}: "${text.slice(0, 55)}…" → ${JSON.stringify(expected)}`, () => {
+      expect(mapPyqTextToConceptIds('linear-algebra', text)).toEqual(expected);
+      for (const conceptId of expected) expect(CONCEPT_IDS.has(conceptId)).toBe(true);
+    });
+  }
+
+  it('mapPyqTextToConceptId (single) still returns the primary — element [0]', () => {
+    expect(mapPyqTextToConceptId('linear-algebra', 'The product of eigenvalues of [[1, 0, 0], [0, 3, -1], [0, -1, 3]] is:'))
+      .toBe('eigenvalues');
+  });
+
+  it('returns [] for unrelated text', () => {
+    expect(mapPyqTextToConceptIds('linear-algebra', 'What is the capital of France?')).toEqual([]);
+  });
+});
+
 describe('mapPyqToConceptId — combined tag-then-text fallback', () => {
   it('prefers tag match when both would resolve', () => {
     expect(mapPyqToConceptId('linear-algebra', ['eigenvalues'], 'trace(AB) equals')).toBe('eigenvalues');
@@ -240,6 +272,69 @@ describe('mapPyqTagsToConceptIds — multi-concept mapping', () => {
     for (const q of questions) {
       expect(mapPyqTagsToConceptIds('linear-algebra', q.tags)).toEqual(LA_EXPECTED[q.id]);
     }
+  });
+});
+
+// Wiring for la-016..la-029 — 14 new questions a sibling content lane adds
+// to data/courses/gate-em/topics/01-linear-algebra/mcqs.json (arrives via a
+// separate merge, not present in this branch's mcqs.json). These cases
+// exercise the tag rules ahead of that merge so the wiring is provably
+// correct the moment the questions land, without depending on the file.
+describe('mapPyqTagsToConceptIds — the 7 previously-uncovered LA concepts (la-016..la-029 primary tags)', () => {
+  const primaryCases: Array<[string, string]> = [
+    ['inner-product', 'inner-product-spaces'],
+    ['gram-schmidt', 'gram-schmidt'],
+    ['lu-decomposition', 'lu-factorization'],
+    ['positive-definite', 'positive-definite-matrices'],
+    ['svd', 'svd'],
+    ['jordan-form', 'jordan-normal-form'],
+    ['matrix-norm', 'matrix-norms'],
+  ];
+
+  for (const [tag, expectedConcept] of primaryCases) {
+    it(`'${tag}' tag (primary) → ${expectedConcept}`, () => {
+      expect(mapPyqTagsToConceptIds('linear-algebra', [tag])).toEqual([expectedConcept]);
+      expect(CONCEPT_IDS.has(expectedConcept)).toBe(true);
+    });
+  }
+
+  it('all 7 newly-covered concepts are real gate-ma.yml concept ids', () => {
+    for (const [, expectedConcept] of primaryCases) {
+      expect(CONCEPT_IDS.has(expectedConcept)).toBe(true);
+    }
+  });
+
+  // Secondary tags reported present on the same 14 questions — re-verified
+  // against the current table (some pre-existed, some are new entries
+  // added alongside the 7 primaries above).
+  const secondaryCases: Array<[string, string]> = [
+    ['orthogonality', 'orthogonality'],
+    ['vector-spaces', 'vector-spaces'],
+    ['linear-independence', 'linear-independence'],
+    ['matrices', 'matrix-operations'],
+    ['determinant', 'determinants'],
+    ['eigenvalues', 'eigenvalues'],
+    ['symmetric-matrix', 'symmetric-matrices'],
+    ['rank', 'rank-nullity'],
+    ['diagonalization', 'diagonalization'],
+    ['svd', 'svd'],
+  ];
+  for (const [tag, expectedConcept] of secondaryCases) {
+    it(`secondary tag '${tag}' still resolves sensibly → ${expectedConcept}`, () => {
+      expect(mapPyqTagsToConceptIds('linear-algebra', [tag])).toEqual([expectedConcept]);
+    });
+  }
+
+  it("'vectors' is deliberately unmapped — too generic to name a concept, same as bare 'linear-algebra'", () => {
+    expect(mapPyqTagsToConceptIds('linear-algebra', ['vectors'])).toEqual([]);
+    expect(mapPyqTagsToConceptId('linear-algebra', ['vectors'])).toBeNull();
+  });
+
+  it('a plausible la-016..029-style multi-tag question resolves primary-first with secondaries following', () => {
+    // e.g. an inner-product-spaces question that also touches
+    // orthogonality and vector-spaces as secondary tags.
+    expect(mapPyqTagsToConceptIds('linear-algebra', ['inner-product', 'orthogonality', 'vector-spaces']))
+      .toEqual(['inner-product-spaces', 'orthogonality', 'vector-spaces']);
   });
 });
 

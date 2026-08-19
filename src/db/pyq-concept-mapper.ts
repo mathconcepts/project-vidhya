@@ -122,6 +122,33 @@ const TAG_MAPS: Record<string, Record<string, string | string[]>> = {
     'quadratic-forms': 'quadratic-forms',
     'symmetric-matrix': 'symmetric-matrices',
     'spectral-theorem': 'spectral-theorem',
+
+    // la-016..la-029 (sibling content lane, arrives via the merge — not in
+    // this branch's mcqs.json yet): 14 new questions covering the 7
+    // linear-algebra concepts that previously had zero PYQ coverage.
+    // Primary tags, one per new concept:
+    'inner-product': 'inner-product-spaces',
+    'gram-schmidt': 'gram-schmidt',
+    'lu-decomposition': 'lu-factorization',
+    'positive-definite': 'positive-definite-matrices',
+    'svd': 'svd',
+    'jordan-form': 'jordan-normal-form',
+    'matrix-norm': 'matrix-norms',
+    // Secondary tags on those same 14 questions that weren't yet direct
+    // TAG_MAPS keys (the concept existed via a differently-named tag —
+    // e.g. 'orthogonal-matrix' → orthogonality, not the bare
+    // 'orthogonality' tag itself — or wasn't reachable via tags at all —
+    // 'diagonalization' was previously only reachable through
+    // 'matrix-powers'). Every other secondary tag on those questions
+    // (vector-spaces, linear-independence, matrices, determinant,
+    // eigenvalues, symmetric-matrix, rank) already resolves via the
+    // entries above; re-verified against this same table, unchanged.
+    'orthogonality': 'orthogonality',
+    'diagonalization': 'diagonalization',
+    // 'vectors' is deliberately NOT mapped — same "too generic" reasoning
+    // as the bare 'linear-algebra' tag (see header comment): it names no
+    // single concept on its own, so it stays absent from this table and
+    // contributes nothing rather than guessing.
   },
 
   'calculus': {
@@ -383,14 +410,28 @@ export function mapPyqTagsToConceptId(topic: string, tags: string[] | undefined 
 }
 
 /**
- * Text-keyword rules for rows with no `tags` array — currently only
- * migration 035's 11 hand-inserted, machine-generated linear-algebra MCQs
- * (`source = 'generated_tier3'`). Each `match` is a literal, verified
- * substring of that specific question's text (lowercased), not a generic
- * keyword — every one was checked against 035_generated_content_provenance.sql's
- * actual question text before being written here.
+ * Text-keyword rules for rows with no `tags` array. Two sources:
+ *   - Migration 035's 11 hand-inserted, machine-generated linear-algebra
+ *     MCQs (`source = 'generated_tier3'`).
+ *   - The 8 SQL-seeded linear-algebra PYQs in `scripts/seed-pyqs.sql` /
+ *     `supabase/seeds/gate_em_pyqs.sql` (`source` prefixed `sql-`), which
+ *     carry `question`/`topic`/etc. columns but no `tags` column at all —
+ *     the tag-based mapper can never see them.
+ * Each `match` is a literal, verified substring of that specific
+ * question's text (lowercased), not a generic keyword — every one was
+ * checked against the real question text (035_generated_content_provenance.sql,
+ * or the exported `question_text` for the SQL-seeded rows) before being
+ * written here.
+ *
+ * `concept_id` may be a `string[]` — same multi-concept extension as
+ * TAG_MAPS above — for a question whose text makes more than one concept
+ * unambiguous (e.g. "det(A)=0, then the system Ax=b..." tests
+ * determinants, matrix-inverse, AND systems-of-equations at once; the
+ * explanation for the eigenvalue-product question explicitly states the
+ * identity "product of eigenvalues = det(A)", so that one tests both
+ * eigenvalues and determinants, not eigenvalues alone).
  */
-const TEXT_RULES: Array<{ topic: string; match: string; concept_id: string }> = [
+const TEXT_RULES: Array<{ topic: string; match: string; concept_id: string | string[] }> = [
   { topic: 'linear-algebra', match: '(a + aᵀ) is always', concept_id: 'symmetric-matrices' },
   { topic: 'linear-algebra', match: 'trace(ab) equals', concept_id: 'trace' },
   { topic: 'linear-algebra', match: 'det(a⁻¹) is', concept_id: 'determinants' },
@@ -402,15 +443,58 @@ const TEXT_RULES: Array<{ topic: string; match: string; concept_id: string }> = 
   { topic: 'linear-algebra', match: 'lu decomposition a = lu', concept_id: 'lu-factorization' },
   { topic: 'linear-algebra', match: 'nullity theorem states', concept_id: 'rank-nullity' },
   { topic: 'linear-algebra', match: 'linearly independent in', concept_id: 'linear-independence' },
+
+  // sql-GATE-PYQs-Seed-* / sql-Supabase-PYQs-Seed-* (scripts/seed-pyqs.sql,
+  // supabase/seeds/gate_em_pyqs.sql) — no tags column, matched on the
+  // literal question text instead. Each substring verified unique against
+  // both these 8 questions and every tagged mcqs.json linear-algebra
+  // question (different matrix entries / phrasing throughout).
+  { topic: 'linear-algebra', match: 'the eigenvalues of the matrix [[2, 1], [1, 2]]', concept_id: 'eigenvalues' },
+  { topic: 'linear-algebra', match: 'the rank of the matrix [[1, 2, 3], [2, 4, 6], [1, 2, 4]]', concept_id: 'rank-nullity' },
+  // det(2A) = 2^n det(A) — the scalar-multiple determinant property, same
+  // single concept as la-004's det(2A⁻¹) question.
+  { topic: 'linear-algebra', match: 'det(a) = 5, then det(2a)', concept_id: 'determinants' },
+  // Consistency read off rank(A) vs rank([A|b]) — identical reasoning to
+  // the 'consistency' tag (TAG_MAPS above): systems-of-equations AND
+  // rank-nullity both genuinely tested.
+  { topic: 'linear-algebra', match: 'x + y + z = 6, x + 2y + 3z = 14, x + 4y + 7z = 30', concept_id: ['systems-of-equations', 'rank-nullity'] },
+  // Explanation states the identity "Product of eigenvalues = det(A)"
+  // outright — the question IS that identity, not eigenvalues alone.
+  { topic: 'linear-algebra', match: 'the product of eigenvalues of [[1, 0, 0], [0, 3, -1], [0, -1, 3]]', concept_id: ['eigenvalues', 'determinants'] },
+  { topic: 'linear-algebra', match: 'the eigenvalues of the matrix [[3, 1], [0, 3]]', concept_id: 'eigenvalues' },
+  { topic: 'linear-algebra', match: 'the rank of the matrix [[1,2,3],[4,5,6],[7,8,9]]', concept_id: 'rank-nullity' },
+  // Singular (det=0) ⇒ not invertible ⇒ Ax=b has no unique solution — the
+  // question is exactly the three-way link determinants/matrix-inverse/
+  // systems-of-equations, mirroring la-012's 'singular-matrix' tag set.
+  { topic: 'linear-algebra', match: 'matrix with det(a) = 0, then the system ax = b', concept_id: ['determinants', 'matrix-inverse', 'systems-of-equations'] },
 ];
 
-export function mapPyqTextToConceptId(topic: string, questionText: string | undefined | null): string | null {
-  if (!questionText) return null;
+/**
+ * Walk TEXT_RULES and return every concept named by the FIRST matching
+ * rule for this topic — a rule's `concept_id` may itself be a `string[]`
+ * (see TEXT_RULES comments above) for a question whose text makes more
+ * than one concept unambiguous. Unlike the tag-based mapper, rules here
+ * are NOT accumulated across multiple matches: each rule's `match` is a
+ * literal substring unique to one specific question, so at most one rule
+ * ever fires per question text — there is no "primary tag order" to walk.
+ */
+export function mapPyqTextToConceptIds(topic: string, questionText: string | undefined | null): string[] {
+  if (!questionText) return [];
   const lower = questionText.toLowerCase();
   for (const rule of TEXT_RULES) {
-    if (rule.topic === topic && lower.includes(rule.match)) return rule.concept_id;
+    if (rule.topic === topic && lower.includes(rule.match)) {
+      return Array.isArray(rule.concept_id) ? rule.concept_id : [rule.concept_id];
+    }
   }
-  return null;
+  return [];
+}
+
+/**
+ * Thin single-concept wrapper over `mapPyqTextToConceptIds`, kept for
+ * every existing caller/test that only wants the primary concept.
+ */
+export function mapPyqTextToConceptId(topic: string, questionText: string | undefined | null): string | null {
+  return mapPyqTextToConceptIds(topic, questionText)[0] ?? null;
 }
 
 /**
@@ -440,6 +524,5 @@ export function mapPyqToConceptIds(
 ): string[] {
   const tagResult = mapPyqTagsToConceptIds(topic, tags);
   if (tagResult.length > 0) return tagResult;
-  const textResult = mapPyqTextToConceptId(topic, questionText);
-  return textResult ? [textResult] : [];
+  return mapPyqTextToConceptIds(topic, questionText);
 }

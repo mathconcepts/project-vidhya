@@ -283,6 +283,45 @@ describe('POST /api/practice/quiz/start', () => {
     expect(r.status).toBe(422);
   });
 
+  it('a failed XP-cycle read is a 503, never a silent 0-XP fall-through to the 422 gate', async () => {
+    // xpEarnedSince rejecting mirrors quiz-store-pg.ts throwing
+    // '[quiz-store-pg] DATABASE_URL not configured' — the handler must not
+    // catch this and treat it as "0 XP earned", which would surface as the
+    // 422 threshold message and misreport "we can't tell" as "not enough".
+    setQuizDepsForTests({
+      catalog: () => new InMemoryCatalog([mcqItem('a', 'eigenvalues')]),
+      studentModel: () => fakeStudentModel([], new Map()),
+      dueCards: async () => [],
+      recentlyReviewed: async () => new Set(),
+      getLastSubmittedQuizAt: async () => { throw new Error('[quiz-store-pg] DATABASE_URL not configured'); },
+      xpEarnedSince: async () => 100,
+      now: () => NOW,
+    });
+    const r = makeRes();
+    await startHandler(makeReq({}), r.res);
+    expect(r.status).toBe(503);
+    expect(r.status).not.toBe(500);
+    expect(r.status).not.toBe(422);
+    expect(r.payload.error).toMatch(/checkpoint quiz unavailable/i);
+    expect(r.payload.error).not.toMatch(/practise more/i);
+  });
+
+  it('a failed pool-assembly read is a 503', async () => {
+    setQuizDepsForTests({
+      catalog: () => new InMemoryCatalog([mcqItem('a', 'eigenvalues')]),
+      studentModel: () => fakeStudentModel([], new Map()),
+      dueCards: async () => { throw new Error('[quiz-store-pg] DATABASE_URL not configured'); },
+      recentlyReviewed: async () => new Set(),
+      getLastSubmittedQuizAt: async () => null,
+      xpEarnedSince: async () => 100,
+      now: () => NOW,
+    });
+    const r = makeRes();
+    await startHandler(makeReq({}), r.res);
+    expect(r.status).toBe(503);
+    expect(r.payload.error).toMatch(/checkpoint quiz unavailable/i);
+  });
+
   it('starts a quiz with QUIZ_LENGTH items, an 80s/item deadline, and no leaked answer key', async () => {
     setQuizDepsForTests(bigPoolDeps());
     const r = makeRes();

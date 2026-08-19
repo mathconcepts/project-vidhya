@@ -67,7 +67,7 @@ import { getStudentModel } from '../gbrain/student-model-pg';
 import type { BatchMasteryStudentModel } from '../gbrain/student-model-pg';
 import { recordProblemAttempt } from '../gbrain/problem-generator';
 import type { Attempt, StudentModel } from '../core/interfaces';
-import { ALL_CONCEPTS } from '../constants/concept-graph';
+import { ALL_CONCEPTS, CONCEPT_MAP } from '../constants/concept-graph';
 import { makeDueReviewSource, recentlyReviewedObjectIds } from '../readiness/due-cards';
 import { assembleQuizPool, quizIsEligible, selectQuizItems, type QuizPoolCandidate } from '../readiness/quiz-pool';
 import {
@@ -186,6 +186,24 @@ async function frontierCandidates(
   return out;
 }
 
+/**
+ * Concept-scoped pool contribution for the walkthrough's Test leg
+ * (POST /api/practice/quiz/start with an optional `concept_id`): every
+ * gradable-or-not catalog item for that one concept, capped the same way
+ * frontierCandidates caps its per-concept contribution but with a larger
+ * single-concept ceiling since there's exactly one concept to draw from
+ * instead of up to FRONTIER_CONCEPT_SCAN_CAP of them.
+ */
+const CONCEPT_SCOPED_ITEM_LIMIT = 50;
+
+async function conceptScopedCandidates(
+  catalog: LearningObjectCatalog,
+  conceptId: string,
+): Promise<Array<{ objectId: string; skillId: string }>> {
+  const items = await catalog.query({ skillId: conceptId, limit: CONCEPT_SCOPED_ITEM_LIMIT });
+  return items.map((item) => ({ objectId: item.id, skillId: item.nodeId }));
+}
+
 interface QuizOffer {
   eligible: boolean;
   reason?: string;
@@ -218,20 +236,32 @@ interface AssembledQuizPool {
  * Both computeQuizOffer (the XP-summary preview) and handleQuizStart (the
  * actual start) must build this identically — a divergence here would let
  * the offer say "eligible" while start refuses, or vice versa.
+ *
+ * `conceptId` (optional — the walkthrough rail's concept-scoped Test leg,
+ * POST /api/practice/quiz/start with a `concept_id` body field) narrows
+ * BOTH sources to that one concept: due-review candidates are restricted
+ * via `dueCards`'s existing `allowedNodes` filter, and the frontier
+ * contribution is replaced by a direct single-concept catalog query
+ * (conceptScopedCandidates) instead of scanning every touched concept.
+ * Omitting `conceptId` is byte-identical to the pre-scoping behavior —
+ * every existing (unscoped) caller passes nothing and takes this exact
+ * same code path.
  */
-async function buildQuizPool(studentId: string, now: Date): Promise<AssembledQuizPool> {
+async function buildQuizPool(studentId: string, now: Date, conceptId?: string): Promise<AssembledQuizPool> {
   const catalog = deps.catalog();
   const studentModel = deps.studentModel();
 
-  const [dueRows, frontierRows, recentlyReviewed] = await Promise.all([
-    deps.dueCards(studentId, now, {}),
-    frontierCandidates(studentId, catalog, studentModel),
+  const [dueRows, otherRows, recentlyReviewed] = await Promise.all([
+    deps.dueCards(studentId, now, conceptId ? { allowedNodes: [conceptId] } : {}),
+    conceptId
+      ? conceptScopedCandidates(catalog, conceptId)
+      : frontierCandidates(studentId, catalog, studentModel),
     deps.recentlyReviewed(studentId, now, QUIZ_NO_REPEAT_WINDOW_DAYS),
   ]);
 
   const pool: QuizPoolCandidate[] = assembleQuizPool(
     dueRows.map((r) => ({ objectId: r.objectId, skillId: r.nodeId ?? null })),
-    frontierRows,
+    otherRows,
     recentlyReviewed,
   );
 
@@ -319,16 +349,33 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
 
   const now = deps.now();
 
+  // Optional concept scope (the walkthrough rail's Test leg). Unscoped
+  // (concept_id absent) is the pre-existing behavior — untouched. A
+  // present-but-unknown concept_id is refused up front rather than
+  // silently falling back to unscoped, which would otherwise hand the
+  // student a quiz drawn from every concept while claiming it was theirs.
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  let conceptId: string | undefined;
+  if (typeof body.concept_id === 'string' && body.concept_id.trim() !== '') {
+    if (!CONCEPT_MAP.has(body.concept_id)) {
+      return sendError(res, 400, `unknown concept: ${body.concept_id}`);
+    }
+    conceptId = body.concept_id;
+  }
+
   // Both gates enforced server-side — the frontend's meter/offer switch
   // is a display convenience, not the authority. A client that somehow
   // calls start() before its own cycle has reached the threshold (stale
   // state, a race, a hand-crafted request) gets the same honest refusal.
+  // The XP-cycle gate is NOT weakened for the concept-scoped case — a
+  // concept-scoped checkpoint is still a checkpoint, not a separate
+  // "practice test" tier with its own rules.
   const cycleMinutes = await xpSinceBaseline(user.userId);
   if (!meetsQuizThreshold(cycleMinutes)) {
     return sendError(res, 422, 'Checkpoint unlocks as you practise more');
   }
 
-  const { catalog, pool } = await buildQuizPool(user.userId, now);
+  const { catalog, pool } = await buildQuizPool(user.userId, now, conceptId);
 
   if (!quizIsEligible(pool.length, QUIZ_LENGTH)) {
     return sendError(res, 422, 'Checkpoint unlocks as you practise more');

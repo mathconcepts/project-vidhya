@@ -40,15 +40,27 @@ describe('demo container boot chain', () => {
 
   it('never makes the server conditional on a seed step succeeding', () => {
     const cmd = cmdLine();
-    // Everything before the server start must be `;`-separated. A single
-    // `&&` anywhere ahead of it re-introduces the outage.
     const beforeServer = cmd.slice(0, cmd.indexOf('src/server.ts'));
     expect(
       beforeServer.includes('&&'),
       `demo/Dockerfile CMD chains a seed step to the server with "&&":\n  ${cmd}\n` +
-        `That makes booting conditional on seeding. Use ";" with a "|| echo ..." notice ` +
-        `so a failed seed degrades the demo instead of killing it.`,
+        `That makes booting conditional on seeding.`,
     ).toBe(false);
+  });
+
+  it('does not put the port behind the seeds', () => {
+    // The stronger property, and the one that actually broke: seeding must
+    // not delay the port. Ordering is survivable while seeds are fast and
+    // fatal once they are not — with a real database attached, seeding
+    // writes thousands of rows a round trip at a time, and the platform's
+    // port scan gives up long before that finishes.
+    const cmd = cmdLine();
+    const beforeServer = cmd.slice(0, cmd.indexOf('exec npx tsx src/server.ts'));
+    expect(
+      /}\s*&\s*$/.test(beforeServer.trim()) || !/npm run demo:/.test(beforeServer),
+      `demo/Dockerfile CMD runs seeds in the foreground ahead of the server:\n  ${cmd}\n` +
+        `Background them ("{ ...; } &") so the port binds immediately.`,
+    ).toBe(true);
   });
 
   it('reports a failed seed rather than swallowing it silently', () => {

@@ -107,9 +107,19 @@ VOLUME ["/app/.data"]
 #
 # JWT_SECRET is required; Render's render.yaml sets it via generateValue.
 # Locally, pass it via -e or --env-file.
-# Seed, then serve. The seeds are chained with `;` and each carries its own
-# `||` notice rather than `&&`: seeding is a nice-to-have, serving is not.
-# Under `&&` a single failing seed exited the container with status 1 and the
-# server never started — a dead demo instead of a demo missing its sample
-# history. `exec` hands PID 1 to the server so it receives Render's signals.
-CMD ["sh", "-c", "npm run demo:seed || echo '[boot] demo:seed failed — continuing without fresh demo accounts'; npm run demo:seed-media || echo '[boot] demo:seed-media failed — continuing without rendered media'; npm run demo:seed-history || echo '[boot] demo:seed-history failed — continuing without persona history'; exec npx tsx src/server.ts"]
+# Serve, and seed alongside. The seeds run in a background subshell and the
+# server is exec'd immediately, so the port binds in seconds.
+#
+# They used to run ahead of the server, first chained with `&&` (one failing
+# seed then killed the container) and then with `;`. Both put the port behind
+# them. That is survivable while seeding is fast and fatal once it is not: with
+# a real database attached, demo:seed-history writes thousands of rows one
+# round trip at a time, and against a database in another region that is many
+# minutes. The platform scanned for an open port, found none, marked the deploy
+# failed, and kept serving the previous instance — which is what made corrected
+# environment variables look like they were being ignored.
+#
+# Seeding is a nice-to-have; serving is not. A demo whose sample history fills
+# in over the first minute is fine. A demo that never binds a port is nothing.
+# Each seed keeps its own failure notice so a skip stays visible in the logs.
+CMD ["sh", "-c", "{ npm run demo:seed || echo '[boot] demo:seed failed — continuing without fresh demo accounts'; npm run demo:seed-media || echo '[boot] demo:seed-media failed — continuing without rendered media'; npm run demo:seed-history || echo '[boot] demo:seed-history failed — continuing without persona history'; } & exec npx tsx src/server.ts"]

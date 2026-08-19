@@ -1,5 +1,6 @@
 /**
- * PYQ → concept_id mapper (T3 / Milestone A / A2).
+ * PYQ → concept_id(s) mapper (T3 / Milestone A / A2; multi-concept
+ * extension: A9 / "multi-concept mapping").
  *
  * `pyq_questions` has no concept-level classification — only a coarse
  * `topic` TEXT column. `session-store.ts`'s `fetchProblemsForConcept`
@@ -9,25 +10,41 @@
  * Deterministic, explicit, NEVER a guess: every rule below was written by
  * reading the actual question in `data/courses/gate-em/topics/<topic>/mcqs.json`
  * (or, for migration 035's untagged rows, the raw SQL text) and confirming
- * the mapped concept id is the one the question is actually testing — not
+ * the mapped concept id(s) are what the question is actually testing — not
  * inferred from tag-name string similarity alone. A question no rule
- * confidently matches returns `null`; callers must NEVER fall back to a
- * best-guess concept id.
+ * confidently matches returns `null` / `[]`; callers must NEVER fall back to
+ * a best-guess concept id.
  *
  * Two matching strategies, tried in order:
- *   1. Tag-based (`mapPyqTagsToConceptId`) — the static mcqs.json files
+ *   1. Tag-based (`mapPyqTagsToConceptIds`) — the static mcqs.json files
  *      carry an author-curated `tags` array per question, ordered
  *      (verified against every question in the 10 topic files) with the
  *      PRIMARY tested concept listed first. We walk the tags in order and
- *      return the concept for the first tag this topic's map recognizes —
- *      which is why the map only needs ONE entry per tag, not per
- *      question, and still resolves each question to its actual primary
- *      concept rather than a secondary one that happens to appear first
- *      alphabetically.
+ *      collect the concept(s) for every tag this topic's map recognizes,
+ *      in first-seen order, deduped — so the FIRST tag's first concept is
+ *      always the primary (matches the pre-multi-concept single-id
+ *      semantics exactly), while later tags that genuinely name a second
+ *      or third tested concept (e.g. `singular-matrix` implying both
+ *      "determinant is zero" AND "matrix has no inverse") are no longer
+ *      silently dropped.
  *   2. Text-keyword-based (`mapPyqTextToConceptId`) — for rows with no
  *      tags at all (migration 035's 11 hand-inserted linear-algebra rows).
  *      Each rule is a literal substring lifted from that exact question,
- *      not a generic keyword.
+ *      not a generic keyword. Text rules stay single-concept — there is no
+ *      author-curated tag order to derive a secondary concept from, and
+ *      guessing one from keyword text alone would violate the "never a
+ *      guess" rule above.
+ *
+ * Most tag → concept entries below are still single concepts (a plain
+ * string). A handful of linear-algebra tags are genuinely two concepts at
+ * once — those entries are `string[]` instead, e.g. `'singular-matrix':
+ * ['determinants', 'matrix-inverse']` (det(A)=0 IS "A has no inverse", not
+ * a coincidence). Every multi-concept entry was verified against the real
+ * question(s) that carry that tag in `data/courses/gate-em/topics/*​/mcqs.json`
+ * before being written here — see the multi-concept audit table in this
+ * PR's report for the full linear-algebra derivation. Other topics were
+ * deliberately left single-mapped (not re-audited question-by-question for
+ * this pass); a topic staying single-valued is not an oversight.
  *
  * Deliberately conservative: many tags below are OMITTED even though a
  * plausible-sounding concept exists, because the tag is ambiguous across
@@ -48,30 +65,58 @@
  * matching what actually lands in the `topic` column so the DB-side
  * backfill UPDATE can key off it directly.
  */
-const TAG_MAPS: Record<string, Record<string, string>> = {
+const TAG_MAPS: Record<string, Record<string, string | string[]>> = {
   'linear-algebra': {
     'eigenvalues': 'eigenvalues',
     'characteristic-equation': 'eigenvalues',
     'complex-eigenvalues': 'eigenvalues',
-    'rotation-matrix': 'eigenvalues',
+    // la-010: "The matrix A = [[0,1],[-1,0]] represents a rotation. What
+    // are its eigenvalues?" — the question tests BOTH the eigenvalue
+    // computation AND the geometric fact that a real rotation matrix has
+    // no real eigenvector (rotation IS the linear transformation).
+    'rotation-matrix': ['eigenvalues', 'linear-transformations'],
+    // la-011: "trace(A²)" from eigenvalues 2,3,5 — matrix-powers questions
+    // in this bank are really about A^n via diagonalization (eigenvalues
+    // of A^n are eigenvalues^n), with Cayley-Hamilton the standard
+    // alternate method for the same computation. NOT "trace" — the prior
+    // single-concept mapping conflated "the answer format is a trace" with
+    // "the concept under test", which was wrong; corrected here.
+    'matrix-powers': ['diagonalization', 'cayley-hamilton'],
     'system-of-equations': 'systems-of-equations',
-    'consistency': 'systems-of-equations',
-    'overdetermined-system': 'systems-of-equations',
+    // la-002/la-012: "consistency" tags a system-of-equations question
+    // whose actual test is reading consistency OFF the rank comparison
+    // (rank(A) vs rank([A|b])) — rank-nullity is a second concept genuinely
+    // in play, not just systems-of-equations.
+    'consistency': ['systems-of-equations', 'rank-nullity'],
+    // la-014: overdetermined (5x3, full column rank) system — tests both
+    // systems-of-equations AND whether b lies in the column space, i.e.
+    // least-squares' central question (when is there no exact solution).
+    'overdetermined-system': ['systems-of-equations', 'least-squares'],
     'rank-nullity': 'rank-nullity',
-    'null-space': 'rank-nullity',
+    // la-003: null-space is dim(ker A); column-space is dim(im A) — the
+    // SAME "space" concept (null-space-column-space), not the rank/nullity
+    // relationship itself. Corrected from the prior 'rank-nullity' mapping,
+    // which conflated "appears in the rank-nullity theorem" with "IS the
+    // rank-nullity concept".
+    'null-space': 'null-space-column-space',
     'rank': 'rank-nullity',
     'determinant': 'determinants',
-    'singular-matrix': 'determinants',
+    // la-009/la-012: singular ⟺ det=0 ⟺ not invertible — a singular-matrix
+    // question genuinely tests both determinants (the zero-det criterion)
+    // and matrix-inverse (why no inverse exists), not determinants alone.
+    'singular-matrix': ['determinants', 'matrix-inverse'],
     'linear-dependence': 'linear-independence',
     'linear-independence': 'linear-independence',
     'matrices': 'matrix-operations',
-    'basis': 'vector-spaces',
+    // la-007: "which set forms a basis for ℝ³" tests both vector-spaces
+    // (spanning/dimension) and change-of-basis (a basis IS a coordinate
+    // system choice) — the two are inseparable in this question's content.
+    'basis': ['vector-spaces', 'change-of-basis'],
     'vector-spaces': 'vector-spaces',
     'invertible-matrix': 'matrix-inverse',
     'matrix-inverse': 'matrix-inverse',
     'inverse': 'matrix-inverse',
     'trace': 'trace',
-    'matrix-powers': 'trace',
     'orthogonal-matrix': 'orthogonality',
     'column-space': 'null-space-column-space',
     'quadratic-forms': 'quadratic-forms',
@@ -291,26 +336,50 @@ const TAG_MAPS: Record<string, Record<string, string>> = {
 };
 
 /**
- * Walk `tags` in order and return the concept for the FIRST tag this
- * topic's map recognizes. Tag order in the source files consistently
- * lists the primary tested concept first (verified against all 150
- * questions while building TAG_MAPS above), so first-match is correct,
- * not arbitrary — e.g. a question tagged
- * `['second-order-ode', 'characteristic-equation', 'repeated-roots']`
- * resolves via 'second-order-ode', while one tagged
- * `['non-homogeneous-ode', 'resonance', ...]` resolves via
- * 'non-homogeneous-ode' — both correct even though both topics share the
- * generic 'characteristic-equation'-style vocabulary.
+ * Walk `tags` in order and return EVERY concept this topic's map
+ * recognizes across the whole tag array, in first-seen order, deduped.
+ * Tag order in the source files consistently lists the primary tested
+ * concept first (verified against all 150 questions while building
+ * TAG_MAPS above), so the first tag's first concept is always `[0]` —
+ * exactly the value the pre-multi-concept `mapPyqTagsToConceptId` used to
+ * return alone. A tag whose entry is a `string[]` (see TAG_MAPS comments
+ * above) contributes every concept in that array, in the order listed;
+ * a later tag repeating a concept already collected is skipped, not
+ * re-added. Unknown topic or empty/missing tags → `[]`, never a guess.
+ *
+ * e.g. la-012 is tagged
+ * `['system-of-equations', 'consistency', 'rank', 'singular-matrix']` and
+ * resolves to `['systems-of-equations', 'rank-nullity', 'determinants',
+ * 'matrix-inverse']` — the question genuinely exercises all four.
+ */
+export function mapPyqTagsToConceptIds(topic: string, tags: string[] | undefined | null): string[] {
+  if (!tags || tags.length === 0) return [];
+  const map = TAG_MAPS[topic];
+  if (!map) return [];
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const tag of tags) {
+    const entry = map[tag];
+    if (!entry) continue;
+    const concepts = Array.isArray(entry) ? entry : [entry];
+    for (const conceptId of concepts) {
+      if (!seen.has(conceptId)) {
+        seen.add(conceptId);
+        ordered.push(conceptId);
+      }
+    }
+  }
+  return ordered;
+}
+
+/**
+ * Thin single-concept wrapper over `mapPyqTagsToConceptIds`, kept for every
+ * existing caller/test that only wants the primary concept. Primary-first
+ * ordering (see above) makes `[0]` exactly what the original
+ * single-concept mapper returned.
  */
 export function mapPyqTagsToConceptId(topic: string, tags: string[] | undefined | null): string | null {
-  if (!tags || tags.length === 0) return null;
-  const map = TAG_MAPS[topic];
-  if (!map) return null;
-  for (const tag of tags) {
-    const conceptId = map[tag];
-    if (conceptId) return conceptId;
-  }
-  return null;
+  return mapPyqTagsToConceptIds(topic, tags)[0] ?? null;
 }
 
 /**
@@ -355,4 +424,22 @@ export function mapPyqToConceptId(
   questionText: string | undefined | null,
 ): string | null {
   return mapPyqTagsToConceptId(topic, tags) ?? mapPyqTextToConceptId(topic, questionText);
+}
+
+/**
+ * Multi-concept combined mapper: tag-based (full set) first, text-keyword
+ * as a fallback for untagged rows. The text-keyword strategy only ever
+ * yields a single concept (see the header comment on why), so the fallback
+ * result is wrapped as a one-element array. Returns `[]` — never a guess —
+ * when neither strategy confidently matches.
+ */
+export function mapPyqToConceptIds(
+  topic: string,
+  tags: string[] | undefined | null,
+  questionText: string | undefined | null,
+): string[] {
+  const tagResult = mapPyqTagsToConceptIds(topic, tags);
+  if (tagResult.length > 0) return tagResult;
+  const textResult = mapPyqTextToConceptId(topic, questionText);
+  return textResult ? [textResult] : [];
 }

@@ -147,6 +147,9 @@ function rowToLearningObject(r: GeneratedProblemRow): LearningObject {
   };
 }
 
+/** Postgres accepts nothing else for a uuid column; anything else is a parse error. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export class PgLearningObjectCatalog implements LearningObjectCatalog {
   private pool: pg.Pool | null;
 
@@ -198,6 +201,14 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
 
   async getById(objectId: string): Promise<LearningObject | null> {
     if (!this.pool) return null;
+    // `generated_problems.id` is a uuid column, and authored file-backed
+    // items carry ids like `pi-eigenvalues-001`. Postgres rejects those at
+    // parse time, so the query can only ever fail — one wasted round trip
+    // plus a logged error per lookup, which on the live deploy meant an
+    // error line every second and real failures hiding among them. The
+    // composite catalog already answers these from the file catalog, so
+    // returning null here is the same result, reached honestly.
+    if (!UUID_RE.test(objectId)) return null;
     try {
       const { rows } = await this.pool.query<GeneratedProblemRow>(
         'SELECT * FROM generated_problems WHERE id = $1',

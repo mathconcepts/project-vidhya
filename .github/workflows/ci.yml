@@ -159,6 +159,17 @@ jobs:
       - name: Syllabus floor check
         run: npm run ci:syllabus-floor
 
+      # Linear Algebra Complete Walkthrough (the "any and every concept"
+      # guarantee, made mechanical): every one of the 26 linear-algebra
+      # concepts must clear all 4 demo legs — explanation, interactive,
+      # practice (>=5 gradable items), test (>=1 mapped PYQ). Blocking by
+      # default; the test leg fails for all 26 concepts until the sibling
+      # PYQ concept-mapping lane lands frontend/public/data/pyq-bank.json's
+      # concept_ids/concept_id field — see scripts/check-la-walkthrough.ts's
+      # header comment.
+      - name: Linear Algebra walkthrough (4 legs × 26 concepts)
+        run: npm run ci:la-walkthrough
+
       - name: Test
         run: npm test
 

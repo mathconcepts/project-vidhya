@@ -52,11 +52,29 @@ if (!existsSync(TOKENS_PATH)) {
 // boot-time autoMigrate() yet. Apply migrations here too — idempotent
 // (tracked in _migrations), so this is a safe no-op if the server (or a
 // previous run of this script) already applied them.
+// Wrapped, and the wrap is load-bearing: this script is chained with `&&`
+// in demo/Dockerfile's CMD, so a non-zero exit here means the server never
+// starts and the container dies with "Exited with status 1". autoMigrate
+// swallows per-migration failures, but the work it does BEFORE the loop —
+// creating `_migrations`, reading the applied set — is a plain query, so an
+// unreachable database (wrong port, missing sslmode, transient outage)
+// threw straight through this top-level await. Seeding is a nice-to-have;
+// serving is not.
 {
   const { Pool } = pg;
   const migratePool = new Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
-  const applied = await autoMigrate(migratePool);
-  console.log(`demo:seed-history — applied ${applied} pending migration(s).`);
+  try {
+    const applied = await autoMigrate(migratePool);
+    console.log(`demo:seed-history — applied ${applied} pending migration(s).`);
+  } catch (err: any) {
+    console.error(
+      `demo:seed-history — could not reach the database (${err?.message ?? err}). ` +
+      `Skipping history seeding; the server still starts and the demo runs without ` +
+      `persona history. Check DATABASE_URL: session-mode pooler, port 5432, ?sslmode=require.`,
+    );
+    await migratePool.end().catch(() => {});
+    process.exit(0);
+  }
   await migratePool.end();
 }
 

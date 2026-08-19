@@ -20,10 +20,50 @@ import { useState, useEffect, useRef } from 'react';
 import { authFetch } from '@/lib/auth/client';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
-import { Flag, Loader2, Play } from 'lucide-react';
+import { AlertTriangle, Flag, Loader2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { TimerPrimitive } from '@/components/app/TimerPrimitive';
+
+/**
+ * Server error strings are shown to the student verbatim only when they
+ * read like a sentence written for a student (the honest "mock exam
+ * unavailable — try again shortly" wording these endpoints return). Two
+ * shapes are treated as internals, not copy, and fall back to a generic
+ * sentence instead: a bracketed module tag (e.g. "[mock-exam-store] ...")
+ * and a bare "HTTP 503"-style status with no message. Everything else
+ * passes through — this is a simple heuristic, not a full classifier.
+ */
+function studentFacingMessage(raw: string | undefined, fallback: string): string {
+  const trimmed = raw?.trim();
+  if (!trimmed) return fallback;
+  if (/^\[[^\]]+\]/.test(trimmed)) return fallback;
+  if (/^HTTP\s+\d{3}$/.test(trimmed)) return fallback;
+  return trimmed;
+}
+
+/** Shared boxed error surface (mirrors PracticeAttemptPage's loadError pattern). */
+function ErrorSurface({ message, onRetry, retryLabel }: { message: string; onRetry: () => void; retryLabel: string }) {
+  return (
+    <div style={{
+      padding: 16,
+      borderRadius: 'var(--radius-md)',
+      background: 'var(--red-tint)',
+      border: 'var(--hairline) solid var(--red)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 8,
+    }}>
+      <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 2, color: 'var(--red)' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+        <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--red-ink)' }}>{message}</p>
+        <Button size="sm" tone="neutral" variant="tinted" onClick={onRetry} style={{ alignSelf: 'flex-start' }}>
+          {retryLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 interface Question {
   id: string;
@@ -76,8 +116,14 @@ export default function MockExamPage() {
   const [answers, setAnswers] = useState<Record<string, number | number[] | string | null>>({});
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [results, setResults] = useState<SubmitResult | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const startedAt = useRef(0);
   const submittingRef = useRef(false);
+  // Guards the timer-expiry auto-submit so a failed auto-submit doesn't
+  // re-fire every second once timeRemaining is pinned at 0 (see the
+  // interval effect below) — manual retries via the button are unaffected.
+  const autoSubmittedRef = useRef(false);
 
   useEffect(() => {
     trackEvent('page_view', { page: 'mock-exam' });
@@ -99,7 +145,13 @@ export default function MockExamPage() {
     if (phase !== 'in-progress') return;
     const interval = setInterval(() => {
       setTimeRemaining(prev => {
-        if (prev <= 1) { latestSubmitRef.current(); return 0; }
+        if (prev <= 1) {
+          if (!autoSubmittedRef.current) {
+            autoSubmittedRef.current = true;
+            latestSubmitRef.current();
+          }
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
@@ -109,6 +161,7 @@ export default function MockExamPage() {
 
   const handleStart = async () => {
     setLoading(true);
+    setStartError(null);
     try {
       const r = await authFetch(`/api/gbrain/mock-exam/${sessionId}`);
       const data = await r.json().catch(() => null);
@@ -117,11 +170,12 @@ export default function MockExamPage() {
       setTimeRemaining(data.time_limit_minutes * 60);
       setAnswers({});
       setCurrentQ(0);
+      autoSubmittedRef.current = false;
       setPhase('in-progress');
       startedAt.current = Date.now();
       trackEvent('mock_exam_start', { exam_id: data.exam_id, total_questions: data.total_questions });
     } catch (err) {
-      alert('Could not start exam: ' + (err as Error).message);
+      setStartError(studentFacingMessage((err as Error).message, 'Could not start your exam — try again shortly.'));
     } finally {
       setLoading(false);
     }
@@ -143,6 +197,7 @@ export default function MockExamPage() {
   const handleSubmit = async () => {
     if (!exam || submittingRef.current) return;
     submittingRef.current = true;
+    setSubmitError(null);
     setPhase('submitting');
     trackEvent('mock_exam_submit', { exam_id: exam.exam_id, elapsed: Date.now() - startedAt.current });
 
@@ -170,11 +225,16 @@ export default function MockExamPage() {
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
       setResults(data as SubmitResult);
+      setPhase('results');
     } catch (err) {
-      alert('Could not submit exam: ' + (err as Error).message);
+      // Deliberately do NOT move to 'results' — `exam` and `answers` are
+      // untouched, so falling back to 'in-progress' resumes the exam
+      // exactly where the student left it and the retry button below can
+      // re-run this same submit.
+      setSubmitError(studentFacingMessage((err as Error).message, 'Could not submit your exam — try again shortly.'));
+      setPhase('in-progress');
     } finally {
       submittingRef.current = false;
-      setPhase('results');
     }
   };
 
@@ -229,6 +289,10 @@ export default function MockExamPage() {
           ))}
         </div>
 
+        {startError && (
+          <ErrorSurface message={startError} retryLabel="Try again" onRetry={handleStart} />
+        )}
+
         <Button size="lg" tone="mastery" onClick={handleStart} disabled={loading} style={{ width: '100%' }}>
           {loading ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Preparing your exam…</> : <><Play size={18} /> Start Mock Exam</>}
         </Button>
@@ -271,6 +335,10 @@ export default function MockExamPage() {
             {currentQ + 1} / {exam.questions.length} · {answered} answered
           </span>
         </div>
+
+        {submitError && (
+          <ErrorSurface message={submitError} retryLabel="Retry submit" onRetry={handleSubmit} />
+        )}
 
         {/* Question card */}
         <Card elevated padding={16}>

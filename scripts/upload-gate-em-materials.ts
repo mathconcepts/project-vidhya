@@ -84,6 +84,16 @@ function parseSqlInserts(sqlContent: string, sourceName: string): any[] {
       options = { raw: optionsRaw };
     }
 
+    // These SQL-seeded rows have no `tags` column at all (unlike the topic
+    // MCQs above) — mapPyqToConceptIds falls straight through to the
+    // text-keyword rules (see pyq-concept-mapper.ts's TEXT_RULES) with
+    // `tags` undefined. Canonicalize the topic the same way the topic-MCQs
+    // section does, since the mapper's TAG_MAPS/TEXT_RULES keys are the
+    // post-TOPIC_DIR_ALIAS canonical ids.
+    const normalizedTopic = normalizeTopic(topic);
+    const canonicalTopic = DIR_TO_CANONICAL_TOPIC[normalizedTopic] || normalizedTopic;
+    const conceptIds = mapPyqToConceptIds(canonicalTopic, undefined, question_text);
+
     problems.push({
       id: `sql-${sourceName}-${problems.length + 1}`,
       year,
@@ -91,7 +101,9 @@ function parseSqlInserts(sqlContent: string, sourceName: string): any[] {
       options,
       correct_answer,
       explanation,
-      topic: normalizeTopic(topic),
+      topic: normalizedTopic,
+      concept_id: conceptIds[0] ?? undefined,
+      concept_ids: conceptIds.length > 0 ? conceptIds : undefined,
       difficulty: normalizeDifficulty(difficulty),
       marks,
       negative_marks,

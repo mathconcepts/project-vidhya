@@ -1,6 +1,6 @@
 {
   "name": "project-vidhya",
-  "version": "4.34.0",
+  "version": "4.35.0",
   "description": "Project Vidhya — Cost-minimal local-first adaptive learning engine with a four-tier content cascade",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -87,7 +87,8 @@
     "playbook:estimate": "tsx scripts/playbook-cli.ts estimate",
     "ci:template-coverage": "tsx scripts/check-template-coverage.ts",
     "ci:variant-agreement": "tsx scripts/check-variant-agreement.ts",
-    "ci:practice-items": "tsx scripts/check-practice-items.ts"
+    "ci:practice-items": "tsx scripts/check-practice-items.ts",
+    "ci:la-walkthrough": "tsx scripts/check-la-walkthrough.ts"
   },
   "keywords": [
     "adaptive-learning",

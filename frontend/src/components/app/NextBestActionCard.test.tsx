@@ -10,7 +10,7 @@
  *   - a network failure degrading to the honest empty state, never a crash
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { NextBestActionCard } from './NextBestActionCard';
 
@@ -48,6 +48,13 @@ function mockFetchRouting(opts: {
 
 describe('NextBestActionCard', () => {
   afterEach(() => {
+    // Unmount BEFORE resetting the mocks. Vitest runs afterEach hooks LIFO, so
+    // this file's hook fires ahead of the setup file's cleanup(); resetting
+    // first would let the unmount flush FocusedWorkStrip's still-pending mount
+    // effect against an authFetch whose implementation is already gone
+    // (returns undefined -> `.then` of undefined). cleanup() is idempotent, so
+    // the setup file's own call afterwards is a no-op.
+    cleanup();
     vi.resetAllMocks();
   });
 
@@ -86,6 +93,9 @@ describe('NextBestActionCard', () => {
     const cta = screen.getByRole('link', { name: /Start now/ });
     expect(cta).toHaveAttribute('href', '/attempt/obj-42');
     expect(screen.getByText('Estimated 30–60 marks right now')).toBeInTheDocument();
+    // Settle FocusedWorkStrip's own fetch inside the test rather than leaving
+    // it in flight across the teardown boundary.
+    await waitFor(() => expect(screen.getByText('40 / 100 min')).toBeInTheDocument());
   });
 
   it('routes a retain action with an objectId to /attempt/:objectId (not /smart-practice)', async () => {
@@ -100,6 +110,7 @@ describe('NextBestActionCard', () => {
     await waitFor(() => expect(screen.getByText('This card is overdue for review.')).toBeInTheDocument());
     expect(screen.getByRole('link', { name: /Start now/ })).toHaveAttribute('href', '/attempt/obj-99');
     expect(screen.getByText('Review')).toBeInTheDocument(); // KIND_META label for 'retain'
+    await waitFor(() => expect(screen.getByText('40 / 100 min')).toBeInTheDocument());
   });
 
   it('routes a teach action by nodeId to /lesson/:nodeId with the "Start learning" label', async () => {
@@ -114,6 +125,7 @@ describe('NextBestActionCard', () => {
     await waitFor(() => expect(screen.getByText('A new concept is ready to learn.')).toBeInTheDocument());
     const cta = screen.getByRole('link', { name: /Start learning/ });
     expect(cta).toHaveAttribute('href', '/lesson/determinants');
+    await waitFor(() => expect(screen.getByText('40 / 100 min')).toBeInTheDocument());
   });
 
   it('degrades to the honest empty state (not a crash) when both fetches reject', async () => {
@@ -123,5 +135,6 @@ describe('NextBestActionCard', () => {
     wrap(<NextBestActionCard />);
     await waitFor(() => expect(screen.getByText(/Building your baseline/)).toBeInTheDocument());
     expect(screen.getByRole('link', { name: /Answer a few questions/ })).toHaveAttribute('href', '/smart-practice');
+    await waitFor(() => expect(screen.getByText('40 / 100 min')).toBeInTheDocument());
   });
 });

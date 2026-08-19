@@ -22,6 +22,8 @@ import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
 import { ALL_CONCEPTS, CONCEPT_MAP } from '../src/constants/concept-graph';
+import { mapPyqToConceptIds } from '../src/db/pyq-concept-mapper';
+import { TOPIC_DIR_ALIAS } from '../src/db/seed-static-pyqs';
 
 const { Pool } = pg;
 const OUT_DIR = path.resolve(process.cwd(), 'frontend/public/data');
@@ -47,7 +49,8 @@ async function main() {
     try {
       const pool = new Pool({ connectionString: dbUrl, max: 2 });
       const { rows } = await pool.query(
-        `SELECT id, year, question_text, options, correct_answer, explanation, topic, difficulty, marks, source
+        `SELECT id, year, question_text, options, correct_answer, explanation, topic, difficulty, marks, source,
+                concept_id, concept_ids
          FROM pyq_questions ORDER BY topic, difficulty, year DESC`
       );
       problems = rows;
@@ -73,7 +76,22 @@ async function main() {
   console.log(`\nBundles written to ${OUT_DIR}`);
 }
 
-function seedPYQs() {
+// Inverse of seed-static-pyqs.ts's TOPIC_DIR_ALIAS (canonical -> dirSlug):
+// content files declare 'transform-theory'/'discrete-mathematics' as their
+// internal `topic` field, but the app's canonical topic ids (and the
+// pyq-concept-mapper.ts TAG_MAPS keys) are 'transforms'/'discrete'. Without
+// this, mapPyqToConceptIds would look up TAG_MAPS['transform-theory'] —
+// which doesn't exist — and every question in those two topics would
+// silently export with no concept mapping, same class of bug this whole
+// change fixes.
+const DIR_TO_CANONICAL_TOPIC: Record<string, string> = Object.fromEntries(
+  Object.entries(TOPIC_DIR_ALIAS).map(([canonical, dirSlug]) => [dirSlug, canonical]),
+);
+
+// Exported (not just used by main()) so tests can assert on its output
+// directly without shelling out to the whole script (which also touches
+// the filesystem / DB).
+export function seedPYQs() {
   const problems: any[] = [];
   const topicsDir = path.resolve(process.cwd(), 'data/courses/gate-em/topics');
 
@@ -86,15 +104,29 @@ function seedPYQs() {
           const content = JSON.parse(fs.readFileSync(f, 'utf-8'));
           const list = Array.isArray(content) ? content : (content.questions || content.problems || []);
           list.forEach((p: any) => {
+            const questionText = p.question_text || p.question || '';
+            const fileTopic = p.topic || d.replace(/^\d+-/, '');
+            // The exported `topic` field is left exactly as before (the raw
+            // fileTopic, e.g. 'transform-theory') — only the concept-mapper
+            // lookup below needs the canonical (post-alias) topic id, since
+            // that's the key pyq-concept-mapper.ts's TAG_MAPS actually uses.
+            const canonicalTopic = DIR_TO_CANONICAL_TOPIC[fileTopic] || fileTopic;
+            // This is the fix that makes the DB-less demo (the deployed
+            // one) able to find exam questions by concept: pyq-bank.json
+            // previously carried no concept mapping at all — p.concept_id
+            // was always undefined since the source mcqs.json files have no
+            // such field. Same "never a guess" mapper as the DB seed path.
+            const conceptIds = mapPyqToConceptIds(canonicalTopic, p.tags, questionText);
             problems.push({
               id: p.id || `topic-${d}-${problems.length}`,
               year: p.year || 2024,
-              question_text: p.question_text || p.question || '',
+              question_text: questionText,
               options: p.options || {},
               correct_answer: p.correct_answer || p.correct || 'A',
               explanation: p.explanation || p.solution || '',
-              topic: p.topic || d.replace(/^\d+-/, ''),
-              concept_id: p.concept_id,
+              topic: fileTopic,
+              concept_id: conceptIds[0] ?? undefined,
+              concept_ids: conceptIds.length > 0 ? conceptIds : undefined,
               difficulty: p.difficulty || 'medium',
               marks: p.marks || 2,
               source: p.source || 'GATE-EM-Topic-MCQs'
@@ -126,4 +158,9 @@ function seedPYQs() {
   return problems;
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+// Guard so tests can `import { seedPYQs } from './export-bundles'` without
+// triggering the full file-writing / DB-hitting main() as a side effect of
+// module load (same pattern as scripts/check-practice-items.ts).
+if (process.argv[1]?.endsWith('export-bundles.ts')) {
+  main().catch(err => { console.error(err); process.exit(1); });
+}

@@ -432,9 +432,17 @@ export interface AtomCardRendererProps {
   onComplete?: () => void;
   /** Fires with the atom currently on screen. Used by the demo caption layer. */
   onStepChange?: (atom: ContentAtom | null) => void;
+  /**
+   * External jump request — when this changes to an atom id present in
+   * `atoms`, the carousel snaps to that card. Used by the lesson
+   * walkthrough rail's Interactive leg ("jump to the first interactive
+   * atom"). A null/undefined value, or an id not found in `atoms`, is a
+   * no-op — every existing call site that omits this prop is unaffected.
+   */
+  jumpToAtomId?: string | null;
 }
 
-export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete, onStepChange }: AtomCardRendererProps) {
+export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete, onStepChange, jumpToAtomId }: AtomCardRendererProps) {
   const [index, setIndex] = useState(0);
   const [errorStreak, setErrorStreak] = useState(0);
   const [completedIdx, setCompletedIdx] = useState<Set<number>>(() => new Set());
@@ -504,6 +512,16 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
   };
 
   const prev = () => setIndex((i) => Math.max(0, i - 1));
+
+  // Walkthrough rail's Interactive leg: snap the carousel to a requested
+  // atom id. Runs whenever the requested id (or the atom list) changes;
+  // re-requesting the same id while already parked there is a no-op via
+  // React's normal setState bail-out.
+  useEffect(() => {
+    if (!jumpToAtomId) return;
+    const idx = atoms.findIndex((a) => a.id === jumpToAtomId);
+    if (idx >= 0) setIndex(idx);
+  }, [jumpToAtomId, atoms]);
 
   // Swipe gestures (E3): left = next, right = prev, down = exit (back nav).
   const handleDragEnd = (_e: unknown, info: PanInfo) => {

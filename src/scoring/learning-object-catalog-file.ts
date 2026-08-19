@@ -55,6 +55,15 @@ export interface AuthoredItem {
   correct_answer?: string;
   solution_steps?: string[];
   verification_method?: string;
+  /**
+   * Optional — concept ids (besides `concept_id`) the solution genuinely
+   * exercises as a real step (e.g. an eigenvalues item whose solution
+   * computes a determinant along the way). Metadata only: it does not
+   * change grading or the marking payload, only what a concept-coverage
+   * report can credit this item toward. Validated against known concept
+   * ids by `scripts/check-practice-items.ts`.
+   */
+  also_tests?: string[];
 }
 
 const GATE_KINDS = new Set(['mcq', 'msq', 'nat']);

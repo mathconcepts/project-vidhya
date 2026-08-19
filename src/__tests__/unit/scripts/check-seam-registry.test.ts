@@ -9,10 +9,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const SCRIPT = path.resolve(process.cwd(), 'scripts/check-seam-registry.ts');
+
+// Repo-pinned tsx, not `npx tsx` — a cold npx cache installs from the network
+// and writes its warning to stderr (see check-la-walkthrough.test.ts).
+const TSX_BIN = path.resolve(process.cwd(), 'node_modules/.bin/tsx');
 const REGISTRY = path.resolve(process.cwd(), 'seam-registry.json');
 
 function runScript() {
-  return spawnSync('npx', ['tsx', SCRIPT], { encoding: 'utf-8', timeout: 25_000 });
+  return spawnSync(TSX_BIN, [SCRIPT], { encoding: 'utf-8', timeout: 25_000 });
 }
 
 describe('check-seam-registry', () => {

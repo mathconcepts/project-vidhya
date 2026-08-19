@@ -15,7 +15,7 @@
  * (practice, chat, multimodal) orbits this.
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { applyDemoPersona, getDemoCaptions, getDemoPersona } from '@/lib/demoPersona';
 import { SampleDataChip } from '@/components/app/SampleDataChip';
@@ -23,6 +23,9 @@ import { DemoCaption } from '@/components/app/DemoCaption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
 import { ConceptMathViz } from '@/components/lesson/ConceptMathViz';
+import { WalkthroughRail } from '@/components/lesson/WalkthroughRail';
+import { parseInteractiveSpec } from '@/components/lesson/interactives/types';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import {
   Loader2, CheckCircle2, XCircle, Eye,
   Lightbulb, BookOpen, Target, Zap, AlertTriangle, Hash, GitBranch,
@@ -512,6 +515,14 @@ export default function LessonPage() {
   const [doneState, setDoneState] = useState<null | { quality: number; interval_days: number }>(null);
   const visitsRef = useRef<Record<string, StoredVisit>>({});
 
+  // Walkthrough rail (Explanation → Interactive → Practice → Test): the
+  // atom stack container is the Explanation leg's own scroll target, and
+  // jumpToAtomId drives the Interactive leg's "jump to the first
+  // interactive atom" via AtomCardRenderer's jumpToAtomId prop.
+  const atomStackRef = useRef<HTMLDivElement>(null);
+  const [jumpToAtomId, setJumpToAtomId] = useState<string | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
+
   useEffect(() => {
     if (!concept_id) return;
     let cancelled = false;
@@ -567,6 +578,26 @@ export default function LessonPage() {
   const currentComponent = lesson?.components[index];
   const totalComponents = lesson?.components.length ?? 0;
   const progress = totalComponents > 0 ? (index + 1) / totalComponents : 0;
+
+  // First atom (in authored order) carrying a parseable ```interactive-spec```
+  // block — the walkthrough rail's Interactive leg jump target. Computed
+  // client-side from the lesson already loaded (mirrors the same fenced-block
+  // detection InteractiveSidecar renders from), so the rail never offers a
+  // jump this page can't actually complete.
+  const firstInteractiveAtomId = useMemo(() => {
+    const atom = lesson?.atoms?.find((a) => parseInteractiveSpec(a.content).ok);
+    return atom?.id ?? null;
+  }, [lesson?.atoms]);
+
+  const scrollToAtomStack = useCallback(() => {
+    atomStackRef.current?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+  }, [reducedMotion]);
+
+  const jumpToInteractiveAtom = useCallback(() => {
+    if (!firstInteractiveAtomId) return;
+    setJumpToAtomId(firstInteractiveAtomId);
+    scrollToAtomStack();
+  }, [firstInteractiveAtomId, scrollToAtomStack]);
 
   const advance = useCallback(() => {
     if (index < totalComponents - 1) {
@@ -680,14 +711,23 @@ export default function LessonPage() {
           </div>
         </div>
         <DemoCaption step={demoStep} captions={getDemoCaptions()} />
-        <AtomCardRenderer
-          onStepChange={(a) => setDemoStep(a?.atom_type ?? '')}
-          atoms={lesson.atoms}
-          conceptId={concept_id}
-          studentId={sessionId}
-          onComplete={() => navigate('/')}
-        />
+        <div ref={atomStackRef}>
+          <AtomCardRenderer
+            onStepChange={(a) => setDemoStep(a?.atom_type ?? '')}
+            atoms={lesson.atoms}
+            conceptId={concept_id}
+            studentId={sessionId}
+            onComplete={() => navigate('/')}
+            jumpToAtomId={jumpToAtomId}
+          />
+        </div>
         <ConceptMathViz conceptId={concept_id} />
+        <WalkthroughRail
+          conceptId={concept_id}
+          onExplanationTap={scrollToAtomStack}
+          onInteractiveTap={jumpToInteractiveAtom}
+          interactiveJumpReady={firstInteractiveAtomId !== null}
+        />
       </div>
     );
   }

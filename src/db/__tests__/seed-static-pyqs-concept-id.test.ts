@@ -4,6 +4,11 @@
  * for already-seeded rows BEFORE the per-topic skip-guard, and backfilled
  * separately for migration 035's untagged linear-algebra rows.
  *
+ * Extended (multi-concept mapping / A9): every INSERT and backfill UPDATE
+ * now also carries `concept_ids TEXT[]` — the full concept set a question
+ * covers (migration 048_pyq_concept_ids.sql), primary-first, alongside the
+ * unchanged single `concept_id` primary.
+ *
  * Uses the REAL data/courses/gate-em/topics/*​/mcqs.json fixtures (the same
  * ones the running server seeds from) against a fake pg.Pool, so this test
  * fails if either the mapper or the wiring regresses.
@@ -39,19 +44,19 @@ function makeFakePool() {
   return { pool, calls };
 }
 
-describe('seedStaticPyqQuestions — concept_id wiring', () => {
-  it('inserts all 150 static PYQs, each with a concept_id column (null or a real concept)', async () => {
+describe('seedStaticPyqQuestions — concept_id / concept_ids wiring', () => {
+  it('inserts all 164 static PYQs, each with concept_id + concept_ids columns (null or real concepts)', async () => {
     const { pool, calls } = makeFakePool();
     const seeded = await seedStaticPyqQuestions(pool as any);
 
-    expect(seeded).toBe(150);
+    expect(seeded).toBe(164);
 
     const inserts = calls.filter(c => c.sql.includes('INSERT INTO pyq_questions'));
-    expect(inserts.length).toBe(150);
+    expect(inserts.length).toBe(164);
 
-    // Every INSERT carries exactly 11 params, concept_id last.
+    // Every INSERT carries exactly 12 params: concept_id at [10], concept_ids at [11].
     for (const call of inserts) {
-      expect(call.params.length).toBe(11);
+      expect(call.params.length).toBe(12);
     }
 
     const withConcept = inserts.filter(c => c.params[10] !== null);
@@ -61,18 +66,33 @@ describe('seedStaticPyqQuestions — concept_id wiring', () => {
     // order/degree question; probability-statistics ps-013, a
     // Chebyshev-inequality question — neither has a confident single-concept
     // match in the mapper).
-    expect(withConcept.length).toBe(148);
+    expect(withConcept.length).toBe(162);
     expect(withoutConcept.length).toBe(2);
+
+    // concept_ids is populated iff concept_id is; unmapped rows carry null
+    // for both, never an empty-array guess.
+    for (const call of withConcept) {
+      expect(Array.isArray(call.params[11])).toBe(true);
+      expect(call.params[11].length).toBeGreaterThan(0);
+      expect(call.params[11][0]).toBe(call.params[10]); // primary is always element [0]
+    }
+    for (const call of withoutConcept) {
+      expect(call.params[11]).toBeNull();
+    }
   });
 
-  it('runs a per-question backfill UPDATE for every topic before the skip-guard', async () => {
+  it('runs a per-question backfill UPDATE (concept_id + concept_ids) for every topic before the skip-guard', async () => {
     const { pool, calls } = makeFakePool();
     await seedStaticPyqQuestions(pool as any);
 
     const backfillUpdates = calls.filter(c => c.sql.includes('UPDATE pyq_questions SET concept_id') && c.sql.includes('question_text'));
     // One backfill attempt per question that resolves a concept_id, across
-    // all 10 topics — same 148 that resolve on the INSERT path.
-    expect(backfillUpdates.length).toBe(148);
+    // all 10 topics — same 162 that resolve on the INSERT path.
+    expect(backfillUpdates.length).toBe(162);
+    for (const call of backfillUpdates) {
+      expect(call.sql).toContain('concept_ids');
+      expect(Array.isArray(call.params[1])).toBe(true); // concept_ids param
+    }
   });
 
   it('queries migration 035\'s untagged linear-algebra rows for a separate backfill', async () => {
@@ -90,10 +110,31 @@ describe('seedStaticPyqQuestions — concept_id wiring', () => {
     await seedStaticPyqQuestions(pool as any);
 
     const laInserts = calls.filter(c => c.sql.includes('INSERT INTO pyq_questions') && c.params[6] === 'linear-algebra');
-    expect(laInserts.length).toBe(15);
+    // 15 original GATE LA questions + 14 authored for the concepts that had
+    // no exam-style question at all (la-016..la-029).
+    expect(laInserts.length).toBe(29);
     const conceptIds = laInserts.map(c => c.params[10]);
     expect(conceptIds).toContain('eigenvalues');
     expect(conceptIds).toContain('rank-nullity');
     expect(conceptIds.every(id => typeof id === 'string')).toBe(true);
+  });
+
+  it('linear-algebra INSERTs carry the FULL multi-concept set in concept_ids, not just the primary', async () => {
+    const { pool, calls } = makeFakePool();
+    await seedStaticPyqQuestions(pool as any);
+
+    const laInserts = calls.filter(c => c.sql.includes('INSERT INTO pyq_questions') && c.params[6] === 'linear-algebra');
+    // la-012 (question_text param [2]) tests systems-of-equations AND
+    // rank-nullity AND determinants AND matrix-inverse — see
+    // pyq-concept-mapper.test.ts's table-driven LA_EXPECTED.
+    const la012 = laInserts.find(c => c.params[2].includes('Ax = b where A = [[1,2],[2,4]]'));
+    expect(la012).toBeDefined();
+    expect(la012!.params[11]).toEqual(['systems-of-equations', 'rank-nullity', 'determinants', 'matrix-inverse']);
+
+    // A single-concept question (la-001, eigenvalues only) still gets a
+    // one-element array, not a bare scalar.
+    const la001 = laInserts.find(c => c.params[2].includes('eigenvalues of the matrix A = [[3, 1], [1, 3]]'));
+    expect(la001).toBeDefined();
+    expect(la001!.params[11]).toEqual(['eigenvalues']);
   });
 });

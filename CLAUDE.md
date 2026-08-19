@@ -891,6 +891,33 @@ path override).
 **Tests:** Backend 2,499 → 3,285 (+786). Frontend 393 → 486 (+93). CI gates
 10 → 12 (`ci:template-coverage`, `ci:variant-agreement`).
 
+---
+
+### Linear Algebra Complete Walkthrough gate (`ci:la-walkthrough`)
+
+CI gates 12 → 13. `scripts/check-la-walkthrough.ts` is the "any and every
+concept" guarantee, made mechanical: for every concept with
+`topic === 'linear-algebra'` in `src/constants/concept-graph.ts` (derived,
+never hardcoded — 26 today), it checks four demo legs — explanation (reuses
+`isRealExplainer` from `check-syllabus-floor.ts`), interactive (a valid
+` ```interactive-spec ``` ` block under `modules/project-vidhya-content/concepts/<id>/atoms/`,
+reusing the renderer's own `parseInteractiveSpec`), practice (>=5 items
+gradable through `FileLearningObjectCatalog` + the real
+`gateItemFromPayload` the server uses — "gradable" means what the runtime
+means, not what the JSON claims; `also_tests` cross-concept references are
+reported as secondary coverage, never counted toward the floor), and test
+(>=1 PYQ mapped to the concept in `frontend/public/data/pyq-bank.json`,
+reading `concept_ids[]` first, `concept_id` as fallback).
+
+Blocking by default; `--report-only` prints the same table and exits 0.
+`npm run ci:la-walkthrough` / wired into `.github/workflows/ci.yml` next to
+the syllabus floor check. As of this gate's introduction, explanation,
+interactive, and practice are green for all 26 concepts — the test leg
+fails for all 26, because `pyq-bank.json` does not yet carry `concept_id`
+or `concept_ids` on any problem (a sibling lane lands that mapping
+separately; this gate will flip green on that leg once it merges, with no
+change needed here).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

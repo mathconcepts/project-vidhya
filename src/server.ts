@@ -62,6 +62,7 @@ import { contentRoutes } from './api/content-routes';
 import { syllabusRoutes } from './api/syllabus-routes';
 import { multimodalRoutes } from './api/multimodal-routes';
 import { lessonRoutes } from './api/lesson-routes';
+import { walkthroughRoutes } from './api/walkthrough-routes';
 import { verifyRoutes } from './api/verify-routes';
 import { conceptOrchestratorRoutes } from './api/concept-orchestrator-routes';
 import { jobRoutes } from './api/job-routes';
@@ -327,6 +328,9 @@ for (const route of multimodalRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of lessonRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of walkthroughRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of verifyRoutes) {

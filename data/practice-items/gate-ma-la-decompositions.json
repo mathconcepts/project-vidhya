@@ -244,7 +244,8 @@
         "By Sylvester's criterion, all leading principal minors positive means A is positive definite.",
         "Cross-check via eigenvalues: trace=5, det=2, characteristic equation λ²-5λ+2=0 has roots λ=(5±√17)/2 — since the sum (5) and product (2) are both positive, both roots must be positive, confirming positive definiteness."
       ],
-      "verification_method": "hand_checkable_quadratic_form_classify"
+      "verification_method": "hand_checkable_quadratic_form_classify",
+      "also_tests": ["positive-definite-matrices"]
     },
     {
       "id": "pi-quadratic-forms-003",
@@ -262,7 +263,8 @@
         "D3 = det(A) = 1 · 3 = 3.",
         "Cross-check via cofactor expansion along the third row: det(A) = 3·det([[1,1],[1,2]]) - 0 + 0 = 3·1 = 3 — matches."
       ],
-      "verification_method": "hand_checkable_sylvester_criterion"
+      "verification_method": "hand_checkable_sylvester_criterion",
+      "also_tests": ["determinants"]
     },
     {
       "id": "pi-quadratic-forms-004",
@@ -281,7 +283,8 @@
         "t² < 4 is equivalent to -2 < t < 2.",
         "Check a boundary case: at t=2, D2 = 4-4 = 0, so A is only positive SEMIdefinite there (eigenvalue 0 appears), confirming the strict inequality -2<t<2 (not ≤) is required for positive definiteness."
       ],
-      "verification_method": "hand_checkable_quadratic_form_parametric"
+      "verification_method": "hand_checkable_quadratic_form_parametric",
+      "also_tests": ["positive-definite-matrices"]
     },
     {
       "id": "pi-quadratic-forms-005",
@@ -347,7 +350,8 @@
         "Both eigenvalues (6, 1) are positive, confirming A is positive definite (consistent with D1=5>0, D2=6>0 via Sylvester's criterion).",
         "The smallest eigenvalue is 1."
       ],
-      "verification_method": "hand_checkable_positive_definite_eigenvalue"
+      "verification_method": "hand_checkable_positive_definite_eigenvalue",
+      "also_tests": ["eigenvalues"]
     },
     {
       "id": "pi-positive-definite-matrices-003",
@@ -389,7 +393,8 @@
         "l22 = √(a22 - l21²) = √(3 - 1²) = √2 ≈ 1.4142.",
         "Check by reconstructing LLᵀ: L = [[2,0],[1,√2]], LLᵀ = [[2,0],[1,√2]]·[[2,1],[0,√2]] = [[4, 2],[2, 1+2]] = [[4,2],[2,3]] — matches A exactly, confirming the Cholesky decomposition."
       ],
-      "verification_method": "hand_checkable_cholesky_decomposition"
+      "verification_method": "hand_checkable_cholesky_decomposition",
+      "also_tests": ["lu-factorization"]
     },
     {
       "id": "pi-positive-definite-matrices-005",
@@ -451,7 +456,8 @@
         "The largest singular value is σ_max = √10 ≈ 3.1623.",
         "Cross-check: A's rows are proportional (row1 = 2·row2), so rank(A) = 1, consistent with exactly one nonzero singular value (√10) and one zero singular value."
       ],
-      "verification_method": "hand_checkable_svd_singular_value_compute"
+      "verification_method": "hand_checkable_svd_singular_value_compute",
+      "also_tests": ["eigenvalues"]
     },
     {
       "id": "pi-svd-003",
@@ -491,7 +497,8 @@
         "‖A‖_F² = (√10)² + 0² = 10 + 0 = 10.",
         "Cross-check by direct computation: ‖A‖_F² = sum of squares of all entries = 2²+2²+1²+1² = 4+4+1+1 = 10 — matches exactly."
       ],
-      "verification_method": "hand_checkable_svd_frobenius_norm"
+      "verification_method": "hand_checkable_svd_frobenius_norm",
+      "also_tests": ["matrix-norms"]
     },
     {
       "id": "pi-svd-005",
@@ -681,7 +688,8 @@
         "Singular values: σ_max = √40, σ_min = √10. κ₂(A) = √40/√10 = √(40/10) = √4 = 2.",
         "Cross-check using AAᵀ instead (same nonzero eigenvalues guaranteed for square A): AAᵀ = [[4,0],[3,5]]·[[4,3],[0,5]] = [[16,12],[12,34]], trace=50, det=16·34-12·12=544-144=400 — same trace and det, confirming eigenvalues 40, 10 and κ₂(A)=2."
       ],
-      "verification_method": "hand_checkable_condition_number"
+      "verification_method": "hand_checkable_condition_number",
+      "also_tests": ["svd", "eigenvalues"]
     },
     {
       "id": "pi-matrix-norms-005",

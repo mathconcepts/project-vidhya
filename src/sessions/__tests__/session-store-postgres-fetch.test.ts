@@ -118,6 +118,19 @@ describe('PostgresStore.fetchProblemsForConcept — fixed query shape', () => {
     });
   });
 
+  it('matches the array too: WHERE (concept_id = $1 OR $1 = ANY(concept_ids))', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] });
+    vi.resetModules();
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+
+    await store.fetchProblemsForConcept('matrix-inverse', 0.5, new Set());
+
+    const [sql] = mockQuery.mock.calls[0];
+    expect(sql).toContain('WHERE (concept_id = $1 OR $1 = ANY(concept_ids))');
+  });
+
   it('returns null (not a throw) when no row matches', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] });
     vi.resetModules();

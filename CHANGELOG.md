@@ -4,6 +4,80 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.35.0] — 2026-08-18 — Every Linear Algebra concept, walkable end to end
+
+**Operator action:** migration `048` applies automatically on boot. No new ENV
+vars. Nothing to re-seed — the demo bundles ship pre-mapped.
+
+Two things were incomplete after v4.34.0. Exam questions were filed under a
+single concept even when they plainly exercised four, and the bundle the demo
+actually reads carried no concept mapping at all — so a student on the
+determinants page could not be shown the exam question that spends half its
+solution computing a determinant. And seven concepts had no exam-style question
+in the bank at any level, so "any topic, any time" was true for practice and
+false for testing.
+
+This release maps every Linear Algebra question to every concept it genuinely
+tests, fills the seven gaps, and puts a four-leg walkthrough — explanation,
+interactive, practice, test — on every concept page, with a CI gate that fails
+the build if any leg disappears.
+
+### The numbers that matter
+
+Measured by `npm run ci:la-walkthrough` and the bundle contents on `main` versus
+this release.
+
+| | Before | After | Δ |
+|---|---|---|---|
+| LA exam questions in the demo bank | 23 | 37 | +14 |
+| ...carrying a concept mapping | 0 | 37 | all of them |
+| LA concepts with ≥1 exam question | 3 | 26 | +23 |
+| LA concepts with a complete 4-leg walkthrough | 0 | 26 | all of them |
+| Invalid concept ids refused at bundle build | — | 12 | newly caught |
+| Backend tests | 3,285 | 3,400 | +115 |
+| CI gates | 12 | 13 | +1 |
+
+The third row is the one that mattered for the demo. Before, the bundle stored
+the *topic* string "linear-algebra" in the concept field of 23 questions and an
+id that does not exist ("matrix-rank") in another, so only three concepts could
+surface an exam question. The builder had a `concept_id || topic` fallback that
+manufactured those values; it is gone, and the build now refuses an id that is
+not a real concept rather than writing a plausible-looking one.
+
+### What this means for whoever runs the demo
+
+Open any of the 26 Linear Algebra concepts and there is a complete path on the
+page: read the explanation, work the interactive, practise a graded item, take a
+concept-scoped checkpoint. No leg is a dead link — an unavailable one says what
+is missing instead of pretending. Questions now surface under every concept they
+exercise, so the determinants page shows the eigenvalue question that hinges on a
+determinant, and vice versa.
+
+### Itemized changes
+
+#### Added
+- Multi-concept mapping (`concept_ids`) for exam questions: mapper support,
+  migration 048 with a GIN index, seeder writes, and both demo bundles carry it.
+- 14 GATE-style exam questions covering the seven concepts that had none:
+  inner-product-spaces, gram-schmidt, lu-factorization,
+  positive-definite-matrices, svd, jordan-normal-form, matrix-norms.
+- `GET /api/lesson/walkthrough/:concept_id` and a four-leg rail on every concept
+  page; `/checkpoint?concept=<id>` scopes a checkpoint quiz to one concept
+  (same grading, same pool-depth and XP rules).
+- `also_tests` on practice items, declaring the secondary concept a solution
+  genuinely exercises (20 items today).
+- `npm run ci:la-walkthrough` — blocking gate over all 26 concepts × 4 legs.
+
+#### Fixed
+- Bundle generation no longer falls back to the topic label when a concept id is
+  missing, and refuses ids absent from the concept graph (12 pre-existing bad
+  ids across other topics were caught and dropped).
+- Untagged SQL-seeded questions are mapped by text rules instead of being
+  silently skipped; two long-standing tag mis-mappings corrected
+  (`matrix-powers` pointed at trace, `null-space` at rank-nullity).
+- Concept-scoped question lookup matches the array, so a secondary concept
+  surfaces its questions too.
+
 ## [4.34.0] — 2026-08-18 — Any topic, live — and the engine remembers what you practice
 
 **Operator action:** migrations `044`–`047` apply automatically on boot. Optional

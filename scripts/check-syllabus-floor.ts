@@ -128,8 +128,8 @@ function getConceptFloor(manifest: FloorManifest, conceptId: string): ConceptFlo
  * Both shapes are normalised here, and the legacy flat-array form is still
  * accepted, so a regenerated bundle in either layout keeps working.
  */
-export function loadExplainersJson(): Record<string, unknown[]> | null {
-  const p = path.join(ROOT, 'frontend/public/data/explainers.json');
+export function loadExplainersJson(bundlePath?: string): Record<string, unknown[]> | null {
+  const p = bundlePath ?? path.join(ROOT, 'frontend/public/data/explainers.json');
   if (!fs.existsSync(p)) return null;
   try {
     const data = JSON.parse(fs.readFileSync(p, 'utf-8'));

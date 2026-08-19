@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import { ArrowLeft, Compass, Loader2, SkipForward } from 'lucide-react';
@@ -57,6 +57,13 @@ const fmt = (n: number) => {
 type Phase = 'framing' | 'starting' | 'in-quiz' | 'submitting' | 'result' | 'error';
 
 export default function CheckpointQuizPage() {
+  // Optional concept scope — the walkthrough rail's Test leg links here as
+  // /checkpoint?concept=<id>. Every existing rule (XP-cycle gate, pool-depth
+  // gate, no-repeat window, timer registers, framing copy) stays identical;
+  // only which items the pool draws from narrows.
+  const [searchParams] = useSearchParams();
+  const conceptId = searchParams.get('concept');
+
   const [phase, setPhase] = useState<Phase>('framing');
   const [error, setError] = useState<string | null>(null);
   const [quiz, setQuiz] = useState<QuizStartResponse | null>(null);
@@ -115,7 +122,11 @@ export default function CheckpointQuizPage() {
     setPhase('starting');
     setError(null);
     try {
-      const r = await authFetch('/api/practice/quiz/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+      const r = await authFetch('/api/practice/quiz/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conceptId ? { concept_id: conceptId } : {}),
+      });
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
       setQuiz(data as QuizStartResponse);

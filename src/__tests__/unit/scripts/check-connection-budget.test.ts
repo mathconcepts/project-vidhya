@@ -33,8 +33,12 @@ import path from 'node:path';
 
 const SCRIPT = path.resolve(process.cwd(), 'scripts/check-connection-budget.ts');
 
+// Repo-pinned tsx, not `npx tsx`: a cold npx cache installs from the network
+// and writes its warning to stderr (see check-la-walkthrough.test.ts).
+const TSX_BIN = path.resolve(process.cwd(), 'node_modules/.bin/tsx');
+
 function runScript(env: Record<string, string> = {}) {
-  return spawnSync('npx', ['tsx', SCRIPT], {
+  return spawnSync(TSX_BIN, [SCRIPT], {
     encoding: 'utf-8',
     timeout: 25_000,
     env: { ...process.env, ...env },

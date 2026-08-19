@@ -35,11 +35,15 @@ import {
 } from '../src/scoring/deterministic-scorer';
 import { parseNumericAnswer } from '../src/gbrain/marking-derivation';
 import type { AuthoredItem } from '../src/scoring/learning-object-catalog-file';
+import { ALL_CONCEPTS } from '../src/constants/concept-graph';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_ITEMS_DIR = path.join(ROOT, 'data', 'practice-items');
 
 const VALID_KINDS = new Set(['mcq', 'msq', 'nat']);
+
+/** Known concept ids — `also_tests` entries must name a real concept. */
+const KNOWN_CONCEPT_IDS = new Set(ALL_CONCEPTS.map((c) => c.id));
 
 // ---------------------------------------------------------------------------
 // Loading — a parse failure THROWS (never silently contributes "0 items").
@@ -137,6 +141,25 @@ export function validateItemSchema(raw: unknown): string[] {
       problems.push('answer_range missing or not a [number, number] tuple (required for nat)');
     } else if (range[0] > range[1]) {
       problems.push(`answer_range is inverted: [${range[0]}, ${range[1]}]`);
+    }
+  }
+
+  // also_tests is optional, but when present it must be a string array of
+  // KNOWN concept ids — a typo here would silently under-report coverage
+  // rather than fail loudly, so it is validated like every other field.
+  if (it.also_tests !== undefined) {
+    const also = it.also_tests;
+    if (!Array.isArray(also) || also.some((c) => typeof c !== 'string')) {
+      problems.push('also_tests, if present, must be an array of strings');
+    } else {
+      for (const conceptId of also) {
+        if (!KNOWN_CONCEPT_IDS.has(conceptId)) {
+          problems.push(`also_tests references unknown concept_id ${JSON.stringify(conceptId)}`);
+        }
+      }
+      if (typeof it.concept_id === 'string' && also.includes(it.concept_id)) {
+        problems.push(`also_tests should not repeat the item's own concept_id (${JSON.stringify(it.concept_id)})`);
+      }
     }
   }
 

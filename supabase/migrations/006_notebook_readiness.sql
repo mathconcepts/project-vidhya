@@ -43,5 +43,9 @@ ALTER TABLE notebook_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
 
 -- Public access policies (anonymous sessions use session_id, not auth)
-CREATE POLICY "notebook_public_all" ON notebook_entries FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "analytics_public_all" ON analytics_events FOR ALL USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "notebook_public_all" ON notebook_entries FOR ALL USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "analytics_public_all" ON analytics_events FOR ALL USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

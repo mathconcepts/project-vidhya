@@ -48,8 +48,12 @@ CREATE TRIGGER on_auth_user_created
 
 -- RLS for user_profiles
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "users_read_own" ON user_profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "users_update_own" ON user_profiles FOR UPDATE USING (auth.uid() = id);
+DO $$ BEGIN
+  CREATE POLICY "users_read_own" ON user_profiles FOR SELECT USING (auth.uid() = id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "users_update_own" ON user_profiles FOR UPDATE USING (auth.uid() = id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Add user_id to existing tables (nullable for backward compat)
 ALTER TABLE sr_sessions ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;

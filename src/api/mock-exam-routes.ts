@@ -33,6 +33,7 @@ import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import { generateMockExam as generateMockExamProd } from '../gbrain/operations/moat-operations';
+import { MARKS_WEIGHTS, TOPIC_NAMES } from '../engine/priority-engine';
 import {
   createMockExam, getMockExam, claimMockExamSubmission, finalizeMockExamSubmission, revertClaim,
   sessionOwner, claimUnclaimedSessionRows, claimMockExamOwner,
@@ -43,6 +44,43 @@ import {
 } from '../gbrain/mock-exam-grading';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
+
+// ────────────────────────────────────────────────────────────────────
+// C1/C2 request parsing — topic-wise mocks + exam-feel timing modes
+// ────────────────────────────────────────────────────────────────────
+
+const KNOWN_TIMING_MODES = new Set(['standard', 'compressed', 'rush']);
+
+/**
+ * Parses the `?topics=` query param (comma-separated) into a deduped list,
+ * or `{ error }` naming the first unrecognized topic — refused up front
+ * rather than silently falling back to the full syllabus, so a typo in the
+ * topic name doesn't quietly produce a full-length exam instead of the
+ * scoped one the student asked for.
+ */
+function parseTopicsParam(raw: string | null): { topics?: string[]; error?: string } {
+  if (!raw || raw.trim() === '') return {};
+  const requested = raw.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
+  const seen = new Set<string>();
+  const topics: string[] = [];
+  for (const t of requested) {
+    if (!Object.prototype.hasOwnProperty.call(MARKS_WEIGHTS, t)) {
+      return { error: `unknown topic: ${t}` };
+    }
+    if (!seen.has(t)) { seen.add(t); topics.push(t); }
+  }
+  return { topics };
+}
+
+/** Parses `?mode=` into a validated timing mode, or `{ error }` naming the bad value. */
+function parseTimingModeParam(raw: string | null): { mode?: 'standard' | 'compressed' | 'rush'; error?: string } {
+  if (!raw || raw.trim() === '') return { mode: 'standard' };
+  const trimmed = raw.trim();
+  if (!KNOWN_TIMING_MODES.has(trimmed)) {
+    return { error: `unknown timing mode: ${trimmed} (expected standard, compressed, or rush)` };
+  }
+  return { mode: trimmed as 'standard' | 'compressed' | 'rush' };
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Test seam
@@ -115,6 +153,11 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
   const exam = req.query.get('exam') || 'gate';
   if (!sessionId) return sendError(res, 400, 'sessionId required');
 
+  const topicsResult = parseTopicsParam(req.query.get('topics'));
+  if (topicsResult.error) return sendError(res, 400, topicsResult.error);
+  const modeResult = parseTimingModeParam(req.query.get('mode'));
+  if (modeResult.error) return sendError(res, 400, modeResult.error);
+
   // DB-less deploys (demo, boot-before-migrate) can't run the ownership
   // lookups or the persistence step below — fail honestly up front rather
   // than letting the underlying store throw its internal
@@ -161,7 +204,7 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
 
   let assembled: Awaited<ReturnType<typeof generateMockExamProd>>;
   try {
-    assembled = await deps.generateMockExam(sessionId, exam);
+    assembled = await deps.generateMockExam(sessionId, exam, { topics: topicsResult.topics, timingMode: modeResult.mode });
   } catch (err) {
     return sendError(res, 500, (err as Error).message);
   }
@@ -175,6 +218,7 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
       examKey: exam,
       questions: assembled.questions,
       timeLimitMinutes: assembled.time_limit_minutes,
+      timingMode: modeResult.mode,
     });
   } catch (err) {
     console.error('[mock-exam] persistence failed:', (err as Error).message);
@@ -185,6 +229,8 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
     exam_id: saved.id,
     exam_name: assembled.exam_name,
     time_limit_minutes: saved.timeLimitMinutes,
+    timing_mode: saved.timingMode,
+    topics: topicsResult.topics ?? null,
     total_questions: saved.questions.length,
     marks_scheme: assembled.marks_scheme,
     section_breakdown: assembled.section_breakdown,
@@ -233,7 +279,7 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
 
   if (!claim.fresh) {
     const r = claim.row;
-    return sendJSON(res, { exam_id: examId, ...(r.analysis as object ?? {}), late: r.late, recorded: true, replayed: true });
+    return sendJSON(res, { exam_id: examId, ...(r.analysis as object ?? {}), late: r.late, timing_mode: r.timingMode, recorded: true, replayed: true });
   }
 
   const rawResponses = Array.isArray(body.responses) ? body.responses : [];
@@ -294,10 +340,40 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
     return null;
   });
 
-  return sendJSON(res, { exam_id: examId, ...analysis, late, recorded: saved !== null });
+  return sendJSON(res, { exam_id: examId, ...analysis, late, timing_mode: claim.row.timingMode, recorded: saved !== null });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// GET /api/gbrain/mock-exam/topics — C1 topic picker data
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * The exact id/label set the `?topics=` param on generation validates
+ * against — sourced from MARKS_WEIGHTS/TOPIC_NAMES directly rather than
+ * duplicated as a hardcoded frontend list (this repo's client-side GBrain
+ * core deliberately keeps its own topic maps empty for the same reason —
+ * see frontend/src/lib/gbrain/core.ts). Deliberately NOT the same id
+ * namespace as GET /api/topics (that one's ids come from the syllabus YAML
+ * section headers — 'transforms'/'discrete' instead of 'transform-theory'/
+ * 'discrete-mathematics', and it's missing graph-theory/vector-calculus
+ * entirely — see src/db/seed-static-pyqs.ts's TOPIC_DIR_ALIAS comment for
+ * the same mismatch documented elsewhere). Reusing it here would 400 a
+ * student who picked a topic straight from that list.
+ */
+async function handleListTopics(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const user = await requireRole(req, res, 'student', 'teacher', 'admin');
+  if (!user) return;
+  return sendJSON(res, {
+    topics: Object.keys(MARKS_WEIGHTS).map((id) => ({
+      id,
+      name: TOPIC_NAMES[id] ?? id,
+      weight: MARKS_WEIGHTS[id],
+    })),
+  });
 }
 
 export const mockExamRoutes: RouteDefinition[] = [
+  { method: 'GET', path: '/api/gbrain/mock-exam/topics', handler: handleListTopics },
   { method: 'GET', path: '/api/gbrain/mock-exam/:sessionId', handler: handleGenerate },
   { method: 'POST', path: '/api/gbrain/mock-exam/:id/submit', handler: handleSubmit },
 ];

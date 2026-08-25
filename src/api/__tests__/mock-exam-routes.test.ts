@@ -44,9 +44,10 @@ const { gradeMockExam } = await import('../../gbrain/mock-exam-grading');
 
 const generateHandler = mockExamRoutes.find((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/:sessionId')!.handler;
 const submitHandler = mockExamRoutes.find((r) => r.method === 'POST' && r.path === '/api/gbrain/mock-exam/:id/submit')!.handler;
+const topicsHandler = mockExamRoutes.find((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/topics')!.handler;
 
-function makeReq(body: unknown, params: Record<string, string> = {}) {
-  return { pathname: '/', query: new URLSearchParams(), params, body, headers: {} } as any;
+function makeReq(body: unknown, params: Record<string, string> = {}, query: Record<string, string> = {}) {
+  return { pathname: '/', query: new URLSearchParams(query), params, body, headers: {} } as any;
 }
 
 function makeRes() {
@@ -84,6 +85,7 @@ function makeFakeStore() {
       const row: MockExamRow = {
         id: params.id, sessionId: params.sessionId, ownerUserId: params.ownerUserId ?? null,
         examKey: params.examKey, questions: params.questions, timeLimitMinutes: params.timeLimitMinutes,
+        timingMode: params.timingMode ?? 'standard',
         status: 'in_progress', late: false, score: null, maxMarks: null,
         createdAtMs: NOW.getTime(), submittedAtMs: null, gradedAtMs: null, analysis: null,
       };
@@ -144,6 +146,46 @@ function examConfig(questions: unknown[] = [PYQ_Q]) {
     questions, section_breakdown: {},
   } as any);
 }
+
+describe('GET /api/gbrain/mock-exam/topics', () => {
+  beforeEach(() => {
+    mockRequireRole.mockReset();
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+  });
+
+  it('requires auth', async () => {
+    mockRequireRole.mockResolvedValue(null);
+    const r = makeRes();
+    await topicsHandler(makeReq(null), r.res);
+    expect(r.payload).toBeNull();
+  });
+
+  it('returns the same id namespace mock-exam generation validates ?topics= against', async () => {
+    const r = makeRes();
+    await topicsHandler(makeReq(null), r.res);
+    expect(r.status).toBe(200);
+    expect(Array.isArray(r.payload.topics)).toBe(true);
+    expect(r.payload.topics.length).toBeGreaterThan(5);
+    const byId = Object.fromEntries(r.payload.topics.map((t: any) => [t.id, t]));
+    expect(byId['linear-algebra']).toBeTruthy();
+    expect(byId['linear-algebra'].name).toBe('Linear Algebra');
+    expect(typeof byId['linear-algebra'].weight).toBe('number');
+    // The known cross-namespace trap this endpoint exists to avoid — GET
+    // /api/topics uses the syllabus YAML's own section ids for these two,
+    // not the canonical MARKS_WEIGHTS ones the generator actually checks.
+    expect(byId['transforms']).toBeUndefined();
+    expect(byId['discrete']).toBeUndefined();
+    expect(byId['transform-theory']).toBeTruthy();
+    expect(byId['discrete-mathematics']).toBeTruthy();
+  });
+
+  it('is registered ahead of the :sessionId route so it is never shadowed by it', () => {
+    const topicsIndex = mockExamRoutes.findIndex((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/topics');
+    const sessionIndex = mockExamRoutes.findIndex((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/:sessionId');
+    expect(topicsIndex).toBeGreaterThanOrEqual(0);
+    expect(topicsIndex).toBeLessThan(sessionIndex);
+  });
+});
 
 describe('GET /api/gbrain/mock-exam/:sessionId', () => {
   let originalDb: string | undefined;
@@ -330,6 +372,76 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
     expect(byId['gen-1'].gradable).toBe(true);
     expect(byId['gen-2'].gradable).toBe(false);
   });
+
+  // ────────────────────────────────────────────────────────────────────
+  // C1 — topic-wise mocks (buyer demo-prep Q7)
+  // ────────────────────────────────────────────────────────────────────
+
+  it('400s an unknown topic and never reaches generation', async () => {
+    const store = makeFakeStore();
+    const generateMock = vi.fn();
+    setMockExamDepsForTests({ generateMockExam: generateMock, ...store, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }, { topics: 'linear-algebra,not-a-real-topic' }), r.res);
+    expect(r.status).toBe(400);
+    expect(r.payload.error).toContain('not-a-real-topic');
+    expect(generateMock).not.toHaveBeenCalled();
+  });
+
+  it('threads a valid, deduped topics list through to generateMockExam', async () => {
+    const store = makeFakeStore();
+    const generateMock = vi.fn(examConfig());
+    setMockExamDepsForTests({ generateMockExam: generateMock, ...store, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(
+      makeReq(null, { sessionId: 'anon-uuid-xyz' }, { topics: ' linear-algebra , calculus ,linear-algebra' }),
+      r.res,
+    );
+    expect(r.status).toBe(200);
+    expect(generateMock).toHaveBeenCalledWith('anon-uuid-xyz', 'gate', {
+      topics: ['linear-algebra', 'calculus'],
+      timingMode: 'standard',
+    });
+    expect(r.payload.topics).toEqual(['linear-algebra', 'calculus']);
+  });
+
+  it('omitting topics entirely reports topics: null and passes undefined through', async () => {
+    const store = makeFakeStore();
+    const generateMock = vi.fn(examConfig());
+    setMockExamDepsForTests({ generateMockExam: generateMock, ...store, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), r.res);
+    expect(r.status).toBe(200);
+    expect(generateMock).toHaveBeenCalledWith('anon-uuid-xyz', 'gate', { topics: undefined, timingMode: 'standard' });
+    expect(r.payload.topics).toBeNull();
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // C2 — exam-feel timing modes (buyer demo-prep Q7)
+  // ────────────────────────────────────────────────────────────────────
+
+  it('400s an unknown timing mode and never reaches generation', async () => {
+    const store = makeFakeStore();
+    const generateMock = vi.fn();
+    setMockExamDepsForTests({ generateMockExam: generateMock, ...store, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }, { mode: 'turbo' }), r.res);
+    expect(r.status).toBe(400);
+    expect(r.payload.error).toContain('turbo');
+    expect(generateMock).not.toHaveBeenCalled();
+  });
+
+  it('threads a valid timing mode through to generateMockExam and persists it on the row', async () => {
+    const store = makeFakeStore();
+    const generateMock = vi.fn(examConfig());
+    setMockExamDepsForTests({ generateMockExam: generateMock, ...store, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }, { mode: 'rush' }), r.res);
+    expect(r.status).toBe(200);
+    expect(generateMock).toHaveBeenCalledWith('anon-uuid-xyz', 'gate', { topics: undefined, timingMode: 'rush' });
+    expect(r.payload.timing_mode).toBe('rush');
+    expect(store.rows.get('mock-1')!.timingMode).toBe('rush');
+  });
 });
 
 describe('POST /api/gbrain/mock-exam/:id/submit', () => {
@@ -339,14 +451,27 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
   });
   afterEach(() => setMockExamDepsForTests(null));
 
-  async function seededExam(ownerUserId: string | null = 'student-1') {
+  async function seededExam(ownerUserId: string | null = 'student-1', timingMode: 'standard' | 'compressed' | 'rush' = 'standard') {
     const store = makeFakeStore();
     await store.createMockExam({
       id: 'mock-1', sessionId: 'anon-uuid-xyz', ownerUserId, examKey: 'gate',
-      questions: [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED], timeLimitMinutes: 180,
+      questions: [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED], timeLimitMinutes: 180, timingMode,
     });
     return store;
   }
+
+  it('C2: submit response reports the timing mode the exam was generated under, and replays it on double-submit', async () => {
+    const store = await seededExam('student-1', 'rush');
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    const first = makeRes();
+    await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), first.res);
+    expect(first.payload.timing_mode).toBe('rush');
+
+    const second = makeRes();
+    await submitHandler(makeReq({ responses: [] }, { id: 'mock-1' }), second.res);
+    expect(second.payload.replayed).toBe(true);
+    expect(second.payload.timing_mode).toBe('rush');
+  });
 
   it('grades pyq (letter-keyed) and generated (index-keyed) questions via the deterministic scorer, excludes ungraded from the total', async () => {
     const store = await seededExam();

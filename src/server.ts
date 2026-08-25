@@ -127,6 +127,7 @@ import fs from 'fs';
 import pg from 'pg';
 import { autoMigrate } from './db/auto-migrate';
 import { seedStaticPyqQuestions } from './db/seed-static-pyqs';
+import { seedPracticeItemsFromDisk } from './db/seed-la-practice-items';
 
 const ssrPool = new pg.Pool({ connectionString: process.env.SUPABASE_DB_URL || process.env.DATABASE_URL });
 
@@ -956,6 +957,16 @@ async function main() {
       await seedStaticPyqQuestions(migratePool);
     } catch (err) {
       console.error('[server] Static PYQ seed error (non-fatal):', (err as Error).message);
+    }
+    // Upserts data/practice-items/*.json into generated_problems (see
+    // src/db/seed-la-practice-items.ts) — closes the gap where all 26
+    // Linear Algebra concepts have real practice content, but only the
+    // file-backed catalog could see it; generateMockExam() queries
+    // generated_problems directly and needs real rows.
+    try {
+      await seedPracticeItemsFromDisk(migratePool);
+    } catch (err) {
+      console.error('[server] Practice-item seed error (non-fatal):', (err as Error).message);
     }
     await migratePool.end();
 

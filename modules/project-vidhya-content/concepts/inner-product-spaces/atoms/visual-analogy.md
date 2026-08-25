@@ -15,5 +15,5 @@ The inner product is the lens through which we see geometry in abstract spaces. 
 **Visualization: Norm and Angle in $\mathbb{R}^2$**
 
 ```gif-scene
-{"type": "parametric", "x_expr": "3*cos(t)", "y_expr": "3*sin(t)", "t_range": [0, 2], "frames": 30, "fps": 12, "title": "Vector u = (3, 0), rotating vector v"}
+{"type": "parametric-curve", "x_expr": "3*cos(t)", "y_expr": "3*sin(t)", "t_range": [0, 2], "frames": 30, "fps": 12, "title": "Vector u = (3, 0), rotating vector v"}
 ```

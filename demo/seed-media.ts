@@ -21,7 +21,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { renderScene, type SceneDescription } from '../src/content/concept-orchestrator/gif-generator.ts';
+import { renderScene, isKnownSceneType, type SceneDescription } from '../src/content/concept-orchestrator/gif-generator.ts';
 
 const REPO_ROOT = path.resolve(import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname), '..');
 const CONTENT_ROOT = path.join(REPO_ROOT, 'modules', 'project-vidhya-content', 'concepts');
@@ -52,7 +52,7 @@ function extractGifScene(body: string): SceneDescription | null {
   if (!m) return null;
   try {
     const parsed = JSON.parse(m[1]);
-    if (parsed?.type === 'parametric' || parsed?.type === 'function-trace') return parsed as SceneDescription;
+    if (isKnownSceneType(parsed?.type)) return parsed as SceneDescription;
   } catch { /* malformed — skip */ }
   return null;
 }

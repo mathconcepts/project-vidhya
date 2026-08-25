@@ -13,5 +13,5 @@ Think of a quadratic form as a landscape. A positive definite form is like a bow
 In 2D, the level curves $\mathbf{x}^T A \mathbf{x} = c$ are either ellipses (positive definite), hyperbolas (indefinite), or degenerate (semi-definite).
 
 ```gif-scene
-{"type":"function-trace","expression":"x**2 + 4*y**2","x_range":[-3,3],"y_range":[-3,3],"frames":30,"fps":12}
+{"type":"level-set","expression":"x**2 + 4*y**2","x_range":[-3,3],"y_range":[-3,3],"frames":30,"fps":12}
 ```

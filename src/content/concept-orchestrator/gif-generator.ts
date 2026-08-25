@@ -16,7 +16,25 @@
  *   - 'function-trace' scene: y = f(x) drawn progressively from left to right
  *     across frames (e.g. trace the curve as time advances).
  *
- * Future extensions (v2): vector field, surface plot, custom sprites.
+ * Scope (v2, §4.15 follow-up — two-expression / two-variable authoring):
+ *   - 'parametric-curve' scene: (x(s), y(s)) traced over a curve parameter
+ *     s. When `t_range` is also given the whole curve redraws each frame
+ *     with `t` sweeping t_range (a morphing closed curve, e.g. a growing
+ *     ellipse); when `t_range` is absent, `s_range` itself is the thing
+ *     that advances across frames and the curve is revealed progressively
+ *     (mirrors 'function-trace', but along a parametric path instead of a
+ *     graph of x — e.g. a rotating vector sweeping out an arc).
+ *   - 'level-set' scene: the sublevel curve f(x, y) = c of a two-variable
+ *     expression, c growing across frames (e.g. the nested ellipses of a
+ *     positive-definite quadratic form). Implicit-plot via thresholding —
+ *     no marching squares, just a per-pixel |f(x,y) - c| test scaled by
+ *     the local gradient so the line stays roughly constant-width. An
+ *     optional `expression2` overlays a second level-set (accent color) on
+ *     the same axes for contrast a single family can't show on its own —
+ *     e.g. an indefinite form's open hyperbola branches next to a
+ *     positive-definite form's closed ellipses.
+ *
+ * Future extensions (v3): vector field, 3-D surface plot, custom sprites.
  *
  * Theme palette (matches v4.4.0 design system):
  *   bg     = #0b0d10 (surface-950)
@@ -34,7 +52,27 @@ const { GIFEncoder, quantize, applyPalette } = _gifencRequire('gifenc') as any;
 
 export type SceneDescription =
   | ParametricScene
-  | FunctionTraceScene;
+  | FunctionTraceScene
+  | ParametricCurveScene
+  | LevelSetScene;
+
+/**
+ * Scene `type` values the renderer actually knows how to draw. Callers that
+ * parse `gif-scene` JSON (orchestrator.ts, demo/seed-media.ts, the CI gate)
+ * should gate on this list rather than hand-rolling their own — that
+ * hand-rolled duplication is exactly how the four Linear Algebra scenes
+ * rotted silently (parsed as "known", rendered as broken).
+ */
+export const KNOWN_SCENE_TYPES = [
+  'parametric',
+  'function-trace',
+  'parametric-curve',
+  'level-set',
+] as const;
+
+export function isKnownSceneType(type: unknown): type is SceneDescription['type'] {
+  return typeof type === 'string' && (KNOWN_SCENE_TYPES as readonly string[]).includes(type);
+}
 
 export interface ParametricScene {
   type: 'parametric';
@@ -66,14 +104,79 @@ export interface FunctionTraceScene {
   height?: number;
 }
 
+export interface ParametricCurveScene {
+  type: 'parametric-curve';
+  /** x(s [, t]) as a string, e.g. '3*cos(t)' or '0.5*t*cos(s)'. */
+  x_expr: string;
+  /** y(s [, t]) as a string, matching x_expr's variables. */
+  y_expr: string;
+  /**
+   * Curve parameter range — the whole curve is swept over this domain.
+   * Default [0, 2*PI]. Ignored (s_range takes the primary-parameter role
+   * instead) when s_range is absent and t_range plays that role — see
+   * t_range below.
+   */
+  s_range?: [number, number];
+  /**
+   * When `s_range` is given, `t` is a second variable available to
+   * x_expr/y_expr that advances across frames while the full s-curve
+   * redraws each frame (a morphing curve — e.g. a circle stretching into
+   * an ellipse). When `s_range` is absent, `t_range` supplies the sole
+   * curve parameter and the curve is instead revealed progressively frame
+   * by frame, from t_range[0] up to the current frame's t (e.g. a vector
+   * sweeping out an arc). Default [0, 2*PI].
+   */
+  t_range?: [number, number];
+  x_range?: [number, number];
+  y_range?: [number, number];
+  frames?: number;
+  fps?: number;
+  width?: number;
+  height?: number;
+  /** Display-only; not rendered into the frame. */
+  title?: string;
+}
+
+export interface LevelSetScene {
+  type: 'level-set';
+  /** f(x, y) as a string, e.g. 'x**2 + 4*y**2'. Variables: x, y. */
+  expression: string;
+  /**
+   * Optional second f(x, y), drawn in the accent color on the SAME axes as
+   * `expression`, its own level value growing in lockstep (shared frame
+   * index, independently defaulted c-range). For teaching a contrast a
+   * single family of level curves can't show by itself — e.g. a
+   * positive-definite form's closed ellipses (bounded, every direction
+   * curves up) next to an indefinite form's open hyperbola branches (one
+   * direction curves up, the other down; the level curve never closes).
+   */
+  expression2?: string;
+  x_range?: [number, number];
+  y_range?: [number, number];
+  /**
+   * Level value c swept across frames, drawing f(x,y) = c. Default: grows
+   * from a small fraction of the domain-edge value up to the smallest
+   * value f takes on the boundary of x_range/y_range, so the sublevel
+   * curve grows outward without ever exceeding the visible canvas.
+   */
+  c_range?: [number, number];
+  /** Same as c_range but for expression2. Defaulted independently when omitted. */
+  c2_range?: [number, number];
+  frames?: number;
+  fps?: number;
+  width?: number;
+  height?: number;
+}
+
 const DEFAULTS = {
   width: 480,
   height: 320,
   frames: 30,
   fps: 12,
-  bg:    [11, 13, 16, 255],     // #0b0d10
-  axes:  [55, 65, 81, 255],     // #374151
-  curve: [16, 185, 129, 255],   // #10b981 emerald
+  bg:     [11, 13, 16, 255],     // #0b0d10
+  axes:   [55, 65, 81, 255],     // #374151
+  curve:  [16, 185, 129, 255],   // #10b981 emerald — primary
+  accent: [167, 139, 250, 255],  // #a78bfa violet — secondary (contrast overlays)
 };
 
 export interface RenderResult {
@@ -161,9 +264,67 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
     // Trace the curve from xMin up to xMin + (i/total)*(xMax-xMin).
     const xCurrent = xMin + ((xMax - xMin) * (i + 1)) / totalFrames;
     drawCurve(buf, w, h, sx, sy, xMin, xCurrent, (x) => f(x));
+  } else if (scene.type === 'parametric-curve') {
+    if (scene.s_range) {
+      // s is the curve parameter (full sweep, redrawn every frame); t is the
+      // envelope that morphs the curve across frames — e.g. an ellipse
+      // growing from a point as t advances.
+      const [sStart, sEnd] = scene.s_range;
+      const tStart = scene.t_range?.[0] ?? 0;
+      const tEnd = scene.t_range?.[1] ?? Math.PI * 2;
+      const t = tStart + ((tEnd - tStart) * i) / Math.max(1, totalFrames - 1);
+      const fx = compileExpression(scene.x_expr, ['s', 't']);
+      const fy = compileExpression(scene.y_expr, ['s', 't']);
+      drawParametricCurve(buf, w, h, sx, sy, sStart, sEnd, (s) => [fx(s, t), fy(s, t)]);
+    } else {
+      // No secondary parameter: t_range itself is the curve parameter, and
+      // the curve is revealed progressively (mirrors function-trace's
+      // left-to-right reveal, but along the parametric path).
+      const tStart = scene.t_range?.[0] ?? 0;
+      const tEnd = scene.t_range?.[1] ?? Math.PI * 2;
+      const tCurrent = tStart + ((tEnd - tStart) * (i + 1)) / totalFrames;
+      const fx = compileExpression(scene.x_expr, ['t']);
+      const fy = compileExpression(scene.y_expr, ['t']);
+      drawParametricCurve(buf, w, h, sx, sy, tStart, tCurrent, (t) => [fx(t), fy(t)]);
+    }
+  } else if (scene.type === 'level-set') {
+    const f = compileExpression(scene.expression, ['x', 'y']);
+    const [cStart, cEnd] = resolveLevelRange(scene.c_range, xMin, xMax, yMin, yMax, f);
+    const c = cStart + ((cEnd - cStart) * i) / Math.max(1, totalFrames - 1);
+    drawLevelSet(buf, w, h, xMin, xMax, yMin, yMax, f, c, DEFAULTS.curve);
+
+    // Contrast overlay: a second level-set family (e.g. an indefinite form's
+    // saddle) drawn in the accent color on the same axes, its level growing
+    // in lockstep with the primary curve. See LevelSetScene.expression2.
+    if (scene.expression2) {
+      const f2 = compileExpression(scene.expression2, ['x', 'y']);
+      const [c2Start, c2End] = resolveLevelRange(scene.c2_range, xMin, xMax, yMin, yMax, f2);
+      const c2 = c2Start + ((c2End - c2Start) * i) / Math.max(1, totalFrames - 1);
+      drawLevelSet(buf, w, h, xMin, xMax, yMin, yMax, f2, c2, DEFAULTS.accent);
+    }
   }
 
   return buf;
+}
+
+/**
+ * Default level (c) range for a 'level-set' scene when the scene doesn't
+ * name one explicitly: grow the sublevel curve from a small fraction of the
+ * domain up to the largest c that still fits inside BOTH axis extents (the
+ * smaller of f at the x-edge and f at the y-edge) — so the curve never grows
+ * past the visible canvas regardless of the expression's shape.
+ */
+function resolveLevelRange(
+  override: [number, number] | undefined,
+  xMin: number, xMax: number, yMin: number, yMax: number,
+  f: (x: number, y: number) => number,
+): [number, number] {
+  if (override) return override;
+  const xEdge = Math.abs(f(Math.max(Math.abs(xMin), Math.abs(xMax)), 0));
+  const yEdge = Math.abs(f(0, Math.max(Math.abs(yMin), Math.abs(yMax))));
+  const candidates = [xEdge, yEdge].filter((v) => Number.isFinite(v) && v > 0);
+  const cEnd = candidates.length > 0 ? Math.min(...candidates) : 1;
+  return [cEnd * 0.12, cEnd];
 }
 
 function drawCurve(
@@ -189,6 +350,74 @@ function drawCurve(
     }
     lastPx = px;
     lastPy = py;
+  }
+}
+
+/** Same shape as drawCurve but for a genuinely 2-D parametric path (x(p), y(p)). */
+function drawParametricCurve(
+  buf: Uint8ClampedArray,
+  w: number,
+  h: number,
+  sx: (x: number) => number,
+  sy: (y: number) => number,
+  pMin: number,
+  pMax: number,
+  f: (p: number) => [number, number],
+): void {
+  const samples = w * 2;
+  let lastPx = -1, lastPy = -1;
+  for (let i = 0; i <= samples; i++) {
+    const p = pMin + ((pMax - pMin) * i) / samples;
+    const [x, y] = f(p);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) { lastPx = -1; lastPy = -1; continue; }
+    const px = sx(x);
+    const py = sy(y);
+    if (lastPx >= 0) {
+      drawLine(buf, w, h, lastPx, lastPy, px, py, DEFAULTS.curve);
+    }
+    lastPx = px;
+    lastPy = py;
+  }
+}
+
+/**
+ * Implicit sublevel-curve plot: mark every (subsampled) pixel where
+ * f(x,y) is within `threshold` of c. threshold is scaled by the local
+ * gradient magnitude (finite differences) so the drawn line stays roughly
+ * constant-width in screen space regardless of how steeply f varies —
+ * a flat region of f near c would otherwise flood-fill instead of outline.
+ */
+function drawLevelSet(
+  buf: Uint8ClampedArray,
+  w: number,
+  h: number,
+  xMin: number, xMax: number,
+  yMin: number, yMax: number,
+  f: (x: number, y: number) => number,
+  c: number,
+  color: number[],
+): void {
+  const dxDomain = (xMax - xMin) / w;
+  const dyDomain = (yMax - yMin) / h;
+  const hStep = Math.max(dxDomain, dyDomain, 1e-6) * 0.5;
+  const step = 2; // subsample the pixel grid — cheap and still reads as a clean curve
+  for (let py = 0; py < h; py += step) {
+    const y = yMin + ((h - py) / h) * (yMax - yMin);
+    for (let px = 0; px < w; px += step) {
+      const x = xMin + (px / w) * (xMax - xMin);
+      const v = f(x, y);
+      if (!Number.isFinite(v)) continue;
+      const gx = (f(x + hStep, y) - f(x - hStep, y)) / (2 * hStep);
+      const gy = (f(x, y + hStep) - f(x, y - hStep)) / (2 * hStep);
+      const gradMag = Math.hypot(gx, gy);
+      if (!Number.isFinite(gradMag) || gradMag < 1e-9) continue;
+      const threshold = gradMag * Math.max(dxDomain, dyDomain) * step * 0.75;
+      if (Math.abs(v - c) < threshold) {
+        putPixel(buf, w, h, px, py, color);
+        putPixel(buf, w, h, px + 1, py, color);
+        putPixel(buf, w, h, px, py + 1, color);
+      }
+    }
   }
 }
 

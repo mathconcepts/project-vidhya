@@ -123,6 +123,22 @@ jobs:
       - name: Interactive-spec validity
         run: npm run ci:interactive-specs
 
+      # The gif-scene sibling of the check above, and it exists because the
+      # gap between them was load-bearing: interactive-spec blocks were gated,
+      # gif-scene blocks were not, and ten of them had been failing to render
+      # in every deploy for as long as they had existed. A broken animation is
+      # invisible the same way a broken interactive is — the atom just renders
+      # without its picture, which is indistinguishable from an atom that never
+      # had one.
+      #
+      # Like ci:interactive-specs it calls the real renderScene() rather than
+      # re-implementing the rules, so a scene that passes here is one a deploy
+      # can actually draw. Six pre-existing failures outside the Linear Algebra
+      # fix are frozen in scripts/gif-scene-baseline.json; the list may shrink
+      # freely, growing it takes a reviewed edit.
+      - name: gif-scene validity
+        run: npm run ci:gif-scenes
+
       # Every concept's topic must resolve to an authoring template. The
       # lookup (template-loader.ts:114-122) returns null on a miss and
       # generation carries on un-guided, so a missing template produces atoms

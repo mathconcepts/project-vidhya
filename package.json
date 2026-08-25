@@ -90,7 +90,8 @@
     "ci:template-coverage": "tsx scripts/check-template-coverage.ts",
     "ci:variant-agreement": "tsx scripts/check-variant-agreement.ts",
     "ci:practice-items": "tsx scripts/check-practice-items.ts",
-    "ci:la-walkthrough": "tsx scripts/check-la-walkthrough.ts"
+    "ci:la-walkthrough": "tsx scripts/check-la-walkthrough.ts",
+    "ci:gif-scenes": "tsx scripts/check-gif-scenes.ts"
   },
   "keywords": [
     "adaptive-learning",

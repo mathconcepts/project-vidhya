@@ -28,7 +28,11 @@
  *     expression, c growing across frames (e.g. the nested ellipses of a
  *     positive-definite quadratic form). Implicit-plot via thresholding —
  *     no marching squares, just a per-pixel |f(x,y) - c| test scaled by
- *     the local gradient so the line stays roughly constant-width.
+ *     the local gradient so the line stays roughly constant-width. An
+ *     optional `expression2` overlays a second level-set (accent color) on
+ *     the same axes for contrast a single family can't show on its own —
+ *     e.g. an indefinite form's open hyperbola branches next to a
+ *     positive-definite form's closed ellipses.
  *
  * Future extensions (v3): vector field, 3-D surface plot, custom sprites.
  *
@@ -137,6 +141,16 @@ export interface LevelSetScene {
   type: 'level-set';
   /** f(x, y) as a string, e.g. 'x**2 + 4*y**2'. Variables: x, y. */
   expression: string;
+  /**
+   * Optional second f(x, y), drawn in the accent color on the SAME axes as
+   * `expression`, its own level value growing in lockstep (shared frame
+   * index, independently defaulted c-range). For teaching a contrast a
+   * single family of level curves can't show by itself — e.g. a
+   * positive-definite form's closed ellipses (bounded, every direction
+   * curves up) next to an indefinite form's open hyperbola branches (one
+   * direction curves up, the other down; the level curve never closes).
+   */
+  expression2?: string;
   x_range?: [number, number];
   y_range?: [number, number];
   /**
@@ -146,6 +160,8 @@ export interface LevelSetScene {
    * curve grows outward without ever exceeding the visible canvas.
    */
   c_range?: [number, number];
+  /** Same as c_range but for expression2. Defaulted independently when omitted. */
+  c2_range?: [number, number];
   frames?: number;
   fps?: number;
   width?: number;
@@ -157,9 +173,10 @@ const DEFAULTS = {
   height: 320,
   frames: 30,
   fps: 12,
-  bg:    [11, 13, 16, 255],     // #0b0d10
-  axes:  [55, 65, 81, 255],     // #374151
-  curve: [16, 185, 129, 255],   // #10b981 emerald
+  bg:     [11, 13, 16, 255],     // #0b0d10
+  axes:   [55, 65, 81, 255],     // #374151
+  curve:  [16, 185, 129, 255],   // #10b981 emerald — primary
+  accent: [167, 139, 250, 255],  // #a78bfa violet — secondary (contrast overlays)
 };
 
 export interface RenderResult {
@@ -272,9 +289,19 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
     }
   } else if (scene.type === 'level-set') {
     const f = compileExpression(scene.expression, ['x', 'y']);
-    const [cStart, cEnd] = resolveLevelRange(scene, xMin, xMax, yMin, yMax, f);
+    const [cStart, cEnd] = resolveLevelRange(scene.c_range, xMin, xMax, yMin, yMax, f);
     const c = cStart + ((cEnd - cStart) * i) / Math.max(1, totalFrames - 1);
-    drawLevelSet(buf, w, h, xMin, xMax, yMin, yMax, f, c);
+    drawLevelSet(buf, w, h, xMin, xMax, yMin, yMax, f, c, DEFAULTS.curve);
+
+    // Contrast overlay: a second level-set family (e.g. an indefinite form's
+    // saddle) drawn in the accent color on the same axes, its level growing
+    // in lockstep with the primary curve. See LevelSetScene.expression2.
+    if (scene.expression2) {
+      const f2 = compileExpression(scene.expression2, ['x', 'y']);
+      const [c2Start, c2End] = resolveLevelRange(scene.c2_range, xMin, xMax, yMin, yMax, f2);
+      const c2 = c2Start + ((c2End - c2Start) * i) / Math.max(1, totalFrames - 1);
+      drawLevelSet(buf, w, h, xMin, xMax, yMin, yMax, f2, c2, DEFAULTS.accent);
+    }
   }
 
   return buf;
@@ -288,11 +315,11 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
  * past the visible canvas regardless of the expression's shape.
  */
 function resolveLevelRange(
-  scene: LevelSetScene,
+  override: [number, number] | undefined,
   xMin: number, xMax: number, yMin: number, yMax: number,
   f: (x: number, y: number) => number,
 ): [number, number] {
-  if (scene.c_range) return scene.c_range;
+  if (override) return override;
   const xEdge = Math.abs(f(Math.max(Math.abs(xMin), Math.abs(xMax)), 0));
   const yEdge = Math.abs(f(0, Math.max(Math.abs(yMin), Math.abs(yMax))));
   const candidates = [xEdge, yEdge].filter((v) => Number.isFinite(v) && v > 0);
@@ -368,6 +395,7 @@ function drawLevelSet(
   yMin: number, yMax: number,
   f: (x: number, y: number) => number,
   c: number,
+  color: number[],
 ): void {
   const dxDomain = (xMax - xMin) / w;
   const dyDomain = (yMax - yMin) / h;
@@ -385,9 +413,9 @@ function drawLevelSet(
       if (!Number.isFinite(gradMag) || gradMag < 1e-9) continue;
       const threshold = gradMag * Math.max(dxDomain, dyDomain) * step * 0.75;
       if (Math.abs(v - c) < threshold) {
-        putPixel(buf, w, h, px, py, DEFAULTS.curve);
-        putPixel(buf, w, h, px + 1, py, DEFAULTS.curve);
-        putPixel(buf, w, h, px, py + 1, DEFAULTS.curve);
+        putPixel(buf, w, h, px, py, color);
+        putPixel(buf, w, h, px + 1, py, color);
+        putPixel(buf, w, h, px, py + 1, color);
       }
     }
   }

@@ -82,13 +82,23 @@ ALTER TABLE verification_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seo_pages ENABLE ROW LEVEL SECURITY;
 
 -- Public read for SEO pages
-CREATE POLICY "seo_pages_public_read" ON seo_pages FOR SELECT USING (true);
-CREATE POLICY "seo_pages_service_write" ON seo_pages FOR ALL USING (auth.role() = 'service_role');
+DO $$ BEGIN
+  CREATE POLICY "seo_pages_public_read" ON seo_pages FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "seo_pages_service_write" ON seo_pages FOR ALL USING (auth.role() = 'service_role');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- SR sessions: users can only access their own session data
 -- (anonymous sessions matched by session_id passed in request)
-CREATE POLICY "sr_sessions_public_all" ON sr_sessions FOR ALL USING (true);
+DO $$ BEGIN
+  CREATE POLICY "sr_sessions_public_all" ON sr_sessions FOR ALL USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Verification log: service role write, public read for own session
-CREATE POLICY "vlog_public_read" ON verification_log FOR SELECT USING (true);
-CREATE POLICY "vlog_service_write" ON verification_log FOR INSERT WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "vlog_public_read" ON verification_log FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "vlog_service_write" ON verification_log FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

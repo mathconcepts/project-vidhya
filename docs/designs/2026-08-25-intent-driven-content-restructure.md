@@ -204,14 +204,35 @@ visitor landing on an atom gets the atom's declared lane. A signed-in student
 with mastery state gets the readiness engine's arm; the lane chips remain one
 tap away. The lane↔arm table in §1 is a shared *vocabulary*, not a routing
 identity — a property look-up (clarify) is not an overdue review (retain),
-and the router never pretends it is.
+and the router never pretends it is. Two amendments from the eng review make
+this rule implementable: (a) "student state wins" needs a **per-concept arm
+query** — `nextBestAction` returns one global action, not the arm for the
+page the student navigated to; a scoped variant (allowedNodes = this
+concept) is a named Phase 2b task. (b) The **anonymous path for the practice
+default** is browse/self-check (the labeled ungraded path), with a warmup +
+sign-in prompt to unlock grading — never a graded ladder for a student the
+scorer cannot attribute (48% of atoms default to practice; `/warmup` remains
+the cold-start front door).
 
-Progressive lanes (outside-voice finding 6 accepted): a lane chip renders
-only when its content exists. "Every page serves all four lanes" is the
-contract's end state, not a launch gate — an atom with only a PYQ ladder
-shows one chip, honestly, rather than three hollow ones. Full lane build-out
-is ~600–800 authored artifacts across the catalogue; it rolls out per module
-under the same floor-gate discipline as questions.
+**Render grain (eng review, decision 5): concept-grain first.** Pages,
+blueprints, inventory floors, and PYQ counts all stay concept-keyed through
+Phases 2–4. Atoms AGGREGATE onto their concept's page: the DPS block
+synthesizes from the concept's mapped atoms (dominant intent breaks ties —
+e.g. `matrix-operations` carries 5 atoms, 4 practice + 1 clarify → practice),
+inventory floors sum the atom targets per concept, and PYQ counts are
+honest concept-grain numbers. Atom-level routes (`/topics/AT-xxx`),
+atom-keyed attribution columns, and atom-grain headlines are Phase 6
+(acquisition) work with their own design pass — no `decisions_v2`, no new
+schema column, no new route surface before then.
+
+**Lane rollout (eng review, decision 6): DPS + intent-ordered sequence
+first; chips are Phase 2b.** Phase 2 ships the problem-statement block plus
+the intent-ORDERED default stage sequence on existing concept pages — no
+chips, no lane router. The readiness engine stays the sole "what next"
+router. Lane chips, the switcher, and progressive availability ship as
+Phase 2b, gated on the behavioral validation this plan already requires
+(D7). Full lane build-out is ~600–800 authored artifacts; it starts only
+after the lane hypothesis survives contact with real behavior.
 
 Measurement grain (outside-voice finding 8 acknowledged): mastery, lift and
 holdout deltas are **concept-keyed**, and several atoms share one concept
@@ -257,18 +278,46 @@ FIRST (outside-voice finding 3 accepted):
    work the walkthrough gate is already waiting on.
 2. **Catalogue validation gate** (see T3) so the data can never drift ahead
    of its checks again.
-Then: render the DPS block + intent-lane chips on mapped LA atoms.
-`problem_statement_frame` placeholders (`{pyq_count}`, `{marks}`,
-`{time_budget}`) are **derived at render time** from the PYQ mapping and
-marking data — any placeholder without a real value renders an honest reduced
-frame, never a fabricated number. Feature-flagged (`VIDHYA_INTENT_LANES=on`),
-default off until QA.
+Then: render the DPS block (concept-aggregated, per the render-grain rule in
+§5) + the intent-ordered default stage sequence on mapped LA concept pages —
+no chips or lane router in this phase (decision 6). `problem_statement_frame`
+placeholders (`{pyq_count}`, `{marks}`, `{time_budget}`) are **derived at
+render time** from the PYQ mapping and marking data — concept-grain counts,
+and any placeholder without a real value renders an honest reduced frame,
+never a fabricated number. Feature-flagged (`VIDHYA_INTENT_LANES=on`),
+default off until QA. Gate-lag note (eng review): T3 lands as the FIRST
+Phase 2 commit — the catalogue merged in Phase 1 with one-time in-PR
+verification, and until T3 exists any interim edit rots unchecked.
 
-**Phase 3 — Blueprint intent templates.** `template-engine.ts` reads the
-atom's intent and emits the lane's stage sequence; new additive rationale
-codes (`intent_pyq_practice`, `intent_method_selection`, `intent_property_recall`,
-`intent_foundation`). Lift ledger groups by rationale — the existing groupby
-answers "does intent-aware sequencing move mastery?"
+**Phase 2b — lane chips + per-concept arm (gated on D7 validation).** The
+lane switcher UI, progressive chip availability, the scoped
+`nextBestAction`-per-concept query behind the "student state wins" rule, and
+the lane-switch aggregate counter. The counter's storage is named now: a
+`durable_records` collection (aggregate counts only, no per-student rows —
+surveillance-invariant-compatible), not a flat file (the v4.33.0 lesson).
+
+**Phase 3 — Blueprint intent templates.** Four eng-review amendments shape
+this phase:
+1. **Codegen from YAML (finding 2):** the template-engine's intent tables are
+   GENERATED from `intent-profiles.yml` at build time (the `concept-graph.ts`
+   pattern), with a CI drift test — the YAML stays the single source of truth
+   for lane sequences; no hand-copied tables in TS.
+2. **Concept-keyed input (decision 5):** blueprints keep their
+   `(concept_id, exam_pack_id, target_difficulty)` key; the concept's
+   dominant intent (from its mapped atoms) selects the sequence.
+3. **Presentation lives OUTSIDE the locked contract:** `BlueprintDecisionsV1`
+   is permanent ("Never mutate this") and carries no `presentation` field —
+   so `property_card`/`decision_tree` are derived by the RENDERER from
+   (intent × stage), never persisted into blueprint decisions. No
+   `decisions_v2` needed for this plan.
+4. **Practice-stage `count` derivation:** the existing validator requires a
+   positive integer `count` on practice stages; codegen derives it from the
+   concept's summed inventory targets (capped per unit), so generated
+   sequences always pass `validator.ts` as-is.
+New additive rationale codes (`intent_pyq_practice`, `intent_method_selection`,
+`intent_property_recall`, `intent_foundation`). Lift ledger groups by
+rationale — the existing groupby answers "does intent-aware sequencing move
+mastery?" at concept grain (stated in §5).
 
 **Phase 4 — Inventory floors + generation.** Extend the floor gate to read
 `question_inventory` targets per atom; report-only first (the honest 126 vs
@@ -284,10 +333,35 @@ experiment wrapper (existing behavior). The 45/40/35 targets are planning
 constants — the ratchet per module is set by measured PYQ frequency and
 verification throughput, not by the workbook's numbers.
 
+Four eng-review amendments:
+1. **P1 prerequisite (finding 1, T4a):** wire `solveSecondary` +
+   `wolframCheck` into `poller.ts`'s `getOrchestrator()` (per the TODOS.md
+   sketch: `resolveDistinctSecondaryModel` + `verifyProblemWithWolfram`)
+   BEFORE any Phase 4 run launches — today the fail-closed dispatcher
+   refuses 100% of batch-generated items. A launch-time guard test asserts
+   an unwired-verifier run fails loudly, never completes with all-refused.
+2. **Concept-grain floors (decision 5):** the floor gate tracks the SUM of
+   atom targets per concept — one generated item counts once, toward one
+   concept; no atom-level attribution column before Phase 6.
+3. **One difficulty mapping, declared:** catalogue `foundation/standard/
+   stretch` ↔ blueprint `easy/medium/hard` ↔ runtime numeric (marking's
+   ≥0.66 threshold) get a single declared mapping table in the codegen
+   module; the floor gate and generation speak through it, never guess.
+4. **MSQ/NAT path named:** `AtomKind` has no msq/nat — those targets
+   (≈27/45 per atom) are filled through the existing practice-item pipeline
+   (`marking-derivation.ts` supports mcq/msq/nat), not the blueprint atom
+   path; the floor gate counts both pipelines' output against the same
+   concept floor.
+
 **Phase 5 — Trap drills + error-tag extension.** Migration extending the
 `ErrorTag` union CHECK (031) with the proposed tags in `intent-profiles.yml`;
 misconception-miner briefs per module profile; trap-drill generation targeted
-at dominant error tags.
+at dominant error tags. Eng-review amendment: every new tag ships with a
+**knew-it/slipped bucket assignment in `mock-to-marks.ts`** — its classifier
+partitions tags into `method` (didn't know) vs careless-family (slipped),
+and a tag in neither bucket silently corrupts the Extraction report, XP, and
+drill targeting. The bucket table extends in the same commit as the CHECK
+constraint, with tests.
 
 **Phase 6 — Cross-paper pathways.** Eight paper landing pathways via
 `exam_packs` rows + `papers` filtering. Discrete Mathematics and the
@@ -473,22 +547,30 @@ Synthesized from findings. P1 = this PR; P2 = next branch; P3 = follow-up.
 - [x] **T2 (P1, human: ~1d / CC: ~30min)** — data — Lock intent-profiles contract (lanes ↔ readiness arms ↔ blueprint vocabulary; pain profiles ↔ error tags)
   - Files: `data/curriculum/gate-em/intent-profiles.yml`, `data/curriculum/gate-em/README.md`
   - Verify: 4 intents, 8 module profiles, zero new runtime enums
-- [ ] **T3 (P2 — lands BEFORE any Phase 2 UI, human: ~3h / CC: ~20min)** — CI — Catalogue validation gate (unique ids, enum intents, `mcq+msq+nat==total` + pyq-variant-overlay semantics, mixes sum to 100, prereqs resolve, concept_ids exist, LA fully mapped, cross-DAG prerequisite consistency)
-  - Surfaced by: Section 5 drift risk + outside-voice findings 2 and 9
+- [ ] **T3 (P2 — the FIRST Phase 2 commit, human: ~5h / CC: ~30min)** — CI — Catalogue + intent-profiles validation gate (unique ids, enum intents, `mcq+msq+nat==total` + pyq-variant-overlay semantics, mixes sum to 100, prereqs resolve, concept_ids exist, LA fully mapped, cross-DAG prerequisite consistency; intent-profiles.yml: stage/atom kinds ∈ types.ts enums, four intents present, all 8 module profiles, error_tags.existing ⊆ ErrorTag union)
+  - Surfaced by: Section 5 drift risk + CEO-outside-voice findings 2/9 + eng review finding 3 + gate-lag amendment
   - Files: `scripts/check-intent-catalogue.ts`, `.github/workflows/ci.yml`
-  - Verify: `npm run ci:intent-catalogue` green; corrupting one id fails it
+  - Verify: `npm run ci:intent-catalogue` green; corrupting one concept_id or one YAML atom_kind fails it
+- [ ] **T4a (P1 — blocks every Phase 4 run, human: ~4h / CC: ~30min)** — generation — Wire `solveSecondary` + `wolframCheck` into `poller.ts` `getOrchestrator()` (per TODOS.md sketch) + launch-time guard that an unwired run fails loudly
+  - Surfaced by: eng review finding 1 (`poller.ts:98` passes two args; `batch-dispatch.ts:102` defaults deps to `{}` — all batch items refuse terminally in production)
+  - Files: `src/generation/batch/poller.ts`, `src/generation/practice-item-factory/batch-dispatch.ts` (tests)
+  - Verify: batch integration test produces a verified (non-refused) item with deps wired; unwired launch errors at start
 - [ ] **T3b (P2 — hard dependency of T4, human: ~3d / CC: ~4h)** — data — PYQ → atom/concept mapping for Linear Algebra (`concept_ids[]` on `pyq-bank.json` problems)
   - Surfaced by: outside-voice finding 3; also the exact mapping the red `ci:la-walkthrough` test leg is waiting on — one task turns both green
   - Files: `frontend/public/data/pyq-bank.json`, mapping notes
   - Verify: `ci:la-walkthrough` test leg green for 26 LA concepts; practice lanes open non-empty
-- [ ] **T4 (P2, human: ~3d / CC: ~2h)** — frontend — DPS block + intent-lane chips on mapped concept pages, behind `VIDHYA_INTENT_LANES`
-  - Surfaced by: the demo finding itself; Section 11 hierarchy
-  - Files: `frontend/src/components/lesson/`, `frontend/src/pages/app/`
-  - Verify: LA pages open with problem statement; unmapped pages unchanged; flag off = today's UI
-- [ ] **T5 (P2, human: ~1d / CC: ~45min)** — blueprints — intent-aware template sequences + additive rationale codes
-  - Surfaced by: Section "what already exists" — template-engine is the hook
-  - Files: `src/blueprints/template-engine.ts`, `src/blueprints/types.ts`
-  - Verify: contract tests per lane; lift ledger groups by new codes
+- [ ] **T4 (P2, human: ~2d / CC: ~1.5h)** — frontend — Concept-aggregated DPS block + intent-ORDERED default stage sequence on mapped LA concept pages, behind `VIDHYA_INTENT_LANES`; per-concept catalogue slices via build-time codegen (code-split, ~2KB/page — never a whole-catalogue import)
+  - Surfaced by: the demo finding itself; Section 11 hierarchy; eng review finding 4 (bundle) + decisions 5/6 (concept grain, no chips yet)
+  - Files: `frontend/src/components/lesson/`, `frontend/src/pages/app/`, slice codegen script
+  - Verify: LA pages open with problem statement; unmapped pages unchanged; flag off = today's UI; bundle delta < 5KB
+- [ ] **T4b (P3 — Phase 2b, gated on D7 behavioral validation)** — frontend + readiness — Lane chips + switcher, per-concept `nextBestAction` scoped query ("student state wins"), anonymous practice path (browse/self-check + warmup/sign-in prompt), lane-switch aggregate counter in a `durable_records` collection
+  - Surfaced by: eng review decision 6 + amendments (per-concept arm API, anonymous cold-start, counter storage)
+  - Files: `frontend/src/components/lesson/`, `src/readiness/`, `src/storage/`
+  - Verify: chips render only where content exists; anonymous never hits graded attempt; counter survives restart
+- [ ] **T5 (P2, human: ~1.5d / CC: ~1h)** — blueprints — intent tables CODEGEN'd from `intent-profiles.yml` (drift test in CI), concept-keyed with dominant-intent tie-break, presentation derived in the renderer (never persisted into the locked `BlueprintDecisionsV1`), practice `count` derived from concept inventory so `validator.ts` passes, + one declared difficulty-vocabulary mapping (foundation/standard/stretch ↔ easy/medium/hard ↔ numeric)
+  - Surfaced by: Section "what already exists" + eng review findings 2/7/9 and decision 5
+  - Files: `src/blueprints/template-engine.ts` (+ codegen script), `src/blueprints/types.ts` (rationale codes only)
+  - Verify: contract tests per lane; YAML↔TS drift test; generated stages pass the existing validator; lift ledger groups by new codes
 - [ ] **T6 (P3, human: ~2d / CC: ~2h)** — CI/generation — inventory floor gate (report-only → ratchet) + per-module batch-generation runbook with dry-run costs
   - Surfaced by: Section 9/v4.33.0 honest-gates lesson; 126 vs 8,725 gap
   - Files: `scripts/check-syllabus-floor.ts` or sibling, `docs/`
@@ -518,6 +600,16 @@ posture, the recommended option was auto-chosen at each gate:
 | D7 | Intent distribution status | treated as hypothesis; readiness engine overrides for stateful students | treating template-derived row counts as measured demand (rejected after outside-voice challenge) |
 | D8 | `question_mix_target` field | dropped from committed catalogue (parallel truth to `question_inventory`) | committing both and hoping they stay in sync |
 
+Decisions D9–D12 were made BY THE USER during the eng review (2026-08-25),
+not autonomously:
+
+| # | Decision | Chosen | Alternatives considered |
+|---|---|---|---|
+| D9 | Whole-plan complexity gate | proceed phased as-is | reduce to Phases 1–3 or Phase 2 only |
+| D10 | Render/attribution grain | concept-grain through Phases 2–4; atom surfaces in Phase 6 | atom routes + decisions_v2 + attribution column now |
+| D11 | Lane machinery timing | DPS + intent-ordered sequence first; chips = Phase 2b gated on D7 validation | full lanes in Phase 2 |
+| D12 | Eng-review amendments | all eight folded (presentation outside locked contract, difficulty mapping, per-concept arm query, count derivation, anonymous path, ErrorTag buckets, counter storage, gate-lag) | selective / record-only |
+
 Any veto reshapes Phases 2–6, not this PR's data (except D4/D5/D8, which shape the committed files).
 
 ---
@@ -528,14 +620,13 @@ Any veto reshapes Phases 2–6, not this PR's data (except D4/D5/D8, which shape
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | issues_open | 8 proposals, 7 accepted (D1–D6 auto), 1 deferred (DM runtime) |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | codex CLI unavailable in this environment |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | — | recommended before Phase 2 implementation |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | clean | 4 findings (all accepted) + 14 outside-voice findings folded; 0 critical gaps open |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | recommended before Phase 2 UI lands |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | not run |
 
-- **OUTSIDE VOICE:** Claude subagent (independent context, plan + data + repo access) returned 13 findings, 4 HIGH. Its verdict: "the joining-layer architecture is defensible, but validate the data and build the PYQ mapping before a single line of Phase 2 lands." Accepted and incorporated: intent data is template-derived research, not measured demand (→ §1 caveat, routing rule, D7); `pyq_variant` overlay semantics + dropped `question_mix_target` parallel truth (→ data fix, D8); PYQ→atom mapping as Phase 2 hard dependency (→ T3b); verification-labor feasibility on the 8,600-item gap (→ Phase 4); static intent must not override student state (→ routing rule); lane content scoped (~600–800 artifacts, progressive lanes); measurement grain stated honestly (concept-keyed); cross-DAG consistency check (→ T3); mapping ownership quotas (→ Phase 6); exam-pack identity + interactives-gate questions (→ Phase 6); observability counter is a deliverable, not an assumption.
-- **CROSS-MODEL TENSION:** the outside voice would demote the intent distribution from "headline finding" to "unvalidated label distribution." This review keeps it as the headline *hypothesis* — the demo feedback independently confirms the direction (content ignores arrival intent) even if the percentages are unmeasured. Both positions are recorded; the user decides whether Phase 2 waits for behavioral validation or ships flagged-off in parallel.
-- **VERDICT:** CEO review complete in EXPANSION mode. Eng review required before Phase 2 code lands; T3 (validation gate) and T3b (PYQ mapping) precede any Phase 2 UI.
+- **OUTSIDE VOICES:** two independent Claude subagent passes (codex CLI absent). CEO-review pass: 13 findings, 4 HIGH — incorporated (intent-as-hypothesis, PYQ-mapping dependency, verification-labor feasibility, measurement grain, and more; see §1/§5/§7). Eng-review pass: 14 findings, 5 HIGH — the load-bearing three seams (atom→page, atom→blueprint, atom→inventory) resolved by decision D10 (concept-grain first); the lane-machinery timing tension resolved by D11 (DPS + intent-ordered sequence first, chips in Phase 2b); eight engineering amendments folded per D12.
+- **CROSS-MODEL:** both outside voices and the in-session reviews agree on the demand/supply join architecture; both challenged unvalidated demand data and unbuilt key translations; every tension was resolved by an explicit user decision (D9–D12) — none remain open.
+- **VERDICT:** CEO + ENG CLEARED — ready to implement Phase 2 (T3 first, then T3b, then T4). Design review recommended before T4's UI lands.
 
 **UNRESOLVED DECISIONS:**
-- D1–D8 above were auto-decided under the autonomous-session posture and await the user's confirmation or veto before Phase 2 begins.
-- Cross-model tension (above): ship Phase 2 flagged-off in parallel with behavioral validation, or gate Phase 2 on validation completing first.
+- D1–D8 were auto-decided under the autonomous-session posture during the CEO review and still await explicit confirmation or veto (D9–D12 were user-decided in the eng review; a veto of D1–D8 reshapes Phases 2–6, not this PR's data).

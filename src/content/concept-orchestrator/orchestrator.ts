@@ -627,7 +627,10 @@ function resolveProviderForModel(config: { providers: Record<string, { models: R
   return null;
 }
 
-async function callLlm(prompt: string, modelId: string): Promise<string> {
+// Exported (T4a) so other callers that need "just call this model id with a
+// prompt" reuse the SAME client-construction path — rather than a second,
+// slightly-different copy — see answer-check.ts's buildSolveSecondaryFn.
+export async function callLlm(prompt: string, modelId: string): Promise<string> {
   try {
     const { LLMClient } = await import('../../llm/index');
     const { loadLlmConfig } = await import('../../llm/registry');

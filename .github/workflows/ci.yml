@@ -170,6 +170,24 @@ jobs:
       - name: Linear Algebra walkthrough (4 legs × 26 concepts)
         run: npm run ci:la-walkthrough
 
+      # Intent Catalogue gate (T3, design doc
+      # docs/designs/2026-08-25-intent-driven-content-restructure.md §6):
+      # validates data/curriculum/gate-em/atomic-catalogue.json (203 atoms —
+      # unique ids, intent enum, question-inventory arithmetic, prerequisite
+      # atoms resolve, concept_ids resolve, LA fully mapped, cross-DAG
+      # prerequisite consistency) and intent-profiles.yml (four intents,
+      # stage/atom_kind ∈ src/blueprints/types.ts enums, difficulty mixes,
+      # module_profiles matches the catalogue's module set, error_tags ⊆
+      # the locked ErrorTag union).
+      #
+      # The cross-DAG check (finding 9 from the design doc's review) found
+      # 11 real prerequisite inversions in the workbook data against the
+      # concept-graph teaching order (check A7). Those edges were repaired
+      # in the catalogue in the same change that added this gate, so it
+      # runs BLOCKING from day one — 12/12 checks green on committed data.
+      - name: Intent catalogue + intent profiles validation
+        run: npm run ci:intent-catalogue
+
       - name: Test
         run: npm test
 

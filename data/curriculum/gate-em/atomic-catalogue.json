@@ -9,7 +9,8 @@
     "Per-learner runtime fields from the research workbook (mastery_state, attempt_count, ...) are deliberately NOT committed here — learner state lives in the database, never in content data. See surveillance invariants.",
     "question_inventory semantics: mcq_target + msq_target + nat_target == target_total. pyq_variant_target is an OVERLAY — the number of those items that should be authored as variants of real PYQs — not a fourth additive bucket.",
     "The intent distribution in this catalogue is structured research derived from query templates, NOT measured demand. Treat it as a routing hypothesis to be validated against real behavior; see the design doc.",
-    "competitor_coverage_level and source_scope are reference-only research fields; the workbook itself marks competitor data \"verify before publication\"."
+    "competitor_coverage_level and source_scope are reference-only research fields; the workbook itself marks competitor data \"verify before publication\".",
+    "LA prerequisite edges AT-005/009/019/021/022/024 were repaired against the concept graph (the research workbook chained each atom to its sequence predecessor, which inverted concept order in 6 places — caught by ci:intent-catalogue check A7)."
   ],
   "atoms": [
     {
@@ -245,7 +246,7 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-004"
+        "AT-003"
       ],
       "concept_ids": [
         "determinants"
@@ -439,11 +440,10 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-008"
+        "AT-006"
       ],
       "concept_ids": [
-        "systems-of-equations",
-        "null-space-column-space"
+        "systems-of-equations"
       ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
@@ -900,7 +900,7 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-018"
+        "AT-016"
       ],
       "concept_ids": [
         "vector-spaces",
@@ -986,10 +986,9 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-020"
+        "AT-011"
       ],
       "concept_ids": [
-        "matrix-operations",
         "eigenvalues"
       ],
       "competitor_coverage_level": "High",
@@ -1029,7 +1028,7 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-021"
+        "AT-002"
       ],
       "concept_ids": [
         "matrix-operations"
@@ -1115,7 +1114,7 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-023"
+        "AT-010"
       ],
       "concept_ids": [
         "systems-of-equations",

@@ -82,6 +82,7 @@ interface MockExam {
   exam_id: string;
   exam_name: string;
   time_limit_minutes: number;
+  timing_mode?: TimingMode;
   total_questions: number;
   marks_scheme: { correct: number; wrong: number };
   questions: Question[];
@@ -100,8 +101,21 @@ interface SubmitResult {
   accuracy: number;
   by_topic: Record<string, { correct: number; attempted: number; marks: number }>;
   late: boolean;
+  timing_mode?: TimingMode;
   recorded: boolean;
 }
+
+/** C1 (topic-wise mocks): { id, name, weight } — same namespace the generator's ?topics= validates against. */
+interface TopicOption { id: string; name: string; weight: number }
+
+/** C2 (exam-feel timing): standard = full duration, compressed = 85-95%, rush = fixed 70%. */
+type TimingMode = 'standard' | 'compressed' | 'rush';
+
+const TIMING_MODE_LABELS: Record<TimingMode, string> = {
+  standard: 'Standard',
+  compressed: 'Compressed',
+  rush: 'Rush',
+};
 
 type Phase = 'ready' | 'in-progress' | 'submitting' | 'results';
 
@@ -118,6 +132,11 @@ export default function MockExamPage() {
   const [results, setResults] = useState<SubmitResult | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // C1: empty = full syllabus (unchanged default behavior).
+  const [topicOptions, setTopicOptions] = useState<TopicOption[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  // C2: exam-feel pacing.
+  const [timingMode, setTimingMode] = useState<TimingMode>('standard');
   const startedAt = useRef(0);
   const submittingRef = useRef(false);
   // Guards the timer-expiry auto-submit so a failed auto-submit doesn't
@@ -128,6 +147,23 @@ export default function MockExamPage() {
   useEffect(() => {
     trackEvent('page_view', { page: 'mock-exam' });
   }, []);
+
+  // C1: fetch the picker options once — same namespace generation validates
+  // against, so nothing here can ever offer a topic id that then 400s.
+  // Best-effort: a failed fetch just leaves the picker empty (full-syllabus
+  // exam, the pre-existing default), never blocks the ready screen.
+  useEffect(() => {
+    authFetch('/api/gbrain/mock-exam/topics')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: any) => {
+        if (Array.isArray(data?.topics)) setTopicOptions(data.topics);
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleTopic = (id: string) => {
+    setSelectedTopics((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
+  };
 
   // Adversarial-review fix (CRITICAL, same idiom as CheckpointQuizPage):
   // this effect only re-runs on [phase], so calling `handleSubmit`
@@ -163,7 +199,11 @@ export default function MockExamPage() {
     setLoading(true);
     setStartError(null);
     try {
-      const r = await authFetch(`/api/gbrain/mock-exam/${sessionId}`);
+      const params = new URLSearchParams();
+      if (selectedTopics.length > 0) params.set('topics', selectedTopics.join(','));
+      if (timingMode !== 'standard') params.set('mode', timingMode);
+      const qs = params.toString();
+      const r = await authFetch(`/api/gbrain/mock-exam/${sessionId}${qs ? `?${qs}` : ''}`);
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error ?? `HTTP ${r.status}`);
       setExam(data as MockExam);
@@ -173,7 +213,10 @@ export default function MockExamPage() {
       autoSubmittedRef.current = false;
       setPhase('in-progress');
       startedAt.current = Date.now();
-      trackEvent('mock_exam_start', { exam_id: data.exam_id, total_questions: data.total_questions });
+      trackEvent('mock_exam_start', {
+        exam_id: data.exam_id, total_questions: data.total_questions,
+        topics: selectedTopics.length > 0 ? selectedTopics.join(',') : 'all', timing_mode: timingMode,
+      });
     } catch (err) {
       setStartError(studentFacingMessage((err as Error).message, 'Could not start your exam — try again shortly.'));
     } finally {
@@ -289,6 +332,84 @@ export default function MockExamPage() {
           ))}
         </div>
 
+        {/* C1: topic-wise scoping — empty selection = full syllabus (unchanged default) */}
+        {topicOptions.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>
+              Topics {selectedTopics.length > 0 ? `(${selectedTopics.length} selected)` : '(full syllabus)'}
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {topicOptions.map((t) => {
+                const active = selectedTopics.includes(t.id);
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => toggleTopic(t.id)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 999,
+                      border: active ? '1px solid var(--indigo)' : 'var(--hairline) solid var(--separator)',
+                      background: active ? 'rgba(88,86,214,.10)' : 'var(--surface-fill)',
+                      color: active ? 'var(--indigo-ink)' : 'var(--text-secondary)',
+                      fontSize: 'var(--text-caption)',
+                      fontFamily: 'var(--font-sans)',
+                      cursor: 'pointer',
+                      transition: 'border-color var(--dur-fast) var(--ease-standard)',
+                    }}
+                  >
+                    {t.name}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedTopics.length > 0 && (
+              <p style={{ margin: 0, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
+                Question count and duration scale to your selection.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* C2: exam-feel timing — standard is the pre-existing full-duration default */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-secondary)' }}>Timing</p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(Object.keys(TIMING_MODE_LABELS) as TimingMode[]).map((mode) => {
+              const active = timingMode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setTimingMode(mode)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 0',
+                    borderRadius: 'var(--radius-sm)',
+                    border: active ? '1px solid var(--indigo)' : 'var(--hairline) solid var(--separator)',
+                    background: active ? 'rgba(88,86,214,.10)' : 'var(--surface-fill)',
+                    color: active ? 'var(--indigo-ink)' : 'var(--text-secondary)',
+                    fontSize: 'var(--text-footnote)',
+                    fontWeight: active ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                    fontFamily: 'var(--font-sans)',
+                    cursor: 'pointer',
+                    transition: 'border-color var(--dur-fast) var(--ease-standard)',
+                  }}
+                >
+                  {TIMING_MODE_LABELS[mode]}
+                </button>
+              );
+            })}
+          </div>
+          {timingMode !== 'standard' && (
+            <p style={{ margin: 0, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
+              {timingMode === 'rush' ? 'Fixed 70% of the standard duration — for exam-day pressure.' : '85-95% of the standard duration, picked for this attempt.'}
+            </p>
+          )}
+        </div>
+
         {startError && (
           <ErrorSurface message={startError} retryLabel="Try again" onRetry={handleStart} />
         )}
@@ -333,6 +454,7 @@ export default function MockExamPage() {
           />
           <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
             {currentQ + 1} / {exam.questions.length} · {answered} answered
+            {exam.timing_mode && exam.timing_mode !== 'standard' ? ` · ${TIMING_MODE_LABELS[exam.timing_mode]}` : ''}
           </span>
         </div>
 
@@ -564,6 +686,11 @@ export default function MockExamPage() {
           {results.late && (
             <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--orange-ink)' }}>
               Time's up — what you answered is graded.
+            </p>
+          )}
+          {results.timing_mode && results.timing_mode !== 'standard' && (
+            <p style={{ margin: '6px 0 0', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
+              You did this under {TIMING_MODE_LABELS[results.timing_mode].toLowerCase()} timing.
             </p>
           )}
           {results.ungraded > 0 && (

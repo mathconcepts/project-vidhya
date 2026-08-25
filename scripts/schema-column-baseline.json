@@ -294,6 +294,7 @@
     "tier_used",
     "time_limit_minutes",
     "time_taken_ms",
+    "timing_mode",
     "times_correct",
     "times_served",
     "title",
@@ -362,6 +363,7 @@
     "time_limit_minutes": "047_mock_exams — the exam configs own fixed duration (EXAM_CONFIGS). Config value, not observed behaviour.",
     "analysis": "047_mock_exams — the graded breakdown (earned/max/per-topic), mirroring 046 quiz_sessions.result. Stored so a double-submit replays the same graded analysis instead of re-grading a possibly-different payload.",
     "owner_user_id": "047_mock_exams — the authenticated user (user.userId) that generated a mock exam; the IDOR-closing identity for GET .../mock-exam/:sessionId and POST .../submit (src/api/mock-exam-routes.ts). This DOES link a person to an exam, and is the most sensitive column in 047. Kept because ownership binding is the entire point of the fix: without it any authenticated student could read or grade another student's exam by guessing/reusing a sessionId. Deliberately NOT the same as session_id (that stays the mastery-calibration key, which may legitimately differ from the auth id — see the migration file's header comment) and NOT read by anything cohort/peer-facing — it is compared 1:1 against the caller's own id, never surfaced or aggregated.",
-    "concept_ids": "048_pyq_concept_ids — the full set of concepts one exam question covers (primary first), alongside the existing concept_id primary. Content classification, exactly like the already-baselined concept_id: it describes the QUESTION (which syllabus concepts it tests), not the student who answers it. No behavioural signal, no per-student value ever stored here — src/db/pyq-concept-mapper.ts derives it deterministically from author-curated tags on the static question bank, same 'never a guess' discipline as concept_id."
+    "concept_ids": "048_pyq_concept_ids — the full set of concepts one exam question covers (primary first), alongside the existing concept_id primary. Content classification, exactly like the already-baselined concept_id: it describes the QUESTION (which syllabus concepts it tests), not the student who answers it. No behavioural signal, no per-student value ever stored here — src/db/pyq-concept-mapper.ts derives it deterministically from author-curated tags on the static question bank, same 'never a guess' discipline as concept_id.",
+    "timing_mode": "049_mock_exam_timing_mode — which named pacing mode (standard/compressed/rush) a mock exam was generated under, per docs/demo/buyer-qa-demo-prep.md's C2 follow-up. A content/config choice the student made before starting, mirroring the already-baselined exam_key — not an observed behaviour, and never aggregated across students."
   }
 }

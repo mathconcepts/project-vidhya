@@ -44,6 +44,8 @@ export interface MockExamRow {
   /** Full question set INCLUDING answer keys — server-only, never serialized to a client. */
   questions: unknown[];
   timeLimitMinutes: number;
+  /** C2: standard | compressed | rush — see src/gbrain/operations/moat-operations.ts's timingModeMultiplier(). */
+  timingMode: 'standard' | 'compressed' | 'rush';
   status: 'in_progress' | 'submitted';
   late: boolean;
   score: number | null;
@@ -62,6 +64,7 @@ function toRow(r: any): MockExamRow {
     examKey: String(r.exam_key),
     questions: Array.isArray(r.questions) ? r.questions : [],
     timeLimitMinutes: Number(r.time_limit_minutes),
+    timingMode: r.timing_mode === 'compressed' || r.timing_mode === 'rush' ? r.timing_mode : 'standard',
     status: r.status === 'submitted' ? 'submitted' : 'in_progress',
     late: Boolean(r.late),
     score: r.score === null || r.score === undefined ? null : Number(r.score),
@@ -75,12 +78,16 @@ function toRow(r: any): MockExamRow {
 
 export async function createMockExam(params: {
   id: string; sessionId: string; ownerUserId: string; examKey: string; questions: unknown[]; timeLimitMinutes: number;
+  timingMode?: 'standard' | 'compressed' | 'rush';
 }): Promise<MockExamRow> {
   const { rows } = await getPool().query(
-    `INSERT INTO mock_exams (id, session_id, owner_user_id, exam_key, questions, time_limit_minutes, status)
-     VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'in_progress')
+    `INSERT INTO mock_exams (id, session_id, owner_user_id, exam_key, questions, time_limit_minutes, timing_mode, status)
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'in_progress')
      RETURNING *`,
-    [params.id, params.sessionId, params.ownerUserId, params.examKey, JSON.stringify(params.questions), params.timeLimitMinutes],
+    [
+      params.id, params.sessionId, params.ownerUserId, params.examKey,
+      JSON.stringify(params.questions), params.timeLimitMinutes, params.timingMode ?? 'standard',
+    ],
   );
   return toRow(rows[0]);
 }

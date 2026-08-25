@@ -155,6 +155,64 @@ function getPreset(atom: ContentAtom): AnimationPreset {
   return atom.animation_preset ?? ATOM_ANIMATION_MAP[atom.atom_type];
 }
 
+/**
+ * ContentAtom's `atom_type` (11 values, rendering-oriented) → the
+ * blueprint's `StageKind` (6 values, src/blueprints/types.ts — pedagogical
+ * sequencing) used by the intent-driven content restructure's
+ * `INTENT_STAGE_SEQUENCES` (T4, see docs/designs/2026-08-25-intent-driven-
+ * content-restructure.md §5). No 1:1 mapping exists between the two
+ * vocabularies, so this is a best-effort correspondence, not a generated
+ * table: `hook`/`intuition`/`visual_analogy` open a concept the way the
+ * blueprint's `intuition` stage does; `formal_definition` reads as
+ * `formalism`; `micro_exercise`/`retrieval_prompt`/`interleaved_drill` are
+ * all retrieval-at-scale, i.e. `practice`; `exam_pattern` is exam-anchored,
+ * i.e. `pyq_anchor`. `common_traps` and `mnemonic` have no corresponding
+ * stage — they intentionally stay unmapped (see applyIntentStageOrder).
+ */
+export const ATOM_TYPE_TO_STAGE_KIND: Partial<Record<AtomType, string>> = {
+  hook: 'intuition',
+  intuition: 'intuition',
+  visual_analogy: 'intuition',
+  formal_definition: 'formalism',
+  worked_example: 'worked_example',
+  micro_exercise: 'practice',
+  retrieval_prompt: 'practice',
+  interleaved_drill: 'practice',
+  exam_pattern: 'pyq_anchor',
+};
+
+/**
+ * Intent-ordered default sequence (T4, decision 6 — DPS + intent-ORDERED
+ * sequence first, no chips/router). A stable sort of `atoms` by the rank
+ * of each atom's mapped stage-kind within `stageOrder` (the concept's
+ * dominant intent's stage sequence, e.g. `['pyq_anchor', 'practice']` for
+ * a practice-dominant concept). Atoms whose atom_type has no stage-kind
+ * mapping, or whose mapped stage-kind isn't part of THIS concept's
+ * stageOrder, are unranked and sort after every ranked atom, keeping
+ * their original relative order (an explicit decorate-sort-undecorate
+ * pass, so stability never depends on the engine's Array.sort guarantee).
+ * `stageOrder` empty/undefined is a no-op — returns `atoms` unchanged, so
+ * flag-off and unmapped concepts render byte-identical to today.
+ */
+export function applyIntentStageOrder(atoms: ContentAtom[], stageOrder?: string[]): ContentAtom[] {
+  if (!stageOrder || stageOrder.length === 0) return atoms;
+  const rank = new Map<string, number>();
+  stageOrder.forEach((stage, i) => {
+    if (!rank.has(stage)) rank.set(stage, i);
+  });
+  const rankOf = (atom: ContentAtom): number => {
+    const stageKind = ATOM_TYPE_TO_STAGE_KIND[atom.atom_type];
+    return stageKind !== undefined ? rank.get(stageKind) ?? Infinity : Infinity;
+  };
+  return atoms
+    .map((atom, originalIndex) => ({ atom, originalIndex }))
+    .sort((a, b) => {
+      const diff = rankOf(a.atom) - rankOf(b.atom);
+      return diff !== 0 ? diff : a.originalIndex - b.originalIndex;
+    })
+    .map((entry) => entry.atom);
+}
+
 /** Splits worked_example prose on `---` step delimiters. */
 function splitSteps(content: string): string[] {
   return content
@@ -440,9 +498,16 @@ export interface AtomCardRendererProps {
    * no-op — every existing call site that omits this prop is unaffected.
    */
   jumpToAtomId?: string | null;
+  /**
+   * T4 — intent-ordered default sequence. The mapped concept's dominant
+   * intent's stage_order (from frontend/src/generated/intent-slices.gen.ts),
+   * only when VIDHYA_INTENT_LANES is on and the concept has a slice. Absent
+   * (the default) means no reorder — identical to pre-T4 behavior.
+   */
+  intentStageOrder?: string[];
 }
 
-export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete, onStepChange, jumpToAtomId }: AtomCardRendererProps) {
+export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComplete, onStepChange, jumpToAtomId, intentStageOrder }: AtomCardRendererProps) {
   const [index, setIndex] = useState(0);
   const [errorStreak, setErrorStreak] = useState(0);
   const [completedIdx, setCompletedIdx] = useState<Set<number>>(() => new Set());
@@ -450,15 +515,25 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
     try { return localStorage.getItem(VISUAL_PREF_KEY) === '1'; } catch { return false; }
   });
 
+  // T4: intent-ordered default sequence, applied BEFORE show-me-visually
+  // below — a stable sort by stage-kind rank, the concept's own catalogue
+  // slice deciding the rank order. No-op (returns rawAtoms unchanged) when
+  // intentStageOrder is absent, which is the flag-off / unmapped-concept
+  // case, so this is a strict no-op addition to the pre-T4 behavior.
+  const intentOrderedAtoms = useMemo(
+    () => applyIntentStageOrder(rawAtoms, intentStageOrder),
+    [rawAtoms, intentStageOrder],
+  );
+
   // Show-me-visually (B4): when ON, reorder so visual-modality atoms come
   // first, preserving relative order within each group. The original
   // atoms[] is preserved in props — this is a view-time projection only.
   const atoms = useMemo(() => {
-    if (!showVisually) return rawAtoms;
-    const visual = rawAtoms.filter((a) => a.modality === 'visual' || a.atom_type === 'visual_analogy');
-    const rest = rawAtoms.filter((a) => !(a.modality === 'visual' || a.atom_type === 'visual_analogy'));
-    return visual.length === 0 ? rawAtoms : [...visual, ...rest];
-  }, [rawAtoms, showVisually]);
+    if (!showVisually) return intentOrderedAtoms;
+    const visual = intentOrderedAtoms.filter((a) => a.modality === 'visual' || a.atom_type === 'visual_analogy');
+    const rest = intentOrderedAtoms.filter((a) => !(a.modality === 'visual' || a.atom_type === 'visual_analogy'));
+    return visual.length === 0 ? intentOrderedAtoms : [...visual, ...rest];
+  }, [intentOrderedAtoms, showVisually]);
 
   const toggleVisual = () => {
     setShowVisually((prev) => {

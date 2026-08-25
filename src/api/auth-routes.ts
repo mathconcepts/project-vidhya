@@ -66,6 +66,14 @@ async function handleConfig(_req: ParsedRequest, res: ServerResponse): Promise<v
     // Causes the sign-in page to show demo quick-start buttons even when Google
     // OAuth is configured — so Render demo deployments always allow admin access.
     demo_mode: !!process.env.VIDHYA_DEMO_MODE || !process.env.GOOGLE_OAUTH_CLIENT_ID,
+    // intent_lanes (T4, intent-driven content restructure §5/§7 Phase 2):
+    // gates the concept-page Definite Problem Statement block + intent-
+    // ordered atom sequence for mapped Linear Algebra concepts. Default
+    // off until QA — same on/off convention as VIDHYA_AB_TESTING /
+    // VIDHYA_PEDAGOGY_GATE. Mirrors local_dev/demo_mode's pattern: a plain
+    // env-gated boolean surfaced through this existing config endpoint
+    // rather than a new route.
+    intent_lanes: process.env.VIDHYA_INTENT_LANES === 'on',
     channels: {
       web: true,
       telegram: !!process.env.TELEGRAM_BOT_TOKEN,

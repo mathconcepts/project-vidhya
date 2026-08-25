@@ -34,9 +34,19 @@ export {
 
 export {
   buildTemplateBlueprint,
+  buildIntentBlueprint,
   TEMPLATE_VERSION,
   type TemplateInput,
 } from './template-engine';
+
+export {
+  INTENT_STAGE_SEQUENCES,
+  CONCEPT_DOMINANT_INTENT,
+  CONCEPT_INVENTORY_TOTALS,
+  DIFFICULTY_LABEL_FROM_CATALOGUE,
+  type IntentId,
+  type GeneratedStage,
+} from './intent-tables.gen';
 
 export {
   insertBlueprint,

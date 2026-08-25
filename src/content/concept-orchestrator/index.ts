@@ -79,8 +79,15 @@ export {
 } from './media-artifacts';
 export type { MediaArtifact, MediaKind, MediaStatus } from './media-artifacts';
 
-export { renderScene as renderGifScene } from './gif-generator';
-export type { SceneDescription, ParametricScene, FunctionTraceScene, RenderResult } from './gif-generator';
+export { renderScene as renderGifScene, isKnownSceneType, KNOWN_SCENE_TYPES } from './gif-generator';
+export type {
+  SceneDescription,
+  ParametricScene,
+  FunctionTraceScene,
+  ParametricCurveScene,
+  LevelSetScene,
+  RenderResult,
+} from './gif-generator';
 
 export {
   shouldNarrate,

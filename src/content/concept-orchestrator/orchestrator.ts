@@ -36,7 +36,7 @@ import { resolveModelForAtom, type TierModels } from './model-tiers';
 import { casPreVerify } from './cas-pre-verifier';
 import { appendVersion } from './atom-versions';
 import { writeArtifact, markFailed as markMediaFailed } from './media-artifacts';
-import { renderScene, type SceneDescription } from './gif-generator';
+import { renderScene, isKnownSceneType, type SceneDescription } from './gif-generator';
 // Phase B of personalization plan — see buildPrompt() for usage.
 // Decoupled via a single-function import so the orchestrator stays
 // generic; if the personalization module is removed, the orchestrator
@@ -543,7 +543,7 @@ export function extractGifSceneDescription(content: string): SceneDescription | 
   if (!m) return null;
   try {
     const parsed = JSON.parse(m[1]);
-    if (parsed && typeof parsed === 'object' && (parsed.type === 'parametric' || parsed.type === 'function-trace')) {
+    if (parsed && typeof parsed === 'object' && isKnownSceneType(parsed.type)) {
       return parsed as SceneDescription;
     }
   } catch { /* malformed — skip */ }

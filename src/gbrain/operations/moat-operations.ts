@@ -344,17 +344,79 @@ export async function dailyIntelligence() {
 // MOCK EXAM GENERATOR
 // ============================================================================
 
-export async function generateMockExam(sessionId: string, examKey: string = 'gate') {
+/**
+ * C1 (buyer Q7 — topic-wise mocks): given an optional subset of topics,
+ * returns the MARKS_WEIGHTS entries for just those topics, renormalized so
+ * they sum to 1 (preserving their RELATIVE weight to each other, not their
+ * absolute share of the full syllabus). No topics (or an empty/unknown-only
+ * list) falls back to the full weighted set — the pre-existing behavior.
+ * Route-layer validation (mock-exam-routes.ts) rejects unknown topic names
+ * before this ever runs; the unknown-topic filter here is just defense in
+ * depth, not the primary validation path.
+ */
+export function selectedTopicWeights(topics?: string[] | null): Record<string, number> {
+  if (!topics || topics.length === 0) return MARKS_WEIGHTS;
+  const known = topics.filter((t) => Object.prototype.hasOwnProperty.call(MARKS_WEIGHTS, t));
+  if (known.length === 0) return MARKS_WEIGHTS;
+  const sum = known.reduce((s, t) => s + MARKS_WEIGHTS[t], 0);
+  const out: Record<string, number> = {};
+  for (const t of known) out[t] = MARKS_WEIGHTS[t] / sum;
+  return out;
+}
+
+/** C2 (buyer Q7 — exam-feel timing): named pacing modes for a mock exam. */
+export type MockExamTimingMode = 'standard' | 'compressed' | 'rush';
+
+/**
+ * Deterministic string → [0, 1) hash (FNV-1a-shaped, no external dep). Used
+ * ONLY to pick a reproducible "compressed" ratio from the exam id — never
+ * for anything grading-affecting or security-sensitive.
+ */
+function hashUnitInterval(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(h, 31) + seed.charCodeAt(i)) >>> 0;
+  }
+  return h / 0xffffffff;
+}
+
+/**
+ * standard = the exam's full configured duration (unchanged default).
+ * compressed = 85-95% of standard, deterministic per exam id (a seeded hash,
+ * NOT Math.random — the same exam id always yields the same ratio, so a
+ * page reload or grading replay never disagrees with the timer the student
+ * actually saw).
+ * rush = a fixed 70% — deliberately harsher, for "give me the pressure".
+ */
+export function timingModeMultiplier(examId: string, mode: MockExamTimingMode): number {
+  if (mode === 'rush') return 0.7;
+  if (mode === 'compressed') return 0.85 + hashUnitInterval(examId) * 0.10;
+  return 1.0;
+}
+
+export interface GenerateMockExamOptions {
+  /** Subset of MARKS_WEIGHTS topic keys to draw from. Omit/empty = all topics. */
+  topics?: string[];
+  timingMode?: MockExamTimingMode;
+}
+
+export async function generateMockExam(
+  sessionId: string,
+  examKey: string = 'gate',
+  options: GenerateMockExamOptions = {},
+) {
   const pool = getPool();
   const examConfig = EXAM_CONFIGS[examKey] || EXAM_CONFIGS['gate'];
   const model = await getOrCreateStudentModel(sessionId);
   const mastery = getMasterySummary(model);
+  const timingMode = options.timingMode ?? 'standard';
+  const topicWeights = selectedTopicWeights(options.topics);
 
   const totalQuestions = examConfig.total_questions;
   const questions: any[] = [];
 
-  for (const topic of Object.keys(MARKS_WEIGHTS)) {
-    const topicQCount = Math.round(totalQuestions * (MARKS_WEIGHTS[topic] || 0.08));
+  for (const topic of Object.keys(topicWeights)) {
+    const topicQCount = Math.round(totalQuestions * (topicWeights[topic] || 0.08));
     const topicMastery = mastery[topic] || 0;
 
     // Difficulty distribution: 40% easy, 40% medium, 20% hard
@@ -406,6 +468,12 @@ export async function generateMockExam(sessionId: string, examKey: string = 'gat
   questions.sort(() => Math.random() - 0.5);
 
   const examId = `mock-${examKey}-${Date.now()}-${sessionId.slice(0, 6)}`;
+  // C2: the multiplier is derived from examId AFTER it's finalized, so the
+  // resulting time_limit_minutes is fixed the instant this function returns
+  // — the route persists it verbatim, and every later read (timer render,
+  // late-submission check, grading replay) agrees with what was computed
+  // here, never recomputed from a re-hashed or re-randomized value.
+  const timeLimitMinutes = Math.round(examConfig.total_time_minutes * timingModeMultiplier(examId, timingMode));
 
   // T22 (ENG-D3): this function no longer touches mock_exams at all — the
   // route layer (src/api/mock-exam-routes.ts) owns persistence via the
@@ -417,7 +485,8 @@ export async function generateMockExam(sessionId: string, examKey: string = 'gat
   return {
     exam_id: examId,
     exam_name: examConfig.name,
-    time_limit_minutes: examConfig.total_time_minutes,
+    time_limit_minutes: timeLimitMinutes,
+    timing_mode: timingMode,
     total_questions: questions.length,
     marks_scheme: {
       correct: examConfig.marks_per_correct,

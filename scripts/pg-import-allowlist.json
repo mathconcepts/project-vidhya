@@ -37,6 +37,7 @@
   "src/curriculum/exam-loader.ts",
   "src/db/__tests__/auto-migrate.test.ts",
   "src/db/auto-migrate.ts",
+  "src/db/seed-la-practice-items.ts",
   "src/db/seed-static-pyqs.ts",
   "src/experiments/db.ts",
   "src/gbrain/error-taxonomy.ts",

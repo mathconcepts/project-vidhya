@@ -313,22 +313,25 @@ C3 below.
 
 ## Q7. Mock practice: full-length, topic-wise, random time "for a feel"?
 
-**ELI5 answer (today's truth):**
+**ELI5 answer (current — C1/C2 shipped):**
 
-> "Full-length mocks are live today: timed, built to the exam's real
-> section weights, tuned to the student's current level, graded entirely
-> on the server with real GATE negative marking, and the answer key never
-> reaches the browser until submission. On top of that, short
-> concept-scoped checkpoint quizzes, six questions, exam-paced at 80
-> seconds a question, drawn from what that student is due to review.
-> Topic-length mocks and a 'surprise timer' mode are on the near-term
-> roadmap and are thin additions, because the assembly, timing, and
-> grading engine they reuse is already built."
+> "Full-length mocks are live: timed, built to the exam's real section
+> weights, tuned to the student's current level, graded entirely on the
+> server with real GATE negative marking, and the answer key never
+> reaches the browser until submission. You can now also scope a mock to
+> one or more topics, say, Linear Algebra only, and the question count
+> and duration rescale to match. And you can choose how the clock feels:
+> Standard is the full duration, Compressed trims 5-15% off (a different,
+> reproducible amount each time), Rush is a flat 30% off for real
+> exam-day pressure. On top of that, short concept-scoped checkpoint
+> quizzes, six questions, exam-paced at 80 seconds a question, drawn from
+> what that student is due to review."
 
 **Show, don't tell:**
-- `/mock-exam` — generate and start a full-length mock; show the timer
-  and, after submit, the by-topic breakdown and the marks-recovery
-  report.
+- `/mock-exam` — pick a topic or two from the chip row, pick Rush timing,
+  start the mock, and show the timer bar naming the mode; after submit,
+  the by-topic breakdown, the marks-recovery report, and the "you did
+  this under rush timing" line.
 - A checkpoint quiz from the XP meter, showing timer auto-submit.
 
 **Receipts:**
@@ -337,58 +340,120 @@ C3 below.
   047 binds exams to their owner (IDOR fixed), grading is server-side,
   submission is idempotent, and `GET .../mock-exam/:sessionId` strips the
   answer key.
+- Topic-wise (C1): `generateMockExam()`'s `selectedTopicWeights()` filters
+  and renormalizes `MARKS_WEIGHTS` over the requested topics;
+  `GET .../mock-exam/:sessionId?topics=linear-algebra,calculus` validates
+  against the same canonical topic set and 400s a typo by name.
+  `GET .../mock-exam/topics` gives the frontend picker that exact
+  id/label set — deliberately not `GET /api/topics`, which uses a
+  different id namespace (`transforms`/`discrete` instead of
+  `transform-theory`/`discrete-mathematics`, and is missing two topics
+  outright).
+- Exam-feel timing (C2): `timingModeMultiplier()` is a pure function of
+  the exam id — `rush` is a fixed 0.7×, `compressed` a deterministic
+  0.85-0.95× seeded from the id (never `Math.random`, so a reload or a
+  grading replay always agrees with the timer the student watched).
+  Migration 049 persists the chosen mode on the `mock_exams` row.
+- Verified against a real local Postgres (not just mocks): after seeding,
+  a Linear-Algebra-only mock draws its full 65-question quota from real
+  `generated_problems` rows; Rush yields a 126-minute exam (180 × 0.7)
+  exactly as computed.
 - Quizzes: `src/api/quiz-routes.ts` + `src/scoring/xp.ts`
   (QUIZ_LENGTH=6, 80s/item), graded through the same deterministic GATE
   scorer and student-model path as all practice.
 - Timer correctness: `TimerPrimitive.tsx` runs two registers so expiry
   auto-submits what was actually answered (stale-closure bug fixed).
 
-**Honest gaps (the "required changes" for this question):** topic-wise
-mock exams and variable/random duration do not exist yet. See C1 and C2.
+**Honest gap:** C3 (per-problem "try with new numbers" re-roll) is still
+open — see below.
 
 ---
 
 ## Required changes (scoped, ranked)
 
-Review-only pass: no code changed on this branch. Each item below is
-sized and named so the next session can execute it directly.
+C1 and C2 shipped in a follow-up session (same PR). C3 and C4 remain
+open, sized below so the next session can execute directly.
 
-### C1. Topic-wise mock exams — P1, the only hard demo blocker in the list
+### C1. Topic-wise mock exams — SHIPPED
 
-The buyer asked for it by name and the demo answer is currently
-"roadmap". Smallest honest implementation:
+- `src/gbrain/operations/moat-operations.ts` — `generateMockExam()`
+  gains `options: { topics?: string[]; timingMode? }`.
+  `selectedTopicWeights()` filters `MARKS_WEIGHTS` to the requested
+  topics and renormalizes them to sum to 1.
+- `src/api/mock-exam-routes.ts` — `?topics=` query param (comma-separated,
+  deduped), validated against `MARKS_WEIGHTS`, 400s naming the first
+  unknown topic. New `GET /api/gbrain/mock-exam/topics` (registered
+  ahead of the `:sessionId` route so it's never shadowed) gives the
+  frontend the exact id/label set generation validates against.
+- `frontend/src/pages/app/MockExamPage.tsx` — topic chip row on the ready
+  screen, fetched from the new endpoint; selected topics ride along on
+  the start request; a note tells the student duration/count will scale.
+- Tests: `src/gbrain/operations/__tests__/moat-operations.test.ts` (pure
+  renormalization), `src/api/__tests__/mock-exam-routes.test.ts` (400 on
+  unknown topic, threading, topics-endpoint namespace correctness, route
+  order), `frontend/.../MockExamPage.test.tsx` (chip rendering, query
+  param on start).
 
-- `src/gbrain/operations/moat-operations.ts` `generateMockExam(sessionId,
-  examKey)` gains an optional `topics?: string[]` filter. The topic loop
-  already iterates `MARKS_WEIGHTS` keys; filtering it and renormalizing
-  weights over the selected topics is a small, contained change.
-- Thread the option through `src/api/mock-exam-routes.ts` (body field,
-  validated against known topics, refuse unknowns with a 400 naming the
-  topic, matching quiz-routes' pattern at `quiz-routes.ts:359`).
-- `MockExamPage.tsx`: a topic multi-select above the Generate button.
-  Time limit scales with question count (the per-question pacing constant
-  already exists for quizzes).
-- Tests mirror `mock-exam-routes.test.ts` (assemble, ownership, key
-  stripping, idempotent submit) plus weight renormalization.
+### C2. Exam-feel timer modes (including "random time") — SHIPPED
 
-Effort: human ~2 days / CC ~1 hour.
+- `timingModeMultiplier(examId, mode)` — pure function: `rush` = fixed
+  0.7×, `compressed` = a deterministic 0.85-0.95× seeded from the exam id
+  (no `Math.random` — a reload or grading replay always agrees with the
+  timer the student watched), `standard` = 1.0× (unchanged default).
+  Applied to `time_limit_minutes` once, at exam creation.
+- Migration `049_mock_exam_timing_mode.sql` — `mock_exams.timing_mode`,
+  persisted at creation, entered into
+  `scripts/schema-column-baseline.json` with rationale (config choice,
+  never aggregated).
+- `?mode=standard|compressed|rush` on the generate request, validated;
+  surfaced in the generate response, the in-progress timer bar, and the
+  post-submit report ("you did this under rush timing"), reading back
+  from the stored row so a replayed double-submit still reports the
+  original mode.
+- Tests mirror C1's — pure-function bounds/determinism, route validation
+  + persistence + replay, frontend chip selection + query param + results
+  copy.
 
-### C2. Exam-feel timer modes (including "random time") — P2
+**Verified against a real database, not just mocks:** this session had no
+live Postgres attached, so it started the repo's own native `postgresql`
+service (no Docker daemon available in the sandbox — `docker-compose.yml`
+assumes one), ran `autoMigrate()` through migration 049, seeded both PYQ
+and Linear-Algebra practice-item content, and called `generateMockExam()`
+directly. A Linear-Algebra-only mock drew its full 65-question quota
+from real DB rows; Rush produced a 126-minute exam (180 × 0.7) exactly as
+predicted; a two-topic Compressed mock landed at 162 minutes (0.9× of
+180, within the promised 153-171 range).
 
-"Random time for a feel" = simulating exam pressure, not a gimmick.
-Implement as named modes on mock generation: `standard` (current),
-`compressed` (85 to 95 percent of standard, drawn deterministically from
-the exam id so grading and replay stay reproducible), `rush` (fixed 70
-percent). Store the chosen mode on the `mock_exams` row; the deadline
-math at `mock-exam-routes.ts:275` already keys off
-`timeLimitMinutes`, so only assembly changes. Surface the mode chip in
-the UI and in the post-submit report ("you did this under rush timing").
+### D1. Linear Algebra content now backs the database, not just files — SHIPPED
 
-Effort: human ~1 day / CC ~30 min. Note the determinism rule: no
-`Math.random` at grade-affecting points; derive from a seeded hash, the
-same discipline `policy-runner.ts` already uses.
+Closing a gap C1 exposed: all 26 LA concepts already had authored,
+verified practice items (`data/practice-items/gate-ma-la-*.json`, 130
+items — the v4.34 "content floor" work), but they lived ONLY as
+disk-backed content served through `FileLearningObjectCatalog` for
+ordinary practice. `generateMockExam()` queries the `generated_problems`
+Postgres table directly via SQL — so before this change, a
+Linear-Algebra-scoped mock exam had zero real DB rows to draw from
+despite the content existing.
 
-### C3. "Same question, new numbers" re-roll — P2
+- `src/db/seed-la-practice-items.ts` — `seedPracticeItemsFromDisk(pool)`,
+  mirroring the existing `seed-static-pyqs.ts` boot-seed convention
+  exactly (idempotent, a DB-unreachable run degrades and resumes next
+  boot rather than crashing it). Each item's stable JSON id hashes to a
+  deterministic UUID, so this is a genuine UPSERT: editing an item's
+  text in the source JSON re-syncs the same row next boot, and running
+  it twice never duplicates.
+- Wired into `src/server.ts`'s boot sequence, right after the existing
+  static-PYQ seed — runs on every boot, same as migrations.
+- Verified live: 130/130 items upserted into `generated_problems` across
+  all 26 canonical LA concept ids (confirmed via direct SQL against a
+  real local Postgres, not just a mocked pool in tests).
+- `src/db/__tests__/seed-la-practice-items.test.ts` — 9 tests against the
+  real JSON fixtures: full count, every one of the 26 concepts present,
+  correct topic slug (not the file's display-cased label), verified
+  flag, deterministic id shape, genuine upsert (`ON CONFLICT DO UPDATE`),
+  and idempotency across two runs.
+
+### C3. "Same question, new numbers" re-roll — P2, still open
 
 Per-problem dynamic variants, the concrete thing a principal means by
 "this cannot be fully static". Reuse two existing pieces: the adaptive
@@ -412,16 +477,20 @@ Keep the honest refusal. Do not promise OCR in the demo; the register
 ## Review verdict
 
 - **Mode:** HOLD SCOPE (auto-selected: existing system, demo prep, no
-  silent scope changes). Skill contract is review-only; no code changed.
-- **Findings:** 5 of 7 buyer questions have strong, code-backed answers
-  today. Q7 is the only one where a named ask (topic-wise, random time)
-  is missing outright: C1/C2. Q6 has one soft gap (per-problem re-roll):
-  C3. Q3 has two labelled honest limits (scanned PDFs, retrieval-only
+  silent scope changes). Initial pass was review-only; a follow-up
+  session implemented C1, C2, and D1 (topic-wise mocks, exam-feel
+  timing, and the Linear Algebra database-seeding gap the first pass
+  surfaced), tested end-to-end against a real local Postgres, and merged.
+- **Findings:** all 7 buyer questions now have strong, code-backed,
+  verified-live answers. Q6 keeps one soft gap (per-problem re-roll): C3.
+  Q3 keeps two labelled honest limits (scanned PDFs, retrieval-only
   personalization from uploads).
 - **Demo risk to rehearse:** the live deploy runs on Render free tier
   with ephemeral disk; seed the demo personas and scenario runs fresh
   before the meeting (`npm run demo:start`, `npm run demo:scenario`),
   and open `/admin/scenarios` once beforehand to warm the neutral-render
-  cache.
+  cache. The Linear Algebra practice-item seed (D1) runs automatically
+  on every boot, including the demo deploy, as long as `DATABASE_URL` is
+  configured — no separate manual step.
 
 NO UNRESOLVED DECISIONS

@@ -22,6 +22,26 @@ function jsonResponse(body: unknown, ok = true) {
   return { ok, json: async () => body } as Response;
 }
 
+/**
+ * C1's topic picker fetches `/api/gbrain/mock-exam/topics` on mount — an
+ * extra authFetch call ahead of every GET-exam/POST-submit sequence these
+ * tests already exercise. This helper keeps every test's sequence exactly
+ * as it reads (GET exam, then POST submit, in that order) by answering the
+ * topics call out of band, dispatched on URL rather than call position;
+ * `responses` still serves in strict order for every OTHER call, repeating
+ * the last entry for any call past the end (mirrors plain mockResolvedValue's
+ * "keep returning this" behavior for the single-response tests).
+ */
+function mockAuthFetchSequence(authFetchMock: any, responses: Response[]) {
+  let i = 0;
+  authFetchMock.mockImplementation(async (url: unknown) => {
+    if (String(url).includes('/mock-exam/topics')) return jsonResponse({ topics: [] });
+    const r = responses[Math.min(i, responses.length - 1)];
+    i++;
+    return r;
+  });
+}
+
 const EXAM = {
   exam_id: 'exam-1',
   exam_name: 'GATE Mock',
@@ -51,7 +71,7 @@ async function renderPage() {
 describe('MockExamPage — MSQ', () => {
   it('renders MSQ options as a real multi-select (checkboxes), not a single-select radiogroup', async () => {
     const { authFetch } = await import('@/lib/auth/client');
-    vi.mocked(authFetch).mockResolvedValue(jsonResponse(EXAM));
+    mockAuthFetchSequence(vi.mocked(authFetch), [jsonResponse(EXAM)]);
     await renderPage();
 
     fireEvent.click(screen.getByText('Start Mock Exam'));
@@ -66,12 +86,13 @@ describe('MockExamPage — MSQ', () => {
 
   it('an MSQ submission carries selectedIndices for every option picked', async () => {
     const { authFetch } = await import('@/lib/auth/client');
-    vi.mocked(authFetch)
-      .mockResolvedValueOnce(jsonResponse(EXAM)) // GET exam
-      .mockResolvedValueOnce(jsonResponse({ // POST submit
+    mockAuthFetchSequence(vi.mocked(authFetch), [
+      jsonResponse(EXAM), // GET exam
+      jsonResponse({ // POST submit
         exam_id: 'exam-1', total: 1, correct: 1, wrong: 0, skipped: 0, ungraded: 0,
         marks: 2, max_marks: 2, accuracy: 1, by_topic: {}, late: false, recorded: true,
-      }));
+      }),
+    ]);
     await renderPage();
 
     fireEvent.click(screen.getByText('Start Mock Exam'));
@@ -86,7 +107,8 @@ describe('MockExamPage — MSQ', () => {
 
     fireEvent.click(screen.getByText('Submit Exam'));
 
-    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(2));
+    // topics (mount) + GET exam + POST submit = 3.
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(3));
     const submitCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/submit'));
     expect(submitCall).toBeDefined();
     const body = JSON.parse((submitCall![1] as RequestInit).body as string);
@@ -95,12 +117,13 @@ describe('MockExamPage — MSQ', () => {
 
   it('an untouched MSQ question submits as skipped, not a bogus empty selectedIndices', async () => {
     const { authFetch } = await import('@/lib/auth/client');
-    vi.mocked(authFetch)
-      .mockResolvedValueOnce(jsonResponse(EXAM))
-      .mockResolvedValueOnce(jsonResponse({
+    mockAuthFetchSequence(vi.mocked(authFetch), [
+      jsonResponse(EXAM),
+      jsonResponse({
         exam_id: 'exam-1', total: 1, correct: 0, wrong: 0, skipped: 1, ungraded: 0,
         marks: 0, max_marks: 2, accuracy: 0, by_topic: {}, late: false, recorded: true,
-      }));
+      }),
+    ]);
     await renderPage();
 
     fireEvent.click(screen.getByText('Start Mock Exam'));
@@ -108,7 +131,7 @@ describe('MockExamPage — MSQ', () => {
 
     fireEvent.click(screen.getByText('Submit Exam'));
 
-    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(3));
     const submitCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/submit'));
     const body = JSON.parse((submitCall![1] as RequestInit).body as string);
     expect(body.responses).toEqual([{ id: 'q-msq-1' }]);
@@ -149,12 +172,13 @@ const MCQ_EXAM = {
 describe('MockExamPage — timer expiry submits the real answer, not a stale skip', () => {
   it('an answer selected before expiry is what gets submitted when the clock runs out', async () => {
     const { authFetch } = await import('@/lib/auth/client');
-    vi.mocked(authFetch)
-      .mockResolvedValueOnce(jsonResponse(MCQ_EXAM)) // GET exam
-      .mockResolvedValueOnce(jsonResponse({ // POST submit
+    mockAuthFetchSequence(vi.mocked(authFetch), [
+      jsonResponse(MCQ_EXAM), // GET exam
+      jsonResponse({ // POST submit
         exam_id: 'exam-timer-1', total: 1, correct: 1, wrong: 0, skipped: 0, ungraded: 0,
         marks: 2, max_marks: 2, accuracy: 1, by_topic: {}, late: true, recorded: true,
-      }));
+      }),
+    ]);
     // Real timers throughout — see the identical note in
     // CheckpointQuizPage.test.tsx (the interval is registered by a
     // useEffect that fires during the render/click above, so switching
@@ -172,7 +196,8 @@ describe('MockExamPage — timer expiry submits the real answer, not a stale ski
     expect(radios[1]).toHaveAttribute('aria-checked', 'true');
 
     // Wait for the real countdown (2s) to expire and auto-submit.
-    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(2), { timeout: 4000 });
+    // topics (mount) + GET exam + POST submit = 3.
+    await waitFor(() => expect(authFetch).toHaveBeenCalledTimes(3), { timeout: 4000 });
     const submitCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/submit'));
     expect(submitCall).toBeDefined();
     const body = JSON.parse((submitCall![1] as RequestInit).body as string);
@@ -211,9 +236,9 @@ const MCQ_EXAM_LONG = {
 describe('MockExamPage — start failure renders in-page, never alert()', () => {
   it('shows the server error message inline and does not call window.alert', async () => {
     const { authFetch } = await import('@/lib/auth/client');
-    vi.mocked(authFetch).mockResolvedValueOnce(
-      jsonResponse({ error: 'mock exam unavailable — try again shortly' }, false)
-    );
+    mockAuthFetchSequence(vi.mocked(authFetch), [
+      jsonResponse({ error: 'mock exam unavailable — try again shortly' }, false),
+    ]);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
     await renderPage();
@@ -231,13 +256,14 @@ describe('MockExamPage — start failure renders in-page, never alert()', () => 
 describe('MockExamPage — submit failure keeps the exam intact for a retry', () => {
   it('renders an error inline, leaves the answer + exam in progress, and a retry succeeds', async () => {
     const { authFetch } = await import('@/lib/auth/client');
-    vi.mocked(authFetch)
-      .mockResolvedValueOnce(jsonResponse(MCQ_EXAM_LONG)) // GET exam succeeds
-      .mockResolvedValueOnce(jsonResponse({ error: 'mock exam unavailable — try again shortly' }, false)) // submit fails
-      .mockResolvedValueOnce(jsonResponse({ // retry submit succeeds
+    mockAuthFetchSequence(vi.mocked(authFetch), [
+      jsonResponse(MCQ_EXAM_LONG), // GET exam succeeds
+      jsonResponse({ error: 'mock exam unavailable — try again shortly' }, false), // submit fails
+      jsonResponse({ // retry submit succeeds
         exam_id: 'exam-submit-fail', total: 1, correct: 1, wrong: 0, skipped: 0, ungraded: 0,
         marks: 2, max_marks: 2, accuracy: 1, by_topic: {}, late: false, recorded: true,
-      }));
+      }),
+    ]);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
     await renderPage();
@@ -273,12 +299,99 @@ describe('MockExamPage — submit failure keeps the exam intact for a retry', ()
   });
 });
 
+// ────────────────────────────────────────────────────────────────────
+// C1 (topic-wise mocks) + C2 (exam-feel timing modes)
+// ────────────────────────────────────────────────────────────────────
+
+const TOPICS_RESPONSE = {
+  topics: [
+    { id: 'linear-algebra', name: 'Linear Algebra', weight: 0.15 },
+    { id: 'calculus', name: 'Calculus', weight: 0.15 },
+  ],
+};
+
+function mockAuthFetchWithTopics(authFetchMock: any, topics: unknown, rest: Response[]) {
+  let i = 0;
+  authFetchMock.mockImplementation(async (url: unknown) => {
+    if (String(url).includes('/mock-exam/topics')) return jsonResponse(topics);
+    const r = rest[Math.min(i, rest.length - 1)];
+    i++;
+    return r;
+  });
+}
+
+describe('MockExamPage — C1 topic-wise mocks', () => {
+  it('renders a chip per topic from the server, unselected by default (full syllabus)', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    mockAuthFetchWithTopics(vi.mocked(authFetch), TOPICS_RESPONSE, [jsonResponse(EXAM)]);
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('Linear Algebra')).toBeInTheDocument());
+    expect(screen.getByText('Calculus')).toBeInTheDocument();
+    expect(screen.getByText(/full syllabus/)).toBeInTheDocument();
+  });
+
+  it('selecting a topic appends it to the ?topics= query string on start', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    mockAuthFetchWithTopics(vi.mocked(authFetch), TOPICS_RESPONSE, [jsonResponse(EXAM)]);
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('Linear Algebra')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Linear Algebra'));
+    expect(screen.getByText(/1 selected/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Start Mock Exam'));
+    await waitFor(() => expect(screen.getByText('Which of the following are prime?')).toBeInTheDocument());
+
+    const genCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/mock-exam/') && !String(url).includes('/topics'));
+    expect(genCall).toBeDefined();
+    expect(String(genCall![0])).toContain('topics=linear-algebra');
+  });
+});
+
+describe('MockExamPage — C2 exam-feel timing modes', () => {
+  it('defaults to Standard and omits ?mode= from the start request', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    mockAuthFetchSequence(vi.mocked(authFetch), [jsonResponse(EXAM)]);
+    await renderPage();
+
+    fireEvent.click(screen.getByText('Start Mock Exam'));
+    await waitFor(() => expect(screen.getByText('Which of the following are prime?')).toBeInTheDocument());
+
+    const genCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/mock-exam/') && !String(url).includes('/topics'));
+    expect(String(genCall![0])).not.toContain('mode=');
+  });
+
+  it('selecting Rush sends ?mode=rush and the timer bar + results surface it', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    mockAuthFetchSequence(vi.mocked(authFetch), [
+      jsonResponse({ ...EXAM, timing_mode: 'rush', time_limit_minutes: 126 }),
+      jsonResponse({
+        exam_id: 'exam-1', total: 1, correct: 1, wrong: 0, skipped: 0, ungraded: 0,
+        marks: 2, max_marks: 2, accuracy: 1, by_topic: {}, late: false, timing_mode: 'rush', recorded: true,
+      }),
+    ]);
+    await renderPage();
+
+    fireEvent.click(screen.getByText('Rush'));
+    fireEvent.click(screen.getByText('Start Mock Exam'));
+    await waitFor(() => expect(screen.getByText('Which of the following are prime?')).toBeInTheDocument());
+
+    const genCall = vi.mocked(authFetch).mock.calls.find(([url]) => String(url).includes('/mock-exam/') && !String(url).includes('/topics'));
+    expect(String(genCall![0])).toContain('mode=rush');
+    expect(screen.getByText(/Rush/)).toBeInTheDocument(); // timer-bar chip
+
+    fireEvent.click(screen.getByText('Submit Exam'));
+    await waitFor(() => expect(screen.getByText('You did this under rush timing.')).toBeInTheDocument());
+  });
+});
+
 describe('MockExamPage — internals-looking messages fall back to a generic sentence', () => {
   it('never renders a raw exception string that starts with a bracketed module tag', async () => {
     const { authFetch } = await import('@/lib/auth/client');
-    vi.mocked(authFetch).mockResolvedValueOnce(
-      jsonResponse({ error: '[mock-exam-store] write failed: ECONNRESET' }, false)
-    );
+    mockAuthFetchSequence(vi.mocked(authFetch), [
+      jsonResponse({ error: '[mock-exam-store] write failed: ECONNRESET' }, false),
+    ]);
 
     await renderPage();
     fireEvent.click(screen.getByText('Start Mock Exam'));

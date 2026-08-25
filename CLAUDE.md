@@ -186,16 +186,19 @@ POST   /api/admin/suggestions/:id       action: 'launch' | 'dismiss'
 
 Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
 
-### First-time setup (run once after cloning)
+### First-time setup (run once per machine)
+Install gstack globally first, then wire it into the project:
 ```bash
-bash .claude/bootstrap-skills.sh
+git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+cd ~/.claude/skills/gstack && ./setup
+cd - && bash .claude/bootstrap-skills.sh
 ```
-This clones gstack, installs bun if needed, and wires all skill symlinks. After this, every `/skill-name` below is available as a Claude Code slash command.
+`bootstrap-skills.sh` detects the global `~/.claude/skills/gstack` install and symlinks it into `.claude/skills/gstack/` — no per-project clone needed. (If no global install is found, it falls back to cloning gstack locally and installing bun itself.) After this, every `/skill-name` below is available as a Claude Code slash command.
 
 ### Available gstack skills
 /office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review, /design-consultation, /design-shotgun, /design-html, /review, /ship, /land-and-deploy, /canary, /benchmark, /browse, /connect-chrome, /qa, /qa-only, /design-review, /setup-browser-cookies, /setup-deploy, /setup-gbrain, /retro, /investigate, /document-release, /document-generate, /codex, /cso, /autoplan, /plan-devex-review, /devex-review, /careful, /freeze, /guard, /unfreeze, /gstack-upgrade, /learn
 
-Skills are vendored at `.claude/skills/gstack/` (cloned from github.com/garrytan/gstack). All skill directories in `.claude/skills/<name>/SKILL.md` are relative symlinks into the vendored gstack. If a skill isn't resolving, re-run `bash .claude/bootstrap-skills.sh`.
+All skill directories in `.claude/skills/<name>/SKILL.md` are relative symlinks into `.claude/skills/gstack/` — itself either a symlink to the global install or a vendored clone (see setup above). If a skill isn't resolving, re-run `bash .claude/bootstrap-skills.sh`.
 
 ## GBrain MOAT Skills
 

@@ -10,7 +10,8 @@
     "question_inventory semantics: mcq_target + msq_target + nat_target == target_total. pyq_variant_target is an OVERLAY — the number of those items that should be authored as variants of real PYQs — not a fourth additive bucket.",
     "The intent distribution in this catalogue is structured research derived from query templates, NOT measured demand. Treat it as a routing hypothesis to be validated against real behavior; see the design doc.",
     "competitor_coverage_level and source_scope are reference-only research fields; the workbook itself marks competitor data \"verify before publication\".",
-    "LA prerequisite edges AT-005/009/019/021/022/024 were repaired against the concept graph (the research workbook chained each atom to its sequence predecessor, which inverted concept order in 6 places — caught by ci:intent-catalogue check A7)."
+    "LA prerequisite edges AT-005/009/019/021/022/024 were repaired against the concept graph (the research workbook chained each atom to its sequence predecessor, which inverted concept order in 6 places — caught by ci:intent-catalogue check A7).",
+    "2026-08-25 module mapping pass: all non-LA modules mapped onto the spine; spine extended with vector-algebra-basics, sampling-distributions, numerical-error-analysis (each backed by a >=2-atom cluster with no faithful existing home). AT-027, AT-099, AT-196 remain deliberately unmapped (single orphan atoms; see design doc mapping-ownership rule). 7 prerequisite edges repaired for concept-order consistency."
   ],
   "atoms": [
     {
@@ -1299,7 +1300,9 @@
       "prerequisite_atomic_ids": [
         "AT-027"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "limits"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1346,7 +1349,9 @@
       "prerequisite_atomic_ids": [
         "AT-028"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "limits"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1391,7 +1396,9 @@
       "prerequisite_atomic_ids": [
         "AT-029"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "limits"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1436,7 +1443,9 @@
       "prerequisite_atomic_ids": [
         "AT-030"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "limits"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1483,7 +1492,9 @@
       "prerequisite_atomic_ids": [
         "AT-031"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "continuity"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1530,7 +1541,9 @@
       "prerequisite_atomic_ids": [
         "AT-032"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "differentiability"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1577,7 +1590,9 @@
       "prerequisite_atomic_ids": [
         "AT-033"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "derivatives-basic"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1622,7 +1637,9 @@
       "prerequisite_atomic_ids": [
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "mean-value-theorems"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1667,7 +1684,9 @@
       "prerequisite_atomic_ids": [
         "AT-035"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "mean-value-theorems"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1711,7 +1730,9 @@
       "prerequisite_atomic_ids": [
         "AT-036"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "mean-value-theorems"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1756,7 +1777,9 @@
       "prerequisite_atomic_ids": [
         "AT-037"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1803,7 +1826,9 @@
       "prerequisite_atomic_ids": [
         "AT-038"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1849,7 +1874,9 @@
       "prerequisite_atomic_ids": [
         "AT-039"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multivariable-calculus"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 DA official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1893,7 +1920,9 @@
       "prerequisite_atomic_ids": [
         "AT-040"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multivariable-calculus"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EC official syllabus; GATE 2026 EE official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1938,7 +1967,9 @@
       "prerequisite_atomic_ids": [
         "AT-041"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multivariable-calculus"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -1983,7 +2014,9 @@
       "prerequisite_atomic_ids": [
         "AT-042"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multivariable-calculus"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2028,7 +2061,9 @@
       "prerequisite_atomic_ids": [
         "AT-043"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multivariable-calculus"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 DA official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2075,7 +2110,9 @@
       "prerequisite_atomic_ids": [
         "AT-044"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "maxima-minima"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2121,7 +2158,9 @@
       "prerequisite_atomic_ids": [
         "AT-045"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "maxima-minima"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 DA official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2167,7 +2206,10 @@
       "prerequisite_atomic_ids": [
         "AT-046"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "maxima-minima",
+        "multivariable-calculus"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 DA official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2212,7 +2254,9 @@
       "prerequisite_atomic_ids": [
         "AT-047"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "maxima-minima"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2253,7 +2297,9 @@
       "prerequisite_atomic_ids": [
         "AT-048"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "maxima-minima"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2298,7 +2344,9 @@
       "prerequisite_atomic_ids": [
         "AT-049"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "definite-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2339,7 +2387,9 @@
       "prerequisite_atomic_ids": [
         "AT-050"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "definite-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2386,7 +2436,9 @@
       "prerequisite_atomic_ids": [
         "AT-051"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "definite-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2430,7 +2482,9 @@
       "prerequisite_atomic_ids": [
         "AT-052"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "improper-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2470,9 +2524,11 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-053"
+        "AT-050"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "definite-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2514,7 +2570,9 @@
       "prerequisite_atomic_ids": [
         "AT-054"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "definite-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 CE official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2559,7 +2617,9 @@
       "prerequisite_atomic_ids": [
         "AT-055"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multiple-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2600,7 +2660,9 @@
       "prerequisite_atomic_ids": [
         "AT-056"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multiple-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 CE official syllabus"
     },
@@ -2642,7 +2704,9 @@
       "prerequisite_atomic_ids": [
         "AT-057"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "multiple-integrals"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 CE official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2679,10 +2743,10 @@
           "stretch": 20
         }
       },
-      "prerequisite_atomic_ids": [
-        "AT-058"
+      "prerequisite_atomic_ids": [],
+      "concept_ids": [
+        "sequences"
       ],
-      "concept_ids": [],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 XE-A official syllabus"
     },
@@ -2722,7 +2786,9 @@
       "prerequisite_atomic_ids": [
         "AT-059"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 XE-A official syllabus"
     },
@@ -2762,7 +2828,9 @@
       "prerequisite_atomic_ids": [
         "AT-060"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 XE-A official syllabus"
     },
@@ -2805,7 +2873,9 @@
       "prerequisite_atomic_ids": [
         "AT-061"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "fourier-series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2848,7 +2918,9 @@
       "prerequisite_atomic_ids": [
         "AT-062"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "fourier-series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -2890,7 +2962,9 @@
       "prerequisite_atomic_ids": [
         "AT-063"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "fourier-series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus"
     },
@@ -2931,7 +3005,9 @@
       "prerequisite_atomic_ids": [
         "AT-064"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "fourier-series"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus"
     },
@@ -2974,7 +3050,9 @@
         }
       },
       "prerequisite_atomic_ids": [],
-      "concept_ids": [],
+      "concept_ids": [
+        "vector-algebra-basics"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3019,7 +3097,9 @@
       "prerequisite_atomic_ids": [
         "AT-066"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "vector-algebra-basics"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3064,7 +3144,9 @@
       "prerequisite_atomic_ids": [
         "AT-067"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "vector-fields"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3112,7 +3194,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "vector-fields"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3160,7 +3244,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3208,7 +3294,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3253,7 +3341,9 @@
       "prerequisite_atomic_ids": [
         "AT-071"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3301,7 +3391,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "line-integrals"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3349,7 +3441,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "surface-integrals"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3394,7 +3488,9 @@
       "prerequisite_atomic_ids": [
         "AT-074"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "gauss-divergence"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3442,7 +3538,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "greens-theorem"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3489,7 +3587,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "stokes-theorem"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3536,7 +3636,9 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "gauss-divergence"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3584,7 +3686,11 @@
         "AT-067",
         "AT-068"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "stokes-theorem",
+        "gauss-divergence",
+        "greens-theorem"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3629,7 +3735,9 @@
       "prerequisite_atomic_ids": [
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-first-order"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3675,7 +3783,9 @@
         "AT-080",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-first-order"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3718,7 +3828,9 @@
         "AT-081",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-first-order"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3763,7 +3875,9 @@
         "AT-082",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-bernoulli"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3807,7 +3921,9 @@
         "AT-083",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-exact"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus"
     },
@@ -3853,7 +3969,9 @@
         "AT-084",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-bernoulli"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3899,7 +4017,9 @@
         "AT-085",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-homo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3945,7 +4065,9 @@
         "AT-086",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-homo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -3990,7 +4112,9 @@
         "AT-087",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4035,7 +4159,9 @@
         "AT-088",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4080,7 +4206,9 @@
         "AT-089",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4125,7 +4253,9 @@
         "AT-090",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4171,7 +4301,9 @@
         "AT-091",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-higher-order"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4213,10 +4345,12 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-092",
+        "AT-091",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4255,10 +4389,12 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-093",
+        "AT-087",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-homo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4299,7 +4435,9 @@
         "AT-094",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-homo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 XE-A official syllabus"
     },
@@ -4345,7 +4483,9 @@
         "AT-095",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4391,7 +4531,9 @@
         "AT-096",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "pde-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4432,7 +4574,9 @@
         "AT-097",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "pde-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 XE-A official syllabus"
     },
@@ -4470,7 +4614,7 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-098",
+        "AT-095",
         "AT-034"
       ],
       "concept_ids": [],
@@ -4514,7 +4658,9 @@
         "AT-099",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "pde-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 XE-A official syllabus"
     },
@@ -4560,7 +4706,9 @@
         "AT-100",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "pde-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4603,7 +4751,9 @@
         "AT-101",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "pde-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4646,7 +4796,9 @@
         "AT-102",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "pde-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4689,7 +4841,9 @@
         "AT-103",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "pde-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4733,7 +4887,9 @@
         "AT-104",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "laplace-transform"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus"
     },
@@ -4777,7 +4933,9 @@
         "AT-105",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "inverse-laplace"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus"
     },
@@ -4820,7 +4978,10 @@
         "AT-106",
         "AT-034"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "inverse-laplace",
+        "laplace-applications"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus"
     },
@@ -4862,7 +5023,9 @@
         }
       },
       "prerequisite_atomic_ids": [],
-      "concept_ids": [],
+      "concept_ids": [
+        "complex-numbers"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4906,7 +5069,9 @@
       "prerequisite_atomic_ids": [
         "AT-108"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "complex-numbers"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4950,7 +5115,9 @@
       "prerequisite_atomic_ids": [
         "AT-109"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "complex-numbers"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -4994,7 +5161,9 @@
       "prerequisite_atomic_ids": [
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "complex-numbers"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5040,7 +5209,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "analytic-functions"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5086,7 +5257,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "analytic-functions"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5132,7 +5305,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "analytic-functions"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5178,7 +5353,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "analytic-functions"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5224,7 +5401,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "complex-integration"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5270,7 +5449,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "complex-integration"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5314,7 +5495,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "taylor-laurent"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 EC official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5358,7 +5541,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "taylor-laurent"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 EC official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5404,7 +5589,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "taylor-laurent"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5450,7 +5637,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "taylor-laurent"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5495,7 +5684,10 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "residue-calculus",
+        "taylor-laurent"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus"
     },
@@ -5540,7 +5732,9 @@
         "AT-108",
         "AT-110"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "residue-calculus"
+      ],
       "competitor_coverage_level": "Medium-High",
       "source_scope": "GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus"
     },
@@ -5579,7 +5773,9 @@
         }
       },
       "prerequisite_atomic_ids": [],
-      "concept_ids": [],
+      "concept_ids": [
+        "counting-principles"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 EC official syllabus"
     },
@@ -5626,7 +5822,9 @@
       "prerequisite_atomic_ids": [
         "AT-124"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "probability-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5673,7 +5871,9 @@
       "prerequisite_atomic_ids": [
         "AT-125"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "probability-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5714,7 +5914,9 @@
       "prerequisite_atomic_ids": [
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "probability-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -5761,7 +5963,9 @@
       "prerequisite_atomic_ids": [
         "AT-127"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "probability-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 CS official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5808,7 +6012,9 @@
       "prerequisite_atomic_ids": [
         "AT-128"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "probability-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5857,7 +6063,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "probability-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5906,7 +6114,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "probability-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -5949,7 +6159,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "joint-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 EC official syllabus"
     },
@@ -5991,7 +6203,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "joint-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6033,7 +6247,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "joint-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6078,11 +6294,13 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-134",
+        "AT-129",
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "random-variables"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6131,7 +6349,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "random-variables"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6173,7 +6393,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "random-variables"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6215,7 +6437,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "random-variables"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6264,7 +6488,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "random-variables"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6313,7 +6539,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "random-variables"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6362,7 +6590,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "random-variables"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6404,7 +6634,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "discrete-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6453,7 +6685,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "discrete-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6502,7 +6736,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "discrete-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6545,7 +6781,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "continuous-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -6593,7 +6831,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "continuous-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6642,7 +6882,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "continuous-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6691,7 +6933,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "continuous-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 CS official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6733,7 +6977,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sampling-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6775,7 +7021,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sampling-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6823,7 +7071,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sampling-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -6865,7 +7115,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sampling-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6907,7 +7159,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "hypothesis-testing"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6949,7 +7203,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "hypothesis-testing"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -6991,7 +7247,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "hypothesis-testing"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -7033,7 +7291,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "hypothesis-testing"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus"
     },
@@ -7077,7 +7337,10 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "regression-correlation",
+        "joint-distributions"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 EE official syllabus; GATE 2026 EC official syllabus"
     },
@@ -7121,7 +7384,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "regression-correlation"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 EE official syllabus; GATE 2026 CE official syllabus"
     },
@@ -7165,7 +7430,9 @@
         "AT-125",
         "AT-126"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "regression-correlation"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 CE official syllabus; GATE 2026 EE official syllabus"
     },
@@ -7206,7 +7473,9 @@
         }
       },
       "prerequisite_atomic_ids": [],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-error-analysis"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7249,7 +7518,9 @@
       "prerequisite_atomic_ids": [
         "AT-160"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-error-analysis"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7291,7 +7562,9 @@
       "prerequisite_atomic_ids": [
         "AT-161"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-error-analysis"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 IN official syllabus"
     },
@@ -7332,7 +7605,9 @@
       "prerequisite_atomic_ids": [
         "AT-162"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-linear-algebra"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7376,7 +7651,9 @@
       "prerequisite_atomic_ids": [
         "AT-163"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-linear-algebra"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 DA official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus; GATE 2026 CE official syllabus; GATE 2026 ME official syllabus"
     },
@@ -7417,7 +7694,9 @@
       "prerequisite_atomic_ids": [
         "AT-164"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-linear-algebra"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 IN official syllabus; GATE 2026 DA official syllabus"
     },
@@ -7460,7 +7739,9 @@
       "prerequisite_atomic_ids": [
         "AT-165"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "root-finding"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7503,7 +7784,9 @@
       "prerequisite_atomic_ids": [
         "AT-166"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "root-finding"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 IN official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7545,7 +7828,9 @@
       "prerequisite_atomic_ids": [
         "AT-167"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "root-finding"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 IN official syllabus"
     },
@@ -7586,7 +7871,9 @@
       "prerequisite_atomic_ids": [
         "AT-168"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "interpolation"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7627,7 +7914,9 @@
       "prerequisite_atomic_ids": [
         "AT-169"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "interpolation"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7668,7 +7957,9 @@
       "prerequisite_atomic_ids": [
         "AT-170"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "interpolation"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 IN official syllabus"
     },
@@ -7710,7 +8001,9 @@
       "prerequisite_atomic_ids": [
         "AT-171"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-integration"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7752,7 +8045,9 @@
       "prerequisite_atomic_ids": [
         "AT-172"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-integration"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7793,7 +8088,9 @@
       "prerequisite_atomic_ids": [
         "AT-173"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-integration"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus"
     },
@@ -7834,7 +8131,9 @@
       "prerequisite_atomic_ids": [
         "AT-174"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-ode"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 XE-A official syllabus"
     },
@@ -7874,7 +8173,9 @@
       "prerequisite_atomic_ids": [
         "AT-175"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-ode"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 ME official syllabus"
     },
@@ -7915,7 +8216,9 @@
       "prerequisite_atomic_ids": [
         "AT-176"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "numerical-ode"
+      ],
       "competitor_coverage_level": "Medium",
       "source_scope": "GATE 2026 CE official syllabus; GATE 2026 ME official syllabus"
     },
@@ -7954,7 +8257,9 @@
         }
       },
       "prerequisite_atomic_ids": [],
-      "concept_ids": [],
+      "concept_ids": [
+        "propositional-logic"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -7996,7 +8301,9 @@
         "AT-178",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "propositional-logic"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -8038,7 +8345,9 @@
         "AT-179",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "propositional-logic"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -8080,7 +8389,9 @@
         "AT-180",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "propositional-logic"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -8122,7 +8433,9 @@
         "AT-181",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "propositional-logic"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -8164,7 +8477,9 @@
         "AT-182",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "propositional-logic"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus; GATE 2026 DA official syllabus"
     },
@@ -8205,7 +8520,9 @@
         "AT-183",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sets-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8246,7 +8563,9 @@
         "AT-184",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sets-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8287,7 +8606,9 @@
         "AT-185",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sets-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8328,7 +8649,9 @@
         "AT-186",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sets-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8369,7 +8692,9 @@
         "AT-187",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "functions-combinatorics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8410,7 +8735,9 @@
         "AT-188",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "functions-combinatorics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8448,10 +8775,12 @@
         }
       },
       "prerequisite_atomic_ids": [
-        "AT-189",
+        "AT-187",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sets-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8492,7 +8821,9 @@
         "AT-190",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "sets-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8533,7 +8864,9 @@
         "AT-191",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "group-theory-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8574,7 +8907,9 @@
         "AT-192",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "group-theory-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8615,7 +8950,9 @@
         "AT-193",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "graph-basics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8656,7 +8993,9 @@
         "AT-194",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "graph-connectivity"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8738,7 +9077,9 @@
         "AT-196",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "graph-coloring"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8779,7 +9120,9 @@
         "AT-197",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "functions-combinatorics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8820,7 +9163,9 @@
         "AT-198",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "functions-combinatorics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8861,7 +9206,9 @@
         "AT-199",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "functions-combinatorics"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8902,7 +9249,9 @@
         "AT-200",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "recurrence-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8943,7 +9292,9 @@
         "AT-201",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "recurrence-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     },
@@ -8984,7 +9335,9 @@
         "AT-202",
         "AT-178"
       ],
-      "concept_ids": [],
+      "concept_ids": [
+        "recurrence-relations"
+      ],
       "competitor_coverage_level": "High",
       "source_scope": "GATE 2026 CS official syllabus"
     }

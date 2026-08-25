@@ -1,0 +1,1189 @@
+{
+ "version": 1,
+ "_comment": "GATE-MA calculus practice bank (foundations + differentiation): sequences..maxima-minima. Authored 2026-08-25 via the dual-independent-solve protocol: Sonnet authoring with two-method cross-checks, independent blind second-solve by separate agents (128/130 first-pass agreement across the full batch), disagreements arbitrated and corrected, Wolfram spot-checks on a NAT sample. Graded by the deterministic scorer via ci:practice-items.",
+ "items": [
+  {
+   "id": "pi-sequences-001",
+   "concept_id": "sequences",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Find lim_{n→∞} a_n where a_n = (2n² + 3)/(n² + 5n).",
+   "options": [
+    "2",
+    "0",
+    "∞",
+    "2/5"
+   ],
+   "answer_index": 0,
+   "correct_answer": "2",
+   "solution_steps": [
+    "Method 1 (divide by highest power of n): divide numerator and denominator by n²: a_n = (2 + 3/n²)/(1 + 5/n). As n→∞, 3/n²→0 and 5/n→0, so a_n → 2/1 = 2.",
+    "Method 2 (leading-coefficient shortcut, cross-check): for a rational sequence where numerator and denominator have the SAME degree in n, the limit equals the ratio of the leading coefficients: 2/1 = 2. Matches Method 1 exactly.",
+    "Option '0' is the trap for treating this like a case where the denominator's degree is higher (it isn't — both are degree 2). '∞' is the trap for treating it like the numerator's degree is higher. '2/5' comes from wrongly taking the ratio of the n-coefficients (0 and 5) instead of the n²-coefficients."
+   ],
+   "verification_method": "hand_checkable_rational_sequence_limit"
+  },
+  {
+   "id": "pi-sequences-002",
+   "concept_id": "sequences",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "A sequence is defined by a_1 = 1, a_{n+1} = (a_n + 3)/2. Assuming the sequence converges, find its limit L.",
+   "answer_range": [
+    2.985,
+    3.015
+   ],
+   "correct_answer": "3",
+   "solution_steps": [
+    "Method 1 (fixed point of the recursion): if a_n → L, then a_{n+1} → L too, so L must satisfy L = (L+3)/2. Solving: 2L = L + 3, so L = 3.",
+    "Justify convergence first (monotone bounded): a_1=1 < a_2=2 < a_3=2.5 < ... is increasing, and induction shows a_n < 3 for all n (if a_n<3 then a_{n+1}=(a_n+3)/2 < (3+3)/2=3), so by the Monotone Convergence Theorem the sequence converges — the fixed-point equation is valid to use.",
+    "Method 2 (direct computation, cross-check): a_1=1, a_2=2, a_3=2.5, a_4=2.75, a_5=2.875, a_6=2.9375 — clearly approaching 3, confirming L=3."
+   ],
+   "verification_method": "hand_checkable_recursive_sequence_fixed_point"
+  },
+  {
+   "id": "pi-sequences-003",
+   "concept_id": "sequences",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Consider the sequence a_n = (-1)^n · n/(n+1). Which statement about it is correct?",
+   "options": [
+    "The sequence converges to 0",
+    "The sequence is bounded but does not converge — it oscillates, with even-indexed terms approaching 1 and odd-indexed terms approaching -1",
+    "The sequence diverges to infinity",
+    "The sequence converges to 1"
+   ],
+   "answer_index": 1,
+   "correct_answer": "The sequence is bounded but does not converge — it oscillates, with even-indexed terms approaching 1 and odd-indexed terms approaching -1",
+   "solution_steps": [
+    "Method 1 (subsequence approach): for even n, a_n = n/(n+1) → 1. For odd n, a_n = -n/(n+1) → -1. Since two subsequences converge to different limits (1 and -1), the full sequence does NOT converge.",
+    "Boundedness: |a_n| = n/(n+1) < 1 for every n, so the sequence IS bounded — this rules out 'diverges to infinity'.",
+    "Method 2 (Cauchy criterion, cross-check): a Cauchy sequence must converge (completeness of ℝ), so if we show {a_n} is not Cauchy, it cannot converge. Take even n=2k and odd n=2k+1 for large k: a_{2k} ≈ 1 and a_{2k+1} ≈ -1, so |a_{2k} - a_{2k+1}| ≈ 2, which does not shrink to 0 — not Cauchy, confirming non-convergence.",
+    "This kills the common trap of assuming 'bounded implies convergent' — boundedness alone is not sufficient; the sequence must also settle to a single value."
+   ],
+   "verification_method": "hand_checkable_bounded_not_convergent"
+  },
+  {
+   "id": "pi-sequences-004",
+   "concept_id": "sequences",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about sequences of real numbers are always true?",
+   "options": [
+    "Every convergent sequence is bounded",
+    "Every bounded sequence converges",
+    "A monotonically increasing sequence that is bounded above must converge",
+    "Every Cauchy sequence of real numbers converges",
+    "If some subsequence of {a_n} converges, then {a_n} itself must converge"
+   ],
+   "answer_indices": [
+    0,
+    2,
+    3
+   ],
+   "correct_answer": "Convergent sequences are bounded; monotone bounded sequences converge; Cauchy sequences of reals converge",
+   "solution_steps": [
+    "(a) TRUE: if a_n → L, then for ε=1, all but finitely many terms lie within (L-1, L+1); the finitely many remaining terms are automatically bounded, so the whole sequence is bounded.",
+    "(b) FALSE: a_n = (-1)^n is bounded (|a_n|=1) but oscillates between 1 and -1 forever — never converges. (See pi-sequences-003 for a non-trivial version of this same trap.)",
+    "(c) TRUE: this is the Monotone Convergence Theorem — used directly in pi-sequences-002 to justify that the recursive sequence there actually converges before solving its fixed-point equation.",
+    "(d) TRUE: this is the completeness property of ℝ — every Cauchy sequence of real numbers converges (to a real number). This is exactly why the Cauchy test in pi-sequences-003 was valid evidence of non-convergence: that sequence failed to be Cauchy.",
+    "(e) FALSE: a_n = (-1)^n has the subsequence a_2, a_4, a_6, ... = 1, 1, 1, ... which converges to 1, but the full sequence {a_n} does not converge (it keeps oscillating) — a convergent subsequence does not force the whole sequence to converge."
+   ],
+   "verification_method": "hand_checkable_sequence_convergence_properties"
+  },
+  {
+   "id": "pi-sequences-005",
+   "concept_id": "sequences",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "A sequence is defined by a_1 = 1, a_{n+1} = √(2 + a_n). Assuming the sequence converges, find its limit.",
+   "answer_range": [
+    1.99,
+    2.01
+   ],
+   "correct_answer": "2",
+   "solution_steps": [
+    "Method 1 (fixed point): if a_n → L, then L = √(2+L). Squaring: L² = 2 + L, so L² - L - 2 = 0, i.e. (L-2)(L+1) = 0, giving L = 2 or L = -1. Since every term is a square root (hence ≥0), L cannot be -1, so L = 2.",
+    "Justify convergence: a_1=1 < a_2=√3≈1.732 < 2, and induction shows the sequence is increasing and bounded above by 2 (if a_n<2, then a_{n+1}=√(2+a_n)<√4=2), so it converges by the Monotone Convergence Theorem.",
+    "Method 2 (direct computation, cross-check): a_1=1, a_2=√3≈1.732, a_3=√3.732≈1.932, a_4=√3.932≈1.983, a_5≈1.996 — clearly approaching 2, confirming L=2."
+   ],
+   "verification_method": "hand_checkable_recursive_sqrt_sequence"
+  },
+  {
+   "id": "pi-series-001",
+   "concept_id": "series",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Which of the following series converges?",
+   "options": [
+    "Σ (1/n), n=1 to ∞",
+    "Σ (1/n²), n=1 to ∞",
+    "Σ (1/√n), n=1 to ∞",
+    "Σ (n/(n+1)), n=1 to ∞"
+   ],
+   "answer_index": 1,
+   "correct_answer": "Σ (1/n²), n=1 to ∞",
+   "solution_steps": [
+    "Method 1 (p-series test): Σ1/n^p converges iff p>1. Here p=2>1, so Σ1/n² converges.",
+    "Method 2 (integral test, cross-check): ∫₁^∞ x⁻² dx = [-1/x]₁^∞ = 0-(-1) = 1, a finite value, confirming convergence.",
+    "Σ1/n is the harmonic series (p=1): ∫₁^∞ (1/x)dx = [ln x]₁^∞ = ∞, diverges — this is the classic 'p=1 boundary' trap.",
+    "Σ1/√n has p=1/2<1, diverges by the same p-series test. Σ n/(n+1) diverges because its terms tend to 1 (not 0) — violates the necessary condition that terms of a convergent series must →0, so it fails immediately without needing any deeper test."
+   ],
+   "verification_method": "hand_checkable_p_series_and_integral_test"
+  },
+  {
+   "id": "pi-series-002",
+   "concept_id": "series",
+   "topic": "calculus",
+   "difficulty": 0.45,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Find the sum of the infinite geometric series Σ_{n=0}^∞ (1/3)^n.",
+   "answer_range": [
+    1.49,
+    1.51
+   ],
+   "correct_answer": "1.5",
+   "solution_steps": [
+    "Method 1 (geometric series formula): for Σ_{n=0}^∞ ar^n with |r|<1, the sum is a/(1-r). Here a=1, r=1/3, so sum = 1/(1-1/3) = 1/(2/3) = 3/2.",
+    "Method 2 (partial sums, cross-check): S_N = (1-(1/3)^{N+1})/(1-1/3). S_0=1, S_1=1.333, S_2=1.444, S_3=1.481, S_4≈1.494 — clearly approaching 1.5, confirming the sum is 3/2 = 1.5."
+   ],
+   "verification_method": "hand_checkable_geometric_series_sum"
+  },
+  {
+   "id": "pi-series-003",
+   "concept_id": "series",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Determine the convergence behavior of Σ_{n=1}^∞ n!/n^n.",
+   "options": [
+    "Converges — the ratio test gives limit 1/e < 1",
+    "Diverges — the ratio test gives limit e > 1",
+    "Converges — the ratio test gives limit 0",
+    "The ratio test is inconclusive here (limit equals 1)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "Converges — the ratio test gives limit 1/e < 1",
+   "solution_steps": [
+    "Method 1 (ratio test): a_{n+1}/a_n = [(n+1)!/(n+1)^{n+1}] · [n^n/n!] = (n+1)·n^n / (n+1)^{n+1} = n^n/(n+1)^n = 1/(1+1/n)^n. As n→∞, (1+1/n)^n → e, so the ratio → 1/e ≈ 0.368 < 1, hence the series converges.",
+    "Method 2 (root test, cross-check): using Stirling's approximation n! ~ √(2πn)·(n/e)^n, we get (a_n)^{1/n} = (n!)^{1/n}/n ~ (2πn)^{1/(2n)}·(n/e)/n → 1·(1/e) = 1/e as n→∞ (since (2πn)^{1/(2n)}→1). This matches the ratio test's limit exactly, as expected since lim a_{n+1}/a_n = lim (a_n)^{1/n} whenever the ratio limit exists.",
+    "Option (b)'s trap comes from inverting the ratio (computing a_n/a_{n+1} instead of a_{n+1}/a_n) and getting e instead of 1/e. Option (d)'s trap is forgetting that (1+1/n)^n has a genuine limit (e), not that the expression stays at 1."
+   ],
+   "verification_method": "hand_checkable_ratio_test_factorial_series"
+  },
+  {
+   "id": "pi-series-004",
+   "concept_id": "series",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following series converge?",
+   "options": [
+    "Σ (-1)^n / n, n=1 to ∞",
+    "Σ 1/(n ln n), n=2 to ∞",
+    "Σ 1/n!, n=1 to ∞",
+    "Σ n/2^n, n=1 to ∞",
+    "Σ 1/n^0.99, n=1 to ∞"
+   ],
+   "answer_indices": [
+    0,
+    2,
+    3
+   ],
+   "correct_answer": "Σ(-1)^n/n converges (conditionally); Σ1/n! converges; Σn/2^n converges",
+   "solution_steps": [
+    "(a) TRUE (converges, conditionally): the terms 1/n decrease monotonically to 0, so the Alternating Series Test applies directly.",
+    "(b) FALSE (diverges): by the integral test, ∫₂^∞ dx/(x ln x) = [ln(ln x)]₂^∞ = ∞ (substitute u=ln x, du=dx/x). This is a classic 'looks like it should converge' trap — the extra ln n factor is not enough to force convergence.",
+    "(c) TRUE (converges): ratio test gives a_{n+1}/a_n = n!/(n+1)! = 1/(n+1) → 0 < 1.",
+    "(d) TRUE (converges): ratio test gives a_{n+1}/a_n = [(n+1)/2^{n+1}]·[2^n/n] = (n+1)/(2n) → 1/2 < 1.",
+    "(e) FALSE (diverges): this is a p-series with p=0.99 < 1, so it diverges — the trap is that 0.99 looks 'close enough to 1' to feel convergent, but the p-series test has a hard cutoff exactly at p=1."
+   ],
+   "verification_method": "hand_checkable_series_convergence_tests"
+  },
+  {
+   "id": "pi-series-005",
+   "concept_id": "series",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Find the sum of the telescoping series Σ_{n=1}^∞ 1/(n(n+1)).",
+   "answer_range": [
+    0.99,
+    1.01
+   ],
+   "correct_answer": "1",
+   "solution_steps": [
+    "Method 1 (partial fractions + telescoping): 1/(n(n+1)) = 1/n - 1/(n+1). The partial sum S_N = Σ_{n=1}^N [1/n - 1/(n+1)] telescopes: all interior terms cancel, leaving S_N = 1 - 1/(N+1). As N→∞, 1/(N+1)→0, so S_N → 1.",
+    "Method 2 (direct partial sums, cross-check): first few terms are 1/2, 1/6, 1/12, 1/20, summing to 0.5+0.1667+0.0833+0.05 = 0.8, and continuing to add smaller positive terms clearly approaches 1, consistent with the closed-form S_N = 1-1/(N+1)."
+   ],
+   "verification_method": "hand_checkable_telescoping_series_sum"
+  },
+  {
+   "id": "pi-limits-001",
+   "concept_id": "limits",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate lim_{x→0} sin(3x)/x.",
+   "options": [
+    "3",
+    "1/3",
+    "0",
+    "∞"
+   ],
+   "answer_index": 0,
+   "correct_answer": "3",
+   "solution_steps": [
+    "Method 1 (standard limit form): write sin(3x)/x = 3·[sin(3x)/(3x)]. Let u=3x; as x→0, u→0, and sin(u)/u → 1 (the standard limit). So the expression → 3·1 = 3.",
+    "Method 2 (L'Hôpital's rule, cross-check): the limit is 0/0. Differentiate numerator and denominator: d/dx[sin(3x)] = 3cos(3x), d/dx[x] = 1. So the limit = 3cos(0)/1 = 3·1 = 3. Matches Method 1.",
+    "The trap for '1/3' is inverting the coefficient (confusing sin(3x)/x with sin(x)/(3x)). '0' comes from naively plugging x=0 into sin(3x)/x without recognizing the 0/0 indeterminate form needs resolving first."
+   ],
+   "verification_method": "hand_checkable_standard_sine_limit"
+  },
+  {
+   "id": "pi-limits-002",
+   "concept_id": "limits",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate lim_{x→0} (e^{2x} - 1)/x.",
+   "answer_range": [
+    1.99,
+    2.01
+   ],
+   "correct_answer": "2",
+   "solution_steps": [
+    "Method 1 (standard limit form): (e^{kx}-1)/x → k as x→0 (a standard limit derived from the exponential series e^{kx}=1+kx+(kx)²/2!+... , so (e^{kx}-1)/x = k + k²x/2! + ... → k). Here k=2, so the limit is 2.",
+    "Method 2 (L'Hôpital's rule, cross-check): the form is 0/0. d/dx[e^{2x}-1] = 2e^{2x}, d/dx[x] = 1. Limit = 2e^0/1 = 2. Matches Method 1."
+   ],
+   "verification_method": "hand_checkable_standard_exponential_limit"
+  },
+  {
+   "id": "pi-limits-003",
+   "concept_id": "limits",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate lim_{x→0} (1 - cos x)/x².",
+   "options": [
+    "1/2",
+    "-1/2 (sign error from differentiating -cos x incorrectly)",
+    "1 (stopping after one application of L'Hôpital's rule and misreading the result)",
+    "0 (plugging x=0 directly into the 0/0 form without resolving it)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "1/2",
+   "solution_steps": [
+    "Method 1 (Taylor expansion): cos x = 1 - x²/2 + x⁴/24 - ..., so 1-cos x = x²/2 - x⁴/24 + ... . Dividing by x²: 1/2 - x²/24 + ... → 1/2 as x→0.",
+    "Method 2 (L'Hôpital's rule twice, cross-check): the form is 0/0. First application: d/dx(1-cos x)=sin x, d/dx(x²)=2x, giving sin x/(2x), which is AGAIN 0/0 at x=0 — a second application is required, not optional. Second application: d/dx(sin x)=cos x, d/dx(2x)=2, giving cos x/2 → cos(0)/2 = 1/2. Matches Method 1.",
+    "This item targets the exact trap named in the module's pain profile: stopping L'Hôpital too early. Option (c) represents exactly that mistake — treating sin x/(2x) as already resolved instead of recognizing it's still 0/0 and differentiating again. Option (d) skips the indeterminate-form check entirely. Option (b) is a pure sign slip in the derivative of cos x."
+   ],
+   "verification_method": "hand_checkable_lhopital_repeated_application"
+  },
+  {
+   "id": "pi-limits-004",
+   "concept_id": "limits",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "For lim_{x→a} f(x)/g(x) where f(x)→0 and g(x)→0 as x→a (a 0/0 indeterminate form), which of the following statements are true?",
+   "options": [
+    "L'Hôpital's rule can be applied provided f and g are differentiable near a (except possibly at a) and g'(x)≠0 near a",
+    "If lim f'(x)/g'(x) fails to exist, then the original limit lim f(x)/g(x) must also fail to exist",
+    "L'Hôpital's rule can be applied repeatedly, as long as each successive application still yields a 0/0 or ∞/∞ form",
+    "Every 0/0 indeterminate form can always be resolved using L'Hôpital's rule alone, with no algebraic rewriting needed",
+    "If lim f(x)/g(x) exists, then lim f'(x)/g'(x) must also exist"
+   ],
+   "answer_indices": [
+    0,
+    2
+   ],
+   "correct_answer": "Hypothesis conditions required; repeated application valid on successive indeterminate forms",
+   "solution_steps": [
+    "(a) TRUE: this is precisely L'Hôpital's rule's hypothesis — differentiability near (not necessarily at) a, with g' nonzero near a, plus the 0/0 (or ∞/∞) form.",
+    "(b) FALSE: this is the converse of L'Hôpital's rule, which does NOT hold. Counterexample: f(x)=x²sin(1/x), g(x)=x as x→a=0. f(x)/g(x) = x sin(1/x) → 0 by the squeeze theorem (|x sin(1/x)| ≤ |x| → 0), so the original limit exists and equals 0. But f'(x)=2x sin(1/x) - cos(1/x), g'(x)=1, so f'(x)/g'(x) = 2x sin(1/x) - cos(1/x), which oscillates between -1 and 1 as x→0 and never settles — the derivative-ratio limit does not exist, even though the original limit does.",
+    "(c) TRUE: this is exactly the mechanism used in pi-limits-003, where a single application left sin x/(2x) still in 0/0 form, requiring a second application.",
+    "(d) FALSE: L'Hôpital's rule directly applies only to 0/0 and ∞/∞ forms. Other indeterminate forms like 0·∞ or 1^∞ must FIRST be algebraically rewritten into a 0/0 or ∞/∞ form before it can be used — e.g. lim_{x→0+} x ln x (a 0·∞ form) must be rewritten as lim (ln x)/(1/x) (an ∞/∞ form) before applying L'Hôpital.",
+    "(e) TRUE: for f(x)=sin x, g(x)=x, f(0)=g(0)=0 (0/0 form), and f'(x)/g'(x) = cos x/1 → cos(0) = 1 as x→0 — this reproduces the standard limit exactly, and is used directly in pi-limits-001's cross-check.",
+    "Option 4 is the CONVERSE of L'Hôpital and is false: for f(x)=x²sin(1/x), g(x)=x, lim f/g = 0 exists, but f'(x)/g'(x) = 2x sin(1/x) − cos(1/x) has no limit as x→0. (An earlier draft claimed sin x/x is 'derivable via L'Hôpital' — dropped as pedagogically circular: the derivative of sin is itself established using that limit.)"
+   ],
+   "verification_method": "hand_checkable_lhopital_hypotheses_and_converse"
+  },
+  {
+   "id": "pi-limits-005",
+   "concept_id": "limits",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate lim_{x→∞} (3x² + 2x - 1)/(2x² - x + 5).",
+   "answer_range": [
+    1.49,
+    1.51
+   ],
+   "correct_answer": "1.5",
+   "solution_steps": [
+    "Method 1 (divide by highest power of x): divide numerator and denominator by x²: (3 + 2/x - 1/x²)/(2 - 1/x + 5/x²). As x→∞, all the 1/x and 1/x² terms vanish, leaving 3/2.",
+    "Method 2 (L'Hôpital's rule, cross-check): the form is ∞/∞. Differentiate once: (6x+2)/(4x-1), still ∞/∞ as x→∞, so differentiate again: 6/4 = 3/2. Matches Method 1.",
+    "Both methods rely on the same underlying fact for degree-equal rational functions: the limit at infinity equals the ratio of the leading coefficients, 3/2 = 1.5."
+   ],
+   "verification_method": "hand_checkable_rational_function_limit_at_infinity"
+  },
+  {
+   "id": "pi-continuity-001",
+   "concept_id": "continuity",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x) = (x² - 4)/(x - 2) for x ≠ 2, and f(2) = k. For what value of k is f continuous at x = 2?",
+   "options": [
+    "k = 4",
+    "k = 2",
+    "k = 0",
+    "No value of k makes f continuous at x = 2"
+   ],
+   "answer_index": 0,
+   "correct_answer": "k = 4",
+   "solution_steps": [
+    "Method 1 (factor and cancel): for x≠2, (x²-4)/(x-2) = (x-2)(x+2)/(x-2) = x+2. So lim_{x→2} f(x) = 2+2 = 4. For continuity, we need f(2) = this limit, so k = 4.",
+    "Method 2 (numerical approach, cross-check): at x=1.9, f = (3.61-4)/(-0.1) = 3.9; at x=2.1, f = (4.41-4)/(0.1) = 4.1. Both are approaching 4 as x→2 from either side, confirming k=4.",
+    "This is a removable discontinuity: the limit exists (4) even though the original formula is undefined at x=2; defining f(2)=4 exactly 'removes' it."
+   ],
+   "verification_method": "hand_checkable_removable_discontinuity"
+  },
+  {
+   "id": "pi-continuity-002",
+   "concept_id": "continuity",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x) = x² + 1 for x ≤ 1, and f(x) = ax + 3 for x > 1. Find the value of a for which f is continuous at x = 1.",
+   "answer_range": [
+    -1.01,
+    -0.99
+   ],
+   "correct_answer": "-1",
+   "solution_steps": [
+    "Method 1 (match one-sided limits to the function value): f(1) = 1²+1 = 2 (from the x≤1 branch, which includes x=1). The right-hand limit as x→1+ is lim (ax+3) = a+3. For continuity, all three must be equal: a+3 = 2, so a = -1.",
+    "Method 2 (plug in and check numerically, cross-check): with a=-1, at x=1.01, f = -1(1.01)+3 = 1.99, and the left branch gives f(1)=2, f(0.99)=0.99²+1=1.9801 — both sides are clearly converging to 2 as x→1, confirming a=-1 makes the pieces meet."
+   ],
+   "verification_method": "hand_checkable_piecewise_continuity_matching"
+  },
+  {
+   "id": "pi-continuity-003",
+   "concept_id": "continuity",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "mcq",
+   "marks": 2,
+   "question_text": "f(x) = sin(1/x) for x ≠ 0, and f(0) = 0. What type of discontinuity does f have at x = 0?",
+   "options": [
+    "Essential (oscillatory) discontinuity — the limit does not exist because sin(1/x) oscillates between -1 and 1 infinitely often as x→0",
+    "Removable discontinuity — redefining f(0) appropriately would make f continuous",
+    "Jump discontinuity — the left-hand and right-hand limits both exist but are unequal",
+    "f is actually continuous at x = 0, since sin is a bounded function"
+   ],
+   "answer_index": 0,
+   "correct_answer": "Essential (oscillatory) discontinuity — the limit does not exist because sin(1/x) oscillates between -1 and 1 infinitely often as x→0",
+   "solution_steps": [
+    "Method 1 (sequence test, first sequence): take x_n = 1/(2nπ + π/2) → 0 as n→∞. Then f(x_n) = sin(2nπ + π/2) = 1 for every n, so along this sequence f(x_n) → 1.",
+    "Method 2 (sequence test, second sequence, cross-check): take x_n = 1/(2nπ) → 0 as n→∞. Then f(x_n) = sin(2nπ) = 0 for every n, so along this sequence f(x_n) → 0.",
+    "Two sequences both converging to x=0 give f-values converging to DIFFERENT limits (1 vs 0), so lim_{x→0} f(x) does not exist at all — not even the one-sided limits exist, since the oscillation happens arbitrarily close to 0 from both directions.",
+    "Since no limit exists (not just an unequal pair of one-sided limits), this rules out both 'removable' (needs a limit to redefine to) and 'jump' (needs both one-sided limits to exist) — it is an essential discontinuity."
+   ],
+   "verification_method": "hand_checkable_essential_discontinuity_classification"
+  },
+  {
+   "id": "pi-continuity-004",
+   "concept_id": "continuity",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about continuity of a function f: ℝ→ℝ are always true?",
+   "options": [
+    "If f is differentiable at a point a, then f is continuous at a",
+    "If f is continuous at a point a, then f is differentiable at a",
+    "If f is continuous on a closed interval [a,b], then f attains a maximum and a minimum value on [a,b]",
+    "The sum of two functions that are each discontinuous everywhere must itself be discontinuous everywhere",
+    "If f is continuous at x=a, then lim_{x→a} f(x) = f(a)"
+   ],
+   "answer_indices": [
+    0,
+    2,
+    4
+   ],
+   "correct_answer": "Differentiable implies continuous; Extreme Value Theorem; continuity is exactly lim f(x)=f(a)",
+   "solution_steps": [
+    "(a) TRUE: differentiability at a point is a strictly stronger condition than continuity there — the existence of f'(a) as a finite limit forces f to be continuous at a.",
+    "(b) FALSE: f(x)=|x| is continuous everywhere (including at x=0) but not differentiable at x=0 (see pi-differentiability-001 for the full derivation of the left/right derivative mismatch there).",
+    "(c) TRUE: this is the Extreme Value Theorem, which requires BOTH continuity and a closed, bounded interval.",
+    "(d) FALSE: let f(x)=1 for rational x, 0 for irrational x, and g(x)=0 for rational x, 1 for irrational x. Both f and g are discontinuous at every real number, but f(x)+g(x)=1 for all x, which is the constant function 1 — continuous everywhere.",
+    "(e) TRUE: this IS the definition of continuity at a point — f is continuous at a exactly when lim_{x→a} f(x) exists and equals f(a)."
+   ],
+   "verification_method": "hand_checkable_continuity_properties"
+  },
+  {
+   "id": "pi-continuity-005",
+   "concept_id": "continuity",
+   "topic": "calculus",
+   "difficulty": 0.45,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x) = sin(kx)/x for x ≠ 0, and f(0) = 5. Find the value of k for which f is continuous at x = 0.",
+   "answer_range": [
+    4.975,
+    5.025
+   ],
+   "correct_answer": "5",
+   "solution_steps": [
+    "Method 1 (standard limit form): lim_{x→0} sin(kx)/x = k, using the same standard-limit reasoning as pi-limits-001 (write sin(kx)/x = k·sin(kx)/(kx) → k·1 = k). For continuity, this must equal f(0)=5, so k=5.",
+    "Method 2 (L'Hôpital's rule, cross-check): the form is 0/0. d/dx[sin(kx)] = k cos(kx), d/dx[x] = 1. Limit = k cos(0)/1 = k. Setting k=5 confirms Method 1."
+   ],
+   "verification_method": "hand_checkable_continuity_via_standard_limit"
+  },
+  {
+   "id": "pi-differentiability-001",
+   "concept_id": "differentiability",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Is f(x) = |x| differentiable at x = 0?",
+   "options": [
+    "No — the left-hand derivative is -1 and the right-hand derivative is +1, so they disagree",
+    "Yes — f is continuous at x=0, so it must be differentiable there too",
+    "Yes — the derivative is 0 by symmetry of the graph",
+    "No — f is not even continuous at x=0"
+   ],
+   "answer_index": 0,
+   "correct_answer": "No — the left-hand derivative is -1 and the right-hand derivative is +1, so they disagree",
+   "solution_steps": [
+    "Method 1 (definition, left-hand derivative): LHD = lim_{h→0⁻} (f(0+h)-f(0))/h = lim_{h→0⁻} |h|/h. For h<0, |h|=-h, so this is lim (-h)/h = -1.",
+    "Method 1 continued (right-hand derivative): RHD = lim_{h→0⁺} |h|/h. For h>0, |h|=h, so this is lim h/h = 1. Since LHD (-1) ≠ RHD (1), f'(0) does not exist.",
+    "Method 2 (geometric intuition, cross-check): the graph of |x| has a sharp 'V' corner at the origin — the two branches meet at different slopes (-1 and +1), so no single tangent line exists there, confirming non-differentiability without redoing the algebra.",
+    "f IS continuous at x=0 (lim_{x→0}|x|=0=f(0)), which rules out option (d) and is exactly why option (b)'s reasoning is the trap: continuity is necessary but NOT sufficient for differentiability."
+   ],
+   "verification_method": "hand_checkable_corner_nondifferentiable"
+  },
+  {
+   "id": "pi-differentiability-002",
+   "concept_id": "differentiability",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x) = x²·sin(1/x) for x ≠ 0, and f(0) = 0. Find f'(0).",
+   "answer_range": [
+    -0.01,
+    0.01
+   ],
+   "correct_answer": "0",
+   "solution_steps": [
+    "Method 1 (definition + squeeze theorem): f'(0) = lim_{h→0} (f(h)-f(0))/h = lim_{h→0} h²sin(1/h)/h = lim_{h→0} h·sin(1/h). Since sin(1/h) is always between -1 and 1, we have -|h| ≤ h·sin(1/h) ≤ |h|. As h→0, both bounds → 0, so by the Squeeze Theorem, the limit is 0.",
+    "Method 2 (direct bound check, cross-check): for a small h like h=0.001, |h·sin(1/h)| ≤ |h| = 0.001, no matter how wildly sin(1/h) oscillates — the h factor forces the whole expression toward 0 regardless of the oscillation, confirming f'(0)=0."
+   ],
+   "verification_method": "hand_checkable_squeeze_theorem_derivative"
+  },
+  {
+   "id": "pi-differentiability-003",
+   "concept_id": "differentiability",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "mcq",
+   "marks": 2,
+   "question_text": "Can Rolle's theorem be applied to f(x) = |x - 1| on the interval [0, 2]?",
+   "options": [
+    "No — f is not differentiable at x=1, which lies inside (0,2), so the differentiability hypothesis of Rolle's theorem fails",
+    "Yes — since f(0) = f(2) = 1, Rolle's theorem applies directly",
+    "Yes — f is continuous on [0,2], and continuity alone is sufficient for Rolle's theorem",
+    "No — f(0) ≠ f(2), so the theorem's hypothesis fails"
+   ],
+   "answer_index": 0,
+   "correct_answer": "No — f is not differentiable at x=1, which lies inside (0,2), so the differentiability hypothesis of Rolle's theorem fails",
+   "solution_steps": [
+    "Method 1 (check all three Rolle's hypotheses in order): (i) continuity on [0,2] — |x-1| is continuous everywhere, so YES. (ii) f(0)=f(2) — f(0)=|-1|=1, f(2)=|1|=1, so YES, equal. (iii) differentiability on the OPEN interval (0,2) — |x-1| has a corner at x=1, which lies inside (0,2), so f is NOT differentiable there. Hypothesis (iii) fails, so Rolle's theorem cannot be applied.",
+    "Method 2 (verify the conclusion actually fails too, cross-check): f'(x) = -1 for x<1 and f'(x) = +1 for x>1 (never 0 anywhere in (0,2)\\{1}), so there is indeed NO c in (0,2) with f'(c)=0 — exactly what we'd expect once we know a hypothesis of the theorem failed.",
+    "This targets the condition-checking trap directly: f(0)=f(2) alone (option b's reasoning) is only ONE of three required hypotheses — differentiability on the open interval must be checked separately and is not automatic just because f is continuous (option c's trap)."
+   ],
+   "verification_method": "hand_checkable_rolles_theorem_hypothesis_check"
+  },
+  {
+   "id": "pi-differentiability-004",
+   "concept_id": "differentiability",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about differentiability of a function f: ℝ→ℝ are always true?",
+   "options": [
+    "If f is differentiable at a, then f is continuous at a",
+    "If f is continuous on [a,b] and differentiable on (a,b), then there exists c∈(a,b) with f'(c) = (f(b)-f(a))/(b-a)",
+    "If f'(a) exists, then f' must be continuous at a",
+    "If f is differentiable everywhere on ℝ and f'(x)=0 for all x, then f is a constant function",
+    "Every continuous function is differentiable except possibly at finitely many points"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    3
+   ],
+   "correct_answer": "Differentiable implies continuous; Mean Value Theorem; f'≡0 implies constant",
+   "solution_steps": [
+    "(a) TRUE: same fact used in pi-continuity-004(a) — a finite derivative at a point forces continuity there.",
+    "(b) TRUE: this is exactly the statement of the Mean Value Theorem, used directly in pi-differentiability-005 to find c.",
+    "(c) FALSE: let f(x)=x²sin(1/x) for x≠0, f(0)=0. From pi-differentiability-002, f'(0)=0 exists. But for x≠0, f'(x) = 2x sin(1/x) - cos(1/x); as x→0, 2x sin(1/x)→0 but -cos(1/x) oscillates between -1 and 1 with no limit, so f'(x) has no limit as x→0 — meaning f' is discontinuous at 0 even though f'(0) itself exists.",
+    "(d) TRUE: a direct consequence of the Mean Value Theorem — for any x1<x2, f(x2)-f(x1) = f'(c)(x2-x1) = 0 for some c, so f(x2)=f(x1) for all pairs, meaning f is constant.",
+    "(e) FALSE: there is no such finite bound in general — the Weierstrass function is continuous everywhere on ℝ but differentiable NOWHERE (infinitely many non-differentiable points, not finitely many); more simply, one can build continuous functions with infinitely many corner points (e.g. |sin x| has a corner at every multiple of π, infinitely many points)."
+   ],
+   "verification_method": "hand_checkable_differentiability_properties"
+  },
+  {
+   "id": "pi-differentiability-005",
+   "concept_id": "differentiability",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x) = x² on [1, 3]. By the Mean Value Theorem, find the value of c ∈ (1,3) such that f'(c) equals the average rate of change of f over [1,3].",
+   "answer_range": [
+    1.99,
+    2.01
+   ],
+   "correct_answer": "2",
+   "solution_steps": [
+    "Method 1 (Mean Value Theorem directly): average rate of change = (f(3)-f(1))/(3-1) = (9-1)/2 = 4. f'(x) = 2x, so setting f'(c)=4 gives 2c=4, c=2. Since 2 ∈ (1,3), this is a valid MVT point.",
+    "Method 2 (geometric cross-check): the secant line through (1,1) and (3,9) has slope (9-1)/(3-1) = 4. The tangent line to f(x)=x² at x=2 has slope f'(2)=2(2)=4, matching the secant's slope exactly — confirming c=2 is where the tangent is parallel to the secant, as MVT guarantees."
+   ],
+   "verification_method": "hand_checkable_mean_value_theorem_direct"
+  },
+  {
+   "id": "pi-derivatives-basic-001",
+   "concept_id": "derivatives-basic",
+   "topic": "calculus",
+   "difficulty": 0.2,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x) = 3x⁴ − 5x² + 7. Find f'(2).",
+   "options": [
+    "76",
+    "86",
+    "56",
+    "96"
+   ],
+   "answer_index": 0,
+   "correct_answer": "76",
+   "solution_steps": [
+    "Differentiate term by term: f'(x) = 12x³ − 10x.",
+    "f'(2) = 12(8) − 10(2) = 96 − 20 = 76.",
+    "Cross-check via the limit definition numerically: [f(2.001) − f(2)]/0.001 ≈ 76.03, confirming f'(2) = 76.",
+    "Trap check: 86 comes from forgetting to bring the exponent 2 down on −5x² (using −5x instead of −10x): 96−10=86. 56 comes from an arithmetic slip that doubles the second term: 96−40=56. 96 comes from dropping the second term entirely and only differentiating 3x⁴."
+   ],
+   "verification_method": "hand_checkable_power_rule_polynomial"
+  },
+  {
+   "id": "pi-derivatives-basic-002",
+   "concept_id": "derivatives-basic",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "g(x) = √x + 1/x². Find g'(4).",
+   "answer_range": [
+    0.209,
+    0.229
+   ],
+   "correct_answer": "7/32",
+   "solution_steps": [
+    "Rewrite: g(x) = x^(1/2) + x^(−2). g'(x) = (1/2)x^(−1/2) − 2x^(−3).",
+    "g'(4) = (1/2)(1/2) − 2(1/64) = 1/4 − 1/32 = 8/32 − 1/32 = 7/32 = 0.21875.",
+    "Cross-check numerically: g(4.001) − g(4) ≈ 0.00021875 over h=0.001, giving slope ≈ 0.21875 — matches.",
+    "Common trap avoided here: differentiating x^(−2) as −2x^(−1) (forgetting to decrement the exponent to −3) would give a wrong second term of −0.5 instead of −1/32."
+   ],
+   "verification_method": "hand_checkable_fractional_negative_power_rule"
+  },
+  {
+   "id": "pi-derivatives-basic-003",
+   "concept_id": "derivatives-basic",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x) = 4x³ − 6/x + 5. Find f'(−1).",
+   "options": [
+    "18",
+    "6",
+    "10",
+    "23"
+   ],
+   "answer_index": 0,
+   "correct_answer": "18",
+   "solution_steps": [
+    "Rewrite −6/x as −6x^(−1). Its derivative is −6·(−1)x^(−2) = 6x^(−2) = 6/x².",
+    "f'(x) = 12x² + 6/x². At x = −1: 12(1) + 6(1) = 18.",
+    "Cross-check by direct substitution near x=−1: f(−1.001) ≈ f(−1) − 0.018, giving slope ≈ 18 — matches.",
+    "Trap check: 6 comes from forgetting the sign flip on −6x^(−1) (using −6/x² instead of +6/x²): 12−6=6. 10 comes from using 4x² instead of 12x² for the first term: 4+6=10. 23 comes from treating the constant +5 as contributing its own value 5 to the derivative: 18+5=23."
+   ],
+   "verification_method": "hand_checkable_negative_power_sign_trap"
+  },
+  {
+   "id": "pi-derivatives-basic-004",
+   "concept_id": "derivatives-basic",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "msq",
+   "marks": 1,
+   "question_text": "Which of the following statements about differentiation are true?",
+   "options": [
+    "The derivative of a constant function is always zero",
+    "d/dx[xⁿ] = n·x^(n−1) holds for all real n ≠ 0, including negative and fractional exponents",
+    "If f(x) = 5 for all x, then f'(x) = 5",
+    "The derivative of a sum equals the sum of the derivatives: (f+g)' = f' + g'",
+    "d/dx[1/x] = 1/x²"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    3
+   ],
+   "correct_answer": "Derivative of a constant is 0; power rule holds for any real exponent; derivative of a sum is the sum of derivatives",
+   "solution_steps": [
+    "(a) TRUE: a constant function never changes, so its instantaneous rate of change is 0.",
+    "(b) TRUE: the power rule is valid for any real exponent n≠0, e.g. x^(1/2), x^(−2) as used in item pi-derivatives-basic-002.",
+    "(c) FALSE — this is the classic trap of confusing a constant's VALUE with its DERIVATIVE. f(x)=5 is a horizontal line, so f'(x)=0, not 5.",
+    "(d) TRUE: linearity of differentiation, used throughout item pi-derivatives-basic-001.",
+    "(e) FALSE — the sign is wrong. Since 1/x = x^(−1), d/dx[x^(−1)] = −x^(−2) = −1/x², not +1/x²."
+   ],
+   "verification_method": "hand_checkable_derivative_rule_properties"
+  },
+  {
+   "id": "pi-derivatives-basic-005",
+   "concept_id": "derivatives-basic",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "f(x) = x³ − 6x² + 9x + 1. The tangent to f is horizontal at two points. Find the sum of the squares of the x-coordinates of these points.",
+   "answer_range": [
+    9.95,
+    10.05
+   ],
+   "correct_answer": "10",
+   "solution_steps": [
+    "Horizontal tangent means f'(x) = 0. f'(x) = 3x² − 12x + 9 = 3(x² − 4x + 3) = 3(x−1)(x−3).",
+    "Roots: x = 1 and x = 3. Sum of squares = 1² + 3² = 1 + 9 = 10.",
+    "Cross-check using Vieta's formulas on x² − 4x + 3 = 0 (dividing f'(x)=0 by 3): sum of roots = 4, product of roots = 3. Sum of squares = (sum)² − 2·product = 16 − 6 = 10 — matches the direct computation.",
+    "Trap avoided: a student who only finds one root (e.g. stops at x=1 via inspection) and squares just that value would get 1, missing that GATE-style questions often require using BOTH critical points."
+   ],
+   "verification_method": "hand_checkable_horizontal_tangent_vieta_crosscheck"
+  },
+  {
+   "id": "pi-chain-rule-001",
+   "concept_id": "chain-rule",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x) = (3x + 2)⁵. Find f'(0).",
+   "options": [
+    "240",
+    "80",
+    "96",
+    "480"
+   ],
+   "answer_index": 0,
+   "correct_answer": "240",
+   "solution_steps": [
+    "By the chain rule: f'(x) = 5(3x+2)⁴ · 3 = 15(3x+2)⁴.",
+    "f'(0) = 15·(2)⁴ = 15·16 = 240.",
+    "Cross-check by direct numerical slope: f(0.001) − f(0) = (2.003)⁵ − 2⁵ ≈ 0.2400, over h=0.001 gives slope ≈ 240 — matches.",
+    "Trap check: 80 comes from forgetting the inner-derivative factor of 3 (the chain-rule multiplier): 5·16=80. 96 comes from mistakenly using exponent 4 (instead of 5) in the power rule: 4·(2)³·3=96. 480 comes from forgetting to decrement the outer exponent by 1: 15·2⁵=480."
+   ],
+   "verification_method": "hand_checkable_chain_rule_power_composite"
+  },
+  {
+   "id": "pi-chain-rule-002",
+   "concept_id": "chain-rule",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "g(x) = ln(3x² − 2). Find g'(1).",
+   "answer_range": [
+    5.97,
+    6.03
+   ],
+   "correct_answer": "6",
+   "solution_steps": [
+    "Let u = 3x² − 2, so g = ln(u). By the chain rule, g'(x) = (1/u)·u' = 6x/(3x² − 2).",
+    "g'(1) = 6(1)/(3−2) = 6/1 = 6.",
+    "Cross-check numerically: g(1.001) = ln(3(1.002001) − 2) = ln(1.006003) ≈ 0.005985, and g(1) = ln(1) = 0, giving slope ≈ 0.005985/0.001 = 5.985 ≈ 6 — matches.",
+    "Trap avoided: forgetting the chain-rule factor of 6x and reporting just 1/u = 1/1 = 1 is a common shortcut error."
+   ],
+   "verification_method": "hand_checkable_chain_rule_log_composite"
+  },
+  {
+   "id": "pi-chain-rule-003",
+   "concept_id": "chain-rule",
+   "topic": "calculus",
+   "difficulty": 0.45,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "h(x) = cos(5 − 2x). Find h'(x).",
+   "options": [
+    "2 sin(5 − 2x)",
+    "−2 sin(5 − 2x)",
+    "2 cos(5 − 2x)",
+    "−sin(5 − 2x)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "2 sin(5 − 2x)",
+   "solution_steps": [
+    "Let u = 5 − 2x, so h = cos(u). d/du[cos u] = −sin(u), and du/dx = −2.",
+    "By the chain rule: h'(x) = −sin(5−2x) · (−2) = 2 sin(5−2x). The two negative signs (from d/du[cos u]=−sin u AND from du/dx=−2) cancel.",
+    "Numerical spot-check at x=0: h(0.001) − h(0) = cos(4.998) − cos(5) ≈ (2 sin 5)(0.001) ≈ 0.00192; and 2 sin(5) ≈ 1.918, matching the slope of 1.918×10⁻³/10⁻³.",
+    "Trap check: −2 sin(5−2x) keeps only ONE of the two negative signs (a very common chain-rule sign slip). 2 cos(5−2x) forgets that d/du[cos u]=−sin u and differentiates only the inner function. −sin(5−2x) forgets to multiply by the inner derivative −2 at all."
+   ],
+   "verification_method": "hand_checkable_chain_rule_double_sign_trap"
+  },
+  {
+   "id": "pi-chain-rule-004",
+   "concept_id": "chain-rule",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "For y = f(g(x)), which of the following statements are correct?",
+   "options": [
+    "dy/dx = f'(g(x)) · g'(x)",
+    "If g'(x₀) = 0 (and f' is finite at g(x₀)), then dy/dx at x₀ is 0",
+    "d/dx[sin(x²)] = cos(x²)",
+    "The chain rule extends to any finite composition: d/dx[f(g(h(x)))] = f'(g(h(x)))·g'(h(x))·h'(x)",
+    "d/dx[(3x+1)⁴] = 4(3x+1)³"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    3
+   ],
+   "correct_answer": "dy/dx = f'(g(x))g'(x); dy/dx = 0 wherever g'=0; the chain rule chains across any finite composition",
+   "solution_steps": [
+    "(a) TRUE — this is the definition of the chain rule.",
+    "(b) TRUE — dy/dx = f'(g(x₀))·g'(x₀) = f'(g(x₀))·0 = 0, provided f' is finite there.",
+    "(c) FALSE — this drops the inner-derivative factor of 2x entirely (as seen correctly applied in pi-chain-rule-002-style problems). The correct derivative is 2x·cos(x²).",
+    "(d) TRUE — the chain rule composes across arbitrarily many nested functions, multiplying every inner derivative in the chain.",
+    "(e) FALSE — this drops the inner-derivative factor of 3 (same trap as pi-chain-rule-001's distractor '80'). The correct derivative is 4(3x+1)³·3 = 12(3x+1)³."
+   ],
+   "verification_method": "hand_checkable_chain_rule_general_properties"
+  },
+  {
+   "id": "pi-chain-rule-005",
+   "concept_id": "chain-rule",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x) = 1/(x² + 1)² . Find f'(1).",
+   "answer_range": [
+    -0.51,
+    -0.49
+   ],
+   "correct_answer": "-0.5",
+   "solution_steps": [
+    "Rewrite f(x) = (x²+1)^(−2). Let u = x²+1. f'(x) = −2u^(−3)·(2x) = −4x/(x²+1)³.",
+    "f'(1) = −4(1)/(2)³ = −4/8 = −0.5.",
+    "Cross-check numerically: f(1) = 1/4 = 0.25. f(1.001) = 1/(2.002001)² ≈ 0.249501. Slope ≈ (0.249501 − 0.25)/0.001 = −0.499 ≈ −0.5 — matches.",
+    "Trap avoided: forgetting to decrement the outer exponent (using u^(−2) instead of u^(−3) in the derivative) would give −2x/(x²+1)² = −1 at x=1, a wrong answer that is exactly double the correct magnitude."
+   ],
+   "verification_method": "hand_checkable_chain_rule_negative_power_composite"
+  },
+  {
+   "id": "pi-product-quotient-rule-001",
+   "concept_id": "product-quotient-rule",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x) = (x² + 1)(x³ − 2). Find f'(1).",
+   "options": [
+    "4",
+    "-2",
+    "6",
+    "-8"
+   ],
+   "answer_index": 0,
+   "correct_answer": "4",
+   "solution_steps": [
+    "Product rule: f'(x) = 2x(x³−2) + (x²+1)(3x²).",
+    "f'(1) = 2(1)(1−2) + (1+1)(3)(1) = 2(−1) + 2(3) = −2 + 6 = 4.",
+    "Cross-check by expanding first: f(x) = x⁵ + x³ − 2x² − 2, so f'(x) = 5x⁴ + 3x² − 4x. f'(1) = 5+3−4 = 4 — matches exactly.",
+    "Trap check: −2 comes from forgetting the second product-rule term entirely (only keeping 2x(x³−2)). 6 comes from forgetting the first term (only keeping (x²+1)(3x²)). −8 comes from subtracting the terms instead of adding them (2(−1) − 2(3) = −2−6 = −8)."
+   ],
+   "verification_method": "hand_checkable_product_rule_dropped_term_trap"
+  },
+  {
+   "id": "pi-product-quotient-rule-002",
+   "concept_id": "product-quotient-rule",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "g(x) = (2x + 1)/(x − 3). Find g'(1).",
+   "answer_range": [
+    -1.76,
+    -1.74
+   ],
+   "correct_answer": "-1.75",
+   "solution_steps": [
+    "Quotient rule: g'(x) = [2(x−3) − (2x+1)(1)]/(x−3)² = [2x−6−2x−1]/(x−3)² = −7/(x−3)².",
+    "g'(1) = −7/(1−3)² = −7/4 = −1.75.",
+    "Cross-check by algebraic rewrite: (2x+1)/(x−3) = 2 + 7/(x−3) [check: 2(x−3)+7 = 2x−6+7 = 2x+1 ✓]. So g'(x) = −7/(x−3)², same formula, same value at x=1: −7/4 = −1.75 — matches.",
+    "Trap avoided: writing the quotient-rule numerator in the wrong order, (2x+1)(1) − 2(x−3), flips the sign and would give +1.75 instead."
+   ],
+   "verification_method": "hand_checkable_quotient_rule_algebraic_rewrite_crosscheck"
+  },
+  {
+   "id": "pi-product-quotient-rule-003",
+   "concept_id": "product-quotient-rule",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "h(x) = x²/(3 − x). Find h'(1).",
+   "options": [
+    "1.25",
+    "0.75",
+    "2.5",
+    "-1.25"
+   ],
+   "answer_index": 0,
+   "correct_answer": "1.25",
+   "solution_steps": [
+    "Quotient rule with u=x², v=3−x, u'=2x, v'=−1: h'(x) = [u'v − uv']/v² = [2x(3−x) − x²(−1)]/(3−x)² = [6x−2x²+x²]/(3−x)² = (6x−x²)/(3−x)².",
+    "h'(1) = (6−1)/(3−1)² = 5/4 = 1.25.",
+    "Cross-check numerically: h(1)=0.5, h(1.001) = 1.002001/1.999 ≈ 0.501251. Slope ≈ (0.501251−0.5)/0.001 = 1.251 ≈ 1.25 — matches.",
+    "Trap check: 0.75 comes from using v'=+1 instead of −1 (forgetting the sign of d/dx[3−x]): (6x−3x²)/(3−x)² at x=1 = 3/4. 2.5 comes from forgetting to square the denominator: (6x−x²)/(3−x) at x=1 = 5/2. −1.25 comes from flipping the numerator order (v'u − u'v instead of u'v − v'u): (x²−6x)/(3−x)² at x=1 = −5/4."
+   ],
+   "verification_method": "hand_checkable_quotient_rule_sign_and_order_traps"
+  },
+  {
+   "id": "pi-product-quotient-rule-004",
+   "concept_id": "product-quotient-rule",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about the product and quotient rules are true?",
+   "options": [
+    "d/dx[uv] = u'v + uv'",
+    "d/dx[u/v] = (u'v − uv')/v²",
+    "d/dx[u/v] = (u'v + uv')/v²",
+    "The product rule can be derived (for u,v > 0) from uv = e^(ln u + ln v) by differentiating both sides",
+    "For three factors, d/dx[uvw] = u'v'w'"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    3
+   ],
+   "correct_answer": "Product rule u'v+uv'; quotient rule (u'v−uv')/v²; product rule is derivable via log differentiation for positive u,v",
+   "solution_steps": [
+    "(a) TRUE — the standard product rule, applied throughout pi-product-quotient-rule-001.",
+    "(b) TRUE — the standard quotient rule, applied throughout pi-product-quotient-rule-002 and 003.",
+    "(c) FALSE — this uses + instead of − in the numerator, exactly the sign trap tested by the '0.75' distractor in pi-product-quotient-rule-003.",
+    "(d) TRUE: differentiating ln(uv)=ln u + ln v gives (uv)'/(uv) = u'/u + v'/v, so (uv)' = uv(u'/u + v'/v) = u'v + uv' — recovers the product rule.",
+    "(e) FALSE — multiplying all three derivatives together is not the product rule for three factors; the correct extension is d/dx[uvw] = u'vw + uv'w + uvw' (differentiate one factor at a time, holding the others fixed, then sum)."
+   ],
+   "verification_method": "hand_checkable_product_quotient_rule_properties"
+  },
+  {
+   "id": "pi-product-quotient-rule-005",
+   "concept_id": "product-quotient-rule",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "f(x) = x² · (x + 1)/(x − 1). Find f'(2).",
+   "answer_range": [
+    3.98,
+    4.02
+   ],
+   "correct_answer": "4",
+   "solution_steps": [
+    "Let u = x² and v = (x+1)/(x−1), so f = uv and f' = u'v + uv' (product rule combined with quotient rule for v).",
+    "u' = 2x. At x=2: u=4, u'=4.",
+    "v'(x) = [1·(x−1) − (x+1)·1]/(x−1)² = [x−1−x−1]/(x−1)² = −2/(x−1)². At x=2: v = 3/1 = 3, v' = −2/1 = −2.",
+    "f'(2) = u'v + uv' = 4(3) + 4(−2) = 12 − 8 = 4.",
+    "Cross-check numerically: f(2) = 4·3 = 12. f(2.001) = (2.001)²(3.001)/(1.001) ≈ 12.004003. Slope ≈ (12.004003−12)/0.001 = 4.003 ≈ 4 — matches.",
+    "Trap avoided: forgetting the product-rule structure and only applying the quotient rule to v (ignoring that u=x² is also varying) would drop the u'v term entirely, giving uv' = 4(−2) = −8, way off."
+   ],
+   "verification_method": "hand_checkable_combined_product_and_quotient_rule"
+  },
+  {
+   "id": "pi-implicit-differentiation-001",
+   "concept_id": "implicit-differentiation",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "x² + y² = 25. Find dy/dx at the point (3, 4).",
+   "options": [
+    "-3/4",
+    "3/4",
+    "-4/3",
+    "4/3"
+   ],
+   "answer_index": 0,
+   "correct_answer": "-3/4",
+   "solution_steps": [
+    "Differentiate both sides with respect to x: 2x + 2y(dy/dx) = 0, so dy/dx = −x/y.",
+    "At (3,4): dy/dx = −3/4.",
+    "Cross-check via the explicit branch y = √(25−x²) near (3,4): dy/dx = −x/√(25−x²) = −3/4 — matches, since √(25−9)=4.",
+    "Trap check: 3/4 drops the negative sign entirely. −4/3 and 4/3 swap x and y in the ratio (a common mix-up when reading off which variable came from which term)."
+   ],
+   "verification_method": "hand_checkable_implicit_diff_circle"
+  },
+  {
+   "id": "pi-implicit-differentiation-002",
+   "concept_id": "implicit-differentiation",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "x²y + y³ = 10. The point (1, 2) lies on this curve. Find dy/dx at (1, 2).",
+   "answer_range": [
+    -0.318,
+    -0.298
+   ],
+   "correct_answer": "-4/13",
+   "solution_steps": [
+    "Verify the point: 1²(2) + 2³ = 2 + 8 = 10 ✓.",
+    "Differentiate implicitly: d/dx[x²y] = 2xy + x²y' (product rule, y is a function of x). d/dx[y³] = 3y²y' (chain rule).",
+    "So 2xy + x²y' + 3y²y' = 0, i.e. y'(x² + 3y²) = −2xy, so y' = −2xy/(x² + 3y²).",
+    "At (1,2): y' = −2(1)(2)/(1 + 3·4) = −4/13 ≈ −0.3077.",
+    "Cross-check numerically: perturbing x to 1.001 and solving x²y+y³=10 to first order for the nearby y gives Δy ≈ −4/13·0.001, and substituting back reproduces 10 to within 2×10⁻⁶ — confirms the derivative."
+   ],
+   "verification_method": "hand_checkable_implicit_diff_product_and_chain"
+  },
+  {
+   "id": "pi-implicit-differentiation-003",
+   "concept_id": "implicit-differentiation",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "sin(y) = x. Using the point (x, y) = (1/2, π/6) on this curve, find dy/dx there.",
+   "options": [
+    "2/√3 ≈ 1.155",
+    "-2/√3 ≈ -1.155",
+    "√3/2 ≈ 0.866",
+    "2"
+   ],
+   "answer_index": 0,
+   "correct_answer": "2/√3 ≈ 1.155",
+   "solution_steps": [
+    "Verify the point: sin(π/6) = 1/2 ✓.",
+    "Differentiate implicitly: cos(y)·(dy/dx) = 1, so dy/dx = 1/cos(y).",
+    "At y = π/6: cos(π/6) = √3/2, so dy/dx = 1/(√3/2) = 2/√3 ≈ 1.1547.",
+    "Cross-check via the explicit inverse function: y = arcsin(x), dy/dx = 1/√(1−x²) = 1/√(1−1/4) = 1/√(3/4) = 2/√3 — matches exactly.",
+    "Trap check: −2/√3 flips the sign (confusing d/dy[sin y]=cos y with d/dy[cos y]=−sin y). √3/2 inverts the reciprocal, reporting cos(y) itself instead of 1/cos(y). 2 comes from misremembering cos(π/6) as 1/2 (a sin/cos value mix-up at π/6)."
+   ],
+   "verification_method": "hand_checkable_implicit_diff_trig_sign_trap"
+  },
+  {
+   "id": "pi-implicit-differentiation-004",
+   "concept_id": "implicit-differentiation",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about implicit differentiation are true?",
+   "options": [
+    "When differentiating y² with respect to x implicitly, the chain rule gives 2y(dy/dx)",
+    "Implicit differentiation requires first solving the equation explicitly for y in terms of x",
+    "For the circle x² + y² = r², dy/dx = −x/y wherever y ≠ 0",
+    "When differentiating a product term like xy implicitly, the product rule gives x(dy/dx) + y",
+    "Implicit differentiation can only be applied where the equation is single-valued for y over its entire domain"
+   ],
+   "answer_indices": [
+    0,
+    2,
+    3
+   ],
+   "correct_answer": "d/dx[y²]=2y·y'; circle gives dy/dx=−x/y; d/dx[xy]=x·y'+y — implicit diff needs no global explicit solution",
+   "solution_steps": [
+    "(a) TRUE — this is exactly the step used in pi-implicit-differentiation-002 for the y³ term (chain rule since y depends on x).",
+    "(b) FALSE — this defeats the entire purpose of the technique; implicit differentiation works precisely WITHOUT solving for y explicitly, as done throughout pi-implicit-differentiation-001 through 003.",
+    "(c) TRUE — proved and used directly in pi-implicit-differentiation-001.",
+    "(d) TRUE — treat y as a function of x and apply the ordinary product rule: d/dx[xy] = 1·y + x·y' = y + x(dy/dx).",
+    "(e) FALSE — implicit differentiation only needs the curve to define y as a differentiable function of x LOCALLY near the point of interest. The circle x²+y²=25 in pi-implicit-differentiation-001 is not single-valued globally (each x gives two y's), yet implicit differentiation works fine at the specific point (3,4)."
+   ],
+   "verification_method": "hand_checkable_implicit_diff_general_properties"
+  },
+  {
+   "id": "pi-implicit-differentiation-005",
+   "concept_id": "implicit-differentiation",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "e^y + xy = e. The point (0, 1) lies on this curve (since e¹ + 0 = e). Find dy/dx at (0, 1).",
+   "answer_range": [
+    -0.378,
+    -0.358
+   ],
+   "correct_answer": "-1/e",
+   "solution_steps": [
+    "Differentiate implicitly: d/dx[e^y] = e^y·y' (chain rule). d/dx[xy] = y + x·y' (product rule). d/dx[e] = 0.",
+    "So e^y·y' + y + x·y' = 0, i.e. y'(e^y + x) = −y, so y' = −y/(e^y + x).",
+    "At (0,1): y' = −1/(e¹ + 0) = −1/e ≈ −0.36788.",
+    "Cross-check via linear (first-order) approximation: perturbing x by Δx=0.001 and using e^y ≈ e + e(y−1) near y=1 gives Δy ≈ −Δx/e = −0.0003679, matching the predicted slope directly.",
+    "Trap avoided: forgetting the product-rule term 'y' from d/dx[xy] (treating xy's derivative as just x·y') would give the wrong equation e^y·y' + x·y' = 0, i.e. y'=0 at x=0 — silently losing the entire answer."
+   ],
+   "verification_method": "hand_checkable_implicit_diff_exp_and_product_combo"
+  },
+  {
+   "id": "pi-maxima-minima-001",
+   "concept_id": "maxima-minima",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x) = x³ − 3x² − 9x + 5. Classify the critical point at x = −1 using the second derivative test.",
+   "options": [
+    "Local maximum",
+    "Local minimum",
+    "Saddle / inflection point (neither max nor min)",
+    "Cannot be determined without further testing"
+   ],
+   "answer_index": 0,
+   "correct_answer": "Local maximum",
+   "solution_steps": [
+    "f'(x) = 3x² − 6x − 9 = 3(x−3)(x+1), so critical points are x = −1 and x = 3.",
+    "f''(x) = 6x − 6. At x = −1: f''(−1) = −6 − 6 = −12 < 0, so by the second derivative test, x = −1 is a local MAXIMUM.",
+    "Cross-check via the first derivative test: f'(x) = 3(x−3)(x+1) is positive for x < −1 (e.g. f'(−2) = 3(−5)(−1) = 15 > 0) and negative for −1 < x < 3 (e.g. f'(0) = 3(−3)(1) = −9 < 0) — the sign change from + to − at x=−1 confirms a local maximum.",
+    "Trap check: this tests exactly the 'unchecked critical-point classification' error — a student who finds f'(x)=0 at x=−1 but skips the second (or first) derivative test cannot tell max from min. f''(−1)=−12 is clearly nonzero, so the test IS conclusive here — 'cannot be determined' is also a trap for students who over-worry about the test failing."
+   ],
+   "verification_method": "hand_checkable_second_derivative_test_classification"
+  },
+  {
+   "id": "pi-maxima-minima-002",
+   "concept_id": "maxima-minima",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Find the minimum value of g(x) = x² − 4x + 7.",
+   "answer_range": [
+    2.985,
+    3.015
+   ],
+   "correct_answer": "3",
+   "solution_steps": [
+    "g'(x) = 2x − 4 = 0 ⟹ x = 2. g''(x) = 2 > 0, so x=2 gives a minimum (and since g is an upward parabola, it's the global minimum).",
+    "g(2) = 4 − 8 + 7 = 3.",
+    "Cross-check by completing the square: g(x) = (x−2)² + 3. Since (x−2)² ≥ 0 always, the minimum value is exactly 3, attained at x=2 — matches the derivative-based answer exactly, via a completely independent method.",
+    "Trap avoided: reporting x=2 (the location) instead of g(2)=3 (the minimum VALUE) is a common answer-reading error on this style of question."
+   ],
+   "verification_method": "hand_checkable_min_value_complete_square_crosscheck"
+  },
+  {
+   "id": "pi-maxima-minima-003",
+   "concept_id": "maxima-minima",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Find the absolute maximum value of f(x) = x³ − 3x on the closed interval [0, 2].",
+   "options": [
+    "2",
+    "-2",
+    "0",
+    "8"
+   ],
+   "answer_index": 0,
+   "correct_answer": "2",
+   "solution_steps": [
+    "f'(x) = 3x² − 3 = 0 ⟹ x = ±1. Only x=1 lies in [0,2] (x=−1 is outside the interval and must be discarded).",
+    "The absolute extrema on a closed interval occur at critical points in the interior OR at the endpoints, so evaluate all three candidates: f(0)=0, f(1)=1−3=−2, f(2)=8−6=2.",
+    "Comparing 0, −2, and 2: the absolute maximum on [0,2] is 2, attained at the ENDPOINT x=2 — not at the critical point, since f''(x)=6x gives f''(1)=6>0, meaning x=1 is actually a local MINIMUM, not a maximum.",
+    "Trap check: −2 comes from wrongly assuming the critical point automatically gives the max (it's actually the min here) and reporting f(1) without checking endpoints. 0 comes from checking only the left endpoint x=0 and stopping. 8 comes from an arithmetic slip: computing x³ at x=2 as 8 and forgetting to subtract the −3x term (−6). This item directly targets the 'boundary points ignored in optimization' trap."
+   ],
+   "verification_method": "hand_checkable_closed_interval_extrema_boundary_trap"
+  },
+  {
+   "id": "pi-maxima-minima-004",
+   "concept_id": "maxima-minima",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about optimization and critical points are true?",
+   "options": [
+    "At a critical point where f'(x)=0, if f''(x) > 0, the point is a local minimum",
+    "If f''(x) = 0 at a critical point, the second derivative test is inconclusive AND the point cannot be a local extremum",
+    "On a closed interval [a,b], the absolute maximum of a continuous function occurs either at a critical point in (a,b) or at one of the endpoints a, b",
+    "Every critical point of a differentiable function is either a local maximum or a local minimum",
+    "If f'(x) changes sign from negative to positive at x=c, then x=c is a local minimum"
+   ],
+   "answer_indices": [
+    0,
+    2,
+    4
+   ],
+   "correct_answer": "f''>0 at critical point gives local min; extrema on [a,b] are at interior critical points or endpoints; sign change −to+ gives local min",
+   "solution_steps": [
+    "(a) TRUE — the standard second derivative test, used in pi-maxima-minima-001 and 002.",
+    "(b) FALSE — 'inconclusive' does NOT mean 'cannot be an extremum'. Counterexample: f(x)=x⁴ has f''(0)=0, yet x=0 IS a (global) minimum — the second derivative test just can't detect it, so you fall back to the first derivative test or a higher-order check.",
+    "(c) TRUE — this is exactly the discipline applied in pi-maxima-minima-003: check the interior critical point AND both endpoints, then compare.",
+    "(d) FALSE — counterexample: f(x)=x³ has f'(0)=0, but x=0 is neither a max nor a min (f is increasing on both sides) — it's an inflection point. Critical points can be saddle/inflection points too.",
+    "(e) TRUE — this is the first derivative test: f decreasing then increasing at c means c is a local minimum."
+   ],
+   "verification_method": "hand_checkable_optimization_theory_properties"
+  },
+  {
+   "id": "pi-maxima-minima-005",
+   "concept_id": "maxima-minima",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "A farmer has 40 metres of fencing to enclose a rectangular field against an existing straight wall, so fencing is only needed on three sides (two widths of length x, and one length parallel to the wall). Find the maximum area, in square metres, that can be enclosed.",
+   "answer_range": [
+    199,
+    201
+   ],
+   "correct_answer": "200",
+   "solution_steps": [
+    "Constraint: 2x + (length) = 40, so length = 40 − 2x, with 0 < x < 20 for a valid rectangle.",
+    "Area A(x) = x(40 − 2x) = 40x − 2x². A'(x) = 40 − 4x = 0 ⟹ x = 10. A''(x) = −4 < 0, confirming a maximum.",
+    "A(10) = 10(40 − 20) = 10(20) = 200.",
+    "Check the boundary behaviour: as x→0 or x→20, the length or width shrinks to 0 and A(x)→0, which is worse than 200 — confirming the interior critical point x=10 really is the maximum, not just a stationary point that boundary values could beat.",
+    "Cross-check via AM-GM: for fixed sum 2x + length = 40, the product (2x)(length) is maximized when the two terms are equal, i.e. 2x = length = 20, giving x=10 and area = x·length = 10·20 = 200 — matches the calculus answer exactly via an independent method."
+   ],
+   "verification_method": "hand_checkable_optimization_word_problem_amgm_crosscheck"
+  }
+ ]
+}

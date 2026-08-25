@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-08-18T07:00:18.974Z",
+  "exported_at": "2026-08-25T07:54:55.692Z",
   "concepts": [
     {
       "id": "sequences",
@@ -236,6 +236,12 @@
       "gate_frequency": "high",
       "prerequisites": [
         "matrix-operations"
+      ],
+      "encompasses": [
+        {
+          "id": "matrix-operations",
+          "weight": 0.6
+        }
       ]
     },
     {
@@ -247,6 +253,16 @@
       "gate_frequency": "high",
       "prerequisites": [
         "determinants"
+      ],
+      "encompasses": [
+        {
+          "id": "determinants",
+          "weight": 0.6
+        },
+        {
+          "id": "matrix-operations",
+          "weight": 0.85
+        }
       ]
     },
     {
@@ -258,6 +274,16 @@
       "gate_frequency": "high",
       "prerequisites": [
         "matrix-inverse"
+      ],
+      "encompasses": [
+        {
+          "id": "matrix-operations",
+          "weight": 0.5
+        },
+        {
+          "id": "matrix-inverse",
+          "weight": 0.35
+        }
       ]
     },
     {
@@ -269,6 +295,12 @@
       "gate_frequency": "high",
       "prerequisites": [
         "systems-of-equations"
+      ],
+      "encompasses": [
+        {
+          "id": "systems-of-equations",
+          "weight": 0.6
+        }
       ]
     },
     {
@@ -280,6 +312,12 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "rank-nullity"
+      ],
+      "encompasses": [
+        {
+          "id": "rank-nullity",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -291,6 +329,16 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "vector-spaces"
+      ],
+      "encompasses": [
+        {
+          "id": "vector-spaces",
+          "weight": 0.5
+        },
+        {
+          "id": "matrix-operations",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -303,6 +351,16 @@
       "prerequisites": [
         "determinants",
         "systems-of-equations"
+      ],
+      "encompasses": [
+        {
+          "id": "determinants",
+          "weight": 0.7
+        },
+        {
+          "id": "systems-of-equations",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -315,6 +373,16 @@
       "prerequisites": [
         "eigenvalues",
         "vector-spaces"
+      ],
+      "encompasses": [
+        {
+          "id": "eigenvalues",
+          "weight": 0.8
+        },
+        {
+          "id": "linear-independence",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -326,6 +394,16 @@
       "gate_frequency": "high",
       "prerequisites": [
         "eigenvalues"
+      ],
+      "encompasses": [
+        {
+          "id": "eigenvalues",
+          "weight": 0.5
+        },
+        {
+          "id": "determinants",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -337,6 +415,12 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "vector-spaces"
+      ],
+      "encompasses": [
+        {
+          "id": "vector-spaces",
+          "weight": 0.45
+        }
       ]
     },
     {
@@ -349,6 +433,16 @@
       "prerequisites": [
         "matrix-operations",
         "eigenvalues"
+      ],
+      "encompasses": [
+        {
+          "id": "matrix-operations",
+          "weight": 0.5
+        },
+        {
+          "id": "eigenvalues",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -360,6 +454,12 @@
       "gate_frequency": "high",
       "prerequisites": [
         "vector-spaces"
+      ],
+      "encompasses": [
+        {
+          "id": "vector-spaces",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -372,6 +472,20 @@
       "prerequisites": [
         "rank-nullity",
         "linear-independence"
+      ],
+      "encompasses": [
+        {
+          "id": "rank-nullity",
+          "weight": 0.6
+        },
+        {
+          "id": "linear-independence",
+          "weight": 0.5
+        },
+        {
+          "id": "systems-of-equations",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -384,6 +498,16 @@
       "prerequisites": [
         "eigenvalues",
         "orthogonality"
+      ],
+      "encompasses": [
+        {
+          "id": "eigenvalues",
+          "weight": 0.6
+        },
+        {
+          "id": "orthogonality",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -395,6 +519,12 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "vector-spaces"
+      ],
+      "encompasses": [
+        {
+          "id": "vector-spaces",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -407,6 +537,20 @@
       "prerequisites": [
         "inner-product-spaces",
         "orthogonality"
+      ],
+      "encompasses": [
+        {
+          "id": "inner-product-spaces",
+          "weight": 0.8
+        },
+        {
+          "id": "orthogonality",
+          "weight": 0.5
+        },
+        {
+          "id": "linear-independence",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -419,6 +563,16 @@
       "prerequisites": [
         "linear-independence",
         "linear-transformations"
+      ],
+      "encompasses": [
+        {
+          "id": "linear-independence",
+          "weight": 0.4
+        },
+        {
+          "id": "linear-transformations",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -431,6 +585,16 @@
       "prerequisites": [
         "systems-of-equations",
         "matrix-operations"
+      ],
+      "encompasses": [
+        {
+          "id": "systems-of-equations",
+          "weight": 0.6
+        },
+        {
+          "id": "matrix-operations",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -443,6 +607,16 @@
       "prerequisites": [
         "systems-of-equations",
         "orthogonality"
+      ],
+      "encompasses": [
+        {
+          "id": "systems-of-equations",
+          "weight": 0.5
+        },
+        {
+          "id": "orthogonality",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -455,6 +629,16 @@
       "prerequisites": [
         "symmetric-matrices",
         "eigenvalues"
+      ],
+      "encompasses": [
+        {
+          "id": "symmetric-matrices",
+          "weight": 0.6
+        },
+        {
+          "id": "eigenvalues",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -466,6 +650,16 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "quadratic-forms"
+      ],
+      "encompasses": [
+        {
+          "id": "quadratic-forms",
+          "weight": 0.7
+        },
+        {
+          "id": "eigenvalues",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -478,6 +672,16 @@
       "prerequisites": [
         "symmetric-matrices",
         "diagonalization"
+      ],
+      "encompasses": [
+        {
+          "id": "symmetric-matrices",
+          "weight": 0.7
+        },
+        {
+          "id": "diagonalization",
+          "weight": 0.6
+        }
       ]
     },
     {
@@ -491,6 +695,20 @@
         "eigenvalues",
         "symmetric-matrices",
         "orthogonality"
+      ],
+      "encompasses": [
+        {
+          "id": "eigenvalues",
+          "weight": 0.7
+        },
+        {
+          "id": "orthogonality",
+          "weight": 0.6
+        },
+        {
+          "id": "symmetric-matrices",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -503,6 +721,16 @@
       "prerequisites": [
         "eigenvalues",
         "diagonalization"
+      ],
+      "encompasses": [
+        {
+          "id": "eigenvalues",
+          "weight": 0.6
+        },
+        {
+          "id": "diagonalization",
+          "weight": 0.5
+        }
       ]
     },
     {
@@ -515,6 +743,16 @@
       "prerequisites": [
         "svd",
         "eigenvalues"
+      ],
+      "encompasses": [
+        {
+          "id": "svd",
+          "weight": 0.6
+        },
+        {
+          "id": "eigenvalues",
+          "weight": 0.4
+        }
       ]
     },
     {
@@ -1105,7 +1343,36 @@
       "prerequisites": [
         "trees"
       ]
+    },
+    {
+      "id": "vector-algebra-basics",
+      "topic": "vector-calculus",
+      "label": "Vector Algebra Basics",
+      "description": "Vectors in 2D/3D space, dot product, cross product, scalar triple product",
+      "difficulty_base": 0.2,
+      "gate_frequency": "medium",
+      "prerequisites": []
+    },
+    {
+      "id": "sampling-distributions",
+      "topic": "probability-statistics",
+      "label": "Sampling Distributions",
+      "description": "t-distribution, chi-squared distribution, sampling distributions of statistics, Central Limit Theorem",
+      "difficulty_base": 0.55,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "continuous-distributions"
+      ]
+    },
+    {
+      "id": "numerical-error-analysis",
+      "topic": "numerical-methods",
+      "label": "Numerical Error Analysis",
+      "description": "Absolute/relative/percentage error, significant digits and rounding, error propagation",
+      "difficulty_base": 0.25,
+      "gate_frequency": "medium",
+      "prerequisites": []
     }
   ],
-  "total": 97
+  "total": 100
 }

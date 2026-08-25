@@ -1015,6 +1015,28 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - trees
+  - id: vector-algebra-basics
+    topic: vector-calculus
+    label: Vector Algebra Basics
+    description: Vectors in 2D/3D space, dot product, cross product, scalar triple product
+    difficulty_base: 0.2
+    gate_frequency: medium
+    prerequisites: []
+  - id: sampling-distributions
+    topic: probability-statistics
+    label: Sampling Distributions
+    description: t-distribution, chi-squared distribution, sampling distributions of statistics, Central Limit Theorem
+    difficulty_base: 0.55
+    gate_frequency: medium
+    prerequisites:
+      - continuous-distributions
+  - id: numerical-error-analysis
+    topic: numerical-methods
+    label: Numerical Error Analysis
+    description: Absolute/relative/percentage error, significant digits and rounding, error propagation
+    difficulty_base: 0.25
+    gate_frequency: medium
+    prerequisites: []
 
 # ---------------------------------------------------------------------------
 # Official syllabus structure — sections mirror the MA paper's sections

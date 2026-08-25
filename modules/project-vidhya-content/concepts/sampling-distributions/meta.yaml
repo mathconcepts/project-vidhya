@@ -1,0 +1,6 @@
+concept_id: sampling-distributions
+label: "Sampling Distributions"
+topic: probability-statistics
+difficulty_base: 0.55
+gate_frequency: medium
+exam_ids: ["*"]

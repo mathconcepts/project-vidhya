@@ -18,8 +18,8 @@ import {
 } from '../concept-graph';
 
 describe('concept-graph.ts (thin YAML loader)', () => {
-  it('loads exactly 97 concepts', () => {
-    expect(ALL_CONCEPTS.length).toBe(97);
+  it('loads exactly 100 concepts', () => {
+    expect(ALL_CONCEPTS.length).toBe(100);
   });
 
   it('every concept has the full ConceptNode shape', () => {

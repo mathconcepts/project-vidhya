@@ -148,6 +148,15 @@ export const RATIONALE_CODES = {
   // Constraint sources
   no_jargon_first_definition: 'Lead with intuition, not formal language',
   always_include_pyq_anchor: 'Anchor every unit to a real exam question',
+
+  // Intent-lane rationale (T5 — codegen'd from data/curriculum/gate-em/intent-profiles.yml
+  // via src/blueprints/intent-tables.gen.ts). One code per intent, applied to every
+  // stage that intent's default_stage_sequence produces. Additive only — see the
+  // header note above: add codes forward, never rename.
+  intent_pyq_practice: 'PYQ-targeted practice lane — stage sequence from the concept\'s dominant catalogue intent (pyq_targeted_practice)',
+  intent_method_selection: 'Guided problem-solving lane — stage sequence from the concept\'s dominant catalogue intent (guided_problem_solving)',
+  intent_property_recall: 'Concept-clarification lane — stage sequence from the concept\'s dominant catalogue intent (concept_clarification)',
+  intent_foundation: 'Foundation-learning lane — stage sequence from the concept\'s dominant catalogue intent (foundation_learning)',
 } as const;
 
 export type RationaleCode = keyof typeof RATIONALE_CODES;

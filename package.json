@@ -41,6 +41,7 @@
     "data:import": "tsx scripts/vidhya-data.ts import",
     "data:verify": "tsx scripts/vidhya-data.ts verify",
     "typecheck": "tsc --noEmit",
+    "gen:intent-tables": "tsx scripts/generate-intent-tables.ts",
     "content:scrape": "tsx scripts/scrape-corpus.ts --source gate && tsx scripts/scrape-textbooks.ts --source openstax && tsx scripts/scrape-textbooks.ts --source ocw",
     "content:explainers": "tsx scripts/build-explainers.ts",
     "content:generate": "tsx src/jobs/job-cli.ts content-generation",

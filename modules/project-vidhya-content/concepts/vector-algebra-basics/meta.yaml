@@ -1,0 +1,6 @@
+concept_id: vector-algebra-basics
+label: "Vector Algebra Basics"
+topic: vector-calculus
+difficulty_base: 0.2
+gate_frequency: medium
+exam_ids: ["*"]

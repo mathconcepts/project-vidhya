@@ -110,6 +110,11 @@ export interface AuthConfig {
    *  Shows demo quick-start buttons even when Google OAuth is active —
    *  used on the Render demo deploy so admin access always works. */
   demo_mode?: boolean;
+  /** True when VIDHYA_INTENT_LANES=on. Gates the concept-page Definite
+   *  Problem Statement block + intent-ordered atom sequence (T4). Default
+   *  false/absent on any deployment that hasn't set the env var. Read via
+   *  the useIntentLanesFlag() hook rather than fetching this directly. */
+  intent_lanes?: boolean;
   channels: { web: boolean; telegram: boolean; whatsapp: boolean };
 }
 

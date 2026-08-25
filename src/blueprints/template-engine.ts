@@ -19,6 +19,12 @@ import type {
   DifficultyLabel,
   AtomKind,
 } from './types';
+import {
+  INTENT_STAGE_SEQUENCES,
+  CONCEPT_DOMINANT_INTENT,
+  CONCEPT_INVENTORY_TOTALS,
+  type IntentId,
+} from './intent-tables.gen';
 
 export const TEMPLATE_VERSION = 'v1.0';
 
@@ -115,6 +121,94 @@ export function buildTemplateBlueprint(input: TemplateInput): BlueprintDecisions
 
   // Default constraint
   constraints.push({ id: 'no_jargon_first_definition', source: 'template' });
+
+  return {
+    version: 1,
+    metadata: {
+      concept_id: input.concept_id,
+      exam_pack_id: input.exam_pack_id,
+      target_difficulty: input.target_difficulty,
+    },
+    stages,
+    constraints,
+  };
+}
+
+// ----------------------------------------------------------------------------
+// Intent-aware blueprints (T5 — codegen'd from data/curriculum/gate-em/intent-profiles.yml)
+// ----------------------------------------------------------------------------
+
+/** One rationale code per intent — see the additive block in types.ts. */
+const RATIONALE_ID_BY_INTENT: Record<IntentId, string> = {
+  pyq_targeted_practice: 'intent_pyq_practice',
+  guided_problem_solving: 'intent_method_selection',
+  concept_clarification: 'intent_property_recall',
+  foundation_learning: 'intent_foundation',
+};
+
+const PRACTICE_COUNT_MIN = 3;
+const PRACTICE_COUNT_MAX = 8;
+/** Roughly a session-sized slice of the concept's full inventory target. */
+const PRACTICE_COUNT_DIVISOR = 15;
+
+/**
+ * count = clamp(round(total_inventory / 15), 3, 8).
+ *
+ * `total_inventory` is the concept's full CONCEPT_INVENTORY_TOTALS figure —
+ * everything Phase 4 generation eventually fills in. A single blueprint's
+ * practice stage should feel like one sitting, not the whole backlog, so
+ * this divides down to a session-sized slice and clamps it into a sane
+ * [3, 8] range (matches validator.ts's "positive integer count" requirement
+ * and mirrors buildTemplateBlueprint's PRACTICE_COUNT_BY_DIFFICULTY scale).
+ */
+function practiceCountFromInventory(totalInventory: number): number {
+  const raw = Math.round(totalInventory / PRACTICE_COUNT_DIVISOR);
+  return Math.min(PRACTICE_COUNT_MAX, Math.max(PRACTICE_COUNT_MIN, raw));
+}
+
+/**
+ * Intent-aware alternative to buildTemplateBlueprint. When the concept has
+ * a dominant intent (CONCEPT_DOMINANT_INTENT, computed by codegen from the
+ * atomic catalogue's per-atom intent distribution — see intent-tables.gen.ts),
+ * or an explicit `intent` override is passed, emits the stage sequence
+ * INTENT_STAGE_SEQUENCES declares for that intent, with:
+ *   - practice stages given a concrete count via practiceCountFromInventory()
+ *     and their difficulty_mix passed through unchanged from the sequence;
+ *   - every stage's rationale_id set from RATIONALE_ID_BY_INTENT (one of the
+ *     four intent_* codes added to RATIONALE_CODES in types.ts).
+ *
+ * Returns null when the concept has no dominant intent and no explicit
+ * override was given — callers fall back to buildTemplateBlueprint(), which
+ * this function never calls and never mutates.
+ */
+export function buildIntentBlueprint(
+  input: TemplateInput & { intent?: IntentId },
+): BlueprintDecisionsV1 | null {
+  const intent = input.intent ?? CONCEPT_DOMINANT_INTENT[input.concept_id];
+  if (!intent) return null;
+
+  const sequence = INTENT_STAGE_SEQUENCES[intent];
+  const rationale_id = RATIONALE_ID_BY_INTENT[intent];
+  const totalInventory = CONCEPT_INVENTORY_TOTALS[input.concept_id] ?? 0;
+
+  const stages: BlueprintStage[] = sequence.map((generated) => {
+    const stage: BlueprintStage = {
+      id: generated.stage,
+      atom_kind: generated.atom_kind,
+      rationale_id,
+    };
+    if (generated.stage === 'practice') {
+      stage.count = practiceCountFromInventory(totalInventory);
+    }
+    if (generated.difficulty_mix) {
+      stage.difficulty_mix = { ...generated.difficulty_mix };
+    }
+    return stage;
+  });
+
+  const constraints: BlueprintConstraint[] = [
+    { id: 'no_jargon_first_definition', source: 'template' },
+  ];
 
   return {
     version: 1,

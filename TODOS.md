@@ -289,19 +289,13 @@ refused) instead of hanging. The genuinely transient case — Wolfram itself
 gets called and returns `status: 'inconclusive'` — is unchanged and still
 `pending_retry`, because that one really might succeed on a later pass.
 
-**What's still open:** mcq/msq/nat items generated via the batch path will
-ALL refuse until this dep is actually wired, so practice-item batch runs are
-honest-but-useless in production today — refusing instead of hanging is
-strictly better, but it is not the same as working. The real fix is wiring
-`solveSecondary` (via `resolveDistinctSecondaryModel` in `answer-check.ts`,
-which already exists and reuses the atom pipeline's provider-routing) and
-`wolframCheck` (via the existing `verifyProblemWithWolfram` /
-`src/services/wolfram-service.ts`) into the `onJobProcessed` closure in
-`poller.ts`'s `getOrchestrator()`, threaded down to `handleJobProcessed`'s
-`deps` parameter alongside the existing `getRun`/`dispatchPracticeItemJob`/
-`writePracticeItemBank`.
-
-**Where to start:** `src/generation/batch/poller.ts`'s `defaultJobProcessedDeps`
-and `getOrchestrator()`'s `onJobProcessed` closure; the verifier factories
-themselves are one import away in `answer-check.ts` and
-`src/services/wolfram-service.ts`.
+**RESOLVED (2026-08-25, intent-restructure branch):** `poller.ts` now builds
+real `PracticeItemDispatchDeps` per job (`buildSolveSecondaryFn` over the
+distinct-secondary provider routing; `verifyProblemWithWolfram` gated on the
+existing wolfram feature flag), and `orchestrator.ts`'s `prepare()` carries a
+launch guard (`assertPracticeItemLaunchReady`) that fails a FRESH practice-item
+run loudly at launch when its item kinds' verifiers aren't configured — resume
+of in-flight runs is structurally unaffected. What remains open is only the
+original trigger: nothing populates `config.target.practice_item_specs` yet,
+so the first real launch caller should re-verify end-to-end against a live
+provider config.

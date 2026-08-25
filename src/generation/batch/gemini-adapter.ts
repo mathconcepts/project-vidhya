@@ -33,7 +33,13 @@ export interface GeminiAdapterOpts {
 }
 
 const DEFAULT_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta';
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// Exported (T4a) — this IS the batch pipeline's fixed primary model id
+// (createGeminiBatchAdapter() is the only adapter poller.ts constructs).
+// poller.ts's real verifier wiring and the practice-item launch guard both
+// need to know it, to resolve a distinct-provider secondary rather than
+// re-deriving/duplicating this literal (see CLAUDE.md's v4.25.0 note on
+// model-id "parallel truths" drift).
+export const DEFAULT_MODEL = 'gemini-2.5-flash';
 const DEFAULT_RETRY_DELAYS = [500, 2000, 8000];
 
 export function createGeminiBatchAdapter(opts: GeminiAdapterOpts = {}): BatchAdapter {

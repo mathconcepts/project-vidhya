@@ -1,0 +1,167 @@
+# ---------------------------------------------------------------------------
+# Intent profiles — the demand-side content contract for GATE Engineering
+# Mathematics.
+#
+# Source: user-intent research (2026-08-25), 203 atomic sub-topics profiled in
+# data/curriculum/gate-em/atomic-catalogue.json. Every atom in the catalogue
+# declares exactly one primary `intent` (the job the student arrives with) and
+# belongs to one `module_profile` (the module-level pain-point pattern).
+#
+# What this file locks:
+#   1. Four intent lanes. Every sub-topic page serves all four; the atom's
+#      declared `intent` picks the DEFAULT lane. Lanes map 1:1 onto the
+#      readiness engine's four arms (src/readiness/next-best-action.ts), so
+#      demand-side intent and the supply-side engine speak the same language.
+#   2. Eight module pain profiles. Each names the error family students
+#      actually lose marks to, mapped onto the locked ErrorTag union
+#      (src/core/interfaces.ts) plus proposed extensions (marked — extending
+#      ErrorTag requires a migration touching 031's CHECK constraint; the
+#      proposal is recorded here, NOT silently assumed).
+#   3. The stage sequence each lane renders, expressed in the existing
+#      blueprint vocabulary (src/blueprints/types.ts StageKind / AtomKind) —
+#      this file introduces NO new runtime enums; presentation variants
+#      (property_card, decision_tree) are declared as `presentation` hints on
+#      existing atom kinds.
+#
+# schema_version 1 is locked. Shape changes ship as schema_version 2.
+# ---------------------------------------------------------------------------
+schema_version: 1
+id: gate-em-intent-profiles
+
+intents:
+  foundation_learning:
+    catalogue_label: "Foundation learning"
+    student_job: "I am new to this — teach me from zero."
+    lane: learn
+    readiness_arm: teach
+    default_stage_sequence:
+      - { stage: intuition,      atom_kind: visual_analogy }
+      - { stage: discovery,      atom_kind: manipulable }
+      - { stage: formalism,      atom_kind: worked_example, presentation: property_card }
+      - { stage: worked_example, atom_kind: worked_example }
+      - { stage: practice,       atom_kind: mcq, difficulty_mix: { easy: 50, medium: 40, hard: 10 } }
+    success_metric: "first-attempt accuracy on foundation-difficulty items"
+    problem_statement_frame: >
+      "You have never met {subtopic}. In {time_budget} minutes you will be able
+      to answer a GATE 1-mark question on it."
+
+  concept_clarification:
+    catalogue_label: "Concept clarification / property recall"
+    student_job: "I know this roughly — I need the exact property or formula, fast."
+    lane: clarify
+    readiness_arm: retain
+    default_stage_sequence:
+      - { stage: formalism,      atom_kind: worked_example, presentation: property_card }
+      - { stage: worked_example, atom_kind: worked_example, presentation: counterexample }
+      - { stage: pyq_anchor,     atom_kind: pyq_anchor }
+    success_metric: "recall accuracy on property-check items; FSRS retention on the card"
+    problem_statement_frame: >
+      "GATE tests whether you can APPLY the property of {subtopic} without
+      re-deriving it. Here is the property, its trap, and the PYQ it decides."
+
+  guided_problem_solving:
+    catalogue_label: "Guided problem solving / method selection"
+    student_job: "I see a problem and do not know which method applies."
+    lane: solve
+    readiness_arm: diagnose
+    default_stage_sequence:
+      - { stage: discovery,      atom_kind: guided_walkthrough, presentation: decision_tree }
+      - { stage: worked_example, atom_kind: worked_example }
+      - { stage: practice,       atom_kind: mcq, difficulty_mix: { easy: 20, medium: 50, hard: 30 } }
+    success_metric: "method-selection accuracy BEFORE calculation begins (first branch of the walkthrough)"
+    problem_statement_frame: >
+      "Most marks on {subtopic} are lost before the first calculation — by
+      picking the wrong method. This decision tree makes the choice mechanical."
+
+  pyq_targeted_practice:
+    catalogue_label: "PYQ discovery / targeted practice"
+    student_job: "Give me real exam questions for exactly this sub-topic."
+    lane: practice
+    readiness_arm: practice
+    default_stage_sequence:
+      - { stage: pyq_anchor,     atom_kind: pyq_anchor }
+      - { stage: practice,       atom_kind: mcq, difficulty_mix: { easy: 30, medium: 50, hard: 20 } }
+    success_metric: "holdout PYQ accuracy delta (experiments.metadata.pyq_accuracy_delta_v1)"
+    problem_statement_frame: >
+      "{subtopic} has appeared {pyq_count} times in GATE {papers}. Solve the
+      ladder: diagnostic → drill → timed set. Marks at stake: {marks}."
+
+# ---------------------------------------------------------------------------
+# Module pain profiles. `error_tags.existing` values are members of today's
+# locked ErrorTag union; `error_tags.proposed` are NEW tags this restructure
+# proposes (require extending src/core/interfaces.ts ErrorTag + migration for
+# attempt_error_tags CHECK constraint — see design doc, Phase 5).
+# `trap_drill_focus` is the brief for pain-point-targeted practice generation.
+# ---------------------------------------------------------------------------
+module_profiles:
+  linear-algebra:
+    pain_point: "Students often over-calculate, confuse definitions, or make row-operation and sign errors."
+    error_tags:
+      existing: [sign, method, careless]
+      proposed: [over-calculation, definition-confusion]
+    expectation: "A property-first explanation, worked examples, PYQs and a short timed drill."
+    signature_formats: [property_card, worked_example, timed_drill]
+    trap_drill_focus: "property shortcuts that make brute-force computation unnecessary; sign discipline in row operations"
+
+  calculus:
+    pain_point: "Students struggle with condition checking, algebraic manipulation, bounds, and selecting the shortest valid method."
+    error_tags:
+      existing: [method, sign, misread]
+      proposed: [condition-check, bounds]
+    expectation: "Visual intuition where needed, formula sheet, solved PYQs and graduated practice."
+    signature_formats: [visual_intuition, formula_card, pyq_ladder]
+    trap_drill_focus: "hypothesis/condition verification before applying a theorem; limit and integration bounds"
+
+  vector-calculus:
+    pain_point: "Abstract geometric meaning, parameterization, orientation and theorem selection create avoidable errors."
+    error_tags:
+      existing: [method, sign, misread]
+      proposed: [orientation, parameterization]
+    expectation: "Animated intuition, region sketches, theorem flowcharts and stepwise checks."
+    signature_formats: [animated_explainer, visualizer, theorem_decision_tree]
+    trap_drill_focus: "orientation/normal-direction sign traps; Green vs Stokes vs Divergence selection"
+
+  differential-equations:
+    pain_point: "Learners confuse equation types, CF/PI steps, substitutions and condition application."
+    error_tags:
+      existing: [method, transcription, careless]
+      proposed: [classification, condition-application]
+    expectation: "Classification flowchart, reusable templates, fully worked examples and error-based revision."
+    signature_formats: [classification_map, solution_template, timed_problem_set]
+    trap_drill_focus: "equation-type classification before solving; CF/PI bookkeeping; initial/boundary condition application"
+
+  complex-variables:
+    pain_point: "Students find the subject abstract and make errors in contour inclusion, regions and singularity classification."
+    error_tags:
+      existing: [method, misread]
+      proposed: [region-inclusion, singularity-classification]
+    expectation: "Plane diagrams, condition checklists, expansion templates and contour-based PYQs."
+    signature_formats: [plane_diagram, condition_checklist, contour_pyqs]
+    trap_drill_focus: "is the singularity inside the contour; Laurent region selection; pole order"
+
+  probability-statistics:
+    pain_point: "The main difficulty is interpretation: 'given', distribution selection, normalization and parameter meaning."
+    error_tags:
+      existing: [misread, method]
+      proposed: [interpretation, distribution-selection, normalization]
+    expectation: "Plain-language examples, tree/table representations, distribution selector and mixed practice."
+    signature_formats: [story_lesson, decision_tree, mixed_pyq_set]
+    trap_drill_focus: "translating English to events/random variables; conditional vs joint; which distribution fits"
+
+  numerical-methods:
+    pain_point: "Students lose marks through coefficient, interval, rounding, iteration and stopping-condition mistakes."
+    error_tags:
+      existing: [transcription, careless, unit]
+      proposed: [rounding, stopping-condition, iteration-bookkeeping]
+    expectation: "Interactive calculator, iteration table, error dashboard and short numerical drills."
+    signature_formats: [interactive_simulator, iteration_table, nat_drill]
+    trap_drill_focus: "one-or-two iteration execution with exact rounding discipline; convergence criteria"
+
+  discrete-mathematics:
+    pain_point: "Students confuse similar definitions and struggle to translate English statements or graph structure into formal reasoning."
+    error_tags:
+      existing: [misread, method]
+      proposed: [definition-confusion, formalization]
+    expectation: "Definition matrix, counterexamples, visual graphs, proof patterns and PYQ classification."
+    signature_formats: [definition_matrix, counterexample, proof_pattern]
+    trap_drill_focus: "near-miss definition pairs (e.g. partial vs total order); English → predicate-logic translation"

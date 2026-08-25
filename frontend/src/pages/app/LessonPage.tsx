@@ -22,10 +22,13 @@ import { SampleDataChip } from '@/components/app/SampleDataChip';
 import { DemoCaption } from '@/components/app/DemoCaption';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtomCardRenderer, type ContentAtom } from '@/components/lesson/AtomCardRenderer';
+import { ProblemStatementBlock } from '@/components/lesson/ProblemStatementBlock';
 import { ConceptMathViz } from '@/components/lesson/ConceptMathViz';
 import { WalkthroughRail } from '@/components/lesson/WalkthroughRail';
 import { parseInteractiveSpec } from '@/components/lesson/interactives/types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useIntentLanesFlag } from '@/hooks/useIntentLanesFlag';
+import { INTENT_SLICES } from '@/generated/intent-slices.gen';
 import {
   Loader2, CheckCircle2, XCircle, Eye,
   Lightbulb, BookOpen, Target, Zap, AlertTriangle, Hash, GitBranch,
@@ -502,6 +505,12 @@ export default function LessonPage() {
   const navigate = useNavigate();
   const sessionId = useSession();
   const { exam } = useActiveExam();
+  // T4 — intent-driven content restructure, §7 Phase 2 (VIDHYA_INTENT_LANES,
+  // default off). intentSlice is undefined for every concept outside the
+  // 19 mapped LA concepts, so both the DPS block and the atom reorder
+  // below degrade to "render nothing" / "no-op" automatically.
+  const intentLanesEnabled = useIntentLanesFlag();
+  const intentSlice = INTENT_SLICES[concept_id];
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -710,6 +719,7 @@ export default function LessonPage() {
             </div>
           </div>
         </div>
+        <ProblemStatementBlock conceptId={concept_id} enabled={intentLanesEnabled} />
         <DemoCaption step={demoStep} captions={getDemoCaptions()} />
         <div ref={atomStackRef}>
           <AtomCardRenderer
@@ -719,6 +729,7 @@ export default function LessonPage() {
             studentId={sessionId}
             onComplete={() => navigate('/')}
             jumpToAtomId={jumpToAtomId}
+            intentStageOrder={intentLanesEnabled ? intentSlice?.stage_order : undefined}
           />
         </div>
         <ConceptMathViz conceptId={concept_id} />

@@ -1,0 +1,1100 @@
+{
+ "version": 1,
+ "_comment": "GATE-MA calculus practice bank (MVT + integration + multivariable): mean-value-theorems..multiple-integrals. Same dual-independent-solve protocol as the foundations bank; see that file's _comment.",
+ "items": [
+  {
+   "id": "pi-mean-value-theorems-001",
+   "concept_id": "mean-value-theorems",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x) = x² is continuous on [1, 3] and differentiable on (1, 3). By the Lagrange Mean Value Theorem, find the value c ∈ (1, 3) such that f'(c) = (f(3) − f(1)) / (3 − 1).",
+   "options": [
+    "c = 2",
+    "c = 1",
+    "c = 3",
+    "c = 4"
+   ],
+   "answer_index": 0,
+   "correct_answer": "c = 2",
+   "solution_steps": [
+    "f(1) = 1, f(3) = 9, so the average (secant) slope is (9 − 1)/(3 − 1) = 8/2 = 4.",
+    "f'(x) = 2x, so f'(c) = 4 gives 2c = 4, i.e. c = 2. This lies in (1, 3), as LMVT guarantees.",
+    "Cross-check by an independent argument: f'(x) = 2x is linear in x, so the derivative equals its average value over [1,3] exactly at the midpoint of the interval. Midpoint = (1+3)/2 = 2 — matches c = 2 without solving the equation directly.",
+    "Trap named: c = 4 comes from mistaking the value of f'(c) itself (which is 4) for c; c = 1 or c = 3 are the endpoints, which LMVT explicitly excludes (c must be strictly interior)."
+   ],
+   "verification_method": "hand_checkable_lmvt_quadratic"
+  },
+  {
+   "id": "pi-mean-value-theorems-002",
+   "concept_id": "mean-value-theorems",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x) = ln(x) is continuous on [1, e] and differentiable on (1, e). Find the value c guaranteed by the Lagrange Mean Value Theorem.",
+   "answer_range": [
+    1.708,
+    1.728
+   ],
+   "correct_answer": "e - 1 (≈ 1.718)",
+   "solution_steps": [
+    "Average slope = (f(e) − f(1))/(e − 1) = (1 − 0)/(e − 1) = 1/(e − 1).",
+    "f'(x) = 1/x, so f'(c) = 1/(e−1) gives 1/c = 1/(e−1), i.e. c = e − 1 ≈ 1.71828.",
+    "Cross-check: LMVT requires 1 < c < e, i.e. 1 < 1.71828 < 2.71828 — holds, confirming the value is admissible (a value outside the open interval would signal an algebra error).",
+    "The hypothesis-check trap: LMVT needs continuity on the CLOSED interval [1,e] and differentiability on the OPEN interval (1,e) — ln(x) satisfies both since x=1 is included in its domain and the derivative 1/x is defined throughout (1,e)."
+   ],
+   "verification_method": "hand_checkable_lmvt_logarithm"
+  },
+  {
+   "id": "pi-mean-value-theorems-003",
+   "concept_id": "mean-value-theorems",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Which of the following functions does NOT satisfy the hypotheses of Rolle's theorem on the stated interval?",
+   "options": [
+    "f(x) = |x − 2| on [0, 4]",
+    "f(x) = x² − 4x + 3 on [1, 3]",
+    "f(x) = sin(x) on [0, π]",
+    "f(x) = x³ − x on [−1, 1]"
+   ],
+   "answer_index": 0,
+   "correct_answer": "f(x) = |x − 2| on [0, 4]",
+   "solution_steps": [
+    "Rolle's theorem needs: f continuous on [a,b], differentiable on (a,b), and f(a) = f(b).",
+    "f(x) = |x−2| on [0,4]: f(0) = 2 = f(4), so the endpoint condition holds and f is continuous everywhere — but f is NOT differentiable at x = 2, which lies inside the open interval (0,4). This is the classic 'kink at an interior point' trap — the hypothesis fails silently even though f(a)=f(b) looks fine.",
+    "Check the others satisfy all three conditions: x²−4x+3 gives f(1)=0=f(3), polynomial so differentiable everywhere — valid. sin(x) gives f(0)=0=f(π), differentiable everywhere — valid. x³−x gives f(−1)=0=f(1), differentiable everywhere — valid.",
+    "Cross-check by symmetry: |x−2| is a V-shape with vertex exactly at x=2 ∈ (0,4); geometrically no tangent line exists there, matching the algebraic non-differentiability finding."
+   ],
+   "verification_method": "hand_checkable_rolle_hypothesis_check"
+  },
+  {
+   "id": "pi-mean-value-theorems-004",
+   "concept_id": "mean-value-theorems",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x) = x³ − 4x satisfies f(−2) = f(2) = 0, so Rolle's theorem applies on [−2, 2]. Find the POSITIVE value of c ∈ (−2, 2) with f'(c) = 0.",
+   "answer_range": [
+    1.1447,
+    1.1647
+   ],
+   "correct_answer": "2/√3 (≈ 1.1547)",
+   "solution_steps": [
+    "Verify hypotheses first: f is a polynomial (continuous & differentiable everywhere), and f(−2) = −8+8 = 0, f(2) = 8−8 = 0, so f(−2)=f(2) — Rolle's theorem applies.",
+    "f'(x) = 3x² − 4. Setting f'(c) = 0: 3c² = 4, c² = 4/3, c = ±2/√3 = ±(2√3)/3.",
+    "The positive root is c = 2/√3 ≈ 1.1547, which lies in (−2, 2) as required.",
+    "Cross-check: since f(x) = x(x²−4) is an odd function, f'(x) = 3x²−4 is even, so its roots come in a ± pair — confirming both ±2/√3 are valid Rolle points, and picking the positive one gives 1.1547."
+   ],
+   "verification_method": "hand_checkable_rolle_cubic"
+  },
+  {
+   "id": "pi-mean-value-theorems-005",
+   "concept_id": "mean-value-theorems",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about the Lagrange Mean Value Theorem (LMVT) and Rolle's theorem are true?",
+   "options": [
+    "For LMVT, the guaranteed point c satisfies f'(c) = (f(b) − f(a)) / (b − a)",
+    "Rolle's theorem additionally requires f(a) = f(b), on top of LMVT's continuity/differentiability conditions",
+    "Rolle's theorem is a special case of the Mean Value Theorem",
+    "The point c guaranteed by LMVT is always unique",
+    "LMVT requires f to be differentiable on the closed interval [a, b]"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    2
+   ],
+   "correct_answer": "f'(c) = (f(b)-f(a))/(b-a); Rolle adds f(a)=f(b); Rolle is a special case of LMVT",
+   "solution_steps": [
+    "(a) TRUE: this is the exact statement of LMVT — the slope of the tangent at c matches the average (secant) slope over [a,b].",
+    "(b) TRUE: Rolle's theorem is LMVT with the extra hypothesis f(a) = f(b), which forces the conclusion f'(c) = 0 (flat tangent) instead of the general secant slope.",
+    "(c) TRUE: setting f(a) = f(b) in LMVT's statement immediately reduces it to Rolle's — Rolle is the special case where the secant slope is zero.",
+    "(d) FALSE: c need not be unique — item pi-mean-value-theorems-004 above has TWO valid points, c = 2/√3 and c = −2/√3, both satisfying f'(c) = 0 on the same interval.",
+    "(e) FALSE: LMVT requires continuity on the CLOSED interval [a,b] but differentiability only on the OPEN interval (a,b) — a function can fail to be differentiable at an endpoint and LMVT still applies (e.g. f(x) = √x on [0,4] is not differentiable at x=0, yet LMVT holds)."
+   ],
+   "verification_method": "hand_checkable_lmvt_rolle_properties"
+  },
+  {
+   "id": "pi-integration-basics-001",
+   "concept_id": "integration-basics",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀² (3x² − 4x + 5) dx.",
+   "options": [
+    "10",
+    "6",
+    "14",
+    "8"
+   ],
+   "answer_index": 0,
+   "correct_answer": "10",
+   "solution_steps": [
+    "Antiderivative: ∫(3x² − 4x + 5) dx = x³ − 2x² + 5x + C.",
+    "Evaluate at bounds: [x³ − 2x² + 5x]₀² = (8 − 8 + 10) − (0) = 10.",
+    "Cross-check by differentiating back: d/dx(x³ − 2x² + 5x) = 3x² − 4x + 5, exactly the original integrand — antiderivative confirmed.",
+    "Trap named: 6 comes from dropping the constant '+5' term's contribution; 14 and 8 come from sign slips in the −4x term when evaluating at x=2."
+   ],
+   "verification_method": "hand_checkable_polynomial_power_rule"
+  },
+  {
+   "id": "pi-integration-basics-002",
+   "concept_id": "integration-basics",
+   "topic": "calculus",
+   "difficulty": 0.35,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₋₁¹ (4x³ − 6x + 2) dx.",
+   "options": [
+    "4",
+    "0",
+    "8",
+    "-4"
+   ],
+   "answer_index": 0,
+   "correct_answer": "4",
+   "solution_steps": [
+    "Antiderivative: ∫(4x³ − 6x + 2) dx = x⁴ − 3x² + 2x + C.",
+    "Evaluate: at x=1, 1 − 3 + 2 = 0. At x=−1, 1 − 3 − 2 = −4. Definite integral = 0 − (−4) = 4.",
+    "Cross-check via odd/even splitting: 4x³ − 6x is an odd function, so its integral over the symmetric interval [−1,1] is exactly 0 by symmetry; the remaining term 2 is even (constant), contributing ∫₋₁¹ 2 dx = 2·(1−(−1)) = 4. Total = 0 + 4 = 4 — matches.",
+    "Trap named: answer 0 is exactly what a student gets by (incorrectly) assuming the ENTIRE integrand is odd and vanishes over the symmetric interval — forgetting that the constant '+2' term is even and does NOT cancel."
+   ],
+   "verification_method": "hand_checkable_polynomial_odd_even_symmetry"
+  },
+  {
+   "id": "pi-integration-basics-003",
+   "concept_id": "integration-basics",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∫₁ᵉ (1/x) dx.",
+   "answer_range": [
+    0.99,
+    1.01
+   ],
+   "correct_answer": "1",
+   "solution_steps": [
+    "∫(1/x) dx = ln|x| + C.",
+    "Evaluate: [ln x]₁ᵉ = ln(e) − ln(1) = 1 − 0 = 1.",
+    "Cross-check by differentiating back: d/dx(ln x) = 1/x, matching the integrand exactly.",
+    "Cross-check numerically: 1/x decreases from 1 (at x=1) to 1/e ≈ 0.368 (at x=e) over an interval of width e−1 ≈ 1.718; a rough trapezoid estimate ((1+0.368)/2)·1.718 ≈ 1.175 is in the right ballpark of the exact value 1, confirming no gross error."
+   ],
+   "verification_method": "hand_checkable_reciprocal_integral"
+  },
+  {
+   "id": "pi-integration-basics-004",
+   "concept_id": "integration-basics",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀¹ 1/(1 + x²) dx.",
+   "answer_range": [
+    0.7754,
+    0.7954
+   ],
+   "correct_answer": "π/4 (≈ 0.7854)",
+   "solution_steps": [
+    "∫ 1/(1+x²) dx = arctan(x) + C.",
+    "Evaluate: [arctan x]₀¹ = arctan(1) − arctan(0) = π/4 − 0 = π/4 ≈ 0.7854.",
+    "Cross-check by differentiating back: d/dx(arctan x) = 1/(1+x²), matching the integrand.",
+    "Cross-check numerically: 1/(1+x²) decreases smoothly from 1 (at x=0) to 0.5 (at x=1); the exact value π/4 ≈ 0.785 sits comfortably between the endpoint values, consistent with a concave-down integrand over [0,1]."
+   ],
+   "verification_method": "hand_checkable_arctan_integral"
+  },
+  {
+   "id": "pi-integration-basics-005",
+   "concept_id": "integration-basics",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about definite integrals are true?",
+   "options": [
+    "∫ₐᵇ f(x) dx = −∫ᵦᵃ f(x) dx",
+    "∫ₐᵃ f(x) dx = 0",
+    "If f is an odd function, ∫₋ₐᵃ f(x) dx = 0",
+    "If f is an even function, ∫₋ₐᵃ f(x) dx = ∫₀ᵃ f(x) dx",
+    "d/dx [∫ₐˣ f(t) dt] = f(x), by the Fundamental Theorem of Calculus"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    2,
+    4
+   ],
+   "correct_answer": "Swapping limits flips sign; zero-width integral is 0; odd function over symmetric interval is 0; FTC derivative statement",
+   "solution_steps": [
+    "(a) TRUE: reversing the limits of integration negates the value — this follows directly from the Fundamental Theorem of Calculus applied to F(b)−F(a) vs F(a)−F(b).",
+    "(b) TRUE: a definite integral over a zero-width interval [a,a] is always 0, since F(a) − F(a) = 0 regardless of f.",
+    "(c) TRUE: for odd f, the contributions from [−a,0] and [0,a] are exact negatives of each other and cancel — e.g. ∫₋₁¹ x dx = 0.",
+    "(d) FALSE: this is the exact 'sign/factor' trap — for even f the correct identity is ∫₋ₐᵃ f(x) dx = 2·∫₀ᵃ f(x) dx (double, not equal), since the two symmetric halves contribute EQUALLY, not just once. Counterexample: f(x)=x², ∫₋₁¹x²dx = 2/3, but ∫₀¹x²dx = 1/3 ≠ 2/3.",
+    "(e) TRUE: this is the first Fundamental Theorem of Calculus — the derivative of the accumulation function recovers the original integrand."
+   ],
+   "verification_method": "hand_checkable_definite_integral_properties"
+  },
+  {
+   "id": "pi-integration-substitution-001",
+   "concept_id": "integration-substitution",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀^√(π/2) 2x·cos(x²) dx using the substitution u = x².",
+   "options": [
+    "1",
+    "0",
+    "√(π/2)",
+    "-1"
+   ],
+   "answer_index": 0,
+   "correct_answer": "1",
+   "solution_steps": [
+    "Let u = x², so du = 2x dx — this exactly matches the '2x dx' factor in the integrand.",
+    "Transform the LIMITS to u: at x=0, u=0; at x=√(π/2), u = π/2. The integral becomes ∫₀^(π/2) cos(u) du.",
+    "∫₀^(π/2) cos(u) du = [sin u]₀^(π/2) = sin(π/2) − sin(0) = 1 − 0 = 1.",
+    "Cross-check by staying in x and differentiating back: d/dx[sin(x²)] = cos(x²)·2x, which is exactly the integrand — so sin(x²) is the correct antiderivative, and [sin(x²)]₀^√(π/2) = sin(π/2) − sin(0) = 1, matching."
+   ],
+   "verification_method": "hand_checkable_substitution_trig"
+  },
+  {
+   "id": "pi-integration-substitution-002",
+   "concept_id": "integration-substitution",
+   "topic": "calculus",
+   "difficulty": 0.45,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₁² x/(x² + 1) dx using the substitution u = x² + 1.",
+   "options": [
+    "(1/2)ln(5/2)",
+    "(1/2)ln(2)",
+    "ln(5/2)",
+    "(1/2)ln(3)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "(1/2)ln(5/2)",
+   "solution_steps": [
+    "Let u = x² + 1, so du = 2x dx, i.e. x dx = du/2.",
+    "Transform the LIMITS to u (this is the step the trap targets): at x=1, u = 1²+1 = 2; at x=2, u = 2²+1 = 5. The integral becomes (1/2)∫₂⁵ (1/u) du.",
+    "(1/2)∫₂⁵ (1/u) du = (1/2)[ln u]₂⁵ = (1/2)(ln 5 − ln 2) = (1/2)ln(5/2) ≈ 0.4581.",
+    "Cross-check by staying in x: antiderivative is (1/2)ln(x²+1); evaluate [(1/2)ln(x²+1)]₁² = (1/2)ln(5) − (1/2)ln(2) = (1/2)ln(5/2) — matches exactly.",
+    "Trap named: (1/2)ln(2) results from mistakenly reusing the ORIGINAL x-limits (1, 2) as if they were u-limits, without converting; ln(5/2) forgets the 1/2 factor from du=2x dx."
+   ],
+   "verification_method": "hand_checkable_substitution_limit_conversion"
+  },
+  {
+   "id": "pi-integration-substitution-003",
+   "concept_id": "integration-substitution",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀¹ x²√(1 + x³) dx using the substitution u = 1 + x³.",
+   "answer_range": [
+    0.3963,
+    0.4163
+   ],
+   "correct_answer": "(2/9)(2√2 − 1) ≈ 0.4063",
+   "solution_steps": [
+    "Let u = 1 + x³, so du = 3x² dx, i.e. x² dx = du/3.",
+    "Convert limits: at x=0, u=1; at x=1, u=2. Integral becomes (1/3)∫₁² √u du = (1/3)·(2/3)[u^(3/2)]₁² = (2/9)(2^(3/2) − 1).",
+    "2^(3/2) = 2√2 ≈ 2.8284, so the value is (2/9)(2.8284 − 1) = (2/9)(1.8284) ≈ 0.4063.",
+    "Cross-check by staying in x: antiderivative is (2/9)(1+x³)^(3/2); evaluate [(2/9)(1+x³)^(3/2)]₀¹ = (2/9)(2^(3/2)) − (2/9)(1) = (2/9)(2√2 − 1) — matches."
+   ],
+   "verification_method": "hand_checkable_substitution_radical"
+  },
+  {
+   "id": "pi-integration-substitution-004",
+   "concept_id": "integration-substitution",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Evaluate ∫₀^(ln 2) eˣ/(1 + eˣ)² dx using the substitution u = 1 + eˣ.",
+   "answer_range": [
+    0.1567,
+    0.1767
+   ],
+   "correct_answer": "1/6 (≈ 0.1667)",
+   "solution_steps": [
+    "Let u = 1 + eˣ, so du = eˣ dx — this matches the 'eˣ dx' factor exactly.",
+    "Convert limits: at x=0, u = 1+e⁰ = 2; at x=ln2, u = 1+e^(ln2) = 1+2 = 3. Integral becomes ∫₂³ (1/u²) du.",
+    "∫₂³ u⁻² du = [−1/u]₂³ = (−1/3) − (−1/2) = −1/3 + 1/2 = 1/6 ≈ 0.1667.",
+    "Cross-check by staying in x: antiderivative is −1/(1+eˣ); evaluate [−1/(1+eˣ)]₀^(ln2) = −1/3 − (−1/2) = 1/6 — matches. Also sanity: eˣ/(1+eˣ)² > 0 everywhere and the interval width is ln2 ≈ 0.693, so a small positive value like 1/6 is plausible."
+   ],
+   "verification_method": "hand_checkable_substitution_exponential"
+  },
+  {
+   "id": "pi-integration-substitution-005",
+   "concept_id": "integration-substitution",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about u-substitution in DEFINITE integrals are true?",
+   "options": [
+    "The limits of integration must be converted to the new variable u before evaluating (or the antiderivative must be converted back to x before plugging in the original x-limits)",
+    "If the substitution u = g(x) is not monotonic over the interval of integration, the integral must be split into pieces where it IS monotonic",
+    "It is always acceptable to keep the original x-limits after substituting to u, since limits are just numbers",
+    "The differential du can absorb a missing constant multiple (e.g. introducing a factor of 1/2 outside the integral) as long as it is accounted for consistently",
+    "Substituting back to the original variable x is always mandatory in a definite integral, even after the limits have already been converted to u"
+   ],
+   "answer_indices": [
+    0,
+    3
+   ],
+   "correct_answer": "Convert the limits (or convert back before evaluating); a constant factor can be carried through du",
+   "solution_steps": [
+    "(a) TRUE: this is the core rule of definite-integral substitution — see the deliberate limit-conversion step in pi-integration-substitution-002.",
+    "(b) TRUE: if u = g(x) doubles back on itself over the interval, treating the whole range as a single monotonic sweep in u silently double-counts or cancels area; the interval must be split at the turning point(s) first.",
+    "(c) FALSE — this is exactly the trap tested in pi-integration-substitution-002: reusing x-limits as u-limits gives a wrong numeric answer whenever u ≠ x at the endpoints.",
+    "(d) TRUE: e.g. for ∫x cos(x²)dx, du = 2x dx, so x dx = du/2 — the missing factor of 1/2 is simply pulled outside the new integral, exactly as done in pi-integration-substitution-001.",
+    "(e) FALSE: once the limits are converted to u, the definite integral can be evaluated entirely in u without ever returning to x — converting back is only needed if one chooses NOT to convert the limits (the two are alternative, not both-mandatory, procedures).",
+    "Correction from blind review: option 1 is FALSE as stated — the substitution theorem ∫_a^b f(g(x))g'(x)dx = ∫_{g(a)}^{g(b)} f(u)du requires only g continuously differentiable and f continuous on g's range; monotonicity is NOT required and splitting is never mandatory for this direction of substitution."
+   ],
+   "verification_method": "hand_checkable_substitution_properties"
+  },
+  {
+   "id": "pi-integration-by-parts-001",
+   "concept_id": "integration-by-parts",
+   "topic": "calculus",
+   "difficulty": 0.35,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀¹ x eˣ dx using integration by parts with u = x, dv = eˣ dx.",
+   "options": [
+    "1",
+    "e",
+    "e - 2",
+    "2 - e"
+   ],
+   "answer_index": 0,
+   "correct_answer": "1",
+   "solution_steps": [
+    "u = x, dv = eˣ dx ⟹ du = dx, v = eˣ. Formula: ∫u dv = uv − ∫v du.",
+    "∫x eˣ dx = x eˣ − ∫eˣ dx = x eˣ − eˣ + C.",
+    "Evaluate: [x eˣ − eˣ]₀¹ = (e − e) − (0 − 1) = 0 − (−1) = 1.",
+    "Cross-check by differentiating back: d/dx(x eˣ − eˣ) = eˣ + x eˣ − eˣ = x eˣ, matching the integrand exactly.",
+    "Trap named: answer 'e' comes from computing only the boundary term [x eˣ]₀¹ = e and forgetting to subtract the leftover integral ∫eˣ dx entirely."
+   ],
+   "verification_method": "hand_checkable_by_parts_polynomial_exponential"
+  },
+  {
+   "id": "pi-integration-by-parts-002",
+   "concept_id": "integration-by-parts",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀^(π/2) x cos(x) dx using integration by parts with u = x, dv = cos(x) dx.",
+   "options": [
+    "π/2 - 1",
+    "π/2 + 1",
+    "π/2",
+    "1 - π/2"
+   ],
+   "answer_index": 0,
+   "correct_answer": "π/2 - 1",
+   "solution_steps": [
+    "u = x, dv = cos(x) dx ⟹ du = dx, v = sin(x). Formula: ∫u dv = uv − ∫v du (note the MINUS sign).",
+    "∫x cos(x) dx = x sin(x) − ∫sin(x) dx = x sin(x) + cos(x) + C.",
+    "Evaluate: [x sin x + cos x]₀^(π/2) = (π/2·1 + 0) − (0 + 1) = π/2 − 1 ≈ 0.5708.",
+    "Cross-check by differentiating back: d/dx(x sin x + cos x) = sin x + x cos x − sin x = x cos x, matching the integrand.",
+    "Trap named: π/2 + 1 is exactly what results from the SIGN ERROR of using ∫u dv = uv + ∫v du (wrong sign), giving x sin x − cos x, which evaluates to (π/2 − 0) − (0 − 1) = π/2 + 1."
+   ],
+   "verification_method": "hand_checkable_by_parts_sign_trap"
+  },
+  {
+   "id": "pi-integration-by-parts-003",
+   "concept_id": "integration-by-parts",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∫₁ᵉ ln(x) dx using integration by parts with u = ln(x), dv = dx.",
+   "answer_range": [
+    0.99,
+    1.01
+   ],
+   "correct_answer": "1",
+   "solution_steps": [
+    "u = ln x, dv = dx ⟹ du = (1/x) dx, v = x. Formula: ∫u dv = uv − ∫v du.",
+    "∫ln x dx = x ln x − ∫x·(1/x) dx = x ln x − ∫1 dx = x ln x − x + C.",
+    "Evaluate: [x ln x − x]₁ᵉ = (e·1 − e) − (1·0 − 1) = 0 − (−1) = 1.",
+    "Cross-check by differentiating back: d/dx(x ln x − x) = ln x + x·(1/x) − 1 = ln x + 1 − 1 = ln x, matching the integrand exactly."
+   ],
+   "verification_method": "hand_checkable_by_parts_logarithm"
+  },
+  {
+   "id": "pi-integration-by-parts-004",
+   "concept_id": "integration-by-parts",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Evaluate ∫₀¹ x² eˣ dx using repeated (tabular) integration by parts.",
+   "answer_range": [
+    0.7083,
+    0.7283
+   ],
+   "correct_answer": "e - 2 (≈ 0.7183)",
+   "solution_steps": [
+    "First pass: u = x², dv = eˣ dx ⟹ du = 2x dx, v = eˣ. ∫x²eˣ dx = x²eˣ − 2∫x eˣ dx.",
+    "Second pass (reuse pi-integration-by-parts-001's result): ∫x eˣ dx = x eˣ − eˣ. So ∫x²eˣ dx = x²eˣ − 2(x eˣ − eˣ) = x²eˣ − 2x eˣ + 2eˣ = eˣ(x² − 2x + 2) + C.",
+    "Evaluate: at x=1, e¹(1−2+2) = e·1 = e. At x=0, e⁰(0−0+2) = 2. Definite integral = e − 2 ≈ 0.7183.",
+    "Cross-check by differentiating back: d/dx[eˣ(x²−2x+2)] = eˣ(x²−2x+2) + eˣ(2x−2) = eˣ(x²−2x+2+2x−2) = eˣ·x² = x²eˣ, matching the integrand exactly."
+   ],
+   "verification_method": "hand_checkable_by_parts_tabular_double_pass"
+  },
+  {
+   "id": "pi-integration-by-parts-005",
+   "concept_id": "integration-by-parts",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about integration by parts are true?",
+   "options": [
+    "The by-parts formula is ∫u dv = uv − ∫v du",
+    "Choosing u by the LIATE priority (Logarithmic, Inverse trig, Algebraic, Trigonometric, Exponential) generally leads to a simpler remaining integral",
+    "For a definite integral, the boundary term [uv] must be evaluated at both limits, not just the leftover integral",
+    "Integration by parts can require repeated application when integrating a polynomial times an exponential or trigonometric function",
+    "∫u dv = uv + ∫v du (with a plus sign) is an equally valid alternate form of the formula"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "correct_answer": "Formula has a minus sign; LIATE heuristic; boundary term evaluated at both limits; repeated application for polynomial×exponential/trig",
+   "solution_steps": [
+    "(a) TRUE: this is the definition, derived directly from the product rule d(uv) = u dv + v du, rearranged as u dv = d(uv) − v du and integrated.",
+    "(b) TRUE: LIATE is the standard mnemonic for choosing u so that du is 'simpler' than u — e.g. choosing u = ln x (Logarithmic beats Algebraic) in pi-integration-by-parts-003 turns ln x into 1/x, which is simpler.",
+    "(c) TRUE: as in pi-integration-by-parts-001 and -002, the boundary term [uv] is evaluated at BOTH the upper and lower limit and subtracted — skipping the lower limit is a common source of off-by-a-constant errors.",
+    "(d) TRUE: pi-integration-by-parts-004 needed the formula applied TWICE to fully reduce x² down to a constant, since each pass only lowers the polynomial's degree by one.",
+    "(e) FALSE — this is the exact sign-error trap tested in pi-integration-by-parts-002: the formula's sign is fixed as MINUS (∫u dv = uv − ∫v du); using a plus sign gives a different, wrong antiderivative."
+   ],
+   "verification_method": "hand_checkable_by_parts_properties"
+  },
+  {
+   "id": "pi-partial-fractions-001",
+   "concept_id": "partial-fractions",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Find A and B such that 1/((x−1)(x+2)) = A/(x−1) + B/(x+2).",
+   "options": [
+    "A = 1/3, B = -1/3",
+    "A = -1/3, B = 1/3",
+    "A = 1/3, B = 1/3",
+    "A = 1, B = -1"
+   ],
+   "answer_index": 0,
+   "correct_answer": "A = 1/3, B = -1/3",
+   "solution_steps": [
+    "Multiply both sides by (x−1)(x+2): 1 = A(x+2) + B(x−1).",
+    "Set x = 1 (cover-up for the (x−1) factor): 1 = A(1+2) = 3A ⟹ A = 1/3.",
+    "Set x = −2 (cover-up for the (x+2) factor): 1 = B(−2−1) = −3B ⟹ B = −1/3.",
+    "Cross-check by recombining over a common denominator: (1/3)/(x−1) − (1/3)/(x+2) = [(1/3)(x+2) − (1/3)(x−1)] / ((x−1)(x+2)) = (1/3)(x+2−x+1) / ((x−1)(x+2)) = (1/3)(3) / ((x−1)(x+2)) = 1/((x−1)(x+2)) — matches the original expression exactly."
+   ],
+   "verification_method": "hand_checkable_partial_fractions_distinct_linear"
+  },
+  {
+   "id": "pi-partial-fractions-002",
+   "concept_id": "partial-fractions",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "What is the correct partial fraction decomposition FORM (coefficients unknown) for (3x + 1) / ((x − 2)²(x + 1))?",
+   "options": [
+    "A/(x−2) + B/(x−2)² + C/(x+1)",
+    "A/(x−2)² + B/(x+1)",
+    "A/(x−2) + B/(x+1)",
+    "(Ax+B)/(x−2)² + C/(x+1)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "A/(x−2) + B/(x−2)² + C/(x+1)",
+   "solution_steps": [
+    "Rule: a REPEATED linear factor (x−a)ⁿ contributes n separate terms A₁/(x−a) + A₂/(x−a)² + ... + Aₙ/(x−a)ⁿ — every power from 1 up to n must appear.",
+    "Here (x−2)² is a repeated linear factor (n=2), so it needs BOTH A/(x−2) AND B/(x−2)² — not just the highest power alone.",
+    "(x+1) is a simple (non-repeated) linear factor, so it needs exactly one term C/(x+1). Combined form: A/(x−2) + B/(x−2)² + C/(x+1).",
+    "Cross-check by degree counting: the denominator has degree 3, so the decomposition must supply exactly 3 unknown constants (A, B, C) to match — option (a) has 3 constants; options (b) and (c) wrongly supply only 2, silently discarding a degree of freedom needed to match the numerator's general linear form.",
+    "Trap named: option (b) omits the A/(x−2) term (assuming a repeated factor needs only its highest power); option (d) wrongly uses a linear numerator (Ax+B) for a REPEATED LINEAR factor — that construction is reserved for irreducible QUADRATIC factors, not repeated linear ones."
+   ],
+   "verification_method": "hand_checkable_partial_fractions_repeated_linear_form"
+  },
+  {
+   "id": "pi-partial-fractions-003",
+   "concept_id": "partial-fractions",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∫₂³ 1/(x² − 1) dx using partial fractions.",
+   "answer_range": [
+    0.1927,
+    0.2127
+   ],
+   "correct_answer": "(1/2)ln(3/2) ≈ 0.2027",
+   "solution_steps": [
+    "Factor: x² − 1 = (x−1)(x+1). Decompose: 1/((x−1)(x+1)) = A/(x−1) + B/(x+1). Cover-up: x=1 gives A=1/2; x=−1 gives B=−1/2.",
+    "So 1/(x²−1) = (1/2)/(x−1) − (1/2)/(x+1). Antiderivative: (1/2)ln|x−1| − (1/2)ln|x+1| = (1/2)ln|(x−1)/(x+1)|.",
+    "Evaluate: (1/2)ln(2/4) − (1/2)ln(1/3) = (1/2)[ln(1/2) − ln(1/3)] = (1/2)ln((1/2)/(1/3)) = (1/2)ln(3/2) ≈ 0.2027.",
+    "Cross-check by differentiating back: d/dx[(1/2)ln|(x−1)/(x+1)|] = (1/2)[1/(x−1) − 1/(x+1)] = (1/2)·[(x+1)−(x−1)] / ((x−1)(x+1)) = (1/2)·(2)/(x²−1) = 1/(x²−1) — matches the integrand exactly."
+   ],
+   "verification_method": "hand_checkable_partial_fractions_definite_integral"
+  },
+  {
+   "id": "pi-partial-fractions-004",
+   "concept_id": "partial-fractions",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Decompose (2x² + 1) / (x(x² + 1)) = A/x + (Bx + C)/(x² + 1), then evaluate ∫₁² (2x² + 1)/(x(x² + 1)) dx.",
+   "answer_range": [
+    1.1413,
+    1.1613
+   ],
+   "correct_answer": "(1/2)ln(10) ≈ 1.1513",
+   "solution_steps": [
+    "Multiply through: 2x² + 1 = A(x²+1) + (Bx+C)x = (A+B)x² + Cx + A. Match coefficients: x² term gives A+B=2; x term gives C=0; constant gives A=1.",
+    "So A=1, B=1, C=0: (2x²+1)/(x(x²+1)) = 1/x + x/(x²+1). Note the (x²+1) factor is irreducible quadratic, so its numerator correctly needs the LINEAR form (Bx+C), not just a constant — here it resolves to Bx with B=1.",
+    "Antiderivative: ∫[1/x + x/(x²+1)] dx = ln|x| + (1/2)ln(x²+1) + C.",
+    "Evaluate: [ln x + (1/2)ln(x²+1)]₁² = (ln2 + (1/2)ln5) − (ln1 + (1/2)ln2) = ln2 + (1/2)ln5 − (1/2)ln2 = (1/2)ln2 + (1/2)ln5 = (1/2)ln10 ≈ 1.1513.",
+    "Cross-check by recombining the decomposition over a common denominator: 1/x + x/(x²+1) = [(x²+1) + x²] / (x(x²+1)) = (2x²+1)/(x(x²+1)) — matches the original integrand exactly, confirming A,B,C are correct before even integrating."
+   ],
+   "verification_method": "hand_checkable_partial_fractions_irreducible_quadratic"
+  },
+  {
+   "id": "pi-partial-fractions-005",
+   "concept_id": "partial-fractions",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about partial fraction decomposition are true?",
+   "options": [
+    "A repeated linear factor (x−a)ⁿ requires n separate terms: A₁/(x−a) + A₂/(x−a)² + ... + Aₙ/(x−a)ⁿ",
+    "An irreducible quadratic factor (x²+bx+c) requires a linear numerator (Bx+C)/(x²+bx+c), not just a constant",
+    "Partial fraction decomposition applies directly only when the numerator's degree is strictly less than the denominator's; otherwise, polynomial long division must be done first",
+    "The Heaviside cover-up method (plugging in the root) directly gives the coefficient for ANY factor in the decomposition, repeated or not, with no further work needed",
+    "A repeated linear factor (x−a)² can be correctly decomposed using only a single term A/(x−a)², with no separate A/(x−a) term"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    2
+   ],
+   "correct_answer": "Repeated linear factors need all powers as separate terms; irreducible quadratics need a linear numerator; degree check requires long division first",
+   "solution_steps": [
+    "(a) TRUE: demonstrated directly in pi-partial-fractions-002 — (x−2)² needs both A/(x−2) and B/(x−2)², one term per power from 1 to n.",
+    "(b) TRUE: demonstrated in pi-partial-fractions-004 — (x²+1) is irreducible (no real roots, since x²+1=0 has no real solution) and its numerator (Bx+C) is genuinely linear, not merely a constant.",
+    "(c) TRUE: if the numerator's degree ≥ denominator's degree, the fraction is 'improper' and must first be reduced via polynomial long division into a polynomial plus a proper fraction, before partial fractions can be applied to the remainder.",
+    "(d) FALSE: cover-up (plugging in the root x=a) works cleanly to find the coefficient of the HIGHEST power of a repeated factor, or the coefficient of a simple non-repeated linear factor — but it does NOT directly give the coefficients of the LOWER powers of a repeated factor (e.g., in pi-partial-fractions-002's B/(x−2)² can be found by cover-up at x=2, but the A/(x−2) coefficient needs additional work, such as comparing another coefficient or plugging in a second x-value).",
+    "(e) FALSE — this is exactly the trap tested in pi-partial-fractions-002: a repeated linear factor (x−a)² needs BOTH A/(x−a) and B/(x−a)², since a general proper fraction over (x−a)² can have a nonzero residual term at the lower power too; using only A/(x−a)² cannot match every possible numerator."
+   ],
+   "verification_method": "hand_checkable_partial_fractions_properties"
+  },
+  {
+   "id": "pi-definite-integrals-001",
+   "concept_id": "definite-integrals",
+   "topic": "calculus",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀² x√(4−x²) dx using the substitution u = 4 − x².",
+   "options": [
+    "8/3",
+    "-8/3",
+    "16/3",
+    "4/3"
+   ],
+   "answer_index": 0,
+   "correct_answer": "8/3",
+   "solution_steps": [
+    "Let u = 4 − x², so du = −2x dx, i.e. x dx = −du/2.",
+    "Convert the bounds using the substitution: x = 0 → u = 4 − 0 = 4; x = 2 → u = 4 − 4 = 0.",
+    "∫₀² x√(4−x²) dx = ∫_{u=4}^{0} √u ·(−du/2) = (1/2)∫₀⁴ √u du (flipping the limits from 4→0 to 0→4 cancels the minus sign).",
+    "(1/2)∫₀⁴ √u du = (1/2)·[(2/3)u^{3/2}]₀⁴ = (1/2)·(2/3)·8 = 8/3.",
+    "Cross-check by back-substituting instead of changing bounds: ∫x√(4−x²)dx = −(1/3)(4−x²)^{3/2} + C; evaluating in the original x-limits gives −(1/3)(0)^{3/2} − (−(1/3)(4)^{3/2}) = 0 + (1/3)(8) = 8/3 — matches.",
+    "Trap: forgetting to convert the bounds to u-values (i.e. evaluating √u from the ORIGINAL x-limits 0 to 2, or leaving the sign flip unresolved) gives −8/3 instead of the correct 8/3 — bounds must always be re-expressed in the new variable before evaluating."
+   ],
+   "verification_method": "hand_checkable_definite_integral_substitution_bounds"
+  },
+  {
+   "id": "pi-definite-integrals-002",
+   "concept_id": "definite-integrals",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "mcq",
+   "marks": 2,
+   "question_text": "Evaluate I = ∫₀^π [x sin x / (1 + cos²x)] dx using King's property (the substitution x → π − x).",
+   "options": [
+    "π²/4",
+    "π²/2",
+    "π/4",
+    "π²/8"
+   ],
+   "answer_index": 0,
+   "correct_answer": "π²/4",
+   "solution_steps": [
+    "Apply x → π − x: I = ∫₀^π (π−x) sin(π−x) / (1 + cos²(π−x)) dx. Since sin(π−x) = sin x and cos(π−x) = −cos x (so cos² is unchanged), I = ∫₀^π (π−x) sin x / (1+cos²x) dx = π·J − I, where J = ∫₀^π sin x/(1+cos²x) dx.",
+    "So 2I = π·J. Evaluate J by substituting u = cos x, du = −sin x dx: J = ∫_{u=1}^{-1} −1/(1+u²) du = ∫_{-1}^{1} 1/(1+u²) du = [arctan u]_{-1}^{1} = π/4 − (−π/4) = π/2.",
+    "Then 2I = π·(π/2) = π²/2, so I = π²/4 ≈ 2.4674.",
+    "Cross-check J independently as a definite bounds computation: [−arctan(cos x)]₀^π = −arctan(cos π) + arctan(cos 0) = −arctan(−1) + arctan(1) = π/4 + π/4 = π/2 — matches.",
+    "Trap: solving 2I = πJ but forgetting to divide by 2 for the final answer (reporting πJ = π²/2 instead of I = π²/4) is the most common slip; a second trap is attempting integration by parts directly on x sin x/(1+cos²x) without the King's-property reflection, which is not tractable by hand in exam time."
+   ],
+   "verification_method": "hand_checkable_kings_property_reflection"
+  },
+  {
+   "id": "pi-definite-integrals-003",
+   "concept_id": "definite-integrals",
+   "topic": "calculus",
+   "difficulty": 0.35,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀¹ [x / (1 + x²)] dx. Give your answer as a decimal.",
+   "answer_range": [
+    0.3366,
+    0.3566
+   ],
+   "correct_answer": "0.3466",
+   "solution_steps": [
+    "Let w = 1 + x², so dw = 2x dx, i.e. x dx = dw/2. Bounds: x = 0 → w = 1; x = 1 → w = 2.",
+    "∫₀¹ x/(1+x²) dx = (1/2)∫₁² (1/w) dw = (1/2)[ln w]₁² = (1/2)(ln 2 − ln 1) = (1/2)ln 2 ≈ 0.34657.",
+    "Cross-check directly: the antiderivative of x/(1+x²) is (1/2)ln(1+x²); evaluating from 0 to 1 gives (1/2)ln 2 − (1/2)ln 1 = (1/2)ln 2 — matches.",
+    "Trap: forgetting the 1/2 factor introduced by dw = 2x dx (reporting ln 2 ≈ 0.693 instead of the correct (1/2)ln 2 ≈ 0.347) is the standard bounds/substitution slip on this kind of integral."
+   ],
+   "verification_method": "hand_checkable_log_substitution_definite_integral"
+  },
+  {
+   "id": "pi-definite-integrals-004",
+   "concept_id": "definite-integrals",
+   "topic": "calculus",
+   "difficulty": 0.45,
+   "question_type": "msq",
+   "marks": 1,
+   "question_text": "For definite integrals, which of the following statements are always true?",
+   "options": [
+    "∫_{-a}^{a} f(x) dx = 2∫₀^a f(x) dx whenever f is an even function",
+    "∫_{-a}^{a} f(x) dx = 0 whenever f is an odd function",
+    "Swapping the limits of integration from (a,b) to (b,a) leaves the value of the definite integral unchanged",
+    "∫_a^b f(x)g(x) dx = [∫_a^b f(x) dx]·[∫_a^b g(x) dx] in general",
+    "If f(x) ≥ 0 on [a,b], then ∫_a^b f(x) dx ≥ 0"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    4
+   ],
+   "correct_answer": "Even-function halving rule; odd-function symmetry rule; non-negativity is preserved under integration",
+   "solution_steps": [
+    "(a) TRUE: split ∫_{-a}^{a} = ∫_{-a}^{0} + ∫_0^a, and substituting x→−x in the first piece gives ∫_0^a f(-x)dx = ∫_0^a f(x)dx when f is even, so the total is 2∫_0^a f(x)dx.",
+    "(b) TRUE: by the same split, the substitution gives ∫_0^a f(-x)dx = −∫_0^a f(x)dx when f is odd, so the two pieces cancel to 0.",
+    "(c) FALSE: swapping the limits flips the sign, ∫_b^a f(x)dx = −∫_a^b f(x)dx — this is exactly the bounds-error trap of forgetting the sign flip when limits are exchanged.",
+    "(d) FALSE: the integral of a product is not the product of integrals — e.g. f(x)=g(x)=x on [0,1]: ∫₀¹x·x dx = 1/3, but [∫₀¹x dx]² = (1/2)² = 1/4 ≠ 1/3.",
+    "(e) TRUE: a definite integral of a non-negative function over an interval with a ≤ b is a limit of non-negative Riemann sums, hence non-negative."
+   ],
+   "verification_method": "hand_checkable_definite_integral_properties"
+  },
+  {
+   "id": "pi-definite-integrals-005",
+   "concept_id": "definite-integrals",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Evaluate ∫₀^{π/2} sin³x cos²x dx.",
+   "answer_range": [
+    0.1233,
+    0.1433
+   ],
+   "correct_answer": "2/15",
+   "solution_steps": [
+    "Method 1 (u-substitution): write sin³x cos²x = sin x (1−cos²x) cos²x = sin x (cos²x − cos⁴x). Let u = cos x, du = −sin x dx.",
+    "∫ sin x(cos²x−cos⁴x)dx = −∫(u²−u⁴)du = u⁵/5 − u³/3 + C. Bounds: x=0 → u=1; x=π/2 → u=0. Evaluating [u⁵/5−u³/3] from u=1 to u=0: at u=0 the expression is 0; at u=1 it is 1/5−1/3 = −2/15. So the integral (u from 1 to 0, i.e. upper minus lower) = 0 − (−2/15) = 2/15.",
+    "Method 2 (independent split, no substitution bookkeeping): ∫₀^{π/2} sin x cos^k x dx = 1/(k+1) for any k, so ∫₀^{π/2} sin x cos²x dx − ∫₀^{π/2} sin x cos⁴x dx = 1/3 − 1/5 = 5/15 − 3/15 = 2/15 — matches Method 1 exactly.",
+    "So the value is 2/15 ≈ 0.1333.",
+    "Trap: mishandling the sign when the substitution bounds run backward (u from 1 down to 0) — reporting −2/15 by forgetting that evaluating 'upper minus lower' with u=0 as the upper limit still requires (value at 0) − (value at 1), not the reverse."
+   ],
+   "verification_method": "hand_checkable_odd_power_trig_substitution"
+  },
+  {
+   "id": "pi-improper-integrals-001",
+   "concept_id": "improper-integrals",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₁^∞ (1/x²) dx, or state that it diverges.",
+   "options": [
+    "1",
+    "Diverges",
+    "1/2",
+    "2"
+   ],
+   "answer_index": 0,
+   "correct_answer": "1",
+   "solution_steps": [
+    "Write the improper integral as a limit: ∫₁^∞ x⁻²dx = lim_{t→∞} ∫₁^t x⁻²dx = lim_{t→∞} [−1/x]₁^t = lim_{t→∞} (−1/t + 1).",
+    "As t→∞, −1/t → 0, so the limit is 0 + 1 = 1. The integral converges to 1.",
+    "Cross-check via the p-test: ∫₁^∞ x⁻ᵖdx converges to 1/(p−1) whenever p>1. Here p=2>1, giving 1/(2−1)=1 — matches the direct computation.",
+    "Trap: this convergent p=2 case is the reference point for the next item's boundary case p=1, which behaves completely differently despite looking similar."
+   ],
+   "verification_method": "hand_checkable_improper_integral_p_test_convergent"
+  },
+  {
+   "id": "pi-improper-integrals-002",
+   "concept_id": "improper-integrals",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₁^∞ (1/x) dx, or state that it diverges.",
+   "options": [
+    "Diverges",
+    "1",
+    "0",
+    "e"
+   ],
+   "answer_index": 0,
+   "correct_answer": "Diverges",
+   "solution_steps": [
+    "∫₁^t (1/x)dx = [ln x]₁^t = ln t − ln 1 = ln t.",
+    "As t→∞, ln t → ∞, so the limit does not exist as a finite number — the integral diverges.",
+    "Cross-check via the p-test: ∫₁^∞ x⁻ᵖdx converges only for p>1 (value 1/(p−1)); at p=1 the formula 1/(p−1) is undefined/blows up, signalling divergence rather than some finite boundary value — consistent with ln t → ∞ directly.",
+    "Trap: assuming p=1 is a 'boundary case that still converges,' by loose analogy with the convergent p=2 case in the previous item — this is the single most common improper-integral error: treating a divergent integral as convergent just because the integrand still shrinks toward 0."
+   ],
+   "verification_method": "hand_checkable_improper_integral_p_test_divergent"
+  },
+  {
+   "id": "pi-improper-integrals-003",
+   "concept_id": "improper-integrals",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "msq",
+   "marks": 1,
+   "question_text": "For the improper integral ∫₁^∞ (1/xᵖ) dx, which of the following statements are true?",
+   "options": [
+    "The integral converges if and only if p > 1",
+    "At p = 1, the integral still converges (it is simply the limiting case of the p > 1 family)",
+    "At p = 2, the integral evaluates to exactly 1",
+    "For any p > 0, the integral converges, since 1/xᵖ → 0 as x → ∞",
+    "The integral is improper because the upper limit of integration is infinite, not because of any singularity of the integrand on [1, ∞)"
+   ],
+   "answer_indices": [
+    0,
+    2,
+    4
+   ],
+   "correct_answer": "Converges iff p>1; value at p=2 is exactly 1; improper due to the infinite upper limit, not a singularity",
+   "solution_steps": [
+    "(a) TRUE: ∫₁^∞ x⁻ᵖdx = [x^{1−p}/(1−p)]₁^∞, which has a finite limit as x→∞ exactly when 1−p<0, i.e. p>1.",
+    "(b) FALSE: at p=1 the antiderivative becomes ln x instead of x^{1−p}/(1−p) (the formula is discontinuous there), and ln t → ∞ — p=1 diverges, it is NOT a convergent limiting case (see previous item).",
+    "(c) TRUE: computed directly in the first item of this concept, ∫₁^∞ x⁻²dx = 1.",
+    "(d) FALSE: 1/xᵖ → 0 as x→∞ for every p>0, yet p=1 still diverges — decay to zero is necessary but not sufficient for convergence; what matters is HOW FAST the integrand decays, not merely that it decays.",
+    "(e) TRUE: 1/xᵖ is continuous and finite everywhere on [1,∞) for p>0 (no blow-up at any finite x), so the only source of impropriety is the infinite upper limit."
+   ],
+   "verification_method": "hand_checkable_p_test_properties"
+  },
+  {
+   "id": "pi-improper-integrals-004",
+   "concept_id": "improper-integrals",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀¹ x^(−1/2) dx (improper due to the singularity at x = 0).",
+   "answer_range": [
+    1.99,
+    2.01
+   ],
+   "correct_answer": "2",
+   "solution_steps": [
+    "The integrand blows up as x→0⁺, so treat this as a limit: ∫₀¹ x⁻¹ᐟ²dx = lim_{ε→0⁺} ∫_ε¹ x⁻¹ᐟ²dx.",
+    "Antiderivative: ∫x⁻¹ᐟ²dx = 2x¹ᐟ² + C. So ∫_ε¹ x⁻¹ᐟ²dx = 2(1)^{1/2} − 2ε^{1/2} = 2 − 2√ε.",
+    "As ε→0⁺, 2√ε → 0, so the limit is 2. The integral converges despite the singularity at x=0.",
+    "Cross-check via the reversed p-test for a lower-limit singularity: ∫₀¹ x⁻ᵖdx converges (to 1/(1−p)) precisely when p<1. Here p=1/2<1, giving 1/(1−1/2)=2 — matches.",
+    "Trap: assuming the integral diverges simply because the integrand is unbounded near x=0 — unboundedness alone does not force divergence; convergence depends on how mild the singularity is (p<1 here), the mirror-image boundary of the p=1 divergence seen at the infinite end in the previous items."
+   ],
+   "verification_method": "hand_checkable_improper_integral_singularity_convergent"
+  },
+  {
+   "id": "pi-improper-integrals-005",
+   "concept_id": "improper-integrals",
+   "topic": "calculus",
+   "difficulty": 0.7,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Evaluate ∫₁^∞ x e^(−x) dx.",
+   "answer_range": [
+    0.7258,
+    0.7458
+   ],
+   "correct_answer": "2/e",
+   "solution_steps": [
+    "Integrate by parts: u=x, dv=e⁻ˣdx ⇒ du=dx, v=−e⁻ˣ. ∫x e⁻ˣ dx = −x e⁻ˣ + ∫e⁻ˣdx = −x e⁻ˣ − e⁻ˣ = −(x+1)e⁻ˣ + C.",
+    "As a limit: ∫₁^t x e⁻ˣdx = [−(x+1)e⁻ˣ]₁^t = −(t+1)e⁻ᵗ + 2e⁻¹. As t→∞, (t+1)e⁻ᵗ → 0 (exponential decay dominates the linear growth of t+1), so the integral → 2e⁻¹ = 2/e ≈ 0.7358.",
+    "Cross-check by splitting the known full-range value ∫₀^∞ x e⁻ˣdx = 1 (Γ(2) = 1! = 1): ∫₀¹ x e⁻ˣdx = [−(x+1)e⁻ˣ]₀¹ = −2e⁻¹ − (−1) = 1 − 2/e ≈ 0.2642. Then ∫₁^∞ = ∫₀^∞ − ∫₀¹ = 1 − (1 − 2/e) = 2/e ≈ 0.7358 — matches exactly.",
+    "Trap: mistakenly treating the (t+1) factor as making the limit diverge because t+1→∞ on its own — exponential decay e⁻ᵗ always dominates any polynomial growth, so (t+1)e⁻ᵗ still vanishes; missing this leads to wrongly concluding the integral diverges."
+   ],
+   "verification_method": "hand_checkable_improper_integral_by_parts_convergent"
+  },
+  {
+   "id": "pi-multivariable-calculus-001",
+   "concept_id": "multivariable-calculus",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x,y) = x²y³. Find ∂f/∂x at (x,y) = (1,2).",
+   "options": [
+    "16",
+    "12",
+    "8",
+    "24"
+   ],
+   "answer_index": 0,
+   "correct_answer": "16",
+   "solution_steps": [
+    "Treating y as a constant, ∂f/∂x = 2xy³ (power rule on the x-factor; y³ is carried through unchanged).",
+    "At (x,y) = (1,2): ∂f/∂x = 2(1)(2)³ = 2·1·8 = 16.",
+    "Cross-check via the limit definition: [f(1+h,2) − f(1,2)]/h for small h=0.001 gives [(1.001)²·8 − 8]/0.001 = [8.016008 − 8]/0.001 ≈ 16.008, matching 16 to within the expected O(h) rounding error.",
+    "Trap: differentiating with respect to the wrong variable — computing ∂f/∂y = 3x²y² instead, which gives 3(1)(4)=12 at (1,2) — is the classic partial-derivative variable-confusion error."
+   ],
+   "verification_method": "hand_checkable_partial_derivative_basic"
+  },
+  {
+   "id": "pi-multivariable-calculus-002",
+   "concept_id": "multivariable-calculus",
+   "topic": "calculus",
+   "difficulty": 0.5,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "f(x,y) = x³y² + sin(xy). Find ∂²f/∂x∂y (differentiate with respect to y first, then x).",
+   "options": [
+    "6x²y + cos(xy) − xy sin(xy)",
+    "6x²y + cos(xy)",
+    "6xy² + cos(xy) − xy sin(xy)",
+    "6x²y − xy sin(xy)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "6x²y + cos(xy) − xy sin(xy)",
+   "solution_steps": [
+    "First, ∂f/∂y = 2x³y + x cos(xy) (power rule on x³y², and chain rule on sin(xy) with x held constant).",
+    "Then differentiate with respect to x: ∂/∂x[2x³y] = 6x²y. For ∂/∂x[x cos(xy)], use the product rule: d/dx[x]·cos(xy) + x·d/dx[cos(xy)] = cos(xy) + x·(−sin(xy)·y) = cos(xy) − xy sin(xy).",
+    "So ∂²f/∂x∂y = 6x²y + cos(xy) − xy sin(xy).",
+    "Cross-check via the other mixed-partial order (Clairaut's theorem should give the same result, since all derivatives here are continuous): ∂f/∂x = 3x²y² + y cos(xy); then ∂/∂y[3x²y²] = 6x²y and ∂/∂y[y cos(xy)] = cos(xy) + y·(−sin(xy)·x) = cos(xy) − xy sin(xy), giving the same total 6x²y + cos(xy) − xy sin(xy) — matches.",
+    "Trap: dropping the product-rule term when differentiating x·cos(xy) with respect to x (reporting just 6x²y + cos(xy), i.e. forgetting the −xy sin(xy) piece) — this mixed partial-derivative product-rule slip is the error tested in option (b)."
+   ],
+   "verification_method": "hand_checkable_mixed_partial_derivative"
+  },
+  {
+   "id": "pi-multivariable-calculus-003",
+   "concept_id": "multivariable-calculus",
+   "topic": "calculus",
+   "difficulty": 0.65,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about partial derivatives are true?",
+   "options": [
+    "If fₓᵧ and f_yₓ are both continuous near a point, they are equal there (Clairaut's/Schwarz's theorem)",
+    "fₓᵧ always equals f_yₓ for every function, regardless of continuity",
+    "The gradient ∇f = (∂f/∂x, ∂f/∂y) points in the direction of steepest ascent of f",
+    "∂f/∂x measures the rate of change of f with respect to x while holding y constant",
+    "For f(x,y) = xy, fₓᵧ = 0"
+   ],
+   "answer_indices": [
+    0,
+    2,
+    3
+   ],
+   "correct_answer": "Clairaut's theorem holds under continuity; the gradient gives the direction of steepest ascent; a partial derivative holds the other variable(s) constant",
+   "solution_steps": [
+    "(a) TRUE: this is exactly Clairaut's (Schwarz's) theorem — equality of mixed partials is guaranteed when both mixed partials exist and are continuous in a neighborhood of the point.",
+    "(b) FALSE: continuity is a genuine requirement, not automatic. A standard counterexample is f(x,y) = xy(x²−y²)/(x²+y²) for (x,y)≠(0,0), f(0,0)=0 — its mixed partials at the origin are fₓᵧ(0,0)=1 and f_yₓ(0,0)=−1, which disagree because the mixed partials are discontinuous at the origin.",
+    "(c) TRUE: the direction of steepest ascent of a scalar field f at a point is exactly the direction of ∇f, a standard multivariable calculus fact.",
+    "(d) TRUE: this is the definition of a partial derivative — differentiate with respect to one variable while every other variable is treated as a fixed constant.",
+    "(e) FALSE, checked directly: for f=xy, fₓ = y, and fₓᵧ = ∂/∂y(y) = 1, not 0 — a concrete counterexample to the claim."
+   ],
+   "verification_method": "hand_checkable_partial_derivative_properties"
+  },
+  {
+   "id": "pi-multivariable-calculus-004",
+   "concept_id": "multivariable-calculus",
+   "topic": "calculus",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x,y) = e^(xy). Find ∂²f/∂x∂y at (x,y) = (1,1).",
+   "answer_range": [
+    5.4094,
+    5.4637
+   ],
+   "correct_answer": "2e",
+   "solution_steps": [
+    "First, ∂f/∂y = ∂/∂y[e^{xy}] = x e^{xy} (chain rule, treating x as constant).",
+    "Then ∂²f/∂x∂y = ∂/∂x[x e^{xy}] = e^{xy} + x·(y e^{xy}) = e^{xy}(1+xy), using the product rule on x·e^{xy}.",
+    "At (1,1): e^{1}(1+1) = 2e ≈ 5.4366.",
+    "Cross-check via the other mixed-partial order: fₓ = y e^{xy}; ∂/∂y[y e^{xy}] = e^{xy} + y·(x e^{xy}) = e^{xy}(1+xy), the same formula, giving 2e at (1,1) — confirms Clairaut's theorem (both orders agree since e^{xy} and its derivatives are continuous everywhere).",
+    "Trap: dropping the product-rule term when differentiating x·e^{xy} (reporting just e^{xy}, i.e. e ≈ 2.718, instead of e^{xy}(1+xy) = 2e ≈ 5.437) is the most common slip in this mixed-partial computation."
+   ],
+   "verification_method": "hand_checkable_mixed_partial_exponential"
+  },
+  {
+   "id": "pi-multivariable-calculus-005",
+   "concept_id": "multivariable-calculus",
+   "topic": "calculus",
+   "difficulty": 0.35,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "f(x,y) = x² + y². Find |∇f| (the magnitude of the gradient) at (x,y) = (3,4).",
+   "answer_range": [
+    9.95,
+    10.05
+   ],
+   "correct_answer": "10",
+   "solution_steps": [
+    "∇f = (∂f/∂x, ∂f/∂y) = (2x, 2y). At (3,4): ∇f = (6,8).",
+    "|∇f| = √(6² + 8²) = √(36+64) = √100 = 10.",
+    "Cross-check: (6,8,10) is the well-known 3-4-5 Pythagorean triple scaled by 2, confirming the arithmetic without a calculator.",
+    "Trap: computing the magnitude as a simple sum of components (6+8=14) instead of the Euclidean norm √(6²+8²) is the common error here — a gradient's magnitude always requires squaring, summing, and taking a square root."
+   ],
+   "verification_method": "hand_checkable_gradient_magnitude"
+  },
+  {
+   "id": "pi-multiple-integrals-001",
+   "concept_id": "multiple-integrals",
+   "topic": "calculus",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Evaluate ∫₀¹∫₀² xy dy dx.",
+   "options": [
+    "1",
+    "2",
+    "4",
+    "0.5"
+   ],
+   "answer_index": 0,
+   "correct_answer": "1",
+   "solution_steps": [
+    "Inner integral (over y, with x constant): ∫₀² xy dy = x·[y²/2]₀² = x·2 = 2x.",
+    "Outer integral: ∫₀¹ 2x dx = [x²]₀¹ = 1.",
+    "Cross-check by reversing the order of integration: ∫₀²∫₀¹ xy dx dy = ∫₀² y·[x²/2]₀¹ dy = ∫₀² y·(1/2) dy = (1/2)·[y²/2]₀² = (1/2)·2 = 1 — matches.",
+    "Trap: integrating with respect to the wrong variable in the inner integral (e.g. treating y as the constant and x as the integration variable while the differential still reads dy) produces the wrong power of x or y in the result."
+   ],
+   "verification_method": "hand_checkable_double_integral_separable"
+  },
+  {
+   "id": "pi-multiple-integrals-002",
+   "concept_id": "multiple-integrals",
+   "topic": "calculus",
+   "difficulty": 0.6,
+   "question_type": "mcq",
+   "marks": 2,
+   "question_text": "Evaluate ∫₀¹∫_x^1 e^(y²) dy dx by switching the order of integration.",
+   "options": [
+    "(e−1)/2",
+    "e−1",
+    "e/2",
+    "(e+1)/2"
+   ],
+   "answer_index": 0,
+   "correct_answer": "(e−1)/2",
+   "solution_steps": [
+    "The given order describes the triangular region 0 ≤ x ≤ y ≤ 1. Since e^{y²} has no elementary antiderivative in y, integrating in the given order is intractable — the region must be re-described with x as the inner variable instead.",
+    "Solving for the swapped bounds: for a fixed y in [0,1], the original constraint x ≤ y ≤ 1 (with 0≤x) means x ranges over 0 ≤ x ≤ y. Verify with a test point: (x,y)=(0.5,0.7) satisfies the original bounds (0.5 ≤ 0.7 ≤ 1); under the swapped bounds (0 ≤ y ≤ 1, 0 ≤ x ≤ y) it also satisfies 0 ≤ 0.5 ≤ 0.7 — consistent.",
+    "Swapped integral: ∫₀¹∫₀^y e^{y²} dx dy = ∫₀¹ y e^{y²} dy (the inner integral over x just multiplies by the length y, since e^{y²} doesn't depend on x).",
+    "Substitute w = y², dw = 2y dy: ∫₀¹ y e^{y²} dy = (1/2)∫₀¹ e^w dw = (1/2)[e^w]₀¹ = (1/2)(e−1) ≈ 0.8591.",
+    "Trap: attempting to integrate ∫e^{y²}dy directly in the original dy-first order (it has no elementary closed form) instead of recognizing the wrong order of integration and swapping to the triangular region 0 ≤ x ≤ y ≤ 1 first — this is the single most common region-description error on this class of problem."
+   ],
+   "verification_method": "hand_checkable_order_of_integration_swap"
+  },
+  {
+   "id": "pi-multiple-integrals-003",
+   "concept_id": "multiple-integrals",
+   "topic": "calculus",
+   "difficulty": 0.55,
+   "question_type": "msq",
+   "marks": 1,
+   "question_text": "The region D = {(x,y): 0 ≤ x ≤ 1, x² ≤ y ≤ x} lies between the curves y = x² and y = x. Which of the following statements about D are true?",
+   "options": [
+    "D can equivalently be described as 0 ≤ y ≤ 1, y ≤ x ≤ √y",
+    "D is symmetric about the line y = x",
+    "Swapping ∫₀¹∫_{x²}^{x} f dy dx to ∫₀¹∫_{x²}^{x} f dx dy (keeping the same numeric bounds) computes the same integral",
+    "The area of D equals ∫₀¹ (x − x²) dx = 1/6",
+    "D is entirely contained within the unit square [0,1] × [0,1]"
+   ],
+   "answer_indices": [
+    0,
+    3,
+    4
+   ],
+   "correct_answer": "Equivalent y-first description 0≤y≤1, y≤x≤√y; area = 1/6; D is contained in the unit square",
+   "solution_steps": [
+    "(a) TRUE: for a fixed y in [0,1], the condition x²≤y (with x≥0) gives x≤√y, and the condition y≤x gives x≥y, so x ranges over y ≤ x ≤ √y — verified with the test point (x,y)=(0.5,0.3): x²=0.25≤0.3=y≤x=0.5, and under the new description y=0.3≤x=0.5≤√0.3≈0.548, consistent.",
+    "(b) FALSE: reflecting D about y=x means swapping coordinates; test the reflected point (0.3, 0.5) [the reflection of (0.5,0.3)] against the ORIGINAL description x²≤y≤x: here x=0.3,y=0.5 needs y≤x, i.e. 0.5≤0.3, which is false — so the reflected point is NOT in D, meaning D is not symmetric about y=x.",
+    "(c) FALSE: simply relabeling dy dx as dx dy without changing the bounds does not describe the same region — the bounds x²(x) and x are functions of x and only make sense as the y-range for a given x; using them as an x-range for a given y describes a different, meaningless region. This is exactly the order-of-integration bounds trap.",
+    "(d) TRUE: area = ∫₀¹ (upper − lower) dx = ∫₀¹ (x − x²) dx = [x²/2 − x³/3]₀¹ = 1/2 − 1/3 = 1/6.",
+    "(e) TRUE: for x∈[0,1], both bounding curves y=x² and y=x take values in [0,1], so every point of D has both coordinates in [0,1]."
+   ],
+   "verification_method": "hand_checkable_region_description_between_curves"
+  },
+  {
+   "id": "pi-multiple-integrals-004",
+   "concept_id": "multiple-integrals",
+   "topic": "calculus",
+   "difficulty": 0.45,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Evaluate ∬_D (x+y) dA where D is the rectangle 0 ≤ x ≤ 1, 0 ≤ y ≤ 2.",
+   "answer_range": [
+    2.985,
+    3.015
+   ],
+   "correct_answer": "3",
+   "solution_steps": [
+    "∫₀¹∫₀² (x+y) dy dx: inner integral = [xy + y²/2]₀² = 2x + 2. Outer integral = ∫₀¹ (2x+2) dx = [x²+2x]₀¹ = 1+2 = 3.",
+    "Cross-check by reversing the order: ∫₀²∫₀¹ (x+y) dx dy: inner integral = [x²/2+xy]₀¹ = 1/2+y. Outer integral = ∫₀² (1/2+y) dy = [y/2+y²/2]₀² = 1+2 = 3 — matches.",
+    "Trap: dropping the constant y-term when integrating over x (or vice versa) — e.g. computing only ∫∫x dA = 1 and forgetting to add ∫∫y dA = 2 — gives an incomplete result."
+   ],
+   "verification_method": "hand_checkable_double_integral_rectangle"
+  },
+  {
+   "id": "pi-multiple-integrals-005",
+   "concept_id": "multiple-integrals",
+   "topic": "calculus",
+   "difficulty": 0.68,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Evaluate ∫₀¹∫₀^(√(1−x²)) (x²+y²) dy dx by converting to polar coordinates.",
+   "answer_range": [
+    0.3827,
+    0.4027
+   ],
+   "correct_answer": "π/8",
+   "solution_steps": [
+    "Recognize the region: 0≤x≤1 with 0≤y≤√(1−x²) is the quarter-disk x²+y²≤1 lying in the first quadrant (x≥0, y≥0).",
+    "Convert to polar (x=r cosθ, y=r sinθ, dA=r dr dθ): x²+y²=r², with r from 0 to 1 and θ from 0 to π/2. The integral becomes ∫₀^{π/2}∫₀¹ r²·r dr dθ = ∫₀^{π/2} dθ · ∫₀¹ r³ dr = (π/2)·(1/4) = π/8 ≈ 0.3927.",
+    "Cross-check via symmetry: the full-disk integral ∬_{x²+y²≤1} (x²+y²) dA = ∫₀^{2π}∫₀¹ r³ dr dθ = 2π·(1/4) = π/2. Since x²+y² is invariant under quadrant reflection, each of the 4 quadrants contributes an equal 1/4 share: (π/2)/4 = π/8 — matches.",
+    "Trap: using the wrong θ-range (e.g. 0 to 2π for what is only a quarter-disk region, or forgetting the extra factor of r from dA=r dr dθ) — both are the classic polar-conversion region-description errors."
+   ],
+   "verification_method": "hand_checkable_polar_double_integral_quarter_disk"
+  }
+ ]
+}

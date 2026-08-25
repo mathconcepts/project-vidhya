@@ -6,6 +6,7 @@
  * data/practice-items/*.json fixtures against a fake pg.Pool, the same
  * pattern as seed-static-pyqs-concept-id.test.ts.
  */
+import { ALL_CONCEPTS } from '../../constants/concept-graph';
 import { describe, it, expect } from 'vitest';
 import { seedPracticeItemsFromDisk, deterministicItemId } from '../seed-la-practice-items';
 import { CONCEPT_MAP } from '../../constants/concept-graph';
@@ -48,10 +49,10 @@ describe('seedPracticeItemsFromDisk — Linear Algebra content floor', () => {
 
     const inserts = calls.filter((c) => c.sql.includes('INSERT INTO generated_problems'));
     expect(inserts.length).toBe(seeded);
-    // 4 authored concept-family files (127 items) + the original 3-item
-    // demo-rail file = 130. Update this count deliberately if content is
-    // added — it is the floor this test locks, not an incidental number.
-    expect(seeded).toBe(130);
+    // 5 LA files (130 items) + 2 calculus banks (95) + 1 DE bank (35)
+    // = 260. Update this count deliberately if content is added — it is
+    // the floor this test locks, not an incidental number.
+    expect(seeded).toBe(260);
   });
 
   it('every one of the 26 canonical linear-algebra concepts has at least one seeded row', async () => {
@@ -72,10 +73,12 @@ describe('seedPracticeItemsFromDisk — Linear Algebra content floor', () => {
     await seedPracticeItemsFromDisk(pool as any);
 
     const inserts = calls.filter((c) => c.sql.includes('INSERT INTO generated_problems'));
+    const topicByConcept = new Map(ALL_CONCEPTS.map((cc) => [cc.id, cc.topic]));
     for (const call of inserts) {
-      // topic is param index 2 — must be the slug ('linear-algebra'), never
-      // the item JSON's own "Linear Algebra" display-cased topic field.
-      expect(call.params[2]).toBe('linear-algebra');
+      // topic is param index 2 — must be the concept graph's slug for the
+      // row's concept_id ('linear-algebra', 'calculus', ...), never the
+      // item JSON's own display-cased topic field.
+      expect(call.params[2]).toBe(topicByConcept.get(call.params[1] as string));
     }
   });
 

@@ -13,12 +13,16 @@
  */
 
 import { createBatchOrchestrator, type StepResult } from './orchestrator';
-import { createGeminiBatchAdapter } from './gemini-adapter';
+import { createGeminiBatchAdapter, DEFAULT_MODEL } from './gemini-adapter';
 import { createPgPersistence } from './pg-persistence';
 import type { JobRow } from './persistence';
 import { getRun } from '../run-orchestrator';
-import { dispatchPracticeItemJob } from '../practice-item-factory/batch-dispatch';
+import { dispatchPracticeItemJob, type PracticeItemDispatchDeps } from '../practice-item-factory/batch-dispatch';
 import { practiceItemBankPath, writePracticeItemBank } from '../practice-item-factory/writer';
+import { buildSolveSecondaryFn } from '../practice-item-factory/answer-check';
+import { assertPracticeItemLaunchReady } from '../practice-item-factory/launch-guard';
+import { verifyProblemWithWolfram } from '../../services/wolfram-service';
+import { computeFeatureFlags } from '../../api/feature-flags';
 import type { AuthoredItem } from '../../scoring/learning-object-catalog-file';
 
 /**
@@ -35,12 +39,50 @@ export interface JobProcessedDeps {
   getRun: (run_id: string) => Promise<RunLookupResult | null>;
   dispatchPracticeItemJob: typeof dispatchPracticeItemJob;
   writePracticeItemBank: typeof writePracticeItemBank;
+  /**
+   * T4a: resolves the real verifier deps (solveSecondary / wolframCheck)
+   * dispatchPracticeItemJob's third argument needs. A FUNCTION, not an
+   * already-resolved value, so production wiring never constructs a
+   * provider client at module load — only when a practice-item job is
+   * actually being dispatched (see buildRealPracticeItemDispatchDeps
+   * below). Tests inject a synchronous fake. Omitted entirely (legacy
+   * callers, e.g. direct/older test callers) falls back to `{}` — the
+   * pre-T4a default, still fail-closed exactly as before.
+   */
+  getPracticeItemDispatchDeps?: () => Promise<PracticeItemDispatchDeps>;
+}
+
+/**
+ * T4a real wiring. `solveSecondary` reuses answer-check.ts's provider
+ * routing (resolveDistinctSecondaryModel) against the batch pipeline's
+ * fixed primary model (gemini-adapter.ts's DEFAULT_MODEL — the only model
+ * createGeminiBatchAdapter() ever submits under); resolves to null (not a
+ * throw) when no distinct-provider secondary is configured, which
+ * dispatchPracticeItemJob already treats as "not wired" (fail-closed
+ * refusal). `wolframCheck` is verifyProblemWithWolfram itself, gated by
+ * the same WOLFRAM_APP_ID feature flag the rest of the app checks
+ * (src/api/feature-flags.ts) — omitted (null) rather than wired-but-
+ * doomed-to-fail when the key isn't set, so an unconfigured deploy still
+ * gets the honest structural "refused" outcome, not a wired call that
+ * would just error every time.
+ *
+ * Called lazily (per job, from handleJobProcessed below) — nothing here
+ * runs, and no LLM/Wolfram client is built, until a practice-item job is
+ * actually being dispatched. resolveDistinctSecondaryModel's own registry
+ * lookup is in-process cached (src/llm/registry.ts), so calling this once
+ * per job costs no meaningful work beyond the first.
+ */
+export async function buildRealPracticeItemDispatchDeps(): Promise<PracticeItemDispatchDeps> {
+  const solveSecondary = await buildSolveSecondaryFn(DEFAULT_MODEL);
+  const wolframCheck = computeFeatureFlags().wolfram ? verifyProblemWithWolfram : null;
+  return { solveSecondary, wolframCheck };
 }
 
 const defaultJobProcessedDeps: JobProcessedDeps = {
   getRun,
   dispatchPracticeItemJob,
   writePracticeItemBank,
+  getPracticeItemDispatchDeps: buildRealPracticeItemDispatchDeps,
 };
 
 /**
@@ -95,7 +137,13 @@ export async function handleJobProcessed(
     return;
   }
 
-  const result = await deps.dispatchPracticeItemJob(job.atom_spec, job.result);
+  // T4a: resolve real verifier deps lazily, right before dispatch — never
+  // at module load. Omitted getPracticeItemDispatchDeps (legacy/older
+  // test callers) falls back to `{}`, the exact pre-T4a default.
+  const practiceItemDeps = deps.getPracticeItemDispatchDeps
+    ? await deps.getPracticeItemDispatchDeps()
+    : {};
+  const result = await deps.dispatchPracticeItemJob(job.atom_spec, job.result, practiceItemDeps);
   const logPrefix = `[batch-poller] practice-item run=${run_id} concept=${job.atom_spec.concept_id}`;
 
   switch (result.outcome) {
@@ -189,6 +237,14 @@ function getOrchestrator() {
   _orch = createBatchOrchestrator({
     persistence: createPgPersistence(),
     adapter: createGeminiBatchAdapter(),
+    // T4a launch guard: fails a fresh practice-item run loudly (batch_state
+    // → 'failed', clear error) if its specs need a verifier that isn't
+    // configured, BEFORE any provider call. No-op for non-practice-item
+    // (plain atom-mode) batches — see assertPracticeItemLaunchReady's doc
+    // comment. Never fires on resume (orchestrator.ts's prepare() only
+    // reaches this on a genuinely fresh launch).
+    assertLaunchReady: (atom_specs) =>
+      assertPracticeItemLaunchReady(atom_specs, { primaryModelId: DEFAULT_MODEL }),
     onJobProcessed: async (run_id, job) => {
       try {
         // Propagate handleJobProcessed's return value (in particular

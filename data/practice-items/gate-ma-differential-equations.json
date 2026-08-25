@@ -1,0 +1,875 @@
+{
+ "version": 1,
+ "_comment": "GATE-MA differential-equations practice bank: all 7 DE concepts. Same dual-independent-solve protocol as the calculus banks.",
+ "items": [
+  {
+   "id": "pi-ode-first-order-001",
+   "concept_id": "ode-first-order",
+   "topic": "differential-equations",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Find the integrating factor for the linear ODE dy/dx + (2/x)y = x, for x > 0.",
+   "options": [
+    "x²",
+    "x",
+    "1/x²",
+    "ln x"
+   ],
+   "answer_index": 0,
+   "correct_answer": "x²",
+   "solution_steps": [
+    "The ODE is linear in the form dy/dx + P(x)y = Q(x) with P(x) = 2/x.",
+    "The integrating factor is μ(x) = e^{∫P(x)dx} = e^{∫(2/x)dx} = e^{2 ln x} = x².",
+    "Verify: multiplying through by x² should make the left side an exact derivative — d/dx(x²y) = x²(dy/dx) + 2xy = x²(dy/dx + (2/x)y), which matches the left side of the original ODE exactly.",
+    "Trap: option '1/x²' comes from a sign error (using μ = e^{-∫P dx} instead of e^{+∫P dx}); option 'x' comes from forgetting to double the exponent from the coefficient 2/x; 'ln x' confuses the integrating factor with the integral of P(x) itself."
+   ],
+   "verification_method": "hand_checkable_integrating_factor"
+  },
+  {
+   "id": "pi-ode-first-order-002",
+   "concept_id": "ode-first-order",
+   "topic": "differential-equations",
+   "difficulty": 0.4,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Solve dy/dx + y = e^x with y(0) = 1.",
+   "options": [
+    "y = (1/2)e^x + (1/2)e^{-x}",
+    "y = (x+1)e^x",
+    "y = e^x",
+    "y = (1/2)e^x + 2e^{-x}"
+   ],
+   "answer_index": 0,
+   "correct_answer": "y = (1/2)e^x + (1/2)e^{-x}",
+   "solution_steps": [
+    "IF = e^{∫1 dx} = e^x. Multiply through: d/dx(y e^x) = e^x·e^x = e^{2x}.",
+    "Integrate: y e^x = (1/2)e^{2x} + C, so y = (1/2)e^x + Ce^{-x}.",
+    "Apply y(0)=1: 1 = 1/2 + C, so C = 1/2. General solution: y = (1/2)e^x + (1/2)e^{-x} = cosh(x).",
+    "Verify by differentiating back: y' = (1/2)e^x - (1/2)e^{-x}; y'+y = (1/2)e^x-(1/2)e^{-x}+(1/2)e^x+(1/2)e^{-x} = e^x, matching the RHS. y(0) = 1/2+1/2 = 1, matching the IC.",
+    "Trap: '(x+1)e^x' comes from a sign error in the integrating factor (using e^{-x} as if the equation were dy/dx - y = e^x); 'e^x' comes from forgetting the 1/2 coefficient on the particular solution; '(1/2)e^x+2e^{-x}' comes from an arithmetic slip solving for C (e.g. solving 1 = (1/2)C instead of 1 = 1/2 + C)."
+   ],
+   "verification_method": "hand_checkable_linear_ode_ic"
+  },
+  {
+   "id": "pi-ode-first-order-003",
+   "concept_id": "ode-first-order",
+   "topic": "differential-equations",
+   "difficulty": 0.55,
+   "question_type": "msq",
+   "marks": 1,
+   "question_text": "For a first-order linear ODE dy/dx + P(x)y = Q(x), which of the following statements are true?",
+   "options": [
+    "The integrating factor is μ(x) = e^{∫P(x)dx}",
+    "Multiplying the ODE by μ(x) turns the left side into d/dx(μ(x)y)",
+    "If Q(x) ≡ 0, the general (homogeneous) solution is y = Ce^{+∫P(x)dx} for arbitrary constant C",
+    "The arbitrary constant in the general solution is uniquely determined by the ODE alone, without any initial condition",
+    "For P, Q continuous on an interval containing x₀, the IVP y'+Py=Q, y(x₀)=y₀ has a unique solution on that interval"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    4
+   ],
+   "correct_answer": "IF is e^{∫P dx}; multiplying gives d/dx(μy); linear IVPs with continuous P,Q have a unique solution",
+   "solution_steps": [
+    "(0) TRUE: this is the defining formula for the integrating factor of a first-order linear ODE.",
+    "(1) TRUE: by construction, μ'(x) = P(x)μ(x), so d/dx(μy) = μy' + μ'y = μy' + Pμy = μ(y'+Py), exactly the left side after multiplying by μ.",
+    "(2) FALSE — sign trap: separating dy/y = -P(x)dx (from dy/dx = -Py) and integrating gives y = Ce^{-∫P(x)dx}, not e^{+∫P dx}; dropping the minus sign is a classic error when solving the homogeneous case directly instead of via the integrating factor.",
+    "(3) FALSE: the general solution y = (1/μ)∫μQ dx + C/μ always carries one free constant C; an initial condition is required to pin it down — the ODE alone only determines the family of solutions, not one specific member.",
+    "(4) TRUE: this is the standard existence-uniqueness theorem for first-order linear ODEs — continuity of P and Q on an interval containing x₀ guarantees exactly one solution through (x₀,y₀) on that interval."
+   ],
+   "verification_method": "hand_checkable_linear_ode_properties"
+  },
+  {
+   "id": "pi-ode-first-order-004",
+   "concept_id": "ode-first-order",
+   "topic": "differential-equations",
+   "difficulty": 0.45,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Solve dy/dx + y/x = x², x > 0, with y(1) = 1. Find y(2).",
+   "answer_range": [
+    2.363125,
+    2.386875
+   ],
+   "correct_answer": "19/8",
+   "solution_steps": [
+    "IF = e^{∫(1/x)dx} = e^{ln x} = x. Multiply through: d/dx(xy) = x·x² = x³.",
+    "Integrate: xy = x⁴/4 + C, so y = x³/4 + C/x.",
+    "Apply y(1)=1: 1 = 1/4 + C, so C = 3/4. y(x) = x³/4 + (3/4)/x.",
+    "Verify by differentiating back: y' = 3x²/4 - (3/4)/x²; y' + y/x = 3x²/4 - 3/(4x²) + x²/4 + 3/(4x²) = x², matching the RHS. y(1) = 1/4+3/4=1, matching the IC.",
+    "y(2) = 8/4 + (3/4)/2 = 2 + 3/8 = 19/8 = 2.375. Trap: forgetting to divide the constant term (3/4)/x by x at x=2 (i.e. using C instead of C/x) would give the wrong value 2+0.75=2.75."
+   ],
+   "verification_method": "hand_checkable_linear_ode_ivp_value"
+  },
+  {
+   "id": "pi-ode-first-order-005",
+   "concept_id": "ode-first-order",
+   "topic": "differential-equations",
+   "difficulty": 0.65,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Solve dy/dx - 2y = e^{2x} with y(0) = 3. Find y(1).",
+   "answer_range": [
+    29.408443,
+    29.704006
+   ],
+   "correct_answer": "4e² ≈ 29.556",
+   "solution_steps": [
+    "IF = e^{∫-2 dx} = e^{-2x}. Multiply through: d/dx(y e^{-2x}) = e^{-2x}·e^{2x} = 1.",
+    "Integrate: y e^{-2x} = x + C, so y = (x+C)e^{2x}.",
+    "Apply y(0)=3: 3 = (0+C)·1, so C=3. y(x) = (x+3)e^{2x}.",
+    "Verify by differentiating back: y' = e^{2x} + 2(x+3)e^{2x} = (2x+7)e^{2x}; y' - 2y = (2x+7)e^{2x} - 2(x+3)e^{2x} = e^{2x}, matching the RHS. y(0) = 3·1 = 3, matching the IC.",
+    "y(1) = (1+3)e² = 4e² ≈ 29.556. Trap: this is a resonance case — the forcing term e^{2x} matches the homogeneous solution's own exponential rate. A student solving by undetermined coefficients who guesses a particular solution of the form Ae^{2x} (instead of Axe^{2x}) would fail; the integrating factor method sidesteps this trap automatically, which is exactly why it's used here."
+   ],
+   "verification_method": "hand_checkable_linear_ode_resonance"
+  },
+  {
+   "id": "pi-ode-bernoulli-001",
+   "concept_id": "ode-bernoulli",
+   "topic": "differential-equations",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "For the Bernoulli equation dy/dx + P(x)y = Q(x)y², which substitution linearizes it?",
+   "options": [
+    "v = y^{-1}",
+    "v = y^{-2}",
+    "v = y^{2}",
+    "v = y^{1/2}"
+   ],
+   "answer_index": 0,
+   "correct_answer": "v = y^{-1}",
+   "solution_steps": [
+    "A Bernoulli equation dy/dx+P(x)y=Q(x)yⁿ is linearized by the substitution v = y^{1-n}.",
+    "Here n=2, so v = y^{1-2} = y^{-1} = 1/y.",
+    "Verify: dividing the ODE by y² gives y^{-2}dy/dx + P(x)y^{-1} = Q(x). Since v=y^{-1}, dv/dx = -y^{-2}dy/dx, so y^{-2}dy/dx = -dv/dx. Substituting gives -dv/dx + P(x)v = Q(x), a linear ODE in v — confirming v=y^{-1} is the correct substitution.",
+    "Trap: 'v=y^{-2}' would be the correct substitution for n=3, not n=2 — mixing up the formula v=y^{1-n} with v=y^{-n} is the classic error."
+   ],
+   "verification_method": "hand_checkable_bernoulli_substitution"
+  },
+  {
+   "id": "pi-ode-bernoulli-002",
+   "concept_id": "ode-bernoulli",
+   "topic": "differential-equations",
+   "difficulty": 0.45,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "The Bernoulli equation dy/dx + y = xy² is linearized by v = 1/y. Which linear ODE results for v?",
+   "options": [
+    "dv/dx - v = -x",
+    "dv/dx + v = -x",
+    "dv/dx - v = x",
+    "dv/dx - 2v = -x"
+   ],
+   "answer_index": 0,
+   "correct_answer": "dv/dx - v = -x",
+   "solution_steps": [
+    "Divide the ODE by y²: y^{-2}dy/dx + y^{-1} = x.",
+    "With v = y^{-1}, dv/dx = -y^{-2}dy/dx, so y^{-2}dy/dx = -dv/dx. Substituting: -dv/dx + v = x.",
+    "Multiply by -1: dv/dx - v = -x.",
+    "Verify by reversing the substitution: if v satisfies dv/dx - v = -x, then -dv/dx+v=x, i.e. y^{-2}y' + y^{-1} = x (multiplying back by y² gives y' + y = xy², the original ODE) — confirms the transformation is correct.",
+    "Trap: 'dv/dx + v = -x' comes from a sign error differentiating v = y^{-1} (forgetting the minus sign in dv/dx = -y^{-2}y'); 'dv/dx - v = x' comes from a sign error on the Q(x) side; 'dv/dx - 2v = -x' comes from incorrectly using the exponent n=2 as a multiplying coefficient instead of correctly forming v=y^{1-n}."
+   ],
+   "verification_method": "hand_checkable_bernoulli_transform"
+  },
+  {
+   "id": "pi-ode-bernoulli-003",
+   "concept_id": "ode-bernoulli",
+   "topic": "differential-equations",
+   "difficulty": 0.6,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Solve dy/dx + y = xy², y(0) = 1. Find y(2).",
+   "answer_range": [
+    0.323333,
+    0.343333
+   ],
+   "correct_answer": "1/3",
+   "solution_steps": [
+    "Divide by y² and substitute v=1/y (as in pi-ode-bernoulli-002) to get the linear ODE dv/dx - v = -x.",
+    "IF = e^{-x}. d/dx(v e^{-x}) = -x e^{-x}. Integrating (by parts): ∫-x e^{-x}dx = (x+1)e^{-x} + C, so v e^{-x} = (x+1)e^{-x} + C, giving v = (x+1) + Ce^{x}.",
+    "Apply y(0)=1, so v(0)=1: 1 = (0+1) + C·1, so C=0. v(x) = x+1 (the exponential term vanishes entirely for this IC).",
+    "Since v=1/y, y(x) = 1/(x+1). Verify by differentiating back: y' = -1/(x+1)²; check y'+y = -1/(x+1)²+1/(x+1) = [-1+(x+1)]/(x+1)² = x/(x+1)². And xy² = x/(x+1)² — matches exactly. y(0)=1 confirms the IC.",
+    "y(2) = 1/(2+1) = 1/3. Trap: forgetting to divide by y² before substituting (applying v=1/y directly to the untouched equation) is the most common error in Bernoulli problems and produces a non-linear, unsolvable mess."
+   ],
+   "verification_method": "hand_checkable_bernoulli_ivp"
+  },
+  {
+   "id": "pi-ode-bernoulli-004",
+   "concept_id": "ode-bernoulli",
+   "topic": "differential-equations",
+   "difficulty": 0.68,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about the Bernoulli equation dy/dx + P(x)y = Q(x)yⁿ (n ≠ 0, 1) are true?",
+   "options": [
+    "The substitution v = y^{1-n} transforms the Bernoulli equation into a linear ODE in v",
+    "For n = 0 or n = 1, the equation is already linear and no substitution is needed",
+    "A suitable substitution power is v = y^{n-1}, equivalent to v = y^{1-n}",
+    "After substituting, the resulting linear ODE in v can be solved with an ordinary integrating factor, just like any first-order linear ODE",
+    "Dividing the original equation by yⁿ before substituting is optional — the substitution works equally well on the untouched equation"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    3
+   ],
+   "correct_answer": "v=y^{1-n} linearizes it; n=0,1 already linear; standard IF applies to the resulting linear ODE in v",
+   "solution_steps": [
+    "(0) TRUE: this is the defining Bernoulli substitution, verified explicitly in pi-ode-bernoulli-001/002.",
+    "(1) TRUE: if n=0, the equation is already dy/dx+Py=Q (linear); if n=1, it's dy/dx+Py=Qy, i.e. dy/dx+(P-Q)y=0, still linear — no substitution is needed in either case.",
+    "(2) FALSE — trap: v=y^{n-1} is the reciprocal power of the correct v=y^{1-n} (e.g. for n=2, y^{n-1}=y¹=y, not y^{-1}); this sign-of-exponent mix-up is extremely common.",
+    "(3) TRUE: after the substitution, the ODE in v is linear (dv/dx + (1-n)P(x)v = (1-n)Q(x)), so the standard integrating factor μ=e^{∫(1-n)P dx} applies directly.",
+    "(4) FALSE — trap: dividing by yⁿ first is essential; it's what makes y^{-n}dy/dx recognizable as proportional to dv/dx after substitution. Substituting into the untouched equation does not linearize anything."
+   ],
+   "verification_method": "hand_checkable_bernoulli_properties"
+  },
+  {
+   "id": "pi-ode-bernoulli-005",
+   "concept_id": "ode-bernoulli",
+   "topic": "differential-equations",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Solve dy/dx + 2y = 2xy², y(0) = 2. Find y(1.5).",
+   "answer_range": [
+    0.49,
+    0.51
+   ],
+   "correct_answer": "0.5",
+   "solution_steps": [
+    "Divide by y² and substitute v=1/y: -dv/dx+2v=2x, i.e. dv/dx - 2v = -2x.",
+    "IF = e^{-2x}. d/dx(v e^{-2x}) = -2x e^{-2x}. Integrating by parts: ∫-2x e^{-2x}dx = e^{-2x}(x+1/2) + C, so v = x + 1/2 + Ce^{2x}.",
+    "Apply y(0)=2, so v(0)=1/2: 1/2 = (0+1/2) + C, so C=0. v(x) = x + 1/2 exactly (no exponential term survives for this IC).",
+    "y(x) = 1/(x+1/2) = 2/(2x+1). Verify by differentiating back: y' = -4/(2x+1)²; y'+2y = -4/(2x+1)²+4/(2x+1) = [-4+4(2x+1)]/(2x+1)² = 8x/(2x+1)². And 2xy² = 2x·4/(2x+1)² = 8x/(2x+1)² — matches. y(0)=2/1=2, matching the IC.",
+    "y(1.5) = 2/(3+1) = 2/4 = 0.5. Trap: dividing by yⁿ with the wrong sign of n (e.g. treating this as n=-2 instead of n=2) gives an unsolvable substitution."
+   ],
+   "verification_method": "hand_checkable_bernoulli_value"
+  },
+  {
+   "id": "pi-ode-exact-001",
+   "concept_id": "ode-exact",
+   "topic": "differential-equations",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Is (2xy+3)dx + (x²-1)dy = 0 exact?",
+   "options": [
+    "Exact, since ∂M/∂y = ∂N/∂x = 2x",
+    "Not exact, since ∂M/∂y=2x but ∂N/∂x=2x²",
+    "Exact, since M and N are both polynomials",
+    "Not exact, since M depends on y"
+   ],
+   "answer_index": 0,
+   "correct_answer": "Exact, since ∂M/∂y = ∂N/∂x = 2x",
+   "solution_steps": [
+    "M(x,y)=2xy+3, N(x,y)=x²-1. Exactness requires ∂M/∂y = ∂N/∂x.",
+    "∂M/∂y = 2x. ∂N/∂x = 2x. These are equal, so the equation is exact.",
+    "Trap: 'Not exact, since M depends on y' is a common but incorrect shortcut — M or N depending on the other variable is normal and expected; exactness is about the specific partial derivatives matching, not about variable dependence in general. 'Exact, since M and N are both polynomials' is also a false general claim — being polynomials guarantees nothing about exactness without checking the actual partial derivatives."
+   ],
+   "verification_method": "hand_checkable_exactness_check"
+  },
+  {
+   "id": "pi-ode-exact-002",
+   "concept_id": "ode-exact",
+   "topic": "differential-equations",
+   "difficulty": 0.4,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "For the exact equation (2xy+3)dx + (x²-1)dy = 0, find the general solution F(x,y)=C.",
+   "options": [
+    "x²y+3x-y=C",
+    "x²y+3x+y=C",
+    "x²y-3x-y=C",
+    "xy²+3x-y=C"
+   ],
+   "answer_index": 0,
+   "correct_answer": "x²y+3x-y=C",
+   "solution_steps": [
+    "Integrate M with respect to x, treating y as constant: ∫(2xy+3)dx = x²y+3x+g(y), where g(y) is an unknown function of y (not a plain constant).",
+    "Differentiate with respect to y and match to N: ∂/∂y(x²y+3x+g(y)) = x²+g'(y) = N = x²-1, so g'(y) = -1, giving g(y) = -y.",
+    "F(x,y) = x²y+3x-y, so the general solution is x²y+3x-y=C.",
+    "Cross-check via the other integration order: ∫N dy = ∫(x²-1)dy = x²y-y+h(x). ∂/∂x(x²y-y+h(x)) = 2xy+h'(x) = M = 2xy+3, so h'(x)=3, h(x)=3x. F=x²y-y+3x — identical to the first path, confirming the potential function.",
+    "Trap: 'x²y+3x+y=C' comes from a sign error integrating g'(y); 'x²y-3x-y=C' comes from a sign error on the constant term when integrating M; 'xy²+3x-y=C' comes from swapping which variable gets squared (misreading M and N's roles)."
+   ],
+   "verification_method": "hand_checkable_exact_potential_function"
+  },
+  {
+   "id": "pi-ode-exact-003",
+   "concept_id": "ode-exact",
+   "topic": "differential-equations",
+   "difficulty": 0.55,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Using (2xy+3)dx + (x²-1)dy = 0 with general solution x²y+3x-y=C, and y(1) = 2, find y(2).",
+   "answer_range": [
+    -1.01,
+    -0.99
+   ],
+   "correct_answer": "-1",
+   "solution_steps": [
+    "Apply the IC to find C: at x=1, y=2: (1)²(2)+3(1)-2 = 2+3-2 = 3, so C=3.",
+    "The implicit solution is x²y+3x-y=3.",
+    "At x=2: 4y+6-y=3, so 3y = 3-6 = -3, giving y=-1.",
+    "Verify by substituting (x,y)=(2,-1) back into the potential function: (2)²(-1)+3(2)-(-1) = -4+6+1 = 3, matching C — confirms the point lies on the solution curve.",
+    "Cross-check with the alternate potential-function derivation (F=x²y-y+3x from integrating N first, in pi-ode-exact-002) — algebraically identical, so the same C=3 and y(2)=-1 result."
+   ],
+   "verification_method": "hand_checkable_exact_ivp_value"
+  },
+  {
+   "id": "pi-ode-exact-004",
+   "concept_id": "ode-exact",
+   "topic": "differential-equations",
+   "difficulty": 0.65,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about exact equations M(x,y)dx + N(x,y)dy = 0 are true?",
+   "options": [
+    "The equation is exact iff ∂M/∂y = ∂N/∂x on a simply connected domain",
+    "For an exact equation, the solution is F(x,y)=C where F_x=M and F_y=N",
+    "If ∂M/∂y ≠ ∂N/∂x, a suitable integrating factor that restores exactness must always depend on x alone",
+    "Every exact equation is also a separable equation",
+    "When integrating M with respect to x to find F, the 'constant' of integration should be treated as an arbitrary function of y, not a true constant"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    4
+   ],
+   "correct_answer": "Exactness test ∂M/∂y=∂N/∂x; solution is the potential function F=C; integration 'constant' is a function of the other variable",
+   "solution_steps": [
+    "(0) TRUE: this is the standard exactness criterion (on a simply connected domain, so no topological obstructions).",
+    "(1) TRUE: this is the definition of the potential function F used to solve exact equations, demonstrated explicitly in pi-ode-exact-002.",
+    "(2) FALSE — trap: an integrating factor can depend on x alone, y alone, or (via ad hoc methods) on a combination like xy, depending on which combination of (N_x-M_y)/N or (M_y-N_x)/M turns out to be a function of one variable only; there is no universal guarantee it depends on x alone.",
+    "(3) FALSE: exact equations are generally NOT separable — e.g. (2xy+3)dx+(x²-1)dy=0 from pi-ode-exact-001/002 cannot be written as f(x)dx=g(y)dy, yet it is exact.",
+    "(4) TRUE: since F depends on both x and y, integrating F_x=M with respect to x can only recover F up to a term that's constant *with respect to x* — which may still vary with y, i.e. an arbitrary function g(y). Treating it as a true constant is the trap that leads to a wrong or incomplete solution (see pi-ode-exact-002)."
+   ],
+   "verification_method": "hand_checkable_exact_properties"
+  },
+  {
+   "id": "pi-ode-exact-005",
+   "concept_id": "ode-exact",
+   "topic": "differential-equations",
+   "difficulty": 0.7,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "(y²+2xy)dx + (x²+2xy)dy = 0 is exact with potential function F(x,y)=xy²+x²y=C. Given y(1)=2, find y(2), taking the solution branch continuous with the initial condition.",
+   "answer_range": [
+    0.99,
+    1.01
+   ],
+   "correct_answer": "1",
+   "solution_steps": [
+    "Check exactness: M=y²+2xy, N=x²+2xy. ∂M/∂y=2y+2x, ∂N/∂x=2x+2y — equal, confirmed exact.",
+    "Derive F: ∫M dx = xy²+x²y+g(y); ∂/∂y(xy²+x²y+g(y))=2xy+x²+g'(y)=N=x²+2xy, so g'(y)=0, g(y)=0. F=xy²+x²y.",
+    "Cross-check via the other order: ∫N dy = x²y+xy²+h(x); ∂/∂x(x²y+xy²+h(x))=2xy+y²+h'(x)=M=y²+2xy, so h'(x)=0 — same F=xy²+x²y, confirming the potential function two independent ways.",
+    "Apply IC: at (1,2), F=1·4+1·2=6, so C=6. At x=2: 2y²+4y=6, i.e. y²+2y-3=0, i.e. (y+3)(y-1)=0, giving y=1 or y=-3.",
+    "Select the branch continuous with the IC: at x=1, the '+' root of the quadratic y=[-x²+√(x⁴+24x)]/(2x) gives y=[-1+5]/2=2, matching the IC exactly; evaluating the same '+' branch at x=2 gives y=[-4+8]/4=1. Trap: picking the other root (y=-3) without checking which branch actually passes through the initial condition is the classic condition-application error with implicit exact solutions."
+   ],
+   "verification_method": "hand_checkable_exact_branch_selection"
+  },
+  {
+   "id": "pi-ode-second-order-homo-001",
+   "concept_id": "ode-second-order-homo",
+   "topic": "differential-equations",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Find the general solution of y'' - 5y' + 6y = 0.",
+   "options": [
+    "y=C1e^{2x}+C2e^{3x}",
+    "y=C1e^{-2x}+C2e^{-3x}",
+    "y=(C1+C2x)e^{2x}",
+    "y=C1cos(2x)+C2sin(3x)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "y=C1e^{2x}+C2e^{3x}",
+   "solution_steps": [
+    "The characteristic equation is r²-5r+6=0, which factors as (r-2)(r-3)=0, giving distinct real roots r=2 and r=3.",
+    "For distinct real roots r1,r2, the general solution is y=C1e^{r1 x}+C2e^{r2 x} = C1e^{2x}+C2e^{3x}.",
+    "Verify by direct substitution: for y=e^{2x}, y'=2e^{2x}, y''=4e^{2x}; y''-5y'+6y = 4e^{2x}-10e^{2x}+6e^{2x}=0 ✓. For y=e^{3x}: y''-5y'+6y = 9e^{3x}-15e^{3x}+18e^{3x}=0 ✓. Both basis solutions check out.",
+    "Trap: 'C1e^{-2x}+C2e^{-3x}' comes from a sign error solving the characteristic equation; '(C1+C2x)e^{2x}' incorrectly treats distinct roots as a repeated root; 'C1cos(2x)+C2sin(3x)' misclassifies real roots as complex — none of these apply here since the discriminant 25-24=1>0 gives two distinct real roots."
+   ],
+   "verification_method": "hand_checkable_char_eq_distinct_roots"
+  },
+  {
+   "id": "pi-ode-second-order-homo-002",
+   "concept_id": "ode-second-order-homo",
+   "topic": "differential-equations",
+   "difficulty": 0.35,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Find the general solution of y'' + 4y' + 4y = 0.",
+   "options": [
+    "y=(C1+C2x)e^{-2x}",
+    "y=C1e^{-2x}+C2e^{-2x}",
+    "y=(C1+C2x)e^{2x}",
+    "y=C1cos(2x)+C2sin(2x)"
+   ],
+   "answer_index": 0,
+   "correct_answer": "y=(C1+C2x)e^{-2x}",
+   "solution_steps": [
+    "Characteristic equation: r²+4r+4=0, i.e. (r+2)²=0, giving a repeated root r=-2 (discriminant=16-16=0).",
+    "For a repeated root r, the general solution is y=(C1+C2x)e^{rx} = (C1+C2x)e^{-2x} — the factor of x is required to get a second, linearly independent solution.",
+    "Verify by direct substitution of y=xe^{-2x}: y'=e^{-2x}-2xe^{-2x}=(1-2x)e^{-2x}; y''=-2e^{-2x}-2(1-2x)e^{-2x}=(-4+4x)e^{-2x}. Then y''+4y'+4y = e^{-2x}[(-4+4x)+4(1-2x)+4x] = e^{-2x}[-4+4x+4-8x+4x]=e^{-2x}[0]=0 ✓.",
+    "Trap: 'C1e^{-2x}+C2e^{-2x}' collapses to a single constant times e^{-2x} (since C1+C2 is just one effective constant) — it is NOT two linearly independent solutions, which is exactly why the x-factor is required for repeated roots; forgetting it is the single most common mistake in this topic."
+   ],
+   "verification_method": "hand_checkable_char_eq_repeated_root"
+  },
+  {
+   "id": "pi-ode-second-order-homo-003",
+   "concept_id": "ode-second-order-homo",
+   "topic": "differential-equations",
+   "difficulty": 0.5,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "y'' + 2y' + 5y = 0, with y(0) = 1 and y'(0) = 0. Find y(π/4).",
+   "answer_range": [
+    0.217969,
+    0.237969
+   ],
+   "correct_answer": "0.5e^(-π/4) ≈ 0.228",
+   "solution_steps": [
+    "Characteristic equation: r²+2r+5=0. Discriminant = 4-20=-16<0, so complex roots r=(-2±√-16)/2 = -1±2i.",
+    "General solution: y=e^{-x}(C1 cos2x + C2 sin2x).",
+    "Apply y(0)=1: C1=1. Differentiate: y'=e^{-x}[(-C1+2C2)cos2x+(-2C1-C2)sin2x]. Apply y'(0)=0: -C1+2C2=0, so with C1=1, C2=0.5.",
+    "y(x)=e^{-x}(cos2x+0.5sin2x). Verify by direct substitution: y'=-2.5e^{-x}sin2x (simplifying using -C1+2C2=0), y''=2.5e^{-x}sin2x-5e^{-x}cos2x; y''+2y'+5y = e^{-x}[(2.5sin2x-5cos2x)+2(-2.5sin2x)+5(cos2x+0.5sin2x)] = e^{-x}[(2.5-5+2.5)sin2x+(-5+5)cos2x]=0 ✓.",
+    "y(π/4): 2x=π/2, so cos(π/2)=0, sin(π/2)=1. y(π/4)=e^{-π/4}(0+0.5)=0.5e^{-π/4}≈0.228. Trap: forgetting the e^{-x} envelope and reporting just the trig part (0.5) is the classic error — complex-root solutions oscillate INSIDE a decaying (or growing) exponential envelope, not on their own."
+   ],
+   "verification_method": "hand_checkable_char_eq_complex_roots_ivp"
+  },
+  {
+   "id": "pi-ode-second-order-homo-004",
+   "concept_id": "ode-second-order-homo",
+   "topic": "differential-equations",
+   "difficulty": 0.6,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "For a constant-coefficient homogeneous ODE ay''+by'+cy=0 with characteristic equation ar²+br+c=0, which of the following statements are true?",
+   "options": [
+    "If the characteristic equation has two distinct real roots r1,r2, the general solution is y=C1e^{r1x}+C2e^{r2x}",
+    "If the characteristic equation has a repeated real root r, the general solution is y=(C1+C2x)e^{rx}",
+    "If the characteristic equation has complex roots α±iβ, the general solution is y=e^{αx}(C1cosβx+C2sinβx)",
+    "For a repeated root r, y=C1e^{rx}+C2e^{rx} gives two linearly independent solutions",
+    "Complex roots α±iβ always produce oscillatory solutions that neither grow nor decay as x→∞"
+   ],
+   "answer_indices": [
+    0,
+    1,
+    2
+   ],
+   "correct_answer": "Distinct real roots, repeated root, and complex root forms are all standard; the other two options are traps",
+   "solution_steps": [
+    "(0) TRUE: standard case, demonstrated in pi-ode-second-order-homo-001.",
+    "(1) TRUE: standard case, demonstrated in pi-ode-second-order-homo-002 — the extra factor of x is essential.",
+    "(2) TRUE: standard case, demonstrated in pi-ode-second-order-homo-003.",
+    "(3) FALSE — trap: C1e^{rx}+C2e^{rx}=(C1+C2)e^{rx} is really just one function (one effective constant), not two independent solutions — this is exactly the mistake option (1)'s x-factor exists to prevent.",
+    "(4) FALSE — trap: the solution is e^{αx}(C1cosβx+C2sinβx); the oscillation (cos,sin part) always stays bounded, but the e^{αx} envelope grows if α>0 and decays if α<0 — only when α=0 (purely imaginary roots) does the solution neither grow nor decay. Ignoring the envelope is the same error as in pi-ode-second-order-homo-003's trap."
+   ],
+   "verification_method": "hand_checkable_second_order_homo_properties"
+  },
+  {
+   "id": "pi-ode-second-order-homo-005",
+   "concept_id": "ode-second-order-homo",
+   "topic": "differential-equations",
+   "difficulty": 0.7,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "y'' - 6y' + 9y = 0, with y(0) = 2 and y'(0) = 1. Find y(1).",
+   "answer_range": [
+    -60.557894,
+    -59.955328
+   ],
+   "correct_answer": "-3e^3 ≈ -60.257",
+   "solution_steps": [
+    "Characteristic equation: r²-6r+9=0, i.e. (r-3)²=0, giving a repeated root r=3 (discriminant=36-36=0).",
+    "General solution: y=(C1+C2x)e^{3x}. Apply y(0)=2: C1=2.",
+    "Differentiate: y'=C2e^{3x}+3(C1+C2x)e^{3x}=e^{3x}[3C1+C2+3C2x]. Apply y'(0)=1: 3C1+C2=1, so with C1=2, C2=1-6=-5.",
+    "y(x)=(2-5x)e^{3x}. Verify by direct substitution: y'=e^{3x}(1-15x), y''=e^{3x}(-12-45x); y''-6y'+9y = e^{3x}[(-12-45x)-6(1-15x)+9(2-5x)] = e^{3x}[(-12-6+18)+(-45+90-45)x]=e^{3x}[0+0]=0 ✓. y(0)=2·1=2, y'(0)=1·1=1, both match ICs.",
+    "y(1)=(2-5)e^3=-3e^3≈-60.257. Trap: for a repeated root, omitting the x-factor when solving for C2 (treating y as C1e^{3x} alone) makes it impossible to satisfy both initial conditions simultaneously — the x-term carries the second degree of freedom needed."
+   ],
+   "verification_method": "hand_checkable_char_eq_repeated_root_ivp"
+  },
+  {
+   "id": "pi-ode-second-order-nonhomo-001",
+   "concept_id": "ode-second-order-nonhomo",
+   "topic": "differential-equations",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "For the ODE y'' - 5y' + 6y = e^{4x}, find the complementary function (CF) — the general solution of the associated homogeneous equation y'' - 5y' + 6y = 0.",
+   "options": [
+    "C1 e^{2x} + C2 e^{3x}",
+    "C1 e^{-2x} + C2 e^{-3x}",
+    "(C1 + C2 x) e^{2x}",
+    "C1 cos 2x + C2 cos 3x"
+   ],
+   "answer_index": 0,
+   "correct_answer": "C1 e^{2x} + C2 e^{3x}",
+   "solution_steps": [
+    "The CF depends only on the homogeneous part y'' - 5y' + 6y = 0, regardless of the forcing term e^{4x} on the right — form the auxiliary (characteristic) equation m² - 5m + 6 = 0.",
+    "Factor: m² - 5m + 6 = (m-2)(m-3) = 0, giving two distinct real roots m = 2 and m = 3.",
+    "Two distinct real roots each contribute a simple exponential term, so CF = C1 e^{2x} + C2 e^{3x}.",
+    "Cross-check: substitute y=e^{2x} into y''-5y'+6y: 4e^{2x}-10e^{2x}+6e^{2x}=0 ✓. Substitute y=e^{3x}: 9e^{3x}-15e^{3x}+6e^{3x}=0 ✓ — both independently solve the homogeneous equation, confirming the CF.",
+    "Trap named: option (c) is the form for a REPEATED root at m=2, and option (d) is the form for COMPLEX roots — neither applies since the roots here are distinct and real."
+   ],
+   "verification_method": "hand_checkable_cf_distinct_real_roots"
+  },
+  {
+   "id": "pi-ode-second-order-nonhomo-002",
+   "concept_id": "ode-second-order-nonhomo",
+   "topic": "differential-equations",
+   "difficulty": 0.55,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "For y'' - 3y' + 2y = e^{x}, what is the correct trial form for the particular integral (PI)?",
+   "options": [
+    "y_p = A x e^{x}",
+    "y_p = A e^{x}",
+    "y_p = A x^2 e^{x}",
+    "y_p = A e^{2x}"
+   ],
+   "answer_index": 0,
+   "correct_answer": "y_p = A x e^{x}",
+   "solution_steps": [
+    "First find the CF: characteristic equation m²-3m+2=0 factors as (m-1)(m-2)=0, giving roots m=1, m=2. So CF = C1e^x + C2e^{2x}.",
+    "The forcing term e^x has rate 1, which MATCHES the CF root m=1 (a simple root, multiplicity 1) — this is resonance.",
+    "Resonance rule: when e^{cx} matches a CF root of multiplicity k, the trial PI must be multiplied by x^k. Here k=1, so y_p = A x e^x (not the naive A e^x).",
+    "Cross-check by direct substitution: with y_p=Axe^x, y_p'=Ae^x(1+x), y_p''=Ae^x(2+x); then y_p''-3y_p'+2y_p = Ae^x[(2+x)-3(1+x)+2x] = -Ae^x, which CAN be matched to e^x by choosing A=-1 — a nonzero, consistent solution exists, confirming x·e^x is the right trial family.",
+    "Trap named: option (b) Ae^x, when substituted, gives (1-3+2)Ae^x = 0, which can NEVER equal e^x for any A — this is exactly the 'forgot the resonance modification factor x' trap. Option (c) x²e^x over-corrects (that form is for a DOUBLE root at 1, not a simple one); option (d) matches the wrong root (2, not 1)."
+   ],
+   "verification_method": "hand_checkable_pi_resonance_simple_root"
+  },
+  {
+   "id": "pi-ode-second-order-nonhomo-003",
+   "concept_id": "ode-second-order-nonhomo",
+   "topic": "differential-equations",
+   "difficulty": 0.7,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about finding the CF and PI for a linear constant-coefficient second-order ODE y'' + py' + qy = f(x) are true?",
+   "options": [
+    "If f(x) = e^{cx} and c is NOT a root of the characteristic equation, the correct trial PI is A e^{cx}.",
+    "If f(x) = e^{cx} and c IS a simple (multiplicity 1) root of the characteristic equation, the correct trial PI is A x e^{cx}.",
+    "If f(x) = sin(kx) (or cos(kx)) and ik is not a root of the characteristic equation, the correct trial PI is A sin(kx) alone — the cosine term can always be dropped.",
+    "The CF is the general solution of the associated homogeneous equation; its arbitrary constants are fixed only after the PI is added in and the given initial/boundary conditions are applied — not before.",
+    "By the principle of superposition, if f(x) = f1(x) + f2(x), the total PI equals PI1 + PI2, where PI_i is the particular integral for the equation with f_i(x) alone on the right side."
+   ],
+   "answer_indices": [
+    0,
+    1,
+    3,
+    4
+   ],
+   "correct_answer": "Non-resonant e^{cx} → Ae^{cx}; resonant simple root → Axe^{cx}; CF constants are fixed only after applying conditions to CF+PI; superposition splits PI additively",
+   "solution_steps": [
+    "(a) TRUE: when c is not a characteristic root, e^{cx} is not itself a homogeneous solution, so the naive trial Ae^{cx} works without modification.",
+    "(b) TRUE: this is the resonance rule demonstrated directly in the previous item — matching a simple root requires exactly one factor of x.",
+    "(c) FALSE — counterexample: take y''+4y=cos x (roots ±2i; ik=i is not a root, so no resonance). Try the (wrong) trial y_p=Asinx: y_p''+4y_p = -Asinx+4Asinx = 3A sinx, which has NO cosine term and so can never equal cos x for any A. The correct trial needs BOTH terms, y_p=Asinx+Bcosx, because differentiating sin produces cos and vice versa.",
+    "(d) TRUE: C1, C2 in the CF are placeholders until the full general solution y = CF + PI is formed; only then do the given conditions pin down their numeric values — solving for them using the CF alone (before adding PI) is a classic bookkeeping error.",
+    "(e) TRUE: superposition holds because the ODE operator L is linear — if L[y1]=f1 and L[y2]=f2, then L[y1+y2]=f1+f2, so PI=PI1+PI2 solves the combined equation.",
+    "Trap named: option (c) is the 'dropped required PI term' family of mistakes — assuming a single trigonometric term suffices when both sin and cos are structurally required."
+   ],
+   "verification_method": "hand_checkable_cf_pi_properties"
+  },
+  {
+   "id": "pi-ode-second-order-nonhomo-004",
+   "concept_id": "ode-second-order-nonhomo",
+   "topic": "differential-equations",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "For y'' + y = 3 cos x — note cos x is already a CF term of y'' + y = 0 (roots ±i), so this is a resonance case — the particular integral is assumed as y_p = x(A cos x + B sin x). Find B (the coefficient of x sin x).",
+   "answer_range": [
+    1.49,
+    1.51
+   ],
+   "correct_answer": "1.5",
+   "solution_steps": [
+    "CF check: m²+1=0 gives m=±i, so CF = C1 cos x + C2 sin x. Since 3cos x duplicates a CF term, multiply the naive trial by x: y_p = Ax cos x + Bx sin x.",
+    "Differentiate: y_p' = A(cos x - x sin x) + B(sin x + x cos x); y_p'' = -2A sin x - Ax cos x + 2B cos x - Bx sin x.",
+    "Add y_p'' + y_p: the x cos x terms (-Ax cos x + Ax cos x) cancel and the x sin x terms (-Bx sin x + Bx sin x) cancel, leaving y_p''+y_p = -2A sin x + 2B cos x.",
+    "Match to the RHS 3 cos x + 0·sin x: -2A = 0 → A = 0, and 2B = 3 → B = 1.5.",
+    "Cross-check via the standard resonance formula for y''+ω0²y = F cos(ω0x): y_p = (F/(2ω0)) x sin(ω0x). With ω0=1, F=3: y_p = 1.5 x sin x — matches A=0, B=1.5 exactly.",
+    "Trap named: a student who forgets the resonance factor x and tries y_p = A cos x + B sin x directly would get y_p''+y_p = 0 (since cos x, sin x already solve the homogeneous equation), which can never equal 3 cos x — the x factor is not optional."
+   ],
+   "verification_method": "hand_checkable_pi_resonance_trig_coefficient"
+  },
+  {
+   "id": "pi-ode-second-order-nonhomo-005",
+   "concept_id": "ode-second-order-nonhomo",
+   "topic": "differential-equations",
+   "difficulty": 0.65,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "Solve y'' - 4y' + 4y = e^{2x} with y(0) = 1 and y'(0) = 2. Find y(1) (give the numerical value, using e ≈ 2.71828).",
+   "answer_range": [
+    11.028,
+    11.139
+   ],
+   "correct_answer": "1.5e^2 ≈ 11.08",
+   "solution_steps": [
+    "Characteristic equation: m²-4m+4=(m-2)²=0, a REPEATED root m=2 (multiplicity 2). CF = (C1+C2x)e^{2x}.",
+    "The forcing term e^{2x} matches the repeated root, and since multiplicity is 2, the trial PI needs TWO factors of x: y_p = A x² e^{2x} (a single x·e^{2x} would still duplicate a CF term).",
+    "Substituting y_p=Ax²e^{2x} into the ODE and simplifying (the x², x¹ terms all cancel) gives y_p''-4y_p'+4y_p = 2A e^{2x}. Setting 2A=1 gives A=1/2, so y_p = 0.5x²e^{2x}.",
+    "Cross-check via the operator-shift formula: the equation is exactly (D-2)²y=e^{2x}; for (D-a)ⁿy=e^{ax}, PI = xⁿe^{ax}/n! = x²e^{2x}/2! = 0.5x²e^{2x} — matches exactly.",
+    "General solution: y = e^{2x}(C1+C2x+0.5x²). Apply y(0)=1: C1=1. Differentiate: y' = e^{2x}[2(C1+C2x+0.5x²)+(C2+x)]; at x=0 this is 2C1+C2 = 2, giving C2=0.",
+    "So y = e^{2x}(1+0.5x²). At x=1: y(1) = e²(1+0.5) = 1.5e² ≈ 1.5×7.38906 ≈ 11.08.",
+    "Trap named: using only y_p=Axe^{2x} (a single x factor) for a DOUBLE root would fail — substituting it gives y_p''-4y_p'+4y_p=0 identically (it still solves the homogeneous equation), so no A could ever match e^{2x}; the double-root case strictly requires x²."
+   ],
+   "verification_method": "hand_checkable_ivp_repeated_root_resonance"
+  },
+  {
+   "id": "pi-ode-higher-order-001",
+   "concept_id": "ode-higher-order",
+   "topic": "differential-equations",
+   "difficulty": 0.3,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Find the complementary function (CF) of y''' - 6y'' + 11y' - 6y = 0.",
+   "options": [
+    "C1 e^{x} + C2 e^{2x} + C3 e^{3x}",
+    "C1 e^{x} + (C2 + C3 x) e^{2x}",
+    "e^{x}(C1 + C2 cos 2x + C3 sin 2x)",
+    "C1 e^{-x} + C2 e^{-2x} + C3 e^{-3x}"
+   ],
+   "answer_index": 0,
+   "correct_answer": "C1 e^{x} + C2 e^{2x} + C3 e^{3x}",
+   "solution_steps": [
+    "Form the characteristic (auxiliary) equation: m³ - 6m² + 11m - 6 = 0.",
+    "Test m=1: 1-6+11-6=0 ✓, so (m-1) is a factor. Divide: m³-6m²+11m-6 = (m-1)(m²-5m+6) = (m-1)(m-2)(m-3).",
+    "Three distinct real roots m=1,2,3, so CF = C1e^x + C2e^{2x} + C3e^{3x}.",
+    "Cross-check via Vieta's formulas: sum of roots = 1+2+3=6, matching -(-6)=6 from the m² coefficient; product of roots = 1·2·3=6, matching the constant term's sign convention for a monic cubic — consistent with the characteristic equation.",
+    "Trap named: option (b) assumes a repeated root at m=2 (not the case here — all three roots are distinct); option (c) assumes complex roots (not the case — all roots are real); the correct CF uses three independent simple-exponential terms."
+   ],
+   "verification_method": "hand_checkable_cf_third_order_distinct_roots"
+  },
+  {
+   "id": "pi-ode-higher-order-002",
+   "concept_id": "ode-higher-order",
+   "topic": "differential-equations",
+   "difficulty": 0.55,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "For y''' - 3y'' + 3y' - y = e^{x}, what is the correct trial form for the particular integral (PI)?",
+   "options": [
+    "y_p = A x^3 e^{x}",
+    "y_p = A e^{x}",
+    "y_p = A x e^{x}",
+    "y_p = A x^2 e^{x}"
+   ],
+   "answer_index": 0,
+   "correct_answer": "y_p = A x^3 e^{x}",
+   "solution_steps": [
+    "Characteristic equation: m³-3m²+3m-1=(m-1)³=0, a TRIPLE root at m=1 (algebraic multiplicity 3). CF = (C1+C2x+C3x²)e^x.",
+    "The forcing term e^x has rate 1, matching this root with multiplicity 3 — full resonance. Rule: the naive trial must be multiplied by x^k where k is the multiplicity, so k=3 here.",
+    "Correct trial: y_p = A x³ e^x.",
+    "Cross-check via the operator-shift formula: the equation is exactly (D-1)³y=e^x; for (D-a)ⁿy=e^{ax}, PI=xⁿe^{ax}/n!, so here PI=x³e^x/3!=x³e^x/6 — a nonzero, well-defined solution exists in the x³e^x family, confirming it's the right trial.",
+    "Trap named: option (b) Ae^x, when substituted, gives y_p'''-3y_p''+3y_p'-y_p=(1-3+3-1)Ae^x=0 — it solves the HOMOGENEOUS equation, so it can never match e^x (0 modification factors, but 3 are needed). Options (c) and (d) under-count the multiplicity (1 and 2 factors of x respectively, but the root has multiplicity 3); since xe^x and x²e^x are also CF solutions here, they too would substitute to zero."
+   ],
+   "verification_method": "hand_checkable_pi_resonance_triple_root"
+  },
+  {
+   "id": "pi-ode-higher-order-003",
+   "concept_id": "ode-higher-order",
+   "topic": "differential-equations",
+   "difficulty": 0.68,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about nth-order linear constant-coefficient ODEs are true?",
+   "options": [
+    "The CF of an nth-order linear homogeneous ODE with constant coefficients contains exactly n independent arbitrary constants.",
+    "A real root r with multiplicity k contributes k independent terms x^0e^{rx}, x^1e^{rx}, …, x^{k-1}e^{rx} (each with its own arbitrary constant) to the CF.",
+    "When the forcing term's exponential rate matches a CF root of multiplicity k, the trial PI must be multiplied by x^k to avoid duplicating a CF term.",
+    "A complex conjugate pair of roots α±iβ contributes only ONE arbitrary constant to the CF, since the pair is treated as a single root.",
+    "For an nth-order ODE, initial conditions and boundary conditions can be freely interchanged in how they are applied, as long as the total count of conditions equals n — the type of condition doesn't affect the solving approach."
+   ],
+   "answer_indices": [
+    0,
+    1,
+    2
+   ],
+   "correct_answer": "n roots give n constants; a multiplicity-k root gives k independent x^j e^{rx} terms; resonance of multiplicity k needs an x^k trial factor",
+   "solution_steps": [
+    "(a) TRUE: the characteristic polynomial has degree n, giving n roots (with multiplicity), and the standard theory of linear ODEs constructs exactly n linearly independent solutions from them — hence exactly n arbitrary constants.",
+    "(b) TRUE: demonstrated directly by H2's CF, (C1+C2x+C3x²)e^x for a triple root at 1 — three independent terms, three constants.",
+    "(c) TRUE: demonstrated directly by H2's resonance PI, which needed the x³ factor (multiplicity 3) — a lower power would coincide with a CF term and solve the homogeneous equation instead.",
+    "(d) FALSE — counterexample: y''+y=0 (n=2) has roots ±i, and CF=C1 cos x+C2 sin x has TWO constants for the pair, not one — consistent with (a)'s 'n roots → n constants' rule, since the conjugate pair still counts as 2 roots.",
+    "(e) FALSE — counterexample: for y''+y=0, initial conditions y(0)=1, y'(0)=0 (both at x=0) give a straightforward 2×2 system with a unique solution y=cos x. But boundary conditions y(0)=1, y(π)=1 (at two DIFFERENT points) give C1=1 from the first and C1cosπ+C2sinπ=-C1=1 from the second, i.e. C1=-1 — contradicting C1=1, so NO solution exists. IC and BC application are not interchangeable in general.",
+    "Trap named: statement (e) is the direct trap — treating IC and BC application as freely swappable ignores that BCs at separate points can be simultaneously unsatisfiable even when the condition count matches n."
+   ],
+   "verification_method": "hand_checkable_higher_order_general_properties"
+  },
+  {
+   "id": "pi-ode-higher-order-004",
+   "concept_id": "ode-higher-order",
+   "topic": "differential-equations",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "Find the sum of the roots of the characteristic equation of y''' - 2y'' - y' + 2y = 0.",
+   "answer_range": [
+    1.99,
+    2.01
+   ],
+   "correct_answer": "2",
+   "solution_steps": [
+    "Characteristic equation: m³-2m²-m+2=0. Test m=1: 1-2-1+2=0 ✓, so (m-1) is a factor. Divide: m³-2m²-m+2=(m-1)(m²-m-2)=(m-1)(m-2)(m+1).",
+    "Roots: m=1, 2, -1. Sum = 1+2+(-1) = 2.",
+    "Cross-check via Vieta's formulas directly on the coefficients (no factoring needed): for m³+c2m²+c1m+c0=0, the sum of roots = -c2. Here c2=-2, so sum = -(-2) = 2 — matches the factored result exactly.",
+    "Trap named: no individual root needs to be found to answer this — a student who unnecessarily fully factors AND miscounts (e.g. a sign error on the root -1) is the failure mode; reading -c2 off the coefficients directly is the safe, fast method."
+   ],
+   "verification_method": "hand_checkable_vieta_sum_of_roots"
+  },
+  {
+   "id": "pi-ode-higher-order-005",
+   "concept_id": "ode-higher-order",
+   "topic": "differential-equations",
+   "difficulty": 0.6,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "For y''' - 3y'' + 3y' - y = e^{x} (the same triple-resonance setup as before), the particular integral has the form y_p = A x^3 e^{x}. Find A.",
+   "answer_range": [
+    0.1567,
+    0.1767
+   ],
+   "correct_answer": "1/6 ≈ 0.1667",
+   "solution_steps": [
+    "Let y_p = Ax³eˣ. Differentiate three times (product rule): y_p'=Aeˣ(3x²+x³); y_p''=Aeˣ(x³+6x²+6x); y_p'''=Aeˣ(x³+9x²+18x+6).",
+    "Substitute into y'''-3y''+3y'-y and collect powers of x: the x³, x², and x¹ terms all cancel exactly, leaving y'''-3y''+3y'-y = 6A·eˣ.",
+    "Set 6A·eˣ = eˣ (matching the RHS): A = 1/6.",
+    "Cross-check via the operator-shift formula: the equation is (D-1)³y=eˣ, and for (D-a)ⁿy=e^{ax}, PI=xⁿe^{ax}/n! = x³eˣ/3! = x³eˣ/6 — giving A=1/6 directly, matching the substitution method exactly.",
+    "Trap named: using the wrong power in the denominator (e.g. n instead of n!, giving A=1/3 instead of 1/6) is the main failure mode here — the n! is easy to drop."
+   ],
+   "verification_method": "hand_checkable_pi_coefficient_triple_resonance"
+  },
+  {
+   "id": "pi-pde-basics-001",
+   "concept_id": "pde-basics",
+   "topic": "differential-equations",
+   "difficulty": 0.25,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Eliminate the arbitrary constant a from z = ax + a² y to form a first-order PDE relating p = ∂z/∂x and q = ∂z/∂y.",
+   "options": [
+    "q = p²",
+    "p = q²",
+    "p + q = a",
+    "pq = a²"
+   ],
+   "answer_index": 0,
+   "correct_answer": "q = p²",
+   "solution_steps": [
+    "Differentiate z=ax+a²y partially: p=∂z/∂x=a (a²y has no x-dependence), and q=∂z/∂y=a² (ax has no y-dependence).",
+    "Since p=a, substitute into q=a²: q=p².",
+    "Cross-check with a concrete value: let a=2, so z=2x+4y. Directly: ∂z/∂x=2=p ✓, ∂z/∂y=4=q ✓, and indeed q=4=2²=p² ✓.",
+    "Trap named: options (c) and (d) still contain the arbitrary constant a — the whole point of elimination is that the constant must NOT appear in the final PDE; only (a) is purely in terms of p and q."
+   ],
+   "verification_method": "hand_checkable_pde_formation_eliminate_constant"
+  },
+  {
+   "id": "pi-pde-basics-002",
+   "concept_id": "pde-basics",
+   "topic": "differential-equations",
+   "difficulty": 0.55,
+   "question_type": "mcq",
+   "marks": 1,
+   "question_text": "Classify the PDE ∂²u/∂x² + 4∂²u/∂x∂y + 4∂²u/∂y² = 0 as elliptic, parabolic, or hyperbolic, using the discriminant B²-4AC for the general form Au_xx + Bu_xy + Cu_yy + … = 0.",
+   "options": [
+    "Parabolic (B²-4AC = 0)",
+    "Elliptic (B²-4AC < 0)",
+    "Hyperbolic (B²-4AC > 0)",
+    "Cannot classify without boundary conditions"
+   ],
+   "answer_index": 0,
+   "correct_answer": "Parabolic (B²-4AC = 0)",
+   "solution_steps": [
+    "Identify coefficients: A=1 (coefficient of u_xx), B=4 (coefficient of u_xy), C=4 (coefficient of u_yy).",
+    "Compute the discriminant: B²-4AC = 4² - 4(1)(4) = 16 - 16 = 0.",
+    "Discriminant = 0 corresponds to PARABOLIC (by definition: Δ>0 hyperbolic, Δ=0 parabolic, Δ<0 elliptic).",
+    "Cross-check by factoring the operator: u_xx+4u_xy+4u_yy is exactly (∂/∂x + 2∂/∂y)² acting on u, since (D_x+2D_y)² = D_x²+4D_xD_y+4D_y² — a REPEATED real characteristic direction, which is precisely the structural signature of a parabolic PDE, confirming the discriminant result independently.",
+    "Trap named: classification depends only on the coefficients A, B, C (option (d) is wrong), and the discriminant's exact value must be computed carefully — 16-16=0 is neither strictly positive (option (c)) nor strictly negative (option (b)); misremembering the inequality direction for each type is the trap this item targets."
+   ],
+   "verification_method": "hand_checkable_pde_classification_discriminant"
+  },
+  {
+   "id": "pi-pde-basics-003",
+   "concept_id": "pde-basics",
+   "topic": "differential-equations",
+   "difficulty": 0.68,
+   "question_type": "msq",
+   "marks": 2,
+   "question_text": "Which of the following statements about the classification of linear second-order PDEs (using discriminant Δ=B²-4AC for Au_xx+Bu_xy+Cu_yy+…=0) are true?",
+   "options": [
+    "The 1D heat equation u_t = k u_xx (k>0) is parabolic.",
+    "The 2D Laplace equation u_xx + u_yy = 0 is elliptic.",
+    "The 1D wave equation u_tt - c²u_xx = 0 is hyperbolic.",
+    "For a linear PDE with CONSTANT coefficients, the classification (elliptic/parabolic/hyperbolic) can change from point to point within the domain.",
+    "A discriminant Δ>0 corresponds to two distinct real characteristic directions through each point, which is the structural hallmark of hyperbolic equations."
+   ],
+   "answer_indices": [
+    0,
+    1,
+    2,
+    4
+   ],
+   "correct_answer": "Heat equation parabolic; Laplace elliptic; wave equation hyperbolic; Δ>0 gives two real characteristics (hyperbolic); type is FIXED for constant-coefficient PDEs, not point-varying",
+   "solution_steps": [
+    "(a) TRUE: the heat equation has only one second-order term (u_xx), so effectively C=0 for the second-order part, giving Δ=0 — the canonical parabolic example.",
+    "(b) TRUE: Laplace's equation has A=1, B=0, C=1, so Δ=0²-4(1)(1)=-4<0 — elliptic, the canonical example.",
+    "(c) TRUE: writing the wave equation as -c²u_xx+u_tt=0 (A=-c², B=0, C=1), Δ=0²-4(-c²)(1)=4c²>0 (c≠0) — hyperbolic, the canonical example.",
+    "(d) FALSE — counterexample: for a linear PDE with CONSTANT coefficients A, B, C, the discriminant B²-4AC is itself a fixed number, so it cannot change sign from point to point; the classification is the SAME everywhere. (Only variable-coefficient PDEs, like the Tricomi equation u_xx=x·u_yy, can change type across the domain.)",
+    "(e) TRUE: Δ>0 means the characteristic equation A(dy/dx)²-B(dy/dx)+C=0 has two distinct real roots, giving two families of real characteristic curves — exactly the wave equation's structure in (c).",
+    "Trap named: statement (d) is the trap — conflating 'PDE classification can vary spatially' (true only for variable-coefficient PDEs) with the constant-coefficient case, where the type never changes within the domain."
+   ],
+   "verification_method": "hand_checkable_pde_classification_properties"
+  },
+  {
+   "id": "pi-pde-basics-004",
+   "concept_id": "pde-basics",
+   "topic": "differential-equations",
+   "difficulty": 0.4,
+   "question_type": "nat",
+   "marks": 1,
+   "question_text": "The PDE formed by eliminating the arbitrary constants a, b from z = ax + by + ab is the Clairaut-type equation z = px + qy + pq (p=∂z/∂x, q=∂z/∂y). A particular solution has a=2, b=-3. Using the ORIGINAL relation z=ax+by+ab, find z at the point x=4, y=1.",
+   "answer_range": [
+    -1.01,
+    -0.99
+   ],
+   "correct_answer": "-1",
+   "solution_steps": [
+    "From z=ax+by+ab: p=∂z/∂x=a and q=∂z/∂y=b (since a, b are constants w.r.t. the other variable).",
+    "With a=2, b=-3: z = ax+by+ab = 2x + (-3)y + (2)(-3) = 2x - 3y - 6.",
+    "At x=4, y=1: z = 2(4) - 3(1) - 6 = 8 - 3 - 6 = -1.",
+    "Cross-check by differentiating the explicit solution z=2x-3y-6 directly: p=∂z/∂x=2, q=∂z/∂y=-3 (recovering a=2, b=-3 independently of how they were given). Then via the derived PDE, z=px+qy+pq = 2(4)+(-3)(1)+(2)(-3) = 8-3-6 = -1 — matches exactly.",
+    "Trap named: a sign slip on ab (writing +6 instead of -6, since a·b=2·(-3) is negative) is the main arithmetic trap here — always compute ab with its sign before adding."
+   ],
+   "verification_method": "hand_checkable_pde_formation_explicit_solution"
+  },
+  {
+   "id": "pi-pde-basics-005",
+   "concept_id": "pde-basics",
+   "topic": "differential-equations",
+   "difficulty": 0.65,
+   "question_type": "nat",
+   "marks": 2,
+   "question_text": "For the family of PDEs u_xx + 2k u_xy + u_yy = 0 (k a real constant; A=1, B=2k, C=1), find the smallest POSITIVE INTEGER value of k for which the PDE is hyperbolic (Δ=B²-4AC>0, strictly).",
+   "answer_range": [
+    1.99,
+    2.01
+   ],
+   "correct_answer": "2",
+   "solution_steps": [
+    "Discriminant: Δ = B²-4AC = (2k)² - 4(1)(1) = 4k² - 4.",
+    "Hyperbolic requires Δ>0 strictly: 4k²-4>0 → k²>1 → |k|>1 (equality |k|=1 gives Δ=0, which is PARABOLIC, not hyperbolic).",
+    "Test k=1 (smallest positive integer overall): Δ=4(1)-4=0 → parabolic, so k=1 does NOT qualify as hyperbolic.",
+    "Test k=2: Δ=4(4)-4=12>0 → hyperbolic — qualifies. So the smallest positive integer satisfying the strict hyperbolic condition is k=2.",
+    "Cross-check via the characteristic-curve ODE (dy/dx)² - 2k(dy/dx) + 1 = 0 (from A(dy/dx)²-B(dy/dx)+C=0): at k=2, dy/dx = 2±√3, two DISTINCT real slopes — two real characteristic families through each point, the structural definition of hyperbolic. At k=1, dy/dx = 1±0 = 1, only ONE repeated real slope — the structural definition of parabolic. Both independently confirm the discriminant-based answer.",
+    "Trap named: the boundary value k=1 gives Δ=0 (parabolic), not Δ>0 (hyperbolic) — treating '|k|≥1' as sufficient for hyperbolic instead of the correct strict '|k|>1' is exactly the discriminant-boundary trap this item targets."
+   ],
+   "verification_method": "hand_checkable_pde_classification_boundary_parameter"
+  }
+ ]
+}

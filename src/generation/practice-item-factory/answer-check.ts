@@ -184,3 +184,33 @@ export async function resolveDistinctSecondaryModel(primaryModelId: string): Pro
   const distinct = await consensusProvidersAreDistinct(primaryModelId, secondary);
   return distinct ? secondary : null;
 }
+
+/**
+ * T4a — production wiring for `solveSecondary` (src/generation/batch/
+ * poller.ts's onJobProcessed call site). Resolves a distinct-provider
+ * secondary model id via resolveDistinctSecondaryModel above, then wraps
+ * the atom pipeline's own callLlm() (orchestrator.ts, exported for this
+ * reuse) so the second leg goes through the EXACT SAME provider-routing +
+ * client-construction path the atom consensus pipeline uses, instead of a
+ * parallel copy that could drift (see CLAUDE.md's v4.25.0 note on model-id
+ * "parallel truths").
+ *
+ * Dynamic import — same lazy-load discipline as resolveDistinctSecondaryModel
+ * itself: nothing here touches the orchestrator module, or constructs an
+ * LLM provider client, until the returned SolveFn is actually invoked.
+ *
+ * Returns null when no distinct-provider secondary is configured. Callers
+ * (batch-dispatch.ts via runDualLegAnswerCheck) treat null exactly like
+ * "not wired" and refuse fail-closed — this function never throws for
+ * that case. Only a genuine secondary-leg CALL failure (inside the
+ * returned SolveFn) can throw, and runDualLegAnswerCheck already catches
+ * that and refuses with a "secondary leg failed" reason.
+ */
+export async function buildSolveSecondaryFn(primaryModelId: string): Promise<SolveFn | null> {
+  const secondaryModelId = await resolveDistinctSecondaryModel(primaryModelId);
+  if (!secondaryModelId) return null;
+  return async (prompt: string): Promise<string> => {
+    const { callLlm } = await import('../../content/concept-orchestrator/orchestrator');
+    return callLlm(prompt, secondaryModelId);
+  };
+}

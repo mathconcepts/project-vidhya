@@ -43,6 +43,21 @@ export interface OrchestratorOpts {
    * `error` and also leaves `processed_at` unset, same as always.
    */
   onJobProcessed?: (run_id: string, job: JobRow) => Promise<{ retry?: boolean } | void>;
+  /**
+   * T4a launch guard: called ONCE, only on a genuinely fresh launch —
+   * prepare()'s `jobs.length === 0` branch, where atom_specs is freshly
+   * supplied by the caller. NEVER on resume: once batch_jobs rows exist
+   * for a run, prepare() skips straight past this branch even if it's
+   * re-entered (crash recovery, a second poll pass), so an in-flight run
+   * already past launch keeps its current behavior (per-item refusals
+   * are valid terminal outcomes, not something to retroactively block).
+   * Throwing fails the run loudly: the message is persisted to the run's
+   * `error` column (batch_state → 'failed'), the same visible failure
+   * path budget_exceeded already uses, BEFORE any provider call or spend.
+   * Absent = no guard — unchanged behavior for callers with no such
+   * precondition (e.g. plain atom-mode batches).
+   */
+  assertLaunchReady?: (atom_specs: AtomSpec[]) => Promise<void>;
 }
 
 export type StepResult =
@@ -107,6 +122,22 @@ export function createBatchOrchestrator(opts: OrchestratorOpts) {
         });
         return { kind: 'transitioned', from: 'queued', to: 'failed' };
       }
+
+      // T4a launch guard — see OrchestratorOpts.assertLaunchReady's doc
+      // comment. Only reachable from this fresh-launch branch; resume
+      // (jobs.length > 0 above) never re-enters it.
+      if (opts.assertLaunchReady) {
+        try {
+          await opts.assertLaunchReady(atom_specs);
+        } catch (err) {
+          await persistence.updateRun(run.id, {
+            batch_state: 'failed',
+            error: (err as Error).message,
+          });
+          return { kind: 'transitioned', from: 'queued', to: 'failed' };
+        }
+      }
+
       const built = buildJobs(run.id, atom_specs);
       await persistence.insertJobs(run.id, built);
       jobs = built.map((b) => ({

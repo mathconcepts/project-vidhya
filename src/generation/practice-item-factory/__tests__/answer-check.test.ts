@@ -149,3 +149,36 @@ describe('resolveDistinctSecondaryModel', () => {
     vi.resetModules();
   });
 });
+
+describe('buildSolveSecondaryFn — T4a production wiring', () => {
+  it('resolves to null when no distinct-provider secondary is available (never throws)', async () => {
+    vi.doMock('../../../content/concept-orchestrator/orchestrator', () => ({
+      pickConsensusSecondary: vi.fn().mockResolvedValue(null),
+      consensusProvidersAreDistinct: vi.fn(),
+      callLlm: vi.fn(),
+    }));
+    vi.resetModules();
+    const { buildSolveSecondaryFn: fn } = await import('../answer-check');
+    expect(await fn('gemini-2.5-flash')).toBeNull();
+    vi.doUnmock('../../../content/concept-orchestrator/orchestrator');
+    vi.resetModules();
+  });
+
+  it('returns a SolveFn that dispatches through the resolved secondary model via callLlm', async () => {
+    const callLlm = vi.fn().mockResolvedValue('5 and 2');
+    vi.doMock('../../../content/concept-orchestrator/orchestrator', () => ({
+      pickConsensusSecondary: vi.fn().mockResolvedValue('claude-sonnet-4-5'),
+      consensusProvidersAreDistinct: vi.fn().mockResolvedValue(true),
+      callLlm,
+    }));
+    vi.resetModules();
+    const { buildSolveSecondaryFn: fn } = await import('../answer-check');
+    const solve = await fn('gemini-2.5-flash');
+    expect(solve).not.toBeNull();
+    const answer = await solve!('Solve for eigenvalues of A');
+    expect(answer).toBe('5 and 2');
+    expect(callLlm).toHaveBeenCalledWith('Solve for eigenvalues of A', 'claude-sonnet-4-5');
+    vi.doUnmock('../../../content/concept-orchestrator/orchestrator');
+    vi.resetModules();
+  });
+});

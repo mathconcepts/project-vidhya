@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Practice-session log — timestamped per-session minute records.
  *

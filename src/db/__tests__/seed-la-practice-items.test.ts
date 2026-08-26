@@ -53,9 +53,10 @@ describe('seedPracticeItemsFromDisk — Linear Algebra content floor', () => {
     // + 1 probability-statistics bank (45) + 1 vector-calculus bank (40)
     // + 1 complex-variables bank (30) + 1 numerical-methods bank (30)
     // + 1 transform-theory bank (30) + 1 graph-theory bank (35)
-    // = 470. Update this count deliberately if content is added — it is
+    // + 1 discrete-mathematics bank (30)
+    // = 500. Update this count deliberately if content is added — it is
     // the floor this test locks, not an incidental number.
-    expect(seeded).toBe(470);
+    expect(seeded).toBe(500);
   });
 
   it('every one of the 26 canonical linear-algebra concepts has at least one seeded row', async () => {

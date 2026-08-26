@@ -1,0 +1,708 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the",
+    "discrete-mathematics topic: propositional logic (connectives, truth",
+    "tables, tautologies, equivalences, quantifier negation), sets and",
+    "relations (set operations, inclusion-exclusion, equivalence relations,",
+    "partitions), functions and combinatorics (injections/surjections/",
+    "bijections, permutations, combinations), recurrence relations",
+    "(characteristic roots, closed forms, term-by-term iteration), Boolean",
+    "algebra (simplification, Karnaugh maps, identities), and group theory",
+    "basics (element order, subgroups, Lagrange's theorem).",
+    "",
+    "Every item's answer was derived TWICE by genuinely independent",
+    "methods before its key was written -- discrete math gives exhaustive",
+    "verification more readily than any other topic, and it is used",
+    "throughout rather than restated: propositional equivalences by",
+    "algebraic law AND by a full small truth table; counting results by a",
+    "closed-form formula AND by direct enumeration of every case; a",
+    "recurrence's closed form by characteristic roots AND by an exact",
+    "algebraic proof that the closed form satisfies the same recurrence",
+    "and initial conditions (or by direct term-by-term iteration);",
+    "Boolean simplifications by Karnaugh-map grouping AND by algebraic",
+    "identities, cross-checked against a from-scratch truth table; group",
+    "properties by checking the subgroup/Lagrange criteria directly AND",
+    "by recognising a known structure (Z_n, a dihedral group) with an",
+    "explicit exhaustive element listing. All domains are kept small (at",
+    "most 8-12 elements, 2-3 propositional variables, 3-4 sets) so",
+    "exhaustive checking stays genuinely tractable and is actually carried",
+    "out in solution_steps, not merely asserted. Every quantified statement",
+    "states its domain explicitly.",
+    "",
+    "Shape mirrors gate-ma-graph-theory.json exactly (same AuthoredItem",
+    "schema consumed by FileLearningObjectCatalog / GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-propositional-logic-001",
+      "concept_id": "propositional-logic",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Which expression is logically equivalent to the negation of (p -> q), i.e. to NOT(p -> q)?",
+      "options": [
+        "p AND (NOT q)",
+        "(NOT p) AND q",
+        "p OR (NOT q)",
+        "(NOT p) OR (NOT q)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "p AND (NOT q)",
+      "solution_steps": [
+        "Method 1 (algebraic law): p -> q is equivalent to (NOT p) OR q. Negating: NOT((NOT p) OR q) = p AND (NOT q), by De Morgan's law (the negation of an OR is the AND of the negations, and NOT(NOT p) = p).",
+        "Method 2 (full truth table, independent check -- 4 rows since 2 variables): p=T,q=T: p->q=T so NOT(p->q)=F; p AND NOT q = T AND F = F. Match. p=T,q=F: p->q=F so NOT(p->q)=T; p AND NOT q = T AND T = T. Match. p=F,q=T: p->q=T so NOT(p->q)=F; p AND NOT q = F AND F = F. Match. p=F,q=F: p->q=T so NOT(p->q)=F; p AND NOT q = F AND T = F. Match. All 4 rows agree exactly, confirming Method 1.",
+        "The other options are the classic near-misses: '(NOT p) AND q' and 'p OR (NOT q)' swap AND/OR or negate the wrong side; '(NOT p) OR (NOT q)' is NOT(p AND q), a different formula entirely."
+      ],
+      "verification_method": "hand_checkable_de_morgan_law_and_full_truth_table"
+    },
+    {
+      "id": "pi-propositional-logic-002",
+      "concept_id": "propositional-logic",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "For the propositional formula (p -> q) OR (q -> p), where p and q are propositional variables, how many of the 4 rows of its truth table evaluate to True?",
+      "answer_range": [
+        3.98,
+        4.02
+      ],
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (algebraic tautology proof): (p -> q) OR (q -> p) = ((NOT p) OR q) OR ((NOT q) OR p) = (NOT p) OR p OR q OR (NOT q) = (p OR NOT p) OR (q OR NOT q) = True OR True = True, for every assignment -- so all 4 rows are True.",
+        "Method 2 (full truth table enumeration, independent check): p=T,q=T: p->q=T, so the OR is T. p=T,q=F: q->p = F->T = T, so the OR is T. p=F,q=T: p->q = F->T = T, so the OR is T. p=F,q=F: p->q = F->F = T, so the OR is T. All 4 rows are True, matching Method 1's tautology conclusion exactly."
+      ],
+      "verification_method": "hand_checkable_algebraic_tautology_proof_and_full_truth_table"
+    },
+    {
+      "id": "pi-propositional-logic-003",
+      "concept_id": "propositional-logic",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Which of the following is logically equivalent to the biconditional p <-> q?",
+      "options": [
+        "(p -> q) AND (q -> p)",
+        "(p -> q) OR (q -> p)",
+        "p -> q",
+        "(NOT p) OR (NOT q)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(p -> q) AND (q -> p)",
+      "solution_steps": [
+        "Method 1 (definition): 'if and only if' means both directions of implication hold simultaneously -- p <-> q is defined as (p -> q) AND (q -> p).",
+        "Method 2 (full truth table, independent check): p=T,q=T: p<->q=T; p->q=T, q->p=T, AND=T. Match. p=T,q=F: p<->q=F; p->q=F, q->p=T, AND=F. Match. p=F,q=T: p<->q=F; p->q=T, q->p=F, AND=F. Match. p=F,q=F: p<->q=T; p->q=T, q->p=T, AND=T. Match. All 4 rows agree exactly.",
+        "This also exposes the classic error option 2 tempts: p -> q ALONE has truth values T,F,T,T over the same 4 rows -- it disagrees with p<->q at row (p=T,q=F), confirming that 'implies' is strictly weaker than 'if and only if' and cannot be substituted for it."
+      ],
+      "verification_method": "hand_checkable_definition_and_full_truth_table"
+    },
+    {
+      "id": "pi-propositional-logic-004",
+      "concept_id": "propositional-logic",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Let the domain of both x and y be some fixed universe U, and let S be the statement 'for all x, there exists y, such that P(x, y)' (in symbols, FORALL x EXISTS y P(x,y)). Which of the following are logically equivalent to NOT S (the correct negation of S)?",
+      "options": [
+        "EXISTS x, FORALL y, NOT P(x, y)",
+        "FORALL x, EXISTS y, NOT P(x, y)",
+        "NOT (FORALL x EXISTS y P(x, y)) -- i.e. S negated as written, unsimplified",
+        "EXISTS x, FORALL y, P(x, y)",
+        "NOT (EXISTS x, FORALL y, NOT P(x, y))"
+      ],
+      "answer_indices": [
+        0,
+        2
+      ],
+      "correct_answer": "The correct negation swaps BOTH quantifiers and negates the predicate: EXISTS x FORALL y NOT P(x,y), which by definition is literally what NOT S means (option 2) before simplifying.",
+      "solution_steps": [
+        "Method 1 (quantifier-negation rule, applied twice): NOT(FORALL x, phi(x)) = EXISTS x, NOT phi(x); NOT(EXISTS y, phi(y)) = FORALL y, NOT phi(y). Applying the first rule to S = FORALL x (EXISTS y P(x,y)): NOT S = EXISTS x, NOT(EXISTS y P(x,y)). Applying the second rule inside: = EXISTS x, FORALL y, NOT P(x,y). This matches option 0 exactly, and option 2 is simply NOT S written before any simplification -- the same statement, so both are correct.",
+        "Option 1 (FORALL x EXISTS y NOT P(x,y)) is the classic error of negating the predicate WITHOUT swapping the quantifiers -- it is a different, unrelated statement, not the negation of S.",
+        "Option 3 (EXISTS x FORALL y P(x,y)) forgets to negate P entirely -- also a different statement.",
+        "Option 4 is NOT(EXISTS x FORALL y NOT P(x,y)) = NOT(NOT S) = S itself (double negation cancels) -- the ORIGINAL statement, not its negation.",
+        "Method 2 (concrete finite instance, independent check -- U={1,2}, P(1,1)=T, P(1,2)=F, P(2,1)=T, P(2,2)=T): S = FORALL x EXISTS y P(x,y): x=1 has P(1,1)=T so EXISTS y holds; x=2 has P(2,1)=T so EXISTS y holds; both x satisfied, so S=True, meaning NOT S must be False. Evaluate option 0 (EXISTS x FORALL y NOT P(x,y)): x=1: FORALL y NOT P(1,y)? NOT P(1,1)=F, fails. x=2: FORALL y NOT P(2,y)? NOT P(2,1)=F, fails. So option 0 = False, matching NOT S = False -- consistent. Evaluate option 1 (the trap, FORALL x EXISTS y NOT P(x,y)): x=1: EXISTS y NOT P(1,y)? NOT P(1,2)=T (since P(1,2)=F), so True. x=2: EXISTS y NOT P(2,y)? NOT P(2,1)=F, NOT P(2,2)=F, both False, so this x fails. Option 1 = (True AND False) = False here -- inconclusive on this instance, so use a second instance to expose it: with P(x,y) = (x equals y) on U={1,2}: S = FORALL x EXISTS y P(x,y) is True (each x matches itself), so NOT S = False; option 1 = FORALL x EXISTS y NOT P(x,y): x=1: EXISTS y with y != 1, namely y=2, gives NOT P(1,2)=NOT(False)=True; x=2 similarly True via y=1. Option 1 evaluates True here, disagreeing with NOT S = False -- concretely disproving option 1. Evaluate option 3 (EXISTS x FORALL y P(x,y)) using a tautological P(x,y)=True always: S=True so NOT S=False, but option 3 = EXISTS x FORALL y P(x,y) is True (P always holds) -- disagreeing with NOT S = False, concretely disproving option 3."
+      ],
+      "verification_method": "hand_checkable_quantifier_negation_rule_and_concrete_finite_instances"
+    },
+    {
+      "id": "pi-propositional-logic-005",
+      "concept_id": "propositional-logic",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A propositional formula has exactly 2 distinct variables, so its truth table has 4 rows and there are 2^(2^2) = 16 possible distinct truth tables (Boolean functions of 2 variables). How many of these 16 possible truth tables correspond to a genuine contingency -- i.e. a formula that is NEITHER a tautology (always True) NOR a contradiction (always False)?",
+      "answer_range": [
+        13.93,
+        14.07
+      ],
+      "correct_answer": "14",
+      "solution_steps": [
+        "Method 1 (counting formula): total distinct truth tables over 4 rows = 2^4 = 16 (each row independently True or False). Exactly 1 of these has all 4 rows True (the tautology) and exactly 1 has all 4 rows False (the contradiction). Every other truth table is a contingency: 16 - 1 - 1 = 14.",
+        "Method 2 (exhaustive enumeration, independent check): list all 16 possible 4-bit row-patterns as TTTT, TTTF, TTFT, TTFF, TFTT, TFTF, TFFT, TFFF, FTTT, FTTF, FTFT, FTFF, FFTT, FFTF, FFFT, FFFF -- 16 patterns total. Exactly one of these, TTTT, is all-True (tautology); exactly one, FFFF, is all-False (contradiction). The remaining 14 patterns in the list each contain a genuine mix of T and F, so each is a contingency. Direct count of the mixed patterns = 14, matching Method 1."
+      ],
+      "verification_method": "hand_checkable_counting_formula_and_exhaustive_pattern_enumeration"
+    },
+    {
+      "id": "pi-sets-relations-001",
+      "concept_id": "sets-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Let A = {1, 2, 3, 4} and B = {3, 4, 5, 6}. What is |A UNION B| - |A INTERSECT B|?",
+      "options": [
+        "4",
+        "2",
+        "6",
+        "8"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (direct listing): A UNION B = {1,2,3,4,5,6}, so |A UNION B| = 6. A INTERSECT B = {3,4}, so |A INTERSECT B| = 2. Difference = 6 - 2 = 4.",
+        "Method 2 (inclusion-exclusion formula, independent cross-check): |A UNION B| = |A| + |B| - |A INTERSECT B| = 4 + 4 - 2 = 6, matching the directly-listed union size of 6 -- an internally consistent check that the intersection size (2) used in both the formula and the subtraction is correct. Difference = 6 - 2 = 4, matching Method 1."
+      ],
+      "verification_method": "hand_checkable_direct_listing_and_inclusion_exclusion_formula"
+    },
+    {
+      "id": "pi-sets-relations-002",
+      "concept_id": "sets-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "In a class, |A| = 10 students study Math, |B| = 12 study Physics, |C| = 8 study Chemistry. |A INTERSECT B| = 5, |A INTERSECT C| = 3, |B INTERSECT C| = 4, and |A INTERSECT B INTERSECT C| = 2. How many students study at least one of the three subjects, i.e. |A UNION B UNION C|?",
+      "answer_range": [
+        19.9,
+        20.1
+      ],
+      "correct_answer": "20",
+      "solution_steps": [
+        "Method 1 (inclusion-exclusion formula): |A UNION B UNION C| = |A|+|B|+|C| - |A INTERSECT B| - |A INTERSECT C| - |B INTERSECT C| + |A INTERSECT B INTERSECT C| = 10+12+8 - 5-3-4 + 2 = 30 - 12 + 2 = 20.",
+        "Method 2 (Venn-diagram region decomposition, independent check): let the triple overlap = 2. Region A-and-B-only (not C) = |A INTERSECT B| - triple = 5-2 = 3. Region A-and-C-only = 3-2 = 1. Region B-and-C-only = 4-2 = 2. Region A-only = |A| - (A&B-only) - (A&C-only) - triple = 10-3-1-2 = 4. Region B-only = |B| - (A&B-only) - (B&C-only) - triple = 12-3-2-2 = 5. Region C-only = |C| - (A&C-only) - (B&C-only) - triple = 8-1-2-2 = 3. Summing every disjoint region: 4(A-only) + 5(B-only) + 3(C-only) + 3(A&B-only) + 1(A&C-only) + 2(B&C-only) + 2(all three) = 20. Matches Method 1 exactly, via a completely independent region-by-region reconstruction rather than the formula.",
+        "The classic error here is ADDING the pairwise intersections instead of subtracting them (or omitting the '+ triple overlap' correction term) -- either mistake would overcount students who belong to two or three sets."
+      ],
+      "verification_method": "hand_checkable_inclusion_exclusion_formula_and_venn_region_decomposition"
+    },
+    {
+      "id": "pi-sets-relations-003",
+      "concept_id": "sets-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Let R be the relation on {1, 2, 3, 4} defined by 'x R y if and only if x and y have the same parity (both even or both odd)'. Is R an equivalence relation, and if so, what is the partition it induces?",
+      "options": [
+        "Yes, an equivalence relation; partition = {{1,3}, {2,4}}",
+        "Yes, an equivalence relation; partition = {{1,2}, {3,4}}",
+        "No -- R is not transitive.",
+        "No -- R is not symmetric."
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes, an equivalence relation; partition = {{1,3}, {2,4}}",
+      "solution_steps": [
+        "Method 1 (axiom check via the parity definition): reflexive -- every x has the same parity as itself, always true. symmetric -- if x,y share a parity then y,x share the same parity, true by symmetry of equality of parity. transitive -- if x,y share a parity and y,z share a parity, then x and z share that same parity too, true. All three axioms hold, so R is an equivalence relation; grouping by parity gives the odd class {1,3} and the even class {2,4}.",
+        "Method 2 (explicit pair listing over the 4-element set, independent check): R as an explicit set of ordered pairs is {(1,1),(1,3),(3,1),(3,3),(2,2),(2,4),(4,2),(4,4)} -- 8 pairs. Reflexive check: (1,1),(2,2),(3,3),(4,4) are all present. Symmetric check: for every one of the 8 pairs (x,y) in R, (y,x) is also in the list -- verified pair by pair (e.g. (1,3) and (3,1) both present; (2,4) and (4,2) both present). Transitive check: since the only pairs in R stay strictly within {1,3} or strictly within {2,4}, every composition of two R-pairs also stays within one of those two blocks and is itself in R -- checked over the finite set of possible compositions, none escapes. The induced partition read directly off this pair list is exactly {1,3} and {2,4}, matching Method 1."
+      ],
+      "verification_method": "hand_checkable_axiom_check_and_explicit_pair_listing"
+    },
+    {
+      "id": "pi-sets-relations-004",
+      "concept_id": "sets-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Let S = {1, 2, 3} and R = {(1,1), (2,2), (3,3), (1,2), (2,3)} (note: (1,3) is NOT in R). Which of the following are true about R?",
+      "options": [
+        "R is reflexive on S.",
+        "R is transitive on S.",
+        "R is antisymmetric on S.",
+        "R is a partial order on S.",
+        "Adding the single pair (1,3) to R would make it transitive."
+      ],
+      "answer_indices": [
+        0,
+        2,
+        4
+      ],
+      "correct_answer": "R is reflexive and antisymmetric but not transitive as authored (it is missing (1,3)); adding exactly that one pair would fix transitivity.",
+      "solution_steps": [
+        "Method 1 (direct axiom check): reflexive -- (1,1),(2,2),(3,3) are all present, TRUE. transitive -- (1,2) is in R and (2,3) is in R, so transitivity REQUIRES (1,3) to be in R too; it is explicitly stated NOT to be, so R is NOT transitive, FALSE. antisymmetric -- for every (a,b) in R with a != b, check (b,a) is absent: (1,2) is present but (2,1) is not; (2,3) is present but (3,2) is not; so antisymmetric holds, TRUE. partial order -- requires reflexive AND antisymmetric AND transitive; since transitive fails, R is NOT a partial order, FALSE. Adding (1,3) closes the only missing required composition, TRUE.",
+        "Method 2 (exhaustive pairwise composition check over all 9 possible ordered pairs on S={1,2,3}, independent check): the 5 pairs IN R are (1,1),(2,2),(3,3),(1,2),(2,3); the 4 pairs NOT in R are (1,3),(2,1),(3,1),(3,2). Checking every composition of two R-pairs sharing a middle element: (1,1)+(1,2) needs (1,2) -- present, ok. (1,2)+(2,2) needs (1,2) -- present, ok. (1,2)+(2,3) needs (1,3) -- ABSENT, this is the ONLY failing composition found by exhaustive check. (2,2)+(2,3) needs (2,3) -- present, ok. (2,3)+(3,3) needs (2,3) -- present, ok. (1,1)+(1,1), (2,2)+(2,2), (3,3)+(3,3) all trivially need themselves, present. This exhaustive scan over every possible composition confirms exactly one gap, (1,3), matching both the non-transitivity finding and the claim that adding only (1,3) suffices. For antisymmetry, the exhaustive check confirms the reverse of each off-diagonal R-pair -- (2,1) for (1,2), and (3,2) for (2,3) -- both fall among the 4 NOT-in-R pairs, confirming antisymmetry holds with no exceptions."
+      ],
+      "verification_method": "hand_checkable_axiom_check_and_exhaustive_pairwise_composition_scan"
+    },
+    {
+      "id": "pi-sets-relations-005",
+      "concept_id": "sets-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.75,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "How many distinct equivalence relations exist on the 3-element set {1, 2, 3}? (Equivalence relations on a set correspond exactly to partitions of that set.)",
+      "answer_range": [
+        4.975,
+        5.025
+      ],
+      "correct_answer": "5",
+      "solution_steps": [
+        "Method 1 (Stirling numbers of the second kind): the number of partitions of an n-element set into any number of nonempty blocks is the Bell number B_n = sum over k of S(n,k). For n=3: S(3,1)=1 (one block of all 3), S(3,2)=3 (one pair plus one singleton, 3 ways to choose the singleton), S(3,3)=1 (three singleton blocks). Total = 1+3+1 = 5.",
+        "Method 2 (exhaustive enumeration of every partition, independent check -- n=3 is small enough to genuinely list all of them): {1,2,3} as one block (1 way); {1},{2,3}; {2},{1,3}; {3},{1,2} (3 ways, one for each choice of the singleton); {1},{2},{3} as three separate singleton blocks (1 way). That is a complete, non-overlapping list of every way to partition {1,2,3}: 1 + 3 + 1 = 5 partitions total, matching Method 1 exactly and, since each partition corresponds to exactly one equivalence relation, giving 5 equivalence relations."
+      ],
+      "verification_method": "hand_checkable_stirling_number_formula_and_exhaustive_partition_enumeration"
+    },
+    {
+      "id": "pi-functions-combinatorics-001",
+      "concept_id": "functions-combinatorics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Let f: {1, 2, 3} -> {a, b, c, d} be defined by f(1)=a, f(2)=b, f(3)=c. Is f injective, surjective, both, or neither?",
+      "options": [
+        "Injective but not surjective",
+        "Surjective but not injective",
+        "Bijective",
+        "Neither injective nor surjective"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Injective but not surjective",
+      "solution_steps": [
+        "Method 1 (direct definitional check): injective means no two distinct domain elements map to the same image -- f(1)=a, f(2)=b, f(3)=c are three pairwise distinct values, so f is injective. surjective means every codomain element is hit -- the codomain is {a,b,c,d}, but d has no preimage (no domain element maps to d), so f is NOT surjective.",
+        "Method 2 (counting-argument cross-check, independent): a function between finite sets is injective if and only if the number of DISTINCT images equals the domain size. Here the image set {a,b,c} has exactly 3 distinct elements, matching |domain|=3 exactly -- confirms injectivity structurally. Separately, a function can only be surjective if the image size equals the codomain size; here |image|=3 while |codomain|=4, so 3 != 4 rules out surjectivity by a counting argument alone, independent of checking any specific missing element by name."
+      ],
+      "verification_method": "hand_checkable_definitional_check_and_image_size_counting_argument"
+    },
+    {
+      "id": "pi-functions-combinatorics-002",
+      "concept_id": "functions-combinatorics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "In how many ways can a committee of 3 people be chosen from a group of 6 distinct people (order does not matter)?",
+      "answer_range": [
+        19.9,
+        20.1
+      ],
+      "correct_answer": "20",
+      "solution_steps": [
+        "Method 1 (combinations formula): C(6,3) = 6! / (3! * 3!) = 720 / (6*6) = 720/36 = 20.",
+        "Method 2 (exhaustive enumeration, independent check -- small enough to list every 3-subset of {1,...,6}): subsets starting with 1: {1,2,3},{1,2,4},{1,2,5},{1,2,6},{1,3,4},{1,3,5},{1,3,6},{1,4,5},{1,4,6},{1,5,6} -- 10 subsets. Subsets with smallest element 2 (excluding 1): {2,3,4},{2,3,5},{2,3,6},{2,4,5},{2,4,6},{2,5,6} -- 6 subsets. Smallest element 3: {3,4,5},{3,4,6},{3,5,6} -- 3 subsets. Smallest element 4: {4,5,6} -- 1 subset. Total = 10+6+3+1 = 20, matching Method 1."
+      ],
+      "verification_method": "hand_checkable_combinations_formula_and_exhaustive_subset_enumeration"
+    },
+    {
+      "id": "pi-functions-combinatorics-003",
+      "concept_id": "functions-combinatorics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "How many distinct ways are there to arrange 3 books, chosen from 5 distinct books, on a shelf where the order matters?",
+      "options": [
+        "60",
+        "10",
+        "20",
+        "125"
+      ],
+      "answer_index": 0,
+      "correct_answer": "60",
+      "solution_steps": [
+        "Method 1 (permutations formula): P(5,3) = 5! / (5-3)! = 5! / 2! = 120/2 = 60.",
+        "Method 2 (multiplication principle, direct and independent): choose the 1st position: 5 available books. Choose the 2nd position: 4 remaining books. Choose the 3rd position: 3 remaining books. By the multiplication principle, total arrangements = 5 * 4 * 3 = 60, matching Method 1 via sequential counting rather than the factorial formula.",
+        "The distractors are classic mix-ups: '10' is C(5,3) (forgetting that order matters, i.e. using combinations instead of permutations); '20' is 5*4 (stopping after only 2 picks); '125' is 5^3 (treating the picks as independent with repetition allowed, i.e. as if a book could be placed twice)."
+      ],
+      "verification_method": "hand_checkable_permutations_formula_and_multiplication_principle"
+    },
+    {
+      "id": "pi-functions-combinatorics-004",
+      "concept_id": "functions-combinatorics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Let A and B be finite sets with |A| = m and |B| = n. Which of the following are always true?",
+      "options": [
+        "The total number of functions from A to B is n^m.",
+        "If m > n, no function from A to B can be injective.",
+        "If m < n, no function from A to B can be surjective.",
+        "The number of injective functions from A to B, when m <= n, is n! / (n-m)!.",
+        "A bijection from A to B exists and is positive in count whenever m != n."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "Function-counting, pigeonhole, and permutation-count facts all hold; a bijection is only possible when m equals n, so it CANNOT exist whenever m != n.",
+      "solution_steps": [
+        "Method 1 (direct derivation of each claim): (0) each of the m domain elements independently has n choices of image, so n^m total functions, by the multiplication principle. (1) pigeonhole: with more domain elements (m) than codomain slots (n), at least two domain elements must share an image, so no injective function can exist. (2) an image set can have at most m distinct elements; if m<n the image can never cover all n codomain elements, so no surjection is possible. (3) building an injective function is equivalent to choosing an ordered sequence of m distinct images from n options, i.e. P(n,m) = n!/(n-m)!. (4) a bijection requires a perfect one-to-one pairing, which is only possible when |A|=|B|; when m != n, this is directly contradicted by (1) or (2), so NO bijection can exist -- statement 4 has it exactly backwards.",
+        "Method 2 (concrete small-instance exhaustive check, independent): take m=3, n=2, domain {1,2,3}, codomain {x,y}. Total functions = 2^3 = 8; enumerate every one by listing the image triple: xxx, xxy, xyx, xyy, yxx, yxy, yyx, yyy -- 8 total, matching (0). None of these 8 triples has 3 pairwise distinct entries (impossible with only 2 available values) -- exhaustively confirming (1). Now take m=2, n=3, domain {p,q}, codomain {x,y,z}: total functions = 3^2 = 9, enumerated as every pair of choices for p and q; checking each of the 9, none can cover all 3 of x,y,z with only 2 domain elements to assign -- confirming (2) exhaustively. Injective functions here correspond to ordered pairs of DISTINCT images: xy, xz, yx, yz, zx, zy -- exactly 6, matching P(3,2) = 3*2 = 6 from (3). Finally, since neither of these mismatched-size cases (m=3,n=2 or m=2,n=3) admits even a single injective-and-surjective function simultaneously (shown by (1) and (2) above), no bijection exists in either case -- directly disproving (4)."
+      ],
+      "verification_method": "hand_checkable_counting_formulas_and_small_instance_exhaustive_check"
+    },
+    {
+      "id": "pi-functions-combinatorics-005",
+      "concept_id": "functions-combinatorics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "How many surjective (onto) functions are there from a 4-element set to a 2-element set?",
+      "answer_range": [
+        13.93,
+        14.07
+      ],
+      "correct_answer": "14",
+      "solution_steps": [
+        "Method 1 (inclusion-exclusion on the missing codomain element): total functions from a 4-set to a 2-set = 2^4 = 16. Subtract functions that miss at least one codomain element: missing element 'a' forces every domain element to map to the other element, giving exactly 1 such function; missing element 'b' similarly gives exactly 1. No function can miss BOTH elements (it must map somewhere). So surjective count = 16 - 1 - 1 + 0 = 14.",
+        "Method 2 (direct exhaustive reasoning, independent check): with codomain {a,b}, total functions = 2^4 = 16 (each of the 4 domain elements independently maps to a or b). A function FAILS to be surjective only if it is constant -- i.e. ALL 4 domain elements map to a, or ALL 4 map to b (any function that is not entirely one value must use both values, hence is surjective onto the 2-element codomain). There are exactly 2 such constant functions (all-a, all-b), listed exhaustively. So surjective count = 16 - 2 = 14, matching Method 1."
+      ],
+      "verification_method": "hand_checkable_inclusion_exclusion_and_exhaustive_constant_function_count"
+    },
+    {
+      "id": "pi-recurrence-relations-001",
+      "concept_id": "recurrence-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Given the recurrence a_n = 5*a_(n-1) - 6*a_(n-2) with a_0 = 1 and a_1 = 2, what is a_4?",
+      "options": [
+        "16",
+        "10",
+        "24",
+        "32"
+      ],
+      "answer_index": 0,
+      "correct_answer": "16",
+      "solution_steps": [
+        "Method 1 (closed form via characteristic roots): the characteristic equation is x^2 - 5x + 6 = 0, i.e. (x-2)(x-3) = 0, giving roots 2 and 3. General solution a_n = A*2^n + B*3^n. Using a_0=1: A+B=1. Using a_1=2: 2A+3B=2. Substituting A=1-B: 2(1-B)+3B=2, so 2+B=2, giving B=0 and A=1. So a_n = 2^n. Then a_4 = 2^4 = 16.",
+        "Method 2 (direct term-by-term iteration, independent check): a_2 = 5*a_1 - 6*a_0 = 5*2 - 6*1 = 10-6 = 4. a_3 = 5*a_2 - 6*a_1 = 5*4 - 6*2 = 20-12 = 8. a_4 = 5*a_3 - 6*a_2 = 5*8 - 6*4 = 40-24 = 16. Matches Method 1 exactly, and each iterated term (1,2,4,8,16) also matches the closed form 2^n at n=0,1,2,3,4."
+      ],
+      "verification_method": "hand_checkable_characteristic_roots_closed_form_and_term_by_term_iteration"
+    },
+    {
+      "id": "pi-recurrence-relations-002",
+      "concept_id": "recurrence-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Given the recurrence a_n = 5*a_(n-1) - 6*a_(n-2) with a_0 = 1 and a_1 = 2, what is a_5?",
+      "answer_range": [
+        31.84,
+        32.16
+      ],
+      "correct_answer": "32",
+      "solution_steps": [
+        "Method 1 (closed form, continued from the sibling item): the closed form was already derived as a_n = 2^n (roots 2 and 3 with B=0). So a_5 = 2^5 = 32.",
+        "Method 2 (term-by-term iteration, independent check): continuing the trace a_0=1, a_1=2, a_2=4, a_3=8, a_4=16 (each verified in the sibling item), a_5 = 5*a_4 - 6*a_3 = 5*16 - 6*8 = 80-48 = 32. Matches Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_characteristic_roots_closed_form_and_term_by_term_iteration"
+    },
+    {
+      "id": "pi-recurrence-relations-003",
+      "concept_id": "recurrence-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Given the recurrence a_n = 4*a_(n-1) - 4*a_(n-2) with a_0 = 1 and a_1 = 4, what is a_3? (Note: the characteristic equation of this recurrence has a REPEATED root.)",
+      "options": [
+        "32",
+        "24",
+        "28",
+        "16"
+      ],
+      "answer_index": 0,
+      "correct_answer": "32",
+      "solution_steps": [
+        "Method 1 (closed form via repeated characteristic root): the characteristic equation is x^2 - 4x + 4 = 0, i.e. (x-2)^2 = 0, a repeated root r=2. For a repeated root, the general solution takes the form a_n = (A + B*n) * r^n. Using a_0=1: A = 1. Using a_1=4: (A+B)*2 = 4, so A+B=2, giving B=1 (since A=1). So a_n = (1+n)*2^n. Then a_3 = (1+3)*2^3 = 4*8 = 32.",
+        "Method 2 (direct term-by-term iteration, independent check): a_2 = 4*a_1 - 4*a_0 = 4*4 - 4*1 = 16-4 = 12; cross-check against the closed form at n=2: (1+2)*2^2 = 3*4 = 12, matches. a_3 = 4*a_2 - 4*a_1 = 4*12 - 4*4 = 48-16 = 32, matching Method 1's closed-form value exactly."
+      ],
+      "verification_method": "hand_checkable_repeated_root_closed_form_and_term_by_term_iteration"
+    },
+    {
+      "id": "pi-recurrence-relations-004",
+      "concept_id": "recurrence-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "For a second-order linear homogeneous recurrence a_n = c1*a_(n-1) + c2*a_(n-2), with characteristic equation x^2 - c1*x - c2 = 0, which of the following are always true?",
+      "options": [
+        "If the characteristic equation has two distinct real roots r1, r2, the general solution is a_n = A*r1^n + B*r2^n for constants A, B fixed by the initial conditions.",
+        "If the characteristic equation has a repeated real root r, the general solution is a_n = (A + B*n)*r^n.",
+        "The constants A and B are determined once two initial terms (e.g. a_0 and a_1) are specified.",
+        "The characteristic roots can be found by substituting the ansatz a_n = r^n into the recurrence and solving the resulting polynomial equation for r.",
+        "If both characteristic roots equal 1, then a_n grows without bound as n -> infinity for ANY nonzero initial conditions."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "The distinct-root and repeated-root general solution forms, the well-posedness of fixing A and B from two initial terms, and the derivation method via the ansatz r^n all hold; a repeated root of 1 does not force unbounded growth on its own -- a nonzero constant initial condition can still give a bounded (constant) sequence.",
+      "solution_steps": [
+        "(0) TRUE and (1) TRUE -- these are the standard general-solution forms for the two root cases, used directly in the two sibling items of this concept.",
+        "(2) TRUE -- fixing a_0 and a_1 gives exactly 2 linear equations in the 2 unknowns A and B, which (for a non-degenerate characteristic equation) has a unique solution.",
+        "(3) TRUE -- substituting a_n=r^n into a_n = c1*a_(n-1) + c2*a_(n-2) gives r^n = c1*r^(n-1) + c2*r^(n-2); dividing through by r^(n-2) gives exactly r^2 = c1*r + c2, i.e. the characteristic equation x^2-c1*x-c2=0.",
+        "(4) FALSE -- counterexample: take the recurrence a_n = 2*a_(n-1) - a_(n-2), whose characteristic equation is x^2-2x+1=(x-1)^2=0, a repeated root of 1. Its general solution is a_n = A + B*n (since r^n=1^n=1). With a_0=5 and a_1=5 (nonzero initial conditions): A=5 from a_0=5; A+B=5 from a_1=5, giving B=0. So a_n = 5 for ALL n -- a constant, bounded sequence, directly contradicting the claim that it must grow without bound.",
+        "Method 2 cross-check (concrete worked instances, independent of the algebraic argument): the two earlier sibling items already numerically confirm (0) and (2) -- the distinct-root recurrence (roots 2,3) had A,B uniquely fixed as A=1,B=0 by a_0=1,a_1=2, and the repeated-root recurrence (root 2) had A,B uniquely fixed as A=1,B=1 by a_0=1,a_1=4 -- confirming (1) too. For (4)'s counterexample, iterate the recurrence a_n=2a_(n-1)-a_(n-2) directly from a_0=5,a_1=5: a_2 = 2*5-5 = 5; a_3 = 2*5-5 = 5 -- the sequence stays exactly constant at 5 by direct iteration, independently confirming the closed-form claim of bounded (non-growing) behavior and disproving (4)."
+      ],
+      "verification_method": "hand_checkable_general_solution_theory_and_concrete_counterexample"
+    },
+    {
+      "id": "pi-recurrence-relations-005",
+      "concept_id": "recurrence-relations",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "The Fibonacci-style recurrence a_n = a_(n-1) + a_(n-2) has a_0 = 0 and a_1 = 1. What is a_7?",
+      "answer_range": [
+        12.935,
+        13.065
+      ],
+      "correct_answer": "13",
+      "solution_steps": [
+        "Method 1 (direct term-by-term iteration): a_0=0, a_1=1, a_2=a_1+a_0=1, a_3=a_2+a_1=2, a_4=a_3+a_2=3, a_5=a_4+a_3=5, a_6=a_5+a_4=8, a_7=a_6+a_5=13.",
+        "Method 2 (exact algebraic verification of the closed form via characteristic roots, independent of numerically iterating): the characteristic equation is x^2-x-1=0, with roots phi=(1+sqrt5)/2 and psi=(1-sqrt5)/2, both satisfying x^2=x+1 EXACTLY (by construction, as roots of that equation). Define b_n = (phi^n - psi^n)/sqrt5. Check initial terms exactly (no decimals needed): b_0 = (1-1)/sqrt5 = 0, matching a_0. b_1 = (phi-psi)/sqrt5 = sqrt5/sqrt5 = 1, matching a_1 (since phi-psi = sqrt5 by their definition). Now check b_n satisfies the SAME recurrence exactly: b_n - b_(n-1) - b_(n-2) = [phi^(n-2)(phi^2-phi-1) - psi^(n-2)(psi^2-psi-1)] / sqrt5 = [phi^(n-2)*0 - psi^(n-2)*0]/sqrt5 = 0, using phi^2-phi-1=0 and psi^2-psi-1=0 exactly. So b_n obeys the identical recurrence AND identical initial conditions (b_0=a_0=0, b_1=a_1=1) as a_n. By uniqueness of solutions to a linear recurrence given two initial values, b_n = a_n for every n -- so a_7 = b_7 is guaranteed to equal the iterated value, confirming a_7=13 through an exact algebraic argument rather than a numerical re-derivation."
+      ],
+      "verification_method": "hand_checkable_term_by_term_iteration_and_exact_algebraic_closed_form_proof"
+    },
+    {
+      "id": "pi-boolean-algebra-001",
+      "concept_id": "boolean-algebra",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Simplify the Boolean expression F = A.B + A.B' (where ' denotes NOT, . denotes AND).",
+      "options": [
+        "A",
+        "B",
+        "A+B",
+        "A.B"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A",
+      "solution_steps": [
+        "Method 1 (algebraic identity): factor A out of both terms: F = A.(B+B'). By the complement law, B+B' = 1. So F = A.1 = A.",
+        "Method 2 (full truth table over A, B -- 4 rows, independent check): A=0,B=0: A.B=0, A.B'=0, F=0. A=0,B=1: A.B=0, A.B'=0, F=0. A=1,B=0: A.B=0, A.B'=1, F=1. A=1,B=1: A.B=1, A.B'=0, F=1. The F column is 0,0,1,1 -- exactly the same as the A column across all 4 rows, confirming F=A."
+      ],
+      "verification_method": "hand_checkable_algebraic_identity_and_full_truth_table"
+    },
+    {
+      "id": "pi-boolean-algebra-002",
+      "concept_id": "boolean-algebra",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "How many distinct Boolean functions of 3 variables exist in total (i.e. how many distinct truth tables can a 3-variable Boolean function have)?",
+      "answer_range": [
+        254.72,
+        257.28
+      ],
+      "correct_answer": "256",
+      "solution_steps": [
+        "Method 1 (counting formula): the number of distinct Boolean functions of n variables is 2^(2^n). For n=3: 2^(2^3) = 2^8 = 256.",
+        "Method 2 (multiplication-principle reasoning via truth-table rows, independent derivation): 3 variables give a truth table with 2^3 = 8 rows. Each Boolean function independently assigns 0 or 1 to each of these 8 rows, so the total number of distinct assignments (functions) is 2 multiplied by itself 8 times: 2*2*2*2*2*2*2*2 = 256, arrived at by directly counting the independent row-by-row choices rather than plugging into the 2^(2^n) formula."
+      ],
+      "verification_method": "hand_checkable_counting_formula_and_row_by_row_multiplication_principle"
+    },
+    {
+      "id": "pi-boolean-algebra-003",
+      "concept_id": "boolean-algebra",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A 3-variable Boolean function F(A,B,C) equals 1 exactly for the input rows (A,B,C) = (0,0,0), (0,0,1), (0,1,0), (0,1,1), and (1,1,0), and equals 0 for every other row. What is the minimal sum-of-products (SOP) simplification of F?",
+      "options": [
+        "A' + B.C'",
+        "A' + B + C'",
+        "A'.B + B.C'",
+        "A' + A.B.C'"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A' + B.C'",
+      "solution_steps": [
+        "Method 1 (Karnaugh-map grouping): the four rows with A=0 (000,001,010,011) form a group of 4 covered by the single literal A'. The remaining 1-row, (1,1,0), can be paired with the already-covered row (0,1,0) -- both have B=1,C=0 and differ only in A -- giving the group B.C'. Together A' and B.C' cover all five 1-rows with no extra rows included, a minimal 2-term cover.",
+        "Method 2 (pure algebraic Boolean identities, independent of any geometric grouping): write F as the sum of its 5 minterms: F = A'B'C' + A'B'C + A'BC' + A'BC + ABC'. Factor A' from the first four terms: A'(B'C'+B'C+BC'+BC) = A'(B'(C'+C) + B(C'+C)) = A'(B'+B) = A'(1) = A'. So F = A' + ABC'. Apply the absorption/consensus identity A' + A.X = A' + X (proved by distributing: A'+AX = (A'+A)(A'+X) = 1.(A'+X) = A'+X) with X=BC': F = A' + BC'. Matches Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_karnaugh_map_grouping_and_algebraic_boolean_identities"
+    },
+    {
+      "id": "pi-boolean-algebra-004",
+      "concept_id": "boolean-algebra",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following Boolean algebra identities hold for ALL values of A, B in {0, 1} (' denotes NOT, . denotes AND, + denotes OR, XOR is exclusive-or)?",
+      "options": [
+        "A + A'.B = A + B",
+        "A.(A+B) = A",
+        "(A+B)' = A'.B'",
+        "(A.B)' = A'.B'",
+        "A XOR B = A.B' + A'.B"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "correct_answer": "The absorption-with-complement law, plain absorption, De Morgan for OR, and the XOR sum-of-products identity all hold. De Morgan for AND is (A.B)' = A'+B', NOT A'.B' -- that expression is instead the correct simplification of (A+B)'.",
+      "solution_steps": [
+        "Method 1 (algebraic derivation of each): (0) A+A'B = (A+A')(A+B) = 1.(A+B) = A+B, by distribution and the complement law. (1) A(A+B) = AA+AB = A+AB = A(1+B) = A.1 = A, using idempotence and the domination law 1+B=1. (2) De Morgan for OR: (A+B)'=A'.B', a standard law. (3) De Morgan for AND is actually (A.B)' = A'+B', not A'.B' -- the stated identity applies the WRONG De Morgan form (the OR-negation form) to an AND expression, so it is FALSE in general. (4) XOR is true exactly when A and B differ, i.e. (A true, B false) OR (A false, B true) = A.B' + A'.B, a standard identity.",
+        "Method 2 (exhaustive truth table over all 4 rows of A,B, independent check): checking (0): (A=0,B=0): A+A'B=0+1*0=0, A+B=0, match. (A=0,B=1): 0+1*1=1, A+B=1, match. (A=1,B=0): 1+0*0=1, A+B=1, match. (A=1,B=1): 1+0*1=1, A+B=1, match -- all 4 rows agree. Checking (3) exhaustively: at (A=0,B=1): A.B=0, so (A.B)'=1; but A'.B'=1*0=0. 1 != 0 -- a direct mismatch found by exhaustive check, disproving (3). Cross-checking the CORRECT De Morgan-for-AND form at the same row: A'+B' = 1+0 = 1, which DOES match (A.B)'=1, confirming that A'+B' (not A'.B') is the right simplification. Checking (4) exhaustively: (0,0): XOR=0, A.B'+A'.B=0*1+1*0=0, match. (0,1): XOR=1, 0*0+1*1=1, match. (1,0): XOR=1, 1*1+0*0=1, match. (1,1): XOR=0, 1*0+0*1=0, match -- all 4 rows agree, confirming (4)."
+      ],
+      "verification_method": "hand_checkable_algebraic_derivation_and_exhaustive_truth_table"
+    },
+    {
+      "id": "pi-boolean-algebra-005",
+      "concept_id": "boolean-algebra",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "For the Boolean function F(A,B,C) = A' + B.C', how many of the 8 rows of its full truth table evaluate to 1?",
+      "answer_range": [
+        4.975,
+        5.025
+      ],
+      "correct_answer": "5",
+      "solution_steps": [
+        "Method 1 (direct row-by-row evaluation of all 8 rows): (0,0,0): A'=1, F=1. (0,0,1): A'=1, F=1. (0,1,0): A'=1, F=1. (0,1,1): A'=1, F=1. (1,0,0): A'=0, B.C'=0*1=0, F=0. (1,0,1): A'=0, B.C'=0*0=0, F=0. (1,1,0): A'=0, B.C'=1*1=1, F=1. (1,1,1): A'=0, B.C'=1*0=0, F=0. Rows evaluating to 1: (0,0,0),(0,0,1),(0,1,0),(0,1,1),(1,1,0) -- a count of 5.",
+        "Method 2 (minterm cross-check against the sibling item's derivation, independent): the sibling Karnaugh-map item derived F = A' + BC' as the minimal SOP covering EXACTLY the minterms at rows (0,0,0),(0,0,1),(0,1,0),(0,1,1),(1,1,0) -- a set of 5 minterms, by construction of that problem. This from-scratch truth-table evaluation reproduces the identical set of 5 rows independently, cross-checking the earlier Karnaugh-map/algebraic simplification against a completely fresh row-by-row computation rather than reusing its derivation."
+      ],
+      "verification_method": "hand_checkable_row_by_row_evaluation_and_minterm_cross_check"
+    },
+    {
+      "id": "pi-group-theory-basics-001",
+      "concept_id": "group-theory-basics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "In the group Z6 = {0,1,2,3,4,5} under addition modulo 6, what is the order of the element 4 (the smallest positive k such that k*4 is congruent to 0 mod 6)?",
+      "options": [
+        "3",
+        "2",
+        "6",
+        "4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "Method 1 (direct repeated addition): 1*4=4 (not 0 mod 6). 2*4=8, 8 mod 6=2 (not 0). 3*4=12, 12 mod 6=0. So the smallest positive k is 3 -- the order of 4 is 3.",
+        "Method 2 (gcd formula, independent cross-check): in Z_n under addition, the order of an element a is n/gcd(a,n). Here n=6, a=4, gcd(4,6)=2, so order = 6/2 = 3. Matches Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_direct_repeated_addition_and_gcd_formula"
+    },
+    {
+      "id": "pi-group-theory-basics-002",
+      "concept_id": "group-theory-basics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the order (total number of elements) of the group of symmetries of an equilateral triangle -- the dihedral group D3, consisting of all rotations and reflections that map the triangle onto itself?",
+      "answer_range": [
+        5.97,
+        6.03
+      ],
+      "correct_answer": "6",
+      "solution_steps": [
+        "Method 1 (dihedral group order formula): the dihedral group D_n (symmetries of a regular n-gon) always has order 2n. For n=3: |D3| = 2*3 = 6.",
+        "Method 2 (exhaustive listing of every symmetry, independent check): the identity (e); rotation by 120 degrees (r); rotation by 240 degrees (r^2) -- 3 rotations total, including the identity. Each of these 3 rotational positions can additionally be combined with a single reflection (a flip), giving 3 more symmetries: a reflection (s), reflection-then-120-rotation (sr), reflection-then-240-rotation (sr^2). That is 3 rotations + 3 reflections = 6 distinct symmetries total, matching Method 1 via direct enumeration rather than the formula."
+      ],
+      "verification_method": "hand_checkable_dihedral_order_formula_and_exhaustive_symmetry_listing"
+    },
+    {
+      "id": "pi-group-theory-basics-003",
+      "concept_id": "group-theory-basics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Which of the following subsets of Z8 = {0,1,2,3,4,5,6,7} (under addition modulo 8) is a subgroup of Z8?",
+      "options": [
+        "{0, 2, 4, 6}",
+        "{1, 3, 5, 7}",
+        "{2, 4, 6}",
+        "{0, 1, 2}"
+      ],
+      "answer_index": 0,
+      "correct_answer": "{0, 2, 4, 6}",
+      "solution_steps": [
+        "Method 1 (subgroup axioms checked directly): a subset H is a subgroup iff it contains the identity (0), is closed under the operation, and closed under inverses. {0,2,4,6}: contains 0. Closed: 2+2=4, 2+4=6, 2+6=8mod8=0, 4+4=8mod8=0, 4+6=10mod8=2, 6+6=12mod8=4 -- every sum stays in the set. Inverses: -2mod8=6 (in set), -4mod8=4 (self-inverse, in set), -6mod8=2 (in set). All three axioms hold -- it IS a subgroup. {1,3,5,7}: does not contain 0 -- fails immediately. {2,4,6}: does not contain 0 -- fails immediately (the classic error of forgetting the identity element). {0,1,2}: contains 0, but is not closed (1+2=3, which is not in the set) -- fails.",
+        "Method 2 (Lagrange's theorem plus structural recognition, independent cross-check): by Lagrange's theorem, any subgroup's order must divide |Z8|=8. {2,4,6} has 3 elements, and 3 does NOT divide 8 -- this ALONE rules it out as a subgroup, independently confirming its rejection without even checking the identity. {0,1,2} likewise has 3 elements, also ruled out by the same 3-does-not-divide-8 argument. {1,3,5,7} has 4 elements (4 divides 8, so Lagrange alone does not rule it out), but it still fails the identity-membership check, matching Method 1. {0,2,4,6} has 4 elements (4 divides 8, consistent) and is recognizable as the cyclic subgroup generated by 2 -- repeatedly adding 2 gives 2,4,6,8mod8=0, then the cycle repeats, generating exactly {0,2,4,6} -- confirming it is a genuine (cyclic) subgroup by structural recognition, not just by checking closure pair by pair."
+      ],
+      "verification_method": "hand_checkable_subgroup_axiom_check_and_lagrange_theorem_cross_check"
+    },
+    {
+      "id": "pi-group-theory-basics-004",
+      "concept_id": "group-theory-basics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Let G be a finite group with |G| = 12. Which of the following are always true?",
+      "options": [
+        "The order of every element of G divides 12.",
+        "G must contain an element of order 12 (i.e. G must be cyclic).",
+        "Every subgroup of G has an order that divides 12.",
+        "The order of an element of G and the order of the group G are the same thing.",
+        "G cannot have a subgroup of order 5."
+      ],
+      "answer_indices": [
+        0,
+        2,
+        4
+      ],
+      "correct_answer": "Lagrange's theorem constrains both element orders and subgroup orders to divide 12, and rules out any subgroup of order 5; but a group of order 12 need not be cyclic, and 'order of an element' is a different notion from 'order of the group'.",
+      "solution_steps": [
+        "(0) TRUE -- for any g in G, the cyclic subgroup generated by g has order equal to the order of g, and by Lagrange's theorem that subgroup's order divides |G|=12, so the order of g divides 12.",
+        "(1) FALSE -- this confuses 'there EXISTS some group of order 12 that is cyclic' with 'EVERY group of order 12 must be cyclic'. Counterexample: the dihedral group D6 (symmetries of a regular hexagon) has order 12 but has NO element of order 12 -- its elements only have orders 1, 2, 3, or 6.",
+        "(2) TRUE -- this is Lagrange's theorem stated directly.",
+        "(3) FALSE -- 'order of an element' (the smallest positive k with g^k = identity) and 'order of the group' (the total element count |G|) are generally DIFFERENT numbers; they coincide only for a generator of a cyclic group, not as a universal identity.",
+        "(4) TRUE -- since 5 does not divide 12, Lagrange's theorem directly rules out any subgroup of order 5.",
+        "Method 2 (concrete worked example, independent cross-check -- the dihedral group D6, order 12): its 6 rotations by k*60 degrees (k=0..5) have orders 6/gcd(k,6): k=0 gives order 1; k=1 gives gcd(1,6)=1, order 6; k=2 gives gcd(2,6)=2, order 3; k=3 gives gcd(3,6)=3, order 2; k=4 gives gcd(4,6)=2, order 3; k=5 gives gcd(5,6)=1, order 6. Its 6 reflections each have order 2 (reflecting twice returns to identity). Listing all 12 element orders: 1,6,3,2,3,6,2,2,2,2,2,2 -- every single one divides 12, exhaustively confirming (0). The MAXIMUM order appearing is 6, never 12 -- D6 has no element of order 12 despite |D6|=12, directly disproving (1) by explicit counterexample. D6's actual subgroups have orders drawn from {1,2,3,6,12} (trivial subgroup, reflection subgroups, the order-3 rotation subgroup, the full rotation subgroup of order 6, and G itself) -- every one divides 12, confirming (2), and none equals 5, consistent with (4). Since D6 has elements of order 6 while |D6|=12, this concretely shows element-order and group-order are different numbers, disproving (3)."
+      ],
+      "verification_method": "hand_checkable_lagrange_theorem_and_concrete_dihedral_group_example"
+    },
+    {
+      "id": "pi-group-theory-basics-005",
+      "concept_id": "group-theory-basics",
+      "topic": "discrete-mathematics",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "In the group Z12 = {0,1,...,11} under addition modulo 12, how many elements have order EXACTLY 4?",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (gcd formula, targeted search): the order of element a in Z_n is n/gcd(a,n). We need 12/gcd(a,12) = 4, i.e. gcd(a,12) = 3. Checking multiples of 3 in {0,...,11} (candidates for gcd 3): a=0 has gcd(0,12)=12 (excluded); a=3 has gcd(3,12)=3 (matches); a=6 has gcd(6,12)=6 (excluded, too large); a=9 has gcd(9,12)=3 (matches). So a=3 and a=9 are the only elements with order exactly 4 -- a count of 2.",
+        "Method 2 (exhaustive computation of every element's order in Z12, independent check -- 12 elements is small enough to check all of them): a=0: order 1. a=1: gcd(1,12)=1, order 12. a=2: gcd(2,12)=2, order 6. a=3: gcd(3,12)=3, order 4. a=4: gcd(4,12)=4, order 3. a=5: gcd(5,12)=1, order 12. a=6: gcd(6,12)=6, order 2. a=7: gcd(7,12)=1, order 12. a=8: gcd(8,12)=4, order 3. a=9: gcd(9,12)=3, order 4. a=10: gcd(10,12)=2, order 6. a=11: gcd(11,12)=1, order 12. The complete order list for a=0..11 is [1,12,6,4,3,12,2,12,3,4,6,12]. Scanning this exhaustive list for entries equal to exactly 4: a=3 and a=9 -- a count of 2, matching Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_gcd_formula_targeted_search_and_exhaustive_order_computation"
+    }
+  ]
+}

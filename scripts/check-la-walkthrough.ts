@@ -458,7 +458,7 @@ async function main(): Promise<void> {
   );
 
   if (failCount === 0) {
-    console.log('\n✓ Every Linear Algebra concept has a complete 4-leg walkthrough.\n');
+    console.log(`\n✓ Every "${TOPIC}" concept has a complete 4-leg walkthrough.\n`);
     process.exit(0);
     return;
   }

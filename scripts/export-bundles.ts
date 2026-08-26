@@ -41,11 +41,36 @@ async function main() {
   fs.writeFileSync(path.join(OUT_DIR, 'concept-graph.json'), JSON.stringify(conceptGraph, null, 2));
   console.log(`✓ concept-graph.json (${ALL_CONCEPTS.length} concepts)`);
 
-  // 2. PYQ bank — from DB if available, else seed
+  // 2. PYQ bank.
+  //
+  // The committed bank is the DB-less bundle — not a cache of one. It carries
+  // work that exists nowhere else: hand-authored concept_ids mapping each
+  // question to what it actually tests, and questions seeded straight into the
+  // database that no topic file contains.
+  //
+  // This step used to rebuild it unconditionally, falling back to a scan of
+  // the topic files whenever the database was absent or unreachable. That scan
+  // yields 164 of the committed 241, so a routine regeneration silently
+  // deleted 77 questions and every mapping on them — and printed a tick.
+  //
+  // It is not a hypothetical: both Dockerfiles run this script in the builder
+  // stage, and neither declares DATABASE_URL as a build ARG. Every image built
+  // has therefore shipped the 164-question scan, so the deployed bank was
+  // smaller than the committed one and no concept mapping ever reached a
+  // student. An earlier release hit the same thing from a developer's machine.
+  //
+  // So: the bank is written only from a real database, and only when doing so
+  // loses nothing. Absent a database there is nothing better to write than
+  // what is already committed, and leaving it alone is the correct outcome
+  // rather than a degraded one. The concept graph above still regenerates,
+  // which is what the build actually needs from this script.
+  const BANK_PATH = path.join(OUT_DIR, 'pyq-bank.json');
   const dbUrl = process.env.DATABASE_URL;
-  let problems: any[] = [];
 
-  if (dbUrl) {
+  if (!dbUrl) {
+    console.log('· pyq-bank.json left as committed (no DATABASE_URL — nothing better to write)');
+  } else {
+    let problems: any[] | null = null;
     try {
       const pool = new Pool({ connectionString: dbUrl, max: 2 });
       const { rows } = await pool.query(
@@ -55,25 +80,60 @@ async function main() {
       );
       problems = rows;
       await pool.end();
-      console.log(`✓ pyq-bank.json (${problems.length} problems from DB)`);
     } catch (err) {
-      console.warn(`⚠ DB unreachable, using seed PYQs: ${(err as Error).message}`);
-      problems = seedPYQs();
+      // Unreachable is not empty. Writing a fallback here is what turned a
+      // connection blip into data loss.
+      console.warn(`· pyq-bank.json left as committed (DB unreachable: ${(err as Error).message})`);
+      problems = null;
     }
-  } else {
-    problems = seedPYQs();
-    console.log(`✓ pyq-bank.json (${problems.length} problems from seed — no DATABASE_URL)`);
+
+    if (problems) {
+      const dropped = idsLostAgainstCommitted(BANK_PATH, problems);
+      if (dropped.length > 0 && !process.argv.includes('--allow-bank-shrink')) {
+        console.error(
+          `\n✗ refusing to write pyq-bank.json: ${dropped.length} committed question(s) are ` +
+            `absent from the database and would be deleted.\n` +
+            `  first few: ${dropped.slice(0, 5).join(', ')}\n` +
+            `  The committed bank is the source of truth for DB-less deploys. Either seed the\n` +
+            `  database from it first, or pass --allow-bank-shrink if the loss is intended.\n`,
+        );
+        process.exit(1);
+      }
+      fs.writeFileSync(
+        BANK_PATH,
+        JSON.stringify(
+          { version: 1, exported_at: new Date().toISOString(), problems, total: problems.length },
+          null,
+          2,
+        ),
+      );
+      console.log(`✓ pyq-bank.json (${problems.length} problems from DB)`);
+    }
   }
 
-  const pyqBank = {
-    version: 1,
-    exported_at: new Date().toISOString(),
-    problems,
-    total: problems.length,
-  };
-  fs.writeFileSync(path.join(OUT_DIR, 'pyq-bank.json'), JSON.stringify(pyqBank, null, 2));
-
   console.log(`\nBundles written to ${OUT_DIR}`);
+}
+
+/**
+ * Question ids present in the committed bank but missing from `next`.
+ *
+ * Compares identity rather than counts: a rebuild that swaps thirty questions
+ * for thirty different ones keeps the total identical while losing all thirty,
+ * and a count check would wave it through.
+ */
+export function idsLostAgainstCommitted(bankPath: string, next: any[]): string[] {
+  if (!fs.existsSync(bankPath)) return [];
+  let committed: any[];
+  try {
+    const parsed = JSON.parse(fs.readFileSync(bankPath, 'utf8'));
+    committed = Array.isArray(parsed) ? parsed : (parsed.problems ?? []);
+  } catch {
+    // An unreadable committed bank cannot be compared against, and guessing
+    // it was empty would license overwriting it.
+    return [];
+  }
+  const nextIds = new Set(next.map((p) => String(p?.id)));
+  return committed.map((p) => String(p?.id)).filter((id) => id && !nextIds.has(id));
 }
 
 // Inverse of seed-static-pyqs.ts's TOPIC_DIR_ALIAS (canonical -> dirSlug):

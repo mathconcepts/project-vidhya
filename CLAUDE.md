@@ -896,30 +896,98 @@ path override).
 
 ---
 
-### Linear Algebra Complete Walkthrough gate (`ci:la-walkthrough`)
+### Complete Walkthrough gate (`ci:la-walkthrough`)
 
-CI gates 12 → 13. `scripts/check-la-walkthrough.ts` is the "any and every
-concept" guarantee, made mechanical: for every concept with
-`topic === 'linear-algebra'` in `src/constants/concept-graph.ts` (derived,
-never hardcoded — 26 today), it checks four demo legs — explanation (reuses
-`isRealExplainer` from `check-syllabus-floor.ts`), interactive (a valid
-` ```interactive-spec ``` ` block under `modules/project-vidhya-content/concepts/<id>/atoms/`,
-reusing the renderer's own `parseInteractiveSpec`), practice (>=5 items
-gradable through `FileLearningObjectCatalog` + the real
-`gateItemFromPayload` the server uses — "gradable" means what the runtime
-means, not what the JSON claims; `also_tests` cross-concept references are
-reported as secondary coverage, never counted toward the floor), and test
-(>=1 PYQ mapped to the concept in `frontend/public/data/pyq-bank.json`,
-reading `concept_ids[]` first, `concept_id` as fallback).
+The "any and every concept" guarantee, made mechanical. For every concept with
+a given `topic` in `src/constants/concept-graph.ts` (derived, never hardcoded),
+`scripts/check-la-walkthrough.ts` checks four demo legs:
 
-Blocking by default; `--report-only` prints the same table and exits 0.
-`npm run ci:la-walkthrough` / wired into `.github/workflows/ci.yml` next to
-the syllabus floor check. As of this gate's introduction, explanation,
-interactive, and practice are green for all 26 concepts — the test leg
-fails for all 26, because `pyq-bank.json` does not yet carry `concept_id`
-or `concept_ids` on any problem (a sibling lane lands that mapping
-separately; this gate will flip green on that leg once it merges, with no
-change needed here).
+- **explanation** — reuses `isRealExplainer` from `check-syllabus-floor.ts`
+- **interactive** — a valid ` ```interactive-spec ``` ` block under
+  `modules/project-vidhya-content/concepts/<id>/atoms/`, parsed with the
+  renderer's own `parseInteractiveSpec`
+- **practice** — >=5 items gradable through `FileLearningObjectCatalog` + the
+  real `gateItemFromPayload` the server uses. "Gradable" means what the runtime
+  means, not what the JSON claims. `also_tests` cross-concept references are
+  reported as secondary coverage, never counted toward the floor
+- **test** — >=1 PYQ mapped to the concept in
+  `frontend/public/data/pyq-bank.json`, reading `concept_ids[]` first,
+  `concept_id` as fallback
+
+`--topic=<id>` selects the topic; it defaults to `linear-algebra`, which is
+what `npm run ci:la-walkthrough` gates in CI. The flag exists because the gate
+is the instrument as well as the gate — filling a new topic to the Linear
+Algebra standard needs the same four numbers reported the same way, and a
+second hand-written checker would drift from this one the moment either
+changed. Blocking by default; `--report-only` prints the same table and
+exits 0.
+
+**`exam_tested: false`** (a property on `ConceptNode`) marks the 15 concepts
+real papers assume rather than directly test — the chain rule appears inside a
+hundred questions and is the subject of none. The test leg passes those
+concepts WITHOUT a question, but prints `— (not examined)` rather than `✓`, and
+the summary reports the counts separately (`test 13/19 (+6 not examined)`), so
+a flagged pass is never folded into the same number as a real one. A concept
+with a genuine gap still fails.
+
+**Status as of v4.36.0:** all 10 topics measured, **101 concepts, 0 failing
+legs**.
+
+---
+
+### Every topic walkable + three silent failures (v4.36.0)
+
+**Content.** 245 new practice items across eight banks (**260 → 505** items,
+16 banks), the last explainer and interactive gaps closed, and every one of the
+241 past-exam questions in the shipped bank now carries a concept mapping (was
+170). `ode-classification` joins the concept graph in its own right —
+classifying order, degree and linearity is a distinct skill from solving.
+
+**Three defects that reported success while failing:**
+
+1. **Migrations `003`, `005`, `006` failed on every boot.** Postgres has no
+   `CREATE POLICY IF NOT EXISTS`, and nine policy statements had no guard.
+   `auto-migrate` runs each file in a transaction, so one `42710` rolled the
+   whole file back — the `_migrations` row was never written, so the next boot
+   retried and failed identically. Permanently. Fixed with the repo's own
+   `DO $$ … EXCEPTION WHEN duplicate_object THEN NULL; END $$;` idiom, NOT
+   `DROP POLICY IF EXISTS` (which would silently replace a policy that had
+   drifted on the live database). `src/db/__tests__/migration-policy-idempotency.test.ts`
+   fails on any future unguarded `CREATE POLICY`.
+
+2. **`scripts/export-bundles.ts` was deleting most of the PYQ bank.** It
+   rebuilt the bank from a topic-file scan whenever it could not reach a
+   database; that scan produces 164 of the 241 committed questions. Both
+   Dockerfiles run it in the builder stage with no `DATABASE_URL` build ARG, so
+   **every shipped image carried the truncated bank**. Now: no database → no
+   write (the committed bank IS the DB-less bundle, not a cache of one);
+   unreachable → no write; present → a write that would drop any committed
+   question id is refused by name via `idsLostAgainstCommitted()`. Identity is
+   compared, not counts — a rebuild swapping thirty questions for thirty others
+   keeps the total identical while losing all thirty. `--allow-bank-shrink` is
+   the deliberate escape.
+
+3. **Seven `gif-scene` blocks never rendered.** Three scene types close them in
+   `src/content/concept-orchestrator/gif-generator.ts`: `parametric-curve`
+   (`x_expr`/`y_expr`), `level-set` (implicit plots, optional `expression2`),
+   and `discrete-bars` (literal `values`, never touches `compileExpression` —
+   for distributions and recurrences). Two unplottable blocks were deleted
+   rather than faked, keeping their prose. Renders went **66 / 28 skipped / 6
+   failed → 70 / 30 / 0**, and `known_broken_scenes` in
+   `scripts/gif-scene-baseline.json` is empty for the first time.
+
+**`ci:playbook-convention` is live.** It existed, ran nowhere, and failed on
+twelve scripts for anyone running it by hand — the worst of both, since a red
+result teaches people the check is broken rather than that the code is. Six
+were never bulk operations and are in `src/playbooks/non-bulk-allowlist.json`;
+the other six are recorded in `src/playbooks/owed-playbook-baseline.json`
+**with the reason each is still open**, because a playbook's estimator quotes
+real money to an operator and inventing those numbers would be worse than the
+debt. Kept separate from the non-bulk allowlist deliberately: that file asserts
+"this is not a bulk operation", and filing `content:generate` there would
+assert something false.
+
+**Tests:** backend 3,400 → **3,640** (302 files). **CI gates 14 → 15.**
 
 ## Skill routing
 

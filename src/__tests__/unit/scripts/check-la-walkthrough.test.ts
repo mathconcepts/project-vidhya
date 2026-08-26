@@ -197,7 +197,11 @@ describe('check-la-walkthrough', () => {
     const r = runScript([], fixture.root, fixture.env);
     expect(r.stderr).toBe('');
     expect(r.status).toBe(0);
-    expect(r.stdout).toContain('Every Linear Algebra concept has a complete 4-leg walkthrough');
+    // The success line names the topic it actually walked. It used to say
+    // "Linear Algebra" unconditionally, which meant a green run against any
+    // other topic announced the wrong one — the same class of bug the
+    // --topic= flag was added to avoid.
+    expect(r.stdout).toContain('Every "linear-algebra" concept has a complete 4-leg walkthrough');
     expect(r.stdout).toContain(`Checked ${LA_CONCEPT_IDS.length} concepts | Full walkthrough: ${LA_CONCEPT_IDS.length} pass, 0 fail`);
   });
 

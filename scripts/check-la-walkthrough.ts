@@ -77,7 +77,20 @@ import { gateItemFromPayload } from '../src/api/practice-routes';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const TOPIC = 'linear-algebra';
+/**
+ * Which topic to walk. Defaults to linear-algebra — the topic this gate was
+ * written for and the only one blocking in CI today — but `--topic=<id>` lets
+ * the same four legs be measured against any topic in the concept graph.
+ *
+ * The parameter exists because the gate is the instrument as well as the gate:
+ * filling a new topic to the Linear Algebra standard needs the same four
+ * numbers reported the same way, and a second hand-written checker would drift
+ * from this one the moment either changed.
+ */
+const TOPIC = (() => {
+  const flag = process.argv.find((a) => a.startsWith('--topic='));
+  return flag ? flag.slice('--topic='.length) : 'linear-algebra';
+})();
 const PRACTICE_FLOOR = 5;
 
 const EXPLAINERS_PATH = process.env.LA_WALKTHROUGH_EXPLAINERS_PATH

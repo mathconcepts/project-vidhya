@@ -190,6 +190,15 @@ export function requireRecordId(collection: string, id: unknown): string {
   );
 }
 
+/**
+ * Stable lock order for a mirror transaction. Exported so the ordering can be
+ * asserted directly — a deadlock is not reproducible in a unit test, so the
+ * property that prevents it is what gets tested.
+ */
+export function sortRowsById<R extends [string, string, string | null, string]>(rows: R[]): R[] {
+  return [...rows].sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+}
+
 class PgSharedStore<T> implements SharedStore<T> {
   constructor(private spec: SharedCollection<T>) {}
 
@@ -225,19 +234,37 @@ class PgSharedStore<T> implements SharedStore<T> {
     if (!client) return;
     try {
       await client.query('BEGIN');
-      for (const item of items) {
+      // Insert in a deterministic order, or concurrent mirrors of the same
+      // collection deadlock.
+      //
+      // mirror() rewrites the whole collection in one transaction and is
+      // called fire-and-forget after every save, so two saves overlap
+      // routinely. The local array is not stably ordered between them —
+      // session-plans re-groups and re-sorts its whole array on every prune —
+      // so transaction A could take row 1 and then wait on row 2 while B held
+      // row 2 and waited on row 1. Postgres broke the tie by killing one,
+      // which surfaced in production as
+      // `[durable:session-plans] mirror failed: deadlock detected` and lost
+      // that mirror entirely.
+      //
+      // Sorting by the row's own id gives every transaction the same lock
+      // acquisition order, which is what makes the cycle impossible rather
+      // than merely unlikely. Sorting rows rather than items keeps idOf
+      // called exactly once per item.
+      const rows = sortRowsById(items.map((item) => this.row(item)));
+      for (const row of rows) {
         await client.query(
           `INSERT INTO durable_records (collection, id, scope, record, updated_at)
            VALUES ($1, $2, $3, $4, now())
            ON CONFLICT (collection, id) DO UPDATE
              SET scope = EXCLUDED.scope, record = EXCLUDED.record, updated_at = now()`,
-          this.row(item),
+          row,
         );
       }
       // Deletions must propagate, or the next hydration resurrects a record
       // someone removed. Scoped when a scope is given, so mirroring one
       // student cannot wipe another's.
-      const ids = items.map((i) => this.spec.idOf(i));
+      const ids = rows.map((r) => r[1]);
       const where = scope === undefined
         ? 'collection = $1'
         : 'collection = $1 AND scope IS NOT DISTINCT FROM $2';

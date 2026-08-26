@@ -1,13 +1,4 @@
 {
-  "$comment": "gif-scene blocks that do not render today, grandfathered so ci:gif-scenes can gate NEW breakage without first fixing pre-existing debt (see the 2026-08-25 Linear Algebra GIF fix — 4 concepts were repaired and removed from this list; the 6 below are out of scope for that change and remain broken on purpose, matching demo/seed-media.ts's known 10-failure baseline minus the 4 fixed LA ones). The list may only SHRINK: check-gif-scenes.ts fails the build on anything broken that is NOT on this list, and flags (without failing) any entry here that has started passing so it gets deleted instead of silently going stale.",
-  "known_broken_scenes": [
-    "modules/project-vidhya-content/concepts/counting-principles/atoms/visual-analogy.md",
-    "modules/project-vidhya-content/concepts/discrete-distributions/atoms/visual-analogy.md",
-    "modules/project-vidhya-content/concepts/divergence-curl/atoms/visual-analogy.md",
-    "modules/project-vidhya-content/concepts/graph-basics/atoms/visual-analogy.md",
-    "modules/project-vidhya-content/concepts/pde-basics/atoms/visual-analogy.md",
-    "modules/project-vidhya-content/concepts/propositional-logic/atoms/visual-analogy.md",
-    "modules/project-vidhya-content/concepts/recurrence-relations/atoms/visual-analogy.md"
-  ],
-  "recurrence-relations-note": "Discovered by this gate, not by demo/seed-media.ts's failure count: its scene type ('sequence-build') isn't one the renderer has ever supported, so the old extractGifScene() silently treated it as 'no gif-scene block' (counted under skipped, not failed) instead of surfacing the mismatch. Not a Linear Algebra concept and out of scope for the LA GIF fix; grandfathered here rather than silently passed through."
+  "$comment": "gif-scene blocks that do not render today, grandfathered so ci:gif-scenes can gate NEW breakage without first fixing pre-existing debt. The list may only SHRINK: check-gif-scenes.ts fails the build on anything broken that is NOT on this list, and flags (without failing) any entry here that has started passing so it gets deleted instead of silently going stale. As of the 2026-08-26 fix, all 7 previously-grandfathered entries are resolved (discrete-distributions and recurrence-relations now render via the new 'discrete-bars' scene type; counting-principles and propositional-logic had their unplottable gif-scene blocks deleted, keeping their prose; divergence-curl, graph-basics, and pde-basics were fixed separately). known_broken_scenes is empty — that is the goal state, not a placeholder, so a new entry here should mean a genuinely new regression, not a reflex re-add.",
+  "known_broken_scenes": []
 }

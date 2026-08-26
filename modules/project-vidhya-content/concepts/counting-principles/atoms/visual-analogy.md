@@ -16,15 +16,4 @@ Now think of **combinations** like **choosing fruit for a smoothie**. You have 5
 
 **The key difference:** Permutation = position/order matters. Combination = just which items are chosen.
 
-```gif-scene
-{
-  "type": "parametric",
-  "title": "Permutations (Left) vs Combinations (Right)",
-  "expression": "Podium {P(5,3)} = 60 ways | Committee {C(5,3)} = 10 ways",
-  "x_range": [-1, 5],
-  "y_range": [-1, 3],
-  "color": "#4338ca"
-}
-```
-
 **Exam insight:** If a problem says "arrange," "order," "line up" → permutation. If it says "select," "choose," "committee" → combination.

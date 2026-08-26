@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Plan-template store — recurring session patterns a student saves
  * once and recalls with one tap.
@@ -69,8 +68,8 @@ const _store = createFlatFileStore<StoreShape>({
  */
 const _durable = registerDurable('plan-templates', durableCollection<PlanTemplate>({
   collection: 'plan-templates',
-  idOf: (i) => (i as any).id,
-  scopeOf: (i) => (i as any).student_id ?? null,
+  idOf: (i) => i.id,
+  scopeOf: (i) => i.student_id ?? null,
   readLocal: () => _store.read().templates ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), templates: items } as never),
 }));

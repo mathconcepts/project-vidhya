@@ -82,7 +82,7 @@ export function entryId(e: PracticeSessionEntry): string {
 const _durable = registerDurable('practice-sessions', durableCollection<PracticeSessionEntry>({
   collection: 'practice-sessions',
   idOf: entryId,
-  scopeOf: (i) => (i as any).student_id ?? null,
+  scopeOf: (i) => i.student_id ?? null,
   readLocal: () => _store.read().entries ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), entries: items } as never),
 }));

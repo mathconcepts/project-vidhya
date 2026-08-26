@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Student exam-profile store — where a student declares which exams
  * they are actively preparing for and the dates of each.
@@ -95,8 +94,8 @@ const _store = createFlatFileStore<StoreShape>({
  */
 const _durable = registerDurable('student-exam-profiles', durableCollection<StudentExamProfile>({
   collection: 'student-exam-profiles',
-  idOf: (i) => (i as any).student_id,
-  scopeOf: (i) => (i as any).student_id,
+  idOf: (i) => i.student_id,
+  scopeOf: (i) => i.student_id,
   readLocal: () => _store.read().profiles ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), profiles: items } as never),
 }));

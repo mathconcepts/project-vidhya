@@ -66,7 +66,7 @@ The curve below represents how $\nabla \times \mathbf{F}$ varies across a cross-
 
 ```gif-scene
 {
-  "type": "function-trace",
+  "type": "parametric",
   "expression": "sin(x + t) * 0.5",
   "x_range": [-6.28, 6.28],
   "y_range": [-0.6, 0.6],

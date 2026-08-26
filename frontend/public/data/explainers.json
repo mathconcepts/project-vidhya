@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generated_at": "2026-08-09T15:34:20.667Z",
-  "total": 97,
+  "total": 100,
   "by_concept": {
     "sequences": {
       "concept_id": "sequences",
@@ -4559,6 +4559,137 @@
       ],
       "exam_tip": "GATE matrix-norm questions are quick 1-2 mark MCQ/NAT — memorize the three definitions (1-norm=col sum, ∞-norm=row sum, Frobenius=√Σaᵢⱼ²) cold, and remember condition-number questions almost always use the 2-norm (via singular values), not 1 or ∞.",
       "generated_at": "2026-08-18T00:00:00.000Z",
+      "model": "hand-authored"
+    },
+    "sampling-distributions": {
+      "concept_id": "sampling-distributions",
+      "topic": "probability-&-statistics",
+      "label": "Sampling Distributions",
+      "gate_frequency": "medium",
+      "canonical_definition": "Sampling Distribution: if $X_1, \\ldots, X_n$ is a random sample from a population with mean $\\mu$ and variance $\\sigma^2$, then any statistic computed from the sample — such as the sample mean $\\bar{X} = \\frac{1}{n}\\sum X_i$ — is itself a random variable, and its probability distribution (over all possible samples of size $n$) is called its sampling distribution. Key results: $E[\\bar{X}] = \\mu$, $\\mathrm{Var}(\\bar{X}) = \\sigma^2/n$, so the standard error is $\\sigma_{\\bar{X}} = \\sigma/\\sqrt{n}$. Central Limit Theorem: for large $n$, $\\bar{X} \\approx N(\\mu, \\sigma^2/n)$ regardless of the shape of the population distribution. If the population itself is normal, $\\bar{X} \\sim N(\\mu, \\sigma^2/n)$ exactly for every $n$. When $\\sigma$ is unknown and replaced by the sample standard deviation $S$, $T = \\dfrac{\\bar{X}-\\mu}{S/\\sqrt{n}} \\sim t_{n-1}$ (Student's $t$ with $n-1$ degrees of freedom). For a normal population, $\\dfrac{(n-1)S^2}{\\sigma^2} \\sim \\chi^2_{n-1}$.",
+      "deep_explanation": "Here is the step that trips almost everyone up: a **sampling distribution is not the same kind of object as the distribution you started with.** The population distribution describes single measurements — one bottle's fill volume, one student's score, one die roll. A sampling distribution describes a *statistic computed from a whole sample* — the average of 30 bottles, the average of 40 scores, the average of 30 rolls. Those are different random variables living on different scales, and conflating them is the single most common conceptual error in this topic.\n\nMake it concrete with something that is obviously **not** bell-shaped: a fair six-sided die. Each roll is uniform on $\\{1, 2, \\ldots, 6\\}$ — flat, not remotely normal. Its mean is $\\mu = 3.5$ and its variance is $\\sigma^2 = \\frac{6^2-1}{12} = \\frac{35}{12} \\approx 2.917$.\n\nNow roll the die $n = 30$ times and average the results. Do that whole experiment over and over, and record each average. Those averages form a **new** random variable, $\\bar{X}$, with its own distribution — the sampling distribution of the mean. Its exact mean is still $E[\\bar{X}] = \\mu = 3.5$, but its variance has shrunk to $\\mathrm{Var}(\\bar{X}) = \\sigma^2/n = \\frac{35/12}{30} \\approx 0.0972$, giving a standard error of about $0.312$ — nearly ten times tighter than a single roll's spread ($\\sigma \\approx 1.708$). And by the Central Limit Theorem, this distribution of averages is *approximately bell-shaped*, even though the die that produced it is exactly flat.\n\nSo the same population produces two completely different objects: the flat, wide distribution of one roll, and the narrow, bell-shaped distribution of the average of 30 rolls. Neither describes \"the data\" alone — the sampling distribution describes how much the *summary statistic* wobbles from sample to sample, which is precisely the question behind every confidence interval and hypothesis test: \"if I only get to see one sample, how far can its mean plausibly be from the truth?\" The standard error $\\sigma/\\sqrt{n}$ answers exactly that, and it shrinks as $\\sqrt{n}$ grows — more data narrows the sampling distribution without needing the population itself to look any different.\n\nThe $t$ and $\\chi^2$ distributions extend the same idea to the two situations where you don't get to use the population's true $\\sigma$: estimating the mean when $\\sigma$ is unknown (use $S$ instead, and the extra uncertainty from estimating $S$ fattens the tails into a $t_{n-1}$ distribution instead of a normal one), and studying the sample variance itself (which follows a scaled $\\chi^2_{n-1}$ distribution, always skewed and never negative, because a sum of squared deviations can't go below zero).",
+      "worked_examples": [
+        {
+          "difficulty": "medium",
+          "problem": "A filling machine produces bottles whose individual volumes have mean $500$ mL and standard deviation $\\sigma = 4$ mL (the shape of this population distribution is not stated). A sample of $n = 64$ bottles is measured and $\\bar{X}$ denotes the sample mean. Find the standard error of $\\bar{X}$ and describe its approximate distribution.",
+          "solution": "The standard error of the mean is\n$$\\sigma_{\\bar{X}} = \\frac{\\sigma}{\\sqrt{n}} = \\frac{4}{\\sqrt{64}} = \\frac{4}{8} = 0.5 \\text{ mL}.$$\n\nSince $n = 64 \\geq 30$, the Central Limit Theorem applies regardless of the shape of the individual-bottle distribution: $\\bar{X}$ is approximately $N(500, 0.5^2)$. Notice the population distribution's shape was never needed — the CLT is exactly the guarantee that lets us skip that question.",
+          "answer": "Standard error $= 0.5$ mL; $\\bar{X} \\approx N(500, 0.25)$ by the CLT"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "A random sample of $n = 16$ observations is drawn from a normal population with unknown mean $\\mu$ and unknown variance $\\sigma^2$. The sample gives $\\bar{X} = 52$ and sample standard deviation $S = 6$. Set up the test statistic for $H_0: \\mu = 50$ and state which sampling distribution it follows.",
+          "solution": "Because $\\sigma$ is unknown, it is replaced by the sample estimate $S$, and the statistic follows Student's $t$-distribution rather than the normal:\n$$T = \\frac{\\bar{X} - \\mu_0}{S/\\sqrt{n}} = \\frac{52 - 50}{6/\\sqrt{16}} = \\frac{2}{6/4} = \\frac{2}{1.5} = 1.333.$$\n\nDegrees of freedom: $n - 1 = 15$. So $T = 1.333 \\sim t_{15}$ under $H_0$.",
+          "answer": "$T \\approx 1.333$, following a $t_{15}$ distribution"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Treating the sampling distribution of $\\bar{X}$ as if it were the population distribution",
+          "corrective": "The population distribution can be any shape — skewed, uniform, even bimodal. The sampling distribution of $\\bar{X}$ is a different object: it is centered at the same mean $\\mu$, but it is always narrower (variance $\\sigma^2/n$ instead of $\\sigma^2$) and, by the CLT, trends toward a bell shape as $n$ grows — regardless of what the population looked like. A uniform die has a sampling distribution of its 30-roll average that looks nothing like a die."
+        },
+        {
+          "id": "mc-02",
+          "description": "Confusing the population standard deviation $\\sigma$ with the standard error $\\sigma/\\sqrt{n}$",
+          "corrective": "$\\sigma$ measures how spread out individual observations are. The standard error $\\sigma/\\sqrt{n}$ measures how spread out the sample MEAN is across repeated samples — a different question with a different (and always smaller, for $n > 1$) number. Using $\\sigma$ where a formula calls for $\\sigma/\\sqrt{n}$ (or vice versa) is one of the most common numeric slips in this topic."
+        },
+        {
+          "id": "mc-03",
+          "description": "Using the $z$ statistic when $\\sigma$ is unknown, or the $t$ statistic when it is known",
+          "corrective": "If the population standard deviation $\\sigma$ is genuinely known, standardize with $z = (\\bar{X}-\\mu)/(\\sigma/\\sqrt{n})$ against the normal distribution. If only the sample standard deviation $S$ is available, the extra uncertainty from estimating $\\sigma$ means the correct reference distribution is $t_{n-1}$, which has heavier tails than the normal — using $z$ here understates how uncertain the estimate really is, especially for small $n$."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review continuous distributions first."
+      ],
+      "exam_tip": "**Why it matters in GATE MA:** sampling distributions are the bridge between probability theory and the applied statistics questions (confidence intervals, hypothesis testing) that make up a large share of the probability-and-statistics section. GATE rarely asks you to derive a sampling distribution from scratch — it asks you to correctly IDENTIFY which one applies and plug in.\n\nGATE tests this topic in three recurring forms: (1) **Standard error computation** — given $\\sigma$ (or $S$) and $n$, compute $\\sigma/\\sqrt{n}$ and use it inside a $z$ or $t$ statistic (1 mark, MCQ/NAT); (2) **Distribution identification** — decide whether a statistic follows $N$, $t_{n-1}$, or $\\chi^2_{n-1}$ based on whether $\\sigma$ is known and whether the quantity is a mean or a variance (1–2 marks, MCQ); (3) **CLT-based probability** — given a non-normal population's $\\mu$ and $\\sigma$ and a sample size $n \\geq 30$, compute $P(\\bar{X} > c)$ by treating $\\bar{X}$ as approximately normal (2 marks). The trap to watch for: a question stating a large $n$ is a signal to invoke the CLT and stop worrying about the population's shape; a question giving $S$ instead of $\\sigma$ is a signal to switch to the $t$-distribution.",
+      "generated_at": "2026-08-26T12:34:11.847Z",
+      "model": "hand-authored"
+    },
+    "vector-algebra-basics": {
+      "concept_id": "vector-algebra-basics",
+      "topic": "vector-calculus",
+      "label": "Vector Algebra Basics",
+      "gate_frequency": "medium",
+      "canonical_definition": "For vectors $\\mathbf{a} = (a_1, a_2, a_3)$ and $\\mathbf{b} = (b_1, b_2, b_3)$ in $\\mathbb{R}^3$: **Dot product** (scalar): $\\mathbf{a} \\cdot \\mathbf{b} = a_1b_1 + a_2b_2 + a_3b_3 = |\\mathbf{a}||\\mathbf{b}|\\cos\\theta$. **Cross product** (vector, 3D only): $\\mathbf{a} \\times \\mathbf{b} = (a_2b_3 - a_3b_2,\\ a_3b_1 - a_1b_3,\\ a_1b_2 - a_2b_1)$, with magnitude $|\\mathbf{a} \\times \\mathbf{b}| = |\\mathbf{a}||\\mathbf{b}|\\sin\\theta$ and direction perpendicular to both $\\mathbf{a}$ and $\\mathbf{b}$ (right-hand rule). **Scalar triple product**: $\\mathbf{a} \\cdot (\\mathbf{b} \\times \\mathbf{c})$, whose absolute value equals the volume of the parallelepiped spanned by $\\mathbf{a}, \\mathbf{b}, \\mathbf{c}$.",
+      "deep_explanation": "The formulas for dot and cross product look like arbitrary bookkeeping until you connect each one to a picture it is secretly computing.\n\n**Dot product = projection.** $\\mathbf{a} \\cdot \\mathbf{b} = |\\mathbf{a}||\\mathbf{b}|\\cos\\theta$ is, up to the factor $|\\mathbf{b}|$, how much of $\\mathbf{a}$ points along $\\mathbf{b}$. Take $\\mathbf{u} = (3, 4)$ and the unit vector $\\mathbf{v} = (1, 0)$ along the $x$-axis. Then $\\mathbf{u} \\cdot \\mathbf{v} = 3(1) + 4(0) = 3$ — exactly the $x$-component of $\\mathbf{u}$, i.e. exactly how far $\\mathbf{u}$ reaches along the direction $\\mathbf{v}$ points. That is the scalar projection of $\\mathbf{u}$ onto $\\mathbf{v}$, and it is why $\\mathbf{a} \\cdot \\mathbf{b} = 0$ is the standard test for perpendicularity: zero shadow means no component along that direction, i.e. $\\theta = 90°$.\n\n**Cross product = signed area.** $\\mathbf{a} \\times \\mathbf{b}$ builds a vector whose magnitude $|\\mathbf{a}||\\mathbf{b}|\\sin\\theta$ is exactly the area of the parallelogram spanned by $\\mathbf{a}$ and $\\mathbf{b}$, and whose direction is perpendicular to the plane both vectors lie in. Check it on two vectors at a clean right angle: $\\mathbf{a} = (3, 0, 0)$, $\\mathbf{b} = (0, 4, 0)$. Then $\\mathbf{a} \\times \\mathbf{b} = (0 \\cdot 0 - 0 \\cdot 4,\\ 0 \\cdot 0 - 3 \\cdot 0,\\ 3 \\cdot 4 - 0 \\cdot 0) = (0, 0, 12)$. Its magnitude, $12$, is exactly the area of the $3 \\times 4$ rectangle $\\mathbf{a}$ and $\\mathbf{b}$ span — consistent with $|\\mathbf{a}||\\mathbf{b}|\\sin 90° = 3 \\cdot 4 \\cdot 1 = 12$. The direction $(0,0,12)$ points along $z$, perpendicular to the $xy$-plane both vectors live in, exactly as the right-hand rule predicts.\n\n**Scalar triple product = volume.** Stack a third vector on top and $\\mathbf{a} \\cdot (\\mathbf{b} \\times \\mathbf{c})$ measures a solid rather than a flat area. For the unit cube edges $\\mathbf{a} = (1,0,0)$, $\\mathbf{b} = (0,1,0)$, $\\mathbf{c} = (0,0,1)$: $\\mathbf{b} \\times \\mathbf{c} = (1,0,0)$, so $\\mathbf{a} \\cdot (\\mathbf{b} \\times \\mathbf{c}) = 1$ — exactly the volume of the unit cube. Scale any edge and the triple product scales the same way, because it is genuinely computing a volume, not an abstract number.\n\nThe throughline: the dot product turns two vectors into the length of a shadow (1 dimension worth of geometry), the cross product turns them into the area of a parallelogram (2 dimensions), and the scalar triple product turns three vectors into a volume (3 dimensions). Every algebraic identity involving these products is really a statement about how shadows, areas, and volumes behave under scaling, rotation, and addition — which is why it pays to keep the geometric picture in view even when the exam question only shows you components.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Find the angle between $\\mathbf{a} = (1, 1, 0)$ and $\\mathbf{b} = (1, 0, 1)$.",
+          "solution": "$$\\mathbf{a} \\cdot \\mathbf{b} = (1)(1) + (1)(0) + (0)(1) = 1.$$\n\n$$|\\mathbf{a}| = \\sqrt{1^2+1^2+0^2} = \\sqrt{2}, \\qquad |\\mathbf{b}| = \\sqrt{1^2+0^2+1^2} = \\sqrt{2}.$$\n\n$$\\cos\\theta = \\frac{\\mathbf{a}\\cdot\\mathbf{b}}{|\\mathbf{a}||\\mathbf{b}|} = \\frac{1}{\\sqrt{2}\\cdot\\sqrt{2}} = \\frac{1}{2} \\implies \\theta = 60°.$$",
+          "answer": "$\\theta = 60°$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Find $\\mathbf{a} \\times \\mathbf{b}$ and the area of the parallelogram spanned by $\\mathbf{a} = (1, 2, 0)$ and $\\mathbf{b} = (3, 0, 4)$.",
+          "solution": "$$\\mathbf{a} \\times \\mathbf{b} = (a_2b_3 - a_3b_2,\\ a_3b_1 - a_1b_3,\\ a_1b_2 - a_2b_1)$$\n$$= (2 \\cdot 4 - 0 \\cdot 0,\\ 0 \\cdot 3 - 1 \\cdot 4,\\ 1 \\cdot 0 - 2 \\cdot 3) = (8, -4, -6).$$\n\nArea $= |\\mathbf{a} \\times \\mathbf{b}| = \\sqrt{8^2 + (-4)^2 + (-6)^2} = \\sqrt{64+16+36} = \\sqrt{116} = 2\\sqrt{29} \\approx 10.77.$",
+          "answer": "$\\mathbf{a}\\times\\mathbf{b} = (8,-4,-6)$, area $= 2\\sqrt{29} \\approx 10.77$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Treating the dot product's result as a vector",
+          "corrective": "$\\mathbf{a} \\cdot \\mathbf{b}$ is always a SCALAR — that is why it is called the scalar product. Only the cross product returns a vector, and that vector exists specifically in three dimensions (there is no single-vector cross product in the plane)."
+        },
+        {
+          "id": "mc-02",
+          "description": "Forgetting that the cross product is anti-commutative",
+          "corrective": "$\\mathbf{a} \\times \\mathbf{b} = -(\\mathbf{b} \\times \\mathbf{a})$: swapping the order flips the direction of the result (opposite side of the plane, by the right-hand rule) while leaving its magnitude and the plane it lies in unchanged. The dot product has no such issue — $\\mathbf{a}\\cdot\\mathbf{b} = \\mathbf{b}\\cdot\\mathbf{a}$ always."
+        },
+        {
+          "id": "mc-03",
+          "description": "Inverting what a zero result means for each product",
+          "corrective": "$\\mathbf{a} \\cdot \\mathbf{b} = 0$ means the vectors are PERPENDICULAR ($\\theta = 90°$). $\\mathbf{a} \\times \\mathbf{b} = \\mathbf{0}$ (the zero vector) means the opposite: the vectors are PARALLEL or anti-parallel ($\\theta = 0°$ or $180°$), so there is no parallelogram to span. Students frequently swap these two facts under exam pressure."
+        }
+      ],
+      "prerequisite_reminders": [],
+      "exam_tip": "**Why it matters in GATE MA:** vector algebra basics is the foundation every later vector-calculus topic (vector fields, divergence, curl, line and surface integrals) is built on, so questions on it are usually fast, computational, and unforgiving of a sign slip.\n\nGATE tests this topic in three recurring shapes: (1) **Direct computation** — given components, compute $\\mathbf{a}\\cdot\\mathbf{b}$, $\\mathbf{a}\\times\\mathbf{b}$, or a scalar triple product (1 mark, NAT/MCQ, pure arithmetic); (2) **Geometric interpretation** — decide orthogonality, parallelism, the angle between two vectors, or the area/volume a set of vectors spans (1–2 marks, tests whether the formula is connected to its geometric meaning, not just memorized); (3) **Projection and decomposition** — resolve one vector into components parallel and perpendicular to another using the dot product (2 marks). Watch for questions that give you $\\mathbf{a}\\times\\mathbf{b} = \\mathbf{0}$ and ask what that implies about the two vectors — the answer is parallel, not perpendicular, and this exact reversal is a favorite distractor.",
+      "generated_at": "2026-08-26T12:34:11.847Z",
+      "model": "hand-authored"
+    },
+    "numerical-error-analysis": {
+      "concept_id": "numerical-error-analysis",
+      "topic": "numerical-methods",
+      "label": "Numerical Error Analysis",
+      "gate_frequency": "medium",
+      "canonical_definition": "For a true value $x_t$ and an approximation $x_a$: **Absolute error** $E_a = |x_t - x_a|$ (same units as $x$). **Relative error** $E_r = |x_t - x_a| / |x_t|$ (dimensionless). **Percentage error** $= E_r \\times 100\\%$. **Round-off error** is the error introduced by representing or storing numbers with a finite number of digits (a property of the arithmetic, unavoidable even with a perfect method). **Truncation error** is the error introduced by approximating an exact, often infinite or continuous, mathematical process with a finite one — such as stopping a Taylor series after finitely many terms, or replacing a derivative or integral with a finite-difference formula (a property of the method, present even with infinite-precision arithmetic).",
+      "deep_explanation": "The single most common mistake in this topic is treating \"error\" as one thing. It is at least four different things, and GATE questions are built specifically to test whether you can tell them apart.\n\n**Absolute vs. relative error — same absolute error, different story.** Suppose a measurement is off by $1$ unit in both of these cases: (a) true value $1000$, approximate $999$; (b) true value $2$, approximate $1$. The absolute error is $1$ in both — identical. But the relative error is $1/1000 = 0.1\\%$ in case (a) and $1/2 = 50\\%$ in case (b). The first approximation is excellent; the second is nearly worthless. Absolute error alone tells you nothing about quality — you have to divide by the scale of the quantity to know whether an error is small or catastrophic. This is exactly why GATE almost always asks for relative or percentage error when comparing the accuracy of two different computations.\n\n**Round-off vs. truncation — different causes, different fixes.** Round-off error comes from the computer (or a person) storing a number with finitely many digits — it exists no matter how good your formula is, purely because $\\frac{1}{3}$ cannot be written exactly in finite decimal. Truncation error comes from the mathematical METHOD itself being an approximation — it exists even on a machine with infinite precision, because you are deliberately stopping an infinite process early.\n\nSee both at once in the forward-difference derivative approximation $f'(x) \\approx \\dfrac{f(x+h)-f(x)}{h}$. Taylor's theorem gives $f(x+h) = f(x) + hf'(x) + \\frac{h^2}{2}f''(x) + \\cdots$, so\n$$\\frac{f(x+h)-f(x)}{h} = f'(x) + \\frac{h}{2}f''(x) + O(h^2).$$\nThe leading error term $\\frac{h}{2}f''(x)$ is **truncation error** — it shrinks as $h \\to 0$, because a smaller step makes the linear (tangent-line) approximation of $f$ more faithful. But shrinking $h$ has a second effect: the computer now evaluates $f(x+h) - f(x)$, the difference of two numbers that are almost equal, and any round-off in each of them becomes a much larger fraction of their (tiny) difference. So round-off error GROWS as $h \\to 0$, exactly opposite to truncation error. Total error is U-shaped in $h$: too large an $h$ is dominated by truncation error, too small an $h$ is dominated by round-off, and the best choice sits in between.\n\n**Round-off amplification in one concrete subtraction.** Suppose $p = 1.00003$ and $q = 1.00000$ are each stored correctly to $5$ decimal places, so each carries a rounding error of at most $\\pm 0.000005$. The true difference is $p - q = 0.00003$, but the COMPUTED difference can range as low as $(1.00003 - 0.000005) - (1.00000 + 0.000005) = 0.00002$ and as high as $0.00004$ — a swing of $\\pm 0.00001$ around a true value of only $0.00003$. That is a relative error of up to $0.00001/0.00003 = 33\\%$, even though each individual input was accurate to a relative error of about $0.0005\\%$. Subtracting two nearly-equal, individually well-rounded numbers can turn a negligible round-off error into a huge one — this is called catastrophic cancellation, and it is the reason numerical methods avoid subtracting close quantities wherever an equivalent, cancellation-free formula exists.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "The true value of a quantity is $x_t = 250$ and a computed approximation gives $x_a = 245$. Find the absolute error, relative error, and percentage error.",
+          "solution": "$$E_a = |x_t - x_a| = |250 - 245| = 5.$$\n$$E_r = \\frac{E_a}{|x_t|} = \\frac{5}{250} = 0.02.$$\n$$\\text{Percentage error} = 0.02 \\times 100\\% = 2\\%.$$",
+          "answer": "Absolute error $= 5$, relative error $= 0.02$, percentage error $= 2\\%$"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Round $x = 0.0284951$ to 3 significant figures and find the absolute error introduced by rounding.",
+          "solution": "Leading zeros are not significant, so the significant digits are $2, 8, 4, 9, 5, 1$. Keeping the first 3 ($2, 8, 4$) means looking at the next digit, $9$, to round: since $9 \\geq 5$, the third significant digit rounds up from $4$ to $5$, giving\n$$x_{\\text{rounded}} = 0.0285.$$\n\nAbsolute error: $|0.0284951 - 0.0285| = |-0.0000049| = 0.0000049 = 4.9 \\times 10^{-6}$.\n\n(As a check, the relative error is $4.9\\times10^{-6}/0.0284951 \\approx 1.72\\times10^{-4}$, about $0.017\\%$ — small, as expected for a correctly-rounded 3-significant-figure value.)",
+          "answer": "$x_{\\text{rounded}} = 0.0285$, absolute error $\\approx 4.9\\times10^{-6}$"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Treating absolute error and relative error as interchangeable",
+          "corrective": "Absolute error carries the same units and scale as the quantity itself, so it says nothing on its own about how good an approximation is. An absolute error of $1$ is excellent for a quantity near $1000$ and terrible for a quantity near $2$. Always check which one a question is actually asking for before reporting a number."
+        },
+        {
+          "id": "mc-02",
+          "description": "Assuming a smaller step size $h$ always makes a numerical result more accurate",
+          "corrective": "Shrinking $h$ only reduces truncation error. It simultaneously increases round-off error, because the computation ends up subtracting numbers that are closer and closer together (catastrophic cancellation). Total error versus $h$ is U-shaped, not monotonically decreasing — pushing $h$ too small can make a numerical derivative or integral WORSE, not better."
+        },
+        {
+          "id": "mc-03",
+          "description": "Calling every numerical inaccuracy \"round-off error\"",
+          "corrective": "Round-off error comes specifically from finite-precision representation of numbers — it exists purely because of storage, independent of the algorithm's design. Truncation error comes from approximating an infinite or continuous mathematical process (a series, a derivative, an integral) with a finite one — it exists even under perfect infinite-precision arithmetic. A coarse step size or too few Taylor terms is a truncation problem; a machine that can't store $1/3$ exactly is a round-off problem. The two often show up together, but they have different causes and different fixes."
+        }
+      ],
+      "prerequisite_reminders": [],
+      "exam_tip": "**Why it matters in GATE MA:** every other numerical-methods topic (root finding, interpolation, integration, ODEs) is graded on how well it controls error, so this topic's vocabulary is assumed fluency for the rest of the section, not tested in isolation only.\n\nGATE tests numerical error analysis in three main forms: (1) **Direct computation** — given a true and an approximate value, compute absolute, relative, or percentage error (1 mark, straightforward substitution, but a frequent source of careless sign or scale errors); (2) **Classification** — given a scenario (finite-precision storage vs. a truncated series or step-based formula), identify whether the dominant error is round-off or truncation (1 mark, conceptual); (3) **Significant-figure rounding** — round a value to $n$ significant figures and reason about the resulting error (1–2 marks). Watch for questions that describe shrinking a step size $h$ and ask what happens to total error — the trap answer is \"it always decreases\"; the correct reasoning invokes the truncation/round-off trade-off.",
+      "generated_at": "2026-08-26T12:34:11.847Z",
       "model": "hand-authored"
     }
   }

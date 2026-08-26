@@ -27,6 +27,7 @@ import {
   requireRecordId,
   sortRowsById,
   collectionLockKey,
+  MIRROR_LOCK_TIMEOUT_MS,
 } from '../../../storage/repositories/durable-store-repo';
 import {
   logPracticeSession,
@@ -226,5 +227,34 @@ describe('collectionLockKey', () => {
       expect(k).toBeGreaterThanOrEqual(0n);
       expect(k).toBeLessThanOrEqual(0x7fffffffffffffffn);
     }
+  });
+});
+
+/**
+ * The advisory lock has to be bounded.
+ *
+ * `pg_advisory_xact_lock` blocks indefinitely by default. The shared pool caps
+ * its connections and nothing in this codebase sets a statement_timeout, so an
+ * indefinite wait would hold a connection open and, with enough queued mirrors,
+ * starve the pool for everything else — trading a deadlock that failed loudly
+ * for a stall that does not.
+ *
+ * `lock_timeout` makes the wait give up and fail that one mirror instead, which
+ * is already the contract: mirroring is best-effort, the local write has
+ * succeeded, and each mirror rewrites the whole collection so the next one
+ * supersedes any that was dropped.
+ */
+describe('mirror lock timeout', () => {
+  it('is bounded, so a stuck mirror cannot hold a pool connection forever', () => {
+    expect(MIRROR_LOCK_TIMEOUT_MS).toBeGreaterThan(0);
+    expect(Number.isFinite(MIRROR_LOCK_TIMEOUT_MS)).toBe(true);
+  });
+
+  it('allows longer than a mirror should ever need, and far less than forever', () => {
+    // The transaction body is INSERTs plus one DELETE — no external I/O — so
+    // waiting seconds means stuck, not busy. Wide bounds on purpose: this pins
+    // the ORDER of magnitude, not a number someone must keep in sync.
+    expect(MIRROR_LOCK_TIMEOUT_MS).toBeGreaterThanOrEqual(1000);
+    expect(MIRROR_LOCK_TIMEOUT_MS).toBeLessThanOrEqual(30_000);
   });
 });

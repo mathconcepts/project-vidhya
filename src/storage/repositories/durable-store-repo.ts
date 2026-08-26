@@ -191,6 +191,12 @@ export function requireRecordId(collection: string, id: unknown): string {
 }
 
 /**
+ * How long a mirror waits for another mirror of the same collection before
+ * giving up. See the SET LOCAL below for why this is bounded at all.
+ */
+export const MIRROR_LOCK_TIMEOUT_MS = 5000;
+
+/**
  * Advisory-lock key for a collection. Postgres advisory keys are bigints, so
  * the collection name is hashed into one deterministically — same collection,
  * same key, in every process. FNV-1a truncated to 63 bits (signed bigint),
@@ -277,6 +283,20 @@ class PgSharedStore<T> implements SharedStore<T> {
       //
       // Different collections hash to different keys and still mirror
       // concurrently.
+      //
+      // Bounded, because pg_advisory_xact_lock blocks indefinitely by default.
+      // The shared pool caps at SHARED_POOL_MAX connections and nothing sets a
+      // statement_timeout, so an indefinite wait would hold a connection and,
+      // with enough queued mirrors, could starve the pool for everything else.
+      // The transaction body is only INSERTs and one DELETE, so a wait this
+      // long means something is genuinely stuck rather than merely busy.
+      //
+      // lock_timeout turns that into a failed mirror instead: this one rolls
+      // back, logs, and releases its connection. That is already the contract
+      // — mirroring is best-effort and the local write has succeeded — and
+      // dropping one is harmless because each mirror rewrites the whole
+      // collection, so the next supersedes it entirely.
+      await client.query(`SET LOCAL lock_timeout = '${MIRROR_LOCK_TIMEOUT_MS}ms'`);
       await client.query('SELECT pg_advisory_xact_lock($1::BIGINT)', [
         collectionLockKey(this.spec.collection).toString(),
       ]);

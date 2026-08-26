@@ -2141,6 +2141,10 @@
       "correct_answer": "A",
       "explanation": "Chebyshev's inequality: P(|X - μ| ≥ kσ) ≤ 1/k²\n\nFor k = 3:\nP(|X - μ| ≥ 3σ) ≤ 1/3² = 1/9\n\nThis means at most 1/9 ≈ 11.1% of values lie more than 3 standard deviations from the mean — for ANY distribution.\n\nChebyshev is distribution-free (works for any RV with finite mean and variance).\n\nFor comparison, if X ~ Normal:\nP(|X - μ| ≥ 3σ) ≈ 0.003 (0.3%) — much tighter than 1/9.\n\nChebyshev gives a conservative bound, not a tight one.",
       "topic": "probability-statistics",
+      "concept_id": "random-variables",
+      "concept_ids": [
+        "random-variables"
+      ],
       "difficulty": 0.5,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4148,6 +4152,10 @@
       "correct_answer": "B",
       "explanation": "This is a standard limit. By L'Hôpital's rule or Taylor series:\nsin x = x - x³/6 + ... so (sin x)/x = 1 - x²/6 + ... → 1 as x → 0.",
       "topic": "calculus",
+      "concept_id": "limits",
+      "concept_ids": [
+        "limits"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4168,6 +4176,10 @@
       "correct_answer": "A",
       "explanation": "Integration by parts: u = x, dv = eˣdx.\n∫x·eˣdx = x·eˣ - ∫eˣdx = x·eˣ - eˣ + C = eˣ(x-1) + C.\nEvaluating: [eˣ(x-1)]₀¹ = e¹(0) - e⁰(-1) = 0 + 1 = 1.",
       "topic": "calculus",
+      "concept_id": "integration-by-parts",
+      "concept_ids": [
+        "integration-by-parts"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4188,6 +4200,10 @@
       "correct_answer": "A",
       "explanation": "f'(x) = 3x² - 12x + 9 = 3(x-1)(x-3) = 0 → x = 1, 3.\nf''(x) = 6x - 12. At x = 1: f''(1) = -6 < 0 → local maximum.\nAt x = 3: f''(3) = 6 > 0 → local minimum.",
       "topic": "calculus",
+      "concept_id": "maxima-minima",
+      "concept_ids": [
+        "maxima-minima"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4208,6 +4224,10 @@
       "correct_answer": "B",
       "explanation": "eˣ = Σ(xⁿ/n!) = 1 + x + x²/2! + x³/3! + ...\nUp to x²: eˣ ≈ 1 + x + x²/2.",
       "topic": "calculus",
+      "concept_id": "series",
+      "concept_ids": [
+        "series"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4228,6 +4248,10 @@
       "correct_answer": "A",
       "explanation": "Intersection: x² = x → x(x-1) = 0 → x = 0, 1.\nArea = ∫₀¹ (x - x²) dx = [x²/2 - x³/3]₀¹ = 1/2 - 1/3 = 1/6.",
       "topic": "calculus",
+      "concept_id": "definite-integrals",
+      "concept_ids": [
+        "definite-integrals"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4248,6 +4272,10 @@
       "correct_answer": "A",
       "explanation": "This is a first-order linear ODE. Integrating factor: μ = e^(∫1dx) = eˣ.\nMultiplying: d/dx(yeˣ) = e²ˣ.\nIntegrating: yeˣ = e²ˣ/2 + C → y = eˣ/2 + Ce⁻ˣ.",
       "topic": "differential-equations",
+      "concept_id": "ode-first-order",
+      "concept_ids": [
+        "ode-first-order"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4288,6 +4316,10 @@
       "correct_answer": "A",
       "explanation": "Characteristic equation: m² - 4 = 0 → m = ±2.\nTwo distinct real roots → y = C₁e²ˣ + C₂e⁻²ˣ.",
       "topic": "differential-equations",
+      "concept_id": "ode-second-order-homo",
+      "concept_ids": [
+        "ode-second-order-homo"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4308,6 +4340,10 @@
       "correct_answer": "A",
       "explanation": "Rewrite: dy/dx = y/x. Or: (y dx - x dy) = 0 → d(y/x) = (x dy - y dx)/x².\nMultiplying by 1/x²: (x dy - y dx)/x² = d(y/x) = 0.\nSo 1/x² is the integrating factor.",
       "topic": "differential-equations",
+      "concept_id": "ode-exact",
+      "concept_ids": [
+        "ode-exact"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4328,6 +4364,10 @@
       "correct_answer": "A",
       "explanation": "y'' + y = sin x. Since sin x is already a solution of the homogeneous equation (m² + 1 = 0, m = ±i),\nPI = x × Im[e^(ix)/(2i)] = x × Im[e^(ix)/(2i)] = -x cos x / 2.",
       "topic": "differential-equations",
+      "concept_id": "ode-second-order-nonhomo",
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4348,6 +4388,10 @@
       "correct_answer": "A",
       "explanation": "|3 + 4i| = √(3² + 4²) = √(9 + 16) = √25 = 5.",
       "topic": "complex-variables",
+      "concept_id": "complex-numbers",
+      "concept_ids": [
+        "complex-numbers"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4368,6 +4412,10 @@
       "correct_answer": "A",
       "explanation": "The Cauchy-Riemann equations for f(z) = u(x,y) + iv(x,y) to be analytic:\n∂u/∂x = ∂v/∂y and ∂u/∂y = -∂v/∂x.",
       "topic": "complex-variables",
+      "concept_id": "analytic-functions",
+      "concept_ids": [
+        "analytic-functions"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4388,6 +4436,10 @@
       "correct_answer": "A",
       "explanation": "z = 0 is a pole of order 2. Residue = lim(z→0) d/dz [z² × 1/(z²(z-1))]\n= lim(z→0) d/dz [1/(z-1)] = lim(z→0) [-1/(z-1)²] = -1.",
       "topic": "complex-variables",
+      "concept_id": "residue-calculus",
+      "concept_ids": [
+        "residue-calculus"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4408,6 +4460,10 @@
       "correct_answer": "A",
       "explanation": "z = 2 lies inside |z| = 3. By Cauchy's integral formula:\n∮ dz/(z-a) = 2πi when a is inside C.\nHere a = 2, so the integral = 2πi.",
       "topic": "complex-variables",
+      "concept_id": "complex-integration",
+      "concept_ids": [
+        "complex-integration"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4428,6 +4484,10 @@
       "correct_answer": "B",
       "explanation": "f(z) = |z|² = x² + y². So u = x² + y², v = 0.\nC-R equations: ∂u/∂x = 2x = ∂v/∂y = 0 → only at x = 0.\n∂u/∂y = 2y = -∂v/∂x = 0 → only at y = 0.\nAnalytic only at z = 0.",
       "topic": "complex-variables",
+      "concept_id": "analytic-functions",
+      "concept_ids": [
+        "analytic-functions"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4448,6 +4508,10 @@
       "correct_answer": "A",
       "explanation": "For a standard normal distribution N(0,1), the distribution is symmetric about 0.\nP(X > 0) = P(X < 0) = 0.5.",
       "topic": "probability-statistics",
+      "concept_id": "continuous-distributions",
+      "concept_ids": [
+        "continuous-distributions"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4468,6 +4532,10 @@
       "correct_answer": "A",
       "explanation": "Favorable outcomes for sum 7: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6.\nTotal outcomes = 36. P(sum=7) = 6/36 = 1/6.",
       "topic": "probability-statistics",
+      "concept_id": "probability-basics",
+      "concept_ids": [
+        "probability-basics"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4488,6 +4556,10 @@
       "correct_answer": "A",
       "explanation": "Var(X) = E(X²) - [E(X)]² = 8 - 4 = 4.",
       "topic": "probability-statistics",
+      "concept_id": "random-variables",
+      "concept_ids": [
+        "random-variables"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4508,6 +4580,10 @@
       "correct_answer": "A",
       "explanation": "P(X = k) = e⁻λ · λᵏ / k!\nP(X = 0) = e⁻³ · 3⁰ / 0! = e⁻³ ≈ 0.0498.",
       "topic": "probability-statistics",
+      "concept_id": "discrete-distributions",
+      "concept_ids": [
+        "discrete-distributions"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4528,6 +4604,10 @@
       "correct_answer": "A",
       "explanation": "The Pearson correlation coefficient is always bounded: -1 ≤ r ≤ 1.\nr = 1 means perfect positive linear correlation, r = -1 means perfect negative.",
       "topic": "probability-statistics",
+      "concept_id": "regression-correlation",
+      "concept_ids": [
+        "regression-correlation"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4548,6 +4628,10 @@
       "correct_answer": "A",
       "explanation": "To find √N, solve f(x) = x² - N = 0. f'(x) = 2x.\nNewton-Raphson: xₙ₊₁ = xₙ - f(xₙ)/f'(xₙ) = xₙ - (xₙ²-N)/(2xₙ)\n= (2xₙ² - xₙ² + N)/(2xₙ) = (xₙ + N/xₙ)/2.\nNote: Options A and D are equivalent.",
       "topic": "calculus",
+      "concept_id": "root-finding",
+      "concept_ids": [
+        "root-finding"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4568,6 +4652,10 @@
       "correct_answer": "B",
       "explanation": "Newton-Raphson method has quadratic convergence (order 2) when the root is simple\nand f'(r) ≠ 0. Error at step n+1: eₙ₊₁ ≈ C·eₙ².",
       "topic": "calculus",
+      "concept_id": "root-finding",
+      "concept_ids": [
+        "root-finding"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4588,6 +4676,10 @@
       "correct_answer": "A",
       "explanation": "Simpson's 1/3 rule uses parabolic approximation over pairs of intervals.\nEach application requires 2 intervals, so total n must be even.",
       "topic": "calculus",
+      "concept_id": "numerical-integration",
+      "concept_ids": [
+        "numerical-integration"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4608,6 +4700,10 @@
       "correct_answer": "C",
       "explanation": "h = 1, x₀ = 0, x₁ = 1, x₂ = 2.\nf(0) = 0, f(1) = 1, f(2) = 4.\nTrapezoidal: (h/2)[f(0) + 2f(1) + f(2)] = (1/2)[0 + 2 + 4] = 3.\nWait — recalculating: (h/2)[f(x₀) + 2f(x₁) + f(x₂)] = (1/2)(0 + 2·1 + 4) = 3.\nBut actual = 8/3 ≈ 2.67. The trapezoidal approximation gives 3.\nHmm, the answer should be 4 for two separate trapezoids: (1/2)(0+1)·1 + (1/2)(1+4)·1 = 0.5 + 2.5 = 3.\nCorrecting: composite trapezoidal = (h/2)[f(0) + 2f(1) + f(2)] = 0.5(0 + 2 + 4) = 3. The answer is 3.",
       "topic": "calculus",
+      "concept_id": "numerical-integration",
+      "concept_ids": [
+        "numerical-integration"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4628,6 +4724,10 @@
       "correct_answer": "A",
       "explanation": "After n iterations, error ≤ (b-a)/2ⁿ. For error ≤ ε:\n(b-a)/2ⁿ ≤ ε → 2ⁿ ≥ (b-a)/ε → n ≥ log₂((b-a)/ε).",
       "topic": "calculus",
+      "concept_id": "root-finding",
+      "concept_ids": [
+        "root-finding"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4648,6 +4748,10 @@
       "correct_answer": "A",
       "explanation": "L{e⁻ᵃᵗ} = ∫₀^∞ e⁻ᵃᵗ·e⁻ˢᵗ dt = ∫₀^∞ e⁻⁽ˢ⁺ᵃ⁾ᵗ dt = 1/(s+a), for s > -a.",
       "topic": "transform-theory",
+      "concept_id": "laplace-transform",
+      "concept_ids": [
+        "laplace-transform"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4668,6 +4772,10 @@
       "correct_answer": "A",
       "explanation": "L{tⁿ·eᵃᵗ} = n!/(s-a)ⁿ⁺¹. For n=1: L{t·eᵃᵗ} = 1!/(s-a)² = 1/(s-a)².",
       "topic": "transform-theory",
+      "concept_id": "laplace-transform",
+      "concept_ids": [
+        "laplace-transform"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4688,6 +4796,10 @@
       "correct_answer": "A",
       "explanation": "L⁻¹{1/(s² + ω²)} = sin(ωt)/ω. Here ω = 2.\nL⁻¹{1/(s² + 4)} = sin(2t)/2.",
       "topic": "transform-theory",
+      "concept_id": "inverse-laplace",
+      "concept_ids": [
+        "inverse-laplace"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4708,6 +4820,10 @@
       "correct_answer": "A",
       "explanation": "The Fourier transform of rect(t/T) = T·sinc(fT), where sinc(x) = sin(πx)/(πx).\nThis is the fundamental time-frequency duality result.",
       "topic": "transform-theory",
+      "concept_id": "fourier-transform",
+      "concept_ids": [
+        "fourier-transform"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4728,6 +4844,10 @@
       "correct_answer": "A",
       "explanation": "This is the second shifting theorem (time-delay property):\nL{f(t-a)·u(t-a)} = e⁻ᵃˢ·F(s), where u(t) is the unit step function.",
       "topic": "transform-theory",
+      "concept_id": "laplace-transform",
+      "concept_ids": [
+        "laplace-transform"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4748,6 +4868,10 @@
       "correct_answer": "A",
       "explanation": "For complete graph Kₙ: edges = n(n-1)/2 = 6×5/2 = 15.",
       "topic": "discrete-mathematics",
+      "concept_id": "graph-basics",
+      "concept_ids": [
+        "graph-basics"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4768,6 +4892,10 @@
       "correct_answer": "A",
       "explanation": "Each element can be either included or excluded. Total subsets = 2ⁿ.\nThis includes the empty set and the set itself.",
       "topic": "discrete-mathematics",
+      "concept_id": "counting-principles",
+      "concept_ids": [
+        "counting-principles"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4788,6 +4916,10 @@
       "correct_answer": "B",
       "explanation": "By inclusion-exclusion:\n|A| = strings starting with 1 = 2⁷ = 128.\n|B| = strings ending with 00 = 2⁶ = 64.\n|A∩B| = start with 1 AND end with 00 = 2⁵ = 32.\n|A∪B| = 128 + 64 - 32 = 160.",
       "topic": "discrete-mathematics",
+      "concept_id": "counting-principles",
+      "concept_ids": [
+        "counting-principles"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4808,6 +4940,10 @@
       "correct_answer": "A",
       "explanation": "Any bipartite graph can be colored with 2 colors (one for each partition).\nK₃,₃ is bipartite, so χ(K₃,₃) = 2.",
       "topic": "discrete-mathematics",
+      "concept_id": "graph-coloring",
+      "concept_ids": [
+        "graph-coloring"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4828,6 +4964,10 @@
       "correct_answer": "A",
       "explanation": "aₙ = 2aₙ₋₁ = 2²aₙ₋₂ = ... = 2ⁿa₀ = 3·2ⁿ.",
       "topic": "discrete-mathematics",
+      "concept_id": "recurrence-relations",
+      "concept_ids": [
+        "recurrence-relations"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4848,6 +4988,10 @@
       "correct_answer": "A",
       "explanation": "A fundamental property of trees: a tree with n vertices always has exactly n-1 edges.\nAdding any edge creates a cycle; removing any edge disconnects the graph.",
       "topic": "graph-theory",
+      "concept_id": "trees",
+      "concept_ids": [
+        "trees"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4868,6 +5012,10 @@
       "correct_answer": "A",
       "explanation": "Euler's formula: V - E + F = 2, where V = vertices, E = edges, F = faces (including the outer face).\nValid for any connected planar graph.",
       "topic": "graph-theory",
+      "concept_id": "planar-graphs",
+      "concept_ids": [
+        "planar-graphs"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4888,6 +5036,10 @@
       "correct_answer": "A",
       "explanation": "For a simple connected planar graph: E ≤ 3V - 6.\nWith V = 8: E ≤ 3(8) - 6 = 18.",
       "topic": "graph-theory",
+      "concept_id": "planar-graphs",
+      "concept_ids": [
+        "planar-graphs"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4908,6 +5060,10 @@
       "correct_answer": "A",
       "explanation": "A connected graph has an Eulerian circuit (closed walk using every edge exactly once)\nif and only if every vertex has even degree. (Euler's theorem, 1736.)",
       "topic": "graph-theory",
+      "concept_id": "euler-hamilton",
+      "concept_ids": [
+        "euler-hamilton"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4928,6 +5084,10 @@
       "correct_answer": "A",
       "explanation": "By Cayley's formula: the number of labeled spanning trees of Kₙ = nⁿ⁻².\nFor K₄: 4⁴⁻² = 4² = 16.",
       "topic": "graph-theory",
+      "concept_id": "trees",
+      "concept_ids": [
+        "trees"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4948,6 +5108,10 @@
       "correct_answer": "A",
       "explanation": "div F = ∂Fx/∂x + ∂Fy/∂y + ∂Fz/∂z = 2x + 2y + 2z = 2(x + y + z).",
       "topic": "calculus",
+      "concept_id": "divergence-curl",
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -4968,6 +5132,10 @@
       "correct_answer": "A",
       "explanation": "∇φ = (∂φ/∂x)î + (∂φ/∂y)ĵ + (∂φ/∂z)k̂\n= 2xy·î + (x² + z²)ĵ + 2yz·k̂\nAt (1,1,1): = 2î + 2ĵ + 2k̂.",
       "topic": "calculus",
+      "concept_id": "vector-fields",
+      "concept_ids": [
+        "vector-fields"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -4988,6 +5156,10 @@
       "correct_answer": "A",
       "explanation": "curl(grad φ) = ∇ × (∇φ) = 0 for any twice-differentiable scalar field φ.\nThis is a fundamental vector identity.",
       "topic": "calculus",
+      "concept_id": "divergence-curl",
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -5008,6 +5180,10 @@
       "correct_answer": "A",
       "explanation": "Stokes' theorem: ∮_C F·dr = ∬_S (∇×F)·dS,\nwhere S is any surface bounded by the closed curve C.",
       "topic": "calculus",
+      "concept_id": "stokes-theorem",
+      "concept_ids": [
+        "stokes-theorem"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5028,6 +5204,10 @@
       "correct_answer": "A",
       "explanation": "∇²f = ∂²f/∂x² + ∂²f/∂y² + ∂²f/∂z² = 2 + 2 + 2 = 6.",
       "topic": "calculus",
+      "concept_id": "divergence-curl",
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "difficulty": 0.25,
       "marks": 1,
       "negative_marks": -0.33,
@@ -5122,6 +5302,10 @@
       "correct_answer": "A",
       "explanation": "Using Taylor series: sin x = x - x³/6 + ... So (sin x - x)/x³ = -x³/6 / x³ = -1/6.",
       "topic": "calculus",
+      "concept_id": "limits",
+      "concept_ids": [
+        "limits"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5142,6 +5326,10 @@
       "correct_answer": "A",
       "explanation": "Inner integral: ∫₀ˣ y dy = x²/2. Outer: ∫₀¹ x²/2 dx = [x³/6]₀¹ = 1/6.",
       "topic": "calculus",
+      "concept_id": "multiple-integrals",
+      "concept_ids": [
+        "multiple-integrals"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5162,6 +5350,10 @@
       "correct_answer": "A",
       "explanation": "Integrating factor μ = eˣ. d(yeˣ)/dx = e²ˣ. Integrate: yeˣ = e²ˣ/2 + C. So y = eˣ/2 + Ce⁻ˣ.",
       "topic": "differential-equations",
+      "concept_id": "ode-first-order",
+      "concept_ids": [
+        "ode-first-order"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5202,6 +5394,10 @@
       "correct_answer": "A",
       "explanation": "Since 2 is a root of the characteristic equation m² + 4 = 0, we use the formula for repeated case: PI = x sin 2x / 4.",
       "topic": "differential-equations",
+      "concept_id": "ode-second-order-nonhomo",
+      "concept_ids": [
+        "ode-second-order-nonhomo"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5222,6 +5418,10 @@
       "correct_answer": "A",
       "explanation": "Simple poles at z = ±i. Residue at z = i: lim(z→i)(z-i)·1/((z-i)(z+i)) = 1/(2i).",
       "topic": "complex-variables",
+      "concept_id": "residue-calculus",
+      "concept_ids": [
+        "residue-calculus"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5242,6 +5442,10 @@
       "correct_answer": "C",
       "explanation": "f(z) = x² + y². Check Cauchy-Riemann: ∂u/∂x = 2x = ∂v/∂y = 0 only if x = 0 and y = 0. So analytic only at origin.",
       "topic": "complex-variables",
+      "concept_id": "analytic-functions",
+      "concept_ids": [
+        "analytic-functions"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5262,6 +5466,10 @@
       "correct_answer": "A",
       "explanation": "z = 2 is inside |z| = 3. By Cauchy's integral formula: ∮ dz/(z-a) = 2πi for a inside C.",
       "topic": "complex-variables",
+      "concept_id": "complex-integration",
+      "concept_ids": [
+        "complex-integration"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5282,6 +5490,10 @@
       "correct_answer": "A",
       "explanation": "Pairs summing to 7: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6 outcomes. P = 6/36 = 1/6.",
       "topic": "probability-statistics",
+      "concept_id": "probability-basics",
+      "concept_ids": [
+        "probability-basics"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5302,6 +5514,10 @@
       "correct_answer": "A",
       "explanation": "P(X = k) = e⁻λ · λᵏ / k!. P(X=0) = e⁻² · 2⁰ / 0! = e⁻².",
       "topic": "probability-statistics",
+      "concept_id": "discrete-distributions",
+      "concept_ids": [
+        "discrete-distributions"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5322,6 +5538,10 @@
       "correct_answer": "A",
       "explanation": "Standard result: Mean = np, Variance = npq = np(1-p).",
       "topic": "probability-statistics",
+      "concept_id": "discrete-distributions",
+      "concept_ids": [
+        "discrete-distributions"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5342,6 +5562,10 @@
       "correct_answer": "A",
       "explanation": "The global truncation error for trapezoidal rule is O(h²) where h = (b-a)/n.",
       "topic": "calculus",
+      "concept_id": "numerical-integration",
+      "concept_ids": [
+        "numerical-integration"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5362,6 +5586,10 @@
       "correct_answer": "A",
       "explanation": "Gauss-Seidel is guaranteed to converge when the coefficient matrix is strictly diagonally dominant.",
       "topic": "calculus",
+      "concept_id": "numerical-linear-algebra",
+      "concept_ids": [
+        "numerical-linear-algebra"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5382,6 +5610,10 @@
       "correct_answer": "A",
       "explanation": "L{t·eᵃᵗ} = L{t} shifted by a: L{t} = 1/s², so L{t·eᵃᵗ} = 1/(s-a)².",
       "topic": "transform-theory",
+      "concept_id": "laplace-transform",
+      "concept_ids": [
+        "laplace-transform"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5402,6 +5634,10 @@
       "correct_answer": "A",
       "explanation": "The Fourier transform of rect(t/τ) is τ·sinc(fτ) = τ·sin(πfτ)/(πfτ). It is a sinc function.",
       "topic": "transform-theory",
+      "concept_id": "fourier-transform",
+      "concept_ids": [
+        "fourier-transform"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5422,6 +5658,10 @@
       "correct_answer": "A",
       "explanation": "This is the second shifting theorem (time delay property): L{f(t-a)·u(t-a)} = e⁻ᵃˢ·F(s).",
       "topic": "transform-theory",
+      "concept_id": "laplace-transform",
+      "concept_ids": [
+        "laplace-transform"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5442,6 +5682,10 @@
       "correct_answer": "A",
       "explanation": "Total functions = 2³ = 8. Non-onto (all to one element) = 2. Onto = 8 - 2 = 6.",
       "topic": "discrete-mathematics",
+      "concept_id": "functions-combinatorics",
+      "concept_ids": [
+        "functions-combinatorics"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5462,6 +5706,10 @@
       "correct_answer": "A",
       "explanation": "|M∪P| = 60 + 50 - 20 = 90. Neither = 100 - 90 = 10.",
       "topic": "discrete-mathematics",
+      "concept_id": "counting-principles",
+      "concept_ids": [
+        "counting-principles"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5482,6 +5730,10 @@
       "correct_answer": "A",
       "explanation": "In Kₙ every vertex connects to every other: n(n-1)/2 edges.",
       "topic": "graph-theory",
+      "concept_id": "graph-basics",
+      "concept_ids": [
+        "graph-basics"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5502,6 +5754,10 @@
       "correct_answer": "A",
       "explanation": "Eulerian graph: connected, all vertices even degree. Min even degree = 2. 5 vertices × degree 2 / 2 = 5 edges.",
       "topic": "graph-theory",
+      "concept_id": "euler-hamilton",
+      "concept_ids": [
+        "euler-hamilton"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5522,6 +5778,10 @@
       "correct_answer": "A",
       "explanation": "A tree with n vertices always has exactly n-1 edges. This is a fundamental property of trees.",
       "topic": "graph-theory",
+      "concept_id": "trees",
+      "concept_ids": [
+        "trees"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5542,6 +5802,10 @@
       "correct_answer": "A",
       "explanation": "div F = ∂(x²)/∂x + ∂(y²)/∂y + ∂(z²)/∂z = 2x + 2y + 2z. At (1,1,1): 2+2+2 = 6.",
       "topic": "calculus",
+      "concept_id": "divergence-curl",
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "difficulty": 0.25,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5562,6 +5826,10 @@
       "correct_answer": "A",
       "explanation": "curl F = (∂Fz/∂y - ∂Fy/∂z)î + (∂Fx/∂z - ∂Fz/∂x)ĵ + (∂Fy/∂x - ∂Fx/∂y)k̂ = 0î + 0ĵ + (-1-1)k̂ = -2k̂.",
       "topic": "calculus",
+      "concept_id": "divergence-curl",
+      "concept_ids": [
+        "divergence-curl"
+      ],
       "difficulty": 0.5,
       "marks": 2,
       "negative_marks": -0.67,
@@ -5582,6 +5850,10 @@
       "correct_answer": "A",
       "explanation": "Green's theorem: ∮(P dx + Q dy) = ∬(∂Q/∂x - ∂P/∂y) dA. Here P=y, Q=-x: ∂Q/∂x - ∂P/∂y = -1-1 = -2. So integral = -2A.",
       "topic": "calculus",
+      "concept_id": "greens-theorem",
+      "concept_ids": [
+        "greens-theorem"
+      ],
       "difficulty": 0.75,
       "marks": 2,
       "negative_marks": -0.67,

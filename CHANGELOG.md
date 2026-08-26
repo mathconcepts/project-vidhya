@@ -4,6 +4,137 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.36.0] — 2026-08-26 — Every topic walkable, and three silent failures that had been shipping
+
+**Operator action:** none. No new ENV vars, no new migrations. Migrations `003`,
+`005` and `006` are edited in place and are now genuinely idempotent — a boot
+against a database that already has these policies stops failing.
+
+v4.35.0 made all 26 Linear Algebra concepts walkable end to end. This release
+does the same for the other nine topics, and fixes three defects that had been
+failing quietly in every deploy for as long as they had existed. Each was
+invisible in the way that matters: the code reported success.
+
+### Every concept in the syllabus, all four legs
+
+| topic | concepts | explanation | interactive | practice | test |
+|---|---|---|---|---|---|
+| linear-algebra | 26 | 26/26 | 26/26 | 26/26 | 26/26 |
+| calculus | 19 | 19/19 | 19/19 | 19/19 | 13/19 (+6 not examined) |
+| probability-statistics | 9 | 9/9 | 9/9 | 9/9 | 8/9 (+1) |
+| differential-equations | 8 | 8/8 | 8/8 | 8/8 | 7/8 (+1) |
+| vector-calculus | 8 | 8/8 | 8/8 | 8/8 | 7/8 (+1) |
+| graph-theory | 7 | 7/7 | 7/7 | 7/7 | 5/7 (+2) |
+| complex-variables | 6 | 6/6 | 6/6 | 6/6 | 5/6 (+1) |
+| numerical-methods | 6 | 6/6 | 6/6 | 6/6 | 5/6 (+1) |
+| transform-theory | 6 | 6/6 | 6/6 | 6/6 | 5/6 (+1) |
+| discrete-mathematics | 6 | 6/6 | 6/6 | 6/6 | 5/6 (+1) |
+
+**101 concepts, 10 topics, 0 failing legs.** Measured by
+`npm run ci:la-walkthrough --topic=<id>`, not asserted.
+
+Getting there: 245 new practice items across eight banks (bank total **260 →
+505** items across 16 banks), the last explainer and interactive gaps closed,
+and the 71 past-exam questions that carried no concept mapping — and so could
+never be shown on any concept page — mapped to the concepts they actually test.
+All 241 questions in the shipped bank now carry one.
+
+Every answer key was derived twice by independent routes before its bank
+landed, with roughly 70 items re-derived by hand at the coordinating layer.
+Wolfram is still unreachable from this environment, so that third check is
+absent and is not claimed.
+
+### "Not examined" is now a property, not a gap
+
+Fifteen concepts are prerequisites that real papers assume rather than test —
+the chain rule appears inside a hundred questions and is the subject of none.
+Previously the test leg counted those as failures forever, which is a metric
+that can never reach 100% and therefore stops being read.
+
+`exam_tested: false` on the concept node states the fact. The walkthrough gate
+passes those concepts **without** a question but prints `— (not examined)`
+rather than `✓`, and reports the two counts separately (`test 13/19 (+6 not
+examined)`), so a flagged pass is never folded into the same number as a real
+one. A concept with a genuine gap still fails.
+
+`ode-classification` joins the graph as a real concept in its own right —
+classifying order, degree and linearity is a distinct skill, and filing it
+under the first-order solver it precedes was a modelling error.
+
+### Three things that were failing in every deploy
+
+**Migrations 003, 005 and 006 failed on every boot.** Postgres has no
+`CREATE POLICY IF NOT EXISTS`, and nine policy statements across those files
+had no guard. Each migration runs inside a transaction, so a single `42710
+policy already exists` rolled the whole file back — which meant the
+`_migrations` row was never written, so the next boot tried the same file
+again, and failed the same way. Permanently. Wrapped in the repo's own
+`duplicate_object` idiom (not `DROP POLICY IF EXISTS`, which would silently
+replace a policy that had drifted on the live database), with a test that
+fails on any future unguarded `CREATE POLICY`.
+
+**The bundle export was deleting most of the PYQ bank.** `scripts/export-bundles.ts`
+rebuilt the bank from a topic-file scan whenever it could not reach a database.
+That scan produces 164 of the 241 committed questions. Both Dockerfiles run
+this script in the builder stage and neither declares `DATABASE_URL` as a build
+ARG — so every image ever shipped carried the truncated bank, and the concept
+mappings above would never have reached a student. It reported success with a
+tick each time.
+
+Now: no database, no write (the committed bank *is* the DB-less bundle, not a
+cache of one). Database unreachable, no write. Database present, a write that
+would drop any committed question id is refused by name — identity compared,
+not counts, because a rebuild that swaps thirty questions for thirty others
+keeps the total identical while losing all thirty.
+
+**Every `gif-scene` block renders.** Seven had been failing silently, which
+looks exactly like an atom that never had an animation. Three scene types were
+added to cover what those blocks actually needed — `parametric-curve`,
+`level-set` (implicit plots, two expressions) and `discrete-bars` (literal
+values, no expression evaluation at all, for distributions and recurrences) —
+and two unplottable blocks were deleted rather than faked, keeping their prose.
+Renders went **66 / 28 skipped / 6 failed → 70 / 30 / 0**, and
+`known_broken_scenes` in the baseline is empty for the first time.
+
+The `positive-definite-matrices` animation was byte-identical to
+`quadratic-forms` — not a bug, a consequence of degree-2 homogeneity making the
+level sets scale-invariant. It now contrasts a bowl against a saddle, which is
+the thing the atom is about.
+
+### The playbook gate was worse than absent
+
+`ci:playbook-convention` existed, ran nowhere, and failed on twelve scripts for
+anyone who ran it by hand — teaching people the check was broken rather than
+that the code was. Six of the twelve were never bulk operations and are
+allowlisted. The other six genuinely are and are recorded in
+`src/playbooks/owed-playbook-baseline.json` **with the reason each is still
+open**, because a playbook's estimator quotes real money to an operator and
+inventing those numbers would be worse than the debt. The gate now runs in CI,
+blocks a new unregistered bulk script, and prints the six owed ones every run.
+
+Kept deliberately separate from `non-bulk-allowlist.json`: that file asserts
+"this is not a bulk operation", and filing `content:generate` there would
+assert something false that the next reader would believe.
+
+### The instrument is the gate
+
+`ci:la-walkthrough` took a `--topic=` flag rather than growing a second
+hand-written checker per topic. The four legs were never Linear-Algebra
+specific; only the constant was. The Linear Algebra claim is trustworthy
+because it was measured mechanically, and the nine new topics are trustworthy
+for the same reason.
+
+| | Before | After |
+|---|---|---|
+| Concepts with a complete 4-leg walkthrough | 26 | **101** |
+| Practice items in the shipped banks | 260 | **505** |
+| Past-exam questions carrying a concept mapping | 170 of 241 | **241 of 241** |
+| `gif-scene` blocks that fail to render | 7 | **0** |
+| Migrations failing on every boot | 3 | **0** |
+| Questions lost by a routine bundle rebuild | 77 | **0** |
+| CI gates | 14 | **15** |
+| Backend tests | 3,400 | **3,640** (302 files) |
+
 ## [4.35.0] — 2026-08-18 — Every Linear Algebra concept, walkable end to end
 
 **Operator action:** migration `048` applies automatically on boot. No new ENV

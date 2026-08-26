@@ -25,7 +25,7 @@ The power: you don't climb day-by-day each time; you jump straight to day 30 usi
 
 ```gif-scene
 {
-  "type": "sequence-build",
+  "type": "discrete-bars",
   "values": [500, 850, 1375, 2162.5, 3343.75],
   "formula": "a_n = 1.5*a_{n-1} + 100",
   "labels": ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"]

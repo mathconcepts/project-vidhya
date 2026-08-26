@@ -1,0 +1,1068 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the nine",
+    "probability-statistics concepts: counting principles, probability basics,",
+    "random variables, discrete distributions, continuous distributions, joint",
+    "distributions, hypothesis testing, regression & correlation, and sampling",
+    "distributions.",
+    "",
+    "Every item was solved by hand, TWICE, via genuinely independent methods",
+    "before its key was written (e.g. a Bayes-theorem posterior computed via",
+    "the formula AND cross-checked against a natural-frequency table; a",
+    "correlation coefficient computed via the deviation-score formula AND the",
+    "raw-score computational formula; a hypergeometric probability computed via",
+    "the combinatorial formula AND via ordered sequential draws). Numbers were",
+    "deliberately chosen small and clean so both derivations stay hand-checkable",
+    "— no Wolfram Alpha or other CAS was available in this authoring session.",
+    "",
+    "Shape mirrors gate-ma-la-eigen.json exactly (same AuthoredItem schema",
+    "consumed by FileLearningObjectCatalog / GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-counting-principles-001",
+      "concept_id": "counting-principles",
+      "topic": "probability-statistics",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A committee of 3 people is to be chosen from a group of 7 people. In how many ways can this be done?",
+      "options": [
+        "35",
+        "210",
+        "21",
+        "84"
+      ],
+      "answer_index": 0,
+      "correct_answer": "35",
+      "solution_steps": [
+        "Order does not matter when choosing a committee, so use combinations: C(7,3) = 7!/(3!·4!) = (7·6·5)/(3·2·1) = 210/6 = 35.",
+        "Cross-check via the symmetry identity C(n,k) = C(n,n-k): C(7,3) should equal C(7,4). Compute C(7,4) directly: 7!/(4!·3!) = (7·6·5·4)/(4·3·2·1) = 840/24 = 35. Matches exactly.",
+        "Trap: '210' is 7·6·5 (a permutation count, forgetting to divide by 3! for unordered selection). '21' is C(7,2), the wrong committee size. '84' is C(9,3), an unrelated slip."
+      ],
+      "verification_method": "combination_symmetry_C(n,k)=C(n,n-k)"
+    },
+    {
+      "id": "pi-counting-principles-002",
+      "concept_id": "counting-principles",
+      "topic": "probability-statistics",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "How many distinct ways can the letters of the word LEVEL be arranged?",
+      "answer_range": [
+        29.85,
+        30.15
+      ],
+      "correct_answer": "30",
+      "solution_steps": [
+        "LEVEL has 5 letters: L appears twice, E appears twice, V appears once. Distinct arrangements = 5!/(2!·2!·1!) = 120/4 = 30.",
+        "Cross-check via sequential position choice: choose 2 of the 5 positions for L: C(5,2) = 10. From the remaining 3 positions, choose 2 for E: C(3,2) = 3. The last position is forced for V: C(1,1) = 1. Total = 10·3·1 = 30. Matches the multinomial formula exactly."
+      ],
+      "verification_method": "hand_checkable_multinomial_vs_sequential_choice"
+    },
+    {
+      "id": "pi-counting-principles-003",
+      "concept_id": "counting-principles",
+      "topic": "probability-statistics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "There are 12 months in a year. What is the minimum number of people needed in a room to GUARANTEE that at least 3 of them were born in the same month?",
+      "options": [
+        "25",
+        "24",
+        "36",
+        "13"
+      ],
+      "answer_index": 0,
+      "correct_answer": "25",
+      "solution_steps": [
+        "Pigeonhole formula: to guarantee m objects in some pigeonhole with k holes, the minimum number of objects needed is k·(m-1) + 1. Here k=12 holes (months), m=3: 12·2 + 1 = 25.",
+        "Cross-check via worst-case construction: the adversary spreads people as evenly as possible while avoiding any month reaching 3 — that means at most 2 people per month, i.e. 2·12 = 24 people with no month having 3. The very next (25th) person must push some month to 3, since only 12 months exist. This matches the formula exactly.",
+        "Trap: '24' forgets the final +1 (24 people can still avoid a triple, as shown above). '36' wrongly uses 3·12 instead of 2·12+1. '13' confuses this with the classic 'guarantee at least 2 share a birth month' pigeonhole problem (12+1=13), which needs only 2 pigeonholes' worth of margin, not 3."
+      ],
+      "verification_method": "pigeonhole_formula_vs_worst_case_construction"
+    },
+    {
+      "id": "pi-counting-principles-004",
+      "concept_id": "counting-principles",
+      "topic": "probability-statistics",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about counting principles are TRUE?",
+      "options": [
+        "The number of ways to arrange n distinct objects in a circle is (n-1)!",
+        "The number of r-permutations of n distinct objects is P(n,r) = n!/(n-r)!",
+        "C(n,r) = C(n, n-r) for all valid r",
+        "The number of ways to choose r objects from n distinct objects WITH repetition allowed (order irrelevant) is C(n,r)",
+        "By the pigeonhole principle, if n+1 objects are placed into n boxes, at least one box contains at least 2 objects"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "correct_answer": "Circular arrangements = (n-1)!; P(n,r) = n!/(n-r)!; C(n,r)=C(n,n-r); pigeonhole with n+1 objects in n boxes",
+      "solution_steps": [
+        "(a) TRUE: fixing one object's position to remove rotational duplicates leaves (n-1)! arrangements of the rest — the standard circular-permutation result.",
+        "(b) TRUE: P(n,r) = n!/(n-r)! is the definition of an ordered selection of r from n.",
+        "(c) TRUE: choosing r objects to include is equivalent to choosing the n-r objects to exclude, so C(n,r) = C(n,n-r).",
+        "(d) FALSE: selection WITH repetition, order irrelevant, uses the 'stars and bars' formula C(n+r-1, r), not C(n,r) — e.g. choosing 2 scoops from 3 flavors with repeats allowed gives C(4,2)=6 ways, not C(3,2)=3.",
+        "(e) TRUE: this is the basic pigeonhole principle — n+1 objects cannot all fit one-per-box into only n boxes."
+      ],
+      "verification_method": "hand_checkable_counting_definitions"
+    },
+    {
+      "id": "pi-counting-principles-005",
+      "concept_id": "counting-principles",
+      "topic": "probability-statistics",
+      "difficulty": 0.75,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "4 boys and 3 girls are to be arranged in a row such that no two girls are adjacent. In how many ways can this be done?",
+      "answer_range": [
+        1432.8,
+        1447.2
+      ],
+      "correct_answer": "1440",
+      "solution_steps": [
+        "Gap method: first arrange the 4 boys in a row: 4! = 24 ways. This creates 5 gaps (before, between, and after the boys) where girls can go without being adjacent to each other. Choose 3 of these 5 gaps and arrange the 3 distinct girls in them: P(5,3) = 5·4·3 = 60. Total = 24·60 = 1440.",
+        "Cross-check via the non-adjacent-position formula: the number of ways to pick 3 non-adjacent positions out of 7 in a row is C(7-3+1, 3) = C(5,3) = 10. Arrange the 3 girls in the chosen positions: 3! = 6. Arrange the 4 boys in the remaining 4 positions: 4! = 24. Total = 10·6·24 = 1440. Matches exactly."
+      ],
+      "verification_method": "gap_method_vs_nonadjacent_position_formula"
+    },
+    {
+      "id": "pi-probability-basics-001",
+      "concept_id": "probability-basics",
+      "topic": "probability-statistics",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A fair six-sided die is rolled once. What is the probability of rolling a number greater than 4?",
+      "options": [
+        "1/3",
+        "1/2",
+        "2/3",
+        "1/6"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1/3",
+      "solution_steps": [
+        "Numbers greater than 4 on a die: {5, 6} — 2 favorable outcomes out of 6 equally likely outcomes. P = 2/6 = 1/3.",
+        "Cross-check via the complement rule: P(X ≤ 4) = 4/6 = 2/3 (outcomes 1,2,3,4), so P(X > 4) = 1 - 2/3 = 1/3. Matches.",
+        "Trap: '1/2' comes from including 4 itself in the 'greater than 4' count (treating it as ≥4). '2/3' is the complement, picked by mistake. '1/6' only counts rolling a 6."
+      ],
+      "verification_method": "direct_count_vs_complement_rule"
+    },
+    {
+      "id": "pi-probability-basics-002",
+      "concept_id": "probability-basics",
+      "topic": "probability-statistics",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A box contains 5 red and 3 blue balls (8 total). Two balls are drawn without replacement. Given that the first ball drawn is red, what is the probability that the second ball is also red?",
+      "options": [
+        "4/7",
+        "5/7",
+        "4/8",
+        "5/8"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4/7",
+      "solution_steps": [
+        "After one red ball is removed, 4 red and 3 blue balls remain, 7 total. So P(2nd red | 1st red) = 4/7.",
+        "Cross-check via the definition P(2nd red | 1st red) = P(both red) / P(1st red). P(1st red) = 5/8. P(both red) = (5/8)·(4/7) = 20/56 = 5/14. Dividing: (5/14) / (5/8) = (5/14)·(8/5) = 8/14 = 4/7. Matches.",
+        "Trap: '5/7' forgets to reduce the red count after removing one red ball (only reduces the total). '4/8' reduces the red count but forgets to reduce the total. '5/8' is the unconditional probability of red on the first draw, ignoring the conditioning entirely."
+      ],
+      "verification_method": "conditional_reasoning_vs_joint_probability_definition"
+    },
+    {
+      "id": "pi-probability-basics-003",
+      "concept_id": "probability-basics",
+      "topic": "probability-statistics",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A disease affects 2% of a population. A diagnostic test has a 95% true positive rate (sensitivity) and a 90% true negative rate (specificity). If a random person tests positive, what is the probability that they actually have the disease? Give the answer as a decimal to 3 significant figures.",
+      "answer_range": [
+        0.152,
+        0.172
+      ],
+      "correct_answer": "0.162",
+      "solution_steps": [
+        "Bayes' theorem: P(D) = 0.02, P(pos|D) = 0.95, P(not D) = 0.98, P(pos|not D) = 1 - 0.90 = 0.10 (false positive rate).",
+        "P(pos) = P(pos|D)P(D) + P(pos|not D)P(not D) = 0.95·0.02 + 0.10·0.98 = 0.019 + 0.098 = 0.117.",
+        "P(D|pos) = P(pos|D)P(D) / P(pos) = 0.019 / 0.117 ≈ 0.1624 ≈ 0.162.",
+        "Cross-check via a natural-frequency table over 100,000 people: 2,000 diseased, 98,000 not diseased. True positives = 0.95·2,000 = 1,900. False positives = 0.10·98,000 = 9,800. Total positives = 1,900 + 9,800 = 11,700. P(D|pos) = 1,900/11,700 ≈ 0.1624. Matches the Bayes computation exactly."
+      ],
+      "verification_method": "bayes_formula_vs_natural_frequency_table"
+    },
+    {
+      "id": "pi-probability-basics-004",
+      "concept_id": "probability-basics",
+      "topic": "probability-statistics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Events A and B are independent, with P(A) = 0.4 and P(B) = 0.5. What is P(A ∪ B)?",
+      "options": [
+        "0.7",
+        "0.9",
+        "0.2",
+        "0.5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.7",
+      "solution_steps": [
+        "For independent events, P(A∩B) = P(A)P(B) = 0.4·0.5 = 0.2. By inclusion-exclusion: P(A∪B) = P(A) + P(B) - P(A∩B) = 0.4 + 0.5 - 0.2 = 0.7.",
+        "Cross-check via De Morgan + independence of complements: P(A'∩B') = P(A')P(B') = 0.6·0.5 = 0.3 (complements of independent events are independent). So P(A∪B) = 1 - P(A'∩B') = 1 - 0.3 = 0.7. Matches.",
+        "Trap: '0.9' just adds P(A)+P(B) and forgets to subtract the overlap. '0.2' is P(A∩B) mistaken for the answer. '0.5' matches neither event's probability meaningfully — an arithmetic slip."
+      ],
+      "verification_method": "inclusion_exclusion_vs_complement_of_intersection"
+    },
+    {
+      "id": "pi-probability-basics-005",
+      "concept_id": "probability-basics",
+      "topic": "probability-statistics",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about probability are TRUE for events A and B in a sample space, with P(A) > 0 and P(B) > 0?",
+      "options": [
+        "If A and B are mutually exclusive, they cannot also be independent",
+        "P(A ∩ B) ≤ min(P(A), P(B)) always holds",
+        "If P(A|B) = P(A), then A and B are independent",
+        "P(A ∪ B) can never exceed 1",
+        "If A ⊆ B, then P(A) ≥ P(B)"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "Mutually exclusive with positive probabilities cannot be independent; P(A∩B)≤min(P(A),P(B)); P(A|B)=P(A) means independent; P(A∪B)≤1",
+      "solution_steps": [
+        "(a) TRUE: mutually exclusive means P(A∩B)=0, but independence requires P(A∩B)=P(A)P(B)>0 (since both probabilities are positive) — these contradict, so the events cannot be both.",
+        "(b) TRUE: A∩B is a subset of both A and B, and probability is monotone on subsets, so P(A∩B) ≤ P(A) and P(A∩B) ≤ P(B), hence P(A∩B) ≤ min(P(A),P(B)).",
+        "(c) TRUE: P(A|B)=P(A) means P(A∩B)/P(B)=P(A), i.e. P(A∩B)=P(A)P(B), which is exactly the definition of independence.",
+        "(d) TRUE: probability is bounded by the axiom P(any event) ≤ 1, and A∪B is itself an event.",
+        "(e) FALSE: if A ⊆ B then A occurring forces B to occur, so B is 'easier' to satisfy — probability is monotone increasing on supersets, meaning P(A) ≤ P(B), not ≥."
+      ],
+      "verification_method": "hand_checkable_axiom_definitions"
+    },
+    {
+      "id": "pi-random-variables-001",
+      "concept_id": "random-variables",
+      "topic": "probability-statistics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A discrete random variable X takes values 1, 2, 3 with probabilities 0.2, 0.3, 0.5 respectively. Find E[X].",
+      "options": [
+        "2.3",
+        "2.0",
+        "2.5",
+        "1.9"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2.3",
+      "solution_steps": [
+        "E[X] = 1(0.2) + 2(0.3) + 3(0.5) = 0.2 + 0.6 + 1.5 = 2.3.",
+        "Cross-check via the shift trick: let Y = 3 - X, so Y takes values 2, 1, 0 with the SAME probabilities 0.2, 0.3, 0.5. E[Y] = 2(0.2) + 1(0.3) + 0(0.5) = 0.4 + 0.3 + 0 = 0.7. Since E[Y] = 3 - E[X], E[X] = 3 - 0.7 = 2.3. Matches."
+      ],
+      "verification_method": "direct_weighted_sum_vs_shift_trick"
+    },
+    {
+      "id": "pi-random-variables-002",
+      "concept_id": "random-variables",
+      "topic": "probability-statistics",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "For the discrete random variable X taking values 1, 2, 3 with probabilities 0.2, 0.3, 0.5, find Var(X).",
+      "answer_range": [
+        0.6,
+        0.62
+      ],
+      "correct_answer": "0.61",
+      "solution_steps": [
+        "E[X] = 2.3 (computed directly: 1(0.2)+2(0.3)+3(0.5)=2.3). E[X²] = 1²(0.2)+2²(0.3)+3²(0.5) = 0.2+1.2+4.5 = 5.9. Var(X) = E[X²] - (E[X])² = 5.9 - 5.29 = 0.61.",
+        "Cross-check via the definitional formula Var(X) = Σ p_i(x_i - E[X])²: 0.2(1-2.3)² + 0.3(2-2.3)² + 0.5(3-2.3)² = 0.2(1.69) + 0.3(0.09) + 0.5(0.49) = 0.338 + 0.027 + 0.245 = 0.61. Matches exactly."
+      ],
+      "verification_method": "moment_formula_vs_definitional_deviation_sum"
+    },
+    {
+      "id": "pi-random-variables-003",
+      "concept_id": "random-variables",
+      "topic": "probability-statistics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A continuous random variable X has PDF f(x) = c·x for 0 ≤ x ≤ 4, and f(x) = 0 otherwise. Find c.",
+      "options": [
+        "1/8",
+        "1/4",
+        "1/16",
+        "1/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1/8",
+      "solution_steps": [
+        "Normalization requires ∫₀⁴ c·x dx = 1. ∫₀⁴ c·x dx = c[x²/2]₀⁴ = c(16/2) = 8c. So 8c = 1, giving c = 1/8.",
+        "Cross-check geometrically: f(x) = cx over [0,4] is a triangle with base 4 and height f(4) = 4c, so its area is (1/2)(4)(4c) = 8c. Setting this area equal to 1 (total probability) gives the same equation 8c = 1, so c = 1/8. Matches."
+      ],
+      "verification_method": "integral_normalization_vs_triangle_area"
+    },
+    {
+      "id": "pi-random-variables-004",
+      "concept_id": "random-variables",
+      "topic": "probability-statistics",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For the PDF f(x) = x/8 on 0 ≤ x ≤ 4 (0 otherwise), find P(1 ≤ X ≤ 3).",
+      "options": [
+        "1/2",
+        "1/4",
+        "3/8",
+        "5/8"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1/2",
+      "solution_steps": [
+        "CDF: F(x) = ∫₀ˣ (t/8) dt = x²/16. P(1≤X≤3) = F(3) - F(1) = 9/16 - 1/16 = 8/16 = 1/2.",
+        "Cross-check via the trapezoid rule (exact for a linear PDF like f(x)=x/8): area under a straight line from x=1 to x=3 equals width × average height = 2 × [(f(1)+f(3))/2] = 2 × [(1/8 + 3/8)/2] = 2 × (4/8)/2 = 2 × 0.25 = 0.5 = 1/2. Matches — the trapezoid formula is exact whenever the function is linear, giving an independent geometric confirmation."
+      ],
+      "verification_method": "cdf_difference_vs_trapezoid_rule"
+    },
+    {
+      "id": "pi-random-variables-005",
+      "concept_id": "random-variables",
+      "topic": "probability-statistics",
+      "difficulty": 0.75,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about a random variable X are ALWAYS true?",
+      "options": [
+        "Var(aX + b) = a²Var(X) for constants a, b",
+        "E[aX + b] = aE[X] + b for constants a, b",
+        "The CDF F(x) is a non-decreasing function of x",
+        "Var(X) = E[X²] - (E[X])² can be negative for some random variables",
+        "If X and Y are independent, Var(X+Y) = Var(X) + Var(Y)"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "correct_answer": "Var(aX+b)=a²Var(X); E[aX+b]=aE[X]+b; CDF is non-decreasing; independent Var(X+Y)=Var(X)+Var(Y)",
+      "solution_steps": [
+        "(a) TRUE: shifting by b doesn't change spread, and scaling by a scales the spread by |a|, so variance (a squared quantity) scales by a².",
+        "(b) TRUE: expectation is linear, so E[aX+b] = aE[X] + b directly from the definition of expectation as a weighted sum/integral.",
+        "(c) TRUE: F(x) = P(X≤x), and enlarging x can only include more outcomes in the event, so F cannot decrease.",
+        "(d) FALSE: Var(X) = E[(X-E[X])²] is an expectation of a squared (hence non-negative) quantity, so Var(X) ≥ 0 always — meaning E[X²] - (E[X])² can never be negative.",
+        "(e) TRUE: for independent X, Y, the covariance term vanishes in Var(X+Y) = Var(X)+Var(Y)+2Cov(X,Y), leaving Var(X)+Var(Y)."
+      ],
+      "verification_method": "hand_checkable_expectation_variance_properties"
+    },
+    {
+      "id": "pi-discrete-distributions-001",
+      "concept_id": "discrete-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A fair coin is tossed 5 times. What is the probability of getting exactly 3 heads?",
+      "options": [
+        "5/16",
+        "1/32",
+        "3/5",
+        "15/16"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5/16",
+      "solution_steps": [
+        "Binomial PMF: P(X=3) = C(5,3)·(0.5)³·(0.5)² = 10·(0.5)⁵ = 10/32 = 5/16.",
+        "Cross-check via direct enumeration: total equally likely outcomes = 2⁵ = 32. Number of outcomes with exactly 3 heads (choose which 3 of the 5 tosses are heads) = C(5,3) = 10. P = 10/32 = 5/16. Matches.",
+        "Trap: '1/32' is p^k·q^(n-k) alone, forgetting the combinatorial factor C(5,3). '3/5' naively treats the answer as the fraction of tosses that were heads. '15/16' is an unrelated overcount."
+      ],
+      "verification_method": "binomial_pmf_vs_outcome_enumeration"
+    },
+    {
+      "id": "pi-discrete-distributions-002",
+      "concept_id": "discrete-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "The number of typos on a page follows a Poisson distribution with mean λ=2. Find the probability of exactly 0 typos on a page, to 4 decimal places.",
+      "answer_range": [
+        0.1253,
+        0.1453
+      ],
+      "correct_answer": "0.1353",
+      "solution_steps": [
+        "Poisson PMF: P(X=0) = e^{-λ}·λ⁰/0! = e^{-2} ≈ 0.1353 (using e ≈ 2.71828, e² ≈ 7.3891, so e^{-2} = 1/7.3891 ≈ 0.13534).",
+        "Cross-check via the Taylor series e^{-2} = Σ (-2)ⁿ/n! = 1 - 2 + 2 - 4/3 + 2/3 - 4/15 + 4/45 - ... Partial sums: 1, -1, 1, -0.333, 0.333, 0.067, 0.156, 0.130, 0.137, 0.135, 0.1354, ... converging to ≈0.1353. Matches the closed-form computation."
+      ],
+      "verification_method": "poisson_pmf_vs_exponential_series_expansion"
+    },
+    {
+      "id": "pi-discrete-distributions-003",
+      "concept_id": "discrete-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A basketball player makes free throws independently with probability 0.6 on each attempt. What is the probability that her FIRST made free throw occurs on the 3rd attempt?",
+      "options": [
+        "0.096",
+        "0.36",
+        "0.216",
+        "0.6"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.096",
+      "solution_steps": [
+        "Geometric PMF: P(X=k) = (1-p)^{k-1}·p. Here p=0.6, k=3: P(X=3) = (0.4)²·(0.6) = 0.16·0.6 = 0.096.",
+        "Cross-check via direct sequence enumeration: the required outcome is Miss, Miss, Make in that exact order — P = 0.4 × 0.4 × 0.6 = 0.096. Matches.",
+        "Trap: '0.36' = (0.6)², confusing success and failure roles. '0.216' = (0.6)³, wrongly using the success probability for all 3 attempts. '0.6' ignores the two required misses entirely."
+      ],
+      "verification_method": "geometric_formula_vs_direct_sequence_enumeration"
+    },
+    {
+      "id": "pi-discrete-distributions-004",
+      "concept_id": "discrete-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A box has 10 items, of which 4 are defective. If 3 items are drawn without replacement, what is the probability that exactly 2 are defective?",
+      "options": [
+        "3/10",
+        "2/5",
+        "1/5",
+        "9/20"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3/10",
+      "solution_steps": [
+        "Hypergeometric PMF: P = C(4,2)·C(6,1) / C(10,3) = (6·6)/120 = 36/120 = 3/10.",
+        "Cross-check via sequential (ordered) draws: the probability of one specific order with exactly 2 defective and 1 good, e.g. D,D,G, is (4/10)(3/9)(6/8) = 72/720 = 0.1. There are C(3,2)=3 orders in which exactly 2 of the 3 draws are defective (DDG, DGD, GDD), each with probability 0.1 by symmetry. Total = 3 × 0.1 = 0.3 = 3/10. Matches."
+      ],
+      "verification_method": "hypergeometric_formula_vs_sequential_draw_probability"
+    },
+    {
+      "id": "pi-discrete-distributions-005",
+      "concept_id": "discrete-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.75,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about discrete probability distributions are TRUE?",
+      "options": [
+        "For X ~ Binomial(n,p), Mean = np and Variance = np(1-p)",
+        "For X ~ Poisson(λ), Mean = Variance = λ",
+        "For a Geometric distribution counting trials until the first success (success probability p), Mean = 1/p",
+        "As n→∞ and p→0 with np=λ held constant, Binomial(n,p) approaches Poisson(λ)",
+        "A Hypergeometric distribution assumes sampling WITH replacement"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "Binomial mean/variance formulas; Poisson mean=variance=λ; Geometric mean=1/p; Binomial→Poisson limit",
+      "solution_steps": [
+        "(a) TRUE: standard Binomial moments, derivable by summing n iid Bernoulli(p) trials — mean np, variance np(1-p) since Bernoulli variance is p(1-p) and variances of independent sums add.",
+        "(b) TRUE: a defining feature of the Poisson distribution is that its mean and variance both equal λ.",
+        "(c) TRUE: for the 'number of trials until first success' geometric distribution, E[X] = 1/p — a standard result (e.g. p=0.5 gives mean 2 trials, matching intuition).",
+        "(d) TRUE: this is the Poisson limit theorem — a Binomial with many trials and small per-trial probability, holding np fixed, converges to Poisson(λ).",
+        "(e) FALSE: the Hypergeometric distribution is specifically defined for sampling WITHOUT replacement from a finite population — that is exactly what distinguishes it from the Binomial."
+      ],
+      "verification_method": "hand_checkable_distribution_property_facts"
+    },
+    {
+      "id": "pi-continuous-distributions-001",
+      "concept_id": "continuous-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "X ~ Uniform(2, 10). Find P(4 ≤ X ≤ 7).",
+      "options": [
+        "3/8",
+        "1/2",
+        "5/8",
+        "3/10"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3/8",
+      "solution_steps": [
+        "For a Uniform(a,b) distribution, probability over a sub-interval equals (sub-interval length)/(total length). Here total length = 10-2 = 8, and the interval [4,7] has length 3. P = 3/8.",
+        "Cross-check by partitioning the whole range [2,10] into [2,4), [4,7], (7,10] with lengths 2, 3, 3, and confirming total probability sums to 1: P[2,4)=2/8, P(7,10]=3/8, so together with the middle piece: 2/8 + P(middle) + 3/8 = 1, giving P(middle) = 1 - 5/8 = 3/8. Matches."
+      ],
+      "verification_method": "length_ratio_vs_total_probability_partition"
+    },
+    {
+      "id": "pi-continuous-distributions-002",
+      "concept_id": "continuous-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "The lifetime of a component (in years) follows an Exponential distribution with rate λ=0.5. Find P(X > 3), to 4 decimal places.",
+      "answer_range": [
+        0.2131,
+        0.2331
+      ],
+      "correct_answer": "0.2231",
+      "solution_steps": [
+        "Exponential survival function: P(X>x) = e^{-λx}. Here λ=0.5, x=3: P(X>3) = e^{-1.5} ≈ 0.2231.",
+        "Cross-check by factoring the exponent: e^{1.5} = e¹ · e^{0.5} = e · √e ≈ 2.71828 × 1.64872 ≈ 4.4817. So e^{-1.5} = 1/4.4817 ≈ 0.2231. Matches the direct computation."
+      ],
+      "verification_method": "survival_formula_vs_factored_exponent_computation"
+    },
+    {
+      "id": "pi-continuous-distributions-003",
+      "concept_id": "continuous-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "X ~ N(50, 100) (mean 50, variance 100, so σ=10). Using the empirical rule, approximately what is P(30 < X < 70)?",
+      "options": [
+        "≈95%",
+        "≈68%",
+        "≈99.7%",
+        "≈50%"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈95%",
+      "solution_steps": [
+        "30 and 70 are exactly μ±2σ = 50±20 (since σ=10). The empirical (68-95-99.7) rule says about 95% of a Normal distribution's probability lies within 2 standard deviations of the mean.",
+        "Cross-check via standard normal z-scores: z₁=(30-50)/10=-2, z₂=(70-50)/10=2, so this is P(-2<Z<2) = 2Φ(2)-1. Using the known table value Φ(2)≈0.9772: 2(0.9772)-1 = 0.9544 ≈ 95.4%. Matches the empirical rule's ≈95% closely."
+      ],
+      "verification_method": "empirical_rule_vs_standard_normal_z_scores"
+    },
+    {
+      "id": "pi-continuous-distributions-004",
+      "concept_id": "continuous-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "X₁, X₂, X₃ are independent Exponential(λ) random variables. What distribution does Y = X₁+X₂+X₃ follow?",
+      "options": [
+        "Gamma(shape=3, rate=λ)",
+        "Exponential(3λ)",
+        "Normal(3/λ, 3/λ²)",
+        "Uniform(0, 3/λ)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Gamma(shape=3, rate=λ)",
+      "solution_steps": [
+        "The MGF of Exponential(λ) is M(t) = λ/(λ-t). For the sum of 3 independent copies, the MGF multiplies: [λ/(λ-t)]³, which is exactly the MGF of a Gamma(shape=3, rate=λ) distribution (the Erlang distribution).",
+        "Cross-check via mean and variance matching: E[Xᵢ]=1/λ, Var(Xᵢ)=1/λ². So E[Y]=3/λ and Var(Y)=3/λ² (variances add for independent sums). Gamma(k=3,λ) has mean k/λ=3/λ and variance k/λ²=3/λ² — matches exactly, confirming the identification via a completely different route (moments, not MGFs)."
+      ],
+      "verification_method": "mgf_product_vs_mean_variance_matching"
+    },
+    {
+      "id": "pi-continuous-distributions-005",
+      "concept_id": "continuous-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about continuous distributions are TRUE?",
+      "options": [
+        "For a continuous random variable, P(X=x) = 0 for any specific value x",
+        "The Exponential distribution has the memoryless property: P(X>s+t | X>s) = P(X>t)",
+        "For a Normal distribution, mean = median = mode",
+        "For X ~ Uniform(a,b), Var(X) = (b-a)²/12",
+        "A Gamma(shape=1, rate=λ) distribution is the same as a Normal distribution with the same mean"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "P(X=x)=0 for continuous X; exponential is memoryless; Normal mean=median=mode; Uniform variance=(b-a)²/12",
+      "solution_steps": [
+        "(a) TRUE: for a continuous distribution, probability is area under the density curve, and a single point has zero width, hence zero area/probability.",
+        "(b) TRUE: this is the defining memoryless property of the exponential distribution, unique among continuous distributions.",
+        "(c) TRUE: the Normal density is symmetric and unimodal about its mean, so mean, median, and mode all coincide.",
+        "(d) TRUE: standard result, derivable from ∫ₐᵇ (x-mean)²/(b-a) dx = (b-a)²/12.",
+        "(e) FALSE: Gamma(shape=1, rate=λ) is exactly the Exponential(λ) distribution (a well-known special case), not a Normal distribution — their shapes are entirely different (skewed and supported on x≥0, vs. symmetric and supported on all reals)."
+      ],
+      "verification_method": "hand_checkable_continuous_distribution_facts"
+    },
+    {
+      "id": "pi-joint-distributions-001",
+      "concept_id": "joint-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Two discrete random variables X, Y (each taking values 1 or 2) have joint PMF given by the table: P(X=1,Y=1)=0.1, P(X=1,Y=2)=0.2, P(X=2,Y=1)=0.3, P(X=2,Y=2)=0.4. Find the marginal probability P(X=2).",
+      "options": [
+        "0.7",
+        "0.6",
+        "0.4",
+        "0.5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.7",
+      "solution_steps": [
+        "Marginal P(X=2) = P(X=2,Y=1) + P(X=2,Y=2) = 0.3 + 0.4 = 0.7.",
+        "Cross-check via the complement: all four cells sum to 1 (0.1+0.2+0.3+0.4=1.0, confirming a valid joint PMF). P(X=1) = 0.1+0.2 = 0.3, so P(X=2) = 1 - P(X=1) = 1 - 0.3 = 0.7. Matches."
+      ],
+      "verification_method": "row_sum_vs_complement_of_other_marginal"
+    },
+    {
+      "id": "pi-joint-distributions-002",
+      "concept_id": "joint-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Two discrete random variables X, Y (each taking values 1 or 2) have joint PMF given by the table: P(X=1,Y=1)=0.1, P(X=1,Y=2)=0.2, P(X=2,Y=1)=0.3, P(X=2,Y=2)=0.4. Find the conditional probability P(Y=2 | X=2).",
+      "options": [
+        "4/7",
+        "0.4",
+        "3/7",
+        "0.7"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4/7",
+      "solution_steps": [
+        "P(Y=2|X=2) = P(X=2,Y=2)/P(X=2) = 0.4/0.7 = 4/7.",
+        "Cross-check: within the X=2 row, the conditional probabilities must sum to 1. P(Y=1|X=2) = 0.3/0.7 = 3/7. Indeed 4/7 + 3/7 = 1, confirming 4/7 is consistent with a valid conditional distribution."
+      ],
+      "verification_method": "conditional_definition_vs_row_normalization_check"
+    },
+    {
+      "id": "pi-joint-distributions-003",
+      "concept_id": "joint-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Two discrete random variables X, Y (each taking values 1 or 2) have joint PMF given by the table: P(X=1,Y=1)=0.1, P(X=1,Y=2)=0.2, P(X=2,Y=1)=0.3, P(X=2,Y=2)=0.4. Are X and Y independent?",
+      "options": [
+        "No — P(X=1,Y=1)=0.1 but P(X=1)P(Y=1)=0.3×0.4=0.12, which do not match",
+        "Yes — the marginals multiply correctly for every cell in the table",
+        "No — because the joint table has unequal probabilities across cells",
+        "Yes — because the row sums differ from the column sums"
+      ],
+      "answer_index": 0,
+      "correct_answer": "No — P(X=1,Y=1)=0.1 but P(X=1)P(Y=1)=0.3×0.4=0.12, which do not match",
+      "solution_steps": [
+        "P(X=1)=0.3, P(Y=1)=P(X=1,Y=1)+P(X=2,Y=1)=0.1+0.3=0.4. Product P(X=1)P(Y=1)=0.3×0.4=0.12, but the actual joint value P(X=1,Y=1)=0.1. Since these don't match, X and Y are NOT independent (independence requires every cell to match; one mismatch is enough to disprove it).",
+        "Cross-check with a second cell: P(X=2)=0.7, P(Y=2)=0.2+0.4=0.6, product=0.42, but the actual joint value P(X=2,Y=2)=0.4≠0.42 — a second, independent confirmation that independence fails."
+      ],
+      "verification_method": "single_cell_check_vs_second_cell_check"
+    },
+    {
+      "id": "pi-joint-distributions-004",
+      "concept_id": "joint-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Two discrete random variables X, Y (each taking values 1 or 2) have joint PMF given by the table: P(X=1,Y=1)=0.1, P(X=1,Y=2)=0.2, P(X=2,Y=1)=0.3, P(X=2,Y=2)=0.4. Find Cov(X,Y), treating X and Y as taking the numeric values 1 and 2.",
+      "answer_range": [
+        -0.03,
+        -0.01
+      ],
+      "correct_answer": "-0.02",
+      "solution_steps": [
+        "E[X] = 1(0.3)+2(0.7) = 0.3+1.4 = 1.7. E[Y] = 1(0.4)+2(0.6) = 0.4+1.2 = 1.6. E[XY] = (1)(1)(0.1)+(1)(2)(0.2)+(2)(1)(0.3)+(2)(2)(0.4) = 0.1+0.4+0.6+1.6 = 2.7. Cov(X,Y) = E[XY]-E[X]E[Y] = 2.7 - (1.7)(1.6) = 2.7 - 2.72 = -0.02.",
+        "Cross-check via the definitional deviation-product sum Σ(x-E[X])(y-E[Y])p(x,y): deviations are x=1→-0.7, x=2→0.3, y=1→-0.6, y=2→0.4. Terms: (-0.7)(-0.6)(0.1)=0.042, (-0.7)(0.4)(0.2)=-0.056, (0.3)(-0.6)(0.3)=-0.054, (0.3)(0.4)(0.4)=0.048. Sum = 0.042-0.056-0.054+0.048 = -0.02. Matches exactly."
+      ],
+      "verification_method": "moment_shortcut_vs_definitional_deviation_sum"
+    },
+    {
+      "id": "pi-joint-distributions-005",
+      "concept_id": "joint-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about joint distributions of two random variables X, Y are TRUE?",
+      "options": [
+        "If X and Y are independent, then Cov(X,Y) = 0",
+        "If Cov(X,Y) = 0, then X and Y must be independent",
+        "The marginal PMF of X is obtained by summing the joint PMF over all values of Y",
+        "Var(X+Y) = Var(X) + Var(Y) + 2Cov(X,Y), always",
+        "If X and Y are independent, Var(X+Y) = Var(X) + Var(Y)"
+      ],
+      "answer_indices": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "correct_answer": "Independence implies zero covariance; marginal by summing joint over Y; Var(X+Y) formula with covariance; independent Var(X+Y)=sum of variances",
+      "solution_steps": [
+        "(a) TRUE: independence means E[XY]=E[X]E[Y], and Cov(X,Y)=E[XY]-E[X]E[Y]=0 follows directly.",
+        "(b) FALSE: zero covariance only rules out LINEAR dependence — variables can be uncorrelated yet still dependent through a nonlinear relationship (e.g. X symmetric about 0 and Y=X² are dependent but have Cov(X,Y)=0).",
+        "(c) TRUE: this is the definition of marginalization — summing (or integrating) the joint distribution over the other variable's values.",
+        "(d) TRUE: this is the general variance-of-a-sum identity, derivable by expanding Var(X+Y)=E[(X+Y-E[X]-E[Y])²].",
+        "(e) TRUE: a direct consequence of (a) and (d) — independence zeroes the covariance term, leaving Var(X)+Var(Y)."
+      ],
+      "verification_method": "hand_checkable_joint_distribution_facts"
+    },
+    {
+      "id": "pi-hypothesis-testing-001",
+      "concept_id": "hypothesis-testing",
+      "topic": "probability-statistics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "In hypothesis testing, a Type I error occurs when:",
+      "options": [
+        "The null hypothesis is rejected when it is actually true",
+        "The null hypothesis is accepted when it is actually false",
+        "The null hypothesis is rejected when it is actually false",
+        "The alternative hypothesis is rejected when it is actually true"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The null hypothesis is rejected when it is actually true",
+      "solution_steps": [
+        "By definition, α = P(Type I error) = P(reject H0 | H0 is true) — a Type I error is a false rejection of a true null hypothesis.",
+        "Cross-check via the complementary definition: Type II error β = P(fail to reject H0 | H0 is false), which is a DIFFERENT event described in option (b) — this confirms (b) is the Type II error, not Type I, and (a) correctly names the Type I error by elimination as well as by direct definition."
+      ],
+      "verification_method": "definitional_cross_check_against_type_II"
+    },
+    {
+      "id": "pi-hypothesis-testing-002",
+      "concept_id": "hypothesis-testing",
+      "topic": "probability-statistics",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A sample of n=64 has known population standard deviation σ=8. Using z=1.96 for a 95% confidence interval, find the margin of error z·σ/√n.",
+      "answer_range": [
+        1.95,
+        1.97
+      ],
+      "correct_answer": "1.96",
+      "solution_steps": [
+        "Margin of error = z·σ/√n = 1.96 · 8/√64 = 1.96 · 8/8 = 1.96 · 1 = 1.96.",
+        "Cross-check the square root: 8×8=64, so √64=8 is confirmed independently by squaring back. With σ/√n = 8/8 = 1 verified this way, the margin of error is simply 1.96×1 = 1.96, matching the direct computation."
+      ],
+      "verification_method": "direct_formula_vs_variance_route_sqrt_check"
+    },
+    {
+      "id": "pi-hypothesis-testing-003",
+      "concept_id": "hypothesis-testing",
+      "topic": "probability-statistics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A hypothesis test yields a p-value of 0.03. At significance level α=0.05, what is the correct conclusion?",
+      "options": [
+        "Reject the null hypothesis, since p-value < α",
+        "Fail to reject the null hypothesis, since p-value < α",
+        "Reject the null hypothesis, since p-value > α",
+        "Accept the null hypothesis as proven true"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Reject the null hypothesis, since p-value < α",
+      "solution_steps": [
+        "Decision rule: reject H0 if p-value < α. Here 0.03 < 0.05, so H0 is rejected.",
+        "Cross-check via the meaning of a p-value: it is the probability of observing data this extreme (or more) if H0 were true. A p-value smaller than α (0.03 < 0.05) means the observed data would be unusually rare under H0, which is exactly the evidence needed to reject it. Note also that hypothesis testing never 'proves' H0 true even when not rejected, ruling out the last option on principle."
+      ],
+      "verification_method": "decision_rule_vs_pvalue_definition_reasoning"
+    },
+    {
+      "id": "pi-hypothesis-testing-004",
+      "concept_id": "hypothesis-testing",
+      "topic": "probability-statistics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "If the significance level α of a hypothesis test is increased (holding sample size fixed), what happens to the probability of a Type II error, β?",
+      "options": [
+        "β decreases (power increases)",
+        "β increases (power decreases)",
+        "β stays exactly the same",
+        "β becomes exactly 0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "β decreases (power increases)",
+      "solution_steps": [
+        "Increasing α enlarges the rejection region. A larger rejection region captures more of the sampling distribution under the alternative hypothesis, so the chance of failing to reject when H0 is false (β) goes down — i.e., power (1-β) goes up.",
+        "Cross-check via boundary cases: as α→1 (always reject), β→0 (never fail to reject a false H0). As α→0 (never reject), β→1 (always fail to reject, even when H0 is false). Both boundary cases confirm the same inverse relationship between α and β — increasing α decreases β."
+      ],
+      "verification_method": "region_argument_vs_boundary_case_check"
+    },
+    {
+      "id": "pi-hypothesis-testing-005",
+      "concept_id": "hypothesis-testing",
+      "topic": "probability-statistics",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about hypothesis testing are TRUE?",
+      "options": [
+        "A smaller p-value provides stronger evidence against the null hypothesis",
+        "Increasing the sample size (holding effect size and α fixed) generally decreases β (increases power)",
+        "A 95% confidence interval means there is a 95% probability that the true population parameter lies within this ONE particular computed interval",
+        "The significance level α is the probability of a Type I error, chosen by the researcher before the test",
+        "Failing to reject the null hypothesis proves that the null hypothesis is true"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Smaller p-value = stronger evidence against H0; larger n generally decreases β; α is the pre-chosen Type I error probability",
+      "solution_steps": [
+        "(a) TRUE: a smaller p-value means the observed data is more extreme under H0, i.e. stronger evidence against it.",
+        "(b) TRUE: more data sharpens the sampling distribution, making it easier to distinguish the alternative from the null, which reduces β.",
+        "(c) FALSE — classic misinterpretation: the 95% is the long-run coverage of the PROCEDURE across repeated sampling. A specific already-computed interval either does or does not contain the (fixed, unknown) parameter — there is no probability left to state about this one interval.",
+        "(d) TRUE: α is set by the researcher in advance as the tolerated Type I error rate.",
+        "(e) FALSE: failing to reject H0 only means insufficient evidence against it was found — it never proves H0 true."
+      ],
+      "verification_method": "hand_checkable_hypothesis_testing_facts"
+    },
+    {
+      "id": "pi-regression-correlation-001",
+      "concept_id": "regression-correlation",
+      "topic": "probability-statistics",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "For the paired data (X,Y): (1,2), (2,1), (3,3), find the Pearson correlation coefficient r between X and Y.",
+      "answer_range": [
+        0.49,
+        0.51
+      ],
+      "correct_answer": "0.5",
+      "solution_steps": [
+        "Means: x̄=2, ȳ=2. Deviations: x: -1,0,1; y: 0,-1,1. Sxy = (-1)(0)+(0)(-1)+(1)(1) = 1. Sxx = 1+0+1 = 2. Syy = 0+1+1 = 2. r = Sxy/√(Sxx·Syy) = 1/√4 = 1/2 = 0.5.",
+        "Cross-check via the raw-score computational formula: n=3, Σx=6, Σy=6, Σxy=(1)(2)+(2)(1)+(3)(3)=2+2+9=13, Σx²=1+4+9=14, Σy²=4+1+9=14. Numerator = nΣxy - ΣxΣy = 3(13)-6(6) = 39-36 = 3. Denominator = √[(nΣx²-(Σx)²)(nΣy²-(Σy)²)] = √[(42-36)(42-36)] = √36 = 6. r = 3/6 = 0.5. Matches exactly."
+      ],
+      "verification_method": "deviation_score_formula_vs_raw_score_formula"
+    },
+    {
+      "id": "pi-regression-correlation-002",
+      "concept_id": "regression-correlation",
+      "topic": "probability-statistics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For the paired data (X,Y): (1,2), (2,1), (3,3), find the slope b₁ of the least-squares regression line of Y on X.",
+      "options": [
+        "0.5",
+        "1",
+        "2",
+        "0.25"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.5",
+      "solution_steps": [
+        "Slope b₁ = Sxy/Sxx. From the deviations (x̄=2,ȳ=2): Sxy=1, Sxx=2, so b₁ = 1/2 = 0.5.",
+        "Cross-check via the raw-score formula: b₁ = [nΣxy-ΣxΣy] / [nΣx²-(Σx)²] = (39-36)/(42-36) = 3/6 = 0.5. Matches."
+      ],
+      "verification_method": "deviation_slope_formula_vs_raw_score_slope_formula"
+    },
+    {
+      "id": "pi-regression-correlation-003",
+      "concept_id": "regression-correlation",
+      "topic": "probability-statistics",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "For the paired data (X,Y): (1,2), (2,1), (3,3), using the least-squares regression line (intercept b₀=1, slope b₁=0.5, i.e. Ŷ=1+0.5X), predict Ŷ when X=5.",
+      "answer_range": [
+        3.4825,
+        3.5175
+      ],
+      "correct_answer": "3.5",
+      "solution_steps": [
+        "Ŷ = b₀ + b₁X = 1 + 0.5(5) = 1 + 2.5 = 3.5.",
+        "Cross-check the fitted line's validity first: a least-squares line must pass through (x̄,ȳ)=(2,2): Ŷ(2)=1+0.5(2)=2 ✓. It must also make residuals sum to zero at the original data: fitted values at X=1,2,3 are 1.5, 2, 2.5, giving residuals 2-1.5=0.5, 1-2=-1, 3-2.5=0.5, which sum to 0.5-1+0.5=0 ✓ (the defining least-squares property). With the line confirmed correct, extrapolating to X=5 gives Ŷ = 1+2.5 = 3.5."
+      ],
+      "verification_method": "direct_substitution_vs_residual_sum_zero_check"
+    },
+    {
+      "id": "pi-regression-correlation-004",
+      "concept_id": "regression-correlation",
+      "topic": "probability-statistics",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For the paired data (X,Y): (1,2), (2,1), (3,3), with correlation coefficient r=0.5, find the coefficient of determination R².",
+      "options": [
+        "0.25",
+        "0.5",
+        "0.75",
+        "1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.25",
+      "solution_steps": [
+        "R² = r² = (0.5)² = 0.25.",
+        "Cross-check via the residual-based definition R² = 1 - SSres/SStot. SStot = Syy = 2 (computed earlier). Fitted values (Ŷ=1+0.5X) at X=1,2,3 are 1.5, 2, 2.5, giving residuals 0.5, -1, 0.5, so SSres = 0.5²+(-1)²+0.5² = 0.25+1+0.25 = 1.5. R² = 1 - 1.5/2 = 1 - 0.75 = 0.25. Matches the r² shortcut exactly."
+      ],
+      "verification_method": "r_squared_shortcut_vs_residual_sum_of_squares"
+    },
+    {
+      "id": "pi-regression-correlation-005",
+      "concept_id": "regression-correlation",
+      "topic": "probability-statistics",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about correlation and regression are TRUE?",
+      "options": [
+        "The correlation coefficient r always lies between -1 and 1, inclusive",
+        "A correlation coefficient of 0 implies X and Y are independent",
+        "The least-squares regression line always passes through the point (x̄, ȳ)",
+        "R² represents the proportion of variance in Y explained by the linear regression on X",
+        "Correlation implies causation"
+      ],
+      "answer_indices": [
+        0,
+        2,
+        3
+      ],
+      "correct_answer": "r always in [-1,1]; the least-squares line passes through (x̄,ȳ); R² is the proportion of variance explained",
+      "solution_steps": [
+        "(a) TRUE: this bound follows from the Cauchy-Schwarz inequality applied to the covariance definition of r.",
+        "(b) FALSE: r=0 only rules out a LINEAR relationship — X and Y can still be strongly (nonlinearly) dependent with zero linear correlation, e.g. Y=X² with X symmetric about 0.",
+        "(c) TRUE: this follows directly from the least-squares normal equations — the fitted line is constructed to pass exactly through the means.",
+        "(d) TRUE: this is the standard interpretation of R² = 1 - SSres/SStot as the fraction of total variability explained by the model.",
+        "(e) FALSE: correlation (even strong correlation) never by itself establishes a causal relationship — confounding variables or reverse causation remain possible."
+      ],
+      "verification_method": "hand_checkable_regression_correlation_facts"
+    },
+    {
+      "id": "pi-sampling-distributions-001",
+      "concept_id": "sampling-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "According to the Central Limit Theorem, as sample size n increases, the sampling distribution of the sample mean X̄ approaches:",
+      "options": [
+        "A Normal distribution with mean μ and variance σ²/n, regardless of the population's original distribution shape",
+        "The same distribution as the population, unchanged",
+        "A Uniform distribution, regardless of the population's shape",
+        "A Normal distribution, but only if the population itself is already Normal"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A Normal distribution with mean μ and variance σ²/n, regardless of the population's original distribution shape",
+      "solution_steps": [
+        "This is the Central Limit Theorem: for large n, X̄ is approximately Normal(μ, σ²/n), whatever the shape of the underlying population (given finite variance).",
+        "Cross-check the variance term independently: for iid X₁,...,Xₙ with variance σ², Var(X̄) = Var(ΣXᵢ/n) = (1/n²)·Var(ΣXᵢ) = (1/n²)·(nσ²) = σ²/n, since variances of independent variables add. This confirms the σ²/n term in option (a) directly from the definition of variance, independent of the CLT statement itself."
+      ],
+      "verification_method": "clt_statement_vs_direct_variance_derivation"
+    },
+    {
+      "id": "pi-sampling-distributions-002",
+      "concept_id": "sampling-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A population has standard deviation σ=20. For a random sample of size n=25, find the standard error of the sample mean (the standard deviation of X̄).",
+      "answer_range": [
+        3.98,
+        4.02
+      ],
+      "correct_answer": "4",
+      "solution_steps": [
+        "Standard error = σ/√n = 20/√25 = 20/5 = 4.",
+        "Cross-check via the variance route: Var(X̄) = σ²/n = 400/25 = 16, so SE = √16 = 4. Matches, computed via a different intermediate quantity (variance first, then square root, instead of dividing by √n directly). Also confirms √25=5 independently since 5²=25."
+      ],
+      "verification_method": "direct_ratio_vs_variance_route"
+    },
+    {
+      "id": "pi-sampling-distributions-003",
+      "concept_id": "sampling-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "If Z₁, Z₂, Z₃ are independent standard Normal random variables, W = Z₁²+Z₂²+Z₃² follows which distribution, and what is E[W]?",
+      "options": [
+        "Chi-squared distribution with 3 degrees of freedom; E[W]=3",
+        "Chi-squared distribution with 3 degrees of freedom; E[W]=6",
+        "Normal distribution with mean 3; E[W]=3",
+        "t-distribution with 3 degrees of freedom; E[W]=0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Chi-squared distribution with 3 degrees of freedom; E[W]=3",
+      "solution_steps": [
+        "By definition, the sum of k independent squared standard Normal random variables follows a Chi-squared distribution with k degrees of freedom. Here k=3, and the Chi-squared distribution's mean equals its degrees of freedom, so E[W]=3.",
+        "Cross-check via direct expectation, without invoking the chi-squared formula: for a standard Normal Zᵢ, E[Zᵢ²] = Var(Zᵢ) + (E[Zᵢ])² = 1 + 0² = 1. So E[W] = E[Z₁²]+E[Z₂²]+E[Z₃²] = 1+1+1 = 3. Matches the chi-squared mean-equals-df property exactly, derived independently from the definition of variance."
+      ],
+      "verification_method": "chi_squared_definition_vs_direct_expectation_sum"
+    },
+    {
+      "id": "pi-sampling-distributions-004",
+      "concept_id": "sampling-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Compared to the standard Normal distribution, the t-distribution (for small degrees of freedom) has:",
+      "options": [
+        "Heavier tails, and it converges to the standard Normal as degrees of freedom → ∞",
+        "Lighter tails, and it diverges further from Normal as degrees of freedom increase",
+        "The exact same shape as the standard Normal, for any degrees of freedom",
+        "Tail behavior identical to a Uniform distribution"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Heavier tails, and it converges to the standard Normal as degrees of freedom → ∞",
+      "solution_steps": [
+        "The t-distribution has heavier tails than the standard Normal for small degrees of freedom, and approaches the standard Normal as degrees of freedom → ∞ — a standard textbook property.",
+        "Cross-check via the t-distribution's own definition: t = Z/√(V/k), where Z is standard Normal and V~Chi-squared(k), independent of Z. Dividing Z by an extra random quantity √(V/k) — which itself has variability, especially for small k — inflates the spread relative to Z alone, producing heavier tails. As k→∞, V/k → 1 (since V/k is essentially an average of k terms each with expectation 1, by the law of large numbers), so t → Z/1 = Z, recovering the standard Normal. This derivation-based reasoning confirms the textbook fact independently."
+      ],
+      "verification_method": "textbook_fact_vs_ratio_definition_derivation"
+    },
+    {
+      "id": "pi-sampling-distributions-005",
+      "concept_id": "sampling-distributions",
+      "topic": "probability-statistics",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about sampling distributions are TRUE?",
+      "options": [
+        "The Central Limit Theorem applies regardless of the population distribution's shape, given a sufficiently large sample size",
+        "The t-distribution should be used instead of the Normal when the population standard deviation is unknown and estimated from the sample",
+        "As degrees of freedom increase, the t-distribution's tails become heavier (further from Normal)",
+        "The chi-squared distribution is always non-negative — it cannot take negative values",
+        "The sampling distribution of the sample mean always has exactly the same shape as the population distribution, for any sample size"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "CLT applies regardless of population shape for large n; use t-distribution when σ is unknown; chi-squared is always non-negative",
+      "solution_steps": [
+        "(a) TRUE: the CLT's key strength is that it applies to essentially any population shape with finite variance, given large enough n.",
+        "(b) TRUE: estimating σ from the sample (using s) introduces extra uncertainty, which the t-distribution's heavier tails account for — this is precisely why it's used instead of the Normal in that case.",
+        "(c) FALSE: it's the opposite — as degrees of freedom increase, the t-distribution's tails become LIGHTER, approaching the standard Normal's tails.",
+        "(d) TRUE: chi-squared random variables are sums of squares, and a sum of squares can never be negative.",
+        "(e) FALSE: the sampling distribution of X̄ only matches the population's shape exactly when the population itself is already Normal, or approximately for large n via the CLT — it is not true 'always...for any sample size' in general."
+      ],
+      "verification_method": "hand_checkable_sampling_distribution_facts"
+    }
+  ]
+}

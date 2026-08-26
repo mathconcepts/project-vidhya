@@ -20,14 +20,10 @@ Imagine flipping a fair coin over and over. Three questions naturally arise:
 
 ```gif-scene
 {
-  "type": "parametric",
-  "expression": "y = C(10, x) * (0.5)^10",
-  "x_range": [0, 10],
-  "y_range": [0, 0.25],
-  "title": "Binomial: Heads in 10 Fair Coin Flips",
-  "x_label": "Number of Heads",
-  "y_label": "Probability",
-  "curve_color": "#22c55e"
+  "type": "discrete-bars",
+  "values": [0.0009765625, 0.009765625, 0.0439453125, 0.1171875, 0.205078125, 0.24609375, 0.205078125, 0.1171875, 0.0439453125, 0.009765625, 0.0009765625],
+  "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+  "title": "Binomial: Heads in 10 Fair Coin Flips"
 }
 ```
 

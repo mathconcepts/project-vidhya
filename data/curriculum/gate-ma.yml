@@ -26,6 +26,11 @@ metadata:
 # `concept_links:` (per-exam depth/weight/emphasis). All three sections can
 # reference disjoint or overlapping concept_id sets — `concepts:` is just
 # "what nodes exist", the others are "how this exam treats them".
+#
+# `exam_tested: false` (a handful of concepts only — see ConceptNode's own
+# doc comment in concept-graph.ts for the full meaning) marks a concept as a
+# prerequisite exams assume rather than directly test. Absence of a mapped
+# past-exam question for one of these is expected, not a gap.
 # ---------------------------------------------------------------------------
 concepts:
   - id: sequences
@@ -35,6 +40,7 @@ concepts:
     difficulty_base: 0.3
     gate_frequency: medium
     prerequisites: []
+    exam_tested: false
   - id: series
     topic: calculus
     label: Infinite Series
@@ -83,6 +89,7 @@ concepts:
     gate_frequency: high
     prerequisites:
       - derivatives-basic
+    exam_tested: false
   - id: product-quotient-rule
     topic: calculus
     label: Product & Quotient Rule
@@ -91,6 +98,7 @@ concepts:
     gate_frequency: high
     prerequisites:
       - derivatives-basic
+    exam_tested: false
   - id: implicit-differentiation
     topic: calculus
     label: Implicit Differentiation
@@ -99,6 +107,7 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - chain-rule
+    exam_tested: false
   - id: maxima-minima
     topic: calculus
     label: Maxima & Minima
@@ -125,6 +134,7 @@ concepts:
     gate_frequency: high
     prerequisites:
       - derivatives-basic
+    exam_tested: false
   - id: integration-substitution
     topic: calculus
     label: Integration by Substitution
@@ -151,6 +161,7 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - integration-basics
+    exam_tested: false
   - id: definite-integrals
     topic: calculus
     label: Definite Integrals
@@ -578,6 +589,14 @@ concepts:
       # The spectral radius (dominant |eigenvalue|) bounds several norms.
       - id: eigenvalues
         weight: 0.4
+  - id: ode-classification
+    topic: differential-equations
+    label: Order, Degree and Linearity of an ODE
+    description: Classifying a differential equation before choosing a solving technique — order, degree (and when degree is undefined), and linearity
+    difficulty_base: 0.25
+    gate_frequency: medium
+    prerequisites:
+      - derivatives-basic
   - id: ode-first-order
     topic: differential-equations
     label: First Order ODEs
@@ -587,6 +606,7 @@ concepts:
     prerequisites:
       - integration-basics
       - derivatives-basic
+      - ode-classification
   - id: ode-bernoulli
     topic: differential-equations
     label: Bernoulli Equations
@@ -630,6 +650,7 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - ode-second-order-nonhomo
+    exam_tested: false
   - id: pde-basics
     topic: differential-equations
     label: PDE Basics
@@ -755,6 +776,7 @@ concepts:
     gate_frequency: low
     prerequisites:
       - analytic-functions
+    exam_tested: false
   - id: root-finding
     topic: numerical-methods
     label: Root Finding
@@ -825,6 +847,7 @@ concepts:
     gate_frequency: high
     prerequisites:
       - inverse-laplace
+    exam_tested: false
   - id: fourier-series
     topic: transform-theory
     label: Fourier Series
@@ -960,6 +983,7 @@ concepts:
     gate_frequency: low
     prerequisites:
       - sets-relations
+    exam_tested: false
   - id: graph-basics
     topic: graph-theory
     label: Graph Basics
@@ -975,6 +999,7 @@ concepts:
     gate_frequency: high
     prerequisites:
       - graph-basics
+    exam_tested: false
   - id: trees
     topic: graph-theory
     label: Trees
@@ -1015,6 +1040,7 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - trees
+    exam_tested: false
   - id: vector-algebra-basics
     topic: vector-calculus
     label: Vector Algebra Basics
@@ -1022,6 +1048,7 @@ concepts:
     difficulty_base: 0.2
     gate_frequency: medium
     prerequisites: []
+    exam_tested: false
   - id: sampling-distributions
     topic: probability-statistics
     label: Sampling Distributions
@@ -1030,6 +1057,7 @@ concepts:
     gate_frequency: medium
     prerequisites:
       - continuous-distributions
+    exam_tested: false
   - id: numerical-error-analysis
     topic: numerical-methods
     label: Numerical Error Analysis
@@ -1037,6 +1065,7 @@ concepts:
     difficulty_base: 0.25
     gate_frequency: medium
     prerequisites: []
+    exam_tested: false
 
 # ---------------------------------------------------------------------------
 # Official syllabus structure — sections mirror the MA paper's sections

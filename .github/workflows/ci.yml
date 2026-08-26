@@ -103,6 +103,26 @@ jobs:
       - name: seam-registry check
         run: npm run ci:seam-registry
 
+      # Playbook convention. A bulk content operation belongs in the playbook
+      # registry, where it gets a kill switch, a quota-ledger binding, and a
+      # dry-run estimate an operator sees before authorising spend; a bare
+      # package.json script has none of those.
+      #
+      # This existed but ran nowhere, and failed on 12 scripts whenever anyone
+      # ran it by hand — which is the worst of both: no enforcement, and a red
+      # result that teaches people the check is broken rather than that the
+      # code is. Six of those twelve were never bulk ops (diagnostics and build
+      # plumbing) and are now allowlisted. The other six genuinely are, and are
+      # recorded in src/playbooks/owed-playbook-baseline.json with the reason
+      # each is still open, because a playbook's estimator quotes real money
+      # and inventing those numbers would be worse than the debt.
+      #
+      # So the gate is live and blocks a NEW unregistered bulk script, prints
+      # the six owed ones every run so they stay visible, and the baseline
+      # shrinks as each gets a real playbook.
+      - name: Playbook convention (bulk ops are registered)
+        run: npm run ci:playbook-convention
+
       # Content integrity + interactive-spec validity (2026-08-15 CP0).
       # Both gates exist because the failures they catch are INVISIBLE at
       # runtime: an interactive-spec that fails validation makes

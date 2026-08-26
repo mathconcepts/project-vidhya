@@ -1,0 +1,45 @@
+{
+  "_comment": [
+    "Scripts that ARE bulk content operations and are owed a playbook, but do not have one yet.",
+    "",
+    "This is deliberately NOT non-bulk-allowlist.json. That file means 'this is not a bulk",
+    "operation'. Putting content:generate there would assert something false, and the next",
+    "person reading it would believe it. These entries assert the opposite: each one is a real",
+    "bulk op, and its absence from the registry is debt.",
+    "",
+    "The distinction matters because registering a playbook is not a lint fix. A registry entry",
+    "carries a params_schema, a kill switch, a quota-ledger binding, and an estimator whose cost",
+    "and duration are shown to an operator before they authorise spend. An invented estimate is",
+    "worse than no playbook, so these are recorded rather than fabricated.",
+    "",
+    "The list may shrink freely as each script gets a real playbook. Growing it takes a reviewed",
+    "edit, which is where someone asks whether the new bulk script should have been a playbook",
+    "from the start. Same ratchet as fork-test-lint-baseline.json and gif-scene-baseline.json."
+  ],
+  "owed": [
+    {
+      "script": "content:scrape",
+      "reason": "Scrapes GATE, OpenStax and OCW corpora in one run. Needs a per-source quota and a kill switch; cost is bandwidth and time, not tokens."
+    },
+    {
+      "script": "content:explainers",
+      "reason": "Builds explainers across the whole concept set. Estimator needs a per-explainer token cost that nobody has measured yet."
+    },
+    {
+      "script": "content:generate",
+      "reason": "The main content generation job. Spend is real and per-run; this is the one that most needs a dry-run estimate before it becomes a playbook."
+    },
+    {
+      "script": "content:generate:auto",
+      "reason": "Shell wrapper around content:generate that loops unattended. Should not exist as a bare script at all once the playbook has a kill switch."
+    },
+    {
+      "script": "variants:generate",
+      "reason": "Generates stance variants across a topic. Bounded work, but still bulk LLM spend with no ledger binding today."
+    },
+    {
+      "script": "content:verify:legacy",
+      "reason": "Batch Wolfram verification. Rate-limited and metered per request; verify-sweep is the registered playbook that supersedes it, so this may be deleted rather than registered."
+    }
+  ]
+}

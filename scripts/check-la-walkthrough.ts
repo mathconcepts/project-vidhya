@@ -47,6 +47,17 @@
  *      concept legitimately fails this leg today. See the gate's own
  *      report output for the live list.
  *
+ *      EXCEPTION — `exam_tested: false` concepts (see the doc comment on
+ *      `ConceptNode.exam_tested` in `src/constants/concept-graph.ts`): a
+ *      handful of concepts are prerequisites real exam papers assume
+ *      rather than directly test (e.g. the chain rule). Zero mapped
+ *      questions is a correct, permanent property of those concepts, not
+ *      a gap — the test leg passes them WITHOUT a question, but the table
+ *      marks that pass distinctly (`— (not examined)`, never `✓`) so a
+ *      reader can always tell "correct by design" from "has a question",
+ *      and the summary line reports the two counts separately rather than
+ *      folding a flagged pass into the same number as a real one.
+ *
  * Usage:
  *   npx tsx scripts/check-la-walkthrough.ts               # blocking (default)
  *   npx tsx scripts/check-la-walkthrough.ts --report-only  # prints, exits 0
@@ -77,7 +88,20 @@ import { gateItemFromPayload } from '../src/api/practice-routes';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const TOPIC = 'linear-algebra';
+/**
+ * Which topic to walk. Defaults to linear-algebra — the topic this gate was
+ * written for and the only one blocking in CI today — but `--topic=<id>` lets
+ * the same four legs be measured against any topic in the concept graph.
+ *
+ * The parameter exists because the gate is the instrument as well as the gate:
+ * filling a new topic to the Linear Algebra standard needs the same four
+ * numbers reported the same way, and a second hand-written checker would drift
+ * from this one the moment either changed.
+ */
+const TOPIC = (() => {
+  const flag = process.argv.find((a) => a.startsWith('--topic='));
+  return flag ? flag.slice('--topic='.length) : 'linear-algebra';
+})();
 const PRACTICE_FLOOR = 5;
 
 const EXPLAINERS_PATH = process.env.LA_WALKTHROUGH_EXPLAINERS_PATH
@@ -240,6 +264,15 @@ function loadPyqConceptCounts(bankPath: string): Map<string, number> {
 interface Leg {
   pass: boolean;
   detail: string;
+  /**
+   * Set only on a leg that passes for a reason OTHER than real evidence —
+   * today, exactly the `exam_tested: false` test-leg exemption. Printing
+   * and counting code must treat a flagged pass distinctly from a real one
+   * (see mark()/printTable() and the per-leg summary in main()); a flag
+   * that reads identically to "has a question" would be worse than no
+   * flag at all.
+   */
+  flagged?: boolean;
 }
 
 export interface ConceptWalkthrough {
@@ -252,7 +285,7 @@ export interface ConceptWalkthrough {
 }
 
 export async function evaluateWalkthrough(
-  concepts: ReadonlyArray<{ id: string }>,
+  concepts: ReadonlyArray<{ id: string; exam_tested?: boolean }>,
   explainersJson: Record<string, unknown[]> | null,
   pyqCounts: Map<string, number>,
   secondaryCoverage: Map<string, number>,
@@ -264,6 +297,8 @@ export async function evaluateWalkthrough(
     const interactive = scanInteractiveSpecs(c.id);
     const practice = await checkPractice(c.id, catalog, secondaryCoverage);
     const testCount = pyqCounts.get(c.id) ?? 0;
+    // Default-true, same "absent ⇒ tested" contract as ConceptNode.exam_tested.
+    const isExamTested = c.exam_tested !== false;
 
     const explanation: Leg = {
       pass: explainCount >= 1,
@@ -279,10 +314,15 @@ export async function evaluateWalkthrough(
         ? `${practice.gradablePrimary}/${PRACTICE_FLOOR} (+${practice.secondaryCoverage} secondary)`
         : `${practice.gradablePrimary}/${PRACTICE_FLOOR}`,
     };
-    const test: Leg = {
-      pass: testCount >= 1,
-      detail: `${testCount}`,
-    };
+    // A flagged concept passes with zero questions BY DESIGN (see the
+    // interface doc comment on `flagged` and the file header) — but only
+    // when it actually HAS zero questions. A real question mapped to a
+    // flagged concept anyway is still real evidence, so it's reported and
+    // counted exactly like any other concept's — the flag exempts an
+    // absence, it never hides or relabels a presence.
+    const test: Leg = !isExamTested && testCount === 0
+      ? { pass: true, detail: 'not examined', flagged: true }
+      : { pass: testCount >= 1, detail: `${testCount}` };
 
     out.push({
       concept_id: c.id,
@@ -304,6 +344,7 @@ const LEG_NAMES = ['explanation', 'interactive', 'practice', 'test'] as const;
 type LegName = (typeof LEG_NAMES)[number];
 
 function mark(leg: Leg): string {
+  if (leg.flagged) return '—'; // pass by design, not by evidence — never a bare ✓
   return leg.pass ? '✓' : '✗';
 }
 
@@ -395,6 +436,17 @@ async function main(): Promise<void> {
     LEG_NAMES.map((leg) => [leg, results.filter((r) => r[leg as LegName].pass).length]),
   );
 
+  // The test leg is the one leg that can pass two different ways (a real
+  // mapped question, or the exam_tested:false exemption) — reported
+  // separately so the summary line never claims coverage the bank does not
+  // have. `legPassCounts.test` (all passes, real+flagged) is intentionally
+  // NOT what gets printed for this leg below.
+  const testFlaggedCount = results.filter((r) => r.test.flagged).length;
+  const testRealPassCount = results.filter((r) => r.test.pass && !r.test.flagged).length;
+  const testSummary = testFlaggedCount > 0
+    ? `test ${testRealPassCount}/${results.length} (+${testFlaggedCount} not examined)`
+    : `test ${legPassCounts.test}/${results.length}`;
+
   console.log(
     `\nChecked ${results.length} concepts | Full walkthrough: ${passCount} pass, ${failCount} fail`,
   );
@@ -402,11 +454,11 @@ async function main(): Promise<void> {
     `Per-leg: explanation ${legPassCounts.explanation}/${results.length}, ` +
     `interactive ${legPassCounts.interactive}/${results.length}, ` +
     `practice ${legPassCounts.practice}/${results.length}, ` +
-    `test ${legPassCounts.test}/${results.length}`,
+    `${testSummary}`,
   );
 
   if (failCount === 0) {
-    console.log('\n✓ Every Linear Algebra concept has a complete 4-leg walkthrough.\n');
+    console.log(`\n✓ Every "${TOPIC}" concept has a complete 4-leg walkthrough.\n`);
     process.exit(0);
     return;
   }

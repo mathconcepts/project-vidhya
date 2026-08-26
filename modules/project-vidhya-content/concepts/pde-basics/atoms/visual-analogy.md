@@ -32,7 +32,7 @@ The animation below shows a travelling wave — a solution $u(x,t) = e^{-x^2 \cd
 
 ```gif-scene
 {
-  "type": "function-trace",
+  "type": "parametric",
   "expression": "exp(-x*x * 0.1) * cos(x - t * 2)",
   "x_range": [-10, 10],
   "y_range": [-1.5, 1.5],

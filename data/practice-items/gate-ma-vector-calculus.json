@@ -1,0 +1,1008 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the",
+    "vector-calculus topic: vector algebra basics, vector fields, divergence",
+    "and curl, line integrals, surface integrals, Green's theorem, Stokes'",
+    "theorem, and the Gauss divergence theorem.",
+    "",
+    "Every item's answer was derived TWICE by genuinely independent methods",
+    "before its key was written — e.g. a line integral computed by direct",
+    "parameterization AND by path-independence / the potential function; a",
+    "flux computed by direct surface parameterization AND by the divergence",
+    "theorem (or vice versa); a circulation computed directly AND via",
+    "Green's/Stokes' theorem; a divergence/curl formula checked against a",
+    "divergence-theorem consequence or a finite-difference numerical",
+    "estimate. Both methods are shown in solution_steps so a student (or a",
+    "reviewer) can re-derive every answer by hand. Numbers were chosen for",
+    "clean domains (unit circle/disk/sphere/square/cube, simple triangles",
+    "and cones) so the arithmetic stays checkable.",
+    "",
+    "Shape mirrors gate-ma-la-eigen.json exactly (same AuthoredItem schema",
+    "consumed by FileLearningObjectCatalog / GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-vector-algebra-basics-001",
+      "concept_id": "vector-algebra-basics",
+      "topic": "vector-calculus",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "a = (1, 2, 2) and b = (2, -1, 2). Find a·b.",
+      "options": [
+        "4",
+        "-4",
+        "0",
+        "9"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (component-wise): a·b = (1)(2) + (2)(-1) + (2)(2) = 2 - 2 + 4 = 4.",
+        "Method 2 (cross-check via |a+b|² identity): |a|² = 1+4+4 = 9 and |b|² = 4+1+4 = 9. a+b = (3,1,4), so |a+b|² = 9+1+16 = 26.",
+        "The identity |a+b|² = |a|² + |b|² + 2(a·b) gives 26 = 9 + 9 + 2(a·b), so a·b = (26-18)/2 = 4. Matches Method 1.",
+        "'-4' is the trap for a sign slip on the middle term; '0' comes from stopping after only two of the three products; '9' mistakes |a||b| (which happens to be 9 here since |a|=|b|=3) for a·b itself, ignoring cos θ."
+      ],
+      "verification_method": "hand_checkable_sum_of_squares_identity"
+    },
+    {
+      "id": "pi-vector-algebra-basics-002",
+      "concept_id": "vector-algebra-basics",
+      "topic": "vector-calculus",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "a = (2, 1, 0) and b = (1, 3, 0). Find the area of the parallelogram spanned by a and b.",
+      "answer_range": [
+        4.975,
+        5.025
+      ],
+      "correct_answer": "5",
+      "solution_steps": [
+        "Method 1 (direct cross product): a×b = (1·0-0·3, 0·1-2·0, 2·3-1·1) = (0, 0, 5). The parallelogram area is |a×b| = 5.",
+        "Method 2 (Lagrange's identity, cross-check): |a×b|² = |a|²|b|² - (a·b)². |a|² = 4+1 = 5, |b|² = 1+9 = 10, a·b = 2·1+1·3 = 5.",
+        "So |a×b|² = 5·10 - 5² = 50-25 = 25, giving |a×b| = 5. Matches Method 1 exactly, via a completely different identity (no cross product needed)."
+      ],
+      "verification_method": "hand_checkable_lagrange_identity"
+    },
+    {
+      "id": "pi-vector-algebra-basics-003",
+      "concept_id": "vector-algebra-basics",
+      "topic": "vector-calculus",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "a = (1, 2, 0), b = (0, 1, 3), c = (2, 0, 1). Find the scalar triple product a·(b×c), the (signed) volume of the parallelepiped they span.",
+      "options": [
+        "13",
+        "-13",
+        "7",
+        "19"
+      ],
+      "answer_index": 0,
+      "correct_answer": "13",
+      "solution_steps": [
+        "Method 1 (a·(b×c) directly): b×c = (1·1-3·0, 3·2-0·1, 0·0-1·2) = (1, 6, -2). Then a·(b×c) = (1)(1)+(2)(6)+(0)(-2) = 1+12+0 = 13.",
+        "Method 2 (cyclic identity, cross-check): the scalar triple product is cyclic — a·(b×c) = c·(a×b) — a genuinely different pair of vectors to cross and dot.",
+        "a×b = (2·3-0·1, 0·0-1·3, 1·1-2·0) = (6, -3, 1). Then c·(a×b) = (2)(6)+(0)(-3)+(1)(1) = 12+0+1 = 13. Matches Method 1.",
+        "'-13' comes from computing b·(a×c) instead (the anticyclic order, which flips the sign); '7' and '19' come from a single sign error inside one of the 2×2 minors."
+      ],
+      "verification_method": "hand_checkable_cyclic_triple_product",
+      "also_tests": [
+        "determinants"
+      ]
+    },
+    {
+      "id": "pi-vector-algebra-basics-004",
+      "concept_id": "vector-algebra-basics",
+      "topic": "vector-calculus",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "For general vectors a, b, c in R³, which of the following are always true?",
+      "options": [
+        "a·b = b·a",
+        "a×b = b×a",
+        "a·(b×c) = 0 whenever a, b, c are coplanar (linearly dependent)",
+        "If a ⟂ b then |a×b| = |a||b|",
+        "a×(b×c) = (a×b)×c"
+      ],
+      "answer_indices": [
+        0,
+        2,
+        3
+      ],
+      "correct_answer": "Dot product is commutative; scalar triple product vanishes for coplanar vectors; |a×b| = |a||b| when a and b are perpendicular",
+      "solution_steps": [
+        "(a) TRUE: a·b = a₁b₁+a₂b₂+a₃b₃ is symmetric in a, b — commutative by definition.",
+        "(b) FALSE: the cross product is anti-commutative, a×b = -(b×a), not equal to it in general (e.g. (1,0,0)×(0,1,0)=(0,0,1) but (0,1,0)×(1,0,0)=(0,0,-1)).",
+        "(c) TRUE: a·(b×c) is the signed volume of the parallelepiped spanned by a,b,c; coplanar vectors span zero volume, so the triple product is 0.",
+        "(d) TRUE: |a×b| = |a||b|sin θ; if a⟂b then θ=90° and sin θ=1, so |a×b|=|a||b|.",
+        "(e) FALSE: the cross product is NOT associative in general — e.g. with i=(1,0,0), j=(0,1,0): i×(i×j) = i×k = -j, but (i×i)×j = 0×j = 0. Different results."
+      ],
+      "verification_method": "hand_checkable_vector_algebra_properties"
+    },
+    {
+      "id": "pi-vector-algebra-basics-005",
+      "concept_id": "vector-algebra-basics",
+      "topic": "vector-calculus",
+      "difficulty": 0.7,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "a = (3, 4, 0) and b = (4, 3, 0). Find the scalar projection of a onto b, comp_b(a) = (a·b)/|b|.",
+      "answer_range": [
+        4.776,
+        4.824
+      ],
+      "correct_answer": "4.8",
+      "solution_steps": [
+        "Method 1 (direct formula): a·b = (3)(4)+(4)(3) = 24. |b| = √(16+9) = 5. So comp_b(a) = 24/5 = 4.8.",
+        "Method 2 (Pythagorean decomposition, cross-check): the vector projection is a_∥ = (a·b/|b|²) b = (24/25)(4,3,0) = (3.84, 2.88, 0), and a_⊥ = a - a_∥ = (-0.84, 1.12, 0).",
+        "|a_∥|² = 3.84²+2.88² = 14.7456+8.2944 = 23.04, and |a_⊥|² = 0.84²+1.12² = 0.7056+1.2544 = 1.96. Sum = 23.04+1.96 = 25 = |a|² (3²+4²=25) exactly, as the Pythagorean split requires.",
+        "|a_∥| = √23.04 = 4.8, matching comp_b(a) = 4.8 from Method 1 — two unrelated computations (a dot-product ratio vs. a full orthogonal decomposition) agree."
+      ],
+      "verification_method": "hand_checkable_pythagorean_decomposition"
+    },
+    {
+      "id": "pi-vector-fields-001",
+      "concept_id": "vector-fields",
+      "topic": "vector-calculus",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "f(x, y) = x²y. Find ∇f at the point (1, 2).",
+      "options": [
+        "∇f = (4, 1)",
+        "∇f = (1, 4)",
+        "∇f = (2, 1)",
+        "∇f = (4, 2)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "∇f = (4, 1)",
+      "solution_steps": [
+        "Method 1 (partial derivatives): ∂f/∂x = 2xy, ∂f/∂y = x². At (1,2): ∂f/∂x = 2(1)(2) = 4, ∂f/∂y = 1² = 1. So ∇f = (4, 1).",
+        "Method 2 (perpendicularity to the level curve, cross-check): the level curve through (1,2) is x²y = 2. Implicit differentiation: 2xy dx + x² dy = 0, so dy/dx = -2y/x = -4 at (1,2) — the curve's tangent direction there is (1, -4).",
+        "∇f must be perpendicular to this tangent: (4,1)·(1,-4) = 4-4 = 0. ✓ Confirms both the direction and the 4:1 ratio of the components found in Method 1.",
+        "'(1,4)' swaps which partial derivative goes with which variable; '(2,1)' drops the y-factor from ∂f/∂x; '(4,2)' miscomputes ∂f/∂y as 2x instead of x²."
+      ],
+      "verification_method": "hand_checkable_level_curve_orthogonality"
+    },
+    {
+      "id": "pi-vector-fields-002",
+      "concept_id": "vector-fields",
+      "topic": "vector-calculus",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "f(x, y, z) = x² + y² + z². Find |∇f| at the point (1, 2, 2).",
+      "answer_range": [
+        5.97,
+        6.03
+      ],
+      "correct_answer": "6",
+      "solution_steps": [
+        "Method 1 (direct partials): ∇f = (2x, 2y, 2z) = (2, 4, 4) at (1,2,2). |∇f| = √(4+16+16) = √36 = 6.",
+        "Method 2 (identity for f = |r|², cross-check): since f = x²+y²+z² = |r|² for the position vector r = (x,y,z), the standard identity ∇(|r|²) = 2r applies, so |∇f| = 2|r|.",
+        "|r| = √(1+4+4) = 3, so |∇f| = 2(3) = 6. Matches Method 1 via an identity that never differentiates component-by-component."
+      ],
+      "verification_method": "hand_checkable_radial_gradient_identity"
+    },
+    {
+      "id": "pi-vector-fields-003",
+      "concept_id": "vector-fields",
+      "topic": "vector-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "f(x, y) = x² + xy. Find the directional derivative of f at (1, 1) in the direction of v = (3, 4).",
+      "options": [
+        "2.6",
+        "13",
+        "2.8",
+        "3.0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2.6",
+      "solution_steps": [
+        "Method 1 (gradient dot unit direction): ∇f = (2x+y, x) = (3, 1) at (1,1). |v| = 5, so v̂ = (3/5, 4/5). D_v f = ∇f·v̂ = (3·3+1·4)/5 = 13/5 = 2.6.",
+        "Method 2 (symmetric-difference numerical check, cross-check): step h=1 along v̂ from (1,1): forward point (1+0.6, 1+0.8) = (1.6, 1.8), backward point (1-0.6, 1-0.8) = (0.4, 0.2).",
+        "f(1.6,1.8) = 1.6²+1.6(1.8) = 2.56+2.88 = 5.44. f(0.4,0.2) = 0.4²+0.4(0.2) = 0.16+0.08 = 0.24.",
+        "Central difference: (5.44-0.24)/(2·1) = 5.2/2 = 2.6. (f is quadratic, so this central difference is exact for any h, not merely approximate.) Matches Method 1 exactly.",
+        "'13' forgets to divide by |v|=5 (uses the raw dot product ∇f·v instead of ∇f·v̂); '2.8' comes from a slip computing ∇f as (2x, x+y)=(2,2) instead of (2x+y,x)."
+      ],
+      "verification_method": "hand_checkable_central_difference_exact"
+    },
+    {
+      "id": "pi-vector-fields-004",
+      "concept_id": "vector-fields",
+      "topic": "vector-calculus",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about scalar fields, vector fields, and the gradient are always true?",
+      "options": [
+        "∇f at a point is perpendicular to the level curve/surface of f through that point",
+        "|∇f| gives the maximum rate of increase of f, over all unit directions, at that point",
+        "A vector field F is a gradient field only if curl F ≠ 0",
+        "∇f points in the direction of steepest ascent of f",
+        "Every vector field is the gradient of some scalar potential function"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "∇f is perpendicular to level sets; |∇f| gives the max directional derivative; ∇f points toward steepest ascent",
+      "solution_steps": [
+        "(a) TRUE: level sets are where f is constant, so moving along one produces zero directional derivative — ∇f must be orthogonal to the level set's tangent.",
+        "(b) TRUE: D_u f = ∇f·û = |∇f| cos θ is maximized (at value |∇f|) when û points along ∇f itself.",
+        "(c) FALSE on two counts: a gradient field must have curl F = 0 (not ≠ 0), and even curl F = 0 alone doesn't guarantee F is a gradient field without a domain condition (simple connectivity).",
+        "(d) TRUE: this is exactly what (b)'s maximizing direction (θ=0, û along ∇f) means geometrically.",
+        "(e) FALSE: only conservative (curl-free, on a suitable domain) fields have a scalar potential — e.g. F=(-y,x,0) has curl (0,0,2)≠0 and admits no potential."
+      ],
+      "verification_method": "hand_checkable_gradient_field_properties"
+    },
+    {
+      "id": "pi-vector-fields-005",
+      "concept_id": "vector-fields",
+      "topic": "vector-calculus",
+      "difficulty": 0.75,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (y+z, x+z, x+y) is a conservative vector field with potential f (∇f = F, f(0,0,0)=0). Find f(2, 1, 3).",
+      "answer_range": [
+        10.945,
+        11.055
+      ],
+      "correct_answer": "11",
+      "solution_steps": [
+        "Method 1 (systematic partial integration): f = ∫(y+z)dx = xy+xz+g(y,z). ∂f/∂y = x+g_y must equal x+z, so g_y=z, g=yz+h(z). ∂f/∂z = x+y+h'(z) must equal x+y, so h'(z)=0.",
+        "So f(x,y,z) = xy+yz+xz (taking the constant of integration to be 0, matching f(0,0,0)=0). f(2,1,3) = (2)(1)+(1)(3)+(2)(3) = 2+3+6 = 11.",
+        "Method 2 (line-integral potential formula, cross-check): for a conservative field on a star-shaped domain, f(P) = ∫₀¹ F(tP)·P dt. With P=(2,1,3): F(tP) = F(2t,t,3t) = (t+3t, 2t+3t, 2t+t) = (4t, 5t, 3t).",
+        "F(tP)·P = 4t(2)+5t(1)+3t(3) = 8t+5t+9t = 22t. ∫₀¹ 22t dt = 11t²|₀¹ = 11. Matches Method 1 exactly, via a completely different (integral, not algebraic) route."
+      ],
+      "verification_method": "hand_checkable_potential_line_integral_formula",
+      "also_tests": [
+        "line-integrals"
+      ]
+    },
+    {
+      "id": "pi-divergence-curl-001",
+      "concept_id": "divergence-curl",
+      "topic": "vector-calculus",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "F = (x², y², z²). Find div F at the point (1, 2, 3).",
+      "options": [
+        "12",
+        "6",
+        "0",
+        "24"
+      ],
+      "answer_index": 0,
+      "correct_answer": "12",
+      "solution_steps": [
+        "Method 1 (direct partials): div F = ∂(x²)/∂x + ∂(y²)/∂y + ∂(z²)/∂z = 2x+2y+2z. At (1,2,3): 2(1)+2(2)+2(3) = 2+4+6 = 12.",
+        "Method 2 (divergence theorem on the unit cube, cross-check): verify the FORMULA 2x+2y+2z by an unrelated computation — the total flux of F through the unit cube [0,1]³ should equal ∭ div F dV = ∭(2x+2y+2z) dV = 2(½)(1)(1)·3 = 3.",
+        "Directly summing outward flux through the 6 faces: on x=1, F·n=x²=1 (area 1, contributes 1); on x=0, F·n=-x²=0; by symmetry y=1 and z=1 each contribute 1, and y=0, z=0 contribute 0. Total flux = 1+1+1 = 3, matching the volume integral exactly.",
+        "This confirms the divergence formula 2x+2y+2z is correct in general (via a totally different, geometric route), which combined with direct substitution gives div F(1,2,3) = 12.",
+        "'6' forgets the factor of 2 in each term; '0' confuses divergence with curl of this field; '24' doubles every term by mistake."
+      ],
+      "verification_method": "hand_checkable_divergence_theorem_unit_cube",
+      "also_tests": [
+        "gauss-divergence"
+      ]
+    },
+    {
+      "id": "pi-divergence-curl-002",
+      "concept_id": "divergence-curl",
+      "topic": "vector-calculus",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "F = (yz, xz, xy). Find |curl F| (at any point — the field is special).",
+      "answer_range": [
+        -0.01,
+        0.01
+      ],
+      "correct_answer": "0",
+      "solution_steps": [
+        "Method 1 (direct determinant): curl F = (∂(xy)/∂y - ∂(xz)/∂z, ∂(yz)/∂z - ∂(xy)/∂x, ∂(xz)/∂x - ∂(yz)/∂y) = (x-x, y-y, z-z) = (0,0,0). So |curl F| = 0.",
+        "Method 2 (gradient-field identity, cross-check): notice F is exactly ∇(xyz), since ∂(xyz)/∂x = yz, ∂(xyz)/∂y = xz, ∂(xyz)/∂z = xy — matching F's components term for term.",
+        "The fundamental vector identity curl(∇φ) = 0 for ANY smooth scalar φ then gives curl F = 0 immediately, with no determinant computation at all. Matches Method 1."
+      ],
+      "verification_method": "hand_checkable_curl_of_gradient_identity"
+    },
+    {
+      "id": "pi-divergence-curl-003",
+      "concept_id": "divergence-curl",
+      "topic": "vector-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "F = (-y, x, 0) (a planar rotation field). Find curl F.",
+      "options": [
+        "(0, 0, 2)",
+        "(0, 0, 1)",
+        "(0, 0, -2)",
+        "(2, 0, 0)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(0, 0, 2)",
+      "solution_steps": [
+        "Method 1 (direct determinant): curl F = (∂(0)/∂y-∂(x)/∂z, ∂(-y)/∂z-∂(0)/∂x, ∂(x)/∂x-∂(-y)/∂y) = (0-0, 0-0, 1-(-1)) = (0,0,2).",
+        "Method 2 (rigid-rotation identity, cross-check): F = ω×r with ω=(0,0,1) and r=(x,y,0), since ω×r = (0,0,1)×(x,y,0) = (0·0-1·y, 1·x-0·0, 0·y-0·x) = (-y,x,0) = F.",
+        "For a rigid rotation field F = ω×r, the standard identity curl F = 2ω applies directly: curl F = 2(0,0,1) = (0,0,2). Matches Method 1 without any determinant.",
+        "'(0,0,1)' forgets the factor of 2 in the rotation identity; '(0,0,-2)' is a sign/orientation slip; '(2,0,0)' mixes up which axis carries the rotation."
+      ],
+      "verification_method": "hand_checkable_rigid_rotation_identity"
+    },
+    {
+      "id": "pi-divergence-curl-004",
+      "concept_id": "divergence-curl",
+      "topic": "vector-calculus",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "For a twice continuously-differentiable vector field F and scalar field f, which of the following are always true?",
+      "options": [
+        "div(curl F) = 0",
+        "curl(∇f) = 0",
+        "curl F measures the local rotation (circulation density) of F",
+        "div F is a vector quantity",
+        "curl F is a scalar quantity (in 3D)"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2
+      ],
+      "correct_answer": "div(curl F)=0 and curl(∇f)=0 are fundamental identities; curl F measures local rotation",
+      "solution_steps": [
+        "(a) TRUE: div(curl F) = 0 is a standard vector identity — expanding it gives a sum of mixed partials that cancel in pairs by equality of mixed partials.",
+        "(b) TRUE: curl(∇f) = 0 is the dual identity — the gradient field of any scalar is automatically curl-free.",
+        "(c) TRUE: this is the physical/geometric meaning of curl — a nonzero curl at a point indicates the field has local rotational tendency there (e.g. a paddle-wheel would spin).",
+        "(d) FALSE: div F = ∂F₁/∂x+∂F₂/∂y+∂F₃/∂z is a SCALAR (sum of scalars), not a vector.",
+        "(e) FALSE: in 3D, curl F = (∂F₃/∂y-∂F₂/∂z, ∂F₁/∂z-∂F₃/∂x, ∂F₂/∂x-∂F₁/∂y) is a VECTOR, not a scalar (the 2D 'scalar curl' is a special simplified case)."
+      ],
+      "verification_method": "hand_checkable_div_curl_properties"
+    },
+    {
+      "id": "pi-divergence-curl-005",
+      "concept_id": "divergence-curl",
+      "topic": "vector-calculus",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (x²y, -xy², z³). Find div F at the point (2, -1, 1).",
+      "answer_range": [
+        2.985,
+        3.015
+      ],
+      "correct_answer": "3",
+      "solution_steps": [
+        "Method 1 (symbolic partials, simplify first): div F = ∂(x²y)/∂x + ∂(-xy²)/∂y + ∂(z³)/∂z = 2xy - 2xy + 3z² = 3z². The first two terms cancel identically for ALL x,y. At (2,-1,1): div F = 3(1)² = 3.",
+        "Method 2 (numerical finite-difference at the point, cross-check): with step h=0.001 and central differences at (2,-1,1): ∂(x²y)/∂x ≈ [(2.001)²(-1) - (1.999)²(-1)]/0.002 = (-4.004001+3.996001)/0.002 = -4.0.",
+        "∂(-xy²)/∂y ≈ [-2(-0.999)² - (-2(-1.001)²)]/0.002 = (-1.996002+2.004002)/0.002 = 4.0. ∂(z³)/∂z ≈ [(1.001)³-(0.999)³]/0.002 = (1.003003-0.997003)/0.002 ≈ 3.000.",
+        "Summing the three numerically-estimated partials: -4.0+4.0+3.000 = 3.000, matching Method 1's symbolic result — a genuinely different computational route (numerical differentiation vs. symbolic simplification)."
+      ],
+      "verification_method": "hand_checkable_finite_difference_cross_check"
+    },
+    {
+      "id": "pi-line-integrals-001",
+      "concept_id": "line-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "F = (2x, 2y) (conservative). Compute the work ∫_C F·dr along the straight segment C from (0,0) to (1,1).",
+      "options": [
+        "2",
+        "4",
+        "1",
+        "√2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (direct parameterization): r(t) = (t,t), t: 0→1, r'(t) = (1,1). F(r(t)) = (2t,2t). W = ∫₀¹ (2t·1+2t·1) dt = ∫₀¹ 4t dt = 2t²|₀¹ = 2.",
+        "Method 2 (potential function, cross-check): F = ∇f with f(x,y) = x²+y², since ∂f/∂x=2x, ∂f/∂y=2y. For a conservative field, W = f(endpoint) - f(startpoint) = f(1,1)-f(0,0) = 2-0 = 2.",
+        "Matches Method 1 exactly, via the fundamental theorem for line integrals rather than direct parameterization.",
+        "'4' comes from forgetting the ∫ scales by dt before evaluating; '1' uses only the x-component of F·dr; '√2' confuses this with the ARC LENGTH of the segment (|r'(t)|=√2), not the work integral."
+      ],
+      "verification_method": "hand_checkable_potential_function_shortcut",
+      "also_tests": [
+        "vector-fields"
+      ]
+    },
+    {
+      "id": "pi-line-integrals-002",
+      "concept_id": "line-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "F = (2x, 2y). Compute the work ∫_C F·dr along the PARABOLIC path C: r(t) = (t, t²), t: 0→1, from (0,0) to (1,1).",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (direct parameterization along the parabola): r'(t) = (1, 2t). F(r(t)) = (2t, 2t²). W = ∫₀¹ (2t·1 + 2t²·2t) dt = ∫₀¹ (2t+4t³) dt = [t²+t⁴]₀¹ = 1+1 = 2.",
+        "Method 2 (path independence, cross-check): F=∇(x²+y²) is conservative, so its work between two fixed endpoints does NOT depend on which path connects them. W = f(1,1)-f(0,0) = 2-0 = 2 — the same value regardless of the curve's shape.",
+        "Both the straight-line path (pi-line-integrals-001) and this parabolic path give W=2, which is exactly what path-independence for a conservative field predicts — a strong, structural cross-check rather than merely re-doing the algebra."
+      ],
+      "verification_method": "hand_checkable_path_independence_cross_check",
+      "also_tests": [
+        "vector-fields"
+      ]
+    },
+    {
+      "id": "pi-line-integrals-003",
+      "concept_id": "line-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "F = (y, x²) (NOT conservative). Compute ∫_C F·dr along the straight segment C from (0,0) to (1,2).",
+      "options": [
+        "5/3",
+        "5/6",
+        "3",
+        "2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5/3",
+      "solution_steps": [
+        "Method 1 (parameterize by t): r(t)=(t,2t), t:0→1, r'(t)=(1,2). F(r(t))=(2t, t²). W = ∫₀¹(2t·1 + t²·2) dt = ∫₀¹(2t+2t²) dt = [t²+⅔t³]₀¹ = 1+⅔ = 5/3.",
+        "Method 2 (re-parameterize the SAME path by y instead of by t, cross-check): let y=u, so x=u/2, dx=du/2, dy=du, u:0→2. F·dr = y dx + x² dy = u(du/2) + (u/2)² du = (u/2 + u²/4) du.",
+        "∫₀² (u/2+u²/4) du = [u²/4 + u³/12]₀² = (4/4 + 8/12) = 1 + 2/3 = 5/3. Matches Method 1 exactly, using a genuinely different parameterization of the identical path.",
+        "'5/6' is a common arithmetic slip in the ⅔t³ term; '3' comes from mishandling the bounds; '2' drops the x² term entirely (treats F as if it were just (y,0))."
+      ],
+      "verification_method": "hand_checkable_alternate_parameterization"
+    },
+    {
+      "id": "pi-line-integrals-004",
+      "concept_id": "line-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about line integrals are always true?",
+      "options": [
+        "∫_C F·dr depends only on the endpoints of C (not the path) when F is conservative",
+        "The scalar line integral ∫_C f ds (with respect to arc length) depends on the direction C is traversed",
+        "Reversing the orientation of C negates ∫_C F·dr",
+        "If F is conservative, ∮_C F·dr = 0 for every closed curve C",
+        "∫_C F·dr can be computed using any parameterization of C consistent with its orientation, and the result is always the same"
+      ],
+      "answer_indices": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "correct_answer": "Path-independence for conservative fields; reversing orientation negates the vector line integral; zero circulation for conservative fields; parameterization-independence",
+      "solution_steps": [
+        "(a) TRUE: this is the fundamental theorem for line integrals, ∫_C ∇f·dr = f(end)-f(start).",
+        "(b) FALSE: ds = |r'(t)| dt is always ≥0 regardless of direction of travel, so the SCALAR line integral ∫f ds is orientation-independent — unlike the vector integral ∫F·dr.",
+        "(c) TRUE: reversing orientation flips the sign of dr = r'(t)dt at every point, negating the integral.",
+        "(d) TRUE: a closed curve has the same start and end point, so path-independence gives f(P)-f(P) = 0.",
+        "(e) TRUE: the line integral is defined intrinsically on the curve; any orientation-consistent parameterization gives the same value (this is exactly what makes Method 2 in pi-line-integrals-003 a valid cross-check)."
+      ],
+      "verification_method": "hand_checkable_line_integral_properties"
+    },
+    {
+      "id": "pi-line-integrals-005",
+      "concept_id": "line-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.6,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Compute the scalar line integral ∫_C (x+y) ds, where C is the straight segment from (0,0) to (3,4).",
+      "answer_range": [
+        17.4125,
+        17.5875
+      ],
+      "correct_answer": "17.5",
+      "solution_steps": [
+        "Method 1 (parameterize by t): r(t)=(3t,4t), t:0→1. r'(t)=(3,4), |r'(t)|=5 (constant), so ds=5dt. ∫₀¹(3t+4t)(5)dt = 35∫₀¹t dt = 35(1/2) = 17.5.",
+        "Method 2 (parameterize by arc length s directly, cross-check): the segment has total length 5, so use unit-speed parameterization x=3s/5, y=4s/5, s:0→5 (|dr/ds|=1 by construction, so ds is literally ds).",
+        "∫₀⁵ (3s/5+4s/5) ds = ∫₀⁵ (7s/5) ds = (7/5)(s²/2)|₀⁵ = (7/5)(25/2) = 175/10 = 17.5. Matches Method 1 exactly, via a parameterization that never needed to compute |r'(t)| at all."
+      ],
+      "verification_method": "hand_checkable_arc_length_parameterization"
+    },
+    {
+      "id": "pi-surface-integrals-001",
+      "concept_id": "surface-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the surface area of the plane z = x+y over the unit square 0≤x≤1, 0≤y≤1.",
+      "options": [
+        "√3",
+        "1",
+        "3",
+        "√2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "√3",
+      "solution_steps": [
+        "Method 1 (surface-area-element formula): dS = √(1+z_x²+z_y²) dA = √(1+1+1) dA = √3 dA. Area = √3 · (1·1) = √3.",
+        "Method 2 (geometric parallelogram area, cross-check): the surface is a flat parallelogram with corners (0,0,0),(1,0,1),(0,1,1),(1,1,2). Take edge vectors from (0,0,0): u=(1,0,1), v=(0,1,1).",
+        "Area = |u×v|. u×v = (0·1-1·1, 1·0-1·1, 1·1-0·0) = (-1,-1,1). |u×v| = √(1+1+1) = √3. Matches Method 1, from pure geometry with no dS formula involved.",
+        "'1' forgets the dS scaling factor entirely (treats the tilted plane's area as its flat xy-projection); '3' squares √3 by mistake; '√2' uses only one of the two partial-derivative terms."
+      ],
+      "verification_method": "hand_checkable_parallelogram_cross_product"
+    },
+    {
+      "id": "pi-surface-integrals-002",
+      "concept_id": "surface-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (0, 0, 1) (uniform field). Compute the outward flux ∬_S F·dS through the upper unit hemisphere x²+y²+z²=1, z≥0.",
+      "answer_range": [
+        3.125885,
+        3.157301
+      ],
+      "correct_answer": "3.14159",
+      "solution_steps": [
+        "Method 1 (direct parameterization): on the unit sphere, outward n dS = r(θ,φ) sinθ dθdφ. F·n dS = (0,0,1)·(sinθcosφ,sinθsinφ,cosθ) sinθ dθdφ = cosθ sinθ dθdφ.",
+        "Flux = ∫₀^2π∫₀^(π/2) cosθ sinθ dθ dφ = 2π·[sin²θ/2]₀^(π/2) = 2π·(1/2) = π ≈ 3.14159.",
+        "Method 2 (same-boundary substitution, cross-check): since div F = 0, the flux of F through ANY surface sharing the hemisphere's boundary circle (with the same outward orientation) is identical (this is the closed-surface consequence of the divergence theorem: the flux difference between two such caps equals ∭div F dV over the enclosed volume, which is 0).",
+        "Replace the hemisphere by the flat unit disk at z=0 (upward normal): flux = F·n · Area = 1 · π(1)² = π. Matches Method 1 exactly, via a completely different surface."
+      ],
+      "verification_method": "hand_checkable_same_boundary_substitution",
+      "also_tests": [
+        "gauss-divergence"
+      ]
+    },
+    {
+      "id": "pi-surface-integrals-003",
+      "concept_id": "surface-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "F = (x, y, z). Compute the outward flux ∬_S F·dS through the upper unit hemisphere x²+y²+z²=1, z≥0.",
+      "options": [
+        "2π",
+        "π",
+        "4π",
+        "π/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2π",
+      "solution_steps": [
+        "Method 1 (spherical parameterization): on the unit sphere, outward n=(x,y,z), so F·n = x²+y²+z² = 1 everywhere on S. Flux = ∬_S 1 dS = surface area of the hemisphere = 2π(1)² = 2π.",
+        "Method 2 (xy-plane projection, cross-check): with z=g(x,y)=√(1-x²-y²), the upward-oriented flux is ∬_D F·(-g_x,-g_y,1) dA where D is the unit disk. Since g_x=-x/z, g_y=-y/z, this vector is (x/z, y/z, 1).",
+        "F·(x/z,y/z,1) = x²/z+y²/z+z = (x²+y²)/z+z = (1-z²)/z+z = 1/z-z+z = 1/z. So flux = ∬_D (1/z) dA = ∬_D (1/√(1-x²-y²)) dA.",
+        "In polar coordinates: 2π∫₀¹ r/√(1-r²) dr. Let u=1-r²: this equals 2π·[-√u]₁⁰ (from u=1 to u=0) = 2π·(0-(-1)) = 2π. Matches Method 1 exactly, via projection onto an entirely different coordinate system."
+      ],
+      "verification_method": "hand_checkable_projection_parameterization"
+    },
+    {
+      "id": "pi-surface-integrals-004",
+      "concept_id": "surface-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about surface integrals are always true?",
+      "options": [
+        "The value of ∬_S F·dS depends on the choice of orientation (normal direction) of S",
+        "For a scalar surface integral ∬_S f dS, the value is independent of how S is parameterized, provided the parameterization covers S once",
+        "For z=g(x,y), the surface area element is dS = √(1+g_x²+g_y²) dA",
+        "Swapping the roles of the two surface parameters u,v never changes the sign of a flux integral",
+        "Two different surfaces sharing the same boundary curve always give the same flux for any vector field F"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2
+      ],
+      "correct_answer": "Flux depends on orientation; scalar surface integrals are parameterization-independent; the standard z=g(x,y) area-element formula",
+      "solution_steps": [
+        "(a) TRUE: flipping the normal direction n → -n negates F·n at every point, hence negates ∬_S F·dS.",
+        "(b) TRUE: dS is an intrinsic (unsigned) area element — any valid parameterization covering S once gives the same scalar integral, as demonstrated by Method 2 in pi-surface-integrals-003.",
+        "(c) TRUE: this is the standard formula, derived from r(x,y)=(x,y,g(x,y)) and |r_x×r_y| = √(1+g_x²+g_y²).",
+        "(d) FALSE: swapping u,v swaps r_u×r_v to r_v×r_u = -(r_u×r_v), which flips the induced normal's direction — and hence CAN flip the flux integral's sign.",
+        "(e) FALSE: this only holds when div F = 0 in the region between the two surfaces (as used in pi-surface-integrals-002) — not for a general F."
+      ],
+      "verification_method": "hand_checkable_surface_integral_properties"
+    },
+    {
+      "id": "pi-surface-integrals-005",
+      "concept_id": "surface-integrals",
+      "topic": "vector-calculus",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Find the lateral surface area of the cone z = √(x²+y²) for 0 ≤ z ≤ 1.",
+      "answer_range": [
+        4.420669,
+        4.465097
+      ],
+      "correct_answer": "4.44288",
+      "solution_steps": [
+        "Method 1 (surface-area-element formula in polar coordinates): with z=r, z_x=x/r, z_y=y/r, so z_x²+z_y² = (x²+y²)/r² = 1, giving dS = √(1+1) dA = √2 dA.",
+        "Area = √2 · (area of the unit disk) = √2 · π = π√2 ≈ 4.44288.",
+        "Method 2 (standard cone geometry formula, cross-check): this is a right circular cone with base radius R=1 and height h=1 (apex at the origin, base circle at z=1). Slant height l = √(R²+h²) = √2.",
+        "Lateral surface area of a cone = πRl = π(1)(√2) = π√2 ≈ 4.44288. Matches Method 1 exactly, from elementary solid geometry rather than calculus."
+      ],
+      "verification_method": "hand_checkable_cone_geometry_formula"
+    },
+    {
+      "id": "pi-greens-theorem-001",
+      "concept_id": "greens-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "F = (-y, x). Compute the circulation ∮_C F·dr around the unit circle C: x²+y²=1, traversed counterclockwise.",
+      "options": [
+        "2π",
+        "π",
+        "4π",
+        "0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2π",
+      "solution_steps": [
+        "Method 1 (direct parameterization): r(t)=(cos t,sin t), t:0→2π. r'(t)=(-sin t,cos t). F(r(t))=(-sin t,cos t). F·r' = sin²t+cos²t = 1. ∮ = ∫₀^2π 1 dt = 2π.",
+        "Method 2 (Green's theorem, cross-check): ∮_C(Pdx+Qdy) = ∬_D(Q_x-P_y)dA. Here Q_x = ∂x/∂x = 1, P_y = ∂(-y)/∂y = -1, so Q_x-P_y = 2 (constant).",
+        "∬_D 2 dA = 2·Area(unit disk) = 2π. Matches Method 1 exactly, via a double integral instead of a line integral.",
+        "'π' forgets the factor of 2 from Q_x-P_y; '4π' double-counts; '0' mistakes this rotational field for a conservative one (it is not — its circulation is nonzero)."
+      ],
+      "verification_method": "hand_checkable_greens_theorem_circulation"
+    },
+    {
+      "id": "pi-greens-theorem-002",
+      "concept_id": "greens-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (y², x²). Compute the circulation ∮_C F·dr around the unit square with vertices (0,0),(1,0),(1,1),(0,1), traversed counterclockwise.",
+      "answer_range": [
+        -0.01,
+        0.01
+      ],
+      "correct_answer": "0",
+      "solution_steps": [
+        "Method 1 (Green's theorem): Q_x-P_y = ∂(x²)/∂x - ∂(y²)/∂y = 2x-2y. ∬_{[0,1]²}(2x-2y)dA = 2∫₀¹x dx - 2∫₀¹y dy = 2(½)-2(½) = 1-1 = 0.",
+        "Method 2 (direct 4-segment line integral, cross-check): (0,0)→(1,0): y=0,dy=0, ∫y²dx=∫0 dx=0. (1,0)→(1,1): x=1,dx=0, ∫x²dy=∫1 dy=1.",
+        "(1,1)→(0,1): y=1,dy=0, ∫y²dx=∫₁⁰1 dx=-1. (0,1)→(0,0): x=0,dx=0, ∫x²dy=∫0 dy=0.",
+        "Total = 0+1-1+0 = 0, matching Method 1's double integral exactly, via four independent one-dimensional integrals along the actual boundary."
+      ],
+      "verification_method": "hand_checkable_four_segment_boundary_integral"
+    },
+    {
+      "id": "pi-greens-theorem-003",
+      "concept_id": "greens-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Use the Green's-theorem area formula A = ½∮_C(x dy - y dx) to find the area enclosed by the ellipse x=2cos t, y=3sin t, 0≤t≤2π.",
+      "options": [
+        "6π",
+        "12π",
+        "5π",
+        "36π"
+      ],
+      "answer_index": 0,
+      "correct_answer": "6π",
+      "solution_steps": [
+        "Method 1 (Green's area formula): dx=-2sin t dt, dy=3cos t dt. x dy - y dx = (2cos t)(3cos t)dt - (3sin t)(-2sin t)dt = 6cos²t dt + 6sin²t dt = 6 dt.",
+        "A = ½∫₀^2π 6 dt = ½(6)(2π) = 6π.",
+        "Method 2 (standard ellipse area formula, cross-check): this curve is an ellipse with semi-axes a=2 (x-direction) and b=3 (y-direction). The elementary formula for ellipse area is A=πab = π(2)(3) = 6π. Matches Method 1 exactly, with no line integral involved at all.",
+        "'12π' forgets the ½ factor in the area formula; '5π' mistakenly uses π(a+b) instead of πab; '36π' uses (ab)² instead of ab."
+      ],
+      "verification_method": "hand_checkable_ellipse_area_formula"
+    },
+    {
+      "id": "pi-greens-theorem-004",
+      "concept_id": "greens-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about Green's theorem are always true?",
+      "options": [
+        "Green's theorem requires C to be a simple closed curve, positively (counterclockwise) oriented as the boundary of D",
+        "Green's theorem converts a double integral over D into a line integral over its boundary C, or vice versa",
+        "If Q_x = P_y everywhere in a simply-connected region D, then ∮_C(Pdx+Qdy)=0 for every closed curve C inside D",
+        "Green's theorem can only be used to compute circulation, never flux",
+        "Reversing the orientation of C flips the sign of both sides of Green's theorem"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "correct_answer": "Positive orientation is required; it links double and line integrals; Q_x=P_y implies zero circulation; reversing orientation flips both sides' sign",
+      "solution_steps": [
+        "(a) TRUE: this is the theorem's stated hypothesis — C must be simple, closed, and traversed so D stays on the left (counterclockwise for a standard region).",
+        "(b) TRUE: this is exactly what the equality ∮_C(Pdx+Qdy)=∬_D(Q_x-P_y)dA does.",
+        "(c) TRUE: Q_x-P_y=0 makes the right-hand double integral 0 for any region D, hence the circulation around its boundary is 0 — this is precisely the conservative-field/zero-circulation link.",
+        "(d) FALSE: Green's theorem also has an equivalent FLUX form, ∮_C F·n ds = ∬_D div F dA (used in pi-greens-theorem-005) — it is the 2D special case of the divergence theorem, not just circulation.",
+        "(e) TRUE: reversing C's orientation negates the line integral (as in line integrals generally) and, to keep the equality valid, the area integral's sign convention flips with it (equivalently, D would now be traversed clockwise, the 'wrong' side)."
+      ],
+      "verification_method": "hand_checkable_greens_theorem_properties"
+    },
+    {
+      "id": "pi-greens-theorem-005",
+      "concept_id": "greens-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.6,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (x³, y³). Using the flux (divergence) form of Green's theorem, ∮_C F·n ds = ∬_D div F dA, compute the outward flux of F across the unit circle C.",
+      "answer_range": [
+        4.688827,
+        4.735951
+      ],
+      "correct_answer": "4.71239",
+      "solution_steps": [
+        "Method 1 (flux form of Green's theorem): div F = 3x²+3y². ∬_D 3(x²+y²)dA = 3∫₀^2π∫₀¹ r²·r dr dθ = 3(2π)∫₀¹r³dr = 3(2π)(1/4) = 3π/2 ≈ 4.71239.",
+        "Method 2 (direct outward flux integral, cross-check): on the unit circle, outward unit normal n=(cosθ,sinθ), and ds=dθ (radius 1). F=(cos³θ,sin³θ), so F·n = cos⁴θ+sin⁴θ.",
+        "Using cos⁴θ+sin⁴θ = 1-2sin²θcos²θ = 1-½sin²(2θ): ∮F·n ds = ∫₀^2π[1-½sin²2θ]dθ = 2π - ½∫₀^2π sin²2θ dθ.",
+        "∫₀^2π sin²2θ dθ = π (average value ½ over the 2π interval). So ∮ = 2π - π/2 = 3π/2 ≈ 4.71239. Matches Method 1 exactly, via a direct boundary integral rather than the interior double integral."
+      ],
+      "verification_method": "hand_checkable_flux_form_direct_boundary_integral",
+      "also_tests": [
+        "divergence-curl"
+      ]
+    },
+    {
+      "id": "pi-stokes-theorem-001",
+      "concept_id": "stokes-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "F = (-y, x, z). Compute the circulation ∮_C F·dr around the unit circle C: x²+y²=1, z=0, traversed counterclockwise (viewed from +z).",
+      "options": [
+        "2π",
+        "π",
+        "4π",
+        "0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2π",
+      "solution_steps": [
+        "Method 1 (direct parameterization): r(t)=(cos t,sin t,0). r'(t)=(-sin t,cos t,0). F(r(t))=(-sin t,cos t,0). F·r' = sin²t+cos²t = 1. ∮ = ∫₀^2π 1 dt = 2π.",
+        "Method 2 (Stokes' theorem, cross-check): curl F = (∂z/∂y-∂x/∂z, ∂(-y)/∂z-∂z/∂x, ∂x/∂x-∂(-y)/∂y) = (0-0, 0-0, 1-(-1)) = (0,0,2). Take S = the flat unit disk in z=0, n=(0,0,1) (right-hand rule matches the given orientation).",
+        "∬_S curl F·n dS = ∬_S 2 dA = 2·Area(disk) = 2π. Matches Method 1 exactly, via a surface integral of curl F instead of the line integral.",
+        "'π' forgets the factor of 2 in curl F's z-component; '4π' double-counts; '0' wrongly assumes this field is conservative."
+      ],
+      "verification_method": "hand_checkable_stokes_theorem_circulation",
+      "also_tests": [
+        "divergence-curl"
+      ]
+    },
+    {
+      "id": "pi-stokes-theorem-002",
+      "concept_id": "stokes-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (z, x, y). Compute the circulation ∮_C F·dr around the triangle with vertices (1,0,0), (0,1,0), (0,0,1), traversed in that order (this is the counterclockwise orientation of the boundary of the plane x+y+z=1 restricted to the first octant, viewed from outside the octant).",
+      "answer_range": [
+        1.49,
+        1.51
+      ],
+      "correct_answer": "1.5",
+      "solution_steps": [
+        "Method 1 (Stokes' theorem with the flat triangular surface): curl F = (∂y/∂y-∂x/∂z, ∂z/∂z-∂y/∂x, ∂x/∂x-∂z/∂y) = (1,1,1). The plane x+y+z=1 has outward unit normal n=(1,1,1)/√3, matching the stated orientation.",
+        "curl F·n = 3/√3 = √3 (constant on the flat triangle). The triangle has side length √2 (e.g. distance from (1,0,0) to (0,1,0)), so it's equilateral with area (√3/4)(√2)² = √3/2.",
+        "Flux = curl F·n × Area = √3 × √3/2 = 3/2 = 1.5.",
+        "Method 2 (direct 3-segment line integral, cross-check): segment (1,0,0)→(0,1,0): r(t)=(1-t,t,0), r'=(-1,1,0), F=(z,x,y)=(0,1-t,t). F·r'=1-t. ∫₀¹(1-t)dt=0.5.",
+        "segment (0,1,0)→(0,0,1): r(t)=(0,1-t,t), r'=(0,-1,1), F=(t,0,1-t). F·r'=1-t. ∫₀¹(1-t)dt=0.5. segment (0,0,1)→(1,0,0): r(t)=(t,0,1-t), r'=(1,0,-1), F=(1-t,t,0). F·r'=1-t. ∫₀¹(1-t)dt=0.5.",
+        "Total = 0.5+0.5+0.5 = 1.5, matching Method 1 exactly, via three independent one-dimensional integrals along the actual triangle."
+      ],
+      "verification_method": "hand_checkable_stokes_direct_boundary_integral"
+    },
+    {
+      "id": "pi-stokes-theorem-003",
+      "concept_id": "stokes-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "F = (y, -x, z). Compute the circulation ∮_C F·dr around the circle x²+y²=4, z=3, traversed counterclockwise as viewed from above.",
+      "options": [
+        "-8π",
+        "8π",
+        "-4π",
+        "-2π"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-8π",
+      "solution_steps": [
+        "Method 1 (Stokes' theorem with the flat disk at z=3): curl F = (∂z/∂y-∂(-x)/∂z, ∂y/∂z-∂z/∂x, ∂(-x)/∂x-∂y/∂y) = (0-0, 0-0, -1-1) = (0,0,-2). n=(0,0,1) for the flat disk. curl F·n = -2 (constant).",
+        "Flux = -2 · Area(disk of radius 2) = -2·π(2²) = -8π.",
+        "Method 2 (direct parameterization, cross-check): r(t)=(2cos t,2sin t,3). r'(t)=(-2sin t,2cos t,0). F(r(t))=(2sin t,-2cos t,3). F·r' = -4sin²t-4cos²t+0 = -4.",
+        "∮ = ∫₀^2π(-4)dt = -8π. Matches Method 1 exactly, via a direct boundary line integral instead of the surface integral of curl F.",
+        "'8π' is a pure sign/orientation slip; '-4π' uses radius instead of radius² in the disk area; '-2π' forgets the area factor entirely, using only curl F's z-component."
+      ],
+      "verification_method": "hand_checkable_stokes_direct_line_integral"
+    },
+    {
+      "id": "pi-stokes-theorem-004",
+      "concept_id": "stokes-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.7,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about Stokes' theorem are always true?",
+      "options": [
+        "Stokes' theorem generalizes Green's theorem to surfaces in 3D",
+        "∬_S curl F·n dS depends only on the boundary curve C of S (with consistent orientation), not on the particular choice of surface S",
+        "If curl F = 0 everywhere on a simply-connected domain containing S, then ∮_C F·dr = 0 for the boundary C of S",
+        "Stokes' theorem applies only to flat (planar) surfaces",
+        "Reversing the orientation of C reverses the sign of ∮_C F·dr but not of ∬_S curl F·n dS"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2
+      ],
+      "correct_answer": "Stokes generalizes Green's theorem; the surface integral of curl F depends only on the boundary; curl-free implies zero circulation",
+      "solution_steps": [
+        "(a) TRUE: setting z=0 and curl F reducing to its z-component recovers exactly Green's theorem — Stokes' theorem is the 3D generalization.",
+        "(b) TRUE: this is exactly why pi-stokes-theorem-001 and pi-stokes-theorem-002 could each be verified by choosing ANY surface with the given boundary — the flux of curl F is a property of the boundary curve, not the surface.",
+        "(c) TRUE: curl F=0 makes the surface integral 0 for any S with boundary C, so the circulation ∮_C F·dr = 0.",
+        "(d) FALSE: Stokes' theorem applies to any smooth orientable surface (e.g. pi-stokes-theorem-002 uses a flat surface, but curved surfaces work equally well by the boundary-independence property in (b)).",
+        "(e) FALSE: both sides of Stokes' theorem must change sign together when C's orientation reverses — the theorem is an equality, so it stays valid on both sides, meaning ∬_S curl F·n dS ALSO flips sign (its induced surface orientation flips with C's)."
+      ],
+      "verification_method": "hand_checkable_stokes_theorem_properties"
+    },
+    {
+      "id": "pi-stokes-theorem-005",
+      "concept_id": "stokes-theorem",
+      "topic": "vector-calculus",
+      "difficulty": 0.65,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (x²-y, y²+x, z²). Compute the circulation ∮_C F·dr around the unit circle x²+y²=1, z=0, traversed counterclockwise.",
+      "answer_range": [
+        6.251769,
+        6.314601
+      ],
+      "correct_answer": "6.28319",
+      "solution_steps": [
+        "Method 1 (Stokes' theorem with the flat unit disk): curl F = (∂z²/∂y-∂(y²+x)/∂z, ∂(x²-y)/∂z-∂z²/∂x, ∂(y²+x)/∂x-∂(x²-y)/∂y) = (0-0, 0-0, 1-(-1)) = (0,0,2). Flux = 2·Area(disk) = 2π ≈ 6.28319.",
+        "Method 2 (direct parameterization, cross-check): r(t)=(cos t,sin t,0), r'(t)=(-sin t,cos t,0). F(r(t))=(cos²t-sin t, sin²t+cos t, 0).",
+        "F·r' = (cos²t-sin t)(-sin t) + (sin²t+cos t)(cos t) = -sin t cos²t + sin²t + sin²t cos t + cos²t = sin t cos t(sin t - cos t) + 1.",
+        "∫₀^2π sin t cos t(sin t-cos t) dt = 0 (each term, ∫sin²t cos t dt and ∫sin t cos²t dt, integrates to 0 over a full period). So ∮ = 0 + ∫₀^2π 1 dt = 2π ≈ 6.28319. Matches Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_stokes_direct_line_integral_trig"
+    },
+    {
+      "id": "pi-gauss-divergence-001",
+      "concept_id": "gauss-divergence",
+      "topic": "vector-calculus",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "F = (x, y, z). Compute the outward flux ∬_S F·dS through the unit sphere x²+y²+z²=1.",
+      "options": [
+        "4π",
+        "4π/3",
+        "12π",
+        "2π"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4π",
+      "solution_steps": [
+        "Method 1 (divergence theorem): div F = 1+1+1 = 3. Volume of the unit ball = 4π/3. Flux = 3·(4π/3) = 4π.",
+        "Method 2 (direct surface integral, cross-check): on the unit sphere, outward n=(x,y,z) (position vector). F·n = x²+y²+z² = 1 everywhere on S. Flux = ∬_S 1 dS = surface area of the unit sphere = 4π. Matches Method 1 exactly, with no divergence or volume involved.",
+        "'4π/3' uses the ball's volume directly, forgetting to multiply by div F=3; '12π' multiplies the surface area formula by 3 again (double-counting); '2π' is the hemisphere's flux, not the full sphere's."
+      ],
+      "verification_method": "hand_checkable_position_field_flux"
+    },
+    {
+      "id": "pi-gauss-divergence-002",
+      "concept_id": "gauss-divergence",
+      "topic": "vector-calculus",
+      "difficulty": 0.45,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "F = (2x, 3y, -z). Compute the outward flux ∬_S F·dS through the surface of the unit cube [0,1]³.",
+      "answer_range": [
+        3.98,
+        4.02
+      ],
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (divergence theorem): div F = 2+3-1 = 4. Volume of the cube = 1. Flux = 4·1 = 4.",
+        "Method 2 (direct sum over the 6 faces, cross-check): x=1 face (n=(1,0,0)): F·n=2x=2, area 1, contributes 2. x=0 face: F·n=-2x=0. y=1 face: F·n=3y=3, contributes 3. y=0: F·n=-3y=0.",
+        "z=1 face (n=(0,0,1)): F·n=-z=-1, contributes -1. z=0 face (n=(0,0,-1)): F·n=-(-z)=z=0.",
+        "Total flux = 2+3-1+0+0+0 = 4. Matches Method 1 exactly, via six independent face computations instead of one volume integral."
+      ],
+      "verification_method": "hand_checkable_face_by_face_flux_sum"
+    },
+    {
+      "id": "pi-gauss-divergence-003",
+      "concept_id": "gauss-divergence",
+      "topic": "vector-calculus",
+      "difficulty": 0.55,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (x³, y³, z³). Compute the outward flux ∬_S F·dS through the unit sphere x²+y²+z²=1.",
+      "answer_range": [
+        7.502123,
+        7.577521
+      ],
+      "correct_answer": "7.53982",
+      "solution_steps": [
+        "Method 1 (divergence theorem, spherical coordinates): div F = 3x²+3y²+3z² = 3r². ∭ 3r² dV = 3∫₀^2π dθ ∫₀^π sinφ dφ ∫₀¹ r²·r² dr = 3(2π)(2)(1/5) = 12π/5 ≈ 7.53982.",
+        "Method 2 (direct surface integral by symmetry, cross-check): on the unit sphere, n=(x,y,z), so F·n = x⁴+y⁴+z⁴. By symmetry, ∬x⁴dS=∬y⁴dS=∬z⁴dS, so the total is 3∬z⁴dS.",
+        "With z=cosφ, dS=sinφ dφdθ: ∬z⁴dS = ∫₀^2π dθ ∫₀^π cos⁴φ sinφ dφ = 2π·[-cos⁵φ/5]₀^π = 2π·(1/5+1/5) = 4π/5.",
+        "Total flux = 3·(4π/5) = 12π/5 ≈ 7.53982. Matches Method 1 exactly, via a direct surface integral exploiting symmetry rather than the volume integral."
+      ],
+      "verification_method": "hand_checkable_symmetry_surface_integral"
+    },
+    {
+      "id": "pi-gauss-divergence-004",
+      "concept_id": "gauss-divergence",
+      "topic": "vector-calculus",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about the divergence (Gauss) theorem are always true?",
+      "options": [
+        "The divergence theorem relates a flux integral over a closed surface to a volume integral over the region it encloses",
+        "The surface in the divergence theorem must be oriented with an outward-pointing normal",
+        "If div F = 0 everywhere inside a closed surface S, the total outward flux through S is zero",
+        "The divergence theorem applies only when S is a sphere",
+        "For any vector field F, the flux through a closed surface equals its surface area times the average value of F"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2
+      ],
+      "correct_answer": "The divergence theorem links closed-surface flux to enclosed volume integral, requires outward orientation, and gives zero flux when div F=0",
+      "solution_steps": [
+        "(a) TRUE: this is the theorem's statement, ∬_S F·dS = ∭_V div F dV.",
+        "(b) TRUE: the theorem's standard statement requires the OUTWARD orientation; using the inward normal flips the sign.",
+        "(c) TRUE: div F=0 makes the volume integral 0, so the enclosed flux is 0 (as verified structurally in pi-surface-integrals-002, where div F=0 let the hemisphere be swapped for a flat disk).",
+        "(d) FALSE: the theorem holds for any closed surface bounding a well-behaved solid region (e.g. pi-gauss-divergence-002 uses a cube).",
+        "(e) FALSE: this statement doesn't even make dimensional sense — F is a vector, area×F would be a vector, not the flux scalar; the correct relationship involves div F (a scalar), not F itself."
+      ],
+      "verification_method": "hand_checkable_divergence_theorem_properties"
+    },
+    {
+      "id": "pi-gauss-divergence-005",
+      "concept_id": "gauss-divergence",
+      "topic": "vector-calculus",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "F = (x, y, 2z). Compute the outward flux ∬_S F·dS through the closed surface of the cylinder x²+y²≤1, 0≤z≤1 (including the top and bottom disks).",
+      "answer_range": [
+        12.503539,
+        12.629202
+      ],
+      "correct_answer": "12.56637",
+      "solution_steps": [
+        "Method 1 (divergence theorem): div F = 1+1+2 = 4. Volume of the cylinder = π(1²)(1) = π. Flux = 4π ≈ 12.56637.",
+        "Method 2 (direct sum over lateral + top + bottom surfaces, cross-check): lateral surface, parameterized (cosθ,sinθ,z), n=(cosθ,sinθ,0): F·n = x cosθ+y sinθ = cos²θ+sin²θ = 1. Lateral flux = ∫₀^2π∫₀¹ 1 dz dθ = 2π.",
+        "Top disk (z=1, n=(0,0,1)): F·n=2z=2, area π, contributes 2π. Bottom disk (z=0, n=(0,0,-1)): F·n=-2z=0.",
+        "Total flux = 2π+2π+0 = 4π ≈ 12.56637. Matches Method 1 exactly, via three independent surface pieces instead of the volume integral."
+      ],
+      "verification_method": "hand_checkable_cylinder_face_flux_sum"
+    }
+  ]
+}

@@ -22,5 +22,11 @@
   "demo:scenario",
   "demo:scenario:resume",
   "db:migrate",
-  "db:reset"
+  "db:reset",
+  "data:verify",
+  "demo:verify",
+  "demo:seed-history",
+  "verify:teaching",
+  "verify:budget",
+  "content:bundle"
 ]

@@ -32,7 +32,14 @@ interface WalkthroughLegs {
   explanation: { available: boolean; atom_count: number };
   interactive: { available: boolean; count: number };
   practice: { available: boolean; item_count: number; first_object_id: string | null };
-  test: { available: boolean; question_count: number };
+  /**
+   * `exam_tested === false` means this concept is a prerequisite exams
+   * assume rather than directly test — the server sends this on every
+   * response, but it's read defensively (`=== false`, not `!`) so an
+   * older cached response missing the field still reads as "tested"
+   * rather than misfiring the honest-exemption copy below.
+   */
+  test: { available: boolean; question_count: number; exam_tested?: boolean };
 }
 
 interface WalkthroughResponse {
@@ -149,7 +156,9 @@ export function WalkthroughRail({ conceptId, onExplanationTap, onInteractiveTap,
         title="Checkpoint quiz"
         subtitle={legs.test.available
           ? `${legs.test.question_count} exam-style question${s(legs.test.question_count)} for this concept · starts once you've banked enough practice XP`
-          : 'No exam-style questions tagged for this concept yet'}
+          : legs.test.exam_tested === false
+            ? 'Assumed prerequisite — not directly examined in past papers.'
+            : 'No exam-style questions tagged for this concept yet'}
         available={testTappable}
         onClick={testTappable ? () => navigate(`/checkpoint?concept=${encodeURIComponent(conceptId)}`) : undefined}
         last

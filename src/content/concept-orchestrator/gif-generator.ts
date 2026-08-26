@@ -34,6 +34,12 @@
  *     e.g. an indefinite form's open hyperbola branches next to a
  *     positive-definite form's closed ellipses.
  *
+ *   - 'discrete-bars' scene: a fixed array of literal `values` drawn as bars,
+ *     revealed left to right one per frame (e.g. a sequence building term by
+ *     term, or a discrete probability mass function). Takes literal numbers,
+ *     not an expression — it never touches `compileExpression` and adds no
+ *     new expression-evaluation surface.
+ *
  * Future extensions (v3): vector field, 3-D surface plot, custom sprites.
  *
  * Theme palette (matches v4.4.0 design system):
@@ -54,7 +60,8 @@ export type SceneDescription =
   | ParametricScene
   | FunctionTraceScene
   | ParametricCurveScene
-  | LevelSetScene;
+  | LevelSetScene
+  | DiscreteBarsScene;
 
 /**
  * Scene `type` values the renderer actually knows how to draw. Callers that
@@ -68,6 +75,7 @@ export const KNOWN_SCENE_TYPES = [
   'function-trace',
   'parametric-curve',
   'level-set',
+  'discrete-bars',
 ] as const;
 
 export function isKnownSceneType(type: unknown): type is SceneDescription['type'] {
@@ -168,6 +176,20 @@ export interface LevelSetScene {
   height?: number;
 }
 
+export interface DiscreteBarsScene {
+  type: 'discrete-bars';
+  /** Literal bar heights, in display order. Not an expression — no evaluator involved. */
+  values: number[];
+  /** One label per bar, e.g. day numbers or outcome counts. Optional. */
+  labels?: string[];
+  /** Display-only; not rendered into the frame. */
+  title?: string;
+  frames?: number;
+  fps?: number;
+  width?: number;
+  height?: number;
+}
+
 const DEFAULTS = {
   width: 480,
   height: 320,
@@ -231,6 +253,17 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
     buf[p * 4 + 1] = DEFAULTS.bg[1];
     buf[p * 4 + 2] = DEFAULTS.bg[2];
     buf[p * 4 + 3] = DEFAULTS.bg[3];
+  }
+
+  // discrete-bars draws literal values on its own bar-chart layout — it has
+  // no x_range/y_range and no expression, so it skips the generic
+  // axis/curve coordinate system entirely rather than forcing bars through
+  // a -3..3 default that has nothing to do with the data.
+  if (scene.type === 'discrete-bars') {
+    const totalFrames = scene.frames ?? DEFAULTS.frames;
+    const barsShown = Math.max(1, Math.round((scene.values.length * (i + 1)) / totalFrames));
+    drawDiscreteBars(buf, w, h, scene.values, barsShown);
+    return buf;
   }
 
   const xMin = scene.x_range?.[0] ?? -3;
@@ -417,6 +450,52 @@ function drawLevelSet(
         putPixel(buf, w, h, px + 1, py, color);
         putPixel(buf, w, h, px, py + 1, color);
       }
+    }
+  }
+}
+
+/**
+ * Draw the first `barsShown` bars of `values` left to right, most-recently
+ * revealed bar in the accent color so the "one more term" beat reads
+ * clearly, earlier bars in the primary curve color. A zero baseline is
+ * drawn so negative values (not used by either current caller, but not
+ * assumed away) read correctly above/below it.
+ */
+function drawDiscreteBars(
+  buf: Uint8ClampedArray,
+  w: number,
+  h: number,
+  values: number[],
+  barsShown: number,
+): void {
+  const n = values.length;
+  if (n === 0) return;
+
+  const vMax = Math.max(0, ...values);
+  const vMin = Math.min(0, ...values);
+  const span = vMax - vMin || 1;
+
+  const marginX = Math.round(w * 0.05);
+  const marginTop = Math.round(h * 0.08);
+  const marginBottom = Math.round(h * 0.08);
+  const plotW = w - marginX * 2;
+  const plotH = h - marginTop - marginBottom;
+
+  const baselineY = marginTop + Math.round(((vMax - 0) / span) * plotH);
+  for (let xi = marginX; xi < w - marginX; xi++) putPixel(buf, w, h, xi, baselineY, DEFAULTS.axes);
+
+  const gap = Math.max(1, Math.round(plotW * 0.015));
+  const barW = Math.max(1, Math.floor((plotW - gap * (n - 1)) / n));
+
+  for (let idx = 0; idx < Math.min(barsShown, n); idx++) {
+    const value = values[idx];
+    const barX = marginX + idx * (barW + gap);
+    const valueY = marginTop + Math.round(((vMax - value) / span) * plotH);
+    const top = Math.min(valueY, baselineY);
+    const bottom = Math.max(valueY, baselineY);
+    const color = idx === barsShown - 1 ? DEFAULTS.accent : DEFAULTS.curve;
+    for (let bx = barX; bx < barX + barW; bx++) {
+      for (let by = top; by <= bottom; by++) putPixel(buf, w, h, bx, by, color);
     }
   }
 }

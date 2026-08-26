@@ -1,0 +1,729 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the",
+    "complex-variables topic: complex numbers, analytic functions, complex",
+    "integration, Taylor & Laurent series, residue calculus, and conformal",
+    "mapping.",
+    "",
+    "Every item's answer was derived TWICE by genuinely independent methods",
+    "before its key was written — e.g. De Moivre's theorem against direct",
+    "binomial expansion; a harmonic conjugate found by Cauchy-Riemann",
+    "integration AND cross-checked against the closed form of a known",
+    "entire function (z^2, e^z); a contour integral by Cauchy's integral",
+    "formula AND by direct parameterization of a deformed contour; a",
+    "residue at a simple pole by the lim (z-a)f(z) rule AND by the p/q'",
+    "quotient rule, or by partial-fraction decomposition applied through",
+    "Cauchy's integral formula term-by-term; a Laurent coefficient by the",
+    "series expansion AND by the residue shortcut; a Mobius transformation",
+    "value checked by solving its cross-ratio construction AND by",
+    "confirming cross-ratio invariance at the new point. Both methods are",
+    "shown in solution_steps so a student (or a reviewer) can re-derive",
+    "every answer by hand. Contours are stated with explicit radius and",
+    "orientation (always positively oriented / counterclockwise unless",
+    "noted) and singularities are placed at simple, checkable locations",
+    "(0, +-1, +-i, +-2i and small integer poles) so the arithmetic stays",
+    "hand-verifiable without a CAS.",
+    "",
+    "Shape mirrors gate-ma-vector-calculus.json exactly (same AuthoredItem",
+    "schema consumed by FileLearningObjectCatalog / GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-complex-numbers-001",
+      "concept_id": "complex-numbers",
+      "topic": "complex-variables",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Let z = 1 + i. Find z⁴.",
+      "options": [
+        "-4",
+        "4",
+        "-4i",
+        "4i"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-4",
+      "solution_steps": [
+        "Method 1 (polar form / De Moivre): |z| = √(1²+1²) = √2, arg(z) = π/4. So z⁴ = (√2)⁴ (cos(4·π/4) + i sin(4·π/4)) = 4(cos π + i sin π) = 4(-1 + 0i) = -4.",
+        "Method 2 (direct binomial expansion, independent of polar form): (1+i)² = 1 + 2i + i² = 1 + 2i - 1 = 2i. Then (1+i)⁴ = ((1+i)²)² = (2i)² = 4i² = -4. Matches Method 1 exactly.",
+        "'4' drops the sign from cos π = -1; '-4i' and '4i' confuse this with (1+i)³ = -2+2i or a slip that keeps an i factor instead of squaring 2i all the way to a real number."
+      ],
+      "verification_method": "hand_checkable_de_moivre_vs_binomial_expansion"
+    },
+    {
+      "id": "pi-complex-numbers-002",
+      "concept_id": "complex-numbers",
+      "topic": "complex-variables",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Let z = 3 - 4i. Find |z|.",
+      "answer_range": [
+        4.975,
+        5.025
+      ],
+      "correct_answer": "5",
+      "solution_steps": [
+        "Method 1 (direct modulus formula): |z| = √(3² + (-4)²) = √(9+16) = √25 = 5.",
+        "Method 2 (via the conjugate product, cross-check): |z|² = z·z̄ = (3-4i)(3+4i) = 3² - (4i)² = 9 - (-16) = 9 + 16 = 25, so |z| = √25 = 5. Matches Method 1 via a completely different identity (product with the conjugate, not the sum-of-squares formula directly)."
+      ],
+      "verification_method": "hand_checkable_conjugate_product_identity"
+    },
+    {
+      "id": "pi-complex-numbers-003",
+      "concept_id": "complex-numbers",
+      "topic": "complex-variables",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the principal argument (in degrees) of z = -1 + i√3.",
+      "options": [
+        "120°",
+        "60°",
+        "-60°",
+        "240°"
+      ],
+      "answer_index": 0,
+      "correct_answer": "120°",
+      "solution_steps": [
+        "Method 1 (reference angle + quadrant): |z| = √(1+3) = 2. The reference angle is arctan(√3/1) = 60°. Since Re(z) < 0 and Im(z) > 0, z lies in the second quadrant, so arg(z) = 180° - 60° = 120°.",
+        "Method 2 (reconstruction check, independent of the arctan step): if arg(z) = 120°, then z should equal 2(cos 120° + i sin 120°) = 2(-1/2 + i·√3/2) = -1 + i√3.",
+        "This reconstructed value equals the given z exactly, confirming 120° without ever computing an arctan — a genuinely different route (trig reconstruction vs. quadrant analysis).",
+        "'60°' drops the quadrant correction; '-60°' additionally flips the sign (fourth-quadrant trap); '240°' adds 180° to the correct reference angle instead of subtracting it from 180°."
+      ],
+      "verification_method": "hand_checkable_polar_reconstruction"
+    },
+    {
+      "id": "pi-complex-numbers-004",
+      "concept_id": "complex-numbers",
+      "topic": "complex-variables",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "For complex numbers z, z1, z2 (z1, z2 nonzero), which of the following are always true?",
+      "options": [
+        "z·z̄ = |z|²",
+        "Re(z) = (z + z̄)/2",
+        "Im(z) = (z - z̄)/2",
+        "|z1·z2| = |z1|·|z2|",
+        "|z1 + z2| = |z1| + |z2| always, for any z1, z2"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "z·z̄ = |z|²; Re(z) = (z+z̄)/2; |z1·z2| = |z1||z2|",
+      "solution_steps": [
+        "(a) TRUE: writing z = x+iy, z̄ = x-iy, z·z̄ = x²+y² = |z|² by definition.",
+        "(b) TRUE: z + z̄ = (x+iy)+(x-iy) = 2x = 2·Re(z), so Re(z) = (z+z̄)/2.",
+        "(c) FALSE: z - z̄ = (x+iy)-(x-iy) = 2iy, so (z-z̄)/2 = iy, which is iIm(z), not Im(z). The correct identity is Im(z) = (z-z̄)/(2i). Check with z=2+3i: z̄=2-3i, (z-z̄)/2 = 6i/2 = 3i ≠ 3 = Im(z).",
+        "(d) TRUE: |z1z2|² = (z1z2)(z1z2)‾ = z1z̄1·z2z̄2 = |z1|²|z2|², so |z1z2| = |z1||z2| (both sides nonnegative).",
+        "(e) FALSE: this is only the equality case of the triangle inequality |z1+z2| ≤ |z1|+|z2|. Counterexample z1=1, z2=i: |1+i| = √2 ≈ 1.414 but |1|+|i| = 1+1 = 2 ≠ √2."
+      ],
+      "verification_method": "hand_checkable_complex_algebra_properties"
+    },
+    {
+      "id": "pi-complex-numbers-005",
+      "concept_id": "complex-numbers",
+      "topic": "complex-variables",
+      "difficulty": 0.75,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let z = 1 + i. Find Re[z⁵].",
+      "answer_range": [
+        -4.02,
+        -3.98
+      ],
+      "correct_answer": "-4",
+      "solution_steps": [
+        "Method 1 (De Moivre): |z| = √2, arg(z) = π/4. z⁵ = (√2)⁵ (cos(5π/4) + i sin(5π/4)) = 4√2 · (-√2/2 - i√2/2) = -4 - 4i (using (√2)⁵ = 4√2 and √2·√2/2 = 1). So Re(z⁵) = -4.",
+        "Method 2 (repeated binomial squaring, independent of polar form): (1+i)² = 2i. (1+i)⁴ = (2i)² = -4. (1+i)⁵ = (1+i)⁴·(1+i) = -4(1+i) = -4 - 4i. Re(z⁵) = -4, matching Method 1.",
+        "A common slip is stopping at (1+i)⁴ = -4 (real) and reporting that instead of continuing to the fifth power, or dropping the final multiplication by (1+i) altogether."
+      ],
+      "verification_method": "hand_checkable_de_moivre_vs_repeated_squaring"
+    },
+    {
+      "id": "pi-analytic-functions-001",
+      "concept_id": "analytic-functions",
+      "topic": "complex-variables",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Let f(z) = z² = u(x,y) + iv(x,y). Is f analytic everywhere (entire)?",
+      "options": [
+        "Yes — f is entire",
+        "No — the Cauchy-Riemann equations fail everywhere",
+        "Analytic only at z = 0",
+        "Analytic only on the real axis"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes — f is entire",
+      "solution_steps": [
+        "Method 1 (Cauchy-Riemann equations): z² = (x+iy)² = (x²-y²) + i(2xy), so u = x²-y², v = 2xy. u_x = 2x, v_y = 2x, so u_x = v_y. u_y = -2y, v_x = 2y, so u_y = -v_x. Both C-R equations hold at every (x,y), and the partials are continuous, so f is entire.",
+        "Method 2 (composition of known entire functions, no C-R check needed): z² is a polynomial in z built purely from products and sums of the entire function z with itself. Every polynomial in z is entire — a standard closure property — which independently confirms f is analytic everywhere without touching u, v, or partial derivatives at all.",
+        "The C-R equations are genuinely satisfied everywhere (not failing anywhere), and z=0 or the real axis are not special points for this function — it is entire."
+      ],
+      "verification_method": "hand_checkable_cauchy_riemann_vs_polynomial_closure"
+    },
+    {
+      "id": "pi-analytic-functions-002",
+      "concept_id": "analytic-functions",
+      "topic": "complex-variables",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "u(x,y) = x² - y² is the real part of an analytic function f = u + iv. Find its harmonic conjugate v with v(0,0) = 0, and evaluate v(1,1).",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (Cauchy-Riemann integration): u_x = 2x must equal v_y, so v = ∫2x dy = 2xy + g(x). u_y = -2y must equal -v_x = -(2y + g'(x)), giving -2y = -2y - g'(x), so g'(x) = 0, hence g(x) is a constant. v(0,0) = 0 forces that constant to be 0, so v(x,y) = 2xy. Then v(1,1) = 2(1)(1) = 2.",
+        "Method 2 (recognize the closed form, independent check): u + iv should be an analytic function of z alone. Guess f(z) = z² = x² - y² + i(2xy); its real part is exactly u = x²-y², and its imaginary part 2xy matches the v derived above. Evaluating directly: f(1+i) = (1+i)² = 2i, whose imaginary part is 2 — the same v(1,1) = 2, obtained without redoing the C-R integration.",
+        "A common slip is forgetting the integration constant g(x) or mis-signing the second C-R equation, which would produce v = -2xy and v(1,1) = -2 instead."
+      ],
+      "verification_method": "hand_checkable_cr_integration_vs_closed_form_z_squared"
+    },
+    {
+      "id": "pi-analytic-functions-003",
+      "concept_id": "analytic-functions",
+      "topic": "complex-variables",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Is u(x,y) = x³ - 3xy² harmonic (does it satisfy Laplace's equation u_xx + u_yy = 0)?",
+      "options": [
+        "Yes, harmonic",
+        "No, ∇²u = 6x",
+        "No, ∇²u = 12x",
+        "Only harmonic at the origin"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes, harmonic",
+      "solution_steps": [
+        "Method 1 (direct Laplacian): u_x = 3x² - 3y², u_xx = 6x. u_y = -6xy, u_yy = -6x. u_xx + u_yy = 6x + (-6x) = 0. Harmonic.",
+        "Method 2 (recognize as Re of an entire function, independent of the partial-derivative computation): z³ = (x+iy)³ = x³ + 3x²(iy) + 3x(iy)² + (iy)³ = (x³-3xy²) + i(3x²y - y³). So u = Re(z³) exactly. Since z³ is a polynomial in z, it is entire, and the real part of any analytic function is automatically harmonic (a general theorem, not a per-function computation) — this independently confirms u is harmonic without computing a single second partial derivative.",
+        "'∇²u = 6x' and '∇²u = 12x' are the traps from a sign or factor slip on u_yy (e.g. computing u_yy = 6x instead of -6x, or double-counting u_xx)."
+      ],
+      "verification_method": "hand_checkable_laplacian_vs_harmonic_of_analytic_theorem"
+    },
+    {
+      "id": "pi-analytic-functions-004",
+      "concept_id": "analytic-functions",
+      "topic": "complex-variables",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Let f = u + iv be analytic throughout a connected domain D. Which of the following are always true?",
+      "options": [
+        "u_x = v_y and u_y = -v_x throughout D (the Cauchy-Riemann equations)",
+        "Both u and v are harmonic in D",
+        "|f(z)| is analytic wherever f is analytic and nonzero",
+        "If f'(z) = 0 throughout D, then f is constant on D",
+        "The real part u alone always determines v uniquely, with no ambient constant"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Cauchy-Riemann equations hold; u and v are harmonic; f'≡0 on connected D implies f constant",
+      "solution_steps": [
+        "(a) TRUE: this is the defining property of an analytic function's real and imaginary parts.",
+        "(b) TRUE: differentiating the C-R equations (u_x=v_y, u_y=-v_x) again and combining gives u_xx+u_yy=0 and v_xx+v_yy=0 — both satisfy Laplace's equation.",
+        "(c) FALSE: |f(z)| is real-valued. A nonconstant analytic function cannot have a real-valued analytic image (a real-valued analytic function must be constant, by the open mapping theorem / C-R applied to u=|f|, v=0), so |f| is analytic only when f is constant — not 'wherever f is analytic and nonzero'.",
+        "(d) TRUE: f' ≡ 0 on a connected domain forces both u_x=u_y=0 and v_x=v_y=0 there, so u and v are each constant, hence f is constant.",
+        "(e) FALSE: v is determined only up to an additive real constant — v and v+c (any real c) give the same u and both make f analytic; v(0,0)=0 or a similar normalization is needed to pin it down, as item pi-analytic-functions-002 required."
+      ],
+      "verification_method": "hand_checkable_analytic_function_properties"
+    },
+    {
+      "id": "pi-analytic-functions-005",
+      "concept_id": "analytic-functions",
+      "topic": "complex-variables",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "u(x,y) = eˣ cos y is harmonic and is the real part of an analytic f = u+iv. Find the harmonic conjugate v with v(0,0) = 0, and evaluate v(0, π/2).",
+      "answer_range": [
+        0.99,
+        1.01
+      ],
+      "correct_answer": "1",
+      "solution_steps": [
+        "Method 1 (Cauchy-Riemann integration): u_x = eˣ cos y = v_y, so v = ∫eˣ cos y dy = eˣ sin y + g(x). u_y = -eˣ sin y must equal -v_x = -(eˣ sin y + g'(x)), so g'(x)=0, g is constant, and v(0,0)=e⁰sin0+g(0)=g(0)=0 fixes g≡0. So v(x,y) = eˣ sin y, and v(0, π/2) = e⁰ sin(π/2) = 1·1 = 1.",
+        "Method 2 (recognize the closed form f(z) = e^z, independent of the C-R integration): e^z = e^{x+iy} = eˣ e^{iy} = eˣ(cos y + i sin y) = eˣ cos y + i eˣ sin y, using Euler's formula. This is exactly u + iv with u = eˣ cos y (matches) and v = eˣ sin y (matches Method 1's v exactly).",
+        "v(0, π/2) = Im(e^{i·π/2}) = Im(i) = 1, obtained by evaluating the known entire function e^z directly rather than redoing the integration — matches Method 1."
+      ],
+      "verification_method": "hand_checkable_cr_integration_vs_closed_form_exponential"
+    },
+    {
+      "id": "pi-complex-integration-001",
+      "concept_id": "complex-integration",
+      "topic": "complex-variables",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Evaluate ∮ z dz over |z| = 1, positively oriented (counterclockwise).",
+      "options": [
+        "0",
+        "2πi",
+        "-2πi",
+        "4πi"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0",
+      "solution_steps": [
+        "Method 1 (Cauchy-Goursat theorem): f(z) = z is entire (analytic everywhere), so its integral around any closed contour vanishes: ∮ z dz = 0.",
+        "Method 2 (direct parameterization, independent check): z = e^{iθ}, dz = ie^{iθ}dθ, θ from 0 to 2π. ∮ z dz = ∫₀^{2π} e^{iθ}·ie^{iθ} dθ = i∫₀^{2π} e^{2iθ} dθ = i·[e^{2iθ}/(2i)]₀^{2π} = (1/2)(e^{4πi} - e^0) = (1/2)(1-1) = 0. Matches Method 1.",
+        "'2πi' and '-2πi' are the traps for treating z like 1/z (which does have a pole at 0 and gives ±2πi); '4πi' doubles the wrong-formula trap."
+      ],
+      "verification_method": "hand_checkable_cauchy_theorem_vs_direct_parameterization"
+    },
+    {
+      "id": "pi-complex-integration-002",
+      "concept_id": "complex-integration",
+      "topic": "complex-variables",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Evaluate ∮ dz/(z-1) over |z| = 2, positively oriented.",
+      "options": [
+        "2πi",
+        "πi",
+        "0",
+        "-2πi"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2πi",
+      "solution_steps": [
+        "Method 1 (Cauchy's integral formula): with f(z) = 1 (constant, entire) and pole a = 1 inside |z|=2, ∮ f(z)/(z-a) dz = 2πi·f(a) = 2πi·1 = 2πi.",
+        "Method 2 (contour deformation + direct parameterization, independent route): since 1/(z-1) is analytic everywhere except z=1, |z|=2 can be deformed (without changing the integral's value) to the smaller circle |z-1|=1, which also encloses only z=1. Parameterize directly: z-1 = e^{iθ}, dz = ie^{iθ}dθ. ∮ dz/(z-1) = ∫₀^{2π} (1/e^{iθ})·ie^{iθ}dθ = ∫₀^{2π} i dθ = 2πi. Matches Method 1.",
+        "'πi' drops a factor of 2 from the formula; '0' is the trap for treating the pole as if it were outside the contour; '-2πi' is a sign error, e.g. from misreading the orientation."
+      ],
+      "verification_method": "hand_checkable_cauchy_integral_formula_vs_deformed_parameterization"
+    },
+    {
+      "id": "pi-complex-integration-003",
+      "concept_id": "complex-integration",
+      "topic": "complex-variables",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Evaluate ∮ e^z/z dz over |z| = 1, positively oriented.",
+      "options": [
+        "2πi",
+        "2πi·e",
+        "0",
+        "πi·e"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2πi",
+      "solution_steps": [
+        "Method 1 (Cauchy's integral formula): f(z) = e^z is entire, a = 0 is inside |z|=1, so ∮ f(z)/(z-0) dz = 2πi·f(0) = 2πi·e⁰ = 2πi·1 = 2πi.",
+        "Method 2 (residue theorem, independent computation): e^z/z has a simple pole at z=0. Res_{z=0} = lim_{z→0} z·(e^z/z) = lim_{z→0} e^z = e⁰ = 1. By the residue theorem, ∮ e^z/z dz = 2πi·(sum of residues inside) = 2πi·1 = 2πi. Matches Method 1.",
+        "'2πi·e' mistakenly evaluates f at z=1 instead of z=0 (the actual pole location); '0' wrongly treats e^z/z as if it had no singularity inside; 'πi·e' compounds both a factor-of-2 slip and the wrong evaluation point."
+      ],
+      "verification_method": "hand_checkable_cauchy_formula_vs_residue_theorem"
+    },
+    {
+      "id": "pi-complex-integration-004",
+      "concept_id": "complex-integration",
+      "topic": "complex-variables",
+      "difficulty": 0.6,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Evaluate ∮ z̄ dz over |z| = 1, positively oriented (z̄ denotes the complex conjugate of z). Report the imaginary part of the result.",
+      "answer_range": [
+        6.2518,
+        6.3146
+      ],
+      "correct_answer": "6.283185",
+      "solution_steps": [
+        "Method 1 (direct parameterization): z = e^{iθ}, z̄ = e^{-iθ}, dz = ie^{iθ}dθ. ∮ z̄ dz = ∫₀^{2π} e^{-iθ}·ie^{iθ} dθ = ∫₀^{2π} i dθ = 2πi. The imaginary part is 2π ≈ 6.28319.",
+        "Method 2 (substitution + residue theorem, independent route): on |z|=1, z·z̄ = |z|² = 1, so z̄ = 1/z ON THE CONTOUR (not as functions off it). This lets ∮ z̄ dz be rewritten as ∮ (1/z) dz, and 1/z has a simple pole at 0 with residue 1, so ∮(1/z)dz = 2πi·1 = 2πi by the residue theorem. Imaginary part = 2π ≈ 6.28319, matching Method 1.",
+        "z̄ itself is nowhere analytic (it fails the Cauchy-Riemann equations everywhere), so this integral could NOT be evaluated by Cauchy's theorem directly — the z̄=1/z substitution is what makes Method 2 legitimate, a genuinely different insight from the brute-force parameterization of Method 1."
+      ],
+      "verification_method": "hand_checkable_direct_parameterization_vs_substitution_residue"
+    },
+    {
+      "id": "pi-complex-integration-005",
+      "concept_id": "complex-integration",
+      "topic": "complex-variables",
+      "difficulty": 0.75,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Evaluate ∮ z/(z²+1) dz over |z| = 3, positively oriented.",
+      "options": [
+        "2πi",
+        "πi",
+        "4πi",
+        "0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2πi",
+      "solution_steps": [
+        "Method 1 (residue theorem): z/(z²+1) = z/((z-i)(z+i)) has simple poles at z=i and z=-i, both inside |z|=3. Res at i: lim_{z→i}(z-i)·z/((z-i)(z+i)) = i/(2i) = 1/2. Res at -i: (-i)/(-2i) = 1/2. Sum of residues = 1. Integral = 2πi·1 = 2πi.",
+        "Method 2 (partial fractions + Cauchy's integral formula, independent route): z/(z²+1) = (1/2)[1/(z-i) + 1/(z+i)] — check: (1/2)[(z+i+z-i)/((z-i)(z+i))] = (1/2)(2z)/(z²+1) = z/(z²+1). ✓",
+        "Applying Cauchy's integral formula to each term separately (both poles inside |z|=3): ∮ z/(z²+1) dz = (1/2)∮dz/(z-i) + (1/2)∮dz/(z+i) = (1/2)(2πi) + (1/2)(2πi) = πi + πi = 2πi. Matches Method 1.",
+        "'0' is the trap for wrongly believing the two residues cancel (they don't here — both are +1/2, not opposite); '4πi' double-counts a factor of 2."
+      ],
+      "verification_method": "hand_checkable_residue_sum_vs_partial_fractions_cauchy_formula"
+    },
+    {
+      "id": "pi-taylor-laurent-001",
+      "concept_id": "taylor-laurent",
+      "topic": "complex-variables",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Classify the singularity of f(z) = sin(z)/z at z = 0.",
+      "options": [
+        "Removable singularity",
+        "Simple pole",
+        "Essential singularity",
+        "Pole of order 2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Removable singularity",
+      "solution_steps": [
+        "Method 1 (limit test): lim_{z→0} sin(z)/z = 1, a finite nonzero limit. A finite limit at an isolated singularity means it is removable.",
+        "Method 2 (Laurent series expansion, independent of the limit): sin z = z - z³/3! + z⁵/5! - ..., so sin(z)/z = 1 - z²/6 + z⁴/120 - .... This Laurent series about z=0 has NO negative powers of z at all — by the definition of singularity classification (negative-power count in the Laurent series), zero negative-power terms means the point is removable. Matches Method 1.",
+        "'Simple pole' and 'pole of order 2' would require negative powers of z in the series, which are absent; 'essential singularity' would require infinitely many negative powers, also absent."
+      ],
+      "verification_method": "hand_checkable_limit_test_vs_laurent_series_definition"
+    },
+    {
+      "id": "pi-taylor-laurent-002",
+      "concept_id": "taylor-laurent",
+      "topic": "complex-variables",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Classify the singularity of f(z) = 1/(z(z-1)²) at z = 1.",
+      "options": [
+        "Pole of order 2",
+        "Pole of order 1",
+        "Pole of order 3",
+        "Essential singularity"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Pole of order 2",
+      "solution_steps": [
+        "Method 1 (Laurent series about z=1): let w = z-1, so z = 1+w. f = 1/((1+w)w²) = (1/w²)·1/(1+w) = (1/w²)(1 - w + w² - ...) = w⁻² - w⁻¹ + 1 - w + .... The lowest power is w⁻², so the pole has order 2.",
+        "Method 2 (order-counting rule, independent of expanding the series): near z=1, the factor 1/z is analytic and nonzero (z=1≠0), so it contributes nothing to the singularity type there — the ENTIRE singularity behavior at z=1 comes from the (z-1)² factor in the denominator. A denominator factor (z-a)^m with the rest of the function analytic and nonzero at a gives a pole of order exactly m; here m=2. Matches Method 1 without expanding any series.",
+        "'Pole of order 1' undercounts the (z-1)² factor as if it were (z-1)¹; 'pole of order 3' overcounts by including the z factor as if it also vanished at z=1 (it doesn't); 'essential singularity' would require infinitely many negative-power terms, which the finite w⁻²+... expansion rules out."
+      ],
+      "verification_method": "hand_checkable_laurent_series_vs_order_counting_rule"
+    },
+    {
+      "id": "pi-taylor-laurent-003",
+      "concept_id": "taylor-laurent",
+      "topic": "complex-variables",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Find the coefficient of z³ in the Maclaurin (Taylor, about z=0) series of f(z) = e^{2z}.",
+      "answer_range": [
+        1.323333,
+        1.343333
+      ],
+      "correct_answer": "1.333333",
+      "solution_steps": [
+        "Method 1 (known series substitution): e^u = Σ uⁿ/n!, so e^{2z} = Σ (2z)ⁿ/n! = Σ 2ⁿzⁿ/n!. The coefficient of z³ is 2³/3! = 8/6 = 4/3 ≈ 1.3333.",
+        "Method 2 (Taylor coefficient formula aₙ = f⁽ⁿ⁾(0)/n!, independent route): f(z)=e^{2z}, f'(z)=2e^{2z}, f''(z)=4e^{2z}, f'''(z)=8e^{2z}. f'''(0) = 8e⁰ = 8. So a₃ = f'''(0)/3! = 8/6 = 4/3 ≈ 1.3333. Matches Method 1 exactly, computed by differentiating from scratch rather than recalling the series for eᵘ.",
+        "A common slip is forgetting the 2ⁿ factor from the chain rule (reporting 1/3! = 1/6 ≈ 0.1667 instead)."
+      ],
+      "verification_method": "hand_checkable_series_substitution_vs_derivative_formula"
+    },
+    {
+      "id": "pi-taylor-laurent-004",
+      "concept_id": "taylor-laurent",
+      "topic": "complex-variables",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Find the coefficient of z⁻¹ in the Laurent series of f(z) = 1/(z(z-2)) valid in the annulus 0 < |z| < 2.",
+      "options": [
+        "-1/2",
+        "1/2",
+        "-1/4",
+        "1/4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-1/2",
+      "solution_steps": [
+        "Method 1 (partial fractions + geometric series): 1/(z(z-2)) = A/z + B/(z-2) with 1 = A(z-2)+Bz. At z=0: A=-1/2. At z=2: B=1/2. In 0<|z|<2, expand 1/(z-2) = -(1/2)·1/(1-z/2) = -Σ_{n≥0} zⁿ/2^{n+1}, which has NO negative powers. So the only z⁻¹ contribution is from -1/(2z): coefficient of z⁻¹ is -1/2.",
+        "Method 2 (residue shortcut, independent of the full series): the coefficient of z⁻¹ in a Laurent series about z=0 equals Res_{z=0} f(z). Since f has a simple pole at z=0, Res_{z=0} = lim_{z→0} z·[1/(z(z-2))] = 1/(0-2) = -1/2. Matches Method 1 exactly, without expanding the geometric series at all.",
+        "'1/2' drops the sign from the residue limit; '-1/4' and '1/4' come from evaluating the denominator at the wrong point (e.g. z=2 instead of z=0)."
+      ],
+      "verification_method": "hand_checkable_series_expansion_vs_residue_shortcut"
+    },
+    {
+      "id": "pi-taylor-laurent-005",
+      "concept_id": "taylor-laurent",
+      "topic": "complex-variables",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about Taylor and Laurent series are true?",
+      "options": [
+        "The Taylor series of f about z0 converges within the largest disc centered at z0 that avoids the nearest singularity of f — i.e. radius = distance to the nearest singularity",
+        "A function has infinitely many negative-power terms in its Laurent series at a point if and only if it has an essential singularity there",
+        "If f has a pole of order m at z0, then (z-z0)^m f(z) has a removable singularity at z0 with a nonzero limit there",
+        "The Laurent series of a function about a fixed point can differ between different annuli of convergence centered at that same point",
+        "Every Laurent series with at least one negative-power term corresponds to an essential singularity"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "All true except 'every negative-power term implies essential singularity'",
+      "solution_steps": [
+        "(a) TRUE: this is the standard radius-of-convergence theorem for Taylor series.",
+        "(b) TRUE: this is precisely the classification — zero negative terms = removable, finitely many (exactly m) = pole of order m, infinitely many = essential.",
+        "(c) TRUE: multiplying by (z-z0)^m cancels exactly the negative-power part of the order-m pole's Laurent series, leaving a Taylor series with a nonzero constant term at z0 (that constant term is the leading residue-type coefficient).",
+        "(d) TRUE, e.g. f(z)=1/(z(z-2)): the series derived in pi-taylor-laurent-004 (valid for 0<|z|<2) differs from the series valid for |z|>2, because the geometric-series expansion of 1/(z-2) takes a different form in each annulus.",
+        "(e) FALSE: a single negative-power term (e.g. just a z⁻¹ term, nothing beyond) is a SIMPLE POLE, not an essential singularity — essential singularities require infinitely many negative-power terms, not merely 'at least one'."
+      ],
+      "verification_method": "hand_checkable_series_classification_theorems"
+    },
+    {
+      "id": "pi-residue-calculus-001",
+      "concept_id": "residue-calculus",
+      "topic": "complex-variables",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the residue of f(z) = e^z/(z-2) at its pole z = 2.",
+      "options": [
+        "e²",
+        "e",
+        "2e²",
+        "e²/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "e²",
+      "solution_steps": [
+        "Method 1 (limit rule for a simple pole): Res_{z=2} = lim_{z→2} (z-2)·e^z/(z-2) = lim_{z→2} e^z = e².",
+        "Method 2 (Laurent series about z=2, independent route): let w = z-2, so e^z = e^{w+2} = e²·e^w = e²(1 + w + w²/2 + ...). Then f = e²(1+w+w²/2+...)/w = e²w⁻¹ + e² + e²w/2 + .... The coefficient of w⁻¹ (i.e. (z-2)⁻¹) is e², matching Method 1.",
+        "'e' evaluates the exponent at z=1 by mistake; '2e²' and 'e²/2' are factor-of-2 slips."
+      ],
+      "verification_method": "hand_checkable_limit_rule_vs_laurent_series"
+    },
+    {
+      "id": "pi-residue-calculus-002",
+      "concept_id": "residue-calculus",
+      "topic": "complex-variables",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the residue of f(z) = z/(z²+4) at its pole z = 2i.",
+      "options": [
+        "1/2",
+        "1/4",
+        "-1/2",
+        "i/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1/2",
+      "solution_steps": [
+        "Method 1 (limit rule): z²+4 = (z-2i)(z+2i). Res_{z=2i} = lim_{z→2i} (z-2i)·z/((z-2i)(z+2i)) = 2i/(2i+2i) = 2i/(4i) = 1/2.",
+        "Method 2 (p/q' quotient rule, independent formula): for a simple pole of f=p/q at a, Res = p(a)/q'(a). Here p(z)=z, q(z)=z²+4, q'(z)=2z. At a=2i: Res = (2i)/(2·2i) = 2i/4i = 1/2. Matches Method 1 exactly, via a different formula (no factoring of the denominator needed).",
+        "'1/4' misapplies q'(a) as if q'(z)=4z; '-1/2' is a sign error; 'i/2' leaves an i in the answer from an incomplete simplification of 2i/4i."
+      ],
+      "verification_method": "hand_checkable_limit_rule_vs_pq_prime_rule"
+    },
+    {
+      "id": "pi-residue-calculus-003",
+      "concept_id": "residue-calculus",
+      "topic": "complex-variables",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Evaluate ∮ dz/((z-1)(z-3)) over |z| = 2, positively oriented.",
+      "options": [
+        "-πi",
+        "πi",
+        "0",
+        "-1/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-πi",
+      "solution_steps": [
+        "Method 1 (residue theorem — only z=1 is inside |z|=2, since |3|=3>2): Res_{z=1} = lim_{z→1}(z-1)/((z-1)(z-3)) = 1/(1-3) = -1/2. Integral = 2πi·(-1/2) = -πi.",
+        "Method 2 (partial fractions + Cauchy's integral formula applied term-by-term, independent route): 1/((z-1)(z-3)) = A/(z-1) + B/(z-3), with A=1/(1-3)=-1/2, B=1/(3-1)=1/2. The term B/(z-3) is analytic throughout |z|≤2 (its pole at z=3 lies outside), so by Cauchy's theorem it contributes 0. The term A/(z-1) is handled by Cauchy's integral formula directly: ∮A/(z-1)dz = A·2πi = -1/2·2πi = -πi. Total = -πi + 0 = -πi, matching Method 1.",
+        "'0' is exactly the trap of wrongly including the outside pole z=3 (its residue +1/2 would cancel the inside residue -1/2, giving a false 0); 'πi' drops the sign; '-1/2' forgets the 2πi factor and reports the bare residue."
+      ],
+      "verification_method": "hand_checkable_residue_theorem_vs_partial_fractions_cauchy_formula"
+    },
+    {
+      "id": "pi-residue-calculus-004",
+      "concept_id": "residue-calculus",
+      "topic": "complex-variables",
+      "difficulty": 0.65,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "f(z) = 1/(z⁴-1) has simple poles at the four 4th roots of unity (1, -1, i, -i), all enclosed by |z| = 2. Find the sum of the residues of f at all four poles.",
+      "answer_range": [
+        -0.01,
+        0.01
+      ],
+      "correct_answer": "0",
+      "solution_steps": [
+        "Method 1 (p/q' rule at each pole): q(z)=z⁴-1, q'(z)=4z³. At a root a with a⁴=1, a³=1/a, so Res = 1/q'(a) = 1/(4a³) = a/(4a⁴) = a/4 (using a⁴=1). Summing over a ∈ {1,-1,i,-i}: sum = (1 + (-1) + i + (-i))/4 = 0/4 = 0.",
+        "Method 2 (degree-gap theorem, independent of computing individual residues): the denominator's degree (4) exceeds the numerator's degree (0) by more than 1. For such a rational function, |f(z)| decays like 1/R⁴ on a large circle of radius R, while the circle's circumference grows only like R, so the integral over |z|=R vanishes as R→∞. Since the integral's value (2πi times the sum of ALL enclosed residues) is independent of R once every pole is enclosed, and it must equal this vanishing limit, the sum of all four residues must be exactly 0. Matches Method 1.",
+        "This is a genuine cancellation, not a trick: the four residues are 1/4, -1/4, i/4, -i/4, which really do sum to zero because the roots of unity are symmetric about the origin."
+      ],
+      "verification_method": "hand_checkable_pq_prime_sum_vs_degree_gap_theorem"
+    },
+    {
+      "id": "pi-residue-calculus-005",
+      "concept_id": "residue-calculus",
+      "topic": "complex-variables",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about residues and the residue theorem are true?",
+      "options": [
+        "Res_{z=a} f(z) equals the coefficient of (z-a)⁻¹ in the Laurent expansion of f about a",
+        "For a simple pole at a with f = p/q, q(a)=0, q'(a)≠0, p(a)≠0: Res_{z=a} f = p(a)/q'(a)",
+        "The residue theorem requires every singularity of f in the entire complex plane to lie inside the contour, or the theorem cannot be applied",
+        "If a contour is traversed clockwise instead of the usual counterclockwise, the value of the contour integral is the negative of the counterclockwise result",
+        "At a pole of order m, the residue always equals f(a) itself"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Laurent-coefficient definition; p/q' rule; clockwise flips the sign",
+      "solution_steps": [
+        "(a) TRUE — this is the literal definition of the residue.",
+        "(b) TRUE — the standard simple-pole quotient formula, as used in pi-residue-calculus-002.",
+        "(c) FALSE: the residue theorem only requires f to be analytic ON and INSIDE the contour except for finitely many isolated singularities inside it — singularities OUTSIDE the contour are simply excluded from the sum and do not need to be enclosed for the theorem to apply, as demonstrated in pi-residue-calculus-003.",
+        "(d) TRUE: reversing orientation reverses the sign of dz along the path, which negates the entire integral — a positively (counterclockwise) oriented contour gives +2πi·(sum of residues), while the same contour traversed clockwise gives -2πi·(sum of residues).",
+        "(e) FALSE: f(a) itself is undefined (infinite) at a pole — the residue is a specific Laurent coefficient, not the function's value. For a pole of order m>1 it requires an (m-1)-th derivative formula, and even for a simple pole (m=1) the residue is lim_{z→a}(z-a)f(z), not f(a)."
+      ],
+      "verification_method": "hand_checkable_residue_theorem_properties"
+    },
+    {
+      "id": "pi-conformal-mapping-001",
+      "concept_id": "conformal-mapping",
+      "topic": "complex-variables",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Let w = f(z) = (z-1)/(z+1). Find f(0).",
+      "options": [
+        "-1",
+        "1",
+        "0",
+        "-1/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-1",
+      "solution_steps": [
+        "Method 1 (direct substitution): f(0) = (0-1)/(0+1) = -1/1 = -1.",
+        "Method 2 (verify via the inverse map, independent check): solving w=(z-1)/(z+1) for z gives z = (1+w)/(1-w) (from w(z+1)=z-1). Plugging the candidate w=-1 into this inverse: z = (1+(-1))/(1-(-1)) = 0/2 = 0, which matches the original input z=0 exactly — confirming f(0)=-1 is self-consistent with the map's own inverse, a genuinely different route from direct substitution.",
+        "'0' and '1' come from arithmetic slips in the numerator or denominator; '-1/2' comes from mis-simplifying -1/2 instead of -1/1."
+      ],
+      "verification_method": "hand_checkable_direct_substitution_vs_inverse_map_check"
+    },
+    {
+      "id": "pi-conformal-mapping-002",
+      "concept_id": "conformal-mapping",
+      "topic": "complex-variables",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the fixed points of the Mobius map w = (z-1)/(z+1) (solve f(z) = z).",
+      "options": [
+        "z = i and z = -i",
+        "z = 1 and z = -1",
+        "z = 0 only",
+        "No fixed points"
+      ],
+      "answer_index": 0,
+      "correct_answer": "z = i and z = -i",
+      "solution_steps": [
+        "Method 1 (solve the equation): (z-1)/(z+1) = z ⟹ z-1 = z(z+1) = z²+z ⟹ z-1 = z²+z ⟹ -1 = z² ⟹ z² = -1 ⟹ z = ±i.",
+        "Method 2 (direct substitution, independent check): verify f(i) = (i-1)/(i+1). Multiply by the conjugate (1-i)/(1-i) of the denominator: (i-1)(1-i)/((i+1)(1-i)) = (i - i² -1 + i)/(1 - i² + i - i²)... computed cleanly as (i-1)(1-i) = i - i² -1 + i = i+1-1+i = 2i, and (i+1)(1-i) = 1 - i² = 1+1 = 2, so f(i) = 2i/2 = i. ✓ Similarly f(-i) = (-i-1)/(-i+1); multiplying by (1+i)/(1+i): (-i-1)(1+i) = -i -i² -1 -i = -i+1-1-i = -2i, and (-i+1)(1+i) = 1-i² = 2, so f(-i) = -2i/2 = -i. ✓",
+        "Both candidate points genuinely map to themselves, confirming Method 1's algebraic solution via direct plug-in rather than re-deriving the quadratic."
+      ],
+      "verification_method": "hand_checkable_fixed_point_equation_vs_direct_substitution"
+    },
+    {
+      "id": "pi-conformal-mapping-003",
+      "concept_id": "conformal-mapping",
+      "topic": "complex-variables",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Under w = (z-1)/(z+1), what is the image of the imaginary axis (z = iy, y real)?",
+      "options": [
+        "The unit circle |w| = 1",
+        "The real axis",
+        "A line through the origin",
+        "The circle |w| = 2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The unit circle |w| = 1",
+      "solution_steps": [
+        "Method 1 (track three points): z=0 → w=(0-1)/(0+1)=-1. z=i → w=i (from item pi-conformal-mapping-002's verification). z=-i → w=-i. Check: |-1|=1, |i|=1, |-i|=1 — all three lie on |w|=1. A Mobius map sends lines/circles to lines/circles, and three non-collinear points determine a unique circle, so the image of the (non-collinear) imaginary axis must be the circle through these three points: |w|=1.",
+        "Method 2 (direct algebraic test for a general point, independent of picking specific samples): for z=iy (y real), |w| = |iy-1|/|iy+1| = √(y²+1)/√(y²+1) = 1, for EVERY real y. This proves directly (not just via 3 samples) that every point of the imaginary axis maps onto |w|=1, confirming and strengthening Method 1.",
+        "'The real axis' and 'a line through the origin' would apply if the image were unbounded (a line, not a circle) — but the map has a pole at z=-1, which is not on the imaginary axis, so no point of the axis maps to infinity, ruling out a line image."
+      ],
+      "verification_method": "hand_checkable_three_point_tracking_vs_general_modulus_test"
+    },
+    {
+      "id": "pi-conformal-mapping-004",
+      "concept_id": "conformal-mapping",
+      "topic": "complex-variables",
+      "difficulty": 0.65,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "The Joukowski transform is w = z + 1/z. Evaluate w at z = e^{iπ/3} (a point on the unit circle) and report the real part of w.",
+      "answer_range": [
+        0.99,
+        1.01
+      ],
+      "correct_answer": "1",
+      "solution_steps": [
+        "Method 1 (direct rectangular computation): z = e^{iπ/3} = cos60° + i sin60° = 1/2 + i√3/2. Since |z|=1, 1/z = z̄ = 1/2 - i√3/2. w = z + 1/z = (1/2+i√3/2) + (1/2-i√3/2) = 1 (the imaginary parts cancel exactly). Re(w) = 1.",
+        "Method 2 (Euler's formula closed form, independent of rectangular arithmetic): for z=e^{iθ} on the unit circle, w = e^{iθ} + e^{-iθ} = 2cos θ (a standard identity). At θ=π/3: w = 2cos(60°) = 2(1/2) = 1. Matches Method 1 exactly, without expanding either exponential into rectangular form.",
+        "This illustrates the Joukowski map's key property: it sends the unit circle onto the real segment [-2,2] (here landing at the interior point 1)."
+      ],
+      "verification_method": "hand_checkable_rectangular_computation_vs_euler_formula_identity"
+    },
+    {
+      "id": "pi-conformal-mapping-005",
+      "concept_id": "conformal-mapping",
+      "topic": "complex-variables",
+      "difficulty": 0.8,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Find the Mobius transformation w = f(z) satisfying f(0)=1, f(1)=i, f(∞)=-1, and evaluate f(2).",
+      "options": [
+        "-0.6 + 0.8i",
+        "0.6 - 0.8i",
+        "-0.6 - 0.8i",
+        "1 + 0.8i"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-0.6 + 0.8i",
+      "solution_steps": [
+        "Method 1 (cross-ratio construction): with z3=∞, the cross-ratio equation simplifies to (w-1)(i-(-1)) / ((w-(-1))(i-1)) = (z-0)/(1-0) = z. Solving for w: w = [(i+1) + z(i-1)] / [(i+1) - z(i-1)]. Check: z=0 gives w=(i+1)/(i+1)=1 ✓; z=1 gives w=[(i+1)+(i-1)]/[(i+1)-(i-1)]=2i/2=i ✓. At z=2: w = [(i+1)+2(i-1)] / [(i+1)-2(i-1)] = (3i-1)/(3-i). Multiplying by the conjugate (3+i)/(3+i): numerator (3i-1)(3+i) = 9i+3i²-3-i = 8i-6, denominator (3-i)(3+i)=9+1=10. So w = (-6+8i)/10 = -0.6+0.8i.",
+        "Method 2 (cross-ratio invariance check at the new point, independent route): a Mobius map preserves the cross-ratio of any 4 points. The z-side cross-ratio of (z=2; z1=0,z2=1,z3=∞) is (2-0)/(1-0) = 2. Independently compute the w-side cross-ratio of the candidate w=-0.6+0.8i with (w1=1, w2=i, w3=-1): (w-1)(i-(-1))/((w-(-1))(i-1)) with w-1=-1.6+0.8i and w+1=0.4+0.8i. Numerator: (-1.6+0.8i)(1+i) = -2.4-0.8i. Denominator: (0.4+0.8i)(i-1) = -1.2-0.4i. Ratio: (-2.4-0.8i)/(-1.2-0.4i) = 2 (multiply by the conjugate of the denominator to verify), which matches the z-side cross-ratio of 2 exactly — confirming w=-0.6+0.8i without re-solving the linear equation.",
+        "'0.6-0.8i' and '-0.6-0.8i' are sign-flip traps on the real or imaginary part; '1+0.8i' comes from a slip that keeps the real part unchanged from f(0)=1 instead of recomputing it."
+      ],
+      "verification_method": "hand_checkable_cross_ratio_construction_vs_invariance_check"
+    }
+  ]
+}

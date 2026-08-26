@@ -1,0 +1,839 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the",
+    "graph-theory topic: graph basics (vertices/edges/degree/handshake",
+    "lemma), connectivity (paths, cycles, components, bridges), trees",
+    "(spanning trees, Cayley's formula, Prufer sequences), Eulerian and",
+    "Hamiltonian graphs, graph coloring (chromatic number, bounds),",
+    "planar graphs (Euler's formula, edge bounds, Kuratowski), and",
+    "shortest paths (Dijkstra, Bellman-Ford, Floyd-Warshall).",
+    "",
+    "Every item's answer was derived TWICE by genuinely independent",
+    "methods before its key was written -- e.g. the handshake lemma",
+    "against a direct edge count or explicit realization; a cycle",
+    "argument against an exhaustive edge-removal test for bridges;",
+    "Cayley's formula against Kirchhoff's matrix-tree theorem for",
+    "spanning tree counts; an explicit Eulerian circuit or Hamiltonian-",
+    "cycle-blocking cut-vertex argument against the corresponding",
+    "theorem; a chromatic number established by BOTH an explicit proper",
+    "coloring (upper bound) AND a clique or odd-cycle argument (lower",
+    "bound); Euler's formula V-E+F=2 against a direct face count on a",
+    "drawn planar embedding; and Dijkstra's result against exhaustive",
+    "enumeration of the few simple paths in a small graph, or against",
+    "Floyd-Warshall-style intermediate-vertex relaxation. Both methods",
+    "are shown in solution_steps so a student (or reviewer) can",
+    "re-derive every answer by hand. All graphs are kept to at most 8",
+    "vertices so exhaustive checking stays genuinely tractable, and",
+    "every graph is described by an explicit edge list or a named",
+    "standard graph (K4, K5, K_{3,3}, K_{3,4}, K_{2,3}, C5, Q3, the",
+    "wheel W5) so it can be reconstructed exactly.",
+    "",
+    "Shape mirrors gate-ma-vector-calculus.json exactly (same",
+    "AuthoredItem schema consumed by FileLearningObjectCatalog /",
+    "GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-graph-basics-001",
+      "concept_id": "graph-basics",
+      "topic": "graph-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A simple graph has vertices {A, B, C, D, E} and edges {AB, AC, AD, BC, BD, CE, DE}. How many edges does the graph have?",
+      "options": [
+        "7",
+        "14",
+        "6",
+        "8"
+      ],
+      "answer_index": 0,
+      "correct_answer": "7",
+      "solution_steps": [
+        "Method 1 (direct count): the edge list {AB, AC, AD, BC, BD, CE, DE} has 7 distinct entries.",
+        "Method 2 (handshake lemma, cross-check): degrees are A: AB,AC,AD = 3; B: AB,BC,BD = 3; C: AC,BC,CE = 3; D: AD,BD,DE = 3; E: CE,DE = 2. Sum = 3+3+3+3+2 = 14, so |E| = 14/2 = 7. Matches Method 1.",
+        "'14' is the trap of forgetting to divide the degree sum by 2; '6' and '8' come from a miscount of the edge list."
+      ],
+      "verification_method": "hand_checkable_direct_count_and_handshake_lemma"
+    },
+    {
+      "id": "pi-graph-basics-002",
+      "concept_id": "graph-basics",
+      "topic": "graph-theory",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "A simple graph on 5 vertices has degree sequence (3, 3, 2, 2, 2). Using the handshake lemma, how many edges does it have?",
+      "answer_range": [
+        5.97,
+        6.03
+      ],
+      "correct_answer": "6",
+      "solution_steps": [
+        "Method 1 (handshake lemma): sum of degrees = 3+3+2+2+2 = 12, so |E| = 12/2 = 6.",
+        "Method 2 (explicit realization, cross-check): label the vertices A(deg 3), B(deg 3), C(deg 2), D(deg 2), E(deg 2) and build edges {AB, AC, AD, BC, BE, DE}. Check degrees: A: B,C,D = 3; B: A,C,E = 3; C: A,B = 2; D: A,E = 2; E: B,D = 2 \u2014 matches the target sequence exactly, and the edge list has 6 distinct entries. Matches Method 1."
+      ],
+      "verification_method": "hand_checkable_handshake_lemma_and_explicit_realization"
+    },
+    {
+      "id": "pi-graph-basics-003",
+      "concept_id": "graph-basics",
+      "topic": "graph-theory",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Which of the following degree sequences is NOT graphical, i.e., cannot be the degree sequence of any simple graph?",
+      "options": [
+        "(3, 3, 2, 2, 2)",
+        "(2, 2, 2, 2)",
+        "(4, 4, 4, 4, 4)",
+        "(1, 1, 1)"
+      ],
+      "answer_index": 3,
+      "correct_answer": "(1, 1, 1)",
+      "solution_steps": [
+        "Method 1 (handshake lemma parity): a graphical sequence must sum to an even number (= 2|E|). (1,1,1) sums to 3, which is odd, so it cannot be graphical. The other three sums are 12, 8, and 20 \u2014 all even.",
+        "Method 2 (exhaustive construction attempt, independent check): to give three vertices each degree exactly 1, every vertex needs exactly one incident edge, i.e. the three vertices must be perfectly paired off. But 3 is odd, so any single edge choice (there are only 3 possible edges among 3 vertices) leaves exactly one vertex unmatched with degree 0, never all three at degree 1 simultaneously \u2014 checked over all 3 possible single-edge choices, none works.",
+        "The other three sequences ARE graphical: (2,2,2,2) is realized by a 4-cycle, (4,4,4,4,4) is realized by K5 (every vertex connected to all 4 others), and (3,3,2,2,2) was realized explicitly in the previous item."
+      ],
+      "verification_method": "hand_checkable_parity_and_exhaustive_construction"
+    },
+    {
+      "id": "pi-graph-basics-004",
+      "concept_id": "graph-basics",
+      "topic": "graph-theory",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "For any simple undirected graph G with n vertices and m edges, which of the following statements are always true?",
+      "options": [
+        "The sum of all vertex degrees equals 2m.",
+        "The number of vertices with odd degree is even.",
+        "Every vertex has degree at most n - 1.",
+        "If every vertex has degree exactly 2, then G is a single cycle.",
+        "The sum of all vertex degrees is at least 2(n - 1)."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2
+      ],
+      "correct_answer": "Handshake lemma; even count of odd-degree vertices; max degree bound n-1",
+      "solution_steps": [
+        "(0) TRUE: the handshake lemma \u2014 each edge contributes exactly 2 to the total degree count, so the sum is always 2m.",
+        "(1) TRUE: a corollary of the handshake lemma \u2014 since the total degree sum 2m is even, the sum of the odd-degree vertices' degrees must itself be even, which forces their COUNT to be even (an odd number of odd terms sums to odd).",
+        "(2) TRUE: a simple graph forbids self-loops and multi-edges, so a vertex can be adjacent to at most the other n-1 vertices.",
+        "(3) FALSE: counterexample \u2014 two disjoint triangles (6 vertices, every vertex degree 2) form TWO cycles, not one single cycle.",
+        "(4) FALSE: counterexample \u2014 the empty graph on n > 1 vertices has degree sum 0, which is less than 2(n-1).",
+        "Method 2 cross-check: apply (0) and (2) directly to the item-001 graph (degrees 3,3,3,3,2): sum = 14 = 2(7) matching its 7 edges, confirming (0); and its max degree 3 <= n-1 = 4, confirming (2). The odd-degree vertices there (all four degree-3 vertices) number 4, an even count, confirming (1)."
+      ],
+      "verification_method": "hand_checkable_theorem_list_and_worked_example"
+    },
+    {
+      "id": "pi-graph-basics-005",
+      "concept_id": "graph-basics",
+      "topic": "graph-theory",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A simple graph has 6 vertices and 12 edges. Every vertex has degree either 3 or 5. How many vertices have degree 5?",
+      "answer_range": [
+        2.985,
+        3.015
+      ],
+      "correct_answer": "3",
+      "solution_steps": [
+        "Method 1 (algebra via handshake lemma): let x = number of degree-5 vertices, so (6-x) have degree 3. Sum of degrees = 5x + 3(6-x) = 2x + 18. By the handshake lemma this sum equals 2(12) = 24, so 2x + 18 = 24, giving x = 3.",
+        "Method 2 (exhaustive check over x = 0..6, independent verification): x=0 -> sum=18 -> 9 edges; x=1 -> 20 -> 10 edges; x=2 -> 22 -> 11 edges; x=3 -> 24 -> 12 edges (matches!); x=4 -> 26 -> 13 edges; x=5 -> 28 -> 14 edges; x=6 -> 30 -> 15 edges. Only x=3 produces the required 12 edges, confirming Method 1."
+      ],
+      "verification_method": "hand_checkable_algebra_and_exhaustive_search"
+    },
+    {
+      "id": "pi-graph-connectivity-001",
+      "concept_id": "graph-connectivity",
+      "topic": "graph-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A graph has vertices {A, B, C, D, E, F} and edges {AB, BC, DE}. (F has no incident edges.) How many connected components does the graph have?",
+      "options": [
+        "3",
+        "2",
+        "1",
+        "4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "Method 1 (reachability trace): starting from A, edge AB reaches B, edge BC reaches C -> component {A, B, C}. Starting from D, edge DE reaches E -> component {D, E}. F has no edges, so it is its own component {F}. Total: 3 components.",
+        "Method 2 (partition completeness check, independent cross-check): the claimed partition {A,B,C}, {D,E}, {F} covers all 6 vertices exactly once (3+2+1 = 6, matching the vertex count), and every edge in the graph (AB, BC, DE) lies strictly inside one part with none crossing between parts \u2014 confirming this partition is exactly the true component structure."
+      ],
+      "verification_method": "hand_checkable_reachability_and_partition_check"
+    },
+    {
+      "id": "pi-graph-connectivity-002",
+      "concept_id": "graph-connectivity",
+      "topic": "graph-theory",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Two triangles ABC and DEF (edges AB, BC, CA and DE, EF, FD) are joined by a single extra edge CD, for 7 edges total. How many bridges does this graph have?",
+      "answer_range": [
+        0.99,
+        1.01
+      ],
+      "correct_answer": "1",
+      "solution_steps": [
+        "Method 1 (cycle argument): an edge is a bridge iff it lies on no cycle. AB, BC, CA all lie on the 3-cycle A-B-C-A, so none of them is a bridge; likewise DE, EF, FD lie on the 3-cycle D-E-F-D. CD lies on no cycle at all (it is the sole connection between the two triangles), so it is the only bridge.",
+        "Method 2 (exhaustive removal test, independent check): remove AB -> A and B are still connected via A-C-B, graph stays connected, not a bridge. The same holds for BC, CA, DE, EF, FD by the symmetric argument. Remove CD -> the graph splits into two separate components {A,B,C} and {D,E,F} \u2014 a bridge. All 7 edges checked individually; only CD disconnects the graph."
+      ],
+      "verification_method": "hand_checkable_cycle_argument_and_removal_test"
+    },
+    {
+      "id": "pi-graph-connectivity-003",
+      "concept_id": "graph-connectivity",
+      "topic": "graph-theory",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Which statement correctly distinguishes a path from a cycle in a simple graph?",
+      "options": [
+        "A path visits no vertex twice; a cycle is a closed path that returns to its starting vertex, visiting no other vertex twice.",
+        "A path and a cycle are the same thing -- both revisit the start vertex.",
+        "A path may repeat edges; a cycle may not.",
+        "A cycle on n vertices always has fewer edges than a path on n vertices."
+      ],
+      "answer_index": 0,
+      "correct_answer": "A path visits no vertex twice; a cycle is a closed path that returns to its starting vertex, visiting no other vertex twice.",
+      "solution_steps": [
+        "Method 1 (standard definitions): a path is a sequence of distinct vertices joined by edges, with no repeated vertex; a cycle is a closed path (start = end vertex) with no other repeated vertex.",
+        "Method 2 (concrete example, independent cross-check): in the two-triangle graph of the previous item, A-B-C is a path (3 distinct vertices, 2 edges, no return to A) while A-B-C-A is a cycle (returns to A, all other vertices distinct) -- matching option 0's structure exactly. It also contradicts option 1 (the path A-B-C never revisits A), option 2 (neither a path nor a cycle repeats an edge by definition), and option 3 (a cycle on n vertices has n edges while a path on the same n vertices has only n-1 -- the cycle has MORE, not fewer, edges)."
+      ],
+      "verification_method": "hand_checkable_definition_and_concrete_example"
+    },
+    {
+      "id": "pi-graph-connectivity-004",
+      "concept_id": "graph-connectivity",
+      "topic": "graph-theory",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Let G be a connected simple graph with at least 3 vertices. Which of the following are always true?",
+      "options": [
+        "If G has no cycles, then G has exactly n - 1 edges (n = number of vertices).",
+        "Removing a bridge from G always increases the number of connected components.",
+        "Every edge that lies on a cycle is a bridge.",
+        "If every vertex of G has degree >= 2, then G contains at least one cycle.",
+        "A connected graph with n vertices always has exactly n edges."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Tree edge count; bridge definition; min-degree-2 forces a cycle",
+      "solution_steps": [
+        "(0) TRUE: a connected graph with no cycles is by definition a tree, and every tree on n vertices has exactly n-1 edges.",
+        "(1) TRUE: by definition, a bridge is an edge whose removal disconnects the graph -- it always increases the component count (from 1 to at least 2 locally).",
+        "(2) FALSE: directly contradicted by the previous item -- no edge of the 3-cycle A-B-C is a bridge, yet each lies on that cycle.",
+        "(3) TRUE: a tree (or forest) always has a leaf (a degree-1 vertex), since the handshake lemma forces sum of degrees = 2(n-1) < 2n, which is impossible if every vertex had degree >= 2. So a graph with minimum degree >= 2 cannot be a forest and must contain a cycle.",
+        "(4) FALSE: a tree is a counterexample -- it is connected with only n-1 edges, not n. Connected graphs can have anywhere from n-1 up to C(n,2) edges.",
+        "Method 2 cross-check: apply directly to the two-triangle-plus-bridge graph (n=6, 7 edges, has cycles so it is not a tree -- consistent with (0), since 7 != 5; it has exactly one bridge CD -- consistent with (1) and (2); every vertex there has degree >= 2 and the graph does contain cycles -- consistent with (3))."
+      ],
+      "verification_method": "hand_checkable_theorem_list_and_worked_example"
+    },
+    {
+      "id": "pi-graph-connectivity-005",
+      "concept_id": "graph-connectivity",
+      "topic": "graph-theory",
+      "difficulty": 0.75,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A graph on 9 vertices currently has 3 connected components of sizes 4, 3, and 2. What is the minimum number of additional edges needed to make the whole graph connected (a single component)?",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (merging bound): each new edge can connect at most two DIFFERENT components into one, reducing the component count by at most 1. Starting from 3 components and needing to reach 1, at least 3 - 1 = 2 edges are required.",
+        "Method 2 (explicit construction, independent check): add one edge between component 1 (size 4) and component 2 (size 3) -> now 2 components remain (a merged size-7 component and the size-2 component). Add one more edge between that merged component and the size-2 component -> 1 component, using exactly 2 edges. Trying with only 1 edge: any single edge can merge at most 2 of the 3 original components, always leaving at least 2 components -- so 1 edge is provably insufficient, confirming 2 is the true minimum."
+      ],
+      "verification_method": "hand_checkable_component_merging_bound_and_construction"
+    },
+    {
+      "id": "pi-trees-001",
+      "concept_id": "trees",
+      "topic": "graph-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A connected simple graph has 8 vertices. How many edges does any spanning tree of this graph have?",
+      "options": [
+        "7",
+        "8",
+        "6",
+        "9"
+      ],
+      "answer_index": 0,
+      "correct_answer": "7",
+      "solution_steps": [
+        "Method 1 (tree definition): a spanning tree on n vertices always has exactly n - 1 edges (it connects all vertices with no cycles). For n = 8, that is 7.",
+        "Method 2 (incremental construction, independent check): build a spanning tree one vertex at a time -- start with 1 isolated vertex (0 edges so far); each further vertex, to stay connected without creating a cycle, needs exactly 1 new edge. Adding the remaining 7 vertices this way uses exactly 7 edges. Matches Method 1."
+      ],
+      "verification_method": "hand_checkable_tree_definition_and_incremental_construction"
+    },
+    {
+      "id": "pi-trees-002",
+      "concept_id": "trees",
+      "topic": "graph-theory",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "How many distinct labeled trees exist on 4 vertices {1, 2, 3, 4}?",
+      "answer_range": [
+        15.92,
+        16.08
+      ],
+      "correct_answer": "16",
+      "solution_steps": [
+        "Method 1 (Cayley's formula): the number of labeled trees on n vertices is n^(n-2). For n = 4: 4^2 = 16.",
+        "Method 2 (Kirchhoff's matrix-tree theorem, independent theorem): a labeled tree on 4 vertices is exactly a spanning tree of the complete graph K4. The Laplacian of K4 is L = (degree matrix, diag(3,3,3,3)) - (adjacency matrix, all off-diagonal entries -1). Deleting any one row and the same-index column and taking the determinant of the remaining 3x3 cofactor: det([[3,-1,-1],[-1,3,-1],[-1,-1,3]]) = 3(3*3 - (-1)(-1)) - (-1)((-1)*3 - (-1)(-1)) + (-1)((-1)(-1) - 3*(-1)) = 3(9-1) - (-1)(-3-1) + (-1)(1+3) = 24 - 4 - 4 = 16. Matches Method 1 exactly, via a completely different theorem."
+      ],
+      "verification_method": "hand_checkable_cayley_formula_and_matrix_tree_theorem",
+      "also_tests": [
+        "determinants"
+      ]
+    },
+    {
+      "id": "pi-trees-003",
+      "concept_id": "trees",
+      "topic": "graph-theory",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A tree has 10 vertices. Exactly one vertex has degree 9 and is connected to all 9 other vertices. How many leaves (degree-1 vertices) does the tree have?",
+      "options": [
+        "9",
+        "10",
+        "8",
+        "1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "9",
+      "solution_steps": [
+        "Method 1 (direct structure): the described tree is the star graph K_{1,9} -- one center connected to all 9 others. Each of those 9 outer vertices has only the single edge to the center, so it has degree exactly 1. That gives 9 leaves.",
+        "Method 2 (handshake lemma cross-check, independent): sum of degrees = 9 (the center) + 9*1 (the leaves) = 18 = 2 * 9, matching the 9 edges required for a 10-vertex tree (n - 1 = 9). A consistent edge count confirms the leaf-degree accounting is correct."
+      ],
+      "verification_method": "hand_checkable_star_structure_and_handshake_lemma"
+    },
+    {
+      "id": "pi-trees-004",
+      "concept_id": "trees",
+      "topic": "graph-theory",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following are always true for a tree T with n >= 2 vertices?",
+      "options": [
+        "T has exactly n - 1 edges.",
+        "T has at least 2 leaves (vertices of degree 1).",
+        "Adding any single new edge between two existing vertices of T creates exactly one cycle.",
+        "Removing any single edge from T disconnects it into exactly two components.",
+        "T can contain a vertex of degree 0."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "Tree edge count, at-least-2-leaves theorem, unique-cycle-on-edge-addition, every edge is a bridge",
+      "solution_steps": [
+        "(0) TRUE: definition of a tree (connected, acyclic) forces exactly n-1 edges.",
+        "(1) TRUE (standard theorem): sum of degrees = 2(n-1) = 2n-2. If fewer than 2 vertices had degree 1 (i.e. at most 1 leaf), the remaining >= n-1 vertices would each have degree >= 2, giving a degree sum >= 2 + 2(n-1) = 2n, which exceeds 2n-2 -- a contradiction. So at least 2 leaves must exist.",
+        "(2) TRUE: a tree is minimally connected -- adding an edge between two vertices u, v creates exactly one cycle, formed by the new edge plus the unique existing tree-path between u and v.",
+        "(3) TRUE: every edge of a tree is a bridge (a tree is acyclic, so no edge lies on a cycle), so removing any edge always splits the tree into exactly 2 components.",
+        "(4) FALSE: a tree with n >= 2 vertices is connected, so every vertex has degree >= 1; a degree-0 vertex would be isolated, contradicting connectivity.",
+        "Method 2 cross-check: verify (0) and (1) on the star K_{1,9} from the previous item (n=10, edges=9=n-1, confirming (0); leaves=9 >= 2, confirming (1)) and on a simple path 1-2-3-4 (n=4, 3 edges = n-1, confirming (0); leaves are 1 and 4, exactly 2, the theorem's minimum case, confirming (1))."
+      ],
+      "verification_method": "hand_checkable_theorem_list_and_worked_examples"
+    },
+    {
+      "id": "pi-trees-005",
+      "concept_id": "trees",
+      "topic": "graph-theory",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A labeled tree on 4 vertices {1, 2, 3, 4} has Prufer sequence (3, 3). What is the degree of vertex 3 in the tree?",
+      "answer_range": [
+        2.985,
+        3.015
+      ],
+      "correct_answer": "3",
+      "solution_steps": [
+        "Method 1 (Prufer degree formula): degree(v) = (number of times v appears in the Prufer sequence) + 1. Vertex 3 appears twice in (3, 3), so degree(3) = 2 + 1 = 3.",
+        "Method 2 (full decode, independent check): run the standard Prufer decoding algorithm. Sequence = [3, 3]. The smallest label not in the remaining sequence and not yet used is 1 -- join 1-3, drop the first sequence entry, remaining sequence = [3]. Next smallest unused non-sequence label is 2 -- join 2-3, drop the entry, remaining sequence is now empty. Join the two labels left unconnected, 3 and 4, directly. Resulting tree edges: {1-3, 2-3, 3-4}. Vertex 3 connects to 1, 2, and 4 -- degree 3. Matches Method 1."
+      ],
+      "verification_method": "hand_checkable_prufer_formula_and_full_decode"
+    },
+    {
+      "id": "pi-euler-hamilton-001",
+      "concept_id": "euler-hamilton",
+      "topic": "graph-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A graph on vertices {A, B, C, D, E, F} has edges {AC, CB, BD, DA, AE, EB, BF, FA} (8 edges). Does this graph have an Eulerian circuit (a closed walk using every edge exactly once)?",
+      "options": [
+        "Yes.",
+        "No -- C has odd degree.",
+        "No -- the graph is disconnected.",
+        "No -- it has exactly two odd-degree vertices."
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes.",
+      "solution_steps": [
+        "Method 1 (Euler's theorem): compute degrees -- A: C,D,E,F = 4; B: C,D,E,F = 4; C: A,B = 2; D: B,A = 2; E: A,B = 2; F: B,A = 2. All six degrees are even and the graph is connected (A and B link every other vertex), so by Euler's theorem an Eulerian circuit exists.",
+        "Method 2 (explicit construction, independent check): the walk A-C-B-D-A-E-B-F-A uses edges AC, CB, BD, DA, AE, EB, BF, FA -- exactly the graph's 8 edges, each exactly once, returning to the start A. This is a genuine Eulerian circuit, constructively proving existence without relying on the degree-parity theorem."
+      ],
+      "verification_method": "hand_checkable_euler_theorem_and_explicit_circuit"
+    },
+    {
+      "id": "pi-euler-hamilton-002",
+      "concept_id": "euler-hamilton",
+      "topic": "graph-theory",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Take the graph {AC, CB, BD, DA, AE, EB, BF, FA} from the previous item and add one more edge CD, for 9 edges total. Exactly how many vertices now have odd degree?",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (direct recount): with the extra edge CD, degrees become A=4, B=4, C=3, D=3, E=2, F=2. The odd-degree vertices are C and D -- a count of 2.",
+        "Method 2 (parity-flip lemma, independent reasoning): adding a single new edge always flips the parity of exactly its two endpoints' degrees and leaves every other vertex's parity unchanged. Before adding CD, every vertex had even degree (0 odd vertices, from the previous item). Adding CD flips only C and D from even to odd, so the new odd count is exactly 2 -- confirming Method 1 by incremental reasoning rather than a full recount from scratch."
+      ],
+      "verification_method": "hand_checkable_degree_recount_and_parity_flip_lemma"
+    },
+    {
+      "id": "pi-euler-hamilton-003",
+      "concept_id": "euler-hamilton",
+      "topic": "graph-theory",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "The 'bowtie' graph has 5 vertices {A, B, C, D, E} and edges {AB, BC, CA, CD, DE, EC} -- two triangles A-B-C and C-D-E sharing vertex C. Does this graph have a Hamiltonian cycle (a cycle visiting every vertex exactly once)?",
+      "options": [
+        "No -- C is a cut vertex.",
+        "Yes -- A-B-C-D-E-A is one.",
+        "Yes, but only if vertex C is visited twice.",
+        "Cannot be determined from this information."
+      ],
+      "answer_index": 0,
+      "correct_answer": "No -- C is a cut vertex.",
+      "solution_steps": [
+        "Method 1 (cut-vertex argument): removing vertex C splits the graph into two disconnected pieces, {A, B} and {D, E} (there is no way to get from A or B to D or E without passing through C). Any Hamiltonian cycle, minus one of its vertices, is always still a single connected path -- so if the graph disconnects upon removing C, no Hamiltonian cycle can exist (it would have had to stay connected after deleting C).",
+        "Method 2 (forced-degree exhaustive argument, independent check): A and B each have degree exactly 2 (A: only to B and C; B: only to A and C). A degree-2 vertex on a Hamiltonian cycle MUST use both of its incident edges. Forcing both A's edges (AB, AC) and both B's edges (AB, BC) onto the cycle uses AB, AC, and BC simultaneously, which already gives vertex C two cycle-edges (CA and CB) -- but a vertex on a cycle can only have exactly 2 cycle-edges, so C has none left to reach D or E. D and E can therefore never be included in any Hamiltonian cycle -- none exists, confirming Method 1.",
+        "(Option 1's proposed cycle A-B-C-D-E-A is invalid: the edge EA does not exist in the graph.)"
+      ],
+      "verification_method": "hand_checkable_cut_vertex_argument_and_forced_degree_exhaustion"
+    },
+    {
+      "id": "pi-euler-hamilton-004",
+      "concept_id": "euler-hamilton",
+      "topic": "graph-theory",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about Eulerian and Hamiltonian graphs are correct?",
+      "options": [
+        "A connected graph has an Eulerian circuit if and only if every vertex has even degree.",
+        "A connected graph has an Eulerian path (not necessarily closed) if and only if it has exactly 0 or 2 vertices of odd degree.",
+        "Every Eulerian graph (one with an Eulerian circuit) is also Hamiltonian.",
+        "A graph with a cut vertex cannot have a Hamiltonian cycle.",
+        "Every Hamiltonian graph is also Eulerian."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Euler circuit theorem, Euler path theorem, cut-vertex-blocks-Hamiltonicity",
+      "solution_steps": [
+        "(0) TRUE -- Euler's classical theorem, verified directly by explicit construction in the first item of this concept.",
+        "(1) TRUE -- the open-trail version of Euler's theorem (0 odd vertices gives a circuit, which is also a path; exactly 2 odd vertices gives an open trail between exactly those two).",
+        "(2) FALSE -- counterexample: the bowtie graph {AB,BC,CA,CD,DE,EC} has degrees A=2,B=2,C=4,D=2,E=2, all even, so it IS Eulerian (circuit A-B-C-D-E-C-A uses all 6 edges once, returning to A) -- yet the previous item proved it has NO Hamiltonian cycle (cut vertex C).",
+        "(3) TRUE -- proved directly in the previous item: a Hamiltonian cycle minus any one vertex must remain a single connected path, but removing a cut vertex disconnects the graph, a contradiction.",
+        "(4) FALSE -- counterexample: K4 (complete graph on 4 vertices) is Hamiltonian (cycle 1-2-3-4-1 uses only existing edges), but every vertex has degree 3 (odd), so by Euler's theorem it is NOT Eulerian.",
+        "Method 2 cross-check: the single bowtie graph example nails both (2)'s falsity (Eulerian but not Hamiltonian) and (3)'s truth (cut vertex blocks Hamiltonicity) at once, while K4 independently nails (4)'s falsity (Hamiltonian but not Eulerian) -- two concrete counterexamples pinning down all three claims."
+      ],
+      "verification_method": "hand_checkable_theorem_list_with_counterexamples"
+    },
+    {
+      "id": "pi-euler-hamilton-005",
+      "concept_id": "euler-hamilton",
+      "topic": "graph-theory",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "A connected graph has exactly 4 vertices of odd degree (the rest have even degree). What is the minimum number of edge-disjoint trails needed so that every edge of the graph is covered by exactly one trail?",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (trail-decomposition formula): the minimum number of trails needed to decompose a connected graph's edge set equals (number of odd-degree vertices) / 2, when that number is positive. With 4 odd vertices: 4/2 = 2.",
+        "Method 2 (phantom-edge construction, independent argument): pair the 4 odd-degree vertices into 2 pairs and add one 'phantom' edge connecting each pair. Each phantom edge flips the parity of exactly its two endpoints (as established earlier), so adding these 2 phantom edges turns all 4 odd vertices even -- the augmented graph now has every vertex of even degree, so by Euler's theorem it has a single Eulerian circuit. Removing the 2 phantom edges from that one circuit breaks it into exactly 2 pieces (each phantom-edge removal splits one closed walk into one more open trail), and together these 2 trails cover every original edge exactly once. Fewer than 2 trails is impossible: each trail can have at most 2 endpoints, and all 4 odd-degree vertices must be trail endpoints (an odd-degree vertex can never be a pure pass-through point of a trail), so at least 4/2 = 2 trails are required. Confirms Method 1."
+      ],
+      "verification_method": "hand_checkable_trail_decomposition_formula_and_phantom_edge_construction"
+    },
+    {
+      "id": "pi-graph-coloring-001",
+      "concept_id": "graph-coloring",
+      "topic": "graph-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "What is the chromatic number of the complete bipartite graph K_{3,4}?",
+      "options": [
+        "2",
+        "3",
+        "4",
+        "7"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (upper bound -- explicit proper coloring): color all 3 vertices in one part color 1 and all 4 vertices in the other part color 2. Every edge of K_{3,4} goes between the two parts, so no edge ever has both endpoints the same color -- a valid 2-coloring, so chi <= 2.",
+        "Method 2 (lower bound -- edge argument, independent): the graph has at least one edge (in fact 12), and any graph with an edge needs at least 2 colors, since that edge's two endpoints must differ -- so chi >= 2. Combined with chi <= 2, chi = 2 exactly."
+      ],
+      "verification_method": "hand_checkable_bipartite_2coloring_and_edge_lower_bound"
+    },
+    {
+      "id": "pi-graph-coloring-002",
+      "concept_id": "graph-coloring",
+      "topic": "graph-theory",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the chromatic number of the 5-cycle C5 (vertices 1-2-3-4-5-1)?",
+      "answer_range": [
+        2.985,
+        3.015
+      ],
+      "correct_answer": "3",
+      "solution_steps": [
+        "Method 1 (upper bound -- explicit coloring): assign colors 1,2,1,2,3 to vertices 1,2,3,4,5. Check every edge: 1-2 (1 vs 2, ok), 2-3 (2 vs 1, ok), 3-4 (1 vs 2, ok), 4-5 (2 vs 3, ok), 5-1 (3 vs 1, ok). A valid proper coloring using 3 colors, so chi <= 3.",
+        "Method 2 (lower bound -- odd-cycle argument, independent): C5 is itself an odd cycle. Any attempt to 2-color a cycle must alternate colors around it; for an odd-length cycle this alternation forces the last vertex back to the same color as the first vertex, while they are still adjacent -- a contradiction. So 2 colors are impossible and chi >= 3. Combined with chi <= 3, chi = 3 exactly."
+      ],
+      "verification_method": "hand_checkable_explicit_coloring_and_odd_cycle_lower_bound"
+    },
+    {
+      "id": "pi-graph-coloring-003",
+      "concept_id": "graph-coloring",
+      "topic": "graph-theory",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "A graph consists of K4 (vertices A, B, C, D, all 6 pairs connected) plus one extra vertex E connected only to A. What is its chromatic number?",
+      "options": [
+        "4",
+        "5",
+        "3",
+        "2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (upper bound -- explicit coloring): K4 needs 4 distinct colors since every pair among A,B,C,D is adjacent -- color A=1, B=2, C=3, D=4. E is adjacent only to A, so E just needs to differ from color 1; reuse color 2 for E. Valid proper coloring using 4 colors total, so chi <= 4.",
+        "Method 2 (lower bound -- clique argument, independent): the subgraph on {A,B,C,D} is a clique of size 4 (K4) -- every pair in a clique is mutually adjacent, so all 4 vertices must receive pairwise distinct colors, forcing chi >= 4 (the clique number is always a lower bound on the chromatic number). Combined with chi <= 4, chi = 4 exactly."
+      ],
+      "verification_method": "hand_checkable_explicit_coloring_and_clique_lower_bound"
+    },
+    {
+      "id": "pi-graph-coloring-004",
+      "concept_id": "graph-coloring",
+      "topic": "graph-theory",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about graph coloring are always true?",
+      "options": [
+        "A graph is 2-colorable (bipartite) if and only if it contains no odd cycle.",
+        "The chromatic number chi(G) is always at least as large as the size of the largest clique in G.",
+        "Every planar graph can be properly colored with at most 4 colors (the Four Color Theorem).",
+        "If a graph has maximum degree Delta, then chi(G) <= Delta always, for every graph.",
+        "Removing a vertex from G can never increase chi(G)."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "correct_answer": "Bipartite/odd-cycle theorem, clique lower bound, Four Color Theorem, monotonicity under vertex deletion",
+      "solution_steps": [
+        "(0) TRUE -- the classical bipartite characterization, the exact argument used for C5's lower bound in the previous item (an odd cycle forces chi >= 3, i.e. non-bipartite).",
+        "(1) TRUE -- the clique lower bound, used directly in the previous item (a size-4 clique forced chi >= 4).",
+        "(2) TRUE -- the Four Color Theorem: every planar graph is properly 4-colorable.",
+        "(3) FALSE -- this is only Brooks' theorem's conclusion, and Brooks' theorem explicitly EXCLUDES complete graphs and odd cycles. Counterexamples: K4 has Delta = 3 but chi = 4 > Delta (from the previous item); the 5-cycle C5 has Delta = 2 but chi = 3 > Delta (from the item before that).",
+        "(4) TRUE -- deleting a vertex only removes adjacency constraints (never adds any), so restricting any valid coloring of G to G-minus-that-vertex is still valid; chi(G - v) <= chi(G) always.",
+        "Method 2 cross-check: (3)'s falsity is confirmed by two separate concrete counterexamples (K4 and C5), both already independently verified in earlier items of this concept -- decisive rather than relying on quoting Brooks' theorem alone."
+      ],
+      "verification_method": "hand_checkable_theorem_list_with_concrete_counterexamples"
+    },
+    {
+      "id": "pi-graph-coloring-005",
+      "concept_id": "graph-coloring",
+      "topic": "graph-theory",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "The wheel graph W5 has a 5-cycle rim (vertices 1-2-3-4-5-1) plus a hub vertex H connected to all 5 rim vertices (6 vertices total). What is its chromatic number?",
+      "answer_range": [
+        3.98,
+        4.02
+      ],
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (upper bound -- explicit coloring): color the rim 1,2,1,2,3 (the valid 3-coloring of C5 from an earlier item, using colors {1,2,3}), then color the hub H with a 4th color, since H is adjacent to every rim vertex and must differ from all colors present on the rim. This is a valid coloring using 4 colors, so chi <= 4.",
+        "Method 2 (lower bound -- clique plus forced-color argument, independent): the hub together with any two adjacent rim vertices (e.g. H, 1, 2) forms a triangle (H-1, H-2, and 1-2 are all edges) -- a clique of size 3, forcing chi >= 3. To push the bound to 4: any proper coloring of the rim C5 must use all 3 available colors somewhere (a 5-cycle cannot be properly colored with only 2 of the 3 colors, by the odd-cycle argument from an earlier item), and since the hub is adjacent to EVERY rim vertex, the hub's color must differ from all 3 colors present on the rim -- forcing a genuinely new, 4th color. So chi >= 4. Combined with chi <= 4, chi(W5) = 4 exactly."
+      ],
+      "verification_method": "hand_checkable_explicit_coloring_and_forced_fourth_color_argument"
+    },
+    {
+      "id": "pi-planar-graphs-001",
+      "concept_id": "planar-graphs",
+      "topic": "graph-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A connected planar graph drawn in the plane has 6 vertices and 9 edges. By Euler's formula, how many faces (including the outer/unbounded face) does the drawing have?",
+      "options": [
+        "5",
+        "6",
+        "4",
+        "15"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5",
+      "solution_steps": [
+        "Method 1 (Euler's formula): V - E + F = 2, so 6 - 9 + F = 2, giving F = 5.",
+        "Method 2 (direct face count on an explicit embedding, independent check): this V=6, E=9 graph is realized by the triangular prism -- two triangles (outer A-B-C, inner D-E-F) joined by 3 'vertical' edges A-D, B-E, C-F. Draw the outer triangle A-B-C large, the inner triangle D-E-F small and nested inside it, with the 3 connecting edges drawn straight. The regions formed are: the unbounded region outside A-B-C (1), the inner triangular region D-E-F (1), and the 3 quadrilateral regions between the two triangles (3). Total = 1 + 1 + 3 = 5 faces, matching Method 1."
+      ],
+      "verification_method": "hand_checkable_euler_formula_and_explicit_embedding"
+    },
+    {
+      "id": "pi-planar-graphs-002",
+      "concept_id": "planar-graphs",
+      "topic": "graph-theory",
+      "difficulty": 0.3,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the maximum possible number of edges in a simple planar graph on 5 vertices?",
+      "answer_range": [
+        8.955,
+        9.045
+      ],
+      "correct_answer": "9",
+      "solution_steps": [
+        "Method 1 (Euler-formula edge bound): in a simple planar graph with V >= 3, every face is bounded by at least 3 edges, and each edge borders exactly 2 faces, so 2E >= 3F. Combined with Euler's formula F = 2 - V + E: 2E >= 3(2 - V + E), which simplifies to E <= 3V - 6. For V = 5: E <= 3(5) - 6 = 9.",
+        "Method 2 (explicit construction achieving the bound, independent check): take a hub vertex 1 joined to a 4-cycle 2-3-4-5-2 (the wheel graph, 8 edges: spokes 1-2,1-3,1-4,1-5 plus rim 2-3,3-4,4-5,5-2), then add one diagonal, say 2-4, drawn as an arc bulging outside the rim (avoiding the spokes) -- a crossing-free 9th edge. This is a valid planar drawing with exactly 9 edges on 5 vertices (it is K5 with only the edge {3,5} missing), confirming the bound of 9 is actually achieved, not just an unreached ceiling."
+      ],
+      "verification_method": "hand_checkable_euler_edge_bound_and_explicit_triangulation"
+    },
+    {
+      "id": "pi-planar-graphs-003",
+      "concept_id": "planar-graphs",
+      "topic": "graph-theory",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Which of the following graphs is NOT planar?",
+      "options": [
+        "K4 (complete graph on 4 vertices)",
+        "K5 (complete graph on 5 vertices)",
+        "The 3-cube graph Q3 (8 vertices, 12 edges)",
+        "K_{2,3} (complete bipartite graph, parts of size 2 and 3)"
+      ],
+      "answer_index": 1,
+      "correct_answer": "K5 (complete graph on 5 vertices)",
+      "solution_steps": [
+        "Method 1 (edge-count bound E <= 3V - 6): K5 has V = 5 and E = C(5,2) = 10. The planar bound allows at most 3(5) - 6 = 9 edges. Since 10 > 9, K5 violates the bound outright and cannot be planar -- no drawing attempt is even needed.",
+        "Method 2 (Kuratowski's theorem, independent theorem): K5 is literally one of Kuratowski's two forbidden graphs. Kuratowski's theorem states a graph is planar iff it contains no subdivision of K5 or K3,3; K5 trivially contains a subdivision of itself, confirming non-planarity via an entirely different theorem.",
+        "The other three options ARE planar: K4 has V=4, E=6, meeting the bound 3(4)-6=6 exactly, realized by a triangle with a center vertex joined to all 3 corners (no crossings); Q3 has 12 edges, comfortably under 3(8)-6=18, and is the standard planar cube drawing (two nested squares joined at corresponding corners); K_{2,3} has V=5, E=6, comfortably under 3(5)-6=9, drawn with 2 vertices on top and 3 below and 6 non-crossing connecting edges."
+      ],
+      "verification_method": "hand_checkable_edge_bound_and_kuratowski_theorem"
+    },
+    {
+      "id": "pi-planar-graphs-004",
+      "concept_id": "planar-graphs",
+      "topic": "graph-theory",
+      "difficulty": 0.65,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about planar graphs are always true?",
+      "options": [
+        "For any simple planar graph with V >= 3 vertices, E <= 3V - 6.",
+        "For any simple BIPARTITE planar graph with V >= 3 vertices, E <= 2V - 4.",
+        "K_{3,3} is planar.",
+        "Euler's formula V - E + F = 2 holds for any connected planar graph drawn without edge crossings.",
+        "The bound E <= 3V - 6 is the tightest possible bound for bipartite planar graphs (no stronger bound applies to them)."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "General planar edge bound, tighter bipartite bound, Euler's formula",
+      "solution_steps": [
+        "(0) TRUE -- the general planar edge bound, derived in an earlier item.",
+        "(1) TRUE -- the TIGHTER bipartite version: bipartite graphs have no odd cycles, in particular no triangles, so every face in a bipartite planar drawing is bounded by at least 4 edges (not just 3). Then 2E >= 4F, and with Euler's F = 2-V+E: 2E >= 4(2-V+E), which simplifies to E <= 2V - 4.",
+        "(2) FALSE -- K_{3,3} (V=6, E=9) is the SECOND Kuratowski forbidden graph, famously non-planar. It also fails its own bipartite bound numerically: E <= 2(6)-4 = 8, but K_{3,3} has 9 > 8 edges -- an independent numeric contradiction, not merely citing Kuratowski's name.",
+        "(4) FALSE -- directly contradicted by (1): a stricter bound (2V - 4) does apply to bipartite planar graphs, tighter than the general 3V - 6.",
+        "(3) TRUE -- Euler's formula, used directly in two earlier items.",
+        "Method 2 cross-check: apply BOTH bounds numerically to K_{3,3} -- the general bound gives 3V-6 = 12 (K_{3,3}'s 9 edges satisfy this, so the general bound alone would wrongly suggest K_{3,3} could be planar), while the correct bipartite-specific bound 2V-4 = 8 is violated (9 > 8), correctly flagging non-planarity. This concretely demonstrates why applying the wrong (general) bound to a bipartite graph is the classic error statement (4) tempts."
+      ],
+      "verification_method": "hand_checkable_dual_edge_bounds_cross_checked_on_k33"
+    },
+    {
+      "id": "pi-planar-graphs-005",
+      "concept_id": "planar-graphs",
+      "topic": "graph-theory",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "The 3-cube graph Q3 has 8 vertices and 12 edges and is planar. By Euler's formula, how many faces does a planar drawing of Q3 have?",
+      "answer_range": [
+        5.97,
+        6.03
+      ],
+      "correct_answer": "6",
+      "solution_steps": [
+        "Method 1 (Euler's formula): V - E + F = 2, so 8 - 12 + F = 2, giving F = 6.",
+        "Method 2 (direct face count on the standard embedding, independent check): draw Q3 as two nested squares -- an outer square 1-2-3-4 and an inner square 5-6-7-8 -- connected by 4 'spoke' edges 1-5, 2-6, 3-7, 4-8. The regions are: the inner square face (1), 4 quadrilateral side faces between the two squares (4), and the outer unbounded face (1). Total = 1 + 4 + 1 = 6 faces, matching Method 1 -- and matching a physical cube's 6 square faces, a nice independent sanity check via the solid it represents."
+      ],
+      "verification_method": "hand_checkable_euler_formula_and_cube_embedding"
+    },
+    {
+      "id": "pi-shortest-paths-001",
+      "concept_id": "shortest-paths",
+      "topic": "graph-theory",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "An undirected weighted graph has vertices {A, B, C, D, E} and edges A-B (4), A-C (2), B-C (1), B-D (5), C-D (8), D-E (3), C-E (10). What is the length of the shortest path from A to E?",
+      "options": [
+        "11",
+        "12",
+        "13",
+        "15"
+      ],
+      "answer_index": 0,
+      "correct_answer": "11",
+      "solution_steps": [
+        "Method 1 (Dijkstra's algorithm): dist[A]=0. Relax A's neighbors: dist[B]=4, dist[C]=2. Finalize C (smallest, 2); relax from C: dist[B] = min(4, 2+1) = 3, dist[D] = 2+8 = 10, dist[E] = 2+10 = 12. Finalize B (3); relax from B: dist[D] = min(10, 3+5) = 8. Finalize D (8); relax from D: dist[E] = min(12, 8+3) = 11. Finalize E (11). Shortest distance A to E = 11.",
+        "Method 2 (exhaustive enumeration of all simple A-to-E paths, independent check): A-C-E = 2+10 = 12; A-B-D-E = 4+5+3 = 12; A-C-B-D-E = 2+1+5+3 = 11; A-C-D-E = 2+8+3 = 13; A-B-C-D-E = 4+1+8+3 = 16; A-B-C-E = 4+1+10 = 15. The minimum among all 6 simple paths is 11 (via A-C-B-D-E), matching Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_dijkstra_and_exhaustive_path_enumeration"
+    },
+    {
+      "id": "pi-shortest-paths-002",
+      "concept_id": "shortest-paths",
+      "topic": "graph-theory",
+      "difficulty": 0.4,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "An undirected weighted graph has vertices {A, B, C, D, E} and edges A-B (4), A-C (2), B-C (1), B-D (5), C-D (8), D-E (3), C-E (10). What is the length of the shortest path from A to D?",
+      "answer_range": [
+        7.96,
+        8.04
+      ],
+      "correct_answer": "8",
+      "solution_steps": [
+        "Method 1 (Dijkstra's algorithm trace, continued from the previous item): the running trace already found dist[D] = 8, finalized via A-C-B-D (2+1+5 = 8) before D was used to relax E.",
+        "Method 2 (exhaustive enumeration of all simple A-to-D paths, independent check): A-B-D = 4+5 = 9; A-C-D = 2+8 = 10; A-C-B-D = 2+1+5 = 8; A-B-C-D = 4+1+8 = 13. The minimum is 8, matching Method 1."
+      ],
+      "verification_method": "hand_checkable_dijkstra_and_exhaustive_path_enumeration"
+    },
+    {
+      "id": "pi-shortest-paths-003",
+      "concept_id": "shortest-paths",
+      "topic": "graph-theory",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "An undirected weighted graph has vertices {A, B, C, D, E} and edges A-B (4), A-C (2), B-C (1), B-D (5), C-D (8), D-E (3), C-E (10). Running Dijkstra's algorithm from A, after A and then C have been finalized (in that order), what is the current tentative distance to B, and has it already been finalized?",
+      "options": [
+        "3, not yet finalized (B still needs to be popped as the minimum next).",
+        "4, finalized (B was finalized right after A).",
+        "3, already finalized (locked in when A was processed).",
+        "1, not yet finalized."
+      ],
+      "answer_index": 0,
+      "correct_answer": "3, not yet finalized (B still needs to be popped as the minimum next).",
+      "solution_steps": [
+        "Method 1 (careful relaxation trace): after finalizing A (dist 0), the initial relaxations give tentative dist[B]=4 (via A-B) and dist[C]=2 (via A-C). C is finalized next (smallest tentative value, 2). Relaxing C's edges updates dist[B] to min(4, 2+1) = 3. This value, 3, is only a tentative (candidate) distance -- Dijkstra finalizes a vertex only at the moment it is popped as the current minimum, and that has not happened for B yet.",
+        "Method 2 (correctness-invariant check, independent reasoning): a common error is to finalize a vertex right after its first relaxation instead of waiting for it to be popped. This is unsafe in general, and this exact graph shows why it matters: had B been wrongly finalized at 4 immediately after processing A, the algorithm would have skipped the cheaper route to B discovered later through C (cost 3), which the full trace in the previous items relies on to correctly reach dist[D]=8 and dist[E]=11. Since those downstream answers were independently confirmed correct by exhaustive enumeration in the earlier items, dist[B]=3 (not yet finalized) must be the correct current state."
+      ],
+      "verification_method": "hand_checkable_dijkstra_relaxation_trace_and_invariant_check"
+    },
+    {
+      "id": "pi-shortest-paths-004",
+      "concept_id": "shortest-paths",
+      "topic": "graph-theory",
+      "difficulty": 0.6,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about shortest-path algorithms are always true?",
+      "options": [
+        "Dijkstra's algorithm gives correct results only when all edge weights are non-negative.",
+        "Bellman-Ford correctly handles graphs with negative edge weights, as long as there is no negative-weight cycle reachable from the source.",
+        "Floyd-Warshall computes shortest paths between every pair of vertices, not just from a single source.",
+        "Dijkstra's algorithm always produces correct shortest-path distances as long as the graph has no negative-weight CYCLE, even if some individual edges are negative.",
+        "If a graph has a negative-weight cycle reachable from the source, the 'shortest path' to a vertex on that cycle is not well-defined (it can be made arbitrarily negative)."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "correct_answer": "Dijkstra non-negative requirement, Bellman-Ford no-negative-cycle guarantee, Floyd-Warshall is all-pairs, negative cycles make shortest path undefined",
+      "solution_steps": [
+        "(0) TRUE -- standard limitation of Dijkstra's greedy finalize-on-pop strategy, illustrated by the previous item's careful trace (it relies on never needing to revisit a finalized vertex, which a later-discovered negative edge could break).",
+        "(1) TRUE -- Bellman-Ford's repeated relaxation over |V|-1 passes correctly handles negative edges, and one extra pass can even detect a negative cycle rather than silently producing a wrong answer.",
+        "(2) TRUE -- Floyd-Warshall's dynamic program computes all-pairs shortest distances, unlike the single-source Dijkstra and Bellman-Ford.",
+        "(3) FALSE -- Dijkstra needs ALL edge weights non-negative, a strictly stronger requirement than merely 'no negative cycle'. Counterexample: directed edges A-to-C = 2, A-to-B = 3, B-to-C = -2 (no cycle at all). Initial tentative distances from A: dist[B]=3, dist[C]=2. Since 2 < 3, Dijkstra finalizes C first at distance 2 and never relaxes it again -- but the true shortest A-to-C path is A-to-B-to-C = 3 + (-2) = 1 < 2, discovered only when B is processed, which happens AFTER C was already (wrongly) finalized. Dijkstra reports 2, which is wrong; the true answer is 1.",
+        "(4) TRUE -- repeatedly looping around a negative cycle keeps decreasing the total path weight without bound, so no finite minimum path weight exists for vertices reachable via that cycle; this is exactly why Bellman-Ford's extra pass (statement 1) exists, to detect this case rather than silently return a wrong finite number.",
+        "Method 2 cross-check: the A/B/C counterexample for (3) is a concrete numeric disproof (2 reported vs 1 true), independent of the general theoretical argument in (0) -- both point to the same underlying limitation from two different angles."
+      ],
+      "verification_method": "hand_checkable_algorithm_properties_with_counterexample"
+    },
+    {
+      "id": "pi-shortest-paths-005",
+      "concept_id": "shortest-paths",
+      "topic": "graph-theory",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "An undirected weighted graph has vertices {A, B, C, D, E} and edges A-B (4), A-C (2), B-C (1), B-D (5), C-D (8), D-E (3), C-E (10). What is the length of the shortest path from B to E?",
+      "answer_range": [
+        7.96,
+        8.04
+      ],
+      "correct_answer": "8",
+      "solution_steps": [
+        "Method 1 (Dijkstra's algorithm from B): dist[B]=0. Relax B's neighbors: dist[A]=4, dist[C]=1, dist[D]=5. Finalize C (1); relax from C: dist[A] = min(4, 1+2) = 3, dist[E] = 1+10 = 11 (D not improved: 1+8=9 > 5). Finalize A (3); A's remaining neighbors are already finalized, no changes. Finalize D (5); relax from D: dist[E] = min(11, 5+3) = 8. Finalize E (8). Shortest distance B to E = 8, via path B-D-E.",
+        "Method 2 (Floyd-Warshall-style intermediate-vertex relaxation, independent derivation): there is no direct B-E edge (infinite initially). Allowing A as an intermediate: the only route through A back to E is B-A-C-E = 4+2+10 = 16, no improvement. Allowing C as an intermediate: B-C-E = 1+10 = 11 (better than infinity, tentative 11). Allowing D as an intermediate: B-D-E = 5+3 = 8, better than 11 -- update to 8. All intermediate vertices exhausted; final shortest B-to-E = 8, matching Method 1 via the DP-style 'relax through every possible intermediate vertex' logic rather than the greedy-frontier logic."
+      ],
+      "verification_method": "hand_checkable_dijkstra_and_floyd_warshall_intermediate_relaxation"
+    }
+  ]
+}

@@ -53,6 +53,24 @@ export interface ConceptNode {
   prerequisites: string[];
   /** Optional — only the 26 linear-algebra concepts declare these today. */
   encompasses?: EncompassingEdge[];
+  /**
+   * Whether real exam papers directly ask questions on this concept, as
+   * opposed to assuming a student can already do it because it underlies
+   * something else the paper does test (a prerequisite/foundational skill
+   * — e.g. the chain rule, or basic vector algebra). Defaults to `true`
+   * (undefined ⇒ tested) — most concepts in the graph ARE directly examined.
+   *
+   * A concept explicitly flagged `exam_tested: false` in
+   * `data/curriculum/gate-ma.yml` is EXPECTED to have zero questions mapped
+   * to it in `frontend/public/data/pyq-bank.json` — that absence is a
+   * correct, permanent property of the concept, not a content gap.
+   * `scripts/check-la-walkthrough.ts`'s test leg treats it as a pass
+   * (reported distinctly as "not examined", never silently as "✓"), and the
+   * student-facing walkthrough rail explains it in place of an empty list.
+   * Writing a question for one of these and filing it as past-exam material
+   * would fabricate provenance — don't.
+   */
+  exam_tested?: boolean;
 }
 
 // Resolved relative to THIS module's own location (not process.cwd()) —
@@ -119,6 +137,11 @@ function loadConceptsFromYaml(yamlPath: string): ConceptNode[] {
         ? raw_node.prerequisites.filter((p: any) => typeof p === 'string')
         : [],
       encompasses: parseEncompasses(raw_node.encompasses, id, yamlPath),
+      // Only ever written as an explicit `false` in the YAML (see
+      // ConceptNode.exam_tested above) — anything else (absent, `true`,
+      // malformed) collapses to `undefined` so every call site's
+      // `!== false` default-true check stays the single place that matters.
+      exam_tested: raw_node.exam_tested === false ? false : undefined,
     };
   });
 

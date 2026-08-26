@@ -97,6 +97,19 @@ describe('WalkthroughRail', () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/lesson/walkthrough/eigenvalues'));
   });
 
+  it('a concept flagged exam_tested:false shows the honest "assumed prerequisite" line instead of the generic empty state', async () => {
+    vi.mocked(fetch).mockReturnValue(jsonResponse({
+      ...UNAVAILABLE_BODY,
+      legs: { ...UNAVAILABLE_BODY.legs, test: { available: false, question_count: 0, exam_tested: false } },
+    }));
+    renderRail();
+
+    expect(await screen.findByText('Assumed prerequisite — not directly examined in past papers.')).toBeInTheDocument();
+    expect(screen.queryByText('No exam-style questions tagged for this concept yet')).not.toBeInTheDocument();
+    // Still not tappable — the exemption explains the absence, it doesn't unlock a quiz.
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+
   it('every leg unavailable renders honest empty-state copy with no tap target', async () => {
     vi.mocked(fetch).mockReturnValue(jsonResponse(UNAVAILABLE_BODY));
     renderRail();

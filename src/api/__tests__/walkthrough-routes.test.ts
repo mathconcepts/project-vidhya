@@ -125,7 +125,7 @@ describe('GET /api/lesson/walkthrough/:concept_id', () => {
         explanation: { available: true, atom_count: 2 },
         interactive: { available: true, count: 1 },
         practice: { available: true, item_count: 2, first_object_id: 'p1' },
-        test: { available: true, question_count: 1 },
+        test: { available: true, question_count: 1, exam_tested: true },
       },
     });
   });
@@ -147,7 +147,7 @@ describe('GET /api/lesson/walkthrough/:concept_id', () => {
       explanation: { available: false, atom_count: 0 },
       interactive: { available: false, count: 0 },
       practice: { available: false, item_count: 0, first_object_id: null },
-      test: { available: false, question_count: 0 }, // no concept field seen anywhere — honestly "not wired", not zero-matches
+      test: { available: false, question_count: 0, exam_tested: true }, // no concept field seen anywhere — honestly "not wired", not zero-matches
     });
   });
 
@@ -187,6 +187,33 @@ describe('GET /api/lesson/walkthrough/:concept_id', () => {
 
     const serialized = JSON.stringify(r.payload);
     expect(serialized).not.toMatch(/session_id|student_id|user_id|email/i);
+  });
+
+  it('an exam_tested:false concept reports exam_tested:false on the test leg even with zero real questions', async () => {
+    vi.mocked(loadConceptAtoms).mockResolvedValue([]);
+    vi.mocked(getLearningObjectCatalog).mockReturnValue({ query: async () => [] } as any);
+    __setWalkthroughBundleForTests([]); // no PYQ mapped at all — the honest, expected state
+
+    const r = makeRes();
+    // 'sequences' is one of the 15 concepts flagged exam_tested:false in
+    // data/curriculum/gate-ma.yml (a prerequisite real papers assume, never
+    // directly test).
+    await handler(makeReq({ concept_id: 'sequences' }), r.res);
+
+    expect(r.status).toBe(200);
+    expect(r.payload.legs.test).toEqual({ available: false, question_count: 0, exam_tested: false });
+  });
+
+  it('an ordinary (exam_tested:true) concept reports exam_tested:true on the test leg', async () => {
+    vi.mocked(loadConceptAtoms).mockResolvedValue([]);
+    vi.mocked(getLearningObjectCatalog).mockReturnValue({ query: async () => [] } as any);
+    __setWalkthroughBundleForTests([]);
+
+    const r = makeRes();
+    await handler(makeReq({ concept_id: REAL_CONCEPT }), r.res); // 'eigenvalues' — not one of the 15 flagged ids
+
+    expect(r.status).toBe(200);
+    expect(r.payload.legs.test).toEqual({ available: false, question_count: 0, exam_tested: true });
   });
 });
 

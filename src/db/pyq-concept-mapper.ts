@@ -178,6 +178,13 @@ const TAG_MAPS: Record<string, Record<string, string | string[]>> = {
   },
 
   'differential-equations': {
+    // de-006's primary (first-listed) tag — a pure order/degree/linearity
+    // classification question, not a solving-technique one. Deliberately
+    // NOT mapping the co-occurring 'ode-basics' tag (too generic to trust
+    // alone) or 'classification' (used elsewhere in this bank for PDE type
+    // and homogeneous-vs-not classification, a different concept entirely
+    // — see de-003/de-013).
+    'order-degree': 'ode-classification',
     'first-order-ode': 'ode-first-order',
     'separable-ode': 'ode-first-order',
     'integrating-factor': 'ode-first-order',
@@ -467,6 +474,15 @@ const TEXT_RULES: Array<{ topic: string; match: string; concept_id: string | str
   // question is exactly the three-way link determinants/matrix-inverse/
   // systems-of-equations, mirroring la-012's 'singular-matrix' tag set.
   { topic: 'linear-algebra', match: 'matrix with det(a) = 0, then the system ax = b', concept_id: ['determinants', 'matrix-inverse', 'systems-of-equations'] },
+
+  // scripts/seed-pyqs.sql / supabase/seeds/gate_em_pyqs.sql — no tags
+  // column, matched on literal question text, same pattern as the
+  // linear-algebra sql-*-Seed-* rules above. Both are pure order/degree
+  // classification questions (verified against their explanations, which
+  // state "Order = ..." / "Degree = ..." and nothing about solving the
+  // equation), so both map to ode-classification, not a solving concept.
+  { topic: 'differential-equations', match: 'the order and degree of the differential equation (d²y/dx²)³ + (dy/dx)² + y = 0', concept_id: 'ode-classification' },
+  { topic: 'differential-equations', match: 'the order and degree of the ode (d²y/dx²)³ + (dy/dx)² + y = 0', concept_id: 'ode-classification' },
 ];
 
 /**

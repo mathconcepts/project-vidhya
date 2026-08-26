@@ -13,6 +13,10 @@ export interface ConceptNode {
   difficulty_base: number;
   gate_frequency: 'high' | 'medium' | 'low' | 'rare';
   prerequisites: string[];
+  /** See ConceptNode.exam_tested in src/constants/concept-graph.ts — a
+   * `false` here means this concept is a prerequisite exams assume rather
+   * than directly test; absent/undefined means "yes, directly examined". */
+  exam_tested?: boolean;
 }
 
 let _concepts: ConceptNode[] | null = null;

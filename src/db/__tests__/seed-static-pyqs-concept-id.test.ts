@@ -61,13 +61,14 @@ describe('seedStaticPyqQuestions — concept_id / concept_ids wiring', () => {
 
     const withConcept = inserts.filter(c => c.params[10] !== null);
     const withoutConcept = inserts.filter(c => c.params[10] === null);
-    // Verified count (see pyq-concept-mapper.test.ts): 148/150 resolve,
-    // 2 stay honestly unmapped (differential-equations de-006, an
-    // order/degree question; probability-statistics ps-013, a
-    // Chebyshev-inequality question — neither has a confident single-concept
-    // match in the mapper).
-    expect(withConcept.length).toBe(162);
-    expect(withoutConcept.length).toBe(2);
+    // Verified count (see pyq-concept-mapper.test.ts): 163/164 resolve, 1
+    // stays honestly unmapped (probability-statistics ps-013, a
+    // Chebyshev-inequality question with no confident single-concept match
+    // in the mapper). differential-equations de-006 (order/degree) used to
+    // be the other unmapped row until ode-classification's 'order-degree'
+    // tag mapping was added — it now resolves like every other tagged row.
+    expect(withConcept.length).toBe(163);
+    expect(withoutConcept.length).toBe(1);
 
     // concept_ids is populated iff concept_id is; unmapped rows carry null
     // for both, never an empty-array guess.
@@ -87,8 +88,8 @@ describe('seedStaticPyqQuestions — concept_id / concept_ids wiring', () => {
 
     const backfillUpdates = calls.filter(c => c.sql.includes('UPDATE pyq_questions SET concept_id') && c.sql.includes('question_text'));
     // One backfill attempt per question that resolves a concept_id, across
-    // all 10 topics — same 162 that resolve on the INSERT path.
-    expect(backfillUpdates.length).toBe(162);
+    // all 10 topics — same 163 that resolve on the INSERT path.
+    expect(backfillUpdates.length).toBe(163);
     for (const call of backfillUpdates) {
       expect(call.sql).toContain('concept_ids');
       expect(Array.isArray(call.params[1])).toBe(true); // concept_ids param

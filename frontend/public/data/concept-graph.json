@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-08-25T07:54:55.692Z",
+  "exported_at": "2026-08-26T12:45:00.910Z",
   "concepts": [
     {
       "id": "sequences",
@@ -9,7 +9,8 @@
       "description": "Convergence, divergence, bounded sequences",
       "difficulty_base": 0.3,
       "gate_frequency": "medium",
-      "prerequisites": []
+      "prerequisites": [],
+      "exam_tested": false
     },
     {
       "id": "series",
@@ -75,7 +76,8 @@
       "gate_frequency": "high",
       "prerequisites": [
         "derivatives-basic"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "product-quotient-rule",
@@ -86,7 +88,8 @@
       "gate_frequency": "high",
       "prerequisites": [
         "derivatives-basic"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "implicit-differentiation",
@@ -97,7 +100,8 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "chain-rule"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "maxima-minima",
@@ -132,7 +136,8 @@
       "gate_frequency": "high",
       "prerequisites": [
         "derivatives-basic"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "integration-substitution",
@@ -167,7 +172,8 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "integration-basics"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "definite-integrals",
@@ -756,6 +762,17 @@
       ]
     },
     {
+      "id": "ode-classification",
+      "topic": "differential-equations",
+      "label": "Order, Degree and Linearity of an ODE",
+      "description": "Classifying a differential equation before choosing a solving technique — order, degree (and when degree is undefined), and linearity",
+      "difficulty_base": 0.25,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "derivatives-basic"
+      ]
+    },
+    {
       "id": "ode-first-order",
       "topic": "differential-equations",
       "label": "First Order ODEs",
@@ -764,7 +781,8 @@
       "gate_frequency": "high",
       "prerequisites": [
         "integration-basics",
-        "derivatives-basic"
+        "derivatives-basic",
+        "ode-classification"
       ]
     },
     {
@@ -823,7 +841,8 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "ode-second-order-nonhomo"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "pde-basics",
@@ -991,7 +1010,8 @@
       "gate_frequency": "low",
       "prerequisites": [
         "analytic-functions"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "root-finding",
@@ -1085,7 +1105,8 @@
       "gate_frequency": "high",
       "prerequisites": [
         "inverse-laplace"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "fourier-series",
@@ -1267,7 +1288,8 @@
       "gate_frequency": "low",
       "prerequisites": [
         "sets-relations"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "graph-basics",
@@ -1287,7 +1309,8 @@
       "gate_frequency": "high",
       "prerequisites": [
         "graph-basics"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "trees",
@@ -1342,7 +1365,8 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "trees"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "vector-algebra-basics",
@@ -1351,7 +1375,8 @@
       "description": "Vectors in 2D/3D space, dot product, cross product, scalar triple product",
       "difficulty_base": 0.2,
       "gate_frequency": "medium",
-      "prerequisites": []
+      "prerequisites": [],
+      "exam_tested": false
     },
     {
       "id": "sampling-distributions",
@@ -1362,7 +1387,8 @@
       "gate_frequency": "medium",
       "prerequisites": [
         "continuous-distributions"
-      ]
+      ],
+      "exam_tested": false
     },
     {
       "id": "numerical-error-analysis",
@@ -1371,8 +1397,9 @@
       "description": "Absolute/relative/percentage error, significant digits and rounding, error propagation",
       "difficulty_base": 0.25,
       "gate_frequency": "medium",
-      "prerequisites": []
+      "prerequisites": [],
+      "exam_tested": false
     }
   ],
-  "total": 100
+  "total": 101
 }

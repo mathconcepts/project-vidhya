@@ -59,7 +59,17 @@ export interface WalkthroughLegs {
   explanation: { available: boolean; atom_count: number };
   interactive: { available: boolean; count: number };
   practice: { available: boolean; item_count: number; first_object_id: string | null };
-  test: { available: boolean; question_count: number };
+  /**
+   * `exam_tested` mirrors `ConceptNode.exam_tested` (concept-graph.ts):
+   * `false` means this concept is a prerequisite exams assume rather than
+   * directly test, so `available:false` here is a correct, permanent
+   * property of the concept — not a content gap. `available` itself stays
+   * strictly evidence-based (real mapped questions only, unaffected by the
+   * flag) so nothing downstream that gates on it — e.g. the checkpoint
+   * quiz CTA — is silently unlocked by an exemption that was never about
+   * quiz readiness.
+   */
+  test: { available: boolean; question_count: number; exam_tested: boolean };
 }
 
 export interface WalkthroughResponse {
@@ -206,6 +216,9 @@ async function handleWalkthrough(req: ParsedRequest, res: ServerResponse): Promi
   }
 
   const test = countTestQuestions(concept_id);
+  // Default-true, same "absent ⇒ tested" contract as ConceptNode.exam_tested
+  // itself — only an explicit `false` in gate-ma.yml flips this.
+  const examTested = concept.exam_tested !== false;
 
   const body: WalkthroughResponse = {
     concept_id,
@@ -214,7 +227,7 @@ async function handleWalkthrough(req: ParsedRequest, res: ServerResponse): Promi
       explanation: { available: atomCount > 0, atom_count: atomCount },
       interactive: { available: interactiveCount > 0, count: interactiveCount },
       practice: { available: practiceItemCount > 0, item_count: practiceItemCount, first_object_id: firstObjectId },
-      test,
+      test: { ...test, exam_tested: examTested },
     },
   };
   return sendJSON(res, body);

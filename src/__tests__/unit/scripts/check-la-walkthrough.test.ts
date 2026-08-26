@@ -40,6 +40,26 @@ const TSX_BIN = path.resolve(process.cwd(), 'node_modules/.bin/tsx');
 
 const LA_CONCEPT_IDS: string[] = ALL_CONCEPTS.filter((c) => c.topic === 'linear-algebra').map((c) => c.id);
 
+/**
+ * The complete, locked set of `exam_tested: false` concept ids (CEO plan —
+ * "no past question, cannot be closed honestly"). Read from the real
+ * concept graph, never hardcoded here, so this test fails the moment the
+ * flag set drifts from the 15 documented in gate-ma.yml — same discipline
+ * `LA_CONCEPT_IDS` above already applies to the linear-algebra set.
+ */
+const EXAM_TESTED_FALSE_IDS = new Set<string>([
+  'sequences', 'chain-rule', 'product-quotient-rule', 'implicit-differentiation',
+  'integration-basics', 'partial-fractions',
+  'ode-higher-order',
+  'sampling-distributions',
+  'vector-algebra-basics',
+  'graph-connectivity', 'shortest-paths',
+  'conformal-mapping',
+  'numerical-error-analysis',
+  'laplace-applications',
+  'group-theory-basics',
+]);
+
 function runScript(args: string[], cwd: string, extraEnv: Record<string, string>) {
   return spawnSync(TSX_BIN, [SCRIPT, ...args], {
     encoding: 'utf-8',
@@ -61,7 +81,18 @@ interface Fixture {
  * test can knock out exactly one leg for one concept without hand-building
  * the other 25+.
  */
-function buildFixture(mutate?: (root: string, ids: string[]) => void): Fixture {
+/**
+ * `conceptIds` defaults to the real linear-algebra set (backward-compatible
+ * with every existing test below); `omitTestLeg` skips writing ANY PYQ
+ * entry for ANY concept, so a fixture can isolate "what does the test leg
+ * do with zero mapped questions everywhere" without hand-editing the bank
+ * afterward for each concept.
+ */
+function buildFixture(
+  mutate?: (root: string, ids: string[]) => void,
+  conceptIds: string[] = LA_CONCEPT_IDS,
+  omitTestLeg = false,
+): Fixture {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'la-walkthrough-test-'));
 
   const explainersPath = path.join(root, 'explainers.json');
@@ -75,7 +106,7 @@ function buildFixture(mutate?: (root: string, ids: string[]) => void): Fixture {
   const pyqProblems: unknown[] = [];
   const practiceItems: unknown[] = [];
 
-  for (const id of LA_CONCEPT_IDS) {
+  for (const id of conceptIds) {
     // Leg 1 — explanation
     byConcept[id] = [{ model: 'test-authored', deep_explanation: `Real explanation body for ${id}.` }];
 
@@ -118,18 +149,21 @@ function buildFixture(mutate?: (root: string, ids: string[]) => void): Fixture {
       });
     }
 
-    // Leg 4 — test (1 mapped PYQ)
-    pyqProblems.push({ id: `pyq-${id}-1`, concept_id: id, topic: 'linear-algebra' });
+    // Leg 4 — test (1 mapped PYQ), unless this fixture is deliberately
+    // testing the zero-questions-everywhere scenario.
+    if (!omitTestLeg) {
+      pyqProblems.push({ id: `pyq-${id}-1`, concept_id: id, topic: 'linear-algebra' });
+    }
   }
 
   fs.writeFileSync(
     explainersPath,
-    JSON.stringify({ version: 1, generated_at: 'test', total: LA_CONCEPT_IDS.length, by_concept: byConcept }),
+    JSON.stringify({ version: 1, generated_at: 'test', total: conceptIds.length, by_concept: byConcept }),
   );
   fs.writeFileSync(pyqBankPath, JSON.stringify({ problems: pyqProblems }));
   fs.writeFileSync(path.join(practiceItemsDir, 'fixture-bank.json'), JSON.stringify({ items: practiceItems }));
 
-  if (mutate) mutate(root, LA_CONCEPT_IDS);
+  if (mutate) mutate(root, conceptIds);
 
   return {
     root,
@@ -260,6 +294,92 @@ describe('check-la-walkthrough', () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toContain(`[${target}] explanation leg failing`);
     expect(r.stdout).toContain('not blocking (--report-only)');
+  });
+});
+
+describe('exam_tested exemption (test leg)', () => {
+  // discrete-mathematics: 6 real concepts, exactly one (`group-theory-basics`)
+  // flagged `exam_tested: false`. Small enough to build a full fixture over
+  // without hand-picking a subset, and it deliberately is NOT the
+  // linear-algebra set — none of the 26 LA concepts are flagged, so this
+  // exemption can only be exercised against a different topic.
+  const DM_TOPIC = 'discrete-mathematics';
+  const DM_CONCEPT_IDS = ALL_CONCEPTS.filter((c) => c.topic === DM_TOPIC).map((c) => c.id);
+  const DM_FLAGGED_ID = 'group-theory-basics';
+  const DM_UNFLAGGED_ID = DM_CONCEPT_IDS.find((id) => id !== DM_FLAGGED_ID)!;
+
+  it('the flag exists on exactly the documented 15 concepts and no others', () => {
+    const actual = new Set(ALL_CONCEPTS.filter((c) => c.exam_tested === false).map((c) => c.id));
+    expect(actual).toEqual(EXAM_TESTED_FALSE_IDS);
+    expect(actual.size).toBe(15);
+  });
+
+  it('none of the 26 real linear-algebra concepts are flagged', () => {
+    const flaggedLA = LA_CONCEPT_IDS.filter((id) => EXAM_TESTED_FALSE_IDS.has(id));
+    expect(flaggedLA).toEqual([]);
+  });
+
+  it('sanity: discrete-mathematics has exactly one flagged concept, matching the fixture assumption above', () => {
+    const flaggedInTopic = DM_CONCEPT_IDS.filter((id) => EXAM_TESTED_FALSE_IDS.has(id));
+    expect(flaggedInTopic).toEqual([DM_FLAGGED_ID]);
+  });
+
+  it('a flagged concept with zero mapped PYQs still passes the walkthrough, marked "not examined" rather than a bare ✓ — and an unflagged sibling with zero PYQs still fails', () => {
+    const fixture = track(buildFixture(undefined, DM_CONCEPT_IDS, /* omitTestLeg */ true));
+    const r = runScript(['--topic=' + DM_TOPIC], fixture.root, fixture.env);
+
+    // Blocking run: the 5 unflagged concepts genuinely have no PYQ, so the
+    // gate must still fail overall — the flag excuses exactly one concept,
+    // never the whole topic.
+    expect(r.status).toBe(1);
+
+    // The flagged concept's row shows the honest "— (not examined)" cell,
+    // never a bare "✓" (which would claim real evidence that doesn't exist).
+    const flaggedRow = r.stdout!.split('\n').find((line) => line.startsWith(DM_FLAGGED_ID));
+    expect(flaggedRow).toBeDefined();
+    expect(flaggedRow).toContain('— (not examined)');
+
+    // The flagged concept must NOT be listed among the failures at all —
+    // this is the property that matters most: the exemption cannot
+    // silently swallow a real gap.
+    expect(r.stdout).not.toContain(`[${DM_FLAGGED_ID}] test leg failing`);
+
+    // THE CASE THAT MATTERS: an unflagged concept with the exact same
+    // "zero mapped PYQs" condition must still fail. A flag that accidentally
+    // excuses everything is worse than no flag at all.
+    expect(r.stdout).toContain(`[${DM_UNFLAGGED_ID}] test leg failing`);
+  });
+
+  it('the summary line separates real test-leg passes from flagged ("not examined") passes — never inflates to 100%', () => {
+    const fixture = track(buildFixture(undefined, DM_CONCEPT_IDS, /* omitTestLeg */ true));
+    const r = runScript(['--topic=' + DM_TOPIC, '--report-only'], fixture.root, fixture.env);
+
+    expect(r.status).toBe(0); // --report-only never blocks
+    // 6 concepts total, 0 real PYQ matches (omitTestLeg), 1 flagged pass.
+    expect(r.stdout).toContain(`test 0/${DM_CONCEPT_IDS.length} (+1 not examined)`);
+    // Must not print a summary that reads as full coverage.
+    expect(r.stdout).not.toContain(`test ${DM_CONCEPT_IDS.length}/${DM_CONCEPT_IDS.length}`);
+  });
+
+  it('a flagged concept that DOES have a mapped PYQ anyway reports the real count, not the exemption — the flag never hides real evidence', () => {
+    const fixture = track(
+      buildFixture(
+        (root) => {
+          const pyqPath = path.join(root, 'pyq-bank.json');
+          const bank = JSON.parse(fs.readFileSync(pyqPath, 'utf-8'));
+          bank.problems.push({ id: 'pyq-bonus-1', concept_id: DM_FLAGGED_ID, topic: DM_TOPIC });
+          fs.writeFileSync(pyqPath, JSON.stringify(bank));
+        },
+        DM_CONCEPT_IDS,
+        /* omitTestLeg */ true,
+      ),
+    );
+    const r = runScript(['--topic=' + DM_TOPIC, '--report-only'], fixture.root, fixture.env);
+
+    const flaggedRow = r.stdout!.split('\n').find((line) => line.startsWith(DM_FLAGGED_ID));
+    expect(flaggedRow).toBeDefined();
+    expect(flaggedRow).toContain('✓ (1)');
+    expect(flaggedRow).not.toContain('not examined');
   });
 });
 

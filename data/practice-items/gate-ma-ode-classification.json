@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the",
+    "ode-classification concept: order, degree (including the case where",
+    "degree is undefined), and linearity of a differential equation.",
+    "",
+    "Every item's answer was derived TWICE by genuinely independent",
+    "routes before its key was written: a direct read of order/degree",
+    "against a systematic term-by-term (order, exponent) tabulation; a",
+    "root-clearing derivation against a structural scan confirming no",
+    "other term interferes with the cleared exponent; the",
+    "undefined-degree case argued both from 'no algebraic operation",
+    "clears the transcendental wrapper' and from the Taylor-series",
+    "expansion of sin(y') carrying infinitely many powers of y'; order",
+    "read directly from Leibniz notation against the same equation",
+    "rewritten in differential-operator (D) notation. Both routes are",
+    "shown in solution_steps so a student (or a reviewer) can",
+    "re-derive every answer by hand.",
+    "",
+    "Shape mirrors gate-ma-complex-variables.json exactly (same",
+    "AuthoredItem schema consumed by FileLearningObjectCatalog /",
+    "GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-ode-classification-001",
+      "concept_id": "ode-classification",
+      "topic": "differential-equations",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the order and degree of $(y'')^3 + (y')^2 + y = 0$.",
+      "options": [
+        "Order 2, Degree 3",
+        "Order 3, Degree 2",
+        "Order 2, Degree 2",
+        "Order 3, Degree 3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Order 2, Degree 3",
+      "solution_steps": [
+        "Method 1 (direct read): the highest-order derivative present is $y''$ (a second derivative), so order = 2. The power on that highest-order derivative, $(y'')^3$, is 3, and the equation is already polynomial in its derivatives (no roots, fractions, or transcendental wrapping), so degree = 3.",
+        "Method 2 (systematic term-by-term tabulation, independent cross-check): list every term as (derivative order, exponent) — $(y'')^3 \\to (2, 3)$, $(y')^2 \\to (1, 2)$, $y \\to (0, 1)$. The maximum derivative order across all terms is 2, occurring in the term with exponent 3. This confirms order = 2, degree = 3 without relying on which term happened to be written first.",
+        "'Order 3, Degree 2' swaps the two numbers — the classic order/degree mix-up. 'Order 2, Degree 2' and 'Order 3, Degree 3' each drop a digit read from the equation."
+      ],
+      "verification_method": "hand_checkable_direct_read_vs_term_tabulation"
+    },
+    {
+      "id": "pi-ode-classification-002",
+      "concept_id": "ode-classification",
+      "topic": "differential-equations",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Find the order and degree of $\\sqrt{1 + \\left(\\dfrac{dy}{dx}\\right)^2} = \\dfrac{d^2y}{dx^2}$.",
+      "options": [
+        "Order 2, Degree 1",
+        "Order 2, Degree 2",
+        "Order 1, Degree 2",
+        "Order 2, Degree 4"
+      ],
+      "answer_index": 1,
+      "correct_answer": "Order 2, Degree 2",
+      "solution_steps": [
+        "Method 1 (clear the root, then read): the equation is not yet polynomial in its derivatives — $y'$ sits under a square root. Square both sides: $1 + (y')^2 = (y'')^2$. Every derivative is now an integer power. The highest-order derivative is $y''$ (order = 2), appearing as $(y'')^2$ (degree = 2).",
+        "Method 2 (structural interference check, independent cross-check): after squaring, scan every term for the highest-order derivative $y''$ — it appears in exactly one term, $(y'')^2$, with no other term contributing an additional power of $y''$ (the terms $1$ and $(y')^2$ involve only $y'$ or constants). So nothing inflates the exponent beyond 2, confirming degree = 2 independently of the squaring arithmetic itself.",
+        "'Order 2, Degree 1' reads the pre-clearing form's implicit exponent instead of squaring first. 'Order 1, Degree 2' mistakes the order for the derivative appearing under the root rather than the truly highest one. 'Order 2, Degree 4' over-squares by also squaring the already-integer $(y')^2$ term's exponent."
+      ],
+      "verification_method": "hand_checkable_root_clearing_vs_interference_scan"
+    },
+    {
+      "id": "pi-ode-classification-003",
+      "concept_id": "ode-classification",
+      "topic": "differential-equations",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Find the order and degree of $y'' + \\sin(y') = 0$.",
+      "options": [
+        "Order 2, Degree 1",
+        "Order 2, Degree 2",
+        "Order 2, Degree undefined",
+        "Order 1, Degree undefined"
+      ],
+      "answer_index": 2,
+      "correct_answer": "Order 2, Degree undefined",
+      "solution_steps": [
+        "Method 1 (algebraic-clearing argument): order is always well-defined — the highest derivative present is $y''$, so order = 2. For degree, check whether any algebraic operation (squaring, clearing a fraction, etc.) can remove $y'$ from inside $\\sin(\\cdot)$. None does — $\\sin$ is not an algebraic function, so the equation can never be made polynomial in its derivatives. Degree is therefore undefined.",
+        "Method 2 (Taylor-series argument, independent cross-check): expand $\\sin(y') = y' - \\dfrac{(y')^3}{3!} + \\dfrac{(y')^5}{5!} - \\cdots$. This is an infinite sum of ever-higher odd powers of $y'$ with no finite highest power, so no single integer degree can be assigned even after 'expanding' the transcendental term. This independently confirms degree is undefined, not merely large.",
+        "'Order 2, Degree 1' and 'Order 2, Degree 2' both force a numeric degree onto an equation where none exists. 'Order 1, Degree undefined' misreads the order — $y''$, not $y'$, is the highest derivative present."
+      ],
+      "verification_method": "hand_checkable_clearing_argument_vs_series_expansion"
+    },
+    {
+      "id": "pi-ode-classification-004",
+      "concept_id": "ode-classification",
+      "topic": "differential-equations",
+      "difficulty": 0.25,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "What is the order of $\\dfrac{d^4y}{dx^4} + 3\\left(\\dfrac{d^2y}{dx^2}\\right)^2 + y = 0$?",
+      "answer_range": [
+        3.99,
+        4.01
+      ],
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (direct Leibniz-notation read): the highest derivative symbol present is $\\dfrac{d^4y}{dx^4}$, a fourth derivative, so order = 4.",
+        "Method 2 (operator-notation cross-check, independent route): write $D = \\dfrac{d}{dx}$, so the equation becomes $D^4y + 3(D^2y)^2 + y = 0$. The highest power of the operator $D$ applied directly (once) to $y$ is $D^4y$ — the $D^2y$ inside the squared term is only a second-order application, not fourth. This confirms order = 4 via a completely different notation, independent of counting primes/d's in Leibniz form.",
+        "The exponent 2 on $(D^2y)^2$ is a degree contribution, not an order contribution — a common source of an incorrect answer of 2 here."
+      ],
+      "verification_method": "hand_checkable_leibniz_vs_operator_notation"
+    },
+    {
+      "id": "pi-ode-classification-005",
+      "concept_id": "ode-classification",
+      "topic": "differential-equations",
+      "difficulty": 0.3,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "For the differential equation $\\dfrac{d^2y}{dx^2} + 3x\\dfrac{dy}{dx} + 2y = 0$, which of the following are true?",
+      "options": [
+        "The order is 2",
+        "The degree is 1",
+        "The equation is linear",
+        "The equation is non-linear"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2
+      ],
+      "correct_answer": "The order is 2; The degree is 1; The equation is linear",
+      "solution_steps": [
+        "(a) TRUE: the highest derivative present is $\\dfrac{d^2y}{dx^2}$, so order = 2.",
+        "(b) TRUE: the equation is already polynomial in its derivatives, and the highest-order derivative $y''$ appears to the first power, so degree = 1.",
+        "(c) TRUE: $y$ and every derivative ($y''$, $y'$, $y$) appear to the first power only, with no products of $y$ with its own derivatives and no derivative wrapped in a non-linear function — the coefficient $3x$ on $y'$ depends only on $x$, which is allowed in a linear ODE. This matches the standard linear template $y'' + p(x)y' + q(x)y = 0$ exactly.",
+        "(d) FALSE, direct consequence of (c) being true — an ODE cannot be both linear and non-linear.",
+        "Independent cross-check: comparing term-by-term against the general linear second-order form $a(x)y'' + b(x)y' + c(x)y = r(x)$ with $a(x)=1$, $b(x)=3x$, $c(x)=2$, $r(x)=0$ confirms order 2, degree 1, and linearity simultaneously — the same conclusion reached option-by-option above, arrived at via the template match instead of inspecting each term individually."
+      ],
+      "verification_method": "hand_checkable_per_statement_vs_linear_template_match"
+    }
+  ]
+}

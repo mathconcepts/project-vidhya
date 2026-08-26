@@ -1250,7 +1250,10 @@
       "negative_marks": -0.33,
       "source": "GATE-EM-Topic-MCQs",
       "verified": true,
-      "fingerprint": "6210c861fbbcc7e2"
+      "fingerprint": "6210c861fbbcc7e2",
+      "concept_ids": [
+        "ode-classification"
+      ]
     },
     {
       "id": "de-007",
@@ -4301,7 +4304,10 @@
       "negative_marks": -0.33,
       "source": "GATE-PYQs-Seed",
       "verified": true,
-      "fingerprint": "0b3968d1b020b862"
+      "fingerprint": "0b3968d1b020b862",
+      "concept_ids": [
+        "ode-classification"
+      ]
     },
     {
       "id": "sql-GATE-PYQs-Seed-13",
@@ -5379,7 +5385,10 @@
       "negative_marks": -0.67,
       "source": "Supabase-PYQs-Seed",
       "verified": true,
-      "fingerprint": "b5f35b9d11140b5d"
+      "fingerprint": "b5f35b9d11140b5d",
+      "concept_ids": [
+        "ode-classification"
+      ]
     },
     {
       "id": "sql-Supabase-PYQs-Seed-8",

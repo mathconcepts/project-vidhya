@@ -50,13 +50,13 @@ describe('seedPracticeItemsFromDisk — Linear Algebra content floor', () => {
     const inserts = calls.filter((c) => c.sql.includes('INSERT INTO generated_problems'));
     expect(inserts.length).toBe(seeded);
     // 5 LA files (130 items) + 2 calculus banks (95) + 1 DE bank (35)
-    // + 1 probability-statistics bank (45) + 1 vector-calculus bank (40)
-    // + 1 complex-variables bank (30) + 1 numerical-methods bank (30)
-    // + 1 transform-theory bank (30) + 1 graph-theory bank (35)
-    // + 1 discrete-mathematics bank (30)
-    // = 500. Update this count deliberately if content is added — it is
+    // + 1 DE-classification bank (5) + 1 probability-statistics bank (45)
+    // + 1 vector-calculus bank (40) + 1 complex-variables bank (30)
+    // + 1 numerical-methods bank (30) + 1 transform-theory bank (30)
+    // + 1 graph-theory bank (35) + 1 discrete-mathematics bank (30)
+    // = 505. Update this count deliberately if content is added — it is
     // the floor this test locks, not an incidental number.
-    expect(seeded).toBe(500);
+    expect(seeded).toBe(505);
   });
 
   it('every one of the 26 canonical linear-algebra concepts has at least one seeded row', async () => {

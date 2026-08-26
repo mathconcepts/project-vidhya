@@ -38,9 +38,9 @@ describe('seedPYQs — concept mapping wiring (DB-less demo path)', () => {
     }
   });
 
-  it("148/150 problems resolve a concept (matches the DB seed path's verified count)", () => {
+  it("163/164 problems resolve a concept (matches the DB seed path's verified count)", () => {
     const mapped = problems.filter((p: any) => p.concept_id !== undefined);
-    expect(mapped.length).toBe(162);
+    expect(mapped.length).toBe(163);
   });
 
   it('linear-algebra questions carry the full hand-verified multi-concept set', () => {

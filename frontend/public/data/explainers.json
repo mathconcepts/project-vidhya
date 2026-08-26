@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generated_at": "2026-08-09T15:34:20.667Z",
-  "total": 100,
+  "total": 101,
   "by_concept": {
     "sequences": {
       "concept_id": "sequences",
@@ -4691,6 +4691,56 @@
       "exam_tip": "**Why it matters in GATE MA:** every other numerical-methods topic (root finding, interpolation, integration, ODEs) is graded on how well it controls error, so this topic's vocabulary is assumed fluency for the rest of the section, not tested in isolation only.\n\nGATE tests numerical error analysis in three main forms: (1) **Direct computation** — given a true and an approximate value, compute absolute, relative, or percentage error (1 mark, straightforward substitution, but a frequent source of careless sign or scale errors); (2) **Classification** — given a scenario (finite-precision storage vs. a truncated series or step-based formula), identify whether the dominant error is round-off or truncation (1 mark, conceptual); (3) **Significant-figure rounding** — round a value to $n$ significant figures and reason about the resulting error (1–2 marks). Watch for questions that describe shrinking a step size $h$ and ask what happens to total error — the trap answer is \"it always decreases\"; the correct reasoning invokes the truncation/round-off trade-off.",
       "generated_at": "2026-08-26T12:34:11.847Z",
       "model": "hand-authored"
+    },
+    "ode-classification": {
+      "concept_id": "ode-classification",
+      "topic": "differential-equations",
+      "label": "Order, Degree and Linearity of an ODE",
+      "gate_frequency": "medium",
+      "canonical_definition": "Order: the order of the highest-order derivative present in the differential equation. Degree: the power (positive integer exponent) of the highest-order derivative, but only after the equation has been made polynomial in its derivatives (no derivative inside a root, fraction, or transcendental function such as sin, cos, log, e). If the equation cannot be made polynomial in its derivatives, the degree is undefined. Linearity: an ODE is linear if the dependent variable and all its derivatives appear to the first power only, with no products of the dependent variable with itself or its derivatives, and no derivative appearing inside a non-linear function.",
+      "deep_explanation": "Before you can pick a solving technique, you have to know what you're looking at. Order, degree, and linearity are the three labels that tell you which shelf an ODE belongs on — they cost nothing to compute, and GATE asks for them directly almost every year.\n\n**Order** is the easy one: find the highest derivative written anywhere in the equation and count how many times it's been differentiated. $\\frac{d^2y}{dx^2} + \\left(\\frac{dy}{dx}\\right)^3 + y = 0$ has order 2, because $y''$ is the highest derivative present — the cube on $y'$ doesn't change the order, it only affects degree.\n\n**Degree** is where students lose marks, because of one proviso: the equation must first be made polynomial in ALL its derivatives — no derivative sitting inside a square root, a fraction with a derivative in the denominator, or a transcendental function. Once it's in that cleared form, degree is the power on the highest-order derivative term.\n\nLabel: \"**What happens:**\"\n\nConsider $\\sqrt{1 + \\left(\\dfrac{dy}{dx}\\right)^2} = \\dfrac{d^2y}{dx^2}$.\n\n**Step 1:** The equation is not yet polynomial in derivatives — there's a square root over $y'$. Square both sides to clear it:\n$$1 + \\left(\\frac{dy}{dx}\\right)^2 = \\left(\\frac{d^2y}{dx^2}\\right)^2$$\n\n**Step 2:** Now every derivative appears as an integer power. The highest-order derivative is $y''$, and it appears as $(y'')^2$.\n\n**Order = 2** (from $y''$). **Degree = 2** (the power on $y''$ after clearing the root) — NOT degree 1, which is the mistake you'd make by reading the power directly off the un-cleared equation.\n\nLabel: \"**Why it works:**\"\n\nDegree is only meaningful once the equation is polynomial in derivatives, because \"power of the highest derivative\" is only a well-defined integer for a polynomial expression. Squaring to remove the root is a *legal, equation-preserving* algebraic step (both sides were already non-negative here), so the cleared form's degree is the equation's real degree — not an artifact of how it happened to be written down.\n\n**When degree is undefined.** Some equations can never be made polynomial in their derivatives, no matter how you rearrange them. $y'' + \\sin(y') = 0$ is the canonical example: $y'$ sits inside $\\sin(\\cdot)$, and there is no algebraic operation (squaring, clearing fractions, etc.) that turns $\\sin(y')$ into a finite power of $y'$ — its Taylor series has infinitely many powers of $y'$. Order is still perfectly well-defined here (order 2, from $y''$), but degree is **undefined**. This is the case GATE uses to separate students who memorised \"degree = the exponent you see\" from students who understand the definition.\n\n**Linearity** is a separate axis from order/degree. $y'' + 3y' + 2y = e^x$ is linear (degree 1, $y$ and its derivatives all to the first power, no products like $y \\cdot y'$). $y'' + y^2 = 0$ is non-linear even though its degree is 1, because $y$ itself appears squared. $(y')^2 + y = 0$ is non-linear with degree 2. A linear ODE can have degree greater than 1 only if you count $y$'s own powers, not its derivatives' — in practice, on GATE, a linear ODE almost always has degree 1, so seeing degree $>1$ is itself a strong hint the equation is non-linear or that a substitution is needed before you classify it.",
+      "worked_examples": [
+        {
+          "difficulty": "easy",
+          "problem": "Find the order and degree of $\\left(\\dfrac{d^3y}{dx^3}\\right)^2 + \\dfrac{dy}{dx} + y = 0$.",
+          "solution": "**Step 1:** Identify the highest-order derivative. It's $\\dfrac{d^3y}{dx^3}$, a third derivative, so **order = 3**.\n\n**Step 2:** Check the equation is already polynomial in its derivatives — yes, no roots, no fractions with derivatives in the denominator, no transcendental functions wrapping a derivative.\n\n**Step 3:** Read the power on the highest-order derivative term: $\\left(\\frac{d^3y}{dx^3}\\right)^2$, so **degree = 2**.\n\n**Step 4 (linearity, for completeness):** $y$ and every derivative appear to the first power *except* $y'''$, which is squared — so this equation is non-linear.",
+          "answer": "Order 3, degree 2 (non-linear)"
+        },
+        {
+          "difficulty": "medium",
+          "problem": "Find the order and degree of $y'' + \\sin(y') = 0$. If degree cannot be determined, say so and explain why.",
+          "solution": "**Step 1:** The highest-order derivative is $y''$, so **order = 2**. Order is always well-defined — it never depends on how the equation is written.\n\n**Step 2:** Try to make the equation polynomial in its derivatives so degree can be read off. The obstruction is $\\sin(y')$: $y'$ is the argument of a transcendental function, not raised to an integer power.\n\n**Step 3:** Check whether any algebraic manipulation clears this, the way squaring clears a square root. It doesn't — $\\sin(y')$ expands as an infinite Taylor series $y' - \\frac{(y')^3}{3!} + \\frac{(y')^5}{5!} - \\cdots$ in $y'$, so there is no finite integer power that captures it.\n\n**Step 4:** Because the equation cannot be made polynomial in its derivatives, **degree is undefined** — not 1, not 2, not ∞. This is different from 'degree 1': a defined-but-first-power equation and an undefined-degree equation are not the same answer, and GATE distractors exploit exactly this confusion.",
+          "answer": "Order 2, degree undefined (non-linear — y' appears inside sin)"
+        }
+      ],
+      "common_misconceptions": [
+        {
+          "id": "mc-01",
+          "description": "Reading degree off the equation before clearing roots/fractions:",
+          "corrective": "For $\\sqrt{\\frac{d^2y}{dx^2}} + y = 0$, writing 'degree = 1/2' is wrong — degree must be a positive integer read off the equation AFTER it has been made polynomial in derivatives (here, by squaring). Never quote a fractional or negative degree."
+        },
+        {
+          "id": "mc-02",
+          "description": "Confusing order with degree:",
+          "corrective": "In $(y'')^3 + (y')^2 + y = 0$, students sometimes answer 'order 3' because they saw the exponent 3 first. Order comes from WHICH derivative is highest ($y''$ → order 2); degree comes from the POWER on that highest derivative ($(y'')^3$ → degree 3). They are two different questions about the same term."
+        },
+        {
+          "id": "mc-03",
+          "description": "Assuming every ODE has a defined degree:",
+          "corrective": "When a derivative sits inside sin, cos, log, or $e^{(\\cdot)}$ with no way to algebraically clear it — e.g. $y'' + \\sin(y') = 0$ or $\\frac{dy}{dx} + \\log\\left(\\frac{dy}{dx}\\right) = x$ — the degree is undefined, full stop. Don't force a number onto it; 'undefined' is the correct, gradable answer."
+        },
+        {
+          "id": "mc-04",
+          "description": "Equating 'degree 1' with 'linear':",
+          "corrective": "$y'' + y^2 = 0$ has degree 1 (the highest-order derivative $y''$ appears to the first power) but is non-linear, because $y$ itself is squared. Degree only looks at the highest-order DERIVATIVE's power; linearity looks at every term, including the dependent variable itself and any products between $y$ and its derivatives."
+        }
+      ],
+      "prerequisite_reminders": [
+        "Review basic derivatives first."
+      ],
+      "exam_tip": "**Why it matters in GATE MA:** Order/degree/linearity questions are quick, cheap 1-mark MCQs that show up almost every year — no calculus is required, only correct reading of the definitions, so they're free marks if you know the proviso on degree and lost marks if you don't.\n\nGATE typically gives you an ODE that is already polynomial in its derivatives (read order and degree directly) or one that needs a root/fraction cleared first (clear it, THEN read degree) or one with a derivative inside a transcendental function (degree undefined — don't guess a number). Watch for distractor options that pair a plausible order with a degree read off the UN-cleared equation, and options that assign a numeric degree to an equation whose degree is actually undefined.",
+      "generated_at": "2026-08-09T15:34:20.667Z",
+      "model": "gate-em-concept-files"
     }
   }
 }

@@ -41,7 +41,11 @@ const _store = createFlatFileStore<StoreShape>({
 const _durable = registerDurable('session-plans', durableCollection<SessionPlan>({
   collection: 'session-plans',
   idOf: (i) => i.id,
-  scopeOf: (i) => (i as any).student_id ?? null,
+  // SessionPlan carries the student on `request`, not at the top level. An
+  // `(i as any).student_id` here read undefined for every plan, so every row
+  // mirrored with a null scope and mirrorScope() could never isolate one
+  // student — the exact defect the `any` cast was hiding.
+  scopeOf: (i) => i.request?.student_id ?? null,
   readLocal: () => _store.read().plans ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), plans: items } as never),
 }));

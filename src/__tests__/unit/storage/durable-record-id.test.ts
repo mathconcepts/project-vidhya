@@ -23,7 +23,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { requireRecordId } from '../../../storage/repositories/durable-store-repo';
+import { requireRecordId, sortRowsById } from '../../../storage/repositories/durable-store-repo';
 import {
   logPracticeSession,
   entryId,
@@ -95,5 +95,82 @@ describe('practice-session log identity', () => {
   it('preserves an id that was supplied explicitly', () => {
     logPracticeSession({ ...base, id: 'fixed-id' });
     expect(_enumerateEntriesForTest()[0].id).toBe('fixed-id');
+  });
+});
+
+/**
+ * Concurrent mirrors of one collection deadlocked, and the mirror was lost.
+ *
+ * `mirror()` rewrites a whole collection inside one transaction and is called
+ * fire-and-forget after every save, so two saves overlap routinely. Nothing
+ * ordered the inserts: `session-plans` re-groups and re-sorts its entire array
+ * on every prune, so two overlapping mirrors could walk the same rows in
+ * different orders — A holding row 1 and waiting on row 2 while B held row 2
+ * and waited on row 1. Postgres broke the cycle by killing one, which showed
+ * up in production as
+ *
+ *     [durable:session-plans] mirror failed (non-fatal): deadlock detected
+ *
+ * A deadlock needs two live transactions, so it cannot be reproduced in a unit
+ * test. What CAN be pinned is the property that makes it impossible: every
+ * transaction takes row locks in the same order, whatever order the caller
+ * happened to hand the items over in.
+ */
+describe('mirror lock ordering', () => {
+  type Row = [string, string, string | null, string];
+  const row = (id: string): Row => ['session-plans', id, null, '{}'];
+
+  it('orders rows by id regardless of the order they arrive in', () => {
+    const forward = sortRowsById([row('a'), row('b'), row('c')]).map((r) => r[1]);
+    const reverse = sortRowsById([row('c'), row('b'), row('a')]).map((r) => r[1]);
+    const shuffled = sortRowsById([row('b'), row('a'), row('c')]).map((r) => r[1]);
+
+    // The whole point: three different arrival orders, one lock order.
+    expect(forward).toEqual(['a', 'b', 'c']);
+    expect(reverse).toEqual(forward);
+    expect(shuffled).toEqual(forward);
+  });
+
+  it('does not mutate the caller array', () => {
+    // mirror() derives the DELETE's id list from the same rows, so a sort in
+    // place would quietly reorder data the caller still holds.
+    const input = [row('c'), row('a')];
+    sortRowsById(input);
+    expect(input.map((r) => r[1])).toEqual(['c', 'a']);
+  });
+
+  it('keeps every row — ordering must not drop or dedupe', () => {
+    const sorted = sortRowsById([row('b'), row('a'), row('b')]);
+    expect(sorted.map((r) => r[1])).toEqual(['a', 'b', 'b']);
+  });
+});
+
+/**
+ * `session-plans` mirrored every row with a null scope.
+ *
+ * Its `scopeOf` read `(i as any).student_id`. SessionPlan has no such field —
+ * the student lives on `request` — so the cast silenced the compiler and the
+ * expression evaluated to undefined for every plan. Rows still wrote (scope is
+ * nullable), so nothing failed; `mirrorScope()` simply could never isolate one
+ * student, which is the whole reason scope exists.
+ *
+ * Same root cause as the practice-sessions bug above: an `any` standing where
+ * a type would have objected. This pins the shape so a future "cleanup" back
+ * to a top-level `student_id` fails here rather than silently in production.
+ */
+describe('session-plan scope shape', () => {
+  it('carries the student on request, not at the top level', () => {
+    const plan = {
+      id: 'PLN-abc12345',
+      generated_at: '2026-08-26T10:00:00.000Z',
+      request: { student_id: 'stu-7', exam_id: 'gate-ma', minutes_available: 30 },
+    };
+
+    expect((plan as Record<string, unknown>).student_id).toBeUndefined();
+    expect(plan.request.student_id).toBe('stu-7');
+
+    // What the fixed scopeOf resolves to, and what the broken one did.
+    expect(plan.request?.student_id ?? null).toBe('stu-7');
+    expect((plan as any).student_id ?? null).toBeNull();
   });
 });

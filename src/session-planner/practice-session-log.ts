@@ -26,10 +26,20 @@
  * Trailing-7d aggregation never needs older data.
  */
 
+import { randomUUID } from 'crypto';
 import { createFlatFileStore } from '../lib/flat-file-store';
 import { durableCollection, registerDurable } from '../storage/durable-flat-file';
 
 export interface PracticeSessionEntry {
+  /**
+   * Stable per-entry identity, assigned on write.
+   *
+   * Optional only so entries logged before this field existed still mirror
+   * (see `entryId` below) rather than being dropped. New entries always carry
+   * one — `durable_records.id` is NOT NULL, and every mirror of this
+   * collection failed against production for as long as the field was absent.
+   */
+  id?: string;
   student_id: string;
   /** Minutes spent in this interaction — 0.5 OK (rounded to 0.1 precision) */
   minutes: number;
@@ -55,9 +65,24 @@ const _store = createFlatFileStore<StoreShape>({
  * Durable mirror (migration 043). This collection holds work nothing can
  * recompute, and `.data` is wiped whenever the free-tier host sleeps.
  */
+/**
+ * Identity for the mirror.
+ *
+ * `id` is present on everything written since it was introduced. Entries
+ * already on disk predate it, so they fall back to a composite of the fields
+ * that identify one interaction. The fallback can theoretically collide (same
+ * student, same source, same millisecond) and the mirror upserts on
+ * `(collection, id)`, so a collision merges two rows — acceptable for legacy
+ * entries that are pruned within 30 days anyway, and impossible for new ones.
+ */
+export function entryId(e: PracticeSessionEntry): string {
+  if (e.id) return e.id;
+  return `${e.student_id}:${e.completed_at}:${e.source}`;
+}
+
 const _durable = registerDurable('practice-sessions', durableCollection<PracticeSessionEntry>({
   collection: 'practice-sessions',
-  idOf: (i) => (i as any).id,
+  idOf: entryId,
   scopeOf: (i) => (i as any).student_id ?? null,
   readLocal: () => _store.read().entries ?? [],
   writeLocal: (items) => _store.write({ ..._store.read(), entries: items } as never),
@@ -67,7 +92,7 @@ const PRUNE_AFTER_DAYS = 30;
 
 export function logPracticeSession(entry: PracticeSessionEntry): void {
   const store = _store.read();
-  store.entries.push(entry);
+  store.entries.push({ ...entry, id: entry.id ?? randomUUID() });
 
   // Prune aggressively — anything older than PRUNE_AFTER_DAYS is gone.
   const cutoff = Date.now() - PRUNE_AFTER_DAYS * 24 * 60 * 60 * 1000;

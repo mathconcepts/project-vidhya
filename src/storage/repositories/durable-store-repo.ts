@@ -71,7 +71,7 @@ class PgDurableStore<T> implements DurableStore<T> {
       await client.query('BEGIN');
       for (const item of items) {
         const values = [
-          this.spec.idOf(item),
+          requireRecordId(this.spec.table, this.spec.idOf(item)),
           ...extra.map((c) => this.spec.columns![c](item)),
           JSON.stringify(item),
         ];
@@ -84,7 +84,7 @@ class PgDurableStore<T> implements DurableStore<T> {
       }
       // A record deleted locally is deleted here, or the next hydration
       // resurrects it.
-      const ids = items.map((i) => this.spec.idOf(i));
+      const ids = items.map((i) => requireRecordId(this.spec.table, this.spec.idOf(i)));
       await client.query(
         ids.length > 0
           ? `DELETE FROM ${this.spec.table} WHERE NOT (${this.spec.idColumn} = ANY($1::text[]))`
@@ -168,13 +168,35 @@ class NullSharedStore<T> implements SharedStore<T> {
   describe(): string { return `none (DB-less — ${this.name} lives only on local disk)`; }
 }
 
+/**
+ * `durable_records.id` is NOT NULL, so an `idOf` that returns undefined makes
+ * Postgres reject the row — and the error it raises ("null value in column
+ * \"id\"") names the column, not the collection whose `idOf` is wrong. The
+ * practice-sessions collection mirrored nothing for over a week for exactly
+ * this reason: its entry type had no `id` field and its `idOf` read `.id`
+ * through an `any`, so every boot logged a Postgres constraint error that
+ * pointed at the schema rather than at the one line that was wrong.
+ *
+ * Checking here turns that into a message that names the collection and what
+ * it produced. The mirror still swallows it — a student's write must not fail
+ * because the mirror is unhappy — but whoever reads the log can act on it.
+ */
+export function requireRecordId(collection: string, id: unknown): string {
+  if (typeof id === 'string' && id.length > 0) return id;
+  throw new Error(
+    `idOf() for collection "${collection}" returned ${
+      typeof id === 'string' ? 'an empty string' : String(id)
+    }; durable_records.id is NOT NULL, so nothing in this collection can mirror until idOf returns a stable non-empty string`,
+  );
+}
+
 class PgSharedStore<T> implements SharedStore<T> {
   constructor(private spec: SharedCollection<T>) {}
 
   private row(item: T): [string, string, string | null, string] {
     return [
       this.spec.collection,
-      this.spec.idOf(item),
+      requireRecordId(this.spec.collection, this.spec.idOf(item)),
       this.spec.scopeOf ? this.spec.scopeOf(item) : null,
       JSON.stringify(item),
     ];

@@ -1,0 +1,734 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the",
+    "transform-theory topic: Laplace transform, inverse Laplace transform,",
+    "Laplace applications (ODEs, circuits, IVT/FVT), Fourier series, Fourier",
+    "transform, and the z-transform.",
+    "",
+    "Every item's answer was derived TWICE by genuinely independent methods",
+    "before its key was written — e.g. a Laplace transform from the",
+    "defining integral AND from a table property (shift theorem, geometric",
+    "series recognition); an inverse Laplace by partial fractions AND by",
+    "the convolution theorem; an ODE solved by the Laplace method AND by",
+    "the classical characteristic-equation method, agreeing at a specific",
+    "t; the initial- and final-value theorems checked against a closed-form",
+    "solution's own limit; a Fourier coefficient computed from the defining",
+    "integral AND from a symmetry argument or the complex-exponential form;",
+    "Parseval's theorem checked against a direct energy integral; and a",
+    "z-transform derived from the defining sum AND recovered by long-",
+    "dividing (or re-summing) its closed form, with the region of",
+    "convergence always stated explicitly — including two items that",
+    "deliberately share one algebraic closed form (z/(z-a)) but differ only",
+    "in ROC, to make that ambiguity concrete rather than abstract. Both",
+    "methods are shown in solution_steps so a student (or a reviewer) can",
+    "re-derive every answer by hand. Poles and singularities are placed at",
+    "simple, checkable locations (0, ±1, ±2, ±3, small integers) so the",
+    "arithmetic stays hand-verifiable without a CAS.",
+    "",
+    "Shape mirrors gate-ma-complex-variables.json exactly (same AuthoredItem",
+    "schema consumed by FileLearningObjectCatalog / GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-laplace-transform-001",
+      "concept_id": "laplace-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the Laplace transform of f(t) = 1 (the unit step), for s > 0.",
+      "options": [
+        "1/s",
+        "s",
+        "-1/s",
+        "1/s²"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1/s",
+      "solution_steps": [
+        "Method 1 (defining integral): L{1} = ∫₀^∞ e^{-st}·1 dt = [-e^{-st}/s]₀^∞ = (0 - (-1/s)) = 1/s, for s > 0 so the upper limit vanishes.",
+        "Method 2 (table property, independent of the integral): L{tⁿ} = n!/s^{n+1}. Setting n = 0 (since 1 = t⁰): L{1} = 0!/s¹ = 1/s. This uses the general power-function formula rather than integrating from scratch, and matches Method 1 exactly.",
+        "'s' inverts the fraction; '-1/s' drops the sign of the boundary term at t=0; '1/s²' confuses this with L{t}=1/s²."
+      ],
+      "verification_method": "hand_checkable_defining_integral_vs_power_formula"
+    },
+    {
+      "id": "pi-laplace-transform-002",
+      "concept_id": "laplace-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the Laplace transform of f(t) = t·e^{2t}.",
+      "options": [
+        "1/(s-2)²",
+        "1/(s+2)²",
+        "2/(s-2)²",
+        "1/(s-2)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1/(s-2)²",
+      "solution_steps": [
+        "Method 1 (defining integral): L{t e^{2t}} = ∫₀^∞ t e^{2t} e^{-st} dt = ∫₀^∞ t e^{-(s-2)t} dt = 1/(s-2)², using the standard result ∫₀^∞ t e^{-at} dt = 1/a² with a = s-2.",
+        "Method 2 (first shift theorem, independent route): L{t} = 1/s². The shift theorem says L{e^{at} g(t)} = G(s-a) where G(s) = L{g(t)}. Here g(t) = t, a = 2, so L{e^{2t} t} = 1/(s-2)², matching Method 1 by substitution rather than by re-integrating.",
+        "'1/(s+2)²' flips the sign of the shift; '2/(s-2)²' introduces a spurious factor of 2; '1/(s-2)' drops the required square."
+      ],
+      "verification_method": "hand_checkable_defining_integral_vs_shift_theorem"
+    },
+    {
+      "id": "pi-laplace-transform-003",
+      "concept_id": "laplace-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let F(s) = L{cos(2t)}. Evaluate F(3).",
+      "answer_range": [
+        0.220769,
+        0.240769
+      ],
+      "correct_answer": "0.230769",
+      "solution_steps": [
+        "Method 1 (standard table transform): L{cos(at)} = s/(s²+a²). With a=2: F(s) = s/(s²+4). F(3) = 3/(9+4) = 3/13 ≈ 0.230769.",
+        "Method 2 (complex-exponential derivation, independent of the table entry): cos(2t) = Re(e^{i2t}). L{e^{i2t}} = 1/(s-2i) = (s+2i)/((s-2i)(s+2i)) = (s+2i)/(s²+4), whose real part is s/(s²+4) — this reconstructs the same F(s) from the complex-exponential definition of Laplace transforms rather than quoting the cosine formula directly. F(3) = 3/13 ≈ 0.230769, matching Method 1.",
+        "A common slip is forgetting the '+4' term entirely and reporting 3/9=0.3333, or evaluating s/(s²+2) instead of s/(s²+4) (using a instead of a² in the denominator)."
+      ],
+      "verification_method": "hand_checkable_table_transform_vs_complex_exponential_derivation"
+    },
+    {
+      "id": "pi-laplace-transform-004",
+      "concept_id": "laplace-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Find the Laplace transform of f(t) = e^{-2t} sin(3t).",
+      "options": [
+        "3/((s+2)²+9)",
+        "3/((s-2)²+9)",
+        "3/((s+2)²-9)",
+        "(s+2)/((s+2)²+9)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3/((s+2)²+9)",
+      "solution_steps": [
+        "Method 1 (first shift theorem): L{sin(3t)} = 3/(s²+9). Shifting by e^{-2t} replaces s with (s+2): L{e^{-2t} sin(3t)} = 3/((s+2)²+9).",
+        "Method 2 (defining integral, independent route): L{e^{-2t}sin(3t)} = ∫₀^∞ e^{-2t}sin(3t)e^{-st}dt = ∫₀^∞ sin(3t)e^{-(s+2)t}dt = 3/((s+2)²+9), using the standard formula ∫₀^∞ sin(bt)e^{-at}dt = b/(a²+b²) with a = s+2, b = 3. Matches Method 1 exactly.",
+        "'3/((s-2)²+9)' flips the sign in the shift (s-a vs s+a trap for a decaying exponential); '3/((s+2)²-9)' introduces a sign error in the denominator; '(s+2)/((s+2)²+9)' mistakenly uses the cosine-transform numerator instead of sine's."
+      ],
+      "verification_method": "hand_checkable_shift_theorem_vs_defining_integral"
+    },
+    {
+      "id": "pi-laplace-transform-005",
+      "concept_id": "laplace-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.8,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let f(t) = (t-2)·u(t-2), where u is the unit step. Let F(s) = L{f(t)}. Evaluate F(1).",
+      "answer_range": [
+        0.125335,
+        0.145335
+      ],
+      "correct_answer": "0.135335",
+      "solution_steps": [
+        "Method 1 (second shift theorem): L{g(t-a)u(t-a)} = e^{-as}G(s), where G(s) = L{g(t)}. Here g(t)=t so G(s)=1/s², a=2. F(s) = e^{-2s}/s². F(1) = e^{-2}/1² = e^{-2} ≈ 0.135335.",
+        "Method 2 (defining integral, independent route): F(s) = ∫₂^∞ (t-2)e^{-st}dt. Substitute τ=t-2: = ∫₀^∞ τ e^{-s(τ+2)}dτ = e^{-2s}∫₀^∞ τ e^{-sτ}dτ = e^{-2s}/s² (using ∫₀^∞ τ e^{-sτ}dτ = 1/s²), the same closed form derived directly from the shifted-limit integral rather than the shift theorem. F(1) = e^{-2}/1 ≈ 0.135335, matching Method 1.",
+        "Forgetting the e^{-as} delay factor entirely (reporting 1/s² → F(1)=1) is the classic omission this item checks for."
+      ],
+      "verification_method": "hand_checkable_second_shift_theorem_vs_shifted_limit_integral"
+    },
+    {
+      "id": "pi-inverse-laplace-001",
+      "concept_id": "inverse-laplace",
+      "topic": "transform-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find L⁻¹{1/(s-3)}.",
+      "options": [
+        "e^{3t}",
+        "e^{-3t}",
+        "3e^{3t}",
+        "t·e^{3t}"
+      ],
+      "answer_index": 0,
+      "correct_answer": "e^{3t}",
+      "solution_steps": [
+        "Method 1 (table lookup): 1/(s-a) ↔ e^{at}, with a=3, gives e^{3t}.",
+        "Method 2 (forward-transform check, independent of the table): verify the candidate e^{3t} really produces 1/(s-3) by transforming it directly: L{e^{3t}} = ∫₀^∞ e^{3t}e^{-st}dt = ∫₀^∞ e^{-(s-3)t}dt = 1/(s-3) for s>3, matching the given F(s) exactly.",
+        "'e^{-3t}' flips the sign of a; '3e^{3t}' adds a spurious factor of 3; 't·e^{3t}' confuses this with the repeated-pole pair 1/(s-3)²."
+      ],
+      "verification_method": "hand_checkable_table_lookup_vs_forward_transform_check"
+    },
+    {
+      "id": "pi-inverse-laplace-002",
+      "concept_id": "inverse-laplace",
+      "topic": "transform-theory",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find L⁻¹{1/(s(s+2))}.",
+      "options": [
+        "(1/2)(1 - e^{-2t})",
+        "(1/2)(1 + e^{-2t})",
+        "1 - e^{-2t}",
+        "e^{-2t}/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(1/2)(1 - e^{-2t})",
+      "solution_steps": [
+        "Method 1 (partial fractions): 1/(s(s+2)) = A/s + B/(s+2). 1 = A(s+2)+Bs. At s=0: A=1/2. At s=-2: B=-1/2. So F(s) = (1/2)[1/s - 1/(s+2)], and L⁻¹ gives (1/2)(1 - e^{-2t}).",
+        "Method 2 (convolution theorem, independent route): 1/(s(s+2)) = (1/s)·(1/(s+2)), the product of L{1}=1/s and L{e^{-2t}}=1/(s+2). By the convolution theorem, L⁻¹{F(s)G(s)} = (f*g)(t) = ∫₀^t 1·e^{-2(t-τ)}dτ = e^{-2t}∫₀^t e^{2τ}dτ = e^{-2t}·(e^{2t}-1)/2 = (1-e^{-2t})/2, matching Method 1 without ever computing a partial-fraction coefficient.",
+        "'(1/2)(1+e^{-2t})' flips the sign of the decaying term; '1-e^{-2t}' drops the 1/2 factor; 'e^{-2t}/2' keeps only the second partial-fraction term."
+      ],
+      "verification_method": "hand_checkable_partial_fractions_vs_convolution_theorem"
+    },
+    {
+      "id": "pi-inverse-laplace-003",
+      "concept_id": "inverse-laplace",
+      "topic": "transform-theory",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let f(t) = L⁻¹{1/(s-1)²}. Evaluate f(1).",
+      "answer_range": [
+        2.70469,
+        2.731873
+      ],
+      "correct_answer": "2.718282",
+      "solution_steps": [
+        "Method 1 (table lookup for a repeated pole): 1/(s-a)² ↔ t·e^{at}, with a=1: f(t) = t·e^{t}. f(1) = 1·e¹ = e ≈ 2.718282.",
+        "Method 2 (forward-transform check via the derivative property, independent route): L{t·e^{at}} = -d/ds[L{e^{at}}] = -d/ds[1/(s-a)] = 1/(s-a)². With a=1, this confirms L{t·e^{t}} = 1/(s-1)² exactly matches the given F(s), so f(t)=t e^{t} is verified by differentiating the transform rather than by table lookup. f(1) = e ≈ 2.718282, matching Method 1.",
+        "Reporting f(1)=e² (mistaking t·e^{at} for e^{at} alone, dropping the t factor at t=1 is harmless, but confusing the repeated pole with 1/(s-1) itself gives e^1 not squared — a common slip is instead reporting just e^0=1 by misreading which factor carries the t)."
+      ],
+      "verification_method": "hand_checkable_table_lookup_vs_derivative_property_check"
+    },
+    {
+      "id": "pi-inverse-laplace-004",
+      "concept_id": "inverse-laplace",
+      "topic": "transform-theory",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Find L⁻¹{(s+1)/(s²+2s+5)}.",
+      "options": [
+        "e^{-t}·cos(2t)",
+        "e^{t}·cos(2t)",
+        "e^{-t}·sin(2t)",
+        "cos(2t) - e^{-t}"
+      ],
+      "answer_index": 0,
+      "correct_answer": "e^{-t}·cos(2t)",
+      "solution_steps": [
+        "Method 1 (complete the square + shift theorem): s²+2s+5 = (s+1)²+4, so F(s) = (s+1)/((s+1)²+4). Since L{cos(2t)} = s/(s²+4), the shift theorem gives L{e^{-t}cos(2t)} = (s+1)/((s+1)²+4), so f(t) = e^{-t}cos(2t).",
+        "Method 2 (forward-transform via the standard e^{-at}cos(bt) formula, independent route): L{e^{-at}cos(bt)} = (s+a)/((s+a)²+b²). With a=1, b=2: (s+1)/((s+1)²+4) = (s+1)/(s²+2s+5), matching the given F(s) exactly — verified by plugging the candidate answer into a known closed-form transform rather than by re-completing the square.",
+        "'e^{t}cos(2t)' flips the sign of the decay (s-1 vs s+1 shift trap); 'e^{-t}sin(2t)' confuses the numerator pattern for sine, which needs a plain constant numerator, not (s+1); 'cos(2t)-e^{-t}' is not even a valid decomposition of this transform."
+      ],
+      "verification_method": "hand_checkable_complete_square_shift_vs_standard_cos_formula"
+    },
+    {
+      "id": "pi-inverse-laplace-005",
+      "concept_id": "inverse-laplace",
+      "topic": "transform-theory",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about inverse Laplace transforms are always true?",
+      "options": [
+        "L⁻¹ is linear: L⁻¹{aF(s)+bG(s)} = a·f(t) + b·g(t)",
+        "Partial-fraction decomposition requires the numerator's degree to be strictly less than the denominator's degree (a proper rational function) before inverting term-by-term",
+        "The convolution theorem states L⁻¹{F(s)G(s)} = f(t)·g(t), the ordinary pointwise product",
+        "For a repeated pole (s-a)² in F(s), the partial-fraction term A/(s-a)² inverts to A·t·e^{at}",
+        "Every rational F(s) has a unique inverse Laplace transform regardless of which region of convergence is intended"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Linearity; proper-fraction requirement before partial fractions; repeated-pole term A/(s-a)² inverts to A·t·e^{at}",
+      "solution_steps": [
+        "(a) TRUE: L⁻¹ inherits linearity directly from the linearity of the defining integral that produces L.",
+        "(b) TRUE: an improper rational function (numerator degree ≥ denominator degree) must first be reduced by polynomial long division into a polynomial-plus-proper-fraction before term-by-term partial-fraction inversion applies.",
+        "(c) FALSE: this is the classic error the convolution theorem exists to correct — L⁻¹{F(s)G(s)} is the convolution integral (f*g)(t) = ∫₀^t f(τ)g(t-τ)dτ, NOT the ordinary product f(t)g(t), as demonstrated directly in item pi-inverse-laplace-002.",
+        "(d) TRUE: differentiating -d/ds[1/(s-a)] = 1/(s-a)² and using L{t·e^{at}} = -d/ds L{e^{at}} confirms A/(s-a)² ↔ A·t·e^{at} (as used in item pi-inverse-laplace-003).",
+        "(e) FALSE: the same rational closed form can correspond to different time functions depending on which region of the s-plane the intended transform converges in (causal vs anticausal); the inverse is only unique once the ROC — or equivalently, the causality of f(t) — is specified."
+      ],
+      "verification_method": "hand_checkable_inverse_laplace_properties"
+    },
+    {
+      "id": "pi-laplace-applications-001",
+      "concept_id": "laplace-applications",
+      "topic": "transform-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Solve y' + 2y = 0, y(0) = 3, using the Laplace transform. Find y(t).",
+      "options": [
+        "3e^{-2t}",
+        "3e^{2t}",
+        "e^{-2t}",
+        "2e^{-3t}"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3e^{-2t}",
+      "solution_steps": [
+        "Method 1 (Laplace transform): sY(s) - y(0) + 2Y(s) = 0 ⟹ Y(s)(s+2) = 3 ⟹ Y(s) = 3/(s+2) ⟹ y(t) = 3e^{-2t}.",
+        "Method 2 (classical characteristic-equation method, independent route): the ODE y'+2y=0 has characteristic equation r+2=0, so r=-2, and the general solution is y=Ce^{-2t}. Applying y(0)=3 gives C=3, so y(t)=3e^{-2t}, matching Method 1 exactly without ever setting up an s-domain equation.",
+        "'3e^{2t}' flips the sign of the exponent; 'e^{-2t}' drops the initial-value scale factor; '2e^{-3t}' swaps the roles of the initial condition and the coefficient."
+      ],
+      "verification_method": "hand_checkable_laplace_method_vs_characteristic_equation"
+    },
+    {
+      "id": "pi-laplace-applications-002",
+      "concept_id": "laplace-applications",
+      "topic": "transform-theory",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Solve y'' + y = 0, y(0) = 0, y'(0) = 1, using the Laplace transform. Find y(π/2).",
+      "options": [
+        "1",
+        "0",
+        "-1",
+        "π/2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1",
+      "solution_steps": [
+        "Method 1 (Laplace transform): s²Y(s) - s·y(0) - y'(0) + Y(s) = 0 ⟹ Y(s)(s²+1) = 1 ⟹ Y(s) = 1/(s²+1) ⟹ y(t) = sin(t). y(π/2) = sin(π/2) = 1.",
+        "Method 2 (classical characteristic-equation method, independent route): r²+1=0 gives r=±i, so y=A cos t + B sin t. y(0)=A=0. y'(t)=B cos t, and y'(0)=B=1. So y(t)=sin t, matching Method 1. y(π/2)=sin(π/2)=1.",
+        "'0' comes from evaluating cos(π/2) instead of sin(π/2); '-1' is a sign error; 'π/2' mistakenly reports the input angle instead of the function value."
+      ],
+      "verification_method": "hand_checkable_laplace_method_vs_characteristic_equation"
+    },
+    {
+      "id": "pi-laplace-applications-003",
+      "concept_id": "laplace-applications",
+      "topic": "transform-theory",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let F(s) = (2s+3)/(s²+3s+2). Use the initial value theorem to find f(0⁺) = lim_{t→0⁺} f(t).",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (initial value theorem): f(0⁺) = lim_{s→∞} sF(s) = lim_{s→∞} s(2s+3)/(s²+3s+2) = lim_{s→∞} (2s²+3s)/(s²+3s+2) = 2 (ratio of leading coefficients as s→∞).",
+        "Method 2 (partial fractions + direct evaluation, independent route): F(s) = (2s+3)/((s+1)(s+2)) = A/(s+1)+B/(s+2). At s=-1: A = (2(-1)+3)/(-1+2) = 1. At s=-2: B = (2(-2)+3)/(-2+1) = 1. So f(t) = e^{-t}+e^{-2t}, and f(0) = 1+1 = 2, matching the IVT result exactly without taking any s→∞ limit.",
+        "A common slip in the IVT limit is forgetting that only the leading-order terms survive, e.g. reporting 3/2 (the ratio of constant terms) instead of the ratio of the s² coefficients."
+      ],
+      "verification_method": "hand_checkable_initial_value_theorem_vs_partial_fractions"
+    },
+    {
+      "id": "pi-laplace-applications-004",
+      "concept_id": "laplace-applications",
+      "topic": "transform-theory",
+      "difficulty": 0.65,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let F(s) = 5/(s(s+5)). Use the final value theorem to find lim_{t→∞} f(t).",
+      "answer_range": [
+        0.99,
+        1.01
+      ],
+      "correct_answer": "1",
+      "solution_steps": [
+        "Method 1 (final value theorem): sF(s) = 5/(s+5) has its only pole at s=-5, strictly in the left half-plane, so FVT applies. lim_{t→∞} f(t) = lim_{s→0} sF(s) = 5/(0+5) = 1.",
+        "Method 2 (partial fractions + direct limit, independent route): 5/(s(s+5)) = A/s + B/(s+5). At s=0: A=1. At s=-5: B=-1. Check: 1/s - 1/(s+5) = (s+5-s)/(s(s+5)) = 5/(s(s+5)) ✓. So f(t) = 1 - e^{-5t}, and lim_{t→∞} f(t) = 1 - 0 = 1, matching the FVT result via the explicit closed-form solution rather than the s→0 limit shortcut.",
+        "The FVT is only valid because sF(s)'s pole at s=-5 lies strictly inside the left half-plane; had the pole instead sat at s=+5 (an unstable system), applying the same formula would give a finite but meaningless number, since f(t) would actually grow without bound (see item pi-laplace-applications-005)."
+      ],
+      "verification_method": "hand_checkable_final_value_theorem_vs_partial_fractions"
+    },
+    {
+      "id": "pi-laplace-applications-005",
+      "concept_id": "laplace-applications",
+      "topic": "transform-theory",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about applying the Laplace transform to ODEs and circuits are true?",
+      "options": [
+        "The Laplace-domain solution of y'+ay=b (constant a>0, constant b, y(0)=y0) is Y(s) = y0/(s+a) + b/(s(s+a)), obtained from sY - y0 + aY = b/s",
+        "Applying the final value theorem to F(s) = 1/(s-3) gives a valid result: lim_{t→∞} f(t) = lim_{s→0} sF(s) = 0",
+        "In an RC series circuit driven by a step voltage, taking the Laplace transform of the governing ODE converts it into an algebraic equation in s, which is then solved and inverted",
+        "The transfer function H(s) = Y(s)/X(s) of a linear time-invariant system is defined under the assumption of zero initial conditions",
+        "The initial and final value theorems require checking only that the relevant s-domain limit exists — no condition on the pole locations of sF(s) is ever needed for the final value theorem"
+      ],
+      "answer_indices": [
+        0,
+        2,
+        3
+      ],
+      "correct_answer": "y'+ay=b Laplace setup; RC-circuit application; transfer function assumes zero initial conditions",
+      "solution_steps": [
+        "(a) TRUE: L{b}=b/s for constant b, so sY-y0+aY=b/s ⟹ Y(s+a)=y0+b/s ⟹ Y = y0/(s+a) + b/(s(s+a)) — the exact structure used in item pi-laplace-applications-001's simpler b=0 case.",
+        "(b) FALSE: f(t) = L⁻¹{1/(s-3)} = e^{3t}, which grows without bound as t→∞ — it has no finite limit at all. The pole of F(s) at s=3 lies in the RIGHT half-plane (unstable), which violates the final value theorem's precondition (all poles of sF(s) strictly in the left half-plane, or at most a single pole at the origin). Blindly plugging into the sF(s)|_{s=0} formula produces a finite-looking but meaningless '0'.",
+        "(c) TRUE: this is the standard Laplace-domain circuit-analysis workflow — differential equation → algebraic equation in s → solve → inverse transform.",
+        "(d) TRUE: H(s) is defined as the ratio of the output transform to the input transform assuming the system starts at rest (zero initial conditions); nonzero initial conditions contribute separate additive terms, not part of H(s) itself.",
+        "(e) FALSE: this directly contradicts (b) — the final value theorem explicitly requires every pole of sF(s) to lie in the (closed) left half-plane, as shown by the failure in (b) and the valid case in item pi-laplace-applications-004."
+      ],
+      "verification_method": "hand_checkable_laplace_application_properties"
+    },
+    {
+      "id": "pi-fourier-series-001",
+      "concept_id": "fourier-series",
+      "topic": "transform-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "f(x) = x on (-π, π], extended periodically with period 2π. Which is true of its Fourier series?",
+      "options": [
+        "Only sine terms appear (a_n = 0 for all n ≥ 0)",
+        "Only cosine terms appear (b_n = 0 for all n)",
+        "Both sine and cosine terms appear with equal weight",
+        "The series has no sine terms at all (b_n = 0)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Only sine terms appear (a_n = 0 for all n ≥ 0)",
+      "solution_steps": [
+        "Method 1 (symmetry argument): f(x)=x is an odd function, and x·cos(nx) is odd (odd × even = odd). The integral of an odd function over the symmetric interval (-π,π) is 0, so a_n = (1/π)∫_{-π}^{π} x cos(nx) dx = 0 for every n ≥ 0 — an odd function has no cosine terms, by the general symmetry theorem.",
+        "Method 2 (direct integration by parts, independent of invoking the symmetry theorem): a_0 = (1/2π)∫_{-π}^{π} x dx = (1/2π)[x²/2]_{-π}^{π} = (1/2π)(π²/2 - π²/2) = 0. For n≥1, integrate by parts: ∫x cos(nx)dx = [x sin(nx)/n + cos(nx)/n²]. Evaluating -π to π: sin(nπ)=sin(-nπ)=0 always, and cos(nπ)=cos(-nπ) (cosine is even), so the cos(nx)/n² boundary terms cancel too. Total a_n = 0 for every n, matching Method 1 via brute-force computation rather than the general theorem.",
+        "'Only cosine terms' and 'no sine terms' invert the correct symmetry; 'both appear equally' ignores that x is purely odd."
+      ],
+      "verification_method": "hand_checkable_symmetry_argument_vs_direct_integration_by_parts"
+    },
+    {
+      "id": "pi-fourier-series-002",
+      "concept_id": "fourier-series",
+      "topic": "transform-theory",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "f(x) = x on (-π, π], extended periodically with period 2π. Find the Fourier sine coefficient b₁.",
+      "answer_range": [
+        1.99,
+        2.01
+      ],
+      "correct_answer": "2",
+      "solution_steps": [
+        "Method 1 (real sine-integral formula): b_n = (1/π)∫_{-π}^{π} x sin(nx) dx = (2/π)∫₀^{π} x sin(nx) dx (integrand is even in x since odd×odd=even). Integrating by parts: ∫₀^π x sin(nx)dx = [-x cos(nx)/n]₀^π + (1/n)∫₀^π cos(nx)dx = -π cos(nπ)/n + 0 = -π(-1)ⁿ/n. So b_n = (2/π)·(-π(-1)ⁿ/n) = 2(-1)^{n+1}/n. At n=1: b₁ = 2(-1)²/1 = 2.",
+        "Method 2 (complex-exponential Fourier coefficient, independent route): c₁ = (1/2π)∫_{-π}^{π} x e^{-ix} dx. Integrating by parts (u=x, dv=e^{-ix}dx, v=ie^{-ix}): ∫x e^{-ix}dx = ix e^{-ix} + e^{-ix} = e^{-ix}(1+ix). Evaluating -π to π: at π, e^{-iπ}(1+iπ) = -(1+iπ) = -1-iπ; at -π, e^{iπ}(1-iπ) = -(1-iπ) = -1+iπ. Difference = (-1-iπ)-(-1+iπ) = -2iπ. So c₁ = (1/2π)(-2iπ) = -i. Using the relation b_n = -2·Im(c_n) for real f: b₁ = -2·Im(-i) = -2·(-1) = 2, matching Method 1 exactly via the complex-exponential form instead of the real trig-integral form.",
+        "A common slip drops the leading factor of 2 in the (2/π) prefactor and reports 1 instead of 2."
+      ],
+      "verification_method": "hand_checkable_real_sine_integral_vs_complex_exponential_coefficient"
+    },
+    {
+      "id": "pi-fourier-series-003",
+      "concept_id": "fourier-series",
+      "topic": "transform-theory",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "f(x) = x on (-π, π], extended periodically with period 2π, has a_n = 0 for all n and b_n = 2(-1)^{n+1}/n. Evaluate (1/π)∫_{-π}^{π} f(x)² dx.",
+      "answer_range": [
+        6.546838,
+        6.612635
+      ],
+      "correct_answer": "6.579736",
+      "solution_steps": [
+        "Method 1 (direct energy integral): (1/π)∫_{-π}^{π} x² dx = (1/π)[x³/3]_{-π}^{π} = (1/π)(π³/3 - (-π³/3)) = (1/π)(2π³/3) = 2π²/3 ≈ 6.579736.",
+        "Method 2 (Parseval's theorem, independent route): Parseval's theorem states (1/π)∫_{-π}^{π} f(x)² dx = a₀²/2 + Σ_{n=1}^∞ (a_n²+b_n²). Since a₀=0 and a_n=0 for all n (item pi-fourier-series-001), this reduces to Σ b_n² = Σ [2(-1)^{n+1}/n]² = 4Σ(1/n²). Using the known series Σ_{n=1}^∞ 1/n² = π²/6 (Basel problem), the sum is 4·π²/6 = 2π²/3 ≈ 6.579736, matching Method 1 exactly via the frequency-domain sum instead of the time-domain integral.",
+        "Forgetting the leading 2/3 factor and reporting π²≈9.8696, or forgetting to square π and reporting 2π/3≈2.094, are common arithmetic slips this item is designed to catch."
+      ],
+      "verification_method": "hand_checkable_direct_energy_integral_vs_parseval_theorem"
+    },
+    {
+      "id": "pi-fourier-series-004",
+      "concept_id": "fourier-series",
+      "topic": "transform-theory",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "f(t) has period T=2, with f(t)=1 for 0<t<1 and f(t)=0 for 1<t<2. Find the Fourier sine coefficient b₁.",
+      "options": [
+        "2/π",
+        "1/π",
+        "4/π",
+        "2/π²"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2/π",
+      "solution_steps": [
+        "Method 1 (general period-T formula, real antiderivative): b_n = (2/T)∫₀^T f(t) sin(2πnt/T) dt = (2/2)∫₀^1 sin(πnt) dt = [-cos(πnt)/(πn)]₀^1 = (1-cos(πn))/(πn) = (1-(-1)ⁿ)/(πn). At n=1: b₁ = (1-(-1))/π = 2/π.",
+        "Method 2 (same integral, evaluated via Euler's formula instead of the real antiderivative, independent technique): ∫₀^1 sin(πt)dt = Im[∫₀^1 e^{iπt}dt] = Im[(e^{iπ}-1)/(iπ)] = Im[(-1-1)/(iπ)] = Im[-2/(iπ)] = Im[2i/π] = 2/π. So b₁ = (2/T)·2/π = 1·2/π = 2/π, matching Method 1 by decomposing the sine into complex exponentials instead of integrating the real function directly.",
+        "'1/π' is exactly the trap of using 1/T instead of the correct 2/T prefactor; '4/π' double-counts the prefactor; '2/π²' introduces a spurious extra power of π."
+      ],
+      "verification_method": "hand_checkable_real_antiderivative_vs_euler_formula_computation"
+    },
+    {
+      "id": "pi-fourier-series-005",
+      "concept_id": "fourier-series",
+      "topic": "transform-theory",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about Fourier series are true?",
+      "options": [
+        "At a jump discontinuity, the Fourier series converges to the average of the left-hand and right-hand limits of f",
+        "If f is an even function, then b_n = 0 for all n (only cosine terms, plus possibly a₀, appear)",
+        "For a function of period T with series a₀/2 + Σ(a_n cos(2πnt/T) + b_n sin(2πnt/T)), the coefficient formulas use 2/T as the integral prefactor",
+        "A Fourier series of a piecewise-smooth periodic function always converges to f(x) exactly at every point, including jump discontinuities",
+        "The Fourier series of any periodic function converges absolutely and uniformly everywhere, with no exceptions"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2
+      ],
+      "correct_answer": "Jump discontinuity converges to the average of one-sided limits; even function has b_n=0; general coefficient prefactor is 2/T",
+      "solution_steps": [
+        "(a) TRUE: this is the Dirichlet convergence theorem — at a jump, the series converges to [f(x⁻)+f(x⁺)]/2, not to either one-sided value.",
+        "(b) TRUE: by the same symmetry logic as item pi-fourier-series-001 (with roles reversed), f·sin(nx) is odd when f is even, so its integral over a symmetric interval vanishes.",
+        "(c) TRUE: as used explicitly in item pi-fourier-series-004's b_n = (2/T)∫₀^T f(t) sin(2πnt/T) dt.",
+        "(d) FALSE: this directly contradicts (a) — at a jump discontinuity the series converges to the average of the two one-sided limits, which generally is NOT f(x) at that point (f may not even be defined there, or may be defined to one side's value).",
+        "(e) FALSE: convergence is generally only pointwise (or uniform on closed intervals avoiding discontinuities) under the Dirichlet conditions; near a jump discontinuity the partial sums overshoot (the Gibbs phenomenon), so uniform convergence fails there."
+      ],
+      "verification_method": "hand_checkable_fourier_series_convergence_properties"
+    },
+    {
+      "id": "pi-fourier-transform-001",
+      "concept_id": "fourier-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Using F(ω) = ∫_{-∞}^{∞} f(t) e^{-iωt} dt, find the Fourier transform of f(t) = e^{-a|t|} (a > 0).",
+      "options": [
+        "2a/(a²+ω²)",
+        "a/(a²+ω²)",
+        "2a/(a²-ω²)",
+        "1/(a²+ω²)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2a/(a²+ω²)",
+      "solution_steps": [
+        "Method 1 (split the defining integral at t=0): F(ω) = ∫_{-∞}^0 e^{at}e^{-iωt}dt + ∫_0^∞ e^{-at}e^{-iωt}dt = 1/(a-iω) + 1/(a+iω) = [(a+iω)+(a-iω)]/(a²+ω²) = 2a/(a²+ω²).",
+        "Method 2 (even-function cosine-transform shortcut, independent route): since f(t)=e^{-a|t|} is even, F(ω) is real and equals 2∫₀^∞ f(t)cos(ωt)dt = 2∫₀^∞ e^{-at}cos(ωt)dt = 2·[a/(a²+ω²)] (using the standard result ∫₀^∞ e^{-at}cos(bt)dt = a/(a²+b²)) = 2a/(a²+ω²), matching Method 1 without splitting the integral at all.",
+        "'a/(a²+ω²)' and '1/(a²+ω²)' both drop the factor of 2 from the even-function doubling; '2a/(a²-ω²)' introduces a sign error in the denominator."
+      ],
+      "verification_method": "hand_checkable_split_integral_vs_even_function_cosine_shortcut"
+    },
+    {
+      "id": "pi-fourier-transform-002",
+      "concept_id": "fourier-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the Fourier transform of the rectangular pulse f(t) = 1 for |t| < T, and 0 otherwise.",
+      "options": [
+        "2 sin(ωT)/ω",
+        "sin(ωT)/ω",
+        "2 sin(ωT)/(ωT)",
+        "2 cos(ωT)/ω"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2 sin(ωT)/ω",
+      "solution_steps": [
+        "Method 1 (defining integral): F(ω) = ∫_{-T}^{T} e^{-iωt}dt = [e^{-iωt}/(-iω)]_{-T}^{T} = (e^{-iωT}-e^{iωT})/(-iω) = (-2i sin(ωT))/(-iω) = 2 sin(ωT)/ω.",
+        "Method 2 (table property, independent of the direct integral): the Fourier transform of a rectangular pulse of half-width T is the standard tabulated pair 2T·sinc(ωT), where sinc(x)=sin(x)/x. Expanding: 2T·sin(ωT)/(ωT) = 2 sin(ωT)/ω, matching Method 1 exactly via table lookup rather than integration.",
+        "'sin(ωT)/ω' drops the factor of 2 from the two-sided pulse; '2 sin(ωT)/(ωT)' introduces a spurious extra T in the denominator (misapplying the unnormalized sinc); '2 cos(ωT)/ω' confuses sine with cosine."
+      ],
+      "verification_method": "hand_checkable_defining_integral_vs_sinc_table_property"
+    },
+    {
+      "id": "pi-fourier-transform-003",
+      "concept_id": "fourier-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let f(t) = e^{-|t|} and F(ω) its Fourier transform (using F(ω) = ∫_{-∞}^{∞} f(t) e^{-iωt} dt). Evaluate F(1).",
+      "answer_range": [
+        0.99,
+        1.01
+      ],
+      "correct_answer": "1",
+      "solution_steps": [
+        "Method 1 (closed-form formula): from item pi-fourier-transform-001 with a=1: F(ω) = 2/(1+ω²). F(1) = 2/(1+1) = 1.",
+        "Method 2 (direct evaluation of the defining integral at ω=1, independent route): F(1) = ∫_{-∞}^0 e^{t}e^{-it}dt + ∫_0^∞ e^{-t}e^{-it}dt = 1/(1-i) + 1/(1+i). Rationalizing: 1/(1-i) = (1+i)/2, and 1/(1+i) = (1-i)/2. Sum = (1+i)/2 + (1-i)/2 = 2/2 = 1, matching Method 1 by evaluating the split integral at the specific ω=1 rather than deriving the general closed form first.",
+        "A common slip is evaluating the closed form at the wrong point (e.g. reporting F(0)=2 instead of F(1)=1)."
+      ],
+      "verification_method": "hand_checkable_closed_form_vs_direct_integral_evaluation"
+    },
+    {
+      "id": "pi-fourier-transform-004",
+      "concept_id": "fourier-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Let f(t) = g(t) = e^{-|t|}, with Fourier transform F(ω) = G(ω) = 2/(1+ω²). Using the convolution theorem, find the Fourier transform H(ω) of h(t) = (f*g)(t).",
+      "options": [
+        "4/(1+ω²)²",
+        "2/(1+ω²)²",
+        "4/(1+ω²)",
+        "16/(1+ω²)²"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4/(1+ω²)²",
+      "solution_steps": [
+        "Method 1 (convolution theorem): H(ω) = F(ω)·G(ω) = [2/(1+ω²)]·[2/(1+ω²)] = 4/(1+ω²)².",
+        "Method 2 (spot-check at t=0 via the inverse-transform relation, independent route): by definition, h(0) = ∫ f(τ)g(0-τ)dτ = ∫ e^{-|τ|}e^{-|τ|}dτ (g is even, so g(-τ)=g(τ)) = ∫e^{-2|τ|}dτ = 2∫₀^∞ e^{-2τ}dτ = 2·(1/2) = 1, computed directly with no transform involved. Independently, the inverse-transform relation gives h(0) = (1/2π)∫H(ω)dω; using the standard result ∫_{-∞}^{∞} dω/(1+ω²)² = π/2, this is (1/2π)·4·(π/2) = 1, exactly matching the direct convolution value — confirming the candidate H(ω)=4/(1+ω²)² is consistent at t=0.",
+        "'2/(1+ω²)²' drops a factor from squaring the numerator (2×2 not summed correctly); '4/(1+ω²)' forgets to square the denominator, treating convolution like adding exponents; '16/(1+ω²)²' incorrectly squares the whole numerator product (2·2)² instead of 2²."
+      ],
+      "verification_method": "hand_checkable_convolution_theorem_vs_inverse_transform_spot_check"
+    },
+    {
+      "id": "pi-fourier-transform-005",
+      "concept_id": "fourier-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about the Fourier transform are true?",
+      "options": [
+        "Time-shift property: FT{f(t-t₀)}(ω) = F(ω)e^{-iωt₀} — a time shift only changes the phase of F(ω), not its magnitude",
+        "Convolution theorem: FT{f*g}(ω) = F(ω)·G(ω), the pointwise product in the frequency domain",
+        "The Fourier transform of a real, even function is purely real and even",
+        "Parseval's theorem states ∫|f(t)|²dt = (1/2π)∫|F(ω)|²dω, relating time-domain and frequency-domain energy",
+        "Every function that has a Laplace transform also has a Fourier transform obtained simply by setting s=jω, with no additional conditions"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "correct_answer": "Time-shift phase property; convolution theorem; real+even implies real+even transform; Parseval's theorem",
+      "solution_steps": [
+        "(a) TRUE: |e^{-iωt₀}|=1 for all ω, so the time-shift multiplies F(ω) by a unit-magnitude phase factor only.",
+        "(b) TRUE: this is used directly in item pi-fourier-transform-004.",
+        "(c) TRUE: demonstrated explicitly by e^{-a|t|} in item pi-fourier-transform-001, whose transform 2a/(a²+ω²) is real-valued and even in ω.",
+        "(d) TRUE: with the convention F(ω)=∫f(t)e^{-iωt}dt used throughout this bank, this is the standard Fourier-transform form of Parseval's/Plancherel's theorem.",
+        "(e) FALSE: the substitution s=jω is only valid when the Laplace transform's region of convergence includes the imaginary (jω) axis. A counterexample: f(t)=e^{2t}u(t) has Laplace transform 1/(s-2) valid for Re(s)>2, but s=jω is never inside that ROC, so f(t) (which grows without bound) has no ordinary Fourier transform at all."
+      ],
+      "verification_method": "hand_checkable_fourier_transform_properties"
+    },
+    {
+      "id": "pi-z-transform-001",
+      "concept_id": "z-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the z-transform (with region of convergence) of the causal sequence x[n] = aⁿu[n] (a > 0).",
+      "options": [
+        "z/(z-a), ROC |z| > |a|",
+        "z/(z+a), ROC |z| > |a|",
+        "z/(z-a), ROC |z| < |a|",
+        "1/(z-a), ROC |z| > |a|"
+      ],
+      "answer_index": 0,
+      "correct_answer": "z/(z-a), ROC |z| > |a|",
+      "solution_steps": [
+        "Method 1 (defining sum as a geometric series): X(z) = Σ_{n=0}^∞ aⁿz^{-n} = Σ_{n=0}^∞ (az^{-1})ⁿ = 1/(1-az^{-1}) = z/(z-a), and this geometric series converges exactly when |az^{-1}| < 1, i.e. |z| > |a| — the ROC.",
+        "Method 2 (long-division check on the closed form, independent route): expand z/(z-a) = 1/(1-az^{-1}) back into a power series in z^{-1} by polynomial long division: 1/(1-az^{-1}) = 1 + az^{-1} + a²z^{-2} + a³z^{-3} + ... The coefficient of z^{-n} is aⁿ, exactly reproducing x[n]=aⁿ from the original definition — this confirms the closed form by reversing the process (expanding the answer back out) rather than by re-summing the original series.",
+        "'z/(z+a)' flips the sign of a; 'z/(z-a), ROC |z|<|a|' is exactly the wrong-ROC trap for a causal sequence (see item pi-z-transform-002 for the anticausal sequence that legitimately uses this ROC); '1/(z-a)' is missing the required numerator z."
+      ],
+      "verification_method": "hand_checkable_geometric_series_sum_vs_long_division_check"
+    },
+    {
+      "id": "pi-z-transform-002",
+      "concept_id": "z-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the z-transform (with region of convergence) of the anticausal sequence x[n] = -aⁿu[-n-1] (a > 0), i.e. x[n] = -aⁿ for n ≤ -1 and 0 for n ≥ 0.",
+      "options": [
+        "z/(z-a), ROC |z| < |a|",
+        "z/(z-a), ROC |z| > |a|",
+        "-z/(z-a), ROC |z| < |a|",
+        "z/(z+a), ROC |z| < |a|"
+      ],
+      "answer_index": 0,
+      "correct_answer": "z/(z-a), ROC |z| < |a|",
+      "solution_steps": [
+        "Method 1 (defining sum, index substitution): X(z) = Σ_{n=-∞}^{-1}(-aⁿ)z^{-n}. Let k=-n (k runs 1 to ∞): X(z) = -Σ_{k=1}^∞ a^{-k}z^{k} = -Σ_{k=1}^∞ (z/a)^k = -(z/a)/(1-z/a), valid for |z/a|<1, i.e. |z|<|a|. Simplifying: -(z/a)/(1-z/a) = -(z/a)·a/(a-z) = -z/(a-z) = z/(z-a). So X(z) = z/(z-a), ROC |z| < |a|.",
+        "Method 2 (expand the SAME closed form in the opposite region, independent route): expanding z/(z-a) = -1/a · z/(1-z/a) = -(z/a)Σ_{k=0}^∞(z/a)^k for |z/a|<1 gives -Σ_{k=0}^∞ z^{k+1}/a^{k+1} = -Σ_{m=1}^∞ (z/a)^m. Matching this to X(z)=Σx[n]z^{-n} requires z^m = z^{-n}, i.e. n=-m, so the coefficient of z^{-n} is -(1/a^{-n}) = -aⁿ for n=-1,-2,-3,..., exactly reproducing the original x[n], confirmed by expanding the closed form specifically in the |z|<|a| region (the opposite region from item pi-z-transform-001's expansion of the identical algebraic expression).",
+        "'z/(z-a), ROC |z|>|a|' is precisely the causal-sequence answer from item pi-z-transform-001 — the same algebraic closed form belongs to a DIFFERENT sequence once the ROC changes, which is the whole point of this pair of items; '-z/(z-a)' and 'z/(z+a)' introduce extra sign errors on top of that."
+      ],
+      "verification_method": "hand_checkable_defining_sum_index_substitution_vs_opposite_region_expansion"
+    },
+    {
+      "id": "pi-z-transform-003",
+      "concept_id": "z-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.5,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Let x[n] = (1/2)ⁿu[n] + (1/3)ⁿu[n]. X(z) is causal and rational. Find the radius r such that the region of convergence is |z| > r.",
+      "answer_range": [
+        0.49,
+        0.51
+      ],
+      "correct_answer": "0.5",
+      "solution_steps": [
+        "Method 1 (intersection of individual ROCs): (1/2)ⁿu[n] has ROC |z|>1/2, and (1/3)ⁿu[n] has ROC |z|>1/3. The ROC of the sum must satisfy both simultaneously, so it is the intersection: |z| > max(1/2, 1/3) = 1/2. So r = 0.5.",
+        "Method 2 (pole-based rule on the combined rational function, independent route): X(z) = z/(z-1/2) + z/(z-1/3), a rational function with poles at z=1/2 and z=1/3. For a right-sided (causal) sequence, the general rule is that the ROC is the exterior of the circle through the OUTERMOST pole: |z| > max(1/2, 1/3) = 1/2, matching Method 1 via the general pole-location rule rather than reasoning about each geometric term's individual convergence separately.",
+        "A common slip is taking the minimum instead of the maximum of the two individual radii, reporting r=1/3≈0.333 instead of 0.5."
+      ],
+      "verification_method": "hand_checkable_roc_intersection_vs_outermost_pole_rule"
+    },
+    {
+      "id": "pi-z-transform-004",
+      "concept_id": "z-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Let X(z) = z/((z-1)(z-2)), ROC |z| > 2. Find x[n] for n ≥ 0.",
+      "options": [
+        "x[n] = 2ⁿ - 1, n ≥ 0",
+        "x[n] = 2ⁿ + 1, n ≥ 0",
+        "x[n] = 1 - 2ⁿ, n ≥ 0",
+        "x[n] = 2^{n-1} - 1, n ≥ 0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2ⁿ - 1",
+      "solution_steps": [
+        "Method 1 (partial fractions + table pair): X(z)/z = 1/((z-1)(z-2)) = A/(z-1)+B/(z-2). At z=1: A=1/(1-2)=-1. At z=2: B=1/(2-1)=1. So X(z) = -z/(z-1) + z/(z-2). Since ROC |z|>2 forces both terms to be their causal versions (z/(z-a) ↔ aⁿu[n] for |z|>|a|), x[n] = -1ⁿ + 2ⁿ = 2ⁿ - 1, n≥0.",
+        "Method 2 (recurrence from clearing the denominator, independent route): X(z)(z-1)(z-2)=z ⟹ X(z)(z²-3z+2)=z. This corresponds to the difference equation x[n]-3x[n-1]+2x[n-2]=δ[n-1] with x[n]=0 for n<0, giving x[0]=0 and the homogeneous recurrence x[n]=3x[n-1]-2x[n-2] for n≥2, with x[1]=1 read off from matching the z^1 coefficient. Substituting the candidate x[n]=2ⁿ-1 into the recurrence: 3(2^{n-1}-1) - 2(2^{n-2}-1) = 3·2^{n-1} - 2^{n-1} - 3 + 2 = 2·2^{n-1} - 1 = 2ⁿ - 1, which matches exactly, and x[0]=2⁰-1=0, x[1]=2¹-1=1 also match the initial conditions — confirming Method 1 without redoing the partial-fraction decomposition.",
+        "'2ⁿ+1' and '1-2ⁿ' are sign-flip traps on the partial-fraction coefficients A, B; '2^{n-1}-1' incorrectly halves the 2ⁿ term."
+      ],
+      "verification_method": "hand_checkable_partial_fractions_vs_recurrence_from_denominator"
+    },
+    {
+      "id": "pi-z-transform-005",
+      "concept_id": "z-transform",
+      "topic": "transform-theory",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about the z-transform are true?",
+      "options": [
+        "For a causal (right-sided) sequence, the ROC is the exterior of a circle: |z| > r for some r ≥ 0 (possibly extending to z=∞)",
+        "For an anticausal (left-sided) sequence, the ROC is the interior of a circle: |z| < r",
+        "Two different sequences can share the exact same closed-form algebraic expression for X(z), and be distinguished only by their (different) regions of convergence",
+        "The z-transform of a sequence is fully determined by its algebraic closed form alone, without needing to specify the ROC",
+        "The final value theorem for z-transforms, lim_{n→∞}x[n] = lim_{z→1}(z-1)X(z)/z, requires (z-1)X(z) to have all its poles strictly inside the unit circle"
+      ],
+      "answer_indices": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "correct_answer": "Causal ROC is exterior of a circle; anticausal ROC is interior; same closed form can have different ROCs for different sequences; final value theorem's pole-location precondition",
+      "solution_steps": [
+        "(a) TRUE: demonstrated by items pi-z-transform-001, pi-z-transform-003, and pi-z-transform-004, all causal with exterior ROCs.",
+        "(b) TRUE: demonstrated by item pi-z-transform-002.",
+        "(c) TRUE: items pi-z-transform-001 and pi-z-transform-002 share the identical closed form z/(z-a) but represent different sequences (aⁿu[n] vs -aⁿu[-n-1]) precisely because their ROCs differ (|z|>|a| vs |z|<|a|).",
+        "(d) FALSE: this directly contradicts (c) — the algebraic expression alone is ambiguous between (at least) a causal and an anticausal sequence; the ROC is required information, not optional metadata.",
+        "(e) TRUE: this mirrors the Laplace final value theorem's precondition (item pi-laplace-applications-005) — the z-domain final value theorem is only valid when (z-1)X(z)'s poles all lie strictly inside the unit circle, i.e. the system is stable and the limit genuinely exists."
+      ],
+      "verification_method": "hand_checkable_z_transform_roc_properties"
+    }
+  ]
+}

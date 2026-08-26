@@ -1,0 +1,722 @@
+{
+  "version": 1,
+  "_comment": [
+    "Authored, server-gradable GATE-standard practice items for the",
+    "numerical-methods topic: root finding (bisection, Newton-Raphson,",
+    "secant), interpolation (Lagrange, Newton divided differences,",
+    "splines), numerical integration (trapezoidal, Simpson's), numerical",
+    "ODE solvers (Euler, Heun/RK2, stability), numerical linear algebra",
+    "(LU decomposition, Jacobi, Gauss-Seidel), and numerical error",
+    "analysis (absolute/relative error, significant figures, error",
+    "propagation).",
+    "",
+    "Every item's answer was derived TWICE by genuinely independent",
+    "methods before its key was written. Numerical methods carries an",
+    "unusually strong cross-check: the numerical result is compared",
+    "directly against the exact analytic answer wherever one exists",
+    "(Simpson's rule is exact on a cubic; the trapezoidal error is",
+    "checked against the closed-form -(b-a)h^2 f''(xi)/12 formula; a",
+    "Newton-Raphson iterate is checked against the Babylonian averaging",
+    "identity; an interpolating polynomial through points of a known",
+    "function must reproduce that function exactly; a Gauss-Seidel",
+    "iterate is checked by substituting it back into its defining",
+    "equation; an LU factorization is checked by reconstructing L*U",
+    "and confirming it equals the original matrix). Both methods are",
+    "shown in solution_steps so a student (or reviewer) can re-derive",
+    "every answer by hand. Step sizes, nodes, and functions were chosen",
+    "so every iterate is exact or terminates in 2-3 clean steps (h=0.5",
+    "or 1, integer-valued functions, roots and solutions at clean",
+    "values) so the arithmetic stays hand-verifiable without a CAS.",
+    "",
+    "Shape mirrors gate-ma-complex-variables.json exactly (same",
+    "AuthoredItem schema consumed by FileLearningObjectCatalog /",
+    "GateDeterministicScorer)."
+  ],
+  "items": [
+    {
+      "id": "pi-root-finding-001",
+      "concept_id": "root-finding",
+      "topic": "numerical-methods",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Apply the bisection method to f(x) = x² − 4 on the initial interval [0, 3] for exactly 2 iterations (i.e., produce the interval after the 2nd midpoint evaluation). What is the resulting interval?",
+      "options": [
+        "[1.5, 2.25]",
+        "[1.5, 3]",
+        "[0, 1.5]",
+        "[1.875, 2.25]"
+      ],
+      "answer_index": 0,
+      "correct_answer": "[1.5, 2.25]",
+      "solution_steps": [
+        "Method 1 (direct bisection tracking): f(0) = -4, f(3) = 5, opposite signs so a root lies in [0,3]. Iteration 1: midpoint m1 = 1.5, f(1.5) = 1.5² - 4 = -1.75. f(0) and f(1.5) have the same sign (both negative), so the root is in [m1, 3] = [1.5, 3]. Iteration 2: midpoint m2 = (1.5+3)/2 = 2.25, f(2.25) = 2.25² - 4 = 1.0625. f(1.5) and f(2.25) have opposite signs, so the root is in [1.5, m2] = [1.5, 2.25].",
+        "Method 2 (independent interval-width + sign cross-check): each bisection iteration exactly halves the bracket width, so after 2 iterations the width must be 3/2² = 0.75; indeed 2.25 - 1.5 = 0.75, confirming no iteration was skipped or repeated. Re-evaluating f at both reported endpoints directly, f(1.5) = -1.75 < 0 and f(2.25) = +1.0625 > 0, confirms [1.5, 2.25] still brackets the true root (x=2) as required by the intermediate value theorem.",
+        "'[1.5, 3]' stops one iteration early. '[0, 1.5]' picks the wrong half after the first split (a sign-tracking error). '[1.875, 2.25]' applies a 3rd iteration instead of stopping after the 2nd."
+      ],
+      "verification_method": "hand_checkable_bisection_sign_tracking_vs_interval_width_check"
+    },
+    {
+      "id": "pi-root-finding-002",
+      "concept_id": "root-finding",
+      "topic": "numerical-methods",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Apply one iteration of Newton-Raphson to f(x) = x² − 2 starting from x₀ = 1.5. Find x₁.",
+      "answer_range": [
+        1.406667,
+        1.426667
+      ],
+      "correct_answer": "17/12",
+      "solution_steps": [
+        "Method 1 (Newton-Raphson formula): x1 = x0 - f(x0)/f'(x0). f(x0) = 1.5² - 2 = 0.25, f'(x0) = 2x0 = 3. x1 = 1.5 - 0.25/3 = 1.5 - 1/12 = 17/12 ≈ 1.41667.",
+        "Method 2 (Babylonian averaging identity, independent derivation): Newton's method applied to f(x) = x² - c reduces algebraically to the averaging update x1 = (x0 + c/x0)/2 — a different derivation route than the general f/f' formula. Here c = 2: x1 = (1.5 + 2/1.5)/2 = (1.5 + 4/3)/2 = (9/6 + 8/6)/2 = (17/6)/2 = 17/12 ≈ 1.41667. Matches Method 1 exactly, and is already visibly closer to √2 ≈ 1.41421 than x0 was."
+      ],
+      "verification_method": "hand_checkable_newton_formula_vs_babylonian_averaging_identity"
+    },
+    {
+      "id": "pi-root-finding-003",
+      "concept_id": "root-finding",
+      "topic": "numerical-methods",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "For f(x) = x³ − 9 on [1, 3] (f(1) = -8, f(3) = 18, so a root is bracketed), how many bisection iterations are needed to guarantee the bracket width is below 0.1?",
+      "options": [
+        "5",
+        "4",
+        "6",
+        "3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5",
+      "solution_steps": [
+        "Method 1 (bisection iteration-count formula): the bracket width after n iterations is (b-a)/2ⁿ. Require (3-1)/2ⁿ < 0.1, i.e., 2ⁿ > 20. Since 2⁴ = 16 < 20 and 2⁵ = 32 > 20, the smallest valid n is 5.",
+        "Method 2 (direct halving, independent check): starting width 2, successive halvings give 1, 0.5, 0.25, 0.125, 0.0625. After 4 halvings the width is 0.125, which is still ≥ 0.1; after the 5th halving it is 0.0625 < 0.1. So exactly 5 iterations are required, matching Method 1.",
+        "'4' stops one halving short (0.125 is not yet below 0.1). '6' and '3' overshoot/undershoot the log2(20) ≈ 4.32 threshold by rounding the wrong direction."
+      ],
+      "verification_method": "hand_checkable_bisection_bound_formula_vs_direct_halving"
+    },
+    {
+      "id": "pi-root-finding-004",
+      "concept_id": "root-finding",
+      "topic": "numerical-methods",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "Apply one iteration of the secant method to f(x) = x² − 4 using x₀ = 1 and x₁ = 3. Find x₂.",
+      "options": [
+        "1.75",
+        "1.6",
+        "2.0",
+        "1.5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1.75",
+      "solution_steps": [
+        "Method 1 (secant formula): f(x0) = 1-4 = -3, f(x1) = 9-4 = 5. x2 = x1 - f(x1)·(x1-x0)/(f(x1)-f(x0)) = 3 - 5·(2)/(5-(-3)) = 3 - 10/8 = 3 - 1.25 = 1.75.",
+        "Method 2 (independent line-through-two-points check): the secant step is exactly the x-intercept of the line through (1,-3) and (3,5). Slope = (5-(-3))/(3-1) = 4. Line: y - 5 = 4(x-3), i.e. y = 4x - 7. Setting y = 0 gives x = 7/4 = 1.75, matching Method 1.",
+        "'1.6' and '1.5' are arithmetic slips in the slope or the division by 8; '2.0' mistakes this for the exact root of f rather than the secant iterate."
+      ],
+      "verification_method": "hand_checkable_secant_formula_vs_line_intercept"
+    },
+    {
+      "id": "pi-root-finding-005",
+      "concept_id": "root-finding",
+      "topic": "numerical-methods",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about root-finding methods are true?",
+      "options": [
+        "Newton-Raphson has quadratic (second-order) convergence near a simple root where f'(root) ≠ 0.",
+        "The bisection method has linear (first-order) convergence, halving the bracket width every iteration.",
+        "The bisection method requires f to be differentiable on [a,b].",
+        "Newton-Raphson can fail to converge (or diverge) if an iterate lands near a point where f'(x) ≈ 0.",
+        "The secant method requires an explicit formula for f'(x) at every iteration."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Newton-Raphson is quadratically convergent near a simple root; bisection is linearly convergent; Newton-Raphson can diverge near f'(x)≈0",
+      "solution_steps": [
+        "(a) TRUE: by Taylor expansion of f around the root r, the Newton error satisfies e_{n+1} ≈ (f''(r)/2f'(r))·e_n², i.e. quadratic convergence, valid whenever f'(r) ≠ 0.",
+        "(b) TRUE: bisection halves the bracket width every iteration by construction, so the error bound shrinks geometrically with ratio 1/2 — linear convergence, confirmed numerically in the root-finding item above (width 3 → 1.5 → 0.75, halving each step).",
+        "(c) FALSE: bisection only needs f continuous on [a,b] with f(a)·f(b) < 0 (the intermediate value theorem); it never evaluates f'.",
+        "(d) TRUE: the Newton step is x - f(x)/f'(x); if f'(x) is near zero the step can be huge and overshoot far from the root, a well-known failure mode.",
+        "(e) FALSE: the secant method replaces f'(x) with the finite-difference slope (f(x1)-f(x0))/(x1-x0) between the last two iterates, exactly as used in item 4 above — it never needs an analytic derivative."
+      ],
+      "verification_method": "hand_checkable_convergence_theory_cross_referenced_to_computed_items"
+    },
+    {
+      "id": "pi-interpolation-001",
+      "concept_id": "interpolation",
+      "topic": "numerical-methods",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Using Newton's divided-difference table for the data (0,1), (2,5), (3,10), find the second-order divided difference f[x0,x1,x2].",
+      "options": [
+        "1",
+        "2",
+        "5",
+        "1.5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1",
+      "solution_steps": [
+        "Method 1 (divided-difference table): f[x0,x1] = (5-1)/(2-0) = 2. f[x1,x2] = (10-5)/(3-2) = 5. f[x0,x1,x2] = (f[x1,x2]-f[x0,x1])/(x2-x0) = (5-2)/(3-0) = 1.",
+        "Method 2 (independent quadratic-fit check): fitting P(x) = ax²+bx+c directly to the 3 points gives c=1, 4a+2b=4, 9a+3b=9, which solve to a=1, b=0 (so P(x)=x²+1). For an interpolating polynomial through n+1 points, the n-th order divided difference always equals the leading coefficient of the fitted polynomial — here a = 1, matching f[x0,x1,x2] = 1 from Method 1 exactly.",
+        "'2' and '5' are the first-order divided differences f[x0,x1] and f[x1,x2], not the second-order one; '1.5' comes from dividing by the wrong span, e.g. (x1-x0)=2 instead of the correct (x2-x0)=3."
+      ],
+      "verification_method": "hand_checkable_divided_difference_table_vs_leading_coefficient_of_fit"
+    },
+    {
+      "id": "pi-interpolation-002",
+      "concept_id": "interpolation",
+      "topic": "numerical-methods",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Given the data (0,1), (1,3), (2,7), find the value of the (unique quadratic) interpolating polynomial at x = 3, i.e. P(3).",
+      "answer_range": [
+        12.935,
+        13.065
+      ],
+      "correct_answer": "13",
+      "solution_steps": [
+        "Method 1 (Newton divided differences): f[x0,x1] = (3-1)/(1-0) = 2, f[x1,x2] = (7-3)/(2-1) = 4, f[x0,x1,x2] = (4-2)/(2-0) = 1. P(x) = 1 + 2(x-0) + 1·(x-0)(x-1) = 1 + 2x + x² - x = x² + x + 1. P(3) = 9+3+1 = 13.",
+        "Method 2 (direct system of equations, independent of the divided-difference route): fitting ax²+bx+c to the 3 points gives c=1, a+b+c=3 so a+b=2, 4a+2b+c=7 so 2a+b=3; subtracting gives a=1, b=1, so P(x)=x²+x+1, exactly matching Method 1's polynomial and giving the same P(3)=13."
+      ],
+      "verification_method": "hand_checkable_newton_divided_differences_vs_direct_linear_system"
+    },
+    {
+      "id": "pi-interpolation-003",
+      "concept_id": "interpolation",
+      "topic": "numerical-methods",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Using linear interpolation between (2, 4) and (5, 10), estimate f(3.5).",
+      "options": [
+        "7",
+        "6",
+        "8",
+        "7.5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "7",
+      "solution_steps": [
+        "Method 1 (linear interpolation formula): f(3.5) ≈ f(2) + (f(5)-f(2))/(5-2) · (3.5-2) = 4 + (6/3)·1.5 = 4 + 2·1.5 = 4+3 = 7.",
+        "Method 2 (independent slope-intercept line check): the line through (2,4) and (5,10) has slope (10-4)/(5-2) = 2, so y = 2x (since at x=2, y=2·2=4 ✓, and at x=5, y=2·5=10 ✓). At x=3.5: y = 2·3.5 = 7, matching Method 1.",
+        "'6' and '8' are off-by-one-step slope errors; '7.5' mistakenly interpolates using the midpoint of the y-values (4+10)/2 instead of the correct proportional weighting."
+      ],
+      "verification_method": "hand_checkable_linear_interpolation_formula_vs_line_equation"
+    },
+    {
+      "id": "pi-interpolation-004",
+      "concept_id": "interpolation",
+      "topic": "numerical-methods",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "The data (0,0), (1,1), (2,8), (3,27) are interpolated by a cubic polynomial P(x). Find P(4).",
+      "options": [
+        "64",
+        "60",
+        "66",
+        "58"
+      ],
+      "answer_index": 0,
+      "correct_answer": "64",
+      "solution_steps": [
+        "Method 1 (Newton divided-difference table): f[x0,x1]=1, f[x1,x2]=7, f[x2,x3]=19; f[x0,x1,x2]=3, f[x1,x2,x3]=6; f[x0,x1,x2,x3]=1. P(x) = 0 + 1·x + 3·x(x-1) + 1·x(x-1)(x-2). At x=4: 1·4 + 3·4·3 + 1·4·3·2 = 4+36+24 = 64.",
+        "Method 2 (function recognition, independent of the table): the 4 data points are exactly (x, x³) for x=0,1,2,3. Since x³ is itself a cubic and a cubic through 4 points is unique, the interpolant P(x) must equal x³ exactly. So P(4) = 4³ = 64, matching Method 1.",
+        "'60' and '66' are arithmetic slips in the divided-difference table (e.g. dropping or double-counting a term); '58' comes from evaluating only the first two terms of the Newton form and stopping early."
+      ],
+      "verification_method": "hand_checkable_newton_divided_differences_vs_exact_function_recognition"
+    },
+    {
+      "id": "pi-interpolation-005",
+      "concept_id": "interpolation",
+      "topic": "numerical-methods",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about polynomial interpolation are true?",
+      "options": [
+        "A polynomial of degree ≤ n is uniquely determined by n+1 distinct data points (no repeated x-values).",
+        "Lagrange interpolation and Newton's divided-difference method, applied to the same data, always produce the same interpolating polynomial (just expressed differently).",
+        "A natural cubic spline through a set of points always reproduces the true function's derivative at each interior node.",
+        "Runge's phenomenon shows that increasing the degree of a single polynomial interpolant on equally spaced nodes can cause oscillations that grow near the interval's endpoints.",
+        "Newton's divided-difference formula requires the data points to be equally spaced in x."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        3
+      ],
+      "correct_answer": "Uniqueness of the interpolating polynomial; Lagrange and Newton forms agree; Runge's phenomenon causes growing oscillation near endpoints",
+      "solution_steps": [
+        "(a) TRUE: this is the fundamental theorem of polynomial interpolation — n+1 conditions uniquely determine the n+1 coefficients of a degree-≤n polynomial (verified concretely above: both the divided-difference route and the direct linear-system route in item 2 landed on the identical polynomial x²+x+1).",
+        "(b) TRUE: both are just different bookkeeping schemes for constructing THE unique interpolating polynomial through the same data, so they must agree — exactly what item 2's cross-check demonstrated numerically.",
+        "(c) FALSE: a natural cubic spline only enforces continuity of the function value, first, and second derivatives BETWEEN adjacent pieces at each node — it does not know or match the true underlying function's derivative unless that derivative is separately supplied (as in a clamped spline).",
+        "(d) TRUE: this is the classic Runge's phenomenon — high-degree interpolation on equally spaced nodes over-fits and the error can actually increase toward the endpoints of the interval as degree grows, which is why splines are preferred over one single high-degree polynomial.",
+        "(e) FALSE: divided differences are defined for arbitrary (unequally spaced) nodes by construction — the item-2 and item-4 datasets above used spacing (0,1,2) and (0,1,2,3), which happen to be equal, but the formula f[xi,...,xj] = (f[xi+1,...,xj]-f[xi,...,xj-1])/(xj-xi) never assumes equal spacing. Only the simpler forward/backward-difference shortcuts require it."
+      ],
+      "verification_method": "hand_checkable_interpolation_theory_cross_referenced_to_computed_items"
+    },
+    {
+      "id": "pi-numerical-integration-001",
+      "concept_id": "numerical-integration",
+      "topic": "numerical-methods",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Using the trapezoidal rule with a single interval (n=1) over [0,2], estimate ∫₀² x² dx.",
+      "options": [
+        "4",
+        "8/3",
+        "2",
+        "3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (trapezoidal formula): T = (b-a)/2 · [f(a)+f(b)] = (2-0)/2 · [0+4] = 1·4 = 4.",
+        "Method 2 (independent analytic error check): the exact integral is ∫₀² x² dx = [x³/3]₀² = 8/3 ≈ 2.6667. The single-interval trapezoidal error formula is E = exact − T = −h³f''(ξ)/12 with h=2 and f''(x)=2 (constant, since f=x²): E = −(2³·2)/12 = −16/12 = −4/3 ≈ −1.3333. So T = exact − E = 8/3 − (−4/3) = 12/3 = 4, matching Method 1 exactly.",
+        "'8/3' reports the exact integral instead of the trapezoidal estimate; '2' and '3' are arithmetic slips that drop the factor of (b-a)/2 or misread the endpoint value f(2)."
+      ],
+      "verification_method": "hand_checkable_trapezoidal_formula_vs_analytic_error_formula"
+    },
+    {
+      "id": "pi-numerical-integration-002",
+      "concept_id": "numerical-integration",
+      "topic": "numerical-methods",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Apply Simpson's 1/3 rule with n=2 subintervals (h=1) to estimate ∫₀² x³ dx using nodes x=0,1,2.",
+      "answer_range": [
+        3.98,
+        4.02
+      ],
+      "correct_answer": "4",
+      "solution_steps": [
+        "Method 1 (Simpson's 1/3 formula): S = h/3·[f(x0)+4f(x1)+f(x2)] = 1/3·[0 + 4(1) + 8] = 1/3·12 = 4.",
+        "Method 2 (independent analytic check): Simpson's 1/3 rule is exact for any polynomial up to degree 3. The exact integral is ∫₀² x³ dx = [x⁴/4]₀² = 16/4 = 4, matching Method 1's estimate exactly — a real cross-check, not a coincidence, because the integrand here is a cubic."
+      ],
+      "verification_method": "hand_checkable_simpson_formula_vs_exact_integral_of_cubic"
+    },
+    {
+      "id": "pi-numerical-integration-003",
+      "concept_id": "numerical-integration",
+      "topic": "numerical-methods",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A student computes Simpson's 1/3 rule for ∫₀² x³ dx (n=2, h=1, nodes x=0,1,2) but mistakenly writes S = h·[f(x0)+4f(x1)+f(x2)] instead of S = (h/3)·[...], forgetting to divide by 3. What value does the student obtain, and how does it compare to the correct value?",
+      "options": [
+        "12, exactly 3 times the correct value of 4 because the 1/3 factor was dropped",
+        "12, exactly twice the correct value",
+        "4, the same as the correct value because h=1 doesn't change the bracket",
+        "6, 1.5 times the correct value"
+      ],
+      "answer_index": 0,
+      "correct_answer": "12, exactly 3 times the correct value of 4 because the 1/3 factor was dropped",
+      "solution_steps": [
+        "Method 1 (direct erroneous computation): the bracket [f(x0)+4f(x1)+f(x2)] = [0+4+8] = 12; multiplying by h=1 instead of h/3 gives S_wrong = 1·12 = 12.",
+        "Method 2 (independent ratio check against the correct value): the correct Simpson estimate (computed in the previous item) is S_correct = (h/3)·12 = 4. The erroneous version simply uses h instead of h/3, i.e. it is missing exactly the factor of 1/3, so S_wrong should equal 3·S_correct = 3·4 = 12, matching Method 1 exactly.",
+        "'12, twice the correct value' and '6, 1.5 times' misjudge the size of the missing factor; '4, unchanged' incorrectly assumes h=1 makes h and h/3 equal."
+      ],
+      "verification_method": "hand_checkable_direct_arithmetic_vs_ratio_cross_check"
+    },
+    {
+      "id": "pi-numerical-integration-004",
+      "concept_id": "numerical-integration",
+      "topic": "numerical-methods",
+      "difficulty": 0.65,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Using the composite trapezoidal rule with n=4 subintervals (h=0.5) over [0,2], estimate ∫₀² x² dx using nodes x=0, 0.5, 1, 1.5, 2.",
+      "answer_range": [
+        2.73625,
+        2.76375
+      ],
+      "correct_answer": "2.75",
+      "solution_steps": [
+        "Method 1 (composite trapezoidal formula): f-values are 0, 0.25, 1, 2.25, 4. T = h/2·[f0 + 2(f1+f2+f3) + f4] = 0.25·[0 + 2(0.25+1+2.25) + 4] = 0.25·[0+7+4] = 0.25·11 = 2.75.",
+        "Method 2 (independent sum-of-panels check): summing the 4 individual trapezoids directly, T = (h/2)(f0+f1) + (h/2)(f1+f2) + (h/2)(f2+f3) + (h/2)(f3+f4) = 0.25(0.25) + 0.25(1.25) + 0.25(3.25) + 0.25(6.25) = 0.0625+0.3125+0.8125+1.5625 = 2.75, matching Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_grouped_composite_formula_vs_sum_of_individual_panels"
+    },
+    {
+      "id": "pi-numerical-integration-005",
+      "concept_id": "numerical-integration",
+      "topic": "numerical-methods",
+      "difficulty": 0.8,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "For the composite trapezoidal estimate of ∫₀² x² dx with n=4 (h=0.5) found above (T=2.75, exact=8/3≈2.6667), what value does the analytic error formula E = exact − T = −(b−a)h²f''(ξ)/12 predict, using f''(x)=2 throughout?",
+      "options": [
+        "-1/12",
+        "-1/6",
+        "-1/3",
+        "-1/24"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-1/12",
+      "solution_steps": [
+        "Method 1 (direct formula evaluation): E = −(b-a)h²f''(ξ)/12 = −(2)(0.5²)(2)/12 = −(2·0.25·2)/12 = −1/12 ≈ −0.0833.",
+        "Method 2 (independent back-derivation from the already-computed values): exact − T = 8/3 − 2.75 = 2.66667 − 2.75 = −0.08333 = −1/12, matching Method 1's formula prediction exactly — the formula correctly predicts the actual error found by direct computation in the previous item.",
+        "'-1/6', '-1/3', and '-1/24' come from misplacing the factor of (b-a)=2 or squaring h incorrectly in the formula."
+      ],
+      "verification_method": "hand_checkable_analytic_error_formula_vs_back_derived_actual_error"
+    },
+    {
+      "id": "pi-numerical-ode-001",
+      "concept_id": "numerical-ode",
+      "topic": "numerical-methods",
+      "difficulty": 0.2,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Apply one step of Euler's method with h=0.5 to dy/dx = y, y(0)=1. Find y1 (the estimate at x=0.5).",
+      "answer_range": [
+        1.49,
+        1.51
+      ],
+      "correct_answer": "1.5",
+      "solution_steps": [
+        "Method 1 (Euler's method formula): y1 = y0 + h·f(x0,y0) = 1 + 0.5·(1) = 1.5, since f(x,y)=y and y0=1.",
+        "Method 2 (independent first-order Taylor derivation): Euler's method is the truncated Taylor expansion y(x0+h) ≈ y(x0) + h·y'(x0). Here y'(x0) = f(x0,y0) = y0 = 1 (by the ODE itself), so y(0.5) ≈ 1 + 0.5(1) = 1.5, matching Method 1's formula-based computation via an independently-derived route (Taylor truncation rather than the recursive-update definition)."
+      ],
+      "verification_method": "hand_checkable_euler_update_formula_vs_taylor_truncation_derivation"
+    },
+    {
+      "id": "pi-numerical-ode-002",
+      "concept_id": "numerical-ode",
+      "topic": "numerical-methods",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Apply 2 steps of Euler's method with h=0.5 to dy/dx = −y, y(0)=1. Find y2 (the estimate at x=1).",
+      "options": [
+        "0.25",
+        "0.5",
+        "0.75",
+        "0.125"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.25",
+      "solution_steps": [
+        "Method 1 (step-by-step iteration): y1 = y0 + 0.5·(−y0) = 1 − 0.5 = 0.5. y2 = y1 + 0.5·(−y1) = 0.5 − 0.25 = 0.25.",
+        "Method 2 (independent closed-form recursion check): for the linear ODE dy/dx = λy, Euler's method gives the exact recursion y_n = y0·(1+hλ)^n. Here λ=−1, h=0.5, so y_n = (1−0.5)^n = (0.5)^n. y2 = (0.5)² = 0.25, matching Method 1 exactly.",
+        "'0.5' reports y1 instead of y2 (stopping one step early); '0.75' and '0.125' come from adding instead of multiplying the per-step factor, or applying 3 steps instead of 2."
+      ],
+      "verification_method": "hand_checkable_stepwise_euler_iteration_vs_closed_form_recursion"
+    },
+    {
+      "id": "pi-numerical-ode-003",
+      "concept_id": "numerical-ode",
+      "topic": "numerical-methods",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Apply 2 steps of Euler's method with h=0.5 to dy/dx = y, y(0)=1 to estimate y(1). How does the Euler estimate compare with the exact solution y=eˣ at x=1 (e ≈ 2.71828)?",
+      "options": [
+        "Euler gives 2.25, which underestimates the exact value e ≈ 2.71828",
+        "Euler gives 2.25, which overestimates the exact value e ≈ 2.71828",
+        "Euler gives 2.71828, matching the exact solution exactly",
+        "Euler gives 2.0, which underestimates the exact value e ≈ 2.71828"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Euler gives 2.25, which underestimates the exact value e ≈ 2.71828",
+      "solution_steps": [
+        "Method 1 (step-by-step iteration): y1 = y0 + 0.5·y0 = 1 + 0.5 = 1.5. y2 = y1 + 0.5·y1 = 1.5 + 0.75 = 2.25.",
+        "Method 2 (independent closed-form recursion check): for dy/dx = λy with λ=1, h=0.5, Euler's exact recursion is y_n = y0·(1+hλ)^n = (1.5)^n. y2 = 1.5² = 2.25, matching Method 1. Comparing to the exact solution y(1) = e¹ ≈ 2.71828, the Euler estimate 2.25 is smaller, i.e. it underestimates — expected, since Euler's method systematically lags behind the true exponential growth by truncating the Taylor series after the first-order term.",
+        "'2.71828' would only occur if the exact solution were mistaken for the Euler estimate; '2.0' is an arithmetic slip in the second step (e.g. adding 0.5 instead of 0.5·y1)."
+      ],
+      "verification_method": "hand_checkable_stepwise_euler_vs_closed_form_recursion_and_exact_solution"
+    },
+    {
+      "id": "pi-numerical-ode-004",
+      "concept_id": "numerical-ode",
+      "topic": "numerical-methods",
+      "difficulty": 0.65,
+      "question_type": "nat",
+      "marks": 2,
+      "question_text": "Apply one step of Heun's method (improved Euler / RK2) with h=0.5 to dy/dx = −2y, y(0)=1. Find y1.",
+      "answer_range": [
+        0.49,
+        0.51
+      ],
+      "correct_answer": "0.5",
+      "solution_steps": [
+        "Method 1 (predictor-corrector formula): predictor y* = y0 + h·f(x0,y0) = 1 + 0.5·(−2·1) = 1 − 1 = 0. Corrector: y1 = y0 + (h/2)·[f(x0,y0) + f(x1,y*)] = 1 + 0.25·[(−2·1) + (−2·0)] = 1 + 0.25·(−2) = 1 − 0.5 = 0.5.",
+        "Method 2 (independent trapezoidal-on-the-ODE view): Heun's method is exactly the trapezoidal rule applied to ∫f dt, i.e. y1 = y0 + h·(average of the two slopes). Average slope = (f(x0,y0)+f(x1,y*))/2 = (−2 + 0)/2 = −1. y1 = 1 + 0.5·(−1) = 0.5, matching Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_heun_predictor_corrector_vs_trapezoidal_averaging_view"
+    },
+    {
+      "id": "pi-numerical-ode-005",
+      "concept_id": "numerical-ode",
+      "topic": "numerical-methods",
+      "difficulty": 0.8,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "For Euler's method applied to dy/dx = λy, the iterate is stable (does not grow unboundedly) when |1+hλ| ≤ 1. For λ = −4, what is the largest step size h for which Euler's method remains stable?",
+      "options": [
+        "0.5",
+        "0.25",
+        "1.0",
+        "0.125"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.5",
+      "solution_steps": [
+        "Method 1 (solve the stability inequality): |1+h(−4)| ≤ 1 means |1−4h| ≤ 1, i.e. −1 ≤ 1−4h ≤ 1. The right inequality gives h ≥ 0; the left gives 1−4h ≥ −1, i.e. 4h ≤ 2, i.e. h ≤ 0.5. So the largest stable step is h = 0.5.",
+        "Method 2 (independent boundary numerical check): at h=0.5, 1+hλ = 1−2 = −1, and |−1| = 1, exactly at the stability boundary (marginally stable, oscillating but bounded). At h=0.6 (just past the candidate boundary), 1+hλ = 1−2.4 = −1.4, and |−1.4| = 1.4 > 1, which is unstable — confirming h=0.5 is indeed the largest stable step, matching Method 1.",
+        "'0.25' and '0.125' are overly conservative (they satisfy stability but aren't the largest such h); '1.0' is unstable, since at h=1, |1−4| = 3 > 1."
+      ],
+      "verification_method": "hand_checkable_stability_inequality_vs_boundary_numerical_check"
+    },
+    {
+      "id": "pi-numerical-linear-algebra-001",
+      "concept_id": "numerical-linear-algebra",
+      "topic": "numerical-methods",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Find the Doolittle LU decomposition (L unit lower-triangular) of A = [[4,3],[6,3]]. What is the (2,2) entry of U?",
+      "options": [
+        "-1.5",
+        "1.5",
+        "3",
+        "-3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-1.5",
+      "solution_steps": [
+        "Method 1 (Gaussian elimination multiplier): the multiplier is m21 = a21/a11 = 6/4 = 1.5. Eliminating: row2_new = row2 − 1.5·row1 = [6−1.5·4, 3−1.5·3] = [0, 3−4.5] = [0, −1.5]. So U = [[4,3],[0,−1.5]] and L = [[1,0],[1.5,1]], and U(2,2) = −1.5.",
+        "Method 2 (independent reconstruction check): multiply L·U back out and confirm it reproduces A exactly. L·U = [[1,0],[1.5,1]]·[[4,3],[0,−1.5]] = [[4, 3],[1.5·4+0, 1.5·3+(−1.5)]] = [[4,3],[6, 4.5−1.5]] = [[4,3],[6,3]], which matches A exactly — confirming U(2,2) = −1.5 is correct."
+      ],
+      "verification_method": "hand_checkable_gaussian_elimination_multiplier_vs_LU_reconstruction_check"
+    },
+    {
+      "id": "pi-numerical-linear-algebra-002",
+      "concept_id": "numerical-linear-algebra",
+      "topic": "numerical-methods",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Using the LU decomposition of A = [[4,3],[6,3]] from the previous item, find det(A).",
+      "answer_range": [
+        -6.03,
+        -5.97
+      ],
+      "correct_answer": "-6",
+      "solution_steps": [
+        "Method 1 (product of U's diagonal): since L is unit lower-triangular (det L = 1), det(A) = det(L)·det(U) = 1·(4·(−1.5)) = −6.",
+        "Method 2 (independent direct 2×2 determinant formula): det(A) = a·d − b·c = (4)(3) − (3)(6) = 12 − 18 = −6, matching Method 1 exactly."
+      ],
+      "verification_method": "hand_checkable_LU_diagonal_product_vs_direct_2x2_determinant_formula"
+    },
+    {
+      "id": "pi-numerical-linear-algebra-003",
+      "concept_id": "numerical-linear-algebra",
+      "topic": "numerical-methods",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Solve the system 10x1+x2=11, x1+10x2=11 by Jacobi iteration starting from (x1⁰,x2⁰)=(0,0). What is x1 after 2 iterations?",
+      "options": [
+        "0.99",
+        "1.1",
+        "1.0",
+        "0.9"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.99",
+      "solution_steps": [
+        "Method 1 (Jacobi iteration formula): x1(1)=(11−x2(0))/10=11/10=1.1, x2(1)=(11−x1(0))/10=1.1. Then x1(2)=(11−x2(1))/10=(11−1.1)/10=9.9/10=0.99.",
+        "Method 2 (independent 1D-recursion via symmetry): because the two equations and the initial guess are symmetric (x1(0)=x2(0)), x1(k)=x2(k) for every k, collapsing the 2-variable iteration to the scalar recursion x(k+1)=(11−x(k))/10. Starting x(0)=0: x(1)=1.1, x(2)=(11−1.1)/10=0.99, matching Method 1 exactly via a structurally different (reduced-dimension) route.",
+        "'1.1' reports x1 after 1 iteration instead of 2 (stopping one iteration early); '1.0' is the true solution, reached only in the limit, not after 2 iterations; '0.9' is an arithmetic slip."
+      ],
+      "verification_method": "hand_checkable_jacobi_iteration_vs_symmetry_reduced_recursion"
+    },
+    {
+      "id": "pi-numerical-linear-algebra-004",
+      "concept_id": "numerical-linear-algebra",
+      "topic": "numerical-methods",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "For the same system 10x1+x2=11, x1+10x2=11, apply 1 iteration of Gauss-Seidel (which uses the just-updated x1 immediately) starting from (0,0). What is x2 after that 1 iteration?",
+      "options": [
+        "0.99",
+        "1.1",
+        "1.0",
+        "0.9"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.99",
+      "solution_steps": [
+        "Method 1 (Gauss-Seidel update, using the freshly updated x1): x1(1)=(11−x2(0))/10=11/10=1.1 (same first step as Jacobi, since no x1 update exists yet). x2(1)=(11−x1(1))/10 = (11−1.1)/10 = 9.9/10 = 0.99, using the UPDATED x1(1)=1.1, not the stale x1(0)=0.",
+        "Method 2 (independent back-substitution check): a Gauss-Seidel iterate must exactly satisfy the equation it was solved from. Substituting x1(1)=1.1 and x2(1)=0.99 back into the second equation: x1(1)+10·x2(1) = 1.1+10(0.99) = 1.1+9.9 = 11.0, exactly matching the right-hand side — confirming x2(1)=0.99 with zero residual, independent of how it was derived.",
+        "'1.1' is the classic Gauss-Seidel slip of forgetting to use the just-updated x1 and instead reusing the stale x1(0)=0 as Jacobi would; '1.0' is the converged solution, not reached after 1 iteration; '0.9' is an arithmetic slip."
+      ],
+      "verification_method": "hand_checkable_gauss_seidel_immediate_update_vs_defining_equation_residual_check"
+    },
+    {
+      "id": "pi-numerical-linear-algebra-005",
+      "concept_id": "numerical-linear-algebra",
+      "topic": "numerical-methods",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about numerical linear algebra methods are true?",
+      "options": [
+        "LU decomposition allows solving Ax=b for multiple different right-hand sides b without repeating the full elimination each time.",
+        "Gauss-Seidel iteration converges at least as fast as Jacobi iteration for diagonally dominant systems, because it uses updated values immediately within each sweep.",
+        "A condition number close to 1 indicates a system is ill-conditioned (highly sensitive to small perturbations).",
+        "Jacobi and Gauss-Seidel iterations are guaranteed to converge for any square nonsingular matrix A, regardless of diagonal dominance.",
+        "Partial pivoting during LU decomposition improves numerical stability by choosing the largest available pivot element in a column."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        4
+      ],
+      "correct_answer": "LU reuse across right-hand sides; Gauss-Seidel converges at least as fast as Jacobi under diagonal dominance; partial pivoting improves stability",
+      "solution_steps": [
+        "(a) TRUE: once A = LU is factored, solving for a new b only needs a forward solve (Ly=b) then a back solve (Ux=y), both O(n²), far cheaper than repeating the O(n³) elimination.",
+        "(b) TRUE: this system's own Gauss-Seidel iterate (item 4) reached x2=0.99 after just 1 iteration, while Jacobi (item 3) needed 2 iterations to reach the same x1=0.99 — a direct numerical illustration of Gauss-Seidel's typically faster convergence from using freshly updated values immediately.",
+        "(c) FALSE: a condition number near 1 means the matrix is WELL-conditioned (errors don't amplify much); a LARGE condition number signals ill-conditioning.",
+        "(d) FALSE: convergence of Jacobi/Gauss-Seidel is not guaranteed in general — sufficient conditions such as strict diagonal dominance (as in this system, where 10 > 1+0 on every row) or symmetric positive-definiteness are needed.",
+        "(e) TRUE: without pivoting, a small (or zero) pivot can cause catastrophic cancellation and amplify round-off error; selecting the largest available entry in the column as the pivot keeps multipliers bounded and the elimination numerically stable."
+      ],
+      "verification_method": "hand_checkable_numerical_linear_algebra_theory_cross_referenced_to_computed_items"
+    },
+    {
+      "id": "pi-numerical-error-analysis-001",
+      "concept_id": "numerical-error-analysis",
+      "topic": "numerical-methods",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "A quantity's true value is 200 and its measured/approximate value is 198. What is the percentage error?",
+      "options": [
+        "1%",
+        "2%",
+        "0.5%",
+        "4%"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1%",
+      "solution_steps": [
+        "Method 1 (direct formula): absolute error = |true−approx| = |200−198| = 2. Relative error = 2/200 = 0.01. Percentage error = 0.01×100 = 1%.",
+        "Method 2 (independent ratio check): the approximate value is 198/200 = 0.99 = 99% of the true value, so it is short by exactly 100%−99% = 1%, matching Method 1 exactly.",
+        "'2%' mistakes the absolute error (2) for the percentage; '0.5%' and '4%' come from dividing by the wrong base (e.g. 2/400 or 2×2/200)."
+      ],
+      "verification_method": "hand_checkable_percentage_error_formula_vs_ratio_check"
+    },
+    {
+      "id": "pi-numerical-error-analysis-002",
+      "concept_id": "numerical-error-analysis",
+      "topic": "numerical-methods",
+      "difficulty": 0.35,
+      "question_type": "nat",
+      "marks": 1,
+      "question_text": "Given x = 5.0 ± 0.1 and y = 3.0 ± 0.05 (absolute errors), use first-order error propagation to estimate the maximum absolute error in the product xy.",
+      "answer_range": [
+        0.54,
+        0.56
+      ],
+      "correct_answer": "0.55",
+      "solution_steps": [
+        "Method 1 (propagation formula): for a product, Δ(xy) ≈ |x|·Δy + |y|·Δx = 5·(0.05) + 3·(0.1) = 0.25 + 0.3 = 0.55.",
+        "Method 2 (independent direct bracketing check): the nominal product is xy = 15. The maximum possible product is (5.1)(3.05) = 15.555, giving a deviation of 0.555; the minimum possible product is (4.9)(2.95) = 14.455, giving a deviation of 0.545. Both bracket values are within a hundredth of the linear estimate 0.55 (the small discrepancy is the second-order term Δx·Δy = 0.1×0.05 = 0.005, which the first-order formula deliberately ignores) — confirming 0.55 is the correct first-order propagated error."
+      ],
+      "verification_method": "hand_checkable_error_propagation_formula_vs_direct_bracketing_check"
+    },
+    {
+      "id": "pi-numerical-error-analysis-003",
+      "concept_id": "numerical-error-analysis",
+      "topic": "numerical-methods",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 1,
+      "question_text": "Round 0.0034567 to 3 significant figures.",
+      "options": [
+        "0.00346",
+        "0.00345",
+        "0.0035",
+        "0.003457"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.00346",
+      "solution_steps": [
+        "Method 1 (direct decimal rounding): the significant digits of 0.0034567 are 3,4,5,6,7 (leading zeros don't count). The first 3 are 3,4,5; the next digit is 6, which rounds the third significant figure up from 5 to 6, giving 0.00346.",
+        "Method 2 (independent scientific-notation check): 0.0034567 = 3.4567×10⁻³. Rounding the mantissa 3.4567 to 3 significant figures: the first 3 digits are 3,4,5, and the next digit 6 rounds the 5 up to 6, giving 3.46×10⁻³ = 0.00346, matching Method 1 exactly.",
+        "'0.00345' truncates instead of rounding (drops the 4th digit without checking it); '0.0035' rounds to only 2 significant figures; '0.003457' keeps 4 significant figures instead of 3."
+      ],
+      "verification_method": "hand_checkable_decimal_rounding_vs_scientific_notation_rounding"
+    },
+    {
+      "id": "pi-numerical-error-analysis-004",
+      "concept_id": "numerical-error-analysis",
+      "topic": "numerical-methods",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 2,
+      "question_text": "If the relative error in x is 2% and the relative error in y is 3%, what is the approximate maximum relative error in the product xy (or quotient x/y)?",
+      "options": [
+        "5%",
+        "1%",
+        "6%",
+        "2.5%"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5%",
+      "solution_steps": [
+        "Method 1 (relative-error addition rule): for products and quotients, relative errors add in the worst case: relative error in xy ≈ 2% + 3% = 5%.",
+        "Method 2 (independent derivation from the absolute-error propagation formula, normalized): let x=1±0.02 and y=1±0.03 (unit values with the stated relative errors). Δ(xy) = |x|Δy+|y|Δx = (1)(0.03)+(1)(0.02) = 0.05. Since xy=1, the relative error in xy is 0.05/1 = 5%, matching Method 1's rule exactly and showing where the 'errors add' rule for products actually comes from.",
+        "'1%' mistakenly subtracts the relative errors instead of adding them; '6%' and '2.5%' come from doubling or averaging instead of summing."
+      ],
+      "verification_method": "hand_checkable_relative_error_addition_rule_vs_normalized_propagation_derivation"
+    },
+    {
+      "id": "pi-numerical-error-analysis-005",
+      "concept_id": "numerical-error-analysis",
+      "topic": "numerical-methods",
+      "difficulty": 0.8,
+      "question_type": "msq",
+      "marks": 2,
+      "question_text": "Which of the following statements about error analysis are true?",
+      "options": [
+        "Absolute error is defined as |true value − approximate value|.",
+        "Relative error is dimensionless (unitless), unlike absolute error, which carries the same units as the measured quantity.",
+        "Truncation error and round-off error are the same thing.",
+        "Increasing the number of significant digits carried in a computation always eliminates round-off error entirely.",
+        "For a quantity computed as the sum of two measured values, the propagated absolute errors add in the worst case, regardless of the sign of either value."
+      ],
+      "answer_indices": [
+        0,
+        1,
+        4
+      ],
+      "correct_answer": "Absolute error definition; relative error is dimensionless; absolute errors add for a sum in the worst case",
+      "solution_steps": [
+        "(a) TRUE: this is the standard definition, used directly in item 1 above (|200−198|=2).",
+        "(b) TRUE: relative error = absolute error / true value, and since both numerator and denominator carry the same units, they cancel — relative error is a pure (unitless) ratio, unlike absolute error.",
+        "(c) FALSE: truncation error comes from approximating an exact mathematical process with a finite one (e.g. stopping a Taylor series, or using Simpson's rule instead of the true integral); round-off error comes from the finite-precision representation of numbers in a computer. They are different sources of error.",
+        "(d) FALSE: more significant digits REDUCE round-off error but never eliminate it entirely — any finite-precision representation still has a smallest representable increment.",
+        "(e) TRUE: for z=x+y, Δz ≈ Δx+Δy in the worst case (the partial derivatives are both exactly 1, so the propagation formula gives a pure sum of absolute errors) — this is the additive counterpart to the multiplicative rule verified in item 4 above."
+      ],
+      "verification_method": "hand_checkable_error_analysis_theory_cross_referenced_to_computed_items"
+    }
+  ]
+}

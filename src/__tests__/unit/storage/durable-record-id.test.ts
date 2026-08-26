@@ -23,7 +23,11 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { requireRecordId, sortRowsById } from '../../../storage/repositories/durable-store-repo';
+import {
+  requireRecordId,
+  sortRowsById,
+  collectionLockKey,
+} from '../../../storage/repositories/durable-store-repo';
 import {
   logPracticeSession,
   entryId,
@@ -172,5 +176,55 @@ describe('session-plan scope shape', () => {
     // What the fixed scopeOf resolves to, and what the broken one did.
     expect(plan.request?.student_id ?? null).toBe('stu-7');
     expect((plan as any).student_id ?? null).toBeNull();
+  });
+});
+
+/**
+ * Ordering the inserts did not stop the deadlock. Serializing the mirror does.
+ *
+ * The first attempt sorted rows by id so every transaction would take locks in
+ * the same order. It reproduced on the very next deploy:
+ *
+ *     [durable:session-plans] mirror failed (non-fatal): deadlock detected
+ *
+ * Sorting only orders inserts against each other, and the cycle is not between
+ * two inserts. Each mirror also runs a collection-wide
+ * `DELETE ... WHERE NOT (id = ANY($ids))`, whose lock set is every row NOT in
+ * its list — acquired in scan order, over a set this code does not choose. So
+ * A holds the rows it inserted while its DELETE reaches for a row B just
+ * inserted, and B's DELETE reaches back for one of A's. No insert ordering can
+ * break that.
+ *
+ * `pg_advisory_xact_lock` keyed on the collection makes two mirrors of the same
+ * collection strictly sequential, which removes the cycle instead of reshaping
+ * it. What is testable without two live transactions is the key function: same
+ * collection always maps to the same key, different collections do not collide
+ * (or they would serialize against each other for no reason), and every key is
+ * a valid signed bigint.
+ */
+describe('collectionLockKey', () => {
+  it('is deterministic — the same collection always takes the same lock', () => {
+    expect(collectionLockKey('session-plans')).toBe(collectionLockKey('session-plans'));
+  });
+
+  it('separates the collections actually in use, so they mirror concurrently', () => {
+    const names = [
+      'session-plans',
+      'practice-sessions',
+      'plan-templates',
+      'student-exam-profiles',
+      'notebook-entries',
+      'retention-items',
+    ];
+    const keys = names.map(collectionLockKey);
+    expect(new Set(keys.map(String)).size).toBe(names.length);
+  });
+
+  it('stays inside the signed-bigint range Postgres accepts', () => {
+    for (const name of ['session-plans', '', 'a'.repeat(500), 'ünïcodé-ish']) {
+      const k = collectionLockKey(name);
+      expect(k).toBeGreaterThanOrEqual(0n);
+      expect(k).toBeLessThanOrEqual(0x7fffffffffffffffn);
+    }
   });
 });

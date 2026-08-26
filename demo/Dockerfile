@@ -65,6 +65,13 @@ COPY demo/ demo/
 COPY data/ data/
 # Atom-based content modules (ContentAtom v2 lessons) and seed concepts.
 COPY modules/ modules/
+# The orchestrator module registry, read from process.cwd()/modules.yaml by
+# src/orchestrator/registry.ts. NOT the same thing as the modules/ directory
+# above — that is content, this is the registry that names every module and
+# its health probe. Without it loadRegistry() throws
+# "modules.yaml not found — orchestrator cannot boot without it", which the
+# scheduler's healthScan hit every five minutes in every deploy.
+COPY modules.yaml ./
 # Runtime config read from process.cwd()/config. demo-rails.json is the whole
 # journey deck: src/api/demo-routes.ts reads it on every GET /api/demo/rails.
 # Without it the endpoint answers 503 "demo rails config is not available on

@@ -209,7 +209,10 @@ export function loadAllExams(forceReload = false): Map<string, ExamDefinition> {
     return cache;
   }
 
-  const files = fs.readdirSync(CURRICULUM_DIR).filter(f => f.endsWith('.yml') || f.endsWith('.yaml'));
+  const files = fs
+    .readdirSync(CURRICULUM_DIR)
+    .filter(f => f.endsWith('.yml') || f.endsWith('.yaml'))
+    .filter(f => !isExamSidecar(f));
   for (const f of files) {
     try {
       const def = loadOne(path.join(CURRICULUM_DIR, f));
@@ -221,6 +224,27 @@ export function loadAllExams(forceReload = false): Map<string, ExamDefinition> {
 
   _cache = cache;
   return cache;
+}
+
+/**
+ * Not every YAML file beside an exam pack IS an exam pack.
+ *
+ * `<exam>.floor.yml` is the Bare-Minimum Syllabus Contract for that exam —
+ * scripts/check-syllabus-floor.ts resolves it by exactly that name. It
+ * declares floors, not an exam, so it has no `metadata:` block and never
+ * should. Feeding it to loadOne() made every boot log
+ *
+ *   [exam-loader] failed gate-ma.floor.yml: metadata block required
+ *
+ * which is a real error message about a file that is not in fact wrong.
+ *
+ * Skipping by suffix rather than by "has no metadata block" is deliberate:
+ * the metadata error is the loader's only defence against a genuinely
+ * malformed exam pack, and swallowing it to quiet this one file would trade a
+ * false alarm for a silence that matters.
+ */
+export function isExamSidecar(filename: string): boolean {
+  return /\.floor\.ya?ml$/.test(filename);
 }
 
 export function getExam(exam_id: string): ExamDefinition | null {

@@ -58,6 +58,14 @@ COPY --from=builder /app/config ./config
 # Required by atom-responder.ts for LLM-free chat responses.
 COPY --from=builder /app/modules ./modules
 
+# The orchestrator module registry, read from process.cwd()/modules.yaml by
+# src/orchestrator/registry.ts. NOT the same thing as the modules/ directory
+# above — that is content, this is the registry that names every module and
+# its health probe. Without it loadRegistry() throws
+# "modules.yaml not found — orchestrator cannot boot without it", which the
+# scheduler's healthScan hit every five minutes in every deploy.
+COPY --from=builder /app/modules.yaml ./modules.yaml
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:${PORT:-8080}/health || exit 1

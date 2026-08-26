@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Session plan store — persists generated plans for audit + history.
  *

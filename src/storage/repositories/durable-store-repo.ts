@@ -191,6 +191,21 @@ export function requireRecordId(collection: string, id: unknown): string {
 }
 
 /**
+ * Advisory-lock key for a collection. Postgres advisory keys are bigints, so
+ * the collection name is hashed into one deterministically — same collection,
+ * same key, in every process. FNV-1a truncated to 63 bits (signed bigint),
+ * matching the idiom already used for the batch poller's per-run lock.
+ */
+export function collectionLockKey(collection: string): bigint {
+  let h = 14695981039346656037n;
+  for (const ch of collection) {
+    h ^= BigInt(ch.charCodeAt(0));
+    h = (h * 1099511628211n) & 0xffffffffffffffffn;
+  }
+  return h & 0x7fffffffffffffffn;
+}
+
+/**
  * Stable lock order for a mirror transaction. Exported so the ordering can be
  * asserted directly — a deadlock is not reproducible in a unit test, so the
  * property that prevents it is what gets tested.
@@ -234,23 +249,41 @@ class PgSharedStore<T> implements SharedStore<T> {
     if (!client) return;
     try {
       await client.query('BEGIN');
-      // Insert in a deterministic order, or concurrent mirrors of the same
-      // collection deadlock.
+      // Serialize mirrors of the same collection, or they deadlock.
       //
-      // mirror() rewrites the whole collection in one transaction and is
-      // called fire-and-forget after every save, so two saves overlap
-      // routinely. The local array is not stably ordered between them —
-      // session-plans re-groups and re-sorts its whole array on every prune —
-      // so transaction A could take row 1 and then wait on row 2 while B held
-      // row 2 and waited on row 1. Postgres broke the tie by killing one,
-      // which surfaced in production as
-      // `[durable:session-plans] mirror failed: deadlock detected` and lost
-      // that mirror entirely.
+      // mirror() rewrites a whole collection in one transaction and runs
+      // fire-and-forget after every save, so two saves overlap routinely and
+      // production logged
+      // `[durable:session-plans] mirror failed: deadlock detected`, losing
+      // that mirror.
       //
-      // Sorting by the row's own id gives every transaction the same lock
-      // acquisition order, which is what makes the cycle impossible rather
-      // than merely unlikely. Sorting rows rather than items keeps idOf
-      // called exactly once per item.
+      // Ordering the inserts was tried first and was NOT sufficient — the
+      // deadlock reproduced on the next deploy. Sorting only orders inserts
+      // against each other, and the cycle is not between two inserts: each
+      // transaction also runs the collection-wide DELETE below, whose lock
+      // set is "every row NOT in my list". So A can hold the rows it
+      // inserted while its DELETE reaches for a row B just inserted, and B's
+      // DELETE reaches back for one of A's. No insert ordering can break
+      // that, because the DELETE's locks are acquired by scan order over a
+      // set this code does not choose.
+      //
+      // A transaction-scoped advisory lock keyed on the collection makes two
+      // mirrors of the same collection strictly sequential, which removes the
+      // cycle rather than reshaping it. Transaction-scoped (not session-
+      // scoped) matters: it releases on COMMIT or ROLLBACK, so it cannot leak
+      // a lock on a failed mirror and stays correct under transaction-mode
+      // pooling, which docs/ops/render-database-url.md warns session-level
+      // advisory locks are not.
+      //
+      // Different collections hash to different keys and still mirror
+      // concurrently.
+      await client.query('SELECT pg_advisory_xact_lock($1::BIGINT)', [
+        collectionLockKey(this.spec.collection).toString(),
+      ]);
+      // Insert in a deterministic order too. This no longer carries the
+      // deadlock guarantee — the lock above does — but it keeps a mirror's
+      // lock acquisition predictable and its statement order reproducible,
+      // which is worth having while debugging one.
       const rows = sortRowsById(items.map((item) => this.row(item)));
       for (const row of rows) {
         await client.query(

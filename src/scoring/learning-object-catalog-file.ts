@@ -203,6 +203,41 @@ export function toLearningObject(item: AuthoredItem): LearningObject {
   };
 }
 
+/**
+ * Every AuthoredItem in every committed bank, RAW — no LearningObject
+ * conversion, so callers that need the authored fields the conversion
+ * drops (`correct_answer`, `solution_steps`, `verification_method`,
+ * `generation_run_id`) can read them.
+ *
+ * Exists because three separate places already re-implemented this
+ * directory scan (writer.ts, this file's own class, seed-la-practice-items.ts)
+ * and a fourth was about to. The one caller today is the operator review
+ * queue (src/api/admin-review-queue-routes.ts), which must be able to show
+ * an item's proposed answer key — precisely the field the render-safe
+ * serving path is careful never to emit. That asymmetry is deliberate: the
+ * review queue is admin-gated and its whole job is showing the key.
+ *
+ * Not cached: the queue is a low-traffic admin surface, and a stale bank
+ * read after a generation pass wrote new items would be worse than a
+ * re-parse.
+ */
+export function loadAuthoredItemsRaw(dir: string = ITEMS_DIR): AuthoredItem[] {
+  const out: AuthoredItem[] = [];
+  try {
+    for (const file of fs.readdirSync(dir)) {
+      if (!file.endsWith('.json')) continue;
+      const raw = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+      for (const item of raw.items ?? []) {
+        if (item?.id && item?.concept_id) out.push(item as AuthoredItem);
+      }
+    }
+  } catch {
+    // A missing or unreadable directory means no authored items — a
+    // legitimate state, same as the class below treats it.
+  }
+  return out;
+}
+
 export class FileLearningObjectCatalog implements LearningObjectCatalog {
   private cache: LearningObject[] | null = null;
 

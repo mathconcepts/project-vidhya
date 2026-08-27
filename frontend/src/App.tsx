@@ -74,6 +74,7 @@ const ExamGroupsPage = lazy(() => import('@/pages/app/ExamGroupsPage'));
 const ContentAdminPage = lazy(() => import('@/pages/app/ContentAdminPage'));
 const ContentRDPage = lazy(() => import('@/pages/app/ContentRDPage'));
 const HoldoutPage = lazy(() => import('@/pages/app/HoldoutPage'));
+const ReviewQueuePage = lazy(() => import('@/pages/app/ReviewQueuePage'));
 const WalkthroughPage = lazy(() => import('@/pages/app/WalkthroughPage'));
 const PlatformHealthPage = lazy(() => import('@/pages/app/PlatformHealthPage'));
 const RunConsolePage = lazy(() => import('@/pages/app/RunConsolePage'));
@@ -196,6 +197,7 @@ export default function App() {
           <Route path="admin/content-studio" element={<ContentStudioPage />} />
           <Route path="admin/content-rd" element={<ContentRDPage />} />
           <Route path="admin/holdout" element={<HoldoutPage />} />
+          <Route path="admin/review-queue" element={<ReviewQueuePage />} />
           <Route path="admin/walkthrough" element={<WalkthroughPage />} />
           <Route path="admin/platform-health" element={<PlatformHealthPage />} />
           <Route path="admin/jobs" element={<RunConsolePage />} />

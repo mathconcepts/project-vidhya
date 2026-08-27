@@ -568,6 +568,54 @@ operator's and is the schedule. The plan is sized to that constraint.
 | Mock analysis | mock-to-marks (leftOnTable) | Yes — W3.2 is its missing feedback half |
 | Intent lanes | catalogue + profiles + DPS (shipped, dark) | Yes — P0 turns it on |
 
+## 5b. Architecture of the core plan (Section 1 output)
+
+```
+                     GOVERNANCE (W1)                      EXISTING ENGINE (kept)
+        ┌────────────────────────────────┐        ┌─────────────────────────────┐
+        │ assessment_contracts (050+)     │        │ Elo/FSRS/FIRe/readiness     │
+        │  (exam,paper,year) → strategy   │        │ experiments + lift ledger   │
+        │  id + params, source, verified  │        │ batch gen + cost meter      │
+        └───────┬────────────────────────┘        └───────────▲─────────────────┘
+                │ pinned at session creation (E7)             │
+                ▼                                             │
+   ┌────────────────────────┐   compiled constants     ┌──────┴───────────┐
+   │ MarkingStrategy registry│◄──(one truth, D7/E6)───►│ deterministic     │
+   │ (seam + contract test)  │                         │ scorer = gate_2026│
+   └───────┬────────────────┘                          └──────▲───────────┘
+           │ break-even p, marks                              │ grades
+           ▼                                                  │
+   ┌──────────────────────┐   per-question decomposition ┌────┴─────────────┐
+   │ W3.2 counterfactual   │◄────────(E3)────────────────│ mock_exams        │
+   │ + attempt/skip drill  │                             │ quiz_sessions     │
+   └──────────────────────┘                              │ attempt_facts(E1) │
+                                                         └──────────────────┘
+   ANATOMY (W2): template-families.yml ─codegen(E11)─► merged sequence table
+                 anchors = hash(concept,stage,ordinal,ver) (E12) ─► future deltas
+   DEPTH (W3.5): pilot(50) ─measured throughput─► wave 1 ─► gate ledger (E8)
+                 review queue (D4) + writer guard (D5) protect verified keys
+```
+
+## 5c. Cross-phase themes (high-confidence signals — flagged independently by 2+ phases)
+
+1. **Parallel truths are this repo's recurring bug, and this plan kept
+   almost minting more** — eng found the four-way marking drift and the
+   second sequence codegen; DX found the fifth marking table, the frontend
+   AtomKind copy, and the rival provenance fields. Every fold (E6/E11, D7/
+   D10, D1) collapses to one source. Highest-confidence signal in the review.
+2. **Shipped-but-dark is the failure mode to engineer against** — CEO found
+   the flag-dark DPS block; DX found the orphaned `ci:practice-items` gate
+   and demanded a mechanical lanes-on assertion. Anything "done" needs a
+   gate that notices it is not live.
+3. **The operator's hours are the schedule** — CEO's labor arithmetic, DX's
+   missing approval tooling, and the design review's insistence on
+   pre-written contracts (so gated features survive context loss) all point
+   the same way: tool the human path before scaling the machine path.
+4. **Honesty instruments must not become theater** — CEO demanded
+   design_hypothesis labels on the study's own constants; eng scoped the
+   gate ledger so the DB-less demo stays lit; design demanded honest empty/
+   success states. The platform's culture, applied to this plan itself.
+
 ## 6. NOT in scope
 
 - Importing the corpus's SQL schemas wholesale.

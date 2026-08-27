@@ -58,6 +58,16 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # D12 (CI ergonomics): package.json's `ci` aggregate and this job's
+      # gate steps below are two independent statements of "these are the
+      # blocking gates" — nothing else keeps them in sync. This fails loudly,
+      # naming the exact drift, the moment either list moves without the
+      # other (see scripts/check-ci-aggregate-drift.ts's header for why the
+      # steps stayed split rather than collapsing into the aggregate itself:
+      # per-gate names + comments are worth more here than one merged step).
+      - name: CI aggregate ↔ workflow drift check
+        run: npm run ci:aggregate-drift
+
       - name: Fork-test lint (no exam-name literals in engine modules)
         run: npm run lint:fork-test
 
@@ -178,6 +188,16 @@ jobs:
       # headings, and no construction repeating across a topic's concepts.
       - name: Variant agreement (stance variants vs their base atoms)
         run: npm run ci:variant-agreement
+
+      # Practice-item factory gate (E9 / D6 — the "orphaned gate" fix):
+      # existed in package.json, ran nowhere. Every data/practice-items/*.json
+      # bank must be schema-valid (answer_index/answer_indices pointing
+      # INSIDE the item's own options array — an off-by-one here marks a
+      # correct student wrong) AND self-re-grade to full marks through the
+      # real GateDeterministicScorer. Guards the same 505 committed items
+      # the writer's D5 overwrite-refusal now protects at write time.
+      - name: Practice-item bank validity (schema + self-re-grade)
+        run: npm run ci:practice-items
 
       # Journey card deck (M2 / D3.6). The plan's acceptance condition is
       # "every shipped card is QA-walked end to end; a card that dead-ends is

@@ -24,6 +24,7 @@ import { AlertTriangle, Flag, Loader2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { TimerPrimitive } from '@/components/app/TimerPrimitive';
+import { AttemptCounterfactual, type CounterfactualReportView } from '@/components/app/AttemptCounterfactual';
 
 /**
  * Server error strings are shown to the student verbatim only when they
@@ -103,6 +104,8 @@ interface SubmitResult {
   late: boolean;
   timing_mode?: TimingMode;
   recorded: boolean;
+  /** W3.2 — server-computed. Absent on a server that predates it. */
+  counterfactual?: CounterfactualReportView | null;
 }
 
 /** C1 (topic-wise mocks): { id, name, weight } — same namespace the generator's ?topics= validates against. */
@@ -741,6 +744,11 @@ export default function MockExamPage() {
             ))}
           </div>
         </Card>
+
+        {/* W3.2 — the attempt/skip counterfactual. Below the score,
+            scroll-discoverable, never blocking. Plain text under a
+            hairline: the summary above stays the page's one focal card. */}
+        <AttemptCounterfactual report={results.counterfactual} />
 
         {/* GBrain insight */}
         <div style={{

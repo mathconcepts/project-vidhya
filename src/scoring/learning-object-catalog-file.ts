@@ -56,6 +56,21 @@ export interface AuthoredItem {
   solution_steps?: string[];
   verification_method?: string;
   /**
+   * Optional provenance — the `generation_runs.id` that produced this item,
+   * when it came off the batch pipeline (src/generation/practice-item-factory/).
+   * Hand-authored/committed items have no run to point to and leave this
+   * unset. Additive metadata only: it does not change grading or the
+   * marking payload.
+   */
+  generation_run_id?: string;
+  /**
+   * Optional ISO-8601 timestamp of when `verification_method` was actually
+   * confirmed (a human review, a re-verification sweep) — distinct from
+   * when the item was first written. Additive metadata only: it does not
+   * change grading or the marking payload.
+   */
+  verified_at?: string;
+  /**
    * Optional — concept ids (besides `concept_id`) the solution genuinely
    * exercises as a real step (e.g. an eigenvalues item whose solution
    * computes a determinant along the way). Metadata only: it does not

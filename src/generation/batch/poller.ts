@@ -201,7 +201,16 @@ export function flushPracticeItemBankAccumulator(
 ): void {
   for (const [bankPath, items] of accumulator) {
     if (items.length === 0) continue;
-    writeFn(bankPath, items);
+    try {
+      writeFn(bankPath, items);
+    } catch (err) {
+      // D5: the writer now refuses (throws) rather than clobber a verified
+      // item by id. One bank's refusal must not lose every OTHER bank
+      // queued in this pass — log it loudly and keep flushing the rest;
+      // the refused item stays un-written (recorded on disk exactly as it
+      // was before this pass) and the operator sees the precise reason.
+      console.error(`[batch-poller] refused to write bank ${bankPath}: ${(err as Error).message}`);
+    }
   }
 }
 

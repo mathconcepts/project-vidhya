@@ -9,6 +9,15 @@
  * whose id already exists REPLACES that entry rather than duplicating it
  * — a re-run of the factory over the same spec supersedes the old row
  * instead of piling up near-duplicates.
+ *
+ * D5 guard: that "incoming wins" rule stops at a VERIFIED item. If an id
+ * already on disk carries a set `verification_method` and the incoming
+ * item would actually change its content, the write is refused — a
+ * generated re-run must never silently clobber a hand-verified (or
+ * previously verified) row just because its deterministic id happens to
+ * collide. Re-writing the identical item (byte-for-byte) stays a no-op,
+ * preserving the idempotency guarantee above; pass `{ supersede: true }`
+ * to overwrite deliberately.
  */
 
 import fs from 'fs';
@@ -40,19 +49,61 @@ export function loadBank(filePath: string): PracticeItemBankFile {
 }
 
 /**
+ * Thrown by `mergeItems`/`writePracticeItemBank` when an incoming item
+ * would overwrite an existing item that carries a set `verification_method`
+ * with genuinely different content, and `supersede` was not passed (D5).
+ */
+export class PracticeItemOverwriteRefusedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PracticeItemOverwriteRefusedError';
+  }
+}
+
+export interface MergeOptions {
+  /**
+   * Deliberately permit overwriting an existing verified item by id.
+   * Mirrors a `--supersede` CLI flag for any future command-line wrapper
+   * of this writer (none exists today, so the function param is the only
+   * knob) — default false, i.e. refuse.
+   */
+  supersede?: boolean;
+}
+
+/** Deep content equality — used to let a byte-identical re-write through even for a verified item. */
+function sameContent(a: AuthoredItem, b: AuthoredItem): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/**
  * Merge incoming items into existing ones. On an id collision the
  * INCOMING item wins (the factory's re-run supersedes the stored row —
  * same "newer generation wins" rule T21 applies to the pg/file catalog
- * collision, kept consistent here). Stable id-sort makes re-running with
- * an unchanged item set produce byte-identical output.
+ * collision, kept consistent here) — UNLESS the existing item carries a
+ * set `verification_method` and the incoming item's content actually
+ * differs, in which case the merge refuses by throwing
+ * `PracticeItemOverwriteRefusedError` (D5) rather than clobbering verified
+ * content. Pass `{ supersede: true }` to override deliberately. Stable
+ * id-sort makes re-running with an unchanged item set produce
+ * byte-identical output.
  */
 export function mergeItems(
   existing: ReadonlyArray<AuthoredItem>,
   incoming: ReadonlyArray<AuthoredItem>,
+  options: MergeOptions = {},
 ): AuthoredItem[] {
   const byId = new Map<string, AuthoredItem>();
   for (const item of existing) byId.set(item.id, item);
-  for (const item of incoming) byId.set(item.id, item);
+  for (const item of incoming) {
+    const current = byId.get(item.id);
+    if (current?.verification_method && !options.supersede && !sameContent(current, item)) {
+      throw new PracticeItemOverwriteRefusedError(
+        `refusing to overwrite '${item.id}': verification_method='${current.verification_method}' — ` +
+          'pass --supersede (or supersede: true) to override',
+      );
+    }
+    byId.set(item.id, item);
+  }
   return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
 
@@ -61,14 +112,19 @@ export function mergeItems(
  * (temp-file + rename, mirroring wolfram-verify-job.ts's saveBundle).
  * `comment`, if supplied, replaces the file's `_comment`; otherwise the
  * existing bank's comment (if any) is preserved untouched.
+ *
+ * `options.supersede` (D5) threads through to `mergeItems` — omit it (the
+ * default) to have the write refuse rather than clobber a verified item by
+ * id; pass `{ supersede: true }` to override deliberately.
  */
 export function writePracticeItemBank(
   filePath: string,
   items: ReadonlyArray<AuthoredItem>,
   comment?: string[],
+  options?: MergeOptions,
 ): void {
   const existingBank = loadBank(filePath);
-  const merged = mergeItems(existingBank.items, items);
+  const merged = mergeItems(existingBank.items, items, options);
   const finalComment = comment ?? existingBank._comment;
   const out: PracticeItemBankFile = {
     version: existingBank.version,

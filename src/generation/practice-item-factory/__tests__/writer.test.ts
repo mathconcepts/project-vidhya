@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { practiceItemBankPath, loadBank, mergeItems, writePracticeItemBank } from '../writer';
+import {
+  practiceItemBankPath,
+  loadBank,
+  mergeItems,
+  writePracticeItemBank,
+  PracticeItemOverwriteRefusedError,
+} from '../writer';
 import type { AuthoredItem } from '../../../scoring/learning-object-catalog-file';
 
 function item(overrides: Partial<AuthoredItem> = {}): AuthoredItem {
@@ -64,12 +70,20 @@ describe('mergeItems', () => {
     expect(merged.map((i) => i.id)).toEqual(['pi-a-11111111', 'pi-b-22222222']);
   });
 
-  it('an incoming item with the SAME id replaces the existing one (idempotent re-run)', () => {
-    const existing = [item({ id: 'pi-a-11111111', question_text: 'old' })];
-    const incoming = [item({ id: 'pi-a-11111111', question_text: 'new' })];
+  it('an incoming item with the SAME id replaces the existing one when unverified (idempotent re-run)', () => {
+    const existing = [item({ id: 'pi-a-11111111', question_text: 'old', verification_method: undefined })];
+    const incoming = [item({ id: 'pi-a-11111111', question_text: 'new', verification_method: undefined })];
     const merged = mergeItems(existing, incoming);
     expect(merged.length).toBe(1);
     expect(merged[0].question_text).toBe('new');
+  });
+
+  it('re-writing a verified item with BYTE-IDENTICAL content stays a no-op (idempotency preserved)', () => {
+    const existing = [item({ id: 'pi-a-11111111', verification_method: 'hand-solved+wolfram' })];
+    const incoming = [item({ id: 'pi-a-11111111', verification_method: 'hand-solved+wolfram' })];
+    const merged = mergeItems(existing, incoming);
+    expect(merged.length).toBe(1);
+    expect(merged[0]).toEqual(existing[0]);
   });
 
   it('sorts by id for stable, byte-reproducible ordering', () => {
@@ -77,6 +91,43 @@ describe('mergeItems', () => {
     const incoming = [item({ id: 'pi-a-22222222' })];
     const merged = mergeItems(existing, incoming);
     expect(merged.map((i) => i.id)).toEqual(['pi-a-22222222', 'pi-z-11111111']);
+  });
+
+  describe('D5 — refuses to clobber a verified item by id', () => {
+    it('refuses when the incoming item would overwrite a verified existing item with different content', () => {
+      const existing = [
+        item({ id: 'la-eig-014', question_text: 'old', verification_method: 'hand-solved+wolfram' }),
+      ];
+      const incoming = [
+        item({ id: 'la-eig-014', question_text: 'new', verification_method: 'dual_model_consensus' }),
+      ];
+      expect(() => mergeItems(existing, incoming)).toThrow(PracticeItemOverwriteRefusedError);
+      expect(() => mergeItems(existing, incoming)).toThrow(
+        "refusing to overwrite 'la-eig-014': verification_method='hand-solved+wolfram' — pass --supersede (or supersede: true) to override",
+      );
+    });
+
+    it('supersede: true permits the overwrite deliberately', () => {
+      const existing = [
+        item({ id: 'la-eig-014', question_text: 'old', verification_method: 'hand-solved+wolfram' }),
+      ];
+      const incoming = [
+        item({ id: 'la-eig-014', question_text: 'new', verification_method: 'dual_model_consensus' }),
+      ];
+      const merged = mergeItems(existing, incoming, { supersede: true });
+      expect(merged.length).toBe(1);
+      expect(merged[0].question_text).toBe('new');
+      expect(merged[0].verification_method).toBe('dual_model_consensus');
+    });
+
+    it('a new id merges in normally even when the bank holds verified items (unaffected)', () => {
+      const existing = [
+        item({ id: 'la-eig-014', verification_method: 'hand-solved+wolfram' }),
+      ];
+      const incoming = [item({ id: 'pi-new-22222222', verification_method: 'dual_model_consensus' })];
+      const merged = mergeItems(existing, incoming);
+      expect(merged.map((i) => i.id)).toEqual(['la-eig-014', 'pi-new-22222222']);
+    });
   });
 });
 
@@ -108,6 +159,29 @@ describe('writePracticeItemBank', () => {
       'pi-existing-11111111',
       'pi-new-22222222',
     ]);
+  });
+
+  it('D5: refuses to overwrite a verified item on disk and leaves the file untouched', () => {
+    const p = path.join(tmpDir, 'gate-ma-linear-algebra.json');
+    writePracticeItemBank(p, [item({ id: 'la-eig-014', question_text: 'old', verification_method: 'hand-solved+wolfram' })]);
+    const before = fs.readFileSync(p, 'utf-8');
+    expect(() =>
+      writePracticeItemBank(p, [item({ id: 'la-eig-014', question_text: 'new', verification_method: 'dual_model_consensus' })]),
+    ).toThrow("refusing to overwrite 'la-eig-014': verification_method='hand-solved+wolfram'");
+    expect(fs.readFileSync(p, 'utf-8')).toBe(before);
+  });
+
+  it('D5: writes through when supersede: true is passed', () => {
+    const p = path.join(tmpDir, 'gate-ma-linear-algebra.json');
+    writePracticeItemBank(p, [item({ id: 'la-eig-014', question_text: 'old', verification_method: 'hand-solved+wolfram' })]);
+    writePracticeItemBank(
+      p,
+      [item({ id: 'la-eig-014', question_text: 'new', verification_method: 'dual_model_consensus' })],
+      undefined,
+      { supersede: true },
+    );
+    const onDisk = JSON.parse(fs.readFileSync(p, 'utf-8'));
+    expect(onDisk.items[0].question_text).toBe('new');
   });
 
   it('preserves an existing _comment when none is supplied', () => {

@@ -56,6 +56,8 @@ import { createRequire } from 'node:module';
 const _gifencRequire = createRequire(import.meta.url);
 const { GIFEncoder, quantize, applyPalette } = _gifencRequire('gifenc') as any;
 
+import { drawGlyphText, textDimensions } from './gif-qa-font';
+
 export type SceneDescription =
   | ParametricScene
   | FunctionTraceScene
@@ -98,6 +100,8 @@ export interface ParametricScene {
   t_range?: [number, number];
   width?: number;
   height?: number;
+  /** Optional heading drawn top-center via the QA bitmap font (§4.15 W3.6). */
+  title?: string;
 }
 
 export interface FunctionTraceScene {
@@ -110,6 +114,8 @@ export interface FunctionTraceScene {
   fps?: number;
   width?: number;
   height?: number;
+  /** Optional heading drawn top-center via the QA bitmap font (§4.15 W3.6). */
+  title?: string;
 }
 
 export interface ParametricCurveScene {
@@ -174,6 +180,8 @@ export interface LevelSetScene {
   fps?: number;
   width?: number;
   height?: number;
+  /** Optional heading drawn top-center via the QA bitmap font (§4.15 W3.6). */
+  title?: string;
 }
 
 export interface DiscreteBarsScene {
@@ -199,6 +207,57 @@ const DEFAULTS = {
   axes:   [55, 65, 81, 255],     // #374151
   curve:  [16, 185, 129, 255],   // #10b981 emerald — primary
   accent: [167, 139, 250, 255],  // #a78bfa violet — secondary (contrast overlays)
+  label:  [229, 231, 235, 255],  // #e5e7eb light gray — titles + bar labels
+};
+
+/**
+ * W3.6/E9 media QA — a scene's optional `title` and (for discrete-bars)
+ * `labels` are drawn straight into the RGBA frame by drawGlyphText, since
+ * gifenc cannot render text after the fact. `qa` on RenderResult is the
+ * additive finding set computed from that same draw pass — see
+ * evaluateSceneQa below.
+ */
+export interface LabelBox {
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  source: 'title' | 'bar-label';
+}
+
+export interface LabelOverlap {
+  kind: 'label-label' | 'label-edge';
+  /** Text of the first label (kind='label-edge': the offending label). */
+  a: string;
+  /** Text of the second label, or the literal 'canvas-edge' for kind='label-edge'. */
+  b: string;
+  frame: number;
+}
+
+export interface FrameQaSample {
+  frame: number;
+  role: 'mid' | 'final';
+  ink_density: number;
+  contrast: number;
+}
+
+export interface SceneQaResult {
+  label_overlaps: LabelOverlap[];
+  warnings: string[];
+  samples: FrameQaSample[];
+  /** True iff a label overlap on the FINAL frame or a near-blank final frame was found. */
+  hard_fail: boolean;
+  hard_fail_reasons: string[];
+}
+
+export const QA_THRESHOLDS = {
+  /** Below this fraction of non-background pixels, a frame counts as near-blank. */
+  NEAR_BLANK_INK_DENSITY: 0.002,
+  /** Below this normalized (0-1) luminance delta between ink and background, a frame is low-contrast. */
+  LOW_CONTRAST: 0.15,
+  /** Summed per-channel RGB delta from background above which a pixel counts as "ink". */
+  INK_DIFF_THRESHOLD: 20,
 };
 
 export interface RenderResult {
@@ -207,6 +266,8 @@ export interface RenderResult {
   width: number;
   height: number;
   frames: number;
+  /** Additive (§4.15 W3.6/E9) — never absent, computed for every render. */
+  qa: SceneQaResult;
 }
 
 /**
@@ -263,6 +324,7 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
     const totalFrames = scene.frames ?? DEFAULTS.frames;
     const barsShown = Math.max(1, Math.round((scene.values.length * (i + 1)) / totalFrames));
     drawDiscreteBars(buf, w, h, scene.values, barsShown);
+    drawSceneLabels(buf, w, h, scene, i);
     return buf;
   }
 
@@ -337,7 +399,243 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
     }
   }
 
+  drawSceneLabels(buf, w, h, scene, i);
   return buf;
+}
+
+/**
+ * Shared bar-position math for 'discrete-bars': used both by drawDiscreteBars
+ * (to actually paint the bars) and computeSceneLabels (to place per-bar
+ * labels under them without duplicating — and risking drift from — the
+ * layout formula. w/h/n only; the value-dependent baseline lives in
+ * drawDiscreteBars since label placement doesn't need it.
+ */
+function computeBarGeometry(
+  w: number,
+  h: number,
+  n: number,
+): { marginX: number; marginBottom: number; plotW: number; barW: number; gap: number } {
+  const marginX = Math.round(w * 0.05);
+  const marginBottom = Math.round(h * 0.08);
+  const plotW = w - marginX * 2;
+  const gap = Math.max(1, Math.round(plotW * 0.015));
+  const barW = Math.max(1, Math.floor((plotW - gap * (n - 1)) / n));
+  return { marginX, marginBottom, plotW, barW, gap };
+}
+
+/**
+ * A label the rasterizer will draw for frame `i`: a scene's optional `title`
+ * (top-center, every frame it's present) plus — for discrete-bars — one
+ * label per currently-revealed bar. Positions are computed WITHOUT touching
+ * the pixel buffer so the same descriptors drive both the actual draw
+ * (drawSceneLabels) and the QA bounding-box check (computeLabelBoxes) —
+ * they can never disagree about where a label lands.
+ */
+interface LabelDescriptor {
+  text: string;
+  x: number;
+  y: number;
+  scale: number;
+  source: 'title' | 'bar-label';
+}
+
+function computeSceneLabels(scene: SceneDescription, i: number, w: number, h: number): LabelDescriptor[] {
+  const labels: LabelDescriptor[] = [];
+  const totalFrames = scene.frames ?? DEFAULTS.frames;
+
+  const title = scene.title;
+  if (title) {
+    const scale = 2;
+    const dim = textDimensions(title, scale);
+    const x = Math.max(2, Math.round((w - dim.width) / 2));
+    const y = 3;
+    labels.push({ text: title, x, y, scale, source: 'title' });
+  }
+
+  if (scene.type === 'discrete-bars' && scene.labels && scene.labels.length > 0) {
+    const n = scene.values.length;
+    const barsShown = Math.max(1, Math.round((n * (i + 1)) / totalFrames));
+    const { marginX, marginBottom, barW, gap } = computeBarGeometry(w, h, n);
+    const scale = 1;
+    const shown = Math.min(barsShown, n, scene.labels.length);
+    for (let idx = 0; idx < shown; idx++) {
+      const text = scene.labels[idx];
+      if (!text) continue;
+      const barX = marginX + idx * (barW + gap);
+      const dim = textDimensions(text, scale);
+      const x = barX + Math.max(0, Math.round((barW - dim.width) / 2));
+      const y = h - marginBottom + 2;
+      labels.push({ text, x, y, scale, source: 'bar-label' });
+    }
+  }
+
+  return labels;
+}
+
+/** Actually paint computeSceneLabels' descriptors into the frame buffer. */
+function drawSceneLabels(buf: Uint8ClampedArray, w: number, h: number, scene: SceneDescription, i: number): void {
+  for (const l of computeSceneLabels(scene, i, w, h)) {
+    drawGlyphText(l.text, l.x, l.y, l.scale, (px, py) => putPixel(buf, w, h, px, py, DEFAULTS.label));
+  }
+}
+
+/**
+ * QA-facing bounding boxes for every label a scene would draw at frame
+ * `frameIndex` — same geometry as computeSceneLabels, just measured instead
+ * of painted. Exported for direct unit testing (synthetic scenes) and for
+ * evaluateSceneQa below.
+ */
+export function computeLabelBoxes(
+  scene: SceneDescription,
+  frameIndex: number,
+  width?: number,
+  height?: number,
+): LabelBox[] {
+  const w = width ?? scene.width ?? DEFAULTS.width;
+  const h = height ?? scene.height ?? DEFAULTS.height;
+  return computeSceneLabels(scene, frameIndex, w, h).map((l) => {
+    const dim = textDimensions(l.text, l.scale);
+    return { text: l.text, x: l.x, y: l.y, width: dim.width, height: dim.height, source: l.source };
+  });
+}
+
+/**
+ * Deterministic pairwise overlap check: every label against every other
+ * label, and every label against the canvas edge (a label that would be
+ * clipped off-frame is exactly as illegible as one crossing another label).
+ * Pure — takes bounding boxes, not a rendered scene — so it's testable with
+ * hand-built synthetic boxes independent of the rasterizer.
+ */
+export function detectLabelOverlaps(
+  boxes: LabelBox[],
+  width: number,
+  height: number,
+  frame = 0,
+): LabelOverlap[] {
+  const overlaps: LabelOverlap[] = [];
+  for (let a = 0; a < boxes.length; a++) {
+    const box = boxes[a];
+    if (box.x < 0 || box.y < 0 || box.x + box.width > width || box.y + box.height > height) {
+      overlaps.push({ kind: 'label-edge', a: box.text, b: 'canvas-edge', frame });
+    }
+    for (let b = a + 1; b < boxes.length; b++) {
+      if (boxesIntersect(box, boxes[b])) {
+        overlaps.push({ kind: 'label-label', a: box.text, b: boxes[b].text, frame });
+      }
+    }
+  }
+  return overlaps;
+}
+
+function boxesIntersect(a: LabelBox, b: LabelBox): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function luminance(rgb: readonly number[]): number {
+  return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+}
+
+/**
+ * Fraction of pixels that differ from the background by more than
+ * QA_THRESHOLDS.INK_DIFF_THRESHOLD (summed per-channel RGB delta) — cheap
+ * near-blank-frame detector. Pure function over a raw RGBA buffer so it's
+ * directly testable with synthetic frames, no renderScene call needed.
+ */
+export function computeInkDensity(rgba: Uint8ClampedArray, bg: readonly number[] = DEFAULTS.bg): number {
+  const total = rgba.length / 4;
+  if (total === 0) return 0;
+  let ink = 0;
+  for (let p = 0; p < total; p++) {
+    const o = p * 4;
+    const delta = Math.abs(rgba[o] - bg[0]) + Math.abs(rgba[o + 1] - bg[1]) + Math.abs(rgba[o + 2] - bg[2]);
+    if (delta > QA_THRESHOLDS.INK_DIFF_THRESHOLD) ink++;
+  }
+  return ink / total;
+}
+
+/**
+ * Normalized (0-1) luminance delta between the average "ink" pixel and the
+ * background. 0 when there's no ink at all (computeInkDensity would already
+ * flag that as near-blank) — never NaN.
+ */
+export function computeContrast(rgba: Uint8ClampedArray, bg: readonly number[] = DEFAULTS.bg): number {
+  const total = rgba.length / 4;
+  if (total === 0) return 0;
+  const bgLum = luminance(bg);
+  let inkLumSum = 0;
+  let ink = 0;
+  for (let p = 0; p < total; p++) {
+    const o = p * 4;
+    const delta = Math.abs(rgba[o] - bg[0]) + Math.abs(rgba[o + 1] - bg[1]) + Math.abs(rgba[o + 2] - bg[2]);
+    if (delta > QA_THRESHOLDS.INK_DIFF_THRESHOLD) {
+      inkLumSum += luminance([rgba[o], rgba[o + 1], rgba[o + 2]]);
+      ink++;
+    }
+  }
+  if (ink === 0) return 0;
+  return Math.min(1, Math.abs(inkLumSum / ink - bgLum) / 255);
+}
+
+/**
+ * Assemble the full SceneQaResult for a render: label-overlap checks on the
+ * mid + final sampled frames, plus near-blank / low-contrast raster
+ * heuristics on those same two frames. Hard-fail is deliberately narrow —
+ * label overlap OR near-blank on the FINAL frame only (E9: "label overlap on
+ * the final frame, near-blank"); everything else (mid-frame issues,
+ * low-contrast at any sample) is a warning an operator can triage, not an
+ * automatic media_artifacts.status='failed'.
+ */
+function evaluateSceneQa(
+  scene: SceneDescription,
+  w: number,
+  h: number,
+  midIndex: number,
+  finalIndex: number,
+  midRgba: Uint8ClampedArray,
+  finalRgba: Uint8ClampedArray,
+): SceneQaResult {
+  const warnings: string[] = [];
+  const hardReasons: string[] = [];
+
+  const samples: FrameQaSample[] = [
+    { frame: midIndex, role: 'mid', ink_density: computeInkDensity(midRgba), contrast: computeContrast(midRgba) },
+    { frame: finalIndex, role: 'final', ink_density: computeInkDensity(finalRgba), contrast: computeContrast(finalRgba) },
+  ];
+
+  for (const s of samples) {
+    if (s.ink_density < QA_THRESHOLDS.NEAR_BLANK_INK_DENSITY) {
+      const msg = `near-blank ${s.role} frame (frame ${s.frame}): ink_density=${s.ink_density.toFixed(4)} below ${QA_THRESHOLDS.NEAR_BLANK_INK_DENSITY}`;
+      warnings.push(msg);
+      if (s.role === 'final') hardReasons.push(msg);
+    }
+    if (s.contrast < QA_THRESHOLDS.LOW_CONTRAST) {
+      warnings.push(`low-contrast ${s.role} frame (frame ${s.frame}): contrast=${s.contrast.toFixed(4)} below ${QA_THRESHOLDS.LOW_CONTRAST}`);
+    }
+  }
+
+  const label_overlaps: LabelOverlap[] = [];
+  const sampled: Array<{ index: number; role: 'mid' | 'final' }> = [
+    { index: midIndex, role: 'mid' },
+    { index: finalIndex, role: 'final' },
+  ];
+  for (const { index, role } of sampled) {
+    const boxes = computeLabelBoxes(scene, index, w, h);
+    const overlaps = detectLabelOverlaps(boxes, w, h, index);
+    label_overlaps.push(...overlaps);
+    for (const o of overlaps) {
+      const msg = `label overlap on ${role} frame (frame ${index}): ${o.kind} between "${o.a}" and "${o.b}"`;
+      warnings.push(msg);
+      if (role === 'final') hardReasons.push(msg);
+    }
+  }
+
+  return {
+    label_overlaps,
+    warnings,
+    samples,
+    hard_fail: hardReasons.length > 0,
+    hard_fail_reasons: hardReasons,
+  };
 }
 
 /**
@@ -475,17 +773,12 @@ function drawDiscreteBars(
   const vMin = Math.min(0, ...values);
   const span = vMax - vMin || 1;
 
-  const marginX = Math.round(w * 0.05);
   const marginTop = Math.round(h * 0.08);
-  const marginBottom = Math.round(h * 0.08);
-  const plotW = w - marginX * 2;
+  const { marginX, marginBottom, plotW, barW, gap } = computeBarGeometry(w, h, n);
   const plotH = h - marginTop - marginBottom;
 
   const baselineY = marginTop + Math.round(((vMax - 0) / span) * plotH);
   for (let xi = marginX; xi < w - marginX; xi++) putPixel(buf, w, h, xi, baselineY, DEFAULTS.axes);
-
-  const gap = Math.max(1, Math.round(plotW * 0.015));
-  const barW = Math.max(1, Math.floor((plotW - gap * (n - 1)) / n));
 
   for (let idx = 0; idx < Math.min(barsShown, n); idx++) {
     const value = values[idx];
@@ -556,9 +849,20 @@ export function renderScene(scene: SceneDescription): RenderResult {
   const fps = scene.fps ?? DEFAULTS.fps;
   const delay = Math.round(1000 / fps);
 
+  // W3.6/E9 media QA samples the mid + final frame's pre-encoding RGBA —
+  // gifenc is encode-only and cannot be asked to decode its own output back
+  // out, so this is the only point in the pipeline where pixel-level QA is
+  // possible at all.
+  const midIndex = Math.floor(Math.max(0, totalFrames - 1) / 2);
+  const finalIndex = Math.max(0, totalFrames - 1);
+  let midRgba: Uint8ClampedArray | null = null;
+  let finalRgba: Uint8ClampedArray | null = null;
+
   const enc = GIFEncoder();
   for (let i = 0; i < totalFrames; i++) {
     const rgba = renderFrame(scene, i);
+    if (i === midIndex) midRgba = rgba;
+    if (i === finalIndex) finalRgba = rgba;
     // Quantize RGBA frame to 256-color palette + apply.
     const palette = quantize(rgba, 256);
     const indexed = applyPalette(rgba, palette);
@@ -567,5 +871,14 @@ export function renderScene(scene: SceneDescription): RenderResult {
   enc.finish();
   const buffer = Buffer.from(enc.bytes());
   const duration_ms = Date.now() - t0;
-  return { buffer, duration_ms, width: w, height: h, frames: totalFrames };
+
+  // totalFrames <= 0 is an authoring error the loop above never executes
+  // for — render the two QA sample frames directly rather than let QA read
+  // a null sample (defensive; not exercised by any known scene today).
+  if (!midRgba) midRgba = renderFrame(scene, midIndex);
+  if (!finalRgba) finalRgba = renderFrame(scene, finalIndex);
+
+  const qa = evaluateSceneQa(scene, w, h, midIndex, finalIndex, midRgba, finalRgba);
+
+  return { buffer, duration_ms, width: w, height: h, frames: totalFrames, qa };
 }

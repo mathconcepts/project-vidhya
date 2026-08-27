@@ -104,6 +104,7 @@ function main(): void {
   let rendered = 0;
   let skipped = 0;
   let failed = 0;
+  let qaFailed = 0;
   for (const atom of atoms) {
     if (atom.atom_type !== 'visual_analogy') continue;
     const scene = extractGifScene(atom.body);
@@ -111,6 +112,17 @@ function main(): void {
     const outPath = path.join(MEDIA_DIR, `${atom.id}.v1.gif`);
     try {
       const result = renderScene(scene);
+      // W3.6/E9 media QA, DB-less path: QA still computes (there's no
+      // media_artifacts row to flip to 'failed' here — the demo deploy has
+      // no DB), so a hard QA failure means the sidecar file is simply not
+      // written, with the reason logged. atom-loader's disk fallback then
+      // finds no GIF for this atom and the atom ships text-only, same
+      // honest degradation as a render exception below.
+      if (result.qa.hard_fail) {
+        console.warn(`  QA failed ${atom.id}: ${result.qa.hard_fail_reasons.join('; ')}`);
+        qaFailed++;
+        continue;
+      }
       fs.writeFileSync(outPath, result.buffer);
       console.log(`  rendered ${atom.id} → ${outPath} (${result.buffer.length} bytes)`);
       rendered++;
@@ -121,7 +133,7 @@ function main(): void {
   }
   const audio = copySeedAudio();
   console.log(
-    `\nseed-media: ${rendered} GIFs rendered, ${audio.copied} audio files copied${audio.missing ? ' (demo/seed-audio/ missing)' : ''}, ${skipped} GIFs skipped (no gif-scene block), ${failed} failed.`,
+    `\nseed-media: ${rendered} GIFs rendered, ${audio.copied} audio files copied${audio.missing ? ' (demo/seed-audio/ missing)' : ''}, ${skipped} GIFs skipped (no gif-scene block), ${failed} failed, ${qaFailed} QA failed.`,
   );
 }
 

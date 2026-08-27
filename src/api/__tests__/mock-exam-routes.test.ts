@@ -71,6 +71,9 @@ const PYQ_Q = {
 const GEN_Q_MARKED = {
   id: 'gen-1', topic: 'determinants', source: 'generated', question_text: 'det(I)?',
   question_type: 'mcq', marks: 1, options: ['0', '1', '2'], answer_index: 1, difficulty: 0.4,
+  // W3.4/E2: server-only diagnostic data (migration 054) — must never
+  // reach the pre-submission client view (see the leak test below).
+  distractor_failure_tags: { 0: 'method_selection', 2: 'sign' },
 };
 const GEN_Q_UNMARKED = {
   id: 'gen-2', topic: 'determinants', source: 'generated', question_text: 'legacy unmarked question',
@@ -379,6 +382,10 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
     expect(raw).not.toContain('answer_range');
     // and the actual secret VALUES don't leak either
     expect(raw).not.toContain('free text answer');
+    // W3.4/E2: no field naming a failure/trap/misconception hypothesis
+    // ever reaches the pre-submission client view (GEN_Q_MARKED carries
+    // distractor_failure_tags — see the fixture above).
+    expect(raw).not.toMatch(/failure|trap|misconception/i);
 
     // gradable flag is honest — the unmarked legacy row is NOT claimed gradable
     const byId = Object.fromEntries(r.payload.questions.map((q: any) => [q.id, q]));

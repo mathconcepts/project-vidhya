@@ -27,7 +27,7 @@ import type {
   LearningObjectCatalog,
   CatalogQuery,
 } from './learning-object-catalog';
-import type { LearningObject, ObjectType } from '../core/interfaces';
+import type { ErrorTag, LearningObject, ObjectType } from '../core/interfaces';
 import { difficultyToElo, DEFAULT_EXAM_RELEVANCE } from './difficulty-elo';
 
 const ITEMS_DIR = path.join(process.cwd(), 'data', 'practice-items');
@@ -52,6 +52,17 @@ export interface AuthoredItem {
   answer_index?: number;
   answer_indices?: number[];
   answer_range?: [number, number];
+  /**
+   * mcq only, optional (W3.4/E2). POST-shuffle option index → failure-
+   * hypothesis tag for that distractor; never the correct answer's own
+   * index. Server-only — threaded into the served payload as
+   * `distractorFailureTags` (markingPayload(), below) for grading-time
+   * use only. GET /api/practice/item/:id's render-safe view never copies
+   * it (see that route's leak test); POST /api/practice/attempt may
+   * surface ONE tag, post-answer, for the option the student actually
+   * picked when they got it wrong.
+   */
+  distractor_failure_tags?: Partial<Record<number, ErrorTag>>;
   correct_answer?: string;
   solution_steps?: string[];
   verification_method?: string;
@@ -135,6 +146,15 @@ function markingPayload(item: AuthoredItem): Record<string, unknown> {
   if (kind === 'nat' && Array.isArray(item.answer_range) && item.answer_range.length === 2
       && item.answer_range.every((n) => typeof n === 'number')) {
     out.answerRange = item.answer_range;
+  }
+  // W3.4/E2 — server-only grading-time data. Present in payload (the
+  // FULL, unstripped object grading reads from), never in the
+  // render-safe view a client sees before answering (that view is built
+  // by copying named fields, not spreading payload — see
+  // practice-routes.ts's handleGetItem and its leak test).
+  if (kind === 'mcq' && item.distractor_failure_tags
+      && Object.keys(item.distractor_failure_tags).length > 0) {
+    out.distractorFailureTags = item.distractor_failure_tags;
   }
   return out;
 }

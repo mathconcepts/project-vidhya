@@ -65,6 +65,7 @@ export function assemblePracticeItem(
     correctAnswer: response.correct_answer ?? '',
     correctAnswers: response.correct_answers,
     distractors: response.distractors,
+    distractorFailureTags: response.distractor_failure_tags,
     difficulty: spec.difficulty,
     rng,
   });
@@ -73,6 +74,26 @@ export function assemblePracticeItem(
       ok: false,
       reason: `deriveMarking refused: unmarkable "${spec.format}" material for concept "${spec.concept_id}"`,
     };
+  }
+
+  // W3.4/E2 gate (off by default — see PracticeItemSpec.require_failure_tags):
+  // refuse an mcq whose distractors are not ALL failure-tagged. D8 precision:
+  // names the item id and the exact untagged option indices, never a vague
+  // "not enough tags".
+  if (spec.require_failure_tags && marking.question_type === 'mcq') {
+    const id = practiceItemId(spec, response);
+    const options = marking.options ?? [];
+    const tagged = marking.distractor_failure_tags ?? {};
+    const untagged = options
+      .map((_, i) => i)
+      .filter((i) => i !== marking.answer_index && !(i in tagged));
+    if (untagged.length > 0) {
+      const distractorCount = options.length - 1;
+      return {
+        ok: false,
+        reason: `item ${id}: ${untagged.length} of ${distractorCount} distractors missing failure_tag (untagged option indices: ${untagged.join(', ')})`,
+      };
+    }
   }
 
   const item: AuthoredItem = {
@@ -89,6 +110,7 @@ export function assemblePracticeItem(
     answer_index: marking.answer_index,
     answer_indices: marking.answer_indices,
     answer_range: marking.answer_range,
+    distractor_failure_tags: marking.distractor_failure_tags,
     correct_answer:
       spec.format === 'msq' ? (response.correct_answers ?? []).join('; ') : response.correct_answer,
     solution_steps: response.solution_steps,

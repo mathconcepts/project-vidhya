@@ -90,6 +90,8 @@ interface GeneratedProblemRow {
   answer_range?: unknown;
   /** Migration 033: canonical ordered option list for mcq/msq. */
   options?: unknown;
+  /** Migration 054 (W3.4/E2): mcq only, POST-shuffle index -> ErrorTag. */
+  distractor_failure_tags?: unknown;
 }
 
 const GATE_KINDS = new Set(['mcq', 'msq', 'nat']);
@@ -118,6 +120,16 @@ export function markingPayloadFromRow(r: GeneratedProblemRow): Record<string, un
   if (kind === 'nat' && Array.isArray(r.answer_range) && r.answer_range.length === 2
       && r.answer_range.every(n => typeof n === 'number')) {
     out.answerRange = r.answer_range;
+  }
+  // W3.4/E2 (migration 054) — server-only grading-time data, threaded
+  // through the same discipline as every other marking field here: absent
+  // on pre-054 deploys and any row no writer has populated yet (NULL),
+  // present and passed through unvalidated-but-shaped otherwise. The
+  // render-safe view (practice-routes.ts's GET /api/practice/item/:id)
+  // never copies this off `payload` — see that route's leak test.
+  if (kind === 'mcq' && r.distractor_failure_tags && typeof r.distractor_failure_tags === 'object'
+      && !Array.isArray(r.distractor_failure_tags)) {
+    out.distractorFailureTags = r.distractor_failure_tags;
   }
   return out;
 }

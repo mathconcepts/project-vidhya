@@ -13,6 +13,8 @@
  * CORRECT when driven by fixtures, per the Lane D scope of this task.
  */
 
+import type { ErrorTag } from '../../core/interfaces';
+
 /** GATE item kinds this factory can author. Mirrors deterministic-scorer.ts's GateItemKind. */
 export type PracticeItemFormat = 'mcq' | 'msq' | 'nat';
 
@@ -28,6 +30,15 @@ export interface PracticeItemSpec {
   /** 0..1, authored/requested difficulty. */
   difficulty: number;
   topic: string;
+  /**
+   * W3.4/E2 gate — mcq only. When true, assemble.ts refuses (rather than
+   * writes) an mcq whose distractors are not ALL tagged with a failure
+   * hypothesis (deriveMarking()'s `distractorFailureTags`). Off by
+   * default: existing/legacy generation is unaffected — this is a
+   * generation-side GATE, not yet a hard refusal across the board (wave-1
+   * runs turn it on deliberately, per the plan).
+   */
+  require_failure_tags?: boolean;
 }
 
 /**
@@ -53,6 +64,15 @@ export interface PracticeItemGenerationResponse {
   distractors: string[];
   solution_steps: string[];
   difficulty: number;
+  /**
+   * W3.4/E2, mcq only, optional. Per-distractor failure hypothesis, keyed
+   * by the exact distractor text (as it appears in `distractors`, before
+   * trim/dedup). Threaded into deriveMarking()'s `distractorFailureTags`
+   * unchanged — see that function's doc comment for how tags survive
+   * dedup and land on POST-shuffle indices. Server-only diagnostic data;
+   * see the leak tests on the render-safe serialization paths.
+   */
+  distractor_failure_tags?: Record<string, ErrorTag>;
 }
 
 /** How an item earned its `verification_method` stamp (assemble.ts). */

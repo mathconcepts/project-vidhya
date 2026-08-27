@@ -23,24 +23,32 @@ import {
   checkA5_ConceptIdsExist,
   checkA6_LaFullyMapped,
   checkA7_CrossDagConsistency,
+  checkA8_SeoTitlePhraseRule,
   checkB1_IntentSet,
   checkB2_StageAndAtomKindValid,
   checkB3_DifficultyMixSums,
   checkB4_ModuleProfilesMatchCatalogue,
   checkB5_ErrorTagsValid,
+  checkB6_ProblemStatementFramePhraseRule,
+  checkB7_HistoricalEvidenceValid,
   renderPainPointReport,
   runCatalogueChecks,
   runIntentProfileChecks,
+  runHistoricalEvidenceChecks,
   loadCatalogue,
   loadIntentProfiles,
+  loadHistoricalEvidence,
   CATALOGUE_PATH,
   INTENT_PROFILES_PATH,
+  HISTORICAL_EVIDENCE_PATH,
   EXPECTED_ATOM_COUNT,
+  EXPECTED_HISTORICAL_TOPIC_COUNT,
   INTENTS,
   ERROR_TAGS,
   type CatalogueAtom,
   type ConceptLike,
   type IntentProfilesFile,
+  type HistoricalEvidenceFile,
 } from '../../../../scripts/check-intent-catalogue';
 import { ALL_CONCEPTS } from '../../../constants/concept-graph';
 
@@ -112,7 +120,7 @@ function buildCleanProfiles(): IntentProfilesFile {
 // ---------------------------------------------------------------------------
 
 describe('check-intent-catalogue — clean synthetic data', () => {
-  it('passes every check (A1-A7, B1-B5)', () => {
+  it('passes every check (A1-A8, B1-B6)', () => {
     const atoms = buildCleanAtoms();
     const profiles = buildCleanProfiles();
     const catalogueModules = new Set(atoms.map((a) => a.module));
@@ -124,7 +132,7 @@ describe('check-intent-catalogue — clean synthetic data', () => {
 
     const failing = results.filter((r) => !r.pass);
     expect(failing).toEqual([]);
-    expect(results).toHaveLength(12);
+    expect(results).toHaveLength(14);
   });
 });
 
@@ -374,6 +382,120 @@ describe('check-intent-catalogue — remaining intent-profile checks', () => {
 });
 
 // ---------------------------------------------------------------------------
+// W1.2/E10 phrase rule — A8 (seo.title) and B6 (problem_statement_frame)
+// ---------------------------------------------------------------------------
+
+describe('check-intent-catalogue — A8 seo.title phrase rule', () => {
+  it('passes clean seo titles', () => {
+    const atoms = buildCleanAtoms();
+    atoms[0] = { ...atoms[0], seo: { title: 'Eigenvalues for GATE CS: Concepts, PYQs and Practice' } };
+    expect(checkA8_SeoTitlePhraseRule(atoms).pass).toBe(true);
+  });
+
+  it('fails on a forbidden phrase in seo.title, naming the atom and the phrase', () => {
+    const atoms = buildCleanAtoms();
+    atoms[3] = { ...atoms[3], seo: { title: 'Eigenvalues: the most frequently asked GATE topic' } };
+    const result = checkA8_SeoTitlePhraseRule(atoms);
+    expect(result.pass).toBe(false);
+    expect(result.violations[0]).toContain('AT-004');
+    expect(result.violations[0]).toContain('frequently asked');
+  });
+
+  it('is case-insensitive', () => {
+    const atoms = buildCleanAtoms();
+    atoms[0] = { ...atoms[0], seo: { title: 'This is HIGH-YIELD content' } };
+    expect(checkA8_SeoTitlePhraseRule(atoms).pass).toBe(false);
+  });
+
+  it('passes atoms with no seo field at all', () => {
+    const atoms = buildCleanAtoms();
+    expect(checkA8_SeoTitlePhraseRule(atoms).pass).toBe(true);
+  });
+});
+
+describe('check-intent-catalogue — B6 problem_statement_frame phrase rule', () => {
+  it('passes clean frames', () => {
+    const profiles = buildCleanProfiles();
+    expect(checkB6_ProblemStatementFramePhraseRule(profiles).pass).toBe(true);
+  });
+
+  it('fails on a forbidden phrase, naming the intent and the phrase', () => {
+    const profiles = buildCleanProfiles();
+    profiles.intents.foundation_learning.problem_statement_frame = 'This is a most repeated GATE pattern.';
+    const result = checkB6_ProblemStatementFramePhraseRule(profiles);
+    expect(result.pass).toBe(false);
+    expect(result.violations[0]).toContain('foundation_learning');
+    expect(result.violations[0]).toContain('most repeated');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// B7 — historical-evidence.yml
+// ---------------------------------------------------------------------------
+
+describe('check-intent-catalogue — B7 historical-evidence.yml', () => {
+  function buildCleanHistoricalEvidence(): HistoricalEvidenceFile {
+    // Spread across several prefixes (max 30/prefix, well under the id
+    // regex's 2-digit cap) rather than one 116-long LA- block, which would
+    // overflow LA-99 into an invalid 3-digit id — a real corpus artifact
+    // this fixture must not reproduce.
+    const prefixes = ['LA', 'CA', 'VC', 'DE'];
+    const topics: HistoricalEvidenceFile['topics'] = {};
+    for (let i = 1; i <= EXPECTED_HISTORICAL_TOPIC_COUNT; i++) {
+      const prefix = prefixes[(i - 1) % prefixes.length];
+      const n = Math.floor((i - 1) / prefixes.length) + 1;
+      topics[`${prefix}-${String(n).padStart(2, '0')}`] = {
+        topic: `Topic ${i}`,
+        pattern: 'Short MCQ.',
+        evidence: i % 3 === 0 ? 'D' : i % 3 === 1 ? 'P' : 'S',
+      };
+    }
+    return { schema_version: 1, topics };
+  }
+
+  it('passes a clean 116-topic fixture', () => {
+    const result = checkB7_HistoricalEvidenceValid(buildCleanHistoricalEvidence());
+    expect(result.pass).toBe(true);
+  });
+
+  it('fails when the topic count is not exactly 116', () => {
+    const evidence = buildCleanHistoricalEvidence();
+    delete evidence.topics['LA-01'];
+    const result = checkB7_HistoricalEvidenceValid(evidence);
+    expect(result.pass).toBe(false);
+    expect(result.violations.some((v) => v.includes('found 115'))).toBe(true);
+  });
+
+  it('fails on a topic id that does not match the corpus id shape', () => {
+    const evidence = buildCleanHistoricalEvidence();
+    evidence.topics['not-an-id'] = { pattern: 'x', evidence: 'D' };
+    const result = checkB7_HistoricalEvidenceValid(evidence);
+    expect(result.pass).toBe(false);
+    expect(result.violations.some((v) => v.includes('not-an-id'))).toBe(true);
+  });
+
+  it('fails on an empty pattern', () => {
+    const evidence = buildCleanHistoricalEvidence();
+    evidence.topics['LA-01'] = { ...evidence.topics['LA-01'], pattern: '' };
+    const result = checkB7_HistoricalEvidenceValid(evidence);
+    expect(result.pass).toBe(false);
+    expect(result.violations.some((v) => v.includes('LA-01') && v.includes('pattern missing'))).toBe(true);
+  });
+
+  it('fails on an evidence code outside D/P/S', () => {
+    const evidence = buildCleanHistoricalEvidence();
+    evidence.topics['LA-01'] = { ...evidence.topics['LA-01'], evidence: 'D/P' };
+    const result = checkB7_HistoricalEvidenceValid(evidence);
+    expect(result.pass).toBe(false);
+    expect(result.violations.some((v) => v.includes("'D/P'"))).toBe(true);
+  });
+
+  it('runHistoricalEvidenceChecks wraps B7', () => {
+    expect(runHistoricalEvidenceChecks(buildCleanHistoricalEvidence())).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // ErrorTag drift tripwire
 // ---------------------------------------------------------------------------
 
@@ -427,6 +549,23 @@ describe('check-intent-catalogue — real committed data', () => {
     const result = checkA7_CrossDagConsistency(atoms, concepts);
     expect(result.pass).toBe(true);
     expect(result.count).toBe(0);
+  });
+});
+
+describe('check-intent-catalogue — real historical-evidence.yml', () => {
+  it('loads and passes B7 (116 topics, D/P/S codes)', () => {
+    const evidence = loadHistoricalEvidence(HISTORICAL_EVIDENCE_PATH);
+    const result = checkB7_HistoricalEvidenceValid(evidence);
+    expect(result.pass).toBe(true);
+    expect(Object.keys(evidence.topics)).toHaveLength(EXPECTED_HISTORICAL_TOPIC_COUNT);
+  });
+
+  it('every topic id matches a known corpus prefix', () => {
+    const evidence = loadHistoricalEvidence(HISTORICAL_EVIDENCE_PATH);
+    const knownPrefixes = new Set(['LA', 'CA', 'VC', 'DE', 'PD', 'CX', 'PS', 'NM', 'DM']);
+    for (const id of Object.keys(evidence.topics)) {
+      expect(knownPrefixes.has(id.split('-')[0])).toBe(true);
+    }
   });
 });
 

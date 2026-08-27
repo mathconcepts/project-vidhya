@@ -2,15 +2,29 @@
 /**
  * scripts/check-intent-catalogue.ts
  *
- * Intent Catalogue CI gate. Validates the two files that make up the
+ * Intent Catalogue CI gate. Validates the three files that make up the
  * demand-side content contract for GATE Engineering Mathematics:
  *
  *   A) data/curriculum/gate-em/atomic-catalogue.json — the 203 atomic
  *      sub-topics (one row per demand-side query cluster).
  *   B) data/curriculum/gate-em/intent-profiles.yml — the 4 intent lanes +
  *      8 module pain profiles that route those atoms to content shape.
+ *   B) data/curriculum/gate-em/historical-evidence.yml (W1.2/E10, added
+ *      2026-08-27) — 116 corpus topic ids → {pattern, evidence: D|P|S}, the
+ *      market-research corpus's own historical-question-pattern provenance
+ *      (NOT this repo's atomic_id/concept_id scheme — see the file's own
+ *      header for the id-scheme boundary and the 3-paper evidence-scope
+ *      caveat). Numbered under section B (supplementary gate-em data files,
+ *      not just intent-profiles.yml) rather than a new section — see B7.
  *
- * Both files describe CONTENT, not students — there is nothing here to
+ * A8 and B6 (added alongside historical-evidence.yml) are the OTHER half of
+ * W1.2/E10's phrase rule: atomic-catalogue's `seo.title` and intent-profiles'
+ * `problem_statement_frame` may not contain "high-yield" / "frequently
+ * asked" / "most repeated" / "often asked" — see
+ * src/content/evidence-phrase-rule.ts (shared with check-practice-items.ts's
+ * mirror check over practice items + the PYQ bank).
+ *
+ * All three files describe CONTENT, not students — there is nothing here to
  * guard against surveillance drift (contrast check-syllabus-floor.ts /
  * personalization's invariant suite). The risk this gate closes is
  * ordinary data-integrity drift: an id typo, a split that no longer sums,
@@ -54,6 +68,7 @@ import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
 import { ALL_CONCEPTS } from '../src/constants/concept-graph';
 import { ATOM_KINDS, STAGE_KINDS } from '../src/blueprints/types';
+import { findForbiddenPhrases } from '../src/content/evidence-phrase-rule';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -108,6 +123,7 @@ export interface CatalogueAtom {
   question_inventory: QuestionInventory;
   prerequisite_atomic_ids: string[];
   concept_ids: string[];
+  seo?: { title?: string; primary_keyword?: string };
   [key: string]: unknown;
 }
 
@@ -128,6 +144,7 @@ export interface StageSequenceEntry {
 
 export interface IntentProfile {
   default_stage_sequence: StageSequenceEntry[];
+  problem_statement_frame?: string;
   [key: string]: unknown;
 }
 
@@ -346,6 +363,27 @@ export function checkA7_CrossDagConsistency(atoms: CatalogueAtom[], concepts: Co
   return result('A7 cross-DAG prerequisite consistency', violations);
 }
 
+/**
+ * A8: W1.2/E10 phrase rule over atomic-catalogue.json's `seo.title` —
+ * atoms carry no per-item `evidence_level` (that field lives on practice
+ * items / PYQ bank entries, D10), so a forbidden phrase here is an absolute
+ * ban, not a licensable claim. See src/content/evidence-phrase-rule.ts
+ * (shared with check-practice-items.ts's phrase-rule check and B6 below).
+ */
+export function checkA8_SeoTitlePhraseRule(atoms: CatalogueAtom[]): CheckResult {
+  const violations: string[] = [];
+  for (const a of atoms) {
+    const hits = findForbiddenPhrases(a.seo?.title);
+    for (const hit of hits) {
+      violations.push(
+        `${a.atomic_id}: seo.title contains "${hit.phrase}" — catalogue atoms carry no evidence_level ` +
+          `to license this claim; remove the phrase (fix: reword seo.title in atomic-catalogue.json)`,
+      );
+    }
+  }
+  return result('A8 seo.title phrase rule (no unsourced "high-yield"-style claims)', violations);
+}
+
 export function runCatalogueChecks(atoms: CatalogueAtom[], concepts: ConceptLike[]): CheckResult[] {
   const conceptIds = new Set(concepts.map((c) => c.id));
   return [
@@ -356,6 +394,7 @@ export function runCatalogueChecks(atoms: CatalogueAtom[], concepts: ConceptLike
     checkA5_ConceptIdsExist(atoms, conceptIds),
     checkA6_LaFullyMapped(atoms),
     checkA7_CrossDagConsistency(atoms, concepts),
+    checkA8_SeoTitlePhraseRule(atoms),
   ];
 }
 
@@ -460,6 +499,25 @@ export function checkB5_ErrorTagsValid(profiles: IntentProfilesFile): CheckResul
   return result('B5 error_tags.existing ⊆ ErrorTag union', violations);
 }
 
+/**
+ * B6: W1.2/E10 phrase rule over intent-profiles.yml's `problem_statement_frame`.
+ * Same absolute-ban reasoning as A8 above — the four intent lanes carry no
+ * per-item evidence_level, so a forbidden phrase here can never be licensed.
+ */
+export function checkB6_ProblemStatementFramePhraseRule(profiles: IntentProfilesFile): CheckResult {
+  const violations: string[] = [];
+  for (const [intentId, profile] of Object.entries(profiles.intents ?? {})) {
+    const hits = findForbiddenPhrases(profile.problem_statement_frame);
+    for (const hit of hits) {
+      violations.push(
+        `intents.${intentId}.problem_statement_frame contains "${hit.phrase}" — intent lanes carry no ` +
+          `evidence_level to license this claim; reword problem_statement_frame in intent-profiles.yml`,
+      );
+    }
+  }
+  return result('B6 problem_statement_frame phrase rule', violations);
+}
+
 export function runIntentProfileChecks(
   profiles: IntentProfilesFile,
   catalogueModules: ReadonlySet<string>,
@@ -470,7 +528,84 @@ export function runIntentProfileChecks(
     checkB3_DifficultyMixSums(profiles),
     checkB4_ModuleProfilesMatchCatalogue(profiles, catalogueModules),
     checkB5_ErrorTagsValid(profiles),
+    checkB6_ProblemStatementFramePhraseRule(profiles),
   ];
+}
+
+// ---------------------------------------------------------------------------
+// Section B (continued) — historical-evidence.yml (W1.2/E10 D/P/S import)
+// ---------------------------------------------------------------------------
+
+export const HISTORICAL_EVIDENCE_PATH = path.join(ROOT, 'data/curriculum/gate-em/historical-evidence.yml');
+export const EXPECTED_HISTORICAL_TOPIC_COUNT = 116;
+export const HISTORICAL_EVIDENCE_ID_RE = /^[A-Z]{2,3}-\d{2}$/;
+export const HISTORICAL_EVIDENCE_CODES = ['D', 'P', 'S'] as const;
+const HISTORICAL_EVIDENCE_CODE_SET: ReadonlySet<string> = new Set(HISTORICAL_EVIDENCE_CODES);
+
+export interface HistoricalEvidenceTopic {
+  topic?: string;
+  pattern: string;
+  evidence: string;
+  [key: string]: unknown;
+}
+
+export interface HistoricalEvidenceFile {
+  schema_version?: unknown;
+  source?: unknown;
+  topics: Record<string, HistoricalEvidenceTopic>;
+  [key: string]: unknown;
+}
+
+export function loadHistoricalEvidence(filePath: string = HISTORICAL_EVIDENCE_PATH): HistoricalEvidenceFile {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(filePath, 'utf-8');
+  } catch (err) {
+    throw new IntentCatalogueParseError(filePath, err);
+  }
+  try {
+    return parseYaml(raw) as HistoricalEvidenceFile;
+  } catch (err) {
+    throw new IntentCatalogueParseError(filePath, err);
+  }
+}
+
+/**
+ * B7: historical-evidence.yml structural validation — every key matches the
+ * corpus's own `XX-##` topic-id shape, every entry has a non-empty
+ * `pattern` string, and `evidence` is one of the source's own D/P/S codes
+ * (never invented values — see the file's header for what each means and
+ * the D/P resolution rule). Also checks the locked topic count matches the
+ * 116-topic corpus import, mirroring A1's count-lock pattern for the
+ * atomic-catalogue.
+ */
+export function checkB7_HistoricalEvidenceValid(evidence: HistoricalEvidenceFile): CheckResult {
+  const violations: string[] = [];
+  const topics = evidence.topics ?? {};
+  const ids = Object.keys(topics);
+
+  if (ids.length !== EXPECTED_HISTORICAL_TOPIC_COUNT) {
+    violations.push(`expected exactly ${EXPECTED_HISTORICAL_TOPIC_COUNT} topics, found ${ids.length}`);
+  }
+
+  for (const id of ids) {
+    if (!HISTORICAL_EVIDENCE_ID_RE.test(id)) {
+      violations.push(`topic id '${id}' does not match ${HISTORICAL_EVIDENCE_ID_RE}`);
+    }
+    const entry = topics[id];
+    if (typeof entry?.pattern !== 'string' || entry.pattern.trim().length === 0) {
+      violations.push(`${id}: pattern missing or empty`);
+    }
+    if (typeof entry?.evidence !== 'string' || !HISTORICAL_EVIDENCE_CODE_SET.has(entry.evidence)) {
+      violations.push(`${id}: evidence '${String(entry?.evidence)}' is not one of {${HISTORICAL_EVIDENCE_CODES.join(', ')}}`);
+    }
+  }
+
+  return result('B7 historical-evidence.yml structural validity (116 topics, D/P/S codes)', violations);
+}
+
+export function runHistoricalEvidenceChecks(evidence: HistoricalEvidenceFile): CheckResult[] {
+  return [checkB7_HistoricalEvidenceValid(evidence)];
 }
 
 // ---------------------------------------------------------------------------
@@ -619,13 +754,15 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log('\n[check-intent-catalogue] Validating atomic-catalogue.json + intent-profiles.yml\n');
+  console.log('\n[check-intent-catalogue] Validating atomic-catalogue.json + intent-profiles.yml + historical-evidence.yml\n');
 
   let catalogue: AtomicCatalogueFile;
   let profiles: IntentProfilesFile;
+  let historicalEvidence: HistoricalEvidenceFile;
   try {
     catalogue = loadCatalogue();
     profiles = loadIntentProfiles();
+    historicalEvidence = loadHistoricalEvidence();
   } catch (err) {
     if (err instanceof IntentCatalogueParseError) {
       console.error(`[check-intent-catalogue] FATAL — ${err.message}\n`);
@@ -642,6 +779,7 @@ async function main(): Promise<void> {
   const results = [
     ...runCatalogueChecks(atoms, concepts),
     ...runIntentProfileChecks(profiles, catalogueModules),
+    ...runHistoricalEvidenceChecks(historicalEvidence),
   ];
 
   printTable(results);

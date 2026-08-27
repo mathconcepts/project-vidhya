@@ -79,7 +79,33 @@ export interface AuthoredItem {
    * ids by `scripts/check-practice-items.ts`.
    */
   also_tests?: string[];
+  /**
+   * Optional — W1.2/E10/D10 structured provenance for exam-relevance
+   * claims made ABOUT this item (e.g. "this is a high-yield pattern"),
+   * distinct from whether the item's ANSWER is correct (that's
+   * `verification_method`, above). D10, stated here and at its mirror in
+   * frontend/public/data/pyq-bank.json's schema (see
+   * scripts/check-practice-items.ts): `evidence_level` is the structured,
+   * enum-checked provenance field; `verification_method` remains free-text
+   * detail beneath it — the two are never rivals, and neither substitutes
+   * for the other. `directly_reviewed` is the ONLY value that licenses
+   * "high-yield" / "frequently asked" / "most repeated" / "often asked"
+   * copy on this item — see src/content/evidence-phrase-rule.ts, enforced
+   * by `scripts/check-practice-items.ts`'s phrase-rule check.
+   *   - official: stated directly in an official syllabus/exam document.
+   *   - directly_reviewed: a human directly reviewed a specific official
+   *     paper/source and confirmed the claim for THIS item.
+   *   - pattern_supported: supported by a broader reviewed pattern, but no
+   *     single source was isolated confirming this exact item.
+   *   - design_hypothesis: an authoring/product judgment call, not yet
+   *     evidenced — the honest default when no review has happened.
+   */
+  evidence_level?: 'official' | 'directly_reviewed' | 'pattern_supported' | 'design_hypothesis';
 }
+
+/** Mirrors AuthoredItem.evidence_level — the closed enum, for validators. */
+export const EVIDENCE_LEVELS = ['official', 'directly_reviewed', 'pattern_supported', 'design_hypothesis'] as const;
+export type EvidenceLevel = (typeof EVIDENCE_LEVELS)[number];
 
 const GATE_KINDS = new Set(['mcq', 'msq', 'nat']);
 
@@ -129,7 +155,8 @@ export function verificationLabelFor(method: string | undefined): LearningObject
   return method === 'wolfram_verified' ? 'cas_passed' : 'human_verified';
 }
 
-function toLearningObject(item: AuthoredItem): LearningObject {
+/** Exported for direct unit testing (mirrors verificationLabelFor above). */
+export function toLearningObject(item: AuthoredItem): LearningObject {
   return {
     id: item.id,
     nodeId: item.concept_id,
@@ -148,6 +175,8 @@ function toLearningObject(item: AuthoredItem): LearningObject {
       maxMarks: typeof item.marks === 'number' && item.marks > 0 ? item.marks : 1,
       examRelevance: DEFAULT_EXAM_RELEVANCE,
       verificationMethod: item.verification_method ?? 'authored',
+      // Additive metadata only (D10) — never read by grading.
+      evidenceLevel: item.evidence_level ?? null,
       timesServed: 0,
       ...markingPayload(item),
     },

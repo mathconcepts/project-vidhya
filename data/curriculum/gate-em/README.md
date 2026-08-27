@@ -17,6 +17,7 @@ Design doc: `docs/designs/2026-08-25-intent-driven-content-restructure.md`.
 |---|---|
 | `atomic-catalogue.json` | 203 atomic sub-topics, one per searchable student query. Fields: intent, pain point, exam intent, learning objective, expected format, question-inventory targets, prerequisite atom graph, `concept_ids` mapping onto the mastery spine. |
 | `intent-profiles.yml` | The four intent lanes (learn / clarify / solve / practice) with their stage sequences in blueprint vocabulary, plus eight module pain profiles with error-tag mappings and trap-drill briefs. |
+| `historical-evidence.yml` | W1.2/E10 import (2026-08-27): 116 market-research-corpus topic ids (`LA-01`, `CA-01`, …) → `{topic, pattern, evidence: D\|P\|S}` — the corpus's own historical-question-pattern provenance from reviewing official GATE XE-A 2021–2023 papers ONLY. A **different id scheme** from `atomic_id`/`concept_id` above — no automatic join exists. Validated by `check-intent-catalogue.ts`'s B7 check. |
 
 ## Contract
 
@@ -52,3 +53,21 @@ Design doc: `docs/designs/2026-08-25-intent-driven-content-restructure.md`.
   per-learner columns (mastery_state, attempt_count, …) were deliberately
   dropped at commit time. Learner state lives in the database behind the
   surveillance invariants.
+- **`historical-evidence.yml`'s `evidence` codes are a preparation-pattern
+  claim, never a frequency/weightage claim** — that boundary is the source
+  document's own explicit caveat (quoted verbatim in the file's header) and
+  is binding on every consumer. `D` means "a directly reviewed example was
+  visible in one of the three reviewed XE-A papers" — not "asked every
+  year" or "high-yield." Committed student-facing copy (practice-item and
+  PYQ-bank question/explanation text, this directory's own `seo.title` and
+  `problem_statement_frame` fields) may not say "high-yield" / "frequently
+  asked" / "most repeated" / "often asked" without a `directly_reviewed`
+  `evidence_level` on the specific item making the claim (W1.2/E10) —
+  enforced by `check-intent-catalogue.ts` (A8, B6) and
+  `check-practice-items.ts`, sharing one phrase list at
+  `src/content/evidence-phrase-rule.ts`. `evidence_level` (on practice items
+  / PYQ bank entries) and this file's `evidence` (D/P/S, on corpus topics)
+  are two distinct, non-overlapping vocabularies for two distinct
+  surfaces — see D10 at both `evidence_level`'s definition
+  (`src/scoring/learning-object-catalog-file.ts`) and this file's own
+  header.

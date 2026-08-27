@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FileLearningObjectCatalog } from '../learning-object-catalog-file';
+import { FileLearningObjectCatalog, toLearningObject } from '../learning-object-catalog-file';
 
 /**
  * These assert equivalence with the Postgres catalog, not just "it reads a
@@ -66,6 +66,26 @@ describe('FileLearningObjectCatalog', () => {
         p.answerIndex !== undefined || p.answerIndices !== undefined || p.answerRange !== undefined;
       expect(hasKey, `${id} has no answer key`).toBe(true);
     }
+  });
+
+  // W1.2/E10/D10 — evidence_level is additive metadata, never a grading input.
+  it('threads evidence_level into payload.evidenceLevel when present', () => {
+    const lo = toLearningObject({
+      id: 'x', concept_id: 'eigenvalues', question_type: 'mcq', marks: 1,
+      evidence_level: 'directly_reviewed',
+    });
+    expect((lo.payload as Record<string, unknown>).evidenceLevel).toBe('directly_reviewed');
+  });
+
+  it('defaults payload.evidenceLevel to null when absent (never fabricated)', () => {
+    const lo = toLearningObject({ id: 'x', concept_id: 'eigenvalues', question_type: 'mcq', marks: 1 });
+    expect((lo.payload as Record<string, unknown>).evidenceLevel).toBeNull();
+  });
+
+  it('every real committed shipped item defaults evidenceLevel to null (none authored with it yet)', async () => {
+    const item = await catalog.getById('la-eigen-trace-det-001');
+    const p = item!.payload as Record<string, unknown>;
+    expect(p.evidenceLevel).toBeNull();
   });
 
   it('every shipped answer key points inside its own options list', async () => {

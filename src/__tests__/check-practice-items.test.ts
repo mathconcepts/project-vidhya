@@ -11,6 +11,10 @@ import {
   regradeOwnAnswer,
   loadAllPracticeItemBanks,
   checkAllPracticeItems,
+  checkPhraseRule,
+  checkPyqBank,
+  loadPyqBank,
+  type PyqBankFile,
 } from '../../scripts/check-practice-items';
 import type { AuthoredItem } from '../scoring/learning-object-catalog-file';
 
@@ -129,6 +133,22 @@ describe('validateItemSchema', () => {
 
   it('rejects a nat item with an inverted answer_range', () => {
     expect(validateItemSchema(natItem({ answer_range: [7, 5] }))[0]).toMatch(/inverted/);
+  });
+
+  // W1.2/E10/D10 — evidence_level: optional structured provenance.
+  it('accepts an item with no evidence_level at all', () => {
+    expect(validateItemSchema(mcqItem())).toEqual([]);
+  });
+
+  it('accepts each of the four locked evidence_level values', () => {
+    for (const level of ['official', 'directly_reviewed', 'pattern_supported', 'design_hypothesis'] as const) {
+      expect(validateItemSchema(mcqItem({ evidence_level: level }))).toEqual([]);
+    }
+  });
+
+  it('rejects an evidence_level outside the locked four', () => {
+    const problems = validateItemSchema(mcqItem({ evidence_level: 'vibes' as never }));
+    expect(problems[0]).toMatch(/evidence_level 'vibes' is not one of/);
   });
 });
 
@@ -271,5 +291,160 @@ describe('against the real corpus', () => {
     const report = await checkAllPracticeItems();
     expect(report.problems).toEqual([]);
     expect(report.itemCount).toBeGreaterThanOrEqual(3);
+  });
+
+  it('the committed practice-item banks carry no unlicensed forbidden phrases (phrase rule, W1.2/E10)', async () => {
+    // checkAllPracticeItems already folds checkPhraseRule into report.problems
+    // for every item — this test names the property explicitly so a future
+    // regression reads as "phrase rule broke," not just "some problem
+    // appeared," if it ever does.
+    const report = await checkAllPracticeItems();
+    const phraseProblems = report.problems.filter((p) => p.includes('without evidence_level'));
+    expect(phraseProblems).toEqual([]);
+  });
+
+  it('the real PYQ bank is evidence_level schema-valid and phrase-rule clean', () => {
+    const bank = loadPyqBank();
+    expect(bank.problems.length).toBeGreaterThan(0);
+    expect(checkPyqBank(bank)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// W1.2/E10 — checkPhraseRule (shared over practice-items and PYQ-bank items)
+// ---------------------------------------------------------------------------
+
+describe('checkPhraseRule', () => {
+  it('reports nothing for clean text', () => {
+    expect(checkPhraseRule('id-1', undefined, { question_text: 'Compute the eigenvalues of A.' })).toEqual([]);
+  });
+
+  it('reports nothing when evidence_level is directly_reviewed, even with a forbidden phrase', () => {
+    expect(
+      checkPhraseRule('id-1', 'directly_reviewed', { question_text: 'This is a high-yield pattern.' }),
+    ).toEqual([]);
+  });
+
+  it('flags a forbidden phrase when evidence_level is absent', () => {
+    const problems = checkPhraseRule('id-1', undefined, { question_text: 'This is high-yield.' });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('id-1');
+    expect(problems[0]).toContain('question_text');
+    expect(problems[0]).toContain('high-yield');
+  });
+
+  it('flags a forbidden phrase when evidence_level is one of the OTHER three values', () => {
+    for (const level of ['official', 'pattern_supported', 'design_hypothesis']) {
+      const problems = checkPhraseRule('id-1', level, { question_text: 'This is often asked.' });
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toContain(`actual: "${level}"`);
+    }
+  });
+
+  it('scans every field independently and names which one', () => {
+    const problems = checkPhraseRule('id-1', undefined, {
+      question_text: 'clean',
+      solution_steps: 'This is the most repeated trap.',
+    });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('solution_steps');
+  });
+
+  it('ignores undefined fields without throwing', () => {
+    expect(checkPhraseRule('id-1', undefined, { question_text: undefined, explanation: undefined })).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// W1.2/E10 — PYQ bank schema (frontend/public/data/pyq-bank.json)
+// ---------------------------------------------------------------------------
+
+describe('checkPyqBank', () => {
+  function pyqBank(problems: PyqBankFile['problems']): PyqBankFile {
+    return { version: 1, problems };
+  }
+
+  it('passes a clean bank', () => {
+    const bank = pyqBank([{ id: 'la-001', question_text: 'Find the rank.', explanation: 'Row-reduce.' }]);
+    expect(checkPyqBank(bank)).toEqual([]);
+  });
+
+  it('accepts each of the four locked evidence_level values', () => {
+    for (const level of ['official', 'directly_reviewed', 'pattern_supported', 'design_hypothesis']) {
+      const bank = pyqBank([{ id: 'la-001', question_text: 'x', evidence_level: level }]);
+      expect(checkPyqBank(bank)).toEqual([]);
+    }
+  });
+
+  it('rejects an evidence_level outside the locked four', () => {
+    const bank = pyqBank([{ id: 'la-001', question_text: 'x', evidence_level: 'vibes' }]);
+    const problems = checkPyqBank(bank);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('la-001');
+    expect(problems[0]).toContain("evidence_level 'vibes' is not one of");
+  });
+
+  it('flags a forbidden phrase in question_text without directly_reviewed', () => {
+    const bank = pyqBank([{ id: 'la-001', question_text: 'This is a frequently asked question.' }]);
+    const problems = checkPyqBank(bank);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('la-001');
+    expect(problems[0]).toContain('frequently asked');
+  });
+
+  it('flags a forbidden phrase in explanation too', () => {
+    const bank = pyqBank([{ id: 'la-001', question_text: 'clean', explanation: 'This is often asked in GATE.' }]);
+    expect(checkPyqBank(bank)).toHaveLength(1);
+  });
+
+  it('does not flag a forbidden phrase when evidence_level is directly_reviewed', () => {
+    const bank = pyqBank([
+      { id: 'la-001', question_text: 'This is high-yield.', evidence_level: 'directly_reviewed' },
+    ]);
+    expect(checkPyqBank(bank)).toEqual([]);
+  });
+
+  it('falls back to a positional label when id is missing', () => {
+    const bank = pyqBank([{ id: '', question_text: 'This is often asked.' } as never]);
+    const problems = checkPyqBank(bank);
+    expect(problems[0]).toContain('problems[0]');
+  });
+});
+
+describe('loadPyqBank', () => {
+  let tmpDir: string;
+
+  it('loads a well-formed bank', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-practice-items-pyq-'));
+    try {
+      const file = path.join(tmpDir, 'pyq-bank.json');
+      fs.writeFileSync(file, JSON.stringify({ problems: [{ id: 'la-001' }] }));
+      const bank = loadPyqBank(file);
+      expect(bank.problems).toHaveLength(1);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('throws loudly on malformed JSON', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-practice-items-pyq-'));
+    try {
+      const file = path.join(tmpDir, 'pyq-bank.json');
+      fs.writeFileSync(file, '{ not json');
+      expect(() => loadPyqBank(file)).toThrow();
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('throws when the file parses but has no problems array', () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-practice-items-pyq-'));
+    try {
+      const file = path.join(tmpDir, 'pyq-bank.json');
+      fs.writeFileSync(file, JSON.stringify({ version: 1 }));
+      expect(() => loadPyqBank(file)).toThrow(/no "problems" array/);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

@@ -45,6 +45,7 @@ const MarketingLanding = lazy(() => import('@/pages/app/MarketingLanding'));
 const MaterialsPage = lazy(() => import('@/pages/app/MaterialsPage'));
 const SmartPracticePage = lazy(() => import('@/pages/app/SmartPracticePage'));
 const PracticeAttemptPage = lazy(() => import('@/pages/app/PracticeAttemptPage'));
+const AttemptSkipDrillPage = lazy(() => import('@/pages/app/AttemptSkipDrillPage'));
 const CheckpointQuizPage = lazy(() => import('@/pages/app/CheckpointQuizPage'));
 const PlannedSessionPage = lazy(() => import('@/pages/app/PlannedSessionPage'));
 const WarmupPage = lazy(() => import('@/pages/app/WarmupPage'));
@@ -171,6 +172,8 @@ export default function App() {
           <Route path="materials" element={<MaterialsPage />} />
           <Route path="smart-practice" element={<SmartPracticePage />} />
           <Route path="attempt/:objectId" element={<PracticeAttemptPage />} />
+          {/* W3.2 — the attempt/skip drill; the mock counterfactual's single CTA links here. */}
+          <Route path="attempt-skip-drill" element={<AttemptSkipDrillPage />} />
           <Route path="checkpoint" element={<CheckpointQuizPage />} />
           <Route path="planned" element={<PlannedSessionPage />} />
           {/* T8 (A8) — diagnostic warmup onboarding: 4-6 curated LA spine

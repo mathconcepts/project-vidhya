@@ -42,8 +42,9 @@
  * Usage:
  *   npx tsx scripts/check-intent-catalogue.ts               # blocking (default)
  *   npx tsx scripts/check-intent-catalogue.ts --report-only  # prints, exits 0
+ *   npx tsx scripts/check-intent-catalogue.ts --pain-points  # register report, exits 0
  *
- * Exit: 0 = every check passes (or --report-only was passed).
+ * Exit: 0 = every check passes (or --report-only / --pain-points was passed).
  *       1 = at least one check has violations, blocking.
  */
 
@@ -528,6 +529,60 @@ function printTable(results: CheckResult[]): void {
   }
 }
 
+/**
+ * The register report behind `--pain-points`.
+ *
+ * `ProblemStatementBlock` opens every mapped concept page with a module's
+ * `primary_pain_point`, so the tone of those strings is read by a student far
+ * more often than by anyone editing them. Nobody can judge a register they
+ * cannot see in one sitting, and reading 26 rows out of a 203-atom JSON file by
+ * hand is exactly the review that does not happen. This prints them in the
+ * order a student would meet them.
+ *
+ * Report-only by construction: it returns a string and runs no checks, so it
+ * cannot become a rule about what a pain point is allowed to say. Register is a
+ * judgment call — the report exists to inform one, not to automate it.
+ *
+ * `module` is a parameter rather than a hardcoded 'linear-algebra' so the same
+ * pass can be run on the next module without a second, drifting copy of it.
+ */
+export function renderPainPointReport(atoms: CatalogueAtom[], module = 'linear-algebra'): string {
+  const inModule = atoms
+    .filter((a) => a.module === module)
+    // Page order: `sequence` is the catalogue's own ordering field; atomic_id
+    // is the tiebreak so a missing sequence degrades to a stable order rather
+    // than an arbitrary one.
+    .sort((a, b) => {
+      const as = typeof a.sequence === 'number' ? a.sequence : Number.MAX_SAFE_INTEGER;
+      const bs = typeof b.sequence === 'number' ? b.sequence : Number.MAX_SAFE_INTEGER;
+      return as !== bs ? as - bs : a.atomic_id.localeCompare(b.atomic_id);
+    });
+
+  const lines: string[] = [];
+  lines.push(`Pain-point register — module '${module}' (${inModule.length} atom(s), page order)`);
+  lines.push('');
+
+  if (inModule.length === 0) {
+    lines.push(`  (no atoms with module === '${module}' in the catalogue)`);
+    lines.push('');
+    return lines.join('\n');
+  }
+
+  for (const a of inModule) {
+    lines.push(`${a.atomic_id}  ${String(a.subtopic ?? '(no subtopic)')}`);
+    lines.push(`    ${String(a.primary_pain_point ?? '(no primary_pain_point)')}`);
+    lines.push('');
+  }
+
+  // The one count worth stating out loud: a pain point repeated across every
+  // atom is a module-level generality being rendered as a per-page diagnosis,
+  // which is a register finding in itself.
+  const distinct = new Set(inModule.map((a) => String(a.primary_pain_point ?? '')));
+  lines.push(`${inModule.length} atom(s), ${distinct.size} distinct pain-point string(s).`);
+  lines.push('');
+  return lines.join('\n');
+}
+
 function printViolations(results: CheckResult[]): void {
   for (const r of results) {
     if (r.pass) continue;
@@ -543,6 +598,26 @@ function printViolations(results: CheckResult[]): void {
 
 async function main(): Promise<void> {
   const reportOnly = process.argv.includes('--report-only');
+  const painPoints = process.argv.includes('--pain-points');
+
+  // The register report is additive and terminal: it prints and exits 0 without
+  // running a single check, so it can never change what this gate blocks on.
+  if (painPoints) {
+    let catalogue: AtomicCatalogueFile;
+    try {
+      catalogue = loadCatalogue();
+    } catch (err) {
+      if (err instanceof IntentCatalogueParseError) {
+        console.error(`[check-intent-catalogue] FATAL — ${err.message}\n`);
+        process.exit(1);
+        return;
+      }
+      throw err;
+    }
+    console.log(`\n${renderPainPointReport(catalogue.atoms ?? [])}`);
+    process.exit(0);
+    return;
+  }
 
   console.log('\n[check-intent-catalogue] Validating atomic-catalogue.json + intent-profiles.yml\n');
 

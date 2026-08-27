@@ -3,7 +3,14 @@
  *
  * Covers: flag-off renders nothing, unmapped concept renders nothing
  * (honest reduced frame — never a broken block), and a mapped concept
- * renders pain point + exam intent + PYQ sentence + intent framing line.
+ * renders exam intent + pain point + PYQ sentence + intent framing line.
+ *
+ * The ORDER case is not a layout test. The 2026-08-27 plan's P0 tone pass
+ * (amendment D23) moved the exam intent above the pain point and retitled
+ * the pain-point eyebrow, because all 26 Linear Algebra concepts share one
+ * pain-point string and it was opening every page under "Where marks die on
+ * this topic". Reordering is invisible in a diff of a JSX return, so the
+ * decision is asserted here rather than left to be re-litigated.
  *
  * The zero-pyq_count "omit the PYQ sentence" case lives in
  * ProblemStatementBlock.zeroPyq.test.tsx — `vi.mock` calls are hoisted to
@@ -27,7 +34,7 @@ describe('ProblemStatementBlock', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders the pain point, exam intent, PYQ count and intent framing line for a mapped concept', () => {
+  it('renders the exam intent, pain point, PYQ count and intent framing line for a mapped concept', () => {
     const slice = INTENT_SLICES['eigenvalues'];
     expect(slice).toBeDefined(); // sanity: the fixture this test depends on actually exists
     render(<ProblemStatementBlock conceptId="eigenvalues" enabled />);
@@ -41,5 +48,25 @@ describe('ProblemStatementBlock', () => {
     expect(
       screen.getByText("Most students come here to practise real questions — that's how this page opens."),
     ).toBeInTheDocument();
+  });
+
+  it('renders the exam intent BEFORE the pain point — the actionable fact ahead of the wound', () => {
+    const slice = INTENT_SLICES['eigenvalues'];
+    expect(slice).toBeDefined();
+    render(<ProblemStatementBlock conceptId="eigenvalues" enabled />);
+
+    const block = screen.getByTestId('problem-statement-block');
+    const order = Array.from(block.querySelectorAll('p')).map((p) => p.textContent);
+    expect(order.indexOf(slice.exam_intent)).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf(slice.exam_intent)).toBeLessThan(order.indexOf(slice.pain_point));
+  });
+
+  it('labels the pain point as common slips, not as marks dying', () => {
+    // The loss frame is what the tone pass removed; an eyebrow is the easiest
+    // place for it to come back, because it reads as a heading rather than copy.
+    render(<ProblemStatementBlock conceptId="eigenvalues" enabled />);
+    expect(screen.getByText('Common slips on this topic')).toBeInTheDocument();
+    expect(screen.getByText('What GATE actually asks')).toBeInTheDocument();
+    expect(screen.queryByText(/marks die/i)).toBeNull();
   });
 });

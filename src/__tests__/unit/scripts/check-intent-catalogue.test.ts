@@ -28,6 +28,7 @@ import {
   checkB3_DifficultyMixSums,
   checkB4_ModuleProfilesMatchCatalogue,
   checkB5_ErrorTagsValid,
+  renderPainPointReport,
   runCatalogueChecks,
   runIntentProfileChecks,
   loadCatalogue,
@@ -426,5 +427,59 @@ describe('check-intent-catalogue — real committed data', () => {
     const result = checkA7_CrossDagConsistency(atoms, concepts);
     expect(result.pass).toBe(true);
     expect(result.count).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// --pain-points register report
+// ---------------------------------------------------------------------------
+
+describe('check-intent-catalogue — --pain-points register report', () => {
+  it('lists one block per atom of the module, in page order', () => {
+    const atoms: CatalogueAtom[] = [
+      { ...buildCleanAtoms()[0], atomic_id: 'AT-002', module: 'la', sequence: 2, subtopic: 'Second', primary_pain_point: 'Second pain.' },
+      { ...buildCleanAtoms()[0], atomic_id: 'AT-001', module: 'la', sequence: 1, subtopic: 'First', primary_pain_point: 'First pain.' },
+      { ...buildCleanAtoms()[0], atomic_id: 'AT-900', module: 'other', sequence: 1, subtopic: 'Elsewhere', primary_pain_point: 'Other pain.' },
+    ];
+
+    const report = renderPainPointReport(atoms, 'la');
+
+    expect(report).toContain('AT-001  First');
+    expect(report).toContain('First pain.');
+    expect(report).toContain('AT-002  Second');
+    // Page order, not file order — the point of the report is reading the
+    // strings in the sequence a student would meet them.
+    expect(report.indexOf('AT-001')).toBeLessThan(report.indexOf('AT-002'));
+    // Other modules are not in this pass.
+    expect(report).not.toContain('AT-900');
+    expect(report).toContain('2 atom(s), 2 distinct pain-point string(s).');
+  });
+
+  it('counts distinct strings, which is what makes a shared module-level pain point visible', () => {
+    const atoms: CatalogueAtom[] = [1, 2, 3].map((n) => ({
+      ...buildCleanAtoms()[0],
+      atomic_id: `AT-00${n}`,
+      module: 'la',
+      sequence: n,
+      subtopic: `Topic ${n}`,
+      primary_pain_point: 'The same sentence on every page.',
+    }));
+
+    expect(renderPainPointReport(atoms, 'la')).toContain('3 atom(s), 1 distinct pain-point string(s).');
+  });
+
+  it('says so plainly when the module has no atoms, rather than printing an empty report', () => {
+    const report = renderPainPointReport(buildCleanAtoms(), 'no-such-module');
+    expect(report).toContain("no atoms with module === 'no-such-module'");
+  });
+
+  it('reports the committed Linear Algebra register the P0 tone pass was run against', () => {
+    // Not a rule about what a pain point may say — a tripwire on the finding
+    // itself. All 26 LA atoms currently share one string, which is why the
+    // DPS block no longer opens on it. If that ever stops being true, the
+    // tone pass is worth re-running rather than assumed still valid.
+    const report = renderPainPointReport(loadCatalogue(CATALOGUE_PATH).atoms, 'linear-algebra');
+    expect(report).toMatch(/^Pain-point register — module 'linear-algebra' \(26 atom\(s\), page order\)/);
+    expect(report).toContain('26 atom(s), 1 distinct pain-point string(s).');
   });
 });

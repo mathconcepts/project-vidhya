@@ -914,3 +914,72 @@ all four:
 Plan status: **APPROVED**. Implementation begins with P0 (flag-on + tone
 pass + ci:demo-rails lanes-on assertion), then P1 per W1 with the E/D
 amendments binding.
+
+---
+
+## IMPLEMENTATION RECORD (2026-08-27)
+
+The core plan (P0–P3) shipped on `claude/autoplan-content-readiness-4vfhcn`,
+~30 commits over the plan-doc revisions (`019c283..4e8cadf`, unchanged
+above). Base: `f43968a` (main). Head: `61ad70a`.
+
+| Phase | Commits | What shipped |
+|---|---|---|
+| **P0** | `b3b92ae..e96d805` | `VIDHYA_INTENT_LANES=on` landed in `render.yaml` + a `ci:demo-rails` lanes-on assertion (E15); the DPS tone pass reordering LA `pain_point` copy so exam-intent leads, not the wound (decision 23) |
+| **P1a** | `7eb2454..352b7de` | D5 writer refuses to clobber verified practice items; D6 `ci:practice-items` wired into `ci.yml` + D12 `npm run ci` aggregate; D7 five marking truths collapsed into `src/exams/marking-constants.ts`; W1.1 `assessment_contracts` (050) + `MarkingStrategy` registry seam (D11); D17 JEE Advanced paper exercise + D15 MarkingStrategy docs |
+| **P1b** | `ee4cf43..b5a8127` | E1 durable `attempt_facts` ledger (051) + contract/kind stamping on `Attempt`; E7 contract + params snapshot pinned at session creation (052) — grading reads the pin, never resolve-at-submit |
+| **P1c** | `73ea8d3..b65a4cf` | W1.6 anti-gaming guards holding a promotion for operator review; W3.6/E9 media QA at pre-encoding RGBA frames + draw-time bounding-box overlap checks |
+| **P1d** | `3a73bcd` | W1.2/E10/D10 evidence labels as structured claims (`evidence_level` required field, not grep-only) + D/P/S corpus import for the 116 topics |
+| **P2a** | `ea3afbc..be0ebe8` | W3.2 mock counterfactual as a pure function + per-question decomposition persisted and served; attempt/skip drill endpoints + `/attempt-skip-drill` page (four-beat copy, `COUNTERFACTUAL_ITEM_CAP=3`) |
+| **P2b** | `fa4149c..66df9de` | W2.5 `guided_walkthrough` grows the optional `branches` field (D3's pinned literal) rendered as a sequential wizard; `TheoremWizardPage` + `DistributionSelectorPage` migrated onto the data format (D2); the first lesson-embedded branching tree (Green/Stokes/Gauss) |
+| **P2c** | `470d09a..5b05082` | W3.4/E4 `ErrorTag` extended 6→13 members, full lockstep (migration 053, `ERROR_TAGS` mirror, `KNEW_IT_TAGS` completeness test); W3.4/E2 failure-tagged mcq distractors, server-only end-to-end (migration 054) |
+| **P2d** | `0cd2697..974797e` | W2.1/E11 template families + merged sequence codegen with explicit precedence; W2.2/E12 deterministic per-stage anchor ids (`hash(concept_id, stage_id, ordinal, template_version)`) |
+| **P3a** | `16f1b9c..9d64286` | W1.3 quality-gate ledger, five named gates (migration 055); W1.3/E8 enforcement at promotion and DB serving, scoped to `generation_run_id` provenance; D4 item-level answer-key review queue (`/admin/review-queue`, `BulkApprovePanel` pattern) |
+| **P3b** | `4c5ef0e..61ad70a` | D15 `docs/ops/content-verification-runbook.md`; W1.3 operator-gate refusal ordering fix (checked before the pool); `practice_item_specs[]` wired into the batch orchestrator, closing the runbook's §3.2 launch-path gap — the runbook's gap note was deleted and replaced with the real path |
+
+**Final numbers:** backend 4,138 tests / frontend 634 tests / 15 CI gates
+(`npm run ci` aggregate) / migrations 050–055 (`assessment_contracts`,
+`attempt_facts`, `session_contract_pin`, `attempt_error_tags_extend`,
+`generated_problems_distractor_tags`, `content_gate_ledger`).
+
+### What now waits on the operator
+
+Everything code/data-shaped that the agent could build is built. Four
+things only a human (or a human-provisioned credential) can move forward:
+
+1. **Merge PR #129 → Render deploys → the flag-on demo goes live.** P0's
+   `VIDHYA_INTENT_LANES=on` is committed in `render.yaml` but does nothing
+   for a real visitor until the PR lands on `main` and Render's auto-deploy
+   picks it up (~2–5 min per CLAUDE.md's Deploy Configuration).
+2. **A provider key in the launch environment → run the 50-item anatomy
+   pilot per `docs/ops/content-verification-runbook.md` → record
+   minutes-per-item + error rate into the runbook's §6 → wave 1.** Per E16
+   (clock honesty), live generation has never run in this repo's
+   environments — the 6-week/300-item kill clock (§7 of this plan, also
+   runbook §7) starts when a working `GEMINI_API_KEY` (+ a distinct
+   second-provider key for mcq/msq consensus, + `WOLFRAM_APP_ID` for nat)
+   exists in the operator's environment, not before. The launch path itself
+   (`POST /api/admin/runs` → `dispatchPracticeItemMode` → the shared batch
+   orchestrator) is real and tested (P3b); only the credential and the
+   sitting at `/admin/review-queue` are missing.
+3. **W-A activation push.** The plan's agent-buildable pages — (a) publish
+   the LA sub-topic pages as indexable public pages using the catalogue's
+   existing SEO fields, (b) one honest "what this is" landing section — are
+   a follow-up PR after this one merges, not part of this branch. (c),
+   sharing verified solutions into GATE Overflow / r/GATEtard, stays
+   operator-timed per the plan.
+4. **The intent-profiles proposed-tag semantic mapping decision (P2c
+   deviation note).** E4's spec called for moving
+   `data/curriculum/gate-em/intent-profiles.yml`'s `error_tags.proposed`
+   entries to `existing` wherever they matched a newly-added `ErrorTag`.
+   Checked in commit `470d09a`: none of the proposed strings
+   (`over-calculation`, `condition-check`, `orientation`,
+   `distribution-selection`, etc.) match any of the 7 new `ErrorTag` names,
+   so nothing was moved — left unchanged rather than inventing a mapping.
+   Whether those proposed strings become their own future `ErrorTag`
+   members, get renamed onto an existing one, or stay proposed forever is
+   an open call an operator should make, not a default the code picked.
+
+The gated-expansions table (§4 "Sequencing — core plan + gated expansions")
+is unchanged by this record — every item there still waits on its named
+data or activation gate, none of which this branch's work opens on its own.

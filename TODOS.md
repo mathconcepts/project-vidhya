@@ -299,3 +299,154 @@ of in-flight runs is structurally unaffected. What remains open is only the
 original trigger: nothing populates `config.target.practice_item_specs` yet,
 so the first real launch caller should re-verify end-to-end against a live
 provider config.
+
+## `intent-profiles.yml`'s proposed error-tag strings never got a mapping decision
+
+**Trigger:** before anyone claims the W3.4/E4 `ErrorTag` extension "covers" the
+market-study's error taxonomy, or the next time an `ErrorTag` union grows.
+
+**What:** `data/curriculum/gate-em/intent-profiles.yml`'s `error_tags.proposed`
+lists (`over-calculation`, `condition-check`, `orientation`,
+`distribution-selection`, `rounding`, `stopping-condition`, `definition-confusion`,
+and others across the 8 profiles) were never moved to `existing`, and no
+decision was recorded on what should happen to them.
+
+**Why it's still open:** E4 asked for exactly this move wherever a proposed
+string matched one of the 7 new `ErrorTag` members
+(`method_selection`/`representation`/`mode_msq`/`mode_nat_entry`/
+`time_pressure`/`risk_decision`/`prerequisite`). Checked in commit `470d09a`
+(`docs/designs/2026-08-27-content-readiness-market-research-integration.md`,
+IMPLEMENTATION RECORD §"P2c"): none of the proposed strings match any new
+member by name, so nothing moved — correctly, since inventing a mapping would
+have been worse than leaving it undecided. But that leaves the proposed list
+sitting there unresolved: some of those strings (e.g. `condition-check`,
+`definition-confusion`) look like plausible synonyms for tags that DO exist
+now, and an operator, not a pattern-match, should decide synonym-vs-distinct
+per string.
+
+**Where to start:** `src/core/interfaces.ts`'s `ErrorTag` union is the lockstep
+anchor (migration `053`, `ERROR_TAGS` mirror in `scripts/check-intent-catalogue.ts`,
+`KNEW_IT_TAGS` in `src/readiness/mock-to-marks.ts` — see that file's
+union-completeness test for what a new member must touch). Walk each proposed
+string against the 13 current tags one at a time: either it's a synonym (drop
+it from `proposed`, tag content with the existing member) or it names a real
+14th gap (open a new plan amendment — do not add it silently, per the same D9
+discipline that classified `mode_msq` explicitly rather than defaulting it).
+
+**Deferred from:** `docs/designs/2026-08-27-content-readiness-market-research-integration.md`
+core-plan wrap-up, 2026-08-27, branch `claude/autoplan-content-readiness-4vfhcn`.
+
+## No DB-backed SQL tests for `markRunStatus` / the budget-fallback COALESCE
+
+**Trigger:** before trusting `generation_runs.status` reconciliation or
+`budget_remaining_usd` under a real Postgres instance for the first time (i.e.
+before or during the W3.5 pilot, since both sit on the pilot's launch path).
+
+**What:** two SQL-shaped pieces of P3's batch-orchestrator wiring
+(`docs/designs/2026-08-27-content-readiness-market-research-integration.md`
+IMPLEMENTATION RECORD §"P3b", commit `d114fec`) are covered only by mocked-pool
+unit tests, never against a real database:
+
+- `src/generation/run-orchestrator.ts`'s `markRunStatus()` — a bare
+  `UPDATE ... SET status = $2 ... WHERE id = $1 AND status = 'running'`. The
+  `WHERE status = 'running'` guard (so this can never resurrect a run some
+  other path, e.g. an operator abort, already terminalized) has never been
+  exercised against real Postgres row-locking/visibility semantics.
+- `src/generation/batch/pg-persistence.ts`'s `BUDGET_REMAINING_SQL` — a
+  `COALESCE(config->>'budget_remaining_usd', ...)` expression whose fallback
+  to `config.quota.max_cost_usd` (replacing a hardcoded $100 default) was the
+  actual bug fix in `d114fec`. A mocked pool asserts the query STRING; it
+  cannot catch a JSONB-path typo or an operator-precedence mistake the way a
+  real `COALESCE` evaluation would.
+
+**Why it's still open:** the full suite (4,138 backend tests as of this
+branch) runs against mocked `pg.Pool` instances everywhere in this module —
+there is no integration-test harness against a live Postgres in CI today
+(the closest is `docker-compose.yml`'s local parity stack, which is manual).
+Writing this properly means standing up that harness, or at minimum a
+targeted `docker compose`-gated test file, which is bigger than this branch's
+scope.
+
+**Where to start:** `docker-compose.yml` already gives a real Postgres+pgvector
+locally; a new `*.integration.test.ts` (gated behind a `DATABASE_URL` env
+check, skipped when absent, matching the pattern several `__tests__` files
+already use for DB-optional suites) exercising `markRunStatus` against a
+seeded `generation_runs` row and `BUDGET_REMAINING_SQL` against a row with and
+without `config.budget_remaining_usd` set would close this without touching
+CI's default (mocked, fast) path.
+
+**Deferred from:** `docs/designs/2026-08-27-content-readiness-market-research-integration.md`
+core-plan wrap-up, 2026-08-27, branch `claude/autoplan-content-readiness-4vfhcn`.
+
+## W-A activation-push pages (a)-(b) are a follow-up PR, not landed here
+
+**Trigger:** once PR #129 (this branch) merges and the demo is confirmed live
+with `VIDHYA_INTENT_LANES=on`.
+
+**What:** the plan's W-A minimal activation push has three parts; only the
+mechanism this branch shipped (the flag-on demo itself, P0) is live. Still to
+build, agent-side:
+
+- (a) publish the LA sub-topic pages as indexable public pages, using the
+  intent catalogue's existing representative queries / SEO fields — per the
+  plan, "data that has sat dormant through two plans."
+- (b) one honest "what this is" landing section naming the actual problem
+  statement (mock counterfactual + method selection + verified practice), not
+  generic ed-tech copy.
+
+(c) — sharing verified solutions into GATE Overflow / r/GATEtard — stays
+operator-timed and is explicitly not agent work, per the plan.
+
+**Why:** §7 metric 4 (the activation gate: ≥50 weekly-active students) is what
+unlocks every gated expansion in the plan (W3.1 mode readiness, W3.3
+remediation, W3.7 calibration, W3.8 triage/re-entry, W2.3/W2.4/W2.6 deltas).
+Without real traffic to the now-live demo, that gate never opens, and the plan
+says so explicitly rather than pretending artifact-completion is the same as
+activation.
+
+**Where to start:** `data/curriculum/gate-em/` already carries the
+representative-query / SEO fields the plan references (see
+`template-families.yml` and the intent catalogue's own schema); the LA
+sub-topic page shell exists in `frontend/src/pages/app/` under the Knowledge
+Shell — check `KnowledgeHomePage.tsx`'s routing for the nearest existing
+pattern to extend rather than a new page type.
+
+**Deferred from:** `docs/designs/2026-08-27-content-readiness-market-research-integration.md`
+core-plan wrap-up, 2026-08-27, branch `claude/autoplan-content-readiness-4vfhcn`
+(plan's W-A workstream, §"Minimal activation push").
+
+## `attempt_facts.skill_id` is always null on mock-exam writes — topic accuracy needs a join
+
+**Trigger:** before extending `src/gbrain/topic-accuracy.ts` to a NEW
+attempt-writing surface, or the next time someone assumes `attempt_facts`
+alone answers a per-concept question.
+
+**What:** `src/api/mock-exam-routes.ts`'s per-question `attempt_facts` write
+(the W3.2 counterfactual's evidence source) always sets `skillId: null`,
+because a mock question carries only a coarse `topic` column, never a
+concept id. `src/gbrain/topic-accuracy.ts` works around this today with a
+`LEFT JOIN` against `pyq_questions.topic` / `generated_problems.topic` by
+`object_id`, dropping any row that matches neither (documented in that
+file's header comment).
+
+**Why it's a gap, not a bug:** the join is correct and tested, but it means
+"per-topic accuracy" and "per-concept (`skill_id`) accuracy" are two
+different queries with two different reliability profiles forever, unless
+mock questions gain a real concept id. Quiz-session and practice-item
+attempts (which DO carry `skill_id` natively) don't need the join at all —
+only the mock-exam lane does, and that asymmetry is easy to forget when
+writing the next consumer of `attempt_facts`.
+
+**Where to start:** native skill ids on mock questions would need
+`mock_exams`' generated question set to carry a `concept_id` alongside
+`topic` (the questions are drawn from `pyq_questions` / `generated_problems`
+at exam-build time, both of which already have `concept_id` in some form —
+see migration `044_pyq_concept_id.sql`), then `mock-exam-routes.ts`'s
+`AttemptFact` construction threads it through instead of hardcoding `null`.
+Until then, any new per-concept aggregate over `attempt_facts` should follow
+`topic-accuracy.ts`'s join pattern rather than trusting `skill_id` to be
+populated for every row.
+
+**Deferred from:** `docs/designs/2026-08-27-content-readiness-market-research-integration.md`
+core-plan wrap-up, 2026-08-27, branch `claude/autoplan-content-readiness-4vfhcn`
+(flagged in the plan's P2a work, `src/gbrain/attempt-facts.ts`).

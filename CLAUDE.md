@@ -989,6 +989,187 @@ assert something false.
 
 **Tests:** backend 3,400 → **3,640** (302 files). **CI gates 14 → 15.**
 
+### Content readiness core plan (v4.37.0 scope, PR #129)
+
+Closes the core plan (P0–P3) of
+`docs/designs/2026-08-27-content-readiness-market-research-integration.md`
+— see that doc's **IMPLEMENTATION RECORD** appendix for the full commit-SHA
+breakdown per phase. Full detail below assumes that doc's vocabulary
+(W1/W2/W3 workstreams, E/D amendments).
+
+**Assessment contract + `MarkingStrategy` seam (W1.1/D11/E6/E7/D7).**
+`src/exams/marking-constants.ts` is now the ONE marking truth — the five
+prior parallel statements (`deterministic-scorer.ts` defaults,
+`exam-profile.ts:GATE_EM_MARKING_TABLE`, `exam-catalog.ts:marking_table`,
+`samples/gate-mathematics.ts:marking_scheme`, the `exam-profile-schema.md`
+prose table) are deleted or re-export from it. `assessment_contracts`
+(migration 050) is the versioned, DB-backed override — `(exam, paper,
+year)` key, per-question-type `marking_strategy` id + params JSONB,
+`official_source_url`, `verified_at`; `src/exams/assessment-contract-loader.ts`
+resolves it with a 60s-TTL cache beside `exam-loader.ts`'s pattern. DB-less
+or missing-row deploys fall back to the compiled constant and grade
+honestly stamped `gate-2026+compiled` — a distinguishable version, never a
+silent substitution. `src/scoring/marking-strategy.ts` is the registered
+seam (`MarkingStrategy` interface) + `src/scoring/marking-strategy-contract.ts`
+(the EXTENDING.md-style contract test every strategy must pass), entered in
+`seam-registry.json`; `GateDeterministicScorer` is the `gate_2026` strategy.
+`mock_exams`/`quiz_sessions` pin `contract_version` + a params snapshot at
+session creation (migration 052) — grading, including idempotent retries,
+reads the pinned snapshot, never resolve-at-submit.
+
+**`attempt_facts` ledger (E1, migration 051).** The durable per-attempt row
+the repo never had: `attempt_dedup` is prunable, `xp_events` skips skipped
+attempts and stores no correctness/kind, mock analysis was one aggregate
+blob. `src/gbrain/attempt-facts.ts` — `writeAttemptFactIn()` inside
+`PgStudentModel.update()`'s open transaction via a SAVEPOINT (a telemetry
+failure can never take the graded attempt down with it); `recordAttemptFacts()`
+fire-and-forget on the shared pool for grading paths that never reach
+`StudentModel.update()` (every mock-exam question, skipped quiz items).
+Columns: student/object/ts, `question_kind`, `marks_earned`/`marks_max`,
+`skipped`, `contract_version`, `latency_bucket` (4 labels, never raw ms),
+`skill_id`. DB-less returns 0, never throws.
+
+**Anti-gaming promote guards (W1.6).** Pure functions over `attempt_facts`
+cohort/experiment aggregates only (never per-student): promotion routes to
+operator review when immediate lift pairs with flat delayed retention, MCQ
+accuracy rises while NAT falls, or time-on-task drops while errors rise.
+
+**`ErrorTag` 13-tag union + failure-tagged distractors (W3.4/E4/E2/D9).**
+`src/core/interfaces.ts`'s `ErrorTag` grows from 6 to 13
+(`method_selection`, `representation`, `mode_msq`, `mode_nat_entry`,
+`time_pressure`, `risk_decision`, `prerequisite` added) — lockstep across
+migration `053_attempt_error_tags_extend.sql` (guarded CHECK swap, the
+v4.36 CREATE-POLICY idiom), the `ERROR_TAGS` mirror + tripwire test in
+`scripts/check-intent-catalogue.ts`, and `src/readiness/mock-to-marks.ts`'s
+`KNEW_IT_TAGS` (mode_msq/mode_nat_entry/time_pressure/risk_decision = knew
+it — exam-craft, not a knowledge gap; method_selection/prerequisite/
+representation = didn't) with a union-completeness test. `rendering/lesson-
+enrichment.ts`'s unrelated error-type union is declared OUT of this
+lockstep, cross-referenced at both sites. Distractor tags: `src/gbrain/
+marking-derivation.ts`'s `deriveMarking()` maps each mcq distractor to its
+failure hypothesis, stored in `generated_problems.distractor_failure_tags`
+(migration 054, nullable JSONB) — **server-only**, never selected into
+`GET /api/practice/item/:id`'s render-safe view (leak test extended), tags
+keyed against canonical POST-shuffle indices.
+
+**Mock counterfactual + attempt/skip drill (W3.2, the most student-visible
+item in the plan).** `src/readiness/attempt-counterfactual.ts` — a NEW pure
+function computing leftOnTable per skipped/attempted question from the
+per-question mock decomposition (`mock_exams.analysis` now carries `{id,
+kind, marks, earned, skipped}` per question) + the contract's break-even p;
+legacy rows without the decomposition degrade to headline-only (tested).
+`frontend/src/components/app/AttemptCounterfactual.tsx` renders the locked
+four-beat copy contract (earned → knewIt → recoverable-through-decisions →
+one CTA), `COUNTERFACTUAL_ITEM_CAP = 3` with the rest collapsed, no receipt
+border, student register only ("−⅔ of a mark", never raw EV). `src/api/
+attempt-skip-drill-routes.ts` + `frontend/src/pages/app/AttemptSkipDrillPage.tsx`
+at `/attempt-skip-drill` — 5-item drill, equal-weight 44px Attempt/Skip
+buttons, green confirms a correct skip; <5 eligible marked items → honest
+422 (quiz-pool pattern).
+
+**Branching `guided_walkthrough` (W2.5/D1/D2/D3).** No new `InteractiveKind`
+— `guided_walkthrough` grows an optional additive `branches` field (`v: 1`,
+D3's pinned literal: `nodes[]` with `question`/`options[]{label,next}`,
+`leaves[]` with `method`/`reason`/`best`), rendered by
+`frontend/src/components/lesson/interactives/GuidedWalkthrough.tsx` as a
+sequential wizard (one question card, full-width 44px choices, breadcrumb)
+— never a tree diagram. Graded at the leaf only; a wrong branch is walkable
+to its dead end before the reveal (E5: self-check only, feeds NOTHING into
+`StudentModel` — client-visible specs cannot grade without reopening the
+mock T22 client-trusted-grading hole). D2's first deliverable: the two
+already-shipped hardcoded wizards — `frontend/src/pages/app/TheoremWizardPage.tsx`
+and `DistributionSelectorPage.tsx` — migrated onto this data format. First
+lesson-embedded tree: Green's/Stokes'/Gauss's theorem selection.
+
+**Template families + anchors (W2.1/W2.2/E11/E12).**
+`data/curriculum/gate-em/template-families.yml` — 14 families as data,
+validated by new B6/B7 checks in `check-intent-catalogue.ts`
+(`loadTemplateFamilies()`), codegen'd by `generate-intent-tables.ts` into
+one merged sequence table with explicit precedence (family sequence
+overrides the intent default where both exist — no second codegen truth).
+Anchor ids: `hash(concept_id, stage_id, ordinal, template_version)` (the
+`customIdFor` precedent) stamped on stage instances in the blueprint→unit
+translation — additive metadata, `BlueprintDecisionsV1` untouched; the
+attachment point every future anchored delta (W2.3, gated on stance-variant
+n≥30) will use.
+
+**Media QA (W3.6/E9).** `gifenc` cannot decode, so QA hooks pre-encoding
+RGBA frames inside `renderScene` + draw-time bounding-box overlap checks
+(deterministic) plus cheap raster heuristics — integrates with the existing
+`check-gif-scenes` + `gif-scene-baseline.json`, not a parallel checker. The
+70 committed scenes re-render clean; `qa_grandfathered` baseline is empty.
+
+**Evidence labels (W1.2/E10/D10).** `evidence_level` (`official /
+directly_reviewed / pattern_supported / design_hypothesis`) is now a
+REQUIRED structured field on exam-relevance claims, checked at generation
+time in the W1.3 gate path (runtime copy CI never sees); the phrase grep
+for "high-yield"/"frequently asked" stays best-effort defense over
+committed content only. `evidence_level` is the structured provenance
+field, `verification_method` stays free-text detail beneath it — stated at
+both definitions so they never read as rivals (D10). D/P/S codes imported
+for all 116 topics into `data/curriculum/gate-em/historical-evidence.yml`.
+
+**Gate ledger + review queue (W1.3/E8/D4).** `content_gate_ledger`
+(migration 055) — five named, CLOSED-set gates per generated item: `scope`,
+`mathematics` (**operator-decided, never auto-passed** — `src/generation/
+gate-ledger.ts`'s `recordGates()` throws rather than write a decided
+verdict on it), `assessment_contract`, `misconception_coverage`,
+`provenance`. Scoped to items carrying `generation_run_id` provenance ONLY
+(E8) — the 505 committed items stay covered by the existing floor gates +
+hand-verification, and the DB-less demo stays lit. Fail-closed at two
+seams: serving (`filterByGateLedger` in `learning-object-catalog-pg.ts`)
+and promotion (`applyPromotion` in `learnings-ledger-repo.ts`) — no ledger
+row, an unreachable table, or a failed query all read as "not passed."
+`/admin/review-queue` (`src/api/admin-review-queue-routes.ts` +
+`frontend/src/components/admin/ReviewQueuePanel.tsx`) is the D4 approval
+tool built BEFORE any pilot ran, on the `BulkApprovePanel` pattern
+(run → list → checkbox → bulk approve, `j`/`k`/space/enter keyboard nav);
+its throughput meter (items decided, elapsed, min/item, clock anchored at
+first decision) is the pilot's measuring instrument.
+
+**Pilot launch path (W3.5, mechanism only — no live run in this repo's
+environments; see E16).** `POST /api/admin/runs`'s
+`config.target.practice_item_specs[]` now actually dispatches:
+`src/generation/practice-item-factory/spec-to-atom.ts` converts each spec
+to an `AtomSpec`; `src/generation/run-dispatcher.ts`'s practice-item mode
+calls the shared batch orchestrator's `prepareBatchRun()` (same instance
+the poller uses, same T4a launch guard); the rest of the lifecycle
+(submit→poll→download→process→gate-ledger write→bank write) is the
+existing async batch-poller lane. `src/generation/practice-item-factory/
+cost.ts` is the single mode-mix-aware cost estimator shared by dry-run and
+the prepare-time budget check. `docs/ops/content-verification-runbook.md`
+is the operator's procedure for the 50-item anatomy pilot + wave 1;
+§6 ("Measured results") is committed empty by design — filled in by
+whoever runs the pilot, in the same commit as its output.
+
+**Intent lanes ON (P0).** `VIDHYA_INTENT_LANES=on` lands in committed
+`render.yaml` (auditable, survives service recreation; rollback = one
+env-var flip); `ci:demo-rails` gained a lanes-on assertion so "shipped but
+dark" (the failure mode that opened this whole plan) cannot recur silently.
+DPS tone pass: LA `pain_point` copy across ~26 concept pages reordered so
+exam-intent leads the sentence, loss language demoted.
+
+**`npm run ci` aggregate + drift check (D12).** One aggregate the CI
+workflow actually invokes (local ↔ CI cannot drift): `lint:fork-test` then
+15 `ci:<noun>` gates in sequence, `ci:aggregate-drift` separately verifying
+the aggregate's script list matches what `ci.yml` runs. Migrations
+050–055 auto-apply on boot per `src/db/auto-migrate.ts`, same as always.
+
+**Writer overwrite guard (D5).** `practice-item-factory/writer.ts` refuses
+by id to overwrite any item with a set `verification_method` — refusal
+names the id and the method; `--supersede` is the explicit escape. Protects
+the 123 hand-verified LA items (and everything verified since) from a
+re-run before any wave ever launches.
+
+**No new env vars beyond `VIDHYA_INTENT_LANES=on` in `render.yaml`.**
+
+**What waits on the operator** (see the plan doc's IMPLEMENTATION RECORD
+appendix for the full list): merging PR #129 to actually flip the flag on
+the live demo; a provider key to run the 50-item pilot and start the
+6-week/300-item kill clock; the W-A activation-push follow-up PR; and the
+open P2c call on whether `intent-profiles.yml`'s proposed error-tag strings
+ever become real `ErrorTag` members.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

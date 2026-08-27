@@ -26,6 +26,13 @@
  *     excluded from the marks total and counted as `ungraded`, never
  *     guessed. Idempotent at the exam level (optimistic claim, mirrors
  *     quiz_sessions) — a retried submit replays the persisted analysis.
+ *
+ *   GET  /api/gbrain/mock-exam/:id/result             — student-authenticated
+ *     Plan W3.2: the persisted analysis of an already-submitted exam plus
+ *     the attempt/skip counterfactual computed from its per-question
+ *     decomposition (amendment E3). Same ownership rule as submit. The
+ *     revisit path — "revisiting an old mock → same screen from persisted
+ *     analysis" in the W-UI state matrix.
  */
 
 import { ServerResponse } from 'http';
@@ -45,6 +52,13 @@ import {
 import { resolveAssessmentContract } from '../exams/assessment-contract-loader';
 import { snapshotForCreation, parseContractSnapshot, makeContractGrader } from '../scoring/contract-grading';
 import { recordAttemptFacts, type AttemptFact } from '../gbrain/attempt-facts';
+import { getTopicAccuracy } from '../gbrain/topic-accuracy';
+import {
+  computeAttemptCounterfactual,
+  counterfactualParamsFrom,
+  type CounterfactualQuestion,
+  type CounterfactualReport,
+} from '../readiness/attempt-counterfactual';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -103,6 +117,8 @@ export interface MockExamDeps {
   resolveContract: typeof resolveAssessmentContract;
   /** Plan E1(b) — fire-and-forget per-question ledger rows at grade time. */
   recordAttemptFacts: typeof recordAttemptFacts;
+  /** Plan W3.2 — per-topic graded-attempt evidence for the skip counterfactual. */
+  getTopicAccuracy: typeof getTopicAccuracy;
   now: () => Date;
 }
 
@@ -118,6 +134,7 @@ const productionDeps: MockExamDeps = {
   claimMockExamOwner,
   resolveContract: resolveAssessmentContract,
   recordAttemptFacts,
+  getTopicAccuracy,
   now: () => new Date(),
 };
 
@@ -148,6 +165,97 @@ function renderSafeQuestion(row: MockExamQuestionRow) {
     question_type: normalized.item?.kind ?? null,
     source: row.source,
   };
+}
+
+// ────────────────────────────────────────────────────────────────────
+// W3.2 — the post-mock attempt/skip counterfactual
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * The E3 per-question decomposition as it is persisted inside
+ * `mock_exams.analysis`. Read back defensively: a row written months ago
+ * is data, not a typed value, and a half-shaped entry is dropped rather
+ * than coerced.
+ */
+function perQuestionFromAnalysis(analysis: unknown): CounterfactualQuestion[] | null {
+  const a = (analysis ?? {}) as Record<string, unknown>;
+  const raw = a.per_question;
+  // A legacy row (graded before E3) carries no key at all — that is the
+  // headline-only degradation, and it is DIFFERENT from a row whose exam
+  // genuinely had nothing gradable in it (an empty array).
+  if (!Array.isArray(raw)) return null;
+
+  const out: CounterfactualQuestion[] = [];
+  for (const entry of raw) {
+    const e = (entry ?? {}) as Record<string, unknown>;
+    if (typeof e.id !== 'string') continue;
+    if (e.kind !== 'mcq' && e.kind !== 'msq' && e.kind !== 'nat') continue;
+    if (typeof e.max !== 'number' || typeof e.earned !== 'number') continue;
+    out.push({
+      id: e.id,
+      kind: e.kind,
+      marks: e.max,
+      earned: e.earned,
+      skipped: e.skipped === true,
+    });
+  }
+  return out;
+}
+
+/**
+ * Attach the topic/concept each question came from. The decomposition
+ * itself deliberately carries neither (it is the grading half's output,
+ * and grading has no use for them); the mock's own stored question rows
+ * do, so they are joined here rather than widening the grading result.
+ */
+function withQuestionContext(
+  decomposition: CounterfactualQuestion[],
+  questions: ReadonlyArray<unknown>,
+): CounterfactualQuestion[] {
+  const byId = new Map<string, Record<string, unknown>>();
+  for (const q of questions) {
+    const row = (q ?? {}) as Record<string, unknown>;
+    if (typeof row.id === 'string') byId.set(row.id, row);
+  }
+  return decomposition.map((d) => {
+    const row = byId.get(d.id);
+    return {
+      ...d,
+      topic: typeof row?.topic === 'string' ? row.topic : null,
+      // PYQ-sourced rows carry none: the mock generator's pyq_questions
+      // SELECT doesn't pull the concept_id column migration 044 added.
+      conceptId: typeof row?.concept_id === 'string' ? row.concept_id : null,
+    };
+  });
+}
+
+/**
+ * Build the counterfactual for one graded exam. Never throws — the
+ * counterfactual is analysis ABOVE a score that is already final, so a
+ * failure here degrades to the honest unavailable shape rather than
+ * failing a request that would otherwise have shown the student their
+ * marks.
+ */
+async function buildCounterfactual(row: MockExamRow, studentId: string): Promise<CounterfactualReport> {
+  const decomposition = perQuestionFromAnalysis(row.analysis);
+  const snapshot = parseContractSnapshot(row.contractVersion, row.contractParams);
+  const params = counterfactualParamsFrom(snapshot?.marking ?? null);
+
+  if (decomposition === null) {
+    return computeAttemptCounterfactual({ perQuestion: null, params });
+  }
+
+  const perQuestion = withQuestionContext(decomposition, row.questions);
+  // Only pay for the topic-evidence read when there is a skip it could
+  // price. A paper with nothing skipped can't produce a skip line.
+  const topicEvidence = perQuestion.some((q) => q.skipped)
+    ? await deps.getTopicAccuracy(studentId).catch((err) => {
+        console.error('[mock-exam] topic accuracy read failed (skip lines omitted):', (err as Error).message);
+        return {};
+      })
+    : {};
+
+  return computeAttemptCounterfactual({ perQuestion, params, topicEvidence });
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -297,7 +405,15 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
 
   if (!claim.fresh) {
     const r = claim.row;
-    return sendJSON(res, { exam_id: examId, ...(r.analysis as object ?? {}), late: r.late, timing_mode: r.timingMode, recorded: true, replayed: true });
+    return sendJSON(res, {
+      exam_id: examId,
+      ...(r.analysis as object ?? {}),
+      counterfactual: await buildCounterfactual(r, user.userId),
+      late: r.late,
+      timing_mode: r.timingMode,
+      recorded: true,
+      replayed: true,
+    });
   }
 
   const rawResponses = Array.isArray(body.responses) ? body.responses : [];
@@ -378,6 +494,11 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
     max_marks: grading.max,
     accuracy: grading.correct + grading.wrong > 0 ? Math.round((grading.correct / (grading.correct + grading.wrong)) * 100) : 0,
     by_topic: grading.by_topic,
+    // Plan E3 — the per-question decomposition is PERSISTED, not just used
+    // in-flight for attempt_facts. Without it a revisit to an old mock
+    // could only ever render the headline-only degradation, and W3.2's
+    // whole screen would exist for exactly one page-load per exam.
+    per_question: grading.per_question,
   };
 
   const saved = await deps.finalizeMockExamSubmission(examId, {
@@ -387,7 +508,68 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
     return null;
   });
 
-  return sendJSON(res, { exam_id: examId, ...analysis, late, timing_mode: claim.row.timingMode, recorded: saved !== null });
+  // Computed from the row as it now stands — `saved` when the finalize
+  // landed, otherwise the claimed row with this submission's analysis
+  // patched on, so a storage failure degrades the RECORDED flag without
+  // also silently emptying the counterfactual.
+  const counterfactual = await buildCounterfactual(saved ?? { ...claim.row, analysis }, user.userId);
+
+  return sendJSON(res, {
+    exam_id: examId,
+    ...analysis,
+    counterfactual,
+    late,
+    timing_mode: claim.row.timingMode,
+    recorded: saved !== null,
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// GET /api/gbrain/mock-exam/:id/result — W3.2 revisit path
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * The persisted analysis of an already-submitted exam, plus the
+ * counterfactual recomputed from it.
+ *
+ * Why recomputed rather than persisted alongside the analysis: the
+ * counterfactual reads the student's CURRENT topic evidence, so a student
+ * who comes back a fortnight later — having since attempted enough
+ * eigenvalue questions for their accuracy to be measurable — sees skip
+ * lines that genuinely weren't computable on submission day. The graded
+ * marks never move (they come from the persisted analysis, under the
+ * contract pinned at creation); only the advice sharpens.
+ *
+ * Ownership is the same rule the submit path enforces: an exam belongs to
+ * the authenticated caller that generated it. A student reaching another
+ * student's exam gets the same `unknown mock exam` 404 the submit path
+ * returns — never a 403, which would confirm the id exists.
+ */
+async function handleResult(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const user = await requireRole(req, res, 'student', 'teacher', 'admin');
+  if (!user) return;
+
+  const examId = req.params.id;
+  if (!examId) return sendError(res, 400, 'exam id is required');
+
+  const row = await deps.getMockExam(examId).catch(() => null);
+  if (!row) return sendError(res, 404, `unknown mock exam: ${examId}`);
+
+  if (user.role === 'student' && row.ownerUserId !== null && row.ownerUserId !== user.userId) {
+    return sendError(res, 404, `unknown mock exam: ${examId}`);
+  }
+  if (row.status !== 'submitted' || row.analysis === null) {
+    return sendError(res, 409, `mock exam ${examId} has not been submitted yet`);
+  }
+
+  return sendJSON(res, {
+    exam_id: examId,
+    ...(row.analysis as object),
+    counterfactual: await buildCounterfactual(row, user.userId),
+    late: row.late,
+    timing_mode: row.timingMode,
+    recorded: true,
+  });
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -421,6 +603,7 @@ async function handleListTopics(req: ParsedRequest, res: ServerResponse): Promis
 
 export const mockExamRoutes: RouteDefinition[] = [
   { method: 'GET', path: '/api/gbrain/mock-exam/topics', handler: handleListTopics },
+  { method: 'GET', path: '/api/gbrain/mock-exam/:id/result', handler: handleResult },
   { method: 'GET', path: '/api/gbrain/mock-exam/:sessionId', handler: handleGenerate },
   { method: 'POST', path: '/api/gbrain/mock-exam/:id/submit', handler: handleSubmit },
 ];

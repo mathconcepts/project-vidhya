@@ -172,7 +172,10 @@ describe('handleJobProcessed — bank-write batching (accumulator)', () => {
     expect(accumulator.size).toBe(1);
     const [[bankPath, items]] = [...accumulator.entries()];
     expect(bankPath).toContain('gate-ma-linear-algebra.json');
-    expect(items).toEqual([item]);
+    // W1.3 / plan E8: the poller stamps the run onto the item on its way
+    // to the bank. Without that provenance the gate ledger — which keys on
+    // exactly this field — would have nothing to govern.
+    expect(items).toEqual([{ ...item, generation_run_id: 'run-1' }]);
   });
 
   it('accumulates multiple jobs writing to the SAME bank path into one array entry', async () => {
@@ -203,7 +206,10 @@ describe('handleJobProcessed — bank-write batching (accumulator)', () => {
     });
     await handleJobProcessed('run-1', atomJob(), deps); // no accumulator
     expect(deps.writePracticeItemBank).toHaveBeenCalledTimes(1);
-    expect(deps.writePracticeItemBank).toHaveBeenCalledWith(expect.stringContaining('gate-ma-linear-algebra.json'), [item]);
+    expect(deps.writePracticeItemBank).toHaveBeenCalledWith(
+      expect.stringContaining('gate-ma-linear-algebra.json'),
+      [{ ...item, generation_run_id: 'run-1' }],
+    );
   });
 });
 
@@ -303,7 +309,46 @@ describe('handleJobProcessed — practice-item outcome handling', () => {
     expect(deps.writePracticeItemBank).toHaveBeenCalledTimes(1);
     const [bankPath, items] = (deps.writePracticeItemBank as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(bankPath).toContain('gate-ma-linear-algebra.json');
-    expect(items).toEqual([item]);
+    expect(items).toEqual([{ ...item, generation_run_id: 'run-1' }]);
+  });
+
+  it('records the automated gate verdicts for a written item (W1.3)', async () => {
+    const item: AuthoredItem = {
+      id: 'pi-eigenvalues-bbbbbbbb',
+      concept_id: 'eigenvalues',
+      topic: 'linear-algebra',
+      question_text: 'q',
+      correct_answer: 'a',
+      verification_method: 'dual_model_consensus',
+    };
+    const recordItemGates = vi.fn(async () => {});
+    const deps = fakeDeps({
+      getRun: vi.fn(async () => practiceItemRun),
+      dispatchPracticeItemJob: vi.fn(async () => ({
+        outcome: 'written', item,
+        spec: { concept_id: 'eigenvalues', format: 'mcq', difficulty: 0.3, topic: 'linear-algebra', require_failure_tags: true },
+        reason: 'answers match',
+      }) as PracticeItemDispatchResult),
+      recordItemGates,
+    });
+    await handleJobProcessed('run-1', atomJob(), deps);
+    expect(recordItemGates).toHaveBeenCalledWith({
+      generation_run_id: 'run-1',
+      item: { ...item, generation_run_id: 'run-1' },
+      verification: { agreed: true, method: 'dual_model_consensus', detail: 'answers match' },
+      requireFailureTags: true,
+    });
+  });
+
+  it('records no gate verdicts for a refused item — nothing was produced to gate', async () => {
+    const recordItemGates = vi.fn(async () => {});
+    const deps = fakeDeps({
+      getRun: vi.fn(async () => practiceItemRun),
+      dispatchPracticeItemJob: vi.fn(async () => ({ outcome: 'refused', reason: 'disagree' }) as PracticeItemDispatchResult),
+      recordItemGates,
+    });
+    await handleJobProcessed('run-1', atomJob(), deps);
+    expect(recordItemGates).not.toHaveBeenCalled();
   });
 
   it('does not write anything on "refused"', async () => {

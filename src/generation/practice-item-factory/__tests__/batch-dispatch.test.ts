@@ -59,7 +59,21 @@ const validMsqJson = JSON.stringify({
 describe('practiceItemSpecFromAtomSpec', () => {
   it('reconstructs a spec from prompt_vars', () => {
     const spec = practiceItemSpecFromAtomSpec(mcqAtomSpec());
-    expect(spec).toEqual({ concept_id: 'eigenvalues', format: 'mcq', difficulty: 0.35, topic: 'linear-algebra' });
+    expect(spec).toEqual({
+      concept_id: 'eigenvalues',
+      format: 'mcq',
+      difficulty: 0.35,
+      topic: 'linear-algebra',
+      // W3.4/E2: absent prompt_vars means the run did not ask for the
+      // failure-tag gate — the documented default, and what the ledger's
+      // misconception_coverage verdict reads.
+      require_failure_tags: false,
+    });
+  });
+
+  it('carries require_failure_tags through prompt_vars when the run set it', () => {
+    const spec = practiceItemSpecFromAtomSpec(mcqAtomSpec({ require_failure_tags: true }));
+    expect(spec?.require_failure_tags).toBe(true);
   });
 
   it('returns null when format is missing or invalid', () => {

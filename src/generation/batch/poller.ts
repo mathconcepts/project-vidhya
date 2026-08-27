@@ -10,6 +10,13 @@
  *
  * DB-less safe: when DATABASE_URL is unset, the persistence layer's
  * listInFlightRuns returns empty and this becomes a clean no-op.
+ *
+ * W1.3: every practice item this poller writes is stamped with its run and
+ * gets its automated quality-gate verdicts recorded (see
+ * `recordItemGatesDefault` below and src/generation/gate-ledger.ts). The
+ * `mathematics` gate is opened as 'pending' — an operator closes it at
+ * /admin/review-queue, and until they do, the item is neither promotable
+ * nor servable from the DB.
  */
 
 import { createBatchOrchestrator, type StepResult } from './orchestrator';
@@ -24,6 +31,8 @@ import { assertPracticeItemLaunchReady } from '../practice-item-factory/launch-g
 import { verifyProblemWithWolfram } from '../../services/wolfram-service';
 import { computeFeatureFlags } from '../../api/feature-flags';
 import type { AuthoredItem } from '../../scoring/learning-object-catalog-file';
+import { evaluateAutomatedGates, recordGates } from '../gate-ledger';
+import { resolveAssessmentContract } from '../../exams/assessment-contract-loader';
 
 /**
  * Minimal shape `handleJobProcessed` needs from a GenerationRunRow — kept
@@ -50,6 +59,54 @@ export interface JobProcessedDeps {
    * pre-T4a default, still fail-closed exactly as before.
    */
   getPracticeItemDispatchDeps?: () => Promise<PracticeItemDispatchDeps>;
+  /**
+   * W1.3 — writes the automated quality-gate verdicts for a written item
+   * into `content_gate_ledger` at batch-processing time (the four
+   * mechanical gates decided, `mathematics` opened as 'pending' for the
+   * operator). Best-effort and injectable: DB-less deploys resolve to a
+   * no-op, and a ledger write failing never loses an item the pipeline
+   * already verified. Omitted (legacy/test callers) → skipped entirely.
+   */
+  recordItemGates?: (input: RecordItemGatesInput) => Promise<void>;
+}
+
+export interface RecordItemGatesInput {
+  generation_run_id: string;
+  /** The item AFTER the run stamp — the ledger keys on its id. */
+  item: AuthoredItem;
+  /** The verification cascade's result, recorded as EVIDENCE on the mathematics gate, never as its verdict. */
+  verification: { agreed: boolean; method?: string; detail?: string };
+  requireFailureTags: boolean;
+}
+
+/**
+ * Production wiring for `recordItemGates`. Resolves the run's assessment
+ * contract (falling back to the compiled constant, whose version string
+ * `…+compiled` says so honestly) so the `assessment_contract` gate has a
+ * real version to name, evaluates the pure verdicts, and upserts them.
+ * Swallows its own errors — a ledger write is not allowed to fail an
+ * ingestion pass, and an unwritten row fails CLOSED at the enforcement
+ * seams anyway (see src/generation/gate-ledger.ts).
+ */
+export async function recordItemGatesDefault(input: RecordItemGatesInput): Promise<void> {
+  try {
+    const contract = await resolveAssessmentContract();
+    const verdicts = evaluateAutomatedGates({
+      item: input.item,
+      verification: input.verification,
+      requireFailureTags: input.requireFailureTags,
+      contractVersion: contract.version,
+    });
+    await recordGates({
+      generation_run_id: input.generation_run_id,
+      item_id: input.item.id,
+      verdicts,
+    });
+  } catch (err) {
+    console.error(
+      `[batch-poller] gate-ledger write failed for item '${input.item.id}' in run '${input.generation_run_id}': ${(err as Error).message}`,
+    );
+  }
 }
 
 /**
@@ -83,6 +140,7 @@ const defaultJobProcessedDeps: JobProcessedDeps = {
   dispatchPracticeItemJob,
   writePracticeItemBank,
   getPracticeItemDispatchDeps: buildRealPracticeItemDispatchDeps,
+  recordItemGates: recordItemGatesDefault,
 };
 
 /**
@@ -154,6 +212,24 @@ export async function handleJobProcessed(
         console.error(`${logPrefix}: outcome=written but missing exam_pack_id/spec/item — dropping, not writing`);
         return;
       }
+      // Stamp the run that produced it. Without this the item carries no
+      // provenance, and plan E8's whole gate scope — which keys on exactly
+      // this field — would have nothing to bite on. `assemble.ts` cannot
+      // set it: it never sees a run id.
+      const written: AuthoredItem = { ...result.item, generation_run_id: run_id };
+
+      // W1.3: the automated gate verdicts, at batch-processing time.
+      // Fire-and-forget by contract (see the dep's doc comment) — an
+      // unwritten ledger row fails CLOSED downstream, never open.
+      if (deps.recordItemGates) {
+        await deps.recordItemGates({
+          generation_run_id: run_id,
+          item: written,
+          verification: { agreed: true, method: written.verification_method, detail: result.reason },
+          requireFailureTags: result.spec.require_failure_tags === true,
+        });
+      }
+
       const bankPath = practiceItemBankPath(examPackId, result.spec.topic);
       if (bankAccumulator) {
         // T-poller-perf: a poll pass can write many items into the SAME
@@ -163,14 +239,14 @@ export async function handleJobProcessed(
         // exactly once at the end of the pass, via the same atomic
         // write-then-rename `writePracticeItemBank` already uses.
         const list = bankAccumulator.get(bankPath) ?? [];
-        list.push(result.item);
+        list.push(written);
         bankAccumulator.set(bankPath, list);
-        console.log(`${logPrefix}: queued ${result.item.id} → ${bankPath} (${result.reason}) [flushed at end of pass]`);
+        console.log(`${logPrefix}: queued ${written.id} → ${bankPath} (${result.reason}) [flushed at end of pass]`);
       } else {
         // No accumulator threaded in (e.g. a direct/legacy caller) — fall
         // back to the original immediate write, unchanged.
-        deps.writePracticeItemBank(bankPath, [result.item]);
-        console.log(`${logPrefix}: wrote ${result.item.id} → ${bankPath} (${result.reason})`);
+        deps.writePracticeItemBank(bankPath, [written]);
+        console.log(`${logPrefix}: wrote ${written.id} → ${bankPath} (${result.reason})`);
       }
       return;
     }

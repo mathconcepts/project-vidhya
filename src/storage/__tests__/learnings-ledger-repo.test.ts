@@ -36,21 +36,30 @@ describe('PgLearningsLedgerRepo', () => {
   });
 
   it('applyPromotion updates atom_versions, media_artifacts, and generated_problems in order', async () => {
-    const seen: string[] = [];
+    // W1.3 / plan E8 inserted a provenance lookup between the media
+    // update and the generated_problems update: a target carrying
+    // `generation_run_id` needs its five gates before it may be promoted.
+    // A target WITHOUT provenance — which 'atom_x' is here, since the
+    // lookup returns no rows — is promoted exactly as it was before.
+    const seen: Array<{ sql: string; params: any[] }> = [];
     const query = async (sql: string, params: any[]) => {
-      seen.push(sql);
-      expect(params).toEqual([['atom_x'], 'reason text']);
+      seen.push({ sql, params });
       return { rows: [] };
     };
     const repo = new PgLearningsLedgerRepo({ query } as any);
     await repo.applyPromotion(['atom_x'], 'reason text');
-    expect(seen.length).toBe(3);
-    expect(seen[0]).toMatch(/UPDATE atom_versions/);
-    expect(seen[0]).toMatch(/canonical = TRUE/);
-    expect(seen[1]).toMatch(/UPDATE media_artifacts/);
-    expect(seen[1]).toMatch(/status = 'done'/);
-    expect(seen[2]).toMatch(/UPDATE generated_problems/);
-    expect(seen[2]).toMatch(/verified = TRUE/);
+    expect(seen.length).toBe(4);
+    expect(seen[0].sql).toMatch(/UPDATE atom_versions/);
+    expect(seen[0].sql).toMatch(/canonical = TRUE/);
+    expect(seen[0].params).toEqual([['atom_x'], 'reason text']);
+    expect(seen[1].sql).toMatch(/UPDATE media_artifacts/);
+    expect(seen[1].sql).toMatch(/status = 'done'/);
+    expect(seen[1].params).toEqual([['atom_x'], 'reason text']);
+    expect(seen[2].sql).toMatch(/generation_run_id IS NOT NULL/);
+    expect(seen[2].params).toEqual([['atom_x']]);
+    expect(seen[3].sql).toMatch(/UPDATE generated_problems/);
+    expect(seen[3].sql).toMatch(/verified = TRUE/);
+    expect(seen[3].params).toEqual([['atom_x'], 'reason text']);
   });
 
   it('applyDemotion no-ops on an empty target list', async () => {

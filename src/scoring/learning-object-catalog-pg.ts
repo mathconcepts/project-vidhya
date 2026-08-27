@@ -50,6 +50,15 @@
  *     assumption `ConceptGraphCurriculumRepo` and `ProtoCATSelector` already
  *     make (skill id === concept id === catalog skillId).
  *
+ * W1.3 / plan E8 (migration 055) added the quality-gate filter: a row that
+ * carries `generation_run_id` provenance is only servable once all five
+ * named gates in `content_gate_ledger` are passed-or-waived. Rows WITHOUT
+ * provenance — every hand-authored row, everything
+ * src/db/seed-la-practice-items.ts upserts out of data/practice-items/, and
+ * every pre-020 row — are returned untouched and never gate-checked, which
+ * is what keeps the 505 committed items and the DB-less demo lit. See
+ * `filterByGateLedger` below.
+ *
  * DB-less behavior: every method degrades to the honest empty-catalog
  * response (no rows / 0 exposure) rather than throwing, matching the repo's
  * DB-less demo-mode contract. This covers both "DATABASE_URL unset" and
@@ -64,6 +73,7 @@ import { difficultyToElo, eloToDifficultyBounds, DEFAULT_EXAM_RELEVANCE } from '
 import type { LearningObject, ObjectType } from '../core/interfaces';
 import type { CatalogQuery, LearningObjectCatalog } from './learning-object-catalog';
 import { getSharedPool } from '../storage/pool';
+import { gatesSatisfiedItemIds } from '../generation/gate-ledger';
 
 /** Defaults used where `generated_problems` has no corresponding column. */
 export const DEFAULT_MAX_MARKS = 4;
@@ -92,6 +102,14 @@ interface GeneratedProblemRow {
   options?: unknown;
   /** Migration 054 (W3.4/E2): mcq only, POST-shuffle index -> ErrorTag. */
   distractor_failure_tags?: unknown;
+  /**
+   * Migration 020: the generation run that produced this row. NULL for
+   * every hand-authored row (including everything
+   * src/db/seed-la-practice-items.ts upserts from data/practice-items/) and
+   * for every pre-020 row. Plan E8's scope discriminator — see
+   * `filterByGateLedger` below.
+   */
+  generation_run_id?: string | null;
 }
 
 const GATE_KINDS = new Set(['mcq', 'msq', 'nat']);
@@ -162,6 +180,31 @@ function rowToLearningObject(r: GeneratedProblemRow): LearningObject {
 /** Postgres accepts nothing else for a uuid column; anything else is a parse error. */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * W1.3 / plan E8 — the SERVING half of gate enforcement.
+ *
+ * A row that carries `generation_run_id` provenance is servable only once
+ * all five named gates in `content_gate_ledger` are passed-or-waived. A row
+ * WITHOUT provenance is returned untouched and is never even looked up:
+ * that covers every hand-authored row, everything the file-bank seeder
+ * upserts, and every pre-020 row. The file catalog
+ * (`FileLearningObjectCatalog`) does not pass through here at all, so the
+ * 505 committed items keep serving on every deploy shape, and a DB-less
+ * deploy has no pool, no ledger, and no generated rows to gate.
+ *
+ * Exported for tests. Pure except for the one ledger read it delegates.
+ */
+export async function filterByGateLedger(
+  rows: GeneratedProblemRow[],
+  pool: pg.Pool | null,
+  gateCheck: (ids: ReadonlyArray<string>, pool?: pg.Pool | null) => Promise<Set<string>> = gatesSatisfiedItemIds,
+): Promise<GeneratedProblemRow[]> {
+  const provenanced = rows.filter((r) => !!r.generation_run_id);
+  if (provenanced.length === 0) return rows;
+  const satisfied = await gateCheck(provenanced.map((r) => String(r.id)), pool);
+  return rows.filter((r) => !r.generation_run_id || satisfied.has(String(r.id)));
+}
+
 export class PgLearningObjectCatalog implements LearningObjectCatalog {
   private pool: pg.Pool | null;
 
@@ -200,7 +243,8 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
           LIMIT $4`,
         [q.skillId, lo, hi, limit],
       );
-      return rows.map(rowToLearningObject);
+      const gated = await filterByGateLedger(rows, this.pool);
+      return gated.map(rowToLearningObject);
     } catch (err) {
       // DB reachable but query failed (e.g. table/migration missing in an
       // older deploy, or a transient connection error). Degrade to the
@@ -226,7 +270,9 @@ export class PgLearningObjectCatalog implements LearningObjectCatalog {
         'SELECT * FROM generated_problems WHERE id = $1',
         [objectId],
       );
-      return rows.length > 0 ? rowToLearningObject(rows[0]) : null;
+      if (rows.length === 0) return null;
+      const gated = await filterByGateLedger(rows, this.pool);
+      return gated.length > 0 ? rowToLearningObject(gated[0]) : null;
     } catch (err) {
       console.error('[learning-object-catalog-pg] getById failed, returning null:', (err as Error).message);
       return null;

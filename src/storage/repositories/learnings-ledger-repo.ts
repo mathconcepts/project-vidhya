@@ -25,6 +25,7 @@ import { getSharedPool } from '../pool';
 import { resolveTreatmentSessions } from '../../experiments/lift';
 import { LATENCY_BUCKETS } from '../../gbrain/attempt-facts';
 import type { ModeAccuracyWindow } from '../../experiments/promote-guards';
+import { CONTENT_GATES, gatesSatisfiedItemIds } from '../../generation/gate-ledger';
 
 export interface RunConfigRow {
   experiment_id: string;
@@ -126,14 +127,63 @@ export class PgLearningsLedgerRepo implements LearningsLedgerRepo {
     // generated_problems uses `id`, not atom_id, but the experiment may
     // have assigned problem ids directly under the same target_kind=atom
     // bucket (we don't currently distinguish). Best-effort: try by id.
-    await this.pool.query(
-      `UPDATE generated_problems
-         SET canonical = TRUE,
-             canonical_at = NOW(),
-             canonical_reason = $2
-       WHERE id::TEXT = ANY($1::TEXT[]) AND verified = TRUE`,
-      [targets, reason],
-    );
+    //
+    // W1.3 / plan E8 — the PROMOTION half of gate enforcement. A problem
+    // row carrying `generation_run_id` provenance may not be flipped
+    // canonical until all five named gates in `content_gate_ledger` are
+    // passed-or-waived. Rows WITHOUT provenance (hand-authored, file-bank
+    // seeded, pre-020) are promoted exactly as before — the ledger has no
+    // jurisdiction over them and is never consulted for them.
+    const promotable = await this.gatePromotableProblemIds(targets);
+    if (promotable.length > 0) {
+      await this.pool.query(
+        `UPDATE generated_problems
+           SET canonical = TRUE,
+               canonical_at = NOW(),
+               canonical_reason = $2
+         WHERE id::TEXT = ANY($1::TEXT[]) AND verified = TRUE`,
+        [promotable, reason],
+      );
+    }
+  }
+
+  /**
+   * Of `targets`, the problem ids that may be promoted: everything without
+   * `generation_run_id` provenance, plus the provenance-carrying ids whose
+   * five gates are satisfied. Fails CLOSED — if the provenance lookup
+   * itself errors we drop every id that could possibly be provenanced
+   * rather than promote an unreviewed answer key.
+   */
+  private async gatePromotableProblemIds(targets: string[]): Promise<string[]> {
+    let provenanced: string[];
+    try {
+      const { rows } = await this.pool.query<{ id: string }>(
+        `SELECT id::TEXT AS id
+           FROM generated_problems
+          WHERE id::TEXT = ANY($1::TEXT[])
+            AND generation_run_id IS NOT NULL`,
+        [targets],
+      );
+      provenanced = rows.map((r) => r.id);
+    } catch (err) {
+      console.error(
+        `[learnings-ledger] provenance lookup failed for ${targets.length} promotion target(s) — ` +
+          `skipping generated_problems promotion entirely rather than promoting ungated content: ${(err as Error).message}`,
+      );
+      return [];
+    }
+    if (provenanced.length === 0) return targets;
+    const satisfied = await gatesSatisfiedItemIds(provenanced, this.pool);
+    const blocked = provenanced.filter((id) => !satisfied.has(id));
+    if (blocked.length > 0) {
+      console.warn(
+        `[learnings-ledger] refusing to promote ${blocked.length} of ${provenanced.length} provenance-carrying problem(s): ` +
+          `not all ${CONTENT_GATES.length} gates (${CONTENT_GATES.join(', ')}) are passed-or-waived. ` +
+          `Blocked ids: ${blocked.join(', ')}. Review at /admin/review-queue.`,
+      );
+    }
+    const provenancedSet = new Set(provenanced);
+    return targets.filter((id) => !provenancedSet.has(id) || satisfied.has(id));
   }
 
   async applyDemotion(targets: string[], reason: string): Promise<void> {

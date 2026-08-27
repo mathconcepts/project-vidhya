@@ -31,12 +31,23 @@
  *     `partial_credit` flag — no per-mark-value negative array like
  *     vidhya-core's `ExamModel.marking.mcqNegative[item.marks]`. This
  *     module accepts an optional `MarkingScheme` and falls back to the
- *     GATE-standard defaults the task specifies when scheme fields are
- *     absent: 1/3 negative for a 1-mark MCQ, 2/3 negative for a 2-mark
- *     MCQ (`DEFAULT_MCQ_NEGATIVE`). Marks values other than 1 or 2 fall
- *     back to the 2-mark ratio (1/3 of the item's marks) — GATE has no
- *     other MCQ mark values today, so this is a defensive default, not a
- *     documented exam rule.
+ *     compiled contract's defaults when scheme fields are absent.
+ *
+ *     Since plan D7/E6 those defaults are NOT stated here. They are
+ *     imported from `src/exams/marking-constants.ts`, the one compiled
+ *     marking truth, which is also what generates the `assessment_contracts`
+ *     seed row (migration 050) and what the exam-profile row, exam-catalog
+ *     row and sample exam all derive from. `DEFAULT_MCQ_NEGATIVE_1_MARK` /
+ *     `_2_MARK` / `NAT_EPSILON` below are re-exports of contract values
+ *     under their historical names, kept because existing tests import
+ *     them. Mark values other than 1 or 2 fall back to the shared ratio
+ *     (`marks / 3`) — a defensive default, not a documented exam rule.
+ *
+ *     The same numbers are reachable through the registered
+ *     `gate_2026` marking strategy (`src/scoring/marking-strategy.ts`),
+ *     which reads them as contract params instead of as defaults. Both
+ *     paths run this class's arithmetic and are proven byte-identical by
+ *     the parity block in `__tests__/deterministic-scorer.test.ts`.
  *
  * Marking rules (unchanged from the reference / task spec):
  *   - MCQ correct   → +item.marks;  MCQ wrong → −negative(item.marks);  skip → 0
@@ -75,6 +86,14 @@
 
 import type { GradeResult } from '../core/interfaces';
 import type { MarkingScheme } from '../exams/types';
+import {
+  MCQ_NEGATIVE_MAGNITUDE_1_MARK,
+  MCQ_NEGATIVE_MAGNITUDE_2_MARK,
+  MCQ_NEGATIVE_FALLBACK_DIVISOR,
+  MSQ_MARKS_WRONG,
+  NAT_MARKS_WRONG,
+  NAT_TOLERANCE_EPSILON,
+} from '../exams/marking-constants';
 
 // ────────────────────────────────────────────────────────────────────
 // Item / response shapes — structured, not string-based (see header).
@@ -116,12 +135,24 @@ export interface DeterministicScorer {
 // Tuneables
 // ────────────────────────────────────────────────────────────────────
 
-/** Boundary tolerance for NAT range checks (matches the reference impl). */
-export const NAT_EPSILON = 1e-9;
+// Every number below is DERIVED from the compiled marking contract
+// (src/exams/marking-constants.ts) — plan D7/E6. This module used to state
+// the same three literals independently; it no longer states any of them.
+// Change the numbers there, and the seed row, the exam-profile row, the
+// exam-catalog row, the sample exam and this scorer all move together.
 
-/** GATE-standard MCQ negative marking when `MarkingScheme` doesn't say. */
-export const DEFAULT_MCQ_NEGATIVE_1_MARK = 1 / 3;
-export const DEFAULT_MCQ_NEGATIVE_2_MARK = 2 / 3;
+/** Boundary tolerance for numeric-answer range checks. */
+export const NAT_EPSILON = NAT_TOLERANCE_EPSILON;
+
+/**
+ * Default MCQ negative marking, as a POSITIVE penalty magnitude (this
+ * module negates it at the call site), used when `MarkingScheme` doesn't
+ * override it. Re-exported under these historical names because ~2 test
+ * files and the exam-catalog conformance test import them; the VALUES come
+ * from the contract.
+ */
+export const DEFAULT_MCQ_NEGATIVE_1_MARK = MCQ_NEGATIVE_MAGNITUDE_1_MARK;
+export const DEFAULT_MCQ_NEGATIVE_2_MARK = MCQ_NEGATIVE_MAGNITUDE_2_MARK;
 
 const SKIPPED = 'Skipped: no marks awarded or deducted.';
 
@@ -149,7 +180,7 @@ export function mcqNegativeMarks(itemMarks: number, marking?: MarkingScheme): nu
   }
   if (itemMarks === 1) return DEFAULT_MCQ_NEGATIVE_1_MARK;
   if (itemMarks === 2) return DEFAULT_MCQ_NEGATIVE_2_MARK;
-  return itemMarks / 3;
+  return itemMarks / MCQ_NEGATIVE_FALLBACK_DIVISOR;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -244,5 +275,11 @@ export function describeMarking(item: Pick<GateItem, 'kind' | 'marks'>, marking?
   if (item.kind === 'mcq') {
     return { marks_correct: item.marks, marks_wrong: -mcqNegativeMarks(item.marks, marking) };
   }
-  return { marks_correct: item.marks, marks_wrong: 0 };
+  // MSQ and NAT both carry no negative marking; the two contract params
+  // agree on 0 and are asserted equal by the contract-parity test rather
+  // than assumed here.
+  return {
+    marks_correct: item.marks,
+    marks_wrong: item.kind === 'msq' ? MSQ_MARKS_WRONG : NAT_MARKS_WRONG,
+  };
 }

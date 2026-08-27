@@ -11,6 +11,14 @@
  */
 
 import type { ExamScope } from './types';
+import {
+  marksCorrect,
+  mcqMarksWrong,
+  MCQ_NEGATIVE_FALLBACK_DIVISOR,
+  MSQ_MARKS_WRONG,
+  MSQ_PARTIAL_CREDIT,
+  NAT_MARKS_WRONG,
+} from '../exams/marking-constants';
 
 // ============================================================================
 // Marking / question-type / schedule extension (U1-12/U1-13, Multi-Exam
@@ -127,20 +135,24 @@ export const EXAMS: Record<string, ExamDefinition> = {
 
     // FACT, not hypothesis (U1-13): GATE's marking scheme has been stable
     // for several years — MCQ -1/3 on 1-mark items, -2/3 on 2-mark items;
-    // MSQ and NAT carry no negative marking. Matches the values already
-    // documented independently in src/samples/gate-mathematics.ts's
-    // GATE_MATH_EXAM.marking_scheme and src/scoring/deterministic-scorer.ts's
-    // DEFAULT_MCQ_NEGATIVE_1_MARK/2_MARK — this row is the one place a
-    // caller should read them from going forward instead of re-hardcoding.
+    // MSQ and NAT carry no negative marking.
+    //
+    // Since plan D7/E6 this row states no literal of its own: every number
+    // is DERIVED from src/exams/marking-constants.ts, the one compiled
+    // marking truth. The old comment here claimed this row was "the one
+    // place a caller should read them from" while three other files made
+    // the same claim about themselves — which is exactly the drift D7
+    // closes. This row is now a re-shaping of the contract into the
+    // catalog's mark-value-keyed shape, not a second statement of it.
     marking_table: {
       mcq: {
-        1: { marks_correct: 1, marks_wrong: -1 / 3 },
-        2: { marks_correct: 2, marks_wrong: -2 / 3 },
+        1: { marks_correct: marksCorrect(1), marks_wrong: mcqMarksWrong(1) },
+        2: { marks_correct: marksCorrect(2), marks_wrong: mcqMarksWrong(2) },
       },
       // No partial credit unless a future year's brochure states otherwise
       // (see deterministic-scorer.ts's refusal on partial_credit: true).
-      msq: { marks_correct: 1, marks_wrong: 0, partial_credit: false },
-      nat: { marks_correct: 1, marks_wrong: 0 },
+      msq: { marks_correct: marksCorrect(1), marks_wrong: MSQ_MARKS_WRONG, partial_credit: MSQ_PARTIAL_CREDIT },
+      nat: { marks_correct: marksCorrect(1), marks_wrong: NAT_MARKS_WRONG },
     },
     question_types: ['mcq', 'msq', 'nat'],
 
@@ -309,5 +321,5 @@ export function examIdsForTopic(topicId: string): string[] {
 export function gateMcqNegativeMarksFallback(marks: number): number {
   const rule = EXAMS['gate-ma']?.marking_table?.mcq?.[marks];
   if (rule) return rule.marks_wrong;
-  return -(marks / 3);
+  return -(marks / MCQ_NEGATIVE_FALLBACK_DIVISOR);
 }

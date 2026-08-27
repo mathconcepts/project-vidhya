@@ -45,6 +45,14 @@
  *   4. LESSON MANIFEST   Empty — relies on the shared lesson bank
  */
 
+import {
+  marksCorrect,
+  mcqMarksWrong,
+  negativeMagnitude,
+  MSQ_MARKS_WRONG,
+  NAT_MARKS_WRONG,
+} from '../exams/marking-constants';
+
 // ============================================================================
 // 1. EXAM SPEC
 // ============================================================================
@@ -66,15 +74,28 @@ export const GATE_MATH_EXAM = {
 
   duration_minutes: 35,              // EM section's share of 180-min paper, weighted
   total_marks: 13,                   // EM section's marks contribution
+  // Every number here is DERIVED (plan D7/E6) from the one compiled
+  // marking truth in src/exams/marking-constants.ts. This block used to be
+  // the fourth independent statement of the same fact — and the ONLY one
+  // storing negatives as positive magnitudes, which is why the flip is now
+  // an explicit `negativeMagnitude()` call rather than a differently-signed
+  // literal that reads like a typo. The positive-magnitude convention is
+  // kept deliberately: it is what every other exam in src/samples/ uses
+  // (`raw -= negative_marks_per_wrong`, see bitsat-mathematics.ts's
+  // scoreMockExam), so normalizing THIS file to signed values would have
+  // broken the samples family's shared shape rather than unified anything.
+  // Verified: no code reads these four fields arithmetically — the adapter
+  // in src/exams/adapters/gate-mathematics.ts re-exposes the object as
+  // data via loadBaseContent(), and that is the only consumer.
   marking_scheme: {
-    marks_per_correct_mcq_1mark: 1,
-    marks_per_correct_mcq_2mark: 2,
-    marks_per_correct_msq: 1,        // or 2 — varies, but generally 1-mark MSQs
-    marks_per_correct_nat: 1,        // or 2 — varies
-    negative_marks_per_wrong_mcq_1mark: 1 / 3,
-    negative_marks_per_wrong_mcq_2mark: 2 / 3,
-    negative_marks_per_wrong_msq: 0,  // No negative marking on MSQ
-    negative_marks_per_wrong_nat: 0,  // No negative marking on NAT
+    marks_per_correct_mcq_1mark: marksCorrect(1),
+    marks_per_correct_mcq_2mark: marksCorrect(2),
+    marks_per_correct_msq: marksCorrect(1),  // or 2 — varies, but generally 1-mark MSQs
+    marks_per_correct_nat: marksCorrect(1),  // or 2 — varies
+    negative_marks_per_wrong_mcq_1mark: negativeMagnitude(mcqMarksWrong(1)),
+    negative_marks_per_wrong_mcq_2mark: negativeMagnitude(mcqMarksWrong(2)),
+    negative_marks_per_wrong_msq: negativeMagnitude(MSQ_MARKS_WRONG),  // No negative marking on MSQ
+    negative_marks_per_wrong_nat: negativeMagnitude(NAT_MARKS_WRONG),  // No negative marking on NAT
   },
   question_count: 13,
   question_mix: {

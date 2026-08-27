@@ -42,6 +42,14 @@
  * for the draft values when that work lands.
  */
 
+import {
+  marksCorrect,
+  mcqMarksWrong,
+  MSQ_MARKS_WRONG,
+  MSQ_PARTIAL_CREDIT,
+  NAT_MARKS_WRONG,
+} from './marking-constants';
+
 // ============================================================================
 // Schema v1 field types
 // ============================================================================
@@ -149,28 +157,34 @@ export interface ExamProfile {
 // ============================================================================
 
 /**
- * GATE-EM's marking_table, exact values from the schema doc's fact column:
- * "MCQ +1/−⅓ or +2/−⅔ · MSQ no negative, no partial unless verified ·
- * NAT no negative". The 1/3 and 2/3 fractions mirror the exact constants
- * already used for real grading in
- * `src/scoring/deterministic-scorer.ts` (`DEFAULT_MCQ_NEGATIVE_1_MARK` /
- * `DEFAULT_MCQ_NEGATIVE_2_MARK`) — this module doesn't re-derive them
- * independently, it states the same fact in the schema's shape.
+ * GATE-EM's marking_table, restated in the schema doc's shape but DERIVED
+ * (plan D7/E6) from the one compiled marking truth in
+ * `./marking-constants.ts` — this module states no marking literal of its
+ * own any more. `marksCorrect(n)` is the identity on mark value; the
+ * negatives are the contract's signed `marks_wrong`.
+ *
+ * `partial_credit: 'no_partial_unless_verified'` is the schema's tri-state
+ * rendering of the contract's boolean `MSQ_PARTIAL_CREDIT === false`: the
+ * schema distinguishes "the brochure says no partial credit" from "nobody
+ * has verified it this year", and the contract's `false` is the latter,
+ * conservative reading (it is what makes the scorer REFUSE a partial-credit
+ * scheme rather than grade under it). A `true` in the contract would have
+ * to become `'yes'` here — asserted by the exam-profile test.
  */
 export const GATE_EM_MARKING_TABLE: GateMarkingTable = {
   mcq: {
-    one_mark: { marks_correct: 1, marks_wrong: -(1 / 3) },
-    two_mark: { marks_correct: 2, marks_wrong: -(2 / 3) },
+    one_mark: { marks_correct: marksCorrect(1), marks_wrong: mcqMarksWrong(1) },
+    two_mark: { marks_correct: marksCorrect(2), marks_wrong: mcqMarksWrong(2) },
   },
   msq: {
-    marks_correct: 1,
-    marks_wrong: 0,
-    partial_credit: 'no_partial_unless_verified',
+    marks_correct: marksCorrect(1),
+    marks_wrong: MSQ_MARKS_WRONG,
+    partial_credit: MSQ_PARTIAL_CREDIT ? 'yes' : 'no_partial_unless_verified',
     notes: 'No negative marking on MSQ; any non-exact selection scores 0.',
   },
   nat: {
-    marks_correct: 1,
-    marks_wrong: 0,
+    marks_correct: marksCorrect(1),
+    marks_wrong: NAT_MARKS_WRONG,
     notes: 'No negative marking on NAT.',
   },
 };

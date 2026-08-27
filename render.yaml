@@ -95,6 +95,18 @@ services:
       # visitor to vidhya-demo.onrender.com was getting.
       - key: DEMO_MODE_ENABLED
         value: "true"
+      # The intent lanes (T4): the Definite Problem Statement block and the
+      # intent-ordered atom sequence on mapped Linear Algebra concept pages.
+      # Read at src/api/auth-routes.ts and served DB-less-safe through
+      # /api/auth/config, so the frontend gates every T4 surface off one flag.
+      #
+      # Committed here rather than set in the Render UI on purpose: a flag
+      # that lives only in a dashboard survives nobody's memory and does not
+      # survive service recreation, which is exactly how this work shipped and
+      # then sat dark. Rollback stays one env-var change. `ci:demo-rails`
+      # asserts this stays "on" so the flag cannot go dark unnoticed again.
+      - key: VIDHYA_INTENT_LANES
+        value: "on"
 
       # ── AI tutor (STEP 1: paste one key to unlock AI chat) ──────────────
       # Get a free Gemini key at https://aistudio.google.com/apikey

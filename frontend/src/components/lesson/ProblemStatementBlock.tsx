@@ -9,12 +9,31 @@
  *
  * Renders FIRST on a mapped Linear Algebra concept's lesson page, only
  * when VIDHYA_INTENT_LANES is on. Content, in order:
- *   1. The pain point ("this is where marks die on this topic").
- *   2. The exam intent (what GATE actually asks).
+ *   1. The exam intent (what GATE actually asks).
+ *   2. The pain point (the common slips on this topic).
  *   3. The PYQ count sentence — omitted entirely when pyq_count is 0
  *      (never a fabricated or zero-valued sentence).
  *   4. A plain-language line naming the dominant intent — why this page
  *      opens the way it does for most students.
+ *
+ * ORDER AND EYEBROW REGISTER ARE PART OF THE CONTRACT, not layout taste.
+ * This block used to open with the pain point under the eyebrow "Where marks
+ * die on this topic". The 2026-08-27 content-readiness plan's P0 tone pass
+ * (amendment D23 / design finding 10) read all 26 Linear Algebra pain-point
+ * strings in sequence — `npx tsx scripts/check-intent-catalogue.ts
+ * --pain-points` — and found ONE distinct string shared by all 26 atoms:
+ * "Students often over-calculate, confuse definitions, or make row-operation
+ * and sign errors." So every LA concept page opened, above everything else,
+ * with the same sentence about the student's errors under a headline about
+ * marks dying. For the anxious persona the platform explicitly models
+ * (data/personas/priya-cbse-12-anxious.yaml) that is a daily loss prime, and
+ * "on this topic" was not even true of a module-level generality.
+ *
+ * Both halves of the fix are copy/order only. The actionable fact (what the
+ * exam asks) now renders before the wound, and the eyebrow states what the
+ * sentence actually is — common slips — rather than a death. Ordering is
+ * asserted in ProblemStatementBlock.test.tsx so a later edit cannot quietly
+ * put the wound back on top.
  *
  * Clarity compliance (DESIGN-SYSTEM.md — "One focal block per screen"):
  * this is NOT a second card. The atom-card stack below it is the page's
@@ -73,12 +92,12 @@ export function ProblemStatementBlock({ conceptId, enabled }: ProblemStatementBl
       }}
     >
       <div>
-        <p style={eyebrowStyle}>Where marks die on this topic</p>
-        <p style={bodyStyle}>{slice.pain_point}</p>
-      </div>
-      <div>
         <p style={eyebrowStyle}>What GATE actually asks</p>
         <p style={bodyStyle}>{slice.exam_intent}</p>
+      </div>
+      <div>
+        <p style={eyebrowStyle}>Common slips on this topic</p>
+        <p style={bodyStyle}>{slice.pain_point}</p>
       </div>
       {slice.pyq_count > 0 && (
         <p style={supportingStyle}>

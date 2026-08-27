@@ -8,7 +8,12 @@
 import { describe, it, expect } from 'vitest';
 import { buildIntentBlueprint, buildTemplateBlueprint } from '../template-engine';
 import { validateDecisions } from '../validator';
-import { CONCEPT_DOMINANT_INTENT, type IntentId } from '../intent-tables.gen';
+import {
+  CONCEPT_DOMINANT_INTENT,
+  CONCEPT_TEMPLATE_FAMILY,
+  INTENT_STAGE_SEQUENCES,
+  type IntentId,
+} from '../intent-tables.gen';
 import { RATIONALE_CODES } from '../types';
 
 const RATIONALE_BY_INTENT: Record<IntentId, string> = {
@@ -123,9 +128,12 @@ describe('buildIntentBlueprint', () => {
     expect(bp).toBeNull();
   });
 
-  it('uses the concept-graph-derived dominant intent when no explicit intent is passed', () => {
-    // matrix-operations dominant intent is pyq_targeted_practice (3 pyq_targeted_practice
-    // atoms vs 1 concept_clarification atom in the catalogue).
+  it('W2.1/E11: family topology wins over the dominant-intent default when no explicit intent is passed', () => {
+    // matrix-operations resolves to the 'matrix' template family (linear-algebra's
+    // topic default in template-families.yml) — family overrides the intent
+    // default per E11, even though matrix-operations ALSO has a dominant
+    // catalogue intent (pyq_targeted_practice, 3 atoms vs 1 concept_clarification).
+    expect(CONCEPT_TEMPLATE_FAMILY['matrix-operations']).toBe('matrix');
     expect(CONCEPT_DOMINANT_INTENT['matrix-operations']).toBe('pyq_targeted_practice');
     const bp = buildIntentBlueprint({
       concept_id: 'matrix-operations',
@@ -133,7 +141,44 @@ describe('buildIntentBlueprint', () => {
       target_difficulty: 'medium',
     });
     expect(bp).not.toBeNull();
-    expect(bp!.stages.every((s) => s.rationale_id === 'intent_pyq_practice')).toBe(true);
+    expect(bp!.stages.every((s) => s.rationale_id === 'family_matrix')).toBe(true);
+    expect(bp!.stages.some((s) => s.rationale_id === 'intent_pyq_practice')).toBe(false);
+  });
+
+  it('W2.1/E11: an explicit intent override still wins over family topology', () => {
+    // Same concept as above, but the caller explicitly asks for a lane —
+    // family must NOT override an explicit ask (only the unset-intent default).
+    expect(CONCEPT_TEMPLATE_FAMILY['matrix-operations']).toBe('matrix');
+    const bp = buildIntentBlueprint({
+      concept_id: 'matrix-operations',
+      exam_pack_id: 'gate-em',
+      target_difficulty: 'medium',
+      intent: 'concept_clarification',
+    });
+    expect(bp).not.toBeNull();
+    expect(bp!.stages.every((s) => s.rationale_id === 'intent_property_recall')).toBe(true);
+  });
+
+  it('W2.1/E11: family-derived practice stage inherits the intent lane difficulty_mix when the concept has a dominant intent', () => {
+    // eigenvalues -> family 'eigen' (topology) but its dominant intent
+    // (guided_problem_solving) supplies the preserved practice difficulty_mix,
+    // per E11's "intent lane's difficulty mixes preserved" clause.
+    expect(CONCEPT_TEMPLATE_FAMILY['eigenvalues']).toBe('eigen');
+    const intent = CONCEPT_DOMINANT_INTENT['eigenvalues'];
+    expect(intent).toBeDefined();
+    const bp = buildIntentBlueprint({
+      concept_id: 'eigenvalues',
+      exam_pack_id: 'gate-em',
+      target_difficulty: 'medium',
+    });
+    expect(bp).not.toBeNull();
+    const practice = bp!.stages.find((s) => s.id === 'practice')!;
+    const intentPracticeMix = INTENT_STAGE_SEQUENCES[intent!].find((s) => s.stage === 'practice')?.difficulty_mix;
+    if (intentPracticeMix) {
+      expect(practice.difficulty_mix).toEqual(intentPracticeMix);
+    } else {
+      expect(practice.difficulty_mix).toEqual({ easy: 30, medium: 50, hard: 20 });
+    }
   });
 
   it('explicit intent override wins over the dominant intent', () => {

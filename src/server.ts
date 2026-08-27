@@ -25,6 +25,7 @@ import { adminRunsRoutes } from './api/admin-runs-routes';
 import { adminLedgerRoutes } from './api/admin-ledger-routes';
 import { adminExamPacksRoutes } from './api/admin-exam-packs-routes';
 import { adminHoldoutRoutes } from './api/admin-holdout-routes';
+import { adminReviewQueueRoutes } from './api/admin-review-queue-routes';
 import { adminContentMaturityRoutes } from './api/admin-content-maturity-routes';
 import { adminWalkthroughRoutes } from './api/admin-walkthrough-routes';
 import { conceptResolveRoutes } from './api/concept-resolve-routes';
@@ -40,6 +41,7 @@ import { readinessRoutes, setReadinessCatalog } from './api/readiness-routes';
 import { adminReadinessMetricsRoutes } from './api/admin-readiness-metrics-routes';
 import { practiceRoutes } from './api/practice-routes';
 import { quizRoutes } from './api/quiz-routes';
+import { attemptSkipDrillRoutes } from './api/attempt-skip-drill-routes';
 import { fsrsShadowRoutes } from './api/fsrs-shadow-routes';
 import { pedagogyShadowRoutes } from './api/pedagogy-shadow-routes';
 import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
@@ -214,6 +216,9 @@ for (const route of adminExamPacksRoutes) {
 for (const route of adminHoldoutRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
+for (const route of adminReviewQueueRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
 for (const route of adminContentMaturityRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
@@ -263,6 +268,9 @@ for (const route of practiceRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of quizRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of attemptSkipDrillRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of fsrsShadowRoutes) {

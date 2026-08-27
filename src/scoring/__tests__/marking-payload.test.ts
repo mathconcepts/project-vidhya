@@ -55,6 +55,35 @@ describe('markingPayloadFromRow — migration 032 validation gate', () => {
     expect(markingPayloadFromRow({ ...baseRow, question_type: 'nat', marks: 1, answer_range: [1.4] }))
       .toEqual({ questionType: 'nat', marks: 1 });
   });
+
+  // W3.4/E2 (migration 054)
+  it('threads distractor_failure_tags for mcq when present and shaped', () => {
+    expect(markingPayloadFromRow({
+      ...baseRow, question_type: 'mcq', marks: 2, answer_index: 0,
+      distractor_failure_tags: { 1: 'method_selection', 2: 'sign' },
+    })).toEqual({
+      questionType: 'mcq', marks: 2, answerIndex: 0,
+      distractorFailureTags: { 1: 'method_selection', 2: 'sign' },
+    });
+  });
+
+  it('omits distractorFailureTags when absent, NULL, or malformed (never fabricated)', () => {
+    expect(markingPayloadFromRow({ ...baseRow, question_type: 'mcq', marks: 2, answer_index: 0 }))
+      .toEqual({ questionType: 'mcq', marks: 2, answerIndex: 0 });
+    expect(markingPayloadFromRow({
+      ...baseRow, question_type: 'mcq', marks: 2, answer_index: 0, distractor_failure_tags: null,
+    })).toEqual({ questionType: 'mcq', marks: 2, answerIndex: 0 });
+    expect(markingPayloadFromRow({
+      ...baseRow, question_type: 'mcq', marks: 2, answer_index: 0, distractor_failure_tags: ['not', 'an', 'object'],
+    })).toEqual({ questionType: 'mcq', marks: 2, answerIndex: 0 });
+  });
+
+  it('never threads distractor_failure_tags for msq/nat (mcq-only field)', () => {
+    expect(markingPayloadFromRow({
+      ...baseRow, question_type: 'msq', marks: 2, answer_indices: [0],
+      distractor_failure_tags: { 1: 'sign' },
+    })).toEqual({ questionType: 'msq', marks: 2, answerIndices: [0] });
+  });
 });
 
 function obj(id: string, payload: Record<string, unknown>): LearningObject {

@@ -22,6 +22,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ServerResponse } from 'http';
 import type { MockExamRow } from '../../gbrain/mock-exam-store';
+import { compiledAssessmentContract } from '../../exams/assessment-contract-loader';
+import { snapshotForCreation } from '../../scoring/contract-grading';
 
 const mockRequireRole = vi.fn();
 vi.mock('../auth-middleware', () => ({
@@ -44,6 +46,7 @@ const { gradeMockExam } = await import('../../gbrain/mock-exam-grading');
 
 const generateHandler = mockExamRoutes.find((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/:sessionId')!.handler;
 const submitHandler = mockExamRoutes.find((r) => r.method === 'POST' && r.path === '/api/gbrain/mock-exam/:id/submit')!.handler;
+const resultHandler = mockExamRoutes.find((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/:id/result')!.handler;
 const topicsHandler = mockExamRoutes.find((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/topics')!.handler;
 
 function makeReq(body: unknown, params: Record<string, string> = {}, query: Record<string, string> = {}) {
@@ -68,6 +71,9 @@ const PYQ_Q = {
 const GEN_Q_MARKED = {
   id: 'gen-1', topic: 'determinants', source: 'generated', question_text: 'det(I)?',
   question_type: 'mcq', marks: 1, options: ['0', '1', '2'], answer_index: 1, difficulty: 0.4,
+  // W3.4/E2: server-only diagnostic data (migration 054) — must never
+  // reach the pre-submission client view (see the leak test below).
+  distractor_failure_tags: { 0: 'method_selection', 2: 'sign' },
 };
 const GEN_Q_UNMARKED = {
   id: 'gen-2', topic: 'determinants', source: 'generated', question_text: 'legacy unmarked question',
@@ -88,6 +94,7 @@ function makeFakeStore() {
         timingMode: params.timingMode ?? 'standard',
         status: 'in_progress', late: false, score: null, maxMarks: null,
         createdAtMs: NOW.getTime(), submittedAtMs: null, gradedAtMs: null, analysis: null,
+        contractVersion: params.contractVersion ?? null, contractParams: params.contractParams ?? null,
       };
       rows.set(row.id, row);
       return { ...row };
@@ -136,6 +143,16 @@ function makeFakeStore() {
       if (row.ownerUserId === null) { row.ownerUserId = userId; return userId; }
       return row.ownerUserId;
     },
+    // Plan E7/E1(b) test-safe defaults: a pure, no-DB contract resolver
+    // (never a real pg connection, even when DATABASE_URL is a bogus
+    // 'postgres://nowhere' set by the tests below to clear the DB-less
+    // guard) and a no-op fact recorder. Individual tests override either
+    // when they specifically exercise contract pinning or fact-writing.
+    resolveContract: async () => compiledAssessmentContract(),
+    recordAttemptFacts: async () => 0,
+    // Plan W3.2: no topic evidence by default, so no skip is priced —
+    // the honest default, and the one that keeps these tests hermetic.
+    getTopicAccuracy: async () => ({}),
   };
 }
 
@@ -365,6 +382,10 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
     expect(raw).not.toContain('answer_range');
     // and the actual secret VALUES don't leak either
     expect(raw).not.toContain('free text answer');
+    // W3.4/E2: no field naming a failure/trap/misconception hypothesis
+    // ever reaches the pre-submission client view (GEN_Q_MARKED carries
+    // distractor_failure_tags — see the fixture above).
+    expect(raw).not.toMatch(/failure|trap|misconception/i);
 
     // gradable flag is honest — the unmarked legacy row is NOT claimed gradable
     const byId = Object.fromEntries(r.payload.questions.map((q: any) => [q.id, q]));
@@ -441,6 +462,22 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
     expect(generateMock).toHaveBeenCalledWith('anon-uuid-xyz', 'gate', { topics: undefined, timingMode: 'rush' });
     expect(r.payload.timing_mode).toBe('rush');
     expect(store.rows.get('mock-1')!.timingMode).toBe('rush');
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E7 — contract pinned at generation
+  // ────────────────────────────────────────────────────────────────────
+  it('plan E7: resolves the contract ONCE and pins version + params onto the row', async () => {
+    const store = makeFakeStore();
+    const resolveContract = vi.fn(async () => compiledAssessmentContract());
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, resolveContract, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), r.res);
+    expect(r.status).toBe(200);
+    expect(resolveContract).toHaveBeenCalledTimes(1);
+    const row = store.rows.get('mock-1')!;
+    expect(row.contractVersion).toBe('gate-2026+compiled');
+    expect(row.contractParams).toEqual(snapshotForCreation(compiledAssessmentContract()).params);
   });
 });
 
@@ -650,6 +687,308 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
       await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
       expect(r.status).toBe(200);
       expect(revertClaim).not.toHaveBeenCalled();
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E7 — contract pinned at generation, read at grading
+  // ────────────────────────────────────────────────────────────────────
+  describe('assessment contract pinning (E7)', () => {
+    it('grading from the pinned contract produces the same marks as the legacy (unpinned) path', async () => {
+      // Pinned: contractVersion/contractParams set from the compiled contract.
+      const pinned = makeFakeStore();
+      const snapshot = snapshotForCreation(compiledAssessmentContract());
+      await pinned.createMockExam({
+        id: 'mock-1', sessionId: 'anon-uuid-xyz', ownerUserId: 'student-1', examKey: 'gate',
+        questions: [PYQ_Q, GEN_Q_MARKED], timeLimitMinutes: 180,
+        contractVersion: snapshot.version, contractParams: snapshot.params,
+      });
+      setMockExamDepsForTests({ ...pinned, now: () => NOW });
+      const rPinned = makeRes();
+      await submitHandler(makeReq({
+        responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+      }, { id: 'mock-1' }), rPinned.res);
+
+      // Legacy: no contract columns at all (null).
+      const legacy = makeFakeStore();
+      await legacy.createMockExam({
+        id: 'mock-2', sessionId: 'anon-uuid-xyz', ownerUserId: 'student-1', examKey: 'gate',
+        questions: [PYQ_Q, GEN_Q_MARKED], timeLimitMinutes: 180,
+      });
+      setMockExamDepsForTests({ ...legacy, now: () => NOW });
+      const rLegacy = makeRes();
+      await submitHandler(makeReq({
+        responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+      }, { id: 'mock-2' }), rLegacy.res);
+
+      expect(rPinned.status).toBe(200);
+      expect(rLegacy.status).toBe(200);
+      expect(rPinned.payload.marks).toBe(rLegacy.payload.marks);
+      expect(rPinned.payload.correct).toBe(rLegacy.payload.correct);
+      expect(rPinned.payload.wrong).toBe(rLegacy.payload.wrong);
+    });
+
+    it('an unregistered strategy in the pinned snapshot refuses the submission by name (D8) rather than grading under invented rules', async () => {
+      const store = makeFakeStore();
+      await store.createMockExam({
+        id: 'mock-1', sessionId: 'anon-uuid-xyz', ownerUserId: 'student-1', examKey: 'gate',
+        questions: [PYQ_Q], timeLimitMinutes: 180,
+        contractVersion: 'jee-adv-2027',
+        contractParams: { marking: { mcq: { strategy: 'jee_adv_2027' } } },
+      });
+      setMockExamDepsForTests({ ...store, now: () => NOW });
+      const r = makeRes();
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+      expect(r.status).toBe(500);
+      // The row is reverted to in_progress, not stuck 'submitted' — same
+      // adversarial-review discipline as every other grading throw.
+      expect(store.rows.get('mock-1')!.status).toBe('in_progress');
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E1(b) — attempt_facts written per gradable question at grade time
+  // ────────────────────────────────────────────────────────────────────
+  describe('attempt_facts write path (E1b)', () => {
+    it('writes one fact per GRADABLE question, excludes the ungraded one, and never blocks the response', async () => {
+      const store = await seededExam();
+      const recordAttemptFacts = vi.fn(async () => 0);
+      setMockExamDepsForTests({ ...store, recordAttemptFacts, now: () => NOW });
+      const r = makeRes();
+      await submitHandler(makeReq({
+        responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+      }, { id: 'mock-1' }), r.res);
+
+      expect(r.status).toBe(200);
+      expect(recordAttemptFacts).toHaveBeenCalledTimes(1);
+      const facts = recordAttemptFacts.mock.calls[0][0] as Array<Record<string, unknown>>;
+      // pyq-1 (correct mcq) + gen-1 (wrong mcq) + gen-2 (skipped, but still
+      // GRADABLE only if it normalizes — gen-2 is the unmarked legacy row,
+      // so it is excluded: no question_kind exists for it to stamp.
+      expect(facts.map((f) => f.objectId).sort()).toEqual(['gen-1', 'pyq-1']);
+      const byId = Object.fromEntries(facts.map((f) => [f.objectId, f]));
+      expect(byId['pyq-1']).toMatchObject({ studentId: 'student-1', questionKind: 'mcq', skipped: false, marksEarned: 2, marksMax: 2 });
+      expect(byId['gen-1']).toMatchObject({ studentId: 'student-1', questionKind: 'mcq', skipped: false, marksMax: 1 });
+      expect(byId['gen-1'].marksEarned as number).toBeLessThan(0); // wrong MCQ, negative marking
+    });
+
+    it('a failed attempt_facts write is logged and does not affect the grade returned', async () => {
+      const store = await seededExam();
+      const recordAttemptFacts = vi.fn(async () => { throw new Error('attempt_facts table missing'); });
+      setMockExamDepsForTests({ ...store, recordAttemptFacts, now: () => NOW });
+      const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const r = makeRes();
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+      expect(r.status).toBe(200);
+      expect(r.payload.correct).toBe(1);
+      expect(consoleErr).toHaveBeenCalledWith(
+        expect.stringContaining('attempt_facts write failed'),
+        'attempt_facts table missing',
+      );
+      consoleErr.mockRestore();
+    });
+
+    it('a double-submit replay never writes attempt_facts a second time', async () => {
+      const store = await seededExam();
+      const recordAttemptFacts = vi.fn(async () => 0);
+      setMockExamDepsForTests({ ...store, recordAttemptFacts, now: () => NOW });
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), makeRes().res);
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 0 }] }, { id: 'mock-1' }), makeRes().res);
+      expect(recordAttemptFacts).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// W3.2 — the attempt/skip counterfactual on the result path
+// ────────────────────────────────────────────────────────────────────
+
+describe('W3.2 counterfactual', () => {
+  beforeEach(() => {
+    mockRequireRole.mockReset();
+    mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
+  });
+  afterEach(() => setMockExamDepsForTests(null));
+
+  async function seeded(questions: unknown[] = [PYQ_Q, GEN_Q_MARKED, GEN_Q_UNMARKED]) {
+    const store = makeFakeStore();
+    await store.createMockExam({
+      id: 'mock-1', sessionId: 'anon-uuid-xyz', ownerUserId: 'student-1', examKey: 'gate',
+      questions, timeLimitMinutes: 180, timingMode: 'standard',
+    });
+    return store;
+  }
+
+  it('persists the E3 per-question decomposition into the saved analysis', async () => {
+    const store = await seeded();
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    await submitHandler(makeReq({
+      responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+    }, { id: 'mock-1' }), makeRes().res);
+
+    const saved = (await store.getMockExam('mock-1'))!.analysis as any;
+    expect(Array.isArray(saved.per_question)).toBe(true);
+    // gen-2 is ungraded, so it contributes no entry — never guessed.
+    expect(saved.per_question.map((q: any) => q.id).sort()).toEqual(['gen-1', 'pyq-1']);
+    expect(saved.per_question[0]).toHaveProperty('kind');
+    expect(saved.per_question[0]).toHaveProperty('max');
+  });
+
+  it('the submit response carries the counterfactual, priced from the wrong attempt', async () => {
+    const store = await seeded();
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    const r = makeRes();
+    await submitHandler(makeReq({
+      responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+    }, { id: 'mock-1' }), r.res);
+
+    const cf = r.payload.counterfactual;
+    expect(cf.available).toBe(true);
+    expect(cf.state).toBe('decisions');
+    expect(cf.top_decisions).toHaveLength(1);
+    // gen-1 is a wrong 1-mark MCQ → -1/3.
+    expect(cf.top_decisions[0].object_id).toBe('gen-1');
+    expect(cf.top_decisions[0].cost_marks).toBeCloseTo(0.33, 2);
+    expect(cf.top_decisions[0].topic).toBe('determinants');
+    expect(cf.drill_concept_id).toBeNull();  // neither fixture row carries concept_id
+    expect(cf.beats.gap).toContain('attempt-or-skip calls');
+  });
+
+  it('joins the topic and concept off the stored question rows', async () => {
+    const store = await seeded([
+      { ...GEN_Q_MARKED, concept_id: 'la-05' },
+    ]);
+    setMockExamDepsForTests({ ...store, now: () => NOW });
+    const r = makeRes();
+    await submitHandler(makeReq({ responses: [{ id: 'gen-1', selectedIndex: 0 }] }, { id: 'mock-1' }), r.res);
+    expect(r.payload.counterfactual.drill_concept_id).toBe('la-05');
+  });
+
+  it('prices a skip only when the topic evidence is there', async () => {
+    const store = await seeded([PYQ_Q, GEN_Q_MARKED]);
+    setMockExamDepsForTests({
+      ...store,
+      getTopicAccuracy: async () => ({ eigenvalues: { attempted: 20, correct: 14 } }),
+      now: () => NOW,
+    });
+    const r = makeRes();
+    // pyq-1 (eigenvalues, 2 marks) skipped; gen-1 answered correctly.
+    await submitHandler(makeReq({ responses: [{ id: 'gen-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    const cf = r.payload.counterfactual;
+    expect(cf.top_decisions).toHaveLength(1);
+    expect(cf.top_decisions[0].decision).toBe('skipped_positive_ev');
+    expect(cf.top_decisions[0].topic_attempts).toBe(20);
+  });
+
+  it('does not read topic evidence at all when nothing was skipped', async () => {
+    const store = await seeded([GEN_Q_MARKED]);
+    const getTopicAccuracy = vi.fn(async () => ({}));
+    setMockExamDepsForTests({ ...store, getTopicAccuracy, now: () => NOW });
+    await submitHandler(makeReq({ responses: [{ id: 'gen-1', selectedIndex: 1 }] }, { id: 'mock-1' }), makeRes().res);
+    expect(getTopicAccuracy).not.toHaveBeenCalled();
+  });
+
+  it('a topic-evidence read failure omits skip lines rather than failing the submit', async () => {
+    const store = await seeded([PYQ_Q, GEN_Q_MARKED]);
+    setMockExamDepsForTests({
+      ...store,
+      getTopicAccuracy: async () => { throw new Error('attempt_facts unreachable'); },
+      now: () => NOW,
+    });
+    const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const r = makeRes();
+    await submitHandler(makeReq({ responses: [{ id: 'gen-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.counterfactual.available).toBe(true);
+    expect(r.payload.counterfactual.top_decisions).toEqual([]);
+    consoleErr.mockRestore();
+  });
+
+  describe('legacy rows (E3 degradation)', () => {
+    it('an analysis with no per_question key renders headline-only', async () => {
+      const store = await seeded();
+      // A row exactly as a pre-E3 deploy left it.
+      await store.claimMockExamSubmission('mock-1', NOW.getTime());
+      await store.finalizeMockExamSubmission('mock-1', {
+        late: false, score: 4, maxMarks: 5, gradedAtMs: NOW.getTime(),
+        analysis: { total: 3, correct: 2, wrong: 1, skipped: 0, ungraded: 1, marks: 4, max_marks: 5, accuracy: 67, by_topic: {} },
+      });
+      setMockExamDepsForTests({ ...store, now: () => NOW });
+
+      const r = makeRes();
+      await resultHandler(makeReq(null, { id: 'mock-1' }), r.res);
+      expect(r.status).toBe(200);
+      expect(r.payload.marks).toBe(4);
+      expect(r.payload.counterfactual.available).toBe(false);
+      expect(r.payload.counterfactual.state).toBe('unavailable');
+      expect(r.payload.counterfactual.reason).toContain('graded before per-question analysis existed');
+      expect(r.payload.counterfactual.top_decisions).toEqual([]);
+    });
+
+    it('a replayed double-submit of a legacy row degrades the same way', async () => {
+      const store = await seeded();
+      await store.claimMockExamSubmission('mock-1', NOW.getTime());
+      await store.finalizeMockExamSubmission('mock-1', {
+        late: false, score: 4, maxMarks: 5, gradedAtMs: NOW.getTime(), analysis: { marks: 4 },
+      });
+      setMockExamDepsForTests({ ...store, now: () => NOW });
+      const r = makeRes();
+      await submitHandler(makeReq({ responses: [] }, { id: 'mock-1' }), r.res);
+      expect(r.payload.replayed).toBe(true);
+      expect(r.payload.counterfactual.state).toBe('unavailable');
+    });
+  });
+
+  describe('GET /api/gbrain/mock-exam/:id/result', () => {
+    it('replays the same screen from the persisted analysis on a revisit', async () => {
+      const store = await seeded();
+      setMockExamDepsForTests({ ...store, now: () => NOW });
+      const submitted = makeRes();
+      await submitHandler(makeReq({
+        responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+      }, { id: 'mock-1' }), submitted.res);
+
+      const revisit = makeRes();
+      await resultHandler(makeReq(null, { id: 'mock-1' }), revisit.res);
+      expect(revisit.status).toBe(200);
+      expect(revisit.payload.marks).toBe(submitted.payload.marks);
+      expect(revisit.payload.counterfactual.top_decisions)
+        .toEqual(submitted.payload.counterfactual.top_decisions);
+    });
+
+    it('404s a student reaching another student\'s exam — never a 403 that confirms the id', async () => {
+      const store = await seeded();
+      setMockExamDepsForTests({ ...store, now: () => NOW });
+      await submitHandler(makeReq({ responses: [] }, { id: 'mock-1' }), makeRes().res);
+
+      mockRequireRole.mockResolvedValue({ userId: 'student-2', role: 'student' });
+      const r = makeRes();
+      await resultHandler(makeReq(null, { id: 'mock-1' }), r.res);
+      expect(r.status).toBe(404);
+      expect(r.payload.error).toBe('unknown mock exam: mock-1');
+    });
+
+    it('409s an exam that has not been submitted yet', async () => {
+      const store = await seeded();
+      setMockExamDepsForTests({ ...store, now: () => NOW });
+      const r = makeRes();
+      await resultHandler(makeReq(null, { id: 'mock-1' }), r.res);
+      expect(r.status).toBe(409);
+      expect(r.payload.error).toContain('has not been submitted yet');
+    });
+
+    it('requires auth', async () => {
+      mockRequireRole.mockResolvedValue(null);
+      const r = makeRes();
+      await resultHandler(makeReq(null, { id: 'mock-1' }), r.res);
+      expect(r.payload).toBeNull();
+    });
+
+    it('is registered ahead of the :sessionId route so it is never shadowed by it', () => {
+      const resultIndex = mockExamRoutes.findIndex((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/:id/result');
+      const sessionIndex = mockExamRoutes.findIndex((r) => r.method === 'GET' && r.path === '/api/gbrain/mock-exam/:sessionId');
+      expect(resultIndex).toBeGreaterThanOrEqual(0);
+      expect(resultIndex).toBeLessThan(sessionIndex);
     });
   });
 });

@@ -133,6 +133,16 @@ export interface GenerationRunConfig {
       format: 'mcq' | 'msq' | 'nat';
       difficulty: number;
       topic: string;
+      /**
+       * W3.4/E2 — when true, an mcq whose distractors are not ALL tagged
+       * with a failure hypothesis is REFUSED at assemble time, and the
+       * ledger's `misconception_coverage` gate becomes a real verdict
+       * instead of a recorded waiver. Off by default; wave-1 runs set it
+       * (docs/ops/content-verification-runbook.md). Reaches the factory
+       * through the AtomSpec's `prompt_vars.require_failure_tags`, the
+       * same channel format/topic/difficulty use.
+       */
+      require_failure_tags?: boolean;
     }>;
   };
   pipeline: {

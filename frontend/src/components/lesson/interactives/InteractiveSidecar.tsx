@@ -57,4 +57,13 @@ export function InteractiveSidecar({ body, showAuthoringErrors }: Props) {
 
 // Re-export for convenience so consumers can `import from interactives`
 export { parseInteractiveSpec, evalFormula } from './types';
-export type { InteractiveSpec, ManipulableSpec, SimulationSpec, GuidedWalkthroughSpec } from './types';
+export { DecisionTreeWalkthrough } from './DecisionTreeWalkthrough';
+export type {
+  InteractiveSpec,
+  ManipulableSpec,
+  SimulationSpec,
+  GuidedWalkthroughSpec,
+  BranchesSpec,
+  BranchNode,
+  BranchLeaf,
+} from './types';

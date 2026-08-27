@@ -10,20 +10,31 @@
  *
  * DB-less safe: when DATABASE_URL is unset, the persistence layer's
  * listInFlightRuns returns empty and this becomes a clean no-op.
+ *
+ * W1.3: every practice item this poller writes is stamped with its run and
+ * gets its automated quality-gate verdicts recorded (see
+ * `recordItemGatesDefault` below and src/generation/gate-ledger.ts). The
+ * `mathematics` gate is opened as 'pending' — an operator closes it at
+ * /admin/review-queue, and until they do, the item is neither promotable
+ * nor servable from the DB.
  */
 
 import { createBatchOrchestrator, type StepResult } from './orchestrator';
 import { createGeminiBatchAdapter, DEFAULT_MODEL } from './gemini-adapter';
 import { createPgPersistence } from './pg-persistence';
 import type { JobRow } from './persistence';
-import { getRun } from '../run-orchestrator';
-import { dispatchPracticeItemJob, type PracticeItemDispatchDeps } from '../practice-item-factory/batch-dispatch';
+import type { AtomSpec } from './types';
+import { getRun, markRunStatus } from '../run-orchestrator';
+import { dispatchPracticeItemJob, practiceItemSpecFromAtomSpec, type PracticeItemDispatchDeps } from '../practice-item-factory/batch-dispatch';
 import { practiceItemBankPath, writePracticeItemBank } from '../practice-item-factory/writer';
 import { buildSolveSecondaryFn } from '../practice-item-factory/answer-check';
 import { assertPracticeItemLaunchReady } from '../practice-item-factory/launch-guard';
+import { estimatePracticeItemCostUsd } from '../practice-item-factory/cost';
 import { verifyProblemWithWolfram } from '../../services/wolfram-service';
 import { computeFeatureFlags } from '../../api/feature-flags';
 import type { AuthoredItem } from '../../scoring/learning-object-catalog-file';
+import { evaluateAutomatedGates, recordGates } from '../gate-ledger';
+import { resolveAssessmentContract } from '../../exams/assessment-contract-loader';
 
 /**
  * Minimal shape `handleJobProcessed` needs from a GenerationRunRow — kept
@@ -50,6 +61,54 @@ export interface JobProcessedDeps {
    * pre-T4a default, still fail-closed exactly as before.
    */
   getPracticeItemDispatchDeps?: () => Promise<PracticeItemDispatchDeps>;
+  /**
+   * W1.3 — writes the automated quality-gate verdicts for a written item
+   * into `content_gate_ledger` at batch-processing time (the four
+   * mechanical gates decided, `mathematics` opened as 'pending' for the
+   * operator). Best-effort and injectable: DB-less deploys resolve to a
+   * no-op, and a ledger write failing never loses an item the pipeline
+   * already verified. Omitted (legacy/test callers) → skipped entirely.
+   */
+  recordItemGates?: (input: RecordItemGatesInput) => Promise<void>;
+}
+
+export interface RecordItemGatesInput {
+  generation_run_id: string;
+  /** The item AFTER the run stamp — the ledger keys on its id. */
+  item: AuthoredItem;
+  /** The verification cascade's result, recorded as EVIDENCE on the mathematics gate, never as its verdict. */
+  verification: { agreed: boolean; method?: string; detail?: string };
+  requireFailureTags: boolean;
+}
+
+/**
+ * Production wiring for `recordItemGates`. Resolves the run's assessment
+ * contract (falling back to the compiled constant, whose version string
+ * `…+compiled` says so honestly) so the `assessment_contract` gate has a
+ * real version to name, evaluates the pure verdicts, and upserts them.
+ * Swallows its own errors — a ledger write is not allowed to fail an
+ * ingestion pass, and an unwritten row fails CLOSED at the enforcement
+ * seams anyway (see src/generation/gate-ledger.ts).
+ */
+export async function recordItemGatesDefault(input: RecordItemGatesInput): Promise<void> {
+  try {
+    const contract = await resolveAssessmentContract();
+    const verdicts = evaluateAutomatedGates({
+      item: input.item,
+      verification: input.verification,
+      requireFailureTags: input.requireFailureTags,
+      contractVersion: contract.version,
+    });
+    await recordGates({
+      generation_run_id: input.generation_run_id,
+      item_id: input.item.id,
+      verdicts,
+    });
+  } catch (err) {
+    console.error(
+      `[batch-poller] gate-ledger write failed for item '${input.item.id}' in run '${input.generation_run_id}': ${(err as Error).message}`,
+    );
+  }
 }
 
 /**
@@ -83,6 +142,7 @@ const defaultJobProcessedDeps: JobProcessedDeps = {
   dispatchPracticeItemJob,
   writePracticeItemBank,
   getPracticeItemDispatchDeps: buildRealPracticeItemDispatchDeps,
+  recordItemGates: recordItemGatesDefault,
 };
 
 /**
@@ -154,6 +214,24 @@ export async function handleJobProcessed(
         console.error(`${logPrefix}: outcome=written but missing exam_pack_id/spec/item — dropping, not writing`);
         return;
       }
+      // Stamp the run that produced it. Without this the item carries no
+      // provenance, and plan E8's whole gate scope — which keys on exactly
+      // this field — would have nothing to bite on. `assemble.ts` cannot
+      // set it: it never sees a run id.
+      const written: AuthoredItem = { ...result.item, generation_run_id: run_id };
+
+      // W1.3: the automated gate verdicts, at batch-processing time.
+      // Fire-and-forget by contract (see the dep's doc comment) — an
+      // unwritten ledger row fails CLOSED downstream, never open.
+      if (deps.recordItemGates) {
+        await deps.recordItemGates({
+          generation_run_id: run_id,
+          item: written,
+          verification: { agreed: true, method: written.verification_method, detail: result.reason },
+          requireFailureTags: result.spec.require_failure_tags === true,
+        });
+      }
+
       const bankPath = practiceItemBankPath(examPackId, result.spec.topic);
       if (bankAccumulator) {
         // T-poller-perf: a poll pass can write many items into the SAME
@@ -163,14 +241,14 @@ export async function handleJobProcessed(
         // exactly once at the end of the pass, via the same atomic
         // write-then-rename `writePracticeItemBank` already uses.
         const list = bankAccumulator.get(bankPath) ?? [];
-        list.push(result.item);
+        list.push(written);
         bankAccumulator.set(bankPath, list);
-        console.log(`${logPrefix}: queued ${result.item.id} → ${bankPath} (${result.reason}) [flushed at end of pass]`);
+        console.log(`${logPrefix}: queued ${written.id} → ${bankPath} (${result.reason}) [flushed at end of pass]`);
       } else {
         // No accumulator threaded in (e.g. a direct/legacy caller) — fall
         // back to the original immediate write, unchanged.
-        deps.writePracticeItemBank(bankPath, [result.item]);
-        console.log(`${logPrefix}: wrote ${result.item.id} → ${bankPath} (${result.reason})`);
+        deps.writePracticeItemBank(bankPath, [written]);
+        console.log(`${logPrefix}: wrote ${written.id} → ${bankPath} (${result.reason})`);
       }
       return;
     }
@@ -201,7 +279,16 @@ export function flushPracticeItemBankAccumulator(
 ): void {
   for (const [bankPath, items] of accumulator) {
     if (items.length === 0) continue;
-    writeFn(bankPath, items);
+    try {
+      writeFn(bankPath, items);
+    } catch (err) {
+      // D5: the writer now refuses (throws) rather than clobber a verified
+      // item by id. One bank's refusal must not lose every OTHER bank
+      // queued in this pass — log it loudly and keep flushing the rest;
+      // the refused item stays un-written (recorded on disk exactly as it
+      // was before this pass) and the operator sees the precise reason.
+      console.error(`[batch-poller] refused to write bank ${bankPath}: ${(err as Error).message}`);
+    }
   }
 }
 
@@ -232,11 +319,31 @@ let _bankAccumulatorForCurrentPass: Map<string, AuthoredItem[]> | null = null;
 // at a time.
 let _inFlightPollPromise: Promise<Array<{ run_id: string; result: StepResult }>> | null = null;
 
+/**
+ * Per-job cost estimate for prepare()'s pre-submit budget check. A
+ * practice-item job (recognized via practiceItemSpecFromAtomSpec — the
+ * same reconstruction batch-dispatch.ts uses) prices by its actual format
+ * (mcq/msq dual-model consensus vs nat's Wolfram leg); anything else
+ * (plain atom-mode jobs) falls back to the orchestrator's own crude
+ * default. Reuses practice-item-factory/cost.ts so this number can never
+ * drift from src/generation/dry-run.ts's pre-launch estimate for the same
+ * spec (CLAUDE.md's v4.25.0 "parallel truths" warning).
+ */
+function estimateJobCostUsd(atomSpec: AtomSpec): number {
+  const spec = practiceItemSpecFromAtomSpec(atomSpec);
+  return spec ? estimatePracticeItemCostUsd(spec.format, DEFAULT_MODEL) : DEFAULT_PER_JOB_USD_FALLBACK;
+}
+// Mirrors orchestrator.ts's own DEFAULT_PER_JOB_USD — kept local (not
+// imported) since that constant isn't exported and this fallback only
+// needs to be "the same crude order of magnitude", not byte-identical.
+const DEFAULT_PER_JOB_USD_FALLBACK = 0.0008;
+
 function getOrchestrator() {
   if (_orch) return _orch;
   _orch = createBatchOrchestrator({
     persistence: createPgPersistence(),
     adapter: createGeminiBatchAdapter(),
+    estimatePerJobUsd: estimateJobCostUsd,
     // T4a launch guard: fails a fresh practice-item run loudly (batch_state
     // → 'failed', clear error) if its specs need a verifier that isn't
     // configured, BEFORE any provider call. No-op for non-practice-item
@@ -306,7 +413,9 @@ export async function pollAllInFlightBatches(): Promise<Array<{ run_id: string; 
 
   const pass = (async () => {
     try {
-      return await getOrchestrator().pollAllInFlight();
+      const results = await getOrchestrator().pollAllInFlight();
+      await reconcileRunStatuses(results);
+      return results;
     } finally {
       // This pass is the sole owner of these slots for its whole
       // lifetime now (the reentrancy guard above prevents a second pass
@@ -355,4 +464,47 @@ export async function resumeAllInFlightBatches(): Promise<void> {
  */
 export async function abortBatchRun(run_id: string, reason?: string): Promise<void> {
   await getOrchestrator().abort(run_id, reason);
+}
+
+/**
+ * Seeds a practice-item batch run into the shared batch lane: drives the
+ * orchestrator's ONE queued -> prepared transition (persists atom_specs as
+ * batch_jobs rows, runs the T4a launch guard, checks the run's budget,
+ * writes the JSONL to disk). Deliberately does NOT loop the state machine
+ * any further — prepare() sets batch_state, which is all
+ * `listInFlightRuns()` (pg-persistence.ts) needs to pick the run up on the
+ * next pass of the SAME periodic pollAllInFlightBatches() sweep that
+ * already advances every other in-flight batch run (boot resume + the
+ * 5-min cron tick, jobs/scheduler.ts). Submit/poll/download/process are
+ * that existing lane, unchanged.
+ *
+ * Exported for src/generation/run-dispatcher.ts's practice-item dispatch
+ * mode — reusing THIS module's singleton orchestrator (rather than
+ * constructing a second one with its own adapter/launch-guard/cost-estimator
+ * wiring) is what keeps that wiring in exactly one place instead of two
+ * copies that could drift (CLAUDE.md's v4.25.0 "parallel truths" note).
+ */
+export async function prepareBatchRun(run_id: string, atom_specs: AtomSpec[]): Promise<StepResult> {
+  return getOrchestrator().step(run_id, atom_specs);
+}
+
+/**
+ * Reconciles generation_runs.status whenever this pass drove a run's
+ * batch_state to a terminal outcome. See run-orchestrator.ts's
+ * markRunStatus doc comment for why this never touches `error`/`cost_usd`.
+ * Best-effort per run — one reconciliation failing (DB hiccup) is logged
+ * and never blocks the rest of the pass or the caller.
+ */
+async function reconcileRunStatuses(
+  results: Array<{ run_id: string; result: StepResult }>,
+): Promise<void> {
+  for (const { run_id, result } of results) {
+    if (result.kind !== 'transitioned') continue;
+    if (result.to !== 'complete' && result.to !== 'failed') continue;
+    try {
+      await markRunStatus(run_id, result.to);
+    } catch (err) {
+      console.error(`[batch-poller] status reconciliation failed for run=${run_id}: ${(err as Error).message}`);
+    }
+  }
 }

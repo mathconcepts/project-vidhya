@@ -23,6 +23,10 @@
  *     render garbage at runtime.
  *   - simulation: samples x_expr / y_expr across [t_min, t_max] for the same
  *     reason.
+ *   - guided_walkthrough with a `branches` tree (W2.5): walks every
+ *     root-to-leaf path the student can take, and holds the leaf prose to
+ *     the design contract — a reason renders as a 17px sentence, never a
+ *     code, so a committed leaf must actually read as one.
  *
  * Usage:
  *   npx tsx scripts/lint-interactive-specs.ts            # lint all content
@@ -39,6 +43,8 @@ import {
   type InteractiveSpec,
   type ManipulableSpec,
   type SimulationSpec,
+  type GuidedWalkthroughSpec,
+  type BranchNode,
 } from '../frontend/src/components/lesson/interactives/types';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -125,6 +131,63 @@ function exerciseSimulation(file: string, spec: SimulationSpec): void {
   }
 }
 
+/**
+ * Depth bound on a walk through a branching walkthrough. The validator
+ * already refuses cycles, so this only catches a tree so deep that a
+ * student would give up before reaching a leaf — and it keeps the path
+ * enumeration below from exploding on a pathological spec.
+ */
+const MAX_BRANCH_DEPTH = 10;
+/** A leaf reason renders as a sentence. Fewer words than this is a code. */
+const MIN_REASON_WORDS = 4;
+
+/**
+ * Walk every route a student can take through a `branches` tree.
+ *
+ * The validator (shared with the renderer) already guarantees the tree is
+ * acyclic, fully reachable and free of dangling targets. What it cannot
+ * judge is whether the committed CONTENT holds up: a leaf whose reason is
+ * `wrong_method` passes every structural rule and renders as a dead end
+ * that teaches nothing.
+ */
+function exerciseBranches(file: string, spec: GuidedWalkthroughSpec): void {
+  const branches = spec.branches;
+  if (!branches) return;
+
+  const byId = new Map<string, BranchNode>(branches.nodes.map((n) => [n.id, n]));
+  const leafIds = new Set(branches.leaves.map((l) => l.id));
+  const reachedLeaves = new Set<string>();
+
+  function walk(id: string, depth: number, path: string[]): void {
+    if (depth > MAX_BRANCH_DEPTH) {
+      fail(file, `branch path ${path.join(' → ')} exceeds ${MAX_BRANCH_DEPTH} questions deep`);
+      return;
+    }
+    if (leafIds.has(id)) {
+      reachedLeaves.add(id);
+      return;
+    }
+    const node = byId.get(id);
+    if (!node) return;  // validator already refused this case
+    for (const o of node.options) walk(o.next, depth + 1, [...path, o.label]);
+  }
+  walk(branches.nodes[0].id, 0, []);
+
+  for (const leaf of branches.leaves) {
+    if (!reachedLeaves.has(leaf.id)) {
+      fail(file, `branch leaf "${leaf.id}" is not reachable by any sequence of choices`);
+    }
+    const words = leaf.reason.trim().split(/\s+/).filter(Boolean);
+    if (words.length < MIN_REASON_WORDS) {
+      fail(
+        file,
+        `branch leaf "${leaf.id}" reason is ${words.length} word(s): "${leaf.reason}". ` +
+          `A reason renders as a sentence to the student, never a code — write at least ${MIN_REASON_WORDS} words.`,
+      );
+    }
+  }
+}
+
 function lintFile(file: string): void {
   const body = fs.readFileSync(file, 'utf8');
   if (!body.includes('```interactive-spec')) return;
@@ -137,10 +200,15 @@ function lintFile(file: string): void {
 
   specCount++;
   const spec: InteractiveSpec = parsed.spec;
-  census[spec.kind] = (census[spec.kind] ?? 0) + 1;
+  const censusKey =
+    spec.kind === 'guided_walkthrough' && spec.branches
+      ? 'guided_walkthrough (branching)'
+      : spec.kind;
+  census[censusKey] = (census[censusKey] ?? 0) + 1;
 
   if (spec.kind === 'manipulable') exerciseManipulable(file, spec);
   else if (spec.kind === 'simulation') exerciseSimulation(file, spec);
+  else if (spec.kind === 'guided_walkthrough') exerciseBranches(file, spec);
 }
 
 function walk(dir: string): string[] {

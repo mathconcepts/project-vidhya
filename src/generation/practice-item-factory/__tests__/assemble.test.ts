@@ -88,6 +88,65 @@ describe('assemblePracticeItem — mcq', () => {
   });
 });
 
+describe('assemblePracticeItem — W3.4/E2 require_failure_tags gate', () => {
+  const tagged: PracticeItemGenerationResponse = {
+    ...mcqResponse,
+    distractor_failure_tags: { '4 and 3': 'method_selection', '7 and 10': 'sign' },
+  };
+
+  it('off by default: an untagged mcq still writes', () => {
+    const result = assemblePracticeItem(mcqSpec, mcqResponse, 'dual_model_consensus');
+    expect(result.ok).toBe(true);
+    expect(result.item!.distractor_failure_tags).toBeUndefined();
+  });
+
+  it('threads failure tags onto the AuthoredItem at POST-shuffle indices when supplied', () => {
+    const rng = () => 0.42;
+    const result = assemblePracticeItem(mcqSpec, tagged, 'dual_model_consensus', rng);
+    expect(result.ok).toBe(true);
+    const item = result.item!;
+    for (const [text, tag] of Object.entries(tagged.distractor_failure_tags!)) {
+      const idx = item.options!.indexOf(text);
+      expect(item.distractor_failure_tags?.[idx]).toBe(tag);
+    }
+    expect(item.distractor_failure_tags?.[item.answer_index!]).toBeUndefined();
+  });
+
+  it('when ON, writes an mcq whose distractors are ALL tagged', () => {
+    const spec = { ...mcqSpec, require_failure_tags: true };
+    const result = assemblePracticeItem(spec, tagged, 'dual_model_consensus');
+    expect(result.ok).toBe(true);
+  });
+
+  it('when ON, refuses an mcq missing even one distractor tag, naming the item id and untagged indices (D8)', () => {
+    const partiallyTagged: PracticeItemGenerationResponse = {
+      ...mcqResponse,
+      distractor_failure_tags: { '4 and 3': 'method_selection' }, // '7 and 10' left untagged
+    };
+    const spec = { ...mcqSpec, require_failure_tags: true };
+    const rng = () => 0.999999; // identity shuffle: options = [correct, '4 and 3', '7 and 10']
+    const result = assemblePracticeItem(spec, partiallyTagged, 'dual_model_consensus', rng);
+    expect(result.ok).toBe(false);
+    const id = practiceItemId(spec, partiallyTagged);
+    expect(result.reason).toContain(id);
+    expect(result.reason).toMatch(/1 of 2 distractors missing failure_tag/);
+    expect(result.reason).toContain('2'); // the untagged option's index
+  });
+
+  it('when ON, refuses an mcq with NO tags at all', () => {
+    const spec = { ...mcqSpec, require_failure_tags: true };
+    const result = assemblePracticeItem(spec, mcqResponse, 'dual_model_consensus');
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/2 of 2 distractors missing failure_tag/);
+  });
+
+  it('the flag is a no-op for msq/nat (mcq-only gate)', () => {
+    const msqSpecStrict = { ...msqSpec, require_failure_tags: true };
+    const result = assemblePracticeItem(msqSpecStrict, msqResponse, 'dual_model_consensus');
+    expect(result.ok).toBe(true);
+  });
+});
+
 describe('assemblePracticeItem — msq', () => {
   it('assembles with answer_indices and joins correct_answers for correct_answer field', () => {
     const result = assemblePracticeItem(msqSpec, msqResponse, 'dual_model_consensus');

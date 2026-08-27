@@ -3,8 +3,21 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { summarizeMock } from '../mock-to-marks';
+import { summarizeMock, KNEW_IT_TAGS, DIDNT_KNOW_TAGS } from '../mock-to-marks';
 import type { Attempt, ErrorTag } from '../../core/interfaces';
+
+/**
+ * Mirrors src/core/interfaces.ts's ErrorTag union (13 members, W3.4/E4).
+ * Deliberately NOT imported — same "erased at runtime, hand-mirrored with
+ * a drift tripwire" shape as scripts/check-intent-catalogue.ts's
+ * ERROR_TAGS, so this file doesn't grow a THIRD silent copy of the union:
+ * a mismatch here fails the drift test below instead.
+ */
+const ALL_ERROR_TAGS: readonly ErrorTag[] = [
+  'sign', 'unit', 'misread', 'transcription', 'method', 'careless',
+  'method_selection', 'representation', 'mode_msq', 'mode_nat_entry',
+  'time_pressure', 'risk_decision', 'prerequisite',
+];
 
 const A = (over: Partial<Attempt> = {}): Attempt => ({
   studentId: 's', objectId: 'o', skillId: 'algebra',
@@ -93,5 +106,56 @@ describe('summarizeMock', () => {
     ]);
     expect(r.headline).toMatch(/unit/);
     expect(r.headline).toMatch(/2 on the table/i);
+  });
+
+  // W3.4/D9 — the 7 new ErrorTag members, exercised individually so a
+  // future reclassification of any one of them is caught here, not just
+  // by the completeness test below (which only checks that SOME
+  // classification exists, not which one).
+  it('classifies the 4 new knew-it tags as left-on-table (exam-craft, not knowledge gaps)', () => {
+    for (const tag of ['time_pressure', 'mode_nat_entry', 'mode_msq', 'risk_decision'] as const) {
+      const r = summarizeMock([
+        A({ correct: false, partialMarks: partial(0, 4), errorTags: [tag] }),
+      ]);
+      expect(r.knewIt, `${tag} should be knew-it`).toBe(4);
+      expect(r.leftOnTable, `${tag} should be left-on-table`).toBe(4);
+    }
+  });
+
+  it('classifies the 3 new didn\'t-know tags as no left-on-table credit (genuine gaps)', () => {
+    for (const tag of ['method_selection', 'prerequisite', 'representation'] as const) {
+      const r = summarizeMock([
+        A({ correct: false, partialMarks: partial(0, 4), errorTags: [tag] }),
+      ]);
+      expect(r.knewIt, `${tag} should NOT be knew-it`).toBe(0);
+      expect(r.leftOnTable, `${tag} should have no left-on-table credit`).toBe(0);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// W3.4/E4 — ErrorTag union-completeness: KNEW_IT_TAGS ∪ DIDNT_KNOW_TAGS must
+// equal the full ErrorTag union with no overlap and no gap. A future tag
+// added to interfaces.ts but forgotten here fails THIS test rather than
+// silently defaulting to "didn't know" (or worse, "knew it") in the
+// aggregator above.
+// ---------------------------------------------------------------------------
+describe('mock-to-marks — ErrorTag union completeness', () => {
+  it('KNEW_IT_TAGS and DIDNT_KNOW_TAGS partition the full ErrorTag union exactly', () => {
+    const knew = new Set(KNEW_IT_TAGS);
+    const didnt = new Set(DIDNT_KNOW_TAGS);
+
+    const overlap = [...knew].filter((t) => didnt.has(t));
+    expect(overlap, 'a tag cannot be both knew-it and didn\'t-know').toEqual([]);
+
+    const union = new Set([...knew, ...didnt]);
+    const unclassified = ALL_ERROR_TAGS.filter((t) => !union.has(t));
+    expect(
+      unclassified,
+      'every ErrorTag member must be explicitly classified in KNEW_IT_TAGS or DIDNT_KNOW_TAGS',
+    ).toEqual([]);
+
+    const extraneous = [...union].filter((t) => !ALL_ERROR_TAGS.includes(t));
+    expect(extraneous, 'a classified tag that is not a real ErrorTag member — stale entry?').toEqual([]);
   });
 });

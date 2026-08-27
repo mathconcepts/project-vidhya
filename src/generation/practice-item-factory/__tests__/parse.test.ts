@@ -122,4 +122,40 @@ describe('parsePracticeItemResponse — strict parsing', () => {
     expect(r.ok).toBe(true);
     expect(r.response?.distractors).toEqual([]);
   });
+
+  it('W3.4/E2: distractor_failure_tags is optional — absent is fine', () => {
+    const r = parsePracticeItemResponse(validMcq, 'mcq');
+    expect(r.ok).toBe(true);
+    expect(r.response?.distractor_failure_tags).toBeUndefined();
+  });
+
+  it('W3.4/E2: passes through a well-formed distractor_failure_tags map', () => {
+    const withTags = JSON.stringify({
+      question_text: 'A = [[4,1],[2,3]]. Eigenvalues?',
+      correct_answer: '5 and 2',
+      distractors: ['4 and 3', '7 and 10'],
+      solution_steps: ['trace=7, det=10'],
+      difficulty: 0.35,
+      distractor_failure_tags: { '4 and 3': 'method_selection', '7 and 10': 'sign' },
+    });
+    const r = parsePracticeItemResponse(withTags, 'mcq');
+    expect(r.ok).toBe(true);
+    expect(r.response?.distractor_failure_tags).toEqual({
+      '4 and 3': 'method_selection', '7 and 10': 'sign',
+    });
+  });
+
+  it('W3.4/E2: refuses a malformed distractor_failure_tags (not an object of string -> string)', () => {
+    const base = { question_text: 'q', correct_answer: 'x', distractors: ['a', 'b'], solution_steps: ['s'], difficulty: 0.5 };
+    for (const bad of [
+      { ...base, distractor_failure_tags: ['not', 'an', 'object'] },
+      { ...base, distractor_failure_tags: { a: 42 } },
+      { ...base, distractor_failure_tags: { a: '' } },
+      { ...base, distractor_failure_tags: 'nope' },
+    ]) {
+      const r = parsePracticeItemResponse(JSON.stringify(bad), 'mcq');
+      expect(r.ok, JSON.stringify(bad)).toBe(false);
+      expect(r.reason).toMatch(/distractor_failure_tags/);
+    }
+  });
 });

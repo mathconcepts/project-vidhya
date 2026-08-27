@@ -1,0 +1,389 @@
+# ---------------------------------------------------------------------------
+# Template families — the demand-side "package anatomy" (W2.1, PR content-
+# readiness-market-research-integration §4 W2, amendment E11).
+#
+# Source: "Research-First Adaptive Content-Generation Framework for GATE
+# Engineering Mathematics" §7.2 ("Template families for all topics") and its
+# companion "GATE atomic content structure map" (the 116-topic base_sequence
+# table), both part of the 177-file market-research corpus reviewed
+# 2026-08-27. The 14 families and their per-family base_sequence strings
+# (the `source_sequence` field on every family below) are copied verbatim
+# from that table.
+#
+# design_hypothesis (§2 preamble of the plan doc, binding on this file):
+# the family SHAPES (which pedagogical steps exist, in what order) are
+# imported as-is because the corpus's own reasoning for them (chunking,
+# worked examples, retrieval — cited to Sweller/Roediger-family literature)
+# is sound instructional-design practice. The specific STAGE→AtomKind
+# translation below, and every `presentation` hint, is this repo's own
+# judgment call translating that shape into the LOCKED blueprint vocabulary
+# (src/blueprints/types.ts StageKind / AtomKind) — introducing NO new
+# runtime enums, mirroring intent-profiles.yml's own header discipline.
+# Nothing here is measured demand or a validated pedagogical result; it is
+# a starting hypothesis pending lift data, exactly like intent-profiles.yml's
+# default_stage_sequence values already are.
+#
+# Three families (ode, optimization, vector) get an extra `discovery` /
+# guided_walkthrough / decision_tree stage where the source's own sequence
+# names a genuine method-selection decision point (`method_decision_tree`,
+# `method_selection`, `theorem_or_identity_check`) — P2b already shipped a
+# branching guided_walkthrough for the vector-family case (VC-11, "Green,
+# Stokes or Gauss?"), so `vector` here is consistency with shipped product,
+# not speculation. The other 11 families collapse to the simpler
+# intuition → formalism → worked_example → practice shape; the source's
+# `recall_prompt` / `mode_variant` / `timed_check` closing steps fold into
+# the practice stage (see each family's `source_sequence` for the un-folded
+# original — nothing from the source sequence is dropped, only consolidated
+# onto the 6 locked StageKinds).
+#
+# `presentation` hints are documentary metadata for content authors + future
+# renderers, exactly like intent-profiles.yml's `property_card` /
+# `decision_tree` hints — scripts/generate-intent-tables.ts strips them
+# before they reach BlueprintDecisionsV1 (that locked contract must never
+# carry a presentation field; see src/blueprints/types.ts's header). Every
+# value used below is declared in `presentation_vocabulary` so a typo is a
+# CI failure (check-intent-catalogue.ts B10), not a silent drift.
+#
+# Coverage below maps every concept in the concept graph
+# (src/constants/concept-graph.ts, 101 concepts / 10 topics) onto exactly
+# one of these 14 families — `coverage.topic_defaults` (7 topics whose
+# concepts are family-homogeneous) plus `coverage.concept_overrides` (34
+# concepts split across families or belonging to a "cluster" the source
+# table treats specially, e.g. the eigen-decomposition cluster inside
+# linear-algebra). `calculus` and `transform-theory` have NO topic default —
+# both topics genuinely span multiple families in the source table, so
+# every concept in them is listed explicitly. `graph-theory` and
+# `transform-theory`'s `z-transform` have no direct entry in the 116-topic
+# corpus (which stops at GATE-EM's own scope); their family assignment is
+# this file's own extrapolation, called out inline below — never presented
+# as a corpus-sourced mapping. `optimization` currently has ZERO concepts
+# mapped (Vidhya's calculus topic has no multivariable-constrained-
+# optimization concept yet; the source table's own multivariable-only
+# optimization family — single-variable maxima/minima uses `derivative`,
+# see the `maxima-minima` line below — would apply if one is added later).
+# check-intent-catalogue.ts's B12 completeness check does not require every
+# family to have coverage, only that every concept has exactly one.
+#
+# schema_version 1 is locked, mirroring intent-profiles.yml. Shape changes
+# ship as schema_version 2.
+# ---------------------------------------------------------------------------
+schema_version: 1
+id: gate-em-template-families
+
+source: >
+  Research-First Adaptive Content-Generation Framework for GATE Engineering
+  Mathematics, §7.2 "Template families for all topics"; GATE atomic content
+  structure map (116-topic base_sequence table). Market-research corpus,
+  reviewed 2026-08-27.
+
+note: >
+  Every family's stage sequence is a design_hypothesis (W1.2/E10 evidence
+  discipline) — a plausible pedagogical ordering pending lift data, not a
+  validated fact. Treat as a starting default for the template engine, to
+  be A/B'd like any other blueprint decision once real students exist
+  (activation gate, §7 of the plan doc).
+
+# Every `presentation` value used by any family below must appear here —
+# checked by check-intent-catalogue.ts's B10.
+presentation_vocabulary:
+  - algorithm_steps
+  - argand_or_mapping_visual
+  - boundary_compatibility_check
+  - boundary_contrast
+  - bounds_or_convergence_check
+  - characteristic_equation
+  - classification
+  - conditions
+  - data_visual
+  - decision_tree
+  - definition_or_model
+  - dimension_or_invariant_check
+  - equation_classification
+  - error_visual
+  - formal_condition
+  - formal_definition
+  - geometric_intuition
+  - geometric_visual
+  - graph_or_table
+  - independence_or_condition_check
+  - independence_or_multiplicity_check
+  - initial_or_boundary_check
+  - interpretation_or_assumption_check
+  - mode_variant
+  - operation_rule
+  - operator_definition
+  - path_or_singularity_check
+  - physical_or_geometric_intuition
+  - property_or_invariant_check
+  - rule_or_theorem
+  - sample_space_visual
+  - second_order_or_boundary_check
+  - separation_or_series_steps
+  - sign_or_units_check
+  - small_counterexample
+  - stability_or_error_check
+  - step_by_step_solution
+  - visual_intuition
+  - visual_landscape
+  - visual_shape
+  - worked_complex_example
+  - worked_derivation
+  - worked_example
+  - worked_field
+  - worked_iteration
+  - worked_limit
+  - worked_matrix
+  - worked_probability
+  - worked_statistic
+  - worked_structure
+
+families:
+  matrix:
+    label: Matrix
+    hooks: [shape_before_arithmetic, transformation_intuition]
+    source_sequence: "hook → visual_shape → operation_rule → worked_matrix → dimension_or_invariant_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: visual_shape }
+      - { id: formalism,      atom_kind: worked_example,       presentation: operation_rule }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_matrix }
+      - { id: practice,       atom_kind: mcq,                  presentation: dimension_or_invariant_check }
+
+  eigen:
+    label: Eigen
+    hooks: [special_direction_intuition, transformation_preserving_direction]
+    source_sequence: "hook → geometric_visual → characteristic_equation → worked_example → independence_or_multiplicity_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: geometric_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: characteristic_equation }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_example }
+      - { id: practice,       atom_kind: mcq,                  presentation: independence_or_multiplicity_check }
+
+  limit:
+    label: Limit
+    hooks: [prediction_before_calculation, graphical_intuition]
+    source_sequence: "hook → graph_or_table → formal_definition → worked_limit → boundary_contrast → recall_prompt → timed_check"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: graph_or_table }
+      - { id: formalism,      atom_kind: worked_example,       presentation: formal_definition }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_limit }
+      - { id: practice,       atom_kind: mcq,                  presentation: boundary_contrast }
+
+  derivative:
+    label: Derivative
+    hooks: [rate_of_change_intuition, visual_slope]
+    source_sequence: "hook → visual_intuition → rule_or_theorem → worked_derivation → sign_or_units_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: visual_intuition }
+      - { id: formalism,      atom_kind: worked_example,       presentation: rule_or_theorem }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_derivation }
+      - { id: practice,       atom_kind: mcq,                  presentation: sign_or_units_check }
+
+  integral:
+    label: Integral
+    hooks: [accumulation_story, area_or_balance_intuition]
+    source_sequence: "hook → geometric_intuition → rule_or_theorem → worked_example → bounds_or_convergence_check → recall_prompt → timed_check"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: geometric_intuition }
+      - { id: formalism,      atom_kind: worked_example,       presentation: rule_or_theorem }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_example }
+      - { id: practice,       atom_kind: mcq,                  presentation: bounds_or_convergence_check }
+
+  optimization:
+    label: Optimization
+    hooks: [decision_under_constraint, visual_landscape]
+    source_sequence: "hook → visual_landscape → conditions → method_selection → worked_example → second_order_or_boundary_check → recall_prompt"
+    # method_selection is a genuine decision point in the source sequence —
+    # given a guided_walkthrough/decision_tree stage, same treatment as ode
+    # below (see this file's header note).
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,        presentation: visual_landscape }
+      - { id: formalism,      atom_kind: worked_example,         presentation: conditions }
+      - { id: discovery,      atom_kind: guided_walkthrough,     presentation: decision_tree }
+      - { id: worked_example, atom_kind: worked_example,         presentation: worked_example }
+      - { id: practice,       atom_kind: mcq,                    presentation: second_order_or_boundary_check }
+
+  vector:
+    label: Vector
+    hooks: [field_line_intuition, local_to_global_question]
+    source_sequence: "hook → geometric_visual → operator_definition → worked_field → theorem_or_identity_check → recall_prompt → mode_variant"
+    # theorem_or_identity_check is VC-11's "which theorem applies" decision —
+    # already shipped as a guided_walkthrough decision tree in production
+    # (W2.5, "Green, Stokes or Gauss?"). Encoding it here is consistency
+    # with shipped product, not new speculation.
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,        presentation: geometric_visual }
+      - { id: formalism,      atom_kind: worked_example,         presentation: operator_definition }
+      - { id: worked_example, atom_kind: worked_example,         presentation: worked_field }
+      - { id: discovery,      atom_kind: guided_walkthrough,     presentation: decision_tree }
+      - { id: practice,       atom_kind: mcq,                    presentation: mode_variant }
+
+  ode:
+    label: ODE
+    hooks: [system_evolution_story, recognize_equation_form]
+    source_sequence: "hook → equation_classification → method_decision_tree → step_by_step_solution → initial_or_boundary_check → recall_prompt → timed_check"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,        presentation: equation_classification }
+      - { id: discovery,      atom_kind: guided_walkthrough,     presentation: decision_tree }
+      - { id: worked_example, atom_kind: worked_example,         presentation: step_by_step_solution }
+      - { id: practice,       atom_kind: mcq,                    presentation: initial_or_boundary_check }
+
+  pde:
+    label: PDE
+    hooks: [heat_wave_field_story, boundary_condition_puzzle]
+    source_sequence: "hook → physical_or_geometric_intuition → classification → separation_or_series_steps → boundary_compatibility_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: physical_or_geometric_intuition }
+      - { id: formalism,      atom_kind: worked_example,       presentation: classification }
+      - { id: worked_example, atom_kind: worked_example,       presentation: separation_or_series_steps }
+      - { id: practice,       atom_kind: mcq,                  presentation: boundary_compatibility_check }
+
+  complex:
+    label: Complex
+    hooks: [geometry_of_a_number, mapping_intuition]
+    source_sequence: "hook → argand_or_mapping_visual → formal_condition → worked_complex_example → path_or_singularity_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: argand_or_mapping_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: formal_condition }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_complex_example }
+      - { id: practice,       atom_kind: mcq,                  presentation: path_or_singularity_check }
+
+  probability:
+    label: Probability
+    hooks: [everyday_uncertainty_puzzle, count_before_calculate]
+    source_sequence: "hook → sample_space_visual → definition_or_model → worked_probability → independence_or_condition_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: sample_space_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: definition_or_model }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_probability }
+      - { id: practice,       atom_kind: mcq,                  presentation: independence_or_condition_check }
+
+  statistics:
+    label: Statistics
+    hooks: [signal_hidden_in_data, prediction_versus_association]
+    source_sequence: "hook → data_visual → definition_or_model → worked_statistic → interpretation_or_assumption_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: data_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: definition_or_model }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_statistic }
+      - { id: practice,       atom_kind: mcq,                  presentation: interpretation_or_assumption_check }
+
+  numerical:
+    label: Numerical
+    hooks: [approximation_under_constraint, error_budget_intuition]
+    source_sequence: "hook → error_visual → algorithm_steps → worked_iteration → stability_or_error_check → recall_prompt → timed_check"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: error_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: algorithm_steps }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_iteration }
+      - { id: practice,       atom_kind: mcq,                  presentation: stability_or_error_check }
+
+  discrete:
+    label: Discrete
+    hooks: [rule_or_network_puzzle, small_example_before_abstraction]
+    source_sequence: "hook → small_counterexample → formal_definition → worked_structure → property_or_invariant_check → recall_prompt → mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: small_counterexample }
+      - { id: formalism,      atom_kind: worked_example,       presentation: formal_definition }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_structure }
+      - { id: practice,       atom_kind: mcq,                  presentation: property_or_invariant_check }
+
+# ---------------------------------------------------------------------------
+# Coverage — maps every concept-graph concept (src/constants/concept-graph.ts)
+# onto exactly one family above. Resolution order: concept_overrides wins;
+# otherwise topic_defaults[concept.topic]. A concept in a topic with no
+# topic_default MUST appear in concept_overrides (calculus, transform-theory)
+# — enforced by check-intent-catalogue.ts's B12 completeness check.
+# ---------------------------------------------------------------------------
+coverage:
+  topic_defaults:
+    linear-algebra: matrix
+    vector-calculus: vector
+    differential-equations: ode
+    complex-variables: complex
+    probability-statistics: probability
+    numerical-methods: numerical
+    discrete-mathematics: discrete
+    # graph-theory has no direct family in the source table; the corpus's
+    # own discrete-mathematics family (DM-10 graph connectivity, DM-11
+    # matching, DM-12 graph colouring) already covers graph topics under
+    # `discrete` — extrapolated as the topic default for the rest of
+    # Vidhya's graph-theory concepts (graph_basics, trees, euler_hamilton,
+    # planar_graphs, shortest_paths) on the same "small puzzle" hook.
+    graph-theory: discrete
+    # calculus: NO default — the source splits it across limit / derivative
+    #   / integral (and optimization, currently unused); every concept below.
+    # transform-theory: NO default — splits across ode (Laplace) / pde
+    #   (Fourier); every concept below.
+
+  concept_overrides:
+    # --- linear-algebra: eigen-decomposition cluster -----------------------
+    # Matches the source table's own `eigen` family (LA-06..09: eigenvalues,
+    # eigenvectors, symmetric-matrix properties, diagonalization) plus two
+    # Vidhya concepts in the same eigen-decomposition family of ideas that
+    # have no separate 116-topic entry (spectral_theorem, jordan_normal_form).
+    # cayley-hamilton is DELIBERATELY left on the `matrix` default — the
+    # source table places LA-10 "Cayley-Hamilton theorem" in `matrix`, not
+    # `eigen`, despite the eigenvalue connection; fidelity to source wins.
+    eigenvalues: eigen
+    diagonalization: eigen
+    symmetric-matrices: eigen
+    spectral-theorem: eigen
+    jordan-normal-form: eigen
+
+    # --- differential-equations: pde exception ------------------------------
+    pde-basics: pde
+
+    # --- probability-statistics: statistics split ---------------------------
+    # Matches PS-08/12/13/14 (median/mode, sampling theorems, correlation,
+    # regression) → `statistics`; everything else in the topic stays on the
+    # `probability` default (PS-01..07,09..11: axioms, counting, conditional
+    # probability, random variables, mean/variance, the named distributions).
+    hypothesis-testing: statistics
+    regression-correlation: statistics
+    sampling-distributions: statistics
+
+    # --- calculus: full split (no topic default) ----------------------------
+    # limit family (CA-01/02/04/15: limits, indeterminate forms, continuity,
+    # two-variable limits/continuity):
+    sequences: limit
+    series: limit
+    limits: limit
+    continuity: limit
+    # derivative family (CA-03/05..09/16..18: L'Hospital through directional
+    # derivative — includes single-variable maxima/minima, CA-07, which the
+    # source places in `derivative`, NOT `optimization`; optimization is
+    # multivariable-constrained only, see CA-19/20):
+    differentiability: derivative
+    derivatives-basic: derivative
+    chain-rule: derivative
+    product-quotient-rule: derivative
+    implicit-differentiation: derivative
+    maxima-minima: derivative
+    mean-value-theorems: derivative
+    multivariable-calculus: derivative
+    # integral family (CA-10..14/21/22: fundamental theorem through
+    # double/triple integrals):
+    integration-basics: integral
+    integration-substitution: integral
+    integration-by-parts: integral
+    partial-fractions: integral
+    definite-integrals: integral
+    improper-integrals: integral
+    multiple-integrals: integral
+
+    # --- transform-theory: full split (no topic default) --------------------
+    # Laplace transforms map onto the source's DE-14 ("Laplace transforms in
+    # ODE solution"), which the table places in the `ode` family:
+    laplace-transform: ode
+    inverse-laplace: ode
+    laplace-applications: ode
+    # Fourier series maps onto PD-06 ("Fourier-series boundary
+    # representation"), placed in `pde`; fourier-transform is the natural
+    # generalisation of fourier-series and follows it into the same family.
+    fourier-series: pde
+    fourier-transform: pde
+    # z-transform has NO entry in the 116-topic corpus (discrete-time
+    # transforms are outside its GATE-EM scope). This repo's own
+    # extrapolation: nearest kin to Laplace (same mechanical-steps shape —
+    # recognize the transform, apply the table, verify), not a corpus claim.
+    z-transform: ode

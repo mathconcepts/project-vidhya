@@ -67,6 +67,73 @@ describe('deriveMarking — mcq', () => {
   });
 });
 
+describe('deriveMarking — mcq distractor failure tags (W3.4/E2)', () => {
+  it('records tags against POST-shuffle indices — shuffle-integrity', () => {
+    // A non-identity rng (unlike the 0.999999 fixture used elsewhere) so
+    // this genuinely proves the tag follows its distractor THROUGH a real
+    // permutation, not just in the happen-to-be-identity case.
+    const rng = () => 0.42;
+    const distractorFailureTags = {
+      '2': 'method_selection', '8': 'sign', '16': 'time_pressure',
+    } as const;
+    const m = deriveMarking({
+      format: 'mcq', correctAnswer: '4', distractors: ['2', '8', '16'],
+      difficulty: 0.7, rng, distractorFailureTags,
+    })!;
+
+    // Sanity: this rng really does permute (not silently identity).
+    expect(m.options).not.toEqual(['4', '2', '8', '16']);
+
+    for (const [text, tag] of Object.entries(distractorFailureTags)) {
+      const idx = m.options!.indexOf(text);
+      expect(idx).toBeGreaterThanOrEqual(0);
+      expect(m.distractor_failure_tags?.[idx]).toBe(tag);
+    }
+    expect(Object.keys(m.distractor_failure_tags ?? {})).toHaveLength(3);
+  });
+
+  it('never tags the correct answer\'s index, even if the caller\'s map keys it', () => {
+    const rng = () => 0.13;
+    const m = deriveMarking({
+      format: 'mcq', correctAnswer: '4', distractors: ['2', '8', '16'],
+      difficulty: 0.7, rng,
+      // Adversarial: the caller's map includes a (mistaken) tag for the
+      // correct answer's own text.
+      distractorFailureTags: { '4': 'sign', '2': 'method_selection' } as any,
+    })!;
+    expect(m.distractor_failure_tags?.[m.answer_index!]).toBeUndefined();
+    expect(m.distractor_failure_tags?.[m.options!.indexOf('2')]).toBe('method_selection');
+  });
+
+  it('is fine with a partial map — untagged distractors are simply absent', () => {
+    const rng = () => 0.999999;   // identity for this size
+    const m = deriveMarking({
+      format: 'mcq', correctAnswer: '4', distractors: ['2', '8', '16'],
+      difficulty: 0.7, rng,
+      distractorFailureTags: { '8': 'risk_decision' },
+    })!;
+    expect(Object.keys(m.distractor_failure_tags ?? {})).toEqual([String(m.options!.indexOf('8'))]);
+  });
+
+  it('omits distractor_failure_tags entirely when no map is supplied (backward compat)', () => {
+    const rng = () => 0.999999;
+    const m = deriveMarking({
+      format: 'mcq', correctAnswer: '4', distractors: ['2', '8', '16'], difficulty: 0.7, rng,
+    })!;
+    expect(m.distractor_failure_tags).toBeUndefined();
+  });
+
+  it('drops a tag for a distractor that did not survive dedup/filter', () => {
+    const rng = () => 0.999999;
+    const m = deriveMarking({
+      format: 'mcq', correctAnswer: '4', distractors: ['2', '2', '8'],
+      difficulty: 0.7, rng,
+      distractorFailureTags: { '2': 'method_selection', 'never-a-distractor': 'sign' },
+    })!;
+    expect(Object.values(m.distractor_failure_tags ?? {})).toEqual(['method_selection']);
+  });
+});
+
 describe('deriveMarking — nat', () => {
   it('authors an inclusive range around a numeric answer', () => {
     const m = deriveMarking({ format: 'numerical', correctAnswer: '0.75', distractors: [], difficulty: 0.4 })!;

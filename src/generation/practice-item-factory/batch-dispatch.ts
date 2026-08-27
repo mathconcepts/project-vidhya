@@ -61,10 +61,10 @@ const VALID_FORMATS = new Set<PracticeItemFormat>(['mcq', 'msq', 'nat']);
 
 /**
  * Reconstructs a PracticeItemSpec from an AtomSpec's `concept_id` +
- * `prompt_vars` (`format`, `topic`, `difficulty_frac`). This is how the
- * batch pipeline threads spec details through a single JobRow without
- * adding a new field to AtomSpec — prompt_vars already exists as a
- * free-form bag for exactly this purpose.
+ * `prompt_vars` (`format`, `topic`, `difficulty_frac`,
+ * `require_failure_tags`). This is how the batch pipeline threads spec
+ * details through a single JobRow without adding a new field to AtomSpec —
+ * prompt_vars already exists as a free-form bag for exactly this purpose.
  */
 export function practiceItemSpecFromAtomSpec(atomSpec: AtomSpec): PracticeItemSpec | null {
   const format = atomSpec.prompt_vars?.format;
@@ -79,6 +79,12 @@ export function practiceItemSpecFromAtomSpec(atomSpec: AtomSpec): PracticeItemSp
     format: format as PracticeItemFormat,
     difficulty: difficultyFrac,
     topic,
+    // W3.4/E2, threaded the same way as everything else here: absent
+    // prompt_vars means the run did not ask for the gate, which is the
+    // documented default (see PracticeItemSpec.require_failure_tags).
+    // Wave-1 runs set it, and the ledger's misconception_coverage gate
+    // reads the same flag off the reconstructed spec.
+    require_failure_tags: atomSpec.prompt_vars?.require_failure_tags === true,
   };
 }
 

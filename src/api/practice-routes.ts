@@ -65,7 +65,7 @@ import type { LearningObjectCatalog } from '../scoring/learning-object-catalog';
 import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg';
 import { getStudentModel } from '../gbrain/student-model-pg';
 import { recordProblemAttempt } from '../gbrain/problem-generator';
-import type { Attempt, StudentModel } from '../core/interfaces';
+import type { Attempt, ErrorTag, StudentModel } from '../core/interfaces';
 import { xpForAttempt } from '../scoring/xp';
 import { awardXp as awardXpProd, type XpAward } from '../gbrain/xp-store';
 
@@ -174,6 +174,32 @@ export function gateResponseFromBody(item: GateItem, raw: unknown): GateResponse
   return { kind: 'nat', value: r.value };
 }
 
+/**
+ * W3.4/E2 — the post-answer diagnosis. Resolves the failure hypothesis for
+ * a WRONG mcq pick straight off the item's own payload
+ * (`distractorFailureTags`, threaded by markingPayload()/
+ * markingPayloadFromRow() from deriveMarking()'s POST-shuffle map).
+ * Exported for tests. Returns null whenever there's nothing honest to
+ * report — a correct pick, a skip, a non-mcq item, or simply no tag
+ * authored for that option — never guessed. This is the ONE place a
+ * failure tag is allowed to reach the client: strictly after grading, for
+ * the option the student actually chose.
+ */
+export function failureTagForWrongPick(
+  payload: unknown,
+  correct: boolean,
+  response: GateResponse,
+): ErrorTag | null {
+  if (correct || response.skipped || response.kind !== 'mcq'
+      || typeof response.selectedIndex !== 'number') {
+    return null;
+  }
+  const tags = (payload as { distractorFailureTags?: unknown } | null)?.distractorFailureTags;
+  if (!tags || typeof tags !== 'object' || Array.isArray(tags)) return null;
+  const tag = (tags as Record<string, unknown>)[String(response.selectedIndex)];
+  return typeof tag === 'string' ? (tag as ErrorTag) : null;
+}
+
 // ────────────────────────────────────────────────────────────────────
 // POST /api/practice/attempt
 // ────────────────────────────────────────────────────────────────────
@@ -219,18 +245,35 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     ? Math.min(Math.floor(body.latency_ms), 60 * 60 * 1000)  // clamp at 1h — beyond that it's not answer latency
     : 0;
 
+  const correct = grade.casFinalAnswerCorrect === true;
+
+  // W3.4/E2 — post-answer only, and only for the option actually chosen.
+  // See failureTagForWrongPick's own doc comment for the leak discipline.
+  const failureTag = failureTagForWrongPick(obj.payload, correct, response);
+
   const attempt: Attempt = {
     studentId: user.userId,
     objectId,
     skillId: obj.nodeId,
-    correct: grade.casFinalAnswerCorrect === true,
+    correct,
     partialMarks: {
       earned: grade.earned,
       max: grade.max,
       perCriterion: grade.perCriterion,
     },
+    // Feeds the SAME errorTags channel StudentModel.update() already
+    // persists to attempt_error_tags and errorProfile() aggregates from —
+    // a diagnosed wrong pick is real error-tag telemetry, not a special case.
+    errorTags: failureTag ? [failureTag] : undefined,
     latencyMs,
     ts,
+    // Plan E1 — attempt_facts (migration 051) reads these off the Attempt
+    // StudentModel.update() already receives; no separate write here.
+    // contractVersion is left unset: this path grades via the compiled
+    // scorer directly (no assessment-contract resolution), so recording no
+    // version is honest rather than guessing one.
+    questionKind: item.kind,
+    skipped: response.skipped === true,
   };
 
   // Best-effort persistence: a DB-less deploy still grades honestly.
@@ -282,6 +325,10 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     solution_steps: solutionSteps,
     recorded,
     xp_minutes_awarded: xpMinutesAwarded,
+    // W3.4/E2 — the diagnosis for a wrong mcq pick, or null (never
+    // omitted — an explicit null on a correct/skipped/untagged attempt is
+    // the honest shape, not a field the client has to guess is missing).
+    failure_tag: failureTag,
   });
 }
 

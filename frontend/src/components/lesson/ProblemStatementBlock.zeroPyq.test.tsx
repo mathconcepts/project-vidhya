@@ -31,8 +31,9 @@ describe('ProblemStatementBlock — pyq_count = 0', () => {
     render(<ProblemStatementBlock conceptId="zero-pyq-concept" enabled />);
     expect(screen.getByTestId('problem-statement-block')).toBeInTheDocument();
     expect(screen.queryByText(/past-paper question/)).toBeNull();
-    // The pain point + exam intent + framing line still render — only the
+    // The exam intent + pain point + framing line still render — only the
     // PYQ sentence is conditionally omitted.
+    expect(screen.getByText('Apply the property without re-deriving it.')).toBeInTheDocument();
     expect(screen.getByText('Students confuse the definition under time pressure.')).toBeInTheDocument();
     expect(
       screen.getByText("Most students come here to look up the exact property, fast — that's how this page opens."),

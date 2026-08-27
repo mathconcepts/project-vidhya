@@ -27,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 
 const ROOT = process.cwd();
 const REAL_CONCEPTS = path.join(ROOT, 'modules/project-vidhya-content/concepts');
@@ -42,9 +43,9 @@ afterAll(() => {
 });
 
 /** Runs a gate and reports its exit code — the thing CI reads. */
-function runGate(script: string, arg: string): { code: number; out: string } {
+function runGate(script: string, ...args: string[]): { code: number; out: string } {
   try {
-    const out = execFileSync('npx', ['tsx', path.join('scripts', script), arg], {
+    const out = execFileSync('npx', ['tsx', path.join('scripts', script), ...args], {
       cwd: ROOT,
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -294,5 +295,77 @@ describe('check-demo-rails fails on what it claims to catch', () => {
 
   it('refuses a missing rails file rather than passing it', () => {
     expect(runGate('check-demo-rails.ts', path.join(tmp, 'does-not-exist.json')).code).toBe(1);
+  });
+});
+
+// ── demo rails: the intent-lanes flag ───────────────────────────────────
+
+/**
+ * The lanes-on assertion is the one check here whose subject is the deploy
+ * rather than the deck, and it is the one most in need of a mutation test: a
+ * flag check that silently stopped checking would leave every other assertion
+ * green while the demo went dark again — which is the exact history this
+ * assertion exists because of.
+ */
+function blueprintFixture(name: string, mutate: (bp: any) => void): string {
+  const bp = parseYaml(fs.readFileSync(path.join(ROOT, 'render.yaml'), 'utf-8'));
+  mutate(bp);
+  const p = path.join(tmp, `render-${name}.yaml`);
+  fs.writeFileSync(p, stringifyYaml(bp), 'utf-8');
+  return p;
+}
+
+function intentLanesEntry(bp: any): any {
+  const entry = (bp.services?.[0]?.envVars ?? []).find((v: any) => v?.key === 'VIDHYA_INTENT_LANES');
+  if (!entry) throw new Error('render.yaml no longer declares VIDHYA_INTENT_LANES — fixture is stale');
+  return entry;
+}
+
+describe('check-demo-rails asserts the demo deploy turns the intent lanes on', () => {
+  it('passes the committed render.yaml — the control', () => {
+    const r = runGate('check-demo-rails.ts', REAL_RAILS, path.join(ROOT, 'render.yaml'));
+    expect(r.code, r.out).toBe(0);
+    expect(r.out).toMatch(/VIDHYA_INTENT_LANES=on/);
+  });
+
+  it('passes an unmutated re-serialised copy, so the copy is not the variable', () => {
+    const p = blueprintFixture('noop', () => {});
+    expect(runGate('check-demo-rails.ts', REAL_RAILS, p).code).toBe(0);
+  });
+
+  it('catches the flag being removed from the blueprint', () => {
+    const p = blueprintFixture('absent', (bp) => {
+      bp.services[0].envVars = bp.services[0].envVars.filter(
+        (v: any) => v?.key !== 'VIDHYA_INTENT_LANES',
+      );
+    });
+    const r = runGate('check-demo-rails.ts', REAL_RAILS, p);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/VIDHYA_INTENT_LANES not declared at all/);
+  });
+
+  it('catches the flag being turned off rather than removed', () => {
+    const p = blueprintFixture('off', (bp) => {
+      intentLanesEntry(bp).value = 'off';
+    });
+    const r = runGate('check-demo-rails.ts', REAL_RAILS, p);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/expected: VIDHYA_INTENT_LANES: "on"/);
+  });
+
+  it('catches the flag being demoted to an operator-supplied key', () => {
+    // `sync: false` means "the Render UI prompts for this" — the value stops
+    // being committed, which is the state the whole assertion is about.
+    const p = blueprintFixture('sync-false', (bp) => {
+      const entry = intentLanesEntry(bp);
+      delete entry.value;
+      entry.sync = false;
+    });
+    expect(runGate('check-demo-rails.ts', REAL_RAILS, p).code).toBe(1);
+  });
+
+  it('refuses a missing blueprint rather than passing it', () => {
+    const r = runGate('check-demo-rails.ts', REAL_RAILS, path.join(tmp, 'no-render.yaml'));
+    expect(r.code).toBe(1);
   });
 });

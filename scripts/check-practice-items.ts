@@ -19,8 +19,28 @@
  * loadPracticeCounts: a bank nobody can read must never silently count
  * as "no items here".
  *
+ * W1.2/E10/D10 additions (2026-08-27):
+ *
+ *   3. `evidence_level`, when present, is one of AuthoredItem's four locked
+ *      values (src/scoring/learning-object-catalog-file.ts). Absence is
+ *      fine — it's optional structured provenance, not a required field.
+ *   4. PYQ BANK SCHEMA — frontend/public/data/pyq-bank.json is loaded and
+ *      validated too: every problem's optional `evidence_level` is
+ *      enum-checked the same way. This is the natural home for that check
+ *      (over check-intent-catalogue.ts, the other candidate) because a PYQ
+ *      bank entry is structurally a practice item — question_text, options,
+ *      correct_answer, marks — not demand-side catalogue/routing data.
+ *   5. PHRASE RULE — neither bank's question_text/solution_steps
+ *      (practice-items) or question_text/explanation (PYQ bank) may say
+ *      "high-yield" / "frequently asked" / "most repeated" / "often asked"
+ *      UNLESS that item's `evidence_level` is `directly_reviewed`. See
+ *      src/content/evidence-phrase-rule.ts (shared with
+ *      check-intent-catalogue.ts's A8/B6 checks over the demand-side
+ *      catalogue — one phrase list, two scoped gates).
+ *
  * Usage: npx tsx scripts/check-practice-items.ts
- * Exit: 0 = every item schema-valid + self-re-grades to full marks.
+ * Exit: 0 = every item schema-valid + self-re-grades to full marks + PYQ
+ *           bank schema-valid + phrase rule holds across both banks.
  *       1 = at least one problem (or a bank failed to parse).
  */
 
@@ -34,13 +54,16 @@ import {
   type GateResponse,
 } from '../src/scoring/deterministic-scorer';
 import { parseNumericAnswer } from '../src/gbrain/marking-derivation';
-import type { AuthoredItem } from '../src/scoring/learning-object-catalog-file';
+import { EVIDENCE_LEVELS, type AuthoredItem } from '../src/scoring/learning-object-catalog-file';
 import { ALL_CONCEPTS } from '../src/constants/concept-graph';
+import { findForbiddenPhrases, evidenceLevelLicensesClaim } from '../src/content/evidence-phrase-rule';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_ITEMS_DIR = path.join(ROOT, 'data', 'practice-items');
+const DEFAULT_PYQ_BANK_PATH = path.join(ROOT, 'frontend', 'public', 'data', 'pyq-bank.json');
 
 const VALID_KINDS = new Set(['mcq', 'msq', 'nat']);
+const EVIDENCE_LEVEL_SET: ReadonlySet<string> = new Set(EVIDENCE_LEVELS);
 
 /** Known concept ids — `also_tests` entries must name a real concept. */
 const KNOWN_CONCEPT_IDS = new Set(ALL_CONCEPTS.map((c) => c.id));
@@ -89,6 +112,17 @@ export function validateItemSchema(raw: unknown): string[] {
   }
   if (typeof it.verification_method !== 'string' || it.verification_method.length === 0) {
     problems.push('verification_method missing — every committed item must carry its verification provenance');
+  }
+
+  // W1.2/E10/D10: evidence_level is OPTIONAL structured provenance (distinct
+  // from verification_method, which stays free-text answer-correctness
+  // detail) — enum-checked when present, never required.
+  if (it.evidence_level !== undefined) {
+    if (typeof it.evidence_level !== 'string' || !EVIDENCE_LEVEL_SET.has(it.evidence_level)) {
+      problems.push(
+        `evidence_level '${String(it.evidence_level)}' is not one of {${EVIDENCE_LEVELS.join(', ')}}`,
+      );
+    }
   }
 
   const kind = it.question_type;
@@ -220,6 +254,100 @@ export async function regradeOwnAnswer(item: AuthoredItem): Promise<RegradeResul
 }
 
 // ---------------------------------------------------------------------------
+// W1.2/E10 phrase rule — shared over both practice-items and PYQ-bank items.
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks one or more text fields on an item for forbidden unsourced-claim
+ * phrases (src/content/evidence-phrase-rule.ts) and returns human-readable
+ * problem strings — D8 precision: names the id, the field, the phrase found,
+ * and the fix.
+ */
+export function checkPhraseRule(
+  id: string,
+  evidenceLevel: unknown,
+  fields: Record<string, string | undefined | null>,
+): string[] {
+  const problems: string[] = [];
+  if (evidenceLevelLicensesClaim(typeof evidenceLevel === 'string' ? evidenceLevel : undefined)) return problems;
+
+  for (const [fieldName, text] of Object.entries(fields)) {
+    const hits = findForbiddenPhrases(text);
+    for (const hit of hits) {
+      problems.push(
+        `${id}: ${fieldName} contains "${hit.phrase}" without evidence_level='directly_reviewed' ` +
+          `(actual: ${JSON.stringify(evidenceLevel ?? null)}) — either add directly_reviewed provenance ` +
+          `for this specific claim or remove the phrase`,
+      );
+    }
+  }
+  return problems;
+}
+
+// ---------------------------------------------------------------------------
+// PYQ bank (frontend/public/data/pyq-bank.json) — W1.2/E10 schema addition.
+// ---------------------------------------------------------------------------
+
+export interface PyqBankProblem {
+  id: string;
+  question_text?: string;
+  explanation?: string;
+  /**
+   * Optional — W1.2/E10/D10 structured provenance, the PYQ-bank mirror of
+   * AuthoredItem.evidence_level (src/scoring/learning-object-catalog-file.ts).
+   * D10, stated here as at that other definition: `evidence_level` is the
+   * structured, enum-checked provenance field for an exam-relevance claim
+   * ABOUT this problem (e.g. "this pattern is high-yield"); it is separate
+   * from whether the ANSWER is correct, which this bank tracks via its own
+   * `verified` boolean — the two are never rivals. One of
+   * EVIDENCE_LEVELS; `directly_reviewed` is the only value that licenses
+   * "high-yield" / "frequently asked" / "most repeated" / "often asked"
+   * copy on this entry (src/content/evidence-phrase-rule.ts).
+   */
+  evidence_level?: string;
+  [key: string]: unknown;
+}
+
+export interface PyqBankFile {
+  version?: unknown;
+  problems: PyqBankProblem[];
+  [key: string]: unknown;
+}
+
+export function loadPyqBank(filePath: string = DEFAULT_PYQ_BANK_PATH): PyqBankFile {
+  // Deliberately no try/catch — same discipline as loadAllPracticeItemBanks:
+  // a bank nobody can read must fail the gate loudly, not count as empty.
+  const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as { problems?: unknown };
+  if (!Array.isArray(raw.problems)) {
+    throw new Error(`${filePath}: no "problems" array (or it is not an array)`);
+  }
+  return raw as PyqBankFile;
+}
+
+/** Schema + phrase-rule violations across the PYQ bank. Empty array = clean. */
+export function checkPyqBank(bank: PyqBankFile): string[] {
+  const problems: string[] = [];
+  for (let i = 0; i < bank.problems.length; i++) {
+    const p = bank.problems[i];
+    const id = typeof p?.id === 'string' && p.id.length > 0 ? p.id : `problems[${i}]`;
+
+    if (p.evidence_level !== undefined) {
+      if (typeof p.evidence_level !== 'string' || !EVIDENCE_LEVEL_SET.has(p.evidence_level)) {
+        problems.push(`${id}: evidence_level '${String(p.evidence_level)}' is not one of {${EVIDENCE_LEVELS.join(', ')}}`);
+      }
+    }
+
+    problems.push(
+      ...checkPhraseRule(id, p.evidence_level, {
+        question_text: p.question_text,
+        explanation: p.explanation,
+      }),
+    );
+  }
+  return problems;
+}
+
+// ---------------------------------------------------------------------------
 // Full run over a directory — the pure core `main()` wraps for I/O + exit.
 // ---------------------------------------------------------------------------
 
@@ -236,7 +364,7 @@ export async function checkAllPracticeItems(dir: string = DEFAULT_ITEMS_DIR): Pr
 
   for (const bank of banks) {
     for (let i = 0; i < bank.items.length; i++) {
-      const raw = bank.items[i];
+      const raw = bank.items[i] as AuthoredItem & Record<string, unknown>;
       itemCount++;
       const id = (raw as { id?: unknown })?.id;
       const label = `${bank.file}[${i}]${typeof id === 'string' ? ` (${id})` : ''}`;
@@ -251,6 +379,13 @@ export async function checkAllPracticeItems(dir: string = DEFAULT_ITEMS_DIR): Pr
       if (!regrade.ok) {
         problems.push(`${label}: ${regrade.reason}`);
       }
+
+      problems.push(
+        ...checkPhraseRule(typeof id === 'string' ? id : label, raw.evidence_level, {
+          question_text: raw.question_text,
+          solution_steps: Array.isArray(raw.solution_steps) ? raw.solution_steps.join(' ') : undefined,
+        }),
+      );
     }
   }
 
@@ -265,17 +400,27 @@ async function main(): Promise<void> {
   console.log(`\n[check-practice-items] Checking ${DEFAULT_ITEMS_DIR}\n`);
 
   let report: CheckReport;
+  let pyqProblems: string[];
+  let pyqCount = 0;
   try {
     report = await checkAllPracticeItems();
+    const pyqBank = loadPyqBank();
+    pyqCount = pyqBank.problems.length;
+    pyqProblems = checkPyqBank(pyqBank);
   } catch (err) {
     console.error(`[check-practice-items] FATAL — a bank failed to parse: ${(err as Error).message}\n`);
     process.exit(1);
     return;
   }
 
-  if (report.problems.length > 0) {
-    console.error(`✗ ${report.problems.length} problem(s) across ${report.itemCount} item(s) in ${report.bankCount} bank(s):\n`);
-    for (const p of report.problems) console.error(`  - ${p}`);
+  const allProblems = [...report.problems, ...pyqProblems];
+
+  if (allProblems.length > 0) {
+    console.error(
+      `✗ ${allProblems.length} problem(s) across ${report.itemCount} practice item(s) in ` +
+        `${report.bankCount} bank(s) + ${pyqCount} PYQ bank entr(y/ies):\n`,
+    );
+    for (const p of allProblems) console.error(`  - ${p}`);
     console.error('');
     process.exit(1);
     return;
@@ -283,7 +428,8 @@ async function main(): Promise<void> {
 
   console.log(
     `✓ ${report.itemCount} practice item(s) across ${report.bankCount} bank(s): ` +
-    `schema-valid and self-re-grade to full marks.\n`,
+    `schema-valid and self-re-grade to full marks.\n` +
+    `✓ ${pyqCount} PYQ bank entr(y/ies): evidence_level schema-valid; phrase rule holds.\n`,
   );
   process.exit(0);
 }

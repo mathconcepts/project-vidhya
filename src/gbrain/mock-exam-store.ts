@@ -54,6 +54,16 @@ export interface MockExamRow {
   submittedAtMs: number | null;
   gradedAtMs: number | null;
   analysis: unknown | null;
+  /**
+   * Plan E7 (migration 052) — the assessment contract resolved ONCE at
+   * creation. `null` on every pre-052 row (and on a row created before an
+   * operator wires the resolution call) — that is the legacy path, graded
+   * exactly as before. Optional on the TypeScript side (not just nullable)
+   * so existing test fixtures built before this plan still typecheck
+   * without threading the field through.
+   */
+  contractVersion?: string | null;
+  contractParams?: unknown | null;
 }
 
 function toRow(r: any): MockExamRow {
@@ -73,20 +83,26 @@ function toRow(r: any): MockExamRow {
     submittedAtMs: r.submitted_at ? new Date(r.submitted_at).getTime() : null,
     gradedAtMs: r.graded_at ? new Date(r.graded_at).getTime() : null,
     analysis: r.analysis ?? null,
+    contractVersion: r.contract_version === null || r.contract_version === undefined ? null : String(r.contract_version),
+    contractParams: r.contract_params ?? null,
   };
 }
 
 export async function createMockExam(params: {
   id: string; sessionId: string; ownerUserId: string; examKey: string; questions: unknown[]; timeLimitMinutes: number;
   timingMode?: 'standard' | 'compressed' | 'rush';
+  /** Plan E7 — the contract resolved ONCE at creation. Omit on a caller that hasn't wired resolution yet; both columns stay NULL (legacy grading). */
+  contractVersion?: string | null;
+  contractParams?: unknown | null;
 }): Promise<MockExamRow> {
   const { rows } = await getPool().query(
-    `INSERT INTO mock_exams (id, session_id, owner_user_id, exam_key, questions, time_limit_minutes, timing_mode, status)
-     VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'in_progress')
+    `INSERT INTO mock_exams (id, session_id, owner_user_id, exam_key, questions, time_limit_minutes, timing_mode, status, contract_version, contract_params)
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'in_progress', $8, $9::jsonb)
      RETURNING *`,
     [
       params.id, params.sessionId, params.ownerUserId, params.examKey,
       JSON.stringify(params.questions), params.timeLimitMinutes, params.timingMode ?? 'standard',
+      params.contractVersion ?? null, params.contractParams != null ? JSON.stringify(params.contractParams) : null,
     ],
   );
   return toRow(rows[0]);

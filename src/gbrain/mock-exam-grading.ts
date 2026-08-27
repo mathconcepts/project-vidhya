@@ -22,6 +22,7 @@
 
 import type { GateItem, GateItemKind, GateResponse } from '../scoring/deterministic-scorer';
 import { makeDeterministicScorer } from '../scoring/deterministic-scorer';
+import type { ContractGrader } from '../scoring/contract-grading';
 
 export interface MockExamQuestionRow {
   id: string;
@@ -136,6 +137,24 @@ export function normalizeMockExamRow(row: MockExamQuestionRow): NormalizedMockQu
 // ────────────────────────────────────────────────────────────────────
 
 export interface MockExamTopicStat { correct: number; attempted: number; marks: number }
+
+/**
+ * Plan E1(b) — one row per GRADABLE question, for the caller (mock-exam-
+ * routes.ts) to turn into `attempt_facts` rows at grade time. Deliberately
+ * NOT written from inside this module — see the header: this stays the
+ * pure, DB-free half of grading, same discipline as the rest of the file.
+ * An ungraded question (`item === null`) contributes no entry here — there
+ * is no question_kind to stamp, and the mode-split/speed guards (W1.6)
+ * have nothing to read off it either.
+ */
+export interface MockExamPerQuestionResult {
+  id: string;
+  kind: GateItemKind;
+  skipped: boolean;
+  earned: number;
+  max: number;
+}
+
 export interface MockExamGradeResult {
   earned: number;
   max: number;
@@ -144,6 +163,7 @@ export interface MockExamGradeResult {
   skipped: number;
   ungraded: number;
   by_topic: Record<string, MockExamTopicStat>;
+  per_question: MockExamPerQuestionResult[];
 }
 
 /** A response is either an mcq option index, an msq index array, a nat value, or absent (→ skipped). */
@@ -167,29 +187,49 @@ function responseToGateResponse(item: GateItem, raw: MockExamResponse): GateResp
  * a genuinely absent one. Ungraded questions (item === null) are excluded
  * from `earned`/`max` entirely and counted separately — never guessed,
  * never silently zeroed into the total as if they were attempted-and-wrong.
+ *
+ * `grader` (plan E7) defaults to the plain `GateDeterministicScorer` — the
+ * exact call this function made before contract pinning existed. Passing
+ * `makeContractGrader(snapshot)` grades from a session's pinned contract
+ * instead; passing nothing (or `makeContractGrader(null)`) is byte-
+ * identical to the pre-E7 behavior, so every caller that hasn't been
+ * updated to thread a snapshot through keeps grading exactly as before.
  */
 export async function gradeMockExam(
   questions: ReadonlyArray<NormalizedMockQuestion>,
   responses: Record<string, MockExamResponse>,
+  grader?: ContractGrader,
 ): Promise<MockExamGradeResult> {
-  const scorer = makeDeterministicScorer();
+  const grade_ = grader ?? defaultGrader();
   let earned = 0, max = 0, correct = 0, wrong = 0, skipped = 0, ungraded = 0;
   const byTopic: Record<string, MockExamTopicStat> = {};
+  const perQuestion: MockExamPerQuestionResult[] = [];
 
   for (const q of questions) {
     byTopic[q.topic] = byTopic[q.topic] ?? { correct: 0, attempted: 0, marks: 0 };
     if (!q.item) { ungraded++; continue; }
 
     const gateResponse = responseToGateResponse(q.item, responses[q.id]);
-    if (gateResponse.skipped) { skipped++; continue; }
+    if (gateResponse.skipped) {
+      skipped++;
+      perQuestion.push({ id: q.item.id, kind: q.item.kind, skipped: true, earned: 0, max: q.item.marks });
+      continue;
+    }
 
-    const grade = await scorer.grade(q.item, gateResponse);
+    const grade = await grade_(q.item, gateResponse);
     max += grade.max;
     earned += grade.earned;
     byTopic[q.topic].attempted++;
     byTopic[q.topic].marks += grade.earned;
     if (grade.casFinalAnswerCorrect) { correct++; byTopic[q.topic].correct++; } else { wrong++; }
+    perQuestion.push({ id: q.item.id, kind: q.item.kind, skipped: false, earned: grade.earned, max: grade.max });
   }
 
-  return { earned, max, correct, wrong, skipped, ungraded, by_topic: byTopic };
+  return { earned, max, correct, wrong, skipped, ungraded, by_topic: byTopic, per_question: perQuestion };
+}
+
+/** Lazily built so a module that never grades (pure tests of normalization) pays nothing for it. */
+function defaultGrader(): ContractGrader {
+  const scorer = makeDeterministicScorer();
+  return (item, response) => scorer.grade(item, response);
 }

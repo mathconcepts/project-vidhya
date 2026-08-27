@@ -12,6 +12,7 @@
  * now fails loudly there too, for the same reason).
  */
 
+import type { ErrorTag } from '../../core/interfaces';
 import type { PracticeItemFormat, PracticeItemGenerationResponse } from './types';
 
 export interface ParseResult {
@@ -31,6 +32,20 @@ function isStringArray(v: unknown): v is string[] {
 
 function isNonEmptyStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.length > 0 && v.every((x) => isNonEmptyString(x));
+}
+
+/**
+ * W3.4/E2: shape-only check (a plain object of non-empty string → non-empty
+ * string). Deliberately not an ErrorTag-membership check here — this
+ * module's whole discipline is "check the JS shape, not domain semantics"
+ * (see the file header); a tag naming an unknown value simply won't match
+ * any distractor's text in deriveMarking() and is dropped there, same as
+ * any other stale/mistyped key.
+ */
+function isFailureTagMap(v: unknown): v is Record<string, string> {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+  return Object.entries(v as Record<string, unknown>)
+    .every(([k, val]) => k.length > 0 && isNonEmptyString(val));
 }
 
 /**
@@ -75,6 +90,16 @@ export function parsePracticeItemResponse(raw: string, format: PracticeItemForma
     }
   }
 
+  // W3.4/E2 — optional, mcq-relevant. Present-but-malformed refuses (same
+  // "don't guess" discipline as every other field here); absent is fine.
+  let distractorFailureTags: Record<string, ErrorTag> | undefined;
+  if (obj.distractor_failure_tags !== undefined) {
+    if (!isFailureTagMap(obj.distractor_failure_tags)) {
+      return { ok: false, reason: 'distractor_failure_tags present but not an object of string -> string' };
+    }
+    distractorFailureTags = obj.distractor_failure_tags as Record<string, ErrorTag>;
+  }
+
   const response: PracticeItemGenerationResponse = {
     question_text: obj.question_text as string,
     distractors: obj.distractors as string[],
@@ -83,6 +108,7 @@ export function parsePracticeItemResponse(raw: string, format: PracticeItemForma
     ...(format === 'msq'
       ? { correct_answers: obj.correct_answers as string[] }
       : { correct_answer: obj.correct_answer as string }),
+    ...(distractorFailureTags ? { distractor_failure_tags: distractorFailureTags } : {}),
   };
   return { ok: true, response };
 }

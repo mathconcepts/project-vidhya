@@ -91,7 +91,9 @@
     "ci:variant-agreement": "tsx scripts/check-variant-agreement.ts",
     "ci:practice-items": "tsx scripts/check-practice-items.ts",
     "ci:la-walkthrough": "tsx scripts/check-la-walkthrough.ts",
-    "ci:gif-scenes": "tsx scripts/check-gif-scenes.ts"
+    "ci:gif-scenes": "tsx scripts/check-gif-scenes.ts",
+    "ci:aggregate-drift": "tsx scripts/check-ci-aggregate-drift.ts",
+    "ci": "npm run lint:fork-test && CONTENT_CI_STRICT=true npm run ci:content-gate && npm run ci:pg-allowlist && npm run ci:connection-budget && npm run ci:seam-registry && npm run ci:playbook-convention && npm run ci:content-integrity && npm run ci:interactive-specs && npm run ci:gif-scenes && npm run ci:template-coverage && npm run ci:variant-agreement && npm run ci:practice-items && npm run ci:demo-rails && npm run ci:syllabus-floor && npm run ci:la-walkthrough && npm run ci:intent-catalogue"
   },
   "keywords": [
     "adaptive-learning",

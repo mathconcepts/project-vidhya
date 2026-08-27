@@ -90,7 +90,13 @@ export interface MasterySignal {
   concept_score?: number;
   /** Total attempts on this concept */
   attempts?: number;
-  /** Recent error type, if any — drives trap-surfacing */
+  /**
+   * Recent error type, if any — drives trap-surfacing. A rendering-side
+   * enrichment vocabulary, deliberately DIFFERENT from and NOT lockstepped
+   * with `ErrorTag` in src/core/interfaces.ts (the attempt-telemetry union
+   * W3.4 extended to 13 members) — see that type's doc comment (D9). This
+   * union stays 4 values; a future ErrorTag addition never touches it.
+   */
   last_error_type?: 'conceptual' | 'careless' | 'computational' | 'none';
   /** Average milliseconds the student took on this concept */
   recent_avg_ms?: number;

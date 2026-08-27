@@ -19,7 +19,7 @@ vi.mock('../auth-middleware', () => ({
   requireRole: (...args: any[]) => mockRequireRole(...args),
 }));
 
-const { practiceRoutes, setPracticeDepsForTests, gateItemFromPayload } = await import('../practice-routes');
+const { practiceRoutes, setPracticeDepsForTests, gateItemFromPayload, failureTagForWrongPick } = await import('../practice-routes');
 
 const itemHandler = practiceRoutes.find(r => r.method === 'GET' && r.path === '/api/practice/item/:id')!.handler;
 
@@ -57,6 +57,12 @@ function obj(id: string, payload: Record<string, unknown>): LearningObject {
 const MARKED_MCQ = obj('mcq-1', {
   questionType: 'mcq', marks: 2, options: ['a', 'b', 'c', 'd'], answerIndex: 2,
 });
+// W3.4/E2 — same item, plus distractor failure hypotheses at the
+// non-answer indices (0, 1, 3 — 2 is the correct answer).
+const TAGGED_MCQ = obj('mcq-tagged', {
+  questionType: 'mcq', marks: 2, options: ['a', 'b', 'c', 'd'], answerIndex: 2,
+  distractorFailureTags: { 0: 'method_selection', 1: 'sign', 3: 'time_pressure' },
+});
 const MARKED_MSQ = obj('msq-1', {
   questionType: 'msq', marks: 2, options: ['a', 'b', 'c'], answerIndices: [0, 2],
 });
@@ -90,7 +96,7 @@ describe('POST /api/practice/attempt', () => {
     mockRequireRole.mockReset();
     mockRequireRole.mockResolvedValue({ userId: 'student-1', role: 'student' });
     setPracticeDepsForTests({
-      catalog: () => new InMemoryCatalog([MARKED_MCQ, MARKED_MSQ, MARKED_NAT, UNMARKED]),
+      catalog: () => new InMemoryCatalog([MARKED_MCQ, MARKED_MSQ, MARKED_NAT, UNMARKED, TAGGED_MCQ]),
       studentModel: () => fakeStudentModel(updates),
       recordProblemAttempt: async (id, correct) => { recalibrations.push({ id, correct }); },
       awardXp: async (award) => { xpAwards.push(award); },
@@ -252,6 +258,51 @@ describe('POST /api/practice/attempt', () => {
     expect(r.payload.recorded).toBe(false);
     expect(xpAwards).toHaveLength(0);
   });
+
+  // ── W3.4/E2: post-answer failure_tag disclosure ──────────────────────
+
+  it('a wrong pick on a tagged mcq returns its failure_tag and feeds it into errorTags', async () => {
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-tagged', response: { selectedIndex: 1 } }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.grade.correct).toBe(false);
+    expect(r.payload.failure_tag).toBe('sign');
+    expect(updates[0].errorTags).toEqual(['sign']);
+  });
+
+  it('a correct pick returns failure_tag: null (never a tag, even one authored on some OTHER option)', async () => {
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-tagged', response: { selectedIndex: 2 } }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.grade.correct).toBe(true);
+    expect(r.payload.failure_tag).toBeNull();
+    expect(updates[0].errorTags).toBeUndefined();
+  });
+
+  it('a skip returns failure_tag: null', async () => {
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-tagged', response: { skipped: true } }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.failure_tag).toBeNull();
+  });
+
+  it('a wrong pick on an UNTAGGED mcq returns failure_tag: null (never guessed)', async () => {
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 0 } }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.grade.correct).toBe(false);
+    expect(r.payload.failure_tag).toBeNull();
+    expect(updates[0].errorTags).toBeUndefined();
+  });
+
+  it('a wrong pick on an option with no authored tag (partial map) returns null, not another option\'s tag', async () => {
+    const r = makeRes();
+    // index 3 IS tagged ('time_pressure'); pick index 0 instead ('method_selection')
+    // to confirm the lookup is keyed by the ACTUAL picked index.
+    await handler(makeReq({ object_id: 'mcq-tagged', response: { selectedIndex: 0 } }), r.res);
+    expect(r.payload.failure_tag).toBe('method_selection');
+    expect(r.payload.failure_tag).not.toBe('time_pressure');
+  });
 });
 
 describe('gateItemFromPayload — refusal reasons', () => {
@@ -284,6 +335,9 @@ describe('GET /api/practice/item/:id — render-safe view', () => {
           questionType: 'mcq', marks: 2, options: ['a', 'b', 'c', 'd'], answerIndex: 2,
           questionText: 'What is $2+2$?', topic: 'arithmetic',
           correctAnswer: '4', solutionSteps: ['add'], distractors: ['3', '5'],
+          // W3.4/E2: server-only diagnostic data — must never reach the
+          // pre-answer render-safe view (see the leak test below).
+          distractorFailureTags: { 0: 'method_selection', 1: 'sign', 3: 'time_pressure' },
         }),
         obj('plain-1', { questionText: 'Ponder this.', correctAnswer: 'secret' }),
       ]),
@@ -329,6 +383,21 @@ describe('GET /api/practice/item/:id — render-safe view', () => {
     expect(raw).not.toContain('"4"');
   });
 
+  // W3.4/E2 — defense-in-depth: even though handleGetItem is already
+  // leak-safe by construction (fields copied one at a time onto a fresh
+  // object, never spread from payload), assert directly that no field
+  // matching this shape ever escapes pre-answer. A failure-tagged
+  // distractor is present on the fixture (see beforeEach above); the one
+  // option WITHOUT a tag would otherwise reveal the correct answer.
+  it('NEVER leaks distractor failure tags (or anything matching failure|trap|misconception) pre-answer', async () => {
+    const r = makeRes();
+    await itemHandler(makeItemReq('mcq-1'), r.res);
+    const raw = JSON.stringify(r.payload);
+    expect(raw).not.toMatch(/failure|trap|misconception/i);
+    expect(raw).not.toContain('distractorFailureTags');
+    expect(raw).not.toContain('distractor_failure_tags');
+  });
+
   it('serves unmarked items as display-only with a precise reason', async () => {
     const r = makeRes();
     await itemHandler(makeItemReq('plain-1'), r.res);
@@ -345,5 +414,41 @@ describe('GET /api/practice/item/:id — render-safe view', () => {
     const r = makeRes();
     await itemHandler(makeItemReq('nope'), r.res);
     expect(r.status).toBe(404);
+  });
+});
+
+describe('failureTagForWrongPick — W3.4/E2 pure-function unit tests', () => {
+  const payload = { distractorFailureTags: { 0: 'method_selection', 3: 'time_pressure' } };
+
+  it('returns null for a correct pick, regardless of payload', () => {
+    expect(failureTagForWrongPick(payload, true, { kind: 'mcq', selectedIndex: 0 })).toBeNull();
+  });
+
+  it('returns null for a skip', () => {
+    expect(failureTagForWrongPick(payload, false, { kind: 'mcq', skipped: true, selectedIndex: 0 })).toBeNull();
+  });
+
+  it('returns null for non-mcq kinds (msq/nat carry no per-distractor tags)', () => {
+    expect(failureTagForWrongPick(payload, false, { kind: 'msq', selectedIndices: [0] })).toBeNull();
+    expect(failureTagForWrongPick(payload, false, { kind: 'nat', value: 3 })).toBeNull();
+  });
+
+  it('returns the tag at the picked index', () => {
+    expect(failureTagForWrongPick(payload, false, { kind: 'mcq', selectedIndex: 0 })).toBe('method_selection');
+    expect(failureTagForWrongPick(payload, false, { kind: 'mcq', selectedIndex: 3 })).toBe('time_pressure');
+  });
+
+  it('returns null when the picked index has no authored tag', () => {
+    expect(failureTagForWrongPick(payload, false, { kind: 'mcq', selectedIndex: 1 })).toBeNull();
+  });
+
+  it('returns null when payload has no distractorFailureTags at all', () => {
+    expect(failureTagForWrongPick({}, false, { kind: 'mcq', selectedIndex: 0 })).toBeNull();
+    expect(failureTagForWrongPick(null, false, { kind: 'mcq', selectedIndex: 0 })).toBeNull();
+  });
+
+  it('is defensive against a malformed distractorFailureTags shape', () => {
+    expect(failureTagForWrongPick({ distractorFailureTags: ['a', 'b'] }, false, { kind: 'mcq', selectedIndex: 0 })).toBeNull();
+    expect(failureTagForWrongPick({ distractorFailureTags: 'nope' }, false, { kind: 'mcq', selectedIndex: 0 })).toBeNull();
   });
 });

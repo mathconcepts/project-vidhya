@@ -42,6 +42,14 @@ export interface QuizSessionRow {
   score: number | null;
   maxMarks: number | null;
   result: unknown | null;
+  /**
+   * Plan E7 (migration 052) — the assessment contract resolved ONCE at
+   * session creation. `null` on every pre-052 row — the legacy path,
+   * graded exactly as before. Optional (not just nullable) so pre-existing
+   * test fixtures typecheck without threading the field through.
+   */
+  contractVersion?: string | null;
+  contractParams?: unknown | null;
 }
 
 function toRow(r: any): QuizSessionRow {
@@ -58,6 +66,8 @@ function toRow(r: any): QuizSessionRow {
     score: r.score === null || r.score === undefined ? null : Number(r.score),
     maxMarks: r.max_marks === null || r.max_marks === undefined ? null : Number(r.max_marks),
     result: r.result ?? null,
+    contractVersion: r.contract_version === null || r.contract_version === undefined ? null : String(r.contract_version),
+    contractParams: r.contract_params ?? null,
   };
 }
 
@@ -68,12 +78,19 @@ export async function createQuizSession(params: {
   itemIds: string[];
   startedAtMs: number;
   deadlineAtMs: number;
+  /** Plan E7 — the contract resolved ONCE at creation. Omit on a caller that hasn't wired resolution yet; both columns stay NULL (legacy grading). */
+  contractVersion?: string | null;
+  contractParams?: unknown | null;
 }): Promise<QuizSessionRow> {
   const { rows } = await getPool().query(
-    `INSERT INTO quiz_sessions (id, student_id, item_ids, status, started_at, deadline_at)
-     VALUES ($1, $2, $3, 'in_progress', $4, $5)
+    `INSERT INTO quiz_sessions (id, student_id, item_ids, status, started_at, deadline_at, contract_version, contract_params)
+     VALUES ($1, $2, $3, 'in_progress', $4, $5, $6, $7::jsonb)
      RETURNING *`,
-    [params.id, params.studentId, params.itemIds, new Date(params.startedAtMs).toISOString(), new Date(params.deadlineAtMs).toISOString()],
+    [
+      params.id, params.studentId, params.itemIds,
+      new Date(params.startedAtMs).toISOString(), new Date(params.deadlineAtMs).toISOString(),
+      params.contractVersion ?? null, params.contractParams != null ? JSON.stringify(params.contractParams) : null,
+    ],
   );
   return toRow(rows[0]);
 }

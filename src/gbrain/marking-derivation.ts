@@ -1,3 +1,5 @@
+import type { ErrorTag } from '../core/interfaces';
+
 /**
  * src/gbrain/marking-derivation.ts — Wave 10: derive the migration
  * 032/033 marking columns for a freshly generated problem, honestly.
@@ -31,6 +33,19 @@
  * (typically to two decimals). We author the range as value ± max(0.01,
  * 0.5% · |value|) — wide enough for two-decimal entry of the exact
  * value, tight enough to reject a genuinely different answer.
+ *
+ * ── W3.4/E2 — failure-tagged distractors (mcq only): the caller may supply
+ * `distractorFailureTags`, a map from a distractor's TRIMMED text to an
+ * `ErrorTag` naming the misconception that distractor is built to catch.
+ * Shuffle happens ONCE, here (see the header note above) — tags are
+ * resolved against the POST-shuffle `options` array, keyed by the option's
+ * final index, never the pre-shuffle position. The correct answer's index
+ * NEVER receives a tag even if the caller's map happens to key it (E2 leak
+ * discipline: the one option WITHOUT a tag would otherwise reveal the
+ * answer, so "correct is always untagged" must hold unconditionally, not
+ * just by the caller's good behavior). Server-only data — see the leak
+ * tests on GET /api/practice/item/:id and mock-exam-routes.ts's
+ * renderSafeQuestion; never served pre-answer.
  */
 
 export interface DerivedMarking {
@@ -40,6 +55,13 @@ export interface DerivedMarking {
   answer_index?: number;
   answer_indices?: number[];
   answer_range?: [number, number];
+  /**
+   * mcq only, optional. POST-shuffle option index → failure-hypothesis
+   * tag for that distractor. Absent when the caller supplied no
+   * `distractorFailureTags`, or when none of them matched a surviving
+   * distractor. Never contains the correct answer's index.
+   */
+  distractor_failure_tags?: Partial<Record<number, ErrorTag>>;
 }
 
 /** Difficulty boundary above which the generator authors 2-mark items. */
@@ -96,6 +118,12 @@ export function deriveMarking(args: {
   distractors: string[];
   difficulty: number;
   rng?: () => number;
+  /**
+   * mcq only, optional (W3.4/E2). Map from a distractor's trimmed text to
+   * the failure hypothesis it's built to catch. See DerivedMarking's own
+   * doc comment for the shuffle/leak discipline this resolves against.
+   */
+  distractorFailureTags?: Record<string, ErrorTag>;
 }): DerivedMarking | null {
   const { format, correctAnswer, difficulty } = args;
   const marks = marksForDifficulty(difficulty);
@@ -108,11 +136,28 @@ export function deriveMarking(args: {
       .filter(d => d !== correct);
     if (distractors.length < 2) return null;   // a 2-option "MCQ" is a coin flip, refuse
     const options = shuffle([correct, ...distractors], args.rng);
+    const answer_index = options.indexOf(correct);
+
+    // Resolve failure tags against the POST-shuffle indices (shuffle-integrity
+    // — see the file header). The correct answer's index is unconditionally
+    // excluded, never merely by trusting the caller's map didn't key it.
+    let distractor_failure_tags: Partial<Record<number, ErrorTag>> | undefined;
+    if (args.distractorFailureTags) {
+      const tags: Partial<Record<number, ErrorTag>> = {};
+      options.forEach((opt, i) => {
+        if (i === answer_index) return;
+        const tag = args.distractorFailureTags![opt];
+        if (tag) tags[i] = tag;
+      });
+      if (Object.keys(tags).length > 0) distractor_failure_tags = tags;
+    }
+
     return {
       question_type: 'mcq',
       marks,
       options,
-      answer_index: options.indexOf(correct),
+      answer_index,
+      ...(distractor_failure_tags ? { distractor_failure_tags } : {}),
     };
   }
 

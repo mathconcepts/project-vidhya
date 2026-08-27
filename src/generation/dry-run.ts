@@ -16,6 +16,7 @@
  */
 
 import { priceForCall } from './cost-meter';
+import { estimatePracticeItemBatchBreakdownUsd } from './practice-item-factory/cost';
 import type { GenerationRunConfig } from '../experiments/types';
 import { loadLlmConfig } from '../llm/registry';
 
@@ -49,9 +50,16 @@ export interface CostEstimate {
   warnings: string[];
   /** Whether the estimate is from heuristics (no historical data). */
   from_heuristics: boolean;
+  /** practice-item runs only: item count per format, for the RunLauncher's estimate panel. */
+  mode_mix?: Record<'mcq' | 'msq' | 'nat', number>;
 }
 
 export function estimateRunCost(config: GenerationRunConfig): CostEstimate {
+  const specs = config.target.practice_item_specs;
+  if (specs && specs.length > 0) {
+    return estimatePracticeItemRunCost(config, specs);
+  }
+
   const warnings: string[] = [];
   const count = Math.max(1, config.quota.count);
 
@@ -101,6 +109,68 @@ export function estimateRunCost(config: GenerationRunConfig): CostEstimate {
     },
     warnings,
     from_heuristics: true,
+  };
+}
+
+/**
+ * Practice-item runs (config.target.practice_item_specs[]) cost differently
+ * per item than an atom run: mode mix (mcq/msq/nat) determines whether the
+ * per-item verification leg is a second LLM call (dual-model consensus) or
+ * a Wolfram call, and the spec count — not quota.count, which is a separate,
+ * looser cap — is the actual number of items requested. Reuses
+ * estimatePracticeItemCostUsd (practice-item-factory/cost.ts) so this number
+ * never drifts from the one src/generation/batch/poller.ts's orchestrator
+ * uses for its own prepare()-time budget check.
+ */
+function estimatePracticeItemRunCost(
+  config: GenerationRunConfig,
+  specs: NonNullable<GenerationRunConfig['target']['practice_item_specs']>,
+): CostEstimate {
+  const warnings: string[] = [];
+  const genModel = pickGenerationModel(config);
+  const breakdown = estimatePracticeItemBatchBreakdownUsd(specs, genModel);
+  const totalUsd = breakdown.total_usd;
+  const perArtifact = specs.length > 0 ? totalUsd / specs.length : 0;
+
+  // Batch generation is async (up to a 24h provider SLA) rather than the
+  // synchronous per-item wall-clock the atom estimate uses — duration here
+  // is deliberately not modeled as "minutes"; the operator watches
+  // Active runs / the batch_state column instead.
+  const minutes = 0;
+
+  if (totalUsd > config.quota.max_cost_usd) {
+    warnings.push(
+      `Estimated cost ($${totalUsd.toFixed(2)}) exceeds the $${config.quota.max_cost_usd.toFixed(2)} cap. ` +
+        `The batch will refuse at launch (budget_exceeded) rather than partially spend. Reduce specs or raise the cap.`,
+    );
+  }
+  if (specs.length !== Math.max(1, config.quota.count)) {
+    warnings.push(
+      `quota.count (${config.quota.count}) does not match practice_item_specs.length (${specs.length}) — ` +
+        `the spec count is what actually gets generated.`,
+    );
+  }
+  if (specs.length > 200) {
+    warnings.push(
+      `${specs.length} items is a large batch. Consider a smaller pilot to measure verification throughput first.`,
+    );
+  }
+
+  const modeCounts = { mcq: 0, msq: 0, nat: 0 };
+  for (const s of specs) modeCounts[s.format] = (modeCounts[s.format] ?? 0) + 1;
+
+  return {
+    estimated_cost_usd: totalUsd,
+    estimated_duration_minutes: minutes,
+    per_artifact_usd: perArtifact,
+    call_count: specs.length * 2, // one generation + one verification leg per item
+    breakdown: {
+      generation_usd: breakdown.generation_usd,
+      verification_usd: breakdown.verification_usd,
+    },
+    warnings,
+    from_heuristics: true,
+    mode_mix: modeCounts,
   };
 }
 

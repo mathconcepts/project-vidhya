@@ -488,8 +488,15 @@ function renderStudentContextBlock(ctx: unknown): string {
  *     Strips markdown to a narration script and POSTs to the provider.
  *
  * Both paths are best-effort: failure leaves the atom shipping text-only.
+ * A GIF that renders but hard-fails media QA (§4.15 W3.6/E9 — label
+ * overlap or a near-blank final frame, see gif-generator.ts's
+ * evaluateSceneQa) is routed through markMediaFailed exactly like a render
+ * exception, so applyMediaUrls' existing skip machinery keeps it off the
+ * page rather than shipping an illegible sidecar.
+ *
+ * Exported for unit testing; production callers reach it via generateConcept.
  */
-async function maybeGenerateMedia(
+export async function maybeGenerateMedia(
   atom: GeneratedAtom,
   version_n: number,
 ): Promise<void> {
@@ -511,11 +518,23 @@ async function maybeGenerateMedia(
     if (scene) {
       try {
         const result = renderScene(scene);
-        await writeArtifact(
-          atom.atom_id, version_n, 'gif',
-          result.buffer,
-          { duration_ms: result.duration_ms },
-        );
+        // W3.6/E9 media QA: a hard QA failure (label overlap or a
+        // near-blank frame on the FINAL frame — see gif-generator.ts's
+        // evaluateSceneQa) never ships a broken sidecar. Route it through
+        // the existing failed-artifact machinery so applyMediaUrls skips
+        // it, same as a render exception.
+        if (result.qa.hard_fail) {
+          await markMediaFailed(
+            atom.atom_id, version_n, 'gif',
+            `media QA failed: ${result.qa.hard_fail_reasons.join('; ')}`,
+          );
+        } else {
+          await writeArtifact(
+            atom.atom_id, version_n, 'gif',
+            result.buffer,
+            { duration_ms: result.duration_ms },
+          );
+        }
       } catch (err) {
         await markMediaFailed(atom.atom_id, version_n, 'gif', (err as Error).message);
       }

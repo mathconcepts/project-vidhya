@@ -124,7 +124,15 @@ export async function computeLift(
 // Cohort resolution
 // ============================================================================
 
-async function resolveTreatmentSessions(
+/**
+ * Exported (plan W1.6) so the learnings-ledger repo's anti-gaming-guard
+ * data fetchers (src/storage/repositories/learnings-ledger-repo.ts) can
+ * resolve the SAME treatment cohort lift_v1 was computed against, rather
+ * than re-deriving the atom/session join independently — a second copy of
+ * this resolution is exactly the kind of drift the guards exist to catch
+ * elsewhere in the plan.
+ */
+export async function resolveTreatmentSessions(
   experimentId: string,
   examPackId: string,
 ): Promise<Set<string>> {

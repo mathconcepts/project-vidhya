@@ -37,6 +37,11 @@ import path from 'path';
 import { computeLift } from '../experiments/lift';
 import { listExperiments, updateExperimentStatus } from '../experiments/registry';
 import { suggestRuns, type RunSuggestion } from '../generation/suggester';
+import {
+  immediateLiftFlatRetention,
+  modeSplitRegression,
+  speedUpErrorsUp,
+} from '../experiments/promote-guards';
 import type {
   ExperimentRow,
   ExperimentStatus,
@@ -53,6 +58,8 @@ export interface LedgerRunResult {
   experiments_evaluated: number;
   promotions: number;
   demotions: number;
+  /** W1.6 — would-be promotions an anti-gaming guard held for operator review instead of auto-promoting. */
+  held_for_review: number;
   suggestions: number;
   digest_path: string | null;
   pr_url: string | null;
@@ -95,6 +102,7 @@ export async function runLearningsLedger(
     experiments_evaluated: 0,
     promotions: 0,
     demotions: 0,
+    held_for_review: 0,
     suggestions: 0,
     digest_path: null,
     pr_url: null,
@@ -138,6 +146,17 @@ export async function runLearningsLedger(
   });
   result.experiments_evaluated = refreshed.length;
 
+  // Fetched here (moved up from step 3) so a guard-triggered review
+  // suggestion (W1.6, below) can reuse the SAME config lookup the
+  // ride-win/confirm-win/recover-loss suggester rules already make —
+  // never a second query for the same experiment ids.
+  const runConfigRows = await repo.loadRecentRunConfigs(refreshed.map((e) => e.id));
+  const baseConfigs = new Map<string, GenerationRunConfig>(
+    runConfigRows.map((r) => [r.experiment_id, r.config as GenerationRunConfig]),
+  );
+
+  const held: HeldDecision[] = [];
+
   for (const exp of refreshed) {
     const lift = numOrNull(exp.lift_v1);
     const n = numOrNull(exp.lift_n);
@@ -146,6 +165,23 @@ export async function runLearningsLedger(
     if (n < cfg.n_min) continue;
 
     if (lift > cfg.win_lift_threshold && pv < cfg.p_threshold) {
+      // W1.6 — anti-gaming guards run over cohort-aggregate data the
+      // ledger already reads (mastery_snapshots + attempt_facts) BEFORE
+      // any promotion side-effect. A tripped guard redirects into an
+      // operator-review suggestion instead of auto-promoting; it does NOT
+      // demote or otherwise touch the experiment's status — the next
+      // night's run reconsiders it exactly like any other active
+      // experiment, so more data can clear the guard on its own.
+      const trippedGuards = await evaluateAntiGamingGuards(repo, exp, lift, n, cfg.window_days);
+      if (trippedGuards.length > 0) {
+        held.push({ experiment: exp, lift, n, p: pv, trippedGuards });
+        const baseConfig = baseConfigs.get(exp.id);
+        if (baseConfig) {
+          await repo.upsertSuggestion(reviewSuggestion(exp, lift, n, baseConfig, trippedGuards));
+        }
+        continue;
+      }
+
       const decision: PromotionDecision = {
         kind: 'won',
         experiment: exp,
@@ -173,12 +209,9 @@ export async function runLearningsLedger(
   }
   result.promotions = promotions.length;
   result.demotions = demotions.length;
+  result.held_for_review = held.length;
 
   // 3) Build suggestions from the just-decided experiments
-  const runConfigRows = await repo.loadRecentRunConfigs(refreshed.map((e) => e.id));
-  const baseConfigs = new Map<string, GenerationRunConfig>(
-    runConfigRows.map((r) => [r.experiment_id, r.config as GenerationRunConfig]),
-  );
   const suggestions = suggestRuns(refreshed, baseConfigs, {
     win_lift_threshold: cfg.win_lift_threshold,
     loss_lift_threshold: cfg.loss_lift_threshold,
@@ -188,6 +221,9 @@ export async function runLearningsLedger(
   for (const s of suggestions) {
     await repo.upsertSuggestion(s);
   }
+  // held.length review suggestions were already upserted above, inside the
+  // promote loop — counted separately (result.held_for_review) since they
+  // are a hold, not a follow-up run suggestion of the suggestRuns() kind.
   result.suggestions = suggestions.length;
 
   // 4) Write digest markdown
@@ -196,6 +232,7 @@ export async function runLearningsLedger(
       runId: id,
       promotions,
       demotions,
+      held,
       suggestions,
       evaluated: refreshed.length,
     });
@@ -209,7 +246,7 @@ export async function runLearningsLedger(
     process.env.VIDHYA_LEDGER_PR === 'on' &&
     !opts.no_pr &&
     (isSunday || opts.force_pr === true) &&
-    (promotions.length + demotions.length + suggestions.length > 0);
+    (promotions.length + demotions.length + held.length + suggestions.length > 0);
 
   if (wantPr && result.digest_path) {
     try {
@@ -232,7 +269,7 @@ export async function runLearningsLedger(
     suggestions: result.suggestions,
     pr_url: result.pr_url,
     digest: opts.no_digest ? buildDigest({
-      runId: id, promotions, demotions, suggestions, evaluated: refreshed.length,
+      runId: id, promotions, demotions, held, suggestions, evaluated: refreshed.length,
     }) : undefined,
   });
 
@@ -264,6 +301,94 @@ function demotionReason(d: PromotionDecision): string {
   return `lift_v1=${d.lift.toFixed(4)} p=${d.p.toFixed(4)} n=${d.n} (exp=${d.experiment.id})`;
 }
 
+// ============================================================================
+// W1.6 — anti-gaming guards
+// ============================================================================
+
+/** A would-be promotion an anti-gaming guard held for operator review. */
+interface HeldDecision {
+  experiment: ExperimentRow;
+  lift: number;
+  n: number;
+  p: number;
+  /** Every guard that tripped — usually one, but a run can trip more than one at once. */
+  trippedGuards: Array<{ name: string; reason: string }>;
+}
+
+/**
+ * Runs all three W1.6 guards for one would-be-won experiment, over cohort-
+ * aggregate data fetched from the repo (mastery_snapshots + attempt_facts).
+ * Every fetch is best-effort (never throws — see the repo's own header);
+ * a guard with no usable data returns not-tripped with an 'insufficient
+ * data' reason, so a DB-less deploy or a young experiment promotes exactly
+ * as it did before this plan.
+ */
+async function evaluateAntiGamingGuards(
+  repo: LearningsLedgerRepo,
+  exp: ExperimentRow,
+  lift: number,
+  n: number,
+  windowDays: number,
+): Promise<Array<{ name: string; reason: string }>> {
+  const [delayed, modeSplit, speed] = await Promise.all([
+    repo.fetchDelayedRetention(exp.id, exp.exam_pack_id, exp.started_at, windowDays),
+    repo.fetchModeSplitAccuracy(exp.id, exp.exam_pack_id, exp.started_at, windowDays),
+    repo.fetchSpeedAccuracy(exp.id, exp.exam_pack_id, exp.started_at, windowDays),
+  ]);
+
+  const tripped: Array<{ name: string; reason: string }> = [];
+
+  const g1 = immediateLiftFlatRetention({
+    liftV1: lift, liftN: n,
+    delayedMasteryDelta: delayed?.delta ?? null, delayedN: delayed?.n ?? null,
+  });
+  if (g1.tripped) tripped.push({ name: 'immediate_lift_flat_retention', reason: g1.reason });
+
+  const g2 = modeSplitRegression({ byKind: modeSplit });
+  if (g2.tripped) tripped.push({ name: 'mode_split_regression', reason: g2.reason });
+
+  const g3 = speedUpErrorsUp({
+    meanBucketIndexPre: speed?.meanBucketIndexPre ?? null,
+    meanBucketIndexPost: speed?.meanBucketIndexPost ?? null,
+    accuracyPre: speed?.accuracyPre ?? null,
+    accuracyPost: speed?.accuracyPost ?? null,
+    n: speed?.n ?? null,
+  });
+  if (g3.tripped) tripped.push({ name: 'speed_up_errors_up', reason: g3.reason });
+
+  return tripped;
+}
+
+/**
+ * The operator-review `run_suggestions` row for a guard-held experiment.
+ * Deterministic id (`sugg_review_<exp.id>`) — mirrors suggestRuns()'s own
+ * id scheme, idempotent via upsertSuggestion's ON CONFLICT. Reuses the
+ * experiment's own most-recent generation-run config unchanged (the same
+ * "no baseConfig → no suggestion row" discipline suggestRuns() already
+ * follows) — this suggestion is "review before promoting", not a proposal
+ * to change anything about the run itself.
+ */
+function reviewSuggestion(
+  exp: ExperimentRow,
+  lift: number,
+  n: number,
+  baseConfig: GenerationRunConfig,
+  trippedGuards: Array<{ name: string; reason: string }>,
+): { id: string; exam_pack_id: string; source_experiment_id: string; hypothesis: string; config: GenerationRunConfig; reason: string; expected_lift: number | null; expected_n: number | null } {
+  return {
+    id: `sugg_review_${exp.id}`,
+    exam_pack_id: exp.exam_pack_id,
+    source_experiment_id: exp.id,
+    hypothesis: `Review before promoting: ${exp.hypothesis ?? exp.name}`,
+    config: baseConfig,
+    reason:
+      `Lift +${lift.toFixed(4)} (n=${n}) would have promoted, but ${trippedGuards.length === 1 ? 'a guard' : `${trippedGuards.length} guards`} ` +
+      `tripped: ${trippedGuards.map((g) => `${g.name} — ${g.reason}`).join(' | ')}`,
+    expected_lift: lift,
+    expected_n: n,
+  };
+}
+
 // fetchAtomTargets / applyPromotion / applyDemotion / loadRecentRunConfigs /
 // upsertSuggestion / markLedgerRunRunning / markLedgerRunComplete moved to
 // src/storage/repositories/learnings-ledger-repo.ts (CEO plan Phase 0 §5.1
@@ -280,6 +405,7 @@ interface DigestInput {
   evaluated: number;
   promotions: PromotionDecision[];
   demotions: PromotionDecision[];
+  held: HeldDecision[];
   suggestions: RunSuggestion[];
 }
 
@@ -293,6 +419,7 @@ function buildDigest(d: DigestInput): string {
   md += `| Decisions | Count |\n|---|---|\n`;
   md += `| Promotions | ${d.promotions.length} |\n`;
   md += `| Demotions  | ${d.demotions.length} |\n`;
+  md += `| Held for review | ${d.held.length} |\n`;
   md += `| Suggestions | ${d.suggestions.length} |\n\n`;
 
   if (d.promotions.length > 0) {
@@ -313,6 +440,20 @@ function buildDigest(d: DigestInput): string {
     md += `\n`;
   }
 
+  if (d.held.length > 0) {
+    md += `## 🛑 Held for review (W1.6 anti-gaming guard)\n\n`;
+    md += `Would have promoted on lift alone; an anti-gaming guard held it instead. ` +
+          `See \`/admin/content-rd\` for the review suggestion (where a launchable config exists).\n\n`;
+    for (const h of d.held) {
+      md += `### ${escMd(h.experiment.name)}\n\n`;
+      md += `- **Lift:** +${h.lift.toFixed(4)} (n=${h.n}, p=${h.p.toFixed(4)})\n`;
+      for (const g of h.trippedGuards) {
+        md += `- **Guard \`${g.name}\`:** ${escMd(g.reason)}\n`;
+      }
+      md += `\n`;
+    }
+  }
+
   if (d.suggestions.length > 0) {
     md += `## 📈 Suggested follow-up runs\n\n`;
     md += `Pending operator approval at \`/admin/content-rd\`.\n\n`;
@@ -326,7 +467,7 @@ function buildDigest(d: DigestInput): string {
     }
   }
 
-  if (d.promotions.length + d.demotions.length + d.suggestions.length === 0) {
+  if (d.promotions.length + d.demotions.length + d.held.length + d.suggestions.length === 0) {
     md += `_No state changes this run. Loop is healthy; experiments still need more cohort time._\n`;
   }
 

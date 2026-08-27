@@ -1,0 +1,557 @@
+# ---------------------------------------------------------------------------
+# historical-evidence.yml — GATE Engineering Mathematics historical
+# question-pattern evidence, imported per W1.2/E10 (D/P/S provenance codes).
+#
+# Source: "GATE Engineering Mathematics: Atomic Learning Objectives and
+# Historical Question Patterns" (market-research corpus, imported
+# 2026-08-27). That document reviewed the OFFICIAL GATE XE-A subject papers
+# for 2021, 2022 and 2023 ONLY — three papers, one branch's XE-A section.
+# Its own stated boundary (quoted verbatim, and binding on every consumer of
+# this file):
+#
+#   "The historical field describes HOW TO PREPARE for question forms, not
+#   how often a topic appears. It does not claim that a topic is asked every
+#   year, has a fixed weightage, or will repeat."
+#   "The first implementation should not hard-code a 'most important' or
+#   'frequently asked' label from this appendix. Such labels require an
+#   item-level historical corpus, a coding protocol, paper/year identifiers,
+#   question IDs and a review process."
+#
+# In other words: `evidence: D` means "a directly reviewed example was
+# visible in one of those three papers" — it is NOT a frequency, weightage,
+# or "high-yield" claim, and must never be rendered as one. `ci:intent-catalogue`
+# (check-intent-catalogue.ts's phrase-rule check) enforces the CI half of
+# that discipline: student-facing copy may not say "high-yield" /
+# "frequently asked" / "most repeated" / "often asked" without a structured
+# `directly_reviewed` evidence label on the SPECIFIC item making the claim —
+# this file's per-topic `evidence` values are D/P/S/S-tier corpus provenance
+# for topic-level content planning, a related but distinct vocabulary from
+# `evidence_level` on individual practice items and PYQ bank entries (D10:
+# the two never read as rivals — see the header comment at
+# src/scoring/learning-object-catalog-file.ts's AuthoredItem.evidence_level
+# and frontend/public/data/pyq-bank.json's schema for that item-level field).
+#
+# Evidence codes (source's own definitions, quoted):
+#   D — "A directly reviewed example or very close item was visible in an
+#       official paper reviewed for this study."
+#   P — "The pattern family is supported by multiple reviewed official-paper
+#       forms, but the exact atomic item was not isolated in every paper."
+#   S — "The pattern is a syllabus-derived preparation expectation requiring
+#       further item-level coding."
+#
+# Resolution rule for the source's own combined "D/P" rows (7 of 116): the
+# source's own D definition only requires that a directly-reviewed example
+# "was visible" at least once, which every D/P row satisfies by construction
+# (that is exactly what distinguishes a D/P row from a plain P row) — so
+# combined rows resolve to `D`, never split or invented. Each resolved entry
+# below carries an inline comment saying so, for anyone auditing this file
+# against the source doc.
+#
+# 116 topic ids across 9 GATE EM sub-areas (LA/CA/VC/DE/PD/CX/PS/NM/DM —
+# Linear Algebra, Calculus, Vector Calculus, Ordinary/Partial Differential
+# Equations, Complex Variables, Probability & Statistics, Numerical Methods,
+# Discrete Mathematics for CS). These ids are the CORPUS's own topic
+# taxonomy — a DIFFERENT id scheme from atomic-catalogue.json's AT-### ids
+# and from the concept graph's concept ids. No automatic join exists between
+# them; an operator wiring this into content generation must map explicitly,
+# not assume string equality.
+#
+# `pattern` is a short paraphrase of the source's "historical question
+# pattern" column with the trailing evidence marker stripped (that marker is
+# what became `evidence` below) — kept close to source wording rather than
+# summarized further, so a reviewer can spot-check against the corpus doc by
+# eye. `topic` is the corpus's own topic label, included for readability;
+# it is not part of the {pattern, evidence} contract this file exists to
+# provide and callers should not depend on its exact wording.
+#
+# Validated by scripts/check-intent-catalogue.ts (B7: every key matches
+# ^[A-Z]{2,3}-\d{2}$, `evidence` is one of D/P/S, `pattern` is a non-empty
+# string) — see loadHistoricalEvidence() there.
+# ---------------------------------------------------------------------------
+schema_version: 1
+id: gate-em-historical-evidence
+source: "GATE Engineering Mathematics: Atomic Learning Objectives and Historical Question Patterns (market-research corpus, imported 2026-08-27)"
+source_paper_scope: "Official GATE XE-A subject papers, 2021-2023 only (3 papers, one branch's XE-A section) — never treat as full-syllabus or multi-branch coverage"
+topics:
+
+  # Linear Algebra
+  LA-01:
+    topic: "Matrix algebra and operations"
+    pattern: "Short property or computation MCQ; dimension/operation recognition and compact calculation."
+    evidence: P
+  LA-02:
+    topic: "Determinants and properties"
+    pattern: "One- or two-mark short calculation or property application; use row/column structure rather than long expansion."
+    evidence: P
+  LA-03:
+    topic: "Matrix inverse"
+    pattern: "Parameter/property MCQ or short numerical result based on invertibility and determinant."
+    evidence: P
+  LA-04:
+    topic: "Rank of a matrix"
+    pattern: "Matrix-condition question or parameter value selected from a rank requirement."
+    evidence: D  # source coded D/P; resolved to D per header rule
+  LA-05:
+    topic: "Systems of linear equations"
+    pattern: "Parameterized matrix/set condition MCQ; compact reasoning rather than a full derivation."
+    evidence: D
+  LA-06:
+    topic: "Eigenvalues"
+    pattern: "Short computational MCQ, property statement or parameter-based eigenvalue question."
+    evidence: P
+  LA-07:
+    topic: "Eigenvectors"
+    pattern: "Matrix computation or statement-based question checking eigenvector validity."
+    evidence: P
+  LA-08:
+    topic: "Symmetric-matrix properties"
+    pattern: "MSQ-style property verification or short statement set."
+    evidence: S
+  LA-09:
+    topic: "Diagonalization"
+    pattern: "Property/condition question or matrix-power simplification."
+    evidence: S
+  LA-10:
+    topic: "Cayley–Hamilton theorem"
+    pattern: "Compact property/application question; likely asks for a reduced expression or scalar parameter."
+    evidence: S
+  LA-11:
+    topic: "LU decomposition"
+    pattern: "Short numerical computation or step/property question; fits the compact computational style of subject papers."
+    evidence: P
+
+  # Calculus
+  CA-01:
+    topic: "Limits"
+    pattern: "Short expression-based MCQ/NAT; compact manipulation with a final value."
+    evidence: P
+  CA-02:
+    topic: "Indeterminate forms"
+    pattern: "Method-selection or short calculation question involving a limit form."
+    evidence: S
+  CA-03:
+    topic: "L’Hospital’s rule"
+    pattern: "One-mark limit evaluation or method-choice item."
+    evidence: S
+  CA-04:
+    topic: "Continuity"
+    pattern: "Parameterized piecewise-function MCQ or statement evaluation."
+    evidence: P
+  CA-05:
+    topic: "Differentiability"
+    pattern: "Conceptual statement or compact piecewise-function calculation."
+    evidence: P
+  CA-06:
+    topic: "Mean value theorems"
+    pattern: "Theorem-condition MCQ/MSQ or short inference question."
+    evidence: S
+  CA-07:
+    topic: "One-variable maxima and minima"
+    pattern: "Function-based short calculation or statement question."
+    evidence: P
+  CA-08:
+    topic: "Taylor theorem and remainder"
+    pattern: "Approximation/value question or statement about error/order."
+    evidence: S
+  CA-09:
+    topic: "Taylor series"
+    pattern: "Compact expansion or coefficient extraction question."
+    evidence: P
+  CA-10:
+    topic: "Fundamental theorem of integral calculus"
+    pattern: "Short derivative-of-integral MCQ or parameter/value problem."
+    evidence: S
+  CA-11:
+    topic: "Definite integrals"
+    pattern: "Direct short computation, identity/property application or NAT."
+    evidence: P
+  CA-12:
+    topic: "Improper integrals"
+    pattern: "Convergence/property MCQ or short evaluation."
+    evidence: S
+  CA-13:
+    topic: "Area under curves"
+    pattern: "Area expression or parameter recovery in NAT/MCQ; area-from-function prompts are directly visible in reviewed XE forms."
+    evidence: D  # source coded D/P; resolved to D per header rule
+  CA-14:
+    topic: "Volume of revolution"
+    pattern: "Compact geometry-to-integral question or numerical entry."
+    evidence: P
+  CA-15:
+    topic: "Two-variable limits and continuity"
+    pattern: "Conceptual or counterexample-based MCQ/MSQ."
+    evidence: S
+  CA-16:
+    topic: "Partial derivatives"
+    pattern: "Short symbolic calculation or derivative-property question."
+    evidence: P
+  CA-17:
+    topic: "Total derivative"
+    pattern: "Compact symbolic/NAT calculation or chain-rule setup."
+    evidence: S
+  CA-18:
+    topic: "Directional derivative"
+    pattern: "Short vector/calculus calculation or geometric interpretation."
+    evidence: P
+  CA-19:
+    topic: "Two-variable maxima, minima and saddle points"
+    pattern: "Classification MCQ or parameter/property statement."
+    evidence: S
+  CA-20:
+    topic: "Lagrange multipliers"
+    pattern: "Compact constrained-extremum calculation or condition question."
+    evidence: S
+  CA-21:
+    topic: "Double integrals"
+    pattern: "Region/limit setup and compact calculation; representation-based prompts are consistent with reviewed papers."
+    evidence: P
+  CA-22:
+    topic: "Triple integrals"
+    pattern: "Setup or short numerical result; exact paper-level frequency requires coding."
+    evidence: S
+
+  # Vector Calculus
+  VC-01:
+    topic: "Scalar/vector fields and notation"
+    pattern: "Definition/property MCQ or short classification."
+    evidence: S
+  VC-02:
+    topic: "Gradient"
+    pattern: "Compact calculation or interpretation question."
+    evidence: P
+  VC-03:
+    topic: "Divergence"
+    pattern: "Short calculation or theorem-condition statement."
+    evidence: P
+  VC-04:
+    topic: "Curl"
+    pattern: "Compact vector calculation or property question."
+    evidence: P
+  VC-05:
+    topic: "Vector identities"
+    pattern: "Statement/property question or short symbolic simplification."
+    evidence: S
+  VC-06:
+    topic: "Line integrals"
+    pattern: "Direct line-integral calculation; a reviewed XE question uses a boundary orientation and Green’s theorem route."
+    evidence: D  # source coded D/P; resolved to D per header rule
+  VC-07:
+    topic: "Green’s theorem"
+    pattern: "Short theorem-application MCQ with a bounded region; directly reviewed in XE 2021."
+    evidence: D
+  VC-08:
+    topic: "Surface and volume integrals"
+    pattern: "Setup, flux or compact numerical result."
+    evidence: S
+  VC-09:
+    topic: "Stokes’ theorem"
+    pattern: "Theorem eligibility/orientation statement or short application."
+    evidence: S
+  VC-10:
+    topic: "Gauss/divergence theorem"
+    pattern: "Theorem-selection or compact flux calculation."
+    evidence: S
+  VC-11:
+    topic: "Theorem selection"
+    pattern: "Method-selection MCQ/MSQ with region/orientation cues; reviewed papers support compact theorem/region applications."
+    evidence: P
+
+  # Ordinary Differential Equations
+  DE-01:
+    topic: "First-order linear equations"
+    pattern: "Short transformed/solved ODE or parameter-value question; compact ODE transformations are directly visible in reviewed XE papers."
+    evidence: D  # source coded D/P; resolved to D per header rule
+  DE-02:
+    topic: "First-order separable/nonlinear equations"
+    pattern: "Method-selection or short solution-value question."
+    evidence: P
+  DE-03:
+    topic: "Exact equations"
+    pattern: "Condition/classification MCQ or compact implicit solution."
+    evidence: S
+  DE-04:
+    topic: "Homogeneous first-order equations"
+    pattern: "Short method-choice or solution expression."
+    evidence: S
+  DE-05:
+    topic: "Higher-order constant-coefficient equations"
+    pattern: "Compact root/classification or parameter calculation."
+    evidence: P
+  DE-06:
+    topic: "Cauchy–Euler equations"
+    pattern: "Equation-classification or short solution-form question."
+    evidence: S
+  DE-07:
+    topic: "Variable-coefficient linear equations"
+    pattern: "Method-selection or transformation question; exact historical frequency requires item coding."
+    evidence: S
+  DE-08:
+    topic: "Initial-value problems"
+    pattern: "Short solution/value calculation."
+    evidence: P
+  DE-09:
+    topic: "Boundary-value problems"
+    pattern: "Condition/eigenvalue statement or compact calculation."
+    evidence: S
+  DE-10:
+    topic: "Wronskian"
+    pattern: "Short determinant/property question."
+    evidence: S
+  DE-11:
+    topic: "Variation of parameters"
+    pattern: "Compact formula/application question; exact recurrence requires question-paper coding."
+    evidence: S
+  DE-12:
+    topic: "Second-order eigenvalue problems"
+    pattern: "Boundary/eigenvalue selection or short calculation."
+    evidence: S
+  DE-13:
+    topic: "Power-series solutions at ordinary points"
+    pattern: "Short coefficient/recurrence question."
+    evidence: S
+  DE-14:
+    topic: "Laplace transforms in ODE solution"
+    pattern: "Transform/inverse-transform or compact ODE solution; paper-level evidence should be coded separately by branch."
+    evidence: S
+
+  # Partial Differential Equations
+  PD-01:
+    topic: "Classification of second-order linear PDEs"
+    pattern: "Short classification MCQ or statement question."
+    evidence: S
+  PD-02:
+    topic: "Separation of variables"
+    pattern: "Compact derivation step, method-selection or solution-form question."
+    evidence: S
+  PD-03:
+    topic: "One-dimensional heat/diffusion equation"
+    pattern: "Solution-form, coefficient or condition-application question."
+    evidence: S
+  PD-04:
+    topic: "One-dimensional wave equation"
+    pattern: "Classification/solution-form or boundary-condition item."
+    evidence: S
+  PD-05:
+    topic: "Two-dimensional Laplace equation"
+    pattern: "Setup, boundary-condition or solution-form question."
+    evidence: S
+  PD-06:
+    topic: "Fourier-series boundary representation"
+    pattern: "Short coefficient calculation or representation question."
+    evidence: P
+  PD-07:
+    topic: "Initial/boundary-condition compatibility"
+    pattern: "Condition-validity statement or short diagnostic MCQ."
+    evidence: S
+  PD-08:
+    topic: "PDE verification and interpretation"
+    pattern: "Statement or substitution check; exact historical frequency requires item-level review."
+    evidence: S
+
+  # Complex Variables
+  CX-01:
+    topic: "Complex-number algebra"
+    pattern: "Short direct calculation or property MCQ."
+    evidence: P
+  CX-02:
+    topic: "Argand plane"
+    pattern: "Diagram/representation or compact calculation."
+    evidence: P
+  CX-03:
+    topic: "Polar/exponential representation"
+    pattern: "Short conversion or power/root question."
+    evidence: P
+  CX-04:
+    topic: "De Moivre’s theorem"
+    pattern: "Compact power/root calculation or statement question."
+    evidence: S
+  CX-05:
+    topic: "Analytic functions"
+    pattern: "Definition/condition MCQ or statement set."
+    evidence: S
+  CX-06:
+    topic: "Cauchy–Riemann equations"
+    pattern: "Condition/property question or compact construction."
+    evidence: S
+  CX-07:
+    topic: "Cauchy’s integral theorem"
+    pattern: "Theorem eligibility or short contour statement."
+    evidence: S
+  CX-08:
+    topic: "Cauchy’s integral formula"
+    pattern: "Compact contour-integral MCQ/NAT; exact reviewed-paper evidence for this atom requires further item coding."
+    evidence: S
+  CX-09:
+    topic: "Taylor and Laurent series"
+    pattern: "Expansion/region question or coefficient calculation."
+    evidence: S
+  CX-10:
+    topic: "Residue theorem and contour integrals"
+    pattern: "Compact residue or contour-evaluation question."
+    evidence: S
+
+  # Probability and Statistics
+  PS-01:
+    topic: "Probability axioms"
+    pattern: "Short event-relation MCQ or NAT."
+    evidence: P
+  PS-02:
+    topic: "Counting and event construction"
+    pattern: "Compact combinatorial/probability model question."
+    evidence: P
+  PS-03:
+    topic: "Conditional probability"
+    pattern: "Short conditional-probability calculation; reviewed XE papers include compact probability modelling."
+    evidence: D  # source coded D/P; resolved to D per header rule
+  PS-04:
+    topic: "Bayes’ theorem"
+    pattern: "Word-problem MCQ/NAT with independent numerical entry; conditional-information prompts are directly visible in reviewed XE forms."
+    evidence: D  # source coded D/P; resolved to D per header rule
+  PS-05:
+    topic: "Random variables"
+    pattern: "Definition/selection or short calculation."
+    evidence: P
+  PS-06:
+    topic: "Mean/expectation"
+    pattern: "Compact distribution calculation or property statement."
+    evidence: P
+  PS-07:
+    topic: "Variance and standard deviation"
+    pattern: "Short numerical or property question."
+    evidence: P
+  PS-08:
+    topic: "Median and mode"
+    pattern: "Small-data or definition/property MCQ."
+    evidence: S
+  PS-09:
+    topic: "Binomial distribution"
+    pattern: "Distribution-selection word problem or compact calculation."
+    evidence: P
+  PS-10:
+    topic: "Poisson distribution"
+    pattern: "Model-selection or short numerical entry."
+    evidence: P
+  PS-11:
+    topic: "Normal distribution"
+    pattern: "Compact standardization/probability calculation."
+    evidence: P
+  PS-12:
+    topic: "Sampling theorems"
+    pattern: "Conceptual/property or short calculation; paper applicability is branch-specific."
+    evidence: S
+  PS-13:
+    topic: "Correlation"
+    pattern: "Formula or interpretation question."
+    evidence: S
+  PS-14:
+    topic: "Linear regression"
+    pattern: "Compact data-based calculation or interpretation."
+    evidence: S
+
+  # Numerical Methods
+  NM-01:
+    topic: "Numerical error and error analysis"
+    pattern: "Short definition/calculation or statement question."
+    evidence: S
+  NM-02:
+    topic: "Conditioning and stability"
+    pattern: "Conceptual/property question; exact GATE coverage should be paper-verified."
+    evidence: S
+  NM-03:
+    topic: "Gauss elimination"
+    pattern: "Compact numerical system solution or step question."
+    evidence: S
+  NM-04:
+    topic: "LU decomposition"
+    pattern: "Short numerical calculation; LU is explicitly in CS/XE-A scope."
+    evidence: P
+  NM-05:
+    topic: "Lagrange interpolation"
+    pattern: "Direct numerical interpolation question."
+    evidence: P
+  NM-06:
+    topic: "Newton interpolation"
+    pattern: "Table-based short calculation."
+    evidence: P
+  NM-07:
+    topic: "Newton–Raphson method"
+    pattern: "NAT-style numerical iteration or one-step MCQ; reviewed official papers visibly use independent numeric entry and rounding instructions."
+    evidence: P
+  NM-08:
+    topic: "Trapezoidal integration"
+    pattern: "Direct NAT numerical entry with explicit subinterval/rounding instruction; directly reviewed in XE 2021."
+    evidence: D
+  NM-09:
+    topic: "Simpson’s integration"
+    pattern: "Direct NAT/short calculation; numerical-integration NAT style is directly reviewed."
+    evidence: D  # source coded D/P; resolved to D per header rule
+  NM-10:
+    topic: "Explicit Euler method"
+    pattern: "NAT-style step computation or algorithm-trace MCQ."
+    evidence: S
+  NM-11:
+    topic: "Single- and multistep ODE methods"
+    pattern: "Method-comparison or short numerical trace."
+    evidence: S
+
+  # Discrete Mathematics for CS
+  DM-01:
+    topic: "Propositional logic"
+    pattern: "Compact truth-table/property MCQ or MSQ statement set."
+    evidence: S
+  DM-02:
+    topic: "First-order logic"
+    pattern: "Statement-validity or translation question."
+    evidence: S
+  DM-03:
+    topic: "Sets"
+    pattern: "Short set-operation or cardinality question."
+    evidence: S
+  DM-04:
+    topic: "Relations"
+    pattern: "Property-classification MCQ/MSQ."
+    evidence: S
+  DM-05:
+    topic: "Functions"
+    pattern: "Mapping/condition question or finite-set calculation."
+    evidence: S
+  DM-06:
+    topic: "Partial orders"
+    pattern: "Relation/Hasse representation question."
+    evidence: S
+  DM-07:
+    topic: "Lattices"
+    pattern: "Hasse-diagram or property question."
+    evidence: S
+  DM-08:
+    topic: "Monoids"
+    pattern: "Structure-validity statement question."
+    evidence: S
+  DM-09:
+    topic: "Groups"
+    pattern: "Cayley-table/property MCQ or MSQ."
+    evidence: S
+  DM-10:
+    topic: "Graph connectivity"
+    pattern: "Diagram-based reasoning or short graph-property MCQ; representation-based questions are consistent with reviewed GATE styles."
+    evidence: P
+  DM-11:
+    topic: "Matching"
+    pattern: "Diagram/property question or small graph calculation."
+    evidence: S
+  DM-12:
+    topic: "Graph colouring"
+    pattern: "Diagram-based option selection or property question."
+    evidence: S
+  DM-13:
+    topic: "Counting"
+    pattern: "Compact combinatorial calculation."
+    evidence: S
+  DM-14:
+    topic: "Recurrence relations"
+    pattern: "Short recurrence calculation or asymptotic/property question."
+    evidence: S
+  DM-15:
+    topic: "Generating functions"
+    pattern: "Compact coefficient/series manipulation question."
+    evidence: S

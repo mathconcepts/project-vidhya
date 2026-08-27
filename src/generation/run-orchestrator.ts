@@ -218,6 +218,39 @@ export async function markRunComplete(
   }
 }
 
+/**
+ * Reconciles `generation_runs.status` from the batch lane's OWN state
+ * machine (`batch_state`, migration 026) once it reaches a terminal state.
+ * Practice-item runs (src/generation/run-dispatcher.ts's practice-item
+ * mode) only ever drive the run as far as 'running' synchronously — the
+ * rest of the batch lifecycle (submit → poll → download → process →
+ * complete) happens asynchronously over the batch poller's periodic sweep
+ * (src/generation/batch/poller.ts), potentially hours later. This is the
+ * status-side half of that: called from pollAllInFlightBatches() whenever
+ * one of ITS step() transitions lands on 'complete' or 'failed'.
+ *
+ * Deliberately does NOT touch `error` or `cost_usd` — the batch
+ * orchestrator already wrote a precise `error` message onto the SAME
+ * generation_runs row (pg-persistence.ts's updateRun shares the column);
+ * overwriting it here with a generic message would destroy that
+ * diagnostic detail. `WHERE status = 'running'` guards against
+ * resurrecting a run some other path (e.g. an operator abort, which sets
+ * status directly) already terminalized.
+ */
+export async function markRunStatus(
+  id: string,
+  status: 'complete' | 'failed',
+): Promise<void> {
+  const pool = getGenerationPool();
+  if (!pool) return;
+  await pool.query(
+    `UPDATE generation_runs
+        SET status = $2, completed_at = NOW()
+      WHERE id = $1 AND status = 'running'`,
+    [id, status],
+  );
+}
+
 export async function markRunFailed(
   id: string,
   error: string,

@@ -55,7 +55,9 @@ function makeClient(steps: Array<unknown | Error>) {
   return { query, release: vi.fn() };
 }
 
-/** The 9-call happy path up to and including COMMIT, with no FIRe steps. */
+/** The 12-call happy path up to and including COMMIT, with no FIRe steps —
+ *  BEGIN..fsrs_cards upsert, then the attempt_facts SAVEPOINT/INSERT/RELEASE
+ *  (plan E1, migration 051), then COMMIT. */
 function happyPathSteps() {
   return [
     {},                 // BEGIN
@@ -66,6 +68,9 @@ function happyPathSteps() {
     {},                 // item_difficulty_elo upsert
     { rows: [] },       // fsrs_cards select
     {},                 // fsrs_cards upsert
+    {},                 // SAVEPOINT attempt_fact
+    {},                 // attempt_facts INSERT
+    {},                 // RELEASE SAVEPOINT attempt_fact
     {},                 // COMMIT
   ];
 }
@@ -81,15 +86,15 @@ const LA_ATTEMPT: Attempt = {
 };
 
 describe('PgStudentModel.update() — VIDHYA_FIRE unset (default)', () => {
-  it('issues exactly the 9-call happy path, no FIRe queries, for an LA concept with a real closure', async () => {
+  it('issues exactly the 12-call happy path, no FIRe queries, for an LA concept with a real closure', async () => {
     const model = new PgStudentModel();
     const client = makeClient(happyPathSteps());
     mockConnect.mockResolvedValueOnce(client);
 
     await model.update(LA_ATTEMPT);
 
-    expect(client.query).toHaveBeenCalledTimes(9);
-    expect(client.query).toHaveBeenNthCalledWith(9, 'COMMIT');
+    expect(client.query).toHaveBeenCalledTimes(12);
+    expect(client.query).toHaveBeenNthCalledWith(12, 'COMMIT');
   });
 });
 
@@ -102,25 +107,28 @@ describe('PgStudentModel.update() — VIDHYA_FIRE=on, empty closure', () => {
 
     await model.update(NON_LA_ATTEMPT);
 
-    expect(client.query).toHaveBeenCalledTimes(9); // fire.ts's closure.size===0 short-circuit
-    expect(client.query).toHaveBeenNthCalledWith(9, 'COMMIT');
+    expect(client.query).toHaveBeenCalledTimes(12); // fire.ts's closure.size===0 short-circuit
+    expect(client.query).toHaveBeenNthCalledWith(12, 'COMMIT');
   });
 });
 
 describe('PgStudentModel.update() — VIDHYA_FIRE=on, real closure, no existing cards', () => {
-  it('issues the closure SELECT but no UPDATE, then COMMITs', async () => {
+  it('issues the closure SELECT but no UPDATE, then writes attempt_facts and COMMITs', async () => {
     process.env.VIDHYA_FIRE = 'on';
     const model = new PgStudentModel();
     const client = makeClient([
       ...happyPathSteps().slice(0, 8), // BEGIN..fsrs_cards upsert (8 calls, no COMMIT yet)
       { rows: [] },                    // FIRe closure SELECT — nothing to nudge
+      {},                              // SAVEPOINT attempt_fact
+      {},                              // attempt_facts INSERT
+      {},                              // RELEASE SAVEPOINT attempt_fact
       {},                              // COMMIT
     ]);
     mockConnect.mockResolvedValueOnce(client);
 
     await model.update(LA_ATTEMPT);
 
-    expect(client.query).toHaveBeenCalledTimes(10);
+    expect(client.query).toHaveBeenCalledTimes(13);
     const [selectSql, selectParams] = client.query.mock.calls[8];
     expect(String(selectSql)).toContain('FOR UPDATE');
     expect(String(selectSql)).toContain('ORDER BY object_id');
@@ -132,7 +140,7 @@ describe('PgStudentModel.update() — VIDHYA_FIRE=on, real closure, no existing 
       new Set(['determinants', 'systems-of-equations', 'matrix-operations', 'matrix-inverse']),
     );
     expect(selectParams[2]).toBe('o-eigen-1'); // the attempted card's own object_id, excluded
-    expect(client.query).toHaveBeenNthCalledWith(10, 'COMMIT');
+    expect(client.query).toHaveBeenNthCalledWith(13, 'COMMIT');
   });
 });
 
@@ -153,20 +161,23 @@ describe('PgStudentModel.update() — VIDHYA_FIRE=on, real closure with existing
         ],
       }, // FIRe closure SELECT — one existing card
       {}, // the batched UPDATE
+      {}, // SAVEPOINT attempt_fact
+      {}, // attempt_facts INSERT
+      {}, // RELEASE SAVEPOINT attempt_fact
       {}, // COMMIT
     ]);
     mockConnect.mockResolvedValueOnce(client);
 
     await model.update(LA_ATTEMPT);
 
-    expect(client.query).toHaveBeenCalledTimes(11);
+    expect(client.query).toHaveBeenCalledTimes(14);
     const [updateSql, updateParams] = client.query.mock.calls[9];
     expect(String(updateSql)).toContain('UPDATE fsrs_cards');
     expect(String(updateSql)).toContain('unnest(');
     expect(updateParams[0]).toBe('s1');
     expect(updateParams[1]).toEqual(['o-det-1']);
     expect(updateParams[2][0]).toBeGreaterThan(5); // correct attempt -> stability increases
-    expect(client.query).toHaveBeenNthCalledWith(11, 'COMMIT');
+    expect(client.query).toHaveBeenNthCalledWith(14, 'COMMIT');
   });
 
   it('never issues FIRe queries on the bare pool — everything runs on the client inside the tx', async () => {
@@ -175,7 +186,10 @@ describe('PgStudentModel.update() — VIDHYA_FIRE=on, real closure with existing
     const client = makeClient([
       ...happyPathSteps().slice(0, 8),
       { rows: [] },
-      {},
+      {}, // SAVEPOINT attempt_fact
+      {}, // attempt_facts INSERT
+      {}, // RELEASE SAVEPOINT attempt_fact
+      {}, // COMMIT
     ]);
     mockConnect.mockResolvedValueOnce(client);
 

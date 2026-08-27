@@ -27,7 +27,7 @@ import type {
   LearningObjectCatalog,
   CatalogQuery,
 } from './learning-object-catalog';
-import type { LearningObject, ObjectType } from '../core/interfaces';
+import type { ErrorTag, LearningObject, ObjectType } from '../core/interfaces';
 import { difficultyToElo, DEFAULT_EXAM_RELEVANCE } from './difficulty-elo';
 
 const ITEMS_DIR = path.join(process.cwd(), 'data', 'practice-items');
@@ -52,9 +52,35 @@ export interface AuthoredItem {
   answer_index?: number;
   answer_indices?: number[];
   answer_range?: [number, number];
+  /**
+   * mcq only, optional (W3.4/E2). POST-shuffle option index → failure-
+   * hypothesis tag for that distractor; never the correct answer's own
+   * index. Server-only — threaded into the served payload as
+   * `distractorFailureTags` (markingPayload(), below) for grading-time
+   * use only. GET /api/practice/item/:id's render-safe view never copies
+   * it (see that route's leak test); POST /api/practice/attempt may
+   * surface ONE tag, post-answer, for the option the student actually
+   * picked when they got it wrong.
+   */
+  distractor_failure_tags?: Partial<Record<number, ErrorTag>>;
   correct_answer?: string;
   solution_steps?: string[];
   verification_method?: string;
+  /**
+   * Optional provenance — the `generation_runs.id` that produced this item,
+   * when it came off the batch pipeline (src/generation/practice-item-factory/).
+   * Hand-authored/committed items have no run to point to and leave this
+   * unset. Additive metadata only: it does not change grading or the
+   * marking payload.
+   */
+  generation_run_id?: string;
+  /**
+   * Optional ISO-8601 timestamp of when `verification_method` was actually
+   * confirmed (a human review, a re-verification sweep) — distinct from
+   * when the item was first written. Additive metadata only: it does not
+   * change grading or the marking payload.
+   */
+  verified_at?: string;
   /**
    * Optional — concept ids (besides `concept_id`) the solution genuinely
    * exercises as a real step (e.g. an eigenvalues item whose solution
@@ -64,7 +90,33 @@ export interface AuthoredItem {
    * ids by `scripts/check-practice-items.ts`.
    */
   also_tests?: string[];
+  /**
+   * Optional — W1.2/E10/D10 structured provenance for exam-relevance
+   * claims made ABOUT this item (e.g. "this is a high-yield pattern"),
+   * distinct from whether the item's ANSWER is correct (that's
+   * `verification_method`, above). D10, stated here and at its mirror in
+   * frontend/public/data/pyq-bank.json's schema (see
+   * scripts/check-practice-items.ts): `evidence_level` is the structured,
+   * enum-checked provenance field; `verification_method` remains free-text
+   * detail beneath it — the two are never rivals, and neither substitutes
+   * for the other. `directly_reviewed` is the ONLY value that licenses
+   * "high-yield" / "frequently asked" / "most repeated" / "often asked"
+   * copy on this item — see src/content/evidence-phrase-rule.ts, enforced
+   * by `scripts/check-practice-items.ts`'s phrase-rule check.
+   *   - official: stated directly in an official syllabus/exam document.
+   *   - directly_reviewed: a human directly reviewed a specific official
+   *     paper/source and confirmed the claim for THIS item.
+   *   - pattern_supported: supported by a broader reviewed pattern, but no
+   *     single source was isolated confirming this exact item.
+   *   - design_hypothesis: an authoring/product judgment call, not yet
+   *     evidenced — the honest default when no review has happened.
+   */
+  evidence_level?: 'official' | 'directly_reviewed' | 'pattern_supported' | 'design_hypothesis';
 }
+
+/** Mirrors AuthoredItem.evidence_level — the closed enum, for validators. */
+export const EVIDENCE_LEVELS = ['official', 'directly_reviewed', 'pattern_supported', 'design_hypothesis'] as const;
+export type EvidenceLevel = (typeof EVIDENCE_LEVELS)[number];
 
 const GATE_KINDS = new Set(['mcq', 'msq', 'nat']);
 
@@ -95,6 +147,15 @@ function markingPayload(item: AuthoredItem): Record<string, unknown> {
       && item.answer_range.every((n) => typeof n === 'number')) {
     out.answerRange = item.answer_range;
   }
+  // W3.4/E2 — server-only grading-time data. Present in payload (the
+  // FULL, unstripped object grading reads from), never in the
+  // render-safe view a client sees before answering (that view is built
+  // by copying named fields, not spreading payload — see
+  // practice-routes.ts's handleGetItem and its leak test).
+  if (kind === 'mcq' && item.distractor_failure_tags
+      && Object.keys(item.distractor_failure_tags).length > 0) {
+    out.distractorFailureTags = item.distractor_failure_tags;
+  }
   return out;
 }
 
@@ -114,7 +175,8 @@ export function verificationLabelFor(method: string | undefined): LearningObject
   return method === 'wolfram_verified' ? 'cas_passed' : 'human_verified';
 }
 
-function toLearningObject(item: AuthoredItem): LearningObject {
+/** Exported for direct unit testing (mirrors verificationLabelFor above). */
+export function toLearningObject(item: AuthoredItem): LearningObject {
   return {
     id: item.id,
     nodeId: item.concept_id,
@@ -133,10 +195,47 @@ function toLearningObject(item: AuthoredItem): LearningObject {
       maxMarks: typeof item.marks === 'number' && item.marks > 0 ? item.marks : 1,
       examRelevance: DEFAULT_EXAM_RELEVANCE,
       verificationMethod: item.verification_method ?? 'authored',
+      // Additive metadata only (D10) — never read by grading.
+      evidenceLevel: item.evidence_level ?? null,
       timesServed: 0,
       ...markingPayload(item),
     },
   };
+}
+
+/**
+ * Every AuthoredItem in every committed bank, RAW — no LearningObject
+ * conversion, so callers that need the authored fields the conversion
+ * drops (`correct_answer`, `solution_steps`, `verification_method`,
+ * `generation_run_id`) can read them.
+ *
+ * Exists because three separate places already re-implemented this
+ * directory scan (writer.ts, this file's own class, seed-la-practice-items.ts)
+ * and a fourth was about to. The one caller today is the operator review
+ * queue (src/api/admin-review-queue-routes.ts), which must be able to show
+ * an item's proposed answer key — precisely the field the render-safe
+ * serving path is careful never to emit. That asymmetry is deliberate: the
+ * review queue is admin-gated and its whole job is showing the key.
+ *
+ * Not cached: the queue is a low-traffic admin surface, and a stale bank
+ * read after a generation pass wrote new items would be worse than a
+ * re-parse.
+ */
+export function loadAuthoredItemsRaw(dir: string = ITEMS_DIR): AuthoredItem[] {
+  const out: AuthoredItem[] = [];
+  try {
+    for (const file of fs.readdirSync(dir)) {
+      if (!file.endsWith('.json')) continue;
+      const raw = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+      for (const item of raw.items ?? []) {
+        if (item?.id && item?.concept_id) out.push(item as AuthoredItem);
+      }
+    }
+  } catch {
+    // A missing or unreadable directory means no authored items — a
+    // legitimate state, same as the class below treats it.
+  }
+  return out;
 }
 
 export class FileLearningObjectCatalog implements LearningObjectCatalog {

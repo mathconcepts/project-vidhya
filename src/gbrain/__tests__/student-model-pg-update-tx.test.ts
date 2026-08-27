@@ -57,8 +57,10 @@ const ATTEMPT: Attempt = {
   ts: 12345,
 };
 
-/** The 9-call happy-path sequence: BEGIN, dedup, sSelect, iSelect, sInsert,
- *  iInsert, cSelect, cInsert, COMMIT. Matches the code's actual query order. */
+/** The 12-call happy-path sequence: BEGIN, dedup, sSelect, iSelect, sInsert,
+ *  iInsert, cSelect, cInsert, attempt_facts SAVEPOINT/INSERT/RELEASE (plan
+ *  E1, migration 051 — see attempt-facts.ts), COMMIT. Matches the code's
+ *  actual query order. */
 function happyPathSteps() {
   return [
     {},                                // BEGIN
@@ -69,6 +71,9 @@ function happyPathSteps() {
     {},                                // item_difficulty_elo upsert
     { rows: [] },                      // fsrs_cards select
     {},                                // fsrs_cards upsert
+    {},                                // SAVEPOINT attempt_fact
+    {},                                // attempt_facts INSERT
+    {},                                // RELEASE SAVEPOINT attempt_fact
     {},                                // COMMIT
   ];
 }
@@ -110,7 +115,7 @@ describe('PgStudentModel.update() — dedup-inside-tx rollback semantics', () =>
     mockConnect.mockResolvedValueOnce(client2);
 
     await expect(model.update(ATTEMPT)).resolves.toBeUndefined();
-    expect(client2.query).toHaveBeenNthCalledWith(9, 'COMMIT');
+    expect(client2.query).toHaveBeenNthCalledWith(12, 'COMMIT');
   });
 
   it('a duplicate (already-committed) attempt is a no-op: COMMIT, no further writes, no bus event', async () => {
@@ -143,8 +148,8 @@ describe('PgStudentModel.update() — error-tag persistence moved after COMMIT',
     const attemptWithTags: Attempt = { ...ATTEMPT, errorTags: ['sign'] };
     await model.update(attemptWithTags);
 
-    // Exactly the 9 happy-path calls on the client — no error-tag insert in there.
-    expect(client.query).toHaveBeenCalledTimes(9);
+    // Exactly the 12 happy-path calls on the client — no error-tag insert in there.
+    expect(client.query).toHaveBeenCalledTimes(12);
     for (const call of client.query.mock.calls) {
       expect(String(call[0])).not.toContain('attempt_error_tags');
     }

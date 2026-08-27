@@ -17,13 +17,18 @@ import type {
   BlueprintStage,
   BlueprintConstraint,
   DifficultyLabel,
+  DifficultyMix,
   AtomKind,
 } from './types';
 import {
   INTENT_STAGE_SEQUENCES,
   CONCEPT_DOMINANT_INTENT,
   CONCEPT_INVENTORY_TOTALS,
+  FAMILY_STAGE_SEQUENCES,
+  CONCEPT_TEMPLATE_FAMILY,
   type IntentId,
+  type TemplateFamilyId,
+  type GeneratedStage,
 } from './intent-tables.gen';
 
 export const TEMPLATE_VERSION = 'v1.0';
@@ -65,10 +70,131 @@ const DIFFICULTY_MIX_BY_TARGET = {
   hard:   { easy: 10, medium: 40, hard: 50 },
 } as const;
 
+// ----------------------------------------------------------------------------
+// Template families (W2.1/E11) — codegen'd from
+// data/curriculum/gate-em/template-families.yml via
+// src/blueprints/intent-tables.gen.ts's FAMILY_STAGE_SEQUENCES /
+// CONCEPT_TEMPLATE_FAMILY.
+//
+// Precedence (E11, locked): when a concept resolves to a template family
+// (CONCEPT_TEMPLATE_FAMILY covers all 101 concept-graph concepts as of
+// 2026-08-27), the family's stage TOPOLOGY (stage ids, atom_kinds, order)
+// REPLACES this file's old 3-way GEOMETRIC/ALGEBRAIC/COMPUTATIONAL heuristic
+// below (pickIntuitionAtom/pickDiscoveryAtom + inferTopicFamily) — that
+// heuristic now serves ONLY concept_ids the family table doesn't cover
+// (concepts outside the GATE-EM concept graph, e.g. JEE's '-jee'-suffixed
+// ids used by presets.ts and the existing test suite). Practice-stage
+// difficulty_mix is preserved from the concept's dominant catalogue intent
+// where one exists (practiceDifficultyMixFor below), falling back to
+// DIFFICULTY_MIX_BY_TARGET — never invented fresh per family.
+// ----------------------------------------------------------------------------
+
+/** One rationale code per template family — see the additive block in types.ts. */
+const RATIONALE_ID_BY_FAMILY: Record<TemplateFamilyId, string> = {
+  matrix: 'family_matrix',
+  eigen: 'family_eigen',
+  limit: 'family_limit',
+  derivative: 'family_derivative',
+  integral: 'family_integral',
+  optimization: 'family_optimization',
+  vector: 'family_vector',
+  ode: 'family_ode',
+  pde: 'family_pde',
+  complex: 'family_complex',
+  probability: 'family_probability',
+  statistics: 'family_statistics',
+  numerical: 'family_numerical',
+  discrete: 'family_discrete',
+};
+
+/** The family a concept resolves to, or null when uncovered (legacy fallback applies). */
+function resolveFamilyStages(concept_id: string): { family: TemplateFamilyId; sequence: GeneratedStage[] } | null {
+  const family = CONCEPT_TEMPLATE_FAMILY[concept_id];
+  if (!family) return null;
+  const sequence = FAMILY_STAGE_SEQUENCES[family];
+  if (!sequence || sequence.length === 0) return null;
+  return { family, sequence };
+}
+
+/**
+ * Practice-stage difficulty_mix for a family-derived blueprint: the concept's
+ * dominant catalogue intent's own practice-stage mix when one exists
+ * (preserving the calibrated intent-lane mixes — E11's "intent lane's
+ * difficulty mixes preserved" clause), else the existing target-difficulty
+ * table (never a third, invented default).
+ */
+function practiceDifficultyMixFor(concept_id: string, target_difficulty: DifficultyLabel): DifficultyMix {
+  const intent = CONCEPT_DOMINANT_INTENT[concept_id];
+  if (intent) {
+    const practiceEntry = INTENT_STAGE_SEQUENCES[intent].find((s) => s.stage === 'practice');
+    if (practiceEntry?.difficulty_mix) return { ...practiceEntry.difficulty_mix };
+  }
+  return { ...DIFFICULTY_MIX_BY_TARGET[target_difficulty] };
+}
+
+/** Build a BlueprintDecisionsV1 from a resolved family's stage sequence. */
+function buildFromFamilySequence(
+  input: TemplateInput,
+  family: TemplateFamilyId,
+  sequence: GeneratedStage[],
+): BlueprintDecisionsV1 {
+  const rationale_id = RATIONALE_ID_BY_FAMILY[family];
+  const totalInventory = CONCEPT_INVENTORY_TOTALS[input.concept_id] ?? 0;
+
+  const stages: BlueprintStage[] = sequence.map((generated) => {
+    const stage: BlueprintStage = {
+      id: generated.stage,
+      atom_kind: generated.atom_kind,
+      rationale_id,
+    };
+    if (generated.stage === 'practice') {
+      stage.count = practiceCountFromInventory(totalInventory);
+      stage.difficulty_mix = practiceDifficultyMixFor(input.concept_id, input.target_difficulty);
+    }
+    return stage;
+  });
+
+  const constraints: BlueprintConstraint[] = [
+    { id: 'no_jargon_first_definition', source: 'template' },
+  ];
+
+  if (input.requires_pyq_anchor && !stages.some((s) => s.id === 'pyq_anchor')) {
+    stages.push({
+      id: 'pyq_anchor',
+      atom_kind: 'pyq_anchor',
+      rationale_id: 'pyq_anchor_required_by_pack',
+    });
+    constraints.push({ id: 'always_include_pyq_anchor', source: 'template' });
+  }
+
+  return {
+    version: 1,
+    metadata: {
+      concept_id: input.concept_id,
+      exam_pack_id: input.exam_pack_id,
+      target_difficulty: input.target_difficulty,
+    },
+    stages,
+    constraints,
+  };
+}
+
 /**
  * Produce the deterministic baseline blueprint for the given input.
+ *
+ * W2.1/E11: tries the template-family table FIRST (resolveFamilyStages) —
+ * this replaces the old 3-way topic-family heuristic below for any concept
+ * template-families.yml covers. The heuristic (inferTopicFamily +
+ * pickIntuitionAtom/pickDiscoveryAtom) survives as the fallback for concept
+ * ids outside the concept graph (see the precedence note above the family
+ * helpers).
  */
 export function buildTemplateBlueprint(input: TemplateInput): BlueprintDecisionsV1 {
+  const familyMatch = resolveFamilyStages(input.concept_id);
+  if (familyMatch) {
+    return buildFromFamilySequence(input, familyMatch.family, familyMatch.sequence);
+  }
+
   const family = (input.topic_family ?? inferTopicFamily(input.concept_id)).toLowerCase();
   const stages: BlueprintStage[] = [];
   const constraints: BlueprintConstraint[] = [];
@@ -167,23 +293,38 @@ function practiceCountFromInventory(totalInventory: number): number {
 }
 
 /**
- * Intent-aware alternative to buildTemplateBlueprint. When the concept has
- * a dominant intent (CONCEPT_DOMINANT_INTENT, computed by codegen from the
- * atomic catalogue's per-atom intent distribution — see intent-tables.gen.ts),
- * or an explicit `intent` override is passed, emits the stage sequence
- * INTENT_STAGE_SEQUENCES declares for that intent, with:
- *   - practice stages given a concrete count via practiceCountFromInventory()
- *     and their difficulty_mix passed through unchanged from the sequence;
- *   - every stage's rationale_id set from RATIONALE_ID_BY_INTENT (one of the
- *     four intent_* codes added to RATIONALE_CODES in types.ts).
+ * Intent-aware alternative to buildTemplateBlueprint. Precedence (W2.1/E11):
+ *   1. An explicit `intent` override ALWAYS wins — the caller asked for that
+ *      lane specifically, family topology never overrides an explicit ask.
+ *   2. Otherwise, when the concept resolves to a template family
+ *      (CONCEPT_TEMPLATE_FAMILY — covers all 101 concept-graph concepts as
+ *      of 2026-08-27), the family's stage topology is used — "family
+ *      overrides the intent default", per E11 — via the same
+ *      buildFromFamilySequence() buildTemplateBlueprint() uses, so the two
+ *      builders can never silently diverge on how a family renders.
+ *   3. Otherwise (no explicit intent, no family), falls back to the
+ *      concept's dominant catalogue intent (CONCEPT_DOMINANT_INTENT,
+ *      computed by codegen from the atomic catalogue's per-atom intent
+ *      distribution). Emits INTENT_STAGE_SEQUENCES for that intent, with:
+ *      - practice stages given a concrete count via practiceCountFromInventory()
+ *        and their difficulty_mix passed through unchanged from the sequence;
+ *      - every stage's rationale_id set from RATIONALE_ID_BY_INTENT (one of
+ *        the four intent_* codes added to RATIONALE_CODES in types.ts).
  *
- * Returns null when the concept has no dominant intent and no explicit
- * override was given — callers fall back to buildTemplateBlueprint(), which
- * this function never calls and never mutates.
+ * Returns null when none of the three resolve — callers fall back to
+ * buildTemplateBlueprint(), which this function never calls and never
+ * mutates.
  */
 export function buildIntentBlueprint(
   input: TemplateInput & { intent?: IntentId },
 ): BlueprintDecisionsV1 | null {
+  if (!input.intent) {
+    const familyMatch = resolveFamilyStages(input.concept_id);
+    if (familyMatch) {
+      return buildFromFamilySequence(input, familyMatch.family, familyMatch.sequence);
+    }
+  }
+
   const intent = input.intent ?? CONCEPT_DOMINANT_INTENT[input.concept_id];
   if (!intent) return null;
 

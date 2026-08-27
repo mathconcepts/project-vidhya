@@ -194,6 +194,15 @@ describe('recordGates', () => {
   it('is a no-op with no pool (DB-less), never a throw', async () => {
     await expect(recordGates({ generation_run_id: 'r', item_id: 'i', verdicts: [] }, null)).resolves.toBe(0);
   });
+
+  it('still refuses a decided mathematics verdict with NO pool — the refusal is a contract, not a DB behaviour', async () => {
+    await expect(
+      recordGates(
+        { generation_run_id: 'r', item_id: 'i', verdicts: [{ gate: 'mathematics', status: 'passed', reason: 'looks fine' }] },
+        null,
+      ),
+    ).rejects.toThrow(/require an operator decision/);
+  });
 });
 
 describe('decideGate', () => {

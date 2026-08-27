@@ -295,8 +295,10 @@ export interface RecordGatesInput {
  * path cannot produce an approved answer key.
  */
 export async function recordGates(input: RecordGatesInput, pool?: pg.Pool | null): Promise<number> {
-  const p = poolOrNull(pool);
-  if (!p) return 0;
+  // The refusal is checked BEFORE the pool, deliberately. It is a contract
+  // about what this function may ever write, not a property of whether a
+  // database happens to be reachable — a caller that only ever runs
+  // DB-less must still find out it is doing something forbidden.
   const forbidden = input.verdicts.filter(
     (v) => OPERATOR_DECIDED_GATES.has(v.gate) && (v.status === 'passed' || v.status === 'failed'),
   );
@@ -306,6 +308,8 @@ export async function recordGates(input: RecordGatesInput, pool?: pg.Pool | null
         `gate(s) ${[...OPERATOR_DECIDED_GATES].join(', ')} require an operator decision (decideGate with decided_by)`,
     );
   }
+  const p = poolOrNull(pool);
+  if (!p) return 0;
   let written = 0;
   for (const v of input.verdicts) {
     try {

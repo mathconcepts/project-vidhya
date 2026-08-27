@@ -56,10 +56,12 @@ import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import {
-  makeDeterministicScorer,
   describeMarking,
   type GateItem,
 } from '../scoring/deterministic-scorer';
+import { resolveAssessmentContract } from '../exams/assessment-contract-loader';
+import { snapshotForCreation, parseContractSnapshot, makeContractGrader, type ContractGrader } from '../scoring/contract-grading';
+import { recordAttemptFacts, type AttemptFact } from '../gbrain/attempt-facts';
 import { gateItemFromPayload, gateResponseFromBody } from './practice-routes';
 import type { LearningObjectCatalog } from '../scoring/learning-object-catalog';
 import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg';
@@ -106,6 +108,10 @@ export interface QuizDeps {
   claimSubmission: typeof claimSubmission;
   finalizeQuizSubmission: typeof finalizeQuizSubmission;
   revertClaim: typeof revertClaim;
+  /** Plan E7 — resolved ONCE at quiz start and pinned onto the session. Never throws (see the loader's header). */
+  resolveContract: typeof resolveAssessmentContract;
+  /** Plan E1 — fire-and-forget attempt_facts rows for SKIPPED items (non-skipped items get theirs via StudentModel.update()). */
+  recordAttemptFacts: typeof recordAttemptFacts;
   now: () => Date;
   rng: () => number;
   newQuizId: () => string;
@@ -125,6 +131,8 @@ const productionDeps: QuizDeps = {
   claimSubmission,
   finalizeQuizSubmission,
   revertClaim,
+  resolveContract: resolveAssessmentContract,
+  recordAttemptFacts,
   now: () => new Date(),
   rng: () => Math.random(),
   newQuizId: () => `quiz-${randomUUID()}`,
@@ -411,6 +419,13 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
   const deadlineAtMs = startedAtMs + usable.length * QUIZ_SECONDS_PER_ITEM * 1000;
   const quizId = deps.newQuizId();
 
+  // Plan E7 — resolve the assessment contract ONCE, here, and pin it onto
+  // the session. resolveAssessmentContract() never throws (DB-less / no
+  // row / malformed row all degrade to the compiled contract with a warn
+  // line — see the loader's header), so this never blocks a quiz start.
+  const resolvedContract = await deps.resolveContract();
+  const contractSnapshot = snapshotForCreation(resolvedContract);
+
   try {
     await deps.createQuizSession({
       id: quizId,
@@ -418,6 +433,8 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
       itemIds: usable.map((it) => it.id),
       startedAtMs,
       deadlineAtMs,
+      contractVersion: contractSnapshot.version,
+      contractParams: contractSnapshot.params,
     });
   } catch (err) {
     console.error('[quiz] session creation failed:', (err as Error).message);
@@ -451,9 +468,11 @@ async function gradeQuizItems(
   responsesByObjectId: Map<string, unknown>,
   catalog: LearningObjectCatalog,
   studentModel: StudentModel,
+  grader: ContractGrader,
+  contractVersion: string | null,
 ): Promise<{ perItem: PerItemResult[]; earned: number; max: number }> {
-  const scorer = makeDeterministicScorer();
   const perItem: PerItemResult[] = [];
+  const skippedFacts: AttemptFact[] = [];
   let earned = 0;
   let max = 0;
 
@@ -476,7 +495,7 @@ async function gradeQuizItems(
     const responseOrReason = gateResponseFromBody(itemOrReason, rawResponse);
     const response = typeof responseOrReason === 'string' ? { kind: itemOrReason.kind, skipped: true } : responseOrReason;
 
-    const grade = await scorer.grade(itemOrReason, response);
+    const grade = await grader(itemOrReason, response);
     max += grade.max;
     earned += grade.earned;
     perItem.push({ object_id: objectId, correct: grade.casFinalAnswerCorrect === true, earned: grade.earned, max: grade.max, skipped: Boolean(response.skipped) });
@@ -497,6 +516,12 @@ async function gradeQuizItems(
         partialMarks: { earned: grade.earned, max: grade.max, perCriterion: grade.perCriterion },
         latencyMs: 0,
         ts,
+        // Plan E1 — StudentModel.update()'s own transaction writes the
+        // attempt_facts row for a non-skipped item; nothing further to do
+        // here. Plan E7 — the version the row was PINNED under at start,
+        // never re-resolved here.
+        questionKind: itemOrReason.kind,
+        contractVersion: contractVersion ?? undefined,
       };
       try {
         await studentModel.update(attempt);
@@ -506,7 +531,22 @@ async function gradeQuizItems(
       } catch (err) {
         console.error(`[quiz] per-item update failed for object=${objectId} (grade still stands):`, (err as Error).message);
       }
+    } else {
+      // Plan E1 — a SKIPPED item never reaches StudentModel.update(), so it
+      // gets no attempt_facts row from that path. Collected here and
+      // written fire-and-forget after the loop (never blocks grading).
+      skippedFacts.push({
+        studentId, objectId, tsMs: ts, questionKind: itemOrReason.kind,
+        marksEarned: null, marksMax: itemOrReason.marks, skipped: true,
+        contractVersion: contractVersion ?? null, skillId,
+      });
     }
+  }
+
+  if (skippedFacts.length > 0) {
+    await deps.recordAttemptFacts(skippedFacts).catch((err) => {
+      console.error('[quiz] attempt_facts write for skipped items failed (grade still stands):', (err as Error).message);
+    });
   }
 
   return { perItem, earned, max };
@@ -546,9 +586,18 @@ async function handleQuizSubmit(req: ParsedRequest, res: ServerResponse): Promis
   const studentModel = deps.studentModel();
   const late = now.getTime() > claim.row.deadlineAtMs;
 
+  // Plan E7 — grade from the contract PINNED at start (claim.row's
+  // snapshot), never re-resolved here. A session with no snapshot (every
+  // pre-052 quiz) parses to `null` and grades exactly as before this plan.
+  const contractSnapshot = parseContractSnapshot(claim.row.contractVersion, claim.row.contractParams);
+  const grader = makeContractGrader(contractSnapshot);
+
   let grading: { perItem: PerItemResult[]; earned: number; max: number };
   try {
-    grading = await gradeQuizItems(user.userId, claim.row.itemIds, claim.row.startedAtMs, responsesByObjectId, catalog, studentModel);
+    grading = await gradeQuizItems(
+      user.userId, claim.row.itemIds, claim.row.startedAtMs, responsesByObjectId, catalog, studentModel,
+      grader, claim.row.contractVersion ?? null,
+    );
   } catch (err) {
     console.error('[quiz] grading failed:', (err as Error).message);
     // Adversarial-review fix: claimSubmission (above) already committed

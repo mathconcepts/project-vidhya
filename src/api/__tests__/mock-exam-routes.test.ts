@@ -22,6 +22,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ServerResponse } from 'http';
 import type { MockExamRow } from '../../gbrain/mock-exam-store';
+import { compiledAssessmentContract } from '../../exams/assessment-contract-loader';
+import { snapshotForCreation } from '../../scoring/contract-grading';
 
 const mockRequireRole = vi.fn();
 vi.mock('../auth-middleware', () => ({
@@ -88,6 +90,7 @@ function makeFakeStore() {
         timingMode: params.timingMode ?? 'standard',
         status: 'in_progress', late: false, score: null, maxMarks: null,
         createdAtMs: NOW.getTime(), submittedAtMs: null, gradedAtMs: null, analysis: null,
+        contractVersion: params.contractVersion ?? null, contractParams: params.contractParams ?? null,
       };
       rows.set(row.id, row);
       return { ...row };
@@ -136,6 +139,13 @@ function makeFakeStore() {
       if (row.ownerUserId === null) { row.ownerUserId = userId; return userId; }
       return row.ownerUserId;
     },
+    // Plan E7/E1(b) test-safe defaults: a pure, no-DB contract resolver
+    // (never a real pg connection, even when DATABASE_URL is a bogus
+    // 'postgres://nowhere' set by the tests below to clear the DB-less
+    // guard) and a no-op fact recorder. Individual tests override either
+    // when they specifically exercise contract pinning or fact-writing.
+    resolveContract: async () => compiledAssessmentContract(),
+    recordAttemptFacts: async () => 0,
   };
 }
 
@@ -442,6 +452,22 @@ describe('GET /api/gbrain/mock-exam/:sessionId', () => {
     expect(r.payload.timing_mode).toBe('rush');
     expect(store.rows.get('mock-1')!.timingMode).toBe('rush');
   });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E7 — contract pinned at generation
+  // ────────────────────────────────────────────────────────────────────
+  it('plan E7: resolves the contract ONCE and pins version + params onto the row', async () => {
+    const store = makeFakeStore();
+    const resolveContract = vi.fn(async () => compiledAssessmentContract());
+    setMockExamDepsForTests({ generateMockExam: examConfig(), ...store, resolveContract, now: () => NOW });
+    const r = makeRes();
+    await generateHandler(makeReq(null, { sessionId: 'anon-uuid-xyz' }), r.res);
+    expect(r.status).toBe(200);
+    expect(resolveContract).toHaveBeenCalledTimes(1);
+    const row = store.rows.get('mock-1')!;
+    expect(row.contractVersion).toBe('gate-2026+compiled');
+    expect(row.contractParams).toEqual(snapshotForCreation(compiledAssessmentContract()).params);
+  });
 });
 
 describe('POST /api/gbrain/mock-exam/:id/submit', () => {
@@ -650,6 +676,114 @@ describe('POST /api/gbrain/mock-exam/:id/submit', () => {
       await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
       expect(r.status).toBe(200);
       expect(revertClaim).not.toHaveBeenCalled();
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E7 — contract pinned at generation, read at grading
+  // ────────────────────────────────────────────────────────────────────
+  describe('assessment contract pinning (E7)', () => {
+    it('grading from the pinned contract produces the same marks as the legacy (unpinned) path', async () => {
+      // Pinned: contractVersion/contractParams set from the compiled contract.
+      const pinned = makeFakeStore();
+      const snapshot = snapshotForCreation(compiledAssessmentContract());
+      await pinned.createMockExam({
+        id: 'mock-1', sessionId: 'anon-uuid-xyz', ownerUserId: 'student-1', examKey: 'gate',
+        questions: [PYQ_Q, GEN_Q_MARKED], timeLimitMinutes: 180,
+        contractVersion: snapshot.version, contractParams: snapshot.params,
+      });
+      setMockExamDepsForTests({ ...pinned, now: () => NOW });
+      const rPinned = makeRes();
+      await submitHandler(makeReq({
+        responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+      }, { id: 'mock-1' }), rPinned.res);
+
+      // Legacy: no contract columns at all (null).
+      const legacy = makeFakeStore();
+      await legacy.createMockExam({
+        id: 'mock-2', sessionId: 'anon-uuid-xyz', ownerUserId: 'student-1', examKey: 'gate',
+        questions: [PYQ_Q, GEN_Q_MARKED], timeLimitMinutes: 180,
+      });
+      setMockExamDepsForTests({ ...legacy, now: () => NOW });
+      const rLegacy = makeRes();
+      await submitHandler(makeReq({
+        responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+      }, { id: 'mock-2' }), rLegacy.res);
+
+      expect(rPinned.status).toBe(200);
+      expect(rLegacy.status).toBe(200);
+      expect(rPinned.payload.marks).toBe(rLegacy.payload.marks);
+      expect(rPinned.payload.correct).toBe(rLegacy.payload.correct);
+      expect(rPinned.payload.wrong).toBe(rLegacy.payload.wrong);
+    });
+
+    it('an unregistered strategy in the pinned snapshot refuses the submission by name (D8) rather than grading under invented rules', async () => {
+      const store = makeFakeStore();
+      await store.createMockExam({
+        id: 'mock-1', sessionId: 'anon-uuid-xyz', ownerUserId: 'student-1', examKey: 'gate',
+        questions: [PYQ_Q], timeLimitMinutes: 180,
+        contractVersion: 'jee-adv-2027',
+        contractParams: { marking: { mcq: { strategy: 'jee_adv_2027' } } },
+      });
+      setMockExamDepsForTests({ ...store, now: () => NOW });
+      const r = makeRes();
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+      expect(r.status).toBe(500);
+      // The row is reverted to in_progress, not stuck 'submitted' — same
+      // adversarial-review discipline as every other grading throw.
+      expect(store.rows.get('mock-1')!.status).toBe('in_progress');
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E1(b) — attempt_facts written per gradable question at grade time
+  // ────────────────────────────────────────────────────────────────────
+  describe('attempt_facts write path (E1b)', () => {
+    it('writes one fact per GRADABLE question, excludes the ungraded one, and never blocks the response', async () => {
+      const store = await seededExam();
+      const recordAttemptFacts = vi.fn(async () => 0);
+      setMockExamDepsForTests({ ...store, recordAttemptFacts, now: () => NOW });
+      const r = makeRes();
+      await submitHandler(makeReq({
+        responses: [{ id: 'pyq-1', selectedIndex: 1 }, { id: 'gen-1', selectedIndex: 0 }],
+      }, { id: 'mock-1' }), r.res);
+
+      expect(r.status).toBe(200);
+      expect(recordAttemptFacts).toHaveBeenCalledTimes(1);
+      const facts = recordAttemptFacts.mock.calls[0][0] as Array<Record<string, unknown>>;
+      // pyq-1 (correct mcq) + gen-1 (wrong mcq) + gen-2 (skipped, but still
+      // GRADABLE only if it normalizes — gen-2 is the unmarked legacy row,
+      // so it is excluded: no question_kind exists for it to stamp.
+      expect(facts.map((f) => f.objectId).sort()).toEqual(['gen-1', 'pyq-1']);
+      const byId = Object.fromEntries(facts.map((f) => [f.objectId, f]));
+      expect(byId['pyq-1']).toMatchObject({ studentId: 'student-1', questionKind: 'mcq', skipped: false, marksEarned: 2, marksMax: 2 });
+      expect(byId['gen-1']).toMatchObject({ studentId: 'student-1', questionKind: 'mcq', skipped: false, marksMax: 1 });
+      expect(byId['gen-1'].marksEarned as number).toBeLessThan(0); // wrong MCQ, negative marking
+    });
+
+    it('a failed attempt_facts write is logged and does not affect the grade returned', async () => {
+      const store = await seededExam();
+      const recordAttemptFacts = vi.fn(async () => { throw new Error('attempt_facts table missing'); });
+      setMockExamDepsForTests({ ...store, recordAttemptFacts, now: () => NOW });
+      const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const r = makeRes();
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), r.res);
+      expect(r.status).toBe(200);
+      expect(r.payload.correct).toBe(1);
+      expect(consoleErr).toHaveBeenCalledWith(
+        expect.stringContaining('attempt_facts write failed'),
+        'attempt_facts table missing',
+      );
+      consoleErr.mockRestore();
+    });
+
+    it('a double-submit replay never writes attempt_facts a second time', async () => {
+      const store = await seededExam();
+      const recordAttemptFacts = vi.fn(async () => 0);
+      setMockExamDepsForTests({ ...store, recordAttemptFacts, now: () => NOW });
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 1 }] }, { id: 'mock-1' }), makeRes().res);
+      await submitHandler(makeReq({ responses: [{ id: 'pyq-1', selectedIndex: 0 }] }, { id: 'mock-1' }), makeRes().res);
+      expect(recordAttemptFacts).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -13,6 +13,22 @@ import { ServerResponse } from 'http';
 import { InMemoryCatalog } from '../../scoring/learning-object-catalog';
 import type { Attempt, LearningObject, StudentModel, MasteryState, DueReviewCandidate } from '../../core/interfaces';
 import { QUIZ_LENGTH, QUIZ_SECONDS_PER_ITEM, QUIZ_XP_THRESHOLD_MINUTES } from '../../scoring/xp';
+import { compiledAssessmentContract } from '../../exams/assessment-contract-loader';
+import { snapshotForCreation } from '../../scoring/contract-grading';
+
+/**
+ * Plan E7/E1 test-safe defaults: a pure, no-DB contract resolver (never a
+ * real pg connection, regardless of the ambient DATABASE_URL) and a no-op
+ * fact recorder. Spread into every deps object below; individual tests
+ * override either when they specifically exercise contract pinning or
+ * fact-writing.
+ */
+function safeE7Deps() {
+  return {
+    resolveContract: async () => compiledAssessmentContract(),
+    recordAttemptFacts: async () => 0,
+  };
+}
 
 const mockRequireRole = vi.fn();
 vi.mock('../auth-middleware', () => ({
@@ -59,6 +75,7 @@ function makeFakeQuizStore() {
         id: params.id, studentId: params.studentId, itemIds: params.itemIds, status: 'in_progress',
         startedAtMs: params.startedAtMs, deadlineAtMs: params.deadlineAtMs,
         submittedAtMs: null, gradedAtMs: null, late: false, score: null, maxMarks: null, result: null,
+        contractVersion: params.contractVersion ?? null, contractParams: params.contractParams ?? null,
       };
       sessions.set(params.id, row);
       return { ...row };
@@ -256,6 +273,7 @@ describe('POST /api/practice/quiz/start', () => {
       getQuizSession: store.getQuizSession,
       claimSubmission: store.claimSubmission,
       finalizeQuizSubmission: store.finalizeQuizSubmission,
+      ...safeE7Deps(),
       store,
     };
   }
@@ -341,6 +359,18 @@ describe('POST /api/practice/quiz/start', () => {
     expect(raw).not.toContain('answerRange');
   });
 
+  it('plan E7: resolves the contract ONCE and pins version + params onto the session', async () => {
+    const deps = bigPoolDeps();
+    const resolveContract = vi.fn(async () => compiledAssessmentContract());
+    setQuizDepsForTests({ ...deps, resolveContract });
+    const r = makeRes();
+    await startHandler(makeReq({}), r.res);
+    expect(r.status).toBe(200);
+    expect(resolveContract).toHaveBeenCalledTimes(1);
+    const row = deps.store.sessions.get('quiz-1')!;
+    expect(row.contractVersion).toBe('gate-2026+compiled');
+  });
+
   it('excludes items reviewed within the 14-day no-repeat window (pool shrinks below gate → 422)', async () => {
     const items = POOL_CONCEPTS.flatMap((c, ci) => [0, 1, 2].map((j) => mcqItem(`r${ci}-${j}`, c)));
     const catalog = new InMemoryCatalog(items);
@@ -392,6 +422,7 @@ describe('POST /api/practice/quiz/start', () => {
         getQuizSession: store.getQuizSession,
         claimSubmission: store.claimSubmission,
         finalizeQuizSubmission: store.finalizeQuizSubmission,
+        ...safeE7Deps(),
       });
       const r = makeRes();
       await startHandler(makeReq({ concept_id: 'trace' }), r.res);
@@ -480,6 +511,7 @@ describe('POST /api/practice/quiz/:id/submit', () => {
       claimSubmission: store.claimSubmission,
       finalizeQuizSubmission: store.finalizeQuizSubmission,
       revertClaim: store.revertClaim,
+      ...safeE7Deps(),
     };
     return { items, updates, xpAwards, deps, startedAtMs, store };
   }
@@ -652,6 +684,85 @@ describe('POST /api/practice/quiz/:id/submit', () => {
     await submitHandler(makeReq({ responses: [] }, { id: 'quiz-x' }), r.res);
     expect(r.status).toBe(404);
   });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E7 — contract pinned at start, read at grading
+  // ────────────────────────────────────────────────────────────────────
+  describe('assessment contract pinning (E7)', () => {
+    it('grading from the pinned contract produces the same marks as the legacy (unpinned) session', async () => {
+      const pinned = await startedQuiz();
+      // Overwrite the freshly-created session with a pinned snapshot, as if
+      // it had been created through handleQuizStart's E7 wiring.
+      const snapshot = snapshotForCreation(compiledAssessmentContract());
+      const pinnedRow = pinned.store.sessions.get('quiz-x')!;
+      pinnedRow.contractVersion = snapshot.version;
+      pinnedRow.contractParams = snapshot.params;
+      setQuizDepsForTests({ ...pinned.deps, now: () => NOW });
+      const responses = pinned.items.map((it, i) => ({ object_id: it.id, selectedIndex: i === 0 ? 1 : 0 }));
+      const rPinned = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), rPinned.res);
+
+      const legacy = await startedQuiz();
+      setQuizDepsForTests({ ...legacy.deps, now: () => NOW });
+      const legacyResponses = legacy.items.map((it, i) => ({ object_id: it.id, selectedIndex: i === 0 ? 1 : 0 }));
+      const rLegacy = makeRes();
+      await submitHandler(makeReq({ responses: legacyResponses }, { id: 'quiz-x' }), rLegacy.res);
+
+      expect(rPinned.status).toBe(200);
+      expect(rLegacy.status).toBe(200);
+      expect(rPinned.payload.earned).toBe(rLegacy.payload.earned);
+      expect(rPinned.payload.correct).toBe(rLegacy.payload.correct);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // Plan E1 — attempt_facts for SKIPPED items (non-skipped ones go through
+  // StudentModel.update()'s own transaction — covered by student-model-pg's
+  // own tests, not duplicated here).
+  // ────────────────────────────────────────────────────────────────────
+  describe('attempt_facts for skipped items (E1)', () => {
+    it('writes a fact for every skipped item and never for an answered one', async () => {
+      const { items, deps } = await startedQuiz();
+      const recordAttemptFacts = vi.fn(async () => 0);
+      setQuizDepsForTests({ ...deps, recordAttemptFacts, now: () => NOW });
+      const responses = [{ object_id: items[0].id, selectedIndex: 1 }]; // only the first answered
+      const r = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), r.res);
+      expect(r.status).toBe(200);
+      expect(recordAttemptFacts).toHaveBeenCalledTimes(1);
+      const facts = recordAttemptFacts.mock.calls[0][0] as Array<Record<string, unknown>>;
+      expect(facts).toHaveLength(items.length - 1);
+      expect(facts.every((f) => f.skipped === true)).toBe(true);
+      expect(facts.map((f) => f.objectId).sort()).toEqual(items.slice(1).map((it) => it.id).sort());
+    });
+
+    it('a fully-answered quiz never calls recordAttemptFacts (nothing skipped)', async () => {
+      const { items, deps } = await startedQuiz();
+      const recordAttemptFacts = vi.fn(async () => 0);
+      setQuizDepsForTests({ ...deps, recordAttemptFacts, now: () => NOW });
+      const responses = items.map((it) => ({ object_id: it.id, selectedIndex: 1 }));
+      const r = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), r.res);
+      expect(r.status).toBe(200);
+      expect(recordAttemptFacts).not.toHaveBeenCalled();
+    });
+
+    it('a failed attempt_facts write is logged and does not affect the grade returned', async () => {
+      const { items, deps } = await startedQuiz();
+      const recordAttemptFacts = vi.fn(async () => { throw new Error('attempt_facts table missing'); });
+      setQuizDepsForTests({ ...deps, recordAttemptFacts, now: () => NOW });
+      const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const responses = [{ object_id: items[0].id, selectedIndex: 1 }];
+      const r = makeRes();
+      await submitHandler(makeReq({ responses }, { id: 'quiz-x' }), r.res);
+      expect(r.status).toBe(200);
+      expect(consoleErr).toHaveBeenCalledWith(
+        expect.stringContaining('attempt_facts write for skipped items failed'),
+        'attempt_facts table missing',
+      );
+      consoleErr.mockRestore();
+    });
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -688,6 +799,7 @@ describe('XP cycle re-arms after a submitted quiz', () => {
       finalizeQuizSubmission: store.finalizeQuizSubmission,
       rng: () => 0.42,
       newQuizId: () => 'quiz-cycle-1',
+      ...safeE7Deps(),
     };
   }
 

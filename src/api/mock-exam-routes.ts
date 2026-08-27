@@ -42,6 +42,9 @@ import {
 import {
   normalizeMockExamRow, gradeMockExam, type MockExamQuestionRow, type NormalizedMockQuestion, type MockExamResponse,
 } from '../gbrain/mock-exam-grading';
+import { resolveAssessmentContract } from '../exams/assessment-contract-loader';
+import { snapshotForCreation, parseContractSnapshot, makeContractGrader } from '../scoring/contract-grading';
+import { recordAttemptFacts, type AttemptFact } from '../gbrain/attempt-facts';
 
 interface RouteDefinition { method: string; path: string; handler: RouteHandler }
 
@@ -96,6 +99,10 @@ export interface MockExamDeps {
   sessionOwner: typeof sessionOwner;
   claimUnclaimedSessionRows: typeof claimUnclaimedSessionRows;
   claimMockExamOwner: typeof claimMockExamOwner;
+  /** Plan E7 — resolved ONCE at generation and pinned onto the row. Never throws (see the loader's header). */
+  resolveContract: typeof resolveAssessmentContract;
+  /** Plan E1(b) — fire-and-forget per-question ledger rows at grade time. */
+  recordAttemptFacts: typeof recordAttemptFacts;
   now: () => Date;
 }
 
@@ -109,6 +116,8 @@ const productionDeps: MockExamDeps = {
   sessionOwner,
   claimUnclaimedSessionRows,
   claimMockExamOwner,
+  resolveContract: resolveAssessmentContract,
+  recordAttemptFacts,
   now: () => new Date(),
 };
 
@@ -209,6 +218,13 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
     return sendError(res, 500, (err as Error).message);
   }
 
+  // Plan E7 — resolve the assessment contract ONCE, here, and pin it onto
+  // the row. resolveAssessmentContract() never throws (DB-less / no row /
+  // malformed row all degrade to the compiled contract with a warn line —
+  // see the loader's header), so this never blocks generation.
+  const resolvedContract = await deps.resolveContract();
+  const contractSnapshot = snapshotForCreation(resolvedContract);
+
   let saved: MockExamRow;
   try {
     saved = await deps.createMockExam({
@@ -219,6 +235,8 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
       questions: assembled.questions,
       timeLimitMinutes: assembled.time_limit_minutes,
       timingMode: modeResult.mode,
+      contractVersion: contractSnapshot.version,
+      contractParams: contractSnapshot.params,
     });
   } catch (err) {
     console.error('[mock-exam] persistence failed:', (err as Error).message);
@@ -298,9 +316,15 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
   const responsesByObj: Record<string, MockExamResponse> = {};
   for (const q of normalized) responsesByObj[q.id] = responsesById.get(q.id);
 
+  // Plan E7 — grade from the contract PINNED at generation (claim.row's
+  // snapshot), never re-resolved here. A row with no snapshot (every
+  // pre-052 exam) parses to `null` and grades exactly as before this plan.
+  const contractSnapshot = parseContractSnapshot(claim.row.contractVersion, claim.row.contractParams);
+  const grader = makeContractGrader(contractSnapshot);
+
   let grading: Awaited<ReturnType<typeof gradeMockExam>>;
   try {
-    grading = await gradeMockExam(normalized, responsesByObj);
+    grading = await gradeMockExam(normalized, responsesByObj, grader);
   } catch (err) {
     console.error('[mock-exam] grading failed:', (err as Error).message);
     // Adversarial-review fix (same shape as quiz-routes.ts): the claim
@@ -320,6 +344,29 @@ async function handleSubmit(req: ParsedRequest, res: ServerResponse): Promise<vo
   }
   const deadlineMs = claim.row.createdAtMs + claim.row.timeLimitMinutes * 60 * 1000;
   const late = now.getTime() > deadlineMs;
+
+  // Plan E1(b) — one attempt_facts row per GRADABLE question (mirrors the
+  // fsrs-shadow posture: fire-and-forget, failures log, never affect the
+  // grade already computed above). Same idempotency key shape as
+  // attempt_dedup: (student, object, ts) — every question in THIS exam
+  // shares the submission instant as its ts, so a retried submit (which
+  // never re-reaches this branch — see the `!claim.fresh` replay above)
+  // could never double-write even if it did.
+  const factTsMs = now.getTime();
+  const facts: AttemptFact[] = grading.per_question.map((q) => ({
+    studentId: user.userId,
+    objectId: q.id,
+    tsMs: factTsMs,
+    questionKind: q.kind,
+    marksEarned: q.skipped ? null : q.earned,
+    marksMax: q.max,
+    skipped: q.skipped,
+    contractVersion: claim.row.contractVersion ?? null,
+    skillId: null, // mock questions carry a coarser `topic`, not a concept id — see migration 051.
+  }));
+  await deps.recordAttemptFacts(facts).catch((err) => {
+    console.error('[mock-exam] attempt_facts write failed (grade still stands):', (err as Error).message);
+  });
 
   const analysis = {
     total: normalized.length,

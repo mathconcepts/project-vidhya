@@ -41,7 +41,7 @@ measures verification throughput, never key-provisioning delay.
 
 | Need | Env var | Refused without it |
 |---|---|---|
-| Primary generation | any one of `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` | the run cannot generate at all |
+| Primary generation (batch submission) | `GEMINI_API_KEY` — the practice-item batch pipeline submits ONLY through Gemini's Batch API (`gemini-adapter.ts`'s `DEFAULT_MODEL`); the other three keys in `config/providers.yaml` matter for other generation lanes (atom mode, the flywheel), not this one | `dispatchRun` refuses at launch, naming `GEMINI_API_KEY` |
 | mcq / msq verification (dual-model consensus) | a **second** key on a **different** provider | `PracticeItemLaunchGuardError` at launch, naming the primary model |
 | nat verification (Wolfram) | `WOLFRAM_APP_ID` | `PracticeItemLaunchGuardError` at launch |
 | Persistence + the gate ledger | `DATABASE_URL` | review queue returns 503; no ledger, no promotion |
@@ -144,36 +144,76 @@ Config shape (`POST /api/admin/runs`, or the RunLauncher form):
 }
 ```
 
-### 3.2 Honest gap in the launch path
+### 3.2 The launch path
 
-**Read this before planning the pilot's first hour.** The repo wires
-generation→verification→bank-write end to end *from the poll step onward*:
-`handleJobProcessed` routes a practice-item job through parse → assemble →
-verify → gate-ledger write → bank write, and every step of that is tested.
-What is **not** in the repo is the step that turns
-`config.target.practice_item_specs[]` into the `AtomSpec[]` handed to the
-batch orchestrator's `prepare()`. Nothing calls `prepare()` with
-`atom_specs` today.
+`POST /api/admin/runs` (curl, Postman, or RunLauncher's raw-config path — no
+form addition was needed; the JSON shape below is the whole interface) is
+now the real launch path end to end, not an operator script:
 
-So the pilot's launch is presently an **operator step**: build the
-`AtomSpec[]` (one per spec, `prompt_vars` carrying `format`, `topic`,
-`difficulty_frac`, and `require_failure_tags`) and drive
-`createBatchOrchestrator(...).step()` from a script. Everything after
-submission — polling, resume, ingestion, gating — is the shipped path.
+1. **`admin-runs-routes.ts`'s `parseRunConfig`** validates every entry of
+   `target.practice_item_specs[]` strictly — a malformed spec 400s
+   immediately, naming the exact index and field (`practice_item_specs[3]
+   .format: must be one of mcq, msq, nat — got undefined`), both here and
+   again at `POST /api/admin/runs/dry-run`.
+2. **`createRun()`** inserts the `generation_runs` row (`status='queued'`)
+   and `POST /api/admin/runs` fires `dispatchRun(run.id)` fire-and-forget,
+   same as every other run.
+3. **`run-dispatcher.ts`'s practice-item mode** (`dispatchPracticeItemMode`,
+   selected when `target.practice_item_specs[]` is present) is the piece
+   that used to be missing: `spec-to-atom.ts`'s `practiceItemSpecsToAtomSpecs`
+   turns each spec into the `AtomSpec` the batch orchestrator needs
+   (`prompt_vars` carries `format`, `topic`, `difficulty_frac`, and
+   `require_failure_tags` — the exact shape `batch-dispatch.ts`'s
+   `practiceItemSpecFromAtomSpec` already reconstructed on the poll side),
+   then calls `src/generation/batch/poller.ts`'s `prepareBatchRun(run.id,
+   atomSpecs)` — the SAME shared orchestrator instance the poller already
+   uses, so the T4a launch guard and the per-format cost estimator apply
+   here too. This drives exactly one transition: `queued → prepared`
+   (`batch_jobs` rows persisted, JSONL written to disk, the run's
+   `quota.max_cost_usd` checked as the batch's budget).
+4. **Everything after `prepared`** — submit → poll → download → process →
+   gate-ledger write → bank write — is the SAME async batch-poller lane
+   this file already described: boot resume plus the 5-minute cron tick
+   (`jobs/scheduler.ts`). `dispatchRun` does not wait for it; a batch can
+   take up to the provider's 24h SLA, and the run's `status` column stays
+   `'running'` until the poller's own status-reconciliation
+   (`markRunStatus`) flips it to `'complete'`/`'failed'` once `batch_state`
+   reaches a terminal state.
 
-This is written down rather than glossed because a docblock in
-`curriculum-unit-orchestrator.ts` once claimed a wiring that did not exist,
-and the repo lost a release to it.
+Refusals are precise and happen before any spend: no `GEMINI_API_KEY` (the
+batch pipeline's fixed primary — see §1.2) names that variable; a malformed
+spec names its index and field, at both the API layer and again at dispatch
+(defense in depth for callers other than this route); the T4a launch guard's
+own refusals (missing second-provider key for mcq/msq, missing
+`WOLFRAM_APP_ID` for nat) and the budget check both land as `status='failed'`
+with the orchestrator's own message, verbatim, in the run's `error` column —
+visible at `GET /api/admin/runs/:id` and in `/admin/content-rd`'s Active
+runs panel.
 
 ### 3.3 Launch
 
 ```bash
-# Confirm the guard passes BEFORE spending anything.
-# A refusal here names the missing provider or key.
+# Optional pre-flight: the SAME guard prepare() runs at launch, so a
+# refusal here (missing second-provider key, missing WOLFRAM_APP_ID) is a
+# preview of what dispatch would say, not a separate check to keep in sync.
 npx tsx -e "import('./src/generation/practice-item-factory/launch-guard').then(m => m.assertPracticeItemLaunchReady(specs, { primaryModelId: 'gemini-2.5-flash' }))"
 
-# Then launch, and watch:
-#   /admin/content-rd   → Active runs (status, cost, artifacts)
+# Cost estimate first, no DB write, no spend:
+curl -s localhost:8080/api/admin/runs/dry-run -H "Authorization: Bearer $JWT" \
+  -H 'Content-Type: application/json' \
+  -d '{"config": <the config object from §3.1, minus "target" being wrapped — send it whole>}' | jq
+
+# Launch:
+curl -s localhost:8080/api/admin/runs -H "Authorization: Bearer $JWT" \
+  -H 'Content-Type: application/json' \
+  -d @pilot-50-config.json | jq
+# -> { "run": { "id": "run_...", "status": "queued", ... } }
+
+# Then watch:
+#   /admin/content-rd   → Active runs (status stays 'running' once the
+#                          batch is prepared/submitted — this is expected;
+#                          it flips to 'complete' once the batch's async
+#                          lifecycle finishes, not on this curl returning)
 #   /admin/review-queue → items arriving as their gates are written
 ```
 
@@ -344,9 +384,16 @@ meaningless.
 | Serving enforcement | `src/scoring/learning-object-catalog-pg.ts` (`filterByGateLedger`) |
 | Promotion enforcement | `src/storage/repositories/learnings-ledger-repo.ts` (`applyPromotion`) |
 | Item factory | `src/generation/practice-item-factory/` |
+| Spec → AtomSpec (the launch-path wiring) | `src/generation/practice-item-factory/spec-to-atom.ts` |
+| Practice-item cost estimator (dry-run + prepare's budget check, one source) | `src/generation/practice-item-factory/cost.ts` |
 | Launch guard | `src/generation/practice-item-factory/launch-guard.ts` |
 | Writer overwrite guard (D5) | `src/generation/practice-item-factory/writer.ts` |
+| Practice-item dispatch mode (config → seeded batch) | `src/generation/run-dispatcher.ts` (`dispatchPracticeItemMode`) |
+| Batch prepare entry point + status reconciliation | `src/generation/batch/poller.ts` (`prepareBatchRun`, `reconcileRunStatuses`) |
 
 ---
 
-*Runbook version 1.0 — 2026-08-27 — Project Vidhya. §6 unfilled by design.*
+*Runbook version 1.1 — 2026-08-27 — Project Vidhya. §3.2's launch-path gap
+closed (POST /api/admin/runs now dispatches practice-item runs for real —
+see `src/generation/run-dispatcher.ts`'s `dispatchPracticeItemMode`). §6
+unfilled by design.*

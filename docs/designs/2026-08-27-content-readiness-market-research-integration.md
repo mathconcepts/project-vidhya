@@ -319,6 +319,94 @@ reason — tokens only, no card, no count-shaming. Re-entry opens on
 competence framing (`knewIt`-style recap), never on decay framing, and never
 renders the absence gap as a number.
 
+### W-ENG. Engineering amendments (eng-review fold — binding on implementation)
+
+**E1 — The attempt-facts surface (fixes "nothing to stamp").** The repo has
+no durable attempts table (attempt_dedup is prunable; xp_events skips
+skipped attempts and stores no correctness/kind; mock analysis is
+aggregate). W1.1 + W1.6 + W3.2 all need one. Decision: a new
+`attempt_facts` table (student, object, ts, question_kind, marks
+earned/max, skipped, contract_version, latency bucket) written from the
+existing `StudentModel.update()` path + mock grading; every column gets a
+reviewed `schema-column-baseline.json` entry in the same PR; guards
+aggregate at cohort/experiment scope only.
+**E2 — Failure tags are server-only pre-answer**, exactly like
+`answer_index`; both existing leak tests (practice-item serialization, mock
+render-safe) extended to assert no `failure_*`/`trap`/`misconception` field
+escapes; tags recorded against canonical POST-shuffle indices with a
+shuffle-integrity test.
+**E3 — Per-question mock decomposition.** `mock_exams.analysis` gains a
+per-question `{id, kind, marks, earned, skipped}` decomposition at grade
+time; the counterfactual computes from it + contract break-even p via a NEW
+pure function (not `summarizeMock`); legacy persisted rows without the
+decomposition render the headline-only degradation (tested).
+**E4 — ErrorTag lockstep set (complete enumeration):** `interfaces.ts:45`
+union; migration 031 CHECK swap via guarded DROP/re-ADD (the v4.36
+CREATE-POLICY idiom — unguarded failure = boot-loop); `ERROR_TAGS` mirror in
+`check-intent-catalogue.ts:86` + its literal-match tripwire test (same
+commit, by design); `intent-profiles.yml` `error_tags.proposed` →
+`existing`; explicit `KNEW_IT_TAGS` membership decision for all 7 new tags
+(time_pressure/mode_nat_entry/risk_decision = knew-it;
+method_selection/prerequisite/representation = didn't) + a
+union-completeness test so an unclassified tag can never silently change
+`leftOnTable` semantics.
+**E5 — decision_tree is self-check-only.** Specs are client-visible fenced
+blocks, so leaf-grading in the browser would reintroduce the
+client-trusted-grading hole the mock T22 fix closed. The widget carries the
+SmartPracticePage honesty label ("self-check — no marks recorded") and
+feeds NOTHING into StudentModel (tested). W3.3's VC-11 pilot therefore
+requires server-graded method-selection *items* (an mcq whose options are
+methods) — the widget teaches, the item measures. Lockstep additions:
+`INTERACTIVE_KINDS` in the unit orchestrator + `ci:interactive-specs` lint.
+**E6 — One marking truth.** A single compiled constants module is the
+source; the contract seed row is generated from it (byte-equality test);
+the `MarkingScheme` override param is deprecated onto the contract;
+`describeMarking` and mock `marks_scheme` derive from it. DB-less deploys
+grade from the compiled constant and stamp `gate-2026+compiled` — a
+distinguishable, honest version.
+**E7 — Contract pinned at creation.** `mock_exams`/`quiz_sessions` persist
+`contract_version` AND a params snapshot at creation; grading (including
+idempotent retries and replays) reads the snapshot, never resolve-at-submit.
+Loader lives beside `exam-loader.ts` (60s-TTL pattern); `grade()` stays pure.
+**E8 — Gate ledger scope.** W1.3 applies to items carrying
+`generation_run_id` provenance, enforced at promotion + CI over batch
+outputs — never on the file-catalog read path. The 505 committed items are
+covered by existing floor gates + the hand-verification protocol; the
+DB-less demo stays lit. (§7 metric 2 reads accordingly.)
+**E9 — Media QA at the right seam.** gifenc cannot decode; QA hooks
+pre-encoding RGBA frames inside `renderScene` + draw-time bounding-box
+overlap checks (deterministic), plus cheap raster heuristics. The 70
+committed scenes are re-rendered from their gif-scene JSON for the sweep;
+first run report-only; integrates with `check-gif-scenes` +
+`gif-scene-baseline.json`, not a parallel checker.
+**E10 — Evidence labels as structured claims.** An exam-relevance claim is
+a field REQUIRING `evidence_level`; the phrase grep ("high-yield",
+"frequently asked") is best-effort defense over committed content; the same
+check runs generation-time in the W1.3 gate path for runtime copy CI never
+sees. §7 metric 2 does not overclaim grep coverage.
+**E11 — One merged sequence codegen.** Extend `generate-intent-tables.ts`
+to emit a single merged table with explicit precedence (family sequence
+overrides intent default where both exist); family validation joins
+`check-intent-catalogue.ts` (B2/B3-style), no new checker.
+**E12 — Deterministic anchors.** Anchor id =
+`hash(concept_id, stage_id, ordinal, template_version)` (the `customIdFor`
+precedent) on the translation output — optional-additive to
+`CurriculumUnitSpec`; the locked `BlueprintDecisionsV1` is untouched.
+**E13 — Confidence reuse decision.** Migration 011 already carries
+`confidence_before`/`confidence_calibration` (grandfathered). When W3.7's
+gate opens, the design must reuse-or-supersede those columns explicitly —
+never a fourth confidence truth.
+**E14 — Migration numbering.** This plan's migrations reserve 050+ (two
+`035_*` files already collide); all idempotent; CHECK swaps guarded per E4.
+**E15 — P0 flag mechanics.** `VIDHYA_INTENT_LANES=on` lands in committed
+`render.yaml` (auditable, survives service recreation); rollback stays one
+env-var change. The flag is served DB-less-safe via `/api/auth/config`.
+**E16 — P3 clock honesty.** Live generation has never run in this repo's
+environments (no provider keys). The 50-item pilot and the 6-week kill
+clock start when a working provider key exists in the operator's launch
+environment — the criterion measures verification throughput, never
+key-provisioning delay.
+
 ### Sequencing — core plan + gated expansions
 
 **Core plan (finishes; one operator; no external dependency):**
@@ -393,8 +481,10 @@ operator must consciously time — surfaced at the final gate.
 **Core plan (measurable without a cohort):**
 1. P0: demo concept pages open with the problem-statement block (flag on,
    QA'd).
-2. P1: every attempt row stamps assessment-contract version; zero generated
-   items served without a passing gate row (CI).
+2. P1: graded sessions pin + stamp assessment-contract version (E1/E7);
+   generated items (those with `generation_run_id` provenance) cannot be
+   PROMOTED without a passing gate row (E8); structured exam-relevance
+   claims require evidence labels (E10).
 3. P3: wave-1 verified-item count meets the target set by the anatomy
    pilot's measured throughput (honest counter in the floor gate table);
    kill criterion enforced.
@@ -525,6 +615,38 @@ solid" means here: nothing scheduled that the platform's one real constraint
 | 25 | Design | Student register mandate: marks not EV, sentences not formulas, signs explained | Mechanical | P5 | Operator register leaking to students; INTENT_STUDENT_LABEL precedent | "+2 EV" copy |
 | 26 | Design | W3.8 UI stubs written now (deferral row spec, competence-framed re-entry) | Mechanical | P1 | Gated features get built after context evaporates | one-line specs |
 | 27 | Design | 17px floor on counterfactual rows and reason codes (no 13px tables) | Mechanical | design system | Students read these; floor applies | dense data table |
+
+## ENG DUAL VOICES — CONSENSUS TABLE
+
+```
+═══════════════════════════════════════════════════════════════
+  Dimension                            Claude  Subagent  Consensus
+  ───────────────────────────────────  ──────  ────────  ─────────
+  1. Architecture sound?               YES*    PARTIAL   DISAGREE→folded (E1 attempt-facts, E6 one truth, E7 pinning)
+  2. Test coverage sufficient?         PLAN    EXTENDED  CONFIRMED fix (test plan artifact updated w/ E-cases)
+  3. Performance risks addressed?      YES     YES       CONFIRMED (build-time data, TTL loaders, no hot-path joins)
+  4. Security threats covered?         PARTIAL NO(2 new) CONFIRMED fix (E2 tag-leak oracle, E5 client-grading hole)
+  5. Error paths handled?              YES     PARTIAL   CONFIRMED fix (E3 legacy rows, E8 DB-less serving, E9 seam)
+  6. Deployment risk manageable?       YES     YES*      CONFIRMED (E14 numbering, E15 flag in render.yaml, E16 clock)
+═══════════════════════════════════════════════════════════════
+[subagent-only] — codex CLI absent. 17 findings; 17 folded as E1–E16
+(findings 1+8 merged into E1). None rejected.
+```
+
+| 28 | Eng | attempt_facts table as the durable stamped surface (merges eng findings 1+8) | Mechanical | P1 | No attempt row exists to stamp; W1.6 guards need kind/correctness/latency; baseline entries same-PR | stamping prunable attempt_dedup |
+| 29 | Eng | Failure tags server-only + post-shuffle index integrity + extended leak tests | Mechanical | P1 | Tags client-visible = answer-key oracle; shuffle happens once at creation | render-safe tags |
+| 30 | Eng | Per-question mock decomposition + new pure counterfactual fn + legacy-row degradation | Mechanical | P1 | leftOnTable is structurally 0 on real mocks (no error-tag producer); flagship screen needs per-question facts | shipping the degenerate state |
+| 31 | Eng | ErrorTag lockstep set enumerated (5 sites) + KNEW_IT_TAGS completeness test | Mechanical | P1/P4 | Unclassified tags silently change leftOnTable semantics; unguarded CHECK swap = boot loop | partial lockstep |
+| 32 | Eng | decision_tree self-check-only; server-graded method-selection ITEMS carry measurement | Mechanical | P1/security | Client-visible specs cannot grade; T22 precedent | leaf-graded widget feeding StudentModel |
+| 33 | Eng | One compiled marking truth; seed generated from it; MarkingScheme deprecated; gate-2026+compiled stamp | Mechanical | P4 | Four parallel marking truths otherwise — the repo's named bug class | contract row as 4th truth |
+| 34 | Eng | Contract + params snapshot pinned at session creation | Mechanical | P1 | Idempotent retries must grade under the original contract | resolve-at-submit |
+| 35 | Eng | Gate ledger scoped to generation_run_id provenance; promotion+CI enforcement | Mechanical | P3/P6 | Naive serve-gate blacks out DB-less demo + 505 committed items | serve-path check |
+| 36 | Eng | Media QA at pre-encoding frames + draw-time bounding boxes; report-only first sweep | Mechanical | P3/P5 | gifenc cannot decode; rasterizer owns label geometry | GIF-decode dependency |
+| 37 | Eng | Evidence labels as required structured fields; grep best-effort; generation-time check | Mechanical | P1 | Phrase denylists are synonym-evadable; runtime copy invisible to CI | grep-only enforcement |
+| 38 | Eng | One merged sequence codegen with explicit precedence | Mechanical | P4 | Two generated truths about stage sequences = drift class | second codegen |
+| 39 | Eng | Deterministic anchor ids (customIdFor precedent) | Mechanical | P5 | Random anchors defeat delta reattachment | mint-on-translate |
+| 40 | Eng | Confidence columns reuse-or-supersede migration 011 decision when gated | Mechanical | P4 | 011 already carries confidence fields; no fourth truth | new parallel column |
+| 41 | Eng | Migrations reserve 050+; flag lands in render.yaml; P3 clock starts at provider-key readiness | Mechanical | P5/P6 | 035 collision precedent; auditability; honest kill-clock | dashboard-only flag |
 
 ## CEO DUAL VOICES — CONSENSUS TABLE
 

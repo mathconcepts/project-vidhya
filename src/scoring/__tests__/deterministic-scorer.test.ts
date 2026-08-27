@@ -17,6 +17,8 @@ import {
   type GateItem,
   type GateResponse,
 } from '../deterministic-scorer';
+import { resolveMarkingStrategy } from '../marking-strategy';
+import { COMPILED_ASSESSMENT_CONTRACT } from '../../exams/marking-constants';
 import type { MarkingScheme } from '../../exams/types';
 
 const scorer = new GateDeterministicScorer();
@@ -251,5 +253,130 @@ describe('describeMarking', () => {
   it('describes MSQ/NAT marking as never-negative', () => {
     expect(describeMarking({ kind: 'msq', marks: 2 })).toEqual({ marks_correct: 2, marks_wrong: 0 });
     expect(describeMarking({ kind: 'nat', marks: 1 })).toEqual({ marks_correct: 1, marks_wrong: 0 });
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// Golden parity: strategy + contract params ≡ direct scorer (plan D11)
+//
+// The marking matrix above is the golden set. Every case in it is replayed
+// here through the SECOND path — `resolveMarkingStrategy('gate_2026')`
+// grading under params read from the compiled contract — and asserted
+// byte-identical (`toEqual` on the whole GradeResult, not just `earned`).
+//
+// This is what makes "the scorer becomes the registered gate_2026 strategy"
+// a checkable statement rather than a claim in a doc: if the strategy layer
+// ever starts doing its own arithmetic, or if the contract params drift
+// from the compiled defaults the direct path uses, this block fails.
+//
+// The existing tests above are untouched and still assert the direct path
+// on its own. This is additive.
+// ────────────────────────────────────────────────────────────────────
+
+const strategy = resolveMarkingStrategy('gate_2026');
+const CONTRACT_MARKING = COMPILED_ASSESSMENT_CONTRACT.marking;
+
+/** Contract params for a kind, exactly as the seed row carries them. */
+function paramsFor(kind: 'mcq' | 'msq' | 'nat'): Record<string, unknown> {
+  return CONTRACT_MARKING[kind].params as unknown as Record<string, unknown>;
+}
+
+/** Grade one case both ways and assert the results are indistinguishable. */
+async function assertParity(
+  item: GateItem,
+  response: GateResponse,
+  scheme?: MarkingScheme,
+  params?: Record<string, unknown>,
+) {
+  const direct = await scorer.grade(item, response, scheme);
+  const viaStrategy = await strategy!.grade(item, response, params ?? paramsFor(item.kind));
+  expect(viaStrategy).toEqual(direct);
+  return direct;
+}
+
+describe('marking-strategy parity — the golden matrix, graded both ways', () => {
+  it('the gate_2026 strategy is registered', () => {
+    expect(strategy).toBeDefined();
+  });
+
+  it('MCQ: 1-mark correct / wrong / skipped', async () => {
+    expect((await assertParity(mcqItem(1), { kind: 'mcq', selectedIndex: 1 })).earned).toBe(1);
+    expect((await assertParity(mcqItem(1), { kind: 'mcq', selectedIndex: 0 })).earned).toBeCloseTo(-1 / 3, 9);
+    expect((await assertParity(mcqItem(1), { kind: 'mcq', skipped: true })).earned).toBe(0);
+  });
+
+  it('MCQ: 2-mark correct / wrong / skipped', async () => {
+    expect((await assertParity(mcqItem(2), { kind: 'mcq', selectedIndex: 1 })).earned).toBe(2);
+    expect((await assertParity(mcqItem(2), { kind: 'mcq', selectedIndex: 3 })).earned).toBeCloseTo(-2 / 3, 9);
+    expect((await assertParity(mcqItem(2), { kind: 'mcq', skipped: true })).earned).toBe(0);
+  });
+
+  it('MCQ: an explicit scheme override and its params equivalent agree', async () => {
+    // The direct path expresses "half a mark off" as a MarkingScheme; the
+    // strategy path expresses the same rule as contract params. Both must
+    // land on the same number.
+    const r = await assertParity(
+      mcqItem(1),
+      { kind: 'mcq', selectedIndex: 0 },
+      { negative_marks_per_wrong: 0.5 },
+      { marks_wrong_by_marks: { '1': -0.5 }, marks_wrong_fallback_divisor: 3 },
+    );
+    expect(r.earned).toBeCloseTo(-0.5, 9);
+  });
+
+  it('MCQ: the defensive fallback for an unusual mark value', async () => {
+    expect((await assertParity(mcqItem(3), { kind: 'mcq', selectedIndex: 0 })).earned).toBeCloseTo(-1, 9);
+  });
+
+  it('MSQ: exact / order-independent / subset / superset / wrong / skipped', async () => {
+    expect((await assertParity(msqItem(), { kind: 'msq', selectedIndices: [0, 2] })).earned).toBe(2);
+    expect((await assertParity(msqItem(), { kind: 'msq', selectedIndices: [2, 0] })).earned).toBe(2);
+    expect((await assertParity(msqItem(), { kind: 'msq', selectedIndices: [0] })).earned).toBe(0);
+    expect((await assertParity(msqItem(), { kind: 'msq', selectedIndices: [0, 1, 2] })).earned).toBe(0);
+    expect((await assertParity(msqItem(), { kind: 'msq', selectedIndices: [1, 3] })).earned).toBe(0);
+    expect((await assertParity(msqItem(), { kind: 'msq', skipped: true })).earned).toBe(0);
+  });
+
+  it('NAT: inside / both boundaries / both epsilon edges / outside / skipped', async () => {
+    expect((await assertParity(natItem(), { kind: 'nat', value: 2.0 })).earned).toBe(1);
+    expect((await assertParity(natItem(), { kind: 'nat', value: 1.995 })).earned).toBe(1);
+    expect((await assertParity(natItem(), { kind: 'nat', value: 2.005 })).earned).toBe(1);
+    expect((await assertParity(natItem(), { kind: 'nat', value: 1.995 - NAT_EPSILON / 2 })).earned).toBe(1);
+    expect((await assertParity(natItem(), { kind: 'nat', value: 2.005 + NAT_EPSILON / 2 })).earned).toBe(1);
+    expect((await assertParity(natItem(), { kind: 'nat', value: 3.0 })).earned).toBe(0);
+    expect((await assertParity(natItem(), { kind: 'nat', value: 2.006 })).earned).toBe(0);
+    expect((await assertParity(natItem(), { kind: 'nat', skipped: true })).earned).toBe(0);
+  });
+
+  it('both paths refuse the same malformed items and responses', async () => {
+    const cases: Array<[GateItem, GateResponse]> = [
+      [{ id: 'q', kind: 'mcq', marks: 1 }, { kind: 'mcq', selectedIndex: 0 }],
+      [mcqItem(1), { kind: 'mcq' }],
+      [{ id: 'q', kind: 'msq', marks: 2 }, { kind: 'msq', selectedIndices: [0] }],
+      [{ id: 'q', kind: 'nat', marks: 1 }, { kind: 'nat', value: 1 }],
+      [natItem(), { kind: 'nat' }],
+    ];
+    for (const [item, response] of cases) {
+      await expect(scorer.grade(item, response)).rejects.toThrow();
+      await expect(strategy!.grade(item, response, paramsFor(item.kind))).rejects.toThrow();
+    }
+  });
+
+  it('both paths refuse a kind/response mismatch', async () => {
+    const bad = { kind: 'nat', value: 1 } as GateResponse;
+    await expect(scorer.grade(mcqItem(1), bad)).rejects.toThrow();
+    await expect(strategy!.grade(mcqItem(1), bad, paramsFor('mcq'))).rejects.toThrow();
+  });
+
+  it('the contract params ARE the compiled defaults — not a lookalike copy', () => {
+    // Parity above would still pass if both paths were wrong in the same
+    // way. This asserts the params the strategy reads carry the numbers the
+    // direct path defaults to.
+    const mcq = CONTRACT_MARKING.mcq.params;
+    expect(Math.abs(mcq.marks_wrong_by_marks['1'])).toBe(DEFAULT_MCQ_NEGATIVE_1_MARK);
+    expect(Math.abs(mcq.marks_wrong_by_marks['2'])).toBe(DEFAULT_MCQ_NEGATIVE_2_MARK);
+    expect(CONTRACT_MARKING.nat.params.tolerance_epsilon).toBe(NAT_EPSILON);
+    expect(CONTRACT_MARKING.msq.params.marks_wrong).toBe(0);
+    expect(CONTRACT_MARKING.nat.params.marks_wrong).toBe(0);
   });
 });

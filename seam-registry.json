@@ -70,6 +70,13 @@
       "interface_file": "src/core/interfaces.ts",
       "config_source": null,
       "conformance_test_path": "src/readiness/__tests__/syllabus-aware-engine.test.ts"
+    },
+    {
+      "name": "marking-strategy",
+      "description": "L4 Assessment seam (plan D11) — how one structured response is marked. The strategy id names the ALGORITHM, the assessment_contracts row names the NUMBERS. A new exam with the same arithmetic is a contract row and zero code; a genuinely new scheme (JEE Advanced partial-marking matrix) is one new registered strategy, never a fork of the scorer. gate_2026 is the one implementation today.",
+      "interface_file": "src/scoring/marking-strategy.ts",
+      "config_source": "supabase/migrations/050_assessment_contracts.sql (assessment_contracts.marking), with src/exams/marking-constants.ts as the compiled DB-less fallback",
+      "conformance_test_path": "src/scoring/__tests__/marking-strategy-contract.test.ts"
     }
   ]
 }

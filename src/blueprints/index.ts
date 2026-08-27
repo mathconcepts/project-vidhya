@@ -44,8 +44,11 @@ export {
   CONCEPT_DOMINANT_INTENT,
   CONCEPT_INVENTORY_TOTALS,
   DIFFICULTY_LABEL_FROM_CATALOGUE,
+  FAMILY_STAGE_SEQUENCES,
+  CONCEPT_TEMPLATE_FAMILY,
   type IntentId,
   type GeneratedStage,
+  type TemplateFamilyId,
 } from './intent-tables.gen';
 
 export {

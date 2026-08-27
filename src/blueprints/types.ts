@@ -157,6 +157,29 @@ export const RATIONALE_CODES = {
   intent_method_selection: 'Guided problem-solving lane — stage sequence from the concept\'s dominant catalogue intent (guided_problem_solving)',
   intent_property_recall: 'Concept-clarification lane — stage sequence from the concept\'s dominant catalogue intent (concept_clarification)',
   intent_foundation: 'Foundation-learning lane — stage sequence from the concept\'s dominant catalogue intent (foundation_learning)',
+
+  // Template-family rationale (W2.1/E11 — codegen'd from
+  // data/curriculum/gate-em/template-families.yml via
+  // src/blueprints/intent-tables.gen.ts's FAMILY_STAGE_SEQUENCES /
+  // CONCEPT_TEMPLATE_FAMILY). One code per market-research template family,
+  // applied to every stage that family's sequence produces. Family topology
+  // overrides the intent default where both resolve for a concept — see
+  // template-engine.ts's buildTemplateBlueprint()/buildIntentBlueprint()
+  // header comments for the precedence rule.
+  family_matrix: 'Matrix-family template — market-research template-families.yml, shape-before-arithmetic sequence',
+  family_eigen: 'Eigen-family template — market-research template-families.yml, special-direction sequence',
+  family_limit: 'Limit-family template — market-research template-families.yml, prediction-before-calculation sequence',
+  family_derivative: 'Derivative-family template — market-research template-families.yml, rate-of-change sequence',
+  family_integral: 'Integral-family template — market-research template-families.yml, accumulation-story sequence',
+  family_optimization: 'Optimization-family template — market-research template-families.yml, decision-under-constraint sequence',
+  family_vector: 'Vector-family template — market-research template-families.yml, field-line sequence',
+  family_ode: 'ODE-family template — market-research template-families.yml, equation-classification sequence',
+  family_pde: 'PDE-family template — market-research template-families.yml, boundary-condition sequence',
+  family_complex: 'Complex-family template — market-research template-families.yml, geometry-of-a-number sequence',
+  family_probability: 'Probability-family template — market-research template-families.yml, uncertainty-puzzle sequence',
+  family_statistics: 'Statistics-family template — market-research template-families.yml, signal-in-data sequence',
+  family_numerical: 'Numerical-family template — market-research template-families.yml, approximation-under-constraint sequence',
+  family_discrete: 'Discrete-family template — market-research template-families.yml, small-puzzle sequence',
 } as const;
 
 export type RationaleCode = keyof typeof RATIONALE_CODES;

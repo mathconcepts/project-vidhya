@@ -16,6 +16,17 @@
  *      header for the id-scheme boundary and the 3-paper evidence-scope
  *      caveat). Numbered under section B (supplementary gate-em data files,
  *      not just intent-profiles.yml) rather than a new section — see B7.
+ *   C) data/curriculum/gate-em/template-families.yml (W2.1/E11, added
+ *      2026-08-27) — the 14 market-research template families (matrix,
+ *      eigen, limit, derivative, integral, optimization, vector, ode, pde,
+ *      complex, probability, statistics, numerical, discrete), each with a
+ *      stage sequence in the locked blueprint vocabulary + presentation
+ *      hints, plus a `coverage` map assigning every concept-graph concept to
+ *      exactly one family. Consumed by scripts/generate-intent-tables.ts to
+ *      emit the merged per-concept stage table (E11); see that file's header
+ *      for the "family overrides intent default" precedence rule. Numbered
+ *      under section B for the same reason historical-evidence.yml is (B8-B13
+ *      below), not a new section.
  *
  * A8 and B6 (added alongside historical-evidence.yml) are the OTHER half of
  * W1.2/E10's phrase rule: atomic-catalogue's `seo.title` and intent-profiles'
@@ -90,6 +101,21 @@ export const INTENTS = [
 ] as const;
 export type Intent = (typeof INTENTS)[number];
 const INTENT_SET: ReadonlySet<string> = new Set(INTENTS);
+
+/**
+ * The 14 locked template families (W2.1/E11) — mirrors
+ * template-families.yml's own header ("schema_version 1 is locked").
+ * Iteration order here is ALSO the canonical rendering order
+ * scripts/generate-intent-tables.ts uses for FAMILY_STAGE_SEQUENCES, so a
+ * regen is byte-diff-clean run to run.
+ */
+export const TEMPLATE_FAMILIES = [
+  'matrix', 'eigen', 'limit', 'derivative', 'integral', 'optimization',
+  'vector', 'ode', 'pde', 'complex', 'probability', 'statistics',
+  'numerical', 'discrete',
+] as const;
+export type TemplateFamilyId = (typeof TEMPLATE_FAMILIES)[number];
+const TEMPLATE_FAMILY_SET: ReadonlySet<string> = new Set(TEMPLATE_FAMILIES);
 
 /**
  * Mirrors src/core/interfaces.ts's ErrorTag union (W3.4/E4 extended it from
@@ -170,6 +196,12 @@ export interface IntentProfilesFile {
 export interface ConceptLike {
   id: string;
   prerequisites: string[];
+}
+
+/** Concept-graph node shape needed by the template-family coverage checks (B11/B12). */
+export interface ConceptWithTopic {
+  id: string;
+  topic: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -615,6 +647,203 @@ export function runHistoricalEvidenceChecks(evidence: HistoricalEvidenceFile): C
 }
 
 // ---------------------------------------------------------------------------
+// Section B (continued) — template-families.yml (W2.1/E11)
+// ---------------------------------------------------------------------------
+
+export const TEMPLATE_FAMILIES_PATH = path.join(ROOT, 'data/curriculum/gate-em/template-families.yml');
+
+export interface TemplateFamilyStage {
+  id: string;
+  atom_kind: string;
+  presentation?: string;
+  [key: string]: unknown;
+}
+
+export interface TemplateFamily {
+  label?: string;
+  hooks?: string[];
+  source_sequence?: string;
+  stages: TemplateFamilyStage[];
+  [key: string]: unknown;
+}
+
+export interface TemplateFamilyCoverage {
+  topic_defaults: Record<string, string>;
+  concept_overrides: Record<string, string>;
+}
+
+export interface TemplateFamiliesFile {
+  schema_version?: unknown;
+  source?: unknown;
+  note?: unknown;
+  presentation_vocabulary: string[];
+  families: Record<string, TemplateFamily>;
+  coverage: TemplateFamilyCoverage;
+  [key: string]: unknown;
+}
+
+export function loadTemplateFamilies(filePath: string = TEMPLATE_FAMILIES_PATH): TemplateFamiliesFile {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(filePath, 'utf-8');
+  } catch (err) {
+    throw new IntentCatalogueParseError(filePath, err);
+  }
+  try {
+    return parseYaml(raw) as TemplateFamiliesFile;
+  } catch (err) {
+    throw new IntentCatalogueParseError(filePath, err);
+  }
+}
+
+/** B8: exactly the 14 locked template families are present under families:. */
+export function checkB8_TemplateFamilySet(families: TemplateFamiliesFile): CheckResult {
+  const violations: string[] = [];
+  const present = new Set(Object.keys(families.families ?? {}));
+
+  for (const expected of TEMPLATE_FAMILIES) {
+    if (!present.has(expected)) violations.push(`families.${expected} is missing`);
+  }
+  for (const actual of present) {
+    if (!TEMPLATE_FAMILY_SET.has(actual)) violations.push(`families.${actual} is not one of the locked 14 families`);
+  }
+
+  return result('B8 exactly the 14 locked template families', violations);
+}
+
+/** B9: every family stage's id/atom_kind is a real runtime StageKind/AtomKind. */
+export function checkB9_FamilyStageAtomKindValid(families: TemplateFamiliesFile): CheckResult {
+  const violations: string[] = [];
+  const stageSet: ReadonlySet<string> = new Set(STAGE_KINDS);
+  const atomKindSet: ReadonlySet<string> = new Set(ATOM_KINDS);
+
+  for (const [familyId, family] of Object.entries(families.families ?? {})) {
+    (family.stages ?? []).forEach((stage, i) => {
+      if (!stageSet.has(stage.id)) {
+        violations.push(
+          `families.${familyId}.stages[${i}].id '${stage.id}' not in StageKind {${STAGE_KINDS.join(', ')}}`,
+        );
+      }
+      if (!atomKindSet.has(stage.atom_kind)) {
+        violations.push(
+          `families.${familyId}.stages[${i}].atom_kind '${stage.atom_kind}' not in AtomKind {${ATOM_KINDS.join(', ')}}`,
+        );
+      }
+    });
+  }
+
+  return result('B9 family stage/atom_kind valid (src/blueprints/types.ts)', violations);
+}
+
+/** B10: every family stage's `presentation` (when present) is declared in presentation_vocabulary. */
+export function checkB10_FamilyPresentationKnown(families: TemplateFamiliesFile): CheckResult {
+  const violations: string[] = [];
+  const vocab = new Set(families.presentation_vocabulary ?? []);
+
+  for (const [familyId, family] of Object.entries(families.families ?? {})) {
+    (family.stages ?? []).forEach((stage, i) => {
+      if (stage.presentation === undefined) return;
+      if (!vocab.has(stage.presentation)) {
+        violations.push(
+          `families.${familyId}.stages[${i}].presentation '${stage.presentation}' not declared in presentation_vocabulary`,
+        );
+      }
+    });
+  }
+
+  return result('B10 presentation values known (declared in presentation_vocabulary)', violations);
+}
+
+/**
+ * B11: coverage.topic_defaults keys are real concept-graph topics,
+ * coverage.concept_overrides keys are real concept-graph concept ids, and
+ * every family id referenced by either map is one of the 14 declared
+ * families.
+ */
+export function checkB11_CoverageResolvesAgainstGraphAndFamilies(
+  families: TemplateFamiliesFile,
+  conceptIds: ReadonlySet<string>,
+  topicIds: ReadonlySet<string>,
+): CheckResult {
+  const violations: string[] = [];
+  const familyIds = new Set(Object.keys(families.families ?? {}));
+  const { topic_defaults = {}, concept_overrides = {} } = families.coverage ?? ({} as TemplateFamilyCoverage);
+
+  for (const [topicId, familyId] of Object.entries(topic_defaults)) {
+    if (!topicIds.has(topicId)) violations.push(`coverage.topic_defaults.${topicId}: not a topic in the concept graph`);
+    if (!familyIds.has(familyId)) {
+      violations.push(`coverage.topic_defaults.${topicId} -> '${familyId}': not a declared family`);
+    }
+  }
+  for (const [conceptId, familyId] of Object.entries(concept_overrides)) {
+    if (!conceptIds.has(conceptId)) {
+      violations.push(`coverage.concept_overrides.${conceptId}: not a concept in the concept graph`);
+    }
+    if (!familyIds.has(familyId)) {
+      violations.push(`coverage.concept_overrides.${conceptId} -> '${familyId}': not a declared family`);
+    }
+  }
+
+  return result('B11 coverage keys resolve against concept graph + declared families', violations);
+}
+
+/**
+ * B12: every concept in the concept graph resolves to exactly one family —
+ * via coverage.concept_overrides, falling back to
+ * coverage.topic_defaults[concept.topic]. A concept whose topic has no
+ * default AND no override is uncovered — the exact failure mode this check
+ * exists to catch (a new topic or concept added to the graph without a
+ * template-families.yml update).
+ */
+export function checkB12_EveryConceptResolvesToExactlyOneFamily(
+  families: TemplateFamiliesFile,
+  concepts: ConceptWithTopic[],
+): CheckResult {
+  const violations: string[] = [];
+  const { topic_defaults = {}, concept_overrides = {} } = families.coverage ?? ({} as TemplateFamilyCoverage);
+
+  for (const c of concepts) {
+    const override = concept_overrides[c.id];
+    const fallback = topic_defaults[c.topic];
+    if (!override && !fallback) {
+      violations.push(
+        `${c.id} (topic '${c.topic}'): no coverage.concept_overrides entry and no ` +
+          `coverage.topic_defaults['${c.topic}'] — not covered by any family`,
+      );
+    }
+  }
+
+  return result('B12 every concept resolves to exactly one family (override or topic default)', violations);
+}
+
+/** B13: every family declares a non-empty stage sequence. */
+export function checkB13_FamilySequencesNonEmpty(families: TemplateFamiliesFile): CheckResult {
+  const violations: string[] = [];
+  for (const [familyId, family] of Object.entries(families.families ?? {})) {
+    if (!Array.isArray(family.stages) || family.stages.length === 0) {
+      violations.push(`families.${familyId}.stages is empty — every family must declare a non-empty sequence`);
+    }
+  }
+  return result('B13 family stage sequences non-empty', violations);
+}
+
+export function runTemplateFamilyChecks(
+  families: TemplateFamiliesFile,
+  concepts: ConceptWithTopic[],
+): CheckResult[] {
+  const conceptIds = new Set(concepts.map((c) => c.id));
+  const topicIds = new Set(concepts.map((c) => c.topic));
+  return [
+    checkB8_TemplateFamilySet(families),
+    checkB9_FamilyStageAtomKindValid(families),
+    checkB10_FamilyPresentationKnown(families),
+    checkB11_CoverageResolvesAgainstGraphAndFamilies(families, conceptIds, topicIds),
+    checkB12_EveryConceptResolvesToExactlyOneFamily(families, concepts),
+    checkB13_FamilySequencesNonEmpty(families),
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // File loading (the only I/O — kept out of the check functions above)
 // ---------------------------------------------------------------------------
 
@@ -760,15 +989,20 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log('\n[check-intent-catalogue] Validating atomic-catalogue.json + intent-profiles.yml + historical-evidence.yml\n');
+  console.log(
+    '\n[check-intent-catalogue] Validating atomic-catalogue.json + intent-profiles.yml + ' +
+      'historical-evidence.yml + template-families.yml\n',
+  );
 
   let catalogue: AtomicCatalogueFile;
   let profiles: IntentProfilesFile;
   let historicalEvidence: HistoricalEvidenceFile;
+  let templateFamilies: TemplateFamiliesFile;
   try {
     catalogue = loadCatalogue();
     profiles = loadIntentProfiles();
     historicalEvidence = loadHistoricalEvidence();
+    templateFamilies = loadTemplateFamilies();
   } catch (err) {
     if (err instanceof IntentCatalogueParseError) {
       console.error(`[check-intent-catalogue] FATAL — ${err.message}\n`);
@@ -780,12 +1014,14 @@ async function main(): Promise<void> {
 
   const atoms = catalogue.atoms ?? [];
   const concepts: ConceptLike[] = ALL_CONCEPTS.map((c) => ({ id: c.id, prerequisites: c.prerequisites }));
+  const conceptsWithTopic: ConceptWithTopic[] = ALL_CONCEPTS.map((c) => ({ id: c.id, topic: c.topic }));
   const catalogueModules = new Set(atoms.map((a) => a.module));
 
   const results = [
     ...runCatalogueChecks(atoms, concepts),
     ...runIntentProfileChecks(profiles, catalogueModules),
     ...runHistoricalEvidenceChecks(historicalEvidence),
+    ...runTemplateFamilyChecks(templateFamilies, conceptsWithTopic),
   ];
 
   printTable(results);

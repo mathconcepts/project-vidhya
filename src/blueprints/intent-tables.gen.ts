@@ -6,6 +6,7 @@
  * Source of truth:
  *   data/curriculum/gate-em/intent-profiles.yml
  *   data/curriculum/gate-em/atomic-catalogue.json
+ *   data/curriculum/gate-em/template-families.yml
  *
  * Regenerate:
  *   npm run gen:intent-tables
@@ -15,10 +16,16 @@
  * directly. A CI drift test (src/blueprints/__tests__/intent-tables-drift.test.ts)
  * fails the build if this file is out of sync with the sources.
  *
- * `presentation` hints from intent-profiles.yml are intentionally stripped
- * here — BlueprintDecisionsV1 (src/blueprints/types.ts) is a locked contract
- * that must never carry a presentation field; renderers derive presentation
- * separately from (intent × stage) later in the pipeline.
+ * `presentation` hints from intent-profiles.yml / template-families.yml are
+ * intentionally stripped here — BlueprintDecisionsV1 (src/blueprints/types.ts)
+ * is a locked contract that must never carry a presentation field; renderers
+ * derive presentation separately (from intent × stage, or family × stage)
+ * later in the pipeline.
+ *
+ * FAMILY_STAGE_SEQUENCES / CONCEPT_TEMPLATE_FAMILY (W2.1/E11) are the merged
+ * template-family tables — see generate-intent-tables.ts's header for the
+ * "family overrides intent default" precedence rule applied by
+ * src/blueprints/template-engine.ts.
  */
 
 import type { StageKind, AtomKind, DifficultyMix, DifficultyLabel } from './types';
@@ -28,6 +35,11 @@ export type IntentId =
   | 'concept_clarification'
   | 'guided_problem_solving'
   | 'pyq_targeted_practice';
+
+export type TemplateFamilyId =
+  | 'matrix' | 'eigen' | 'limit' | 'derivative' | 'integral' | 'optimization'
+  | 'vector' | 'ode' | 'pde' | 'complex' | 'probability' | 'statistics'
+  | 'numerical' | 'discrete';
 
 export interface GeneratedStage {
   stage: StageKind;
@@ -225,4 +237,197 @@ export const DIFFICULTY_LABEL_FROM_CATALOGUE: Record<'foundation' | 'standard' |
   foundation: 'easy',
   standard: 'medium',
   stretch: 'hard',
+};
+
+export const FAMILY_STAGE_SEQUENCES: Record<TemplateFamilyId, GeneratedStage[]> = {
+  matrix: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  eigen: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  limit: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  derivative: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  integral: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  optimization: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'discovery', atom_kind: 'guided_walkthrough' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  vector: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'discovery', atom_kind: 'guided_walkthrough' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  ode: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'discovery', atom_kind: 'guided_walkthrough' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  pde: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  complex: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  probability: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  statistics: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  numerical: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+  discrete: [
+    { stage: 'intuition', atom_kind: 'visual_analogy' },
+    { stage: 'formalism', atom_kind: 'worked_example' },
+    { stage: 'worked_example', atom_kind: 'worked_example' },
+    { stage: 'practice', atom_kind: 'mcq' },
+  ],
+};
+
+export const CONCEPT_TEMPLATE_FAMILY: Record<string, TemplateFamilyId> = {
+  'analytic-functions': 'complex',
+  'boolean-algebra': 'discrete',
+  'cayley-hamilton': 'matrix',
+  'chain-rule': 'derivative',
+  'change-of-basis': 'matrix',
+  'complex-integration': 'complex',
+  'complex-numbers': 'complex',
+  'conformal-mapping': 'complex',
+  'continuity': 'limit',
+  'continuous-distributions': 'probability',
+  'counting-principles': 'probability',
+  'definite-integrals': 'integral',
+  'derivatives-basic': 'derivative',
+  'determinants': 'matrix',
+  'diagonalization': 'eigen',
+  'differentiability': 'derivative',
+  'discrete-distributions': 'probability',
+  'divergence-curl': 'vector',
+  'eigenvalues': 'eigen',
+  'euler-hamilton': 'discrete',
+  'fourier-series': 'pde',
+  'fourier-transform': 'pde',
+  'functions-combinatorics': 'discrete',
+  'gauss-divergence': 'vector',
+  'gram-schmidt': 'matrix',
+  'graph-basics': 'discrete',
+  'graph-coloring': 'discrete',
+  'graph-connectivity': 'discrete',
+  'greens-theorem': 'vector',
+  'group-theory-basics': 'discrete',
+  'hypothesis-testing': 'statistics',
+  'implicit-differentiation': 'derivative',
+  'improper-integrals': 'integral',
+  'inner-product-spaces': 'matrix',
+  'integration-basics': 'integral',
+  'integration-by-parts': 'integral',
+  'integration-substitution': 'integral',
+  'interpolation': 'numerical',
+  'inverse-laplace': 'ode',
+  'joint-distributions': 'probability',
+  'jordan-normal-form': 'eigen',
+  'laplace-applications': 'ode',
+  'laplace-transform': 'ode',
+  'least-squares': 'matrix',
+  'limits': 'limit',
+  'line-integrals': 'vector',
+  'linear-independence': 'matrix',
+  'linear-transformations': 'matrix',
+  'lu-factorization': 'matrix',
+  'matrix-inverse': 'matrix',
+  'matrix-norms': 'matrix',
+  'matrix-operations': 'matrix',
+  'maxima-minima': 'derivative',
+  'mean-value-theorems': 'derivative',
+  'multiple-integrals': 'integral',
+  'multivariable-calculus': 'derivative',
+  'null-space-column-space': 'matrix',
+  'numerical-error-analysis': 'numerical',
+  'numerical-integration': 'numerical',
+  'numerical-linear-algebra': 'numerical',
+  'numerical-ode': 'numerical',
+  'ode-bernoulli': 'ode',
+  'ode-classification': 'ode',
+  'ode-exact': 'ode',
+  'ode-first-order': 'ode',
+  'ode-higher-order': 'ode',
+  'ode-second-order-homo': 'ode',
+  'ode-second-order-nonhomo': 'ode',
+  'orthogonality': 'matrix',
+  'partial-fractions': 'integral',
+  'pde-basics': 'pde',
+  'planar-graphs': 'discrete',
+  'positive-definite-matrices': 'matrix',
+  'probability-basics': 'probability',
+  'product-quotient-rule': 'derivative',
+  'propositional-logic': 'discrete',
+  'quadratic-forms': 'matrix',
+  'random-variables': 'probability',
+  'rank-nullity': 'matrix',
+  'recurrence-relations': 'discrete',
+  'regression-correlation': 'statistics',
+  'residue-calculus': 'complex',
+  'root-finding': 'numerical',
+  'sampling-distributions': 'statistics',
+  'sequences': 'limit',
+  'series': 'limit',
+  'sets-relations': 'discrete',
+  'shortest-paths': 'discrete',
+  'spectral-theorem': 'eigen',
+  'stokes-theorem': 'vector',
+  'surface-integrals': 'vector',
+  'svd': 'matrix',
+  'symmetric-matrices': 'eigen',
+  'systems-of-equations': 'matrix',
+  'taylor-laurent': 'complex',
+  'trace': 'matrix',
+  'trees': 'discrete',
+  'vector-algebra-basics': 'vector',
+  'vector-fields': 'vector',
+  'vector-spaces': 'matrix',
+  'z-transform': 'ode',
 };

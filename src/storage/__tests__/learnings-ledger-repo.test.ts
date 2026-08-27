@@ -8,7 +8,7 @@
  * queries had zero test coverage before this repo extraction.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { PgLearningsLedgerRepo, NullLearningsLedgerRepo } from '../repositories/learnings-ledger-repo';
 
 describe('PgLearningsLedgerRepo', () => {
@@ -172,5 +172,119 @@ describe('NullLearningsLedgerRepo', () => {
     await expect(repo.upsertSuggestion()).resolves.toBeUndefined();
     await expect(repo.markLedgerRunRunning()).resolves.toBeUndefined();
     await expect(repo.markLedgerRunComplete()).resolves.toBeUndefined();
+    expect(await repo.fetchDelayedRetention()).toBeNull();
+    expect(await repo.fetchModeSplitAccuracy()).toEqual([]);
+    expect(await repo.fetchSpeedAccuracy()).toBeNull();
+  });
+});
+
+// ============================================================================
+// W1.6 — anti-gaming guard data fetchers
+// ============================================================================
+
+vi.mock('../../experiments/lift', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../experiments/lift')>();
+  return { ...actual, resolveTreatmentSessions: vi.fn() };
+});
+
+describe('PgLearningsLedgerRepo — W1.6 guard data fetchers', () => {
+  it('fetchDelayedRetention: empty treatment cohort short-circuits to null without querying', async () => {
+    const { resolveTreatmentSessions } = await import('../../experiments/lift');
+    vi.mocked(resolveTreatmentSessions).mockResolvedValueOnce(new Set());
+    const query = vi.fn();
+    const repo = new PgLearningsLedgerRepo({ query } as any);
+    const result = await repo.fetchDelayedRetention('exp_a', 'gate-ma', '2026-04-25T00:00:00Z', 7);
+    expect(result).toBeNull();
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('fetchDelayedRetention: averages per-session deltas across concepts, excludes sessions with no measurable delta', async () => {
+    const { resolveTreatmentSessions } = await import('../../experiments/lift');
+    vi.mocked(resolveTreatmentSessions).mockResolvedValueOnce(new Set(['s1', 's2']));
+    const query = vi.fn().mockResolvedValueOnce({
+      rows: [
+        { session_id: 's1', concept_id: 'eigenvalues', pre_mastery: 0.4, delayed_mastery: 0.6 },
+        { session_id: 's1', concept_id: 'determinants', pre_mastery: 0.5, delayed_mastery: 0.5 },
+        { session_id: 's2', concept_id: 'eigenvalues', pre_mastery: 0.3, delayed_mastery: null }, // excluded — no delayed reading
+      ],
+    });
+    const repo = new PgLearningsLedgerRepo({ query } as any);
+    const result = await repo.fetchDelayedRetention('exp_a', 'gate-ma', '2026-04-25T00:00:00Z', 7);
+    // s1: (0.2 + 0.0) / 2 = 0.1; s2 excluded entirely (no delayed_mastery at all) -> mean over 1 session = 0.1
+    expect(result!.n).toBe(1);
+    expect(result!.delta).toBeCloseTo(0.1, 10);
+  });
+
+  it('fetchDelayedRetention: a query failure degrades to null, never throws', async () => {
+    const { resolveTreatmentSessions } = await import('../../experiments/lift');
+    vi.mocked(resolveTreatmentSessions).mockResolvedValueOnce(new Set(['s1']));
+    const query = vi.fn().mockRejectedValueOnce(new Error('boom'));
+    const repo = new PgLearningsLedgerRepo({ query } as any);
+    const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(repo.fetchDelayedRetention('exp_a', 'gate-ma', '2026-04-25T00:00:00Z', 7)).resolves.toBeNull();
+    consoleErr.mockRestore();
+  });
+
+  it('fetchModeSplitAccuracy: bridges session ids to student ids via mastery_snapshots.user_id, then aggregates attempt_facts', async () => {
+    const { resolveTreatmentSessions } = await import('../../experiments/lift');
+    vi.mocked(resolveTreatmentSessions).mockResolvedValueOnce(new Set(['s1']));
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ user_id: 'u1' }] }) // treatmentStudentIds
+      .mockResolvedValueOnce({
+        rows: [
+          { question_kind: 'mcq', n_pre: '40', correct_pre: '20', n_post: '40', correct_post: '28' },
+          { question_kind: 'nat', n_pre: '40', correct_pre: '24', n_post: '40', correct_post: '16' },
+        ],
+      });
+    const repo = new PgLearningsLedgerRepo({ query } as any);
+    const result = await repo.fetchModeSplitAccuracy('exp_a', 'gate-ma', '2026-04-25T00:00:00Z', 7);
+    expect(result).toEqual([
+      { kind: 'mcq', accuracyPre: 0.5, nPre: 40, accuracyPost: 0.7, nPost: 40 },
+      { kind: 'nat', accuracyPre: 0.6, nPre: 40, accuracyPost: 0.4, nPost: 40 },
+    ]);
+    expect(query.mock.calls[1][0]).toMatch(/FROM attempt_facts/);
+    expect(query.mock.calls[1][0]).toMatch(/GROUP BY question_kind/);
+    expect(query.mock.calls[1][1]).toEqual([['u1'], 'gate-ma', '2026-04-25T00:00:00Z', '7']);
+  });
+
+  it('fetchModeSplitAccuracy: no bridged student ids -> empty array without querying attempt_facts', async () => {
+    const { resolveTreatmentSessions } = await import('../../experiments/lift');
+    vi.mocked(resolveTreatmentSessions).mockResolvedValueOnce(new Set(['s1']));
+    const query = vi.fn().mockResolvedValueOnce({ rows: [] }); // no user_id mirrors
+    const repo = new PgLearningsLedgerRepo({ query } as any);
+    const result = await repo.fetchModeSplitAccuracy('exp_a', 'gate-ma', '2026-04-25T00:00:00Z', 7);
+    expect(result).toEqual([]);
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  it('fetchSpeedAccuracy: computes the attempt-weighted mean latency-bucket index pre/post', async () => {
+    const { resolveTreatmentSessions } = await import('../../experiments/lift');
+    vi.mocked(resolveTreatmentSessions).mockResolvedValueOnce(new Set(['s1']));
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ user_id: 'u1' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          { is_pre: true, latency_bucket: '30-90s', n: '20', correct: '10' },  // index 2
+          { is_pre: false, latency_bucket: 'lt10s', n: '20', correct: '5' },   // index 0
+        ],
+      });
+    const repo = new PgLearningsLedgerRepo({ query } as any);
+    const result = await repo.fetchSpeedAccuracy('exp_a', 'gate-ma', '2026-04-25T00:00:00Z', 7);
+    expect(result).toEqual({
+      meanBucketIndexPre: 2, meanBucketIndexPost: 0,
+      accuracyPre: 0.5, accuracyPost: 0.25,
+      n: 20,
+    });
+  });
+
+  it('fetchSpeedAccuracy: no post-window data at all degrades to null', async () => {
+    const { resolveTreatmentSessions } = await import('../../experiments/lift');
+    vi.mocked(resolveTreatmentSessions).mockResolvedValueOnce(new Set(['s1']));
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ user_id: 'u1' }] })
+      .mockResolvedValueOnce({ rows: [] });
+    const repo = new PgLearningsLedgerRepo({ query } as any);
+    const result = await repo.fetchSpeedAccuracy('exp_a', 'gate-ma', '2026-04-25T00:00:00Z', 7);
+    expect(result).toBeNull();
   });
 });

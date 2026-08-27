@@ -38,6 +38,7 @@ describe('learnings-ledger.buildDigest', () => {
       evaluated: 0,
       promotions: [],
       demotions: [],
+      held: [],
       suggestions: [],
     });
     expect(md).toContain('Learnings');
@@ -74,6 +75,7 @@ describe('learnings-ledger.buildDigest', () => {
         },
       ],
       demotions: [],
+      held: [],
       suggestions: [],
     });
     expect(md).toContain('## ✅ Promoted');
@@ -111,8 +113,69 @@ describe('learnings-ledger.buildDigest', () => {
         },
       ],
       demotions: [],
+      held: [],
       suggestions: [],
     });
     expect(md).toContain('A \\| risky \\| name');
+  });
+
+  it('W1.6: renders a Held for review section naming the guard and its reason', () => {
+    const md = buildDigest({
+      runId: 'ledger_test',
+      evaluated: 1,
+      promotions: [],
+      demotions: [],
+      held: [
+        {
+          experiment: {
+            id: 'exp_a',
+            name: 'PYQ-grounded LA wins',
+            exam_pack_id: 'gate-ma',
+            git_sha: 'abc',
+            hypothesis: null,
+            variant_kind: null,
+            started_at: '2026-04-25T00:00:00Z',
+            ended_at: null,
+            status: 'active',
+            lift_v1: 0.18,
+            lift_n: 60,
+            lift_p: 0.001,
+            lift_updated_at: null,
+            metadata: {},
+          },
+          lift: 0.18,
+          n: 60,
+          p: 0.001,
+          trippedGuards: [
+            { name: 'immediate_lift_flat_retention', reason: 'immediate lift +0.1800 (n=60) but the delayed-window mastery delta is +0.0000 (n=40)' },
+          ],
+        },
+      ],
+      suggestions: [],
+    });
+    expect(md).toContain('🛑 Held for review');
+    expect(md).toContain('PYQ-grounded LA wins');
+    expect(md).toContain('immediate_lift_flat_retention');
+    expect(md).toContain('delayed-window mastery delta is +0.0000');
+    expect(md).not.toContain('No state changes this run'); // held counts as a state change
+  });
+
+  it('held counts toward "no state changes" even when promotions/demotions/suggestions are all empty', () => {
+    const md = buildDigest({
+      runId: 'ledger_test', evaluated: 1, promotions: [], demotions: [], suggestions: [],
+      held: [
+        {
+          experiment: {
+            id: 'exp_a', name: 'X', exam_pack_id: 'gate-ma', git_sha: 'abc', hypothesis: null,
+            variant_kind: null, started_at: '2026-04-25T00:00:00Z', ended_at: null, status: 'active',
+            lift_v1: 0.1, lift_n: 40, lift_p: 0.01, lift_updated_at: null, metadata: {},
+          },
+          lift: 0.1, n: 40, p: 0.01,
+          trippedGuards: [{ name: 'speed_up_errors_up', reason: 'r' }],
+        },
+      ],
+    });
+    expect(md).toContain('Held for review');
+    expect(md).not.toContain('No state changes this run');
   });
 });

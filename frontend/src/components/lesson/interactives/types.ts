@@ -76,9 +76,56 @@ export interface SimulationSpec {
 }
 
 /**
+ * One question in a branching walkthrough. `options[].next` names either
+ * another node id or a leaf id — the validator refuses anything else.
+ */
+export interface BranchNode {
+  id: string;
+  question: string;
+  options: Array<{ label: string; next: string }>;
+}
+
+/**
+ * A terminal method choice. `best: true` marks a sanctioned route; every
+ * other leaf is a walkable dead end whose `reason` is the lesson — the
+ * student is told why the route they picked is the wrong one, in a
+ * sentence, never a code.
+ */
+export interface BranchLeaf {
+  id: string;
+  method: string;
+  reason: string;
+  best?: boolean;
+}
+
+/**
+ * Branching extension of `guided_walkthrough` (plan W2.5, amendment D1;
+ * literal pinned in D3). Additive and `v: 1`-compatible: a renderer that
+ * predates it ignores `branches` and still renders `steps`, which is why
+ * `steps` stays REQUIRED on a branching spec. The steps are the
+ * degradation path, not decoration.
+ *
+ * Self-check only (amendment E5): the spec ships to the browser inside a
+ * fenced block, so the leaf the student reaches is client-visible. The
+ * widget therefore feeds NOTHING into StudentModel and carries the
+ * SmartPracticePage honesty label. Measuring method selection is the job
+ * of a server-graded item whose options are methods.
+ */
+export interface BranchesSpec {
+  v: typeof INTERACTIVE_SPEC_VERSION;
+  /** The first entry is the root; every other node must be reachable from it. */
+  nodes: BranchNode[];
+  leaves: BranchLeaf[];
+}
+
+/**
  * Multi-step solver. Operator clicks "Reveal step" to advance through
  * the worked steps. Each step shows a question + its hint + (after a
  * second click) the answer line. No grading — purely revelation paced.
+ *
+ * With an optional `branches` tree the same spec renders as the W2.5
+ * method-selection wizard instead (one question per view, walkable dead
+ * ends, graded at the leaf only — and only as a self-check).
  */
 export interface GuidedWalkthroughSpec {
   v: typeof INTERACTIVE_SPEC_VERSION;
@@ -91,6 +138,7 @@ export interface GuidedWalkthroughSpec {
     /** Optional LaTeX-flavored equation block; renderer keeps it monospace. */
     eqn?: string;
   }>;
+  branches?: BranchesSpec;
   caption?: string;
 }
 
@@ -194,7 +242,144 @@ function validateGuided(raw: any): ParseSuccess | ParseFailure {
       return { ok: false, reason: `guided_walkthrough.steps[${i}] missing prompt or answer` };
     }
   }
+  if (raw.branches !== undefined) {
+    const branchFailure = validateBranches(raw.branches);
+    if (branchFailure) return branchFailure;
+  }
   return { ok: true, spec: raw as GuidedWalkthroughSpec, body_without_spec: '' };
+}
+
+/**
+ * Validate the optional `branches` tree. Returns a ParseFailure on the
+ * first problem, or null when the tree is sound.
+ *
+ * Every rule here exists because breaking it produces a widget that looks
+ * fine to the author and traps or misleads a student:
+ *   - a dangling `next` renders a choice button that goes nowhere
+ *   - an orphan node is content nobody can reach
+ *   - a cycle lets a student walk forever without meeting a leaf
+ *   - an empty reason means a dead end that never says why — the dead end
+ *     IS the lesson, so a silent one is a bug, not a style problem
+ *   - no `best` leaf means the tree teaches no sanctioned route
+ *
+ * Messages name the offending id, mirroring the repo's refusal precedent
+ * ("names the missing column").
+ */
+function validateBranches(raw: any): ParseFailure | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, reason: 'branches must be an object' };
+  }
+  if (raw.v !== INTERACTIVE_SPEC_VERSION) {
+    return { ok: false, reason: `unsupported branches version: ${raw.v}` };
+  }
+  if (!Array.isArray(raw.nodes) || raw.nodes.length === 0) {
+    return { ok: false, reason: 'branches.nodes[] required' };
+  }
+  if (!Array.isArray(raw.leaves) || raw.leaves.length === 0) {
+    return { ok: false, reason: 'branches.leaves[] required' };
+  }
+
+  const nodeIds = new Set<string>();
+  const leafIds = new Set<string>();
+  const seen = new Map<string, string>();  // id -> where it was first declared
+
+  for (let i = 0; i < raw.nodes.length; i++) {
+    const n = raw.nodes[i];
+    if (!n || typeof n.id !== 'string' || n.id.trim() === '') {
+      return { ok: false, reason: `branches.nodes[${i}].id required` };
+    }
+    if (seen.has(n.id)) {
+      return { ok: false, reason: `branches: duplicate id "${n.id}" (already declared as ${seen.get(n.id)})` };
+    }
+    seen.set(n.id, `nodes[${i}]`);
+    nodeIds.add(n.id);
+    if (typeof n.question !== 'string' || n.question.trim() === '') {
+      return { ok: false, reason: `branches.nodes[${i}] "${n.id}" needs a question` };
+    }
+    if (!Array.isArray(n.options) || n.options.length < 2) {
+      return { ok: false, reason: `branches node "${n.id}" needs at least 2 options (a decision with one route is not a decision)` };
+    }
+    for (let j = 0; j < n.options.length; j++) {
+      const o = n.options[j];
+      if (!o || typeof o.label !== 'string' || o.label.trim() === '') {
+        return { ok: false, reason: `branches node "${n.id}" options[${j}] needs a label` };
+      }
+      if (typeof o.next !== 'string' || o.next.trim() === '') {
+        return { ok: false, reason: `branches node "${n.id}" options[${j}] "${o.label}" needs next` };
+      }
+    }
+  }
+
+  for (let i = 0; i < raw.leaves.length; i++) {
+    const l = raw.leaves[i];
+    if (!l || typeof l.id !== 'string' || l.id.trim() === '') {
+      return { ok: false, reason: `branches.leaves[${i}].id required` };
+    }
+    if (seen.has(l.id)) {
+      return { ok: false, reason: `branches: duplicate id "${l.id}" (already declared as ${seen.get(l.id)})` };
+    }
+    seen.set(l.id, `leaves[${i}]`);
+    leafIds.add(l.id);
+    if (typeof l.method !== 'string' || l.method.trim() === '') {
+      return { ok: false, reason: `branches leaf "${l.id}" needs a method` };
+    }
+    if (typeof l.reason !== 'string' || l.reason.trim() === '') {
+      return { ok: false, reason: `branches leaf "${l.id}" needs a reason sentence (the dead end is the lesson)` };
+    }
+    if (l.best !== undefined && typeof l.best !== 'boolean') {
+      return { ok: false, reason: `branches leaf "${l.id}" best must be a boolean` };
+    }
+  }
+
+  if (!raw.leaves.some((l: any) => l.best === true)) {
+    return { ok: false, reason: 'branches: no leaf is marked best:true — the tree teaches no sanctioned route' };
+  }
+
+  // Dangling targets.
+  for (const n of raw.nodes) {
+    for (const o of n.options) {
+      if (!nodeIds.has(o.next) && !leafIds.has(o.next)) {
+        return {
+          ok: false,
+          reason: `branches node "${n.id}" option "${o.label}" points at "${o.next}", which is neither a node nor a leaf id`,
+        };
+      }
+    }
+  }
+
+  // Reachability + acyclicity, in one depth-first walk from the root.
+  const byId = new Map<string, BranchNode>(raw.nodes.map((n: BranchNode) => [n.id, n]));
+  const rootId: string = raw.nodes[0].id;
+  const reached = new Set<string>();
+  const onPath: string[] = [];
+
+  function walk(id: string): ParseFailure | null {
+    if (onPath.includes(id)) {
+      return { ok: false, reason: `branches: cycle ${[...onPath, id].join(' → ')}` };
+    }
+    if (reached.has(id)) return null;
+    reached.add(id);
+    const node = byId.get(id);
+    if (!node) return null;         // leaf: terminal by construction
+    onPath.push(id);
+    for (const o of node.options) {
+      const failure = walk(o.next);
+      if (failure) return failure;
+    }
+    onPath.pop();
+    return null;
+  }
+
+  const cycle = walk(rootId);
+  if (cycle) return cycle;
+
+  for (const id of [...nodeIds, ...leafIds]) {
+    if (!reached.has(id)) {
+      return { ok: false, reason: `branches: "${id}" is unreachable from the root node "${rootId}"` };
+    }
+  }
+
+  return null;
 }
 
 // ============================================================================
@@ -340,4 +525,4 @@ class Parser {
 }
 
 // Exported for tests
-export const __testing = { validateSpec, FUNCS };
+export const __testing = { validateSpec, validateBranches, FUNCS };

@@ -92,14 +92,20 @@ export type Intent = (typeof INTENTS)[number];
 const INTENT_SET: ReadonlySet<string> = new Set(INTENTS);
 
 /**
- * Mirrors src/core/interfaces.ts:45 —
- *   export type ErrorTag = 'sign' | 'unit' | 'misread' | 'transcription' | 'method' | 'careless';
+ * Mirrors src/core/interfaces.ts's ErrorTag union (W3.4/E4 extended it from
+ * 6 to 13 members — see that type's own doc comment for the full lockstep
+ * list) —
+ *   export type ErrorTag = 'sign' | 'unit' | 'misread' | 'transcription' | 'method' | 'careless' | 'method_selection' | 'representation' | 'mode_msq' | 'mode_nat_entry' | 'time_pressure' | 'risk_decision' | 'prerequisite';
  * Deliberately NOT imported (it's a type, erased at runtime). A vitest
  * drift tripwire (src/__tests__/unit/scripts/check-intent-catalogue.test.ts)
  * reads that file's source text and asserts the literal union members
  * match this array exactly, so this constant can't silently go stale.
  */
-export const ERROR_TAGS = ['sign', 'unit', 'misread', 'transcription', 'method', 'careless'] as const;
+export const ERROR_TAGS = [
+  'sign', 'unit', 'misread', 'transcription', 'method', 'careless',
+  'method_selection', 'representation', 'mode_msq', 'mode_nat_entry',
+  'time_pressure', 'risk_decision', 'prerequisite',
+] as const;
 const ERROR_TAG_SET: ReadonlySet<string> = new Set(ERROR_TAGS);
 
 // ---------------------------------------------------------------------------

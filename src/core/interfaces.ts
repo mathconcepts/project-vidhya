@@ -42,7 +42,29 @@ export type MasteryState =
   | 'mastered'
   | 'at-risk';
 
-export type ErrorTag = 'sign' | 'unit' | 'misread' | 'transcription' | 'method' | 'careless';
+/**
+ * W3.4 (docs/designs/2026-08-27-content-readiness-market-research-integration.md,
+ * amendments E4/D9): extended from 6 to 13 members. The 7 additions
+ * (method_selection, representation, mode_msq, mode_nat_entry,
+ * time_pressure, risk_decision, prerequisite) are ADDITIVE only — old
+ * rows in `attempt_error_tags` stay valid. This is a lockstep union:
+ * every site below must stay in sync, each with its own drift tripwire
+ * where one exists —
+ *   - migration 031's CHECK constraint (swapped, not replaced, by
+ *     migration 053_attempt_error_tags_extend.sql)
+ *   - `ERROR_TAGS` in scripts/check-intent-catalogue.ts (mirrors this
+ *     line; src/__tests__/unit/scripts/check-intent-catalogue.test.ts
+ *     fails if the two ever drift)
+ *   - `KNEW_IT_TAGS` in src/readiness/mock-to-marks.ts (every member of
+ *     this union must be explicitly classified knew-it/didn't-know —
+ *     the mock-to-marks tests fail on an unclassified tag)
+ *
+ * `src/rendering/lesson-enrichment.ts` carries its OWN, unrelated
+ * error-type union (a rendering-side vocabulary for enrichment copy,
+ * not attempt telemetry) — deliberately OUT of this lockstep set (D9).
+ * See the cross-reference comment there.
+ */
+export type ErrorTag = 'sign' | 'unit' | 'misread' | 'transcription' | 'method' | 'careless' | 'method_selection' | 'representation' | 'mode_msq' | 'mode_nat_entry' | 'time_pressure' | 'risk_decision' | 'prerequisite';
 
 export interface Ability {
   /** Elo-scale rating. 1500 = average. Updates online from attempts. */

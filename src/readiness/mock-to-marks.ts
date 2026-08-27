@@ -20,14 +20,38 @@
  * 'transcription' (signals the student had the right method).
  * 'method' tag means they didn't know it; not in the knew-it bucket.
  *
+ * W3.4/D9 extended KNEW_IT_TAGS to classify all 7 new ErrorTag members
+ * (docs/designs/2026-08-27-content-readiness-market-research-integration.md):
+ *   knew-it     — time_pressure, mode_nat_entry, mode_msq, risk_decision
+ *                 (exam-craft slips: the student had the math, the miss
+ *                 was mode/timing/risk-calculus, same family as the
+ *                 original 'careless'/'sign' bucket)
+ *   didn't-know — method_selection, prerequisite, representation
+ *                 (a genuine knowledge gap, same family as 'method')
+ * A dedicated completeness test asserts every ErrorTag member is
+ * explicitly classified in one of the two sets, so a future union
+ * addition that forgets this file fails loudly instead of silently
+ * changing `leftOnTable` semantics by falling through as "didn't know".
+ *
  * The student-facing UI reads `topDrillRecommendation` and points them
  * at the matching error drill — closing the loop §2.5 promises.
  */
 
 import type { Attempt, ErrorTag, SkillId } from '../core/interfaces';
 
-const KNEW_IT_TAGS: ReadonlyArray<ErrorTag> = [
+export const KNEW_IT_TAGS: ReadonlyArray<ErrorTag> = [
   'sign', 'unit', 'misread', 'transcription', 'careless',
+  'time_pressure', 'mode_nat_entry', 'mode_msq', 'risk_decision',
+];
+
+/**
+ * Every ErrorTag member NOT in KNEW_IT_TAGS, explicit about why it isn't:
+ * a genuine knowledge/method gap, not a mechanical slip. Exported only for
+ * the union-completeness test below — production code never reads this,
+ * it reads KNEW_IT_TAGS (membership, not exclusion, drives the aggregator).
+ */
+export const DIDNT_KNOW_TAGS: ReadonlyArray<ErrorTag> = [
+  'method', 'method_selection', 'prerequisite', 'representation',
 ];
 
 export interface NodeMockSummary {

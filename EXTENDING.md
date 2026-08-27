@@ -286,6 +286,72 @@ Two rules that are not negotiable:
   apply are an error naming the param and its required value, not a
   best-effort grade. A wrong mark is worse than a refusal.
 
+## Authoring a branching walkthrough (method-selection trainer)
+
+A `guided_walkthrough` interactive-spec may carry an optional `branches`
+tree (plan W2.5, amendment D1). It renders as a sequential question wizard
+— one question per view, full-width choice buttons, a breadcrumb, and a
+leaf that names the method and says why. It is NOT a new `InteractiveKind`:
+adding one would cost a ~12-site lockstep, and the tree is a presentation
+of the same kind.
+
+Authoring surface — a fenced block in the atom body, exactly like any other
+interactive-spec:
+
+```jsonc
+{
+  "v": 1,
+  "kind": "guided_walkthrough",
+  "title": "Green, Stokes or Gauss?",
+  "steps": [ /* required, see below */ ],
+  "branches": {
+    "v": 1,
+    "nodes": [ { "id": "n1", "question": "Is the region closed?",
+                 "options": [ { "label": "Yes", "next": "n2" },
+                              { "label": "No",  "next": "leaf_stokes" } ] } ],
+    "leaves": [ { "id": "leaf_stokes", "method": "Stokes' theorem",
+                  "reason": "An open surface with an oriented boundary wants Stokes.",
+                  "best": true } ]
+  }
+}
+```
+
+Rules the shared validator enforces (renderer and `npm run
+ci:interactive-specs` run the same code — content that lints cannot fail to
+render):
+
+- `steps` stays REQUIRED. It is the `v: 1` degradation path: a renderer
+  that predates `branches` ignores the unknown field and still shows a
+  usable linear walkthrough.
+- ids are unique across nodes AND leaves; `nodes[0]` is the root.
+- every `options[].next` names an existing node or leaf — a dangling target
+  is a button that goes nowhere.
+- every node and leaf is reachable from the root; the tree is acyclic.
+- a node has at least two options. A decision with one route is not one.
+- every leaf has a `method` and a non-empty `reason`, and at least one leaf
+  is `best: true`. The lint additionally holds a committed reason to at
+  least four words — it renders to a student as a 17px sentence, never as
+  a code.
+
+Two rules that are not negotiable:
+
+- **Self-check only (amendment E5).** The spec ships to the browser inside
+  a fenced block, so the answer is client-visible. The widget takes no
+  grading callback, makes no request, and feeds nothing into
+  `StudentModel`; it carries the honesty label "Self-check — not exam
+  grading, no marks recorded." Measuring method selection is the job of a
+  server-graded item whose options are methods.
+- **Every wrong route is walkable, and the dead end is the lesson.** Do not
+  author a tree that blocks a plausible mistake — author the leaf that
+  explains why that method fails here. Green marks the best leaf (the
+  sanctioned exception to the other interactives' never-judge stance); a
+  non-best leaf gets neutral tokens and words, never red.
+
+Worked examples: `frontend/src/data/method-selection-trainers.ts` (the two
+standalone trainer pages) and
+`modules/project-vidhya-content/concepts/stokes-theorem/atoms/common-traps.md`
+(lesson-embedded).
+
 ## Debug trace
 
 Set `VIDHYA_CONTENT_DEBUG=true` to see every router decision logged to console:

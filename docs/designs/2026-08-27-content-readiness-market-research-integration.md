@@ -240,6 +240,85 @@ them is the execution truth.)*
 - **W3.8 Triage & re-entry session modes.** Visible-deferral triage +
   no-shame re-entry on `SyllabusAwareReadinessEngine`. STUDENT-GATED.
 
+### W-UI. UI contracts for the student-visible surfaces (design-review fold)
+
+Each P0–P2 surface gets its contract HERE, before any component exists — the
+standard is `ProblemStatementBlock`'s 25-line header comment, written in
+advance. Backend failure modes live in §8; these are the design rulings.
+
+**P0 — DPS block flag-on QA (adds a tone pass).** "QA" means two things:
+(a) render QA across LA pages; (b) a register pass reading all ~26 LA
+`pain_point` strings in sequence. The block opens every page with "Where
+marks die on this topic" — a daily loss prime for the anxious persona the
+platform explicitly models. If more than a few openers are fear-framed,
+reorder exam-intent-first (the actionable fact before the wound) or soften
+the eyebrow. Copy edit, not rebuild; costs nothing at P0.
+
+**W3.2 counterfactual (on the mock results page, never an interstitial):**
+- Four-beat copy contract, in order: (1) **earned** — the score, plainly;
+  (2) **knewIt** — "you knew enough for N more marks" (competence proof,
+  same number as leftOnTable reframed); (3) the gap framed as *recoverable
+  through decisions, not knowledge*; (4) exactly ONE action — the drill CTA.
+  Loss language appears only inside beat 3, after competence is established.
+  Register locked in `MockToMarksReport.headline`, not in the component.
+- `COUNTERFACTUAL_ITEM_CAP = 3` (literal, tested — the cohort-cap
+  precedent): top 3 costliest decisions; the rest roll up into one collapsed
+  line.
+- The results summary is the page's ONE focal card; the counterfactual is
+  plain text under a hairline (the ProblemStatementBlock pattern); the CTA
+  is a full-width button, not a card. **No receipt border** — leftOnTable is
+  derived analysis, not a verification receipt.
+- Student register, always: "At your accuracy on this topic, skipping this
+  question type gains you about 2 marks per mock." Marks, not EV; sentences,
+  not formulas; break-even p stays server-side. Negative marks rendered with
+  the sign explained ("−⅔ of a mark").
+- 17px floor: per-question cost lines are stacked rows (17px label / 15px
+  supporting), never a 13px table.
+- State matrix: `leftOnTable = 0` → the best screen in the product ("you
+  extracted everything you knew" — the success state gets real copy);
+  mostly-skipped mock (knewIt ≈ earned) → coaching inverts to "attempt
+  more," never naive skip-praise; no careless tags available (MCQ-only) →
+  the section renders the headline only, no fabricated decomposition;
+  revisiting an old mock → same screen from persisted analysis.
+- Reachable, ignorable, repeatable: below the score, scroll-discoverable,
+  never blocking.
+
+**W3.2 attempt/skip drill:**
+- "Attempt" and "Skip" are equal-weight, equal-size, 44px buttons — neither
+  styled primary. The UI must not teach "skipping is giving up" while the
+  content teaches the opposite.
+- A correct skip gets the **green** confirmation (green = correctness — the
+  most persuasive pixel this feature ships).
+- Fewer than 5 eligible marked items → honest 422 refusal (quiz-pool
+  pattern); DB-less → the readiness routes' "building your baseline" honesty.
+
+**W2.5 decision_tree widget:**
+- Interaction model: a **sequential question wizard** extending
+  `GuidedWalkthrough`'s skeleton (one question card per view, full-width
+  44px choice buttons, breadcrumb of choices) — never a rendered tree
+  diagram on a 375px screen.
+- Grading: **graded at the leaf only**, ungraded mid-tree; a wrong branch is
+  walkable to its dead end before the reveal — the dead end IS the lesson.
+  Green marks the correct leaf; this widget is the sanctioned exception to
+  the other three kinds' never-judge stance, and the spec says so.
+- "Wrong" has no color in Clarity: wrong-leaf treatment is neutral tokens +
+  words ("Not the best route here — here's why"), no red anywhere, no
+  hard-coded hex. Reason codes render as 17px sentences, never codes.
+
+**W3.7 confidence chip (gated):** one-tap, below the answer input,
+neutral tokens (not indigo — it isn't AI; not green — it isn't correctness),
+44px (standalone tap; the chip-in-row exemption does not apply), skippable
+by simply answering. Close the loop per-attempt: a post-answer echo
+("Unsure + correct — trust yourself more") — feedback, not a stored profile,
+threading the surveillance invariants. Without the echo, capture decays to
+selection-biased zero.
+
+**W3.8 stubs (gated, specified now while intent is fresh):** a deferral is a
+plain-text row under a "Deliberately parked" hairline section with its
+reason — tokens only, no card, no count-shaming. Re-entry opens on
+competence framing (`knewIt`-style recap), never on decay framing, and never
+renders the absence gap as a number.
+
 ### Sequencing — core plan + gated expansions
 
 **Core plan (finishes; one operator; no external dependency):**
@@ -432,6 +511,21 @@ solid" means here: nothing scheduled that the platform's one real constraint
 | 12 | CEO | Activation gate (≥50 weekly-active) on all outcome-dependent expansions | Taste → folded | P6 | Without students the instruments have no specimens; the plan says so instead of pretending | artifact-completion metrics |
 | 13 | CEO | Users-first/acquisition question surfaced at final gate, not silently dismissed | User-facing | — | Third silent dismissal of the SEO/acquisition asset would be a pattern; operator must decide consciously | quiet "NOT in scope" repeat |
 
+| 14 | Design | Counterfactual four-beat copy contract (earned→knewIt→recoverable→one CTA); loss language only in beat 3 | Mechanical | P1/P5 | Contradiction with motivation-aware-policy's own anxiety theory; competence before loss | loss-first framing |
+| 15 | Design | COUNTERFACTUAL_ITEM_CAP=3, rest collapsed | Mechanical | P5 | Shame-ledger prevention; cohort-cap precedent | full per-question scroll |
+| 16 | Design | Counterfactual lives on results page, never interstitial; repeatable from persisted analysis | Mechanical | P5 | Discoverable but ignorable; forced wall reads as punishment | blocking interstitial |
+| 17 | Design | Skip/Attempt equal-weight 44px buttons; green confirms correct skips | Mechanical | P1 | UI grammar must not contradict the lesson | secondary-styled skip |
+| 18 | Design | Full state matrix for W3.2 (leftOnTable=0 success copy, skip-heavy inversion, tag-degenerate, <5-item 422, DB-less honesty) | Mechanical | P1 | Success state is the best screen in the product; edge honesty | happy-path only |
+| 19 | Design | decision_tree = sequential wizard on GuidedWalkthrough skeleton; graded at leaf only; wrong branch walkable | Taste → folded | P5 | Mobile-first; dead end is the lesson; sanctioned green exception documented | tree diagram render / fully-graded |
+| 20 | Design | No red anywhere; wrong = neutral tokens + words | Mechanical | design system | Clarity has no error accent; anxiety-correct too | hard-coded #dc2626 |
+| 21 | Design | One focal card ruling: results summary is THE card; counterfactual is hairline text; CTA is a button | Mechanical | design system | ProblemStatementBlock precedent | three stacked cards |
+| 22 | Design | No receipt border on W3.2 surfaces | Mechanical | design system | leftOnTable is analysis, not a receipt | gravitas misuse |
+| 23 | Design | P0 QA includes pain_point register/tone pass across LA pages | Mechanical | P1 | "Where marks die" ×26 pages is a loss prime for the modeled anxious persona | render-only QA |
+| 24 | Design | Confidence chip closes the loop with per-attempt post-answer echo; 44px, neutral, subordinate | Taste → folded | P1/P6 | Without payoff, capture decays to biased zero; echo is feedback, not a profile | capture-only chip |
+| 25 | Design | Student register mandate: marks not EV, sentences not formulas, signs explained | Mechanical | P5 | Operator register leaking to students; INTENT_STUDENT_LABEL precedent | "+2 EV" copy |
+| 26 | Design | W3.8 UI stubs written now (deferral row spec, competence-framed re-entry) | Mechanical | P1 | Gated features get built after context evaporates | one-line specs |
+| 27 | Design | 17px floor on counterfactual rows and reason codes (no 13px tables) | Mechanical | design system | Students read these; floor applies | dense data table |
+
 ## CEO DUAL VOICES — CONSENSUS TABLE
 
 ```
@@ -447,4 +541,22 @@ solid" means here: nothing scheduled that the platform's one real constraint
 ═══════════════════════════════════════════════════════════════
 [subagent-only] — codex CLI absent in this environment.
 One subagent factual error corrected against repo evidence (decision 4).
+```
+
+## DESIGN DUAL VOICES — CONSENSUS TABLE
+
+```
+═══════════════════════════════════════════════════════════════
+  Dimension                            Claude  Subagent  Consensus
+  ───────────────────────────────────  ──────  ────────  ─────────
+  1. Hierarchy serves the student?     PARTIAL NO(rev2)  CONFIRMED fix (W-UI: four-beat arc, one-focal-card rulings)
+  2. Interaction states specified?     NO      NO        CONFIRMED fix (W-UI state matrices)
+  3. Emotional arc sound (anxious)?    RISK    NO        CONFIRMED fix (loss-frame ban outside beat 3; P0 tone pass)
+  4. Specific UI vs generic patterns?  PARTIAL NO        CONFIRMED fix (per-surface contracts written pre-component)
+  5. Ambiguities that haunt impl?      SOME    6 NAMED   CONFIRMED fix (wizard model, leaf grading, no-red ruling,
+                                                          skip parity, receipt ban, item cap)
+  6. Design-system compliance?         RISK    RISK      CONFIRMED fix (green/indigo discipline, 17px floor, 44px)
+  7. Gated-surface spec debt?          —       YES       CONFIRMED fix (W3.7 echo, W3.8 stubs written now)
+═══════════════════════════════════════════════════════════════
+[subagent-only] — codex CLI absent. All 14 findings folded; none rejected.
 ```

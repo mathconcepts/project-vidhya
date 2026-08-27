@@ -3,9 +3,10 @@
 This is the map for engineers extending the content cascade. Read it before
 opening any file.
 
-The content module has four extension contracts. All live under `src/content/`
-or `src/verification/`. Each has a TypeScript interface, a contract test
-function, and a one-line registration hook.
+The content module has five extension contracts. Four live under
+`src/content/` or `src/verification/`; `MarkingStrategy` lives under
+`src/scoring/`. Each has a TypeScript interface, a contract test function,
+and a one-line registration hook.
 
 | Contract | What it does | File | Contract test |
 |---|---|---|---|
@@ -13,6 +14,7 @@ function, and a one-line registration hook.
 | `ContentVerifier` | Verifies CONTENT QUALITY (clarity, provenance) | `src/content/verifiers/types.ts` | `runContentVerifierContract` |
 | `CadenceStrategy` | Knowledge vs. exam-prep cadence | `src/content/cadence.ts` | `runCadenceStrategyContract` |
 | `PedagogyReviewer` | Async quality gate for generated content | `src/content/pedagogy.ts` | `runPedagogyReviewerContract` |
+| `MarkingStrategy` | Marks one structured response under an exam's rules | `src/scoring/marking-strategy.ts` | `runMarkingStrategyContract` |
 
 Two different "verifier" concepts: **AnswerVerifier** checks whether a math
 answer is correct (Wolfram, SymPy, LLM consensus). **ContentVerifier** checks
@@ -148,6 +150,142 @@ export const geminiReviewer: PedagogyReviewer = {
 };
 ```
 
+## Adding a new MarkingStrategy
+
+A `MarkingStrategy` marks one structured response (an option index, a set of
+indices, a numeric value) under one exam's rules. The **strategy id names
+the algorithm; the contract row names the numbers** — that split is what
+makes an exam with familiar arithmetic a data change instead of a code
+change.
+
+Reach for a new strategy only when the arithmetic itself is new. If the new
+exam just has different negatives or different mark values, add a row to
+`assessment_contracts` and stop — no code. If it needs a computation no
+registered strategy performs (JEE Advanced's partial-marking matrix is the
+worked example, in
+`docs/designs/2026-08-27-assessment-contract-jee-advanced-check.md`), it
+needs one strategy, and never a fork of `GateDeterministicScorer`.
+
+1. Create `src/scoring/marking-strategies/jee-adv.ts`:
+
+   ```ts
+   import type {
+     MarkingStrategy, MarkingStrategyItem, MarkingStrategyResponse,
+   } from '../marking-strategy';
+   import type { GradeResult } from '../../core/interfaces';
+
+   export const jeeAdvStrategy: MarkingStrategy = {
+     id: 'jee_adv',
+     description: 'Flat MCQ negative; MSQ partial-marking matrix by miss-count.',
+     supportedKinds: ['mcq', 'msq', 'nat'],
+
+     async grade(
+       item: MarkingStrategyItem,
+       response: MarkingStrategyResponse,
+       params?: Record<string, unknown>,
+     ): Promise<GradeResult> {
+       if (!this.supportedKinds.includes(item.kind)) {
+         // Refuse by name. Never return a fabricated 0 — that is a wrong
+         // mark on a student's paper wearing the costume of a valid one.
+         throw new Error(
+           `marking strategy 'jee_adv' does not grade question kind '${item.kind}'; ` +
+           `supported: ${this.supportedKinds.join(', ')}`,
+         );
+       }
+       const marks = Number(params?.marks_correct ?? item.marks);
+       const wrong = Number(params?.marks_wrong ?? 0);
+       if (response.skipped) {
+         return graded(0, marks, false, 'Skipped: no marks awarded or deducted.');
+       }
+       const correct = response.selectedIndex === item.answerIndex;
+       return graded(correct ? marks : wrong, marks, correct, correct ? 'Correct.' : 'Incorrect.');
+     },
+   };
+
+   function graded(earned: number, max: number, correct: boolean, feedback: string): GradeResult {
+     return {
+       earned, max, perCriterion: { final: earned },
+       feedback, confidence: 1.0, casFinalAnswerCorrect: correct,
+     };
+   }
+   ```
+
+2. Register it. Add one line to `registerBuiltInMarkingStrategies()` in
+   `src/scoring/marking-strategy.ts`:
+
+   ```ts
+   registerMarkingStrategy(jeeAdvStrategy);
+   ```
+
+   Duplicate ids throw at registration rather than letting import order
+   decide which implementation silently wins.
+
+3. Write the contract test at
+   `src/scoring/__tests__/jee-adv-strategy.test.ts`:
+
+   ```ts
+   import { describe } from 'vitest';
+   import { runMarkingStrategyContract } from '../marking-strategy-contract';
+   import { jeeAdvStrategy } from '../marking-strategies/jee-adv';
+
+   describe('jeeAdvStrategy', () => {
+     runMarkingStrategyContract(jeeAdvStrategy, {
+       item: { id: 'q1', kind: 'mcq', marks: 3, answerIndex: 2, options: ['a', 'b', 'c', 'd'] },
+       params: { marks_correct: 3, marks_wrong: -1 },
+       correct: { kind: 'mcq', selectedIndex: 2 },
+       wrong: { kind: 'mcq', selectedIndex: 0 },
+       skipped: { kind: 'mcq', skipped: true },
+       expectedWrongMarks: -1,
+       unsupportedKind: 'descriptive',
+     });
+   });
+   ```
+
+   Unlike the other four contracts, this one takes a fixture: a strategy for
+   a different exam grades different question kinds, so the contract cannot
+   hardcode one item shape. The fixture declares one correct / wrong /
+   skipped triple and what a wrong answer must cost — the fact the contract
+   exists to pin down.
+
+4. Add the strategy's contract row. `assessment_contracts` is keyed
+   `(exam, paper, year)`; `marking` is per question type, each naming a
+   strategy and its params:
+
+   ```json
+   {"mcq": {"strategy": "jee_adv", "params": {"marks_correct": 3, "marks_wrong": -1}}}
+   ```
+
+   A row whose `strategy` nobody registered is refused at resolve time,
+   naming the id and what would have worked:
+
+   ```
+   marking_strategy 'jee_adv_2027' is not registered; known: gate_2026, jee_adv
+   ```
+
+5. Extend the seam-registry entry if you add a new interface or test file.
+   The existing entry already covers this seam:
+
+   ```json
+   {
+     "name": "marking-strategy",
+     "interface_file": "src/scoring/marking-strategy.ts",
+     "config_source": "supabase/migrations/050_assessment_contracts.sql (assessment_contracts.marking), with src/exams/marking-constants.ts as the compiled DB-less fallback",
+     "conformance_test_path": "src/scoring/__tests__/marking-strategy-contract.test.ts"
+   }
+   ```
+
+   `npm run ci:seam-registry` fails if either path stops resolving.
+
+Two rules that are not negotiable:
+
+- **The numbers live in the contract, never in the strategy.** GATE's are
+  compiled once in `src/exams/marking-constants.ts` (the DB-less fallback
+  and the generator of migration 050's seed row) and nowhere else — five
+  independent statements of the same marking fact is what plan D7 deleted.
+- **Refuse, never fabricate.** Params describing rules your strategy cannot
+  apply are an error naming the param and its required value, not a
+  best-effort grade. A wrong mark is worse than a refusal.
+
 ## Debug trace
 
 Set `VIDHYA_CONTENT_DEBUG=true` to see every router decision logged to console:
@@ -203,6 +341,15 @@ src/verification/
 │   ├── wolfram.ts           Tier 3 — Wolfram Alpha
 │   ├── sympy.ts             Tier 4-eligible — SymPy
 │   └── llm-consensus.ts     Tier 2 — LLM dual-solve
+
+src/scoring/
+├── marking-strategy.ts           MarkingStrategy interface + registry + gate_2026
+├── marking-strategy-contract.ts  runMarkingStrategyContract
+└── deterministic-scorer.ts       the arithmetic gate_2026 delegates to
+
+src/exams/
+├── marking-constants.ts             the ONE compiled marking truth
+└── assessment-contract-loader.ts    DB row → compiled fallback, 60s TTL
 ```
 
 ## Common pitfalls
@@ -215,6 +362,9 @@ src/verification/
   any failure. The contract test enforces this.
 - **Don't register Tier 1-3 verifiers.** `registerVerifier()` rejects them.
   Tier 1-3 are reserved for the built-in cascade.
+- **Don't restate a marking number.** GATE's live in
+  `src/exams/marking-constants.ts` and are derived everywhere else. A second
+  copy is how five of them appeared before plan D7 collapsed them.
 - **Don't synchronously call PedagogyReviewer in the delivery path.** It's
   async post-delivery by design. Sync placement was rejected in eng review
   (ER-D3) because it would 2x student-facing latency.

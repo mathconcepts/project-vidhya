@@ -51,8 +51,8 @@ async function authFetchMock() {
   return vi.mocked(authFetch);
 }
 
-beforeEach(() => vi.resetAllMocks());
-afterEach(() => vi.resetAllMocks());
+beforeEach(() => { vi.resetAllMocks(); });
+afterEach(() => { vi.resetAllMocks(); });
 
 describe('AttemptSkipDrillPage', () => {
   it('says what is missing when opened without a concept, rather than picking one', async () => {

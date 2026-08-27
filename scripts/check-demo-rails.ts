@@ -26,12 +26,18 @@
  * legitimate when the card's whole point is meeting a concept cold. Explicit,
  * so the intent is visible in review rather than inferred from a silent pass.
  *
- * Usage: npx tsx scripts/check-demo-rails.ts
+ * The deck is not the only thing a visitor's first ten seconds depend on. This
+ * gate also asserts the demo deploy's committed blueprint turns the intent
+ * lanes ON (`VIDHYA_INTENT_LANES=on` in render.yaml) — see checkIntentLanes
+ * below for why a flag deserves a CI assertion at all.
+ *
+ * Usage: npx tsx scripts/check-demo-rails.ts [railsPath] [renderBlueprintPath]
  */
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parse as parseYaml } from 'yaml';
 import { parseInteractiveSpec } from '../frontend/src/components/lesson/interactives/types';
 import { VARIANT_STANCES } from '../src/content/stance-variants';
 
@@ -42,6 +48,11 @@ const ROOT = path.resolve(__dirname, '..');
 const RAILS = process.argv[2]
   ? path.resolve(process.argv[2])
   : path.join(ROOT, 'config/demo-rails.json');
+// Same reason as RAILS above: the lanes-on assertion is only trustworthy if
+// someone has watched it fail, and that needs a blueprint it can be pointed at.
+const RENDER_BLUEPRINT = process.argv[3]
+  ? path.resolve(process.argv[3])
+  : path.join(ROOT, 'render.yaml');
 const PERSONAS = path.join(ROOT, 'data/personas');
 const CONCEPTS = path.join(ROOT, 'modules/project-vidhya-content/concepts');
 const PRACTICE_ITEMS = path.join(ROOT, 'data', 'practice-items');
@@ -152,6 +163,85 @@ function checkReachability(card: any): void {
 
 const errors: string[] = [];
 const fail = (cardId: string, msg: string) => errors.push(`  card "${cardId}"\n      ${msg}`);
+/** Deploy-level problems are not any one card's fault, so they are labelled by
+ * the file that carries them rather than by a card id. */
+const failDeploy = (msg: string) =>
+  errors.push(`  ${path.relative(ROOT, RENDER_BLUEPRINT)}\n      ${msg}`);
+
+const INTENT_LANES_KEY = 'VIDHYA_INTENT_LANES';
+const INTENT_LANES_EXPECTED = 'on';
+
+/**
+ * The demo deploy's committed blueprint must turn the intent lanes ON.
+ *
+ * Every check above asks whether the content behind a card exists. This one
+ * asks whether the visitor is shown it at all. The Definite Problem Statement
+ * block and the intent-ordered atom sequence render only when
+ * `/api/auth/config` reports `intent_lanes: true`, which is
+ * `VIDHYA_INTENT_LANES === 'on'` in `src/api/auth-routes.ts` — so with the flag
+ * off the whole of T4 is shipped, tested, deployed and invisible, and every
+ * other check in this file still passes.
+ *
+ * That is not hypothetical: the block shipped behind this flag, the flag was
+ * never set on the demo, and the same feedback ("the demo opens on a concept
+ * page with no problem statement") came back a second time against code that
+ * had already fixed it. An unwatched flag is the failure mode; a gate is the
+ * only thing that watches one.
+ *
+ * Reading the committed blueprint rather than `process.env` is deliberate. CI
+ * does not run with the demo's environment, and a flag set only in the Render
+ * dashboard is invisible to review and does not survive service recreation.
+ * The blueprint is the artifact the deploy is actually built from.
+ */
+function checkIntentLanes(): void {
+  if (!fs.existsSync(RENDER_BLUEPRINT)) {
+    failDeploy(
+      `blueprint not found, so nothing proves the demo deploy sets ${INTENT_LANES_KEY}\n` +
+        `      actual:   no file at this path\n` +
+        `      expected: a Render blueprint declaring ${INTENT_LANES_KEY}: "${INTENT_LANES_EXPECTED}"`,
+    );
+    return;
+  }
+
+  let blueprint: any;
+  try {
+    blueprint = parseYaml(fs.readFileSync(RENDER_BLUEPRINT, 'utf8'));
+  } catch (e) {
+    failDeploy(`blueprint is not valid YAML — ${(e as Error).message}`);
+    return;
+  }
+
+  const services = Array.isArray(blueprint?.services) ? blueprint.services : [];
+  if (services.length === 0) {
+    failDeploy(
+      `blueprint declares no services[], so no service turns the intent lanes on\n` +
+        `      actual:   services[] is missing or empty\n` +
+        `      expected: at least one service with ${INTENT_LANES_KEY}: "${INTENT_LANES_EXPECTED}" in envVars`,
+    );
+    return;
+  }
+
+  for (const service of services) {
+    const name = service?.name ?? '(unnamed service)';
+    const envVars: any[] = Array.isArray(service?.envVars) ? service.envVars : [];
+    const entry = envVars.find((v) => v?.key === INTENT_LANES_KEY);
+    const actual =
+      entry === undefined
+        ? 'not declared at all'
+        : entry.value === undefined
+          ? `declared with no value (${JSON.stringify(entry)}) — an operator-supplied key, not a committed one`
+          : `"${String(entry.value)}"`;
+
+    if (entry !== undefined && String(entry.value) === INTENT_LANES_EXPECTED) continue;
+
+    failDeploy(
+      `service "${name}" does not turn the intent lanes on, so the demo would open concept ` +
+        `pages with the problem-statement block shipped and invisible\n` +
+        `      actual:   ${INTENT_LANES_KEY} ${actual}\n` +
+        `      expected: ${INTENT_LANES_KEY}: "${INTENT_LANES_EXPECTED}" in this service's envVars`,
+    );
+  }
+}
 
 /**
  * Read a persona's declared mastery keys without pulling in the YAML loader.
@@ -511,13 +601,18 @@ function main(): void {
     checkCaptions(card);
   }
 
+  checkIntentLanes();
+
   if (errors.length > 0) {
     console.error(`\n✗ demo rails: ${errors.length} problem(s)\n`);
     console.error(errors.join('\n'));
     console.error('');
     process.exit(1);
   }
-  console.log(`✓ demo rails: ${config.cards.length} card(s) valid and walkable`);
+  console.log(
+    `✓ demo rails: ${config.cards.length} card(s) valid and walkable; ` +
+      `${INTENT_LANES_KEY}=${INTENT_LANES_EXPECTED} in ${path.relative(ROOT, RENDER_BLUEPRINT)}`,
+  );
 }
 
 main();

@@ -45,7 +45,13 @@ vi.mock('../../constants/concept-graph', () => ({
   getConceptsForTopic: (...args: any[]) => mockGetConceptsForTopic(...args),
 }));
 
+const mockPrepareBatchRun = vi.fn();
+vi.mock('../batch/poller', () => ({
+  prepareBatchRun: (...args: any[]) => mockPrepareBatchRun(...args),
+}));
+
 const { dispatchRun, resumeQueuedRuns } = await import('../run-dispatcher');
+const { practiceItemSpecFromAtomSpec } = await import('../practice-item-factory/batch-dispatch');
 
 function baseConfig(overrides: Partial<GenerationRunConfig> = {}): GenerationRunConfig {
   return {
@@ -240,6 +246,143 @@ describe('dispatchRun · unit mode', () => {
     expect(mockIncrementRunArtifacts).toHaveBeenCalledWith('run_1', 4);
     expect(mockMarkRunComplete).toHaveBeenCalledWith('run_1', 0.2);
     expect(mockGenerateConcept).not.toHaveBeenCalled();
+  });
+});
+
+describe('dispatchRun · practice-item mode', () => {
+  const ORIGINAL_GEMINI_KEY = process.env.GEMINI_API_KEY;
+
+  beforeEach(() => {
+    process.env.GEMINI_API_KEY = 'test-gemini-key';
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_GEMINI_KEY === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = ORIGINAL_GEMINI_KEY;
+  });
+
+  function practiceItemSpecs() {
+    return [
+      { concept_id: 'eigenvalues', format: 'mcq' as const, difficulty: 0.5, topic: 'linear-algebra', require_failure_tags: true },
+      { concept_id: 'determinants', format: 'nat' as const, difficulty: 0.3, topic: 'linear-algebra' },
+    ];
+  }
+
+  it('converts practice_item_specs into AtomSpec[] and hands them to prepareBatchRun', async () => {
+    const run = baseRun({
+      config: baseConfig({
+        target: { practice_item_specs: practiceItemSpecs() },
+        pipeline: { llm_models: ['gemini-2.5-flash'] },
+      }),
+    });
+    mockGetRun.mockResolvedValue(run);
+    mockPrepareBatchRun.mockResolvedValue({ kind: 'transitioned', from: 'queued', to: 'prepared' });
+
+    await dispatchRun('run_1');
+
+    expect(mockPrepareBatchRun).toHaveBeenCalledTimes(1);
+    const [runId, atomSpecs] = mockPrepareBatchRun.mock.calls[0];
+    expect(runId).toBe('run_1');
+    expect(atomSpecs).toHaveLength(2);
+
+    expect(atomSpecs[0]).toMatchObject({
+      concept_id: 'eigenvalues',
+      atom_type: 'practice_item',
+      prompt_vars: expect.objectContaining({
+        format: 'mcq',
+        topic: 'linear-algebra',
+        difficulty_frac: 0.5,
+        require_failure_tags: true,
+      }),
+    });
+    // Round-trips through the SAME reconstruction the batch poller uses on
+    // the poll side (batch-dispatch.ts) — this is the contract that makes
+    // require_failure_tags/mode mix actually reach the gate ledger.
+    expect(practiceItemSpecFromAtomSpec(atomSpecs[0])).toEqual({
+      concept_id: 'eigenvalues',
+      format: 'mcq',
+      difficulty: 0.5,
+      topic: 'linear-algebra',
+      require_failure_tags: true,
+    });
+    expect(practiceItemSpecFromAtomSpec(atomSpecs[1])).toEqual({
+      concept_id: 'determinants',
+      format: 'nat',
+      difficulty: 0.3,
+      topic: 'linear-algebra',
+      require_failure_tags: false,
+    });
+  });
+
+  it('does not touch the atom/unit generators for a practice-item run', async () => {
+    const run = baseRun({ config: baseConfig({ target: { practice_item_specs: practiceItemSpecs() } }) });
+    mockGetRun.mockResolvedValue(run);
+    mockPrepareBatchRun.mockResolvedValue({ kind: 'transitioned', from: 'queued', to: 'prepared' });
+
+    await dispatchRun('run_1');
+
+    expect(mockGenerateConcept).not.toHaveBeenCalled();
+    expect(mockGenerateUnitsForRun).not.toHaveBeenCalled();
+  });
+
+  it('does NOT mark the run complete on a successful prepare — the batch lifecycle is async', async () => {
+    const run = baseRun({ config: baseConfig({ target: { practice_item_specs: practiceItemSpecs() } }) });
+    mockGetRun.mockResolvedValue(run);
+    mockPrepareBatchRun.mockResolvedValue({ kind: 'transitioned', from: 'queued', to: 'prepared' });
+
+    await dispatchRun('run_1');
+
+    expect(mockMarkRunStarted).toHaveBeenCalledWith('run_1');
+    expect(mockMarkRunComplete).not.toHaveBeenCalled();
+    expect(mockMarkRunFailed).not.toHaveBeenCalled();
+    // Records the locked cost estimate so ActiveRunsPanel shows something
+    // other than $0 while the batch runs.
+    expect(mockUpdateRunCost).toHaveBeenCalledWith('run_1', expect.any(Number));
+    expect(mockUpdateRunCost.mock.calls[0][1]).toBeGreaterThan(0);
+  });
+
+  it('refuses at launch, naming GEMINI_API_KEY, when the batch pipeline\'s primary provider is unset', async () => {
+    delete process.env.GEMINI_API_KEY;
+    const run = baseRun({ config: baseConfig({ target: { practice_item_specs: practiceItemSpecs() } }) });
+    mockGetRun.mockResolvedValue(run);
+
+    await dispatchRun('run_1');
+
+    expect(mockPrepareBatchRun).not.toHaveBeenCalled();
+    expect(mockMarkRunFailed).toHaveBeenCalledWith('run_1', expect.stringContaining('GEMINI_API_KEY'));
+  });
+
+  it('refuses a malformed spec, naming the exact index + field, without calling prepareBatchRun', async () => {
+    const run = baseRun({
+      config: baseConfig({
+        target: {
+          practice_item_specs: [
+            { concept_id: 'eigenvalues', format: 'bogus-format', difficulty: 0.5, topic: 'linear-algebra' } as any,
+          ],
+        },
+      }),
+    });
+    mockGetRun.mockResolvedValue(run);
+
+    await dispatchRun('run_1');
+
+    expect(mockPrepareBatchRun).not.toHaveBeenCalled();
+    expect(mockMarkRunFailed).toHaveBeenCalledWith(
+      'run_1',
+      expect.stringMatching(/practice_item_specs\[0\]\.format/),
+    );
+  });
+
+  it('surfaces the orchestrator\'s own recorded reason when prepare() fails (launch guard / budget)', async () => {
+    const run = baseRun({ config: baseConfig({ target: { practice_item_specs: practiceItemSpecs() } }) });
+    mockGetRun
+      .mockResolvedValueOnce(run) // dispatchRun's initial load
+      .mockResolvedValueOnce({ ...run, error: 'budget_exceeded: estimate $9.00 > remaining $5.00' }); // re-fetch after failure
+    mockPrepareBatchRun.mockResolvedValue({ kind: 'transitioned', from: 'queued', to: 'failed' });
+
+    await dispatchRun('run_1');
+
+    expect(mockMarkRunFailed).toHaveBeenCalledWith('run_1', expect.stringContaining('budget_exceeded'));
   });
 });
 

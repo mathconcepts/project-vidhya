@@ -27,6 +27,24 @@ function getPool(): Pool | null {
 }
 
 /**
+ * budget_remaining_usd has no dedicated column — it's read out of the
+ * generation_runs.config JSONB blob every caller already writes.
+ * Preference order: an explicit `config.budget_remaining_usd` (a value
+ * nothing sets today, kept for a future caller that wants to override the
+ * quota-derived figure), else `config.quota.max_cost_usd` — the SAME cap
+ * the RunLauncher form and run-dispatcher.ts's atom/unit modes already
+ * enforce, so a practice-item run's batch-lane budget check
+ * (orchestrator.ts's prepare()) uses the one number the operator actually
+ * set rather than a second, unrelated default. Falls back to 100 only when
+ * neither is present (a config predating both).
+ */
+const BUDGET_REMAINING_SQL = `COALESCE(
+  (config->>'budget_remaining_usd')::FLOAT8,
+  (config->'quota'->>'max_cost_usd')::FLOAT8,
+  100
+)`;
+
+/**
  * Postgres advisory lock keys are bigints. We hash the run_id into one
  * deterministically so the same run always grabs the same key.
  */
@@ -54,7 +72,7 @@ export function createPgPersistence(): BatchPersistence {
       if (!pool) return null;
       const r = await pool.query<RunRowDb>(
         `SELECT id, exam_pack_id, batch_provider, batch_id, batch_state, jsonl_path,
-                budget_locked_usd::FLOAT8, COALESCE((config->>'budget_remaining_usd')::FLOAT8, 100) AS budget_remaining_usd,
+                budget_locked_usd::FLOAT8, ${BUDGET_REMAINING_SQL} AS budget_remaining_usd,
                 submitted_at::TEXT, last_polled_at::TEXT, error
            FROM generation_runs WHERE id = $1`,
         [run_id],
@@ -182,7 +200,7 @@ export function createPgPersistence(): BatchPersistence {
       if (!pool) return [];
       const r = await pool.query<RunRowDb>(
         `SELECT id, exam_pack_id, batch_provider, batch_id, batch_state, jsonl_path,
-                budget_locked_usd::FLOAT8, COALESCE((config->>'budget_remaining_usd')::FLOAT8, 100) AS budget_remaining_usd,
+                budget_locked_usd::FLOAT8, ${BUDGET_REMAINING_SQL} AS budget_remaining_usd,
                 submitted_at::TEXT, last_polled_at::TEXT, error
            FROM generation_runs
            WHERE batch_state IN ('queued','prepared','submitted','downloading','processing')

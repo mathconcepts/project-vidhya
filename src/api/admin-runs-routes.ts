@@ -29,6 +29,7 @@ import {
 } from '../generation/run-orchestrator';
 import { estimateRunCost } from '../generation/dry-run';
 import { dispatchRun } from '../generation/run-dispatcher';
+import { validatePracticeItemSpec, PracticeItemSpecValidationError } from '../generation/practice-item-factory/spec-to-atom';
 import type {
   GenerationRunStatus,
   GenerationRunConfig,
@@ -156,6 +157,27 @@ function parseRunConfig(raw: unknown): GenerationRunConfig | string {
       .filter((s): s is NonNullable<typeof s> => s != null);
   }
 
+  // E9 practice-item factory. Unlike curriculum_unit_specs above (which
+  // silently drops a malformed entry — permissive, admin-only surface),
+  // this is validated STRICTLY here: an operator posting a spec with a
+  // typo'd format or a missing topic gets an immediate, precise 400
+  // (D8 — names the field + index) rather than discovering it minutes
+  // later as a run failure in ActiveRunsPanel. dispatchRun re-validates
+  // the same way at dispatch time (spec-to-atom.ts's
+  // practiceItemSpecsToAtomSpecs) as defense-in-depth for any caller that
+  // reaches createRun() without going through this route.
+  let practiceItemSpecs: GenerationRunConfig['target']['practice_item_specs'] | undefined;
+  if (Array.isArray(target.practice_item_specs)) {
+    try {
+      practiceItemSpecs = (target.practice_item_specs as unknown[]).map((p, i) =>
+        validatePracticeItemSpec(p, i),
+      );
+    } catch (err) {
+      if (err instanceof PracticeItemSpecValidationError) return err.message;
+      throw err;
+    }
+  }
+
   return {
     preview: typeof c.preview === 'boolean' ? c.preview : undefined,
     target: {
@@ -168,6 +190,7 @@ function parseRunConfig(raw: unknown): GenerationRunConfig | string {
           ? (target.difficulty_dist as { easy: number; medium: number; hard: number })
           : undefined,
       curriculum_unit_specs: unitSpecs,
+      practice_item_specs: practiceItemSpecs,
     },
     pipeline: {
       template_id:

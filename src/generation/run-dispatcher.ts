@@ -10,29 +10,38 @@
  * generation through the existing generators, keeping status/cost_usd/
  * artifacts_count current as it goes.
  *
- * Two dispatch modes, mirroring GenerationRunConfig.target:
+ * Three dispatch modes, mirroring GenerationRunConfig.target:
  *   - unit mode: target.curriculum_unit_specs[] present → generateUnitsForRun()
  *     (src/generation/curriculum-unit-orchestrator.ts)
+ *   - practice-item mode: target.practice_item_specs[] present → seeds the
+ *     spec array into the batch orchestrator's queued -> prepared
+ *     transition (src/generation/batch/poller.ts's prepareBatchRun) and
+ *     returns; generation itself happens asynchronously on the batch
+ *     poller's existing lane (see the "Practice-item mode" section below).
+ *     This is the ONE mode that deliberately opts a row into
+ *     generation_runs.batch_state — see that section for why.
  *   - atom mode (default): target.concept_ids[] / target.topic_id →
  *     generateConcept() per concept, one concept at a time, until
  *     quota.count atoms or quota.max_cost_usd is spent.
  *
- * In both modes, config.pipeline.llm_models[0] (the RunLauncher "LLM"
+ * In unit/atom mode, config.pipeline.llm_models[0] (the RunLauncher "LLM"
  * dropdown) is threaded through as the primary generation model id —
  * this is the piece that makes the dropdown actually drive which
- * provider generates content.
+ * provider generates content. Practice-item mode's primary model is fixed
+ * (the batch pipeline submits only through Gemini — see below); llm_models[0]
+ * is used there only for the run's own cost estimate.
  *
  * config.preview (atom mode only): threads dry_run into generateConcept()
  * so admin-launched runs can preview content (real LLM call, nothing
  * persisted to atom_versions) — see GenerationRunConfig.preview's doc
  * comment for why this isn't named dry_run at the config level.
  *
-
- * NOT the same lane as src/generation/batch/poller.ts, which drives a
- * separate Gemini-batch-API pipeline keyed off generation_runs.batch_state.
- * This dispatcher only touches rows where batch_state is null (i.e. runs
- * created without opting into the batch lane — today, all admin/RunLauncher
- * runs).
+ * Unit/atom mode dispatch is synchronous and NOT the same lane as
+ * src/generation/batch/poller.ts, which drives a separate Gemini-batch-API
+ * pipeline keyed off generation_runs.batch_state — those two modes only
+ * ever touch rows where batch_state is null. Practice-item mode is the
+ * deliberate exception: it hands the run OFF to that same batch lane (see
+ * the "Practice-item mode" section below for the full lifecycle).
  *
  * Runs in-process — single-instance deploy constraint, same as
  * jobs/scheduler.ts and batch/poller.ts. Triggered fire-and-forget from
@@ -55,6 +64,9 @@ import { generateUnitsForRun } from './curriculum-unit-orchestrator';
 import { CostMeter } from './cost-meter';
 import { CONCEPT_MAP, getConceptsForTopic } from '../constants/concept-graph';
 import { sanitiseTierModels } from '../content/concept-orchestrator/model-tiers';
+import { prepareBatchRun } from './batch/poller';
+import { practiceItemSpecsToAtomSpecs } from './practice-item-factory/spec-to-atom';
+import { estimatePracticeItemBatchCostUsd } from './practice-item-factory/cost';
 import type { GenerationRunConfig, GenerationRunRow } from '../experiments/types';
 
 // Runs currently being dispatched in THIS process — guards against
@@ -77,10 +89,24 @@ export async function dispatchRun(runId: string): Promise<void> {
     await markRunStarted(runId);
 
     try {
-      const { cost_usd } = run.config.target.curriculum_unit_specs?.length
-        ? await dispatchUnitMode(run)
-        : await dispatchAtomMode(run);
-      await markRunComplete(runId, cost_usd);
+      if (run.config.target.curriculum_unit_specs?.length) {
+        const { cost_usd } = await dispatchUnitMode(run);
+        await markRunComplete(runId, cost_usd);
+      } else if (run.config.target.practice_item_specs?.length) {
+        // Batch/async mode: seeds the batch (queued -> prepared) and
+        // returns WITHOUT calling markRunComplete — status deliberately
+        // stays 'running'. The rest of the lifecycle (submit -> poll ->
+        // download -> process -> complete) happens on the SAME periodic
+        // batch poller sweep that drives every other in-flight batch run
+        // (src/generation/batch/poller.ts), which reconciles status to
+        // 'complete'/'failed' once batch_state reaches a terminal state —
+        // potentially long after this call returns (up to the provider's
+        // 24h batch SLA). See dispatchPracticeItemMode's doc comment.
+        await dispatchPracticeItemMode(run);
+      } else {
+        const { cost_usd } = await dispatchAtomMode(run);
+        await markRunComplete(runId, cost_usd);
+      }
     } catch (err) {
       const message = (err as Error)?.message ?? 'unknown dispatch error';
       console.error(`[run-dispatcher] run ${runId} failed: ${message}`);
@@ -121,6 +147,81 @@ async function dispatchUnitMode(run: GenerationRunRow): Promise<{ cost_usd: numb
     await updateRunCost(run.id, costUsd);
   }
   return { cost_usd: costUsd };
+}
+
+// ============================================================================
+// Practice-item mode — target.practice_item_specs[]
+//
+// Closes the wiring gap recorded in docs/ops/content-verification-runbook.md
+// §3.2: turns the run's practice_item_specs[] into AtomSpec[] (via
+// spec-to-atom.ts's deterministic builder) and seeds them into the batch
+// orchestrator's queued -> prepared transition (via
+// src/generation/batch/poller.ts's prepareBatchRun, which reuses the
+// module's ONE shared orchestrator instance — same adapter, same T4a
+// launch guard, same per-format cost estimator poller.ts already wires for
+// the poll-side path). Unlike atom/unit mode, this does NOT run generation
+// synchronously: prepare() only persists atom_specs + writes the JSONL +
+// checks the budget/launch-guard preconditions. Submission and everything
+// after (poll -> download -> process -> gate-ledger writes -> bank writes)
+// is the batch poller's existing async lane (boot resume + the 5-min cron
+// tick, jobs/scheduler.ts) — already fully wired since P3a.
+// ============================================================================
+
+async function dispatchPracticeItemMode(run: GenerationRunRow): Promise<void> {
+  const specs = run.config.target.practice_item_specs ?? [];
+  if (specs.length === 0) {
+    throw new Error(
+      'no practice_item_specs supplied for a practice-item run — set target.practice_item_specs[]',
+    );
+  }
+
+  // Throws PracticeItemSpecValidationError naming the exact spec index +
+  // field on a malformed entry (D8) — see spec-to-atom.ts. Re-validates
+  // even though admin-runs-routes.ts already validates the same shape at
+  // POST time: defense-in-depth for any caller that reaches createRun()
+  // without going through that route (tests, scripts, a future caller).
+  // Checked BEFORE the provider precondition below: a malformed request is
+  // a client-input problem, independent of whether the environment is
+  // otherwise ready to launch.
+  const atomSpecs = practiceItemSpecsToAtomSpecs(specs);
+  const modelId = run.config.pipeline.llm_models?.[0];
+
+  // The practice-item batch pipeline submits ONLY through Gemini's Batch
+  // API — src/generation/batch/gemini-adapter.ts's DEFAULT_MODEL is fixed
+  // to gemini-2.5-flash, and poller.ts's getOrchestrator() only ever
+  // constructs a Gemini adapter. Refuse loudly here, naming the missing
+  // env var, rather than letting a bare-key submitBatch() call fail with
+  // an opaque HTTP error deep inside the async batch lifecycle (D8 —
+  // "names the missing... provider"). The launch guard
+  // (assertPracticeItemLaunchReady, wired into prepare() below) separately
+  // covers the mcq/msq second-provider and nat/Wolfram preconditions —
+  // this check is the one precondition it does not: the primary itself.
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error(
+      "practice-item run refused at launch: no provider configured for the batch pipeline's primary " +
+        'model (gemini-2.5-flash) — set GEMINI_API_KEY. The practice-item batch pipeline submits only ' +
+        "through Gemini's Batch API (src/generation/batch/gemini-adapter.ts); a distinct second provider " +
+        'for mcq/msq consensus and WOLFRAM_APP_ID for nat are checked separately at launch.',
+    );
+  }
+
+  const result = await prepareBatchRun(run.id, atomSpecs);
+  if (result.kind === 'transitioned' && result.to === 'failed') {
+    // The orchestrator already wrote the precise reason (launch guard or
+    // budget_exceeded) onto generation_runs.error — surface THAT message
+    // rather than a generic one, so the operator sees exactly what to fix.
+    const fresh = await getRun(run.id);
+    throw new Error(fresh?.error ?? 'practice-item batch run failed at prepare (no error recorded)');
+  }
+
+  // Success: batch_state is now 'prepared' and durable (batch_jobs rows +
+  // JSONL on disk). Record the estimate as the run's committed cost — the
+  // real per-item cost is only known once the batch actually bills, which
+  // this codebase does not (yet) reconcile back into cost_usd; the locked
+  // estimate is the best number available at this point, same "rough but
+  // present" bar dry-run.ts's estimate uses.
+  const costUsd = estimatePracticeItemBatchCostUsd(specs, modelId);
+  await updateRunCost(run.id, costUsd);
 }
 
 // ============================================================================

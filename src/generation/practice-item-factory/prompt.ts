@@ -7,7 +7,13 @@
 import { CONCEPT_MAP } from '../../constants/concept-graph';
 import type { PracticeItemSpec } from './types';
 
-const DIFFICULTY_LABEL = (d: number): string => {
+/**
+ * Exported (not just module-local) so anything else that needs the SAME
+ * easy/medium/hard band as this prompt's own "Target difficulty:" line
+ * reuses it rather than re-deriving a second copy that could drift — e.g.
+ * spec-to-atom.ts's AtomSpec.difficulty bucket for the batch pipeline.
+ */
+export const DIFFICULTY_LABEL = (d: number): 'easy' | 'medium' | 'hard' => {
   if (d < 0.34) return 'easy';
   if (d < 0.67) return 'medium';
   return 'hard';

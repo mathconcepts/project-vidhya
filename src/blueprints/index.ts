@@ -66,7 +66,12 @@ export {
 export {
   blueprintToUnitSpec,
   type BlueprintDerivedSpec,
+  type StageAnchor,
 } from './to-unit-spec';
+
+export {
+  computeAnchorId,
+} from './anchor-id';
 
 export {
   proposeBlueprint,

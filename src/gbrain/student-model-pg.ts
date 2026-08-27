@@ -17,6 +17,11 @@
  * attempts are dropped at the dedup primary key, never double-counted.
  * This closes the §3.1 guardrail that Elo's stateful math demands.
  *
+ * Plan E1: every attempt that lands also writes one `attempt_facts` row
+ * (migration 051) — the durable ledger the assessment-contract stamp and
+ * the W1.6 anti-gaming guards read. Same transaction, savepoint-isolated;
+ * see src/gbrain/attempt-facts.ts.
+ *
  * Telemetry: every `update()` that lands publishes an `attempt.recorded`
  * event on the in-process bus, so the calibration store, monitoring,
  * and any future student-facing event surface can subscribe without
@@ -53,6 +58,7 @@ import type {
 } from '../core/interfaces';
 import { publishAttemptRecorded } from '../events/attempts-bus';
 import { downClosureFor, upClosureFor, computeImplicitReviews } from './fire';
+import { latencyBucket, writeAttemptFactIn } from './attempt-facts';
 
 // T16 (D4 / OV2 #10): was its own dedicated `new Pool({max:5})` — now the
 // one shared pool (src/storage/pool.ts). Every method here calls this
@@ -365,6 +371,30 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
       if (process.env.VIDHYA_FIRE === 'on') {
         await this.propagateFire(client, attempt, now);
       }
+
+      // ── attempt_facts (plan E1, migration 051) ───────────────────────
+      // The durable attempt ledger. Written INSIDE this transaction so a
+      // rolled-back attempt leaves no fact behind — but through a
+      // SAVEPOINT (see src/gbrain/attempt-facts.ts) so a failure here
+      // cannot abort the transaction and take Elo + FSRS down with it.
+      // That is the failure mode the error-tag comment below records
+      // having actually shipped once; it is not repeated here.
+      //
+      // Reached only past the dedup guard above, so a duplicate attempt
+      // writes no fact — matching the ON CONFLICT DO NOTHING the row's
+      // own primary key would enforce anyway.
+      await writeAttemptFactIn(client, {
+        studentId: attempt.studentId,
+        objectId: attempt.objectId,
+        tsMs: attempt.ts,
+        questionKind: attempt.questionKind ?? null,
+        marksEarned: attempt.partialMarks?.earned ?? null,
+        marksMax: attempt.partialMarks?.max ?? null,
+        skipped: attempt.skipped === true,
+        contractVersion: attempt.contractVersion ?? null,
+        latencyBucket: latencyBucket(attempt.latencyMs),
+        skillId: attempt.skillId ?? null,
+      });
 
       await client.query('COMMIT');
     } catch (err) {

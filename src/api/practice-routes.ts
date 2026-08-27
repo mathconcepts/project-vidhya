@@ -231,6 +231,13 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     },
     latencyMs,
     ts,
+    // Plan E1 — attempt_facts (migration 051) reads these off the Attempt
+    // StudentModel.update() already receives; no separate write here.
+    // contractVersion is left unset: this path grades via the compiled
+    // scorer directly (no assessment-contract resolution), so recording no
+    // version is honest rather than guessing one.
+    questionKind: item.kind,
+    skipped: response.skipped === true,
   };
 
   // Best-effort persistence: a DB-less deploy still grades honestly.

@@ -75,6 +75,18 @@ export interface Attempt {
   errorTags?: ErrorTag[];
   latencyMs: number;
   ts: number;
+  /**
+   * Plan E1 — the fields `attempt_facts` (migration 051) stamps that the
+   * mastery math above does not use. All optional: a caller that knows
+   * none of them still produces a valid Attempt, and the ledger row simply
+   * records nulls rather than guesses.
+   */
+  /** 'mcq' | 'msq' | 'nat'. Absent when the grading path has no such kind. */
+  questionKind?: string;
+  /** True when the student submitted nothing. Elo/FSRS ignore it; the ledger does not. */
+  skipped?: boolean;
+  /** Resolved (or session-pinned) assessment contract version these marks were scored under. */
+  contractVersion?: string;
 }
 
 export interface GradeResult {

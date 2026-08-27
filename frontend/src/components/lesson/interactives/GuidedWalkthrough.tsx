@@ -14,11 +14,17 @@
  * No grading. The interactive's job is paced revelation, not assessment.
  * Revealed is not the same as correct — the answer step uses a neutral
  * "revealed" treatment, not the mastery-green "correct" treatment.
+ *
+ * When the spec carries the optional `branches` tree (plan W2.5 / D1),
+ * this component delegates to DecisionTreeWalkthrough — the same kind,
+ * a different presentation. `steps` stays required so a renderer without
+ * the branch support still has something to show.
  */
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Lightbulb, Eye, BookOpen } from 'lucide-react';
+import { DecisionTreeWalkthrough } from './DecisionTreeWalkthrough';
 import type { GuidedWalkthroughSpec } from './types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
@@ -38,6 +44,13 @@ interface Props {
 type Phase = 'prompt' | 'hint' | 'answer';
 
 export function GuidedWalkthrough({ spec }: Props) {
+  if (spec.branches) {
+    return <DecisionTreeWalkthrough spec={{ ...spec, branches: spec.branches }} />;
+  }
+  return <LinearWalkthrough spec={spec} />;
+}
+
+function LinearWalkthrough({ spec }: Props) {
   // step index, and per-step reveal phase
   const [stepIdx, setStepIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('prompt');

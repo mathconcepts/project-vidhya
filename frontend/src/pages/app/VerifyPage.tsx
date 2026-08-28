@@ -250,7 +250,11 @@ export default function VerifyPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Zap size={12} />
-                  {result.tierUsed.replace('tier1_', 'Tier 1: ').replace('tier2_', 'Tier 2: ').replace('tier3_', 'Tier 3: ')}
+                  {result.tierUsed
+                    .replace('tier25_', 'Tier 2.5: ')
+                    .replace('tier1_', 'Tier 1: ')
+                    .replace('tier2_', 'Tier 2: ')
+                    .replace('tier3_', 'Tier 3: ')}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Clock size={12} />

@@ -9,6 +9,9 @@
  *   5. SNAPSHOT REGRESSION: with zero extra verifiers, the orchestrator still
  *      delivers byte-identical TieredVerificationResult shape (verifies the
  *      pragmatic refactor preserved the original 3-tier behavior)
+ *   6. B1b: a registered verifier's `.verify()` ACTUALLY FIRES end-to-end
+ *      through `orch.verify()`, and its result lands in `checks` — before
+ *      B1b the registry was populate-only and nothing ever iterated it.
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -132,5 +135,45 @@ describe('TieredVerificationOrchestrator — registerVerifier()', () => {
 
     // The closed enum must still be one of the original three.
     expect(['tier1_rag', 'tier2_llm', 'tier3_wolfram']).toContain(result.tierUsed);
+  });
+
+  it('B1b: a registered verifier actually executes end-to-end through orch.verify() and appears in checks', async () => {
+    const extra = makeMockExtraVerifier('sympy', 4);
+    const orch = buildOrchestrator([extra]);
+
+    const result = await orch.verify('What is 6 * 7?', '42');
+
+    // Before B1b, extraVerifiers was populate-only — nothing ever called
+    // .verify() on it. This is the assertion that closes that gap.
+    expect(extra.verify).toHaveBeenCalledOnce();
+    expect(extra.verify).toHaveBeenCalledWith('What is 6 * 7?', '42', expect.objectContaining({
+      traceId: result.traceId,
+    }));
+
+    const extraCheck = result.checks.find((c) => c.details.startsWith('sympy:'));
+    expect(extraCheck).toBeDefined();
+    expect(extraCheck?.status).toBe('verified'); // mock resolves { agrees: true, confidence: 0.9 }
+
+    // Running a Tier 4+ cross-check is advisory — it must not override the
+    // cascade's own tierUsed (tier2_llm here, since both mock LLMs agree).
+    expect(result.tierUsed).toBe('tier2_llm');
+  });
+
+  it('B1b: an extra verifier that throws is folded in as inconclusive, never crashes verify()', async () => {
+    const broken: AnswerVerifier = {
+      name: 'broken-extra',
+      tier: 5,
+      verify: vi.fn().mockRejectedValue(new Error('boom')),
+      healthCheck: vi.fn().mockResolvedValue(false),
+    };
+    const orch = buildOrchestrator([broken]);
+
+    const result = await orch.verify('What is 6 * 7?', '42');
+
+    expect(broken.verify).toHaveBeenCalledOnce();
+    const brokenCheck = result.checks.find((c) => c.details.includes('broken-extra'));
+    expect(brokenCheck).toBeDefined();
+    expect(brokenCheck?.status).toBe('inconclusive');
+    expect(brokenCheck?.confidence).toBe(0);
   });
 });

@@ -244,6 +244,17 @@ jobs:
       - name: Intent catalogue + intent profiles validation
         run: npm run ci:intent-catalogue
 
+      # B1c (docs/designs/2026-08-28-wolfram-t3-content-strategy.md): the
+      # Tier 2.5 SymPy verifier (src/verification/verifiers/sympy.ts) shells
+      # out to python3 + sympy. Neither Dockerfile installs either — this is
+      # authoring/CI only (B1d) — so CI installs sympy itself, here, BEFORE
+      # `npm test`, so verifiers/__tests__/sympy.test.ts's real-computation
+      # scenarios (agree/disagree/unparseable-head) run for real instead of
+      # skipping. python3 already ships on ubuntu-latest. `--user` avoids
+      # the externally-managed-environment restriction on newer runner images.
+      - name: Install sympy (for the Tier 2.5 SymPy verifier's tests)
+        run: python3 -m pip install --user sympy
+
       - name: Test
         run: npm test
 

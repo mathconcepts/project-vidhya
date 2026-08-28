@@ -12,6 +12,7 @@ import {
   loadAllPracticeItemBanks,
   checkAllPracticeItems,
   checkPhraseRule,
+  checkProvenanceVerificationMethod,
   checkPyqBank,
   loadPyqBank,
   type PyqBankFile,
@@ -352,6 +353,67 @@ describe('checkPhraseRule', () => {
 
   it('ignores undefined fields without throwing', () => {
     expect(checkPhraseRule('id-1', undefined, { question_text: undefined, explanation: undefined })).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// B2 — provenance convention (Move B, generation_run_id-scoped)
+// ---------------------------------------------------------------------------
+
+describe('checkProvenanceVerificationMethod', () => {
+  it('ignores items with no generation_run_id — the 505 committed items are untouched', () => {
+    expect(
+      checkProvenanceVerificationMethod('id-1', {
+        verification_method: 'some made-up value that would otherwise fail',
+        verified_at: undefined,
+      }),
+    ).toEqual([]);
+  });
+
+  it('passes a grandfathered bare enum value', () => {
+    for (const method of ['dual_model_consensus', 'wolfram_verified']) {
+      expect(
+        checkProvenanceVerificationMethod('id-1', {
+          generation_run_id: 'run-1',
+          verification_method: method,
+        }),
+      ).toEqual([]);
+    }
+  });
+
+  it('passes a suffixed value with verified_at present', () => {
+    for (const suffix of ['sympy', 'wolfram']) {
+      expect(
+        checkProvenanceVerificationMethod('id-1', {
+          generation_run_id: 'run-1',
+          verification_method: `dual_model_consensus+${suffix}`,
+          verified_at: '2026-08-28T00:00:00Z',
+        }),
+      ).toEqual([]);
+    }
+  });
+
+  it('fails a suffixed value with no verified_at', () => {
+    const problems = checkProvenanceVerificationMethod('id-1', {
+      generation_run_id: 'run-1',
+      verification_method: 'dual_model_consensus+sympy',
+    });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('id-1');
+    expect(problems[0]).toContain('verified_at');
+    expect(problems[0]).toContain('+sympy');
+  });
+
+  it('fails a value that is neither grandfathered nor suffixed', () => {
+    const problems = checkProvenanceVerificationMethod('id-1', {
+      generation_run_id: 'run-1',
+      verification_method: 'gemini-said-so',
+    });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('id-1');
+    expect(problems[0]).toContain('gemini-said-so');
+    expect(problems[0]).toContain('dual_model_consensus');
+    expect(problems[0]).toContain('wolfram_verified');
   });
 });
 

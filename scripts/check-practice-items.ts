@@ -38,6 +38,21 @@
  *      check-intent-catalogue.ts's A8/B6 checks over the demand-side
  *      catalogue — one phrase list, two scoped gates).
  *
+ * Move B / B2 addition (2026-08-28, `docs/designs/2026-08-28-wolfram-t3-
+ * content-strategy.md`):
+ *
+ *   6. PROVENANCE CONVENTION — scoped ONLY to items carrying a
+ *      `generation_run_id` (the E8 boundary; the 505 hand-verified/committed
+ *      items have no run to point to and are untouched). Such an item's
+ *      `verification_method` must either:
+ *        (a) be exactly one of the factory's grandfathered bare enum values
+ *            (`dual_model_consensus`, `wolfram_verified` —
+ *            src/generation/practice-item-factory/types.ts's
+ *            `PracticeItemVerificationPath`), or
+ *        (b) match the suffix convention `/\+(sympy|wolfram)$/` AND carry a
+ *            `verified_at` timestamp recording when that cross-check ran.
+ *      See `checkProvenanceVerificationMethod` below.
+ *
  * Usage: npx tsx scripts/check-practice-items.ts
  * Exit: 0 = every item schema-valid + self-re-grades to full marks + PYQ
  *           bank schema-valid + phrase rule holds across both banks.
@@ -57,6 +72,7 @@ import { parseNumericAnswer } from '../src/gbrain/marking-derivation';
 import { EVIDENCE_LEVELS, type AuthoredItem } from '../src/scoring/learning-object-catalog-file';
 import { ALL_CONCEPTS } from '../src/constants/concept-graph';
 import { findForbiddenPhrases, evidenceLevelLicensesClaim } from '../src/content/evidence-phrase-rule';
+import type { PracticeItemVerificationPath } from '../src/generation/practice-item-factory/types';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_ITEMS_DIR = path.join(ROOT, 'data', 'practice-items');
@@ -64,6 +80,19 @@ const DEFAULT_PYQ_BANK_PATH = path.join(ROOT, 'frontend', 'public', 'data', 'pyq
 
 const VALID_KINDS = new Set(['mcq', 'msq', 'nat']);
 const EVIDENCE_LEVEL_SET: ReadonlySet<string> = new Set(EVIDENCE_LEVELS);
+
+// ---------------------------------------------------------------------------
+// B2 — provenance convention (scoped to generation_run_id-carrying items).
+// ---------------------------------------------------------------------------
+
+/** The factory's locked bare enum values — grandfathered as always-valid. */
+const GRANDFATHERED_VERIFICATION_METHODS: ReadonlySet<PracticeItemVerificationPath> = new Set([
+  'dual_model_consensus',
+  'wolfram_verified',
+]);
+
+/** `<anything>+sympy` or `<anything>+wolfram` — the B2 suffix convention. */
+const PROVENANCE_SUFFIX_RE = /\+(sympy|wolfram)$/;
 
 /** Known concept ids — `also_tests` entries must name a real concept. */
 const KNOWN_CONCEPT_IDS = new Set(ALL_CONCEPTS.map((c) => c.id));
@@ -284,6 +313,46 @@ export function checkPhraseRule(
   return problems;
 }
 
+/**
+ * B2 — provenance convention. Called ONLY for schema-valid items (so
+ * `verification_method` is guaranteed a non-empty string by this point;
+ * `validateItemSchema` already requires it unconditionally). Untouched for
+ * items with no `generation_run_id` — that is the entire point of the E8
+ * scoping: the 505 committed items have no run to point to and must never
+ * fail a rule aimed at the generation pipeline.
+ */
+export function checkProvenanceVerificationMethod(
+  id: string,
+  item: Pick<AuthoredItem, 'generation_run_id' | 'verification_method' | 'verified_at'>,
+): string[] {
+  if (!item.generation_run_id) return [];
+
+  const method = item.verification_method as string; // guaranteed by schema validation
+  if (GRANDFATHERED_VERIFICATION_METHODS.has(method as PracticeItemVerificationPath)) {
+    return [];
+  }
+
+  const suffixMatch = PROVENANCE_SUFFIX_RE.test(method);
+  if (suffixMatch) {
+    if (!item.verified_at) {
+      return [
+        `${id}: verification_method='${method}' uses the +sympy/+wolfram suffix convention but ` +
+          `has no verified_at — actual: verified_at is unset; expected: an ISO-8601 timestamp ` +
+          `recording when that cross-check ran; fix: set verified_at, or drop the suffix if no ` +
+          `cross-check actually ran`,
+      ];
+    }
+    return [];
+  }
+
+  return [
+    `${id}: generation_run_id='${item.generation_run_id}' but verification_method='${method}' is ` +
+      `neither grandfathered nor suffixed — actual: '${method}'; expected: one of ` +
+      `{${[...GRANDFATHERED_VERIFICATION_METHODS].join(', ')}}, or a value ending in '+sympy'/'+wolfram' ` +
+      `with verified_at set; fix: append the correct suffix (with verified_at) or use a grandfathered value`,
+  ];
+}
+
 // ---------------------------------------------------------------------------
 // PYQ bank (frontend/public/data/pyq-bank.json) — W1.2/E10 schema addition.
 // ---------------------------------------------------------------------------
@@ -386,6 +455,8 @@ export async function checkAllPracticeItems(dir: string = DEFAULT_ITEMS_DIR): Pr
           solution_steps: Array.isArray(raw.solution_steps) ? raw.solution_steps.join(' ') : undefined,
         }),
       );
+
+      problems.push(...checkProvenanceVerificationMethod(typeof id === 'string' ? id : label, raw));
     }
   }
 

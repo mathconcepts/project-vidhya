@@ -293,6 +293,11 @@ confirm (5d); full test plan adopted (6).
 | 10 | Eng | B2 scoped to generation_run_id provenance + factory enum grandfathered | Mechanical | E8 boundary reuse beats a new baseline file; pilot must not fail its own gate |
 | 11 | Eng/DX | B3 = full rewrite + doc-matches-code grep test; B4 = confirm-only; A1 gets a named §0; refusal strings specified | Mechanical | precision precedents (D8, aggregate-drift pattern) |
 
-## FINAL GATE — pending
+## FINAL GATE RECORD (2026-08-28) — APPROVED
 
-Presented to the user with premises + the taste decisions (8, 9) for veto.
+| Decision | Choice |
+|---|---|
+| User Challenge: CAS standard | **Accepted** — SymPy carries the bulk, Wolfram is the reference arbiter (amends "Wolfram-only") |
+| Premises (incl. license-before-activation, stop-and-report MCP rule) | **Confirmed as stated** |
+| Taste calls: tier-2.5 hardcoded stage + authoring/CI-only SymPy | **Both accepted** |
+| Go/no-go | **Approved; Move B implementation authorized now** (Sonnet); Move A is the operator's checklist |

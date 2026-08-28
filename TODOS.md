@@ -450,3 +450,109 @@ populated for every row.
 **Deferred from:** `docs/designs/2026-08-27-content-readiness-market-research-integration.md`
 core-plan wrap-up, 2026-08-27, branch `claude/autoplan-content-readiness-4vfhcn`
 (flagged in the plan's P2a work, `src/gbrain/attempt-facts.ts`).
+
+## Demonstrations-as-visual-standard curation
+
+**Trigger:** a real legal read on independent re-implementation (whether
+building a widget from a Demonstration's underlying MATHEMATICAL IDEA,
+without copying its expression/code, clears CC BY-NC-SA 3.0 — copyright
+protects expression, not the idea, but that inference is `design_hypothesis`
+evidence level, not verified) AND the 50-item anatomy pilot is complete.
+
+**What:** `concept → demo idea → widget spec` mappings — using the Wolfram
+Demonstrations Project (~13,000 demos) as a DESIGN STANDARD for what a good
+interactive looks like, never as an import/embed source. MIT-licensed
+preview snapshots are usable as authoring reference in the meantime, if/when
+this is picked up.
+
+**Why not now:** the Demonstrations corpus itself is CC BY-NC-SA 3.0 (no
+commercial embedding/redistribution) and CDF embedding has been dead since
+~2021 — both close the direct-import path outright (see Move A/B's sibling
+rejections R1/R2 in `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`).
+This item is specifically the narrower "use a demo's IDEA as inspiration for
+an original `interactive-spec` widget" path, which needs the legal read
+before it is more than speculation, and doesn't serve the pilot either way.
+
+**Deferred from:** `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`
+(Move B implementation, parking lot), 2026-08-28, branch
+`claude/autoplan-content-readiness-4vfhcn`.
+
+## WL→safe-evaluator translation adapter
+
+**Trigger:** 3+ authoring sessions each hand-translating Wolfram Language
+output into the frontend's safe-evaluator grammar
+(`frontend/src/components/lesson/interactives/types.ts`'s recursive-descent
+parser — no `Function()`/`eval()`).
+
+**What:** a dedicated adapter that converts WL expression output (from an
+authorized Wolfram MCP session's `WolframLanguageEvaluator` calls, per
+Posture W) directly into `interactive-spec` / `gif-scene` widget JSON,
+instead of an agent doing the translation by hand each time.
+
+**Why not now:** no live authoring session has exercised this yet — Posture
+W is new, and this session's own Wolfram MCP connector was unauthenticated
+(stop-and-report, never approximated). Building the adapter before a real
+session has hit the hand-translation pain three times is building ahead of
+demonstrated need.
+
+**Where to start:** `frontend/src/components/lesson/interactives/types.ts`'s
+schema is the target shape; `src/content/concept-orchestrator/gif-generator.ts`
+is the target shape for `gif-scene` blocks. The adapter's job is purely
+syntactic translation — it must never call Wolfram itself (that stays
+Posture W's ad hoc, human-authorized MCP usage).
+
+**Deferred from:** `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`
+(Posture W, parking lot), 2026-08-28, branch
+`claude/autoplan-content-readiness-4vfhcn`.
+
+## Show Steps content in worked examples
+
+**Trigger:** §0 of `docs/ops/content-verification-runbook.md` (Wolfram
+licensing terms) is filled in, specifically the Show Steps API's
+redistribution terms for product content.
+
+**What:** using Wolfram|Alpha's Show Steps API to generate or check
+step-by-step worked solutions inside `worked_example` atoms, instead of
+(or alongside) LLM-authored solution steps.
+
+**Why not now:** Show Steps redistribution terms for product content are
+unconfirmed (`docs/designs/2026-08-28-wolfram-t3-content-strategy.md`'s
+ground-truth audit) — this is licensing-gated, same as Tier 3 activation
+itself, and §0 is where that answer gets recorded once an operator pulls it.
+
+**Where to start:** `src/services/wolfram-steps-cache.ts` and
+`src/jobs/wolfram-verify-job.ts`'s step-harvest leg
+(`.data/wolfram-steps/<problem_id>.json`, provenance-stamped) already fetch
+and cache Show Steps output for VERIFICATION purposes — this item is about
+whether that content can additionally be shown to students, which is a
+different (redistribution) licensing question than the verification-only
+use already live.
+
+**Deferred from:** `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`
+(Move B implementation, parking lot), 2026-08-28, branch
+`claude/autoplan-content-readiness-4vfhcn`.
+
+## Wolfram Engine batch asset generation
+
+**Trigger:** a demonstrated need `gifenc`
+(`src/content/concept-orchestrator/gif-generator.ts`) cannot meet, AND a
+confirmed Wolfram Engine production license (§0 of
+`docs/ops/content-verification-runbook.md`).
+
+**What:** using a licensed Wolfram Engine to batch-generate visual assets
+(plots, animations) for concept atoms, as an alternative or supplement to
+the existing pure-JS `gifenc` pipeline.
+
+**Why not now:** the free Wolfram Engine's license explicitly forbids
+production use, including non-commercial end-user deployment — a paid
+production license is a real cost with no confirmed price yet
+(`docs/designs/2026-08-28-wolfram-t3-content-strategy.md`'s ground-truth
+audit), and `gifenc` already covers `parametric-curve`, `level-set`, and
+`discrete-bars` scenes with no live dependency or license exposure. There is
+no known gap it fails to meet today (see the v4.36.0 "every topic walkable"
+entry in `CLAUDE.md`: gif-scene renders went from 66/28-skipped/6-failed to
+70/30/0 — zero known-broken scenes).
+
+**Deferred from:** `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`
+(Move B implementation, parking lot / rejected R1), 2026-08-28, branch
+`claude/autoplan-content-readiness-4vfhcn`.

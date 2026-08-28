@@ -27,6 +27,50 @@ guessed throughput is setting it from nothing.
 
 ---
 
+## §0. Licensing terms (gates Tier 3 activation)
+
+**Status: NOT YET FILLED.** Per `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`
+(Move A, premise 5 — "no licensing fact in this plan is settled, so nothing
+license-bearing activates before the terms are read"), the operator pulls
+these four terms and records them verbatim below BEFORE `WOLFRAM_APP_ID` is
+set on the Render service. All four pages are proxy-blocked from agent
+sessions — this is genuinely operator work, not something a session can
+fetch on your behalf.
+
+1. **Wolfram|Alpha API commercial pricing, and whether this pilot qualifies
+   for the free tier's non-commercial clause.** The free tier (2,000
+   calls/mo) is documented as non-commercial-use only. "Pre-revenue" is
+   NOT the same as "non-commercial" under most API ToS — a venture with
+   explicit monetization intent commonly counts as commercial regardless
+   of current revenue. Record: _(unfilled)_
+
+2. **LLM Kit subscription price**, if the Wolfram Cloud MCP path is ever
+   revisited (today's plan uses local `wolframscript`/API access, not
+   Cloud MCP, so this may turn out to be moot — record that finding too).
+   Record: _(unfilled)_
+
+3. **Wolfram Engine production-license terms.** The free Wolfram Engine's
+   license explicitly forbids production use, including non-commercial
+   end-user deployment — relevant only if/when the parked "Wolfram Engine
+   batch asset generation" TODO is ever picked up. Record: _(unfilled)_
+
+4. **Show Steps API redistribution terms** for product content (worked
+   solutions shown to students), if the parked "Show Steps in worked
+   examples" TODO is ever picked up. Record: _(unfilled)_
+
+**Posture W note:** this session's Wolfram MCP connector was unauthenticated
+when checked (2026-08-28) — the harness's pre-emptive notice was the stop
+signal. Per the plan's Posture W rule, an unauthenticated MCP server means
+the session stops and reports rather than proceeding or approximating a CAS
+result. Authorizing it (Move A2, claude.ai Settings → Connectors → Wolfram)
+is separate from and does not substitute for §0's licensing read — MCP
+access answers "can an agent reach Wolfram," not "are we allowed to."
+
+**Gate:** `WOLFRAM_APP_ID` stays unset on the Render service (Move A3) until
+all four rows above are filled with a real answer, not a guess.
+
+---
+
 ## 1. Prerequisites
 
 ### 1.1 The clock has not started

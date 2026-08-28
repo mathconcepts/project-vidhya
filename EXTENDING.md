@@ -31,18 +31,31 @@ Measure: time from "git pull" to "first verifier passes contract test."
 ## Adding a new AnswerVerifier (Tier 4+)
 
 Tier 1-3 are reserved for the built-in cascade (RAG → LLM dual-solve →
-Wolfram). Tier 4+ slots accept new verifiers via `registerVerifier()` with
-zero orchestrator edits.
+optional SymPy stage → Wolfram — see the note below). Tier 4+ slots accept
+new verifiers via `registerVerifier()` with zero orchestrator edits.
 
-Concrete walkthrough — adding a SymPy cross-check at Tier 4:
+> **This walkthrough builds a hypothetical NEW verifier, `example-crosscheck`,
+> for illustration.** It is not the repo's real SymPy stage. That one lives
+> at `src/verification/verifiers/sympy.ts`, also implements `AnswerVerifier`
+> and passes this same contract, but is wired into
+> `TieredVerificationOrchestrator` through a dedicated constructor slot as a
+> hardcoded Tier 2.5 stage — NOT through `registerVerifier()` — because it
+> needs to run *before* the metered Wolfram tier, and `registerVerifier()`
+> only accepts tier ≥ 4 (after Wolfram). It also runs authoring/CI-only
+> (never from a production `/api` path — no Docker image has python3). See
+> that file's header comment for the full deployment-shape decision. Use
+> THIS walkthrough's shape for a genuine Tier 4+ cross-check that should run
+> after Wolfram.
 
-1. Create `src/verification/verifiers/sympy-crosscheck.ts`:
+Concrete walkthrough — adding a Tier 4 cross-check:
+
+1. Create `src/verification/verifiers/example-crosscheck.ts`:
 
    ```ts
    import type { AnswerVerifier, AnswerVerifierResult } from './types';
 
-   export const sympyCrossCheck: AnswerVerifier = {
-     name: 'sympy-crosscheck',
+   export const exampleCrossCheck: AnswerVerifier = {
+     name: 'example-crosscheck',
      tier: 4,
      async verify(problem, answer): Promise<AnswerVerifierResult> {
        // Your verification logic here. Return early on timeout — never throw.
@@ -51,25 +64,26 @@ Concrete walkthrough — adding a SymPy cross-check at Tier 4:
      async healthCheck() { return true; },
    };
 
-   export default sympyCrossCheck;
+   export default exampleCrossCheck;
    ```
 
 2. Register at server bootstrap:
 
    ```ts
-   import { sympyCrossCheck } from './verification/verifiers/sympy-crosscheck';
-   orchestrator.registerVerifier(sympyCrossCheck);
+   import { exampleCrossCheck } from './verification/verifiers/example-crosscheck';
+   orchestrator.registerVerifier(exampleCrossCheck);
    ```
 
-3. Write the contract test:
+3. Write the contract test at
+   `src/verification/verifiers/__tests__/example-crosscheck.test.ts`:
 
    ```ts
    import { describe } from 'vitest';
-   import { runAnswerVerifierContract } from '@/verification/verifiers/contract';
-   import { sympyCrossCheck } from '../sympy-crosscheck';
+   import { runAnswerVerifierContract } from '../contract';
+   import { exampleCrossCheck } from '../example-crosscheck';
 
-   describe('sympyCrossCheck', () => {
-     runAnswerVerifierContract(sympyCrossCheck);
+   describe('exampleCrossCheck', () => {
+     runAnswerVerifierContract(exampleCrossCheck);
    });
    ```
 
@@ -399,14 +413,18 @@ src/content/
     └── contract.ts          runContentVerifierContract
 
 src/verification/
-├── tiered-orchestrator.ts   3-tier cascade + registerVerifier(Tier 4+)
+├── tiered-orchestrator.ts   3-tier cascade + hardcoded Tier 2.5 SymPy stage
+│                            + registerVerifier(Tier 4+)
 ├── verifiers/
 │   ├── types.ts             AnswerVerifier interface
 │   ├── contract.ts          runAnswerVerifierContract
-│   ├── example.ts           AlwaysTrueVerifier — live reference
-│   ├── wolfram.ts           Tier 3 — Wolfram Alpha
-│   ├── sympy.ts             Tier 4-eligible — SymPy
-│   └── llm-consensus.ts     Tier 2 — LLM dual-solve
+│   ├── example.ts           AlwaysTrueVerifier — live reference fixture
+│   ├── wolfram.ts           Tier 3 — implements the SEPARATE internal
+│   │                        `Verifier` interface (verification/types.ts),
+│   │                        NOT AnswerVerifier — not a template to copy
+│   └── sympy.ts             Tier 2.5 — AnswerVerifier impl, wired via a
+│                            dedicated constructor slot (not
+│                            registerVerifier()); authoring/CI only
 
 src/scoring/
 ├── marking-strategy.ts           MarkingStrategy interface + registry + gate_2026

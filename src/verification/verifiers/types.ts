@@ -5,14 +5,28 @@
  *   - AnswerVerifier checks whether a math ANSWER is correct
  *   - ContentVerifier checks whether DELIVERED CONTENT meets quality bars
  *
- * Existing implementations: wolfram.ts, sympy.ts, llm-consensus.ts.
+ * Live implementations in this directory:
+ *   - example.ts   AlwaysTrueVerifier — a reference fixture only, not a real check.
+ *   - sympy.ts     The Tier 2.5 SymPy stage. It implements THIS interface and
+ *                  passes runAnswerVerifierContract, but it is wired into
+ *                  TieredVerificationOrchestrator via a dedicated constructor
+ *                  slot (B1b), not via registerVerifier() — so it is not a
+ *                  Tier 4+ example to copy. Authoring/CI only; never imported
+ *                  from src/api/** (B1d).
+ *   - wolfram.ts   Implements the SEPARATE internal `Verifier` interface
+ *                  (src/verification/types.ts) for the built-in Tier 3 slot.
+ *                  It does NOT implement AnswerVerifier and is not a template
+ *                  for a new extension.
  *
- * Adding a new AnswerVerifier:
+ * There is no barrel/index.ts in this directory — nothing here is
+ * auto-registered. A new Tier 4+ verifier is wired explicitly:
+ *
+ * Adding a new AnswerVerifier (Tier 4+):
  *   1. Create src/verification/verifiers/<name>.ts that exports a default instance
  *      implementing this interface (with a `tier` property for cascade ordering).
- *   2. Auto-registered via src/verification/verifiers/index.ts barrel.
- *   3. The TieredVerificationOrchestrator will pick it up automatically.
- *   4. Write a test that runs `runAnswerVerifierContract(yourVerifier)` and passes.
+ *   2. Register it explicitly: orchestrator.registerVerifier(yourVerifier) at
+ *      server bootstrap (or wherever the orchestrator instance is constructed).
+ *   3. Write a test that runs `runAnswerVerifierContract(yourVerifier)` and passes.
  *
  * See EXTENDING.md and src/verification/verifiers/example.ts for a copy-paste starting point.
  */

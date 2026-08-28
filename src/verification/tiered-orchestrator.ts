@@ -1,20 +1,31 @@
 /**
  * TieredVerificationOrchestrator
  *
- * Sequential 3-tier verification cascade for GATE math problems:
- *   Tier 1: RAG lookup (pgvector cosine similarity) — $0, <500ms
- *   Tier 2: LLM dual-solve (2 models in parallel) — $0 (free tier), <8s
- *   Tier 3: Wolfram Alpha arbitration — free tier (2000/mo), <15s
+ * Sequential verification cascade for GATE math problems:
+ *   Tier 1:   RAG lookup (pgvector cosine similarity) — $0, <500ms
+ *   Tier 2:   LLM dual-solve (2 models in parallel) — $0 (free tier), <8s
+ *   Tier 2.5: SymPy stage (B1b/B1c) — OPTIONAL, constructor-injected,
+ *             nullable. Absent = skipped (DB-less/CI-less honest — the
+ *             live production cascade never wires this in; see B1d).
+ *             When present, runs after an LLM disagreement and BEFORE the
+ *             metered Wolfram call, short-circuiting Tier 3 whenever SymPy
+ *             reaches a decisive verdict, so Wolfram arbitrates only what
+ *             SymPy can't parse or disagrees on (plan premise 3).
+ *   Tier 3:   Wolfram Alpha arbitration — free tier (2000/mo), <15s
+ *   Tier 4+:  registered `AnswerVerifier`s (registerVerifier()) — advisory
+ *             cross-checks that run AFTER the cascade has already picked a
+ *             tierUsed/status/confidence, appending evidence to `checks`
+ *             without overriding the built-in verdict (B1b).
  *
  * Short-circuits at first confident result. Every verification gets a
  * trace ID for end-to-end observability.
  *
- *   INPUT ──▶ Tier 1 (RAG) ──▶ Tier 2 (LLM×2) ──▶ Tier 3 (Wolfram)
- *     │           │ hit?            │ agree?            │ arbitrate
- *     │           ▼ YES → return    ▼ YES → return      ▼ return
- *     │                             │ NO → continue      │
- *     │                                                  │
- *     └──────── trace ID threaded through all tiers ─────┘
+ *   INPUT ─▶ Tier 1 (RAG) ─▶ Tier 2 (LLM×2) ─▶ Tier 2.5 (SymPy?) ─▶ Tier 3 (Wolfram) ─▶ Tier 4+ (extras)
+ *     │        │ hit?            │ agree?           │ decisive?           │ arbitrate         │ advisory
+ *     │        ▼ YES → return    ▼ YES → return     ▼ YES → return       ▼ return            ▼ append to checks
+ *     │                          │ NO → continue     │ NO → continue      │                    │
+ *     │                                                                                        │
+ *     └────────────────────── trace ID threaded through every tier ──────────────────────────┘
  */
 
 import { randomUUID } from 'crypto';
@@ -27,7 +38,7 @@ import type {
 } from './types.js';
 import type { VectorStore, VectorSearchResult } from '../data/vector-store.js';
 import type { WolframVerifier } from './verifiers/wolfram.js';
-import type { AnswerVerifier } from './verifiers/types.js';
+import type { AnswerVerifier, AnswerVerifierResult } from './verifiers/types.js';
 
 // ============================================================================
 // Types
@@ -51,7 +62,19 @@ export const DEFAULT_CONFIG: TieredOrchestratorConfig = {
   wolframTimeoutMs: 15_000,
 };
 
-export type TierUsed = 'tier1_rag' | 'tier2_llm' | 'tier3_wolfram';
+// Additive value for the optional Tier 2.5 SymPy stage. This is a closed
+// union with real consumers — before adding another value, grep
+// `tier_used`/`tierUsed` across the repo (B1b's lockstep enumeration):
+// migration 003's verification_log.tier_used is free TEXT (no CHECK
+// constraint to extend); src/api/gate-routes.ts writes/returns it as-is;
+// src/api/admin-routes.ts's tier-breakdown query is GROUP BY tier_used
+// (no hardcoded enumeration to update); src/jobs/content-flywheel.ts logs
+// it generically; frontend/src/lib/receipt.ts and
+// frontend/src/pages/app/{PracticePage,VerifyPage}.tsx treat it as an
+// opaque string — VerifyPage.tsx's display formatter got an explicit
+// 'tier25_sympy' → 'Tier 2.5 (SymPy): ' case so the UI doesn't show the
+// raw enum value.
+export type TierUsed = 'tier1_rag' | 'tier2_llm' | 'tier25_sympy' | 'tier3_wolfram';
 
 export interface TieredVerificationResult extends VerificationResult {
   traceId: string;
@@ -59,6 +82,7 @@ export interface TieredVerificationResult extends VerificationResult {
   tierTimings: {
     tier1Ms?: number;
     tier2Ms?: number;
+    tier25Ms?: number;
     tier3Ms?: number;
   };
   ragScore?: number;
@@ -93,15 +117,30 @@ export class TieredVerificationOrchestrator {
     private config: TieredOrchestratorConfig = DEFAULT_CONFIG,
     private signals?: TierSignalEmitter,
     extraVerifiers: AnswerVerifier[] = [],
+    /**
+     * Tier 2.5 SymPy stage (B1b) — nullable, constructor-injected like the
+     * `wolfram` slot but optional where wolfram is not. `null`/omitted =
+     * the stage is skipped entirely (no signal, no timing entry). The one
+     * production call site (src/server.ts) never passes this — see B1d.
+     */
+    private sympy: AnswerVerifier | null = null,
   ) {
     for (const v of extraVerifiers) this.registerVerifier(v);
   }
 
   /**
-   * Register a Tier 4+ AnswerVerifier. Runs after Tier 3 (Wolfram) in tier order.
-   * Designed for cross-checks like SymPy or domain-specific verifiers; Tier 1-3
-   * remain hardcoded because their behaviors (RAG writeback, LLM agreement, Wolfram
-   * rate-limit fallback) don't fit the simple verifiers[] iteration pattern.
+   * Register a Tier 4+ AnswerVerifier. Actually executes now (B1b): `verify()`
+   * runs every registered verifier after the built-in cascade has already
+   * settled on a tierUsed/status/confidence, and appends each one's result
+   * to `checks` as advisory evidence — it never overrides the cascade's
+   * verdict. Designed for cross-checks/domain-specific verifiers that should
+   * run AFTER Wolfram. SymPy is NOT such a verifier — the plan places it
+   * BEFORE the metered Wolfram call, so it is wired via the constructor's
+   * dedicated `sympy` slot (a hardcoded Tier 2.5 stage) instead, bypassing
+   * this registry entirely. Tier 1-3 (and 2.5) remain hardcoded because
+   * their behaviors (RAG writeback, LLM agreement, Wolfram rate-limit
+   * fallback, SymPy short-circuit) don't fit the simple verifiers[]
+   * iteration pattern used here.
    *
    * Throws if a verifier with the same name is already registered.
    */
@@ -109,7 +148,8 @@ export class TieredVerificationOrchestrator {
     if (verifier.tier < 4) {
       throw new Error(
         `registerVerifier rejected '${verifier.name}': tier ${verifier.tier} reserved for built-in cascade. ` +
-          `Tier 4+ only. Use the constructor's named verifier slots for tier 1-3.`,
+          `Tier 4+ only. Use the constructor's named verifier slots for tier 1-3 (and the ` +
+          `optional Tier 2.5 SymPy slot).`,
       );
     }
     if (this.extraVerifiers.some(v => v.name === verifier.name)) {
@@ -128,11 +168,38 @@ export class TieredVerificationOrchestrator {
   /**
    * Verify a student's answer to a math problem.
    *
+   * Runs the built-in tiered cascade (`verifyCore`) to a verdict, then —
+   * B1b, "make Tier-4+ verifiers actually execute" — runs every registered
+   * Tier 4+ `AnswerVerifier` and folds its evidence into `checks`. The
+   * registry existed as populate-only before this; nothing ever iterated
+   * it. Extra verifiers are advisory cross-checks: they append evidence,
+   * they never override the cascade's own tierUsed/status/confidence (a
+   * Tier 4+ verifier that should be able to override belongs in the
+   * cascade itself, not the registry — see registerVerifier()'s doc
+   * comment on what the registry is FOR).
+   *
    * @param problem  - The problem statement
    * @param answer   - The student's answer
    * @param context  - Optional verification context (topic, subject, etc.)
    */
   async verify(
+    problem: string,
+    answer: string,
+    context?: VerificationContext,
+  ): Promise<TieredVerificationResult> {
+    const result = await this.verifyCore(problem, answer, context);
+    if (this.extraVerifiers.length > 0) {
+      const extraChecks = await this.runExtraVerifiers(problem, answer, {
+        ...context,
+        traceId: result.traceId,
+      });
+      result.checks.push(...extraChecks);
+    }
+    return result;
+  }
+
+  /** The built-in Tier 1 → 2 → 2.5 → 3 cascade, unchanged in shape from before B1b. */
+  private async verifyCore(
     problem: string,
     answer: string,
     context?: VerificationContext,
@@ -195,6 +262,39 @@ export class TieredVerificationOrchestrator {
 
     checks.push(...llmResult.checks);
     this.emitSignal('tier_2_disagree', { traceId });
+
+    // ── Tier 2.5: SymPy (optional; absent = skipped) ────────────────────
+    // Runs BEFORE the metered Wolfram call so SymPy carries the bulk of
+    // verification and Wolfram arbitrates only the residue (premise 3).
+    if (this.sympy) {
+      const t25Start = Date.now();
+      const sympyCheck = await this.tier25Sympy(problem, answer, context);
+      tierTimings.tier25Ms = Date.now() - t25Start;
+      checks.push(sympyCheck);
+      this.emitSignal('tier_25_sympy', {
+        traceId,
+        status: sympyCheck.status,
+        confidence: sympyCheck.confidence,
+      });
+
+      // A decisive verdict (real agreement OR real disagreement — never a
+      // refusal, which always carries confidence 0) short-circuits Wolfram.
+      if (sympyCheck.confidence > 0) {
+        if (sympyCheck.status === 'verified' || sympyCheck.status === 'failed') {
+          await this.writeToRAGCache(problem, answer, sympyCheck);
+        }
+        return this.buildResult({
+          ...baseResult,
+          checks,
+          requestedAt,
+          tierUsed: 'tier25_sympy',
+          status: sympyCheck.status,
+          confidence: sympyCheck.confidence,
+          llmAgreement: false,
+        });
+      }
+      this.emitSignal('tier_25_sympy_refused', { traceId, details: sympyCheck.details });
+    }
 
     // ── Tier 3: Wolfram Arbitration ──────────────────────────────────────
     if (!this.canCallWolfram()) {
@@ -336,6 +436,95 @@ export class TieredVerificationOrchestrator {
       checks,
       avgConfidence,
     };
+  }
+
+  /** Maps the injected AnswerVerifier's result onto a VerificationCheck. Never throws. */
+  private async tier25Sympy(
+    problem: string,
+    answer: string,
+    context?: VerificationContext,
+  ): Promise<VerificationCheck> {
+    const start = Date.now();
+    try {
+      // AnswerVerifierContext is a narrower shape than VerificationContext —
+      // thread only what it declares.
+      const result: AnswerVerifierResult = await this.sympy!.verify(problem, answer, {
+        topic: context?.topic,
+        subject: context?.subject,
+      });
+      const decisive = result.confidence > 0;
+      return {
+        verifier: 'sympy',
+        status: decisive ? (result.agrees ? 'verified' : 'failed') : 'inconclusive',
+        confidence: result.confidence,
+        details:
+          result.reason ??
+          (result.agrees
+            ? `SymPy confirms${result.canonicalAnswer ? `: ${result.canonicalAnswer}` : ''}`
+            : 'SymPy disagrees'),
+        timestamp: new Date(),
+        durationMs: Date.now() - start,
+      };
+    } catch (error) {
+      // AnswerVerifier.verify() must never throw per its own contract, but
+      // the orchestrator stays defensive here the same way tier3Wolfram
+      // already is against a misbehaving implementation.
+      return {
+        verifier: 'sympy',
+        status: 'inconclusive',
+        confidence: 0,
+        details: `sympy error: ${error instanceof Error ? error.message : 'Unknown'}`,
+        timestamp: new Date(),
+        durationMs: Date.now() - start,
+      };
+    }
+  }
+
+  /**
+   * Runs every registered Tier 4+ verifier and maps each result onto a
+   * VerificationCheck. Advisory only — never throws, never influences
+   * tierUsed/status/confidence (see verify()'s doc comment).
+   */
+  private async runExtraVerifiers(
+    problem: string,
+    answer: string,
+    context?: VerificationContext & { traceId?: string },
+  ): Promise<VerificationCheck[]> {
+    const out: VerificationCheck[] = [];
+    for (const v of this.extraVerifiers) {
+      const start = Date.now();
+      try {
+        const result = await v.verify(problem, answer, {
+          topic: context?.topic,
+          subject: context?.subject,
+          traceId: context?.traceId,
+        });
+        const decisive = result.confidence > 0;
+        out.push({
+          verifier: 'custom',
+          status: decisive ? (result.agrees ? 'verified' : 'failed') : 'inconclusive',
+          confidence: result.confidence,
+          details: `${v.name}: ${result.reason ?? (result.agrees ? 'agrees' : 'disagrees')}`,
+          timestamp: new Date(),
+          durationMs: Date.now() - start,
+        });
+        this.emitSignal('extra_verifier_ran', {
+          name: v.name,
+          agrees: result.agrees,
+          confidence: result.confidence,
+        });
+      } catch (error) {
+        out.push({
+          verifier: 'custom',
+          status: 'inconclusive',
+          confidence: 0,
+          details: `${v.name} error: ${error instanceof Error ? error.message : 'Unknown'}`,
+          timestamp: new Date(),
+          durationMs: Date.now() - start,
+        });
+      }
+    }
+    return out;
   }
 
   private async tier3Wolfram(

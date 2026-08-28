@@ -161,6 +161,29 @@ describe('ReviewQueuePanel', () => {
     expect(screen.getByText(/mathematics: pending/)).toBeInTheDocument();
   });
 
+  it('B4: a mathematics gate reason naming wolfram_verified renders visibly in the expanded evidence', async () => {
+    const wolframRow = row('pi-1', {
+      gates: {
+        scope: { status: 'passed', reason: 'concept resolves', decided_by: null, decided_at: null },
+        mathematics: {
+          status: 'passed',
+          reason: 'cascade AGREED — wolfram_verified',
+          decided_by: null,
+          decided_at: null,
+        },
+        assessment_contract: { status: 'passed', reason: 'gradable', decided_by: null, decided_at: null },
+        misconception_coverage: { status: 'waived', reason: 'not enforced', decided_by: null, decided_at: null },
+        provenance: { status: 'passed', reason: 'run-1', decided_by: null, decided_at: null },
+      },
+    });
+    render(<ReviewQueuePanel fetchQueue={queueOf([wolframRow])} submitBatch={vi.fn()} />);
+    await screen.findByText('Question text for pi-1');
+
+    fireEvent.click(screen.getByLabelText('Toggle detail for pi-1'));
+    expect(screen.getByText(/mathematics: passed/)).toBeInTheDocument();
+    expect(screen.getByText(/wolfram_verified/)).toBeInTheDocument();
+  });
+
   it('the throughput meter reports what the operator actually did', async () => {
     const clock = 0;
     const submitBatch = vi.fn().mockResolvedValue({

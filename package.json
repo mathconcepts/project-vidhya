@@ -33,6 +33,7 @@
     "ci:connection-budget": "tsx scripts/check-connection-budget.ts",
     "ci:seam-registry": "tsx scripts/check-seam-registry.ts",
     "ci:content-integrity": "tsx scripts/check-content-integrity.ts",
+    "ci:katex-fences": "tsx scripts/check-katex-fences.ts",
     "ci:intent-catalogue": "tsx scripts/check-intent-catalogue.ts",
     "ci:interactive-specs": "tsx scripts/lint-interactive-specs.ts",
     "ci:demo-rails": "tsx scripts/check-demo-rails.ts",
@@ -93,7 +94,7 @@
     "ci:la-walkthrough": "tsx scripts/check-la-walkthrough.ts",
     "ci:gif-scenes": "tsx scripts/check-gif-scenes.ts",
     "ci:aggregate-drift": "tsx scripts/check-ci-aggregate-drift.ts",
-    "ci": "npm run lint:fork-test && CONTENT_CI_STRICT=true npm run ci:content-gate && npm run ci:pg-allowlist && npm run ci:connection-budget && npm run ci:seam-registry && npm run ci:playbook-convention && npm run ci:content-integrity && npm run ci:interactive-specs && npm run ci:gif-scenes && npm run ci:template-coverage && npm run ci:variant-agreement && npm run ci:practice-items && npm run ci:demo-rails && npm run ci:syllabus-floor && npm run ci:la-walkthrough && npm run ci:intent-catalogue"
+    "ci": "npm run lint:fork-test && CONTENT_CI_STRICT=true npm run ci:content-gate && npm run ci:pg-allowlist && npm run ci:connection-budget && npm run ci:seam-registry && npm run ci:playbook-convention && npm run ci:content-integrity && npm run ci:katex-fences && npm run ci:interactive-specs && npm run ci:gif-scenes && npm run ci:template-coverage && npm run ci:variant-agreement && npm run ci:practice-items && npm run ci:demo-rails && npm run ci:syllabus-floor && npm run ci:la-walkthrough && npm run ci:intent-catalogue"
   },
   "keywords": [
     "adaptive-learning",
@@ -132,6 +133,11 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^20.19.33",
     "@types/pg": "^8.18.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "unified": "^11.0.5",
     "vitest": "^1.6.1"
   }
 }

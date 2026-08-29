@@ -150,6 +150,16 @@ jobs:
       - name: Content integrity (scaffolding leaks, fences, atom ids)
         run: npm run ci:content-integrity
 
+      # Runs the exact remark-math + rehype-katex pipeline the frontend uses
+      # (MarkdownAtomRenderer.tsx) against every atom body. A $$ fence glued
+      # to adjacent content instead of standing alone on its own line makes
+      # the tokenizer swallow everything up to the next $$ it can find into
+      # one KaTeX error span, rendered in red as raw LaTeX source -- no
+      # console error, no thrown exception, just a student staring at
+      # unrendered math. See scripts/check-katex-fences.ts's header.
+      - name: KaTeX math fences render clean
+        run: npm run ci:katex-fences
+
       - name: Interactive-spec validity
         run: npm run ci:interactive-specs
 

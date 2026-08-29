@@ -4,10 +4,14 @@
  * render. If a parser change breaks an atom, this test catches it before it
  * ships.
  *
- * Base atoms (derivatives-basic: 9, complex-numbers: 8, eigenvalues: 11 = 28)
- * are pinned, so a seed atom cannot silently disappear. eigenvalues gained
- * mnemonic/exam_pattern/interleaved_drill atoms (2026-08-29) — the first
- * seed content for 3 of the 11 AtomType categories that had none before.
+ * Base atoms (derivatives-basic: 9, complex-numbers: 8, 26 Linear Algebra
+ * concepts: 286 = 303) are pinned, so a seed atom cannot silently disappear.
+ * All 26 LA concepts gained mnemonic/exam_pattern/interleaved_drill atoms
+ * (2026-08-29) — the first seed content for 3 of the 11 AtomType categories
+ * that had none before, and the reason CONCEPTS grew from a 3-concept sample
+ * to the full LA set: those 75 new files were previously never mounted
+ * through this renderer by any test (ci:la-walkthrough's "interactive" leg
+ * only checks the JSON `interactive-spec` schema, not a real React render).
  * Authored stance
  * variants (`*.shaken.md` / `*.assured.md`, see src/content/stance-variants.ts)
  * are counted dynamically — they are expected to grow as concepts gain a
@@ -24,7 +28,18 @@ import matter from 'gray-matter';
 import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 
 const CONTENT_ROOT = path.resolve(__dirname, '../../../../modules/project-vidhya-content/concepts');
-const CONCEPTS = ['derivatives-basic', 'complex-numbers', 'eigenvalues'];
+
+const LINEAR_ALGEBRA_CONCEPTS = [
+  'cayley-hamilton', 'change-of-basis', 'determinants', 'diagonalization',
+  'eigenvalues', 'gram-schmidt', 'inner-product-spaces', 'jordan-normal-form',
+  'least-squares', 'linear-independence', 'linear-transformations',
+  'lu-factorization', 'matrix-inverse', 'matrix-norms', 'matrix-operations',
+  'null-space-column-space', 'orthogonality', 'positive-definite-matrices',
+  'quadratic-forms', 'rank-nullity', 'spectral-theorem', 'svd',
+  'symmetric-matrices', 'systems-of-equations', 'trace', 'vector-spaces',
+];
+
+const CONCEPTS = ['derivatives-basic', 'complex-numbers', ...LINEAR_ALGEBRA_CONCEPTS];
 
 interface AtomFile {
   concept: string;
@@ -57,8 +72,8 @@ function loadAtoms(): AtomFile[] {
 describe('MarkdownAtomRenderer — regression on seed atoms', () => {
   const atoms = loadAtoms();
 
-  it('loads all 28 base seed atoms', () => {
-    expect(atoms.filter((a) => !a.isVariant).length).toBe(28);
+  it('loads all 303 base seed atoms', () => {
+    expect(atoms.filter((a) => !a.isVariant).length).toBe(303);
   });
 
   it('loads the authored stance variants too', () => {

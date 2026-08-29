@@ -4,8 +4,11 @@
  * render. If a parser change breaks an atom, this test catches it before it
  * ships.
  *
- * Base atoms (derivatives-basic: 9, complex-numbers: 8, eigenvalues: 8 = 25)
- * are pinned, so a seed atom cannot silently disappear. Authored stance
+ * Base atoms (derivatives-basic: 9, complex-numbers: 8, eigenvalues: 11 = 28)
+ * are pinned, so a seed atom cannot silently disappear. eigenvalues gained
+ * mnemonic/exam_pattern/interleaved_drill atoms (2026-08-29) — the first
+ * seed content for 3 of the 11 AtomType categories that had none before.
+ * Authored stance
  * variants (`*.shaken.md` / `*.assured.md`, see src/content/stance-variants.ts)
  * are counted dynamically — they are expected to grow as concepts gain a
  * confident/unconfident axis, and pinning them would make every authoring
@@ -54,8 +57,8 @@ function loadAtoms(): AtomFile[] {
 describe('MarkdownAtomRenderer — regression on seed atoms', () => {
   const atoms = loadAtoms();
 
-  it('loads all 25 base seed atoms', () => {
-    expect(atoms.filter((a) => !a.isVariant).length).toBe(25);
+  it('loads all 28 base seed atoms', () => {
+    expect(atoms.filter((a) => !a.isVariant).length).toBe(28);
   });
 
   it('loads the authored stance variants too', () => {

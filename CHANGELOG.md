@@ -4,6 +4,52 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.37.0] — 2026-08-29 — Full course coverage on Linear Algebra, and Wolfram Tier 3 goes live
+
+**Operator action:** none required by this release itself. `WOLFRAM_APP_ID` was
+already set on the live `vidhya-demo` Render service directly by the operator
+during this release's own session, after §0 of
+`docs/ops/content-verification-runbook.md` was filled in with operator-attested
+licensing terms (free-tier non-commercial clause, no separate LLM Kit charge).
+Wolfram Engine and Show Steps stay parked — unrelated TODOs, not picked up.
+
+Every Linear Algebra concept already had 14 well-developed atoms — hooks,
+intuition, worked examples (each with confident/anxious stance variants),
+formal definitions, common traps, a micro-exercise, a retrieval prompt, a
+visual analogy. What was still missing was three of the platform's eleven
+`AtomType` categories: `mnemonic`, `exam_pattern`, and `interleaved_drill` had
+zero seed content anywhere in the entire content base, on any topic. This
+release closes that gap for all 26 GATE Linear Algebra concepts — the first
+content that's a genuine course pass, not just practice: memory aids, GATE
+exam-craft notes (NAT vs MCQ patterns, time budgets, the traps GATE actually
+sets), and cross-concept drills pairing each concept with a mathematically
+natural partner (`determinants` ↔ `matrix-inverse`, `svd` ↔
+`spectral-theorem`, 26 pairings in all). Every numeric claim in the new
+content was verified live against Wolfram|Alpha, not hand-computed.
+
+Four pre-existing answer-key and arithmetic bugs were also found and fixed
+along the way (`matrix-operations`, `matrix-norms`, `positive-definite-matrices`,
+`spectral-theorem`) — including one MCQ that had shipped with no correct
+answer among its five options, and two atoms that still carried visible
+"wait, let me recalculate" self-correction text in the student-facing answer.
+
+### Coverage, measured not asserted
+
+- `loadConceptAtoms()` verified for all 26 concepts: each resolves to 11
+  folded base atoms with `mnemonic`/`exam_pattern`/`interleaved_drill`
+  present, zero parse errors.
+- `npm run ci:la-walkthrough`: 26/26 concepts still pass all 4 legs.
+- The `MarkdownAtomRenderer` regression test widened from a 3-concept,
+  25-atom sample to all 26 LA concepts (303 base atoms, 442 files with
+  stance variants) — the 75 previously-untested new atom files (everything
+  but eigenvalues' own) are now proven to render without throwing, not just
+  structurally valid.
+
+### Also in this release
+
+- Fixed a stale `VERSION` file — stuck at 4.35.0 since before the explicit
+  4.36.0 release, silently drifted from `package.json`. Synced up, not down.
+
 ## [4.36.0] — 2026-08-26 — Every topic walkable, and three silent failures that had been shipping
 
 **Operator action:** none. No new ENV vars, no new migrations. Migrations `003`,

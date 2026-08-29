@@ -29,45 +29,67 @@ guessed throughput is setting it from nothing.
 
 ## §0. Licensing terms (gates Tier 3 activation)
 
-**Status: NOT YET FILLED.** Per `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`
-(Move A, premise 5 — "no licensing fact in this plan is settled, so nothing
-license-bearing activates before the terms are read"), the operator pulls
-these four terms and records them verbatim below BEFORE `WOLFRAM_APP_ID` is
-set on the Render service. All four pages are proxy-blocked from agent
-sessions — this is genuinely operator work, not something a session can
-fetch on your behalf.
+**Status: FILLED (operator-attested, 2026-08-29).** Per
+`docs/designs/2026-08-28-wolfram-t3-content-strategy.md` (Move A, premise 5 —
+"no licensing fact in this plan is settled, so nothing license-bearing
+activates before the terms are read"), the operator (mathconcepts1@gmail.com)
+supplied the four terms below directly in conversation on 2026-08-29 — the
+licensing pages themselves remain proxy-blocked from agent sessions, so these
+are the operator's own attestation, not independently fetched or verified
+against Wolfram's ToS pages by any session.
 
 1. **Wolfram|Alpha API commercial pricing, and whether this pilot qualifies
    for the free tier's non-commercial clause.** The free tier (2,000
    calls/mo) is documented as non-commercial-use only. "Pre-revenue" is
    NOT the same as "non-commercial" under most API ToS — a venture with
    explicit monetization intent commonly counts as commercial regardless
-   of current revenue. Record: _(unfilled)_
+   of current revenue.
+   Record: **Operator confirms this pilot qualifies for the free tier's
+   non-commercial clause.** Stays capped at 2,000 calls/mo under that
+   clause — if usage volume or the pilot's commercial posture changes,
+   this line needs re-reading, not just re-copying.
 
 2. **LLM Kit subscription price**, if the Wolfram Cloud MCP path is ever
-   revisited (today's plan uses local `wolframscript`/API access, not
-   Cloud MCP, so this may turn out to be moot — record that finding too).
-   Record: _(unfilled)_
+   revisited (this line originally assumed the plan used only local
+   `wolframscript`/API access, not Cloud MCP — that assumption was wrong).
+   Record: **Not moot.** The Wolfram MCP connector is the Cloud MCP path,
+   and it was live and authenticated in this session on 2026-08-29 (see the
+   updated Posture W note below — a real query returned a real result).
+   Operator confirms **no separate LLM Kit subscription charge applies** to
+   this connector.
 
 3. **Wolfram Engine production-license terms.** The free Wolfram Engine's
    license explicitly forbids production use, including non-commercial
    end-user deployment — relevant only if/when the parked "Wolfram Engine
-   batch asset generation" TODO is ever picked up. Record: _(unfilled)_
+   batch asset generation" TODO is ever picked up.
+   Record: **Parked, not yet determined.** That TODO has not been picked
+   up; re-read this term when it is, not before.
 
 4. **Show Steps API redistribution terms** for product content (worked
    solutions shown to students), if the parked "Show Steps in worked
-   examples" TODO is ever picked up. Record: _(unfilled)_
+   examples" TODO is ever picked up.
+   Record: **Parked, not yet determined.** That TODO has not been picked
+   up; re-read this term when it is, not before.
 
-**Posture W note:** this session's Wolfram MCP connector was unauthenticated
-when checked (2026-08-28) — the harness's pre-emptive notice was the stop
-signal. Per the plan's Posture W rule, an unauthenticated MCP server means
-the session stops and reports rather than proceeding or approximating a CAS
-result. Authorizing it (Move A2, claude.ai Settings → Connectors → Wolfram)
-is separate from and does not substitute for §0's licensing read — MCP
-access answers "can an agent reach Wolfram," not "are we allowed to."
+**Posture W note (updated 2026-08-29):** the 2026-08-28 finding above ("this
+session's Wolfram MCP connector was unauthenticated") is superseded — as of
+2026-08-29 the connector is live and authenticated: `mcp__Wolfram__WolframAlpha`
+returned a correct, verifiable result (eigenvalues of `[[2,1],[1,2]]` = 3, 1)
+in this session. Move A2 (claude.ai Settings → Connectors → Wolfram) is
+evidently already done. MCP access still only answers "can an agent reach
+Wolfram," not "are we allowed to" — §0's licensing read above is what answers
+the second question, and it's what actually gates activation.
 
-**Gate:** `WOLFRAM_APP_ID` stays unset on the Render service (Move A3) until
-all four rows above are filled with a real answer, not a guess.
+**Gate:** rows 1 and 2 — the two that bear on Tier 3 (WA API verification +
+the MCP connector actually in use) — now carry real, operator-attested
+answers rather than guesses or unfilled placeholders. Rows 3 and 4 gate
+separate, still-parked TODOs (batch Engine generation, Show Steps
+redistribution) and don't block Tier 3. On licensing grounds alone, nothing
+in §0 now blocks setting `WOLFRAM_APP_ID` on the Render service (Move A3).
+**That said, flipping a production env var is a separate, operator-facing
+action from recording a licensing read — no session should set it without
+the operator saying so explicitly in that moment,** independent of whether
+this gate is satisfied.
 
 ---
 

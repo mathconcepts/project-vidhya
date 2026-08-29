@@ -213,6 +213,22 @@ export function applyIntentStageOrder(atoms: ContentAtom[], stageOrder?: string[
     .map((entry) => entry.atom);
 }
 
+/**
+ * Strips a fenced ` ```gif-scene\n{...}\n``` ` block from prose. The block
+ * is authoring metadata a GIF was already rendered from server-side (see
+ * MediaSidecar below, which renders atom.media.gif_url) — the student is
+ * meant to see the rendered animation, never the raw scene JSON as text.
+ * Mirrors parseInteractiveSpec's body_without_spec handling of the sibling
+ * `interactive-spec` fence and readingTime.ts's fenced-block treatment,
+ * which already documents this same "never read as text" intent — this was
+ * the one call site that hadn't caught up, so every visual_analogy atom's
+ * gif-scene JSON rendered as a literal code block instead of prose.
+ */
+const GIF_SCENE_FENCE_RE = /```gif-scene\s*[\s\S]*?```/g;
+function stripGifSceneBlock(content: string): string {
+  return content.replace(GIF_SCENE_FENCE_RE, '').trim();
+}
+
 /** Splits worked_example prose on `---` step delimiters. */
 function splitSteps(content: string): string[] {
   return content
@@ -313,7 +329,7 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
           {Math.round((atom.cohort_error_pct ?? 0) * 100)}% of students at your level miss this on the practice problem.
         </div>
       )}
-      <MarkdownAtomRenderer content={atom.content} atomId={atom.id} />
+      <MarkdownAtomRenderer content={stripGifSceneBlock(atom.content)} atomId={atom.id} />
     </div>
   );
 }
@@ -325,7 +341,7 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   // and InteractiveSidecar renders the widget a second time below it.
   // Mirrors DefaultAtomCard's handling of the same fenced block.
   const parsed = parseInteractiveSpec(atom.content);
-  const prose = parsed.ok ? parsed.body_without_spec : atom.content;
+  const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
   const { steps, blanked } = applyScaffoldingFade(atom, prose);
   const visibleCount = steps.length - blanked;
   return (
@@ -371,7 +387,7 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
   // Strip the interactive-spec fenced block from the prose — InteractiveSidecar
   // renders the widget; MarkdownAtomRenderer must not also render it as raw JSON.
   const parsed = parseInteractiveSpec(atom.content);
-  const prose = parsed.ok ? parsed.body_without_spec : atom.content;
+  const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
   return <MarkdownAtomRenderer content={prose} atomId={atom.id} />;
 }
 

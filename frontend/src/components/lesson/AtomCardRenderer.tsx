@@ -329,7 +329,7 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
           {Math.round((atom.cohort_error_pct ?? 0) * 100)}% of students at your level miss this on the practice problem.
         </div>
       )}
-      <MarkdownAtomRenderer content={stripGifSceneBlock(atom.content)} atomId={atom.id} />
+      <MarkdownAtomRenderer content={stripGifSceneBlock(atom.content)} atomId={atom.id} structured />
     </div>
   );
 }
@@ -388,7 +388,7 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
   // renders the widget; MarkdownAtomRenderer must not also render it as raw JSON.
   const parsed = parseInteractiveSpec(atom.content);
   const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
-  return <MarkdownAtomRenderer content={prose} atomId={atom.id} />;
+  return <MarkdownAtomRenderer content={prose} atomId={atom.id} structured={atom.atom_type === 'exam_pattern'} />;
 }
 
 /**
@@ -693,7 +693,13 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             // Not indigo: this eyebrow label is generic card chrome shown for
             // EVERY atom type (hook, intuition, common_traps, ...), not an
             // AI/tutor/study-plan surface, so the reserved accent doesn't apply.
-            style={{ color: 'var(--text-secondary)' }}
+            // common_traps is the one exception, and not a new color: orange
+            // is already Clarity's approved warning token (used today only in
+            // the cohort-stat callout below, which needs >=10 students of
+            // data and so is invisible on any new/low-traffic concept). This
+            // makes the AlertTriangle icon's own warning honest at zero data,
+            // permanently rather than only when cohort telemetry exists.
+            style={{ color: current.atom_type === 'common_traps' ? 'var(--orange)' : 'var(--text-secondary)' }}
           >
             <Icon size={14} />
             <span>{ATOM_LABEL[current.atom_type]}</span>

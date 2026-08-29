@@ -144,9 +144,17 @@ export interface MarkdownAtomRendererProps {
   content: string;
   /** Stable id used as memoization key. */
   atomId: string;
+  /**
+   * Opt-in modifier for atom types authored as "- **label**: detail" lists
+   * (common_traps, exam_pattern) — renders each top-level bullet as a
+   * hairline-separated label row instead of a flowing paragraph bullet. See
+   * .vidhya-atom-body--structured in styles/globals.css. Omit for every
+   * other atom type; default rendering is unchanged.
+   */
+  structured?: boolean;
 }
 
-export function MarkdownAtomRenderer({ content, atomId }: MarkdownAtomRendererProps) {
+export function MarkdownAtomRenderer({ content, atomId, structured = false }: MarkdownAtomRendererProps) {
   const tree = useMemo(() => {
     try {
       const processor = unified()
@@ -177,7 +185,11 @@ export function MarkdownAtomRenderer({ content, atomId }: MarkdownAtomRendererPr
   // is `.vidhya-atom-body` in styles/globals.css, written against the Clarity
   // tokens. Do not re-add `prose-sm`: it sets a 14px body, under the 17px
   // floor for student-facing text.
-  return <div className="max-w-none vidhya-atom-body">{tree}</div>;
+  return (
+    <div className={`max-w-none vidhya-atom-body${structured ? ' vidhya-atom-body--structured' : ''}`}>
+      {tree}
+    </div>
+  );
 }
 
 // ─── Helper for `:::interactive{ref=name}` library references

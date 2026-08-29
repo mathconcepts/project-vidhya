@@ -51,6 +51,22 @@ code
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
+  it('structured=false (default) does not add the structured modifier class', () => {
+    const { container } = render(<MarkdownAtomRenderer atomId="test.plain2" content="- one\n- two" />);
+    expect(container.querySelector('.vidhya-atom-body--structured')).toBeNull();
+  });
+
+  it('structured=true adds the modifier class for common_traps/exam_pattern-style lists', () => {
+    const { container } = render(
+      <MarkdownAtomRenderer atomId="test.structured" content="- **Trap one**: detail one\n- **Trap two**: detail two" structured />,
+    );
+    expect(container.querySelector('.vidhya-atom-body--structured')).toBeTruthy();
+    // The label's colon sits outside the bold span in every authored atom —
+    // must never be split onto its own line/row (see globals.css comment).
+    expect(screen.getByText('Trap one').tagName).toBe('STRONG');
+    expect(screen.getByText(/: detail one/)).toBeInTheDocument();
+  });
+
   it('memoizes parse — same content+id renders identical tree on re-render', () => {
     const { rerender, container } = render(
       <MarkdownAtomRenderer atomId="test.memo" content="Stable content" />,

@@ -4,6 +4,21 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.41.0] — 2026-08-29 — "Complete AND Paid": the 90-day operating system on the founder page
+
+**Operator action:** none required. No new env vars, no migrations (flat-file, matching the rest of the operator module) — `.data/founder-os.json`, durable-mirrored via the existing migration-043 pattern.
+
+The founder page (`/admin/founder`) was already gated on the same `admin` role as everything else — an admin and the founder saw the identical page. This closes that gap and adds the feature the gap was blocking:
+
+- **Founder is now a real superset of admin, not just in name.** `FounderDashboardPage` gates on `hasRole('owner')` (the founder page, in the app's own terms) instead of `hasRole('admin')` — the existing `owner` role already ranks strictly above `admin` in `src/auth/types.ts`'s hierarchy ("master rights": role transfer, admin promotion, everything `/owner/settings` already did), it just wasn't used to gate this specific page. New founder-only endpoints (`/api/operator/founder-os/*`) use a fresh `requireOwner()` gate built on the real `roleGte` hierarchy, rather than the older `requireAdmin`'s explicit `['admin','owner','institution']` membership check that (correctly, for its own purpose) treats admin and owner as equally privileged.
+- **The founder page is now a literal navigation superset of admin.** `frontend/src/components/admin/AdminQuickLinks.tsx` is the admin quick-link grid extracted out of `AdminDashboardPage` into a shared component; `FounderDashboardPage` renders the same grid, so every page an admin can reach, the founder can reach from one screen — not a second, driftable copy of the link list.
+- **"Complete AND Paid"** — the 90-day operating system for a time-starved founder, new on the founder page:
+  - `src/operator/founder-os.ts` — milestones ("Complete": title, target date, not_started/in_progress/done) and settings (window length, revenue target, weekly-hours budget) in a flat-file store, `plan_id`-keyed so a second 90-day plan can run alongside this one without a schema change. "Paid" reads the existing `localPaymentsAdapter` for the window rather than a second revenue store.
+  - `getOsView()` aggregates window math (days elapsed/remaining), completion %, a plain-English pace note ("on pace" / "behind pace"), and revenue-vs-target — degrades honestly (never fabricates a percentage against no target, never throws on a malformed stored date).
+  - `GET/POST/PATCH/DELETE /api/operator/founder-os*` in `src/api/operator-routes.ts`, owner-only.
+  - UI: a countdown card, an inline milestone list (add/cycle-status/delete), a revenue-vs-target bar, and an editable weekly-hours field, all on `FounderDashboardPage`.
+- 28 new backend tests (`src/__tests__/unit/data/founder-os.test.ts`, `src/api/__tests__/operator-founder-os-routes.test.ts`) covering store CRUD, aggregation math, and — the point of the exercise — that `requireOwner` actually rejects `admin`, not just anonymous requests.
+
 ## [4.40.0] — 2026-08-29 — Two rendering bugs fixed, and a real design-review pass on the lesson atom cards
 
 **Operator action:** none required.

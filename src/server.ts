@@ -1041,6 +1041,7 @@ async function main() {
         import('./exams/exam-group-store'),
         import('./syllabus-bridge/feedback-store'),
         import('./api/teaching-routes'),
+        import('./operator/founder-os'),
       ]);
 
       const results = await hydrateAllDurable();

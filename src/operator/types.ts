@@ -94,6 +94,77 @@ export interface AnalyticsAdapter {
   }): Promise<Record<string, number>>;
 }
 
+// ─── Founder OS — "Complete AND Paid" ───────────────────────────────
+//
+// The 90-day operating system for a time-starved founder. Two halves:
+//   - Complete: milestones toward a 90-day goal window (this file).
+//   - Paid: revenue collected in that window — reads PaymentsAdapter
+//     above, not a separate store.
+//
+// `plan_id` keys every record so a second 90-day plan (a different
+// goal set, run alongside or after this one) needs no schema change —
+// default plan is 'complete-and-paid'. Owner-only surface; see
+// requireOwner() in src/api/operator-routes.ts.
+
+export interface FounderOsMilestone {
+  id:            string;
+  plan_id:       string;
+  title:         string;
+  description?:  string;
+  category?:     string;
+  /** ISO date this milestone is targeted for, within the 90-day window. */
+  target_date?:  string;
+  status:        'not_started' | 'in_progress' | 'done';
+  created_at:    string;
+  updated_at:    string;
+  completed_at?: string;
+}
+
+export interface FounderOsSettings {
+  plan_id:                  string;
+  /** ISO timestamp — start of the 90-day (or however long) window. */
+  window_start:             string;
+  window_days:               number;
+  /** Revenue target for the window, minor units. null = no target set. */
+  revenue_target_minor:     number | null;
+  revenue_target_currency:  string;
+  /** How many hours/week the founder actually has — the "time-starved" input. */
+  weekly_hours_budget:      number | null;
+  created_at:               string;
+  updated_at:                string;
+}
+
+export interface FounderOsView {
+  plan_id: string;
+  window: {
+    start:         string;
+    end:           string;
+    days_total:    number;
+    days_elapsed:  number;
+    days_remaining: number;
+    pct_elapsed:   number;
+  };
+  complete: {
+    milestones:    FounderOsMilestone[];
+    total:         number;
+    done:          number;
+    pct_complete:  number;
+    /** Plain-English pace read — null until there's at least one done milestone. */
+    pace_note:     string | null;
+  };
+  paid: {
+    collected_minor: number;
+    currency:        string;
+    target_minor:    number | null;
+    /** null when no target is set — never fabricate a percentage against nothing. */
+    pct_of_target:   number | null;
+  };
+  time_budget: {
+    weekly_hours: number | null;
+  };
+  settings: FounderOsSettings;
+}
+
 // ─── Founder dashboard ─────────────────────────────────────────────
 
 export interface FounderDashboard {

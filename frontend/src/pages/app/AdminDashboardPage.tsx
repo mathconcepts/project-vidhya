@@ -1,15 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Play,
-  Crown, Shield, Activity, Users, MessageCircle, Smartphone, Key,
+  Crown, Shield, Users, MessageCircle, Smartphone, Key,
   CheckCircle2, Circle, AlertTriangle, TrendingDown, Brain,
-  ArrowRight, Loader2, RefreshCw, Sparkles, Settings, FileText, Server,
-  FlaskConical, Lock, BookOpen, Terminal, Wand2, Network, ClipboardCheck,
+  ArrowRight, Loader2, RefreshCw, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
 import { ContentMaturityCard } from '@/components/admin/ContentMaturityCard';
+import { AdminQuickLinks } from '@/components/admin/AdminQuickLinks';
 
 interface DashboardSummary {
   deployment: {
@@ -357,36 +356,9 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* Quick links */}
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Admin pages</p>
-            <div className="grid grid-cols-2 gap-2">
-              <QuickLink href="/admin/walkthrough" label="Demo walkthrough" icon={Play} />
-              <QuickLink href="/admin/users" label="User management" icon={Users} />
-              <QuickLink href="/admin/features" label="Feature flags" icon={Settings} />
-              <QuickLink href="/admin/content-studio" label="Content studio" icon={FileText} />
-              <QuickLink href="/admin/content-rd" label="Content R&D" icon={FlaskConical} />
-              <QuickLink href="/admin/holdout" label="Holdout PYQs" icon={Lock} />
-              <QuickLink href="/admin/review-queue" label="Answer-key review" icon={ClipboardCheck} />
-              <QuickLink href="/admin/platform-health" label="Platform health" icon={Server} />
-              <QuickLink href="/admin/jobs" label="Run console" icon={Terminal} />
-              <QuickLink href="/admin/setup" label="Setup wizard" icon={Wand2} />
-              <QuickLink href="/admin/graph" label="Graph browser" icon={Network} />
-              <QuickLink href="/admin/scenarios" label="Persona scenarios" icon={Sparkles} />
-              <QuickLink href="/admin/blueprints" label="Content blueprints" icon={FileText} />
-              <QuickLink href="/admin/playbooks" label="Playbooks" icon={Terminal} />
-              <QuickLink href="/admin/rulesets" label="Blueprint rulesets" icon={Settings} />
-              <QuickLink href="/admin/decisions" label="Decision log" icon={FileText} />
-              <QuickLink href="/admin/cohort" label="Cohort attention" icon={Users} />
-              <QuickLink href="/admin/exam-packs" label="Exam packs" icon={BookOpen} />
-              <QuickLink href="/admin/syllabus-bridge" label="Syllabus bridge" icon={BookOpen} />
-              <QuickLink href="/admin/founder" label="Founder dashboard" icon={Server} />
-              <QuickLink href="/teacher/roster" label="Teacher roster" icon={Brain} />
-              <QuickLink href="/teacher/syllabus-coverage" label="Class syllabus coverage" icon={Brain} />
-              <QuickLink href="/llm-config" label="AI config" icon={Key} />
-              {isOwner && <QuickLink href="/owner/settings" label="Owner settings" icon={Crown} />}
-            </div>
-          </div>
+          {/* Quick links — shared with FounderDashboardPage so founder is a
+              literal navigation superset of admin, not a second copy. */}
+          <AdminQuickLinks isOwner={isOwner} />
         </>
       )}
     </div>
@@ -476,24 +448,3 @@ function Sparkline({ points }: { points: number[] }) {
   );
 }
 
-function QuickLink({ href, label, icon: Icon }: {
-  href: string; label: string; icon: typeof Key;
-}) {
-  return (
-    <Link
-      to={href}
-      className="p-3 flex items-center gap-2 text-xs"
-      style={{
-        borderRadius: 'var(--radius-xs)',
-        background: 'var(--surface-card)',
-        boxShadow: 'var(--shadow-raise)',
-        color: 'var(--text-primary)',
-        textDecoration: 'none',
-      }}
-    >
-      <Icon size={12} style={{ color: 'var(--text-tertiary)' }} />
-      <span className="flex-1">{label}</span>
-      <ArrowRight size={11} style={{ color: 'var(--text-tertiary)' }} />
-    </Link>
-  );
-}

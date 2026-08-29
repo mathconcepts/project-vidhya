@@ -745,7 +745,12 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               <button
                 onClick={() => next(true)}
                 className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold"
-                style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
+                // Green, not indigo: this confirms the student got the
+                // answer right — mastery/correctness, not an AI/tutor
+                // surface. DESIGN-SYSTEM.md reserves indigo for AI, tutor,
+                // and study plan only; green is mastery/correct/primary
+                // action, which is exactly what this button means.
+                style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
               >
                 Got it
               </button>

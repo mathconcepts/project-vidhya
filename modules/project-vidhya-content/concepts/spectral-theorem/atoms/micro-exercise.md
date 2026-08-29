@@ -20,14 +20,12 @@ C) The determinant of $A$ equals $\lambda_1 \cdot \lambda_2 = 21$.
 
 D) If $B = (A)^3$, then $B = Q\Lambda^3 Q^{\mathrm{T}}$ where $\Lambda^3 = \begin{pmatrix} 27 & 0 \\ 0 & 343 \end{pmatrix}$.
 
-E) The columns of $Q$ must satisfy $\mathbf{q}_1 \cdot \mathbf{q}_2 = 0$.
+E) $Q$ can be built from *any* two linearly independent eigenvectors of $A$, without normalizing them to unit length.
 
 <details><summary>Answer</summary>
 
-**E is false.** Wait, let me reconsider — actually, by the Spectral Theorem, the columns of $Q$ (orthonormal eigenvectors) *must* be orthogonal, so $\mathbf{q}_1 \cdot \mathbf{q}_2 = 0$ **is** guaranteed. So statement E is true.
+**E is false.** A, B, C, D all follow directly from the Spectral Theorem for a real symmetric matrix: eigenvectors for distinct eigenvalues (here $3 \neq 7$) are automatically orthogonal, so choosing unit eigenvectors gives an orthonormal — hence orthogonal — $Q$ with $A = Q\Lambda Q^{\mathrm T}$, and matrix powers follow the same decomposition with $\Lambda$ raised elementwise ($3^3=27$, $7^3=343$).
 
-All statements A–E are true. This is a **catch** — every property listed is guaranteed by the Spectral Theorem. If this question appeared on an exam and asks for the false statement, re-read carefully to ensure one is actually false. In a well-written exam, one property would be violated (e.g., $Q$ non-orthogonal, $\Lambda$ not diagonal, etc.). Here, all follow from the theorem directly.
-
-**Correct reading:** All statements are **true**. The Spectral Theorem guarantees orthonormal eigenvectors, the decomposition formula, correctness of matrix functions, and orthogonality of eigenvector pairs. A real exam question would modify one statement to be false, such as "The eigenvectors of $A$ can be chosen to be orthogonal *but not necessarily orthonormal*" (false, they must be orthonormal) or "There exists a non-orthogonal matrix $P$ such that $A = P\Lambda P^{-1}$" (true, but different from spectral decomposition).
+E is the trap: picking *any* linearly independent eigenvectors (e.g. unnormalized ones) is not enough. $Q\Lambda Q^{\mathrm T} = A$ only holds when $Q$ is genuinely orthogonal — $Q^{\mathrm T}Q = I$, meaning its columns are unit length **and** mutually orthogonal. Skip the normalization step and the identity breaks even though the eigenvectors themselves are correct. This is the single most common slip when writing out a spectral decomposition by hand.
 
 </details>

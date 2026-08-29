@@ -989,7 +989,7 @@ assert something false.
 
 **Tests:** backend 3,400 → **3,640** (302 files). **CI gates 14 → 15.**
 
-### Content readiness core plan (v4.37.0 scope, PR #129)
+### Content readiness core plan (PR #129, merged 2026-08-27)
 
 Closes the core plan (P0–P3) of
 `docs/designs/2026-08-27-content-readiness-market-research-integration.md`
@@ -1163,12 +1163,159 @@ re-run before any wave ever launches.
 
 **No new env vars beyond `VIDHYA_INTENT_LANES=on` in `render.yaml`.**
 
-**What waits on the operator** (see the plan doc's IMPLEMENTATION RECORD
-appendix for the full list): merging PR #129 to actually flip the flag on
-the live demo; a provider key to run the 50-item pilot and start the
+**What waited on the operator for the flag itself is done:** PR #129 merged
+2026-08-27 and `VIDHYA_INTENT_LANES=on` has been live on the production
+Render service since that deploy (confirmed via Render's own deploy
+history). Still open (see the plan doc's IMPLEMENTATION RECORD appendix for
+the full list): a provider key to run the 50-item pilot and start the
 6-week/300-item kill clock; the W-A activation-push follow-up PR; and the
 open P2c call on whether `intent-profiles.yml`'s proposed error-tag strings
-ever become real `ErrorTag` members.
+ever become real `ErrorTag` members. This section's own work went
+undocumented in CHANGELOG.md/VERSION for two days after merging — backfilled
+as `4.37.0` once the gap was caught (see CHANGELOG.md).
+
+### Wolfram as the T3 standard: Move B — SymPy tier + verifier contract infra (PR #130, merged 2026-08-28, v4.38.0)
+
+Closes Move B of `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`.
+Like PR #129, this shipped without a CHANGELOG entry or version bump —
+backfilled as `4.38.0` in the same pass that caught PR #129's gap.
+
+**The `AnswerVerifier` contract was vaporware.** `EXTENDING.md`'s Tier 4+
+tutorial and `registerVerifier()`'s own docstring had been describing
+`runAnswerVerifierContract` and a reference `AlwaysTrueVerifier` that
+didn't exist, and Tier 4+ verifiers registered via `registerVerifier()`
+were populate-only — nothing ever called `.verify()` on them. Both are
+real now: `verify()` runs the built-in cascade (renamed `verifyCore`),
+then executes every registered extra verifier and folds results into
+`checks` as advisory evidence, without letting one override the cascade's
+own `tierUsed`/`status`/`confidence`. `EXTENDING.md`'s broken `@/` import
+alias and stale file-tree references (a cited `llm-consensus.ts` that
+never existed, `wolfram.ts` wrongly held up as an `AnswerVerifier`
+template when it implements a separate internal interface) are fixed too.
+
+**A new Tier 2.5 SymPy stage** (`src/verification/verifiers/sympy.ts`)
+sits between the LLM dual-solve and the metered Wolfram call — a
+hardcoded constructor slot, not a `registerVerifier()` extension (those
+are reserved for tier ≥ 4, after Wolfram, per the locked tier-ordering
+decision). Runs after an LLM disagreement; short-circuits Tier 3 on a
+decisive verdict, falls through to Wolfram on a refusal. Shells out to
+`python3 -c` with sympy for equality/solve checks; refuses (never guesses)
+on unparseable input, subprocess timeout, or a missing sympy/python3.
+`tierUsed` gains `'tier25_sympy'` as an additive value — every consumer of
+the closed union was grepped and checked, including `VerifyPage.tsx`'s
+display formatter. **Authoring/CI only by design**, locked in a header
+comment on `sympy.ts`: a test greps `src/api/**` and confirms
+`src/server.ts` (the one production orchestrator call site) never
+imports it — the Tier 2.5 slot stays `null` in production, since neither
+Dockerfile has `python3`.
+
+**Provenance enforcement (B2).** `check-practice-items.ts` gains
+`checkProvenanceVerificationMethod()`, scoped only to items carrying a
+`generation_run_id` (the 505 hand-verified committed items have no run to
+point to and are untouched). Such an item's `verification_method` must be
+either a grandfathered bare value (`dual_model_consensus`,
+`wolfram_verified`) or match the `+sympy`/`+wolfram` suffix convention
+with `verified_at` set.
+
+**`verify-sweep` doc rewritten against reality (B3).** The old doc
+described a CLI, a `verification_audit_log` table, and a
+`quarantine_problems` table that were never built. Rewritten against the
+real machinery — `src/jobs/wolfram-verify-job.ts`, invoked via
+`npm run content:verify` — covering the atomic per-problem checkpoint, the
+three-way verified/failed/inconclusive outcome, and the real env caps
+(`WOLFRAM_RATE_MS=1200`, `WOLFRAM_MAX_CALLS_PER_RUN=200`,
+`WOLFRAM_STEPS_MAX_PER_RUN=50`). A drift test fails if the doc's claims
+about job name or rate caps diverge from the source that enforces them.
+
+**B4** confirmed (not open work — a QA check) that `ReviewQueuePanel`
+already renders gate evidence naming `wolfram_verified` visibly once a row
+is expanded; added a test locking that in.
+
+**Deliberately not activated by this PR:** `WOLFRAM_APP_ID` stayed unset —
+Move A's licensing gate (§0 of `docs/ops/content-verification-runbook.md`)
+shipped unfilled on purpose, per the plan's premise that nothing
+license-bearing activates before the terms are read. Cleared the next day;
+see the `v4.39.0` section below.
+
+### GATE Linear Algebra: mnemonic/exam_pattern/interleaved_drill for all 26 concepts, and Wolfram Tier 3 licensing cleared (v4.39.0)
+
+Closes a real content-type gap: three of the platform's eleven `AtomType`
+categories — `mnemonic`, `exam_pattern`, `interleaved_drill` — had zero seed
+content anywhere in the content base, on any topic, until this release. All
+26 GATE Linear Algebra concepts now carry all three, on top of the 11 atoms
+each concept already had (hooks, intuition, worked examples with
+confident/anxious stance variants, formal definitions, common traps, a
+micro-exercise, a retrieval prompt, a visual analogy) — the first content
+pass that reads as a genuine course, not just practice drills. `mnemonic`
+atoms are memory aids; `exam_pattern` atoms are GATE exam-craft notes (NAT
+vs MCQ patterns, time budgets, the traps GATE actually sets);
+`interleaved_drill` atoms pair each concept with a mathematically natural
+partner for cross-concept retrieval (`determinants` ↔ `matrix-inverse`,
+`svd` ↔ `spectral-theorem`, 26 pairings total, all under
+`modules/project-vidhya-content/concepts/<id>/atoms/`). Every numeric claim
+in the new content was verified live against Wolfram|Alpha, not
+hand-computed.
+
+**Four pre-existing content bugs found and fixed along the way**, surfaced
+incidentally while the authoring agents read each concept's existing atoms
+for grounding — unrelated to the new atom types themselves:
+- `matrix-operations/atoms/micro-exercise.md` — answer key said C (4) for a
+  question whose correct answer is A (1); also stripped visible internal
+  self-correction text ("Wait, let me recalculate...") that had shipped to
+  students.
+- `matrix-norms/atoms/worked-example.md` — eigenvalues of AᵀA stated as
+  ~18.3/~2.7; correct values (Wolfram-verified) are ~17.30/~3.70, which
+  cascaded into wrong σ₁ and κ₂ in both the prose and the embedded
+  `interactive-spec`. The fix was then propagated to the
+  `worked-example-assured.md` / `worked-example-shaken.md` stance variants,
+  which `ci:variant-agreement` had caught as now disagreeing with the
+  corrected base.
+- `positive-definite-matrices/atoms/micro-exercise.md` — discriminant
+  arithmetic error (`25-24=1` instead of `25-4·5=5`) gave eigenvalues that
+  failed the trace/det sanity check; corrected to `(5±√5)/2`.
+- `spectral-theorem/atoms/micro-exercise.md` — a "which statement is false"
+  question had all five options true (independently confirmed, not just
+  taking the shipped reasoning's word for it); option E replaced with a
+  genuinely false statement (unnormalized eigenvectors) so the question has
+  a real answer.
+
+**Coverage measured, not asserted.** `loadConceptAtoms()` verified for all
+26 concepts: each resolves to 11 folded base atoms with `mnemonic` /
+`exam_pattern` / `interleaved_drill` present, zero parse errors.
+`npm run ci:la-walkthrough`: still 26/26 concepts pass all 4 legs.
+`frontend/src/components/lesson/MarkdownAtomRenderer.regression.test.tsx`
+widened from a 3-concept sample (derivatives-basic, complex-numbers,
+eigenvalues — meaning only eigenvalues' own 3 new atom files were ever
+mounted through a real `render()` call) to a named `LINEAR_ALGEBRA_CONCEPTS`
+array covering all 26 LA concepts. Pinned base-atom count recomputed from
+disk, not guessed: 26×11 + derivatives-basic(9) + complex-numbers(8) = 303
+base atoms, 442 files counting stance variants. The 75 previously-untested
+new atom files are now proven to render without throwing, not just
+structurally valid.
+
+**Wolfram Tier 3 licensing gate cleared.** §0 of
+`docs/ops/content-verification-runbook.md` (shipped unfilled by PR #130) is
+now filled with the operator's own attestation (mathconcepts1@gmail.com,
+2026-08-29, recorded in-doc since the licensing pages themselves stay
+proxy-blocked from agent sessions): the pilot qualifies for the Wolfram|Alpha
+API free tier's non-commercial clause (2,000 calls/mo cap), and the Wolfram
+MCP connector — confirmed live and authenticated this session, a real query
+returned eigenvalues of `[[2,1],[1,2]]` = 3, 1 — carries no separate LLM Kit
+subscription charge. `WOLFRAM_APP_ID` is now set on the production
+`vidhya-demo` Render service. Rows 3–4 of §0 (Wolfram Engine
+production-license terms, Show Steps redistribution terms) stay
+`_(unfilled)_` on purpose — they gate the still-parked "batch Engine
+generation" and "Show Steps" TODOs, not Tier 3 activation.
+
+**Also this release:** fixed a stale `VERSION` file — stuck at `4.35.0`
+since before the explicit `4.36.0` release, silently drifted from
+`package.json`. Synced up, not down. Landed as `4.39.0` (not `4.37.0`) once
+PR #129 and PR #130's own undocumented work was backfilled into CHANGELOG.md
+as `4.37.0`/`4.38.0` ahead of it — see those entries.
+
+**Tests:** `frontend/src/components/lesson/MarkdownAtomRenderer.regression.test.tsx`
+now exercises 442 atom files across 28 concepts (up from 3). No backend test
+count change in this release.
 
 ## Skill routing
 

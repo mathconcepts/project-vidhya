@@ -25,6 +25,6 @@ Both leading principal minors are positive, so $A$ is **positive definite**.
 
 **Answer: (A)**
 
-*Verification:* Eigenvalues are $\lambda = \frac{5 \pm \sqrt{25 - 24}}{2} = \frac{5 \pm 1}{2}$, giving $\lambda_1 = 3, \lambda_2 = 2$ (both positive) ✓
+*Verification:* Eigenvalues are $\lambda = \frac{5 \pm \sqrt{25 - 4(5)}}{2} = \frac{5 \pm \sqrt{5}}{2}$, giving $\lambda_1 \approx 3.62, \lambda_2 \approx 1.38$ (both positive, sum $=5=\text{tr}(A)$ ✓, product $=5=\det(A)$ ✓) ✓
 
 </details>

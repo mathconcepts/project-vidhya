@@ -31,10 +31,10 @@ for_stance: shaken
 
 **1-norm — sum absolute values down each column, take the bigger sum.** Column 1: $4+0=4$. Column 2: $1+2=3$. So $\|A\|_1 = 4$.
 
-**Spectral norm — via $A^TA$.** $A^TA = \begin{pmatrix}16&4\\4&5\end{pmatrix}$, eigenvalues $\approx18.3, 2.7$, so $\sigma_1\approx4.28$, $\sigma_2\approx1.64$.
+**Spectral norm — via $A^TA$.** $A^TA = \begin{pmatrix}16&4\\4&5\end{pmatrix}$, eigenvalues $\approx17.30, 3.70$, so $\sigma_1\approx4.16$, $\sigma_2\approx1.92$.
 
-$$\boxed{\|A\|_F = \sqrt{21} \approx 4.58, \quad \|A\|_1 = 4, \quad \kappa_2(A) = \sigma_1/\sigma_2 \approx 2.6}$$
+$$\boxed{\|A\|_F = \sqrt{21} \approx 4.58, \quad \|A\|_1 = 4, \quad \kappa_2(A) = \sigma_1/\sigma_2 \approx 2.16}$$
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Compute matrix norms step-by-step","steps":[{"prompt":"Square each of the four entries — 4, 1, 0, 2 — and add them. Then take the square root. What do you get?","hint":"$4^2+1^2+0^2+2^2 = 16+1+0+4 = 21$.","answer":"$\\|A\\|_F = \\sqrt{21}$"},{"prompt":"Add absolute values down column 1 (entries 4 and 0), then down column 2 (entries 1 and 2). Which sum is bigger?","hint":"Column 1: $|4|+|0|$. Column 2: $|1|+|2|$.","answer":"Column 1 sum = 4, Column 2 sum = 3. Maximum = 4, so $\\|A\\|_1 = 4$."},{"prompt":"The larger eigenvalue of $A^TA$ is about 18.3. Take its square root — that's the spectral norm.","hint":"$\\|A\\|_2 = \\sigma_1 = \\sqrt{\\lambda_1}$.","answer":"$\\sigma_1 = \\sqrt{18.3} \\approx 4.28$, so $\\|A\\|_2 \\approx 4.28$."}],"caption":"Work through Frobenius, 1-norm, and spectral norm calculations."}
+{"v":1,"kind":"guided_walkthrough","title":"Compute matrix norms step-by-step","steps":[{"prompt":"Square each of the four entries — 4, 1, 0, 2 — and add them. Then take the square root. What do you get?","hint":"$4^2+1^2+0^2+2^2 = 16+1+0+4 = 21$.","answer":"$\\|A\\|_F = \\sqrt{21}$"},{"prompt":"Add absolute values down column 1 (entries 4 and 0), then down column 2 (entries 1 and 2). Which sum is bigger?","hint":"Column 1: $|4|+|0|$. Column 2: $|1|+|2|$.","answer":"Column 1 sum = 4, Column 2 sum = 3. Maximum = 4, so $\\|A\\|_1 = 4$."},{"prompt":"The larger eigenvalue of $A^TA$ is about 17.30. Take its square root — that's the spectral norm.","hint":"$\\|A\\|_2 = \\sigma_1 = \\sqrt{\\lambda_1}$.","answer":"$\\sigma_1 = \\sqrt{17.30} \\approx 4.16$, so $\\|A\\|_2 \\approx 4.16$."}],"caption":"Work through Frobenius, 1-norm, and spectral norm calculations."}
 ```

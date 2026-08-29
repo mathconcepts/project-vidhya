@@ -490,10 +490,12 @@ Posture W) directly into `interactive-spec` / `gif-scene` widget JSON,
 instead of an agent doing the translation by hand each time.
 
 **Why not now:** no live authoring session has exercised this yet — Posture
-W is new, and this session's own Wolfram MCP connector was unauthenticated
-(stop-and-report, never approximated). Building the adapter before a real
-session has hit the hand-translation pain three times is building ahead of
-demonstrated need.
+W is new. (Update 2026-08-29: the Wolfram MCP connector, unauthenticated
+when this item was filed on 2026-08-28, is now live and authenticated — see
+`docs/ops/content-verification-runbook.md` §0's updated Posture W note. That
+changes only whether Posture W's ad hoc usage is possible, not this item's
+trigger.) Building the adapter before a real session has hit the
+hand-translation pain three times is building ahead of demonstrated need.
 
 **Where to start:** `frontend/src/components/lesson/interactives/types.ts`'s
 schema is the target shape; `src/content/concept-orchestrator/gif-generator.ts`

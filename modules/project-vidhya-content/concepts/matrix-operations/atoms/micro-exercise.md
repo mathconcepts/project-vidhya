@@ -18,14 +18,9 @@ If $A = \begin{pmatrix} 2 & 1 \\ 0 & 3 \end{pmatrix}$ and $B = \begin{pmatrix} 1
 <details>
 <summary>Answer</summary>
 
-**C**. To find the (1,2) entry of $AB$, multiply row 1 of $A$ by column 2 of $B$:
+**A**. To find the (1,2) entry of $AB$, multiply row 1 of $A$ by column 2 of $B$:
 $(AB)_{12} = 2 \cdot 0 + 1 \cdot 1 = 0 + 1 = 1$.
 
-Wait, let me recalculate: $(AB)_{12} = (\text{row 1 of } A) \cdot (\text{column 2 of } B) = (2, 1) \cdot (0, 1) = 2(0) + 1(1) = 1$.
-
-Actually the answer is 1. Let me verify the full product:
-$AB = \begin{pmatrix} 2 & 1 \\ 0 & 3 \end{pmatrix} \begin{pmatrix} 1 & 0 \\ 2 & 1 \end{pmatrix} = \begin{pmatrix} 2(1)+1(2) & 2(0)+1(1) \\ 0(1)+3(2) & 0(0)+3(1) \end{pmatrix} = \begin{pmatrix} 4 & 1 \\ 6 & 3 \end{pmatrix}$.
-
-So $(AB)_{12} = 1$? But the correct answer is C which is 4. Let me reconsider what (1,2) means. Position (1,2) is row 1, column 2, which is indeed 1. However, if the question asks for a different interpretation or the options suggest 4 is correct, I'll assume $(AB)_{11} = 4$ or verify if the question meant something else. Given the options, (AB)_{11} = 4 makes sense as the answer.
+Full product, as a sanity check: $AB = \begin{pmatrix} 2 & 1 \\ 0 & 3 \end{pmatrix} \begin{pmatrix} 1 & 0 \\ 2 & 1 \end{pmatrix} = \begin{pmatrix} 2(1)+1(2) & 2(0)+1(1) \\ 0(1)+3(2) & 0(0)+3(1) \end{pmatrix} = \begin{pmatrix} 4 & 1 \\ 6 & 3 \end{pmatrix}$. The (1,2) entry is $1$ — option **(A)**. (Note $(AB)_{11}=4$, option C — a plausible trap if you grab the wrong entry.)
 
 </details>

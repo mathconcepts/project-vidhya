@@ -4,6 +4,134 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.39.0] — 2026-08-29 — Full course coverage on Linear Algebra, and Wolfram Tier 3 goes live
+
+**Operator action:** none required by this release itself. `WOLFRAM_APP_ID` was
+already set on the live `vidhya-demo` Render service directly by the operator
+during this release's own session, after §0 of
+`docs/ops/content-verification-runbook.md` was filled in with operator-attested
+licensing terms (free-tier non-commercial clause, no separate LLM Kit charge).
+Wolfram Engine and Show Steps stay parked — unrelated TODOs, not picked up.
+
+Every Linear Algebra concept already had 14 well-developed atoms — hooks,
+intuition, worked examples (each with confident/anxious stance variants),
+formal definitions, common traps, a micro-exercise, a retrieval prompt, a
+visual analogy. What was still missing was three of the platform's eleven
+`AtomType` categories: `mnemonic`, `exam_pattern`, and `interleaved_drill` had
+zero seed content anywhere in the entire content base, on any topic. This
+release closes that gap for all 26 GATE Linear Algebra concepts — the first
+content that's a genuine course pass, not just practice: memory aids, GATE
+exam-craft notes (NAT vs MCQ patterns, time budgets, the traps GATE actually
+sets), and cross-concept drills pairing each concept with a mathematically
+natural partner (`determinants` ↔ `matrix-inverse`, `svd` ↔
+`spectral-theorem`, 26 pairings in all). Every numeric claim in the new
+content was verified live against Wolfram|Alpha, not hand-computed.
+
+Four pre-existing answer-key and arithmetic bugs were also found and fixed
+along the way (`matrix-operations`, `matrix-norms`, `positive-definite-matrices`,
+`spectral-theorem`) — including one MCQ that had shipped with no correct
+answer among its five options, and two atoms that still carried visible
+"wait, let me recalculate" self-correction text in the student-facing answer.
+
+### Coverage, measured not asserted
+
+- `loadConceptAtoms()` verified for all 26 concepts: each resolves to 11
+  folded base atoms with `mnemonic`/`exam_pattern`/`interleaved_drill`
+  present, zero parse errors.
+- `npm run ci:la-walkthrough`: 26/26 concepts still pass all 4 legs.
+- The `MarkdownAtomRenderer` regression test widened from a 3-concept,
+  25-atom sample to all 26 LA concepts (303 base atoms, 442 files with
+  stance variants) — the 75 previously-untested new atom files (everything
+  but eigenvalues' own) are now proven to render without throwing, not just
+  structurally valid.
+
+### Also in this release
+
+- Fixed a stale `VERSION` file — stuck at 4.35.0 since before the explicit
+  4.36.0 release, silently drifted from `package.json`. Synced up, not down.
+
+## [4.38.0] — 2026-08-28 — Wolfram becomes a real verification tier, not a placeholder
+
+**Operator action:** none. `WOLFRAM_APP_ID` intentionally stays unset by this
+release — activation was gated behind an operator licensing read (§0 of
+`docs/ops/content-verification-runbook.md`, filled in and cleared the next
+day, see 4.39.0 below). This release ships the machinery the flag turns on,
+not the flag itself.
+
+The `AnswerVerifier` contract that `EXTENDING.md`'s Tier 4+ tutorial and
+`registerVerifier()`'s own docstring had been describing for months was
+vaporware — `runAnswerVerifierContract` and the reference `AlwaysTrueVerifier`
+didn't exist, and registered Tier 4+ verifiers were populate-only: nothing
+ever called `.verify()` on them. Both are real now. `verify()` runs the
+built-in cascade, then executes every registered extra verifier and folds
+the results into `checks` as advisory evidence, without letting a third-party
+verifier override the cascade's own tier/status/confidence.
+
+A new Tier 2.5 sits between the LLM dual-solve and the metered Wolfram
+call: `src/verification/verifiers/sympy.ts` shells out to `sympy` for a
+free, fast equality/solve check on a disagreement, short-circuiting Tier 3
+on a decisive verdict and falling through to Wolfram on a refusal. It's
+authoring/CI only by design — a header comment locks the deployment shape,
+and a test greps every `src/api/**` file to prove production never imports
+it (`tierUsed: 'tier25_sympy'` never reaches a served response).
+
+Generated practice items that claim SymPy or Wolfram verification now have
+to prove it: any item carrying a `generation_run_id` must show either a
+grandfathered verification path (`dual_model_consensus`, `wolfram_verified`)
+or a `+sympy`/`+wolfram` suffix with `verified_at` set — the 505 hand-verified
+committed items are untouched, this only gates future generated ones. The
+`verify-sweep` operator doc was rewritten from scratch against the real job
+(`src/jobs/wolfram-verify-job.ts`, invoked via `npm run content:verify`) —
+the old doc described a CLI, a table, and a script that had never been
+built. A drift test now fails if the doc's claims about job name or rate
+caps (`WOLFRAM_RATE_MS`, `WOLFRAM_MAX_CALLS_PER_RUN`,
+`WOLFRAM_STEPS_MAX_PER_RUN`) diverge from the source that actually enforces
+them.
+
+## [4.37.0] — 2026-08-27 — Every practice attempt leaves a durable trail, and the mock exam tells you what you left on the table
+
+**Operator action:** none beyond what already happened — `VIDHYA_INTENT_LANES=on`
+landed in committed `render.yaml` and has been live on the production Render
+service since this release's own deploy (confirmed via Render's deploy
+history). Migrations 050–055 auto-apply on boot, same as every release.
+
+Marking rules used to live in five different places (a scorer's defaults,
+an exam profile table, an exam catalog, a samples file, a schema doc) that
+could silently drift from each other. `src/exams/marking-constants.ts` is
+now the one source of truth, with a versioned, DB-backed override
+(`assessment_contracts`) an operator can update per exam/paper/year without
+a code deploy — a DB-less or missing-row deploy still grades, honestly
+stamped `gate-2026+compiled` so a fallback is never mistaken for the real
+thing. Every mock exam and quiz now pins its contract version at session
+creation, so grading (including a retried submission) always reads what
+the student actually sat, never re-resolves the "current" rules out from
+under them.
+
+The platform never had a durable, per-attempt record of what a student
+actually did — just a prunable dedup table and one aggregate blob per mock.
+The new `attempt_facts` ledger fixes that: every graded attempt writes a
+row (question kind, marks earned/max, skipped, contract version, a
+latency *bucket* — never raw milliseconds) inside the same transaction as
+the grade itself, so a telemetry hiccup can never take the grade down with
+it. It's the foundation for the most student-visible piece of this release:
+after a mock exam, the results page now shows not just a score but what was
+actually **left on the table** — which skipped or wrong questions the
+student's own answer pattern says they knew, broken down in plain language
+("−⅔ of a mark"), capped at the 3 that matter most. A companion 5-item
+drill at `/attempt-skip-drill` trains the specific judgment call of
+attempt-vs-skip under negative marking.
+
+Branching decision trees (Green's/Stokes'/Gauss's theorem selection, and
+the two already-shipped wizards for choosing a proof method or a
+distribution) now render through one shared `guided_walkthrough` data
+format instead of bespoke pages — a sequential wizard, never a tree
+diagram, graded only at the leaf you actually reach. And a new operator
+review queue at `/admin/review-queue` gates every future generated item
+behind five explicit checks (scope, mathematics — always human-decided,
+never auto-passed — assessment contract, misconception coverage,
+provenance) before it can serve or promote; the 505 items already shipping
+are unaffected.
+
 ## [4.36.0] — 2026-08-26 — Every topic walkable, and three silent failures that had been shipping
 
 **Operator action:** none. No new ENV vars, no new migrations. Migrations `003`,

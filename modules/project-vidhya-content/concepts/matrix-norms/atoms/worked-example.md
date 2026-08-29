@@ -43,17 +43,17 @@ $$(16-\lambda)(5-\lambda) - 16 = \lambda^2 - 21\lambda + 64 = 0$$
 By the quadratic formula:
 $$\lambda = \frac{21 \pm \sqrt{441 - 256}}{2} = \frac{21 \pm \sqrt{185}}{2}$$
 
-This gives $\lambda_1 \approx 18.3$ and $\lambda_2 \approx 2.7$.
+This gives $\lambda_1 \approx 17.30$ and $\lambda_2 \approx 3.70$ (verified: $\lambda_1 + \lambda_2 = 21 = \text{tr}(A^TA)$ ✓, $\lambda_1 \lambda_2 = 64 = \det(A^TA)$ ✓).
 
-The singular values are $\sigma_1 = \sqrt{\lambda_1} \approx 4.28$ and $\sigma_2 = \sqrt{\lambda_2} \approx 1.64$.
+The singular values are $\sigma_1 = \sqrt{\lambda_1} \approx 4.16$ and $\sigma_2 = \sqrt{\lambda_2} \approx 1.92$.
 
 Therefore:
-$$\|A\|_2 = \sigma_1 \approx 4.28, \quad \kappa_2(A) = \frac{\sigma_1}{\sigma_2} \approx 2.6$$
+$$\|A\|_2 = \sigma_1 \approx 4.16, \quad \kappa_2(A) = \frac{\sigma_1}{\sigma_2} \approx 2.16$$
 
 ---
 
-$$\boxed{\|A\|_F = \sqrt{21} \approx 4.58, \quad \|A\|_1 = 4, \quad \kappa_2(A) \approx 2.6}$$
+$$\boxed{\|A\|_F = \sqrt{21} \approx 4.58, \quad \|A\|_1 = 4, \quad \kappa_2(A) \approx 2.16}$$
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Compute matrix norms step-by-step","steps":[{"prompt":"What is the Frobenius norm? Recall: $\\|A\\|_F = \\sqrt{\\sum a_{ij}^2}$","hint":"Square each entry: $4^2 + 1^2 + 0^2 + 2^2$. Then take the square root.","answer":"$\\|A\\|_F = \\sqrt{21}$"},{"prompt":"What is the 1-norm (maximum column sum)?","hint":"Sum absolute values down each column. Take the max of the two column sums.","answer":"Column 1 sum = 4, Column 2 sum = 3. Maximum = 4, so $\\|A\\|_1 = 4$."},{"prompt":"How do we find the spectral norm $\\|A\\|_2$?","hint":"The spectral norm equals the largest singular value. Find eigenvalues of $A^T A$, take square roots, pick the max.","answer":"$\\sigma_1 = \\sqrt{18.3} \\approx 4.28$, so $\\|A\\|_2 \\approx 4.28$."}],"caption":"Work through Frobenius, 1-norm, and spectral norm calculations."}
+{"v":1,"kind":"guided_walkthrough","title":"Compute matrix norms step-by-step","steps":[{"prompt":"What is the Frobenius norm? Recall: $\\|A\\|_F = \\sqrt{\\sum a_{ij}^2}$","hint":"Square each entry: $4^2 + 1^2 + 0^2 + 2^2$. Then take the square root.","answer":"$\\|A\\|_F = \\sqrt{21}$"},{"prompt":"What is the 1-norm (maximum column sum)?","hint":"Sum absolute values down each column. Take the max of the two column sums.","answer":"Column 1 sum = 4, Column 2 sum = 3. Maximum = 4, so $\\|A\\|_1 = 4$."},{"prompt":"How do we find the spectral norm $\\|A\\|_2$?","hint":"The spectral norm equals the largest singular value. Find eigenvalues of $A^T A$, take square roots, pick the max.","answer":"$\\sigma_1 = \\sqrt{17.30} \\approx 4.16$, so $\\|A\\|_2 \\approx 4.16$."}],"caption":"Work through Frobenius, 1-norm, and spectral norm calculations."}
 ```

@@ -20,7 +20,9 @@ Perform row operations:
 - $R_3 \leftarrow R_3 - R_2$: third row becomes $[0, 0, 0, 0]$
 
 RREF is:
-$$\begin{pmatrix} 1 & 2 & 0 & -1 \\ 0 & 0 & 1 & 2 \\ 0 & 0 & 0 & 0 \end{pmatrix}$$
+$$
+\begin{pmatrix} 1 & 2 & 0 & -1 \\ 0 & 0 & 1 & 2 \\ 0 & 0 & 0 & 0 \end{pmatrix}
+$$
 
 Pivot columns are **1 and 3**; free variables are **columns 2 and 4** ($x_2$ and $x_4$).
 

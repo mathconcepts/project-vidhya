@@ -20,7 +20,9 @@ Undoing a composition reverses the order. The same picture covers the transpose,
 - **Sign**-flip the off-diagonal ones ($b, c \to -b, -c$)
 - **Split** by the determinant
 
-$$\begin{pmatrix} a & b \\ c & d \end{pmatrix}^{-1} = \frac{1}{ad-bc}\begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$$
+$$
+\begin{pmatrix} a & b \\ c & d \end{pmatrix}^{-1} = \frac{1}{ad-bc}\begin{pmatrix} d & -b \\ -c & a \end{pmatrix}
+$$
 
 Swap the *main* diagonal, negate the *other* one — never both, never neither.
 

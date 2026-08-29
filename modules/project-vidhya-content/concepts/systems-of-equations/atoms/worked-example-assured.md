@@ -32,7 +32,9 @@ $$2x+y-z=8, \quad -3x-y+2z=-11, \quad -2x+y+2z=-3$$
 
 ## Row-reduce once
 
-$$\begin{bmatrix}2&1&-1&\mid&8\\-3&-1&2&\mid&-11\\-2&1&2&\mid&-3\end{bmatrix} \to \begin{bmatrix}2&1&-1&\mid&8\\0&\tfrac12&\tfrac12&\mid&1\\0&0&-1&\mid&1\end{bmatrix}$$
+$$
+\begin{bmatrix}2&1&-1&\mid&8\\-3&-1&2&\mid&-11\\-2&1&2&\mid&-3\end{bmatrix} \to \begin{bmatrix}2&1&-1&\mid&8\\0&\tfrac12&\tfrac12&\mid&1\\0&0&-1&\mid&1\end{bmatrix}
+$$
 
 via $R_2\leftarrow R_2+\tfrac32R_1$, $R_3\leftarrow R_3+R_1$, then $R_3\leftarrow R_3-4R_2$.
 

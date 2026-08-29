@@ -20,7 +20,8 @@ exam_ids: ["*"]
 
 <details><summary>Answer</summary>
 
-**(B)** is symmetric because $$\begin{pmatrix} 1 & -2 \\ -2 & 3 \end{pmatrix}^T = \begin{pmatrix} 1 & -2 \\ -2 & 3 \end{pmatrix}.$$
+**(B)** is symmetric because $$
+\begin{pmatrix} 1 & -2 \\ -2 & 3 \end{pmatrix}^T = \begin{pmatrix} 1 & -2 \\ -2 & 3 \end{pmatrix}.$$
 
 (A) is not symmetric: $a_{12} = 2 \neq 3 = a_{21}$.
 

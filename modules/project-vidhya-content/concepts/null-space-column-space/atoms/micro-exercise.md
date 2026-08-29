@@ -24,7 +24,9 @@ First, row reduce $B$:
 - $R_2 - 2R_1$: second row becomes $[0, 0, 0]$
 
 RREF is:
-$$\begin{pmatrix} 1 & 3 & -2 \\ 0 & 0 & 0 \\ 0 & 0 & 1 \end{pmatrix}$$
+$$
+\begin{pmatrix} 1 & 3 & -2 \\ 0 & 0 & 0 \\ 0 & 0 & 1 \end{pmatrix}
+$$
 
 Rank is 2 (two pivot columns: columns 1 and 3). By rank-nullity:
 $$\text{nullity} = n - \text{rank} = 3 - 2 = 1$$

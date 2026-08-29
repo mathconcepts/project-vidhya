@@ -12,17 +12,20 @@ scaffold_fade: 1
 
 **Problem (GATE-style):** Solve the system
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 2x + y - z &= 8 \\
 -3x - y + 2z &= -11 \\
 -2x + y + 2z &= -3
-\end{aligned}$$
+\end{aligned}
+$$
 
 ---
 
 ## Step 1 — Form the Augmented Matrix
 
-$$[A\mid\mathbf{b}] = \begin{bmatrix} 2 & 1 & -1 & \mid & 8 \\ -3 & -1 & 2 & \mid & -11 \\ -2 & 1 & 2 & \mid & -3 \end{bmatrix}$$
+$$[A\mid\mathbf{b}] = \begin{bmatrix} 2 & 1 & -1 & \mid & 8 \\ -3 & -1 & 2 & \mid & -11 \\ -2 & 1 & 2 & \mid & -3 \end{bmatrix}
+$$
 
 ## Step 2 — Eliminate the First Column
 
@@ -38,7 +41,9 @@ $$R_3: \left(-2+2,\ 1+1,\ 2-1,\ \mid\ -3+8\right) = \left(0,\ 2,\ 1,\ \mid\ 5\ri
 
 After Step 2:
 
-$$\begin{bmatrix} 2 & 1 & -1 & \mid & 8 \\ 0 & \frac{1}{2} & \frac{1}{2} & \mid & 1 \\ 0 & 2 & 1 & \mid & 5 \end{bmatrix}$$
+$$
+\begin{bmatrix} 2 & 1 & -1 & \mid & 8 \\ 0 & \frac{1}{2} & \frac{1}{2} & \mid & 1 \\ 0 & 2 & 1 & \mid & 5 \end{bmatrix}
+$$
 
 ## Step 3 — Eliminate the Second Column
 
@@ -48,7 +53,9 @@ $$R_3: \left(0-0,\ 2-2,\ 1-2,\ \mid\ 5-4\right) = \left(0,\ 0,\ -1,\ \mid\ 1\rig
 
 Row echelon form achieved:
 
-$$\begin{bmatrix} 2 & 1 & -1 & \mid & 8 \\ 0 & \frac{1}{2} & \frac{1}{2} & \mid & 1 \\ 0 & 0 & -1 & \mid & 1 \end{bmatrix}$$
+$$
+\begin{bmatrix} 2 & 1 & -1 & \mid & 8 \\ 0 & \frac{1}{2} & \frac{1}{2} & \mid & 1 \\ 0 & 0 & -1 & \mid & 1 \end{bmatrix}
+$$
 
 $\text{rank}(A) = \text{rank}([A\mid\mathbf{b}]) = 3 = n$, so a **unique solution** exists.
 

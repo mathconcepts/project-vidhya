@@ -14,7 +14,8 @@ scaffold_fade: true
 
 Consider the matrix:
 
-$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}$$
+$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}
+$$
 
 (a) Find the rank of $A$.  
 (b) Find the nullity of $A$.  
@@ -25,11 +26,14 @@ $$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}$$
 
 **Step 1: Row reduce to row echelon form**
 
-$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}$$
+$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}
+$$
 
 $R_2 \to R_2 - 2R_1$, $R_3 \to R_3 - R_1$:
 
-$$\begin{pmatrix} 1 & 2 & 3 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{pmatrix}$$
+$$
+\begin{pmatrix} 1 & 2 & 3 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{pmatrix}
+$$
 
 **Step 2: Count non-zero rows**
 
@@ -66,5 +70,6 @@ $$\text{rank}(A) + \text{nullity}(A) = 1 + 2 = 3 = n \quad \checkmark$$
 Notice that rank 1 means all rows are scalar multiples of each other (here, rows 2 and 3 are copies of row 1). The null space captures the 2 degrees of freedom not constrained by the rank-1 constraint.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Find rank and nullity","steps":[{"prompt":"Step 1: Reduce $\\begin{pmatrix} 1 & 2 & 3 \\\\ 2 & 4 & 6 \\\\ 1 & 2 & 3 \\end{pmatrix}$ to row echelon form using row operations.","hint":"Subtract multiples of row 1 from rows 2 and 3.","answer":"$$\\begin{pmatrix} 1 & 2 & 3 \\\\ 0 & 0 & 0 \\\\ 0 & 0 & 0 \\end{pmatrix}$$"},{"prompt":"Step 2: How many non-zero rows are there? This is the rank.","hint":"Count the rows that are not all zeros.","answer":"Rank = 1 (only one non-zero row)"},{"prompt":"Step 3: Use rank-nullity theorem: nullity = n − rank. What is the nullity?","hint":"We have $n=3$ columns, so nullity = 3 − rank.","answer":"Nullity = 3 − 1 = 2"},{"prompt":"Step 4: Find vectors in the null space by solving $A\\mathbf{x} = \\mathbf{0}$. From row echelon form: $x_1 + 2x_2 + 3x_3 = 0$. Give one basis vector by setting $x_2=1, x_3=0$.","hint":"Solve for $x_1$ in terms of $x_2$ and $x_3$.","answer":"$\\mathbf{v}_1 = \\begin{pmatrix} -2 \\\\ 1 \\\\ 0 \\end{pmatrix}$"}],"caption":"Rank-nullity theorem: the rank (independent equations) plus nullity (free variables) sum to the number of columns."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: Find rank and nullity","steps":[{"prompt":"Step 1: Reduce $\\begin{pmatrix} 1 & 2 & 3 \\\\ 2 & 4 & 6 \\\\ 1 & 2 & 3 \\end{pmatrix}$ to row echelon form using row operations.","hint":"Subtract multiples of row 1 from rows 2 and 3.","answer":"$$\\begin{pmatrix} 1 & 2 & 3 \\\\ 0 & 0 & 0 \\\\ 0 & 0 & 0 \\end{pmatrix}
+$$"},{"prompt":"Step 2: How many non-zero rows are there? This is the rank.","hint":"Count the rows that are not all zeros.","answer":"Rank = 1 (only one non-zero row)"},{"prompt":"Step 3: Use rank-nullity theorem: nullity = n − rank. What is the nullity?","hint":"We have $n=3$ columns, so nullity = 3 − rank.","answer":"Nullity = 3 − 1 = 2"},{"prompt":"Step 4: Find vectors in the null space by solving $A\\mathbf{x} = \\mathbf{0}$. From row echelon form: $x_1 + 2x_2 + 3x_3 = 0$. Give one basis vector by setting $x_2=1, x_3=0$.","hint":"Solve for $x_1$ in terms of $x_2$ and $x_3$.","answer":"$\\mathbf{v}_1 = \\begin{pmatrix} -2 \\\\ 1 \\\\ 0 \\end{pmatrix}$"}],"caption":"Rank-nullity theorem: the rank (independent equations) plus nullity (free variables) sum to the number of columns."}
 ```

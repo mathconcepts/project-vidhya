@@ -20,7 +20,9 @@ Imagine you have $n$ interlocking puzzle pieces, where each piece represents one
 
 **Step 2 — Repeat for $x_2$ among the remaining equations.** Each step removes one unknown from the system until you have a puzzle that looks like:
 
-$$\begin{pmatrix} \blacksquare & * & * \\ 0 & \blacksquare & * \\ 0 & 0 & \blacksquare \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \\ x_3 \end{pmatrix} = \begin{pmatrix} c_1 \\ c_2 \\ c_3 \end{pmatrix}$$
+$$
+\begin{pmatrix} \blacksquare & * & * \\ 0 & \blacksquare & * \\ 0 & 0 & \blacksquare \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \\ x_3 \end{pmatrix} = \begin{pmatrix} c_1 \\ c_2 \\ c_3 \end{pmatrix}
+$$
 
 **Step 3 — Back-substitution.** The last equation has only $x_3$. Solve it. Plug back to get $x_2$. Plug both back to get $x_1$. Puzzle solved.
 

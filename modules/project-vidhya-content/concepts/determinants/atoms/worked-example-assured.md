@@ -29,11 +29,15 @@ Cofactor expansion works, but row-reduce instead — it scales, and adding multi
 
 $R_2 \to R_2 - \tfrac12 R_1$ and $R_3 \to R_3 + \tfrac12 R_1$ (neither changes the determinant):
 
-$$\begin{pmatrix} 2 & 1 & -1 \\ 0 & \tfrac52 & \tfrac52 \\ 0 & \tfrac52 & -\tfrac12 \end{pmatrix}$$
+$$
+\begin{pmatrix} 2 & 1 & -1 \\ 0 & \tfrac52 & \tfrac52 \\ 0 & \tfrac52 & -\tfrac12 \end{pmatrix}
+$$
 
 $R_3 \to R_3 - R_2$:
 
-$$\begin{pmatrix} 2 & 1 & -1 \\ 0 & \tfrac52 & \tfrac52 \\ 0 & 0 & -3 \end{pmatrix}$$
+$$
+\begin{pmatrix} 2 & 1 & -1 \\ 0 & \tfrac52 & \tfrac52 \\ 0 & 0 & -3 \end{pmatrix}
+$$
 
 Triangular, and no swaps or scalings were used, so
 

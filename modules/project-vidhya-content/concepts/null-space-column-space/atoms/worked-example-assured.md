@@ -23,7 +23,9 @@ for_stance: assured
 
 $A=\begin{pmatrix}1&2&0&-1\\2&4&1&0\\1&2&1&1\end{pmatrix}$. RREF (via $R_2-2R_1$, $R_3-R_1$, then $R_3-R_2$):
 
-$$\begin{pmatrix}1&2&0&-1\\0&0&1&2\\0&0&0&0\end{pmatrix}$$
+$$
+\begin{pmatrix}1&2&0&-1\\0&0&1&2\\0&0&0&0\end{pmatrix}
+$$
 
 Pivots: columns $1,3$. Free: $x_2,x_4$.
 

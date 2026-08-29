@@ -30,7 +30,9 @@ $$\det(A) = ad - bc$$
 
 Multiply the diagonal, multiply the anti-diagonal, subtract. Try one:
 
-$$\begin{pmatrix} 3 & 1 \\ 2 & 4 \end{pmatrix} \quad\Rightarrow\quad (3)(4) - (1)(2) = 12 - 2 = 10$$
+$$
+\begin{pmatrix} 3 & 1 \\ 2 & 4 \end{pmatrix} \quad\Rightarrow\quad (3)(4) - (1)(2) = 12 - 2 = 10
+$$
 
 This matrix makes areas ten times bigger.
 

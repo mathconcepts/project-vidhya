@@ -27,7 +27,9 @@ $$T(x, y, z) = (x + y, y + z)$$
 
 The kernel is the set of vectors $(x, y, z)$ such that $T(x, y, z) = (0, 0)$.
 
-$$\begin{cases} x + y = 0 \\ y + z = 0 \end{cases}$$
+$$
+\begin{cases} x + y = 0 \\ y + z = 0 \end{cases}
+$$
 
 From the first equation: $x = -y$  
 From the second equation: $z = -y$
@@ -43,7 +45,9 @@ Let $y = t$ (free parameter). Then $(x, y, z) = (-t, t, -t) = t(-1, 1, -1)$.
 The image is the set of all possible outputs $T(x, y, z) = (x + y, y + z)$.
 
 Set $(u, v) = (x + y, y + z)$. We can rewrite this as:
-$$\begin{pmatrix} u \\ v \end{pmatrix} = x\begin{pmatrix} 1 \\ 0 \end{pmatrix} + y\begin{pmatrix} 1 \\ 1 \end{pmatrix} + z\begin{pmatrix} 0 \\ 1 \end{pmatrix}$$
+$$
+\begin{pmatrix} u \\ v \end{pmatrix} = x\begin{pmatrix} 1 \\ 0 \end{pmatrix} + y\begin{pmatrix} 1 \\ 1 \end{pmatrix} + z\begin{pmatrix} 0 \\ 1 \end{pmatrix}
+$$
 
 So the image is spanned by $\{(1, 0), (1, 1), (0, 1)\}$. These three vectors lie in $\mathbb{R}^2$, so at most 2 are linearly independent.
 

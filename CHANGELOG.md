@@ -4,6 +4,77 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.40.0] — 2026-08-29 — Two rendering bugs fixed, and a real design-review pass on the lesson atom cards
+
+**Operator action:** none required.
+
+Two independent, platform-wide student-visible rendering bugs, both surfaced
+via live screenshots, both root-caused against the exact production
+rendering pipeline rather than patched by symptom:
+
+- **Glued KaTeX fences rendered raw LaTeX in red.** `remark-math`'s
+  block-math tokenizer requires `$$` fence characters to stand alone on
+  their own line — violate that and the tokenizer keeps scanning for the
+  next `$$` it can find, swallowing everything in between (prose, later
+  math, list markers) into one KaTeX error span, which `rehype-katex`
+  renders as raw LaTeX source in its own red error color. 24 atom files
+  across 15 concepts had this defect (`\begin{align}` glued to an opening
+  fence, or a closing fence glued to trailing content); all repaired.
+  `scripts/check-katex-fences.ts` (`npm run ci:katex-fences`) now runs
+  every atom body through the real rendering pipeline and fails on any
+  KaTeX error span — 1036/1036 atom files verified clean, wired into both
+  the local `npm run ci` aggregate and `.github/workflows/ci.yml`.
+- **An unstripped `gif-scene` fence rendered raw scene JSON as a code
+  block.** Every `visual_analogy` atom (70/70 committed) embeds a fenced
+  `gif-scene` JSON block the server renders into a GIF — `AtomCardRenderer`
+  only stripped the sibling `interactive-spec` fence before handing prose
+  to `MarkdownAtomRenderer`, so the `gif-scene` fence rendered as literal
+  `<pre><code>` JSON instead of prose. Fixed in all three card renderers
+  that touch atom content.
+
+A `/design-review` pass followed on the same UI, grounded in live
+screenshots from a real local demo session (Playwright driven directly
+against the pre-installed chromium, not gstack's `browse` binary — its
+headless launch path doesn't honor a custom executable path in this kind
+of sandboxed environment) rather than source reading alone:
+
+- The "Got it" self-assessment button (micro_exercise/retrieval_prompt)
+  used the reserved indigo token (`AI, tutor, study plan — reserved; no
+  other surface may use it` per `design/clarity/readme.md`) for what is
+  actually mastery/correctness confirmation. Now green.
+- A `worked_example` interactive-spec title dumped an entire 3-equation
+  system as a run-on comma-joined string instead of naming the method,
+  wrapping three lines under the sticky header — the concrete cause of a
+  "text overflowing" report. Shortened to match the pattern every other
+  worked_example title in the content base already follows.
+- `common_traps` and `exam_pattern` atoms are authored as `- **label**:
+  detail` lists but rendered with the same flowing-paragraph chrome as
+  every other atom type. `MarkdownAtomRenderer` gained an opt-in
+  `structured` prop (default false, every other atom type unaffected)
+  that turns each bullet into a hairline-separated scannable row.
+  `common_traps`' icon/eyebrow now renders in the existing `--orange`
+  warning token permanently, not gated behind cohort data that needs
+  ≥10 students and so was invisible on exactly the new/low-traffic
+  content this feedback was about. Motion deliberately left unchanged —
+  the existing one-shot, non-looping per-type entrance animations already
+  satisfy attention-without-distraction; a pulsing badge or looping icon
+  would violate the system's own "no shimmer, no pulse" rule.
+- Not fixed, flagged instead: `src/content/pedagogy-engine.ts`'s
+  `selectAtoms()` filters atoms to `difficulty <= mastery + 0.25`, which
+  for any cold-start session excludes `formal_definition`, `worked_example`,
+  `common_traps`, `exam_pattern`, `visual_analogy`, and `interleaved_drill`
+  from a concept's default lesson entirely (confirmed live: a real
+  `/api/lesson/compose` call for `systems-of-equations` returned only 4 of
+  its 11 atoms). `WalkthroughRail`'s "11 cards above" copy overstates what
+  a typical session actually serves — a curriculum-sequencing question for
+  product to decide, not a styling fix.
+- Also flagged, not implemented: threading a "practice this trap" link
+  into the card. `lesson.related_problems`' `relationship` field is
+  concept-level (`same-concept-harder` / `interleaved` /
+  `prerequisite-review`), never tied to a specific atom — pointing a link
+  at a specific problem here would have been a fabricated connection the
+  data doesn't support.
+
 ## [4.39.0] — 2026-08-29 — Full course coverage on Linear Algebra, and Wolfram Tier 3 goes live
 
 **Operator action:** none required by this release itself. `WOLFRAM_APP_ID` was

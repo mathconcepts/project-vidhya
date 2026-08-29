@@ -28,12 +28,16 @@ Therefore: $\boxed{\lambda_1 = 1, \quad \lambda_2 = 3}$
 **Step 2: Find orthonormal eigenvectors**
 
 For $\lambda_1 = 1$: Solve $(A - I)\mathbf{v} = 0$:
-$$\begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix}\begin{pmatrix} v_1 \\ v_2 \end{pmatrix} = 0 \implies v_1 + v_2 = 0$$
+$$
+\begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix}\begin{pmatrix} v_1 \\ v_2 \end{pmatrix} = 0 \implies v_1 + v_2 = 0
+$$
 
 Eigenvector: $\mathbf{v}_1 = \begin{pmatrix} 1 \\ -1 \end{pmatrix}$. Normalize: $\mathbf{q}_1 = \frac{1}{\sqrt{2}}\begin{pmatrix} 1 \\ -1 \end{pmatrix}$
 
 For $\lambda_2 = 3$: Solve $(A - 3I)\mathbf{v} = 0$:
-$$\begin{pmatrix} -1 & 1 \\ 1 & -1 \end{pmatrix}\begin{pmatrix} v_1 \\ v_2 \end{pmatrix} = 0 \implies v_1 = v_2$$
+$$
+\begin{pmatrix} -1 & 1 \\ 1 & -1 \end{pmatrix}\begin{pmatrix} v_1 \\ v_2 \end{pmatrix} = 0 \implies v_1 = v_2
+$$
 
 Eigenvector: $\mathbf{v}_2 = \begin{pmatrix} 1 \\ 1 \end{pmatrix}$. Normalize: $\mathbf{q}_2 = \frac{1}{\sqrt{2}}\begin{pmatrix} 1 \\ 1 \end{pmatrix}$
 
@@ -48,11 +52,14 @@ Verify: $Q^{\mathrm{T}}Q = I$ ✓ and $AQ = Q\Lambda$ ✓
 Since $A = Q\Lambda Q^{\mathrm{T}}$, we have:
 $$\sqrt{A} = Q\sqrt{\Lambda}Q^{\mathrm{T}} = Q\begin{pmatrix} 1 & 0 \\ 0 & \sqrt{3} \end{pmatrix}Q^{\mathrm{T}}$$
 
-$$= \frac{1}{\sqrt{2}}\begin{pmatrix} 1 & 1 \\ -1 & 1 \end{pmatrix}\begin{pmatrix} 1 & 0 \\ 0 & \sqrt{3} \end{pmatrix}\frac{1}{\sqrt{2}}\begin{pmatrix} 1 & -1 \\ 1 & 1 \end{pmatrix}$$
+$$= \frac{1}{\sqrt{2}}\begin{pmatrix} 1 & 1 \\ -1 & 1 \end{pmatrix}\begin{pmatrix} 1 & 0 \\ 0 & \sqrt{3} \end{pmatrix}\frac{1}{\sqrt{2}}\begin{pmatrix} 1 & -1 \\ 1 & 1 \end{pmatrix}
+$$
 
-$$= \frac{1}{2}\begin{pmatrix} 1 & 1 \\ -1 & 1 \end{pmatrix}\begin{pmatrix} 1 & -1 \\ \sqrt{3} & \sqrt{3} \end{pmatrix}$$
+$$= \frac{1}{2}\begin{pmatrix} 1 & 1 \\ -1 & 1 \end{pmatrix}\begin{pmatrix} 1 & -1 \\ \sqrt{3} & \sqrt{3} \end{pmatrix}
+$$
 
-$$= \frac{1}{2}\begin{pmatrix} 1+\sqrt{3} & -1+\sqrt{3} \\ -1+\sqrt{3} & 1+\sqrt{3} \end{pmatrix}$$
+$$= \frac{1}{2}\begin{pmatrix} 1+\sqrt{3} & -1+\sqrt{3} \\ -1+\sqrt{3} & 1+\sqrt{3} \end{pmatrix}
+$$
 
 $$\boxed{\sqrt{A} = \frac{1}{2}\begin{pmatrix} 1+\sqrt{3} & \sqrt{3}-1 \\ \sqrt{3}-1 & 1+\sqrt{3} \end{pmatrix}}$$
 

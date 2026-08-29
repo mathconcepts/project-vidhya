@@ -9,21 +9,27 @@ exam_ids: ["*"]
 ---
 
 **Problem.** Find the least squares solution to:
-$$\begin{pmatrix} 1 & 0 \\ 1 & 1 \\ 1 & 2 \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} = \begin{pmatrix} 1 \\ 2 \\ 2 \end{pmatrix}$$
+$$
+\begin{pmatrix} 1 & 0 \\ 1 & 1 \\ 1 & 2 \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} = \begin{pmatrix} 1 \\ 2 \\ 2 \end{pmatrix}
+$$
 
 ---
 
 **Step 1:** Form $A^T A$ and $A^T b$.
 
-$$A^T A = \begin{pmatrix} 1 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix} \begin{pmatrix} 1 & 0 \\ 1 & 1 \\ 1 & 2 \end{pmatrix} = \begin{pmatrix} 3 & 3 \\ 3 & 5 \end{pmatrix}$$
+$$A^T A = \begin{pmatrix} 1 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix} \begin{pmatrix} 1 & 0 \\ 1 & 1 \\ 1 & 2 \end{pmatrix} = \begin{pmatrix} 3 & 3 \\ 3 & 5 \end{pmatrix}
+$$
 
-$$A^T b = \begin{pmatrix} 1 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix} \begin{pmatrix} 1 \\ 2 \\ 2 \end{pmatrix} = \begin{pmatrix} 5 \\ 6 \end{pmatrix}$$
+$$A^T b = \begin{pmatrix} 1 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix} \begin{pmatrix} 1 \\ 2 \\ 2 \end{pmatrix} = \begin{pmatrix} 5 \\ 6 \end{pmatrix}
+$$
 
 ---
 
 **Step 2:** Solve $(A^T A) \hat{x} = A^T b$.
 
-$$\begin{pmatrix} 3 & 3 \\ 3 & 5 \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} = \begin{pmatrix} 5 \\ 6 \end{pmatrix}$$
+$$
+\begin{pmatrix} 3 & 3 \\ 3 & 5 \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} = \begin{pmatrix} 5 \\ 6 \end{pmatrix}
+$$
 
 From the first equation: $3x + 3y = 5 \Rightarrow x + y = 5/3$.
 
@@ -37,7 +43,8 @@ Then $x = 5/3 - 1/2 = 10/6 - 3/6 = 7/6$.
 
 **Step 3:** Verify the residual is orthogonal to $A$'s columns.
 
-$$r = b - A\hat{x} = \begin{pmatrix} 1 \\ 2 \\ 2 \end{pmatrix} - \begin{pmatrix} 7/6 \\ 10/6 \\ 13/6 \end{pmatrix} = \begin{pmatrix} -1/6 \\ 2/6 \\ -1/6 \end{pmatrix}$$
+$$r = b - A\hat{x} = \begin{pmatrix} 1 \\ 2 \\ 2 \end{pmatrix} - \begin{pmatrix} 7/6 \\ 10/6 \\ 13/6 \end{pmatrix} = \begin{pmatrix} -1/6 \\ 2/6 \\ -1/6 \end{pmatrix}
+$$
 
 Check: $A^T r = \begin{pmatrix} 1 & 1 & 1 \\ 0 & 1 & 2 \end{pmatrix} \begin{pmatrix} -1/6 \\ 2/6 \\ -1/6 \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}$ ✓
 

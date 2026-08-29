@@ -29,7 +29,9 @@ for_stance: assured
 
 **Basis, if the question asks for one explicitly.** Parameterize $y=s,\,z=t$:
 
-$$\begin{pmatrix}x\\y\\z\end{pmatrix} = s\begin{pmatrix}-1\\1\\0\end{pmatrix} + t\begin{pmatrix}-1\\0\\1\end{pmatrix}$$
+$$
+\begin{pmatrix}x\\y\\z\end{pmatrix} = s\begin{pmatrix}-1\\1\\0\end{pmatrix} + t\begin{pmatrix}-1\\0\\1\end{pmatrix}
+$$
 
 $$\boxed{\text{Basis } \{(-1,1,0),(-1,0,1)\},\ \dim(W)=2}$$
 

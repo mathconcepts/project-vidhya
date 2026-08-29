@@ -50,7 +50,9 @@ All three pass — $W$ is a subspace.
 
 Set $y=s$, $z=t$ free. Then $x=-s-t$:
 
-$$\begin{pmatrix}x\\y\\z\end{pmatrix} = s\begin{pmatrix}-1\\1\\0\end{pmatrix} + t\begin{pmatrix}-1\\0\\1\end{pmatrix}$$
+$$
+\begin{pmatrix}x\\y\\z\end{pmatrix} = s\begin{pmatrix}-1\\1\\0\end{pmatrix} + t\begin{pmatrix}-1\\0\\1\end{pmatrix}
+$$
 
 These two vectors span $W$, and they're not multiples of each other, so they're independent.
 

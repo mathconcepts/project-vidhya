@@ -24,7 +24,8 @@ for_stance: shaken
 
 ## The matrix
 
-$$A=\begin{pmatrix}1&2&3\\2&4&6\\1&2&3\end{pmatrix}$$
+$$A=\begin{pmatrix}1&2&3\\2&4&6\\1&2&3\end{pmatrix}
+$$
 
 Find rank, nullity, a basis for the null space, and check rank-nullity.
 
@@ -32,7 +33,9 @@ Find rank, nullity, a basis for the null space, and check rank-nullity.
 
 $R_2\leftarrow R_2-2R_1$, $R_3\leftarrow R_3-R_1$:
 
-$$\begin{pmatrix}1&2&3\\0&0&0\\0&0&0\end{pmatrix}$$
+$$
+\begin{pmatrix}1&2&3\\0&0&0\\0&0&0\end{pmatrix}
+$$
 
 Only one non-zero row: $\text{rank}(A)=1$.
 

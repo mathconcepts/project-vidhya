@@ -35,25 +35,32 @@ Two distinct eigenvalues $\Rightarrow$ matrix is **guaranteed diagonalizable**.
 
 **For $\lambda_1 = 5$:** Solve $(A - 5I)\mathbf{v} = \mathbf{0}$:
 
-$$\begin{pmatrix} -1 & 1 \\ 2 & -2 \end{pmatrix}\mathbf{v} = \mathbf{0}$$
+$$
+\begin{pmatrix} -1 & 1 \\ 2 & -2 \end{pmatrix}\mathbf{v} = \mathbf{0}
+$$
 
 Row reduce: $-v_1 + v_2 = 0 \Rightarrow v_1 = v_2$. Take $v_2 = 1$:
 
-$$\mathbf{v}_1 = \begin{pmatrix} 1 \\ 1 \end{pmatrix}$$
+$$\mathbf{v}_1 = \begin{pmatrix} 1 \\ 1 \end{pmatrix}
+$$
 
 **For $\lambda_2 = 2$:** Solve $(A - 2I)\mathbf{v} = \mathbf{0}$:
 
-$$\begin{pmatrix} 2 & 1 \\ 2 & 1 \end{pmatrix}\mathbf{v} = \mathbf{0}$$
+$$
+\begin{pmatrix} 2 & 1 \\ 2 & 1 \end{pmatrix}\mathbf{v} = \mathbf{0}
+$$
 
 $2v_1 + v_2 = 0 \Rightarrow v_2 = -2v_1$. Take $v_1 = 1$:
 
-$$\mathbf{v}_2 = \begin{pmatrix} 1 \\ -2 \end{pmatrix}$$
+$$\mathbf{v}_2 = \begin{pmatrix} 1 \\ -2 \end{pmatrix}
+$$
 
 ---
 
 ## Step 3: Form $P$ and $D$
 
-$$P = \begin{pmatrix} \mathbf{v}_1 & \mathbf{v}_2 \end{pmatrix} = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}, \qquad D = \begin{pmatrix} 5 & 0 \\ 0 & 2 \end{pmatrix}$$
+$$P = \begin{pmatrix} \mathbf{v}_1 & \mathbf{v}_2 \end{pmatrix} = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}, \qquad D = \begin{pmatrix} 5 & 0 \\ 0 & 2 \end{pmatrix}
+$$
 
 **Note:** Column $i$ of $P$ must match the $i$-th diagonal entry of $D$.
 
@@ -65,11 +72,13 @@ For a $2\times 2$ matrix $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$, the inv
 
 $$\det(P) = (1)(-2) - (1)(1) = -3$$
 
-$$P^{-1} = \frac{1}{-3}\begin{pmatrix} -2 & -1 \\ -1 & 1 \end{pmatrix} = \begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix}$$
+$$P^{-1} = \frac{1}{-3}\begin{pmatrix} -2 & -1 \\ -1 & 1 \end{pmatrix} = \begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix}
+$$
 
 **Verification** $A = PDP^{-1}$:
 
-$$PD = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}\begin{pmatrix} 5 & 0 \\ 0 & 2 \end{pmatrix} = \begin{pmatrix} 5 & 2 \\ 5 & -4 \end{pmatrix}$$
+$$PD = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}\begin{pmatrix} 5 & 0 \\ 0 & 2 \end{pmatrix} = \begin{pmatrix} 5 & 2 \\ 5 & -4 \end{pmatrix}
+$$
 
 $$(PD)P^{-1} = \begin{pmatrix} 5 & 2 \\ 5 & -4 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix} = \begin{pmatrix} 4 & 1 \\ 2 & 3 \end{pmatrix} = A \checkmark$$
 
@@ -77,11 +86,14 @@ $$(PD)P^{-1} = \begin{pmatrix} 5 & 2 \\ 5 & -4 \end{pmatrix}\begin{pmatrix} 2/3 
 
 ## GATE Follow-Up: Compute $A^3$ Efficiently
 
-$$A^3 = PD^3P^{-1}, \qquad D^3 = \begin{pmatrix} 125 & 0 \\ 0 & 8 \end{pmatrix}$$
+$$A^3 = PD^3P^{-1}, \qquad D^3 = \begin{pmatrix} 125 & 0 \\ 0 & 8 \end{pmatrix}
+$$
 
-$$A^3 = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}\begin{pmatrix} 125 & 0 \\ 0 & 8 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix}$$
+$$A^3 = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}\begin{pmatrix} 125 & 0 \\ 0 & 8 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix}
+$$
 
-$$= \begin{pmatrix} 125 & 8 \\ 125 & -16 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix} = \begin{pmatrix} 258/3+8/3 & 125/3-8/3 \\ \cdots & \cdots \end{pmatrix}$$
+$$= \begin{pmatrix} 125 & 8 \\ 125 & -16 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix} = \begin{pmatrix} 258/3+8/3 & 125/3-8/3 \\ \cdots & \cdots \end{pmatrix}
+$$
 
 Without diagonalization this would require two matrix multiplications. With it, just three scalar cubes.
 

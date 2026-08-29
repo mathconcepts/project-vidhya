@@ -14,7 +14,8 @@ scaffold_fade: true
 
 Consider the matrix:
 
-$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}$$
+$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}
+$$
 
 (a) Find the rank of $A$.  
 (b) Find the nullity of $A$.  
@@ -25,11 +26,14 @@ $$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}$$
 
 **Step 1: Row reduce to row echelon form**
 
-$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}$$
+$$A = \begin{pmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 1 & 2 & 3 \end{pmatrix}
+$$
 
 $R_2 \to R_2 - 2R_1$, $R_3 \to R_3 - R_1$:
 
-$$\begin{pmatrix} 1 & 2 & 3 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{pmatrix}$$
+$$
+\begin{pmatrix} 1 & 2 & 3 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{pmatrix}
+$$
 
 **Step 2: Count non-zero rows**
 

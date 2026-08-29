@@ -43,7 +43,9 @@ $$\boxed{\text{Ker}(T) = \{(-1,1,-1)\}}, \qquad \text{nullity}=1$$
 
 Write the output as a combination:
 
-$$\begin{pmatrix}x+y\\y+z\end{pmatrix} = x\begin{pmatrix}1\\0\end{pmatrix} + y\begin{pmatrix}1\\1\end{pmatrix} + z\begin{pmatrix}0\\1\end{pmatrix}$$
+$$
+\begin{pmatrix}x+y\\y+z\end{pmatrix} = x\begin{pmatrix}1\\0\end{pmatrix} + y\begin{pmatrix}1\\1\end{pmatrix} + z\begin{pmatrix}0\\1\end{pmatrix}
+$$
 
 Three vectors in $\mathbb{R}^2$ — at most 2 can be independent. Check: $(1,0)$ and $(1,1)$ are not multiples of each other, so they're independent, and $(0,1)=(1,1)-(1,0)$ falls in their span.
 

@@ -158,6 +158,41 @@
     height: auto;
     border-radius: var(--radius-sm);
   }
+
+  /*
+   * .vidhya-atom-body--structured — common_traps and exam_pattern atoms are
+   * authored as "- **label**: detail" lists (every committed atom of both
+   * types follows this convention), but rendered through the default `ul`
+   * rules above they read as a wall of flowing bullet paragraphs — the exact
+   * complaint that motivated this modifier. This turns each bullet into a
+   * scannable label row, hairline-separated from the next: the bold lead-in
+   * gets its own line and weight, the explanation sits below it in secondary
+   * ink. No new color, no new component — it applies Clarity's own
+   * "hairline-separated rows on the canvas" density rule one level down, at
+   * the bullet instead of the card. Applied by AtomCardRenderer only to
+   * common_traps/exam_pattern atoms; every other atom type is untouched.
+   */
+  .vidhya-atom-body--structured ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  .vidhya-atom-body--structured li {
+    margin: 0;
+    padding: var(--space-3) 0;
+  }
+  .vidhya-atom-body--structured li + li {
+    border-top: var(--hairline) solid var(--separator);
+  }
+  /*
+   * Deliberately NOT display:block on the leading <strong>: most of these
+   * lines are authored as "**label**: detail" with the colon OUTSIDE the
+   * bold span, so forcing a line break there strands a leading ": " at the
+   * start of the next line — a worse defect than the wall-of-text problem
+   * this modifier fixes. Keeping the label inline (default .vidhya-atom-body
+   * strong styling already gives it full weight + primary ink) and doing
+   * the "scannable row" work with padding + hairlines alone is the version
+   * that never mis-renders regardless of an individual atom's punctuation.
+   */
 }
 
 @layer utilities {

@@ -32,7 +32,9 @@ $\ell_{21}u_{11}=6 \Rightarrow \ell_{21}=3/2$, and $\ell_{21}u_{12}+u_{22}=5 \Ri
 
 ## Check it multiplies back to $A$
 
-$$\begin{pmatrix}1&0\\3/2&1\end{pmatrix}\begin{pmatrix}4&3\\0&1/2\end{pmatrix}=\begin{pmatrix}4&3\\6&5\end{pmatrix}=A \quad\checkmark$$
+$$
+\begin{pmatrix}1&0\\3/2&1\end{pmatrix}\begin{pmatrix}4&3\\0&1/2\end{pmatrix}=\begin{pmatrix}4&3\\6&5\end{pmatrix}=A \quad\checkmark
+$$
 
 $$\boxed{L=\begin{pmatrix}1&0\\3/2&1\end{pmatrix}, \quad U=\begin{pmatrix}4&3\\0&1/2\end{pmatrix}}$$
 

@@ -12,7 +12,8 @@ scaffold_fade: 1
 
 **GATE-style problem:** Find the LU decomposition (without pivoting) of
 
-$$A = \begin{pmatrix} 2 & 1 & 1 \\ 4 & 3 & 3 \\ 8 & 7 & 9 \end{pmatrix}$$
+$$A = \begin{pmatrix} 2 & 1 & 1 \\ 4 & 3 & 3 \\ 8 & 7 & 9 \end{pmatrix}
+$$
 
 and use it to solve $Ax = b$ where $b = (4,\; 10,\; 24)^T$.
 
@@ -34,7 +35,9 @@ $$R_3 \leftarrow R_3 - 4\,R_1: \quad (8{-}8,\; 7{-}4,\; 9{-}4) = (0,\; 3,\; 5)$$
 
 Current state:
 
-$$\begin{pmatrix} 2 & 1 & 1 \\ 0 & 1 & 1 \\ 0 & 3 & 5 \end{pmatrix}$$
+$$
+\begin{pmatrix} 2 & 1 & 1 \\ 0 & 1 & 1 \\ 0 & 3 & 5 \end{pmatrix}
+$$
 
 ---
 
@@ -54,7 +57,8 @@ $$R_3 \leftarrow R_3 - 3\,R_2: \quad (0,\; 3{-}3,\; 5{-}3) = (0,\; 0,\; 2)$$
 
 ## Result: $A = LU$
 
-$$L = \begin{pmatrix} 1 & 0 & 0 \\ 2 & 1 & 0 \\ 4 & 3 & 1 \end{pmatrix}, \qquad U = \begin{pmatrix} 2 & 1 & 1 \\ 0 & 1 & 1 \\ 0 & 0 & 2 \end{pmatrix}$$
+$$L = \begin{pmatrix} 1 & 0 & 0 \\ 2 & 1 & 0 \\ 4 & 3 & 1 \end{pmatrix}, \qquad U = \begin{pmatrix} 2 & 1 & 1 \\ 0 & 1 & 1 \\ 0 & 0 & 2 \end{pmatrix}
+$$
 
 **Verification:** The multipliers $m_{21}=2$, $m_{31}=4$, $m_{32}=3$ fill the below-diagonal entries of $L$.
 
@@ -64,7 +68,9 @@ $$LU = \begin{pmatrix} 1 & 0 & 0 \\ 2 & 1 & 0 \\ 4 & 3 & 1 \end{pmatrix}\begin{p
 
 ## Step 3 — Forward Substitution: Solve $Ly = b$
 
-$$\begin{pmatrix} 1 & 0 & 0 \\ 2 & 1 & 0 \\ 4 & 3 & 1 \end{pmatrix} \begin{pmatrix} y_1 \\ y_2 \\ y_3 \end{pmatrix} = \begin{pmatrix} 4 \\ 10 \\ 24 \end{pmatrix}$$
+$$
+\begin{pmatrix} 1 & 0 & 0 \\ 2 & 1 & 0 \\ 4 & 3 & 1 \end{pmatrix} \begin{pmatrix} y_1 \\ y_2 \\ y_3 \end{pmatrix} = \begin{pmatrix} 4 \\ 10 \\ 24 \end{pmatrix}
+$$
 
 $$y_1 = 4$$
 
@@ -78,7 +84,9 @@ $$y = (4,\; 2,\; 2)^T$$
 
 ## Step 4 — Back Substitution: Solve $Ux = y$
 
-$$\begin{pmatrix} 2 & 1 & 1 \\ 0 & 1 & 1 \\ 0 & 0 & 2 \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \\ x_3 \end{pmatrix} = \begin{pmatrix} 4 \\ 2 \\ 2 \end{pmatrix}$$
+$$
+\begin{pmatrix} 2 & 1 & 1 \\ 0 & 1 & 1 \\ 0 & 0 & 2 \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \\ x_3 \end{pmatrix} = \begin{pmatrix} 4 \\ 2 \\ 2 \end{pmatrix}
+$$
 
 $$2x_3 = 2 \;\Rightarrow\; x_3 = 1$$
 

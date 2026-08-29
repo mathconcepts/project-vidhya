@@ -213,6 +213,22 @@ export function applyIntentStageOrder(atoms: ContentAtom[], stageOrder?: string[
     .map((entry) => entry.atom);
 }
 
+/**
+ * Strips a fenced ` ```gif-scene\n{...}\n``` ` block from prose. The block
+ * is authoring metadata a GIF was already rendered from server-side (see
+ * MediaSidecar below, which renders atom.media.gif_url) — the student is
+ * meant to see the rendered animation, never the raw scene JSON as text.
+ * Mirrors parseInteractiveSpec's body_without_spec handling of the sibling
+ * `interactive-spec` fence and readingTime.ts's fenced-block treatment,
+ * which already documents this same "never read as text" intent — this was
+ * the one call site that hadn't caught up, so every visual_analogy atom's
+ * gif-scene JSON rendered as a literal code block instead of prose.
+ */
+const GIF_SCENE_FENCE_RE = /```gif-scene\s*[\s\S]*?```/g;
+function stripGifSceneBlock(content: string): string {
+  return content.replace(GIF_SCENE_FENCE_RE, '').trim();
+}
+
 /** Splits worked_example prose on `---` step delimiters. */
 function splitSteps(content: string): string[] {
   return content
@@ -313,7 +329,7 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
           {Math.round((atom.cohort_error_pct ?? 0) * 100)}% of students at your level miss this on the practice problem.
         </div>
       )}
-      <MarkdownAtomRenderer content={atom.content} atomId={atom.id} />
+      <MarkdownAtomRenderer content={stripGifSceneBlock(atom.content)} atomId={atom.id} structured />
     </div>
   );
 }
@@ -325,7 +341,7 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   // and InteractiveSidecar renders the widget a second time below it.
   // Mirrors DefaultAtomCard's handling of the same fenced block.
   const parsed = parseInteractiveSpec(atom.content);
-  const prose = parsed.ok ? parsed.body_without_spec : atom.content;
+  const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
   const { steps, blanked } = applyScaffoldingFade(atom, prose);
   const visibleCount = steps.length - blanked;
   return (
@@ -371,8 +387,8 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
   // Strip the interactive-spec fenced block from the prose — InteractiveSidecar
   // renders the widget; MarkdownAtomRenderer must not also render it as raw JSON.
   const parsed = parseInteractiveSpec(atom.content);
-  const prose = parsed.ok ? parsed.body_without_spec : atom.content;
-  return <MarkdownAtomRenderer content={prose} atomId={atom.id} />;
+  const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
+  return <MarkdownAtomRenderer content={prose} atomId={atom.id} structured={atom.atom_type === 'exam_pattern'} />;
 }
 
 /**
@@ -677,7 +693,13 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             // Not indigo: this eyebrow label is generic card chrome shown for
             // EVERY atom type (hook, intuition, common_traps, ...), not an
             // AI/tutor/study-plan surface, so the reserved accent doesn't apply.
-            style={{ color: 'var(--text-secondary)' }}
+            // common_traps is the one exception, and not a new color: orange
+            // is already Clarity's approved warning token (used today only in
+            // the cohort-stat callout below, which needs >=10 students of
+            // data and so is invisible on any new/low-traffic concept). This
+            // makes the AlertTriangle icon's own warning honest at zero data,
+            // permanently rather than only when cohort telemetry exists.
+            style={{ color: current.atom_type === 'common_traps' ? 'var(--orange)' : 'var(--text-secondary)' }}
           >
             <Icon size={14} />
             <span>{ATOM_LABEL[current.atom_type]}</span>
@@ -729,7 +751,12 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               <button
                 onClick={() => next(true)}
                 className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold"
-                style={{ background: 'var(--indigo)', color: 'var(--text-on-accent)' }}
+                // Green, not indigo: this confirms the student got the
+                // answer right — mastery/correctness, not an AI/tutor
+                // surface. DESIGN-SYSTEM.md reserves indigo for AI, tutor,
+                // and study plan only; green is mastery/correct/primary
+                // action, which is exactly what this button means.
+                style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
               >
                 Got it
               </button>

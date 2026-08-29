@@ -989,7 +989,7 @@ assert something false.
 
 **Tests:** backend 3,400 → **3,640** (302 files). **CI gates 14 → 15.**
 
-### Content readiness core plan (v4.37.0 scope, PR #129)
+### Content readiness core plan (PR #129, merged 2026-08-27)
 
 Closes the core plan (P0–P3) of
 `docs/designs/2026-08-27-content-readiness-market-research-integration.md`
@@ -1163,12 +1163,95 @@ re-run before any wave ever launches.
 
 **No new env vars beyond `VIDHYA_INTENT_LANES=on` in `render.yaml`.**
 
-**What waits on the operator** (see the plan doc's IMPLEMENTATION RECORD
-appendix for the full list): merging PR #129 to actually flip the flag on
-the live demo; a provider key to run the 50-item pilot and start the
+**What waited on the operator for the flag itself is done:** PR #129 merged
+2026-08-27 and `VIDHYA_INTENT_LANES=on` has been live on the production
+Render service since that deploy (confirmed via Render's own deploy
+history). Still open (see the plan doc's IMPLEMENTATION RECORD appendix for
+the full list): a provider key to run the 50-item pilot and start the
 6-week/300-item kill clock; the W-A activation-push follow-up PR; and the
 open P2c call on whether `intent-profiles.yml`'s proposed error-tag strings
-ever become real `ErrorTag` members.
+ever become real `ErrorTag` members. Note also: this section's own work was
+never given a CHANGELOG entry despite shipping — `v4.37.0` in
+CHANGELOG.md/VERSION/package.json now belongs to a later, unrelated release
+(see below) — a documentation gap worth a follow-up, not backfilled here.
+
+### GATE Linear Algebra: mnemonic/exam_pattern/interleaved_drill for all 26 concepts, and Wolfram Tier 3 licensing cleared (v4.37.0)
+
+Closes a real content-type gap: three of the platform's eleven `AtomType`
+categories — `mnemonic`, `exam_pattern`, `interleaved_drill` — had zero seed
+content anywhere in the content base, on any topic, until this release. All
+26 GATE Linear Algebra concepts now carry all three, on top of the 11 atoms
+each concept already had (hooks, intuition, worked examples with
+confident/anxious stance variants, formal definitions, common traps, a
+micro-exercise, a retrieval prompt, a visual analogy) — the first content
+pass that reads as a genuine course, not just practice drills. `mnemonic`
+atoms are memory aids; `exam_pattern` atoms are GATE exam-craft notes (NAT
+vs MCQ patterns, time budgets, the traps GATE actually sets);
+`interleaved_drill` atoms pair each concept with a mathematically natural
+partner for cross-concept retrieval (`determinants` ↔ `matrix-inverse`,
+`svd` ↔ `spectral-theorem`, 26 pairings total, all under
+`modules/project-vidhya-content/concepts/<id>/atoms/`). Every numeric claim
+in the new content was verified live against Wolfram|Alpha, not
+hand-computed.
+
+**Four pre-existing content bugs found and fixed along the way**, surfaced
+incidentally while the authoring agents read each concept's existing atoms
+for grounding — unrelated to the new atom types themselves:
+- `matrix-operations/atoms/micro-exercise.md` — answer key said C (4) for a
+  question whose correct answer is A (1); also stripped visible internal
+  self-correction text ("Wait, let me recalculate...") that had shipped to
+  students.
+- `matrix-norms/atoms/worked-example.md` — eigenvalues of AᵀA stated as
+  ~18.3/~2.7; correct values (Wolfram-verified) are ~17.30/~3.70, which
+  cascaded into wrong σ₁ and κ₂ in both the prose and the embedded
+  `interactive-spec`. The fix was then propagated to the
+  `worked-example-assured.md` / `worked-example-shaken.md` stance variants,
+  which `ci:variant-agreement` had caught as now disagreeing with the
+  corrected base.
+- `positive-definite-matrices/atoms/micro-exercise.md` — discriminant
+  arithmetic error (`25-24=1` instead of `25-4·5=5`) gave eigenvalues that
+  failed the trace/det sanity check; corrected to `(5±√5)/2`.
+- `spectral-theorem/atoms/micro-exercise.md` — a "which statement is false"
+  question had all five options true (independently confirmed, not just
+  taking the shipped reasoning's word for it); option E replaced with a
+  genuinely false statement (unnormalized eigenvectors) so the question has
+  a real answer.
+
+**Coverage measured, not asserted.** `loadConceptAtoms()` verified for all
+26 concepts: each resolves to 11 folded base atoms with `mnemonic` /
+`exam_pattern` / `interleaved_drill` present, zero parse errors.
+`npm run ci:la-walkthrough`: still 26/26 concepts pass all 4 legs.
+`frontend/src/components/lesson/MarkdownAtomRenderer.regression.test.tsx`
+widened from a 3-concept sample (derivatives-basic, complex-numbers,
+eigenvalues — meaning only eigenvalues' own 3 new atom files were ever
+mounted through a real `render()` call) to a named `LINEAR_ALGEBRA_CONCEPTS`
+array covering all 26 LA concepts. Pinned base-atom count recomputed from
+disk, not guessed: 26×11 + derivatives-basic(9) + complex-numbers(8) = 303
+base atoms, 442 files counting stance variants. The 75 previously-untested
+new atom files are now proven to render without throwing, not just
+structurally valid.
+
+**Wolfram Tier 3 licensing gate cleared.** §0 of
+`docs/ops/content-verification-runbook.md` (shipped unfilled by PR #130) is
+now filled with the operator's own attestation (mathconcepts1@gmail.com,
+2026-08-29, recorded in-doc since the licensing pages themselves stay
+proxy-blocked from agent sessions): the pilot qualifies for the Wolfram|Alpha
+API free tier's non-commercial clause (2,000 calls/mo cap), and the Wolfram
+MCP connector — confirmed live and authenticated this session, a real query
+returned eigenvalues of `[[2,1],[1,2]]` = 3, 1 — carries no separate LLM Kit
+subscription charge. `WOLFRAM_APP_ID` is now set on the production
+`vidhya-demo` Render service. Rows 3–4 of §0 (Wolfram Engine
+production-license terms, Show Steps redistribution terms) stay
+`_(unfilled)_` on purpose — they gate the still-parked "batch Engine
+generation" and "Show Steps" TODOs, not Tier 3 activation.
+
+**Also this release:** fixed a stale `VERSION` file — stuck at `4.35.0`
+since before the explicit `4.36.0` release, silently drifted from
+`package.json`. Synced up, not down, to `4.37.0`.
+
+**Tests:** `frontend/src/components/lesson/MarkdownAtomRenderer.regression.test.tsx`
+now exercises 442 atom files across 28 concepts (up from 3). No backend test
+count change in this release.
 
 ## Skill routing
 

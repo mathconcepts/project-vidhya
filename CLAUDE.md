@@ -1170,12 +1170,74 @@ history). Still open (see the plan doc's IMPLEMENTATION RECORD appendix for
 the full list): a provider key to run the 50-item pilot and start the
 6-week/300-item kill clock; the W-A activation-push follow-up PR; and the
 open P2c call on whether `intent-profiles.yml`'s proposed error-tag strings
-ever become real `ErrorTag` members. Note also: this section's own work was
-never given a CHANGELOG entry despite shipping — `v4.37.0` in
-CHANGELOG.md/VERSION/package.json now belongs to a later, unrelated release
-(see below) — a documentation gap worth a follow-up, not backfilled here.
+ever become real `ErrorTag` members. This section's own work went
+undocumented in CHANGELOG.md/VERSION for two days after merging — backfilled
+as `4.37.0` once the gap was caught (see CHANGELOG.md).
 
-### GATE Linear Algebra: mnemonic/exam_pattern/interleaved_drill for all 26 concepts, and Wolfram Tier 3 licensing cleared (v4.37.0)
+### Wolfram as the T3 standard: Move B — SymPy tier + verifier contract infra (PR #130, merged 2026-08-28, v4.38.0)
+
+Closes Move B of `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`.
+Like PR #129, this shipped without a CHANGELOG entry or version bump —
+backfilled as `4.38.0` in the same pass that caught PR #129's gap.
+
+**The `AnswerVerifier` contract was vaporware.** `EXTENDING.md`'s Tier 4+
+tutorial and `registerVerifier()`'s own docstring had been describing
+`runAnswerVerifierContract` and a reference `AlwaysTrueVerifier` that
+didn't exist, and Tier 4+ verifiers registered via `registerVerifier()`
+were populate-only — nothing ever called `.verify()` on them. Both are
+real now: `verify()` runs the built-in cascade (renamed `verifyCore`),
+then executes every registered extra verifier and folds results into
+`checks` as advisory evidence, without letting one override the cascade's
+own `tierUsed`/`status`/`confidence`. `EXTENDING.md`'s broken `@/` import
+alias and stale file-tree references (a cited `llm-consensus.ts` that
+never existed, `wolfram.ts` wrongly held up as an `AnswerVerifier`
+template when it implements a separate internal interface) are fixed too.
+
+**A new Tier 2.5 SymPy stage** (`src/verification/verifiers/sympy.ts`)
+sits between the LLM dual-solve and the metered Wolfram call — a
+hardcoded constructor slot, not a `registerVerifier()` extension (those
+are reserved for tier ≥ 4, after Wolfram, per the locked tier-ordering
+decision). Runs after an LLM disagreement; short-circuits Tier 3 on a
+decisive verdict, falls through to Wolfram on a refusal. Shells out to
+`python3 -c` with sympy for equality/solve checks; refuses (never guesses)
+on unparseable input, subprocess timeout, or a missing sympy/python3.
+`tierUsed` gains `'tier25_sympy'` as an additive value — every consumer of
+the closed union was grepped and checked, including `VerifyPage.tsx`'s
+display formatter. **Authoring/CI only by design**, locked in a header
+comment on `sympy.ts`: a test greps `src/api/**` and confirms
+`src/server.ts` (the one production orchestrator call site) never
+imports it — the Tier 2.5 slot stays `null` in production, since neither
+Dockerfile has `python3`.
+
+**Provenance enforcement (B2).** `check-practice-items.ts` gains
+`checkProvenanceVerificationMethod()`, scoped only to items carrying a
+`generation_run_id` (the 505 hand-verified committed items have no run to
+point to and are untouched). Such an item's `verification_method` must be
+either a grandfathered bare value (`dual_model_consensus`,
+`wolfram_verified`) or match the `+sympy`/`+wolfram` suffix convention
+with `verified_at` set.
+
+**`verify-sweep` doc rewritten against reality (B3).** The old doc
+described a CLI, a `verification_audit_log` table, and a
+`quarantine_problems` table that were never built. Rewritten against the
+real machinery — `src/jobs/wolfram-verify-job.ts`, invoked via
+`npm run content:verify` — covering the atomic per-problem checkpoint, the
+three-way verified/failed/inconclusive outcome, and the real env caps
+(`WOLFRAM_RATE_MS=1200`, `WOLFRAM_MAX_CALLS_PER_RUN=200`,
+`WOLFRAM_STEPS_MAX_PER_RUN=50`). A drift test fails if the doc's claims
+about job name or rate caps diverge from the source that enforces them.
+
+**B4** confirmed (not open work — a QA check) that `ReviewQueuePanel`
+already renders gate evidence naming `wolfram_verified` visibly once a row
+is expanded; added a test locking that in.
+
+**Deliberately not activated by this PR:** `WOLFRAM_APP_ID` stayed unset —
+Move A's licensing gate (§0 of `docs/ops/content-verification-runbook.md`)
+shipped unfilled on purpose, per the plan's premise that nothing
+license-bearing activates before the terms are read. Cleared the next day;
+see the `v4.39.0` section below.
+
+### GATE Linear Algebra: mnemonic/exam_pattern/interleaved_drill for all 26 concepts, and Wolfram Tier 3 licensing cleared (v4.39.0)
 
 Closes a real content-type gap: three of the platform's eleven `AtomType`
 categories — `mnemonic`, `exam_pattern`, `interleaved_drill` — had zero seed
@@ -1247,7 +1309,9 @@ generation" and "Show Steps" TODOs, not Tier 3 activation.
 
 **Also this release:** fixed a stale `VERSION` file — stuck at `4.35.0`
 since before the explicit `4.36.0` release, silently drifted from
-`package.json`. Synced up, not down, to `4.37.0`.
+`package.json`. Synced up, not down. Landed as `4.39.0` (not `4.37.0`) once
+PR #129 and PR #130's own undocumented work was backfilled into CHANGELOG.md
+as `4.37.0`/`4.38.0` ahead of it — see those entries.
 
 **Tests:** `frontend/src/components/lesson/MarkdownAtomRenderer.regression.test.tsx`
 now exercises 442 atom files across 28 concepts (up from 3). No backend test

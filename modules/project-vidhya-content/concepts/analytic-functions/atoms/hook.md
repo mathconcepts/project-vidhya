@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-An analytic function is a "smooth" complex function — one that can be zoomed in arbitrarily without the graph developing jagged edges or discontinuities. In the real world, it's like water flow that never has turbulence or sudden breaks. Geometrically, analytic functions preserve angles locally (conformal), which makes them invaluable for solving physics problems.
+Know a real function on a tiny interval and you know almost nothing about it anywhere else. Know that a complex function is analytic on a tiny disc, and you have pinned it down across its entire connected domain. That rigidity — differentiable once in the complex sense forces infinitely differentiable — is why analytic functions get a theory of their own.

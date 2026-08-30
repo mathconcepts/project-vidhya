@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Stokes' Theorem is the 3D generalization of Green's Theorem: it relates the "circulation" of a vector field around a closed curve to the "swirl" (curl) passing through the surface bounded by that curve. Imagine a spinning waterwheel in a river—the total spin of the wheel equals the integral of the water's local swirl across its blades.
+Drop a paddle wheel in a river and it spins. Ask why, and there are two answers: the water pushing round its rim, or the swirl in the water crossing its blades. Stokes' Theorem says those are not two answers — circulation around the boundary equals the curl passing through any surface that boundary encloses.

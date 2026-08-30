@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Diagonalization is "simplifying" a matrix by rotating the coordinate system so the matrix becomes diagonal. In the new coordinates, the matrix just scales along each axis—no mixing. It's like finding a new "natural" basis where the transformation is easiest to understand.
+Multiply a matrix by itself ten times and the entries turn to mush. But swing your point of view round onto the eigenvector axes and the same map is doing nothing more than stretching each axis on its own — so the tenth power is just each stretch factor raised to the tenth. Diagonalization is the change of view that buys you that.

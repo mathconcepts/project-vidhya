@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A connected graph is one where you can travel from any city to any other city by following highways—no isolated pockets. Connectivity measures how "glued together" a graph is. If you remove a few highways and the graph breaks into pieces, those highways are critical bridges; if it stays connected, it's more resilient.
+Cut one cable and the network keeps running. Cut a different one and half the building drops offline. Both were single edges; only one was load-bearing. Connectivity is the study of which edges and vertices are holding a graph together, and how many you would have to lose before it splits into pieces.

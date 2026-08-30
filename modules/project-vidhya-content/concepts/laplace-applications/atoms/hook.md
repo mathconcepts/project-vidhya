@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-The Laplace transform's true power emerges when applied to real problems: solving differential equations (the backbone of circuits and control systems), analyzing system stability (poles tell the story), and computing convolution effortlessly. Instead of solving ODEs by hand (messy, error-prone), transform them to algebra, solve, and inverse-transform back. It's like changing the coordinate system to make a hard problem simple.
+An RLC circuit with a switch that flips at $t = 0$ hands you a differential equation with a discontinuous input. Attack it in the time domain and you fight the initial conditions the whole way. Transform it instead: derivatives become multiplication by $s$, the initial conditions fold in for free, and what remains is algebra.

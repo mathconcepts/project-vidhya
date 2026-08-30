@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-The Mean Value Theorem says that if a function is continuous and smooth, somewhere between two points, the function's instantaneous rate of change (derivative) equals its average rate of change (slope of secant line).
+You drive 180 km in exactly two hours. At some instant your speedometer read 90 km/h — not approximately 90, exactly 90, and there is no way to drive the trip and avoid it. That is the Mean Value Theorem: on a stretch where the function is continuous and differentiable, the instantaneous rate has to match the average rate somewhere.

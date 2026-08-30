@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A recurrence relation is a rule that defines each term of a sequence based on previous terms. Think of it like a recipe that says "to make the next cake, use ingredients from the previous two cakes plus some new flour." The classic example: Fibonacci numbers, where each number is the sum of the two before it ($F_n = F_{n-1} + F_{n-2}$). Recurrence relations describe growth, counts, and iterative processes in computer science and engineering.
+Each month a rabbit colony produces as many new pairs as it held two months earlier. You have no formula for the population in month 40 — but you do have a rule tying each month to the ones before it, and that is almost as good. Recurrence relations are those rules; solving one is the work of turning it into a closed form.

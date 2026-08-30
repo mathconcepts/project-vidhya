@@ -7,6 +7,4 @@ difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-# Hook: Change of Basis
-
-When you write a vector as $(3, 2)$, you're already assuming a coordinate system—typically the standard $x$-$y$ axes. But rotate your page by $45°$, and that same point has *different* coordinates in the rotated frame. Change of basis is the mathematics of switching between these viewpoints: same vector, different "language."
+Write a vector as $(3, 2)$ and you have already committed to a coordinate system — the standard $x$-$y$ axes — without ever saying so out loud. Rotate the page by $45°$ and the point has not moved an inch, but its coordinates have. Change of basis is the arithmetic of that switch: one vector, two languages, and a matrix that translates between them.

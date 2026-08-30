@@ -7,4 +7,4 @@ difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-A quadratic form is a polynomial where every term has degree 2—think of it as the matrix generalization of $ax^2 + bxy + cy^2$. To classify them, we ask a single question: do they always stay positive, always stay negative, or do they change sign?
+$ax^2 + bxy + cy^2$ — you have been handling this since school. Package those coefficients into a symmetric matrix and one question suddenly acquires a clean answer: does this expression stay positive for every input, stay negative, or change sign depending on where you look? Producing that classification is what quadratic forms are for.

@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-If the Laplace transform converts a time signal into a frequency-domain snapshot (with poles showing decay rates), the inverse transform *reconstructs* the original time-domain signal from that snapshot. It's like developing a photograph: the $s$-domain is the negative, and the inverse transform is the chemical process that recovers the picture.
+You transformed the differential equation, did the algebra, and now you are holding $F(s) = \frac{1}{s^2+4}$. Nobody can build anything with that. The inverse transform is the trip home: split $F(s)$ into recognisable pieces by partial fractions, read each piece off a table, and $\frac{1}{2}\sin 2t$ drops out.

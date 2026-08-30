@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Integration by parts is the reverse of the product rule. Use it when you have a product of two functions where one becomes simpler when differentiated (like $x$ or $\ln(x)$) and the other is easy to integrate.
+$\int x e^x\,dx$ resists every substitution you try, and it should — substitution reverses the chain rule, but this integrand is a product. Integration by parts is the product rule run backwards: trade the integral you cannot do for one you can, by differentiating the factor that gets simpler and integrating the other.

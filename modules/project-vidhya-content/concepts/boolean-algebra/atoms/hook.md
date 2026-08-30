@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Boolean algebra is the mathematics of true/false (1/0) logic, used in every digital circuit and computer program. Think of a light switch: it's either ON (1) or OFF (0). When you combine switches with logic operators (AND, OR, NOT), you're doing Boolean algebra. Engineers use it to simplify digital circuit designs and programmers use it to optimize conditional statements. It's the foundation of how computers work at the hardware level.
+A light switch is either ON or OFF. Wire enough of them together in the right pattern and you have a processor. Boolean algebra is the arithmetic of those two values, and it is what lets a chip designer take a circuit of forty gates down to nine without changing a single output.

@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-The chain rule tells you how to differentiate composite functions — functions built from other functions. If $y$ depends on $u$, and $u$ depends on $x$, then $dy/dx = (dy/du) \cdot (du/dx)$.
+A balloon's radius grows at 2 cm/s. How fast is its volume growing? You know $V$ in terms of $r$, and $r$ in terms of $t$, but nothing directly ties $V$ to $t$. The chain rule is the gear train between them: multiply the two rates, $\frac{dV}{dt} = \frac{dV}{dr}\cdot\frac{dr}{dt}$, and watch the units cancel.

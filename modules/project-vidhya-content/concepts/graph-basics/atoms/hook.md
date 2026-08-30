@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A graph is a roadmap made of cities (vertices) and highways (edges) connecting them. The same roadmap structure shows up everywhere—computer networks, chemical bonds, social relationships—so understanding graphs unlocks patterns in almost every domain.
+Cities joined by highways. Servers joined by cables. Atoms joined by bonds. Strip away what the dots and the lines happen to mean and the same object is left every time: vertices and edges. That is why one set of results about graphs pays off across every one of those domains at once.

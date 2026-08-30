@@ -7,4 +7,4 @@ difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-The **trace** is the simplest invariant of a square matrix—sum its diagonal. It predicts the sum of eigenvalues before you compute them, and reveals whether $AB=BA$ holds conceptually by proving $\text{tr}(AB)=\text{tr}(BA)$ for any two matrices.
+Before computing a single eigenvalue, add up the diagonal. You now know what all the eigenvalues sum to. That is the trace — the cheapest invariant a square matrix has, and a free check on any eigenvalue you go on to find. It also obeys $\text{tr}(AB) = \text{tr}(BA)$, even though $AB$ and $BA$ are usually different matrices.

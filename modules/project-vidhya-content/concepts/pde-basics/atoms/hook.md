@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A partial differential equation involves derivatives with respect to multiple independent variables. Where an ODE describes a single curve evolving in time (or space), a PDE describes a surface or field evolving in time AND space simultaneously. Heat diffusing through a rod, waves on a string, or electric fields in space—all are PDEs.
+Heat one end of a metal rod. The temperature at any given spot depends on where you are along the rod AND on how long you have waited — two independent variables, both changing at once. A single derivative can no longer describe what is happening, and that is the entire reason PDEs exist as a subject apart from ODEs.

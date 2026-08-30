@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Complex integration is like summing infinitesimal contributions along a path in the complex plane. Imagine walking along a curve and collecting "work" done by a vector field at each step. The remarkable discovery is that for smooth functions (analytic functions), the work depends only on the start and end points, not the path taken — this is the basis of Cauchy's theorem, one of the most powerful theorems in mathematics.
+Integrate an analytic function from A to B along one curve. Now do it again along a wildly different curve. The answers agree. In real calculus that would be a coincidence; in the complex plane, on a region with no holes in it, it is Cauchy's theorem — and it turns integrals that look impossible into arithmetic.

@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-The Z-transform is the discrete-time counterpart of the Laplace transform. While Laplace handles continuous-time signals (analog), the Z-transform handles discrete-time sequences (digital samples). Instead of $e^{st}$, you use $z^{-n}$ where $n$ is the sample index. It's how digital signal processors (DSPs), filters, and control systems analyze sequences: turn a recurrence relation into an algebraic equation, solve in the $z$-domain, and inverse-transform back.
+A digital filter never sees a waveform. It sees sample $n$, then $n+1$, then $n+2$ — and Laplace has nothing to grip. Swap $e^{st}$ for $z^{-n}$ and the same manoeuvre works on sequences: a recurrence relation becomes an algebraic equation, you solve it in the $z$-domain, and you transform back.

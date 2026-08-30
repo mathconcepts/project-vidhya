@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-The Gauss Divergence Theorem measures the total "outflow" of a vector field through a closed surface by integrating the field's "source strength" (divergence) throughout the enclosed volume. Imagine a balloon filled with air—the total air escaping through the rubber surface equals the total air pumped into the balloon by sources inside.
+Seal a region inside a closed surface. You can measure what escapes by patrolling the boundary and adding up the flux through every patch — or you can stay inside and add up how strongly the field is spreading at each interior point. The Divergence Theorem says those two totals are equal. Always.

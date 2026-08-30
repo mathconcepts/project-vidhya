@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A tree is the "most efficient" way to connect a group of cities with highways: use the minimum number of roads so that every city is reachable from every other, but add no redundant loops. Remove one road and a city becomes isolated; add one road and you create a cycle. Trees are the backbone of data structures and network design.
+You have to link $n$ towns by road and every kilometre is paid for. Lay too few and a town is stranded; lay one more than you need and you have bought a loop that carries nothing. Exactly one shape sits on that boundary — connected, $n - 1$ edges, no cycle — and that shape is a tree.

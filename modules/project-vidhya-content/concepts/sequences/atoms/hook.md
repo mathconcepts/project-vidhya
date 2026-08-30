@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A sequence is like a line of students standing in order — each has a specific position (1st, 2nd, 3rd, ...), and each holds a number. The position tells you which number you're looking at.
+$1, 3, 5, 7, \dots$ — you already know the next one. What you are holding is a rule that assigns a number to each position, which is all a sequence ever is. The interesting question is never the next term; it is what the terms are doing out at position ten million, and whether they settle anywhere at all.

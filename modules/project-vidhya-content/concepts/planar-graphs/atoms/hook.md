@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A planar graph can be drawn on a piece of paper (or the plane) without any edges crossing. Maps are planar graphs—regions are vertices, borders are edges, and you want to avoid crossing lines. Non-planar graphs force crossings no matter how you draw them. This property connects to coloring (4-color theorem) and has deep algorithmic consequences.
+Try to wire three houses to three utilities without any two lines crossing. You will fail — and not for want of cleverness, because it is provably impossible. Some graphs can be drawn flat on a page and some genuinely cannot, and telling those two families apart is what planar graph theory is for.

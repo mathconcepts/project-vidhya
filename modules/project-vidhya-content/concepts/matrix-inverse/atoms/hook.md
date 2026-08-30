@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A matrix inverse is like the "undo" transformation. If $A$ scales and rotates space, then $A^{-1}$ reverses those operations—scaling back and rotating in the opposite direction. Only invertible (non-singular) matrices have inverses.
+Every operation you can undo has a cost. Rotate space and you can rotate straight back. Stretch it and you can shrink it again. But flatten a three-dimensional object onto a plane and nothing on Earth recovers the height you threw away. That collapse is exactly what $\det(A) = 0$ records, and exactly when $A^{-1}$ fails to exist.

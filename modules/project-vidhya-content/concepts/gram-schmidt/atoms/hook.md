@@ -7,8 +7,4 @@ difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-# Gram-Schmidt Process: The Hook
-
-Given linearly independent vectors, how do you construct an orthonormal basis for the same span — one where every vector is perpendicular to every other and has unit length?
-
-The **Gram-Schmidt orthogonalization** process answers this by recursively subtracting projections: take each new vector, remove its "shadow" (projection) onto all previous ones, then normalize.
+Three vectors can span exactly the space you want and still be miserable to compute with, leaning against one another at odd angles so that every calculation drags in a system of simultaneous equations. Gram-Schmidt straightens them out: take each vector in turn, subtract off its shadow on everything already fixed, normalise, repeat. Same span, right angles throughout.

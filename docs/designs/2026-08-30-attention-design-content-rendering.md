@@ -149,7 +149,7 @@ The split is pedagogical, not decorative: **above** when the figure *is* the ide
 The three surfaces the brief named, in the register each one needs:
 
 **Hook — the job is to make them look, in under four seconds.**
-Budget ≤ 40 words. It should open on a concrete object or a question, never on a definition. The PDE hook currently runs 90 words and opens "A partial differential equation involves derivatives with respect to multiple independent variables" — that is a `formal_definition` wearing a hook's label, and it is the single highest-leverage content edit available on this page. A hook with a figure now leads with the figure, which is most of the fix; the copy is the rest, and it is authoring work, not rendering work.
+It should open on a concrete object, a question or a stake, never on a definition. **Done — see §7.**
 
 **Visual intuition — the figure carries the argument; the words caption it.**
 Budget ≤ 60 words of prose. The current `visual_analogy` atoms mostly get this right and were being undermined by placement (F2) and palette (F3), both now fixed. The next gain is motion that *carries information*: `SimulationSpec.narration_steps` already exists and keys text beats to playback progress, and only `eigenvalues` uses it. Rolling that across the plot-friendly concepts turns a looping GIF into a narrated demonstration, which is the actual Apple/Tesla technique — state is *shown* changing, not described as changing.
@@ -201,6 +201,29 @@ Same page, same viewport, after.
 2. **`retrieval_prompt` figures** — should live inside the disclosure, not merely after the prose. Needs media resolution moved into the content pipeline.
 3. **F9** — `docs/` absent from the runtime image; the content-spec admin API is empty in production.
 4. **No real boot check in CI** — the existing smoke test runs under vitest's transformer, not tsx's runtime, so it is green on crashes that kill production. The cheap guard added here covers only the `__dirname` class; a subprocess boot covers the rest.
-5. **Hook copy** — the rendering now favours hooks; several hooks are still definitions in disguise. Authoring work.
+5. ~~**Hook copy**~~ — done, §7.
 6. **`narration_steps` coverage** — one concept uses it. This is the highest-value remaining *motion* work.
 7. **Spec → generation wiring** — `docs/content-spec/` still does not reach `template-engine.ts`.
+
+---
+
+## 7. Hook rewrite pass (2026-08-30, follow-up)
+
+The rendering changes above favour hooks. That only pays off if the hooks are hooks.
+
+**Before:** a large majority of the 100 authored `hook` atoms opened by defining the concept — "A vector space is…", "Boolean algebra is…", "The determinant is a single number that…". A `formal_definition` wearing a hook's label. `pde-basics`, the concept this review was driven from, opened "A partial differential equation involves derivatives with respect to multiple independent variables."
+
+A regex over the first sentence (a copula whose subject is the concept) shortlisted 45. It was wrong in both directions — it flagged "Can a group of vectors stand alone?" and "You need to find the area under a curve" as definitions, and it missed "The Cayley-Hamilton theorem says…", "A double integral computes…", "Green's Theorem connects…". So it was used only to shortlist, and all 100 openers were then read and judged by hand. That is why no "N were definitions" figure is quoted here: the only count I can stand behind is what changed. **66 hooks rewritten; 34 left exactly as they were**, because they already opened on an image, a question or a stake.
+
+Each rewrite leads with something concrete and lands the definition after it. `pde-basics` now opens "Heat one end of a metal rod." `limits` opens on $\frac{\sin x}{x}$ being undefined at zero while its outputs march to 1. `planar-graphs` opens by asking you to wire three houses to three utilities without crossing a line — and telling you that you will fail.
+
+**Constraints respected, not discovered late:**
+
+- The 26 Linear Algebra concepts carry `hook-shaken.md` / `hook-assured.md`. `ci:variant-agreement` requires `shaken ≤ base` in prose words and `assured ≤ 130`; several pairs had a margin of one word (`matrix-norms` 44/44, `spectral-theorem` 40/40). Every rewritten base was re-measured with the repo's own `countProseWords`, not `wc -w`, which disagrees with it. All 156 pairs still pass.
+- Three bases carry an `interactive-spec` fence that `compareBlocks` requires to match the variants byte-for-byte. The rewrite tool replaces only the prose ahead of the first fence.
+- Four bases carried an `h1` (`# Hook: Change of Basis`) or a florid `h2` ("Why Matrices Whisper Their Secrets"). Removed — an `h1` in an atom body renders at 22px and competes with the page title.
+- The `-shaken` variants were, almost uniformly, *better hooks than their bases* — concrete and imperative. They were left alone.
+
+**One error caught in my own new copy.** The `series` hook first read "Add $\frac12 + \frac14 + \frac18 + \cdots$ forever and you land on exactly 2." It lands on 1. Every numeric claim introduced in this pass was then checked against Wolfram rather than re-read: the Cayley-Hamilton characteristic polynomial and its zero matrix, $\int_1^\infty x^{-2}\,dx = 1$ and the divergence of $\int_1^\infty x^{-1}\,dx$, $\mathcal{L}^{-1}\{1/(s^2+4)\} = \tfrac12\sin 2t$, $\lim_{x\to0}\sin x/x = 1$, the partial-fraction split of $1/(x^2-1)$, $\int 2x\cos(x^2)\,dx = \sin(x^2)$, and the non-planarity of $K_{3,3}$.
+
+All 17 CI gates, 1102 frontend tests and 4263 backend tests pass on the result.

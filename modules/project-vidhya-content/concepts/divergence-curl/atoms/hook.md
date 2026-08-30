@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-**Divergence** measures how much a vector field is "spreading out" at a point—like water flowing away from a spring (positive divergence) or toward a drain (negative). **Curl** measures the "swirl" or rotation of the field—like the spinning motion of water going down a drain. Together, they characterize the local behavior of any vector field.
+Drop a paddle wheel into moving water. If it drifts outward from a spring or inward toward a drain, the field has divergence. If it sits in place and spins, the field has curl. Two quantities, both assembled from the same partial derivatives, and between them they describe everything a vector field does near a point.

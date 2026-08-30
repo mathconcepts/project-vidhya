@@ -193,6 +193,28 @@
    * the "scannable row" work with padding + hairlines alone is the version
    * that never mis-renders regardless of an individual atom's punctuation.
    */
+
+  /*
+   * GuidedWalkthrough's hint reveal — orange, italic, matching the Lightbulb
+   * icon it sits beside. .vidhya-atom-body sets its own explicit color, so a
+   * parent inline style can't override it by inheritance alone; this modifier
+   * targets the class directly. Scoped to the hint step only — prompt/answer
+   * keep the default text-primary ink.
+   */
+  .vidhya-atom-body--hint,
+  .vidhya-atom-body--hint p {
+    color: var(--orange);
+    opacity: 0.9;
+    font-style: italic;
+  }
+
+  /* DecisionTreeWalkthrough's leaf reason — secondary ink, same reasoning
+     as the hint modifier above (a class-level override, not an inherited
+     one, since .vidhya-atom-body sets color explicitly). */
+  .vidhya-atom-body--hint-neutral,
+  .vidhya-atom-body--hint-neutral p {
+    color: var(--text-secondary);
+  }
 }
 
 @layer utilities {

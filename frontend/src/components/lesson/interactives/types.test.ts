@@ -79,6 +79,32 @@ describe('parseInteractiveSpec', () => {
     if (!r.ok) expect(r.reason).toContain('t_min/t_max invalid');
   });
 
+  it('accepts simulation with valid narration_steps', () => {
+    const body = '```interactive-spec\n{"v":1,"kind":"simulation","title":"x","x_expr":"t","y_expr":"t","t_min":0,"t_max":1,"narration_steps":[{"at_progress":0,"text":"Starts here."},{"at_progress":0.6,"text":"Settles here."}]}\n```';
+    const r = parseInteractiveSpec(body);
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects simulation narration_steps with an out-of-range at_progress', () => {
+    const body = '```interactive-spec\n{"v":1,"kind":"simulation","title":"x","x_expr":"t","y_expr":"t","t_min":0,"t_max":1,"narration_steps":[{"at_progress":1.5,"text":"bad"}]}\n```';
+    const r = parseInteractiveSpec(body);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('narration_steps[0] invalid');
+  });
+
+  it('rejects simulation narration_steps with empty text', () => {
+    const body = '```interactive-spec\n{"v":1,"kind":"simulation","title":"x","x_expr":"t","y_expr":"t","t_min":0,"t_max":1,"narration_steps":[{"at_progress":0,"text":""}]}\n```';
+    const r = parseInteractiveSpec(body);
+    expect(r.ok).toBe(false);
+  });
+
+  it('rejects simulation narration_steps as an empty array', () => {
+    const body = '```interactive-spec\n{"v":1,"kind":"simulation","title":"x","x_expr":"t","y_expr":"t","t_min":0,"t_max":1,"narration_steps":[]}\n```';
+    const r = parseInteractiveSpec(body);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('non-empty array');
+  });
+
   it('rejects guided_walkthrough with empty steps', () => {
     const body = '```interactive-spec\n{"v":1,"kind":"guided_walkthrough","title":"x","steps":[]}\n```';
     const r = parseInteractiveSpec(body);

@@ -5,6 +5,7 @@
  * HTTP surface for the operator (founder) module:
  *
  *   GET    /api/operator/dashboard                    admin only — aggregated metrics
+ *   GET    /api/operator/verification-report          admin only — content verification pass-rate report
  *   POST   /api/operator/payments/record               admin only — manual payment entry
  *   POST   /api/operator/payments/webhook               shared-secret — provider webhooks
  *   POST   /api/operator/analytics/event                admin only — manual event entry
@@ -87,6 +88,22 @@ async function h_dashboard(req: ParsedRequest, res: ServerResponse): Promise<voi
     sendJSON(res, dash);
   } catch (e: any) {
     sendError(res, 500, `dashboard build failed: ${e?.message ?? 'unknown'}`);
+  }
+}
+
+// ─── GET /api/operator/verification-report ───────────────────────
+// The pass-rate report the readiness ledger asked for — see
+// src/verification/report.ts's module doc for what it does and does not
+// claim.
+
+async function h_verification_report(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  const ok = await requireAdmin(req, res);
+  if (!ok) return;
+  try {
+    const { computeVerificationReport } = await import('../verification/report');
+    sendJSON(res, computeVerificationReport());
+  } catch (e: any) {
+    sendError(res, 500, `verification report failed: ${e?.message ?? 'unknown'}`);
   }
 }
 
@@ -293,6 +310,7 @@ export const operatorRoutes: Array<{
   handler: RouteHandler;
 }> = [
   { method: 'GET',    path: '/api/operator/dashboard',                     handler: h_dashboard },
+  { method: 'GET',    path: '/api/operator/verification-report',           handler: h_verification_report },
   { method: 'POST',   path: '/api/operator/payments/record',               handler: h_record_payment },
   { method: 'POST',   path: '/api/operator/payments/webhook',              handler: h_payment_webhook },
   { method: 'POST',   path: '/api/operator/analytics/event',               handler: h_record_event },

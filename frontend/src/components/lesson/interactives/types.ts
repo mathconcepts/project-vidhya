@@ -73,6 +73,22 @@ export interface SimulationSpec {
   /** Display range. Default auto-fit from sampled points. */
   view_box?: { x_min: number; x_max: number; y_min: number; y_max: number };
   caption?: string;
+  /**
+   * Text beats synced to playback progress (bug #1, live QA: "hook and
+   * animation needs to be in sync with each other - like an explanation").
+   * Before this, `caption` was the only text field — a single static
+   * sentence shown once below the SVG regardless of what the trace was
+   * doing at that moment, so the animation read as inert relative to the
+   * prose above it. `at_progress` (0..1, same domain as the play head)
+   * marks when each beat becomes active; the renderer shows the LAST beat
+   * whose `at_progress` is <= the current progress, so the narration
+   * advances in step with the trace instead of sitting there as one
+   * unchanging line. Optional and additive — `caption` alone still works
+   * exactly as before for a widget with nothing to say mid-animation.
+   * Sorted ascending by `at_progress`; the first entry should be 0 so
+   * something is always showing.
+   */
+  narration_steps?: Array<{ at_progress: number; text: string }>;
 }
 
 /**
@@ -227,6 +243,24 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
   }
   if (typeof raw.t_min !== 'number' || typeof raw.t_max !== 'number' || raw.t_max <= raw.t_min) {
     return { ok: false, reason: 'simulation.t_min/t_max invalid' };
+  }
+  if (raw.narration_steps !== undefined) {
+    if (!Array.isArray(raw.narration_steps) || raw.narration_steps.length === 0) {
+      return { ok: false, reason: 'simulation.narration_steps must be a non-empty array when present' };
+    }
+    for (let i = 0; i < raw.narration_steps.length; i++) {
+      const step = raw.narration_steps[i];
+      if (
+        !step ||
+        typeof step.at_progress !== 'number' ||
+        step.at_progress < 0 ||
+        step.at_progress > 1 ||
+        typeof step.text !== 'string' ||
+        !step.text
+      ) {
+        return { ok: false, reason: `simulation.narration_steps[${i}] invalid — needs at_progress in [0,1] and non-empty text` };
+      }
+    }
   }
   return { ok: true, spec: raw as SimulationSpec, body_without_spec: '' };
 }

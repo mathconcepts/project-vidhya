@@ -152,9 +152,16 @@ export interface MarkdownAtomRendererProps {
    * other atom type; default rendering is unchanged.
    */
   structured?: boolean;
+  /**
+   * Extra class(es) appended to the wrapper div, e.g. a tone modifier like
+   * `vidhya-atom-body--hint`. `.vidhya-atom-body` sets its own explicit
+   * `color`, so a parent's inline style can't override it by inheritance —
+   * a class-level modifier is the only way to retint rendered markdown.
+   */
+  className?: string;
 }
 
-export function MarkdownAtomRenderer({ content, atomId, structured = false }: MarkdownAtomRendererProps) {
+export function MarkdownAtomRenderer({ content, atomId, structured = false, className }: MarkdownAtomRendererProps) {
   const tree = useMemo(() => {
     try {
       const processor = unified()
@@ -186,7 +193,9 @@ export function MarkdownAtomRenderer({ content, atomId, structured = false }: Ma
   // tokens. Do not re-add `prose-sm`: it sets a 14px body, under the 17px
   // floor for student-facing text.
   return (
-    <div className={`max-w-none vidhya-atom-body${structured ? ' vidhya-atom-body--structured' : ''}`}>
+    <div
+      className={`max-w-none vidhya-atom-body${structured ? ' vidhya-atom-body--structured' : ''}${className ? ` ${className}` : ''}`}
+    >
       {tree}
     </div>
   );

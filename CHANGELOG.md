@@ -4,6 +4,82 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.42.0] — 2026-08-30 — Four live-QA rendering fixes + the content-generation spec gets a repo home
+
+**Operator action:** none required. No new env vars, no migrations —
+`docs/content-spec/`'s new admin route is file-based (no DB), and
+`frontend/public/data/content-bundle.json` is regenerated at build time the
+same way it already was (`npm run content:bundle`, wired into both
+Dockerfiles' builder stage).
+
+Four bugs found via live mobile QA on the eigenvalues lesson, all root-caused
+against the real rendering pipeline (background investigation), plus the
+founder's per-subtopic content-generation specification gets a durable home
+in the repo instead of living only as a chat upload.
+
+- **Hook/animation out of sync** ("hook and animation needs to be in sync
+  with each other - like an explanation"). `SimulationSpec` gains optional
+  `narration_steps: {at_progress, text}[]` — text beats keyed to playback
+  progress, rendered by `Simulation.tsx` as the trace draws instead of one
+  static caption shown the whole time. The eigenvalues hook atom (base +
+  both stance variants) now authors 4 narration steps.
+- **`visual_analogy` rendering as plain text, no visual.** Root cause: the
+  demo's fire-and-forget boot (`demo:seed-media` renders GIFs in a
+  background subshell while the server already accepts traffic — a
+  deliberate tradeoff against Render's port-detection timeout) leaves a real
+  window on a fresh cold start where an atom's `gif-scene` block is authored
+  but its file doesn't exist yet. `MediaSidecar` now shows "Animation still
+  generating" instead of silently rendering nothing.
+- **`guided_walkthrough` showing raw `$...$` LaTeX source** instead of
+  typeset math. `GuidedWalkthrough.tsx` and `DecisionTreeWalkthrough.tsx`
+  never routed their `prompt`/`hint`/`answer`/`question`/`method`/`reason`
+  fields through the KaTeX pipeline `MarkdownAtomRenderer.tsx` already
+  provides for atom bodies — they interpolated raw strings. Both now do.
+- **Practice pool feeling repetitive** ("only saw 10/15 questions"). Two
+  compounding causes: `resolver.ts`'s tier-0 bundle match sampled only from
+  the top 3 verification-ranked matches (everything ranked 4th+ was
+  permanently unreachable — now samples the full pool), and
+  `content-bundle.json` never included the 505-item hand-verified
+  `data/practice-items/*.json` bank at all (only ~7 PYQ items reached
+  eigenvalues). `build-content-bundle.ts` now folds that bank in —
+  deliberately without the answer key, since these items are meant to be
+  graded server-side via the existing `GET /api/practice/item/:id` →
+  `/attempt/:id` hand-off, and `content-bundle.json` is a public static file
+  every browser fetches. Eigenvalues: 7 → 22 reachable items; bundle total
+  251 → 756, losing zero previously-committed problems.
+
+**Content-generation spec gets a repo home.** `docs/content-spec/` now holds
+the founder's 116-topic GATE Engineering Mathematics content-generation
+specification (recommended hooks/sequences/delta-slots per topic, the
+"Integrated Self-Improving Learning System v2.0" design doc, research
+citations, and the target relational schema for the eventual base+delta
+content system), committed verbatim so it's never just a chat upload again.
+`src/content/atomic-topic-spec.ts` is a real, tested consumer — a memoized
+CSV loader keyed by `atomic_id` — exposed read-only via
+`GET /api/admin/content-spec/atomic-topics[/:atomicId]` so an operator can
+pull up a topic's spec before launching a generation run.
+
+**The atomic_id ↔ concept_id crosswalk, verified (follow-up, same day).**
+Per explicit direction that the two id spaces are meant to be the same:
+`src/content/atomic-concept-map.ts` is the hand-verified mapping — each of
+the 116 `atomic_id`s was matched against the real concept-graph `label` +
+`description` it corresponds to, not guessed by string similarity. 100 of
+116 resolve to a real `concept_id`; the other 16 are recorded with a real
+reason each (a genuine coverage gap, or a cross-cutting skill that isn't
+one concept — e.g. VC-11 "theorem selection across Green/Stokes/Gauss" is
+the already-shipped branching walkthrough, not a concept in its own
+right). The two spaces are NOT identical: the concept graph is richer for
+Linear Algebra (15 concepts — SVD, spectral theorem, Jordan form, and more
+— have no atomic_id at all, added by the v4.34.0 "all 26 concepts" pass
+beyond the base spec's 11 foundational LA topics), and several concepts
+fold multiple atomic topics into one (all 8 PDE subtopics teach as the
+single `pde-basics` concept). `GET /api/admin/content-spec/atomic-topics[/:atomicId]`
+now returns each topic's `concept_id` (null + a reason when unmapped), and
+a new `GET /api/admin/content-spec/mapping` gives the coverage report. The
+founder page (`/admin/founder`) surfaces this mapping directly — coverage
+bar, the multi-topic-per-concept count, and an expandable "why unmatched"
+list for the 16 gaps — so it's visible without a separate API call.
+
 ## [4.41.0] — 2026-08-29 — "Complete AND Paid": the 90-day operating system on the founder page
 
 **Operator action:** none required. No new env vars, no migrations (flat-file, matching the rest of the operator module) — `.data/founder-os.json`, durable-mirrored via the existing migration-043 pattern.

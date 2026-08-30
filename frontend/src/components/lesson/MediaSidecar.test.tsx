@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { MediaSidecar, type ContentAtom } from './AtomCardRenderer';
 
-function atomWith(media?: ContentAtom['media']): ContentAtom {
+function atomWith(media?: ContentAtom['media'], content = 'body'): ContentAtom {
   return {
     id: 'a1',
     concept_id: 'c1',
@@ -14,10 +14,12 @@ function atomWith(media?: ContentAtom['media']): ContentAtom {
     bloom_level: 1,
     difficulty: 0.5,
     exam_ids: [],
-    content: 'body',
+    content,
     media,
   } as ContentAtom;
 }
+
+const GIF_SCENE_BODY = 'Watch the trace unfold.\n\n```gif-scene\n{"type":"function-trace","expression":"2*x"}\n```\n';
 
 beforeEach(() => {
   // Default: no reduced-motion preference
@@ -74,6 +76,42 @@ describe('MediaSidecar', () => {
     );
     expect(container.querySelector('img')).not.toBeNull();
     expect(container.querySelector('audio')).not.toBeNull();
+  });
+
+  // Bug #2 (live QA): a visual_analogy atom authored with a gif-scene block
+  // rendered as bare static text on a freshly-woken demo instance — the
+  // GIF hadn't finished rendering to disk yet (demo:seed-media runs in a
+  // background subshell after boot), and MediaSidecar silently rendered
+  // nothing instead of saying so.
+  describe('awaiting-gif honesty (bug #2)', () => {
+    it('shows an honest placeholder when the atom authors a gif-scene block but has no media yet', () => {
+      const { container, getByText } = render(
+        <MediaSidecar atom={atomWith(undefined, GIF_SCENE_BODY)} />,
+      );
+      expect(container.firstChild).not.toBeNull();
+      expect(container.querySelector('img')).toBeNull();
+      expect(getByText(/still generating/i)).toBeInTheDocument();
+    });
+
+    it('shows the placeholder even when a media object exists but its gif_url is not set yet', () => {
+      const { getByText } = render(
+        <MediaSidecar atom={atomWith({ audio_url: '/a.mp3' }, GIF_SCENE_BODY)} />,
+      );
+      expect(getByText(/still generating/i)).toBeInTheDocument();
+    });
+
+    it('renders the real GIF, not the placeholder, once gif_url is set', () => {
+      const { container, queryByText } = render(
+        <MediaSidecar atom={atomWith({ gif_url: '/g.gif' }, GIF_SCENE_BODY)} />,
+      );
+      expect(container.querySelector('img')).not.toBeNull();
+      expect(queryByText(/still generating/i)).toBeNull();
+    });
+
+    it('renders nothing (unchanged) when the atom has no media AND no gif-scene block', () => {
+      const { container } = render(<MediaSidecar atom={atomWith(undefined, 'plain prose, no scene')} />);
+      expect(container.firstChild).toBeNull();
+    });
   });
 
   it('shows reduced-motion caption when prefers-reduced-motion: reduce', () => {

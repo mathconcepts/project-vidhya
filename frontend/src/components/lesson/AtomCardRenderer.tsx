@@ -394,11 +394,58 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
 /**
  * §4.15 multi-modal sidecars: GIF (visual_analogy) + audio narration (intuition).
  * Renders nothing when atom has no media. Honors prefers-reduced-motion for the GIF.
+ *
+ * Bug #2 (live QA): a `visual_analogy` atom authored with a `gif-scene` block
+ * rendered as bare static text on a freshly-woken demo instance, with no
+ * indication anything was missing. Root cause (background investigation):
+ * the demo boots seed-then-serve fire-and-forget — `demo:seed-media`
+ * renders ~70 GIFs to disk in a background subshell while the HTTP server
+ * is already accepting traffic, so there's a real window after every cold
+ * start where a `visual_analogy` atom's `gif-scene` block is authored but
+ * its `.gif` file doesn't exist on disk yet. That's a deploy-ordering
+ * tradeoff (blocking first-request on ~70 renders would itself risk
+ * Render's own port-detection timeout — see demo/Dockerfile's CMD comment),
+ * not something to fix here. What belongs here is honesty: an atom that
+ * carries an authored `gif-scene` block but has no `gif_url` yet must say
+ * so, never silently render as if no visual was ever intended.
  */
 export function MediaSidecar({ atom }: { atom: ContentAtom }) {
   const reduceMotion = usePrefersReducedMotion();
   const media = atom.media;
-  if (!media || (!media.gif_url && !media.audio_url)) return null;
+  const awaitingGif = !media?.gif_url && GIF_SCENE_FENCE_RE.test(atom.content);
+  // .test() on a global regex advances lastIndex on its own instance —
+  // GIF_SCENE_FENCE_RE is shared with stripGifSceneBlock's .replace() calls
+  // elsewhere, so reset it to avoid a stateful false negative on reuse.
+  GIF_SCENE_FENCE_RE.lastIndex = 0;
+  if (!media && !awaitingGif) return null;
+  if (!media?.gif_url && !media?.audio_url && !awaitingGif) return null;
+  if (awaitingGif) {
+    return (
+      <div className="mt-4 space-y-3">
+        <figure
+          className="rounded-lg overflow-hidden border flex items-center justify-center"
+          style={{ borderColor: 'var(--separator)', background: 'var(--surface-fill)', minHeight: 96 }}
+        >
+          <figcaption className="px-3 py-4 text-center" style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)' }}>
+            Animation still generating — check back in a moment.
+          </figcaption>
+        </figure>
+        {media?.audio_url && (
+          <audio
+            controls
+            preload="none"
+            src={media.audio_url}
+            aria-label="Read this concept aloud"
+            className="w-full h-10"
+          />
+        )}
+      </div>
+    );
+  }
+  // Unreachable in practice — every path above that leaves `media` unset
+  // already returned. Narrows the type for TS, which can't otherwise see
+  // that guarantee across the awaitingGif branch.
+  if (!media) return null;
   return (
     <div className="mt-4 space-y-3">
       {media.gif_url && (

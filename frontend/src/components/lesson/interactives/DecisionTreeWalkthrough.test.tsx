@@ -208,16 +208,18 @@ describe('DecisionTreeWalkthrough — colour discipline', () => {
 
 describe('DecisionTreeWalkthrough — 17px floor', () => {
   it('renders the question, the method and the reason sentence at the body token', () => {
+    // Question/method/reason now route through MarkdownAtomRenderer
+    // (T-latex-fix) so KaTeX renders instead of raw source; the 17px floor
+    // comes from the `.vidhya-atom-body` class (globals.css), not an
+    // inline style.
     render(<DecisionTreeWalkthrough spec={TREE} />);
-    expect(screen.getByText('What is the integral taken over?')).toHaveStyle({
-      fontSize: 'var(--text-body)',
-    });
+    expect(screen.getByText('What is the integral taken over?').closest('.vidhya-atom-body')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'A surface S' }));
-    expect(screen.getByText('The Divergence Theorem')).toHaveStyle({ fontSize: 'var(--text-body)' });
+    expect(screen.getByText('The Divergence Theorem').closest('.vidhya-atom-body')).not.toBeNull();
     // Reason codes render as sentences, never codes — and never below 17px.
     const reason = screen.getByTestId('decision-leaf-reason');
-    expect(reason).toHaveStyle({ fontSize: 'var(--text-body)' });
+    expect(reason.querySelector('.vidhya-atom-body')).not.toBeNull();
     expect(reason.textContent!.split(/\s+/).length).toBeGreaterThan(4);
   });
 });

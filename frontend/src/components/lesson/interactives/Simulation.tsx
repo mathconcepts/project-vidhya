@@ -10,9 +10,11 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { evalFormula, type SimulationSpec } from './types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { EASE_STANDARD, DUR_INSTANT_S, framerDuration } from '@/lib/motion-tokens';
 
 const SVG_W = 320;
 const SVG_H = 200;
@@ -20,6 +22,27 @@ const PADDING = 16;
 
 interface Props {
   spec: SimulationSpec;
+}
+
+/**
+ * The narration beat active at a given progress: the LAST step whose
+ * `at_progress` is <= progress, so the sentence a student reads always
+ * describes what the trace has ALREADY drawn, never something ahead of
+ * it. Steps are sorted defensively — authors write them in reading order,
+ * but nothing enforces that at the content layer.
+ */
+export function activeNarrationStep(
+  steps: SimulationSpec['narration_steps'],
+  progress: number,
+): string | null {
+  if (!steps || steps.length === 0) return null;
+  const sorted = [...steps].sort((a, b) => a.at_progress - b.at_progress);
+  let active = sorted[0];
+  for (const step of sorted) {
+    if (step.at_progress <= progress) active = step;
+    else break;
+  }
+  return active.text;
 }
 
 export function Simulation({ spec }: Props) {
@@ -151,8 +174,24 @@ export function Simulation({ spec }: Props) {
         </p>
       )}
 
-      {spec.caption && (
-        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
+      {spec.narration_steps ? (
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p
+            key={activeNarrationStep(spec.narration_steps, reducedMotion ? 1 : progress) ?? undefined}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: framerDuration(DUR_INSTANT_S, reducedMotion), ease: EASE_STANDARD }}
+            className="text-[12px] leading-relaxed font-medium"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {activeNarrationStep(spec.narration_steps, reducedMotion ? 1 : progress)}
+          </motion.p>
+        </AnimatePresence>
+      ) : (
+        spec.caption && (
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
+        )
       )}
     </div>
   );

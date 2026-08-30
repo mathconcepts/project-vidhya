@@ -112,6 +112,8 @@ export interface BuildContentBundleOptions {
   genDir?: string;
   /** Defaults to <cwd>/data/courses/gate-em/topics */
   topicsDir?: string;
+  /** Defaults to <cwd>/data/practice-items */
+  practiceItemsDir?: string;
   /** Suppress console output (e.g. when called from the nightly chain). Defaults to false — CLI callers keep the original chatty output. */
   quiet?: boolean;
 }
@@ -295,6 +297,79 @@ function collectProblems(feDataDir: string, rawDir: string, genDir: string, log:
   return problems;
 }
 
+/**
+ * 4. Authored, server-gradable practice items (data/practice-items/*.json —
+ *    the 505-item bank `check-la-walkthrough`/`FileLearningObjectCatalog`
+ *    already serve through `GET /api/practice/item/:id`, on every deploy
+ *    shape, DB or none — see the T21 comment on `getLearningObjectCatalog()`
+ *    in learning-object-catalog-pg.ts).
+ *
+ *    Before this, these ids never reached the client at all: the Tier-0
+ *    resolver only ever draws from `content-bundle.json`'s `problems[]`,
+ *    which this bank was never folded into. A student browsing Smart
+ *    Practice was therefore capped at whatever the (much smaller) PYQ bank
+ *    happened to carry for that concept — bug #4 from live QA
+ *    ("only saw 10/15 questions").
+ *
+ *    Deliberately NOT copied here: `correct_answer` / `options` /
+ *    `answer_index` / `answer_indices` / `answer_range` / `solution_steps`.
+ *    `content-bundle.json` ships to every browser as a public static file —
+ *    unlike `GET /api/practice/item/:id`'s deliberate answer-key withholding
+ *    (server-only, never serialized), putting the key here would hand it to
+ *    any student who opens devtools, defeating the entire point of routing
+ *    these ids to `/attempt/:id` for real grading. The resolver only needs
+ *    enough to MATCH (concept, difficulty, topic) and an id; SmartPracticePage
+ *    resolves that id against `GET /api/practice/item/:id` and redirects to
+ *    `/attempt/:id` before ever reading `problem.correct_answer` for a
+ *    gradable hit — see SmartPracticePage.tsx's Wave 11 hand-off comment.
+ */
+function collectPracticeItems(practiceItemsDir: string, log: (msg: string) => void): any[] {
+  const problems: any[] = [];
+  if (!fs.existsSync(practiceItemsDir)) {
+    log('  ⚠ practice-items dir missing — bundle ships without the authored bank');
+    return problems;
+  }
+  const files = fs.readdirSync(practiceItemsDir).filter((f) => f.endsWith('.json'));
+  for (const file of files) {
+    try {
+      const bank = JSON.parse(fs.readFileSync(path.join(practiceItemsDir, file), 'utf-8'));
+      let added = 0;
+      let refusedInvalid = 0;
+      for (const it of bank.items || []) {
+        if (!it.id || !it.question_text) continue;
+        const candidate = withConceptIdsFallback({
+          id: it.id,
+          question_text: it.question_text,
+          topic: it.topic,
+          concept_id: it.concept_id,
+          difficulty: normalizeDifficulty(it.difficulty),
+          marks: it.marks,
+          source: 'practice-items',
+          verified: true,
+          wolfram_verified: false,
+          gradable: true,
+        });
+        try {
+          validateConceptIds(candidate, file);
+        } catch (err) {
+          if (err instanceof InvalidConceptIdError) {
+            log(`  ⚠ ${file}: refusing "${candidate.id}" — ${err.message}`);
+            refusedInvalid++;
+            continue;
+          }
+          throw err;
+        }
+        problems.push({ ...candidate, fingerprint: fingerprint(candidate) });
+        added++;
+      }
+      log(`  ✓ ${file}: +${added} gradable practice items${refusedInvalid ? ` (${refusedInvalid} refused for an invalid concept id)` : ''}`);
+    } catch (err) {
+      log(`  ⚠ ${file}: ${(err as Error).message}`);
+    }
+  }
+  return problems;
+}
+
 function collectExplainers(feDataDir: string, log: (msg: string) => void): Record<string, any> {
   const expPath = path.join(feDataDir, 'explainers.json');
   if (!fs.existsSync(expPath)) {
@@ -354,6 +429,7 @@ export function buildContentBundle(options: BuildContentBundleOptions = {}): Bui
   const rawDir = options.rawDir ?? path.resolve(process.cwd(), 'data/raw');
   const genDir = options.genDir ?? path.resolve(process.cwd(), 'data/generated');
   const topicsDir = options.topicsDir ?? path.resolve(process.cwd(), 'data/courses/gate-em/topics');
+  const practiceItemsDir = options.practiceItemsDir ?? path.resolve(process.cwd(), 'data/practice-items');
   const outPath = path.join(feDataDir, 'content-bundle.json');
   const log = options.quiet ? () => {} : (msg: string) => console.log(msg);
 
@@ -362,6 +438,9 @@ export function buildContentBundle(options: BuildContentBundleOptions = {}): Bui
 
   log('Collecting problems:');
   const problems = collectProblems(feDataDir, rawDir, genDir, log);
+
+  log('\nCollecting authored practice items:');
+  problems.push(...collectPracticeItems(practiceItemsDir, log));
 
   log('\nCollecting explainers:');
   const explainers = collectExplainers(feDataDir, log);

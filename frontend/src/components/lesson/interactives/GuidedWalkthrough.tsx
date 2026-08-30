@@ -28,6 +28,7 @@ import { DecisionTreeWalkthrough } from './DecisionTreeWalkthrough';
 import type { GuidedWalkthroughSpec } from './types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
+import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 
 // Re-exported for this component's existing tests; the source of truth now
 // lives in lib/motion-tokens.ts so every framer-motion surface (not just
@@ -129,7 +130,9 @@ function LinearWalkthrough({ spec }: Props) {
       >
         <div className="flex items-start gap-2">
           <BookOpen size={16} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-          <p className="leading-relaxed" style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}>{currentStep.prompt}</p>
+          <div className="flex-1 min-w-0">
+            <MarkdownAtomRenderer content={currentStep.prompt} atomId={`${spec.title}.step${stepIdx}.prompt`} />
+          </div>
         </div>
 
         {currentStep.eqn && (
@@ -153,7 +156,13 @@ function LinearWalkthrough({ spec }: Props) {
               style={{ borderColor: 'var(--separator)' }}
             >
               <Lightbulb size={16} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--orange)' }} />
-              <p className="italic leading-relaxed" style={{ color: 'var(--orange)', opacity: 0.9, fontSize: 'var(--text-body)' }}>{currentStep.hint}</p>
+              <div className="flex-1 min-w-0">
+                <MarkdownAtomRenderer
+                  content={currentStep.hint ?? ''}
+                  atomId={`${spec.title}.step${stepIdx}.hint`}
+                  className="vidhya-atom-body--hint"
+                />
+              </div>
             </motion.div>
           )}
           {phase === 'answer' && (
@@ -168,7 +177,9 @@ function LinearWalkthrough({ spec }: Props) {
             >
               {/* Eye, not a check mark: this step is revealed, not graded correct. */}
               <Eye size={16} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-              <p className="leading-relaxed" style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}>{currentStep.answer}</p>
+              <div className="flex-1 min-w-0">
+                <MarkdownAtomRenderer content={currentStep.answer} atomId={`${spec.title}.step${stepIdx}.answer`} />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

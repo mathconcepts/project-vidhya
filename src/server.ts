@@ -32,6 +32,7 @@ import { conceptResolveRoutes } from './api/concept-resolve-routes';
 import { adminConceptsRoutes } from './api/admin-concepts-routes';
 import { adminScenariosRoutes } from './api/admin-scenarios-routes';
 import { adminBlueprintsRoutes } from './api/admin-blueprints-routes';
+import { adminContentSpecRoutes } from './api/admin-content-spec-routes';
 import { adminRulesetsRoutes } from './api/admin-rulesets-routes';
 import { adminJourneyRoutes } from './api/admin-journey-routes';
 import { adminDecisionsRoutes } from './api/admin-decisions-routes';
@@ -235,6 +236,9 @@ for (const route of adminScenariosRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminBlueprintsRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of adminContentSpecRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminPlaybooksRoutes) {
@@ -1164,6 +1168,17 @@ Solve carefully:`;
 
   setOrchestrator(orchestrator);
   setFlywheelOrchestrator(orchestrator);
+
+  // Tier 4+ method-tag check (Gap 1's second layer — see
+  // src/verification/verifiers/method-check.ts's module doc). Advisory
+  // only per the Tier 4+ contract; the flag controls whether it's wired
+  // in at all, not a gate on top of an already-advisory result. Off by
+  // default, matching the pedagogy-verifier's shadow-mode-first rollout.
+  if (process.env.VIDHYA_METHOD_CHECK === 'on') {
+    const { methodCheckVerifier } = await import('./verification/verifiers/method-check');
+    orchestrator.registerVerifier(methodCheckVerifier);
+    console.log('[server] Registered Tier 4+ verifier: method-check (VIDHYA_METHOD_CHECK=on)');
+  }
 
   // Note: setGeminiModel() injection was removed — verify-any now uses
   // src/llm/runtime directly so the operator's per-request LLM config

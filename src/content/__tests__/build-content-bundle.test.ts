@@ -17,6 +17,7 @@ let feDataDir: string;
 let rawDir: string;
 let genDir: string;
 let topicsDir: string;
+let practiceItemsDir: string;
 
 beforeEach(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'build-bundle-'));
@@ -24,6 +25,9 @@ beforeEach(() => {
   rawDir = path.join(tmp, 'raw');
   genDir = path.join(tmp, 'generated');
   topicsDir = path.join(tmp, 'topics');
+  // Not created — deliberately absent so these isolated tests never pick up
+  // the real repo's data/practice-items/ (505 items) via process.cwd().
+  practiceItemsDir = path.join(tmp, 'practice-items');
   fs.mkdirSync(feDataDir, { recursive: true });
 });
 
@@ -32,7 +36,7 @@ afterEach(() => {
 });
 
 function opts() {
-  return { feDataDir, rawDir, genDir, topicsDir, quiet: true };
+  return { feDataDir, rawDir, genDir, topicsDir, practiceItemsDir, quiet: true };
 }
 
 describe('buildContentBundle', () => {
@@ -100,6 +104,65 @@ describe('buildContentBundle', () => {
     );
     const result = buildContentBundle(opts());
     expect(result.total_problems).toBe(0);
+  });
+
+  it('folds data/practice-items/*.json in as gradable, WITHOUT the answer key (bug #4 fix)', () => {
+    fs.mkdirSync(practiceItemsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(practiceItemsDir, 'gate-ma-la-eigen.json'),
+      JSON.stringify({
+        version: 1,
+        items: [
+          {
+            id: 'pi-eigenvalues-001',
+            concept_id: 'eigenvalues',
+            topic: 'linear-algebra',
+            difficulty: 0.4,
+            question_type: 'mcq',
+            marks: 2,
+            question_text: 'Find the eigenvalues of [[2,0],[0,3]].',
+            options: ['2 and 3', '0 and 5', '2 and 2', '3 and 3'],
+            answer_index: 0,
+            correct_answer: '2 and 3',
+            solution_steps: ['A diagonal matrix\'s eigenvalues are its diagonal entries.'],
+            verification_method: 'diagonal_matrix_identity',
+          },
+        ],
+      }),
+    );
+    const result = buildContentBundle(opts());
+    expect(result.total_problems).toBe(1);
+    const written = JSON.parse(fs.readFileSync(result.outPath, 'utf-8'));
+    const item = written.problems[0];
+    expect(item.id).toBe('pi-eigenvalues-001');
+    expect(item.concept_id).toBe('eigenvalues');
+    expect(item.gradable).toBe(true);
+    expect(item.question_text).toBe('Find the eigenvalues of [[2,0],[0,3]].');
+    // The answer key must never reach this public, browser-fetched file —
+    // GET /api/practice/item/:id is the only place it's allowed to leave
+    // the server, and only for POST /api/practice/attempt to grade against.
+    expect(item.correct_answer).toBeUndefined();
+    expect(item.options).toBeUndefined();
+    expect(item.answer_index).toBeUndefined();
+    expect(item.solution_steps).toBeUndefined();
+  });
+
+  it('refuses a practice-items entry with an invalid concept_id, keeping its valid siblings', () => {
+    fs.mkdirSync(practiceItemsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(practiceItemsDir, 'bad-bank.json'),
+      JSON.stringify({
+        version: 1,
+        items: [
+          { id: 'pi-bad', concept_id: 'not-a-real-concept', topic: 'linear-algebra', difficulty: 0.4, question_type: 'mcq', question_text: 'Q1' },
+          { id: 'pi-good', concept_id: 'eigenvalues', topic: 'linear-algebra', difficulty: 0.4, question_type: 'mcq', question_text: 'Q2' },
+        ],
+      }),
+    );
+    const result = buildContentBundle(opts());
+    expect(result.total_problems).toBe(1);
+    const written = JSON.parse(fs.readFileSync(result.outPath, 'utf-8'));
+    expect(written.problems.map((p: any) => p.id)).toEqual(['pi-good']);
   });
 
   it('merges verified generated problems and skips unverified ones', () => {

@@ -1468,10 +1468,22 @@ environment the schema touches.
 **`scripts/seed-demo-personalisation.ts` is demo fixtures, not generator
 output.** It seeds 9 `thinking_gap_cache` rows across 9 framing cohorts and 2
 `student_atom_overrides` under the `0aded0a0-` persona prefix. The text is
-hand-authored. `thinking-gap-service.ts` and `personalized-regen.ts` both need
-an LLM provider, so on a deploy without one the rows are real and the mechanism
-behind them is not running. The content-maturity report cannot see that
-distinction — it is stated in the script header and here.
+hand-authored, so those rows demonstrate the shape of the feature and NOT the
+quality of what the generator writes. The content-maturity report cannot see
+that distinction — it counts rows.
+
+Whether the generator can run is a separate question with a checkable answer.
+`src/sessions/thinking-gap-service.ts:175` calls `getLlmForRole('chat')`, and
+`personalized-regen.ts` reaches a provider through `generateConcept`.
+`loadConfigFromEnv` (`src/llm/config-resolver.ts`) resolves the first of
+`VIDHYA_LLM_PRIMARY_PROVIDER`+`_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`,
+`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `DEEPSEEK_API_KEY`,
+`MISTRAL_API_KEY`. The server's boot banner is emitted from that same
+`getLlmForRole('chat')` call (`src/server.ts:1201`), so
+`[server] Verification tiers: RAG + LLM (<provider>/<model>) + Wolfram` in the
+logs IS the proof that the personalisation generators have a provider — and a
+banner reading `RAG + Wolfram` with no LLM segment is the proof they do not.
+Read the banner rather than assuming either way.
 
 **The atom-render regression covers the whole corpus now.**
 `frontend/src/components/lesson/MarkdownAtomRenderer.regression.test.tsx`

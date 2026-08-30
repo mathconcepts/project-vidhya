@@ -30,13 +30,20 @@
  * `isPersonaUserId()`.
  *
  * NOT honest to claim, and so stated here: this text was written by hand for
- * the demo. It is not output of the deployed runtime's own generator. The
- * runtime path (`thinking-gap-service.ts` → `getLlmForRole('chat')`,
- * `personalized-regen.ts` → `generateConcept`) needs a configured provider,
- * and the demo service has none. After this runs, those rows exist and the
- * report goes green over them; the mechanism that would produce MORE of them
- * is still unpowered until a provider key is set. Anyone reading the green
- * light as "generation is working in production" would be wrong.
+ * the demo. It is not output of the deployed runtime's own generator. So the
+ * rows show the SHAPE of the feature, never the quality of what the generator
+ * writes, and reading the report's green light as "generation is producing
+ * text this good" would be wrong.
+ *
+ * Whether the generator can run at all is a separate question, and a
+ * checkable one — do not assume it either way. The runtime path
+ * (`thinking-gap-service.ts` → `getLlmForRole('chat')`,
+ * `personalized-regen.ts` → `generateConcept`) resolves a provider through
+ * `loadConfigFromEnv`, and the server's boot banner is emitted from that same
+ * `getLlmForRole('chat')` call. So the log line
+ * `[server] Verification tiers: RAG + LLM (<provider>/<model>) + Wolfram` is
+ * proof a provider IS configured; the same line without an LLM segment is
+ * proof it is not. Check the banner for the deploy you actually care about.
  *
  * Because the gap text is served verbatim to whoever hits that cache key, it
  * is written to the same standard as the rest of the content: 1–2 sentences,

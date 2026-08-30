@@ -7,6 +7,4 @@ difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-## Why Matrices Whisper Their Secrets
-
-Every matrix hides a skeleton—pure scaling and rotation, stripped of clutter. The Singular Value Decomposition (SVD) finds it: it exposes a matrix as three simple pieces: a rotation, then a stretch, then another rotation. This is how JPEGs compress, search engines rank pages, and neural networks discover hidden patterns.
+Every matrix, however ugly, is secretly three clean operations performed in order: a rotation, a stretch along perpendicular axes, then another rotation. The Singular Value Decomposition is what pulls those three apart. Keep only the largest stretches and you have discarded the least important part of the matrix — which is, concretely, how image compression and low-rank approximation earn their keep.

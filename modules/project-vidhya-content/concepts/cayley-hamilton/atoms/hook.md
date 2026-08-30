@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-The Cayley-Hamilton theorem says: a matrix "satisfies" its own characteristic equation. If you write down the characteristic polynomial and replace the variable $\lambda$ with the matrix $A$, the result is zero. It's a surprising fact that connects the algebraic equation defining eigenvalues to the matrix itself.
+Take $A = \begin{pmatrix}1&1\\0&2\end{pmatrix}$ and find its characteristic polynomial, $\lambda^2 - 3\lambda + 2$. Now do the thing that should not even typecheck: substitute the matrix itself for $\lambda$. Out comes the zero matrix. Every square matrix annihilates its own characteristic polynomial, and that single fact hands you $A^{-1}$ and every power of $A$ without a cofactor in sight.

@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A second-order homogeneous ODE governs systems with "memory" — like a damped spring that remembers both where it is and how fast it's moving. The solution is a combination of two independent modes that decay, oscillate, or grow depending on the roots of a characteristic equation.
+Pluck a guitar string and it does not simply return to rest. It overshoots, swings back, overshoots less, and eventually settles. Where it goes next depends on both where it is and how fast it is travelling — and that pair is exactly what makes the governing equation second order. "Homogeneous" just means nobody is still plucking it.

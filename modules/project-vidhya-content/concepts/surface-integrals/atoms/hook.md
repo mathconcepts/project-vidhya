@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A surface integral sums up the flow of a field through a curved surface—imagine measuring how much water flows through a net held at an angle in a river. The flow depends on the field's strength *and* the surface's orientation (the normal vector).
+Hold a net in a river. How much water passes through it each second? It depends on the flow, on the net's area, and on how it is tilted — held edge-on it catches nothing at all. A surface integral is that calculation carried out properly, patch by patch, across a surface that need not be flat.

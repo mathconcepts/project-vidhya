@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A double integral computes volume under a surface, like a single integral computes area under a curve. A triple integral computes volume of a solid region in 3D space.
+A single integral sweeps along a line and returns an area. Sweep across a whole region of the plane instead, stacking up the height of a surface above each point, and what you get is a volume. No new machinery has appeared — you are integrating twice — and the entire difficulty relocates into describing the region's limits.

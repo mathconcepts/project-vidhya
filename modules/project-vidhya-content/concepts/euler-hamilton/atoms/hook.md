@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-An **Eulerian path** visits every edge exactly once (like drawing a figure without lifting your pen). A **Hamiltonian path** visits every vertex exactly once (like a traveling salesman who must visit every city but can skip some highways). One is about exhausting edges; the other is about exhausting vertices. Detecting them is radically different: Eulerian paths are polynomial-time (degree-based rule), while Hamiltonian paths are NP-complete.
+Can you trace this figure without lifting your pen? Count the corners where an odd number of lines meet; if the count is 0 or 2, yes. Now ask for a route through every corner exactly once instead — same drawing, near-identical phrasing, and nobody knows an efficient test. Euler you check in seconds; Hamilton is NP-complete.

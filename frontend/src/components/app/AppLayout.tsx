@@ -13,6 +13,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Home, BarChart3, Settings, MessageCircle, User, LogOut, Shield, PlayCircle, BookOpen, GraduationCap, Users, Eye, EyeOff, Target, ChevronDown } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCalmMode } from '@/hooks/useCalmMode';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { getDemoPersona } from '@/lib/demoPersona';
 import { isDemoMode } from '@/lib/demoMode';
 import { DemoRoleSwitcher } from '@/components/app/DemoRoleSwitcher';
@@ -65,6 +66,8 @@ export function AppLayout() {
   const [showMenu, setShowMenu] = useState(false);
   const [persona, setPersona] = useState<Persona>('loading');
   const [calmMode, , toggleCalm] = useCalmMode();
+  // Lets the tutor FAB yield the content column while the student reads.
+  const { scrollingDown } = useScrollDirection();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -428,7 +431,17 @@ export function AppLayout() {
 
       {/* Tutor FAB — hidden on /chat and in Calm Mode.
           z:45 keeps it above the header (z:40) but below page modals (z:50).
-          In demo mode, pushed higher so it clears the DemoRoleSwitcher bar (~148px). */}
+          In demo mode, pushed higher so it clears the DemoRoleSwitcher bar (~148px).
+
+          It slides off the right edge while the student is scrolling down,
+          because it is fixed over the content column with no reserved
+          gutter — live QA caught the 56px disc sitting on top of two of the
+          four options on a micro_exercise card. Reading posture hides it;
+          scrolling up or coming to rest brings it straight back (see
+          useScrollDirection). `--dur-base` collapses to 1ms under
+          prefers-reduced-motion, so the control simply snaps rather than
+          animating, and `visibility` keeps it out of the tab order while
+          parked off-screen. */}
       {location.pathname !== '/chat' && !calmMode && (
         <div
           style={{
@@ -438,6 +451,11 @@ export function AppLayout() {
               ? 'calc(148px + env(safe-area-inset-bottom, 0px) + 72px)'
               : 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)',
             zIndex: 45,
+            transform: scrollingDown ? 'translateX(calc(100% + 20px))' : 'translateX(0)',
+            opacity: scrollingDown ? 0 : 1,
+            visibility: scrollingDown ? 'hidden' : 'visible',
+            transition:
+              'transform var(--dur-base) var(--ease-standard), opacity var(--dur-base) var(--ease-standard), visibility var(--dur-base)',
           }}
         >
           <TutorFab onClick={() => navigate('/chat')}>

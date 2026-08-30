@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A limit asks: "What number does this function approach as $x$ gets close to some value?" It's like zooming in on a number line with a microscope — no matter how close you look, the function values cluster at one point.
+$\frac{\sin x}{x}$ is undefined at $x = 0$ — you cannot divide by zero, and there is no arguing with that. Yet feed in $0.1$, then $0.01$, then $0.001$, and the outputs march steadily toward 1. What a function equals at a point and what it is heading toward are two different questions. Limits answer the second.

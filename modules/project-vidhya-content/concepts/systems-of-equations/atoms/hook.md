@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A system of linear equations is a collection of constraints—each equation represents a line (or hyperplane in higher dimensions). Solving the system means finding the point where all lines intersect. Sometimes they intersect at exactly one point (unique solution), infinitely many points (infinitely many solutions), or nowhere (no solution).
+Two lines in a plane either cross at one point, lie exactly on top of each other, or run parallel and never meet. There is no fourth possibility — and that is the entire solution theory of linear systems, in two dimensions. Add unknowns and the lines become hyperplanes, but the three outcomes stay exactly as they were: one solution, infinitely many, or none.

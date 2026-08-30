@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A function is a machine: you feed it an input from set $A$, and it reliably outputs exactly one value in set $B$. Combinatorics counts how many ways you can arrange, select, or combine objects—like asking "how many ways can I choose 3 people from a group of 10?" or "how many ways can I arrange 5 books on a shelf?" Functions and combinatorics are deeply linked: counting functions from set $A$ to set $B$ is a classic combinatorial problem.
+How many ways can you seat five people in a row? Choose three from ten? These are questions you could answer by listing every case, and never should. Combinatorics gives you the count directly — and functions, which pair each input with exactly one output, are what make the counting arguments precise.

@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A Taylor series is a way to approximate a smooth function using an infinite sum of power terms $(z - z_0)^n$. Imagine zooming in on a curve near a point — the closer you zoom, the more it looks like a polynomial. A Laurent series extends this idea: even around a point where the function has a pole (singularity), you can expand it as a series, but now the series includes **negative powers** like $(z - z_0)^{-n}$ as well. The negative-power part encodes the "badness" near the singularity.
+Near a well-behaved point, a function looks like a polynomial — zoom in far enough and it is one, to whatever accuracy you ask for. That is a Taylor series. Now aim at a point where the function blows up instead. Allow negative powers of $(z - z_0)$ into the expansion and it survives even there, with the negative part recording exactly how bad the singularity is. That is Laurent.

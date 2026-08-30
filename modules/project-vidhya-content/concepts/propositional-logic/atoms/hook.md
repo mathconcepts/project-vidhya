@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Think of propositional logic as a system of true/false statements (propositions) connected by logical operators like AND, OR, and NOT. Just like you combine conditions in an if-statement ("if it's raining AND I'm late, then take the bus"), propositional logic combines propositions to build complex logical arguments that are either always true, always false, or depend on the truth values of their parts.
+"If it is raining AND I am late, take the bus." You have written that line, in one syntax or another, a hundred times. Propositional logic is what is left when you stop caring about rain and buses and keep only the AND, the OR and the NOT — which turns out to be enough to decide whether a statement is always true, never true, or depends on its inputs.

@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Multivariable calculus extends single-variable calculus to functions of many variables. Instead of a curve, you have a surface. Instead of a slope, you have partial derivatives in different directions.
+On a curve there are two ways to move, forward or back, so a single derivative says everything there is to say. Stand on a hillside and there are infinitely many. Which way is steepest? Is this spot a summit, a basin, or a saddle? Every idea from single-variable calculus survives the move — but each one now has to be told which direction you meant.

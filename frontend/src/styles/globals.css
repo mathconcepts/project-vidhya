@@ -56,6 +56,51 @@
 
   .vidhya-atom-body p { margin: 0 0 var(--space-4); }
 
+  /* ── Standfirst: the eye needs somewhere to land ─────────────────────────
+     Every atom body rendered at one uniform size from first word to last, so
+     a 1,944-character `intuition` atom arrived as an undifferentiated grey
+     slab. Students scan before they commit to reading; a slab offers nothing
+     to scan, so the decision it produces is "skip", not "read".
+
+     The opening paragraph is promoted to 20px/1.45 — the concept's own first
+     sentence becomes the billboard. This is set in CSS on `:first-child`
+     rather than by extracting a lead sentence in the renderer, deliberately:
+     a parser would have to guess whether the opening block is a claim worth
+     promoting ("A partial differential equation involves derivatives with
+     respect to multiple independent variables") or a throat-clear ("Let's
+     start with an example"), and it would guess wrong on real content. The
+     selector promotes whatever the author actually put first, which is the
+     same thing an editor would do, and an author who wants a different
+     opening changes the content rather than fighting a heuristic.
+
+     Guarded to `p`: an atom that opens with a heading, list or display-math
+     block already has structure, and doubling the size of a $$…$$ opener
+     would blow out the line box. */
+  .vidhya-atom-body > p:first-child {
+    font-size: var(--text-title3);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-title);
+    margin-bottom: var(--space-5);
+  }
+  /* A one-paragraph atom is entirely its own standfirst, which reads as
+     shouting rather than as hierarchy — hierarchy needs something to be
+     louder THAN. */
+  .vidhya-atom-body > p:first-child:last-child {
+    font-size: var(--text-body);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-body);
+  }
+
+  /* Display math is the one element on a maths page that is genuinely worth
+     stopping at, and it was inheriting the same 16px paragraph rhythm as
+     prose. Give it room to read as a figure. */
+  .vidhya-atom-body .katex-display {
+    margin: var(--space-5) 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 0;
+  }
+
   .vidhya-atom-body h1,
   .vidhya-atom-body h2,
   .vidhya-atom-body h3,
@@ -273,5 +318,64 @@
   /* Global tap highlight suppression */
   * {
     -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ── Answer disclosure (AnswerReveal.tsx) ───────────────────────────────
+   Entry only, once, on reveal — no loop, no pulse, per DESIGN-SYSTEM.md
+   ("Rings and bars animate once on entry, then stay still"). The duration
+   token already collapses to 1ms under prefers-reduced-motion, so the
+   animation self-disables rather than needing its own media query. */
+@keyframes vidhya-answer-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Atom stage: figure and prose, co-present ───────────────────────────
+   AtomCardRenderer wraps every atom body + its MediaSidecar in
+   `.vidhya-atom-stage`, with `data-stage` set from ATOM_PRESENTATION_MAP.
+
+   Phone (default): one column. `order` puts the figure before the prose for
+   the atom types whose figure IS the idea (`data-stage="above"`) and after
+   it otherwise. DOM order stays prose-first so assistive tech reads the
+   content before the illustration.
+
+   >=720px: two columns, figure beside prose, figure sticky so it holds
+   position while a long body scrolls past. This is the honest form of the
+   "explanation + visual side by side" brief — at 390px there is no second
+   column to give, so the phone gets sequence instead of adjacency, and the
+   ordering above is what makes that sequence pedagogically right. */
+.vidhya-atom-stage {
+  display: flex;
+  flex-direction: column;
+}
+.vidhya-atom-stage__prose { order: 2; min-width: 0; }
+.vidhya-atom-stage__figure { order: 3; min-width: 0; }
+.vidhya-atom-stage[data-stage='above'] .vidhya-atom-stage__figure { order: 1; }
+/* MediaSidecar's own `mt-4` is right when the figure trails the prose and
+   wrong when it leads it — collapse it in the leading position. */
+.vidhya-atom-stage[data-stage='above'] .vidhya-atom-stage__figure > div { margin-top: 0; }
+.vidhya-atom-stage[data-stage='above'] .vidhya-atom-stage__figure:not(:empty) {
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 720px) {
+  /* Only split into columns when there is actually a figure to put in the
+     second column — `:has()` keeps a text-only atom at full measure instead
+     of stranding it in a 55% column beside dead space. */
+  .vidhya-atom-stage:has(.vidhya-atom-stage__figure > *) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .vidhya-atom-stage:has(.vidhya-atom-stage__figure > *) .vidhya-atom-stage__prose {
+    order: 1;
+  }
+  .vidhya-atom-stage:has(.vidhya-atom-stage__figure > *) .vidhya-atom-stage__figure {
+    order: 2;
+    position: sticky;
+    top: var(--space-4);
+    margin-bottom: 0;
   }
 }

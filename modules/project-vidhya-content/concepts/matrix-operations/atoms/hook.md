@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Matrices are like spreadsheets of numbers that encode how we transform or move objects in space. When you multiply two matrices, you're composing two transformations — like first rotating an object, then scaling it.
+Rotate an object, then shear it. Two operations, two matrices — and their product is one matrix that performs both in a single step. That is what matrix multiplication is really for: composing transformations. It also explains the rule everyone forgets, that $AB$ and $BA$ generally differ, because rotating and then shearing is not the same as shearing and then rotating.

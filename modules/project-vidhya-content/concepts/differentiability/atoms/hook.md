@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A function is differentiable if it has a smooth, well-defined tangent line at each point — no sharp corners or cusps. Differentiability is a stronger condition than continuity.
+Zoom in on a smooth curve and it straightens into a line. Zoom in on the corner of $|x|$ at the origin and the corner is still there, at every magnification. That is the whole distinction: differentiable means the curve has one well-defined tangent at the point — a strictly stronger demand than merely being unbroken.

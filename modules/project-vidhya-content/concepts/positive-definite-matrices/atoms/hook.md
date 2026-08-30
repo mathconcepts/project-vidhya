@@ -7,4 +7,4 @@ difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-A positive definite matrix is the matrix world's "always upward"—its quadratic form is always positive, its eigenvalues are always positive, and Cholesky decomposition always succeeds. GATE loves testing this via Sylvester's criterion, making it a must-know for optimization and numerical methods.
+Rest a marble anywhere on the inside of a bowl and it rolls back to the bottom. Rest it on a saddle and what happens depends on which way you nudge it. A quadratic form is positive definite when its surface is the bowl — every direction curves upward, every eigenvalue is positive, and Cholesky never fails. Sylvester's criterion is how GATE asks you to check which one you have.

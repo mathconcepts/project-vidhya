@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Higher-order ODEs describe systems with more "degrees of freedom" or memory. A third-order ODE might model a crane with inertia, damping, and elasticity all layered together. The solution generalizes naturally from second-order: more roots, more independent modes, richer behavior.
+A mass on a spring needs two numbers before you can say what happens next: where it is, and how fast it is moving. That pair is why its equation is second order. Add a damper and a flexible mount and the list of numbers grows. Higher-order ODEs are what you get when a system's future depends on more of its present than position alone.

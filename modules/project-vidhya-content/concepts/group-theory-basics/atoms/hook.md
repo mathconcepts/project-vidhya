@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A group is a set of objects with a "rule" (operation) for combining them that behaves predictably. Think of rotations of a square: you can rotate it 0°, 90°, 180°, or 270°. Rotating twice in a row gives another valid rotation. Groups capture this algebraic structure—they're the language for symmetries, permutations, and systems where "combining things gives another thing of the same type." Understanding groups unlocks deep connections in mathematics and physics.
+Rotate a square 90°, then 90° again. The result is a rotation you could have reached in one move. Do it four times and you are back where you started. Every symmetry of the square behaves this way, and the rules it obeys — closure, identity, inverses, associativity — are precisely the axioms of a group.

@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Integration by substitution (u-substitution) is the reverse of the chain rule. If you see a composite function in the integrand, identify the inner function, substitute it with $u$, and simplify.
+Look at $\int 2x\cos(x^2)\,dx$. The $2x$ sitting outside is exactly the derivative of the $x^2$ sitting inside. That is not a coincidence — it is the chain rule's fingerprint, left behind when the integrand was formed. Substitution reads that fingerprint backwards: name the inner function $u$, and the whole thing collapses to $\int \cos u\,du$.

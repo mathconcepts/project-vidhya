@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A random variable is like a "translator" that converts unpredictable outcomes into numbers. When you roll a die, the outcome is either 1, 2, 3, 4, 5, or 6 (a random variable $X$). Or count how many heads appear in 10 coin flips — that count is also a random variable, taking values 0 through 10.
+Flip a coin. The outcome is "heads", and you cannot take the average of that. Assign heads the value 1 and tails 0, and suddenly you can — mean, variance, the whole toolkit. A random variable is exactly that assignment: the bridge from outcomes you can only describe to numbers you can compute with.

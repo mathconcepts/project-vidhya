@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-A line integral adds up the "effect" of a vector field along a curve—imagine pushing an object along a winding path against friction, and computing the total work done. The path matters, and you're summing contributions at each infinitesimal step.
+Push a trolley along a winding path through gusting wind. On some stretches the wind helps; on others it fights you; and the total work you end up doing depends on the route you chose. A line integral is that running total — a field's effect accumulated along a curve rather than spread over an area.

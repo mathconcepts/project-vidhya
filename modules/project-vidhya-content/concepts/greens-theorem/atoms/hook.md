@@ -7,4 +7,4 @@ difficulty: 0
 exam_ids: ["*"]
 ---
 
-Green's Theorem connects two different ways of measuring circulation around a closed loop: (1) walking around the boundary and measuring the field's "push" along the path, or (2) measuring the total "swirl" inside the region. They're equal—one of mathematics' most powerful dualities.
+Walk the perimeter of a field and record how much the wind helps or hinders you at each step. Or stand still and add up the swirl at every point inside the fence. Green's Theorem says the two numbers agree — which means an awkward loop integral can become an ordinary double integral, or the other way round.

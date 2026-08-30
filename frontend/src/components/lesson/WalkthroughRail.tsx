@@ -62,6 +62,26 @@ export interface WalkthroughRailProps {
    * row to be tappable — never offer a jump the client can't complete.
    */
   interactiveJumpReady: boolean;
+  /**
+   * How many atom cards the carousel ABOVE this rail is actually showing,
+   * and how many of those carry an interactive spec.
+   *
+   * The server's `legs.explanation.atom_count` counts every atom authored on
+   * disk for the concept (`loadConceptAtoms`), but the carousel renders the
+   * adaptive subset `selectAtoms()` chose for THIS student. On pde-basics
+   * that is 8 authored vs 3 shown, so the rail read "8 cards above" while
+   * three cards sat above it — and "1 interactive figure in this lesson"
+   * while the selected three carried none. Two different sources of truth
+   * for one sentence about one screen.
+   *
+   * The server count still decides AVAILABILITY (does this concept have an
+   * explanation at all); these decide what the copy CLAIMS, because the copy
+   * says "above" and "in this lesson" — both statements about what the
+   * student can currently see. Omitted ⇒ fall back to the server count,
+   * which keeps every other call site rendering exactly as before.
+   */
+  renderedAtomCount?: number;
+  renderedInteractiveCount?: number;
 }
 
 type Phase = 'loading' | 'ready' | 'error';
@@ -69,7 +89,14 @@ type Phase = 'loading' | 'ready' | 'error';
 const DOT_AVAILABLE: React.CSSProperties = { background: 'var(--green)', border: '1.5px solid var(--green)' };
 const DOT_UNAVAILABLE: React.CSSProperties = { background: 'var(--surface-fill)', border: '1.5px solid var(--separator)' };
 
-export function WalkthroughRail({ conceptId, onExplanationTap, onInteractiveTap, interactiveJumpReady }: WalkthroughRailProps) {
+export function WalkthroughRail({
+  conceptId,
+  onExplanationTap,
+  onInteractiveTap,
+  interactiveJumpReady,
+  renderedAtomCount,
+  renderedInteractiveCount,
+}: WalkthroughRailProps) {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('loading');
   const [data, setData] = useState<WalkthroughResponse | null>(null);
@@ -111,7 +138,10 @@ export function WalkthroughRail({ conceptId, onExplanationTap, onInteractiveTap,
   }
 
   const { legs } = data;
-  const interactiveTappable = legs.interactive.available && interactiveJumpReady;
+  // What the copy claims = what is on screen (see renderedAtomCount docs).
+  const shownAtoms = renderedAtomCount ?? legs.explanation.atom_count;
+  const shownInteractives = renderedInteractiveCount ?? legs.interactive.count;
+  const interactiveTappable = legs.interactive.available && interactiveJumpReady && shownInteractives > 0;
   const practiceTappable = legs.practice.available && Boolean(legs.practice.first_object_id);
   const testTappable = legs.test.available;
 
@@ -131,16 +161,23 @@ export function WalkthroughRail({ conceptId, onExplanationTap, onInteractiveTap,
       <RailRow
         title="Explanation"
         subtitle={legs.explanation.available
-          ? `${legs.explanation.atom_count} card${s(legs.explanation.atom_count)} above`
+          ? `${shownAtoms} card${s(shownAtoms)} above`
           : 'No explanation authored yet'}
         available={legs.explanation.available}
         onClick={legs.explanation.available ? onExplanationTap : undefined}
       />
       <RailRow
         title="Interactive"
-        subtitle={legs.interactive.available
-          ? `${legs.interactive.count} interactive figure${s(legs.interactive.count)} in this lesson`
-          : 'No interactive figures for this concept yet'}
+        subtitle={
+          shownInteractives > 0
+            ? `${shownInteractives} interactive figure${s(shownInteractives)} in this lesson`
+            : legs.interactive.available
+              // Authored, but not in the subset this student was served.
+              // Saying "none for this concept" would be false; claiming a
+              // figure the carousel can't jump to would be worse.
+              ? 'No interactive figure in this lesson'
+              : 'No interactive figures for this concept yet'
+        }
         available={interactiveTappable}
         onClick={interactiveTappable ? onInteractiveTap : undefined}
       />

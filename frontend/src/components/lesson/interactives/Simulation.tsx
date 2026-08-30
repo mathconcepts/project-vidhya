@@ -393,24 +393,33 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           {sortedSteps.length > 1 && (
             <BeatBar sortedSteps={sortedSteps} progress={effectiveProgress} servedStance={servedStance} onSeek={seekTo} />
           )}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center flex-shrink-0">
+            {/* 44px tap zones (design-system floor) around visually compact controls */}
             <button
               type="button"
               onClick={() => (playing ? setPlaying(false) : play())}
-              className="p-1.5 rounded-md border"
-              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
               aria-label={playing ? 'Pause simulation' : 'Play simulation'}
             >
-              {playing ? <Pause size={12} /> : <Play size={12} />}
+              <span
+                className="p-1.5 rounded-md border inline-flex"
+                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              >
+                {playing ? <Pause size={12} /> : <Play size={12} />}
+              </span>
             </button>
             <button
               type="button"
               onClick={reset}
-              className="p-1.5 rounded-md border"
-              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
               aria-label="Reset simulation"
             >
-              <RotateCcw size={12} />
+              <span
+                className="p-1.5 rounded-md border inline-flex"
+                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              >
+                <RotateCcw size={12} />
+              </span>
             </button>
           </div>
         </div>

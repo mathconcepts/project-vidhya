@@ -99,6 +99,24 @@ function findResonanceHookAtomIds(): string[] {
   return ids.sort();
 }
 
+/** Idempotently ensure a 'treatment' assignment row per atom; returns how many were new. */
+async function reconcileAssignments(
+  pool: { query: (sql: string, params: unknown[]) => Promise<{ rowCount: number | null }> },
+  atomIds: string[],
+): Promise<number> {
+  let added = 0;
+  for (const atomId of atomIds) {
+    const r = await pool.query(
+      `INSERT INTO experiment_assignments (experiment_id, target_kind, target_id, variant)
+       VALUES ($1, 'atom', $2, 'treatment')
+       ON CONFLICT (experiment_id, target_kind, target_id) DO NOTHING`,
+      [EXPERIMENT_ID, atomId],
+    );
+    if ((r.rowCount ?? 0) > 0) added++;
+  }
+  return added;
+}
+
 async function main(): Promise<void> {
   const pool = getSharedPool();
   if (!pool) {
@@ -151,16 +169,7 @@ async function main(): Promise<void> {
       console.log(`[activate-resonance] --dry-run: would ensure ${atomIds.length} treatment assignment(s): ${atomIds.join(', ')}`);
       return;
     }
-    let added = 0;
-    for (const atomId of atomIds) {
-      const r = await pool.query(
-        `INSERT INTO experiment_assignments (experiment_id, target_kind, target_id, variant)
-         VALUES ($1, 'atom', $2, 'treatment')
-         ON CONFLICT (experiment_id, target_kind, target_id) DO NOTHING`,
-        [EXPERIMENT_ID, atomId],
-      );
-      if ((r.rowCount ?? 0) > 0) added++;
-    }
+    const added = await reconcileAssignments(pool, atomIds);
     console.log(`[activate-resonance] assignments reconciled — ${added} new, ${atomIds.length - added} already present.`);
     return;
   }
@@ -188,16 +197,7 @@ async function main(): Promise<void> {
     ],
   );
 
-  let added = 0;
-  for (const atomId of atomIds) {
-    const r = await pool.query(
-      `INSERT INTO experiment_assignments (experiment_id, target_kind, target_id, variant)
-       VALUES ($1, 'atom', $2, 'treatment')
-       ON CONFLICT (experiment_id, target_kind, target_id) DO NOTHING`,
-      [EXPERIMENT_ID, atomId],
-    );
-    if ((r.rowCount ?? 0) > 0) added++;
-  }
+  const added = await reconcileAssignments(pool, atomIds);
 
   console.log(
     `[activate-resonance] activated ${EXPERIMENT_ID} for exam pack "${examPack}" with ${added} treatment ` +

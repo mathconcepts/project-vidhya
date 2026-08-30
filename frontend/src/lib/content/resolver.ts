@@ -59,7 +59,7 @@ export interface ResolveRequest {
 // Bundle loading (fetched once, cached in memory for the session)
 // ============================================================================
 
-interface ContentBundle {
+export interface ContentBundle {
   version: number;
   problems: any[];
   explainers: Record<string, any>;
@@ -123,7 +123,9 @@ function normalizeDifficulty(d: any): number {
   return 0.5;
 }
 
-function tier0(req: ResolveRequest, bundle: ContentBundle): ResolvedContent | null {
+// Exported for direct unit testing — tier0 is pure (bundle passed in), so
+// tests can drive it without mocking fetch/getBundle.
+export function tier0(req: ResolveRequest, bundle: ContentBundle): ResolvedContent | null {
   if (req.intent === 'explain' && req.concept_id) {
     const exp = bundle.explainers[req.concept_id];
     if (exp) {
@@ -175,7 +177,14 @@ function tier0(req: ResolveRequest, bundle: ContentBundle): ResolvedContent | nu
         const bv = (b.wolfram_verified ? 2 : 0) + (b.verified ? 1 : 0);
         return bv - av;
       });
-      const picked = matches[Math.floor(Math.random() * Math.min(matches.length, 3))];
+      // Sample from the full matched pool, not just the top 3 — a hard
+      // truncation here made every match ranked 4th-or-lower permanently
+      // unreachable no matter how many times the student clicked "Next
+      // problem" (bug #4, live QA: "only saw 10/15 questions"). The
+      // verification-descending sort above still means a verified item is
+      // never shut out in favor of an unverified one within a fixed
+      // window — it just no longer shrinks the reachable pool itself.
+      const picked = matches[Math.floor(Math.random() * matches.length)];
       return {
         source: 'tier-0-bundle-exact',
         problem: picked,

@@ -1317,6 +1317,82 @@ as `4.37.0`/`4.38.0` ahead of it — see those entries.
 now exercises 442 atom files across 28 concepts (up from 3). No backend test
 count change in this release.
 
+### Live-QA rendering fixes + the content-generation spec gets a repo home
+
+Four rendering bugs found by live mobile QA on the eigenvalues lesson, plus
+a first landing for the founder's per-subtopic content-generation
+specification (previously an ad-hoc upload with no durable home).
+
+**Bug fixes:**
+
+1. **Hook/animation out of sync.** `SimulationSpec` (`frontend/src/components/lesson/interactives/types.ts`)
+   gains optional `narration_steps: {at_progress, text}[]` — text beats keyed
+   to playback progress. `Simulation.tsx` shows the last step whose
+   `at_progress <= progress`, fading between them (`activeNarrationStep()`,
+   exported for testing). Falls back to the old static `caption` when a spec
+   has none. `eigenvalues/atoms/hook.md` now authors 4 narration steps
+   instead of one static caption.
+2. **`visual_analogy` rendering with no visual.** Root cause: the demo boots
+   seed-then-serve fire-and-forget (`demo:seed-media` renders ~70 GIFs in a
+   background subshell while the HTTP server already accepts traffic — see
+   `demo/Dockerfile`'s CMD comment for why that ordering is deliberate), so a
+   freshly-woken instance can serve a `visual_analogy` atom before its GIF
+   file exists on disk. `MediaSidecar` (`AtomCardRenderer.tsx`) now detects
+   an authored `gif-scene` block with no `gif_url` yet and shows "Animation
+   still generating — check back in a moment" instead of silently rendering
+   nothing.
+3. **`guided_walkthrough` showing raw LaTeX source.** `GuidedWalkthrough.tsx`
+   and `DecisionTreeWalkthrough.tsx` interpolated `prompt`/`hint`/`answer`/
+   `question`/`method`/`reason` as plain strings, never entering the KaTeX
+   pipeline `MarkdownAtomRenderer.tsx` already provides for atom bodies. Both
+   now route through `MarkdownAtomRenderer`, which gained an optional
+   `className` prop (`.vidhya-atom-body` sets `color` explicitly, so a
+   parent's inline style can't retint it — new `--hint`/`--hint-neutral`
+   modifier classes in `globals.css` do instead).
+4. **Practice pool feeling repetitive ("only saw 10/15 questions").** Two
+   compounding causes in `frontend/src/lib/content/resolver.ts`'s `tier0`:
+   a hard `Math.min(matches.length, 3)` sampling cap made every match ranked
+   4th-or-lower permanently unreachable (now samples the full pool); and
+   `content-bundle.json` never included the 505-item hand-verified
+   `data/practice-items/*.json` bank at all, only the smaller PYQ set (7
+   items for eigenvalues). `src/content/build-content-bundle.ts` now folds
+   that bank in via `collectPracticeItems()` — **deliberately without**
+   `correct_answer`/`options`/`answer_index`/`solution_steps`, since
+   `content-bundle.json` ships to every browser as a public static file and
+   these items are meant to be graded server-side via the existing
+   `GET /api/practice/item/:id` → `/attempt/:id` hand-off
+   (`getLearningObjectCatalog()`'s file catalog already serves them; only the
+   client never knew the ids existed). Eigenvalues went from 7 reachable
+   items to 22. Regenerating the bundle lost zero previously-committed
+   problems (verified: all 251 old ids present in the new 756).
+
+**Content-generation spec gets a repo home.** `docs/content-spec/` now holds
+the founder's 116-topic GATE Engineering Mathematics content-generation
+specification, committed verbatim (was previously only ever shared as a
+chat upload, with no durable place to live): two structure-map CSVs
+(recommended hooks / base sequence / delta slots / attention-design
+hypothesis per topic, and the deeper pipeline spec — prerequisites, quality
+gates, generated artifacts, monitoring metrics), the "Integrated
+Self-Improving Learning System v2.0" design doc, its research-notes
+citations, and the target relational schema for the eventual base+delta
+content system (`content-generation-schema.sql` — not applied; a future
+design, not a migration).
+
+`src/content/atomic-topic-spec.ts` is a real, tested (not just filed-away)
+consumer: a memoized loader parsing both CSVs into `AtomicTopicSpec`,
+keyed by `atomic_id` (e.g. `LA-06`). `GET /api/admin/content-spec/atomic-topics`
+(+ `/:atomicId`, `requireRole('admin')`) exposes it so an operator planning a
+run can pull up a topic's recommended hooks/sequence before launching
+generation. **Deliberately NOT done here:** auto-mapping `atomic_id` to this
+codebase's own `concept_id` (`src/constants/concept-graph.ts`) — the two id
+spaces were authored independently and nothing has verified a row-by-row
+correspondence; fabricating that mapping would silently steer generation for
+the wrong concept, worse than not having it. The loader resolves by
+`atomic_id` only; wiring a *verified* mapping into `src/blueprints/template-engine.ts`
+(today's `CONCEPT_TEMPLATE_FAMILY`, codegen'd from
+`data/curriculum/gate-em/template-families.yml`, already covers all 101
+concept-graph concepts) is future work, not attempted here.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

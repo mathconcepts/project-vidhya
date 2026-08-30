@@ -17,10 +17,12 @@
  *      automated re-run — coverage here means "was documented how it was
  *      checked," not "was swept by the Wolfram job."
  *
- *   2. frontend/public/data/content-bundle.json — 251 problems (mostly
- *      PYQs). Each carries a boolean `wolfram_verified`, set only by
- *      src/jobs/wolfram-verify-job.ts actually running. As of this
- *      report's first run, that number is 0/251 — the automated sweep
+ *   2. frontend/public/data/content-bundle.json — 756 problems (PYQs plus,
+ *      as of the live-QA practice-pool fix, the 505-item practice-items
+ *      bank folded in too — see build-content-bundle.ts's
+ *      collectPracticeItems()). Each carries a boolean `wolfram_verified`,
+ *      set only by src/jobs/wolfram-verify-job.ts actually running. As of
+ *      this report's first run, that number is 0/756 — the automated sweep
  *      exists in code (wired into the nightly contentPipelineNightly job,
  *      gated off by CONTENT_CRON_ENABLED) but has never executed in this
  *      environment.
@@ -61,7 +63,7 @@ export interface VerificationReport {
   headline: {
     /** % of the 505-item hand-authored bank with a documented verification method. */
     hand_verified_coverage_pct: number;
-    /** % of the 251-problem bundle that has passed the automated Wolfram sweep. */
+    /** % of the content-bundle.json problems that has passed the automated Wolfram sweep. */
     automated_sweep_coverage_pct: number;
   };
   /** Honest non-data, same pattern as src/operator/dashboard.ts's caveats array. */

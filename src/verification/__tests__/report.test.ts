@@ -30,12 +30,16 @@ describe('computeVerificationReport', () => {
 
   it('computes real counts from the committed content bundle', () => {
     const report = computeVerificationReport();
-    expect(report.content_bundle.total_problems).toBe(251);
+    // Pin moved 251 -> 756 when build-content-bundle.ts started folding in
+    // the 505-item data/practice-items/ bank (bug #4 fix, live QA: "only
+    // saw 10/15 questions" — the bank existed but the client-side resolver
+    // never saw it). Real content change, not a bug.
+    expect(report.content_bundle.total_problems).toBe(756);
     // As of this report's first run: the automated Wolfram sweep has never
     // executed in this repo. If this ever becomes non-zero, that's real
     // progress and this pin should move — not a bug to "fix" back to 0.
     expect(report.content_bundle.wolfram_verified).toBe(0);
-    expect(report.content_bundle.never_yet_swept).toBe(251);
+    expect(report.content_bundle.never_yet_swept).toBe(756);
     expect(report.headline.automated_sweep_coverage_pct).toBe(0);
   });
 
@@ -54,8 +58,9 @@ describe('computeVerificationReport', () => {
 
   it('breaks down the bundle by topic with per-topic wolfram_verified counts', () => {
     const report = computeVerificationReport();
-    expect(report.content_bundle.by_topic['linear-algebra']?.total).toBe(40);
-    expect(Object.values(report.content_bundle.by_topic).reduce((s, t) => s + t.total, 0)).toBe(251);
+    // Pins moved alongside the total_problems pin above (see that test).
+    expect(report.content_bundle.by_topic['linear-algebra']?.total).toBe(167);
+    expect(Object.values(report.content_bundle.by_topic).reduce((s, t) => s + t.total, 0)).toBe(756);
   });
 
   it('degrades honestly (no throw, zeroed shape) when the paths do not exist', () => {

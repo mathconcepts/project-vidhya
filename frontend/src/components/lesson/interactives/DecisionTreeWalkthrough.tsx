@@ -37,6 +37,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Check, CornerUpLeft, RotateCcw } from 'lucide-react';
 import type { BranchLeaf, BranchNode, GuidedWalkthroughSpec } from './types';
+import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 
 /** The label a student sees on a leaf they should not have reached. */
 export const NOT_BEST_HEADING = 'Not the best route here — here’s why';
@@ -123,12 +124,7 @@ export function DecisionTreeWalkthrough({ spec }: Props) {
           className="rounded-lg border p-3 space-y-3"
           style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)' }}
         >
-          <p
-            className="leading-relaxed"
-            style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}
-          >
-            {node.question}
-          </p>
+          <MarkdownAtomRenderer content={node.question} atomId={`${spec.title}.node.${node.id}.question`} />
           <div className="flex flex-col gap-2">
             {node.options.map((o) => (
               <button
@@ -184,20 +180,15 @@ export function DecisionTreeWalkthrough({ spec }: Props) {
               {leaf.best === true ? BEST_HEADING : NOT_BEST_HEADING}
             </p>
           </div>
-          <p
-            className="leading-relaxed"
-            style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}
-          >
-            {leaf.method}
-          </p>
+          <MarkdownAtomRenderer content={leaf.method} atomId={`${spec.title}.leaf.${leaf.id}.method`} />
           {/* Reason codes render as sentences, never codes. */}
-          <p
-            data-testid="decision-leaf-reason"
-            className="leading-relaxed"
-            style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-body)' }}
-          >
-            {leaf.reason}
-          </p>
+          <div data-testid="decision-leaf-reason">
+            <MarkdownAtomRenderer
+              content={leaf.reason}
+              atomId={`${spec.title}.leaf.${leaf.id}.reason`}
+              className="vidhya-atom-body--hint-neutral"
+            />
+          </div>
         </div>
       )}
 

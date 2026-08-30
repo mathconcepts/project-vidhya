@@ -50,8 +50,11 @@ describe('GuidedWalkthrough — 17px floor', () => {
     expect(title.style.fontSize).toBe('var(--text-body)');
     FORBIDDEN_TEXT_SIZES.forEach((cls) => expect(title.className).not.toContain(cls));
 
+    // Prompt/hint/answer now route through MarkdownAtomRenderer (T-latex-fix)
+    // so KaTeX renders instead of raw source; the 17px floor comes from the
+    // `.vidhya-atom-body` class (globals.css) rather than an inline style.
     const prompt = screen.getByText('What is the characteristic polynomial?');
-    expect(prompt.style.fontSize).toBe('var(--text-body)');
+    expect(prompt.closest('.vidhya-atom-body')).not.toBeNull();
     FORBIDDEN_TEXT_SIZES.forEach((cls) => expect(prompt.className).not.toContain(cls));
   });
 
@@ -65,7 +68,7 @@ describe('GuidedWalkthrough — 17px floor', () => {
     render(<GuidedWalkthrough spec={SPEC} />);
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
     const hint = screen.getByText('Look at det(A − λI).');
-    expect(hint.style.fontSize).toBe('var(--text-body)');
+    expect(hint.closest('.vidhya-atom-body')).not.toBeNull();
   });
 
   it('renders the answer — the payoff — at the body token, not text-xs', () => {
@@ -73,7 +76,7 @@ describe('GuidedWalkthrough — 17px floor', () => {
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
     fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
     const answer = screen.getByText('λ² − 5λ + 6.');
-    expect(answer.style.fontSize).toBe('var(--text-body)');
+    expect(answer.closest('.vidhya-atom-body')).not.toBeNull();
     FORBIDDEN_TEXT_SIZES.forEach((cls) => expect(answer.className).not.toContain(cls));
   });
 
@@ -152,6 +155,50 @@ describe('GuidedWalkthrough — motion', () => {
   it('collapses to ~1ms under prefers-reduced-motion, matching the CSS token contract', () => {
     expect(revealTransitionDuration(false)).toBe(0.18);
     expect(revealTransitionDuration(true)).toBe(0.001);
+  });
+});
+
+describe('GuidedWalkthrough — LaTeX renders, not raw source (bug #3, live QA)', () => {
+  const LATEX_SPEC: GuidedWalkthroughSpec = {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Find rank and nullity',
+    steps: [
+      {
+        prompt: 'Find the rank of $A = \\begin{pmatrix} 1 & 2 \\\\ 2 & 4 \\end{pmatrix}$.',
+        hint: 'Row-reduce: $R_2 \\to R_2 - 2R_1$.',
+        answer: 'rank$(A) = 1$, so nullity$(A) = 2 - 1 = 1$.',
+      },
+    ],
+  };
+
+  // KaTeX's own MathML fallback legitimately embeds the raw $-delimited
+  // source in a screen-reader-only <annotation> node — that's correct
+  // accessibility behavior, not the bug. The bug (and the regression this
+  // guards) is the whole raw markdown string flowing as ONE flat text
+  // node, exactly as the old `<p>{currentStep.prompt}</p>` interpolation
+  // rendered it. So assert no element's full textContent equals the raw
+  // source verbatim, and that KaTeX actually produced `.katex` output.
+  function queryExactText(container: HTMLElement, raw: string) {
+    return Array.from(container.querySelectorAll('p, div')).find((el) => el.textContent === raw) ?? null;
+  }
+
+  it('renders the prompt through KaTeX instead of showing raw $...$ source', () => {
+    const { container } = render(<GuidedWalkthrough spec={LATEX_SPEC} />);
+    expect(queryExactText(container, LATEX_SPEC.steps[0].prompt)).toBeNull();
+    expect(container.querySelector('.katex')).not.toBeNull();
+  });
+
+  it('renders the hint and (once revealed) the answer through KaTeX too', () => {
+    const { container } = render(<GuidedWalkthrough spec={LATEX_SPEC} />);
+    fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
+    expect(queryExactText(container, LATEX_SPEC.steps[0].hint!)).toBeNull();
+    // A second .katex block for the hint's inline math.
+    expect(container.querySelectorAll('.katex').length).toBeGreaterThanOrEqual(2);
+
+    fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
+    expect(queryExactText(container, LATEX_SPEC.steps[0].answer)).toBeNull();
+    expect(container.querySelectorAll('.katex').length).toBeGreaterThanOrEqual(3);
   });
 });
 

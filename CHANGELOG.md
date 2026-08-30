@@ -57,10 +57,28 @@ content system), committed verbatim so it's never just a chat upload again.
 `src/content/atomic-topic-spec.ts` is a real, tested consumer — a memoized
 CSV loader keyed by `atomic_id` — exposed read-only via
 `GET /api/admin/content-spec/atomic-topics[/:atomicId]` so an operator can
-pull up a topic's spec before launching a generation run. Deliberately does
-NOT auto-map `atomic_id` to this codebase's own `concept_id` — the two id
-spaces were authored independently and nothing has verified a
-correspondence; that mapping is future work, not guessed here.
+pull up a topic's spec before launching a generation run.
+
+**The atomic_id ↔ concept_id crosswalk, verified (follow-up, same day).**
+Per explicit direction that the two id spaces are meant to be the same:
+`src/content/atomic-concept-map.ts` is the hand-verified mapping — each of
+the 116 `atomic_id`s was matched against the real concept-graph `label` +
+`description` it corresponds to, not guessed by string similarity. 100 of
+116 resolve to a real `concept_id`; the other 16 are recorded with a real
+reason each (a genuine coverage gap, or a cross-cutting skill that isn't
+one concept — e.g. VC-11 "theorem selection across Green/Stokes/Gauss" is
+the already-shipped branching walkthrough, not a concept in its own
+right). The two spaces are NOT identical: the concept graph is richer for
+Linear Algebra (15 concepts — SVD, spectral theorem, Jordan form, and more
+— have no atomic_id at all, added by the v4.34.0 "all 26 concepts" pass
+beyond the base spec's 11 foundational LA topics), and several concepts
+fold multiple atomic topics into one (all 8 PDE subtopics teach as the
+single `pde-basics` concept). `GET /api/admin/content-spec/atomic-topics[/:atomicId]`
+now returns each topic's `concept_id` (null + a reason when unmapped), and
+a new `GET /api/admin/content-spec/mapping` gives the coverage report. The
+founder page (`/admin/founder`) surfaces this mapping directly — coverage
+bar, the multi-topic-per-concept count, and an expandable "why unmatched"
+list for the 16 gaps — so it's visible without a separate API call.
 
 ## [4.41.0] — 2026-08-29 — "Complete AND Paid": the 90-day operating system on the founder page
 

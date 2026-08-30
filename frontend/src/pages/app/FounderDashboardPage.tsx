@@ -3,7 +3,7 @@ import {
   Loader2, RefreshCw, AlertCircle, AlertTriangle,
   Users, DollarSign, Activity, Coins, Server, FileText,
   UserPlus, Target, Plus, Trash2, CheckCircle2, Circle,
-  Clock, Calendar, XCircle, Wrench, HelpCircle,
+  Clock, Calendar, XCircle, Wrench, HelpCircle, Link2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
@@ -107,6 +107,15 @@ interface FounderOsView {
   };
 }
 
+interface MappingCoverageView {
+  total_atomic_ids: number;
+  mapped: number;
+  unmapped: number;
+  unmapped_reasons: Record<string, string>;
+  concepts_with_multiple_atomic_ids: Record<string, string[]>;
+  concepts_without_atomic_id: string[];
+}
+
 interface VerificationReportView {
   practice_bank: {
     total_items: number;
@@ -137,6 +146,9 @@ export default function FounderDashboardPage() {
 
   const [verifyReport, setVerifyReport]   = useState<VerificationReportView | null>(null);
   const [verifyLoading, setVerifyLoading] = useState(true);
+
+  const [mapping, setMapping]           = useState<MappingCoverageView | null>(null);
+  const [mappingLoading, setMappingLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -199,7 +211,20 @@ export default function FounderDashboardPage() {
     }
   }, []);
 
-  useEffect(() => { refresh(); refreshOs(); refreshVerifyReport(); }, [refresh, refreshOs, refreshVerifyReport]);
+  const refreshMapping = useCallback(async () => {
+    setMappingLoading(true);
+    try {
+      const r = await authFetch('/api/admin/content-spec/mapping');
+      if (r.ok) setMapping(await r.json());
+      else setMapping(null);
+    } catch {
+      setMapping(null);
+    } finally {
+      setMappingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); refreshOs(); refreshVerifyReport(); refreshMapping(); }, [refresh, refreshOs, refreshVerifyReport, refreshMapping]);
 
   if (!hasRole('owner')) {
     return (
@@ -226,12 +251,12 @@ export default function FounderDashboardPage() {
           </p>
         </div>
         <button
-          onClick={() => { refresh(); refreshOs(); refreshVerifyReport(); }}
-          disabled={loading || osLoading || verifyLoading}
-          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: (loading || osLoading || verifyLoading) ? 'not-allowed' : 'pointer', opacity: (loading || osLoading || verifyLoading) ? 0.5 : 1 }}
+          onClick={() => { refresh(); refreshOs(); refreshVerifyReport(); refreshMapping(); }}
+          disabled={loading || osLoading || verifyLoading || mappingLoading}
+          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: (loading || osLoading || verifyLoading || mappingLoading) ? 'not-allowed' : 'pointer', opacity: (loading || osLoading || verifyLoading || mappingLoading) ? 0.5 : 1 }}
           aria-label="refresh"
         >
-          {(loading || osLoading || verifyLoading) ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+          {(loading || osLoading || verifyLoading || mappingLoading) ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
         </button>
       </header>
 
@@ -272,6 +297,12 @@ export default function FounderDashboardPage() {
           The two headline numbers are live; the four lists are editorial
           judgment calls, kept in sync by hand as the product changes. */}
       <ProductReadinessSection report={verifyReport} loading={verifyLoading} />
+
+      {/* The atomic_id <-> concept_id crosswalk (docs/content-spec/, per
+          "atomic id and concept id are same — ensure the mapping" and
+          "this mapping info should also be available in owner page").
+          Honest about where the two id spaces diverge, not just a count. */}
+      <ContentSpecMappingSection mapping={mapping} loading={mappingLoading} />
 
       {data && (
         <div className="space-y-6">
@@ -1046,6 +1077,88 @@ function ReadinessBucket({ icon: Icon, tone, title, items }: {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/**
+ * The founder's 116-topic content-generation spec (docs/content-spec/,
+ * `atomic_id`s like "LA-06") crosswalked against this app's own concept
+ * graph (101 `concept_id`s — src/constants/concept-graph.ts). The two
+ * spaces are related but not identical; this shows the real coverage
+ * rather than asserting they're simply "the same."
+ */
+function ContentSpecMappingSection({ mapping, loading }: { mapping: MappingCoverageView | null; loading: boolean }) {
+  const pct = mapping && mapping.total_atomic_ids > 0
+    ? (mapping.mapped / mapping.total_atomic_ids) * 100
+    : 0;
+  const multiCount = mapping ? Object.keys(mapping.concepts_with_multiple_atomic_ids).length : 0;
+
+  return (
+    <div
+      className="rounded p-5 mb-6"
+      style={{ background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', border: 'var(--hairline) solid var(--separator)' }}
+    >
+      <h2 className="text-base font-semibold flex items-center gap-2 mb-1" style={{ color: 'var(--text-primary)' }}>
+        <Link2 className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+        Content spec → concept mapping
+      </h2>
+      <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+        Every subtopic in the content-generation spec (docs/content-spec/), matched to the real concept it teaches in this app — so generation can look up the right hooks and sequence for a topic instead of guessing.
+      </p>
+
+      {loading && !mapping && (
+        <div className="flex items-center gap-2 py-3" style={{ color: 'var(--text-tertiary)' }}>
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> loading mapping coverage…
+        </div>
+      )}
+
+      {mapping && (
+        <>
+          <div className="mb-4">
+            <div className="flex items-baseline justify-between mb-1">
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Spec topics matched to a real concept</span>
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                {mapping.mapped}/{mapping.total_atomic_ids}
+              </span>
+            </div>
+            <ProgressBar pct={pct} color="var(--green)" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{mapping.mapped}</span> matched — generation for these topics can pull the spec's hooks/sequence directly.
+            </div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{mapping.unmapped}</span> not matched — either the topic isn't built yet, or it's a cross-concept skill, not one concept (see below).
+            </div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{mapping.concepts_without_atomic_id.length}</span> concepts this app teaches beyond the base spec (mostly the deeper Linear Algebra pass — SVD, spectral theorem, and similar).
+            </div>
+          </div>
+
+          {multiCount > 0 && (
+            <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
+              {multiCount} concept{multiCount === 1 ? '' : 's'} fold{multiCount === 1 ? 's' : ''} together more than one spec topic — e.g. all 8 PDE subtopics teach as a single "pde-basics" concept here. Expected, not a gap.
+            </p>
+          )}
+
+          {mapping.unmapped > 0 && (
+            <details style={{ borderRadius: 'var(--radius-md)', border: 'var(--hairline) solid var(--separator)', background: 'var(--surface-fill)' }}>
+              <summary style={{ padding: '10px 14px', fontSize: 'var(--text-footnote)', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                Why the {mapping.unmapped} unmatched topics aren't matched
+              </summary>
+              <ul className="space-y-2" style={{ padding: '10px 14px', margin: 0, listStyle: 'none' }}>
+                {Object.entries(mapping.unmapped_reasons).map(([atomicId, reason]) => (
+                  <li key={atomicId} className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                    <span className="font-mono font-semibold" style={{ color: 'var(--text-secondary)' }}>{atomicId}</span> — {reason}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </>
+      )}
     </div>
   );
 }

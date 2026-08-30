@@ -13,8 +13,15 @@
  * BlueprintsPage) can pull up the exact recommended hooks/sequence for a
  * topic before launching generation, without leaving the app.
  *
+ * Every topic and the mapping endpoint also surface the verified
+ * atomic_id -> concept_id crosswalk (src/content/atomic-concept-map.ts) —
+ * the two id spaces are related but NOT identical (see that file's header
+ * for exactly where and why they diverge); `concept_id` is null on a
+ * topic this app's concept graph doesn't cover yet, never guessed.
+ *
  *   GET /api/admin/content-spec/atomic-topics             list (optional ?domain=)
  *   GET /api/admin/content-spec/atomic-topics/:atomicId    single topic
+ *   GET /api/admin/content-spec/mapping                    coverage report
  *
  * No DB — pure file read via atomic-topic-spec.ts's memoized loader.
  * Never mutated through this surface; the spec's home is
@@ -25,6 +32,7 @@ import { ServerResponse } from 'http';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import { loadAtomicTopicSpecs, getAtomicTopicSpec } from '../content/atomic-topic-spec';
+import { getConceptIdForAtomicId, mappingCoverage, UNMAPPED_ATOMIC_IDS } from '../content/atomic-concept-map';
 
 interface RouteDefinition {
   method: string;
@@ -57,6 +65,7 @@ async function handleList(req: ParsedRequest, res: ServerResponse): Promise<void
       atomic_subtopic: t.structure.atomic_subtopic,
       template_family: t.structure.template_family,
       evidence_status: t.structure.evidence_status,
+      concept_id: getConceptIdForAtomicId(t.atomic_id),
     })),
   });
 }
@@ -69,10 +78,22 @@ async function handleGet(req: ParsedRequest, res: ServerResponse): Promise<void>
     sendJSON(res, { error: 'Not Found', message: `No content spec for atomic_id "${atomicId}"` }, 404);
     return;
   }
-  sendJSON(res, spec);
+  const conceptId = getConceptIdForAtomicId(atomicId);
+  sendJSON(res, {
+    ...spec,
+    concept_id: conceptId,
+    unmapped_reason: conceptId ? null : (UNMAPPED_ATOMIC_IDS[atomicId] ?? null),
+  });
+}
+
+/** GET /api/admin/content-spec/mapping — the honest atomic_id<->concept_id coverage report. */
+async function handleMapping(req: ParsedRequest, res: ServerResponse): Promise<void> {
+  if (!(await checkAdminAuth(req, res))) return;
+  sendJSON(res, mappingCoverage());
 }
 
 export const adminContentSpecRoutes: RouteDefinition[] = [
   { method: 'GET', path: '/api/admin/content-spec/atomic-topics',            handler: handleList },
   { method: 'GET', path: '/api/admin/content-spec/atomic-topics/:atomicId',  handler: handleGet },
+  { method: 'GET', path: '/api/admin/content-spec/mapping',                  handler: handleMapping },
 ];

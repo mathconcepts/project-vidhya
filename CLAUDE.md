@@ -1383,15 +1383,32 @@ consumer: a memoized loader parsing both CSVs into `AtomicTopicSpec`,
 keyed by `atomic_id` (e.g. `LA-06`). `GET /api/admin/content-spec/atomic-topics`
 (+ `/:atomicId`, `requireRole('admin')`) exposes it so an operator planning a
 run can pull up a topic's recommended hooks/sequence before launching
-generation. **Deliberately NOT done here:** auto-mapping `atomic_id` to this
-codebase's own `concept_id` (`src/constants/concept-graph.ts`) — the two id
-spaces were authored independently and nothing has verified a row-by-row
-correspondence; fabricating that mapping would silently steer generation for
-the wrong concept, worse than not having it. The loader resolves by
-`atomic_id` only; wiring a *verified* mapping into `src/blueprints/template-engine.ts`
-(today's `CONCEPT_TEMPLATE_FAMILY`, codegen'd from
-`data/curriculum/gate-em/template-families.yml`, already covers all 101
-concept-graph concepts) is future work, not attempted here.
+generation.
+
+**The `atomic_id` ↔ `concept_id` crosswalk is now real** (follow-up, same
+day, per explicit direction that the two id spaces are meant to be the
+same): `src/content/atomic-concept-map.ts` hand-verifies each of the 116
+`atomic_id`s against the real concept-graph `label` + `description` it
+corresponds to — never string-distance guessing. 100 of 116 resolve; the
+other 16 are recorded with a real reason in `UNMAPPED_ATOMIC_IDS` (a
+genuine coverage gap, or a cross-cutting skill that isn't one concept —
+e.g. VC-11 "theorem selection across Green/Stokes/Gauss" is the
+already-shipped branching walkthrough). The two id spaces are confirmed
+NOT identical: the concept graph is richer for Linear Algebra (15 concepts
+— SVD, spectral theorem, Jordan form, and more — have no atomic_id,
+added by the v4.34.0 "all 26 concepts" pass beyond the base spec's 11
+foundational LA topics), and several concepts fold multiple atomic topics
+into one (all 8 PDE subtopics teach as the single `pde-basics` concept).
+`GET /api/admin/content-spec/atomic-topics[/:atomicId]` now returns each
+topic's `concept_id` (null + reason when unmapped); `GET /api/admin/content-spec/mapping`
+gives the coverage report. The founder page (`/admin/founder`) surfaces it
+directly. Still future work, not attempted here: wiring this *into*
+`src/blueprints/template-engine.ts` (today's `CONCEPT_TEMPLATE_FAMILY`,
+codegen'd from `data/curriculum/gate-em/template-families.yml`, already
+covers all 101 concept-graph concepts on its own, separately-verified
+path) so generation itself consults the spec's hooks/sequence — the
+mapping now exists to make that safe, but the wiring itself is a distinct
+follow-up.
 
 ## Skill routing
 

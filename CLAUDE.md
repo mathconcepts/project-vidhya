@@ -1410,6 +1410,76 @@ path) so generation itself consults the spec's hooks/sequence — the
 mapping now exists to make that safe, but the wiring itself is a distinct
 follow-up.
 
+### Stance-adaptive content course-wide + personalisation activated (v4.43.0)
+
+Stance variants existed for Linear Algebra's 26 concepts and nowhere else.
+They now cover **all 101 concepts — 606 base/variant pairs**, one `shaken` and
+one `assured` body for every `hook`, `intuition` and `worked_example` atom
+that exists.
+
+**Where the two axes differ.** `shaken` leads with concrete numbers before
+symbols, takes the smallest true first step, does the arithmetic in full, and
+makes the check explicit — no praise, no reassurance, no mention of how the
+reader might be feeling. `assured` assumes the mechanics and spends its budget
+on the distinction that costs marks: where two neighbouring ideas are not
+interchangeable, where a condition is necessary and nowhere near sufficient,
+and a counterexample rather than a restatement.
+
+**What the gates enforce.** `ci:variant-agreement` (`src/content/variant-agreement.ts`)
+holds each variant to its base: shaken prose words ≤ base, assured ≤ the
+per-atom-type budget (hook 130 / intuition 200 / worked_example 220 via
+`countProseWords` in `src/content/prose-budget.ts`), fenced blocks
+byte-identical, no emoji, no h1, headings ≤ base + 1, and a 4-gram appearing in
+more than 20% of a topic's CONCEPTS (`repeatedPhrases` keys by concept, not by
+file). That last rule earns its keep — it caught calculus hooks converging on a
+single mould across five concepts.
+
+**Two id fields that must diverge.** A variant's `id` has to satisfy
+`scripts/check-content-integrity.ts:207` (strip a leading `<concept>.` prefix,
+map dots to hyphens, compare to the filename stem) while `variant_of` has to
+match the base atom's *literal* `id` — and a number of base atoms carry legacy
+dash-only ids like `laplace-transform-intuition`. Tidying `variant_of` to the
+dotted form silently detaches the variant: `foldStanceVariants`
+(`src/content/stance-variants.ts:95`) warns and drops it, and no gate fails.
+
+**Coverage is all-or-nothing per concept, across every narrative atom.**
+`computeStanceFigures` (`src/api/admin-content-maturity-routes.ts:415`) counts a
+concept covered only when EVERY narrative atom it has carries both stances —
+not just the three canonically-named files. `derivatives-basic` and
+`z-transform` each carry a second `worked_example`, so a filename-based count
+reported 101/101 while the real figure was 99. Measure this through
+`loadConceptAtoms`, never by globbing filenames.
+
+**Rollout opt-in is a top-level `stances:` key** in
+`modules/project-vidhya-content/templates/<topic>.yaml`, read by
+`loadTopicsWithStancesBlock`. All ten topics with concepts in the graph now
+carry it. `algorithms.yaml` deliberately does not — it has no concepts, so
+opting it in would assert something about nothing. The per-atom-type `stances:`
+guidance blocks lower in each template are authoring instruction and cannot
+double as the signal (every template has them, so they would opt every topic in
+at once and collapse the rollout figure into the course-wide one).
+
+**Personalisation activation** is `scripts/activate-personalised-selector.ts`
+(idempotent, `--deactivate`, `--dry-run`) creating the single `experiments` row
+`personalized_selector_v1_gate_ma` that `src/personalization/lesson-wire.ts`
+reads. A script and not a migration, per §5.2 — a migration enrols every
+environment the schema touches.
+
+**`scripts/seed-demo-personalisation.ts` is demo fixtures, not generator
+output.** It seeds 9 `thinking_gap_cache` rows across 9 framing cohorts and 2
+`student_atom_overrides` under the `0aded0a0-` persona prefix. The text is
+hand-authored. `thinking-gap-service.ts` and `personalized-regen.ts` both need
+an LLM provider, so on a deploy without one the rows are real and the mechanism
+behind them is not running. The content-maturity report cannot see that
+distinction — it is stated in the script header and here.
+
+**The atom-render regression covers the whole corpus now.**
+`frontend/src/components/lesson/MarkdownAtomRenderer.regression.test.tsx`
+derives its concept list from disk rather than hardcoding it; the old hardcoded
+28 meant ~73 concepts were never mounted through React by any test. 1489
+assertions, base-atom count pinned at 880.
+
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

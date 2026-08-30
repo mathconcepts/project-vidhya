@@ -119,6 +119,26 @@ export function AppLayout() {
       .catch(() => setPersona('exam'));
   }, [user]);
 
+  // Bug (found by /investigate, 2026-08-30): the bare `/` index route
+  // renders <Home/> (GateHome — "One Thing Mode": diagnostic prompts, a
+  // student topic-practice grid, "Try a 15-minute session") completely
+  // unconditionally, regardless of persona. Under the three-room
+  // superstrategy every persona's OWN nav "home" tab already points
+  // elsewhere (knowledge→/knowledge-home, exam→/planned,
+  // teacher→/teaching) — `/` was never migrated off the pre-refactor
+  // default and is only still reachable via the logo's plain `<a
+  // href="/">` or a direct nav. For a teacher this is unambiguously
+  // wrong in every case (GateHome has no student-vs-teacher branch at
+  // all), so redirect there specifically. exam/knowledge are left alone:
+  // GateHome may still be an intentional onboarding surface for a new or
+  // anonymous exam-persona visitor, and that's a product call, not a bug
+  // to guess at here.
+  useEffect(() => {
+    if (persona === 'teacher' && location.pathname === '/') {
+      navigate('/teaching', { replace: true });
+    }
+  }, [persona, location.pathname, navigate]);
+
   const navItems = persona !== 'loading' ? NAV_BY_PERSONA[persona] : [];
   const activeTab = navItems.find(it => location.pathname.startsWith(it.value))?.value ?? '';
 

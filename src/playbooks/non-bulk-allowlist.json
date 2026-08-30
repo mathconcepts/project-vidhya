@@ -28,5 +28,6 @@
   "demo:seed-history",
   "verify:teaching",
   "verify:budget",
-  "content:bundle"
+  "content:bundle",
+  "content:verification-report"
 ]

@@ -69,12 +69,15 @@ row is now a documented operator command rather than folklore, and every topic
 template declares its stance rollout, so `/api/admin/content-maturity` reports
 101 of 101 concepts covered on both its rollout and course-wide denominators.
 
-The demo fixtures are the caveat, stated plainly because the readiness page
-cannot state it for you: the seeded thinking-gap and atom-override text is
-**hand-authored for the demo, not output of the deployed generator**. Both
-services need an LLM provider, and a deploy without one will show real rows
-backed by a mechanism that is not yet running. The script's own header says so
-too.
+The demo fixtures carry one caveat the readiness page cannot state for you:
+the seeded thinking-gap and atom-override text is **hand-authored, not output
+of the generator**, so those eleven rows show the shape of the feature rather
+than the quality of what it writes. The generator itself is reachable wherever
+a provider is configured — `getLlmForRole('chat')` is what both
+`thinking-gap-service.ts` and the regeneration path resolve through, and the
+boot banner prints the provider it found. On a deploy with no provider
+configured, that call returns null and the seeded rows sit there backed by
+nothing running.
 
 ## [4.42.0] — 2026-08-30 — Four live-QA rendering fixes + the content-generation spec gets a repo home
 

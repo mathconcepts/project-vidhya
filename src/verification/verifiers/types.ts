@@ -38,6 +38,23 @@ export interface AnswerVerifierContext {
   subject?: string;
   /** Trace id for end-to-end observability. */
   traceId?: string;
+  /**
+   * Free-text hint at the method the answer is EXPECTED to use — e.g. an
+   * item's own `verification_method` field ("integration_by_parts_vs_...").
+   * Optional and additive; a verifier with no use for it ignores it.
+   * Added for the method-tag check (method-check.ts) — a CAS/numeric check
+   * can confirm an answer is right without ever seeing whether the method
+   * that produced it was sound, which is the failure mode this field exists
+   * to let a verifier catch.
+   */
+  expectedMethod?: string;
+  /**
+   * The worked solution / step text to inspect, when the caller has one
+   * (e.g. `solution_steps` on a practice item). Without this, a
+   * method-checking verifier has nothing to check the method of and must
+   * degrade to inconclusive rather than guess.
+   */
+  solutionText?: string;
 }
 
 export interface AnswerVerifierResult {

@@ -3,7 +3,7 @@ import {
   Loader2, RefreshCw, AlertCircle, AlertTriangle,
   Users, DollarSign, Activity, Coins, Server, FileText,
   UserPlus, Target, Plus, Trash2, CheckCircle2, Circle,
-  Clock, Calendar,
+  Clock, Calendar, XCircle, Wrench, HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
@@ -107,6 +107,24 @@ interface FounderOsView {
   };
 }
 
+interface VerificationReportView {
+  practice_bank: {
+    total_items: number;
+    with_verification_method: number;
+    hand_checkable_count: number;
+  };
+  content_bundle: {
+    total_problems: number;
+    wolfram_verified: number;
+    never_yet_swept: number;
+  };
+  headline: {
+    hand_verified_coverage_pct: number;
+    automated_sweep_coverage_pct: number;
+  };
+  caveats: string[];
+}
+
 export default function FounderDashboardPage() {
   const { hasRole } = useAuth();
   const [data, setData]       = useState<FounderDashboard | null>(null);
@@ -116,6 +134,9 @@ export default function FounderDashboardPage() {
   const [os, setOs]               = useState<FounderOsView | null>(null);
   const [osLoading, setOsLoading] = useState(true);
   const [osError, setOsError]     = useState<string | null>(null);
+
+  const [verifyReport, setVerifyReport]   = useState<VerificationReportView | null>(null);
+  const [verifyLoading, setVerifyLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -165,7 +186,20 @@ export default function FounderDashboardPage() {
     }
   }, []);
 
-  useEffect(() => { refresh(); refreshOs(); }, [refresh, refreshOs]);
+  const refreshVerifyReport = useCallback(async () => {
+    setVerifyLoading(true);
+    try {
+      const r = await authFetch('/api/operator/verification-report');
+      if (r.ok) setVerifyReport(await r.json());
+      else setVerifyReport(null);
+    } catch {
+      setVerifyReport(null);
+    } finally {
+      setVerifyLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); refreshOs(); refreshVerifyReport(); }, [refresh, refreshOs, refreshVerifyReport]);
 
   if (!hasRole('owner')) {
     return (
@@ -192,12 +226,12 @@ export default function FounderDashboardPage() {
           </p>
         </div>
         <button
-          onClick={() => { refresh(); refreshOs(); }}
-          disabled={loading || osLoading}
-          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: (loading || osLoading) ? 'not-allowed' : 'pointer', opacity: (loading || osLoading) ? 0.5 : 1 }}
+          onClick={() => { refresh(); refreshOs(); refreshVerifyReport(); }}
+          disabled={loading || osLoading || verifyLoading}
+          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: (loading || osLoading || verifyLoading) ? 'not-allowed' : 'pointer', opacity: (loading || osLoading || verifyLoading) ? 0.5 : 1 }}
           aria-label="refresh"
         >
-          {(loading || osLoading) ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+          {(loading || osLoading || verifyLoading) ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
         </button>
       </header>
 
@@ -232,6 +266,12 @@ export default function FounderDashboardPage() {
         error={osError}
         onRefresh={refreshOs}
       />
+
+      {/* ELI5 product-readiness explainer — what works, what's still needed,
+          what will mislead if demoed wrong, and what it takes to fix it.
+          The two headline numbers are live; the four lists are editorial
+          judgment calls, kept in sync by hand as the product changes. */}
+      <ProductReadinessSection report={verifyReport} loading={verifyLoading} />
 
       {data && (
         <div className="space-y-6">
@@ -880,6 +920,132 @@ function MilestoneRow({
       >
         <Trash2 className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
       </button>
+    </div>
+  );
+}
+
+// ─── ELI5 product readiness ────────────────────────────────────────
+//
+// The four-bucket explainer: what works, what needs to be added, what will
+// mislead if demoed wrong, what it takes to close the gap. The bucket
+// contents are editorial judgment, kept in sync by hand — there is no
+// honest way to auto-derive "what will mislead someone if you say X" from
+// code. The two live numbers (hand-verified coverage, automated-sweep
+// coverage) come from GET /api/operator/verification-report and are
+// interpolated into the relevant bullets rather than stated separately,
+// so the explainer never drifts from what the report actually says.
+
+interface ReadinessItem {
+  text: string;
+}
+
+function buildWorksNow(report: VerificationReportView | null): ReadinessItem[] {
+  const verifyLine = report
+    ? `Every practice answer gets checked before being trusted — your ${report.practice_bank.total_items}-item practice bank has a documented check on ${report.headline.hand_verified_coverage_pct.toFixed(0)}% of items (hand cross-checked); the ${report.content_bundle.total_problems}-question exam bank has been through the newer automated math-software sweep on ${report.headline.automated_sweep_coverage_pct.toFixed(0)}% so far.`
+    : 'Every practice answer gets checked before being trusted — a cache of known answers, an AI double-check, and now a real math-software cross-check.';
+  return [
+    { text: 'A student can sign in, chat with an AI tutor, and do fully-graded practice problems (MCQ / MSQ / numeric) with real exam-style marking.' },
+    { text: '10 topics are built out end-to-end — explanation, interactive, practice, and a real past exam question each. Linear Algebra is the deepest (26 concepts).' },
+    { text: verifyLine },
+    { text: 'A "did the AI use the right method, not just get the right number" checker exists now — built and tested. Currently switched off by default; see below.' },
+    { text: 'A skill-rating engine tracks how good each student actually is per topic, not just an easy/medium/hard label.' },
+    { text: 'This founder page — your own private 90-day OS and, as of today, this very readiness report.' },
+  ];
+}
+
+const NEEDS_TO_BE_ADDED: ReadinessItem[] = [
+  { text: 'Actually running the automated math-check sweep across the whole exam-question bank — it exists in code but is switched off by default (real, ongoing cost once it runs nightly).' },
+  { text: 'Switching the method-checker from "built" to "trusted" — watch it on a sample of real problems before relying on its verdicts.' },
+  { text: 'A real "pay here" button for students — today there is only a place to record that someone already paid you, not a checkout flow.' },
+  { text: 'Real students. Nothing on this page can substitute for that.' },
+];
+
+const WONT_WORK_IF_DEMOED_WRONG: ReadinessItem[] = [
+  { text: 'Don’t say "everything is verified by real math software" — only the hand-checked practice bank is fully covered; the exam-question bank is not, until the sweep actually runs.' },
+  { text: 'Don’t say "we check the method, not just the answer" yet — that checker is off by default, and even switched on it starts as a rough signal, not a trusted verdict, until it’s watched on real content.' },
+  { text: 'Clicking "record a payment" expecting a checkout page will confuse a visitor — it’s an admin-only manual entry, not a customer-facing button.' },
+];
+
+const WHAT_IT_TAKES: ReadinessItem[] = [
+  { text: 'Flip CONTENT_CRON_ENABLED=true (or run npm run content:verify manually) to start the nightly sweep — real ongoing AI/math-software cost, your call to make.' },
+  { text: 'Flip VIDHYA_METHOD_CHECK=on once you’ve spot-checked a handful of its verdicts by hand.' },
+  { text: 'Pick a payment provider (Stripe / Razorpay / UPI) to wire up a real checkout.' },
+  { text: 'Send the outreach emails already on your milestone list above — that’s the only real path to real students.' },
+];
+
+function ProductReadinessSection({ report, loading }: { report: VerificationReportView | null; loading: boolean }) {
+  return (
+    <div
+      className="rounded p-5 mb-6"
+      style={{ background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', border: 'var(--hairline) solid var(--separator)' }}
+    >
+      <h2 className="text-base font-semibold flex items-center gap-2 mb-1" style={{ color: 'var(--text-primary)' }}>
+        <HelpCircle className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+        Product readiness, plainly
+      </h2>
+      <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+        What works today, what still needs adding, what will mislead someone if you demo it wrong, and what it takes to close each gap.
+      </p>
+
+      {loading && !report && (
+        <div className="flex items-center gap-2 py-3" style={{ color: 'var(--text-tertiary)' }}>
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> loading verification numbers…
+        </div>
+      )}
+
+      {report && report.content_bundle.total_problems > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+          <div>
+            <div className="flex items-baseline justify-between mb-1">
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Practice bank — hand-verified coverage</span>
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                {report.practice_bank.with_verification_method}/{report.practice_bank.total_items}
+              </span>
+            </div>
+            <ProgressBar pct={report.headline.hand_verified_coverage_pct} color="var(--green)" />
+          </div>
+          <div>
+            <div className="flex items-baseline justify-between mb-1">
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Exam bank — automated sweep coverage</span>
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                {report.content_bundle.wolfram_verified}/{report.content_bundle.total_problems}
+              </span>
+            </div>
+            <ProgressBar pct={report.headline.automated_sweep_coverage_pct} color={report.headline.automated_sweep_coverage_pct > 0 ? 'var(--green)' : 'var(--orange)'} />
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <ReadinessBucket icon={CheckCircle2} tone="var(--green-ink)" title="Works today" items={buildWorksNow(report)} />
+        <ReadinessBucket icon={AlertTriangle} tone="var(--orange)" title="Still needs to be added" items={NEEDS_TO_BE_ADDED} />
+        <ReadinessBucket icon={XCircle} tone="var(--red)" title="Will mislead if demoed wrong" items={WONT_WORK_IF_DEMOED_WRONG} />
+        <ReadinessBucket icon={Wrench} tone="var(--text-secondary)" title="What it takes" items={WHAT_IT_TAKES} />
+      </div>
+    </div>
+  );
+}
+
+function ReadinessBucket({ icon: Icon, tone, title, items }: {
+  icon: typeof CheckCircle2; tone: string; title: string; items: ReadinessItem[];
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: tone }} />
+        <span className="text-xs font-medium uppercase tracking-wider" style={{ color: tone }}>{title}</span>
+      </div>
+      <ul className="space-y-1.5">
+        {items.map((item, i) => (
+          <li
+            key={i}
+            className="text-xs pl-3"
+            style={{ color: 'var(--text-secondary)', borderLeft: `2px solid ${tone}`, opacity: 0.9 }}
+          >
+            {item.text}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

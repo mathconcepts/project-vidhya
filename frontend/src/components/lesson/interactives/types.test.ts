@@ -187,6 +187,22 @@ describe('parseInteractiveSpec', () => {
     if (!r.ok) expect(r.reason).toContain('trap.avoid');
   });
 
+  it('rejects a non-object trap (string/array shapes an LLM could emit)', () => {
+    for (const bad of ['careful here', ['x', 'y'], 42, null]) {
+      const r = __testing.validateSpec(
+        simSpec({ narration_steps: [{ at_progress: 0, text: 'a', trap: bad as never }] }),
+      );
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it('rejects a non-object ghost (string/array shapes an LLM could emit)', () => {
+    for (const bad of ['2*cos(t)', ['2*cos(t)', '2*sin(t)'], 7]) {
+      const r = __testing.validateSpec(simSpec({ ghost: bad as never }));
+      expect(r.ok).toBe(false);
+    }
+  });
+
   it('rejects a trap text over MAX_BEAT_TEXT_CHARS', () => {
     const r = __testing.validateSpec(
       simSpec({

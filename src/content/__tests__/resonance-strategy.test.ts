@@ -52,6 +52,25 @@ describe('resonanceStrategyFor (real docs/content-spec/ + concept-graph data)', 
     expect(resonanceStrategyFor('not-a-real-concept-id')).toBeNull();
   });
 
+  it('returns null when the crosswalk resolves atomic ids but none exist in the CSV spec', async () => {
+    // Defensive branch: the hand-verified crosswalk names atomic ids the CSVs
+    // no longer carry (e.g. a future spec-file trim). Unreachable with today's
+    // committed data, so the spec lookup is mocked out for this one test.
+    vi.resetModules();
+    vi.doMock('../atomic-topic-spec', () => ({
+      getAtomicTopicSpec: () => undefined,
+      __resetAtomicTopicSpecCacheForTests: () => {},
+    }));
+    try {
+      const mod = await import('../resonance-strategy');
+      mod.__resetResonanceStrategyCacheForTests();
+      expect(mod.resonanceStrategyFor('eigenvalues')).toBeNull();
+    } finally {
+      vi.doUnmock('../atomic-topic-spec');
+      vi.resetModules();
+    }
+  });
+
   it('memoizes — repeated calls for the same concept return an equal result without recomputation drift', () => {
     const first = resonanceStrategyFor('eigenvalues');
     const second = resonanceStrategyFor('eigenvalues');

@@ -643,38 +643,6 @@ export function computeResonanceFigures(input: {
 }
 
 /**
- * IO wrapper around computeResonanceFigures(). Loads the parser via the
- * SAME guarded helper the orchestrator uses (`loadInteractiveSpecParser` —
- * never a duplicate validator); a missing validator or any scan failure
- * degrades to `NOT_MEASURABLE_RESONANCE`, never to zeros.
- */
-async function gatherResonanceFigures(): Promise<ResonanceFigures> {
-  const parseSpec = await loadInteractiveSpecParser();
-  if (!parseSpec) return NOT_MEASURABLE_RESONANCE;
-
-  try {
-    const { listConceptIds, loadConceptAtoms } = await import('../content/atom-loader');
-    const { CONCEPT_MAP } = await import('../constants/concept-graph');
-
-    const concepts: ResonanceFigureConcept[] = [];
-    for (const id of listConceptIds()) {
-      const atoms = await loadConceptAtoms(id);
-      concepts.push({
-        id,
-        topic: CONCEPT_MAP.get(id)?.topic,
-        atoms: atoms
-          .filter((a) => a.atom_type === 'hook')
-          .map((a) => ({ atom_type: a.atom_type, content: a.content })),
-      });
-    }
-    return computeResonanceFigures({ concepts, parseSpec });
-  } catch (err) {
-    console.warn(`[admin-content-maturity] resonance figure scan failed: ${(err as Error).message}`);
-    return NOT_MEASURABLE_RESONANCE;
-  }
-}
-
-/**
  * Topic slugs whose template has opted into authored stances (a top-level
  * `stances:` block in modules/project-vidhya-content/templates/<topic>.yaml).
  * No template has one yet, so this legitimately returns an empty set today —
@@ -708,36 +676,109 @@ function loadTopicsWithStancesBlock(): Set<string> {
   return opted;
 }
 
-/**
- * IO wrapper around computeStanceFigures(). Dynamic imports mirror the rest
- * of this file's defensive style: a missing or broken concept graph must not
- * take the whole maturity report down with it.
- */
-async function gatherStanceFigures(): Promise<StanceFigures> {
-  try {
-    const { listConceptIds, loadConceptAtoms } = await import('../content/atom-loader');
-    const { CONCEPT_MAP } = await import('../constants/concept-graph');
-    const topicsWithStances = loadTopicsWithStancesBlock();
+const EMPTY_STANCE_FIGURES: StanceFigures = {
+  stance_rollout_total: 0,
+  stance_rollout_covered: 0,
+  stance_course_total: 0,
+  stance_course_covered: 0,
+};
 
-    const concepts: StanceFigureConcept[] = [];
-    for (const id of listConceptIds()) {
-      const atoms = await loadConceptAtoms(id);
-      concepts.push({
-        id,
-        topic: CONCEPT_MAP.get(id)?.topic,
-        atoms: atoms.map((a) => ({ atom_type: a.atom_type, stance_variants: a.stance_variants })),
-      });
-    }
-    return computeStanceFigures({ concepts, topicsWithStances });
-  } catch (err) {
-    console.warn(`[admin-content-maturity] stance figure scan failed: ${(err as Error).message}`);
-    return {
-      stance_rollout_total: 0,
-      stance_rollout_covered: 0,
-      stance_course_total: 0,
-      stance_course_covered: 0,
-    };
+/** One concept's authored atoms, loaded once and reused by both figure gatherers below. */
+interface ScannedConcept {
+  id: string;
+  /** ConceptNode.topic (src/constants/concept-graph). Undefined if unmapped. */
+  topic: string | undefined;
+  atoms: Array<{
+    atom_type: string;
+    content: string;
+    stance_variants?: Partial<Record<'shaken' | 'assured', string>>;
+  }>;
+}
+
+/**
+ * The single disk scan both the stance and resonance figures are derived
+ * from. Previously `gatherStanceFigures()` and `gatherResonanceFigures()`
+ * each independently looped `listConceptIds()` and called
+ * `loadConceptAtoms(id)` per concept, so one request to this route scanned
+ * the whole corpus twice. `loadConceptAtoms()` already caches per concept_id
+ * (see atom-loader.ts), which made the second scan cheap rather than free —
+ * still two full passes' worth of cache lookups, dynamic imports, and
+ * per-concept object building. This does it once.
+ */
+async function scanConceptAtoms(): Promise<ScannedConcept[]> {
+  const { listConceptIds, loadConceptAtoms } = await import('../content/atom-loader');
+  const { CONCEPT_MAP } = await import('../constants/concept-graph');
+
+  const concepts: ScannedConcept[] = [];
+  for (const id of listConceptIds()) {
+    const atoms = await loadConceptAtoms(id);
+    concepts.push({
+      id,
+      topic: CONCEPT_MAP.get(id)?.topic,
+      atoms: atoms.map((a) => ({
+        atom_type: a.atom_type,
+        content: a.content,
+        stance_variants: a.stance_variants,
+      })),
+    });
   }
+  return concepts;
+}
+
+interface SharedConceptFigures {
+  stance: StanceFigures;
+  resonance: ResonanceFigures;
+}
+
+/**
+ * IO wrapper feeding the ONE shared scan into both pure figure computations
+ * (`computeStanceFigures`, `computeResonanceFigures` — untouched, still pure
+ * and independently tested). A scan failure (missing/broken concept graph)
+ * must not take the whole maturity report down with it, so it degrades both
+ * figures to their existing fallbacks — mirroring the previous per-gatherer
+ * try/catch behaviour, just around the shared scan instead of two separate
+ * ones. The resonance validator load is independent of the scan and can run
+ * concurrently with it; when it's unavailable the resonance figures still
+ * degrade to `NOT_MEASURABLE_RESONANCE` without needing the scan's atoms at
+ * all.
+ */
+async function gatherSharedConceptFigures(): Promise<SharedConceptFigures> {
+  const topicsWithStances = loadTopicsWithStancesBlock();
+  const [parseSpec, scanned] = await Promise.all([
+    loadInteractiveSpecParser(),
+    scanConceptAtoms().catch((err) => {
+      console.warn(`[admin-content-maturity] concept atom scan failed: ${(err as Error).message}`);
+      return null;
+    }),
+  ]);
+
+  const stance =
+    scanned === null
+      ? EMPTY_STANCE_FIGURES
+      : computeStanceFigures({
+          concepts: scanned.map((c) => ({
+            id: c.id,
+            topic: c.topic,
+            atoms: c.atoms.map((a) => ({ atom_type: a.atom_type, stance_variants: a.stance_variants })),
+          })),
+          topicsWithStances,
+        });
+
+  const resonance =
+    scanned === null || !parseSpec
+      ? NOT_MEASURABLE_RESONANCE
+      : computeResonanceFigures({
+          concepts: scanned.map((c) => ({
+            id: c.id,
+            topic: c.topic,
+            atoms: c.atoms
+              .filter((a) => a.atom_type === 'hook')
+              .map((a) => ({ atom_type: a.atom_type, content: a.content })),
+          })),
+          parseSpec,
+        });
+
+  return { stance, resonance };
 }
 
 /**
@@ -778,12 +819,14 @@ async function safeCount(pool: Pool, sql: string, params: unknown[] = []): Promi
 
 async function gatherFacts(): Promise<MaturityFacts> {
   const pool = getSharedPool();
-  const [stanceFigures, resonance] = await Promise.all([
-    gatherStanceFigures(),
-    gatherResonanceFigures(),
-  ]);
+  // ONE shared scan feeds both stance and resonance figures (see
+  // gatherSharedConceptFigures's doc comment) — kicked off up front so it
+  // runs concurrently with the DB queries below rather than serialized after
+  // them.
+  const sharedFiguresPromise = gatherSharedConceptFigures();
   const stance_rejected_drafts = countFilesRecursive(VARIANT_DRAFTS_DIR);
   if (!pool) {
+    const { stance: stanceFigures, resonance } = await sharedFiguresPromise;
     return {
       database_configured: false,
       selector_gate_present: null,
@@ -797,7 +840,7 @@ async function gatherFacts(): Promise<MaturityFacts> {
     };
   }
 
-  const [gate, total, generic, distinct, overrides] = await Promise.all([
+  const [gate, total, generic, distinct, overrides, { stance: stanceFigures, resonance }] = await Promise.all([
     safeCount(
       pool,
       `SELECT COUNT(*)::int AS n FROM experiments WHERE id = 'personalized_selector_v1_gate_ma'`,
@@ -806,6 +849,7 @@ async function gatherFacts(): Promise<MaturityFacts> {
     safeCount(pool, `SELECT COUNT(*)::int AS n FROM thinking_gap_cache WHERE framing = 'generic'`),
     safeCount(pool, `SELECT COUNT(DISTINCT framing)::int AS n FROM thinking_gap_cache WHERE framing <> 'generic'`),
     safeCount(pool, `SELECT COUNT(*)::int AS n FROM student_atom_overrides WHERE expires_at > NOW()`),
+    sharedFiguresPromise,
   ]);
 
   return {

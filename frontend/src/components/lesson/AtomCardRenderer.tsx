@@ -759,6 +759,13 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
 
   const reducedMotion = usePrefersReducedMotion();
 
+  // Perf: buildPresetVariants() builds the full 11-entry animation-preset
+  // table from scratch on every call. It's a pure function of reducedMotion
+  // alone, so memoize it here rather than rebuilding it on every render —
+  // must run before the `!current` early return below since hooks can't be
+  // conditional.
+  const presetVariantsTable = useMemo(() => buildPresetVariants(reducedMotion), [reducedMotion]);
+
   useEffect(() => {
     if (!current) return;
     engagement.onCardEnter(current);
@@ -835,7 +842,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
   // bounce-alert) is redundant motion competing with it — demote to a plain
   // fade so the scene is the only thing moving.
   const preset = promotedSimSpec ? 'fade-in' : getPreset(current);
-  const variants = buildPresetVariants(reducedMotion)[preset];
+  const variants = presetVariantsTable[preset];
   const Icon = presentation.icon;
 
   return (

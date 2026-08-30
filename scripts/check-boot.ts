@@ -75,17 +75,33 @@ async function probe(port: number): Promise<boolean> {
   }
 }
 
-/** SIGTERM the whole process group, then SIGKILL anything that ignored it.
- *  `npx` execs a child of its own, so killing only the direct pid can orphan
- *  the actual server and leave the port held. */
-function killTree(child: ChildProcess): void {
+/**
+ * SIGTERM the whole process group, then SIGKILL anything that ignored it, and
+ * do not return until the child is actually gone.
+ *
+ * `npx` execs a child of its own, so signalling only the direct pid can orphan
+ * the real server. Hence the negative pid: signal the group.
+ *
+ * The awaiting matters as much as the signalling. The first version of this
+ * scheduled the SIGKILL escalation on an `.unref()`'d timer and then let
+ * main() call `process.exit(0)` immediately — so the escalation could never
+ * fire, and a server that was slow to honour SIGTERM (this one boots a
+ * scheduler with a dozen registered jobs) survived as a detached orphan
+ * holding a port and, on a CI runner, the job's teardown. A cleanup path that
+ * is abandoned before it completes is not a cleanup path.
+ */
+async function killTree(child: ChildProcess): Promise<void> {
   if (child.pid === undefined || child.exitCode !== null) return;
-  try { process.kill(-child.pid, 'SIGTERM'); } catch { /* already gone */ }
-  setTimeout(() => {
-    if (child.pid !== undefined && child.exitCode === null) {
-      try { process.kill(-child.pid, 'SIGKILL'); } catch { /* already gone */ }
-    }
-  }, 3_000).unref();
+  const exited = new Promise<void>((resolve) => child.once('exit', () => resolve()));
+  const after = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+  try { process.kill(-child.pid, 'SIGTERM'); } catch { return; /* already gone */ }
+  await Promise.race([exited, after(3_000)]);
+
+  if (child.exitCode === null && child.signalCode === null) {
+    try { process.kill(-child.pid, 'SIGKILL'); } catch { return; }
+    await Promise.race([exited, after(2_000)]);
+  }
 }
 
 async function main(): Promise<void> {
@@ -123,9 +139,7 @@ async function main(): Promise<void> {
     }
     if (await probe(port)) {
       console.log(`[check-boot] /health answered — the server booted under \`npx tsx\`.`);
-      killTree(child);
-      // The child holds the event loop open via its pipes; nothing is left to
-      // wait for once it is signalled.
+      await killTree(child);
       process.exit(0);
     }
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
@@ -135,7 +149,7 @@ async function main(): Promise<void> {
     `\n[check-boot] FAILED — /health did not answer within ${BOOT_TIMEOUT_MS / 1000}s ` +
       `and the process is still running. Output so far:\n\n${output}`,
   );
-  killTree(child);
+  await killTree(child);
   process.exit(1);
 }
 

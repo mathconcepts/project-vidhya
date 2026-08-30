@@ -12,7 +12,7 @@
  *   - on the 'personalized' generation_context, ANY valid simulation-kind
  *     fence is stripped unconditionally (defense-in-depth, P0 eng finding)
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 interface Call {
   model?: string;
@@ -189,5 +189,81 @@ describe('generateOne — personalized-regen defense-in-depth (P0 eng finding)',
     });
     const all = [...draft.atoms, ...draft.rejected_atoms];
     expect(all[0].content).toContain('```interactive-spec');
+  });
+});
+
+describe('generateOne — interactive-spec validator unavailable (degrade path)', () => {
+  // The other describe blocks in this file rely on the REAL renderer parser
+  // being reachable (frontend/src is on disk in dev/test) to exercise valid
+  // vs. invalid fence shapes. This block needs the opposite — the validator
+  // genuinely unavailable — so it swaps in a fresh module instance via
+  // vi.doMock + vi.resetModules (the pattern orchestrator-model-routing.test.ts
+  // uses for its own single-test override) rather than a file-wide vi.mock,
+  // which would break every other test's shape-validation assertions.
+  afterEach(() => {
+    vi.doUnmock('../../interactive-spec-loader');
+    vi.resetModules();
+  });
+
+  it('loader resolves null → the fence ships UNCHANGED (never thrown, never stripped), with a warning', async () => {
+    vi.doMock('../../interactive-spec-loader', () => ({
+      loadInteractiveSpecParser: async () => null,
+    }));
+    vi.resetModules();
+    const { generateConcept: freshGenerateConcept } = await import('../orchestrator');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    calls = [];
+    responses = [bodyWithFence(VALID_SIMULATION_FENCE)];
+
+    const draft = await freshGenerateConcept({
+      concept_id: 'eigenvalues',
+      topic_family: 'linear-algebra',
+      atom_types: ['hook'],
+      dry_run: true,
+    });
+    const all = [...draft.atoms, ...draft.rejected_atoms];
+
+    // Unchanged, byte-for-byte — the degrade path must not throw, strip, or
+    // otherwise touch content just because it can't validate it.
+    expect(all[0].content).toBe(bodyWithFence(VALID_SIMULATION_FENCE));
+    // No regeneration — there was nothing to regenerate against; the policy
+    // never even attempted validation.
+    expect(calls.filter((c) => c.taskType === 'content-generation').length).toBe(1);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('validator is unavailable in this process'),
+    );
+
+    warnSpy.mockRestore();
+  });
+});
+
+describe('generateOne — regeneration produced no content', () => {
+  it('an invalid fence regenerates once; the retry comes back EMPTY → the fence is stripped from the ORIGINAL content, prose kept (never ships the empty regen)', async () => {
+    responses = [bodyWithFence(INVALID_FENCE), ''];
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const draft = await generateConcept({
+      concept_id: 'eigenvalues',
+      topic_family: 'linear-algebra',
+      atom_types: ['hook'],
+      dry_run: true,
+    });
+    const all = [...draft.atoms, ...draft.rejected_atoms];
+
+    expect(all[0].content).not.toBe('');
+    expect(all[0].content).not.toContain('```interactive-spec');
+    // The prose is the ORIGINAL body's prose, not something derived from the
+    // (empty) regeneration attempt.
+    expect(all[0].content).toContain('Some prose about the concept.');
+    expect(all[0].content).toContain('More prose after.');
+    // Original attempt + exactly one regeneration attempt — no further retry
+    // just because the regen came back empty.
+    expect(calls.filter((c) => c.taskType === 'content-generation').length).toBe(2);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('regeneration produced no content'),
+    );
+
+    warnSpy.mockRestore();
   });
 });

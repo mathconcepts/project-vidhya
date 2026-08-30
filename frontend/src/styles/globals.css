@@ -260,6 +260,89 @@
   .vidhya-atom-body--hint-neutral p {
     color: var(--text-secondary);
   }
+
+  /*
+   * Simulation.tsx's resonance beat caption (plan §W1) — the primary
+   * sentence of a beat-driven scene, rendered through MarkdownAtomRenderer
+   * so math/bold work. `.vidhya-atom-body p` normally carries a bottom
+   * margin meant for a flowing multi-paragraph body; a one-line caption
+   * slot doesn't want that gap above the trap row / beat bar beneath it.
+   */
+  .vidhya-atom-body--beat-caption,
+  .vidhya-atom-body--beat-caption p {
+    margin: 0;
+  }
+}
+
+/* ── Resonance beats: trap row + segmented beat bar (Simulation.tsx, plan
+   §W1) ───────────────────────────────────────────────────────────────────
+   Both are ink/grey-only by design — a trap is not a warning banner (no
+   icon, no red/orange) and the beat bar is neither a mastery surface
+   (green) nor an AI/tutor one (indigo); reaching for either accent here
+   breaks the two-accent law the rest of Clarity holds to. */
+
+.vidhya-resonance-trap {
+  padding-top: var(--space-3);
+  border-top: var(--hairline) solid var(--separator);
+}
+.vidhya-resonance-trap__label {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-footnote);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.vidhya-resonance-trap__text,
+.vidhya-resonance-trap__avoid {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-subhead);
+  color: var(--text-secondary);
+}
+.vidhya-resonance-trap__avoid {
+  margin-bottom: 0;
+}
+
+/* Segmented progress bar under the scene — tapping a segment seeks to
+   that beat. Visually a thin hairline-filled track; the BUTTON itself
+   keeps the full 44px touch zone even though the track it draws is a few
+   pixels tall, per the design system's touch-target floor. */
+.vidhya-resonance-beatbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.vidhya-resonance-beatbar__segment {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.vidhya-resonance-beatbar__segment:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+.vidhya-resonance-beatbar__track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--separator);
+  overflow: hidden;
+}
+.vidhya-resonance-beatbar__fill {
+  position: absolute;
+  inset: 0;
+  right: auto;
+  background: var(--ink);
 }
 
 @layer utilities {

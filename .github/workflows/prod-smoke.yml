@@ -172,6 +172,40 @@ jobs:
             *) echo "::error::/api/practice/item returned $CODE — not a healthy answer"; exit 1 ;;
           esac
 
+      # ── Does a STUDENT actually receive the content? ────────────────────
+      #
+      # Everything above this point asks whether a route answers. v4.43.0
+      # showed that is not the same question: 606 authored stance variants
+      # shipped, every gate went green, the readiness report counted them on
+      # disk and said 101/101, and no real student could reach one of them.
+      # Existence and delivery are different facts and only one of them had a
+      # check.
+      #
+      # Assertions live in scripts/smoke-stance.ts as a pure function with
+      # tests (src/__tests__/unit/smoke-stance.test.ts), for the same reason
+      # the wait loop was moved out of this file: pass/fail logic buried in a
+      # workflow step is logic nothing can test, and this repo has already
+      # shipped one of those that was wrong in exactly the case it existed for.
+      - name: Students receive stance-adapted content
+        run: npx tsx scripts/smoke-stance.ts '${{ steps.cfg.outputs.url }}'
+
+      # Every check above would pass against a build whose JavaScript throws
+      # on load: a broken bundle still returns `<!doctype html>` with HTTP 200
+      # while the student sees a blank page.
+      # Installed into the workspace rather than run through `npx --package`:
+      # smoke-browser.mjs is ESM and `import 'playwright'` resolves from
+      # ./node_modules, which npx's temporary prefix is not on. The npx form
+      # fails with MODULE_NOT_FOUND — caught by running it locally rather than
+      # by a first red run here.
+      # --no-save keeps package.json untouched; this job never runs npm ci.
+      - name: Install Playwright + Chromium for the render check
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: The app boots in a real browser
+        run: node scripts/smoke-browser.mjs '${{ steps.cfg.outputs.url }}'
+
       - name: Summary
         if: always()
         run: |
@@ -183,6 +217,8 @@ jobs:
             echo "- \`/api/demo/rails\` populated proves the flag is set AND config/ is in the image"
             echo "- \`/api/teaching/roster\` healthy proves the v4.28.0 route shipped"
             echo "- \`/api/progress/...\` not-500 proves the degradation fix shipped"
+            echo "- stance probes prove a STUDENT receives adapted content, not just that files exist"
+            echo "- the browser render check proves the bundle boots, which HTTP 200 does not"
             echo ""
             echo "Every status is matched against an allowlist, so an unreachable host"
             echo "fails instead of passing as \"not a 404\"." 

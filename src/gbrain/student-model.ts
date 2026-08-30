@@ -147,6 +147,43 @@ function emptyStudentModel(sessionId: string): StudentModel {
   } as StudentModel;
 }
 
+/**
+ * Read a stored student model, or null when there is not one.
+ *
+ * The read-only twin of `getOrCreateStudentModel`, and the difference is the
+ * point. Lesson composition is a read path served for anonymous traffic as
+ * well as signed-in students; calling the get-or-CREATE form there would
+ * insert a `student_model` row for every session that so much as opened a
+ * concept page. That is write amplification on a read, and it manufactures a
+ * per-student row for people who have done nothing — the kind of row the
+ * surveillance invariants exist to keep from appearing by accident.
+ *
+ * Null is the honest answer for "no stored state", and callers can act on it:
+ * with no row there is no mastery and no motivation, so anything derived from
+ * it would be the cold-start default anyway. Nothing is lost by not writing.
+ *
+ * DB-less deploys return null rather than a cold-start model, for the same
+ * reason: an empty model and a missing one are different facts, and only the
+ * caller knows which default it wants.
+ */
+export async function readStudentModel(sessionId: string): Promise<StudentModel | null> {
+  if (!process.env.DATABASE_URL) return null;
+  try {
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT * FROM student_model WHERE session_id = $1',
+      [sessionId],
+    );
+    return rows.length > 0 ? (rows[0] as StudentModel) : null;
+  } catch (err) {
+    // Same degradation contract as getOrCreateStudentModel: a transient DB
+    // failure must not take the lesson down. Null reads as "no stored state",
+    // which serves the base text.
+    console.warn(`[student-model] read degraded to null: ${(err as Error).message}`);
+    return null;
+  }
+}
+
 /** Get or create a student model for a session */
 export async function getOrCreateStudentModel(sessionId: string): Promise<StudentModel> {
   // Demo / no-DB deploys: return an in-memory cold-start model so callers

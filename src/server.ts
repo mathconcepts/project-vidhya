@@ -1165,6 +1165,17 @@ Solve carefully:`;
   setOrchestrator(orchestrator);
   setFlywheelOrchestrator(orchestrator);
 
+  // Tier 4+ method-tag check (Gap 1's second layer — see
+  // src/verification/verifiers/method-check.ts's module doc). Advisory
+  // only per the Tier 4+ contract; the flag controls whether it's wired
+  // in at all, not a gate on top of an already-advisory result. Off by
+  // default, matching the pedagogy-verifier's shadow-mode-first rollout.
+  if (process.env.VIDHYA_METHOD_CHECK === 'on') {
+    const { methodCheckVerifier } = await import('./verification/verifiers/method-check');
+    orchestrator.registerVerifier(methodCheckVerifier);
+    console.log('[server] Registered Tier 4+ verifier: method-check (VIDHYA_METHOD_CHECK=on)');
+  }
+
   // Note: setGeminiModel() injection was removed — verify-any now uses
   // src/llm/runtime directly so the operator's per-request LLM config
   // flows through to image OCR. setGeminiModel is kept as a no-op for

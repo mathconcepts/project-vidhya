@@ -72,12 +72,16 @@ The second derivative test agrees with our table.
 
 ## What Would Change on an Open Interval?
 
-On the open interval $(-1, 3)$, we'd say:
-- Local max: $f(0) = 4$
-- Local min: $f(2) = 0$
-- **No** absolute max or min can be claimed (the closed interval endpoints are excluded, and the function approaches those values but the "achieved" qualifier fails)
+On the open interval $(-1, 3)$, this particular function keeps both:
 
-The closed interval is what makes absolute extrema definitive — this is why GATE problems specify $[a, b]$.
+- Absolute max $4$, attained at the interior point $x = 0$
+- Absolute min $0$, attained at the interior point $x = 2$
+
+Look at why. The critical values are $f(0) = 4$ and $f(2) = 0$; the endpoint values were $f(3) = 4$ and $f(-1) = 0$. They coincide, so dropping the endpoints costs nothing here.
+
+What the closed interval actually guarantees is that a maximum and a minimum *exist* — that is the Extreme Value Theorem, and it needs continuity on a closed bounded interval. Open intervals lose the guarantee, not the values. Sometimes the values survive anyway, as above; sometimes they do not. On $(0, 1)$, $f(x) = x$ attains neither: it gets arbitrarily close to $0$ and to $1$ and reaches neither.
+
+So when GATE specifies $[a, b]$, read it as "extrema are guaranteed to exist, and the endpoints join the candidate list" — not as "an open interval has none."
 
 ---
 

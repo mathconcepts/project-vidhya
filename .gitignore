@@ -69,3 +69,12 @@ __pycache__/
 docker-compose.override.yml
 docker-compose.override.yaml
 *.tsbuildinfo
+
+# Scratch directories created by tooling and agent runs while authoring
+# content (word-count probes, draft staging). Never part of the corpus —
+# the content itself lives under modules/project-vidhya-content/.
+.scratch/
+.scratch-*/
+.tmp-agent-scratch/
+scratch_tmp/
+scripts/_tmp*

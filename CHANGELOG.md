@@ -4,6 +4,78 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.43.0] — 2026-08-30 — Stance-adaptive content across all 101 concepts, and personalisation switched on
+
+**Operator action:** two commands, both idempotent, both safe to skip if you
+only want the content. `npx tsx scripts/activate-personalised-selector.ts`
+creates the one `experiments` row that turns the personalised selector on for
+`gate-ma` (without it every session sits in the control bucket and reads
+generic text). `npx tsx scripts/seed-demo-personalisation.ts` seeds demo
+fixtures for the thinking-gap and atom-override surfaces — read the caveat
+below before running it. No new env vars, no migrations.
+
+**A student's confidence now changes what the course says to them.** Every
+concept with authored narrative atoms — all 101, across all ten topics —
+carries a second and third body for its hook, its intuition, and its worked
+example. A student who is shaky on a concept gets concrete numbers before
+symbols, the smallest true first step, the arithmetic done in full, and the
+check made explicit. A student who already has the mechanics gets none of
+that re-teaching, and instead gets the distinction that actually costs marks:
+where two neighbouring ideas are not interchangeable, where a condition is
+necessary and nowhere near sufficient, and a counterexample rather than a
+restatement.
+
+Until now this existed for Linear Algebra's 26 concepts and nowhere else. It
+now covers 606 base/variant pairs.
+
+The variants are held to their base. A variant may not contradict the atom it
+replaces, and may not quietly drop a condition the base establishes — under a
+tighter word budget that is the likeliest way to get it wrong, so
+`ci:variant-agreement` checks it, along with word budgets, byte-identical
+fenced blocks (an interactive spec or animation scene is copied, never
+re-typed), and phrase repetition across a topic. That last one earns its keep:
+it caught nineteen calculus hooks converging on a single mould, all opening
+"the reflex mistake under pressure is". Five concepts reading from the same
+template is not a formatting problem, and rewriting them was the fix.
+
+**Four errors in content that was already reaching students.** These were
+found by reading every concept closely; no gate could have caught any of them.
+
+- **`maxima-minima`** claimed $x^3-3x^2+4$ has no absolute extrema on the open
+  interval $(-1,3)$. It has both — $f(0)=4$ and $f(2)=0$ are interior critical
+  points, and the atom's own table gave exactly those values four lines
+  earlier. It now says what the closed interval actually buys: the Extreme
+  Value Theorem guarantees extrema *exist*, and an open interval loses the
+  guarantee rather than necessarily the values, with $f(x)=x$ on $(0,1)$ as a
+  case where they genuinely are lost.
+- **`graph-basics`** asked for a vertex degree that the handshaking lemma
+  alone cannot determine. The atom knew — it showed both $d_5=1$ and $d_5=3$
+  are realisable — and then picked 3 because GATE "typically assumes a
+  connected or standard configuration", which teaches a student to guess the
+  examiner's intent. The question now states its edge count, making 3 genuinely
+  unique, and keeps the real lesson: parity filters, the edge count solves, and
+  the degree bound eliminates a third option for a reason that has nothing to
+  do with parity.
+- **`numerical-integration`** computed Simpson's 1/3 error by subtracting two
+  four-decimal roundings, reporting 0.0002 where the true absolute error is
+  1.07×10⁻⁴, and 0.029% where it is 0.0154%. In an atom whose subject is
+  numerical error, that taught the wrong habit twice. Corrected, with the trap
+  now named explicitly.
+- **Two atoms** (`mean-value-theorems`, `series`) had authoring scaffolding
+  left appended after their real content, including an unclosed shell heredoc.
+
+**Personalisation is live, with one honest caveat.** The selector activation
+row is now a documented operator command rather than folklore, and every topic
+template declares its stance rollout, so `/api/admin/content-maturity` reports
+101 of 101 concepts covered on both its rollout and course-wide denominators.
+
+The demo fixtures are the caveat, stated plainly because the readiness page
+cannot state it for you: the seeded thinking-gap and atom-override text is
+**hand-authored for the demo, not output of the deployed generator**. Both
+services need an LLM provider, and a deploy without one will show real rows
+backed by a mechanism that is not yet running. The script's own header says so
+too.
+
 ## [4.42.0] — 2026-08-30 — Four live-QA rendering fixes + the content-generation spec gets a repo home
 
 **Operator action:** none required. No new env vars, no migrations —

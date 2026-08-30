@@ -62,26 +62,69 @@ describe('findPending', () => {
   const root = path.join(process.cwd(), 'modules/project-vidhya-content/concepts');
   const haveCorpus = fs.existsSync(root);
 
-  it.runIf(haveCorpus)('never proposes a variant that already exists', () => {
-    for (const p of findPending()) {
-      expect(fs.existsSync(path.join(process.cwd(), p.targetPath)), p.targetPath).toBe(false);
+  // A fixture concept, created and removed per test. The corpus is complete —
+  // every base atom has both stances — so driving these assertions from it
+  // would loop over an empty list and assert nothing. The fixture is one
+  // deliberately un-varianted base atom, which keeps the contract tests honest
+  // no matter how finished the real corpus is.
+  const FIXTURE = '__pending_fixture__';
+  function withFixture<T>(fn: () => T): T {
+    const dir = path.join(root, FIXTURE, 'atoms');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'intuition.md'), BASE);
+    fs.writeFileSync(path.join(dir, 'worked-example.md'), BASE);
+    try {
+      return fn();
+    } finally {
+      fs.rmSync(path.join(root, FIXTURE), { recursive: true, force: true });
     }
+  }
+
+  it.runIf(haveCorpus)('proposes nothing when every base atom already has both stances', () => {
+    // The steady state, and the reason it is worth asserting: add a base atom
+    // without its shaken and assured siblings and this fails, naming the gap.
+    // Completeness is not visible from a file count — a concept can carry a
+    // second worked_example whose variants nobody wrote.
+    expect(findPending()).toEqual([]);
+  });
+
+  it.runIf(haveCorpus)('never proposes a variant that already exists', () => {
+    withFixture(() => {
+      const all = findPending(FIXTURE);
+      expect(all.length).toBeGreaterThan(0);
+      for (const p of all) {
+        expect(fs.existsSync(path.join(process.cwd(), p.targetPath)), p.targetPath).toBe(false);
+      }
+    });
   });
 
   it.runIf(haveCorpus)('never proposes a variant with no base atom to rewrite', () => {
     // Generating one anyway would produce content nothing verified.
-    for (const p of findPending()) {
-      expect(fs.existsSync(p.basePath), `${p.conceptId}/${p.atomType}`).toBe(true);
-    }
+    withFixture(() => {
+      const all = findPending(FIXTURE);
+      expect(all.length).toBeGreaterThan(0);
+      for (const p of all) {
+        expect(fs.existsSync(p.basePath), `${p.conceptId}/${p.atomType}`).toBe(true);
+      }
+    });
   });
 
   it.runIf(haveCorpus)('proposes only the narrative atom types and both stances', () => {
-    const all = findPending();
-    expect(all.length).toBeGreaterThan(0);
-    for (const p of all) {
-      expect(CADENCE_ATOM_TYPES).toContain(p.atomType as never);
-      expect(['shaken', 'assured']).toContain(p.stance);
-    }
+    withFixture(() => {
+      const all = findPending(FIXTURE);
+      expect(all.length).toBeGreaterThan(0);
+      for (const p of all) {
+        expect(CADENCE_ATOM_TYPES).toContain(p.atomType as never);
+        expect(['shaken', 'assured']).toContain(p.stance);
+      }
+      // Both stances for both base atoms, and nothing invented beyond them.
+      expect(all.map((p) => `${p.atomType}:${p.stance}`).sort()).toEqual([
+        'intuition:assured',
+        'intuition:shaken',
+        'worked_example:assured',
+        'worked_example:shaken',
+      ]);
+    });
   });
 
   it.runIf(haveCorpus)('honours the concept filter', () => {

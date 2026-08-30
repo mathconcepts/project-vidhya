@@ -10,45 +10,44 @@ scaffold_fade: true
 
 ## GATE Problem: Degree Sequence Consistency
 
-**Problem:** 
+**Problem:**
 
-A simple undirected graph has 5 vertices. Four vertices have degrees 2, 3, 2, and 4 respectively. What must be the degree of the fifth vertex?
+A simple undirected graph has 5 vertices and 7 edges. Four of its vertices have degrees 2, 3, 2 and 4. What is the degree of the fifth vertex?
 
-(A) 1  
-(B) 2  
-(C) 3  
+(A) 1
+(B) 2
+(C) 3
 (D) 5
 
 ---
 
 ## Solution
 
-By the **handshaking lemma**, the sum of all degrees must be **even** (equal to $2|E|$).
+By the **handshaking lemma**, the degrees sum to $2|E|$.
 
-Sum of known degrees: $2 + 3 + 2 + 4 = 11$
+$$\sum_{i=1}^{5} d_i = 2|E| = 2(7) = 14$$
 
-This sum is odd. For the total sum to be even, the fifth vertex's degree must be odd.
+Sum of the four known degrees: $2 + 3 + 2 + 4 = 11$.
 
-Let the fifth vertex's degree be $d_5$.
-
-$$2 + 3 + 2 + 4 + d_5 = 2|E|$$
-$$11 + d_5 = 2|E|$$
-
-Since $2|E|$ is even, $11 + d_5$ must be even. Since 11 is odd, $d_5$ must be odd.
-
-Among the options, only **(A) 1** and **(C) 3** are odd.
-
-Now, check feasibility:
-- If $d_5 = 1$: Total degree sum = 12, so $|E| = 6$ ✓
-- If $d_5 = 3$: Total degree sum = 14, so $|E| = 7$ ✓
-- If $d_5 = 5$: Total degree sum = 16, so $|E| = 8$. But a vertex can have degree at most 4 in a 5-vertex simple graph, so $d_5 \neq 5$ ✗
-
-Both (A) and (C) satisfy the handshaking lemma. However, given the specific wording "must be," we need a unique answer. In a simple graph with 5 vertices, the maximum degree is 4. Both 1 and 3 are valid. **Re-examining:** The problem likely expects option **(C) 3** because degree 1 would create an isolated-like structure; in GATE, typically the "must be" constraint assumes a connected or standard configuration.
+$$11 + d_5 = 14 \quad\Longrightarrow\quad d_5 = 3$$
 
 **Answer: (C) 3**
 
 ---
 
+## Why the edge count is in the question
+
+Parity alone would not have finished this. Without $|E|$, all you get from the handshaking lemma is that $11 + d_5$ is even, so $d_5$ is odd — which leaves both (A) 1 and (C) 3 standing, and both are genuinely realisable:
+
+- $d_5 = 1$ gives degree sum 12, so $|E| = 6$
+- $d_5 = 3$ gives degree sum 14, so $|E| = 7$
+
+Run Havel–Hakimi on either and you get a real graph. A question that stopped at parity would have two correct answers.
+
+So parity is a **filter**, not a solver. It kills (B) 2 outright — even, wrong parity — and (D) 5 is dead for a separate reason worth keeping distinct: in a simple graph on 5 vertices no vertex can exceed degree 4, since it has only 4 possible neighbours and no repeated edges or self-loops.
+
+Two independent constraints, two different eliminations. Reach for the degree bound when parity leaves more than one option alive.
+
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Handshaking Lemma in 5-Vertex Graph","steps":[{"prompt":"Step 1: What is the sum of the four known degrees?","hint":"Add 2 + 3 + 2 + 4","answer":"The sum is 11"},{"prompt":"Step 2: By the handshaking lemma, what property must the total sum of all degrees have?","hint":"Remember: sum of degrees = 2|E|","answer":"The total sum must be even (an even number)"},{"prompt":"Step 3: Since the known sum is 11 (odd) and the total must be even, what type of number must the fifth degree be?","hint":"odd + odd = even, odd + even = odd","answer":"The fifth degree must be odd (to make 11 + d5 even)"},{"prompt":"Step 4: From options 1, 2, 3, and 5, which are odd and feasible (degree ≤ 4 in a 5-vertex graph)?","hint":"In a simple 5-vertex graph, maximum degree is 4. Which options are odd and ≤ 4?","answer":"Options 1 and 3 (degree 1 and degree 3 are odd and ≤ 4)"},{"prompt":"Step 5: GATE expects the unique 'must be' answer. In a standard graph configuration, degree 3 is the expected unique solution. Why?","hint":"Consider graph connectivity and typical GATE problem structure.","answer":"Degree 3 is the typical answer in a connected or standard graph context, making it the unique 'must be' solution."}],"caption":"Key insight: Handshaking lemma constrains degree sequences—sum must be even, ruling out many options."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: Handshaking Lemma in 5-Vertex Graph","steps":[{"prompt":"Step 1: The graph has 7 edges. What must the five degrees sum to?","hint":"The handshaking lemma: the degrees sum to 2|E|, because every edge contributes 1 to each of its two endpoints.","answer":"2(7) = 14"},{"prompt":"Step 2: What do the four known degrees add up to?","hint":"Add 2 + 3 + 2 + 4.","answer":"11"},{"prompt":"Step 3: Find the fifth degree.","hint":"Subtract the known sum from the total: d5 = 14 - 11.","answer":"d5 = 3, which is option (C)"},{"prompt":"Step 4: Suppose the edge count had been left out. What would the handshaking lemma alone tell you?","hint":"11 is odd, and the total must be even. odd + odd = even.","answer":"Only that d5 is odd. That leaves both (A) 1 and (C) 3 alive, and both are genuinely realisable graphs -- parity narrows the field without picking a winner."},{"prompt":"Step 5: Options (B) 2 and (D) 5 are both impossible, but for different reasons. Name each.","hint":"One fails the parity test. The other fails a bound that has nothing to do with parity.","answer":"(B) 2 is even, so 11 + 2 = 13 is odd and cannot equal 2|E|. (D) 5 exceeds the maximum degree in a simple graph on 5 vertices, which is 4 -- a vertex has only 4 other vertices available and cannot repeat an edge or loop to itself."}],"caption":"Parity filters the candidates; the edge count or the degree bound is what finally picks one."}
 ```

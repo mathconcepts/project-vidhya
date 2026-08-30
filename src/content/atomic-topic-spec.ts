@@ -30,8 +30,19 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const SPEC_DIR = path.resolve(__dirname, '../../docs/content-spec');
+// This package is `"type": "module"` and the server boots via `npx tsx
+// src/server.ts` (Dockerfile CMD), so `__dirname` is genuinely undefined
+// here — referencing it threw `ReferenceError: __dirname is not defined in
+// ES module scope` at module-evaluation time, which is BEFORE any route
+// handler runs. `src/server.ts` -> `admin-content-spec-routes.ts` ->
+// this file is an unconditional import chain, so that ReferenceError took
+// the whole server down at boot on every deploy. Vitest injects a
+// `__dirname` shim into transformed modules, which is why the test suite
+// never saw it. Resolve from `import.meta.url` instead — correct under
+// tsx, vitest, and a compiled ESM build alike.
+const SPEC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../docs/content-spec');
 const STRUCTURE_MAP_CSV = path.join(SPEC_DIR, 'atomic-content-structure-map.csv');
 const GENERATION_SPECS_CSV = path.join(SPEC_DIR, 'atomic-content-generation-specs.csv');
 

@@ -9,6 +9,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 vi.mock('@/generated/intent-slices.gen', () => ({
   INTENT_SLICES: {
@@ -27,9 +28,13 @@ vi.mock('@/generated/intent-slices.gen', () => ({
 
 describe('ProblemStatementBlock — pyq_count = 0', () => {
   it('omits the PYQ sentence entirely — never a zero or fabricated count', async () => {
+    const user = userEvent.setup();
     const { ProblemStatementBlock } = await import('./ProblemStatementBlock');
     render(<ProblemStatementBlock conceptId="zero-pyq-concept" enabled />);
     expect(screen.getByTestId('problem-statement-block')).toBeInTheDocument();
+    // Items 2-4 sit behind the "Common slips and past papers" expander since
+    // the 2026-08-30 attention pass — open it before asserting on them.
+    await user.click(screen.getByTestId('dps-more-trigger'));
     expect(screen.queryByText(/past-paper question/)).toBeNull();
     // The exam intent + pain point + framing line still render — only the
     // PYQ sentence is conditionally omitted.

@@ -738,6 +738,13 @@ export default function LessonPage() {
           onExplanationTap={scrollToAtomStack}
           onInteractiveTap={jumpToInteractiveAtom}
           interactiveJumpReady={firstInteractiveAtomId !== null}
+          // The rail's copy talks about what is "above" / "in this lesson",
+          // so it must count the served subset, not everything authored on
+          // disk. See WalkthroughRailProps.renderedAtomCount.
+          renderedAtomCount={lesson.atoms.length}
+          renderedInteractiveCount={
+            lesson.atoms.filter((a) => parseInteractiveSpec(a.content).ok).length
+          }
         />
       </div>
     );

@@ -2,7 +2,8 @@
  * AtomCardRenderer — ContentAtom v2 card stack for LessonPage.
  *
  * Renders an array of ContentAtom into a swipe-through card sequence with:
- *   - ATOM_ANIMATION_MAP per atom_type (declarative, not hardcoded per concept)
+ *   - ATOM_PRESENTATION_MAP per atom_type (label/icon/animation/figure
+ *     placement in one row — declarative, not hardcoded per concept)
  *   - Scaffolding fade on worked_example atoms (E4): blank trailing steps on revisit
  *   - Cohort callout on common_traps cards (E7): "X% miss this on the practice problem"
  *   - Engagement debounce: POST fires on card-leave, not card-mount
@@ -86,27 +87,68 @@ export interface ContentAtom {
   };
 }
 
-// ─── ATOM_ANIMATION_MAP — declarative, single source of truth ─────────────
+// ─── ATOM_PRESENTATION_MAP — one row per atom type, every field consumed ──
+//
+// Was three parallel tables (ATOM_ANIMATION_MAP / ATOM_ICON / ATOM_LABEL)
+// keyed by the same 11 AtomTypes, which is the drift shape this repo has
+// been bitten by before (see the v4.25.0 note on four copies of the model-id
+// list disagreeing). One row per type now, and every field below is read at
+// render time — nothing here is aspirational.
+//
+// `stage` is the new one, and it is a pedagogical call, not a layout
+// preference: it decides whether an atom's figure renders BEFORE its prose
+// or after.
+//
+// The old behaviour was "always after", because MediaSidecar was appended
+// below the body for every type. On a `visual_analogy` — an atom type whose
+// entire job is to be looked at — that put ~200 words of prose in front of
+// the picture the words exist to caption. Apple's product pages, the
+// reference the brief named, never do this: the object leads and the copy
+// captions it.
+//
+//   'above' — the figure IS the idea; prose captions it. Hook, intuition,
+//             visual_analogy, worked_example, micro_exercise,
+//             interleaved_drill, mnemonic.
+//   'below' — the prose IS the idea; a figure annotates it afterwards.
+//             formal_definition (the words are the content), common_traps
+//             and exam_pattern (both are lists of prose), and
+//             retrieval_prompt.
+//
+// retrieval_prompt is 'below' for a reason worth stating: a figure shown
+// above a recall prompt cues the answer the prompt is trying to make the
+// student retrieve unaided. Sequencing it after the prose is the weakest
+// form of that protection — properly the figure belongs INSIDE the
+// AnswerReveal disclosure, but media is a server-side sidecar rather than
+// part of the markdown body, so it cannot be folded into the disclosure
+// without moving media resolution into the content pipeline. Tracked in the
+// design doc rather than silently shipped as if solved.
 
-const ATOM_ANIMATION_MAP: Record<AtomType, AnimationPreset> = {
-  hook:               'bounce-alert',
-  intuition:          'fade-in',
-  formal_definition:  'slide-up',
-  visual_analogy:     'scale-in',
-  worked_example:     'step-unfold',
-  micro_exercise:     'reveal-highlight',
-  common_traps:       'shake-then-settle',
-  retrieval_prompt:   'flip-reveal',
-  interleaved_drill:  'slide-up',
-  mnemonic:           'scale-in',
-  exam_pattern:       'reveal-highlight',
+interface AtomPresentation {
+  label: string;
+  icon: any;
+  animation: AnimationPreset;
+  stage: 'above' | 'below';
+}
+
+const ATOM_PRESENTATION_MAP: Record<AtomType, AtomPresentation> = {
+  hook:               { label: 'Hook',           icon: Sparkles,      animation: 'bounce-alert',      stage: 'above' },
+  intuition:          { label: 'Intuition',      icon: Lightbulb,     animation: 'fade-in',           stage: 'above' },
+  formal_definition:  { label: 'Definition',     icon: BookOpen,      animation: 'slide-up',          stage: 'below' },
+  visual_analogy:     { label: 'Visual',         icon: Eye,           animation: 'scale-in',          stage: 'above' },
+  worked_example:     { label: 'Worked Example', icon: Target,        animation: 'step-unfold',       stage: 'above' },
+  micro_exercise:     { label: 'Quick Check',    icon: Target,        animation: 'reveal-highlight',  stage: 'above' },
+  common_traps:       { label: 'Common Traps',   icon: AlertTriangle, animation: 'shake-then-settle', stage: 'below' },
+  retrieval_prompt:   { label: 'Recall',         icon: Eye,           animation: 'flip-reveal',       stage: 'below' },
+  interleaved_drill:  { label: 'Drill',          icon: Target,        animation: 'slide-up',          stage: 'above' },
+  mnemonic:           { label: 'Mnemonic',       icon: Sparkles,      animation: 'scale-in',          stage: 'above' },
+  exam_pattern:       { label: 'Exam Pattern',   icon: BookOpen,      animation: 'reveal-highlight',  stage: 'below' },
 };
 
 const PRESET_VARIANTS: Record<AnimationPreset, any> = {
   'fade-in':           { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.4 } },
   'slide-up':          { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.35 } },
   // Neutral surface flash, not indigo: used by micro_exercise and exam_pattern
-  // (ATOM_ANIMATION_MAP), neither an AI/tutor surface, so indigo isn't the
+  // (ATOM_PRESENTATION_MAP), neither an AI/tutor surface, so indigo isn't the
   // right semantic here — DESIGN-SYSTEM.md reserves indigo for AI/tutor/study
   // plan only. The rgb triplet mirrors --surface-fill-strong's (120,120,128)
   // as a literal because framer-motion's colour interpolation animates
@@ -121,38 +163,10 @@ const PRESET_VARIANTS: Record<AnimationPreset, any> = {
   'flip-reveal':       { initial: { rotateY: 90, opacity: 0 }, animate: { rotateY: 0, opacity: 1 }, transition: { duration: 0.4 } },
 };
 
-const ATOM_ICON: Record<AtomType, any> = {
-  hook:               Sparkles,
-  intuition:          Lightbulb,
-  formal_definition:  BookOpen,
-  visual_analogy:     Eye,
-  worked_example:     Target,
-  micro_exercise:     Target,
-  common_traps:       AlertTriangle,
-  retrieval_prompt:   Eye,
-  interleaved_drill:  Target,
-  mnemonic:           Sparkles,
-  exam_pattern:       BookOpen,
-};
-
-const ATOM_LABEL: Record<AtomType, string> = {
-  hook: 'Hook',
-  intuition: 'Intuition',
-  formal_definition: 'Definition',
-  visual_analogy: 'Visual',
-  worked_example: 'Worked Example',
-  micro_exercise: 'Quick Check',
-  common_traps: 'Common Traps',
-  retrieval_prompt: 'Recall',
-  interleaved_drill: 'Drill',
-  mnemonic: 'Mnemonic',
-  exam_pattern: 'Exam Pattern',
-};
-
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 function getPreset(atom: ContentAtom): AnimationPreset {
-  return atom.animation_preset ?? ATOM_ANIMATION_MAP[atom.atom_type];
+  return atom.animation_preset ?? ATOM_PRESENTATION_MAP[atom.atom_type].animation;
 }
 
 /**
@@ -684,7 +698,8 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
 
   const preset = getPreset(current);
   const variants = PRESET_VARIANTS[preset];
-  const Icon = ATOM_ICON[current.atom_type];
+  const presentation = ATOM_PRESENTATION_MAP[current.atom_type];
+  const Icon = presentation.icon;
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -749,7 +764,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             style={{ color: current.atom_type === 'common_traps' ? 'var(--orange)' : 'var(--text-secondary)' }}
           >
             <Icon size={14} />
-            <span>{ATOM_LABEL[current.atom_type]}</span>
+            <span>{presentation.label}</span>
             {current.engagement_count != null && current.engagement_count > 0 && (
               <span style={{ color: 'var(--text-tertiary)' }}>· revisit #{current.engagement_count + 1}</span>
             )}
@@ -769,15 +784,34 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
 
           {(() => { const sh = deriveStrategyHint(current); return sh ? <StrategyCallout hint={sh} /> : null; })()}
 
-          {current.atom_type === 'worked_example' ? (
-            <WorkedExampleCard atom={current} />
-          ) : current.atom_type === 'common_traps' ? (
-            <CommonTrapsCard atom={current} />
-          ) : (
-            <DefaultAtomCard atom={current} />
-          )}
+          {/*
+            Figure + prose. `.vidhya-atom-stage` is a plain block on a phone
+            (the figure simply leads or trails per `stage`) and becomes a
+            two-column grid at >=720px, where the figure sits beside the prose
+            it explains rather than a screen away from it — the literal
+            "explanation and visual side by side" that a 390px viewport
+            cannot honestly provide. The figure column is `position: sticky`,
+            so on a long atom it stays put while the prose scrolls past it.
 
-          <MediaSidecar atom={current} />
+            `data-stage` drives the source order via `order` in CSS, so the
+            DOM order stays prose-then-figure for a screen reader (the prose
+            is the accessible content; the figure carries an alt string) while
+            the visual order follows the pedagogy.
+          */}
+          <div className="vidhya-atom-stage" data-stage={presentation.stage}>
+            <div className="vidhya-atom-stage__prose">
+              {current.atom_type === 'worked_example' ? (
+                <WorkedExampleCard atom={current} />
+              ) : current.atom_type === 'common_traps' ? (
+                <CommonTrapsCard atom={current} />
+              ) : (
+                <DefaultAtomCard atom={current} />
+              )}
+            </div>
+            <div className="vidhya-atom-stage__figure">
+              <MediaSidecar atom={current} />
+            </div>
+          </div>
 
           {/* Phase 3 of Curriculum R&D — interactive widgets parsed from
               the atom body's ```interactive-spec``` fenced block. Renders

@@ -42,11 +42,36 @@
  *
  * Future extensions (v3): vector field, 3-D surface plot, custom sprites.
  *
- * Theme palette (matches v4.4.0 design system):
- *   bg     = #0b0d10 (surface-950)
- *   axes   = #374151 (surface-3)
- *   curve  = #10b981 (emerald — primary)
- *   accent = #a78bfa (violet — secondary)
+ * Theme palette — Vidhya Clarity (see DESIGN-SYSTEM.md).
+ *
+ * These figures were still drawn in the v4.4.0 dark palette (#0b0d10 ground,
+ * #10b981 emerald curve, #a78bfa violet accent) long after that theme was
+ * replaced. DESIGN-SYSTEM.md lists the navy `surface-*` ramp and
+ * "emerald/violet as brand colours" under Retired, and CLAUDE.md repeats
+ * that they "must not reappear" — so all 70 rendered scenes were punching a
+ * black rectangle in the retired brand's colours into the middle of a white
+ * Apple-HIG card. It reads as a screenshot pasted in from another product,
+ * which on the `visual_analogy` atom is the one element the card exists to
+ * show.
+ *
+ *   bg     = #ffffff  (--surface-card — the figure sits ON the card)
+ *   grid   = #e5e5ea  (opaque equivalent of --separator on white)
+ *   axes   = #c7c7cc  (--text-tertiary weight — present, not competing)
+ *   curve  = #1d1d1f  (--text-primary: ink)
+ *   accent = #8e8e93  (system grey — the second curve on level-set scenes)
+ *   label  = #1d1d1f  (--text-primary)
+ *
+ * Curves are INK AND GREY, not green and indigo, and that is deliberate.
+ * Clarity's two accents are both semantic and both spoken for: green means
+ * mastery/correct, indigo means AI/tutor/study plan. A plotted function is
+ * neither — colouring an eigenvector line green would assert the student had
+ * mastered something by looking at it. Monochrome also keeps the primary and
+ * secondary curve on a lightness difference rather than a hue difference, so
+ * the level-set scenes stay readable to a colour-blind reader. If the design
+ * owner later wants a real data-visualisation ramp, that is a third colour
+ * ROLE and belongs in DESIGN-SYSTEM.md as a deliberate addition — not
+ * smuggled in through a plotting default, which is how the retired palette
+ * survived this long.
  */
 
 // gifenc ships CJS-flavored dist that Node's ESM static-analyzer can't
@@ -203,11 +228,11 @@ const DEFAULTS = {
   height: 320,
   frames: 30,
   fps: 12,
-  bg:     [11, 13, 16, 255],     // #0b0d10
-  axes:   [55, 65, 81, 255],     // #374151
-  curve:  [16, 185, 129, 255],   // #10b981 emerald — primary
-  accent: [167, 139, 250, 255],  // #a78bfa violet — secondary (contrast overlays)
-  label:  [229, 231, 235, 255],  // #e5e7eb light gray — titles + bar labels
+  bg:     [255, 255, 255, 255],  // #ffffff --surface-card
+  axes:   [199, 199, 204, 255],  // #c7c7cc axis/grid rules
+  curve:  [29, 29, 31, 255],     // #1d1d1f --text-primary — primary trace
+  accent: [142, 142, 147, 255],  // #8e8e93 system grey — secondary trace
+  label:  [29, 29, 31, 255],     // #1d1d1f --text-primary — titles + bar labels
 };
 
 /**

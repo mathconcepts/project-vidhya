@@ -8,10 +8,27 @@
  * real production entry path) crashed at boot with "does not provide an
  * export named 'GIFEncoder'". The deploy red-flagged.
  *
- * The fix is structural: the server.ts module graph must import cleanly
- * under the same module loader production uses (Node ESM via tsx). This
- * test imports server.ts with a side-effect guard so it loads every
+ * This test imports server.ts with a side-effect guard so it loads every
  * transitive dependency without actually starting the HTTP listener.
+ *
+ * ── IMPORTANT: this does NOT run under production's module loader ────────
+ * This docblock used to claim the graph is imported "under the same module
+ * loader production uses (Node ESM via tsx)". That is false, and the false
+ * claim is load-bearing — it is why no real boot check was ever added.
+ * These tests run under VITEST's transformer, which differs from tsx's ESM
+ * runtime in at least one way that has already reached production:
+ * vitest injects `__dirname` / `__filename` shims into the modules it
+ * transforms, and tsx does not.
+ *
+ * Demonstrated on 2026-08-30 against `src/content/atomic-topic-spec.ts` as
+ * it stood on main (PR #134), which used `__dirname` at module top level:
+ *
+ *   npx tsx src/server.ts                        → ReferenceError, dies at boot
+ *   vitest run server-boot-smoke.test.ts         → 3 tests passed
+ *
+ * `src/server.ts` -> `admin-content-spec-routes.ts` -> that file is an
+ * unconditional import chain, so every boot of main died and this test was
+ * green throughout.
  *
  * What it catches:
  *   - Named imports from CJS-shaped packages (the gifenc class of bug)
@@ -20,6 +37,12 @@
  *   - Cyclic-init bugs that surface only on first eager load
  *
  * What it doesn't catch:
+ *   - Anything vitest's transformer papers over that tsx does not —
+ *     `__dirname`/`__filename` being the known case. That specific class is
+ *     covered by src/__tests__/unit/esm-dirname-guard.test.ts, which greps
+ *     source rather than trusting the loader. The general fix is to spawn
+ *     `npx tsx src/server.ts` as a real subprocess and wait on /health;
+ *     that is not done here and remains the honest gap.
  *   - Runtime errors that need an actual request to fire
  *   - Listen-time errors (port-in-use, EACCES, TLS misconfig)
  *

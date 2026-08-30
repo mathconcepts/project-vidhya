@@ -47,6 +47,97 @@ import * as runtime from 'react/jsx-runtime';
 import 'katex/dist/katex.min.css';
 
 import { InteractiveBoundary, resolveInteractive, type DirectiveType } from './interactives/registry';
+import { AnswerReveal } from './AnswerReveal';
+
+// ─── Custom remark plugin: fold <details>/<summary> into a disclosure node
+//
+// Content authors hide answers with:
+//
+//     <details>
+//     <summary>Answer</summary>
+//
+//     **A**. ...prose...
+//
+//     </details>
+//
+// CommonMark parses `<details>\n<summary>…</summary>` as ONE html node
+// (an HTML block, terminated by the blank line), the answer prose as
+// ordinary sibling paragraphs, and `</details>` as a SECOND html node.
+// They are siblings, never nested. `remark-rehype` runs with
+// `allowDangerousHtml: false`, so both html nodes are dropped and the
+// answer paragraphs between them survive as visible body text — the
+// answer leaked on all 200 retrieval atoms. See AnswerReveal.tsx for the
+// full write-up and for why `rehype-raw` is the wrong fix here.
+//
+// This pass rewrites [open, ...body, close] into a single container node
+// carrying the summary label, which `applyData` in mdast-util-to-hast maps
+// to <vidhya-answer-reveal> via `data.hName`. The body children still go
+// through remark-math/KaTeX normally. No raw HTML reaches the output.
+
+const DETAILS_OPEN_RE = /<details(?:\s[^>]*)?>/i;
+const DETAILS_CLOSE_RE = /<\/details\s*>/i;
+const SUMMARY_RE = /<summary(?:\s[^>]*)?>([\s\S]*?)<\/summary\s*>/i;
+
+/** Strips tags from the captured <summary> inner text. Labels are plain words
+ *  ("Answer", "Solution") — anything else degrades to the default. */
+function summaryLabel(html: string): string | undefined {
+  const m = SUMMARY_RE.exec(html);
+  if (!m) return undefined;
+  return m[1].replace(/<[^>]*>/g, '').trim() || undefined;
+}
+
+function foldDetails(children: any[]): any[] {
+  const out: any[] = [];
+  for (let i = 0; i < children.length; i++) {
+    const node = children[i];
+    if (Array.isArray(node?.children)) node.children = foldDetails(node.children);
+
+    const isOpen = node?.type === 'html' && DETAILS_OPEN_RE.test(node.value ?? '');
+    if (!isOpen) {
+      out.push(node);
+      continue;
+    }
+
+    // Walk forward to the matching close, counting depth so a nested
+    // <details> inside an answer can't close the outer one early.
+    let depth = 1;
+    let end = -1;
+    for (let j = i + 1; j < children.length; j++) {
+      const v = children[j]?.type === 'html' ? (children[j].value ?? '') : '';
+      if (!v) continue;
+      if (DETAILS_OPEN_RE.test(v)) depth++;
+      if (DETAILS_CLOSE_RE.test(v)) {
+        depth--;
+        if (depth === 0) { end = j; break; }
+      }
+    }
+
+    // Unclosed <details>: treat the remaining siblings as the body rather
+    // than dropping the marker and spilling the answer. An authoring typo
+    // must fail closed (answer stays hidden), never open.
+    const bodyEnd = end === -1 ? children.length : end;
+    const body = children.slice(i + 1, bodyEnd).map((c: any) =>
+      Array.isArray(c?.children) ? { ...c, children: foldDetails(c.children) } : c,
+    );
+
+    out.push({
+      type: 'answerReveal',
+      children: body,
+      data: {
+        hName: 'vidhya-answer-reveal',
+        hProperties: { 'data-summary': summaryLabel(node.value ?? '') ?? 'Answer' },
+      },
+    });
+    i = bodyEnd; // skip the body and the close marker
+  }
+  return out;
+}
+
+function remarkDetailsTransform() {
+  return (tree: any) => {
+    if (Array.isArray(tree.children)) tree.children = foldDetails(tree.children);
+  };
+}
 
 // ─── Custom remark plugin: convert ::: directives to interactive React nodes
 //
@@ -127,6 +218,15 @@ function VidhyaInteractive({ 'data-directive': directive, 'data-attrs': attrsJso
   );
 }
 
+/**
+ * Adapter for the <vidhya-answer-reveal> element emitted by
+ * remarkDetailsTransform. rehype-react passes the hProperties through as
+ * props, so the authored <summary> label arrives as `data-summary`.
+ */
+function VidhyaAnswerReveal(props: any) {
+  return <AnswerReveal summary={props['data-summary']}>{props.children}</AnswerReveal>;
+}
+
 // rehype-react component map — KaTeX nodes are pure HTML so we don't
 // need to override math elements. The vidhya-interactive custom tag
 // gets routed to the boundary.
@@ -136,6 +236,7 @@ const rehypeReactOptions = {
   jsxs: (runtime as any).jsxs,
   components: {
     'vidhya-interactive': VidhyaInteractive as any,
+    'vidhya-answer-reveal': VidhyaAnswerReveal as any,
   },
 };
 
@@ -169,6 +270,9 @@ export function MarkdownAtomRenderer({ content, atomId, structured = false, clas
         .use(remarkMath)
         .use(remarkDirective)
         .use(remarkDirectiveTransform)
+        // Must run BEFORE remark-rehype: it consumes the raw <details> html
+        // nodes that remark-rehype would otherwise drop on the floor.
+        .use(remarkDetailsTransform)
         .use(remarkRehype, { allowDangerousHtml: false })
         .use(rehypeKatex, { strict: 'ignore', throwOnError: false } as any)
         .use(rehypeReact, rehypeReactOptions as any);

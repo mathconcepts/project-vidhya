@@ -5,6 +5,17 @@
 # scaffold name that the LLM prompt knows how to expand, plus optional
 # bloom_floor and exam_pattern_required hints.
 
+# Opted into the stance rollout. This is the top-level signal the
+# content-maturity report reads; the per-atom-type `stances:` guidance below
+# is authoring instruction and deliberately cannot double as it (every
+# template carries that guidance, so it would opt every topic in at once).
+#
+# Opted in because the topic is genuinely finished: all 19 of its concepts
+# carry a shaken and an assured body for every narrative atom type they have.
+stances:
+  rollout: authored
+  variants: [shaken, assured]
+
 topic_family: calculus
 
 intuition:

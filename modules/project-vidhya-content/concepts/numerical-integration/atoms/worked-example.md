@@ -48,9 +48,9 @@ $$= \frac{0.25}{3}\times 8.3191 = 0.08\overline{3} \times 8.3191 \approx \mathbf
 
 $$\int_0^1 \frac{dx}{1+x} = \bigl[\ln(1+x)\bigr]_0^1 = \ln 2 - \ln 1 = \ln 2 \approx 0.6931$$
 
-$$\text{Absolute error} = |0.6933 - 0.6931| = \mathbf{0.0002}$$
+$$\text{Absolute error} = |0.693254 - 0.693147| = \mathbf{0.000107}$$
 
-$$\text{Relative error} = \frac{0.0002}{0.6931} \approx 0.029\%$$
+$$\text{Relative error} = \frac{0.000107}{0.693147} \approx 0.0154\%$$
 
 ---
 
@@ -68,7 +68,9 @@ Maximum on $[0,1]$ is at $x=0$: $f^{(4)}(0) = 24$. So:
 
 $$|E| \leq \frac{1 \times (0.25)^4}{180} \times 24 = \frac{0.003906 \times 24}{180} \approx 0.00052$$
 
-Our measured error $0.0002$ is well within this bound. ✓
+Our measured error $0.000107$ is well within this bound.
+
+Note where those digits came from. Rounding the estimate and the exact value to 4dp first and *then* subtracting gives $|0.6933-0.6931|=0.0002$ — near enough double the real error, invented entirely by the rounding. Carry the extra digits through the subtraction and round the error at the end, never before it.
 
 ---
 
@@ -78,11 +80,11 @@ Our measured error $0.0002$ is well within this bound. ✓
 |---|---|
 | Approximation (Simpson's, $n=4$) | $0.6933$ |
 | Exact ($\ln 2$) | $0.6931$ |
-| Absolute error | $0.0002$ |
+| Absolute error | $0.000107$ |
 | Error order | $O(h^4) = O(0.25^4) = O(0.0039)$ |
 
 **GATE tip:** With the same four subintervals, the trapezoidal rule gives $\approx 0.6970$ (error $\approx 0.0039$) — about **20 times larger**. Simpson's 1/3 is far more accurate for the same computational cost.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Simpson's 1/3 rule for ∫₀¹ 1/(1+x) dx","steps":[{"prompt":"For Simpson's 1/3 rule applied to ∫₀¹ 1/(1+x) dx with n=4, state the step size h and list all five nodes x₀ through x₄.","hint":"h = (b−a)/n = (1−0)/4 = 0.25. The nodes are x_i = 0 + i·h for i = 0, 1, 2, 3, 4.","answer":"h = 0.25; nodes are x₀=0, x₁=0.25, x₂=0.5, x₃=0.75, x₄=1"},{"prompt":"Evaluate f(xᵢ) = 1/(1+xᵢ) at each node and write the Simpson's 1/3 weighted sum [f₀ + 4f₁ + 2f₂ + 4f₃ + f₄].","hint":"f values: 1.0000, 0.8000, 0.6667, 0.5714, 0.5000. Weights for interior nodes alternate 4, 2, 4 (endpoints weight 1 each).","answer":"1.0000 + 4(0.8000) + 2(0.6667) + 4(0.5714) + 0.5000 = 1 + 3.2 + 1.3334 + 2.2857 + 0.5 = 8.3191"},{"prompt":"Complete the approximation and find the absolute error given that the exact value is ln 2 ≈ 0.6931.","hint":"Multiply the weighted sum by h/3 = 0.25/3 ≈ 0.08333. Then |approx − exact| gives the error.","answer":"(0.25/3) × 8.3191 ≈ 0.6933; absolute error = |0.6933 − 0.6931| ≈ 0.0002"}]}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: Simpson's 1/3 rule for ∫₀¹ 1/(1+x) dx","steps":[{"prompt":"For Simpson's 1/3 rule applied to ∫₀¹ 1/(1+x) dx with n=4, state the step size h and list all five nodes x₀ through x₄.","hint":"h = (b−a)/n = (1−0)/4 = 0.25. The nodes are x_i = 0 + i·h for i = 0, 1, 2, 3, 4.","answer":"h = 0.25; nodes are x₀=0, x₁=0.25, x₂=0.5, x₃=0.75, x₄=1"},{"prompt":"Evaluate f(xᵢ) = 1/(1+xᵢ) at each node and write the Simpson's 1/3 weighted sum [f₀ + 4f₁ + 2f₂ + 4f₃ + f₄].","hint":"f values: 1.0000, 0.8000, 0.6667, 0.5714, 0.5000. Weights for interior nodes alternate 4, 2, 4 (endpoints weight 1 each).","answer":"1.0000 + 4(0.8000) + 2(0.6667) + 4(0.5714) + 0.5000 = 1 + 3.2 + 1.3334 + 2.2857 + 0.5 = 8.3191"},{"prompt":"Complete the approximation and find the absolute error given that the exact value is ln 2 ≈ 0.6931.","hint":"Multiply the weighted sum by h/3 = 0.25/3 ≈ 0.08333. Then |approx − exact| gives the error. Keep more digits than you want in the answer — subtracting two 4dp roundings here doubles the error you report.","answer":"(0.25/3) × 8.3191 ≈ 0.69325; absolute error = |0.69325 − 0.69315| ≈ 0.0001"}]}
 ```

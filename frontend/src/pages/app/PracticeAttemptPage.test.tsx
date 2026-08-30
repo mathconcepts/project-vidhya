@@ -94,3 +94,98 @@ describe('PracticeAttemptPage — option selection', () => {
     expect(document.activeElement).toBe(options[2]);
   });
 });
+
+// Regression (/investigate, 2026-08-30): POST /api/practice/attempt has
+// shipped an honest `failure_tag` since W3.4 (practice-routes.ts's
+// failureTagForWrongPick — "the ONE place a failure tag is allowed to
+// reach the client... strictly after grading, for the option the student
+// actually chose"), but this page never read the field, so a student who
+// picked a well-known wrong answer never learned that's what it was.
+describe('PracticeAttemptPage — common-mistake callout', () => {
+  it('shows the plain-language common-trap label when the server names a failure_tag on a wrong pick', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: 'sign',
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+    expect(screen.getByText(/Common trap: a sign error/)).toBeInTheDocument();
+  });
+
+  it('does not show the callout on a correct answer, even if a stray failure_tag were present', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 1, max: 1, correct: true, feedback: 'Nice work.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: 1,
+        failure_tag: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[1]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
+    expect(screen.queryByText(/Common trap/)).toBeNull();
+  });
+
+  it('does not show the callout on a wrong answer when the server has no failure_tag for it', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+    expect(screen.queryByText(/Common trap/)).toBeNull();
+  });
+
+  it('falls back to the raw tag when an ErrorTag has no plain-language label yet', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: 'some_future_tag',
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Common trap: some_future_tag/)).toBeInTheDocument());
+  });
+});

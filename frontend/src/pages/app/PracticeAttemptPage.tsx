@@ -53,7 +53,40 @@ interface AttemptResult {
   recorded: boolean;
   /** T14 (B5, DR-4): populated only for a positive award — never a negative "-N min" line. */
   xp_minutes_awarded?: number | null;
+  /**
+   * W3.4/E2's diagnosis for a wrong mcq pick — the authored
+   * distractor_failure_tags map, resolved server-side to the ONE option the
+   * student actually chose (see practice-routes.ts's failureTagForWrongPick).
+   * null on a correct/skipped/untagged attempt, never omitted.
+   *
+   * Found by /investigate (2026-08-30): the server has computed and shipped
+   * this since W3.4, but nothing on this page ever read it — a fully-built
+   * "which common mistake was this" signal was silently dropped on the
+   * floor. See COMMON_MISTAKE_LABEL below for where it's now shown.
+   */
+  failure_tag?: string | null;
 }
+
+/**
+ * Plain-language label per ErrorTag (src/core/interfaces.ts), for the
+ * "common mistake" callout below. Student register only — names the
+ * pattern so it's recognizable next time, never jargon, never a score.
+ */
+const COMMON_MISTAKE_LABEL: Record<string, string> = {
+  sign: 'a sign error',
+  unit: 'mixing up units',
+  misread: 'misreading the question',
+  transcription: 'copying a number wrong',
+  method: 'the wrong method',
+  careless: 'a careless slip',
+  method_selection: 'picking the wrong approach',
+  representation: 'misreading the representation',
+  mode_msq: 'missing an option in a multi-select',
+  mode_nat_entry: 'an entry-format slip',
+  time_pressure: 'rushing under time pressure',
+  risk_decision: 'a risky guess rather than a knowledge gap',
+  prerequisite: 'a gap in an earlier concept, not this one',
+};
 
 const fmt = (n: number) => {
   const r = Math.round(n * 100) / 100;
@@ -428,6 +461,22 @@ export default function PracticeAttemptPage() {
                     </p>
                     <p style={{ margin: '4px 0 0', opacity: 0.8 }}>{result.grade.feedback}</p>
                   </ReceiptBorder>
+                  {/* Common-mistake callout (/investigate, 2026-08-30). Same
+                      icon + --orange identity as a lesson's Common Traps
+                      atom (AtomCardRenderer.tsx) — a subtle, quiet line, not
+                      a banner, so the pattern reads as recognizable rather
+                      than as a second scolding on top of "Not this time". */}
+                  {!result.grade.correct && result.failure_tag && (
+                    <p style={{
+                      margin: '6px 0 0', display: 'flex', alignItems: 'flex-start', gap: 6,
+                      color: 'var(--orange)',
+                    }}>
+                      <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+                      <span>
+                        Common trap: {COMMON_MISTAKE_LABEL[result.failure_tag] ?? result.failure_tag}. Worth watching for next time.
+                      </span>
+                    </p>
+                  )}
                   {/* Full-step reveal. Withheld until the answer is committed —
                       the item view never carries it — and shown either way: a
                       student who missed needs the steps most, and one who got

@@ -4,6 +4,45 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## "Concept learning" room silently bounces students with no knowledge track
+
+**Trigger:** the next time someone touches `RoomsPage`, `KnowledgeHomePage`,
+or the room-switcher header — or a support/QA report of "I picked Concept
+learning and landed on my exam plan instead."
+
+**What:** `frontend/src/pages/app/KnowledgeHomePage.tsx:67` redirects to
+`/planned` whenever `profile.exams[0].knowledge_track_id` is unset — correct
+behavior for a student whose only registered exams have no knowledge track
+(e.g. the demo's `student-active` persona, registered for
+`EXM-BITSAT-MATH-SAMPLE` / `EXM-JEEMAIN-MATH-SAMPLE`, neither of which
+carries one). The room-selection screen (`/rooms`) doesn't know this: it
+offers "Concept learning — Build deep understanding... follow a concept
+curriculum" as a live, tappable card regardless, with no eligibility check
+and no messaging when the promise can't be kept. A student picks the room
+they want and is silently placed on a different page than the one they
+chose, with zero explanation.
+
+**Why not fixed inline:** found during a `/qa` pass (2026-08-30) that fixed
+three other bugs in the same journey (see git log around that date), but the
+right fix here is a product call, not a guess: grey out / hide the
+"Concept learning" card when the student has no knowledge-track exam, show
+an inline "not available for your exam yet" state, or route the CTA into
+`/warmup` (which *does* work anonymously/track-less) instead of silently
+landing on `/planned`. Any of these is a small change; picking the wrong one
+guesses at intended room-switching semantics ("switch rooms anytime from the
+header" implies rooms should always be choosable) without a decision.
+
+**Where to start:** `frontend/src/pages/app/RoomsPage.tsx` (or wherever the
+room cards render — grep for "Build deep understanding") for the gate;
+`KnowledgeHomePage.tsx:60-82`'s effect for the existing redirect logic to
+mirror the eligibility check from.
+
+**Effort:** S human / few min CC once the desired behavior is picked.
+**Priority:** P2 (silent, promise-breaking redirect on a primary nav choice).
+
+**Deferred from:** `/qa` 2026-08-30, branch
+`claude/engineering-math-qa-testing-a6r75p`.
+
 ## Post-LA scaling of the Math-Academy layer
 
 **Trigger:** LA lift evidence in the effectiveness ledger (the `fire_v1_gate_ma`

@@ -132,6 +132,25 @@ export interface PickProbeDeps {
 }
 
 /**
+ * True only for an item WarmupProbeScreen's single-select UI can render
+ * and grade correctly: a real options list plus exactly one correct index.
+ * Excludes msq (correctness is a set, `answerIndices`) and nat (no options
+ * at all) — see the call site for why serving either silently breaks the
+ * diagnostic.
+ */
+function isSingleSelectMcq(payload: unknown): boolean {
+  if (typeof payload !== 'object' || payload === null) return false;
+  const p = payload as { options?: unknown; answerIndex?: unknown };
+  return (
+    Array.isArray(p.options) &&
+    p.options.length > 0 &&
+    typeof p.answerIndex === 'number' &&
+    p.answerIndex >= 0 &&
+    p.answerIndex < p.options.length
+  );
+}
+
+/**
  * Pick the next probe item — the one closest to the current bracket
  * centre, NOT already answered, that the catalog actually has. Returns
  * null if we've exhausted the bracket (rare; means the catalog can't
@@ -152,7 +171,17 @@ export async function pickNextProbe(
     limit: 25,
   });
 
-  const unseen = candidates.filter(c => !state.answeredIds.includes(c.id));
+  // The probe screen is single-select buttons over `payload.options` with
+  // a single correct `payload.answerIndex` (see WarmupProbeScreen.tsx +
+  // WarmupPage.tsx's toClientProbe). An msq item's correctness lives in
+  // `answerIndices` (plural) instead, which that screen never reads — so
+  // every msq probe silently grades as wrong no matter what the student
+  // picks. A nat item carries no `options` at all and would render zero
+  // choices. Only mcq items are gradable by this UI; anything else must
+  // never be selected as a probe.
+  const gradable = candidates.filter(c => isSingleSelectMcq(c.payload));
+
+  const unseen = gradable.filter(c => !state.answeredIds.includes(c.id));
   if (unseen.length === 0) return null;
 
   // Closest to target wins.

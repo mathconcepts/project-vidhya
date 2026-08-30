@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, X, ChevronRight } from 'lucide-react';
 import { useDismissible } from '@/hooks/useDismissible';
 import { trackEvent } from '@/lib/analytics';
+import { authFetch } from '@/lib/auth/client';
 
 interface CompoundingEvidence {
   should_show: boolean;
@@ -58,7 +59,7 @@ export function CompoundingCard({ sessionId, endpoint = '/api/student/compoundin
   useEffect(() => {
     if (dismissed) return;
     let cancelled = false;
-    fetch(endpoint, { credentials: 'include' })
+    authFetch(endpoint)
       .then(r => (r.ok ? r.json() : null))
       .then((body: CompoundingEvidence | null) => {
         if (cancelled) return;
@@ -72,7 +73,7 @@ export function CompoundingCard({ sessionId, endpoint = '/api/student/compoundin
   useEffect(() => {
     if (dismissed || !sessionId) return;
     let cancelled = false;
-    fetch(`/api/streak/${sessionId}`, { credentials: 'include' })
+    authFetch(`/api/streak/${sessionId}`)
       .then(r => (r.ok ? r.json() : null))
       .then((body: StreakResponse | null) => {
         if (cancelled || !body) return;

@@ -2,8 +2,8 @@
  * MediaSidecar — visibility + accessibility contract tests (§4.15).
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, waitFor, act } from '@testing-library/react';
 import { MediaSidecar, type ContentAtom } from './AtomCardRenderer';
 
 function atomWith(media?: ContentAtom['media'], content = 'body'): ContentAtom {
@@ -111,6 +111,90 @@ describe('MediaSidecar', () => {
     it('renders nothing (unchanged) when the atom has no media AND no gif-scene block', () => {
       const { container } = render(<MediaSidecar atom={atomWith(undefined, 'plain prose, no scene')} />);
       expect(container.firstChild).toBeNull();
+    });
+  });
+
+  // Regression (/investigate, 2026-08-30): the "still generating" placeholder
+  // never resolved on its own — only a full page reload could ever show the
+  // real GIF, and nothing told the student to reload. This recurs on every
+  // Render free-tier sleep/wake (no persistent disk), not just first boot,
+  // which is why a student can hit it on a spaced-repetition revisit too.
+  describe('awaiting-gif self-resolution (poll)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    it('polls the deterministic media URL and swaps in the real GIF once it 200s, with no reload', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false } as Response) // still generating
+        .mockResolvedValueOnce({ ok: true } as Response); // now ready
+      vi.stubGlobal('fetch', fetchMock);
+
+      const { queryByText, container } = render(
+        <MediaSidecar atom={atomWith(undefined, GIF_SCENE_BODY)} />,
+      );
+      expect(queryByText(/still generating/i)).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith('/api/lesson/media/a1/gif', { cache: 'no-store' });
+      expect(queryByText(/still generating/i)).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+
+      const img = container.querySelector('img');
+      expect(img).not.toBeNull();
+      expect(img!.getAttribute('src')).toBe('/api/lesson/media/a1/gif');
+      expect(queryByText(/still generating/i)).toBeNull();
+    });
+
+    it('stops polling once resolved — no fetches after the GIF is found', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true } as Response);
+      vi.stubGlobal('fetch', fetchMock);
+      render(<MediaSidecar atom={atomWith(undefined, GIF_SCENE_BODY)} />);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('gives up after MAX_ATTEMPTS and stays on the honest placeholder rather than polling forever', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: false } as Response);
+      vi.stubGlobal('fetch', fetchMock);
+      const { queryByText } = render(<MediaSidecar atom={atomWith(undefined, GIF_SCENE_BODY)} />);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20 * 5000 + 10000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(20);
+      expect(queryByText(/still generating/i)).toBeInTheDocument();
+    });
+
+    it('does not poll when the GIF is already resolved server-side (no gif-scene wait)', async () => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      render(<MediaSidecar atom={atomWith({ gif_url: '/g.gif' })} />);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30000);
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 

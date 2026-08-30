@@ -31,10 +31,16 @@ interface RouteDefinition {
 
 let _pool: any = null;
 
+/**
+ * Returns null (never throws) when DATABASE_URL isn't configured — matches
+ * the rest of the platform's "DB-less deploys degrade honestly" contract.
+ * The Render demo runs DB-less; streaks/countdown are just unavailable
+ * there, not a 500 on every page load.
+ */
 function getPool() {
   if (_pool) return _pool;
   const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('[streak] DATABASE_URL not configured');
+  if (!connectionString) return null;
   _pool = new Pool({ connectionString, max: 3, idleTimeoutMillis: 30_000 });
   return _pool;
 }
@@ -66,6 +72,14 @@ async function handleGetStreak(req: ParsedRequest, res: ServerResponse): Promise
   if (!id) return sendJSON(res, { error: 'ID required' }, 400);
 
   const pool = getPool();
+  if (!pool) {
+    return sendJSON(res, {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActiveDate: null,
+      isActiveToday: false,
+    });
+  }
   const result = await pool.query(
     'SELECT current_streak, longest_streak, last_active_date FROM streaks WHERE identifier = $1',
     [id],
@@ -102,6 +116,10 @@ async function handleRecordActivity(req: ParsedRequest, res: ServerResponse): Pr
   if (!id) return sendJSON(res, { error: 'ID required' }, 400);
 
   const pool = getPool();
+  if (!pool) {
+    // No durable store to record into — honest no-op, not a 500.
+    return sendJSON(res, { currentStreak: 0, longestStreak: 0, isActiveToday: false, recorded: false });
+  }
   const todayIST = getISTDate();
   const yesterdayIST = new Date(new Date(todayIST).getTime() - 86400000).toISOString().slice(0, 10);
 

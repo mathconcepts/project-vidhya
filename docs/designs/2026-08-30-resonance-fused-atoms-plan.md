@@ -129,8 +129,24 @@ Renderer (`Simulation.tsx` + a small amount of `types.ts`):
   and a hairline-ruled trap row renders beneath the beat: trap text + "Avoid:" line.
   Ink-and-grey only — Clarity's two accents stay semantic, and a trap is not an
   AI/tutor surface nor a mastery surface.
-- **Beat dots** (44px touch targets) under the stage: N dots for N beats; tapping
-  seeks the playhead to that beat's `at_progress`. Segmenting, learner-paced.
+- **Segmented beat bar** (not dots — the lesson carousel already uses mastery dots
+  for atom navigation, and a second dot row inside a card would read as a second
+  pager): a thin hairline-segmented progress bar under the scene, N segments for N
+  beats, filled to the playhead. Tapping a segment seeks to that beat's
+  `at_progress`; segments sit inside a 44px-tall touch zone, are keyboard-focusable
+  (arrow keys step beats), and carry `aria-label="Beat k of N: <text>"`. The beat
+  caption region is `aria-live="polite"` so narration progression is announced.
+  Segmenting, learner-paced.
+- **Stacking order inside the figure block** (phone): (1) scene SVG, (2) beat
+  caption, (3) trap row — appears at the trap beat and **persists for the rest of
+  playback** (a mistake must not be blink-and-miss; reset clears it), (4) segmented
+  beat bar. At ≥720px the whole figure block (scene + caption + trap row + bar) is
+  the sticky column. After playback ends: final frame + last beat + trap row remain;
+  replay via the existing controls. Autoplay on first card entry stays (the hook is
+  the attention moment); reduced motion never autoplays.
+- **Trap copy register:** third person, always — "students read the 2 as…", never
+  "you might…". A trap beat lands mid-hook for a shaken student; the locked shaken
+  register (no mention of the reader's state) applies to trap text too.
 - **Reduced motion:** unchanged contract (progress pinned to 1, final frame) plus
   every beat listed as static text rows with stress + trap rows intact — the full
   argument survives with zero motion.
@@ -622,3 +638,43 @@ Plan §4, §5, §6 (amended in place this phase).
 | 16 | P1 | ≥20/26 success bar + consolidated pedagogy pass | Mechanical | P1 | CEO-voice #5/#7 | unbounded pass-over |
 | 17 | P1 | Fold 0D-POST spec-review loop into the already-run adversarial CEO voice | Mechanical | P3 | The voice reviewed the full plan (superset of the CEO plan doc); a second subagent adds no coverage | separate reviewer |
 | 18 | P1 | Altitude challenge (LA depth vs instrumentation/breadth) | PREMISE → gate | — | Single-voice challenge to user's stated direction; user decides at gate | auto-resolve |
+
+## Phase 1 Completion Summary
+
+```
++====================================================================+
+|            MEGA PLAN REVIEW — COMPLETION SUMMARY (CEO)             |
++====================================================================+
+| Mode selected        | SELECTIVE EXPANSION (autoplan override)     |
+| System Audit         | no stash; hot files: AtomCardRenderer(16),  |
+|                      | gif-generator(12) — prior-churn areas       |
+| Step 0               | Approach A locked; 4 premises assessed,     |
+|                      | 1 queued to gate (altitude)                 |
+| Section 1  (Arch)    | 1 issue found (silent fence loss) — fixed   |
+| Section 2  (Errors)  | 8 error paths mapped, 0 GAPS after fix      |
+| Section 3  (Security)| 0 issues, 0 High                            |
+| Section 4  (Data/UX) | 7 edge cases mapped, 0 unhandled            |
+| Section 5  (Quality) | 0 issues (DRY helper mandated)              |
+| Section 6  (Tests)   | Diagram produced, 0 gaps (12 test specs)    |
+| Section 7  (Perf)    | 0 issues                                    |
+| Section 8  (Observ)  | 1 gap → admin coverage figures accepted     |
+| Section 9  (Deploy)  | 0 risks beyond revert-only rollback         |
+| Section 10 (Future)  | Reversibility: 4/5, debt items: 1 (trap-    |
+|                      | wording drift, documented)                  |
+| Section 11 (Design)  | 1 caution (trap row ≠ warning banner)       |
++--------------------------------------------------------------------+
+| NOT in scope         | written (7 items, +1 recorded alternative)  |
+| What already exists  | written (8 mechanisms)                      |
+| Dream state delta    | written                                     |
+| Error/rescue registry| 8 methods, 0 CRITICAL GAPS                  |
+| Failure modes        | 6 total, 0 CRITICAL GAPS                    |
+| TODOS.md updates     | 2 items proposed (deferred cherry-picks)    |
+| Scope proposals      | 9 proposed, 2 accepted (SEL)                |
+| CEO plan             | written (~/.gstack/.../ceo-plans/)          |
+| Outside voice        | ran (claude subagent; codex unavailable)    |
+| Lake Score           | 6/6 recommendations chose complete option   |
+| Diagrams produced    | 3 (dream-state, architecture, registries)   |
+| Stale diagrams found | 0 (none exist in touched files)             |
+| Unresolved decisions | 2 (gate: altitude premise; trap→practice)   |
++====================================================================+
+```

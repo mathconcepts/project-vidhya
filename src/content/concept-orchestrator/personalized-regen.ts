@@ -160,6 +160,13 @@ async function generatePersonalVariant(
     atom_types: [atom_type as any],
     dry_run: true,  // we write to student_atom_overrides, not atom_versions
     student_context,
+    // Resonance plan §W4 (P0 eng-review fix): this path writes straight
+    // into student_atom_overrides with no CI gate, no Wolfram check, no
+    // human pedagogy review — buildPrompt() omits the beat/trap/ghost
+    // instructions entirely on 'personalized', and generateOne strips any
+    // simulation fence that shows up anyway as defense-in-depth. See
+    // orchestrator.ts's OrchestratorOptions.generation_context doc comment.
+    generation_context: 'personalized',
   });
 
   const generated = draft.atoms[0];

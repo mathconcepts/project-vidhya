@@ -9,11 +9,15 @@ import {
   buildReport,
   worstSeverity,
   computeStanceFigures,
+  computeResonanceFigures,
   countFilesRecursive,
   type MaturityFacts,
   type MaturitySignal,
   type StanceFigureConcept,
+  type ResonanceFigureConcept,
+  type ResonanceFigures,
 } from '../admin-content-maturity-routes';
+import type { ParseInteractiveSpecFn, ParseInteractiveSpecResult } from '../../content/interactive-spec-loader';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -32,6 +36,23 @@ const HEALTHY: MaturityFacts = {
   stance_course_total: 10,
   stance_course_covered: 10,
   stance_rejected_drafts: 0,
+  resonance: {
+    by_topic: [
+      { topic: 'linear-algebra', concepts_with_hook: 26, concepts_with_beats: 26, concepts_with_trap_beat: 26, concepts_with_stance_beats: 26 },
+    ],
+    concepts_with_hook: 26,
+    concepts_with_beats: 26,
+    concepts_with_trap_beat: 26,
+    concepts_with_stance_beats: 26,
+  },
+};
+
+const NOT_MEASURABLE_RESONANCE: ResonanceFigures = {
+  by_topic: null,
+  concepts_with_hook: null,
+  concepts_with_beats: null,
+  concepts_with_trap_beat: null,
+  concepts_with_stance_beats: null,
 };
 
 function signal(report: ReturnType<typeof buildReport>, id: string): MaturitySignal {
@@ -74,6 +95,7 @@ describe('buildReport', () => {
         stance_course_total: 40,
         stance_course_covered: 8,
         stance_rejected_drafts: 0,
+        resonance: NOT_MEASURABLE_RESONANCE,
       },
       NOW,
     );
@@ -165,6 +187,7 @@ describe('buildReport', () => {
         stance_course_total: 0,
         stance_course_covered: 0,
         stance_rejected_drafts: 3,
+        resonance: NOT_MEASURABLE_RESONANCE,
       },
       NOW,
     );
@@ -245,6 +268,70 @@ describe('buildReport', () => {
       expect(s.label).not.toContain('1 authored drafts');
     });
   });
+
+  describe('resonance_coverage — plan §W5, fused hook scenes', () => {
+    it('reports "not measurable" when the validator could not be loaded, never zero', () => {
+      const s = signal(buildReport({ ...HEALTHY, resonance: NOT_MEASURABLE_RESONANCE }, NOW), 'resonance_coverage');
+      expect(s.severity).toBe('unknown');
+      expect(s.label).not.toContain('0 of');
+      expect(s.detail).toBeUndefined();
+    });
+
+    it('reports zero hook atoms as unknown, not as a finding', () => {
+      const s = signal(
+        buildReport(
+          {
+            ...HEALTHY,
+            resonance: { by_topic: [], concepts_with_hook: 0, concepts_with_beats: 0, concepts_with_trap_beat: 0, concepts_with_stance_beats: 0 },
+          },
+          NOW,
+        ),
+        'resonance_coverage',
+      );
+      expect(s.severity).toBe('unknown');
+      expect(s.label).toContain('No hook atoms');
+    });
+
+    it('reports full coverage of authored hooks as healthy', () => {
+      const s = signal(buildReport(HEALTHY, NOW), 'resonance_coverage'); // 26 of 26 in the fixture
+      expect(s.severity).toBe('healthy');
+      expect(s.label).toContain('26 of 26');
+      expect(s.remedy).toBeNull();
+    });
+
+    it('reports partial coverage as partial, with numbers in detail and a remedy', () => {
+      const partial: ResonanceFigures = {
+        by_topic: [{ topic: 'linear-algebra', concepts_with_hook: 26, concepts_with_beats: 24, concepts_with_trap_beat: 24, concepts_with_stance_beats: 24 }],
+        concepts_with_hook: 26,
+        concepts_with_beats: 24,
+        concepts_with_trap_beat: 24,
+        concepts_with_stance_beats: 24,
+      };
+      const s = signal(buildReport({ ...HEALTHY, resonance: partial }, NOW), 'resonance_coverage');
+      expect(s.severity).toBe('partial');
+      expect(s.label).toContain('24 of 26');
+      expect(s.remedy).toBeTruthy();
+      expect(s.detail).toEqual({
+        concepts_with_hook: 26,
+        concepts_with_beats: 24,
+        concepts_with_trap_beat: 24,
+        concepts_with_stance_beats: 24,
+      });
+    });
+
+    it('does not affect personalization_active — resonance is not a personalisation blocker', () => {
+      const r = buildReport({ ...HEALTHY, resonance: NOT_MEASURABLE_RESONANCE }, NOW);
+      expect(r.personalization_active).toBe(true);
+    });
+
+    it('surfaces the full by_topic figures on the report, additively, next to the signal', () => {
+      const r = buildReport(HEALTHY, NOW);
+      expect(r.resonance).toEqual(HEALTHY.resonance);
+      expect(r.resonance.by_topic).toEqual([
+        { topic: 'linear-algebra', concepts_with_hook: 26, concepts_with_beats: 26, concepts_with_trap_beat: 26, concepts_with_stance_beats: 26 },
+      ]);
+    });
+  });
 });
 
 describe('computeStanceFigures — pure figure computation', () => {
@@ -304,6 +391,136 @@ describe('computeStanceFigures — pure figure computation', () => {
     expect(out.stance_rollout_total).toBe(0);
     expect(out.stance_course_total).toBe(1);
     expect(out.stance_course_covered).toBe(1);
+  });
+});
+
+describe('computeResonanceFigures — pure figure computation (plan §W5)', () => {
+  /** A parseSpec test double. Returns ok:true for `simulation` fixtures matching FIXTURE, else 'no fence'. */
+  function fakeParser(specsByContent: Map<string, ParseInteractiveSpecResult>): ParseInteractiveSpecFn {
+    return (body: string) => specsByContent.get(body) ?? { ok: false, reason: 'no interactive-spec block' };
+  }
+
+  const hookAtom = (content: string) => [{ atom_type: 'hook', content }];
+
+  const BEATS_WITH_TRAP_AND_STANCE = 'BEATS_WITH_TRAP_AND_STANCE';
+  const BEATS_NO_TRAP_NO_STANCE = 'BEATS_NO_TRAP_NO_STANCE';
+  const NO_FENCE = 'NO_FENCE';
+  const MANIPULABLE_FENCE = 'MANIPULABLE_FENCE';
+
+  const specs = new Map<string, ParseInteractiveSpecResult>([
+    [
+      BEATS_WITH_TRAP_AND_STANCE,
+      {
+        ok: true,
+        body_without_spec: '',
+        spec: {
+          kind: 'simulation',
+          narration_steps: [
+            { at_progress: 0, text: 'Start.' },
+            {
+              at_progress: 0.5,
+              text: 'Watch it scale.',
+              text_shaken: 'Watch the arrow grow.',
+              text_assured: 'This is where the condition stops being sufficient.',
+              trap: { text: 'Students read the 2 as scaling both axes.', avoid: 'Match each entry to its own axis.' },
+            },
+          ],
+        },
+      },
+    ],
+    [
+      BEATS_NO_TRAP_NO_STANCE,
+      {
+        ok: true,
+        body_without_spec: '',
+        spec: {
+          kind: 'simulation',
+          narration_steps: [{ at_progress: 0, text: 'Start.' }, { at_progress: 1, text: 'Done.' }],
+        },
+      },
+    ],
+    [
+      MANIPULABLE_FENCE,
+      { ok: true, body_without_spec: '', spec: { kind: 'manipulable', inputs: [], outputs: [] } },
+    ],
+  ]);
+
+  it('counts a hook with a beats simulation, its trap beat, and its per-stance text', () => {
+    const concepts: ResonanceFigureConcept[] = [
+      { id: 'eigenvalues', topic: 'linear-algebra', atoms: hookAtom(BEATS_WITH_TRAP_AND_STANCE) },
+    ];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.concepts_with_hook).toBe(1);
+    expect(out.concepts_with_beats).toBe(1);
+    expect(out.concepts_with_trap_beat).toBe(1);
+    expect(out.concepts_with_stance_beats).toBe(1);
+    expect(out.by_topic).toEqual([
+      { topic: 'linear-algebra', concepts_with_hook: 1, concepts_with_beats: 1, concepts_with_trap_beat: 1, concepts_with_stance_beats: 1 },
+    ]);
+  });
+
+  it('counts a beats hook with neither trap nor stance text as beats-only', () => {
+    const concepts: ResonanceFigureConcept[] = [
+      { id: 'limits', topic: 'calculus', atoms: hookAtom(BEATS_NO_TRAP_NO_STANCE) },
+    ];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.concepts_with_beats).toBe(1);
+    expect(out.concepts_with_trap_beat).toBe(0);
+    expect(out.concepts_with_stance_beats).toBe(0);
+  });
+
+  it('counts a concept with a hook but no fence toward the denominator only', () => {
+    const concepts: ResonanceFigureConcept[] = [
+      { id: 'vector-spaces', topic: 'linear-algebra', atoms: hookAtom(NO_FENCE) },
+    ];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.concepts_with_hook).toBe(1);
+    expect(out.concepts_with_beats).toBe(0);
+  });
+
+  it('a non-simulation interactive-spec (manipulable) never counts as beats', () => {
+    const concepts: ResonanceFigureConcept[] = [
+      { id: 'x', topic: 'linear-algebra', atoms: hookAtom(MANIPULABLE_FENCE) },
+    ];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.concepts_with_beats).toBe(0);
+  });
+
+  it('excludes concepts with no authored hook atom from every count', () => {
+    const concepts: ResonanceFigureConcept[] = [{ id: 'no-hook', topic: 'linear-algebra', atoms: [] }];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.concepts_with_hook).toBe(0);
+    expect(out.by_topic).toEqual([]);
+  });
+
+  it('a concept with no topic mapping is counted overall but never in by_topic', () => {
+    const concepts: ResonanceFigureConcept[] = [
+      { id: 'orphan', topic: undefined, atoms: hookAtom(BEATS_WITH_TRAP_AND_STANCE) },
+    ];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.concepts_with_hook).toBe(1);
+    expect(out.concepts_with_beats).toBe(1);
+    expect(out.by_topic).toEqual([]);
+  });
+
+  it('sorts by_topic by topic slug', () => {
+    const concepts: ResonanceFigureConcept[] = [
+      { id: 'a', topic: 'z-topic', atoms: hookAtom(NO_FENCE) },
+      { id: 'b', topic: 'a-topic', atoms: hookAtom(NO_FENCE) },
+    ];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.by_topic!.map((t) => t.topic)).toEqual(['a-topic', 'z-topic']);
+  });
+
+  it('aggregates multiple concepts on the same topic', () => {
+    const concepts: ResonanceFigureConcept[] = [
+      { id: 'a', topic: 'linear-algebra', atoms: hookAtom(BEATS_WITH_TRAP_AND_STANCE) },
+      { id: 'b', topic: 'linear-algebra', atoms: hookAtom(NO_FENCE) },
+    ];
+    const out = computeResonanceFigures({ concepts, parseSpec: fakeParser(specs) });
+    expect(out.by_topic).toEqual([
+      { topic: 'linear-algebra', concepts_with_hook: 2, concepts_with_beats: 1, concepts_with_trap_beat: 1, concepts_with_stance_beats: 1 },
+    ]);
   });
 });
 

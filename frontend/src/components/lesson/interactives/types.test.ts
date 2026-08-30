@@ -8,7 +8,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseInteractiveSpec, evalFormula, INTERACTIVE_SPEC_VERSION, __testing } from './types';
+import {
+  parseInteractiveSpec,
+  evalFormula,
+  INTERACTIVE_SPEC_VERSION,
+  MAX_SIMULATION_BEATS,
+  MAX_BEAT_TEXT_CHARS,
+  MAX_GHOST_EXPR_CHARS,
+  __testing,
+} from './types';
+import type { SimulationSpec } from './types';
 
 describe('parseInteractiveSpec', () => {
   it('returns no-block reason on empty body', () => {
@@ -103,6 +112,177 @@ describe('parseInteractiveSpec', () => {
     const r = parseInteractiveSpec(body);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toContain('non-empty array');
+  });
+
+  // ==========================================================================
+  // Resonance beats (plan §W1, 2026-08-30): narration_steps additions —
+  // per-stance text, emphasize, a single trap beat, and a top-level ghost.
+  // Every rule here is additive: a v1 spec written before this extension
+  // (plain `{ at_progress, text }` entries, no ghost) must keep validating
+  // unchanged — the last test in this section pins that.
+  // ==========================================================================
+
+  function simSpec(overrides: Partial<SimulationSpec> = {}): SimulationSpec {
+    return {
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'simulation',
+      title: 'x',
+      x_expr: 't',
+      y_expr: 't',
+      t_min: 0,
+      t_max: 1,
+      ...overrides,
+    };
+  }
+
+  it('rejects more than MAX_SIMULATION_BEATS narration_steps', () => {
+    const steps = Array.from({ length: MAX_SIMULATION_BEATS + 1 }, (_, i) => ({
+      at_progress: i / (MAX_SIMULATION_BEATS + 1),
+      text: `beat ${i}`,
+    }));
+    const r = __testing.validateSpec(simSpec({ narration_steps: steps }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain(`at most ${MAX_SIMULATION_BEATS} allowed`);
+  });
+
+  it('accepts exactly MAX_SIMULATION_BEATS narration_steps', () => {
+    const steps = Array.from({ length: MAX_SIMULATION_BEATS }, (_, i) => ({
+      at_progress: i / MAX_SIMULATION_BEATS,
+      text: `beat ${i}`,
+    }));
+    const r = __testing.validateSpec(simSpec({ narration_steps: steps }));
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects a second beat carrying trap — at most one is allowed', () => {
+    const r = __testing.validateSpec(
+      simSpec({
+        narration_steps: [
+          { at_progress: 0, text: 'a', trap: { text: 'x', avoid: 'y' } },
+          { at_progress: 0.5, text: 'b', trap: { text: 'x2', avoid: 'y2' } },
+        ],
+      }),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('more than one beat carries trap');
+  });
+
+  it('accepts exactly one trap beat, with non-empty text and avoid', () => {
+    const r = __testing.validateSpec(
+      simSpec({
+        narration_steps: [
+          { at_progress: 0, text: 'a' },
+          { at_progress: 0.5, text: 'b', trap: { text: 'Students slip here.', avoid: 'Do this instead.' } },
+        ],
+      }),
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects a trap with an empty avoid line', () => {
+    const r = __testing.validateSpec(
+      simSpec({ narration_steps: [{ at_progress: 0, text: 'a', trap: { text: 'x', avoid: '   ' } }] }),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('trap.avoid');
+  });
+
+  it('rejects a non-object trap (string/array shapes an LLM could emit)', () => {
+    for (const bad of ['careful here', ['x', 'y'], 42, null]) {
+      const r = __testing.validateSpec(
+        simSpec({ narration_steps: [{ at_progress: 0, text: 'a', trap: bad as never }] }),
+      );
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it('rejects a non-object ghost (string/array shapes an LLM could emit)', () => {
+    for (const bad of ['2*cos(t)', ['2*cos(t)', '2*sin(t)'], 7]) {
+      const r = __testing.validateSpec(simSpec({ ghost: bad as never }));
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it('rejects a trap text over MAX_BEAT_TEXT_CHARS', () => {
+    const r = __testing.validateSpec(
+      simSpec({
+        narration_steps: [{ at_progress: 0, text: 'a', trap: { text: 'x'.repeat(MAX_BEAT_TEXT_CHARS + 1), avoid: 'y' } }],
+      }),
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('trap.text');
+  });
+
+  it('rejects a beat text over MAX_BEAT_TEXT_CHARS', () => {
+    const r = __testing.validateSpec(simSpec({ narration_steps: [{ at_progress: 0, text: 'x'.repeat(MAX_BEAT_TEXT_CHARS + 1) }] }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('.text exceeds');
+  });
+
+  it('rejects text_shaken/text_assured over MAX_BEAT_TEXT_CHARS or empty', () => {
+    const tooLong = __testing.validateSpec(
+      simSpec({ narration_steps: [{ at_progress: 0, text: 'a', text_shaken: 'x'.repeat(MAX_BEAT_TEXT_CHARS + 1) }] }),
+    );
+    expect(tooLong.ok).toBe(false);
+    const empty = __testing.validateSpec(simSpec({ narration_steps: [{ at_progress: 0, text: 'a', text_assured: '' }] }));
+    expect(empty.ok).toBe(false);
+  });
+
+  it('accepts per-stance overrides within the length cap', () => {
+    const r = __testing.validateSpec(
+      simSpec({
+        narration_steps: [{ at_progress: 0, text: 'Base.', text_shaken: 'Concrete numbers first.', text_assured: 'The distinction that costs marks.' }],
+      }),
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects a non-boolean emphasize', () => {
+    const r = __testing.validateSpec(simSpec({ narration_steps: [{ at_progress: 0, text: 'a', emphasize: 'yes' as any }] }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('emphasize must be a boolean');
+  });
+
+  it('accepts a ghost whose exprs compile through the safe evaluator', () => {
+    const r = __testing.validateSpec(simSpec({ ghost: { x_expr: '2*cos(t)', y_expr: '2*sin(t)' } }));
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects a ghost expr that fails to compile (unknown identifier)', () => {
+    const r = __testing.validateSpec(simSpec({ ghost: { x_expr: 'banana(t)', y_expr: 't' } }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('failed to compile');
+  });
+
+  it('rejects a ghost expr over MAX_GHOST_EXPR_CHARS', () => {
+    const r = __testing.validateSpec(simSpec({ ghost: { x_expr: 't+'.repeat(MAX_GHOST_EXPR_CHARS), y_expr: 't' } }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('simulation.ghost.x_expr');
+  });
+
+  it('rejects a ghost missing y_expr', () => {
+    const r = __testing.validateSpec(simSpec({ ghost: { x_expr: 't' } as any }));
+    expect(r.ok).toBe(false);
+  });
+
+  it('a v1 spec written before this extension (no stance/emphasize/trap/ghost) still validates unchanged', () => {
+    const body =
+      '```interactive-spec\n' +
+      JSON.stringify(
+        simSpec({
+          narration_steps: [
+            { at_progress: 0, text: 'Starts here.' },
+            { at_progress: 0.6, text: 'Settles here.' },
+          ],
+        }),
+      ) +
+      '\n```';
+    const r = parseInteractiveSpec(body);
+    expect(r.ok).toBe(true);
+    if (r.ok && r.spec.kind === 'simulation') {
+      expect(r.spec.narration_steps).toHaveLength(2);
+      expect(r.spec.ghost).toBeUndefined();
+    }
   });
 
   it('rejects guided_walkthrough with empty steps', () => {

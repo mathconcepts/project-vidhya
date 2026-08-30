@@ -19,12 +19,14 @@ import { DeferredFigureContext } from './AnswerReveal';
 import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import { ImprovedBadge } from './ImprovedBadge';
 import { InteractiveSidecar } from './interactives/InteractiveSidecar';
-import { parseInteractiveSpec } from './interactives/types';
+import { Simulation } from './interactives/Simulation';
+import { parseInteractiveSpec, type SimulationSpec } from './interactives/types';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
 } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { EASE_STANDARD, DUR_BASE_S, DUR_SLOW_S, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 
 const VISUAL_PREF_KEY = 'vidhya.show_visually';
 
@@ -154,24 +156,55 @@ const ATOM_PRESENTATION_MAP: Record<AtomType, AtomPresentation> = {
   exam_pattern:       { label: 'Exam Pattern',   icon: BookOpen,      animation: 'reveal-highlight',  stage: 'below' },
 };
 
-const PRESET_VARIANTS: Record<AnimationPreset, any> = {
-  'fade-in':           { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.4 } },
-  'slide-up':          { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.35 } },
-  // Neutral surface flash, not indigo: used by micro_exercise and exam_pattern
-  // (ATOM_PRESENTATION_MAP), neither an AI/tutor surface, so indigo isn't the
-  // right semantic here — DESIGN-SYSTEM.md reserves indigo for AI/tutor/study
-  // plan only. The rgb triplet mirrors --surface-fill-strong's (120,120,128)
-  // as a literal because framer-motion's colour interpolation animates
-  // between concrete rgba values, not CSS custom properties (a var() string
-  // can't be tweened frame-to-frame), so the token can't be referenced
-  // directly here — keep this value in sync with --surface-fill-strong by hand.
-  'reveal-highlight':  { initial: { backgroundColor: 'rgba(120,120,128,0.2)' }, animate: { backgroundColor: 'rgba(120,120,128,0)' }, transition: { duration: 1.2 } },
-  'step-unfold':       { initial: { y: 12, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.3, staggerChildren: 0.15 } },
-  'scale-in':          { initial: { scale: 0.92, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: 0.35 } },
-  'bounce-alert':      { initial: { scale: 0.8, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { type: 'spring', stiffness: 260, damping: 18 } },
-  'shake-then-settle': { initial: { x: 0 }, animate: { x: [0, -8, 8, -4, 4, 0] }, transition: { duration: 0.5 } },
-  'flip-reveal':       { initial: { rotateY: 90, opacity: 0 }, animate: { rotateY: 0, opacity: 1 }, transition: { duration: 0.4 } },
-};
+/**
+ * Entry-animation variants, built per render from the shared motion tokens
+ * (plan §W1 blast radius, "Also in this workstream's blast radius" — found
+ * during W2 recon, fixed here since this is the one file that owns
+ * `PRESET_VARIANTS`). Was a module-level literal table using raw
+ * framer-motion duration numbers and a spring — neither route through
+ * `framerDuration()`, so none of the 11 entry animations collapsed under
+ * `prefers-reduced-motion`, in direct violation of T24/§11 ("framer-motion
+ * duration literals are banned in new surfaces") and, for `bounce-alert`'s
+ * spring, of DESIGN-SYSTEM.md's "One motion curve (`--ease-standard`)" rule
+ * (a spring has no ease curve to share). `shake-then-settle`'s oscillating
+ * `x` keyframes were also the literal "pulse" the design system bans —
+ * replaced with a single settle (small y offset + fade), no oscillation.
+ *
+ * A pure function of `reducedMotion` (no component state), so it is directly
+ * unit-testable without rendering: `buildPresetVariants(true)` collapses
+ * every duration to ~1ms.
+ */
+export function buildPresetVariants(reducedMotion: boolean): Record<AnimationPreset, any> {
+  const base = framerDuration(DUR_BASE_S, reducedMotion);
+  const slow = framerDuration(DUR_SLOW_S, reducedMotion);
+  const stagger = framerDuration(DUR_FAST_S, reducedMotion);
+  return {
+    'fade-in':           { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: slow, ease: EASE_STANDARD } },
+    'slide-up':          { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: slow, ease: EASE_STANDARD } },
+    // Neutral surface flash, not indigo: used by micro_exercise and exam_pattern
+    // (ATOM_PRESENTATION_MAP), neither an AI/tutor surface, so indigo isn't the
+    // right semantic here — DESIGN-SYSTEM.md reserves indigo for AI/tutor/study
+    // plan only. The rgb triplet mirrors --surface-fill-strong's (120,120,128)
+    // as a literal because framer-motion's colour interpolation animates
+    // between concrete rgba values, not CSS custom properties (a var() string
+    // can't be tweened frame-to-frame), so the token can't be referenced
+    // directly here — keep this value in sync with --surface-fill-strong by hand.
+    'reveal-highlight':  { initial: { backgroundColor: 'rgba(120,120,128,0.2)' }, animate: { backgroundColor: 'rgba(120,120,128,0)' }, transition: { duration: slow, ease: EASE_STANDARD } },
+    'step-unfold':       { initial: { y: 12, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: base, ease: EASE_STANDARD, staggerChildren: stagger } },
+    'scale-in':          { initial: { scale: 0.92, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: base, ease: EASE_STANDARD } },
+    // Was a framer-motion spring (type/stiffness/damping) — springs have no
+    // duration or ease curve, so they cannot honour `prefers-reduced-motion`
+    // or DESIGN-SYSTEM.md's single sanctioned ease. Token-routed tween instead.
+    'bounce-alert':      { initial: { scale: 0.8, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: slow, ease: EASE_STANDARD } },
+    // Was oscillating x keyframes [0,-8,8,-4,4,0] — the repeated back-and-forth
+    // motion IS the "pulse" DESIGN-SYSTEM.md bans ("No gradients, no glass, no
+    // emoji... no pulse"). A single settle (small y offset easing to rest,
+    // with a fade) keeps the "something needs attention" signal without the
+    // oscillation.
+    'shake-then-settle': { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, transition: { duration: slow, ease: EASE_STANDARD } },
+    'flip-reveal':       { initial: { rotateY: 90, opacity: 0 }, animate: { rotateY: 0, opacity: 1 }, transition: { duration: slow, ease: EASE_STANDARD } },
+  };
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -363,13 +396,18 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
   );
 }
 
-function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
+/** Return type of `parseInteractiveSpec` — the single hoisted parse (W2
+ *  "Honest sizing") threaded into every card that needs it, instead of each
+ *  one calling the parser independently. */
+type ParsedSpecResult = ReturnType<typeof parseInteractiveSpec>;
+
+function WorkedExampleCard({ atom, parsed }: { atom: ContentAtom; parsed: ParsedSpecResult }) {
   // T19a: strip the fenced interactive-spec block BEFORE splitting on `---`
   // step delimiters. Without this, a spec-carrying worked_example (96/97
   // concepts) renders the raw JSON as literal text inside the last step box,
   // and InteractiveSidecar renders the widget a second time below it.
-  // Mirrors DefaultAtomCard's handling of the same fenced block.
-  const parsed = parseInteractiveSpec(atom.content);
+  // Mirrors DefaultAtomCard's handling of the same fenced block. `parsed` is
+  // the card render's ONE hoisted parse (W2), not a fresh call here.
   const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
   const { steps, blanked } = applyScaffoldingFade(atom, prose);
   const visibleCount = steps.length - blanked;
@@ -412,10 +450,11 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   );
 }
 
-function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
+function DefaultAtomCard({ atom, parsed }: { atom: ContentAtom; parsed: ParsedSpecResult }) {
   // Strip the interactive-spec fenced block from the prose — InteractiveSidecar
-  // renders the widget; MarkdownAtomRenderer must not also render it as raw JSON.
-  const parsed = parseInteractiveSpec(atom.content);
+  // (or, for a promoted resonance simulation, the figure slot itself) renders
+  // the widget; MarkdownAtomRenderer must not also render it as raw JSON.
+  // `parsed` is the card render's ONE hoisted parse (W2), not a fresh call here.
   const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
   return <MarkdownAtomRenderer content={prose} atomId={atom.id} structured={atom.atom_type === 'exam_pattern'} />;
 }
@@ -707,6 +746,26 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
     [current?.id, current?.content],
   );
 
+  // W2 "Honest sizing": the ONE hoisted parse of the current atom's body,
+  // keyed on id+content like readingSeconds above. Before this, three
+  // independent sites (DefaultAtomCard, WorkedExampleCard, the
+  // InteractiveSidecar call below) each re-parsed the same string. Threaded
+  // into: prose stripping (DefaultAtomCard/WorkedExampleCard), the
+  // entry-preset selection, and the figure-promotion decision below.
+  const parsedSpec = useMemo(
+    () => parseInteractiveSpec(current?.content ?? ''),
+    [current?.id, current?.content],
+  );
+
+  const reducedMotion = usePrefersReducedMotion();
+
+  // Perf: buildPresetVariants() builds the full 11-entry animation-preset
+  // table from scratch on every call. It's a pure function of reducedMotion
+  // alone, so memoize it here rather than rebuilding it on every render —
+  // must run before the `!current` early return below since hooks can't be
+  // conditional.
+  const presetVariantsTable = useMemo(() => buildPresetVariants(reducedMotion), [reducedMotion]);
+
   useEffect(() => {
     if (!current) return;
     engagement.onCardEnter(current);
@@ -763,9 +822,27 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
     );
   }
 
-  const preset = getPreset(current);
-  const variants = PRESET_VARIANTS[preset];
   const presentation = ATOM_PRESENTATION_MAP[current.atom_type];
+
+  // W2 figure promotion: a parsed `simulation` spec becomes the card's
+  // figure — UNLESS `presentation.stage === 'in_disclosure'` (retrieval_prompt),
+  // whose figure is deliberately held behind AnswerReveal so nothing cues the
+  // answer; promoting a simulation into the visible slot there would defeat
+  // that protection. Checked against `presentation.stage` (the atom TYPE's
+  // declared stage), not the `deferFigure` runtime fallback computed below —
+  // the carve-out is about what kind of atom this is, not whether it happens
+  // to carry a `<details>` block today.
+  const promotedSimSpec: SimulationSpec | null =
+    parsedSpec.ok && parsedSpec.spec.kind === 'simulation' && presentation.stage !== 'in_disclosure'
+      ? parsedSpec.spec
+      : null;
+
+  // W2 item 3: one moving thing per screen. When the scene itself is about
+  // to autoplay as the figure, the card's own entry animation (e.g. hook's
+  // bounce-alert) is redundant motion competing with it — demote to a plain
+  // fade so the scene is the only thing moving.
+  const preset = promotedSimSpec ? 'fade-in' : getPreset(current);
+  const variants = presetVariantsTable[preset];
   const Icon = presentation.icon;
 
   return (
@@ -870,17 +947,36 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             // actually has one. An authored retrieval_prompt without a
             // `<details>` block falls back to 'below' rather than having its
             // figure silently vanish — failing visible beats failing quiet.
+            // (promotedSimSpec is already null whenever presentation.stage
+            // is 'in_disclosure', so deferFigure and figure-promotion never
+            // both apply to the same atom.)
             const deferFigure =
               presentation.stage === 'in_disclosure' && DETAILS_OPEN_RE.test(current.content);
-            const stage = deferFigure ? 'below' : presentation.stage;
+            // W2 figure promotion forces 'above' — the resonance scene IS
+            // the figure the same way a visual_analogy's GIF is, regardless
+            // of the atom type's own default (e.g. a formal_definition,
+            // normally 'below', still leads with a scene it carries).
+            const stage = promotedSimSpec ? 'above' : deferFigure ? 'below' : presentation.stage;
             const prose =
               current.atom_type === 'worked_example' ? (
-                <WorkedExampleCard atom={current} />
+                <WorkedExampleCard atom={current} parsed={parsedSpec} />
               ) : current.atom_type === 'common_traps' ? (
                 <CommonTrapsCard atom={current} />
               ) : (
-                <DefaultAtomCard atom={current} />
+                <DefaultAtomCard atom={current} parsed={parsedSpec} />
               );
+            // Figure slot: a promoted simulation takes over entirely — no
+            // MediaSidecar (no GIF fetch, no "still generating" placeholder;
+            // a parsed simulation never has anything to wait on). Every
+            // other atom keeps today's MediaSidecar/deferred-figure behavior
+            // untouched — manipulable and guided_walkthrough specs never hit
+            // this branch (promotedSimSpec is null for them) and stay in
+            // their existing below-the-prose InteractiveSidecar placement.
+            const figure = promotedSimSpec ? (
+              <Simulation spec={promotedSimSpec} atomId={current.id} servedStance={current.served_stance} />
+            ) : deferFigure ? null : (
+              <MediaSidecar atom={current} />
+            );
             return (
               <div className="vidhya-atom-stage" data-stage={stage}>
                 <div className="vidhya-atom-stage__prose">
@@ -893,7 +989,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
                   )}
                 </div>
                 <div className="vidhya-atom-stage__figure">
-                  {deferFigure ? null : <MediaSidecar atom={current} />}
+                  {figure}
                 </div>
               </div>
             );
@@ -902,8 +998,10 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
           {/* Phase 3 of Curriculum R&D — interactive widgets parsed from
               the atom body's ```interactive-spec``` fenced block. Renders
               nothing when no spec is present. Mirrors the MediaSidecar
-              authoring pattern (§4.15). */}
-          <InteractiveSidecar body={current.content} />
+              authoring pattern (§4.15). Suppressed when the same simulation
+              was already promoted into the figure slot above — rendering it
+              twice would put two copies of the same scene on one card. */}
+          {!promotedSimSpec && <InteractiveSidecar body={current.content} />}
 
           {/* Recall buttons for retrieval-style atoms */}
           {(current.atom_type === 'micro_exercise' || current.atom_type === 'retrieval_prompt') && (

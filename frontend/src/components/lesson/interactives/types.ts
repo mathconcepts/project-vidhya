@@ -87,8 +87,51 @@ export interface SimulationSpec {
    * exactly as before for a widget with nothing to say mid-animation.
    * Sorted ascending by `at_progress`; the first entry should be 0 so
    * something is always showing.
+   *
+   * Extended for "resonance beats" (plan §W1, 2026-08-30): per-stance
+   * text, an `emphasize` signal on the figure itself, and an optional
+   * `trap` that makes a beat the scene's one erroneous-example moment.
+   * All additive — a v1 spec with plain `{ at_progress, text }` entries
+   * validates and renders exactly as before.
    */
-  narration_steps?: Array<{ at_progress: number; text: string }>;
+  narration_steps?: Array<{
+    at_progress: number;
+    /** Base/steady-register text — the fallback when no stance matches. */
+    text: string;
+    /**
+     * Per-stance overrides, chosen by the atom's served stance. Missing →
+     * falls back to `text`. Deliberately absent on `trap` (design contract
+     * item 6): the mistake is the same mistake for every student, in a
+     * single register-neutral third-person sentence — keeping it stance-
+     * free also keeps the byte-identical fenced block smaller.
+     */
+    text_shaken?: string;
+    text_assured?: string;
+    /**
+     * Signaling (Mayer): while this beat is active, the trace segment
+     * drawn for its arc renders at a heavier stroke (design contract item
+     * 5). Reverts the instant the beat passes — permanent heaviness would
+     * erase the contrast signaling depends on.
+     */
+    emphasize?: boolean;
+    /**
+     * Presence makes this THE trap beat. Schema-enforced: at most one beat
+     * per scene may carry `trap` (design contract item 8) — the single
+     * top-level `ghost` path is its counterpart, and two trap beats with
+     * one ghost is undefined. Third person, register-neutral ("students
+     * read the 2 as…", never "you might…").
+     */
+    trap?: { text: string; avoid: string };
+  }>;
+  /**
+   * The mistaken path, drawn dashed grey once the trap beat is reached —
+   * never from t=0 (design contract, plan §W1: revealed WITH the trap,
+   * not before it). Sampled with the same safe formula evaluator as
+   * `x_expr`/`y_expr` over the scene's own `[t_min, t_max]`; a runtime NaN
+   * or thrown sample omits the ghost and keeps the rest of the scene —
+   * a broken ghost is worse than no ghost, never a half-drawn one.
+   */
+  ghost?: { x_expr: string; y_expr: string };
 }
 
 /**
@@ -236,6 +279,12 @@ function validateManipulable(raw: any): ParseSuccess | ParseFailure {
   return { ok: true, spec: raw as ManipulableSpec, body_without_spec: '' };
 }
 
+/** Beats are capped at 8 per scene — a dot/segment row must stay one row on a 320px phone. */
+export const MAX_SIMULATION_BEATS = 8;
+/** House pattern (cf. `MAX_RESPONSE_CHARS` in `llm-judge.ts`): bound every LLM-reachable string. */
+export const MAX_BEAT_TEXT_CHARS = 280;
+export const MAX_GHOST_EXPR_CHARS = 120;
+
 function validateSimulation(raw: any): ParseSuccess | ParseFailure {
   if (typeof raw.title !== 'string') return { ok: false, reason: 'simulation.title required' };
   if (typeof raw.x_expr !== 'string' || typeof raw.y_expr !== 'string') {
@@ -248,6 +297,13 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
     if (!Array.isArray(raw.narration_steps) || raw.narration_steps.length === 0) {
       return { ok: false, reason: 'simulation.narration_steps must be a non-empty array when present' };
     }
+    if (raw.narration_steps.length > MAX_SIMULATION_BEATS) {
+      return {
+        ok: false,
+        reason: `simulation.narration_steps has ${raw.narration_steps.length} beats — at most ${MAX_SIMULATION_BEATS} allowed (a beat row must stay one row on a 320px phone)`,
+      };
+    }
+    let trapCount = 0;
     for (let i = 0; i < raw.narration_steps.length; i++) {
       const step = raw.narration_steps[i];
       if (
@@ -260,9 +316,93 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
       ) {
         return { ok: false, reason: `simulation.narration_steps[${i}] invalid — needs at_progress in [0,1] and non-empty text` };
       }
+      const lengthFailure = checkBeatTextLengths(step, i);
+      if (lengthFailure) return lengthFailure;
+      if (step.emphasize !== undefined && typeof step.emphasize !== 'boolean') {
+        return { ok: false, reason: `simulation.narration_steps[${i}].emphasize must be a boolean` };
+      }
+      if (step.trap !== undefined) {
+        trapCount++;
+        if (trapCount > 1) {
+          return {
+            ok: false,
+            reason:
+              'simulation.narration_steps: more than one beat carries trap — at most ONE trap beat is allowed per scene ' +
+              '(schema-enforced; its counterpart is the single top-level ghost, and two trap beats with one ghost is undefined)',
+          };
+        }
+        const trapFailure = checkTrapShape(step.trap, i);
+        if (trapFailure) return trapFailure;
+      }
     }
   }
+  if (raw.ghost !== undefined) {
+    const ghostFailure = checkGhost(raw.ghost, raw.t_min);
+    if (ghostFailure) return ghostFailure;
+  }
   return { ok: true, spec: raw as SimulationSpec, body_without_spec: '' };
+}
+
+/** Length caps on the base text plus either stance override, when present. */
+function checkBeatTextLengths(step: any, i: number): ParseFailure | null {
+  if (step.text.length > MAX_BEAT_TEXT_CHARS) {
+    return { ok: false, reason: `simulation.narration_steps[${i}].text exceeds ${MAX_BEAT_TEXT_CHARS} characters` };
+  }
+  for (const field of ['text_shaken', 'text_assured'] as const) {
+    const value = step[field];
+    if (value === undefined) continue;
+    if (typeof value !== 'string' || value.length === 0 || value.length > MAX_BEAT_TEXT_CHARS) {
+      return {
+        ok: false,
+        reason: `simulation.narration_steps[${i}].${field} must be a non-empty string of at most ${MAX_BEAT_TEXT_CHARS} characters`,
+      };
+    }
+  }
+  return null;
+}
+
+function checkTrapShape(trap: any, i: number): ParseFailure | null {
+  if (!trap || typeof trap !== 'object' || Array.isArray(trap)) {
+    return { ok: false, reason: `simulation.narration_steps[${i}].trap must be an object` };
+  }
+  for (const field of ['text', 'avoid'] as const) {
+    const value = trap[field];
+    if (typeof value !== 'string' || value.trim().length === 0 || value.length > MAX_BEAT_TEXT_CHARS) {
+      return {
+        ok: false,
+        reason: `simulation.narration_steps[${i}].trap.${field} must be a non-empty string of at most ${MAX_BEAT_TEXT_CHARS} characters`,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Checks the ghost's exprs are present, capped, and COMPILE through the
+ * same safe evaluator the renderer uses (a syntax/unknown-identifier error
+ * fails here; a runtime NaN across the sampled domain is a renderer-side
+ * concern, handled at render time by omitting the ghost — see
+ * `SimulationSpec.ghost`'s doc comment).
+ */
+function checkGhost(ghost: any, t_min: number): ParseFailure | null {
+  if (!ghost || typeof ghost !== 'object' || Array.isArray(ghost)) {
+    return { ok: false, reason: 'simulation.ghost must be an object' };
+  }
+  for (const field of ['x_expr', 'y_expr'] as const) {
+    const expr = ghost[field];
+    if (typeof expr !== 'string' || expr.length === 0 || expr.length > MAX_GHOST_EXPR_CHARS) {
+      return {
+        ok: false,
+        reason: `simulation.ghost.${field} must be a non-empty string of at most ${MAX_GHOST_EXPR_CHARS} characters`,
+      };
+    }
+    try {
+      evalFormula(expr, { t: t_min });
+    } catch (e) {
+      return { ok: false, reason: `simulation.ghost.${field} \`${expr}\` failed to compile: ${(e as Error).message}` };
+    }
+  }
+  return null;
 }
 
 function validateGuided(raw: any): ParseSuccess | ParseFailure {

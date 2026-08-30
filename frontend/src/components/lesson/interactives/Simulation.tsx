@@ -7,21 +7,56 @@
  *
  * No D3 / canvas — plain SVG path with a moving circle. Light and good
  * enough for v1 of "watch the eigenvector trace stay parallel".
+ *
+ * Extended for "resonance beats" (plan §W1, 2026-08-30): a scene whose
+ * `narration_steps` are present is no longer a passive figure with a
+ * caption underneath — it autoplays once on mount, the caption is the
+ * primary sentence of the experience (17px, through the markdown
+ * pipeline), a beat can carry a per-scene "trap" that eases into a hold
+ * and reveals a dashed ghost path for the wrong turn, and a segmented
+ * beat bar lets the student seek/step through the moments. See the plan's
+ * "design contract" for the pixel-level decisions this file implements.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { evalFormula, type SimulationSpec } from './types';
+import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { EASE_STANDARD, DUR_INSTANT_S, framerDuration } from '@/lib/motion-tokens';
+import { EASE_STANDARD, DUR_INSTANT_S, DUR_SLOW_S, framerDuration } from '@/lib/motion-tokens';
 
 const SVG_W = 320;
 const SVG_H = 200;
 const PADDING = 16;
 
+type Stance = 'shaken' | 'assured' | undefined;
+type Beat = NonNullable<SimulationSpec['narration_steps']>[number];
+
 interface Props {
   spec: SimulationSpec;
+  /** Stable id used for per-beat markdown memoization keys. Defaults to a
+   *  title slug when the caller (today: `InteractiveSidecar`) doesn't have
+   *  a real atom id to thread through — W2 passes the real one. */
+  atomId?: string;
+  /** The atom's served stance, threaded down for per-beat text resolution.
+   *  Undefined → every beat renders its base `text`. */
+  servedStance?: 'shaken' | 'assured';
+}
+
+// ============================================================================
+// Pure helpers — exported for unit tests, no timers/DOM involved.
+// ============================================================================
+
+/**
+ * Per-stance beat text: the matching override when present, else the base
+ * `text` (design contract — base is the fallback for every register,
+ * including a stale/expired stance pin, so register never mixes mid-render).
+ */
+export function resolveBeatText(step: Beat, servedStance: Stance): string {
+  if (servedStance === 'shaken' && step.text_shaken) return step.text_shaken;
+  if (servedStance === 'assured' && step.text_assured) return step.text_assured;
+  return step.text;
 }
 
 /**
@@ -30,6 +65,11 @@ interface Props {
  * describes what the trace has ALREADY drawn, never something ahead of
  * it. Steps are sorted defensively — authors write them in reading order,
  * but nothing enforces that at the content layer.
+ *
+ * Kept as the original text-returning shape for backward compatibility;
+ * the component itself now works off `activeBeatIndex` (index, not text)
+ * so `AnimatePresence` can key on position rather than resolved content —
+ * two beats with identical text must not collide.
  */
 export function activeNarrationStep(
   steps: SimulationSpec['narration_steps'],
@@ -37,29 +77,127 @@ export function activeNarrationStep(
 ): string | null {
   if (!steps || steps.length === 0) return null;
   const sorted = [...steps].sort((a, b) => a.at_progress - b.at_progress);
-  let active = sorted[0];
-  for (const step of sorted) {
-    if (step.at_progress <= progress) active = step;
-    else break;
-  }
-  return active.text;
+  const idx = activeBeatIndex(sorted, progress);
+  return idx === null ? null : sorted[idx].text;
 }
 
-export function Simulation({ spec }: Props) {
+/**
+ * Index (into an ALREADY at_progress-sorted array) of the active beat at a
+ * given progress — the same "last beat whose at_progress <= progress" rule
+ * as `activeNarrationStep`, but returning position instead of content so
+ * duplicate resolved texts across beats never collide as React keys.
+ */
+export function activeBeatIndex(
+  sortedSteps: SimulationSpec['narration_steps'],
+  progress: number,
+): number | null {
+  if (!sortedSteps || sortedSteps.length === 0) return null;
+  let active = 0;
+  for (let i = 0; i < sortedSteps.length; i++) {
+    if (sortedSteps[i].at_progress <= progress) active = i;
+    else break;
+  }
+  return active;
+}
+
+/**
+ * Decides whether NATURAL playback crossing `trapAtProgress` between two
+ * successive ticks should trigger the trap hold. Pure — no refs, no
+ * clock — so the boundary rules are unit-testable without fake timers:
+ *
+ *   - a seek is never a hold trigger, even landing exactly on the trap's
+ *     at_progress (the strict `<` on `prevProgress` already excludes a
+ *     seek that lands ON the point from counting as a "crossing" on the
+ *     very next natural tick, but `isSeek` makes the rule explicit rather
+ *     than relying on that as an accident of the inequality)
+ *   - reduced motion never holds
+ *   - the hold fires at most once per mount (`alreadyHeld`)
+ */
+export function shouldHoldForTrap(params: {
+  prevProgress: number;
+  nextProgress: number;
+  trapAtProgress: number | null;
+  isSeek: boolean;
+  reducedMotion: boolean;
+  alreadyHeld: boolean;
+}): boolean {
+  const { prevProgress, nextProgress, trapAtProgress, isSeek, reducedMotion, alreadyHeld } = params;
+  if (trapAtProgress === null || isSeek || reducedMotion || alreadyHeld) return false;
+  return prevProgress < trapAtProgress && nextProgress >= trapAtProgress;
+}
+
+/**
+ * Fill fraction [0,1] for beat `index`'s segment of the beat bar, given the
+ * current progress. A segment spans [this beat's at_progress, the next
+ * beat's at_progress, or 1 for the last beat) — fully filled once progress
+ * passes it, empty before it, proportional while it is the active beat.
+ */
+export function beatSegmentFill(sortedSteps: SimulationSpec['narration_steps'], progress: number, index: number): number {
+  if (!sortedSteps || sortedSteps.length === 0 || !sortedSteps[index]) return 0;
+  const start = sortedSteps[index].at_progress;
+  const end = index + 1 < sortedSteps.length ? sortedSteps[index + 1].at_progress : 1;
+  if (end <= start) return progress >= start ? 1 : 0;
+  return Math.min(1, Math.max(0, (progress - start) / (end - start)));
+}
+
+/** Strips the light markdown beats use (bold/italic/inline math/code) down
+ *  to plain words for an aria-label — assistive tech reads the sentence,
+ *  not the syntax. */
+export function stripMarkdownForAria(text: string): string {
+  return text
+    .replace(/\$\$?([^$]*)\$\$?/g, '$1')
+    .replace(/\*\*([^*]*)\*\*/g, '$1')
+    .replace(/\*([^*]*)\*/g, '$1')
+    .replace(/`([^`]*)`/g, '$1')
+    .trim();
+}
+
+export function Simulation({ spec, atomId, servedStance }: Props) {
   const samples = useMemo(() => sampleCurve(spec), [spec]);
   const viewBox = useMemo(
     () => spec.view_box ?? autoViewBox(samples.points),
     [spec.view_box, samples.points],
   );
   const projector = useMemo(() => makeProjector(viewBox), [viewBox]);
+  const ghostPoints = useMemo(() => sampleGhost(spec), [spec]);
 
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(1); // 0..1, 1 = fully traced
   const reducedMotion = usePrefersReducedMotion();
+
+  const sortedSteps = useMemo(
+    () => (spec.narration_steps ? [...spec.narration_steps].sort((a, b) => a.at_progress - b.at_progress) : []),
+    [spec.narration_steps],
+  );
+  const hasBeats = sortedSteps.length > 0;
+  const trapStep = useMemo(() => sortedSteps.find((s) => s.trap) ?? null, [sortedSteps]);
+
+  // Design contract item 1: a scene WITH beats autoplays once on mount
+  // (progress=0, playing=true); without beats, today's tap-to-play stays
+  // (progress=1, playing=false — a finished static trace). Reduced motion
+  // never autoplays either way. Computed once in the initializer so there
+  // is no flash of the wrong state — `usePrefersReducedMotion` resolves
+  // its own initial value synchronously the same way.
+  const [playing, setPlaying] = useState(() => hasBeats && !reducedMotion);
+  const [progress, setProgress] = useState(() => (hasBeats && !reducedMotion ? 0 : 1));
+  // Sticky once true — "Once the trap beat is reached (by play or seek),
+  // the trap row ... PERSISTS for the rest of playback" (reset clears it).
+  const [trapRevealed, setTrapRevealed] = useState(false);
+
   const rafRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(0);
+  // "Hold once per mount": NOT cleared by reset()/replay, only by remount.
+  const heldTrapRef = useRef(false);
+  const holdUntilRef = useRef<number | null>(null);
+  // Mirror of `progress` so the tick loop never mutates refs inside a
+  // setProgress functional updater — StrictMode double-invokes updaters, and
+  // an impure one silently defeated the once-per-mount trap hold in dev.
+  const progressRef = useRef(hasBeats && !reducedMotion ? 0 : 1);
 
   const duration = (spec.duration_sec ?? 4) * 1000;
+
+  function applyProgress(v: number) {
+    progressRef.current = v;
+    setProgress(v);
+  }
 
   // Tick loop
   useEffect(() => {
@@ -67,14 +205,39 @@ export function Simulation({ spec }: Props) {
     function tick(now: number) {
       const dt = lastTickRef.current ? now - lastTickRef.current : 0;
       lastTickRef.current = now;
-      setProgress((p) => {
-        const next = p + dt / duration;
-        if (next >= 1) {
-          setPlaying(false);
-          return 1;
+
+      if (holdUntilRef.current !== null) {
+        if (now < holdUntilRef.current) {
+          rafRef.current = requestAnimationFrame(tick);
+          return;
         }
-        return next;
-      });
+        holdUntilRef.current = null;
+      }
+
+      // All side effects live in the tick body, not a setProgress updater —
+      // updaters must stay pure (StrictMode double-invokes them).
+      const p = progressRef.current;
+      const next = p + dt / duration;
+      if (
+        trapStep &&
+        shouldHoldForTrap({
+          prevProgress: p,
+          nextProgress: next,
+          trapAtProgress: trapStep.at_progress,
+          isSeek: false,
+          reducedMotion,
+          alreadyHeld: heldTrapRef.current,
+        })
+      ) {
+        heldTrapRef.current = true;
+        holdUntilRef.current = now + DUR_SLOW_S * 1000;
+        applyProgress(trapStep.at_progress);
+      } else if (next >= 1) {
+        applyProgress(1);
+        setPlaying(false);
+      } else {
+        applyProgress(next);
+      }
       rafRef.current = requestAnimationFrame(tick);
     }
     lastTickRef.current = 0;
@@ -82,15 +245,31 @@ export function Simulation({ spec }: Props) {
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
-  }, [playing, duration]);
+  }, [playing, duration, trapStep, reducedMotion]);
+
+  // Trap reveal is a function of progress alone — fires from natural
+  // playback OR a seek, and (being state, not a derived value) stays true
+  // once set even if the student seeks back before the trap afterward.
+  useEffect(() => {
+    if (trapStep && progress >= trapStep.at_progress) setTrapRevealed(true);
+  }, [progress, trapStep]);
 
   function play() {
-    if (progress >= 1) setProgress(0);
+    if (progressRef.current >= 1) applyProgress(0);
     setPlaying(true);
   }
   function reset() {
     setPlaying(false);
-    setProgress(reducedMotion ? 1 : 0);
+    applyProgress(reducedMotion ? 1 : 0);
+    setTrapRevealed(false);
+    holdUntilRef.current = null;
+  }
+  /** Seek — design contract item 10: playing stays playing, paused stays
+   *  paused; never triggers the trap hold (that only fires from the tick
+   *  loop's own natural-crossing check above). */
+  function seekTo(atProgress: number) {
+    lastTickRef.current = 0;
+    applyProgress(atProgress);
   }
 
   if (samples.error) {
@@ -104,47 +283,48 @@ export function Simulation({ spec }: Props) {
     );
   }
 
-  // Compute the visible portion of the path
-  const cutoff = Math.max(1, Math.round(samples.points.length * (reducedMotion ? 1 : progress)));
+  const effectiveProgress = reducedMotion ? 1 : progress;
+  const cutoff = Math.max(1, Math.round(samples.points.length * effectiveProgress));
   const visiblePoints = samples.points.slice(0, cutoff);
   const head = visiblePoints[visiblePoints.length - 1];
-  const pathD = visiblePoints
-    .map((p, i) => {
-      const [x, y] = projector(p.x, p.y);
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(' ');
+  const activeIdx = hasBeats ? activeBeatIndex(sortedSteps, effectiveProgress) : null;
+  const segments = buildTraceSegments(samples.points, projector, sortedSteps, effectiveProgress, activeIdx);
+  const resolvedId = atomId ?? spec.title;
+  const showStoryboard = hasBeats && reducedMotion;
+  const showLiveBeatUI = hasBeats && !reducedMotion;
 
   return (
     <div
       className="rounded-xl border p-4 space-y-3"
       style={{ borderColor: 'var(--separator)', background: 'var(--surface-fill)' }}
     >
-      <header className="flex items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => (playing ? setPlaying(false) : play())}
-            disabled={reducedMotion}
-            className="p-1.5 rounded-md border disabled:opacity-50"
-            style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-            aria-label={playing ? 'Pause simulation' : 'Play simulation'}
-          >
-            {playing ? <Pause size={12} /> : <Play size={12} />}
-          </button>
-          <button
-            type="button"
-            onClick={reset}
-            disabled={reducedMotion}
-            className="p-1.5 rounded-md border disabled:opacity-50"
-            style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-            aria-label="Reset simulation"
-          >
-            <RotateCcw size={12} />
-          </button>
-        </div>
-      </header>
+      {!hasBeats && (
+        <header className="flex items-center justify-between gap-2">
+          <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => (playing ? setPlaying(false) : play())}
+              disabled={reducedMotion}
+              className="p-1.5 rounded-md border disabled:opacity-50"
+              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              aria-label={playing ? 'Pause simulation' : 'Play simulation'}
+            >
+              {playing ? <Pause size={12} /> : <Play size={12} />}
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              disabled={reducedMotion}
+              className="p-1.5 rounded-md border disabled:opacity-50"
+              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              aria-label="Reset simulation"
+            >
+              <RotateCcw size={12} />
+            </button>
+          </div>
+        </header>
+      )}
 
       <svg
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
@@ -152,12 +332,21 @@ export function Simulation({ spec }: Props) {
         className="rounded-md border"
         style={{ background: 'var(--surface-fill)', borderColor: 'var(--separator)' }}
         preserveAspectRatio="xMidYMid meet"
-        aria-label={`Animated trace: ${spec.title}`}
+        aria-label={hasBeats ? spec.title : `Animated trace: ${spec.title}`}
       >
         <Axes viewBox={viewBox} projector={projector} />
-        {pathD && (
-          <path d={pathD} stroke="var(--ink)" strokeWidth={2} fill="none" />
+        {trapRevealed && ghostPoints && (
+          <path
+            d={pathD(ghostPoints, projector)}
+            stroke="var(--grey-6)"
+            strokeWidth={2}
+            strokeDasharray="4 4"
+            fill="none"
+          />
         )}
+        {segments.map((seg) => (
+          <path key={seg.key} d={seg.d} stroke="var(--ink)" strokeWidth={seg.strokeWidth} fill="none" />
+        ))}
         {head && (
           <circle
             cx={projector(head.x, head.y)[0]}
@@ -168,32 +357,197 @@ export function Simulation({ spec }: Props) {
         )}
       </svg>
 
-      {reducedMotion && (
+      {!hasBeats && reducedMotion && (
         <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
           Reduced-motion enabled — showing the final trace instead of animation.
         </p>
       )}
 
-      {spec.narration_steps ? (
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.p
-            key={activeNarrationStep(spec.narration_steps, reducedMotion ? 1 : progress) ?? undefined}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: framerDuration(DUR_INSTANT_S, reducedMotion), ease: EASE_STANDARD }}
-            className="text-[12px] leading-relaxed font-medium"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            {activeNarrationStep(spec.narration_steps, reducedMotion ? 1 : progress)}
-          </motion.p>
-        </AnimatePresence>
-      ) : (
-        spec.caption && (
-          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
-        )
+      {!hasBeats && spec.caption && (
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
+      )}
+
+      {showStoryboard && (
+        <ReducedMotionStoryboard atomId={resolvedId} spec={spec} sortedSteps={sortedSteps} servedStance={servedStance} />
+      )}
+
+      {showLiveBeatUI && (
+        <div aria-live="polite">
+          {/* No `mode="wait"` — matches GuidedWalkthrough's AnimatePresence
+              convention. `mode="wait"` would hold the OLD beat mounted
+              until its exit transition finishes before mounting the new
+              one, so a seek's DOM update would lag its own animation
+              rather than reflecting the state change immediately. */}
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={activeIdx ?? 'none'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: framerDuration(DUR_INSTANT_S, reducedMotion), ease: EASE_STANDARD }}
+            >
+              <MarkdownAtomRenderer
+                atomId={`${resolvedId}::beat-${activeIdx ?? 0}`}
+                content={activeIdx != null ? resolveBeatText(sortedSteps[activeIdx], servedStance) : ''}
+                className="vidhya-atom-body--beat-caption"
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
+
+      {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} />}
+
+      {showLiveBeatUI && (
+        <div className="flex items-center gap-2">
+          {sortedSteps.length > 1 && (
+            <BeatBar sortedSteps={sortedSteps} progress={effectiveProgress} servedStance={servedStance} onSeek={seekTo} />
+          )}
+          <div className="flex items-center flex-shrink-0">
+            {/* 44px tap zones (design-system floor) around visually compact controls */}
+            <button
+              type="button"
+              onClick={() => (playing ? setPlaying(false) : play())}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
+              aria-label={playing ? 'Pause simulation' : 'Play simulation'}
+            >
+              <span
+                className="p-1.5 rounded-md border inline-flex"
+                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              >
+                {playing ? <Pause size={12} /> : <Play size={12} />}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
+              aria-label="Reset simulation"
+            >
+              <span
+                className="p-1.5 rounded-md border inline-flex"
+                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
+              >
+                <RotateCcw size={12} />
+              </span>
+            </button>
+          </div>
+        </div>
       )}
     </div>
+  );
+}
+
+// ============================================================================
+// Sub-components
+// ============================================================================
+
+/** Design contract item 6: "Where marks are lost" label, trap text +
+ *  Avoid line, hairline above, no icon, ink/grey only. */
+function TrapRow({ trap }: { trap: NonNullable<Beat['trap']> }) {
+  return (
+    <div className="vidhya-resonance-trap">
+      <p className="vidhya-resonance-trap__label">Where marks are lost</p>
+      <p className="vidhya-resonance-trap__text">{trap.text}</p>
+      <p className="vidhya-resonance-trap__avoid">Avoid: {trap.avoid}</p>
+    </div>
+  );
+}
+
+/**
+ * Design contract item 4/9: renders only when there is more than one beat
+ * (a one-segment scrubber is chrome with no function). Ink fill, separator
+ * hairline — no accent color, this is neither mastery nor AI/tutor.
+ * Keyboard: each segment is a focusable button; ArrowLeft/ArrowRight step
+ * to the adjacent beat and move focus with it.
+ */
+function BeatBar({
+  sortedSteps,
+  progress,
+  servedStance,
+  onSeek,
+}: {
+  sortedSteps: NonNullable<SimulationSpec['narration_steps']>;
+  progress: number;
+  servedStance: Stance;
+  onSeek: (atProgress: number) => void;
+}) {
+  return (
+    <div role="group" aria-label="Scene beats" className="vidhya-resonance-beatbar" style={{ flex: 1 }}>
+      {sortedSteps.map((step, i) => {
+        const fill = beatSegmentFill(sortedSteps, progress, i);
+        return (
+          <button
+            key={i}
+            type="button"
+            className="vidhya-resonance-beatbar__segment"
+            onClick={() => onSeek(step.at_progress)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const next = sortedSteps[Math.min(i + 1, sortedSteps.length - 1)];
+                onSeek(next.at_progress);
+                (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus();
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prev = sortedSteps[Math.max(i - 1, 0)];
+                onSeek(prev.at_progress);
+                (e.currentTarget.previousElementSibling as HTMLElement | null)?.focus();
+              }
+            }}
+            aria-label={`Beat ${i + 1} of ${sortedSteps.length}: ${stripMarkdownForAria(resolveBeatText(step, servedStance))}`}
+          >
+            <span className="vidhya-resonance-beatbar__track">
+              <span className="vidhya-resonance-beatbar__fill" style={{ width: `${fill * 100}%` }} />
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Design contract item 11: the reduced-motion argument, in full, with zero
+ * motion — final-frame SVG (rendered by the caller) then this ordered
+ * list. Each row: a 13px index label + the beat's 17px text through
+ * `MarkdownAtomRenderer`; the trap beat's row additionally keeps the
+ * hairline + Avoid line; one closing 15px line names the ghost, when one
+ * exists. Nothing here is gated on `trapRevealed` — under reduced motion
+ * the whole argument is visible at once, there is no "moment" to wait for.
+ */
+function ReducedMotionStoryboard({
+  atomId,
+  spec,
+  sortedSteps,
+  servedStance,
+}: {
+  atomId: string;
+  spec: SimulationSpec;
+  sortedSteps: NonNullable<SimulationSpec['narration_steps']>;
+  servedStance: Stance;
+}) {
+  return (
+    <ol className="space-y-3" aria-label="Scene beats (reduced motion)">
+      {sortedSteps.map((step, i) => (
+        <li key={i}>
+          <p className="text-[13px]" style={{ color: 'var(--text-tertiary)', margin: 0 }}>
+            Beat {i + 1} of {sortedSteps.length}
+          </p>
+          <MarkdownAtomRenderer
+            atomId={`${atomId}::beat-${i}`}
+            content={resolveBeatText(step, servedStance)}
+            className="vidhya-atom-body--beat-caption"
+          />
+          {step.trap && <TrapRow trap={step.trap} />}
+        </li>
+      ))}
+      {spec.ghost && (
+        <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>
+          The dashed grey path is the common wrong turn.
+        </p>
+      )}
+    </ol>
   );
 }
 
@@ -218,6 +572,79 @@ function sampleCurve(spec: SimulationSpec): { points: Array<{ x: number; y: numb
   }
   if (points.length === 0) return { points, error: 'no finite samples' };
   return { points, error: null };
+}
+
+/**
+ * Samples the ghost's (x_expr, y_expr) across the same [t_min, t_max] as
+ * the main trace. Any thrown or non-finite sample omits the ghost entirely
+ * — a partially-drawn wrong path would itself be a misleading scene, which
+ * the content discipline this feature leans on explicitly forbids.
+ */
+function sampleGhost(spec: SimulationSpec): Array<{ x: number; y: number }> | null {
+  if (!spec.ghost) return null;
+  const { x_expr, y_expr } = spec.ghost;
+  const n = 80;
+  const points: Array<{ x: number; y: number }> = [];
+  const span = spec.t_max - spec.t_min;
+  try {
+    for (let i = 0; i <= n; i++) {
+      const t = spec.t_min + (span * i) / n;
+      const x = evalFormula(x_expr, { t });
+      const y = evalFormula(y_expr, { t });
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+      points.push({ x, y });
+    }
+  } catch {
+    return null;
+  }
+  return points.length > 0 ? points : null;
+}
+
+function pathD(points: Array<{ x: number; y: number }>, projector: (x: number, y: number) => [number, number]): string {
+  return points
+    .map((p, i) => {
+      const [x, y] = projector(p.x, p.y);
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(' ');
+}
+
+/**
+ * Splits the visible trace into one `<path>` per beat's arc so `emphasize`
+ * can heavy-up exactly one segment (design contract item 5) without
+ * touching the rest. With no beats this degenerates to the original
+ * single-path behavior.
+ */
+function buildTraceSegments(
+  points: Array<{ x: number; y: number }>,
+  projector: (x: number, y: number) => [number, number],
+  sortedSteps: SimulationSpec['narration_steps'],
+  progress: number,
+  activeIdx: number | null,
+): Array<{ d: string; strokeWidth: number; key: string }> {
+  const visibleCutoff = Math.max(1, Math.round(points.length * progress));
+  if (!sortedSteps || sortedSteps.length === 0) {
+    const visible = points.slice(0, visibleCutoff);
+    const d = pathD(visible, projector);
+    return d ? [{ d, strokeWidth: 2, key: 'trace' }] : [];
+  }
+  const segments: Array<{ d: string; strokeWidth: number; key: string }> = [];
+  for (let i = 0; i < sortedSteps.length; i++) {
+    const startProgress = sortedSteps[i].at_progress;
+    const endProgress = i + 1 < sortedSteps.length ? sortedSteps[i + 1].at_progress : 1;
+    const segStartIdx = Math.round(points.length * startProgress);
+    const segEndFullIdx = Math.round(points.length * endProgress);
+    const segEndIdx = Math.min(segEndFullIdx, visibleCutoff);
+    // Share the boundary point with the previous segment so the drawn
+    // path reads as one continuous line, not visibly-gapped pieces.
+    const fromIdx = Math.max(0, segStartIdx - (i === 0 ? 0 : 1));
+    if (segEndIdx <= fromIdx) continue;
+    const slice = points.slice(fromIdx, segEndIdx + 1);
+    if (slice.length < 2) continue;
+    const strokeWidth = i === activeIdx && sortedSteps[i].emphasize ? 3.5 : 2;
+    segments.push({ d: pathD(slice, projector), strokeWidth, key: `seg-${i}` });
+  }
+  return segments;
 }
 
 function autoViewBox(points: Array<{ x: number; y: number }>): SimulationSpec['view_box'] {
@@ -274,4 +701,3 @@ function Axes({
     </g>
   );
 }
-

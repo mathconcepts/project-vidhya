@@ -118,6 +118,20 @@ export interface OrchestratorOptions {
    * content-generation job and other unlabeled callers, same as today.
    */
   generation_run_id?: string;
+  /**
+   * Resonance plan §W4 — which pipeline is calling. 'batch' (the default)
+   * is admin-launched / cron-driven generation that goes through CI gates,
+   * `ci:interactive-specs`, and a human pedagogy pass before it ever ships.
+   * 'personalized' is `personalized-regen.ts`'s fire-and-forget per-student
+   * path straight into `student_atom_overrides` — no CI gate, no Wolfram
+   * check, no pedagogy review reaches it. `buildPrompt()` in orchestrator.ts
+   * omits the resonance beat/trap/ghost instructions entirely for
+   * 'personalized' (unverified scene math must never reach a struggling
+   * student unreviewed); `generateOne()` additionally strips any
+   * `simulation`-kind fence on this path as defense-in-depth, since schema
+   * validation alone cannot catch well-formed but wrong mathematics.
+   */
+  generation_context?: 'batch' | 'personalized';
 }
 
 export interface ProgressEvent {

@@ -15,7 +15,7 @@ bloom_level: 3
 difficulty: 0.40
 exam_ids: [gate-ma]
 scaffold_fade: 1
-variant_of: chain-rule.worked_example
+variant_of: chain-rule-worked-example
 for_stance: shaken
 ---
 

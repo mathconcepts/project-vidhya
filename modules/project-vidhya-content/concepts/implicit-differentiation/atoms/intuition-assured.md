@@ -14,7 +14,7 @@ bloom_level: 2
 difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
-variant_of: implicit-differentiation.intuition
+variant_of: implicit-differentiation-intuition
 for_stance: assured
 ---
 

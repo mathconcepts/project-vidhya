@@ -58,7 +58,8 @@ against. The lift ledger already answers the more basic question.
   n≥30 / p<0.05 promotion thresholds. That formula is locked — a new metric
   ships as `lift_v2` in a new column, never as an edit.
 
-**Depends on:** the 566-file generation landing, and real session volume.
+**Depends on:** ~~the 566-file generation landing~~ (landed in 4.43.0 — 606
+base/variant pairs across all 101 concepts), and real session volume.
 
 **Deferred from:** `/plan-eng-review` 2026-08-16, Issue 3 (authoring recipe
 correctly lives in `templates/<topic>.yaml`; measurement is the separate

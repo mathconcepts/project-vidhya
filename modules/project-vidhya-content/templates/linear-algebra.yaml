@@ -1,3 +1,27 @@
+# ── Stance rollout opt-in ────────────────────────────────────────────────
+# This TOP-LEVEL `stances:` key is the opt-in signal read by
+# loadTopicsWithStancesBlock() in src/api/admin-content-maturity-routes.ts.
+# Its presence declares "this topic is in the authored-stance rollout", which
+# puts every one of the topic's concepts into the maturity report's rollout
+# denominator.
+#
+# Do not confuse it with the per-atom-type `stances:` blocks further down.
+# Those are AUTHORING GUIDANCE, read by topicGuidanceFor() when generating a
+# variant, and every one of the eleven topic templates already carries them —
+# which is precisely why they cannot double as the opt-in signal. If they did,
+# every topic would opt in at once and the rollout denominator would equal the
+# course-wide one, collapsing the two figures the report deliberately keeps
+# apart.
+#
+# Linear Algebra opts in because it is genuinely finished: all 26 of its
+# concepts carry a shaken and an assured body for all three narrative atom
+# types. Add this key to another topic only when that is true of it too —
+# opting in early makes the rollout figure amber, which is the honest signal,
+# but opting in a topic nobody is working on just adds noise.
+stances:
+  rollout: authored
+  variants: [shaken, assured]
+
 topic_family: linear-algebra
 
 intuition:

@@ -20,6 +20,7 @@
  */
 
 import type { AtomType, BloomLevel } from '../content-types';
+import { loadInteractiveSpecParser } from '../interactive-spec-loader';
 import type {
   ConceptDraft,
   GeneratedAtom,
@@ -456,55 +457,11 @@ async function generateAtomContent(
 }
 
 // ─── Resonance plan §W4 — post-generation interactive-spec fence policy ───
-
-type ParseInteractiveSpecResult =
-  | { ok: true; spec: any; body_without_spec: string }
-  | { ok: false; reason: string };
-type ParseInteractiveSpecFn = (body: string) => ParseInteractiveSpecResult;
-
-// Deliberately a runtime-computed specifier, not a string literal, so
-// TypeScript resolves the dynamic import below to `any` instead of pulling
-// frontend/src into this package's `tsconfig.json` `rootDir: "./src"`
-// compilation (which would fail `npm run build` with "File is not under
-// 'rootDir'"). See loadInteractiveSpecParser's doc comment for why the
-// import itself must also be dynamic, not static.
-const INTERACTIVE_SPEC_TYPES_MODULE = '../../../frontend/src/components/lesson/interactives/types';
-
-let _parseSpecFn: ParseInteractiveSpecFn | null | undefined;
-
-/**
- * Lazily, dynamically imports the renderer's own interactive-spec parser —
- * the cross-import precedent named in the resonance plan is
- * `scripts/lint-interactive-specs.ts` ("It deliberately imports the REAL
- * validator... A second copy of the rules would drift"), running under the
- * same tsx loader as `ci:boot`.
- *
- * The import MUST be dynamic (not a static top-level `import`), and the
- * failure MUST be caught, because `demo/Dockerfile` — the image render.yaml
- * actually deploys — copies `frontend/dist` into its runtime stage but
- * never `frontend/src`. A static import would throw "Cannot find module"
- * the moment `orchestrator.ts` itself loads (this module is reached at
- * server boot via route registration, long before any atom is generated),
- * taking the whole server down — the exact "ReferenceError at
- * module-evaluation time, before any route handler runs" failure class
- * atomic-topic-spec.ts's own header comment documents and works around the
- * same way. Here the degradation is: fence validation becomes a no-op
- * (logged once) in that one image; every dev/test/CI environment — which
- * always has `frontend/src` on disk — gets the real validator.
- */
-async function loadInteractiveSpecParser(): Promise<ParseInteractiveSpecFn | null> {
-  if (_parseSpecFn !== undefined) return _parseSpecFn;
-  let resolved: ParseInteractiveSpecFn | null;
-  try {
-    const mod: any = await import(INTERACTIVE_SPEC_TYPES_MODULE);
-    resolved = typeof mod.parseInteractiveSpec === 'function' ? mod.parseInteractiveSpec : null;
-  } catch (err) {
-    console.warn(`[orchestrator] interactive-spec validator unavailable in this process (${(err as Error).message}) — fence validation skipped`);
-    resolved = null;
-  }
-  _parseSpecFn = resolved;
-  return resolved;
-}
+//
+// The dynamic-import loader for the renderer's real parser now lives in the
+// shared `src/content/interactive-spec-loader.ts` (resonance plan §W5) so
+// this orchestrator and `admin-content-maturity-routes.ts` share exactly one
+// loading/degradation implementation instead of two copies that could drift.
 
 const INTERACTIVE_SPEC_FENCE_RE = /```interactive-spec\s*[\s\S]*?```/m;
 

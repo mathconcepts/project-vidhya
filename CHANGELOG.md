@@ -4,6 +4,93 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.44.0] — 2026-08-30 — Fused resonance hooks: motion, captions, trap ghost-paths and per-stance narration, together
+
+**Operator action:** one optional command. `npx tsx scripts/activate-resonance-experiment.ts`
+creates the `resonance_hooks_v1_gate_ma` experiments row that lets the lift
+ledger measure whether a resonance-carrying hook actually helps, once real
+session volume accrues (`--dry-run` and `--deactivate` supported, same
+pattern as `activate-personalised-selector.ts`). No new env vars, no
+migrations — everything else in this release is authored content or
+generation-side.
+
+**A lesson's opening hook used to be three unrelated things: a sentence, a
+looping widget, and — five cards later — a list of common mistakes.** It is
+now one experience. Open a Linear Algebra hook that ships this release and
+the scene starts moving on its own the instant the card is on screen; the
+caption changes in step with what the trace is doing, not a static line sat
+underneath it; at the one point in the animation where students actually
+slip, the wrong path draws itself in as a dashed grey ghost, is named in
+plain language, and the one-line fix is given right there — that row stays
+on screen through the rest of playback instead of disappearing. A shaky
+student and a confident student watch the identical true geometry but hear
+different captions: concrete numbers first and the smallest true step for
+one, the distinction that actually costs marks for the other. Reduced-motion
+readers get the entire argument as still text — every beat, the trap, the
+fix — with nothing lost.
+
+**Coverage.**
+
+| Scope | Fused scenes | Pass-overs (named) |
+|---|---|---|
+| GATE Linear Algebra (26 concepts) | 24 | `vector-spaces` — the idea's generality can't be captured by one trace; `lu-factorization` — a procedural algorithm, no honest geometry to animate |
+| Proof of generalization (non-LA) | 2 — `limits`, `derivatives-basic` | — |
+| **Total** | **26 concepts, 78 files** (base + shaken + assured, byte-identical scene per concept) | 2 |
+
+Every numeric and geometric claim in a new scene was checked before commit —
+the same discipline the v4.39.0 mnemonic/exam-pattern pass held itself to.
+
+- **The scene is now the figure, not a sidecar.** A hook or intuition atom
+  carrying a resonance scene renders it in the card's main figure slot —
+  above the prose on a phone, sticky beside it on a wider screen — instead
+  of a separate widget stacked below everything else. Where a scene and a
+  legacy GIF are both present, the scene wins; a lesson still mid-disclosure
+  (a retrieval prompt hiding its answer) never promotes a scene into the
+  figure slot, so nothing leaks the answer early.
+- **The design is deliberately restrained.** One trap per scene, ever — its
+  ghost path is its only counterpart. The trap row reads "Where marks are
+  lost", in plain text with a hairline rule above it, never an icon or a
+  warning-banner treatment. The beat caption is full 17px body text, not the
+  12px metadata size the mechanism briefly shipped at. Progress is a thin
+  segmented bar in ink and hairline grey, not green or indigo — resonance is
+  neither a mastery signal nor an AI/tutor surface, and reaching for either
+  accent would have broken the two-accent rule. Every control is
+  keyboard-reachable and screen-reader announced.
+- **Generation now carries the mechanism forward, not just this hand-authored
+  batch.** Any operator-launched or batch generation run for a hook or
+  intuition atom is instructed to emit one fused scene — a beats-scripted
+  interactive spec with exactly one trap woven from the concept's own top
+  pain point — instead of the old "keep the body to a single learning beat"
+  guidance. Where the founder's 116-topic content-generation spec resolves a
+  per-topic attention-design hypothesis for the concept (100 of 116 topics
+  do), the prompt receives it too. Every generated fence is validated
+  against the same schema the renderer uses before it ships; an invalid one
+  gets exactly one regeneration attempt, then the scene is dropped and the
+  prose kept — never served broken and never served silently empty.
+- **Personalisation is explicitly excluded, on purpose.** A per-student
+  regenerated lesson never receives the beat-scripting prompt in the first
+  place, and if a model produces a simulation fence on that path anyway, it
+  is stripped before the rewrite reaches `student_atom_overrides` — that
+  path has no CI gate, no verification pass, and no human review before a
+  struggling student sees it, so an unreviewed trap or ghost path must never
+  reach that audience.
+- **Operators can now see resonance coverage the same way they already see
+  stance coverage.** `/api/admin/content-maturity` reports, per
+  concept-graph topic, how many hook atoms carry a beats scene, how many of
+  those carry the trap beat, and how many carry per-stance beat text — read
+  through the exact same disk scan (`loadConceptAtoms`) and the exact same
+  frontend validator the renderer itself uses, never a second copy of the
+  rules. On the one deploy image that ships without `frontend/src` (the
+  demo image), the figure reports honestly as "not measurable", never as
+  zero.
+
+**Known-unrun, stated plainly:** no provider key is configured in this
+environment, so a live generation run of a resonance-carrying hook has not
+been exercised end-to-end here — coverage on the generation side is
+unit-level (prompt assembly against fixtures, fence validation against
+scripted good/bad responses). The first live batch is the operator's smoke
+test, same as the v4.33.0 precedent.
+
 ## [4.43.0] — 2026-08-30 — Stance-adaptive content across all 101 concepts, and personalisation switched on
 
 **Operator action:** two commands, both idempotent, both safe to skip if you

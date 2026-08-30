@@ -44,6 +44,12 @@ import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import { allFramingSignatures } from '../sessions/learner-framing';
 import { NARRATIVE_ATOM_TYPES, VARIANT_STANCES } from '../content/stance-variants';
+// Resonance plan §W5 — the SAME guarded dynamic-import loader the
+// orchestrator uses for its post-generation fence policy (never a duplicate
+// validator). Returns null when frontend/src is absent in this process
+// (e.g. the demo image), which this route reports as "not measurable", the
+// same convention every other null on this report already follows.
+import { loadInteractiveSpecParser, type ParseInteractiveSpecFn } from '../content/interactive-spec-loader';
 // The shared storage-boundary pool, not a hand-rolled one — new call sites go
 // through src/storage/ so the pg-import ratchet keeps shrinking. Returns null
 // without DATABASE_URL, which is a first-class state for this route: "no
@@ -86,6 +92,15 @@ export interface MaturityReport {
   personalization_active: boolean;
   signals: MaturitySignal[];
   generated_at: string;
+  /**
+   * Resonance plan §W5 — per-topic coverage of fused hook scenes (a beats
+   * simulation on the hook atom, a trap beat within it, per-stance beat
+   * text). Additive: existing fields above are unchanged. `null` figures
+   * mean "not measurable in this process" (the interactive-spec validator
+   * could not be loaded), never "zero" — the same null convention every
+   * other figure on this report already follows.
+   */
+  resonance: ResonanceFigures;
 }
 
 const SEVERITY_RANK: Record<Severity, number> = {
@@ -136,6 +151,14 @@ export interface MaturityFacts {
   stance_course_covered: number;
   /** Files under .data/variant-drafts/ — bodies the equivalence judge refused. */
   stance_rejected_drafts: number;
+  /**
+   * Resonance plan §W5. Like the stance figures above, this needs no
+   * database — it is a disk scan through `loadConceptAtoms` — but it DOES
+   * need the frontend's real `parseInteractiveSpec` validator, which is
+   * unavailable in the demo image (`frontend/src` isn't copied there). See
+   * `ResonanceFigures`'s own doc comment for the null convention.
+   */
+  resonance: ResonanceFigures;
 }
 
 export function buildReport(facts: MaturityFacts, now: string): MaturityReport {
@@ -365,12 +388,58 @@ export function buildReport(facts: MaturityFacts, now: string): MaturityReport {
     });
   }
 
+  // Resonance beat coverage (plan §W5). Reported last, same family as the
+  // stance figures above: this measures authored scenes on disk (via
+  // loadConceptAtoms), not a runtime personalisation mechanism, so a
+  // missing DATABASE_URL never makes it read as broken — only a missing
+  // validator does. A 'partial' severity here can still move `overall`
+  // (same as stance_course_wide), but never `personalization_active`,
+  // which only 'blocked' signals move.
+  if (facts.resonance.concepts_with_hook === null) {
+    signals.push({
+      id: 'resonance_coverage',
+      label: 'Resonance beat coverage is not measurable on this deploy.',
+      severity: 'unknown',
+      remedy:
+        'The interactive-spec validator could not be loaded in this process ' +
+        '(frontend/src is absent — e.g. the demo image, which ships frontend/dist ' +
+        'only). Coverage is measurable in any dev/test/CI environment.',
+    });
+  } else if (facts.resonance.concepts_with_hook === 0) {
+    signals.push({
+      id: 'resonance_coverage',
+      label: 'No hook atoms found on this deploy.',
+      severity: 'unknown',
+      remedy: 'Check that the content corpus is present.',
+      detail: { concepts_with_hook: 0 },
+    });
+  } else {
+    const beats = facts.resonance.concepts_with_beats ?? 0;
+    const full = beats === facts.resonance.concepts_with_hook;
+    signals.push({
+      id: 'resonance_coverage',
+      label: `${beats} of ${facts.resonance.concepts_with_hook} hook atoms carry a fused resonance scene (beats/trap/stance).`,
+      severity: full ? 'healthy' : 'partial',
+      remedy: full
+        ? null
+        : 'Resonance is a topic-by-topic authoring + generation rollout (plan W3/W4) — ' +
+          'expected to read partial for a long time. See resonance.by_topic for detail.',
+      detail: {
+        concepts_with_hook: facts.resonance.concepts_with_hook,
+        concepts_with_beats: beats,
+        concepts_with_trap_beat: facts.resonance.concepts_with_trap_beat,
+        concepts_with_stance_beats: facts.resonance.concepts_with_stance_beats,
+      },
+    });
+  }
+
   const overall = worstSeverity(signals);
   return {
     overall,
     personalization_active: !signals.some((s) => s.severity === 'blocked'),
     signals,
     generated_at: now,
+    resonance: facts.resonance,
   };
 }
 
@@ -444,6 +513,165 @@ export function computeStanceFigures(input: {
     stance_course_total: courseTotal,
     stance_course_covered: courseCovered,
   };
+}
+
+/** Minimal atom shape the pure resonance-figure computation needs. */
+export interface ResonanceFigureAtom {
+  atom_type: string;
+  /** Raw markdown body, fence included — undefined atoms are never passed in. */
+  content: string;
+}
+
+export interface ResonanceFigureConcept {
+  id: string;
+  /** ConceptNode.topic (src/constants/concept-graph). Undefined if unmapped. */
+  topic: string | undefined;
+  atoms: ResonanceFigureAtom[];
+}
+
+export interface ResonanceTopicFigures {
+  topic: string;
+  /** Concepts on this topic that have an authored hook atom at all. */
+  concepts_with_hook: number;
+  /** Of those, hooks whose interactive-spec is a simulation with >=1 beat. */
+  concepts_with_beats: number;
+  /** Of the beat-carrying hooks, how many have exactly the one trap beat. */
+  concepts_with_trap_beat: number;
+  /** Of the beat-carrying hooks, how many have per-stance beat text. */
+  concepts_with_stance_beats: number;
+}
+
+export interface ResonanceFigures {
+  /**
+   * Per-topic breakdown, sorted by topic slug. `null` means "not
+   * measurable in this process" (the interactive-spec validator could not
+   * be loaded) — never an empty array, which would read as "measured, zero
+   * topics found".
+   */
+  by_topic: ResonanceTopicFigures[] | null;
+  concepts_with_hook: number | null;
+  concepts_with_beats: number | null;
+  concepts_with_trap_beat: number | null;
+  concepts_with_stance_beats: number | null;
+}
+
+const NOT_MEASURABLE_RESONANCE: ResonanceFigures = {
+  by_topic: null,
+  concepts_with_hook: null,
+  concepts_with_beats: null,
+  concepts_with_trap_beat: null,
+  concepts_with_stance_beats: null,
+};
+
+/**
+ * Pure figure computation (resonance plan §W5) — mirrors
+ * `computeStanceFigures()` immediately above: no IO, no database, the real
+ * `parseSpec` (or a test double) passed in rather than imported here.
+ *
+ * A concept counts toward `concepts_with_hook` the moment it has an
+ * authored `hook` atom, whether or not that hook carries a resonance scene
+ * — the honest denominator, same discipline as the stance course-wide
+ * figure. "Beats" means the hook's fenced `interactive-spec` parses as a
+ * `simulation` with a non-empty `narration_steps` array (the schema caps it
+ * at 8 and allows at most one `trap` beat — see `types.ts`'s validator,
+ * never re-checked here). Trap/stance figures are counted only among
+ * beat-carrying hooks, since neither is meaningful without beats.
+ */
+export function computeResonanceFigures(input: {
+  concepts: ResonanceFigureConcept[];
+  parseSpec: ParseInteractiveSpecFn;
+}): ResonanceFigures {
+  const byTopic = new Map<string, ResonanceTopicFigures>();
+  let hookTotal = 0;
+  let beatsTotal = 0;
+  let trapTotal = 0;
+  let stanceTotal = 0;
+
+  for (const concept of input.concepts) {
+    const hook = concept.atoms.find((a) => a.atom_type === 'hook');
+    if (!hook) continue; // no hook authored — not part of any count
+
+    hookTotal++;
+    let hasBeats = false;
+    let hasTrap = false;
+    let hasStance = false;
+
+    const parsed = input.parseSpec(hook.content);
+    if (parsed.ok) {
+      const spec = parsed.spec as { kind?: string; narration_steps?: Array<Record<string, unknown>> };
+      const steps = spec?.kind === 'simulation' && Array.isArray(spec.narration_steps) ? spec.narration_steps : [];
+      if (steps.length > 0) {
+        hasBeats = true;
+        beatsTotal++;
+        for (const step of steps) {
+          if (step && typeof step === 'object' && (step as any).trap) hasTrap = true;
+          if (step && typeof step === 'object' && ((step as any).text_shaken || (step as any).text_assured)) {
+            hasStance = true;
+          }
+        }
+        if (hasTrap) trapTotal++;
+        if (hasStance) stanceTotal++;
+      }
+    }
+
+    if (concept.topic) {
+      let t = byTopic.get(concept.topic);
+      if (!t) {
+        t = {
+          topic: concept.topic,
+          concepts_with_hook: 0,
+          concepts_with_beats: 0,
+          concepts_with_trap_beat: 0,
+          concepts_with_stance_beats: 0,
+        };
+        byTopic.set(concept.topic, t);
+      }
+      t.concepts_with_hook++;
+      if (hasBeats) t.concepts_with_beats++;
+      if (hasTrap) t.concepts_with_trap_beat++;
+      if (hasStance) t.concepts_with_stance_beats++;
+    }
+  }
+
+  return {
+    by_topic: Array.from(byTopic.values()).sort((a, b) => a.topic.localeCompare(b.topic)),
+    concepts_with_hook: hookTotal,
+    concepts_with_beats: beatsTotal,
+    concepts_with_trap_beat: trapTotal,
+    concepts_with_stance_beats: stanceTotal,
+  };
+}
+
+/**
+ * IO wrapper around computeResonanceFigures(). Loads the parser via the
+ * SAME guarded helper the orchestrator uses (`loadInteractiveSpecParser` —
+ * never a duplicate validator); a missing validator or any scan failure
+ * degrades to `NOT_MEASURABLE_RESONANCE`, never to zeros.
+ */
+async function gatherResonanceFigures(): Promise<ResonanceFigures> {
+  const parseSpec = await loadInteractiveSpecParser();
+  if (!parseSpec) return NOT_MEASURABLE_RESONANCE;
+
+  try {
+    const { listConceptIds, loadConceptAtoms } = await import('../content/atom-loader');
+    const { CONCEPT_MAP } = await import('../constants/concept-graph');
+
+    const concepts: ResonanceFigureConcept[] = [];
+    for (const id of listConceptIds()) {
+      const atoms = await loadConceptAtoms(id);
+      concepts.push({
+        id,
+        topic: CONCEPT_MAP.get(id)?.topic,
+        atoms: atoms
+          .filter((a) => a.atom_type === 'hook')
+          .map((a) => ({ atom_type: a.atom_type, content: a.content })),
+      });
+    }
+    return computeResonanceFigures({ concepts, parseSpec });
+  } catch (err) {
+    console.warn(`[admin-content-maturity] resonance figure scan failed: ${(err as Error).message}`);
+    return NOT_MEASURABLE_RESONANCE;
+  }
 }
 
 /**
@@ -550,7 +778,10 @@ async function safeCount(pool: Pool, sql: string, params: unknown[] = []): Promi
 
 async function gatherFacts(): Promise<MaturityFacts> {
   const pool = getSharedPool();
-  const stanceFigures = await gatherStanceFigures();
+  const [stanceFigures, resonance] = await Promise.all([
+    gatherStanceFigures(),
+    gatherResonanceFigures(),
+  ]);
   const stance_rejected_drafts = countFilesRecursive(VARIANT_DRAFTS_DIR);
   if (!pool) {
     return {
@@ -562,6 +793,7 @@ async function gatherFacts(): Promise<MaturityFacts> {
       active_atom_overrides: null,
       ...stanceFigures,
       stance_rejected_drafts,
+      resonance,
     };
   }
 
@@ -585,6 +817,7 @@ async function gatherFacts(): Promise<MaturityFacts> {
     active_atom_overrides: overrides,
     ...stanceFigures,
     stance_rejected_drafts,
+    resonance,
   };
 }
 

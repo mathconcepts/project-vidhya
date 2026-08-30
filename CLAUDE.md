@@ -1491,6 +1491,100 @@ derives its concept list from disk rather than hardcoding it; the old hardcoded
 28 meant ~73 concepts were never mounted through React by any test. 1489
 assertions, base-atom count pinned at 880.
 
+### Resonance beats (v4.44.0)
+
+Fuses a hook/intuition atom's prose, its motion, and its one moment-of-need
+mistake into a single scripted experience instead of three siloed cards.
+Plan: `docs/designs/2026-08-30-resonance-fused-atoms-plan.md`.
+
+**Schema — additive on `SimulationSpec` (`v: 1` unchanged).**
+`frontend/src/components/lesson/interactives/types.ts`'s `narration_steps[]`
+gains, per beat: `text_shaken` / `text_assured` (per-stance overrides, base
+`text` is the fallback), `emphasize` (heavier stroke on that beat's trace
+arc while active, reverts after), and `trap: { text, avoid }` (makes that
+beat THE trap beat — schema-enforced at most one per scene). An optional
+top-level `ghost: { x_expr, y_expr }` draws the mistaken path dashed grey
+once the trap beat is reached. Beats are capped at 8; `parseInteractiveSpec`
+validates all of it — the same real parser every consumer uses, never a
+second copy of the rules (see below).
+
+**Design contract highlights** (full 13-item contract in the plan's §W1):
+a scene carrying beats **autoplays once on mount** (reduced motion never
+autoplays — static final-frame + full text storyboard instead); the beat
+caption is full **17px body text**, not metadata size; a thin **segmented
+beat bar** (not a second dot row) renders in ink (`#1d1d1f`) and
+`--separator` hairline only — no accent color, since progress here is
+neither mastery (green) nor AI/tutor (indigo); the trap row ("Where marks
+are lost") is hairline-ruled plain text, no icon, and **persists on screen
+for the rest of playback** once reached rather than blinking past; and
+**at most one trap beat per scene**, third-person register only ("students
+read the 2 as…", never "you might…").
+
+**Delivery.** `AtomCardRenderer.tsx`: when a hook/intuition atom's body
+parses as a `simulation` spec, it renders as the card's actual figure (the
+`.vidhya-atom-stage` slot GIFs already use) instead of below the prose as a
+separate sidecar — one hoisted parse feeds the entry-preset choice, the
+figure slot, and sidecar suppression. A `retrieval_prompt` atom mid-answer
+disclosure is exempt (a promoted scene there would leak the answer early).
+
+**Generation (batch/operator runs only).** `src/content/resonance-strategy.ts`
+joins the founder's 116-topic content-generation spec
+(`atomic-topic-spec.ts`) to `concept_id` via `atomic-concept-map.ts`
+(100/116 resolve); a concept mapped from more than one atomic id — e.g.
+`eigenvalues` ← `LA-06`+`LA-07` — merges hooks by concatenation + dedup,
+takes `base_sequence`/`attention_design_hypothesis` from the lowest atomic
+id. `orchestrator.ts`'s `buildPrompt()` adds a fifth block instructing
+hook/intuition generation to emit one fused scene (beats + exactly one trap
+woven from the concept's own pain-point registry) instead of the retired
+"keep to a single learning beat" line. Every generated fence is
+re-validated post-generation through the SAME renderer parser — one
+regeneration attempt on an invalid shape, then the fence is stripped and
+the prose kept, never served broken or silently empty.
+
+**Personalization safety exclusion — deliberate, two layers.** The
+per-student regeneration path (`personalized-regen.ts` → `generateConcept`)
+never receives the beat-scripting prompt block in the first place (layer 1:
+`buildPrompt` reads `generation_context`); and *any* `simulation`-kind fence
+that reaches `generateOne` on that path is stripped unconditionally before
+the write into `student_atom_overrides` (layer 2, defense-in-depth — schema
+validation can't catch well-formed but wrong mathematics). That path has no
+CI gate, no Wolfram check, and no human pedagogy review before a struggling
+student sees it, so an unreviewed scene must never reach it.
+
+**Shared parser loader.** `src/content/interactive-spec-loader.ts` is the
+ONE guarded dynamic-import of the frontend's real `parseInteractiveSpec`
+(`orchestrator.ts`'s fence policy and `admin-content-maturity-routes.ts`'s
+resonance coverage figures both call it — never a duplicate validator).
+Dynamic because this package's `rootDir: "./src"` forbids a static import
+into `frontend/src`; guarded because the demo image ships `frontend/dist`
+without `frontend/src`, so it degrades to `null` there — every dev/test/CI
+environment gets the real validator.
+
+**Admin resonance coverage.** `GET /api/admin/content-maturity` reports,
+per concept-graph topic (via `loadConceptAtoms` + the shared parser, same
+family as `computeStanceFigures`): how many hook atoms carry a beats
+scene, how many of those carry the trap beat, how many carry per-stance
+beat text. `null` (not zero) when the validator can't be loaded in this
+process. Additive on `MaturityReport` — a new `resonance` field plus a
+`resonance_coverage` signal; no existing field reshaped.
+
+**Coverage: 24 of 26 GATE Linear Algebra concepts, plus 2 non-LA proof
+scenes** (`limits`, `derivatives-basic`) — 26 fused scenes × 3 stance files
+each. Two honest pass-overs, named rather than faked: `vector-spaces` (the
+idea's generality can't be captured by one 2D trace) and `lu-factorization`
+(a procedural algorithm — no honest geometry to animate).
+
+**Measurement.** `scripts/activate-resonance-experiment.ts` (idempotent,
+`--dry-run`, `--deactivate`, same pattern as
+`activate-personalised-selector.ts`) creates the `resonance_hooks_v1_gate_ma`
+experiments row so the existing lift ledger can evaluate resonance hooks
+once real session volume exists — no auto-promotion behavior change.
+
+**Known-unrun:** no provider key is configured in this environment, so a
+live generation run of a resonance-carrying hook has not been exercised
+end-to-end — coverage on the generation side is unit-level (prompt assembly
++ fence validation against fixtures). The first live batch is the
+operator's smoke test, same as the v4.33.0 precedent.
 
 ## Skill routing
 

@@ -1088,6 +1088,137 @@ ENG DUAL VOICES — CONSENSUS TABLE:
 
 ---
 
+# IMPLEMENTATION RECORD (2026-08-30, v4.44.0)
+
+What actually landed on `claude/autoplan-content-resonance-q5p197`, per
+workstream, against `git log origin/main..HEAD --stat --oneline`. All test
+counts below were run and observed directly in this session, not carried
+over from commit messages.
+
+## W1 — Resonance beats: schema + renderer
+
+Commit `2a76479`. `frontend/src/components/lesson/interactives/types.ts`
+gains the additive `narration_steps[].text_shaken/text_assured/emphasize/trap`
+fields, the top-level `ghost` field, and the beat-cap/single-trap/ghost-expr
+validation rules on `parseInteractiveSpec`. `Simulation.tsx` implements
+autoplay-on-mount-with-beats, the segmented beat bar, per-beat trace
+emphasis (path split into segments), the trap-hold state machine, the
+reduced-motion storyboard, and per-stance beat text selection via
+`served_stance`. `globals.css` gains the trap-row and beat-bar styles.
+
+**Tests:** `types.test.ts` — 57 tests. `Simulation.test.tsx` — 50 tests.
+107 frontend tests, all passing at the time of this record.
+
+## W2 — Fused delivery: the animation joins the stage
+
+Commit `beb7a36`. `AtomCardRenderer.tsx` hoists one `useMemo`-cached
+`parseInteractiveSpec` call per atom, feeding the entry-preset choice, the
+`.vidhya-atom-stage` figure slot (simulation > GIF precedence, with the
+`stage !== 'in_disclosure'` carve-out for `retrieval_prompt` atoms), and
+`InteractiveSidecar` suppression so a promoted simulation never
+double-renders. Also closes the motion-token violation named in the plan's
+W1 blast-radius note: `PRESET_VARIANTS` now routes through `framerDuration()`
+instead of raw literals, and the banned shake-then-settle preset is
+replaced with a compliant settle.
+
+**Tests:** `AtomCardRenderer.resonanceFigure.test.tsx` (new file) — 13
+tests, all passing.
+
+## W3 — Resonance coverage: Linear Algebra flagship + non-LA proof
+
+Commits `bdadf1d`, `7985614`, `cfe2d37`, `03fafb2` (slices C1–C4). 24 of 26
+GATE Linear Algebra concepts got a fused hook scene (4 pre-existing scenes
+upgraded in place with stress/trap/stance fields: `eigenvalues`,
+`orthogonality`, `determinants`, `linear-transformations`; 20 newly
+authored), plus 2 non-LA proof-of-generalization scenes (`limits`,
+`derivatives-basic`) — 26 concepts × 3 stance files (base + shaken +
+assured, byte-identical fenced block) = 78 content files touched. Exceeds
+the plan's `≥20/26` LA success bar.
+
+Two honest, named pass-overs (both recorded in the authoring commit
+messages, not invented after the fact):
+- `vector-spaces` — the concept's generality can't be captured by one 2D
+  parametric trace.
+- `lu-factorization` — a procedural algorithm; no honest geometry to
+  animate without misleading.
+
+No dedicated new test file — coverage is exercised by the full-corpus
+regression mount (`MarkdownAtomRenderer.regression.test.tsx`, unchanged
+880-base-atom pin — resonance touches existing hook atoms, not new ones)
+and `ci:variant-agreement`'s byte-identical-fence check, both run as part
+of the existing suites.
+
+## W4 + W4.5 — Generation wiring + measurement
+
+Commit `6e927ac`. `src/content/resonance-strategy.ts` (new) joins
+`atomic-topic-spec.ts` to `concept_id` via `atomic-concept-map.ts`, with the
+explicit N:1 merge rule for multi-atomic-id concepts (`eigenvalues` ←
+`LA-06`+`LA-07` is the tested case). `orchestrator.ts` gains
+`buildResonanceBlock()` (the fifth prompt block, batch-context only),
+`enforceInteractiveSpecPolicy()` (post-generation fence validation: one
+regen attempt on invalid shape, unconditional strip of any `simulation`
+fence when `generation_context === 'personalized'`), and the literal
+prompt-cap carve-out sentence. `personalized-regen.ts` threads
+`generation_context: 'personalized'` through to `buildPrompt`.
+`concept-orchestrator/types.ts` gains the `generation_context` field.
+`scripts/activate-resonance-experiment.ts` (new) creates the
+`resonance_hooks_v1_gate_ma` experiments row. `linear-algebra.yaml` and
+`calculus.yaml` gain the beat-instruction guidance block under `hook:`.
+
+**Tests:** `resonance-strategy.test.ts` — 7 tests. `resonance-fence-validation.test.ts`
+— 7 tests. `resonance-prompt.test.ts` — 11 tests. 25 backend tests, all
+passing.
+
+## W5 — Gates, tests, docs (this record's own workstream)
+
+Files touched in this pass:
+- `src/content/interactive-spec-loader.ts` (new) — the dynamic-import
+  loader for the renderer's real `parseInteractiveSpec`, extracted out of
+  `orchestrator.ts` so it has exactly one implementation; `orchestrator.ts`
+  refactored to import it instead of carrying a private copy (behavior
+  unchanged — proved by the pre-existing W4 fence-validation tests still
+  passing unmodified against the refactor).
+- `src/api/admin-content-maturity-routes.ts` — additive `ResonanceFigures`
+  / `ResonanceTopicFigures` types, the pure `computeResonanceFigures()`
+  (mirrors `computeStanceFigures()`'s discipline: null means
+  "not measurable", never zero), the IO wrapper `gatherResonanceFigures()`,
+  and a new `resonance_coverage` signal + top-level `resonance` field on
+  `MaturityReport` — no existing field reshaped.
+- `src/api/__tests__/content-maturity.test.ts` — 14 new tests (6 on the
+  `resonance_coverage` signal's severity/label/detail rules, 8 on
+  `computeResonanceFigures`'s pure aggregation, including the N:1-per-topic,
+  no-hook-atom, no-topic-mapping, and non-simulation-kind cases). File
+  total: 41 tests, all passing.
+- `src/content/__tests__/interactive-spec-loader.test.ts` (new) — 5 tests
+  (real-parser resolution, valid/invalid fence handling, cache identity,
+  cache reset), all passing.
+- `CHANGELOG.md` — new `[4.44.0]` entry.
+- `VERSION` — `4.43.0` → `4.44.0`.
+- `CLAUDE.md` — new `### Resonance beats (v4.44.0)` section.
+- This plan doc — this record.
+
+**Verification run in this session:**
+- `npx vitest run src/api/__tests__/content-maturity.test.ts` — 41/41 passed.
+- `npx vitest run src/content/__tests__/interactive-spec-loader.test.ts` — 5/5 passed.
+- `npx vitest run src/content/concept-orchestrator/` (23 files, includes the
+  W4 resonance suites against the refactored shared loader) — 200/200 passed.
+- `cd frontend && npx vitest run` on the three W1/W2 resonance files
+  (`types.test.ts`, `Simulation.test.tsx`, `AtomCardRenderer.resonanceFigure.test.tsx`)
+  — 120/120 passed.
+- `npx tsc --noEmit` — clean.
+- Full backend suite (`npm test`) — **348 files, 4517 passed, 4 skipped, 1
+  todo, 0 failed.**
+
+**Deviations from the plan:** none structural. The shared
+`interactive-spec-loader.ts` module is new relative to the plan's file map
+(the plan named the loading *approach* to reuse, not a specific new file);
+extracting it into `src/content/` rather than duplicating the loader inline
+in `admin-content-maturity-routes.ts` was the more literal reading of "a
+shared helper" in the plan's own §W5 instruction, and it also collapsed
+`orchestrator.ts`'s private copy into the same one implementation.
+
+---
+
 ## GSTACK REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |

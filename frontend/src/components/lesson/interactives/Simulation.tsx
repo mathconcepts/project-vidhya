@@ -187,8 +187,17 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   // "Hold once per mount": NOT cleared by reset()/replay, only by remount.
   const heldTrapRef = useRef(false);
   const holdUntilRef = useRef<number | null>(null);
+  // Mirror of `progress` so the tick loop never mutates refs inside a
+  // setProgress functional updater — StrictMode double-invokes updaters, and
+  // an impure one silently defeated the once-per-mount trap hold in dev.
+  const progressRef = useRef(hasBeats && !reducedMotion ? 0 : 1);
 
   const duration = (spec.duration_sec ?? 4) * 1000;
+
+  function applyProgress(v: number) {
+    progressRef.current = v;
+    setProgress(v);
+  }
 
   // Tick loop
   useEffect(() => {
@@ -205,29 +214,30 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         holdUntilRef.current = null;
       }
 
-      setProgress((p) => {
-        const next = p + dt / duration;
-        if (
-          trapStep &&
-          shouldHoldForTrap({
-            prevProgress: p,
-            nextProgress: next,
-            trapAtProgress: trapStep.at_progress,
-            isSeek: false,
-            reducedMotion,
-            alreadyHeld: heldTrapRef.current,
-          })
-        ) {
-          heldTrapRef.current = true;
-          holdUntilRef.current = now + DUR_SLOW_S * 1000;
-          return trapStep.at_progress;
-        }
-        if (next >= 1) {
-          setPlaying(false);
-          return 1;
-        }
-        return next;
-      });
+      // All side effects live in the tick body, not a setProgress updater —
+      // updaters must stay pure (StrictMode double-invokes them).
+      const p = progressRef.current;
+      const next = p + dt / duration;
+      if (
+        trapStep &&
+        shouldHoldForTrap({
+          prevProgress: p,
+          nextProgress: next,
+          trapAtProgress: trapStep.at_progress,
+          isSeek: false,
+          reducedMotion,
+          alreadyHeld: heldTrapRef.current,
+        })
+      ) {
+        heldTrapRef.current = true;
+        holdUntilRef.current = now + DUR_SLOW_S * 1000;
+        applyProgress(trapStep.at_progress);
+      } else if (next >= 1) {
+        applyProgress(1);
+        setPlaying(false);
+      } else {
+        applyProgress(next);
+      }
       rafRef.current = requestAnimationFrame(tick);
     }
     lastTickRef.current = 0;
@@ -245,12 +255,12 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   }, [progress, trapStep]);
 
   function play() {
-    if (progress >= 1) setProgress(0);
+    if (progressRef.current >= 1) applyProgress(0);
     setPlaying(true);
   }
   function reset() {
     setPlaying(false);
-    setProgress(reducedMotion ? 1 : 0);
+    applyProgress(reducedMotion ? 1 : 0);
     setTrapRevealed(false);
     holdUntilRef.current = null;
   }
@@ -259,7 +269,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
    *  loop's own natural-crossing check above). */
   function seekTo(atProgress: number) {
     lastTickRef.current = 0;
-    setProgress(atProgress);
+    applyProgress(atProgress);
   }
 
   if (samples.error) {

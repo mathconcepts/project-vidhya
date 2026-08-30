@@ -351,7 +351,7 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
   // see enforceInteractiveSpecPolicy's own doc comment for the two things
   // it does (regen-once-then-strip on invalid shape; unconditional strip of
   // any simulation fence on the personalized path).
-  const content = await enforceInteractiveSpecPolicy(atomId, args, prompt, rawContent);
+  const { content, regenCalls } = await enforceInteractiveSpecPolicy(atomId, args, prompt, rawContent);
 
   const defaults = ATOM_TYPE_DEFAULTS[args.atom_type];
   const meta: GenerationMeta = {
@@ -360,7 +360,10 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
     pyq_grounded: pyqGrounding.map((g) => g.pyq_id),
     template: template ? `${args.topic_family}.${args.atom_type}` : undefined,
     generated_at: new Date().toISOString(),
-    cost_usd: ESTIMATED_COST_USD[args.atom_type],
+    // A fence-validation regeneration is a second full LLM call — it must
+    // reach recordSpend/canSpend, not ride free on the single-call estimate
+    // (adversarial + red-team confirmed finding, 2026-08-30).
+    cost_usd: ESTIMATED_COST_USD[args.atom_type] * (1 + regenCalls),
     ...consensusMeta,
   };
 
@@ -501,20 +504,22 @@ async function enforceInteractiveSpecPolicy(
   args: GenerateOneArgs,
   prompt: string,
   content: string,
-): Promise<string> {
-  if (!content.includes('```interactive-spec')) return content;
+): Promise<{ content: string; regenCalls: 0 | 1 }> {
+  if (!content.includes('```interactive-spec')) return { content, regenCalls: 0 };
 
   const parseSpec = await loadInteractiveSpecParser();
   if (!parseSpec) {
     console.warn(`[orchestrator] ${atomId}: interactive-spec fence present but the validator is unavailable in this process — shipping unvalidated`);
-    return content;
+    return { content, regenCalls: 0 };
   }
 
   let check = parseSpec(content);
   let finalContent = content;
+  let regenCalls: 0 | 1 = 0;
 
   if (!check.ok) {
     console.warn(`[orchestrator] ${atomId}: invalid interactive-spec fence (${check.reason}) — regenerating once`);
+    regenCalls = 1;
     const regen = await generateAtomContent(args, prompt);
     if (regen.content) {
       const recheck = parseSpec(regen.content);
@@ -523,20 +528,20 @@ async function enforceInteractiveSpecPolicy(
         check = recheck;
       } else {
         console.warn(`[orchestrator] ${atomId}: regeneration still invalid (${recheck.reason}) — stripping fence, keeping prose`);
-        return stripInteractiveSpecFence(regen.content);
+        return { content: stripInteractiveSpecFence(regen.content), regenCalls };
       }
     } else {
       console.warn(`[orchestrator] ${atomId}: regeneration produced no content — stripping fence, keeping prose`);
-      return stripInteractiveSpecFence(content);
+      return { content: stripInteractiveSpecFence(content), regenCalls };
     }
   }
 
   if (args.generation_context === 'personalized' && check.ok && check.spec?.kind === 'simulation') {
     console.warn(`[orchestrator] ${atomId}: stripped simulation fence on personalized-regen path — unreviewed scenes never reach student_atom_overrides`);
-    return stripInteractiveSpecFence(finalContent);
+    return { content: stripInteractiveSpecFence(finalContent), regenCalls };
   }
 
-  return finalContent;
+  return { content: finalContent, regenCalls };
 }
 
 /**

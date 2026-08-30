@@ -82,11 +82,23 @@ export default function PracticePage() {
 
     apiFetch<{ problem: Problem }>(`/api/problems/id/${problemId}`)
       .then(res => {
+        // /investigate (2026-08-30): a modern-catalog item reached through
+        // this legacy topic browser has no correct_answer in its response
+        // by design (gate-topics-modern-bridge.ts never sends one) — this
+        // page's own grading is a client-side string compare, unsafe for
+        // content whose whole design principle elsewhere is "never expose
+        // the answer key before grading". Hand off to the real, server-
+        // graded flow instead of rendering an answer form with nothing to
+        // check against.
+        if (!res.problem.correct_answer) {
+          navigate(`/attempt/${problemId}`, { replace: true });
+          return;
+        }
         setProblem(res.problem);
         trackEvent('problem_view', { problemId, topic: res.problem.topic });
       })
       .finally(() => setLoading(false));
-  }, [problemId]);
+  }, [problemId, navigate]);
 
   // Resolve the concept behind this question so Explore can open its lesson
   // (and therefore its interactives) instead of the prose-only topic page.

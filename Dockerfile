@@ -50,6 +50,20 @@ COPY --from=builder /app/tsconfig.json ./
 # auto-migrator, exam-pack loader, and /demo-login auto-seed work without
 # host bind-mounts.
 COPY --from=builder /app/supabase ./supabase
+
+# The founder's 116-topic content-generation specification, read at runtime
+# by src/content/atomic-topic-spec.ts (which resolves ../../docs/content-spec
+# from its own module URL) and served by GET /api/admin/content-spec/*.
+# Only this subdirectory, not all of docs/ — the rest is prose for humans and
+# has no runtime consumer.
+#
+# Without it the loader's two readFileSync calls throw, and it is written to
+# swallow that: a missing spec file is treated as "no spec available", never
+# an error. That is right for a DB-less local run and wrong for a shipped
+# image, where the effect was an admin API that answered 200 with an empty
+# catalogue and said nothing about why. The feature was dead in every
+# deployed image from the day it shipped.
+COPY --from=builder /app/docs/content-spec ./docs/content-spec
 COPY --from=builder /app/data ./data
 COPY --from=builder /app/demo ./demo
 COPY --from=builder /app/config ./config

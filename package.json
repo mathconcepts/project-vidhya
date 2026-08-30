@@ -35,6 +35,7 @@
     "ci:content-integrity": "tsx scripts/check-content-integrity.ts",
     "ci:katex-fences": "tsx scripts/check-katex-fences.ts",
     "ci:intent-catalogue": "tsx scripts/check-intent-catalogue.ts",
+    "ci:boot": "tsx scripts/check-boot.ts",
     "ci:interactive-specs": "tsx scripts/lint-interactive-specs.ts",
     "ci:demo-rails": "tsx scripts/check-demo-rails.ts",
     "export:bundles": "tsx scripts/export-bundles.ts",
@@ -95,7 +96,7 @@
     "ci:la-walkthrough": "tsx scripts/check-la-walkthrough.ts",
     "ci:gif-scenes": "tsx scripts/check-gif-scenes.ts",
     "ci:aggregate-drift": "tsx scripts/check-ci-aggregate-drift.ts",
-    "ci": "npm run lint:fork-test && CONTENT_CI_STRICT=true npm run ci:content-gate && npm run ci:pg-allowlist && npm run ci:connection-budget && npm run ci:seam-registry && npm run ci:playbook-convention && npm run ci:content-integrity && npm run ci:katex-fences && npm run ci:interactive-specs && npm run ci:gif-scenes && npm run ci:template-coverage && npm run ci:variant-agreement && npm run ci:practice-items && npm run ci:demo-rails && npm run ci:syllabus-floor && npm run ci:la-walkthrough && npm run ci:intent-catalogue"
+    "ci": "npm run lint:fork-test && CONTENT_CI_STRICT=true npm run ci:content-gate && npm run ci:pg-allowlist && npm run ci:connection-budget && npm run ci:seam-registry && npm run ci:playbook-convention && npm run ci:content-integrity && npm run ci:katex-fences && npm run ci:interactive-specs && npm run ci:gif-scenes && npm run ci:template-coverage && npm run ci:variant-agreement && npm run ci:practice-items && npm run ci:demo-rails && npm run ci:syllabus-floor && npm run ci:la-walkthrough && npm run ci:intent-catalogue && npm run ci:boot"
   },
   "keywords": [
     "adaptive-learning",

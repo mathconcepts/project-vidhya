@@ -254,6 +254,26 @@ jobs:
       - name: Intent catalogue + intent profiles validation
         run: npm run ci:intent-catalogue
 
+      # The gate that would have caught the boot crash PR #134 shipped, and
+      # the one every other signal here missed. src/content/atomic-topic-spec.ts
+      # used __dirname in a "type": "module" package, on an unconditional
+      # import chain from src/server.ts, so `npx tsx src/server.ts` — the
+      # Dockerfile CMD — died at module evaluation on every boot of main.
+      # Typecheck, all 17 gates and 4263 tests were green throughout, and
+      # Render's deploy for that commit failed with update_failed while
+      # production quietly kept serving the previous image for a day.
+      #
+      # The pre-existing server-boot-smoke test could not see it: it runs
+      # under vitest's transformer, which injects a __dirname shim that tsx
+      # does not. This step runs the real production command in a subprocess
+      # and requires the process to answer its own /health, so anything that
+      # throws at module-evaluation time fails here regardless of what a
+      # bundler would have papered over. DB-less on purpose — that is the
+      # path the demo deploy runs, and needing a database would make this an
+      # integration test rather than a boot check. ~3s.
+      - name: Server boots under the production loader
+        run: npm run ci:boot
+
       # B1c (docs/designs/2026-08-28-wolfram-t3-content-strategy.md): the
       # Tier 2.5 SymPy verifier (src/verification/verifiers/sympy.ts) shells
       # out to python3 + sympy. Neither Dockerfile installs either — this is

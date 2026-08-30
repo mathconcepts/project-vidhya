@@ -147,6 +147,64 @@ Renderer (`Simulation.tsx` + a small amount of `types.ts`):
 - **Trap copy register:** third person, always — "students read the 2 as…", never
   "you might…". A trap beat lands mid-hook for a shaken student; the locked shaken
   register (no mention of the reader's state) applies to trap text too.
+
+#### The design contract (pixel-level decisions, locked before implementation)
+
+1. **Autoplay.** Today `Simulation.tsx` mounts at `progress = 1, playing = false` —
+   a finished static trace. A scene **with `narration_steps` autoplays once on
+   mount** (`progress = 0, playing = true`); without beats, today's tap-to-play
+   stays; reduced motion never autoplays (static path unchanged). Without this
+   decision the entire "the first thing they see moves" premise silently ships as
+   a still image behind a play button.
+2. **Beat caption is body text: 17px** (the student reads it as the primary
+   sentence of the experience — the current 12px is a design-system floor
+   violation this plan inherits and must fix). The reduced-motion note stays 13px
+   metadata.
+3. **Chrome hierarchy.** When beats exist: `spec.title` is NOT rendered as a
+   heading (it becomes the scene's `aria-label`; the prose heading above already
+   names the atom) and play/pause/reset demote to a compact control row beside the
+   beat bar. SVG → caption (primary) → trap row (secondary) → beat bar + controls
+   (tertiary). Five elements never compete.
+4. **Beat bar colors.** Filled portion: ink `#1d1d1f`. Unfilled: `--separator`
+   hairline. **No accent color** — progress is neither mastery (green) nor
+   AI/tutor (indigo); reaching for green here breaks the two-accent law.
+5. **`emphasize` mechanics.** Bounded to the active beat's arc
+   `[beat.at_progress, next.at_progress)`; stroke 2 → 3.5; **reverts when the beat
+   passes** — permanent heaviness would erase the contrast that signaling depends
+   on.
+6. **Trap row spec.** Label "Where marks are lost" in 13px metadata caps; trap
+   text and "Avoid:" line at 15px supporting; `--separator` hairline above; **no
+   icon** (status-as-icon is banned; this must never read as a warning banner).
+   No stance variants on trap text — **deliberate**: the mistake is the same
+   mistake for every student and the wording is register-neutral exam-craft in
+   third person; keeping it single also keeps the shared fence smaller.
+7. **Trap hold.** The playhead hold at the trap beat applies only on the first
+   uninterrupted autoplay per mount; seeking skips holds; replays in the same
+   mount don't hold again (a returning spaced-repetition student is not nagged).
+8. **At most ONE beat may carry `trap` — schema-enforced**, not guidance: the
+   single top-level `ghost` is that trap's counterpart, and two trap beats with
+   one ghost is undefined. The validator refuses multiples (generation can't
+   drift into it either).
+9. **Beat bar renders only when `beats.length > 1`** (a one-segment scrubber is
+   chrome with no function).
+10. **Seek behavior.** Tap while playing → continue playing from the new point;
+    tap while paused → move there, stay paused. Ghost/emphasis render as pure
+    functions of progress, so rapid seeking cannot flicker state.
+11. **Reduced-motion storyboard layout** (the accessibility-critical path,
+    sketched, not asserted): final-frame SVG, then an ordered list — each row is
+    a 13px index label + the beat's 17px text; the trap beat's row keeps the
+    hairline rule + "Avoid:" line; one closing 15px line describes the ghost
+    ("The dashed grey path is the common wrong turn."). The full argument, zero
+    motion.
+12. **Verification visibility — deliberate no.** W3's Wolfram checks are an
+    authoring discipline, not a runtime receipt object; the receipt border is a
+    promise reserved for `<ReceiptBorder receipt={...}>` with a real receipt, and
+    fabricating one for authored scenes would spend the product's trust signal on
+    decoration. If scenes later flow through the verification pipeline with real
+    receipts, that PR may revisit.
+13. **≥720px sticky column with the taller card:** if the figure block exceeds
+    the viewport, sticky simply stops pinning and the column scrolls with the
+    page — no internal scrollbars.
 - **Reduced motion:** unchanged contract (progress pinned to 1, final frame) plus
   every beat listed as static text rows with stress + trap rows intact — the full
   argument survives with zero motion.
@@ -676,5 +734,100 @@ Plan §4, §5, §6 (amended in place this phase).
 | Diagrams produced    | 3 (dream-state, architecture, registries)   |
 | Stale diagrams found | 0 (none exist in touched files)             |
 | Unresolved decisions | 2 (gate: altitude premise; trap→practice)   |
++====================================================================+
+```
+
+---
+
+# APPENDIX B — /autoplan Phase 2: Design review record (2026-08-30)
+
+Mockup generation unavailable with evidence in hand (design binary: "No OpenAI API
+key found") — wireframe/text fallback per the documented degradation path. Codex
+unavailable → `[subagent-only]`.
+
+## Step 0 — Design scope
+
+Initial design completeness rating: **6/10** — strong behavioral/system specs, but
+the one new UI surface (the fused beat/trap scene) lacked a pixel-level contract.
+DESIGN.md exists (Vidhya Clarity) → all decisions calibrated against it. Existing
+leverage: `.vidhya-atom-stage`, motion tokens, `AnswerReveal` disclosure pattern,
+hairline-row idiom from `structured` rendering. Focus: all 7 passes (autoplan P1).
+
+## Passes (scores before → after amendments)
+
+| Pass | Score | Findings → resolution |
+|---|---|---|
+| 1 Info architecture | 6 → 9 | Stacking order unstated; chrome competition (title/controls/caption/trap/bar); title redundant → contract items 3; figure-block order locked |
+| 2 Interaction states | 7 → 9 | Trap-row persistence; autoplay initial state (CRITICAL — today mounts finished+paused); single-beat bar; mid-play seek; multi-trap × single ghost → contract items 1, 7-10 + schema rule |
+| 3 Journey/emotional arc | 7 → 9 | Arc breaks at "look" (no autoplay) and "way out" (transient trap) — both fixed; repeat-viewing hold fatigue → hold once per mount |
+| 4 AI slop risk | 8 → 9 | Dot-row-as-second-pager confusion → segmented bar; "no icon" made an explicit rule, not a risk-table hope |
+| 5 Design system | 5 → 9 | CRITICAL: 12px caption vs 17px body floor (inherited violation, now must-fix); bar colors locked to ink/separator (green would break the two-accent law); receipt border: deliberate no with reason |
+| 6 Responsive & a11y | 7 → 9 | aria-live caption, keyboard-steppable segments, 44px zones, reduced-motion storyboard designed (not asserted), sticky-overflow rule |
+| 7 Unresolved decisions | — | 13 decisions locked in "The design contract"; 0 deferred |
+
+## Dual voices — Design
+
+CODEX SAYS: [codex-unavailable]
+
+CLAUDE SUBAGENT (design — independent review): 17 findings; 2 critical (autoplay
+never decided — today's component mounts at progress=1/paused; caption at 12px
+under the 17px floor), 6 high (active-indicator color trap, emphasize mechanics
+unspecified, trap persistence, multi-trap/single-ghost hole, reduced-motion layout
+unsketched, trap text stance gap), rest medium/low. **All 17 accepted** — every one
+resolved by a stated contract decision (items 1–13) or already fixed by this
+phase's own pass (segmented bar, persistence, third-person register). Two resolved
+as deliberate NOs with stated reasons (receipt border; trap stance variants).
+
+Design litmus scorecard (App UI rules):
+```
+  Litmus check                                   Claude  Codex  Consensus
+  1. Product unmistakable in first screen?       YES     N/A    YES (scene IS the concept)
+  2. One strong visual anchor?                   YES     N/A    YES (the scene; chrome demoted)
+  3. Understandable scanning headlines only?     YES     N/A    YES (storyboard fallback proves it)
+  4. Each section one job?                       YES     N/A    YES (contract item 3)
+  5. Cards actually necessary?                   YES     N/A    YES (figure block, not a new card)
+  6. Motion improves hierarchy, not atmosphere?  YES     N/A    YES (information-carrying only)
+  7. Premium with decorative shadows removed?    YES     N/A    YES (hairlines + type, no elevation)
+[subagent-only]
+```
+
+## Decision Audit Trail — Phase 2 (continues Appendix A numbering)
+
+| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+|---|-------|----------|----------------|-----------|-----------|----------|
+| 19 | P2 | Beats-scenes autoplay once on mount | Mechanical | P5 | Voice critical #1: premise dies behind a play button; reduced motion exempt | tap-to-play |
+| 20 | P2 | Beat caption 17px | Mechanical | P5 | Design-system floor; the caption is THE primary sentence | keep 12px |
+| 21 | P2 | Segmented beat bar, ink/separator only | Mechanical | P5 | Second dot row = second pager; green/indigo are spoken for | dots; accent fill |
+| 22 | P2 | Trap row persists post-reveal; hold once per mount | Mechanical | P1 | "The way out" must be the last thing seen; never nag repeats | transient; hold always |
+| 23 | P2 | Schema: ≤1 trap beat (enforced) | Mechanical | P1 | Single ghost is its counterpart; undefined otherwise; guards generation | guidance only |
+| 24 | P2 | Title → aria-label when beats exist; controls demoted | Mechanical | P5 | Chrome must not compete with the figure | duplicate heading |
+| 25 | P2 | emphasize = active-arc only, stroke 2→3.5, reverts | Mechanical | P5 | Permanent heaviness erases signaling contrast | cumulative heavy |
+| 26 | P2 | No stance variants on trap text (stated) | Mechanical | P5 | Same mistake for everyone; register-neutral third person; smaller fence | per-stance trap |
+| 27 | P2 | No receipt border on scenes (stated) | Mechanical | P4 | No real receipt object exists; the border is a promise, not a style | decorative receipt |
+| 28 | P2 | Reduced-motion storyboard layout sketched | Mechanical | P1 | Accessibility-critical path needs a design, not an assertion | prose-only claim |
+
+## Phase 2 Completion Summary
+
+```
++====================================================================+
+|         DESIGN PLAN REVIEW — COMPLETION SUMMARY                    |
++====================================================================+
+| System Audit         | DESIGN.md exists; UI scope: lesson figure   |
+| Step 0               | 6/10 initial; all 7 passes                  |
+| Pass 1  (Info Arch)  | 6/10 → 9/10                                 |
+| Pass 2  (States)     | 7/10 → 9/10                                 |
+| Pass 3  (Journey)    | 7/10 → 9/10                                 |
+| Pass 4  (AI Slop)    | 8/10 → 9/10                                 |
+| Pass 5  (Design Sys) | 5/10 → 9/10                                 |
+| Pass 6  (Responsive) | 7/10 → 9/10                                 |
+| Pass 7  (Decisions)  | 13 resolved, 0 deferred                     |
++--------------------------------------------------------------------+
+| NOT in scope         | +2 stated NOs (receipt, trap stance)        |
+| What already exists  | stage/tokens/disclosure idioms mapped       |
+| TODOS.md updates     | 0 new (design debt resolved in-plan)        |
+| Approved Mockups     | unavailable (no OpenAI key) — wireframe path|
+| Decisions made       | 13 added to plan ("The design contract")    |
+| Decisions deferred   | 0                                           |
+| Overall design score | 6/10 → 9/10                                 |
 +====================================================================+
 ```

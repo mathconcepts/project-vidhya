@@ -30,6 +30,11 @@ import { getTopicsForExam } from '../curriculum/topic-adapter';
 import { resolveActiveExamId, listExamIds } from '../curriculum/exam-loader';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import {
+  countModernProblemsForTopic,
+  listModernProblemsForTopic,
+  getModernProblemById,
+} from './gate-topics-modern-bridge';
 import { checkRateLimit } from '../lib/rate-limit';
 import { TOPIC_DIR_ALIAS } from '../db/seed-static-pyqs';
 import { gateMcqNegativeMarksFallback } from '../syllabus/exam-catalog';
@@ -147,11 +152,20 @@ async function handleGetTopics(req: ParsedRequest, res: ServerResponse): Promise
     // DB unavailable -- serve the static list with zero counts
   }
 
-  const topics = topicObjects.map(t => ({
+  // /investigate (2026-08-30): the legacy PYQ count alone undercounts the
+  // real content bank ~4-5x (linear-algebra: 29 PYQs vs ~130 items in the
+  // modern practice-item catalog). Additive, never replacing — the
+  // curated official PYQs are real content too, not a stale duplicate of
+  // the modern bank (disjoint id namespaces, `la-NNN` vs `pi-<concept>-NNN`).
+  const modernCounts = await Promise.all(
+    topicObjects.map((t) => countModernProblemsForTopic(t.id).catch(() => 0)),
+  );
+
+  const topics = topicObjects.map((t, i) => ({
     ...t,
     // Same DB-first-with-static-fallback rule as handleGetProblems, so the
     // home page's counts match what clicking into a topic actually shows.
-    problemCount: countMap[t.id] || staticProblemsForTopic(t.id).length,
+    problemCount: (countMap[t.id] || staticProblemsForTopic(t.id).length) + modernCounts[i],
   }));
 
   sendJSON(res, { topics });
@@ -171,6 +185,13 @@ async function handleGetProblems(req: ParsedRequest, res: ServerResponse): Promi
   // so a topic's question count never regresses just because the DB
   // happens to be configured-but-empty. TopicPage.tsx's "Coming soon!"
   // empty state now only fires when NEITHER source has content.
+  // /investigate (2026-08-30): folds in the modern practice-item catalog
+  // alongside the legacy PYQ list — see gate-topics-modern-bridge.ts's
+  // header for why (the count fix above is meaningless if clicking into
+  // the topic still only shows the old, smaller list). Answer-key-free by
+  // construction; never blocks the legacy PYQ response on failure.
+  const modernProblems = await listModernProblemsForTopic(topic).catch(() => []);
+
   try {
     const pool = getPool();
     const result = await pool.query(
@@ -182,12 +203,12 @@ async function handleGetProblems(req: ParsedRequest, res: ServerResponse): Promi
       [topic],
     );
     if (result.rows.length > 0) {
-      return sendJSON(res, { problems: result.rows });
+      return sendJSON(res, { problems: [...result.rows, ...modernProblems] });
     }
-    return sendJSON(res, { problems: staticProblemsForTopic(topic) });
+    return sendJSON(res, { problems: [...staticProblemsForTopic(topic), ...modernProblems] });
   } catch (err) {
     console.error('[gate-routes] handleGetProblems DB error, falling back to static file:', (err as Error).message);
-    sendJSON(res, { problems: staticProblemsForTopic(topic) });
+    sendJSON(res, { problems: [...staticProblemsForTopic(topic), ...modernProblems] });
   }
 }
 
@@ -221,6 +242,13 @@ async function handleGetProblemById(req: ParsedRequest, res: ServerResponse): Pr
 
   const staticMatch = findStaticProblemById(id);
   if (staticMatch) return sendJSON(res, { problem: staticMatch });
+
+  // /investigate (2026-08-30): last resort — a modern-catalog id reached
+  // via TopicPage's merged list. Deliberately answer-key-free; the
+  // frontend detects the missing correct_answer and redirects to the
+  // safe, server-graded /attempt/:id flow. See gate-topics-modern-bridge.ts.
+  const modernMatch = await getModernProblemById(id).catch(() => null);
+  if (modernMatch) return sendJSON(res, { problem: modernMatch });
 
   return sendError(res, 404, 'Problem not found');
 }

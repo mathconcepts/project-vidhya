@@ -47,6 +47,11 @@ import { generateNarration, shouldNarrate } from './tts-generator';
 // Falls back silently (empty string) when no reviewed entry exists.
 import { buildPainPointPromptBlock } from '../../registry/pain-points';
 import { buildPatternPromptBlock } from '../../registry/pedagogy-patterns';
+// Resonance plan §W4 — per-topic attention strategy, joined from the
+// founder's content-generation spec via the hand-verified concept crosswalk.
+// Pure, memoized, read-only — see resonance-strategy.ts's own header for the
+// N:1 merge rule (eigenvalues ← LA-06+LA-07).
+import { resonanceStrategyFor, type ResonanceStrategy } from '../resonance-strategy';
 
 export const ALL_ATOM_TYPES: AtomType[] = [
   'hook', 'intuition', 'formal_definition', 'visual_analogy',
@@ -172,6 +177,10 @@ export async function generateConcept(
       student_context: opts.student_context,
       model_id: opts.model_id,
       tier_models: opts.tier_models,
+      // Resonance plan §W4 — defaults to 'batch' inside generateOne/buildPrompt
+      // when opts carries nothing (every pre-existing caller), so this wiring
+      // is a no-op for them.
+      generation_context: opts.generation_context,
     });
 
     total_cost += generated.meta.cost_usd;
@@ -308,6 +317,12 @@ interface GenerateOneArgs {
    * why that classification is not itself operator-editable.
    */
   tier_models?: TierModels;
+  /**
+   * Resonance plan §W4 — see OrchestratorOptions.generation_context (types.ts)
+   * for the full contract. Defaults to 'batch'; threaded straight through
+   * from generateConcept's opts.
+   */
+  generation_context?: 'batch' | 'personalized';
 }
 
 async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
@@ -327,6 +342,55 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
     pyq_context: formatPyqContext(pyqGrounding),
   });
 
+  const { content: rawContent, sourceCascade, consensusMeta } = await generateAtomContent(args, prompt);
+
+  const atomId = `${args.concept_id}.${args.atom_type.replace('_', '-')}`;
+  // Resonance plan §W4 — post-generation interactive-spec fence validation.
+  // Runs unconditionally for EVERY caller (batch and personalized alike);
+  // see enforceInteractiveSpecPolicy's own doc comment for the two things
+  // it does (regen-once-then-strip on invalid shape; unconditional strip of
+  // any simulation fence on the personalized path).
+  const content = await enforceInteractiveSpecPolicy(atomId, args, prompt, rawContent);
+
+  const defaults = ATOM_TYPE_DEFAULTS[args.atom_type];
+  const meta: GenerationMeta = {
+    source_cascade: sourceCascade,
+    wolfram_grounded: pyqGrounding.length > 0,  // refined when we actually call Wolfram
+    pyq_grounded: pyqGrounding.map((g) => g.pyq_id),
+    template: template ? `${args.topic_family}.${args.atom_type}` : undefined,
+    generated_at: new Date().toISOString(),
+    cost_usd: ESTIMATED_COST_USD[args.atom_type],
+    ...consensusMeta,
+  };
+
+  return {
+    atom_id: atomId,
+    concept_id: args.concept_id,
+    atom_type: args.atom_type,
+    bloom_level: (template?.bloom_floor as BloomLevel | undefined) ?? defaults.bloom,
+    difficulty: defaults.difficulty,
+    exam_ids: ['*'],
+    content,
+    meta,
+  };
+}
+
+/**
+ * The model-calling half of generateOne, factored out so
+ * `enforceInteractiveSpecPolicy`'s one-time regeneration attempt can invoke
+ * exactly the same cascade (single call, or dual-model consensus) a second
+ * time against the same prompt without duplicating either branch. Behavior
+ * unchanged from the pre-resonance-plan generateOne — this is a pure
+ * extraction, not a logic change.
+ */
+async function generateAtomContent(
+  args: GenerateOneArgs,
+  prompt: string,
+): Promise<{
+  content: string;
+  sourceCascade: GenerationSource[];
+  consensusMeta?: { llm_consensus: boolean; consensus_disagreement?: any };
+}> {
   const sourceCascade: GenerationSource[] = [];
   let content = '';
   let consensusMeta: { llm_consensus: boolean; consensus_disagreement?: any } | undefined;
@@ -388,27 +452,159 @@ async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
       )) || '';
   }
 
-  const defaults = ATOM_TYPE_DEFAULTS[args.atom_type];
-  const meta: GenerationMeta = {
-    source_cascade: sourceCascade,
-    wolfram_grounded: pyqGrounding.length > 0,  // refined when we actually call Wolfram
-    pyq_grounded: pyqGrounding.map((g) => g.pyq_id),
-    template: template ? `${args.topic_family}.${args.atom_type}` : undefined,
-    generated_at: new Date().toISOString(),
-    cost_usd: ESTIMATED_COST_USD[args.atom_type],
-    ...consensusMeta,
-  };
+  return { content, sourceCascade, consensusMeta };
+}
 
-  return {
-    atom_id: `${args.concept_id}.${args.atom_type.replace('_', '-')}`,
-    concept_id: args.concept_id,
-    atom_type: args.atom_type,
-    bloom_level: (template?.bloom_floor as BloomLevel | undefined) ?? defaults.bloom,
-    difficulty: defaults.difficulty,
-    exam_ids: ['*'],
-    content,
-    meta,
-  };
+// ─── Resonance plan §W4 — post-generation interactive-spec fence policy ───
+
+type ParseInteractiveSpecResult =
+  | { ok: true; spec: any; body_without_spec: string }
+  | { ok: false; reason: string };
+type ParseInteractiveSpecFn = (body: string) => ParseInteractiveSpecResult;
+
+// Deliberately a runtime-computed specifier, not a string literal, so
+// TypeScript resolves the dynamic import below to `any` instead of pulling
+// frontend/src into this package's `tsconfig.json` `rootDir: "./src"`
+// compilation (which would fail `npm run build` with "File is not under
+// 'rootDir'"). See loadInteractiveSpecParser's doc comment for why the
+// import itself must also be dynamic, not static.
+const INTERACTIVE_SPEC_TYPES_MODULE = '../../../frontend/src/components/lesson/interactives/types';
+
+let _parseSpecFn: ParseInteractiveSpecFn | null | undefined;
+
+/**
+ * Lazily, dynamically imports the renderer's own interactive-spec parser —
+ * the cross-import precedent named in the resonance plan is
+ * `scripts/lint-interactive-specs.ts` ("It deliberately imports the REAL
+ * validator... A second copy of the rules would drift"), running under the
+ * same tsx loader as `ci:boot`.
+ *
+ * The import MUST be dynamic (not a static top-level `import`), and the
+ * failure MUST be caught, because `demo/Dockerfile` — the image render.yaml
+ * actually deploys — copies `frontend/dist` into its runtime stage but
+ * never `frontend/src`. A static import would throw "Cannot find module"
+ * the moment `orchestrator.ts` itself loads (this module is reached at
+ * server boot via route registration, long before any atom is generated),
+ * taking the whole server down — the exact "ReferenceError at
+ * module-evaluation time, before any route handler runs" failure class
+ * atomic-topic-spec.ts's own header comment documents and works around the
+ * same way. Here the degradation is: fence validation becomes a no-op
+ * (logged once) in that one image; every dev/test/CI environment — which
+ * always has `frontend/src` on disk — gets the real validator.
+ */
+async function loadInteractiveSpecParser(): Promise<ParseInteractiveSpecFn | null> {
+  if (_parseSpecFn !== undefined) return _parseSpecFn;
+  let resolved: ParseInteractiveSpecFn | null;
+  try {
+    const mod: any = await import(INTERACTIVE_SPEC_TYPES_MODULE);
+    resolved = typeof mod.parseInteractiveSpec === 'function' ? mod.parseInteractiveSpec : null;
+  } catch (err) {
+    console.warn(`[orchestrator] interactive-spec validator unavailable in this process (${(err as Error).message}) — fence validation skipped`);
+    resolved = null;
+  }
+  _parseSpecFn = resolved;
+  return resolved;
+}
+
+const INTERACTIVE_SPEC_FENCE_RE = /```interactive-spec\s*[\s\S]*?```/m;
+
+/** Strip a fenced ```interactive-spec``` block, keeping the surrounding prose. */
+function stripInteractiveSpecFence(content: string): string {
+  return content.replace(INTERACTIVE_SPEC_FENCE_RE, '').trim();
+}
+
+/**
+ * Post-generation interactive-spec fence policy (resonance plan §W4). Runs
+ * unconditionally for every generateOne caller, regardless of atom_type or
+ * generation_context:
+ *
+ *   1. No fence in the body → no-op, return content unchanged.
+ *   2. Fence present, validator unavailable (see loadInteractiveSpecParser)
+ *      → logged, content shipped unvalidated (today an invalid generated
+ *      fence would otherwise silently render nothing on the student
+ *      surface — `InteractiveSidecar` swallows parse errors — so even this
+ *      degraded path is strictly better than doing nothing).
+ *   3. Fence present, invalid shape → ONE regeneration attempt against the
+ *      identical prompt. Still invalid (or the regeneration produced no
+ *      content) → strip the fence, keep the prose, log a warning naming
+ *      the atom id and the reason.
+ *   4. `generation_context === 'personalized'` AND the (possibly
+ *      regenerated) fence is valid AND its kind is `simulation` → stripped
+ *      unconditionally, logged. This is layer 2 of the P0 eng-review fix:
+ *      layer 1 is buildPrompt never asking for a scene on this path in the
+ *      first place; this layer defends against the model emitting one
+ *      anyway, or shape validation passing on well-formed but WRONG
+ *      mathematics that schema validation cannot catch. The
+ *      personalized-regen path writes straight into student_atom_overrides
+ *      with no CI gate, no Wolfram check, no human pedagogy review, so an
+ *      unreviewed scene must never reach a struggling student — full stop.
+ */
+async function enforceInteractiveSpecPolicy(
+  atomId: string,
+  args: GenerateOneArgs,
+  prompt: string,
+  content: string,
+): Promise<string> {
+  if (!content.includes('```interactive-spec')) return content;
+
+  const parseSpec = await loadInteractiveSpecParser();
+  if (!parseSpec) {
+    console.warn(`[orchestrator] ${atomId}: interactive-spec fence present but the validator is unavailable in this process — shipping unvalidated`);
+    return content;
+  }
+
+  let check = parseSpec(content);
+  let finalContent = content;
+
+  if (!check.ok) {
+    console.warn(`[orchestrator] ${atomId}: invalid interactive-spec fence (${check.reason}) — regenerating once`);
+    const regen = await generateAtomContent(args, prompt);
+    if (regen.content) {
+      const recheck = parseSpec(regen.content);
+      if (recheck.ok) {
+        finalContent = regen.content;
+        check = recheck;
+      } else {
+        console.warn(`[orchestrator] ${atomId}: regeneration still invalid (${recheck.reason}) — stripping fence, keeping prose`);
+        return stripInteractiveSpecFence(regen.content);
+      }
+    } else {
+      console.warn(`[orchestrator] ${atomId}: regeneration produced no content — stripping fence, keeping prose`);
+      return stripInteractiveSpecFence(content);
+    }
+  }
+
+  if (args.generation_context === 'personalized' && check.ok && check.spec?.kind === 'simulation') {
+    console.warn(`[orchestrator] ${atomId}: stripped simulation fence on personalized-regen path — unreviewed scenes never reach student_atom_overrides`);
+    return stripInteractiveSpecFence(finalContent);
+  }
+
+  return finalContent;
+}
+
+/**
+ * Resonance plan §W4 — the fifth prompt block for hook/intuition atoms in
+ * BATCH generation only (see buildPrompt's generationContext gate). Two
+ * independent pieces:
+ *   1. The founder's per-topic strategy (resonanceStrategyFor) when one
+ *      resolves for this concept — omitted entirely on null, never
+ *      fabricated (mirrors resonance-strategy.ts's own discipline).
+ *   2. The beat-scripting instruction, which applies whether or not a
+ *      per-topic strategy exists for this concept — it's the mechanism
+ *      (schema + trap + stance text), not the strategy data.
+ */
+function buildResonanceBlock(strategy: ResonanceStrategy | null): string {
+  const strategyLines = strategy
+    ? `Per-topic attention strategy (founder's content-generation spec, ${strategy.atomic_ids.join('+')}): recommended hooks — ${strategy.recommended_hooks.join('; ')}. Attention-design hypothesis: ${strategy.attention_design_hypothesis}\n\n`
+    : '';
+
+  return `${strategyLines}Fuse this into one experience instead of a static learning beat: emit a fenced \`\`\`interactive-spec\`\`\` block with a "simulation" spec carrying 3-5 narration_steps beats synced to at_progress (0..1). Exactly ONE beat must carry a "trap" woven from this concept's top pain point (see the pain-point block above — cite it, do not invent a new mistake): {"text": "what students get wrong", "avoid": "the one-line fix"}. Give per-stance beat text where it earns its keep (text_shaken / text_assured; base text is the fallback for a steady reader) and an optional top-level "ghost" parametric path for the mistaken route. Third person only in the trap ("students read the 2 as…"), never "you might…". Schema example:
+
+\`\`\`interactive-spec
+{"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...","t_min":0,"t_max":1,"narration_steps":[{"at_progress":0,"text":"..."},{"at_progress":0.5,"text":"...","text_shaken":"...","text_assured":"...","trap":{"text":"Students read the 2 as scaling both axes.","avoid":"Match each diagonal entry to its own axis before writing anything."}}],"ghost":{"x_expr":"...","y_expr":"..."}}
+\`\`\`
+
+`;
 }
 
 function buildPrompt(args: GenerateOneArgs & {
@@ -431,16 +627,34 @@ function buildPrompt(args: GenerateOneArgs & {
   // E4 Pedagogy Pattern Library — inject active prompt directives for the module.
   const patternBlock = buildPatternPromptBlock(args.topic_family);
 
-  return `${studentContextBlock}${painPointBlock ? painPointBlock + '\n\n' : ''}${patternBlock ? patternBlock + '\n\n' : ''}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
+  // Resonance plan §W4 — batch generation ONLY. NEVER personalized-regen:
+  // an LLM-authored ghost path or trap "avoid" line reaching a struggling
+  // student unreviewed is exactly the harm this gate exists to prevent (the
+  // P0 eng-review finding on this plan). Hook/intuition are the fusion
+  // surface (plan §1/§2) — every other atom type is unaffected either way.
+  const generationContext = args.generation_context ?? 'batch';
+  const isBeatAtom = args.atom_type === 'hook' || args.atom_type === 'intuition';
+  const resonanceEligible = isBeatAtom && generationContext === 'batch';
+  const resonanceBlock = resonanceEligible
+    ? buildResonanceBlock(resonanceStrategyFor(args.concept_id))
+    : '';
+
+  const closingInstruction = args.atom_type === 'worked_example'
+    ? 'worked_example: separate steps with `\\n---\\n` and end with "Answer: <value>" so :::verify can confirm.'
+    : resonanceEligible
+      ? 'hook/intuition: script the beats — motion, caption, emphasis and exactly one trap, together (see the beat-scripting instructions above). Do not just keep the body to a single static learning beat.'
+      : 'other types: keep the body focused on a single learning beat.';
+
+  return `${studentContextBlock}${painPointBlock ? painPointBlock + '\n\n' : ''}${patternBlock ? patternBlock + '\n\n' : ''}${resonanceBlock}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
 
 Scaffold: ${args.template_scaffold}
 ${args.template_guidance ? `Guidance:\n${args.template_guidance}` : ''}
 ${args.pyq_context}
 
 Output ONLY the atom body in markdown. Use $inline$ and $$display$$ math.
-For interactive directives use :::name{attrs} blocks. For ${args.atom_type === 'worked_example' ? 'worked_example: separate steps with `\\n---\\n` and end with "Answer: <value>" so :::verify can confirm.' : 'other types: keep the body focused on a single learning beat.'}
+For interactive directives use :::name{attrs} blocks. For ${closingInstruction}
 
-Do not include frontmatter — only the body. Keep total length under 400 words.`;
+Do not include frontmatter — only the body. Prose is capped at 400 words; a fenced \`\`\`interactive-spec\`\`\` JSON block does NOT count toward that cap.`;
 }
 
 /**
@@ -766,4 +980,9 @@ export const __testing = {
   resolveProviderForModel,
   pickConsensusSecondary,
   consensusProvidersAreDistinct,
+  // Resonance plan §W4 — buildPrompt is otherwise private; fixture tests
+  // assert on its exact output (the carve-out sentence, the batch-only
+  // beat instructions) without going through the full generateConcept
+  // pipeline (which needs an LLM to have anything to assert on).
+  buildPrompt,
 };

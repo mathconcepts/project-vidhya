@@ -146,6 +146,27 @@ hook:
     One sentence naming the problem this concept solves; one sentence
     showing where it appears on the exam. Lead with the question, not
     the formalism.
+
+    Fuse the hook into a scripted beat sequence rather than a static
+    sentence: emit a fenced interactive-spec block at the end of the body
+    (mirrors the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. The "ghost" field, when present,
+    traces the mistaken path dashed. OMIT the fence entirely for concepts
+    that don't reduce to a 2D parametric/trace scene — never invent a
+    misleading scene.
   bloom_floor: 1
   stances:
     shaken: |

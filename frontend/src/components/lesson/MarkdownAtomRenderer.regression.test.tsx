@@ -4,14 +4,15 @@
  * render. If a parser change breaks an atom, this test catches it before it
  * ships.
  *
- * Base atoms (derivatives-basic: 9, complex-numbers: 8, 26 Linear Algebra
- * concepts: 286 = 303) are pinned, so a seed atom cannot silently disappear.
- * All 26 LA concepts gained mnemonic/exam_pattern/interleaved_drill atoms
- * (2026-08-29) — the first seed content for 3 of the 11 AtomType categories
- * that had none before, and the reason CONCEPTS grew from a 3-concept sample
- * to the full LA set: those 75 new files were previously never mounted
- * through this renderer by any test (ci:la-walkthrough's "interactive" leg
- * only checks the JSON `interactive-spec` schema, not a real React render).
+ * The concept list is derived from disk, not hardcoded. It used to be a
+ * hardcoded 28 while the corpus reached 101, so roughly 73 concepts of
+ * authored content were never mounted through a real render by any test —
+ * ci:katex-fences checks that the math parses, and ci:la-walkthrough's
+ * "interactive" leg checks the `interactive-spec` JSON schema, but neither
+ * puts an atom through React. Deriving the list means new content is covered
+ * the moment it lands.
+ *
+ * The 880 base atoms are pinned, so a seed atom cannot silently disappear.
  * Authored stance
  * variants (`*.shaken.md` / `*.assured.md`, see src/content/stance-variants.ts)
  * are counted dynamically — they are expected to grow as concepts gain a
@@ -29,17 +30,20 @@ import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
 
 const CONTENT_ROOT = path.resolve(__dirname, '../../../../modules/project-vidhya-content/concepts');
 
-const LINEAR_ALGEBRA_CONCEPTS = [
-  'cayley-hamilton', 'change-of-basis', 'determinants', 'diagonalization',
-  'eigenvalues', 'gram-schmidt', 'inner-product-spaces', 'jordan-normal-form',
-  'least-squares', 'linear-independence', 'linear-transformations',
-  'lu-factorization', 'matrix-inverse', 'matrix-norms', 'matrix-operations',
-  'null-space-column-space', 'orthogonality', 'positive-definite-matrices',
-  'quadratic-forms', 'rank-nullity', 'spectral-theorem', 'svd',
-  'symmetric-matrices', 'systems-of-equations', 'trace', 'vector-spaces',
-];
+/**
+ * Every concept with an atoms/ directory, read from disk rather than listed
+ * here. A hardcoded list silently stops covering new content the moment the
+ * corpus outgrows it — which is exactly what happened: this array pinned 28
+ * concepts while the corpus reached 101, so roughly 73 concepts of authored
+ * content were never mounted through a real render by any test. Deriving it
+ * means the test grows with the content and cannot fall behind again.
+ */
+const CONCEPTS = fs
+  .readdirSync(CONTENT_ROOT, { withFileTypes: true })
+  .filter((e) => e.isDirectory() && fs.existsSync(path.join(CONTENT_ROOT, e.name, 'atoms')))
+  .map((e) => e.name)
+  .sort();
 
-const CONCEPTS = ['derivatives-basic', 'complex-numbers', ...LINEAR_ALGEBRA_CONCEPTS];
 
 interface AtomFile {
   concept: string;
@@ -72,8 +76,17 @@ function loadAtoms(): AtomFile[] {
 describe('MarkdownAtomRenderer — regression on seed atoms', () => {
   const atoms = loadAtoms();
 
-  it('loads all 303 base seed atoms', () => {
-    expect(atoms.filter((a) => !a.isVariant).length).toBe(303);
+  it('covers every concept that has an atoms/ directory', () => {
+    // The list is derived, so this asserts the derivation actually found the
+    // corpus rather than an empty or truncated slice of it.
+    expect(CONCEPTS.length).toBe(101);
+  });
+
+  it('loads all 880 base seed atoms', () => {
+    // Pinned so a seed atom cannot silently disappear. Recompute and update
+    // deliberately when base content is genuinely added or removed; a change
+    // here should always be something an author meant to do.
+    expect(atoms.filter((a) => !a.isVariant).length).toBe(880);
   });
 
   it('loads the authored stance variants too', () => {

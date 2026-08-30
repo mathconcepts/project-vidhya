@@ -43,32 +43,39 @@ export type ParseInteractiveSpecFn = (body: string) => ParseInteractiveSpecResul
 const INTERACTIVE_SPEC_TYPES_MODULE = '../../frontend/src/components/lesson/interactives/types';
 
 let _parseSpecFn: ParseInteractiveSpecFn | null | undefined;
+let _warnedUnavailable = false;
 
 /**
  * Lazily, dynamically imports the renderer's own interactive-spec parser.
- * Cached in module scope after the first call (success or failure) — the
- * import cost, and the "unavailable in this process" warning, are paid at
- * most once per process. Returns `null` when the validator cannot be
- * reached; callers must treat that as "cannot measure/validate", never as
- * "invalid" or "zero".
+ * A SUCCESSFUL load is cached in module scope; a FAILED load is not — the
+ * expected failure (the demo image ships without `frontend/src`) is permanent
+ * and cheap to re-hit, while a transient one (a filesystem hiccup during a
+ * rolling deploy) must not condemn the whole process lifetime to "cannot
+ * validate". The warning still fires at most once per process either way.
+ * Returns `null` when the validator cannot be reached; callers must treat
+ * that as "cannot measure/validate", never as "invalid" or "zero".
  */
 export async function loadInteractiveSpecParser(): Promise<ParseInteractiveSpecFn | null> {
-  if (_parseSpecFn !== undefined) return _parseSpecFn;
-  let resolved: ParseInteractiveSpecFn | null;
+  if (_parseSpecFn !== undefined && _parseSpecFn !== null) return _parseSpecFn;
   try {
     const mod: any = await import(INTERACTIVE_SPEC_TYPES_MODULE);
-    resolved = typeof mod.parseInteractiveSpec === 'function' ? mod.parseInteractiveSpec : null;
+    const resolved: ParseInteractiveSpecFn | null =
+      typeof mod.parseInteractiveSpec === 'function' ? mod.parseInteractiveSpec : null;
+    _parseSpecFn = resolved;
+    return resolved;
   } catch (err) {
-    console.warn(
-      `[interactive-spec-loader] interactive-spec validator unavailable in this process (${(err as Error).message})`,
-    );
-    resolved = null;
+    if (!_warnedUnavailable) {
+      _warnedUnavailable = true;
+      console.warn(
+        `[interactive-spec-loader] interactive-spec validator unavailable in this process (${(err as Error).message})`,
+      );
+    }
+    return null;
   }
-  _parseSpecFn = resolved;
-  return resolved;
 }
 
 /** Test-only: clears the module-scope cache so a fresh load is exercised. */
 export function _resetInteractiveSpecParserCacheForTests(): void {
   _parseSpecFn = undefined;
+  _warnedUnavailable = false;
 }

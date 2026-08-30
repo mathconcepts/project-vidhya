@@ -644,3 +644,27 @@ new small check; `docs/designs/2026-08-30-resonance-fused-atoms-plan.md` S10.
 **Effort:** S human / ~15 min CC.
 **Priority:** P3.
 **Deferred from:** /autoplan eng phase, 2026-08-30.
+
+## Fence-regeneration retry is invisible to run cost accounting
+
+**Trigger:** the first live batch generation run of resonance-carrying hooks
+(needs a provider key), or any operator report that a run's `cost_usd` looks
+lower than the provider bill.
+
+**What:** `enforceInteractiveSpecPolicy` (src/content/concept-orchestrator/
+orchestrator.ts) makes a second full LLM call when a generated interactive-spec
+fence fails validation, but `meta.cost_usd` stays stamped from the static
+`ESTIMATED_COST_USD[atom_type]` table — the retry is free on paper. The
+resonance prompt raises how often hooks/intuition atoms carry fences, so silent
+regens can widen the gap between reported spend and the real bill, and
+`RunBudgetExceeded` enforcement reads the same under-count.
+
+**Why not fixed inline:** the estimate-vs-actual question spans `cost-meter.ts`
+semantics (per-call actuals exist there); the honest fix routes the retry
+through the same metering rather than bumping a static estimate, which is a
+small design decision, not a one-liner. Surfaced by the v4.44.0 adversarial
+review; no live run can hit it until a provider key exists.
+
+**Where to start:** `enforceInteractiveSpecPolicy` + `src/generation/cost-meter.ts`.
+**Effort:** S human / ~15 min CC. **Priority:** P2.
+**Deferred from:** /ship adversarial review, 2026-08-30.

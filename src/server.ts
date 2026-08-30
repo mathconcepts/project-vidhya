@@ -677,6 +677,24 @@ const DEPLOYED_VERSION: string = (() => {
   }
 })();
 
+/**
+ * The git commit this process was built from, when the platform tells us.
+ *
+ * `version` alone cannot answer "is MY build live". A release that changes
+ * code without bumping the version — a fix, a docs correction, most of what
+ * lands between releases — deploys under a version that is already running,
+ * so a post-deploy check keyed on version sees a match immediately and
+ * verifies the PREVIOUS build while the new one is still building. It then
+ * reports success. That is the failure this endpoint's `version` field was
+ * added to prevent, reappearing one level down.
+ *
+ * Render sets RENDER_GIT_COMMIT on every service. Null off-platform (local
+ * runs, other hosts), and callers must treat null as "cannot tell" rather
+ * than as a match — an unknown commit is not a verified one.
+ */
+const DEPLOYED_COMMIT: string | null =
+  process.env.RENDER_GIT_COMMIT?.trim() || process.env.GIT_COMMIT?.trim() || null;
+
 // Health check
 registerRoute('GET', '/health', async (_req, res) => {
   const info: Record<string, unknown> = {
@@ -689,6 +707,9 @@ registerRoute('GET', '/health', async (_req, res) => {
     // assertion passes against stale code and the check reports success.
     // Read once at boot from package.json, the same file the release bumps.
     version: DEPLOYED_VERSION,
+    // Null when the platform does not report one. A post-deploy check must
+    // read null as "cannot tell which build this is", never as a pass.
+    commit: DEPLOYED_COMMIT,
   };
 
   info.features = computeFeatureFlags();

@@ -28,6 +28,13 @@ on:
         description: How long to wait for a deploy to finish before failing
         required: false
         default: '10'
+  # After every deploy. Render auto-deploys main on commit, so a merge is the
+  # start of a deploy — the run then WAITS for that deploy to go live before
+  # asserting anything (see the commit gate below). Without that wait this
+  # trigger would be actively harmful: it would test the previous build,
+  # seconds after the merge, and report success.
+  push:
+    branches: [main]
   schedule:
     # 09:00 UTC daily. Catches a rolled-back or crashed deploy.
     - cron: '0 9 * * *'
@@ -69,33 +76,41 @@ jobs:
 
       # The check that actually answers "did MY build deploy".
       #
-      # Every other assertion here can pass against the PREVIOUS build, because
-      # Render keeps serving it until the new one is healthy. A run started
-      # seconds after a merge therefore verifies stale code and reports
-      # success — which is the same shape of false green as the wait loop bug
-      # above, one layer up.
+      # Everything below can pass against the PREVIOUS build, because Render
+      # keeps serving it until the new one is healthy. A run started seconds
+      # after a merge therefore verifies stale code and reports success.
       #
-      # /health now reports the running build's version, so this waits for the
-      # deployed version to match the version in the commit being checked out.
+      # This gate used to compare /health.version against package.json, which
+      # closed only half the hole: most merges do not bump the version, so the
+      # deployed version already equalled the expected one the instant the run
+      # started and the gate passed immediately — against the old build. A
+      # commit is unique per merge and cannot collide that way.
+      #
+      # Strict on push (we are waiting for OUR deploy; anything else means the
+      # checks below describe different code) and advisory on the daily cron,
+      # where a skew usually means someone landed to main without deploying —
+      # a real state worth reporting, not a reason to hide every other result
+      # behind one red step.
+      #
+      # Comparison logic lives in scripts/wait-for-deploy.ts with tests
+      # (src/__tests__/unit/wait-for-deploy.test.ts), because a gate that is
+      # wrong in the permissive direction turns this whole suite into a
+      # confident report about code nobody deployed.
+      #
+      # First run after this lands: the build then serving predates the
+      # /health commit field and reports null, which is "cannot tell" and not
+      # a match — so the gate keeps waiting rather than passing. The deploy it
+      # is waiting for is the one carrying this change, which does report a
+      # commit, so it resolves as soon as that goes live (~3-5 min against a
+      # 10 min budget). No intervention needed; it is only surprising if you
+      # do not know why it is waiting.
       - name: The deployed build is this commit's build
         run: |
-          URL='${{ steps.cfg.outputs.url }}'
-          WANT=$(node -p "require('./package.json').version")
-          echo "expecting version $WANT"
-          DEADLINE=$(( $(date +%s) + ${{ steps.cfg.outputs.wait }} * 60 ))
-          while :; do
-            GOT=$(curl -s --max-time 25 "$URL/health" 2>/dev/null \
-                  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).version??"")}catch{console.log("")}})')
-            if [ "$GOT" = "$WANT" ]; then echo "deployed version: $GOT"; exit 0; fi
-            echo "deployed version is '${GOT:-unreadable}', waiting for $WANT"
-            [ "$(date +%s)" -ge "$DEADLINE" ] && break
-            sleep 20
-          done
-          # Not a hard failure: an older deploy is a real, reportable state, and
-          # on the daily cron a version skew usually means someone landed to
-          # main without deploying. Say so loudly and keep checking the rest,
-          # rather than masking every downstream result behind one red step.
-          echo "::warning::Deployed version '${GOT:-unreadable}' does not match this commit's $WANT — the checks below describe an older build"
+          npx tsx scripts/wait-for-deploy.ts \
+            '${{ steps.cfg.outputs.url }}' \
+            '${{ github.sha }}' \
+            --timeout $(( ${{ steps.cfg.outputs.wait }} * 60 )) \
+            ${{ github.event_name == 'push' && '--require-match' || '' }}
 
       - name: The app shell is served
         run: |
@@ -213,7 +228,7 @@ jobs:
             echo "### Production smoke — ${{ steps.cfg.outputs.url }}"
             echo ""
             echo "Checks discriminate old build vs new, not just liveness:"
-            echo "- \`/health.version\` matching this commit proves THIS build is live, not the previous one"
+            echo "- \`/health.commit\` matching this commit proves THIS build is live, not the previous one"
             echo "- \`/api/demo/rails\` populated proves the flag is set AND config/ is in the image"
             echo "- \`/api/teaching/roster\` healthy proves the v4.28.0 route shipped"
             echo "- \`/api/progress/...\` not-500 proves the degradation fix shipped"

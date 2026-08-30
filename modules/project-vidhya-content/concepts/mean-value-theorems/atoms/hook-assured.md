@@ -17,4 +17,4 @@ variant_of: mean-value-theorems.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "show there exists $c\in(a,b)$ with $f'(c)=\dots$" — an MVT existence claim, not a computation to just solve. The reflex mistake under pressure: setting $f'(c)$ equal to the average slope and solving, without first confirming $f$ is continuous on $[a,b]$ **and** differentiable on $(a,b)$. A function with a removable discontinuity or a corner inside the interval can fail to have any such $c$ at all — the hypotheses are not boilerplate, they are what makes the guarantee true.
+"Show there exists $c\in(a,b)$ with $f'(c)=\dots$" is an MVT existence claim on GATE, not a computation to just solve. What usually goes wrong under pressure: setting $f'(c)$ equal to the average slope and solving, without first confirming $f$ is continuous on $[a,b]$ **and** differentiable on $(a,b)$. A function with a removable discontinuity or a corner inside the interval can fail to have any such $c$ at all — the hypotheses are not boilerplate, they are what makes the guarantee true.

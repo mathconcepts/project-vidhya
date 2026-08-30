@@ -17,4 +17,4 @@ variant_of: series.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "test $\sum a_n$ for convergence," and the reflex mistake is treating $a_n\to0$ as proof of convergence rather than a mere necessary condition. The harmonic series $\sum\frac1n$ has $a_n\to0$ and still diverges — the $n$-th term test can only ever prove divergence (when $a_n\not\to0$), never convergence; concluding convergence from $a_n\to0$ alone answers a different, false theorem.
+"Test $\sum a_n$ for convergence" is GATE's standard prompt, and the recurring error is treating $a_n\to0$ as proof of convergence rather than a mere necessary condition. The harmonic series $\sum\frac1n$ has $a_n\to0$ and still diverges — the $n$-th term test can only ever prove divergence (when $a_n\not\to0$), never convergence; concluding convergence from $a_n\to0$ alone answers a different, false theorem.

@@ -17,4 +17,4 @@ variant_of: derivatives-basic.hook
 for_stance: assured
 ---
 
-GATE phrases this as "rate of change" or "instantaneous rate," and the reflex mistake under pressure is answering with the average rate $\frac{f(b)-f(a)}{b-a}$ when the question asks for the derivative *at a point*. The average is a secant's slope across an interval; the derivative is a tangent's slope at one instant. The two coincide only in the limit as the interval shrinks to zero — never for a finite interval, however small it looks.
+GATE phrases this as "rate of change" or "instantaneous rate," and the tempting wrong answer is the average rate $\frac{f(b)-f(a)}{b-a}$ when the question asks for the derivative *at a point*. The average is a secant's slope across an interval; the derivative is a tangent's slope at one instant. The two coincide only in the limit as the interval shrinks to zero — never for a finite interval, however small it looks.

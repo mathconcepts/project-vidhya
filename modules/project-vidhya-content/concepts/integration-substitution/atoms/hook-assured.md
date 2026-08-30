@@ -17,4 +17,4 @@ variant_of: integration-substitution.hook
 for_stance: assured
 ---
 
-GATE's giveaway is an integrand where one factor is visibly the derivative of another's argument — and the reflex mistake under pressure is substituting $u$ for the inner piece while leaving a stray, un-converted $x$ behind that $du$ never absorbs. A clean substitution rewrites the *entire* integral in terms of $u$, not just the composed piece; if an $x$ survives outside $du$, either back-solve it in terms of $u$ or the substitution is not finished.
+An integrand where one factor is visibly the derivative of another's argument is GATE's signature setup for substitution — and the common misfire is substituting $u$ for the inner piece while leaving a stray, un-converted $x$ behind that $du$ never absorbs. A clean substitution rewrites the *entire* integral in terms of $u$, not just the composed piece; if an $x$ survives outside $du$, either back-solve it in terms of $u$ or the substitution is not finished.

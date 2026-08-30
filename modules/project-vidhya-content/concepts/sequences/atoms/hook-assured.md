@@ -17,4 +17,4 @@ variant_of: sequences.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "find $\lim_{n\to\infty}a_n$" for a sequence defined recursively, $a_{n+1}=f(a_n)$ — and the reflex mistake is setting $L=f(L)$ and solving without first establishing that the limit *exists*. A fixed point of $f$ is only the limit if the sequence is already known to converge, typically via monotone-plus-bounded; plugging into $L=f(L)$ for a sequence that diverges or oscillates returns a number satisfying the equation while meaning nothing.
+"Find $\lim_{n\to\infty}a_n$" for a sequence defined recursively, $a_{n+1}=f(a_n)$, is a GATE setup with a hidden precondition — and the wrong shortcut is setting $L=f(L)$ and solving without first establishing that the limit *exists*. A fixed point of $f$ is only the limit if the sequence is already known to converge, typically via monotone-plus-bounded; plugging into $L=f(L)$ for a sequence that diverges or oscillates returns a number satisfying the equation while meaning nothing.

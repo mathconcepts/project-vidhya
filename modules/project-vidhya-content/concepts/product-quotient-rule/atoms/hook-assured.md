@@ -17,4 +17,4 @@ variant_of: product-quotient-rule.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "differentiate $\dfrac{u}{v}$" where $v$ is a genuine function, not a constant — and the fastest route often skips the quotient rule's larger denominator entirely: rewrite $\dfrac{u}{v}=u\cdot v^{-1}$ and apply the product rule with chain rule on $v^{-1}$, since $(v^{-1})'=-v^{-2}v'$. Reaching for the quotient rule on $u/c$ for a constant $c$ is the wasted-motion version of the same mistake in reverse — factor out $\frac1c$ and differentiate $u$ alone.
+Recognizing $\dfrac{u}{v}$ with $v$ a genuine function, not a constant, is the cue GATE hides inside "differentiate this quotient" — and the fastest route often skips the quotient rule's larger denominator entirely: rewrite $\dfrac{u}{v}=u\cdot v^{-1}$ and apply the product rule with chain rule on $v^{-1}$, since $(v^{-1})'=-v^{-2}v'$. Reaching for the quotient rule on $u/c$ for a constant $c$ is the wasted-motion version of the same mistake in reverse — factor out $\frac1c$ and differentiate $u$ alone.

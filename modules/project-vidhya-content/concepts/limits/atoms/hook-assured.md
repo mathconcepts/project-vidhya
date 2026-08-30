@@ -17,4 +17,4 @@ variant_of: limits.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "evaluate $\lim_{x\to a}\dots$" where direct substitution yields $\frac00$ or $\frac\infty\infty$ — and the reflex mistake is reaching for L'Hôpital's rule before checking the form actually qualifies. Applying it to a limit that substitutes to a finite nonzero value over zero differentiates a perfectly fine expression into a wrong one. The rule is conditional on the indeterminate form, not a universal shortcut for any fraction carrying a variable.
+"Evaluate $\lim_{x\to a}\dots$" where direct substitution yields $\frac00$ or $\frac\infty\infty$ is GATE's cue for indeterminate-form handling — and the wrong turn is reaching for L'Hôpital's rule before checking the form actually qualifies. Applying it to a limit that substitutes to a finite nonzero value over zero differentiates a perfectly fine expression into a wrong one. The rule is conditional on the indeterminate form, not a universal shortcut for any fraction carrying a variable.

@@ -17,4 +17,4 @@ variant_of: implicit-differentiation.hook
 for_stance: assured
 ---
 
-GATE's giveaway phrase is "find $dy/dx$" with $x$ and $y$ mixed together, not solved for $y$. The reflex mistake under pressure: differentiating a $y$-term as if $y$ were an ordinary variable in $x$ — writing $\frac{d}{dx}[y^2]=2y$ instead of $2y\cdot\frac{dy}{dx}$, dropping the chain-rule factor implicit differentiation exists to supply. Any term containing $y$ carries that hidden factor; only terms in $x$ alone do not.
+GATE's giveaway phrase is "find $dy/dx$" with $x$ and $y$ mixed together, not solved for $y$. The error that costs the mark: differentiating a $y$-term as if $y$ were an ordinary variable in $x$ — writing $\frac{d}{dx}[y^2]=2y$ instead of $2y\cdot\frac{dy}{dx}$, dropping the chain-rule factor implicit differentiation exists to supply. Any term containing $y$ carries that hidden factor; only terms in $x$ alone do not.

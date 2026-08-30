@@ -17,4 +17,4 @@ variant_of: multivariable-calculus.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "find the rate of change of $f$ in the direction $\mathbf v$" — a directional-derivative question, and the reflex mistake is dotting the gradient with $\mathbf v$ as given, skipping normalization to a unit vector first. $D_{\mathbf v}f=\nabla f\cdot\hat{\mathbf v}$ needs $\hat{\mathbf v}=\mathbf v/\|\mathbf v\|$; using an un-normalized $\mathbf v$ scales the answer by $\|\mathbf v\|$ — a wrong number that still looks entirely plausible.
+"Find the rate of change of $f$ in the direction $\mathbf v$" is GATE's cue for a directional derivative, and the wrong habit is dotting the gradient with $\mathbf v$ as given, skipping normalization to a unit vector first. $D_{\mathbf v}f=\nabla f\cdot\hat{\mathbf v}$ needs $\hat{\mathbf v}=\mathbf v/\|\mathbf v\|$; using an un-normalized $\mathbf v$ scales the answer by $\|\mathbf v\|$ — a wrong number that still looks entirely plausible.

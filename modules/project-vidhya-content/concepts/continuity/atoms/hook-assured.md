@@ -17,4 +17,4 @@ variant_of: continuity.hook
 for_stance: assured
 ---
 
-GATE hides this behind "show a root exists in $(a,b)$" — an Intermediate Value Theorem question wearing a continuity costume, easy to miss until the endpoint signs matter. The reflex mistake under pressure: treating "given by a single algebraic expression" as proof of continuity, when the real test is whether the *limit* at the suspect point equals the function's value there. A formula can be perfectly well-defined everywhere except the one point the question is actually asking about.
+GATE hides this behind "show a root exists in $(a,b)$" — an Intermediate Value Theorem question wearing a continuity costume, easy to miss until the endpoint signs matter. Under pressure, the trap is treating "given by a single algebraic expression" as proof of continuity, when the real test is whether the *limit* at the suspect point equals the function's value there. A formula can be perfectly well-defined everywhere except the one point the question is actually asking about.

@@ -17,4 +17,4 @@ variant_of: partial-fractions.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "decompose $\frac{P(x)}{Q(x)}$ into partial fractions" — and the reflex mistake is applying the standard template directly when $\deg(P)\ge\deg(Q)$. An improper fraction needs polynomial long division *first*, splitting off a polynomial plus a genuinely proper remainder; only that remainder gets the $\frac{A}{x-a}$ treatment. Skipping the division and decomposing the improper fraction as-is produces constants that satisfy no consistent identity.
+"Decompose $\frac{P(x)}{Q(x)}$ into partial fractions" on GATE hides a precondition — and the common misstep is applying the standard template directly when $\deg(P)\ge\deg(Q)$. An improper fraction needs polynomial long division *first*, splitting off a polynomial plus a genuinely proper remainder; only that remainder gets the $\frac{A}{x-a}$ treatment. Skipping the division and decomposing the improper fraction as-is produces constants that satisfy no consistent identity.

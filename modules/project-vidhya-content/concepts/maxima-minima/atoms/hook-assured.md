@@ -17,4 +17,4 @@ variant_of: maxima-minima.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "find the absolute max/min on $[a,b]$" — a closed-interval-method question, not a bare critical-point question. The reflex mistake under pressure: solving $f'(x)=0$, evaluating only those points, and reporting the largest as the answer, silently skipping the endpoints $a$ and $b$. An absolute extremum can sit at an endpoint with no critical point there at all — the closed interval method exists exactly because critical points are not the whole candidate list.
+Finding the absolute max/min on $[a,b]$ is a closed-interval-method question on GATE, not a bare critical-point question. The failure mode under pressure: solving $f'(x)=0$, evaluating only those points, and reporting the largest as the answer, silently skipping the endpoints $a$ and $b$. An absolute extremum can sit at an endpoint with no critical point there at all — the closed interval method exists exactly because critical points are not the whole candidate list.

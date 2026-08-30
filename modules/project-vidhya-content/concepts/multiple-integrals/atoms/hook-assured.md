@@ -17,4 +17,4 @@ variant_of: multiple-integrals.hook
 for_stance: assured
 ---
 
-GATE's giveaway is "set up the limits of integration" for a region that is not a rectangle — the actual test is describing the boundary correctly, not the integration mechanics, which are routine once the bounds are right. The reflex mistake: swapping the order of integration ($dx\,dy\to dy\,dx$) while keeping the *same numerical limits*. A non-rectangular region generally needs entirely different bounds re-derived from the boundary curves for the new order; reusing old limits under a swapped order integrates over the wrong shape entirely.
+Setting up the limits of integration is the real GATE test whenever the region is not a rectangle — describing the boundary correctly, not the integration mechanics, which are routine once the bounds are right. The reflex mistake: swapping the order of integration ($dx\,dy\to dy\,dx$) while keeping the *same numerical limits*. A non-rectangular region generally needs entirely different bounds re-derived from the boundary curves for the new order; reusing old limits under a swapped order integrates over the wrong shape entirely.

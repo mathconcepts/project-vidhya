@@ -28,7 +28,7 @@ import { recordShadow } from '../gbrain/fsrs-shadow';
 import { recordTelemetry } from '../content/telemetry';
 import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
-import { getOrCreateStudentModel } from '../gbrain/student-model';
+import { getOrCreateStudentModel, readStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS, resolveConceptOrSection, SECTION_MAP } from '../constants/concept-graph';
 import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
 import { rankAtomsForLesson } from '../personalization/lesson-wire';
@@ -168,6 +168,42 @@ async function enrichAtomsWithEngagement(
  */
 const ALLOWED_MOTIVATION_STATES = new Set<string>(MOTIVATION_STATES);
 const ALLOWED_REPRESENTATION_MODES = new Set(['geometric', 'algebraic', 'balanced']);
+
+/**
+ * Does this snapshot carry anything to personalise ON?
+ *
+ * Not "is the field present" — that is the distinction that made the stored
+ * model unreachable. `LessonPage` always posts `student: { session_id }`, so a
+ * presence check reports a snapshot for every request while the object holds
+ * no mastery, no errors and no motivation. Personalising on that is
+ * personalising on nothing, and it silently suppressed the stored-state
+ * lookup that would have supplied the real signal.
+ *
+ * `session_id` is deliberately NOT a signal. It identifies the caller; it says
+ * nothing about how they are doing, and treating it as signal is exactly the
+ * bug.
+ *
+ * Any real signal counts, because any of them changes what a student is
+ * served: mastery drives the selector's tier and the related-problem
+ * difficulty, recent errors drive trap selection, and motivation or
+ * representation mode drive the authored body. A caller that sends one is
+ * making a deliberate statement about this learner — the demo persona path is
+ * the live example — and stored state must not overwrite it.
+ */
+export function hasLearningSignal(student: LessonRequest['student'] | undefined): boolean {
+  if (!student) return false;
+  const s = student as Record<string, unknown>;
+  const nonEmptyRecord = (v: unknown): boolean =>
+    typeof v === 'object' && v !== null && Object.keys(v as object).length > 0;
+  return (
+    nonEmptyRecord(s.mastery_by_concept) ||
+    nonEmptyRecord(s.mastery_by_topic) ||
+    (Array.isArray(s.recent_errors) && s.recent_errors.length > 0) ||
+    nonEmptyRecord(s.last_lesson_visit) ||
+    typeof s.motivation_state === 'string' ||
+    typeof s.representation_mode === 'string'
+  );
+}
 
 /**
  * Which authored body this snapshot should read.
@@ -360,14 +396,41 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
     };
   }
 
-  // GBrain enrichment: if session_id is provided and no explicit student
-  // snapshot is passed, fetch the cognitive model and translate it to a
-  // StudentSnapshot. Preserves the v2.5 behavior when session_id is
-  // omitted or GBrain is unavailable.
-  if (lessonReq.session_id && !lessonReq.student) {
+  // GBrain enrichment: when the caller supplied no learning signal of its
+  // own, fill the snapshot in from stored state.
+  //
+  // This used to be gated on `!lessonReq.student`, and that guard never let
+  // the branch run for a real student. LessonPage always posts
+  // `student: { session_id }` (LessonPage.tsx), a truthy object carrying no
+  // signal, so the presence check said "the caller supplied a snapshot" and
+  // the stored model was never read. Everything downstream that needs
+  // mastery or motivation — the atom selector's tier classifier, the related-
+  // problem difficulty, and the authored stance variants — therefore ran
+  // against an empty snapshot for every signed-in student, and stance in
+  // particular derived `steady` (the base body) 100% of the time. The whole
+  // authored confident/unconfident axis was unreachable outside the demo
+  // persona path, which sends a real snapshot and so passed the old guard.
+  //
+  // `hasLearningSignal` asks the question the guard meant to ask: does this
+  // payload carry anything to personalise ON, rather than is the field
+  // merely present.
+  //
+  // Read-only by design (`readStudentModel`, not the get-or-create form):
+  // composition serves anonymous traffic too, and creating a row per session
+  // that opens a concept page would be a write on a read path. No stored row
+  // means no signal, which is the cold-start default anyway.
+  //
+  // `include_emotional` is on because motivation is the signal stance leans
+  // on first (`deriveFraming` checks motivation before the mastery band), so
+  // without it a stored model could only ever reach `assured` via mastery and
+  // never `shaken` at all. It stays server-side: the snapshot is request
+  // input, and the lesson response never echoes it back.
+  if (lessonReq.session_id && !hasLearningSignal(lessonReq.student)) {
     try {
-      const model = await getOrCreateStudentModel(lessonReq.session_id);
-      lessonReq.student = modelToLessonSnapshot(model);
+      const model = await readStudentModel(lessonReq.session_id);
+      if (model) {
+        lessonReq.student = modelToLessonSnapshot(model, { include_emotional: true });
+      }
     } catch {
       // Graceful degradation — lesson works without enrichment
     }

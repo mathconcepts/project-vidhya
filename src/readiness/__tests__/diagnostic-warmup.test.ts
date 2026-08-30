@@ -26,7 +26,9 @@ function probe(id: string, difficulty: number): LearningObject {
     estMinutes: 3,
     prereqs: [],
     verification: 'cas_passed',
-    payload: { skillId: 'algebra' },
+    // options/answerIndex: pickNextProbe only serves items the warmup's
+    // single-select UI can grade (mcq shape) — see isSingleSelectMcq.
+    payload: { skillId: 'algebra', options: ['a', 'b', 'c', 'd'], answerIndex: 0 },
   };
 }
 
@@ -153,6 +155,45 @@ describe('pickNextProbe', () => {
       catalog: new InMemoryCatalog([wex]),
     });
     expect(r).toBeNull();
+  });
+
+  // Regression: an msq item's correctness lives in `answerIndices` (plural),
+  // which WarmupProbeScreen/toClientProbe never read — so serving one as a
+  // probe made every selection grade as wrong, no matter what the student
+  // picked. A nat item has no `options` at all and would render zero
+  // choices. Neither is gradable by the single-select probe screen.
+  // Found by /qa on 2026-08-30.
+  it('never serves an msq item as a probe (answerIndices, not answerIndex)', async () => {
+    const msq: LearningObject = {
+      ...probe('msq-1', 1500),
+      payload: { skillId: 'algebra', options: ['a', 'b', 'c', 'd'], answerIndices: [0, 2] },
+    };
+    const r = await pickNextProbe(newWarmup('algebra'), {
+      catalog: new InMemoryCatalog([msq]),
+    });
+    expect(r).toBeNull();
+  });
+
+  it('never serves a nat item as a probe (no options to render)', async () => {
+    const nat: LearningObject = {
+      ...probe('nat-1', 1500),
+      payload: { skillId: 'algebra', answerRange: [24.875, 25.125] },
+    };
+    const r = await pickNextProbe(newWarmup('algebra'), {
+      catalog: new InMemoryCatalog([nat]),
+    });
+    expect(r).toBeNull();
+  });
+
+  it('falls back to a gradable mcq item when an msq item is also in range', async () => {
+    const msq: LearningObject = {
+      ...probe('msq-1', 1500),
+      payload: { skillId: 'algebra', options: ['a', 'b', 'c', 'd'], answerIndices: [0, 2] },
+    };
+    const r = await pickNextProbe(newWarmup('algebra'), {
+      catalog: new InMemoryCatalog([msq, probe('mcq-1', 1600)]),
+    });
+    expect(r?.id).toBe('mcq-1');
   });
 });
 

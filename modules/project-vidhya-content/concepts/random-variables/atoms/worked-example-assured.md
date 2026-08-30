@@ -31,7 +31,7 @@ for_stance: assured
 
 $P(X=3)=\binom{10}{3}(0.3)^3(0.7)^7\approx0.2668$; $E[X]=3$, $\text{Var}(X)=2.1$. $P(X\le1)=e^{-2}+2e^{-2}=3e^{-2}\approx0.4060$.
 
-## When to swap one for the other
+## When the Poisson shortcut actually applies
 
 $np=3$ here isn't small enough to justify approximating the binomial by Poisson — reserve that shortcut for $n$ large, $p$ small, $np$ moderate. This problem wants the exact binomial value, computed directly.
 

@@ -8,7 +8,7 @@
 # formula, and the check made explicit. No praise, no reassurance, and no
 # mention of how the reader might be feeling — a small win is what steadies
 # someone, not being told they are struggling.
-id: inverse-laplace-intuition.shaken
+id: inverse-laplace.intuition.shaken
 concept_id: inverse-laplace
 atom_type: intuition
 bloom_level: 2

@@ -33,4 +33,4 @@ Lowering $\alpha$ (fewer false alarms) raises $\beta$ (more missed real effects)
 
 ## The sentence that never gets to be true
 
-"We accept $H_0$" is not a valid conclusion — only "fail to reject" is. A p-value of $0.6$ says the data are consistent with $H_0$; it says nothing about how many rival hypotheses the same data would also fit, and it is never the probability $H_0$ is true.
+"We accept $H_0$" is not a valid conclusion — only "fail to reject" is. A p-value of $0.6$ says the data are consistent with $H_0$; it never rules out how many rival hypotheses the same data would also fit, and it is never the probability $H_0$ is true.

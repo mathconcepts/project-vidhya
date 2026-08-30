@@ -18,4 +18,4 @@ variant_of: stokes-theorem.hook
 for_stance: shaken
 ---
 
-Walk once around the unit circle $x^2+y^2=1$ in the $z=0$ plane, tracking $\mathbf F\cdot d\mathbf r$ the whole way round. That is one closed loop, walked directly — nothing yet about trading it for an integral over some surface stretched across the loop.
+Trace the unit circle $x^2+y^2=1$ once, in the $z=0$ plane, tracking $\mathbf F\cdot d\mathbf r$ the whole way round. That is one closed loop, walked directly — nothing yet about trading it for an integral over some surface stretched across the loop.

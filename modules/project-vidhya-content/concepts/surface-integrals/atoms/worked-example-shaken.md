@@ -19,7 +19,7 @@ variant_of: surface-integrals.worked_example
 for_stance: shaken
 ---
 
-$\mathbf F=(x,y,z)$ over the sphere $x^2+y^2+z^2=4$, outward normal. Parametrize $x=2\sin\theta\cos\phi,\,y=2\sin\theta\sin\phi,\,z=2\cos\theta$, giving $\hat n=\frac12(x,y,z)$ and $dS=4\sin\theta\,d\theta\,d\phi$.
+$\mathbf F=(x,y,z)$ on the sphere $x^2+y^2+z^2=4$, outward normal. Parametrize $x=2\sin\theta\cos\phi,\,y=2\sin\theta\sin\phi,\,z=2\cos\theta$, giving $\hat n=\frac12(x,y,z)$ and $dS=4\sin\theta\,d\theta\,d\phi$.
 
 Then $\mathbf F\cdot\hat n=\frac{x^2+y^2+z^2}{2}=\frac{4}{2}=2$, constant, since every point sits on the sphere.
 

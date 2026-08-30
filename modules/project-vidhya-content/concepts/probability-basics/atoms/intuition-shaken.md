@@ -26,7 +26,7 @@ for_stance: shaken
 
 ## The sample space, listed
 
-Roll a die: $\Omega=\{1,2,3,4,5,6\}$, each outcome equally likely. "Even" is $A=\{2,4,6\}$, so $P(A)=3/6=1/2$ — three favorable out of six total, counted directly.
+A single die roll: $\Omega=\{1,2,3,4,5,6\}$, all six outcomes equally likely. "Even" is $A=\{2,4,6\}$, so $P(A)=3/6=1/2$ — three favorable out of six total, counted directly.
 
 ## Three rules that must hold
 

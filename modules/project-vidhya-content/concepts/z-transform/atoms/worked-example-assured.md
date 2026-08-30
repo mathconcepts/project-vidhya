@@ -18,7 +18,7 @@ variant_of: z-transform.worked-example
 for_stance: assured
 ---
 
-$X(z)=\dfrac{z}{z-a}$ for $a^nu[n]$, ROC $|z|>|a|$, follows from summing $\sum(a/z)^n$ in one line — skip re-deriving the convergence condition once $|a/z|<1\Leftrightarrow|z|>|a|$ is automatic.
+$X(z)=\dfrac{z}{z-a}$ for $a^nu[n]$, ROC $|z|>|a|$, drops straight out of summing $\sum(a/z)^n$ as a geometric series; the convergence condition $|a/z|<1\Leftrightarrow|z|>|a|$ is read off the ratio, not something to re-derive each time.
 
 Inverting $\dfrac{1}{1-0.5z^{-1}}=\dfrac{z}{z-0.5}$ with ROC $|z|>0.5$ needs no separate method — it's the same pair, $a=0.5$, exterior ROC:
 

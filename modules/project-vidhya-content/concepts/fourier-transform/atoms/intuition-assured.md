@@ -7,7 +7,7 @@
 # vocabulary, and spends its words on the distinctions that actually cost
 # marks (degenerate cases, faster routes, common false generalisations)
 # rather than re-teaching what they can already do.
-id: fourier-transform-intuition.assured
+id: fourier-transform.intuition.assured
 concept_id: fourier-transform
 atom_type: intuition
 bloom_level: 2

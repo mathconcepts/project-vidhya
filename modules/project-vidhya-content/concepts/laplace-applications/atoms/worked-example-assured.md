@@ -18,11 +18,11 @@ variant_of: laplace-applications.worked-example
 for_stance: assured
 ---
 
-$L=1,R=2,V=10$ step, $i(0)=0$ gives $I(s)=\dfrac{10}{s(s+2)}=\dfrac{5}{s}-\dfrac{5}{s+2}$ by cover-up — skip re-deriving $\frac{di}{dt}+\frac{R}{L}i=\frac{V}{L}$ once it is automatic.
+$L=1,R=2,V=10$ step, $i(0)=0$ gives $I(s)=\dfrac{10}{s(s+2)}=\dfrac{5}{s}-\dfrac{5}{s+2}$ straight from cover-up at $s=0$ and $s=-2$; the KVL line $\frac{di}{dt}+\frac{R}{L}i=\frac{V}{L}$ is worth writing once and trusting from then on.
 
 $$i(t)=5(1-e^{-2t})\ \text{A}$$
 
-The number worth checking isn't the algebra, it's the physical read: steady-state current is $V/R=5$ A by Ohm's law alone, and the time constant $\tau=L/R=0.5$ s is the coefficient of $t$ in the exponent — $e^{-2t}=e^{-t/\tau}$, not $e^{-Rt}$ and not $e^{-t/L}$. Matching the exponent's coefficient to $1/\tau$, not to $R$ or $L$ in isolation, is the fast sanity check on the whole derivation.
+What actually matters here is the physical read, not the algebra: steady-state current is $V/R=5$ A by Ohm's law alone, and the time constant $\tau=L/R=0.5$ s is the coefficient of $t$ in the exponent — $e^{-2t}=e^{-t/\tau}$, not $e^{-Rt}$ and not $e^{-t/L}$. Matching the exponent's coefficient to $1/\tau$, not to $R$ or $L$ in isolation, is the fast sanity check on the whole derivation.
 
 Final-value theorem confirms it without inverting anything: $\lim_{s\to0}sI(s)=\lim_{s\to0}\dfrac{10}{s+2}=5$ — valid here since the only pole of $sI(s)$, at $s=-2$, sits in the left half-plane.
 

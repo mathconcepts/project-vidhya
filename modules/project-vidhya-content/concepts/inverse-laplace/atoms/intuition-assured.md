@@ -7,7 +7,7 @@
 # vocabulary, and spends its words on the distinctions that actually cost
 # marks (degenerate cases, faster routes, common false generalisations)
 # rather than re-teaching what they can already do.
-id: inverse-laplace-intuition.assured
+id: inverse-laplace.intuition.assured
 concept_id: inverse-laplace
 atom_type: intuition
 bloom_level: 2

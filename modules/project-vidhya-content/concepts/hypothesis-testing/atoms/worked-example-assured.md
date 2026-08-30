@@ -31,13 +31,13 @@ for_stance: assured
 
 $z=(52-50)/(6/\sqrt{36})=2/1=2$. Two-tailed critical value at $\alpha=0.05$ is $1.96$; $|z|=2>1.96$, reject $H_0$. Confirmed via $p=2P(Z>2)=2(0.0228)=0.0456<0.05$ — same call from either route, which is the actual value of computing both.
 
-## The distinction this problem is built to test
+## The tail-count distinction hiding in this problem
 
 One-tailed vs two-tailed changes the critical value, not the statistic: $H_1:\mu>50$ at $\alpha=0.05$ uses $1.645$, not $1.96$. Read the alternative's direction before picking a critical value — the $z$ arithmetic itself never changes.
 
-## What "reject $H_0$" buys, and what it doesn't
+## What "reject $H_0$" establishes, and what it leaves open
 
-It says $\mu=50$ is not well supported at this level. It does NOT say $\mu=52$ (the sample mean is an estimate, not the parameter), and it says nothing about $\mu$'s value beyond "probably not 50."
+It says $\mu=50$ is not well supported at this level. It does NOT say $\mu=52$ (the sample mean is an estimate, not the parameter), and it never pins down $\mu$'s value beyond "probably not 50."
 
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: two-tailed z-test for a sample mean","steps":[{"prompt":"A sample of n=25 has x̄=103 and known σ=10. We test H₀: μ=100 vs H₁: μ≠100 at α=0.05. What is the z-statistic?","hint":"Use z = (x̄ − μ₀) / (σ/√n). The standard error is σ/√n = 10/√25 = 2.","answer":"z = (103 − 100) / 2 = 1.5"},{"prompt":"The critical value for a two-tailed test at α=0.05 is z = ±1.96. Based on z=1.5, what is the conclusion?","hint":"Compare |z| with 1.96. If |z| < 1.96, fail to reject H₀.","answer":"Since |1.5| = 1.5 < 1.96, we fail to reject H₀. There is insufficient evidence that μ ≠ 100."}]}

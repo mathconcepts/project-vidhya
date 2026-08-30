@@ -17,4 +17,4 @@ variant_of: vector-fields.hook
 for_stance: assured
 ---
 
-$\nabla\times\mathbf F=\mathbf 0$ is only equivalent to conservative on a simply connected domain — a region with no holes to route a loop around. Punch a single hole out of the plane and the equivalence breaks: a field can be irrotational everywhere on the punctured plane and still have nonzero circulation around a loop encircling the hole. Confirming curl is zero at every point of $\mathbf F$'s domain is necessary but not sufficient; the shape of the domain itself is part of the hypothesis, not a footnote.
+$\nabla\times\mathbf F=\mathbf 0$ is only equivalent to conservative on a simply connected domain — a region with no holes to route a loop around. Punch a single hole out of the plane and the equivalence breaks: on the punctured plane, curl can vanish at every remaining point while a loop encircling the hole still carries nonzero circulation. Checking that the curl vanishes throughout $\mathbf F$'s domain is necessary but not sufficient; the shape of that domain is part of the hypothesis, not a footnote.

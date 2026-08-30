@@ -32,4 +32,4 @@ $\chi^2_{n-1}=(n-1)s^2/\sigma^2$ powers a confidence interval or test ON varianc
 
 ## The CLT's actual claim, precisely
 
-$\bar{X}$ trends normal regardless of the POPULATION's shape — it says nothing about any single observation, which can remain arbitrarily non-normal.
+$\bar{X}$ trends normal regardless of the POPULATION's shape — a single observation is under no such obligation, and can remain arbitrarily non-normal.

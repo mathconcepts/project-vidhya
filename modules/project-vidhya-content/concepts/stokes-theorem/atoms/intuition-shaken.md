@@ -21,8 +21,8 @@ for_stance: shaken
 
 Take $\mathbf F=(-y,x,0)$ and let $C$ be the unit circle $x^2+y^2=1$ in the plane $z=0$, traversed counterclockwise, with $S$ the flat disk it bounds.
 
-Walk $C$ directly: parametrize $x=\cos\theta,\,y=\sin\theta$, so $\mathbf F=(-\sin\theta,\cos\theta,0)$ and $d\mathbf r=(-\sin\theta,\cos\theta,0)\,d\theta$. Then $\mathbf F\cdot d\mathbf r=\sin^2\theta+\cos^2\theta=1$, and $\oint_C\mathbf F\cdot d\mathbf r=\int_0^{2\pi}1\,d\theta=2\pi$.
+Along $C$, set $x=\cos\theta$ and $y=\sin\theta$. Then $\mathbf F=(-\sin\theta,\cos\theta,0)$ and $d\mathbf r=(-\sin\theta,\cos\theta,0)\,d\theta$, giving $\mathbf F\cdot d\mathbf r=\sin^2\theta+\cos^2\theta=1$ everywhere on the loop, so $\oint_C\mathbf F\cdot d\mathbf r=\int_0^{2\pi}1\,d\theta=2\pi$.
 
-Now check the surface instead: $\nabla\times\mathbf F=(0,0,2)$, constant. With the upward normal $\hat n=\hat k$, matching $C$'s counterclockwise direction by the right-hand rule, $\iint_S(\nabla\times\mathbf F)\cdot d\mathbf S=\iint_D2\,dA=2\pi(1)^2=2\pi$.
+Over the disk, $\nabla\times\mathbf F=(0,0,2)$ is constant, and the upward normal $\hat n=\hat k$ matches the counterclockwise direction of $C$ by the right-hand rule, so $\iint_S(\nabla\times\mathbf F)\cdot d\mathbf S=\iint_D2\,dA=2\pi(1)^2=2\pi$.
 
 Both routes give $2\pi$: one added the field's push along the rim, the other summed the spin trapped inside it, and Stokes' theorem guarantees these always match, provided the traversal direction and the surface normal stay linked by the right-hand rule.

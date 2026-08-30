@@ -27,7 +27,7 @@ Delay the same signal by one sample — the $3$ now sits at $n=1$ instead of $n=
 
 $$3z^{-1}$$
 
-That is the whole mechanism: shifting a sequence one step later multiplies its transform by $z^{-1}$. Nothing more is happening than that.
+Shifting a sequence one step later multiplies its transform by $z^{-1}$ — nothing more is happening than that.
 
 Now use it on a real recurrence: $y[n]-0.5y[n-1]=\delta[n]$, with $y[n]=0$ for $n<0$. Transform both sides — $y[n-1]$ becomes $z^{-1}Y(z)$ by the same rule, and $\delta[n]$ transforms to $1$:
 

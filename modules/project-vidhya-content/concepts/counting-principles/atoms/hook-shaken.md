@@ -18,4 +18,4 @@ variant_of: counting-principles.hook
 for_stance: shaken
 ---
 
-Line up A, B, C: order matters, so $3!=6$ arrangements exist. Pick 2 of those same three letters for a bag instead: order doesn't matter, so only $\binom{3}{2}=3$ ways exist. Same three letters, two different counts — because the question changed, not the objects.
+Line up A, B, C: order matters, $3!=6$ arrangements. Pick 2 of the same three for a bag: order doesn't matter, only $\binom{3}{2}=3$ ways. Same three letters, two different counts.

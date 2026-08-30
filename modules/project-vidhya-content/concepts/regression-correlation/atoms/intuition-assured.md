@@ -27,7 +27,7 @@ for_stance: assured
 
 Regressing $y$ on $x$ gives slope $b_{yx}=S_{xy}/S_{xx}$; regressing $x$ on $y$ gives $b_{xy}=S_{xy}/S_{yy}$ — a DIFFERENT line, coinciding with the first only when $|r|=1$. Their product $b_{yx}\cdot b_{xy}=r^2$ always, the fastest correctness check on a two-part regression problem.
 
-## What $R^2$ buys, and what it doesn't
+## What $R^2$ explains, and what it can't
 
 $R^2=r^2$ is the fraction of $y$'s variance explained by the linear fit — it says nothing about causation and nothing about whether a NONLINEAR relationship (which can drive $r$ toward $0$) is actually present.
 

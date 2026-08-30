@@ -18,4 +18,4 @@ variant_of: vector-fields.hook
 for_stance: shaken
 ---
 
-At the point $(1,0)$ a wind map might show a $10\,\text{km/h}$ breeze blowing north; a kilometre away at $(2,0)$ it could show $15\,\text{km/h}$ blowing east. One arrow per location, each with its own length and direction — that assignment, point by point, is the entire content of a vector field, nothing more.
+At the point $(1,0)$ a wind map might show a $10\,\text{km/h}$ breeze blowing north; a kilometre away at $(2,0)$ it could show $15\,\text{km/h}$ blowing east. One arrow per location, each carrying its own size and direction — that assignment, point by point, is the entire content of a vector field, nothing more.

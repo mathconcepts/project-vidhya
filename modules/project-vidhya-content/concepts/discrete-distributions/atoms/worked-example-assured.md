@@ -25,9 +25,9 @@ for_stance: assured
 
 Fixed $n=8$, constant $p=0.15$, independent trials → binomial, no further justification needed. $P(X=2)=\binom{8}{2}(0.15)^2(0.85)^6\approx0.238$. $P(X\le1)=(0.85)^8+8(0.15)(0.85)^7\approx0.2725+0.3847=0.657$.
 
-## The distinction that costs marks here
+## Where the marks actually go
 
-"At most 1" is a CDF value, not a single PMF evaluation — identify whether the question wants $P(X=k)$ or $P(X\le k)$ before touching the formula; swapping them is the most common binomial error, not an arithmetic slip.
+"At most 1" is a CDF value, not a single PMF evaluation — identify whether the question wants $P(X=k)$ or $P(X\le k)$ before touching the formula; swapping them is the single most frequent binomial slip-up, not an arithmetic one.
 
 ## When a faster route applies
 

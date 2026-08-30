@@ -7,7 +7,7 @@
 # vocabulary, and spends its words on the distinctions that actually cost
 # marks (degenerate cases, faster routes, common false generalisations)
 # rather than re-teaching what they can already do.
-id: laplace-transform-worked-example.assured
+id: laplace-transform.worked-example.assured
 concept_id: laplace-transform
 atom_type: worked_example
 bloom_level: 3
@@ -18,7 +18,7 @@ variant_of: laplace-transform-worked-example
 for_stance: assured
 ---
 
-$y''+3y'+2y=0$, $y(0)=1$, $y'(0)=0$ transforms to $(s^2+3s+2)Y=s+3$, and cover-up on $(s+1)(s+2)$ gives $A=2$, $B=-1$ directly — skip re-expanding once cover-up is automatic.
+$y''+3y'+2y=0$, $y(0)=1$, $y'(0)=0$ transforms to $(s^2+3s+2)Y=s+3$; substituting $s=-1$ and $s=-2$ into $\dfrac{s+3}{(s+1)(s+2)}$ hands over $A=2$ and $B=-1$ with no expansion needed.
 
 $$y(t)=2e^{-t}-e^{-2t}$$
 

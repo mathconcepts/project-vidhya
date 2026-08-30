@@ -31,7 +31,7 @@ for_stance: assured
 
 $P(D)=(.02)(.6)+(.03)(.3)+(.05)(.1)=.026$. $P(M_1\mid D)=.012/.026=6/13\approx0.4615$.
 
-## The distinction this problem is testing
+## Which conditional the question actually wants
 
 The question asks $P(M_1\mid D)$ — given a defect, which machine — NOT $P(D\mid M_1)$, which was already given as $0.02$. Reading the two the same way is the single most common error on this problem type.
 
@@ -41,7 +41,7 @@ $M_1$ makes 60% of items but only 2% defective, pulling its share of DEFECTS bel
 
 ## Free check
 
-All three posteriors sum to exactly $1$ — compute all three when time allows; a mismatch catches an arithmetic slip before it costs the mark.
+All three posteriors sum to exactly $1$ — compute all three when time allows; a total off from $1$ flags a wrong entry before it costs the mark.
 
 ```interactive-spec
 {"v":1,"kind":"guided_walkthrough","title":"Walk through: Bayes' theorem for factory defect probabilities","steps":[{"prompt":"A factory has two machines: M1 produces 70% of output with a 4% defect rate, M2 produces 30% with a 10% defect rate. What is P(D), the total probability of a defective item?","hint":"Use the law of total probability: P(D) = P(D|M1)·P(M1) + P(D|M2)·P(M2). Substitute the numbers given.","answer":"P(D) = (0.04)(0.70) + (0.10)(0.30) = 0.028 + 0.030 = 0.058"},{"prompt":"Using the same factory, a defective item is found. What is the probability it came from M2?","hint":"Apply Bayes' theorem: P(M2|D) = P(D|M2)·P(M2) / P(D). You already computed P(D) = 0.058.","answer":"P(M2|D) = (0.10 × 0.30) / 0.058 = 0.030 / 0.058 = 15/29 ≈ 0.517"}]}

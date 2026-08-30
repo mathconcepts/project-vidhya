@@ -20,7 +20,7 @@ for_stance: assured
 
 Recognising when Laplace is the right tool is pattern-matching: initial conditions given, constant coefficients, a standard input (step, ramp, impulse, sinusoid) — GATE usually hands you two of the three together.
 
-The theorem worth guarding, not reciting: a final value only exists once the transient has genuinely died out. Try the formula on $F(s)=1/(s^2+1)$ anyway: it returns $\lim_{s\to0}sF(s)=0$, but the true time function is $\sin t$, which oscillates forever and settles nowhere, let alone at $0$. Undamped oscillation, or outright growth, breaks the theorem without any warning — the formula still hands back a confident number, and that number is meaningless.
+The theorem worth guarding, not reciting: a final value only exists once the transient has genuinely died out. Try the formula on $F(s)=1/(s^2+1)$ anyway: it returns $\lim_{s\to0}sF(s)=0$, but the true time function is $\sin t$, which oscillates forever and settles nowhere, let alone at $0$. Undamped oscillation, or outright growth, breaks the theorem without any warning: nothing in the arithmetic flags the substitution as invalid, so a wrong steady-state slips through looking exactly like a right one.
 
 The initial-value theorem, $f(0^+)=\lim_{s\to\infty}sF(s)$, needs $F(s)$ strictly proper — numerator degree below denominator degree. Apply it to an improper $F(s)$ and you get a finite value for a function that actually jumps or is unbounded at $t=0^+$.
 

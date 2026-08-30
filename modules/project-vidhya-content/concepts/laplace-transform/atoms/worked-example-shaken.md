@@ -8,7 +8,7 @@
 # formula, and the check made explicit. No praise, no reassurance, and no
 # mention of how the reader might be feeling — a small win is what steadies
 # someone, not being told they are struggling.
-id: laplace-transform-worked-example.shaken
+id: laplace-transform.worked-example.shaken
 concept_id: laplace-transform
 atom_type: worked_example
 bloom_level: 3
@@ -33,7 +33,7 @@ $$Y(s)=\frac{s+3}{(s+1)(s+2)}=\frac{A}{s+1}+\frac{B}{s+2}$$
 
 Cover-up: at $s=-1$, $A=\dfrac{-1+3}{-1+2}=2$; at $s=-2$, $B=\dfrac{-2+3}{-2+1}=-1$. So $Y(s)=\dfrac{2}{s+1}-\dfrac{1}{s+2}$.
 
-Invert term by term with $\mathcal L^{-1}\{1/(s+a)\}=e^{-at}$:
+Invert each piece separately, using $\mathcal L^{-1}\{1/(s+a)\}=e^{-at}$:
 
 $$y(t)=2e^{-t}-e^{-2t}$$
 

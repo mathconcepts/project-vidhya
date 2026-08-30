@@ -23,4 +23,4 @@ Take $\mathbf F=(2x,2y)$. Check: $\partial Q/\partial x=0$ and $\partial P/\part
 
 Find $\phi$: integrating $\partial\phi/\partial x=2x$ gives $\phi=x^2+g(y)$; matching $\partial\phi/\partial y=2y$ forces $g(y)=y^2$. So $\phi=x^2+y^2$.
 
-Now $\int_C\mathbf F\cdot d\mathbf r$ from $(0,0)$ to $(1,1)$, along any path, is just $\phi(1,1)-\phi(0,0)=(1+1)-0=2$. Try the straight line $y=x$: parametrize $x=t,y=t$, $\mathbf F\cdot d\mathbf r=2t\,dt+2t\,dt=4t\,dt$, and $\int_0^14t\,dt=2$, the same number, reached the long way, and it would stay $2$ on a curved path too.
+Now $\int_C\mathbf F\cdot d\mathbf r$ from $(0,0)$ to $(1,1)$, along any path, is just $\phi(1,1)-\phi(0,0)=(1+1)-0=2$. Try the straight line $y=x$: parametrize $x=t,y=t$, $\mathbf F\cdot d\mathbf r=2t\,dt+2t\,dt=4t\,dt$, and $\int_0^14t\,dt=2$ — the slower route lands on the identical value, and it would stay $2$ on a curved path too.

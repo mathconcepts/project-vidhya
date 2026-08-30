@@ -17,4 +17,4 @@ variant_of: fourier-series.hook
 for_stance: assured
 ---
 
-The decomposition is the whole content — a period-$2L$ signal is $\dfrac{a_0}{2}+\sum a_n\cos\frac{n\pi x}{L}+b_n\sin\frac{n\pi x}{L}$, nothing more exotic. Where GATE actually scores you is elsewhere: whether you exploit even/odd symmetry to kill half the coefficients before integrating, and whether you know the series at a jump discontinuity converges to the *average* of the two one-sided limits, not to $f$ itself.
+The decomposition is the whole content — a period-$2L$ signal is $\dfrac{a_0}{2}+\sum a_n\cos\frac{n\pi x}{L}+b_n\sin\frac{n\pi x}{L}$, nothing more exotic. Where GATE actually scores you is elsewhere: whether you exploit even/odd symmetry to kill half the coefficients before integrating, and whether you know the series at a jump discontinuity converges to the *average* of the left and right boundary limits, not to $f$ itself.

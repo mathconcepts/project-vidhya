@@ -15,6 +15,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import { MarkdownAtomRenderer } from './MarkdownAtomRenderer';
+import { DeferredFigureContext } from './AnswerReveal';
 import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import { ImprovedBadge } from './ImprovedBadge';
 import { InteractiveSidecar } from './interactives/InteractiveSidecar';
@@ -111,23 +112,32 @@ export interface ContentAtom {
 //             interleaved_drill, mnemonic.
 //   'below' — the prose IS the idea; a figure annotates it afterwards.
 //             formal_definition (the words are the content), common_traps
-//             and exam_pattern (both are lists of prose), and
-//             retrieval_prompt.
+//             and exam_pattern (both are lists of prose).
+//   'in_disclosure' — the figure would give the answer away, so it is held
+//             behind the atom's own AnswerReveal and revealed with it.
+//             retrieval_prompt only.
 //
-// retrieval_prompt is 'below' for a reason worth stating: a figure shown
-// above a recall prompt cues the answer the prompt is trying to make the
-// student retrieve unaided. Sequencing it after the prose is the weakest
-// form of that protection — properly the figure belongs INSIDE the
-// AnswerReveal disclosure, but media is a server-side sidecar rather than
-// part of the markdown body, so it cannot be folded into the disclosure
-// without moving media resolution into the content pipeline. Tracked in the
-// design doc rather than silently shipped as if solved.
+// retrieval_prompt earns the third value rather than settling for 'below'. A
+// figure shown anywhere beside a recall prompt cues the very thing the prompt
+// exists to make the student retrieve unaided, and sequencing it after the
+// prose only means they scroll past it — it is on the same screen either way.
+// The figure is threaded into the disclosure through DeferredFigureContext
+// (see AnswerReveal.tsx for why context rather than a prop).
+//
+// Note on scope, so this is not read as a bigger fix than it is: no shipped
+// retrieval_prompt atom carries a figure today. `gif-scene` blocks live on
+// visual_analogy atoms and narration is `intuition`-only. But media is
+// attached by atom id with no atom-type gate anywhere in that path — the disk
+// fallback in `applyMediaUrlsFromDisk` will hand a `.gif` to any atom whose id
+// matches a file — so an author adding a `gif-scene` to a retrieval-prompt
+// tomorrow would leak the answer silently. This closes the hole before
+// something falls in it.
 
 interface AtomPresentation {
   label: string;
   icon: any;
   animation: AnimationPreset;
-  stage: 'above' | 'below';
+  stage: 'above' | 'below' | 'in_disclosure';
 }
 
 const ATOM_PRESENTATION_MAP: Record<AtomType, AtomPresentation> = {
@@ -138,7 +148,7 @@ const ATOM_PRESENTATION_MAP: Record<AtomType, AtomPresentation> = {
   worked_example:     { label: 'Worked Example', icon: Target,        animation: 'step-unfold',       stage: 'above' },
   micro_exercise:     { label: 'Quick Check',    icon: Target,        animation: 'reveal-highlight',  stage: 'above' },
   common_traps:       { label: 'Common Traps',   icon: AlertTriangle, animation: 'shake-then-settle', stage: 'below' },
-  retrieval_prompt:   { label: 'Recall',         icon: Eye,           animation: 'flip-reveal',       stage: 'below' },
+  retrieval_prompt:   { label: 'Recall',         icon: Eye,           animation: 'flip-reveal',       stage: 'in_disclosure' },
   interleaved_drill:  { label: 'Drill',          icon: Target,        animation: 'slide-up',          stage: 'above' },
   mnemonic:           { label: 'Mnemonic',       icon: Sparkles,      animation: 'scale-in',          stage: 'above' },
   exam_pattern:       { label: 'Exam Pattern',   icon: BookOpen,      animation: 'reveal-highlight',  stage: 'below' },
@@ -238,6 +248,11 @@ export function applyIntentStageOrder(atoms: ContentAtom[], stageOrder?: string[
  * the one call site that hadn't caught up, so every visual_analogy atom's
  * gif-scene JSON rendered as a literal code block instead of prose.
  */
+/** Matches the `<details>` opener AnswerReveal is built from. Non-global so
+ *  `.test()` carries no lastIndex state between calls (the bug documented on
+ *  GIF_SCENE_FENCE_RE below). */
+const DETAILS_OPEN_RE = /<details(?:\s[^>]*)?>/i;
+
 const GIF_SCENE_FENCE_RE = /```gif-scene\s*[\s\S]*?```/g;
 function stripGifSceneBlock(content: string): string {
   return content.replace(GIF_SCENE_FENCE_RE, '').trim();
@@ -798,20 +813,39 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             is the accessible content; the figure carries an alt string) while
             the visual order follows the pedagogy.
           */}
-          <div className="vidhya-atom-stage" data-stage={presentation.stage}>
-            <div className="vidhya-atom-stage__prose">
-              {current.atom_type === 'worked_example' ? (
+          {(() => {
+            // A figure can only be held behind a disclosure if the atom
+            // actually has one. An authored retrieval_prompt without a
+            // `<details>` block falls back to 'below' rather than having its
+            // figure silently vanish — failing visible beats failing quiet.
+            const deferFigure =
+              presentation.stage === 'in_disclosure' && DETAILS_OPEN_RE.test(current.content);
+            const stage = deferFigure ? 'below' : presentation.stage;
+            const prose =
+              current.atom_type === 'worked_example' ? (
                 <WorkedExampleCard atom={current} />
               ) : current.atom_type === 'common_traps' ? (
                 <CommonTrapsCard atom={current} />
               ) : (
                 <DefaultAtomCard atom={current} />
-              )}
-            </div>
-            <div className="vidhya-atom-stage__figure">
-              <MediaSidecar atom={current} />
-            </div>
-          </div>
+              );
+            return (
+              <div className="vidhya-atom-stage" data-stage={stage}>
+                <div className="vidhya-atom-stage__prose">
+                  {deferFigure ? (
+                    <DeferredFigureContext.Provider value={<MediaSidecar atom={current} />}>
+                      {prose}
+                    </DeferredFigureContext.Provider>
+                  ) : (
+                    prose
+                  )}
+                </div>
+                <div className="vidhya-atom-stage__figure">
+                  {deferFigure ? null : <MediaSidecar atom={current} />}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Phase 3 of Curriculum R&D — interactive widgets parsed from
               the atom body's ```interactive-spec``` fenced block. Renders

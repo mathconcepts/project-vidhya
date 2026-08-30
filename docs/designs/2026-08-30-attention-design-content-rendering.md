@@ -197,13 +197,9 @@ Same page, same viewport, after.
 
 ## 6. Still open
 
-1. **F6 residual** — FAB overlays content at rest. Navigation-level decision.
-2. **`retrieval_prompt` figures** — should live inside the disclosure, not merely after the prose. Needs media resolution moved into the content pipeline.
-3. **F9** — `docs/` absent from the runtime image; the content-spec admin API is empty in production.
-4. **No real boot check in CI** — the existing smoke test runs under vitest's transformer, not tsx's runtime, so it is green on crashes that kill production. The cheap guard added here covers only the `__dirname` class; a subprocess boot covers the rest.
-5. ~~**Hook copy**~~ — done, §7.
-6. **`narration_steps` coverage** — one concept uses it. This is the highest-value remaining *motion* work.
-7. **Spec → generation wiring** — `docs/content-spec/` still does not reach `template-engine.ts`.
+1. **F6 residual** — the FAB overlays content at rest. Navigation-level decision, untouched.
+
+Everything else that stood here is now closed — see §7 (hook copy) and §8 (the remaining four).
 
 ---
 
@@ -227,3 +223,48 @@ Each rewrite leads with something concrete and lands the definition after it. `p
 **One error caught in my own new copy.** The `series` hook first read "Add $\frac12 + \frac14 + \frac18 + \cdots$ forever and you land on exactly 2." It lands on 1. Every numeric claim introduced in this pass was then checked against Wolfram rather than re-read: the Cayley-Hamilton characteristic polynomial and its zero matrix, $\int_1^\infty x^{-2}\,dx = 1$ and the divergence of $\int_1^\infty x^{-1}\,dx$, $\mathcal{L}^{-1}\{1/(s^2+4)\} = \tfrac12\sin 2t$, $\lim_{x\to0}\sin x/x = 1$, the partial-fraction split of $1/(x^2-1)$, $\int 2x\cos(x^2)\,dx = \sin(x^2)$, and the non-planarity of $K_{3,3}$.
 
 All 17 CI gates, 1102 frontend tests and 4263 backend tests pass on the result.
+
+---
+
+## 8. Closing the open list (2026-08-30, follow-up)
+
+The four remaining items from §6, implemented.
+
+### `docs/` was not in the runtime image
+
+`atomic-topic-spec.ts` resolves its two CSVs from `docs/content-spec/`; neither Dockerfile copied `docs/`. The loader is written to treat a missing spec file as "no spec available" rather than an error — correct for a DB-less local run, and exactly wrong here, because the effect in production was `GET /api/admin/content-spec/atomic-topics` answering **200 with an empty catalogue**. Nothing logged, nothing 500'd. The feature was dead in every deployed image from the day it shipped.
+
+Both Dockerfiles now copy `docs/content-spec/` — only that subdirectory, since the rest of `docs/` has no runtime consumer. `deploy-wiring.test.ts` gained assertions for the COPY in each file and for the two CSV filenames the loader joins by name, so a rename is caught as the same outage as a missing directory.
+
+### No real boot check in CI
+
+`scripts/check-boot.ts` spawns the actual production command — `npx tsx src/server.ts` — on an OS-assigned free port with no `DATABASE_URL`, and requires the process to answer its own `/health`. A crash is treated as terminal rather than waited out, so the failure output is the stack trace rather than a timeout.
+
+Verified non-vacuous against `src/content/atomic-topic-spec.ts` exactly as it stood on `main`:
+
+```
+fixed file    → [check-boot] /health answered …            exit 0, 2.4s
+original file → [check-boot] FAILED — the server process   exit 1, ~2s
+                exited before answering /health …
+                ReferenceError: __dirname is not defined in ES module scope
+```
+
+Wired into `package.json`'s `ci` aggregate **and** `ci.yml` in the same position — `ci:aggregate-drift` compares the two ordered lists and would fail on either alone. 17 gates → 18. Adds about 3 seconds.
+
+This does not replace `esm-dirname-guard.test.ts`; that grep is deterministic and names the offending file, while this catches the general class (bad CJS named imports, missing exports, top-level throws, cyclic init) regardless of what a transformer would paper over.
+
+### `retrieval_prompt` figures now live inside the disclosure
+
+`ATOM_PRESENTATION_MAP.stage` gained a third value, `in_disclosure`, used by `retrieval_prompt` alone. The figure reaches `AnswerReveal` through `DeferredFigureContext` rather than a prop, because the disclosure is not built by the caller — `remarkDetailsTransform` creates it partway down a markdown tree from the atom's own `<details>` block, while the media is a server-side sidecar that is not in the markdown at all. Context is the seam that skips the arbitrary amount of rendered markdown in between.
+
+An atom marked `in_disclosure` that has no `<details>` block falls back to `below`, so a figure can never silently vanish.
+
+**Scope, stated so this is not read as a bigger fix than it is:** no shipped `retrieval_prompt` atom carries a figure today — `gif-scene` blocks live on `visual_analogy` atoms and narration is `intuition`-only. But nothing in the media path gates on atom type: `applyMediaUrlsFromDisk` hands a `.gif` to any atom whose id matches a file. This closes the hole before something falls in it, rather than after.
+
+### `narration_steps` rolled out
+
+Was 1 concept of 4; now **12 of 12 simulation files** (4 concepts × base + two stance variants). `determinants`, `linear-transformations` and `orthogonality` each gained four beats keyed to playback progress, so the caption advances with the trace instead of sitting there as one unchanging line — the technique that turns a looping GIF into a demonstration.
+
+Each beat describes what is actually on screen at that progress value, which meant checking the geometry rather than writing plausible prose. Verified against Wolfram: `det([[3,0],[0,2]]) = 6`; `[[2,1],[0,1]]·(cos t, sin t) = (2cos t + sin t, sin t)` matching the spec's own expressions, with `det = 2`; and `∫₀^{2π} cos t·cos 2t dt = 0`, the orthogonality the third animation exists to show.
+
+The fenced block must stay byte-identical across a base and its stance variants (`compareBlocks`), so all three files per concept were written from one generated string. 185 interactive specs still valid, 156 variant pairs still agree.

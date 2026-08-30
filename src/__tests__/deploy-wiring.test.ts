@@ -22,6 +22,7 @@ import path from 'path';
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const dockerfile = fs.readFileSync(path.join(ROOT, 'demo', 'Dockerfile'), 'utf8');
+const rootDockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
 const renderYaml = fs.readFileSync(path.join(ROOT, 'render.yaml'), 'utf8');
 
 describe('demo image contents', () => {
@@ -34,6 +35,27 @@ describe('demo image contents', () => {
     // modules/ = lesson atoms, supabase/ = migrations.
     for (const dir of ['data/', 'modules/', 'supabase/', 'src/', 'demo/']) {
       expect(dockerfile).toMatch(new RegExp(`^COPY ${dir.replace('/', '\\/')}`, 'm'));
+    }
+  });
+
+  it('copies docs/content-spec, which the content-spec admin API reads', () => {
+    // The same packaging failure as config/ above, one directory over, and
+    // quieter: loadAtomicTopicSpecs() catches its own readFileSync errors and
+    // treats a missing spec file as "no spec available". That is correct for a
+    // DB-less local run and wrong for a shipped image — the effect was
+    // GET /api/admin/content-spec/atomic-topics answering 200 with an empty
+    // catalogue, in every deployed image, from the day the feature shipped.
+    // Nothing logged, nothing 500'd, so nothing surfaced it.
+    expect(dockerfile).toMatch(/^COPY docs\/content-spec\/ docs\/content-spec\//m);
+    // The root Dockerfile's runtime stage copies from the builder stage.
+    expect(rootDockerfile).toMatch(/^COPY --from=builder \/app\/docs\/content-spec/m);
+  });
+
+  it('ships the two CSVs the spec loader resolves by name', () => {
+    // atomic-topic-spec.ts joins these filenames onto SPEC_DIR, so a rename
+    // is the same outage as a missing directory.
+    for (const f of ['atomic-content-structure-map.csv', 'atomic-content-generation-specs.csv']) {
+      expect(fs.existsSync(path.join(ROOT, 'docs', 'content-spec', f))).toBe(true);
     }
   });
 

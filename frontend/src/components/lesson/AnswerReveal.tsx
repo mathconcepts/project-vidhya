@@ -41,8 +41,30 @@
  *     per screen").
  */
 
-import { useId, useState } from 'react';
+import { createContext, useContext, useId, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+
+/**
+ * A figure that must not be visible until the student has committed to an
+ * answer.
+ *
+ * `retrieval_prompt` asks the student to recall something unaided. A figure
+ * shown beside the prompt cues the very thing the prompt exists to make them
+ * retrieve — so for that atom type the figure belongs INSIDE this disclosure,
+ * revealed together with the answer, not sequenced before or after it.
+ *
+ * It arrives through context rather than as a prop because the disclosure is
+ * not constructed by the caller: `remarkDetailsTransform` creates it partway
+ * down a markdown tree, from the atom's own `<details>` block. The media,
+ * meanwhile, is a server-side sidecar (`atom.media`), not part of the
+ * markdown at all — so AtomCardRenderer has the figure and AnswerReveal has
+ * the place to put it, with an unbounded amount of rendered markdown in
+ * between. Context is the seam that skips it.
+ *
+ * Null (the default) means "no deferred figure" and every existing call site
+ * renders exactly as before.
+ */
+export const DeferredFigureContext = createContext<React.ReactNode>(null);
 
 export interface AnswerRevealProps {
   /** Text from the authored `<summary>`, e.g. "Answer". Falls back to "Answer". */
@@ -53,6 +75,7 @@ export interface AnswerRevealProps {
 
 export function AnswerReveal({ summary, children }: AnswerRevealProps) {
   const [open, setOpen] = useState(false);
+  const deferredFigure = useContext(DeferredFigureContext);
   const bodyId = useId();
   const label = (summary ?? '').trim() || 'Answer';
 
@@ -123,6 +146,7 @@ export function AnswerReveal({ summary, children }: AnswerRevealProps) {
           }}
         >
           {children}
+          {deferredFigure}
         </div>
       )}
     </div>

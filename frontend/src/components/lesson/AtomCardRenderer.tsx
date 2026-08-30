@@ -437,6 +437,19 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
  * not something to fix here. What belongs here is honesty: an atom that
  * carries an authored `gif-scene` block but has no `gif_url` yet must say
  * so, never silently render as if no visual was ever intended.
+ *
+ * Follow-up (/investigate, 2026-08-30): that "window" recurs on EVERY
+ * Render free-tier sleep/wake, not just the first-ever boot — the free
+ * tier has no persistent disk, so `.data/media/` (and every rendered GIF
+ * in it) is wiped on every restart. A student revisiting an atom via
+ * spaced repetition can land on a freshly-woken instance again and again.
+ * The placeholder text promised "check back in a moment" but nothing on
+ * the page ever did — `media.gif_url` was only ever read once, from the
+ * page's initial load. The poll below makes that promise true: it
+ * re-checks the same URL the server would eventually attach (server-side
+ * lookup is already a live disk check, see media-routes.ts's
+ * `resolveLatestOnDisk` — no backend change needed) and swaps the real
+ * GIF in without a reload once it exists.
  */
 export function MediaSidecar({ atom }: { atom: ContentAtom }) {
   const reduceMotion = usePrefersReducedMotion();
@@ -446,9 +459,47 @@ export function MediaSidecar({ atom }: { atom: ContentAtom }) {
   // GIF_SCENE_FENCE_RE is shared with stripGifSceneBlock's .replace() calls
   // elsewhere, so reset it to avoid a stateful false negative on reuse.
   GIF_SCENE_FENCE_RE.lastIndex = 0;
+
+  // Bug (live QA, 2026-08-30): "Animation still generating" never resolved
+  // on its own. This component only ever read the media.gif_url the page
+  // was served with — it never re-checked. The background render race
+  // above is real and recurs on every Render free-tier sleep/wake (no
+  // persistent disk: .data/media/ is wiped, so demo:seed-media re-renders
+  // all ~70 GIFs from scratch on every cold start, not just the first
+  // ever). The server already re-checks disk fresh on every request
+  // (applyMediaUrlsFromDisk / media-routes.ts's resolveLatestOnDisk), so a
+  // student who stayed on the page had no way to see the GIF appear short
+  // of a manual reload nothing told them to do — "check back in a moment"
+  // was a promise the UI never kept. Poll the same deterministic URL the
+  // server would attach once rendering finishes, and swap it in live.
+  const [resolvedGifUrl, setResolvedGifUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!awaitingGif) return;
+    const url = `/api/lesson/media/${encodeURIComponent(atom.id)}/gif`;
+    let cancelled = false;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 20; // ~100s of polling before giving up
+    const POLL_MS = 5000;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      attempts += 1;
+      fetch(url, { cache: 'no-store' })
+        .then((res) => {
+          if (cancelled) return;
+          if (res.ok) { setResolvedGifUrl(url); return; }
+          if (attempts < MAX_ATTEMPTS) timer = setTimeout(tick, POLL_MS);
+        })
+        .catch(() => {
+          if (!cancelled && attempts < MAX_ATTEMPTS) timer = setTimeout(tick, POLL_MS);
+        });
+    };
+    timer = setTimeout(tick, POLL_MS);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [awaitingGif, atom.id]);
+
   if (!media && !awaitingGif) return null;
   if (!media?.gif_url && !media?.audio_url && !awaitingGif) return null;
-  if (awaitingGif) {
+  if (awaitingGif && !resolvedGifUrl) {
     return (
       <div className="mt-4 space-y-3">
         <figure
@@ -471,19 +522,20 @@ export function MediaSidecar({ atom }: { atom: ContentAtom }) {
       </div>
     );
   }
-  // Unreachable in practice — every path above that leaves `media` unset
-  // already returned. Narrows the type for TS, which can't otherwise see
-  // that guarantee across the awaitingGif branch.
-  if (!media) return null;
+  // Resolved via the poll above (the awaitingGif branch already returned
+  // if we're still waiting) — folds the just-arrived GIF in alongside
+  // whatever media the atom was originally served with.
+  const effectiveMedia = resolvedGifUrl ? { ...media, gif_url: resolvedGifUrl } : media;
+  if (!effectiveMedia) return null;
   return (
     <div className="mt-4 space-y-3">
-      {media.gif_url && (
+      {effectiveMedia.gif_url && (
         <figure
           className="rounded-lg overflow-hidden border"
           style={{ borderColor: 'var(--separator)', background: 'var(--canvas)' }}
         >
           <img
-            src={media.gif_url}
+            src={effectiveMedia.gif_url}
             alt="Animated visualization for this concept"
             loading="lazy"
             className="w-full h-auto"
@@ -496,12 +548,12 @@ export function MediaSidecar({ atom }: { atom: ContentAtom }) {
           )}
         </figure>
       )}
-      {media.audio_url && (
+      {effectiveMedia.audio_url && (
         <div className="flex items-center gap-2">
           <audio
             controls
             preload="none"
-            src={media.audio_url}
+            src={effectiveMedia.audio_url}
             aria-label="Read this concept aloud"
             className="w-full h-10"
           />

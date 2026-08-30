@@ -598,3 +598,49 @@ entry in `CLAUDE.md`: gif-scene renders went from 66/28-skipped/6-failed to
 **Deferred from:** `docs/designs/2026-08-28-wolfram-t3-content-strategy.md`
 (Move B implementation, parking lot / rejected R1), 2026-08-28, branch
 `claude/autoplan-content-readiness-4vfhcn`.
+
+## Resonance scenes for intuition atoms of the four pioneer concepts
+
+**Trigger:** resonance hooks (branch `claude/autoplan-content-resonance-q5p197`)
+ship and the `resonance_hooks_v1_gate_ma` experiment row shows engagement signal —
+or the next authoring batch on LA content for any reason.
+
+**What:** `determinants`, `eigenvalues`, `linear-transformations`, `orthogonality`
+carry narration-beat simulations on their hook atoms; their `intuition` atoms
+still use static `manipulable`/directive interactives. Author beat-fused scenes
+(per the resonance schema: per-stance texts, one trap beat, ghost path) for those
+four intuition atoms, propagated byte-identically into both stance variant files.
+
+**Why:** deferred from the resonance plan's cherry-pick ceremony — it doubles the
+W3 authoring load for four concepts while W4's generation wiring covers intuition
+atoms for everything generated going forward. Worth doing by hand only once the
+hook-level pattern shows signal.
+
+**Where to start:** `docs/designs/2026-08-30-resonance-fused-atoms-plan.md` (the
+schema + design contract), `modules/project-vidhya-content/concepts/<id>/atoms/intuition*.md`.
+
+**Effort:** M human / ~30 min CC per concept incl. Wolfram verification.
+**Priority:** P3.
+**Deferred from:** /autoplan CEO phase, 2026-08-30.
+
+## Trap-beat wording can drift from its source common-traps atom
+
+**Trigger:** any edit to a `common-traps.md` file for a concept whose hook carries
+a resonance trap beat; or a QA report of a trap beat contradicting the Common
+Traps card in the same lesson.
+
+**What:** resonance trap beats cite the highest-cost trap from the concept's
+authored `common-traps.md`, but nothing mechanical links them — a later edit to
+the traps atom can leave the beat teaching an outdated or contradicting version.
+Options when this bites: a `ci:` check greping trap-beat text for a keyword
+anchor into the source atom, or an authoring-note convention in the spec fence.
+
+**Why:** named as the one debt item in the resonance plan's trajectory review
+(S10); cheap to fix once real, speculative to build before any drift has occurred.
+
+**Where to start:** `scripts/check-variant-agreement.ts` (walker precedent) or a
+new small check; `docs/designs/2026-08-30-resonance-fused-atoms-plan.md` S10.
+
+**Effort:** S human / ~15 min CC.
+**Priority:** P3.
+**Deferred from:** /autoplan eng phase, 2026-08-30.

@@ -227,12 +227,37 @@ simulation renders **as the figure** in the existing `.vidhya-atom-stage` (above
 prose on phones, beside-and-sticky at ≥720px) — the same slot the attention-design
 pass built for GIFs. Precedence per atom: simulation > GIF (an atom with both shows
 the simulation; its `gif-scene` fence is already stripped from prose and its GIF
-simply isn't fetched). `manipulable` and `guided_walkthrough` keep their current
-below-the-prose placement — they are things you *do after* reading, not figures.
+simply isn't fetched — and a parsed simulation **never** shows a "still
+generating" state; that polling pattern belongs to server-rendered GIFs only).
+`manipulable` and `guided_walkthrough` keep their current below-the-prose
+placement — they are things you *do after* reading, not figures.
+
+**Carve-out: `stage === 'in_disclosure'` atoms are exempt from figure promotion.**
+`retrieval_prompt` defers its figure inside `AnswerReveal` precisely so nothing
+cues the answer; a simulation promoted to the figure slot there would defeat that
+protection. The precedence check requires `presentation.stage !== 'in_disclosure'`,
+with a test pinning it.
 
 The hook atom card, when a resonance simulation is present, drops the redundant
 static entry animation (`bounce-alert`) in favour of the scene's own motion — one
 moving thing per screen, per the one-focal-block rule.
+
+**Honest sizing:** this is real `AtomCardRenderer` surgery, not a prop tweak.
+`parseInteractiveSpec` is called today at three independent sites
+(`DefaultAtomCard`, `WorkedExampleCard`, `InteractiveSidecar`) and the stage
+decision becomes a fourth consumer. The change hoists ONE `useMemo`-cached parse
+per `current.id`/`current.content` to the top of the card render and threads the
+result into: the entry-preset selection, the stage/figure slot, and an
+`InteractiveSidecar` prop suppressing double-rendering of the promoted simulation.
+Four call sites become one parse. Likewise honest on the renderer internals:
+`emphasize` means splitting the single SVG `<path>` into per-beat segments (not a
+stroke prop); the trap hold is a small per-mount state machine (held-once ref +
+seek-skips-hold; a seek landing exactly on the trap's `at_progress` does NOT
+hold — holds fire only when natural playback crosses the point); the
+`AnimatePresence` key moves from beat *text* to beat *index* (identical resolved
+texts must not collide); and beat captions render through `MarkdownAtomRenderer`
+with a stable per-beat id (`${atom.id}::beat-${i}`) and a caption-variant class
+that neutralizes `.vidhya-atom-body`'s paragraph margins for the one-line slot.
 
 ### W3 — Resonance coverage: all 26 Linear Algebra concepts (the flagship proof)
 
@@ -277,6 +302,14 @@ New `src/content/resonance-strategy.ts`:
   `atomic-concept-map.ts` (100 resolve; 16 unmapped stay unmapped with reasons).
 - Exposes `resonanceStrategyFor(concept_id)`: recommended hooks, base sequence,
   personalized delta slots, attention-design hypothesis.
+- **The join is N:1 and the merge rule is explicit** — `eigenvalues` maps from
+  BOTH `LA-06` and `LA-07` (`getAtomicIdsForConceptId` returns `string[]` for
+  exactly this reason). Merge: `recommended_hooks` concatenated in sorted-atomic-id
+  order and de-duplicated; `personalized_delta_slots` unioned; `base_sequence` and
+  `attention_design_hypothesis` taken from the lowest atomic id (they are
+  boilerplate-per-family today, so first-wins loses nothing — revisit if the CSVs
+  ever diverge per topic). Unit-tested against `eigenvalues` specifically, the
+  multi-id case already in the corpus.
 
 Wire into `buildPrompt()` (concept orchestrator) as a fifth prompt block — beside
 student context, pain points, and pedagogy patterns:
@@ -288,15 +321,38 @@ student context, pain points, and pedagogy patterns:
   makes the two blocks meet instead of coexisting).
 - Retire "keep the body focused on a single learning beat" for hook/intuition in
   favour of "script the beats: motion + caption + emphasis + one trap, together" —
-  with the cap clarified as **prose words excluding fenced blocks** (the existing
-  `countProseWords` definition), so the spec JSON never eats the word budget.
+  and **edit the literal prompt string** (`orchestrator.ts:443`'s "Keep total
+  length under 400 words") to state the carve-out the model actually needs to
+  read: *prose is capped; the fenced `interactive-spec` JSON does not count.*
+  Clarifying only the CI-side `countProseWords` definition would leave the model
+  truncating scenes to fit a cap it was never meant to include, or blowing it.
+  A prompt-string fixture test locks the carve-out sentence in.
+- **The resonance prompt block applies to batch/operator generation ONLY — the
+  personalized-regen path is explicitly excluded.**
+  `src/content/concept-orchestrator/personalized-regen.ts` calls the same
+  `generateConcept()` fire-and-forget and writes straight into
+  `student_atom_overrides`, served on the student's next load with no CI gate, no
+  Wolfram check, no pedagogy review — and hooks for struggling students are its
+  main clientele. An LLM-authored ghost path or trap "avoid" line reaching that
+  audience unverified is the exact harm W3's discipline exists to prevent, and
+  that discipline structurally cannot reach this path (nothing is committed).
+  Two layers, both mandatory: (a) `buildPrompt` receives the generation context
+  and omits the beat/trap/ghost instructions for personalized regens; (b)
+  defense-in-depth in `generateOne` for EVERY caller: any `simulation` fence on
+  the personalization path is **stripped before write** — schema validation
+  cannot catch well-formed wrong mathematics, so unreviewed scenes never ship to
+  a student, period. Both layers carry tests.
 - **Post-generation spec validation:** the orchestrator validates any emitted
   `interactive-spec` fence with the same parser the renderer uses (the
-  `lint-interactive-specs` script already imports it). Invalid fence → one
-  regeneration attempt → then strip the fence and keep the prose, logged. Today an
-  invalid generated fence would silently render nothing (`InteractiveSidecar`
-  swallows parse errors on the student surface) — this closes that hole at the
-  source.
+  `lint-interactive-specs` script already imports it — established cross-import
+  precedent, same tsx loader as `ci:boot`). Runs unconditionally inside
+  `generateOne` for every caller. Invalid fence → one regeneration attempt →
+  then strip the fence and keep the prose, logged. Today an invalid generated
+  fence would silently render nothing (`InteractiveSidecar` swallows parse
+  errors on the student surface) — this closes that hole at the source.
+- **Validator string caps** on LLM-reachable fields (house pattern:
+  `MAX_RESPONSE_CHARS` in `llm-judge.ts`): trap text/avoid ≤ 280 chars each,
+  beat texts ≤ 280, ghost exprs ≤ 120.
 - Template YAMLs (`linear-algebra.yaml`, `calculus.yaml` first) gain the beat
   instructions under `hook:` — the same pattern the `gif-scene` instruction set.
 
@@ -831,3 +887,201 @@ Design litmus scorecard (App UI rules):
 | Overall design score | 6/10 → 9/10                                 |
 +====================================================================+
 ```
+
+---
+
+# APPENDIX C — /autoplan Phase 3: Eng review record (2026-08-30)
+
+Codex unavailable → `[subagent-only]`. Eng ran LAST, against the plan as amended by
+Phases 1–2.
+
+## Step 0 — Scope challenge (code-grounded)
+
+Every sub-problem mapped to existing code (plan §5); cross-import of the frontend
+spec parser from server tsx verified against live precedent (`lint-interactive-specs.ts`
+header states it deliberately imports the REAL validator; `prose-count-agreement.test.ts`
+does the same for `countProseWords` — same loader `ci:boot` uses). Complexity check
+re-run post-amendments: ~10 code files; the W2 "honest sizing" paragraph now names
+the real AtomCardRenderer surgery instead of underselling it. Scope not reduced
+(P2); no reduction was warranted — each workstream is independently shippable.
+
+## Section 1 — Architecture
+
+```
+AUTHORED (.md, fences)      GENERATION (batch)                PERSONALIZED REGEN
+concepts/<id>/atoms/*.md    RunLauncher/dispatchRun           3-failure trigger
+        │                        │                                  │
+        │                   buildPrompt ◀── resonance-strategy      │ buildPrompt
+        │                        │            (beats block:         │ (beats block:
+        │                        │             BATCH ONLY)          │  OMITTED)
+        │                        ▼                                  ▼
+        │                   generateOne ──▶ judge gate ──▶ FENCE VALIDATION (all callers)
+        │                        │                              │ personalized +
+        │                        ▼                              │ sim fence → STRIP
+        │                   appendVersion (inactive)            ▼
+        │                                                 student_atom_overrides
+        ▼
+atom-loader → selectAtoms → stance/overrides/AB/media → rank → /api/lesson/*
+        ▼
+AtomCardRenderer: ONE useMemo parse → {entry preset, stage figure, sidecar suppress}
+        ▼                                   │ stage !== 'in_disclosure' guard
+   .vidhya-atom-stage ── figure: Simulation(beats, ghost, trap, bar) | MediaSidecar
+                     └── prose: MarkdownAtomRenderer
+```
+
+Findings (confidence per the calibration gate; all motivating lines quoted in the
+eng voice's report, incorporated by reference):
+
+- **[P0] (9/10) `personalized-regen.ts:128,157-188` — the W4 prompt change would
+  have reached the unreviewed, per-student, fire-and-forget regen path.** The
+  Phase 1 S3 verdict ("no new attack surface") examined only the batch path — a
+  review error, corrected here. FIXED in plan: context-gated prompt block +
+  unconditional fence validation + strip-on-personalized, both layers tested.
+- **[P1] (9/10) `AtomCardRenderer.tsx:372,418,766-768,872-906`** — stage
+  precedence needs a hoisted single parse; entry preset computed before the stage
+  IIFE; sidecar must be suppressed for a promoted sim. FIXED: honest-sizing
+  paragraph + single-useMemo design.
+- **[P1] (9/10) in_disclosure leak** — a sim on a `retrieval_prompt` atom would
+  bypass `DeferredFigureContext`. FIXED: stage carve-out + test.
+- **[P2] (9/10) `atomic-concept-map.ts:60-73`** — N:1 join unhandled for the
+  flagship example. FIXED: explicit merge rule + eigenvalues test.
+- Validated by the voice: the byte-identical-fence design "is real and correct
+  against `variant-agreement.ts:344-361`... a legitimately clever piece of
+  design, not a hand-wave."
+
+## Section 2 — Code quality
+
+- `orchestrator.ts:443` prompt literal vs CI-side definition — two truths about
+  one cap, the drift class this repo documents. FIXED: edit the prompt string
+  itself, fixture-tested.
+- `Simulation.tsx:180` AnimatePresence keyed by text → index. FIXED.
+- Trap hold "pure function" claim corrected to a small per-mount state machine
+  with defined seek-on-boundary semantics. FIXED.
+- `MarkdownAtomRenderer` memo needs stable per-beat ids + caption class. FIXED.
+- One factual correction to the voice's report, for the record: atoms do NOT ship
+  via `content-bundle.json` (they reach the browser only through `/api/lesson/*`
+  — established in recon), so the payload-bloat vector is the API response, not
+  the public static bundle. The string caps are kept anyway — cheap, house style.
+
+## Section 3 — Test review
+
+```
+CODE PATHS                                              USER FLOWS
+[+] interactives/types.ts (validator)                   [+] Fused hook scene
+  ├── [GAP→unit] beat shape/cap/≤1 trap/ghost caps        ├── [GAP→RTL] autoplay on mount
+  ├── [GAP→unit] per-stance text fallback                 ├── [GAP→RTL] seek playing/paused
+  └── [GAP→fixture] lint fixtures valid+invalid           ├── [GAP→RTL] trap row persists
+[+] Simulation.tsx                                        ├── [GAP→RTL] hold once/mount
+  ├── [GAP→unit] beat-by-index keying (dup texts)         ├── [GAP→RTL] reduced-motion storyboard
+  ├── [GAP→unit] hold state machine (incl. boundary seek) └── [GAP→RTL] keyboard + aria-live
+  ├── [GAP→unit] segment-split emphasize render         [+] Non-resonance atoms
+  └── [GAP→RTL]  ghost draw / omit on NaN                 └── [★★★ EXISTS] full-corpus mount
+[+] AtomCardRenderer.tsx                                      (regression, recount pins)
+  ├── [GAP→RTL] sim>GIF precedence                      [+] Personalized regen  ← highest value
+  ├── [GAP→RTL] in_disclosure exemption                   └── [GAP→unit] beats omitted from
+  └── [GAP→RTL] entry-preset suppression                      prompt + fence stripped on write
+[+] resonance-strategy.ts
+  ├── [GAP→unit] N:1 merge (eigenvalues LA-06+LA-07)
+  └── [GAP→unit] unmapped → null
+[+] orchestrator.ts
+  ├── [GAP→unit] prompt carve-out sentence fixture
+  ├── [GAP→unit] fence validation: regen-once-then-strip
+  └── [GAP→unit] batch gets beats block; personalized doesn't
+[→EVAL] W4 prompt change: judge gate ≥7 unchanged; live eval known-unrun (no key) — stated
+COVERAGE TARGET: every GAP above lands WITH its workstream, not after
+```
+
+Test plan artifact: `~/.gstack/projects/project-vidhya/root-claude-autoplan-content-resonance-q5p197-eng-review-test-plan-20260830.md`
+(consumed by /qa). REGRESSION RULE: the four pioneer concepts' existing hook sims
+change behavior (autoplay); the full-corpus regression mount + new autoplay RTL
+test are the mandated regression cover.
+
+## Section 4 — Performance
+
+Beat markdown memoized per beat id; per-beat path segmentation is O(samples) same
+as today (one pass, multiple path elements); no DB, no new connections, no N+1.
+The 26×3 fence additions grow lesson payloads by ~1-2KB/atom — negligible against
+existing bodies. Examined; nothing further flagged.
+
+## Failure modes registry (delta from Appendix A)
+
+```
+CODEPATH                        | FAILURE MODE                        | RESCUED? | TEST? | USER SEES?      | LOGGED?
+--------------------------------|-------------------------------------|----------|-------|-----------------|--------
+personalized regen + resonance  | unverified trap/ghost to a student  | Y (strip)| Y     | prose-only regen| Y
+prompt cap                      | model truncates scene to fit 400w   | Y (carve-out in prompt) | Y | n/a | n/a
+in_disclosure sim               | figure leaks recall answer          | Y (guard)| Y     | never           | n/a
+AnimatePresence dup text        | stale/stuck caption                 | Y (index key) | Y | correct beat  | n/a
+trap-hold boundary seek         | hold fires on seek                  | Y (defined) | Y  | no hold on seek | n/a
+```
+0 CRITICAL GAPS after amendments (was 1 — the P0 — introduced by W4-as-drafted and
+closed in this phase).
+
+## Worktree parallelization
+
+| Step | Modules touched | Depends on |
+|---|---|---|
+| W1 schema+renderer | frontend/src/components/lesson/interactives/ | — |
+| W2 stage fusion | frontend/src/components/lesson/ (AtomCardRenderer, globals.css) | W1 |
+| W3 authoring | modules/project-vidhya-content/concepts/ | W1 (schema locked) |
+| W4 generation | src/content/ (orchestrator, resonance-strategy), templates/ | W1 (schema locked) |
+| W4.5 experiment | scripts/ | — |
+| W5 admin+gates | src/api/, scripts/, tests | W1-W4 |
+
+Lanes: **A:** W1 → W2 (shared frontend/lesson). **B:** W3 fan-out (content only,
+parallel with A after W1's schema commit). **C:** W4 + W4.5 (server-side, parallel
+with A/B after W1). **D:** W5 last. Conflict flag: W2 and W1 share
+`interactives/` — same lane, sequential. Execution: land W1, then B ∥ C while A
+finishes W2, then D.
+
+## Dual voices — Eng
+
+CODEX SAYS: [codex-unavailable]
+
+CLAUDE SUBAGENT (eng — independent, code-grounded): 1 critical (personalized-regen
+reach — a genuine review-process catch, my Phase 1 S3 was wrong), 3 high, 6
+medium/low, 7 named test gaps, plus one explicit validation of the fence design.
+**All accepted and amended.**
+
+```
+ENG DUAL VOICES — CONSENSUS TABLE:
+═══════════════════════════════════════════════════════════════
+  Dimension                            Claude       Codex  Consensus
+  ───────────────────────────────────  ───────────  ─────  ─────────
+  1. Architecture sound?               w/ amends    N/A    AMENDED-CONFIRMED
+  2. Test coverage sufficient?         w/ +7 tests  N/A    AMENDED-CONFIRMED
+  3. Performance risks addressed?      yes          N/A    CONFIRMED
+  4. Security threats covered?         CHALLENGED   N/A    P0 FOUND → FIXED
+  5. Error paths handled?              w/ amends    N/A    AMENDED-CONFIRMED
+  6. Deployment risk manageable?       yes          N/A    CONFIRMED
+═══════════════════════════════════════════════════════════════
+[subagent-only]; single-voice P0 acted on per the flagged-regardless rule.
+```
+
+## Decision Audit Trail — Phase 3 (continues numbering)
+
+| # | Phase | Decision | Classification | Principle | Rationale | Rejected |
+|---|-------|----------|----------------|-----------|-----------|----------|
+| 29 | P3 | Exclude resonance block from personalized-regen prompts + strip sim fences on that path | Mechanical | P1 | P0: unverified math must never reach struggling students; schema validation can't catch wrong-but-well-formed | validate-only |
+| 30 | P3 | Correct Phase 1 S3 verdict in the record | Mechanical | honesty | The "no new attack surface" claim was wrong; corrections are stated, not buried | silent fix |
+| 31 | P3 | Edit the literal prompt cap string + fixture test | Mechanical | P5 | Two truths about one cap = the repo's documented drift class | CI-side-only |
+| 32 | P3 | Single hoisted useMemo parse in AtomCardRenderer | Mechanical | P4 | Four parse sites → one; names the real surgery | per-site parse |
+| 33 | P3 | in_disclosure exemption from figure promotion | Mechanical | P1 | Preserves the answer-cue protection | allowlist by type |
+| 34 | P3 | N:1 merge rule (concat/dedupe hooks, first-wins prose) + eigenvalues test | Mechanical | P5 | Flagship concept is the multi-id case | single-id assumption |
+| 35 | P3 | Beat key by index; hold state machine w/ boundary rule; per-beat markdown ids + caption class; string caps | Mechanical | P5 | Voice E2-E4 + security cap; all in W1/W2 blast radius | as-drafted |
+| 36 | P3 | TODOS.md auto-write (2 entries) | Mechanical | P7 (directive 7) | Deferred = written down | vague intentions |
+
+## Phase 3 Completion Summary
+
+- Step 0: Scope Challenge — scope accepted as-is (no reduction; sizing honesty added)
+- Architecture Review: 4 issues found (1 P0) — all fixed in plan
+- Code Quality Review: 5 issues found — all fixed in plan
+- Test Review: diagram produced, 7 gaps identified — all added to plan with owners
+- Performance Review: 0 issues
+- NOT in scope: written (Phase 1, extended Phase 2)
+- What already exists: written (Phase 1; cross-import precedent verified here)
+- TODOS.md updates: 2 items written
+- Failure modes: 0 critical gaps after amendments (1 found and closed this phase)
+- Outside voice: ran (claude subagent; codex unavailable)
+- Parallelization: 4 lanes — B ∥ C after W1; W2 sequential with W1; W5 last
+- Lake Score: 8/8 recommendations chose the complete option

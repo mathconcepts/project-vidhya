@@ -793,4 +793,62 @@ describe('validateSimulation — linear_map mode', () => {
     expect(result.ok).toBe(false);
     expect((result as { reason: string }).reason).toContain('1–2 eigenpairs');
   });
+
+  // ==========================================================================
+  // unit_square / area_label (determinants-as-area-multiplier extension)
+  // ==========================================================================
+
+  it('accepts unit_square and area_label as booleans', () => {
+    const ok = {
+      ...LM_BASE,
+      linear_map: { ...LM_BASE.linear_map, unit_square: true, area_label: true },
+    };
+    expect(parse(ok).ok).toBe(true);
+
+    const okFalse = {
+      ...LM_BASE,
+      linear_map: { ...LM_BASE.linear_map, unit_square: false, area_label: false },
+    };
+    expect(parse(okFalse).ok).toBe(true);
+
+    const okSquareOnly = {
+      ...LM_BASE,
+      linear_map: { ...LM_BASE.linear_map, unit_square: true },
+    };
+    expect(parse(okSquareOnly).ok).toBe(true);
+  });
+
+  it('rejects a non-boolean unit_square', () => {
+    const bad = { ...LM_BASE, linear_map: { ...LM_BASE.linear_map, unit_square: 'yes' } };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('unit_square must be a boolean');
+  });
+
+  it('rejects a non-boolean area_label', () => {
+    const bad = {
+      ...LM_BASE,
+      linear_map: { ...LM_BASE.linear_map, unit_square: true, area_label: 'yes' },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('area_label must be a boolean');
+  });
+
+  it('refuses area_label:true without unit_square:true, by name', () => {
+    const bad = { ...LM_BASE, linear_map: { ...LM_BASE.linear_map, area_label: true } };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('area_label requires unit_square: true');
+  });
+
+  it('refuses area_label:true with unit_square explicitly false', () => {
+    const bad = {
+      ...LM_BASE,
+      linear_map: { ...LM_BASE.linear_map, unit_square: false, area_label: true },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('area_label requires unit_square: true');
+  });
 });

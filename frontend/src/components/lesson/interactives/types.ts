@@ -87,6 +87,20 @@ export interface LinearMapSceneSpec {
    * as the eigenvalues".
    */
   ghost_matrix?: Mat2;
+  /**
+   * Draw the unit square [(0,0),(1,0),(1,1),(0,1)] as a dotted separator
+   * outline, plus its image under M(s) as a filled green polygon (the
+   * determinant-as-area-multiplier story). Additive — a scene with no
+   * `unit_square` renders exactly as before.
+   */
+  unit_square?: boolean;
+  /**
+   * Once the reveal beat is reached, label the image parallelogram's
+   * centroid with its area (|det(matrix)|, to at most 4 significant
+   * digits). Computed from the matrix at render time — never authored —
+   * so it cannot lie. Requires `unit_square: true`.
+   */
+  area_label?: boolean;
 }
 
 /**
@@ -512,6 +526,20 @@ function checkLinearMap(lm: any): ParseFailure | null {
   if (lm.ghost_matrix !== undefined) {
     const ghostFailure = checkMat2(lm.ghost_matrix, 'simulation.linear_map.ghost_matrix');
     if (ghostFailure) return ghostFailure;
+  }
+  if (lm.unit_square !== undefined && typeof lm.unit_square !== 'boolean') {
+    return { ok: false, reason: 'simulation.linear_map.unit_square must be a boolean' };
+  }
+  if (lm.area_label !== undefined) {
+    if (typeof lm.area_label !== 'boolean') {
+      return { ok: false, reason: 'simulation.linear_map.area_label must be a boolean' };
+    }
+    if (lm.area_label === true && lm.unit_square !== true) {
+      return {
+        ok: false,
+        reason: 'simulation.linear_map.area_label requires unit_square: true — an area label with no drawn square to label makes no sense',
+      };
+    }
   }
   if (lm.eigen !== undefined) {
     if (!Array.isArray(lm.eigen) || lm.eigen.length === 0 || lm.eigen.length > 2) {

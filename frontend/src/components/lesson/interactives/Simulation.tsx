@@ -199,6 +199,31 @@ export function linearMapViewBox(matrix: Mat2): NonNullable<SimulationSpec['view
   return { x_min: -halfW, x_max: halfW, y_min: -halfH, y_max: halfH };
 }
 
+/** Corners of the unit square, in matrix-application order (adjacent
+ *  corners, so the polygon traces the square's boundary, not a diagonal). */
+const UNIT_SQUARE_CORNERS: Array<[number, number]> = [
+  [0, 0],
+  [1, 0],
+  [1, 1],
+  [0, 1],
+];
+
+/**
+ * Formats a number to at most `sigFigs` significant digits, trimming
+ * trailing zeros (and a bare trailing decimal point) — e.g. 3 → "3",
+ * 3.6180339887 → "3.618". Used only for the area label, which is computed
+ * from the matrix at render time (never authored) so it cannot lie.
+ */
+export function formatSignificant(value: number, sigFigs = 4): string {
+  if (!Number.isFinite(value)) return String(value);
+  if (value === 0) return '0';
+  const magnitude = Math.floor(Math.log10(Math.abs(value)));
+  const decimals = Math.max(0, sigFigs - 1 - magnitude);
+  let s = value.toFixed(decimals);
+  if (s.includes('.')) s = s.replace(/0+$/, '').replace(/\.$/, '');
+  return s;
+}
+
 /** Strips the light markdown beats use (bold/italic/inline math/code) down
  *  to plain words for an aria-label — assistive tech reads the sentence,
  *  not the syntax. */
@@ -539,6 +564,26 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
  * the trap beat reveals, dashed grey arrows show where the mistaken reading
  * (`ghost_matrix`) would have put them.
  */
+/**
+ * Directions the ghost arrows are drawn along. A scene that declares eigen
+ * directions draws its ghosts there (the mistaken prediction for the very
+ * arrows the reveal highlighted); a scene with none (matrix-operations'
+ * AB-vs-BA, matrix-inverse's det-0 collapse) gets the four cardinal unit
+ * directions — enough dashed arrows to read as "where things would land"
+ * without burying the solid figure. Exported for tests.
+ */
+export function ghostArrowDirs(
+  eigen: Array<{ u: [number, number]; value: number }>,
+): Array<{ u: [number, number] }> {
+  if (eigen.length > 0) return eigen;
+  return [
+    { u: [1, 0] },
+    { u: [0, 1] },
+    { u: [-1, 0] },
+    { u: [0, -1] },
+  ];
+}
+
 function LinearMapScene({
   lm,
   projector,
@@ -611,8 +656,59 @@ function LinearMapScene({
         d={circlePath((v) => applyLerpedMat2(lm.matrix, v, s))}
         stroke="var(--grey-6)" strokeWidth={1.25} fill="none"
       />
+      {/* The mistaken reading's full image: where the unit circle WOULD land
+          under ghost_matrix, dashed grey. This is the ghost's one guaranteed
+          rendering — per-eigen dashed arrows below only exist when the scene
+          declares eigen directions, and a scene like matrix-operations
+          (AB vs BA) has none, so without this outline its trap would reveal
+          nothing at all. */}
+      {trapRevealed && lm.ghost_matrix && (
+        <path
+          d={circlePath((v) => applyLerpedMat2(lm.ghost_matrix!, v, 1))}
+          stroke="var(--grey-6)" strokeWidth={1.5} strokeDasharray="4 4" fill="none"
+        />
+      )}
+      {lm.unit_square && (
+        <>
+          {/* The original unit square — a dotted separator-colored reference. */}
+          <polygon
+            points={UNIT_SQUARE_CORNERS.map(([x, y]) => projector(x, y).join(',')).join(' ')}
+            fill="none"
+            stroke="var(--separator)"
+            strokeWidth={1}
+            strokeDasharray="2 2"
+          />
+          {/* Its image under M(s) — the area-multiplier payoff, green-as-payoff. */}
+          <polygon
+            points={UNIT_SQUARE_CORNERS.map(([x, y]) => {
+              const [ix, iy] = applyLerpedMat2(lm.matrix, [x, y], s);
+              return projector(ix, iy).join(',');
+            }).join(' ')}
+            fill="var(--green)"
+            fillOpacity={0.1}
+            stroke="var(--ink)"
+            strokeWidth={1.5}
+          />
+        </>
+      )}
+      {lm.unit_square && lm.area_label && eigenRevealed && (() => {
+        const imageCorners = UNIT_SQUARE_CORNERS.map(([x, y]) => applyLerpedMat2(lm.matrix, [x, y], s));
+        const cx = imageCorners.reduce((sum, [ix]) => sum + ix, 0) / imageCorners.length;
+        const cy = imageCorners.reduce((sum, [, iy]) => sum + iy, 0) / imageCorners.length;
+        const [px, py] = projector(cx, cy);
+        const det = lm.matrix[0][0] * lm.matrix[1][1] - lm.matrix[0][1] * lm.matrix[1][0];
+        return (
+          <text
+            x={px} y={py}
+            textAnchor="middle" dominantBaseline="middle"
+            fontSize={12} fill="var(--text-secondary)"
+          >
+            {`area ×${formatSignificant(Math.abs(det))}`}
+          </text>
+        );
+      })()}
       {trapRevealed && lm.ghost_matrix &&
-        eigen.map((e, i) => {
+        ghostArrowDirs(eigen).map((e, i) => {
           const g = lm.ghost_matrix!;
           const tip: [number, number] = [
             g[0][0] * e.u[0] + g[0][1] * e.u[1],

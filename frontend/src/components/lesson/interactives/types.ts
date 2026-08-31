@@ -54,20 +54,63 @@ export interface ManipulableSpec {
   caption?: string;
 }
 
+/** A 2×2 real matrix, row-major: [[a, b], [c, d]]. */
+export type Mat2 = [[number, number], [number, number]];
+
 /**
- * Parameterized animation. Plays/pauses on a single button. The
- * underlying parametric (x(t), y(t)) traces over a line on a small SVG
- * canvas. Useful for "watch eigenvector direction stay invariant".
+ * A "watch the whole plane move" scene (wow-pass, 2026-08-30): instead of
+ * one dot tracing a curve, the renderer draws `num_vectors` unit arrows and
+ * morphs every one of them through M(s) = I + s·(A − I) as playback runs,
+ * with the unit circle deforming into A's image ellipse alongside them.
+ * Directions listed in `eigen` are the scene's payoff — the arrows that
+ * never turn — and the validator RE-VERIFIES each claimed pair against the
+ * matrix (residual check), because the renderer highlights them as
+ * ground truth and a wrong pair would be a lie drawn in accent color.
+ * Authored values are Wolfram-verified upstream; the validator is the
+ * tamper-proof re-check, same discipline as the answer-key gates.
+ */
+export interface LinearMapSceneSpec {
+  /** The matrix whose action the scene animates. */
+  matrix: Mat2;
+  /** Unit-circle arrows to morph. Default 16; validator bounds [8, 24]. */
+  num_vectors?: number;
+  /**
+   * The invariant directions to highlight, with their stretch factors.
+   * Each must satisfy matrix·dir ≈ value·dir or the spec is refused.
+   */
+  eigen?: Array<{ dir: [number, number]; value: number }>;
+  /**
+   * The trap's counterpart in this mode (mutually exclusive with the
+   * expression `ghost`): where the highlighted arrows WOULD land if the
+   * mistaken reading were true — drawn dashed grey once the trap beat is
+   * reached, e.g. [[2,0],[0,2]] for "students read the diagonal entries
+   * as the eigenvalues".
+   */
+  ghost_matrix?: Mat2;
+}
+
+/**
+ * Parameterized animation. Plays/pauses on a single button. Two figure
+ * modes share the beat/trap/storyboard machinery:
+ *   - parametric (default): (x(t), y(t)) traces over a line
+ *   - linear map: `linear_map` present — a field of unit arrows morphs
+ *     through the matrix (see `LinearMapSceneSpec`)
  */
 export interface SimulationSpec {
   v: typeof INTERACTIVE_SPEC_VERSION;
   kind: 'simulation';
   title: string;
-  /** Parametric expressions in t ∈ [t_min, t_max]. */
-  x_expr: string;
-  y_expr: string;
-  t_min: number;
-  t_max: number;
+  /**
+   * Parametric expressions in t ∈ [t_min, t_max]. Required unless
+   * `linear_map` is present (the validator enforces exactly that); a
+   * linear-map scene ignores them entirely.
+   */
+  x_expr?: string;
+  y_expr?: string;
+  t_min?: number;
+  t_max?: number;
+  /** Present → the scene renders as a morphing vector field instead of a trace. */
+  linear_map?: LinearMapSceneSpec;
   /** Total duration of one play, in seconds. Default 4. */
   duration_sec?: number;
   /** Display range. Default auto-fit from sampled points. */
@@ -287,11 +330,23 @@ export const MAX_GHOST_EXPR_CHARS = 120;
 
 function validateSimulation(raw: any): ParseSuccess | ParseFailure {
   if (typeof raw.title !== 'string') return { ok: false, reason: 'simulation.title required' };
-  if (typeof raw.x_expr !== 'string' || typeof raw.y_expr !== 'string') {
-    return { ok: false, reason: 'simulation.x_expr / y_expr required' };
-  }
-  if (typeof raw.t_min !== 'number' || typeof raw.t_max !== 'number' || raw.t_max <= raw.t_min) {
-    return { ok: false, reason: 'simulation.t_min/t_max invalid' };
+  if (raw.linear_map !== undefined) {
+    const lmFailure = checkLinearMap(raw.linear_map);
+    if (lmFailure) return lmFailure;
+    if (raw.ghost !== undefined) {
+      return {
+        ok: false,
+        reason:
+          'simulation.ghost and simulation.linear_map are mutually exclusive — a linear-map scene declares its wrong turn via linear_map.ghost_matrix',
+      };
+    }
+  } else {
+    if (typeof raw.x_expr !== 'string' || typeof raw.y_expr !== 'string') {
+      return { ok: false, reason: 'simulation.x_expr / y_expr required' };
+    }
+    if (typeof raw.t_min !== 'number' || typeof raw.t_max !== 'number' || raw.t_max <= raw.t_min) {
+      return { ok: false, reason: 'simulation.t_min/t_max invalid' };
+    }
   }
   if (raw.narration_steps !== undefined) {
     if (!Array.isArray(raw.narration_steps) || raw.narration_steps.length === 0) {
@@ -400,6 +455,100 @@ function checkGhost(ghost: any, t_min: number): ParseFailure | null {
       evalFormula(expr, { t: t_min });
     } catch (e) {
       return { ok: false, reason: `simulation.ghost.${field} \`${expr}\` failed to compile: ${(e as Error).message}` };
+    }
+  }
+  return null;
+}
+
+export const MIN_LINEAR_MAP_VECTORS = 8;
+export const MAX_LINEAR_MAP_VECTORS = 24;
+export const MAX_LINEAR_MAP_ENTRY = 100;
+/** Relative residual above which a claimed eigenpair is refused as false. */
+export const EIGEN_RESIDUAL_TOL = 1e-3;
+
+function checkMat2(m: any, label: string): ParseFailure | null {
+  if (
+    !Array.isArray(m) || m.length !== 2 ||
+    !Array.isArray(m[0]) || m[0].length !== 2 ||
+    !Array.isArray(m[1]) || m[1].length !== 2
+  ) {
+    return { ok: false, reason: `${label} must be a 2×2 array of numbers` };
+  }
+  for (const row of m) {
+    for (const v of row) {
+      if (typeof v !== 'number' || !Number.isFinite(v) || Math.abs(v) > MAX_LINEAR_MAP_ENTRY) {
+        return { ok: false, reason: `${label} entries must be finite numbers with |entry| ≤ ${MAX_LINEAR_MAP_ENTRY}` };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Shape checks plus the one semantic check no shape rule can express: a
+ * claimed eigenpair must actually BE an eigenpair of the matrix. The
+ * renderer paints these directions as the scene's ground-truth payoff, so
+ * the refusal message names the failing pair and its residual — repo
+ * refusal style ("names the missing column").
+ */
+function checkLinearMap(lm: any): ParseFailure | null {
+  if (!lm || typeof lm !== 'object' || Array.isArray(lm)) {
+    return { ok: false, reason: 'simulation.linear_map must be an object' };
+  }
+  const matrixFailure = checkMat2(lm.matrix, 'simulation.linear_map.matrix');
+  if (matrixFailure) return matrixFailure;
+  if (lm.num_vectors !== undefined) {
+    if (
+      !Number.isInteger(lm.num_vectors) ||
+      lm.num_vectors < MIN_LINEAR_MAP_VECTORS ||
+      lm.num_vectors > MAX_LINEAR_MAP_VECTORS
+    ) {
+      return {
+        ok: false,
+        reason: `simulation.linear_map.num_vectors must be an integer in [${MIN_LINEAR_MAP_VECTORS}, ${MAX_LINEAR_MAP_VECTORS}]`,
+      };
+    }
+  }
+  if (lm.ghost_matrix !== undefined) {
+    const ghostFailure = checkMat2(lm.ghost_matrix, 'simulation.linear_map.ghost_matrix');
+    if (ghostFailure) return ghostFailure;
+  }
+  if (lm.eigen !== undefined) {
+    if (!Array.isArray(lm.eigen) || lm.eigen.length === 0 || lm.eigen.length > 2) {
+      return { ok: false, reason: 'simulation.linear_map.eigen must be an array of 1–2 eigenpairs' };
+    }
+    const [[a, b], [c, d]] = lm.matrix as Mat2;
+    for (let i = 0; i < lm.eigen.length; i++) {
+      const pair = lm.eigen[i];
+      if (!pair || typeof pair !== 'object' || Array.isArray(pair)) {
+        return { ok: false, reason: `simulation.linear_map.eigen[${i}] must be an object` };
+      }
+      const dir = pair.dir;
+      if (
+        !Array.isArray(dir) || dir.length !== 2 ||
+        typeof dir[0] !== 'number' || !Number.isFinite(dir[0]) ||
+        typeof dir[1] !== 'number' || !Number.isFinite(dir[1])
+      ) {
+        return { ok: false, reason: `simulation.linear_map.eigen[${i}].dir must be [x, y] with finite numbers` };
+      }
+      const norm = Math.hypot(dir[0], dir[1]);
+      if (norm < 1e-6 || norm > MAX_LINEAR_MAP_ENTRY) {
+        return { ok: false, reason: `simulation.linear_map.eigen[${i}].dir must be a nonzero vector of reasonable magnitude` };
+      }
+      if (typeof pair.value !== 'number' || !Number.isFinite(pair.value) || Math.abs(pair.value) > MAX_LINEAR_MAP_ENTRY) {
+        return { ok: false, reason: `simulation.linear_map.eigen[${i}].value must be a finite number with |value| ≤ ${MAX_LINEAR_MAP_ENTRY}` };
+      }
+      const mappedX = a * dir[0] + b * dir[1];
+      const mappedY = c * dir[0] + d * dir[1];
+      const residual = Math.hypot(mappedX - pair.value * dir[0], mappedY - pair.value * dir[1]);
+      if (residual > EIGEN_RESIDUAL_TOL * Math.max(1, Math.abs(pair.value)) * norm) {
+        return {
+          ok: false,
+          reason:
+            `simulation.linear_map.eigen[${i}] claims matrix·dir = ${pair.value}·dir for dir (${dir[0]}, ${dir[1]}), ` +
+            `but the residual is ${residual.toFixed(6)} — the claimed eigenpair is not an eigenpair of the matrix`,
+        };
+      }
     }
   }
   return null;

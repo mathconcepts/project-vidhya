@@ -21,7 +21,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw } from 'lucide-react';
-import { evalFormula, type SimulationSpec } from './types';
+import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type Mat2 } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_INSTANT_S, DUR_SLOW_S, framerDuration } from '@/lib/motion-tokens';
@@ -140,6 +140,65 @@ export function beatSegmentFill(sortedSteps: SimulationSpec['narration_steps'], 
   return Math.min(1, Math.max(0, (progress - start) / (end - start)));
 }
 
+// ---------------------------------------------------------------------------
+// Linear-map scene helpers (pure, exported for tests)
+// ---------------------------------------------------------------------------
+
+/** The morph holds still while beat 1 introduces the arrows… */
+export const MORPH_START_PROGRESS = 0.15;
+/** …and settles before the trap/payoff beats, so they land on a still frame. */
+export const MORPH_END_PROGRESS = 0.72;
+
+/**
+ * Playback progress → morph parameter s ∈ [0, 1]: flat until
+ * MORPH_START_PROGRESS, smoothstep to 1 by MORPH_END_PROGRESS, flat after.
+ * Smoothstep (not linear) so arrows visibly accelerate then settle — the
+ * "push" reads as a push, not a conveyor belt.
+ */
+export function morphFraction(progress: number): number {
+  const raw = (progress - MORPH_START_PROGRESS) / (MORPH_END_PROGRESS - MORPH_START_PROGRESS);
+  const c = Math.min(1, Math.max(0, raw));
+  return c * c * (3 - 2 * c);
+}
+
+/**
+ * M(s)·v for M(s) = I + s·(A − I): identity at s=0, the full matrix at s=1.
+ * Every unit vector rides a straight chord from v to A·v; eigen-directions'
+ * chords lie ON their own line, which is exactly the visual claim the scene
+ * makes ("these arrows never turn").
+ */
+export function applyLerpedMat2(matrix: Mat2, v: [number, number], s: number): [number, number] {
+  const a = 1 + s * (matrix[0][0] - 1);
+  const b = s * matrix[0][1];
+  const c = s * matrix[1][0];
+  const d = 1 + s * (matrix[1][1] - 1);
+  return [a * v[0] + b * v[1], c * v[0] + d * v[1]];
+}
+
+/**
+ * Equal-scale view box for a linear-map scene. Angles are the scene's whole
+ * argument ("this arrow did not turn"), so x and y MUST share one scale —
+ * the generic auto-fit stretches axes independently and would tilt every
+ * angle it draws. Fits the unit circle and its image under the matrix (an
+ * intermediate M(s)·v is a convex combination of v and A·v, so it can never
+ * exceed the endpoints' extent), padded, at the SVG's inner aspect ratio.
+ */
+export function linearMapViewBox(matrix: Mat2): NonNullable<SimulationSpec['view_box']> {
+  let maxX = 1;
+  let maxY = 1;
+  const n = 64;
+  for (let i = 0; i < n; i++) {
+    const th = (2 * Math.PI * i) / n;
+    const [x, y] = applyLerpedMat2(matrix, [Math.cos(th), Math.sin(th)], 1);
+    if (Math.abs(x) > maxX) maxX = Math.abs(x);
+    if (Math.abs(y) > maxY) maxY = Math.abs(y);
+  }
+  const innerAspect = (SVG_W - PADDING * 2) / (SVG_H - PADDING * 2);
+  const halfH = Math.max(maxY * 1.14, (maxX * 1.14) / innerAspect);
+  const halfW = halfH * innerAspect;
+  return { x_min: -halfW, x_max: halfW, y_min: -halfH, y_max: halfH };
+}
+
 /** Strips the light markdown beats use (bold/italic/inline math/code) down
  *  to plain words for an aria-label — assistive tech reads the sentence,
  *  not the syntax. */
@@ -153,13 +212,17 @@ export function stripMarkdownForAria(text: string): string {
 }
 
 export function Simulation({ spec, atomId, servedStance }: Props) {
-  const samples = useMemo(() => sampleCurve(spec), [spec]);
+  const linearMap = spec.linear_map ?? null;
+  const samples = useMemo(
+    () => (linearMap ? { points: [], error: null } : sampleCurve(spec)),
+    [spec, linearMap],
+  );
   const viewBox = useMemo(
-    () => spec.view_box ?? autoViewBox(samples.points),
-    [spec.view_box, samples.points],
+    () => spec.view_box ?? (linearMap ? linearMapViewBox(linearMap.matrix) : autoViewBox(samples.points)),
+    [spec.view_box, linearMap, samples.points],
   );
   const projector = useMemo(() => makeProjector(viewBox), [viewBox]);
-  const ghostPoints = useMemo(() => sampleGhost(spec), [spec]);
+  const ghostPoints = useMemo(() => (linearMap ? null : sampleGhost(spec)), [spec, linearMap]);
 
   const reducedMotion = usePrefersReducedMotion();
 
@@ -288,10 +351,23 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   const visiblePoints = samples.points.slice(0, cutoff);
   const head = visiblePoints[visiblePoints.length - 1];
   const activeIdx = hasBeats ? activeBeatIndex(sortedSteps, effectiveProgress) : null;
-  const segments = buildTraceSegments(samples.points, projector, sortedSteps, effectiveProgress, activeIdx);
+  const segments = linearMap
+    ? []
+    : buildTraceSegments(samples.points, projector, sortedSteps, effectiveProgress, activeIdx);
   const resolvedId = atomId ?? spec.title;
   const showStoryboard = hasBeats && reducedMotion;
   const showLiveBeatUI = hasBeats && !reducedMotion;
+  // Linear-map payoff styling turns on the moment the first emphasized beat
+  // is reached — that beat IS the reveal ("these two never turn"). A scene
+  // with no emphasized beat has no reveal moment, so the styling is on from
+  // the start. Derived from progress, so seeking back re-hides it — the
+  // reveal replays honestly rather than spoiling a rewind.
+  const emphasizeBeatAt = useMemo(() => {
+    const step = sortedSteps.find((s) => s.emphasize);
+    return step ? step.at_progress : null;
+  }, [sortedSteps]);
+  const eigenRevealed = emphasizeBeatAt === null || effectiveProgress >= emphasizeBeatAt;
+  const emphasizeActive = activeIdx !== null && sortedSteps[activeIdx]?.emphasize === true;
 
   return (
     <div
@@ -335,6 +411,17 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         aria-label={hasBeats ? spec.title : `Animated trace: ${spec.title}`}
       >
         <Axes viewBox={viewBox} projector={projector} />
+        {linearMap && (
+          <LinearMapScene
+            lm={linearMap}
+            projector={projector}
+            viewBox={viewBox}
+            progress={effectiveProgress}
+            eigenRevealed={eigenRevealed}
+            emphasizeActive={emphasizeActive}
+            trapRevealed={trapRevealed}
+          />
+        )}
         {trapRevealed && ghostPoints && (
           <path
             d={pathD(ghostPoints, projector)}
@@ -442,6 +529,191 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
 // Sub-components
 // ============================================================================
 
+/**
+ * The morphing-vector-field figure (wow-pass): `num_vectors` unit arrows,
+ * every one pushed through M(s) = I + s·(A − I) as playback runs, while the
+ * unit circle deforms into the matrix's image ellipse. Arrows collinear
+ * with a declared eigen-direction are the payoff: they visibly refuse to
+ * turn, go accent-green once the reveal beat is reached (heavier while that
+ * beat is active — the emphasize contract), and pick up a "×λ" label. When
+ * the trap beat reveals, dashed grey arrows show where the mistaken reading
+ * (`ghost_matrix`) would have put them.
+ */
+function LinearMapScene({
+  lm,
+  projector,
+  viewBox,
+  progress,
+  eigenRevealed,
+  emphasizeActive,
+  trapRevealed,
+}: {
+  lm: LinearMapSceneSpec;
+  projector: (x: number, y: number) => [number, number];
+  viewBox: NonNullable<SimulationSpec['view_box']>;
+  progress: number;
+  eigenRevealed: boolean;
+  emphasizeActive: boolean;
+  trapRevealed: boolean;
+}) {
+  const s = morphFraction(progress);
+  const n = lm.num_vectors ?? 16;
+  const eigen = (lm.eigen ?? []).map((e) => {
+    const norm = Math.hypot(e.dir[0], e.dir[1]);
+    return { u: [e.dir[0] / norm, e.dir[1] / norm] as [number, number], value: e.value };
+  });
+  const origin = projector(0, 0);
+
+  const circlePath = (transform: (v: [number, number]) => [number, number], samplesN = 64): string => {
+    const pts: Array<{ x: number; y: number }> = [];
+    for (let i = 0; i <= samplesN; i++) {
+      const th = (2 * Math.PI * i) / samplesN;
+      const [x, y] = transform([Math.cos(th), Math.sin(th)]);
+      pts.push({ x, y });
+    }
+    return pathD(pts, projector);
+  };
+
+  const arrows: Array<{ tip: [number, number]; eigenIdx: number }> = [];
+  for (let i = 0; i < n; i++) {
+    const th = (2 * Math.PI * i) / n;
+    const u: [number, number] = [Math.cos(th), Math.sin(th)];
+    const eigenIdx = eigen.findIndex((e) => Math.abs(u[0] * e.u[1] - u[1] * e.u[0]) < 1e-3);
+    arrows.push({ tip: applyLerpedMat2(lm.matrix, u, s), eigenIdx });
+  }
+
+  // Full-span rails through the origin along each eigen line, clipped to the
+  // view box — the "tracks" the stubborn arrows are locked to.
+  const rails = eigen.map((e) => {
+    const sx = e.u[0] === 0 ? Infinity : Math.abs(viewBox.x_max / e.u[0]);
+    const sy = e.u[1] === 0 ? Infinity : Math.abs(viewBox.y_max / e.u[1]);
+    const span = Math.min(sx, sy) * 0.97;
+    return {
+      a: projector(-span * e.u[0], -span * e.u[1]),
+      b: projector(span * e.u[0], span * e.u[1]),
+    };
+  });
+
+  return (
+    <g>
+      {eigenRevealed &&
+        rails.map((r, i) => (
+          <line
+            key={`rail-${i}`}
+            x1={r.a[0]} y1={r.a[1]} x2={r.b[0]} y2={r.b[1]}
+            stroke="var(--separator)" strokeWidth={1} strokeDasharray="2 3"
+          />
+        ))}
+      {/* Where the arrows started: the unit circle, kept as a dotted reference. */}
+      <path d={circlePath((v) => v)} stroke="var(--separator)" strokeWidth={1} strokeDasharray="2 2" fill="none" />
+      {/* Where the tips are now: the circle mid-deformation into A's ellipse. */}
+      <path
+        d={circlePath((v) => applyLerpedMat2(lm.matrix, v, s))}
+        stroke="var(--grey-6)" strokeWidth={1.25} fill="none"
+      />
+      {trapRevealed && lm.ghost_matrix &&
+        eigen.map((e, i) => {
+          const g = lm.ghost_matrix!;
+          const tip: [number, number] = [
+            g[0][0] * e.u[0] + g[0][1] * e.u[1],
+            g[1][0] * e.u[0] + g[1][1] * e.u[1],
+          ];
+          return (
+            <ArrowGlyph
+              key={`ghost-${i}`}
+              from={origin}
+              to={projector(tip[0], tip[1])}
+              stroke="var(--grey-6)"
+              strokeWidth={2}
+              dash="4 4"
+            />
+          );
+        })}
+      {arrows
+        .filter((a) => a.eigenIdx === -1)
+        .map((a, i) => (
+          <ArrowGlyph
+            key={`v-${i}`}
+            from={origin}
+            to={projector(a.tip[0], a.tip[1])}
+            stroke="var(--ink)"
+            strokeWidth={1.5}
+            opacity={0.55}
+          />
+        ))}
+      {arrows
+        .filter((a) => a.eigenIdx !== -1)
+        .map((a, i) => (
+          <ArrowGlyph
+            key={`e-${i}`}
+            from={origin}
+            to={projector(a.tip[0], a.tip[1])}
+            stroke={eigenRevealed ? 'var(--green)' : 'var(--ink)'}
+            strokeWidth={emphasizeActive ? 3.5 : 2.5}
+          />
+        ))}
+      {eigenRevealed &&
+        eigen.map((e, i) => {
+          const tip = applyLerpedMat2(lm.matrix, e.u, s);
+          const [px, py] = projector(tip[0], tip[1]);
+          const len = Math.hypot(px - origin[0], py - origin[1]) || 1;
+          const ox = ((px - origin[0]) / len) * 16;
+          const oy = ((py - origin[1]) / len) * 16;
+          return (
+            <text
+              key={`lbl-${i}`}
+              x={px + ox} y={py + oy}
+              textAnchor="middle" dominantBaseline="middle"
+              fontSize={12} fontWeight={600} fill="var(--text-secondary)"
+            >
+              {`×${e.value}`}
+            </text>
+          );
+        })}
+    </g>
+  );
+}
+
+/** One arrow: shaft + solid head, all in screen coordinates. */
+function ArrowGlyph({
+  from,
+  to,
+  stroke,
+  strokeWidth,
+  dash,
+  opacity,
+}: {
+  from: [number, number];
+  to: [number, number];
+  stroke: string;
+  strokeWidth: number;
+  dash?: string;
+  opacity?: number;
+}) {
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const len = Math.hypot(dx, dy);
+  if (len < 1) return null;
+  const ux = dx / len;
+  const uy = dy / len;
+  const headLen = Math.min(8, len * 0.4);
+  const headHalf = headLen * 0.45;
+  const bx = to[0] - ux * headLen;
+  const by = to[1] - uy * headLen;
+  return (
+    <g opacity={opacity ?? 1}>
+      <line
+        x1={from[0]} y1={from[1]} x2={bx} y2={by}
+        stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} strokeLinecap="round"
+      />
+      <polygon
+        points={`${to[0]},${to[1]} ${bx - uy * headHalf},${by + ux * headHalf} ${bx + uy * headHalf},${by - ux * headHalf}`}
+        fill={stroke}
+      />
+    </g>
+  );
+}
+
 /** Design contract item 6: "Where marks are lost" label, trap text +
  *  Avoid line, hairline above, no icon, ink/grey only. */
 function TrapRow({ trap }: { trap: NonNullable<Beat['trap']> }) {
@@ -547,6 +819,11 @@ function ReducedMotionStoryboard({
           The dashed grey path is the common wrong turn.
         </p>
       )}
+      {spec.linear_map?.ghost_matrix && (
+        <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>
+          The dashed grey arrows show where the common wrong reading would land.
+        </p>
+      )}
     </ol>
   );
 }
@@ -556,15 +833,22 @@ function ReducedMotionStoryboard({
 // ============================================================================
 
 function sampleCurve(spec: SimulationSpec): { points: Array<{ x: number; y: number }>; error: string | null } {
+  // The validator guarantees these on a non-linear_map spec; the guard keeps
+  // the narrowing honest for TypeScript and for any unvalidated caller.
+  if (typeof spec.x_expr !== 'string' || typeof spec.y_expr !== 'string' ||
+      typeof spec.t_min !== 'number' || typeof spec.t_max !== 'number') {
+    return { points: [], error: 'missing parametric expressions' };
+  }
+  const { x_expr, y_expr, t_min, t_max } = spec;
   const n = 80;
   const points: Array<{ x: number; y: number }> = [];
-  const span = spec.t_max - spec.t_min;
+  const span = t_max - t_min;
   for (let i = 0; i <= n; i++) {
-    const t = spec.t_min + (span * i) / n;
+    const t = t_min + (span * i) / n;
     let x: number, y: number;
     try {
-      x = evalFormula(spec.x_expr, { t });
-      y = evalFormula(spec.y_expr, { t });
+      x = evalFormula(x_expr, { t });
+      y = evalFormula(y_expr, { t });
     } catch (e) {
       return { points: [], error: (e as Error).message };
     }
@@ -582,13 +866,15 @@ function sampleCurve(spec: SimulationSpec): { points: Array<{ x: number; y: numb
  */
 function sampleGhost(spec: SimulationSpec): Array<{ x: number; y: number }> | null {
   if (!spec.ghost) return null;
+  if (typeof spec.t_min !== 'number' || typeof spec.t_max !== 'number') return null;
+  const { t_min, t_max } = spec;
   const { x_expr, y_expr } = spec.ghost;
   const n = 80;
   const points: Array<{ x: number; y: number }> = [];
-  const span = spec.t_max - spec.t_min;
+  const span = t_max - t_min;
   try {
     for (let i = 0; i <= n; i++) {
-      const t = spec.t_min + (span * i) / n;
+      const t = t_min + (span * i) / n;
       const x = evalFormula(x_expr, { t });
       const y = evalFormula(y_expr, { t });
       if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
@@ -647,7 +933,7 @@ function buildTraceSegments(
   return segments;
 }
 
-function autoViewBox(points: Array<{ x: number; y: number }>): SimulationSpec['view_box'] {
+function autoViewBox(points: Array<{ x: number; y: number }>): NonNullable<SimulationSpec['view_box']> {
   let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
   for (const p of points) {
     if (p.x < xMin) xMin = p.x;

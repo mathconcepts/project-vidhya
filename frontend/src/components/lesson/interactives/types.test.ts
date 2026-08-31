@@ -682,3 +682,115 @@ describe('guided_walkthrough branches — refused, by name', () => {
     );
   });
 });
+
+// ============================================================================
+// linear_map mode (wow-pass, 2026-08-30)
+// ============================================================================
+
+describe('validateSimulation — linear_map mode', () => {
+  const LM_BASE = {
+    v: INTERACTIVE_SPEC_VERSION,
+    kind: 'simulation',
+    title: 'Sixteen arrows',
+    linear_map: {
+      matrix: [[2, 1], [1, 2]],
+      num_vectors: 16,
+      eigen: [
+        { dir: [0.70710678, 0.70710678], value: 3 },
+        { dir: [0.70710678, -0.70710678], value: 1 },
+      ],
+      ghost_matrix: [[2, 0], [0, 2]],
+    },
+  };
+
+  function parse(spec: unknown) {
+    return parseInteractiveSpec('```interactive-spec\n' + JSON.stringify(spec) + '\n```');
+  }
+
+  it('accepts a linear_map spec without x_expr/y_expr/t_min/t_max', () => {
+    const result = parse(LM_BASE);
+    expect(result.ok).toBe(true);
+  });
+
+  it('still requires x_expr/y_expr when linear_map is absent', () => {
+    const result = parse({ v: INTERACTIVE_SPEC_VERSION, kind: 'simulation', title: 'no figure' });
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('x_expr');
+  });
+
+  it('REFUSES a claimed eigenpair that is not an eigenpair of the matrix', () => {
+    const bad = {
+      ...LM_BASE,
+      linear_map: { ...LM_BASE.linear_map, eigen: [{ dir: [1, 0], value: 3 }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('not an eigenpair');
+  });
+
+  it('refuses a zero eigen direction', () => {
+    const bad = {
+      ...LM_BASE,
+      linear_map: { ...LM_BASE.linear_map, eigen: [{ dir: [0, 0], value: 3 }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('nonzero');
+  });
+
+  it('refuses a malformed matrix and a malformed ghost_matrix by name', () => {
+    for (const field of ['matrix', 'ghost_matrix'] as const) {
+      const bad = {
+        ...LM_BASE,
+        linear_map: { ...LM_BASE.linear_map, [field]: [[1, 2], [3]] },
+      };
+      const result = parse(bad);
+      expect(result.ok).toBe(false);
+      expect((result as { reason: string }).reason).toContain(field);
+    }
+  });
+
+  it('refuses non-finite and oversized matrix entries', () => {
+    for (const entry of [Number.NaN, Number.POSITIVE_INFINITY, 101]) {
+      const bad = {
+        ...LM_BASE,
+        linear_map: { ...LM_BASE.linear_map, matrix: [[entry, 0], [0, 1]], eigen: undefined },
+      };
+      const result = parse(bad);
+      expect(result.ok).toBe(false);
+    }
+  });
+
+  it('bounds num_vectors to [8, 24] integers', () => {
+    for (const n of [4, 25, 12.5]) {
+      const bad = { ...LM_BASE, linear_map: { ...LM_BASE.linear_map, num_vectors: n } };
+      const result = parse(bad);
+      expect(result.ok).toBe(false);
+      expect((result as { reason: string }).reason).toContain('num_vectors');
+    }
+  });
+
+  it('refuses combining linear_map with the expression ghost', () => {
+    const bad = { ...LM_BASE, ghost: { x_expr: 'cos(t)', y_expr: 'sin(t)' } };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('mutually exclusive');
+  });
+
+  it('refuses more than two eigenpairs (a 2×2 matrix has at most two independent directions)', () => {
+    const bad = {
+      ...LM_BASE,
+      linear_map: {
+        ...LM_BASE.linear_map,
+        eigen: [
+          { dir: [0.70710678, 0.70710678], value: 3 },
+          { dir: [0.70710678, -0.70710678], value: 1 },
+          { dir: [-0.70710678, -0.70710678], value: 3 },
+        ],
+      },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('1–2 eigenpairs');
+  });
+});

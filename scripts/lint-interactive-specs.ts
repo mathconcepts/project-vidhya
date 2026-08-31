@@ -109,6 +109,20 @@ function exerciseManipulable(file: string, spec: ManipulableSpec): void {
 
 /** Sample a simulation's parametric expressions across its declared t-range. */
 function exerciseSimulation(file: string, spec: SimulationSpec): void {
+  if (spec.linear_map) {
+    // A linear-map scene has no t-sampled expressions to exercise; its one
+    // semantic hazard — a claimed eigenpair that isn't one — is already
+    // re-verified numerically by the shared validator (checkLinearMap), so
+    // a false pair fails parseInteractiveSpec above before reaching here.
+    return;
+  }
+  if (
+    typeof spec.x_expr !== 'string' || typeof spec.y_expr !== 'string' ||
+    typeof spec.t_min !== 'number' || typeof spec.t_max !== 'number'
+  ) {
+    fail(file, 'simulation without linear_map is missing x_expr/y_expr/t_min/t_max');
+    return;
+  }
   const span = spec.t_max - spec.t_min;
   for (let i = 0; i <= SIM_SAMPLES; i++) {
     const t = spec.t_min + (span * i) / SIM_SAMPLES;

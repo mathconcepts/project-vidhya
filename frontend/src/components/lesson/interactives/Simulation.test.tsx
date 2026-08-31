@@ -23,6 +23,11 @@ import {
   shouldHoldForTrap,
   beatSegmentFill,
   stripMarkdownForAria,
+  morphFraction,
+  applyLerpedMat2,
+  linearMapViewBox,
+  MORPH_START_PROGRESS,
+  MORPH_END_PROGRESS,
 } from './Simulation';
 import type { SimulationSpec } from './types';
 
@@ -504,5 +509,130 @@ describe('Simulation — rAF cleanup on unmount', () => {
     const { unmount } = render(<Simulation spec={BASE_SPEC} />); // paused by default
     expect(rafSpy.mock.calls.length).toBe(callsBeforeMount);
     unmount();
+  });
+});
+
+// ============================================================================
+// Linear-map scene (wow-pass, 2026-08-30)
+// ============================================================================
+
+describe('linear-map pure helpers', () => {
+  const A: [[number, number], [number, number]] = [[2, 1], [1, 2]];
+
+  it('morphFraction holds at 0 before MORPH_START, settles at 1 by MORPH_END, is monotone between', () => {
+    expect(morphFraction(0)).toBe(0);
+    expect(morphFraction(MORPH_START_PROGRESS)).toBe(0);
+    expect(morphFraction(MORPH_END_PROGRESS)).toBe(1);
+    expect(morphFraction(1)).toBe(1);
+    let prev = 0;
+    for (let p = MORPH_START_PROGRESS; p <= MORPH_END_PROGRESS; p += 0.01) {
+      const s = morphFraction(p);
+      expect(s).toBeGreaterThanOrEqual(prev);
+      prev = s;
+    }
+  });
+
+  it('applyLerpedMat2 is the identity at s=0 and the full matrix at s=1', () => {
+    expect(applyLerpedMat2(A, [0.3, -0.7], 0)).toEqual([0.3, -0.7]);
+    const [x, y] = applyLerpedMat2(A, [1, 1], 1);
+    expect(x).toBeCloseTo(3, 10);
+    expect(y).toBeCloseTo(3, 10);
+  });
+
+  it('applyLerpedMat2 keeps eigen-directions ON their own line at every s (the scene\'s core claim)', () => {
+    const u: [number, number] = [Math.SQRT1_2, Math.SQRT1_2];
+    for (let s = 0; s <= 1.0001; s += 0.1) {
+      const [x, y] = applyLerpedMat2(A, u, s);
+      // cross product with u must vanish — no rotation, only stretch
+      expect(Math.abs(x * u[1] - y * u[0])).toBeLessThan(1e-12);
+    }
+  });
+
+  it('linearMapViewBox is equal-scale (angles preserved) and contains the image of the unit circle', () => {
+    const vb = linearMapViewBox(A);
+    // Equal scale: world-units-per-pixel identical on both axes.
+    const innerAspect = (320 - 16 * 2) / (200 - 16 * 2);
+    expect((vb.x_max - vb.x_min) / (vb.y_max - vb.y_min)).toBeCloseTo(innerAspect, 6);
+    // Wolfram-verified extent of A on the unit circle: √5 on both axes.
+    expect(vb.y_max).toBeGreaterThan(Math.sqrt(5));
+    expect(vb.x_max).toBeGreaterThan(Math.sqrt(5));
+    expect(vb.x_min).toBe(-vb.x_max);
+    expect(vb.y_min).toBe(-vb.y_max);
+  });
+});
+
+describe('linear-map scene rendering', () => {
+  const LM_SPEC: SimulationSpec = {
+    v: 1,
+    kind: 'simulation',
+    title: 'Sixteen arrows meet the matrix',
+    duration_sec: 9,
+    linear_map: {
+      matrix: [[2, 1], [1, 2]],
+      num_vectors: 16,
+      eigen: [
+        { dir: [0.70710678, 0.70710678], value: 3 },
+        { dir: [0.70710678, -0.70710678], value: 1 },
+      ],
+      ghost_matrix: [[2, 0], [0, 2]],
+    },
+    narration_steps: [
+      { at_progress: 0, text: 'Sixteen arrows, all length 1.' },
+      { at_progress: 0.55, text: 'Two arrows refuse to turn.', emphasize: true },
+      {
+        at_progress: 0.8,
+        text: 'Stretch factor = eigenvalue.',
+        trap: { text: 'Students read the diagonal as the eigenvalues.', avoid: 'Solve det(A - lambda I) = 0.' },
+      },
+    ],
+  };
+
+  it('mounts without error and renders arrows + the morphing outline (no parametric expressions present)', () => {
+    const { container } = render(<Simulation spec={LM_SPEC} />);
+    expect(screen.queryByText(/Simulation error/)).toBeNull();
+    // 16 arrows = 16 shafts (lines) at minimum; plus axes lines.
+    const lines = container.querySelectorAll('svg line');
+    expect(lines.length).toBeGreaterThanOrEqual(16);
+    // arrowheads are polygons
+    const heads = container.querySelectorAll('svg polygon');
+    expect(heads.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it('under reduced motion, shows the settled frame: eigen arrows green, ×3/×1 labels, ghost arrows, storyboard', () => {
+    mockMatchMedia(true);
+    const { container } = render(<Simulation spec={LM_SPEC} />);
+    // Labels for both Wolfram-verified eigenvalues.
+    expect(container.textContent).toContain('×3');
+    expect(container.textContent).toContain('×1');
+    // Eigen arrows (4 of 16 unit directions are collinear with the two eigen lines).
+    const greenShafts = Array.from(container.querySelectorAll('svg line')).filter(
+      (l) => l.getAttribute('stroke') === 'var(--green)',
+    );
+    expect(greenShafts.length).toBe(4);
+    // Trap reached at progress 1 → dashed grey ghost arrows drawn.
+    const dashedLines = Array.from(container.querySelectorAll('svg line')).filter(
+      (l) => l.getAttribute('stroke-dasharray') === '4 4',
+    );
+    expect(dashedLines.length).toBe(2);
+    // Storyboard names the wrong-reading arrows.
+    expect(screen.getByText(/dashed grey arrows show where the common wrong reading would land/)).toBeTruthy();
+  });
+
+  it('before the reveal beat, eigen arrows are ink and unlabeled; seeking to the reveal turns them green', () => {
+    const { container } = render(<Simulation spec={LM_SPEC} />);
+    // Autoplay starts at progress 0 (RAF is frozen) — reveal beat not reached.
+    expect(container.textContent).not.toContain('×3');
+    let greenShafts = Array.from(container.querySelectorAll('svg line')).filter(
+      (l) => l.getAttribute('stroke') === 'var(--green)',
+    );
+    expect(greenShafts.length).toBe(0);
+    // Seek to the reveal beat via the beat bar.
+    const beatButtons = screen.getAllByRole('button', { name: /Beat \d of 3/ });
+    fireEvent.click(beatButtons[1]);
+    greenShafts = Array.from(container.querySelectorAll('svg line')).filter(
+      (l) => l.getAttribute('stroke') === 'var(--green)',
+    );
+    expect(greenShafts.length).toBe(4);
+    expect(container.textContent).toContain('×3');
   });
 });

@@ -618,6 +618,24 @@ describe('linear-map scene rendering', () => {
     expect(screen.getByText(/dashed grey arrows show where the common wrong reading would land/)).toBeTruthy();
   });
 
+  it('unit_square + area_label: reduced-motion mount shows the "area ×3" text and at least 2 more svg polygons than an equivalent spec without unit_square', () => {
+    mockMatchMedia(true);
+    const withoutSquare: SimulationSpec = LM_SPEC;
+    const withSquare: SimulationSpec = {
+      ...LM_SPEC,
+      linear_map: { ...LM_SPEC.linear_map!, unit_square: true, area_label: true },
+    };
+
+    const baseline = render(<Simulation spec={withoutSquare} />);
+    const baselinePolygons = baseline.container.querySelectorAll('svg polygon').length;
+    baseline.unmount();
+
+    const { container } = render(<Simulation spec={withSquare} />);
+    expect(container.textContent).toContain('area ×3');
+    const withSquarePolygons = container.querySelectorAll('svg polygon').length;
+    expect(withSquarePolygons).toBeGreaterThanOrEqual(baselinePolygons + 2);
+  });
+
   it('before the reveal beat, eigen arrows are ink and unlabeled; seeking to the reveal turns them green', () => {
     const { container } = render(<Simulation spec={LM_SPEC} />);
     // Autoplay starts at progress 0 (RAF is frozen) — reveal beat not reached.

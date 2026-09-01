@@ -378,6 +378,31 @@ describe('Simulation — seek (design contract item 10)', () => {
   });
 });
 
+describe('Simulation — manual scrub slider (/investigate, 2026-09-01)', () => {
+  it('renders a range input for beat scenes and dragging it seeks + pauses', () => {
+    render(<Simulation spec={BEAT_SPEC} />);
+    expect(screen.getByLabelText('Pause simulation')).toBeInTheDocument(); // autoplay: playing
+    const slider = screen.getByLabelText('Drag to move through the scene at your own pace');
+    fireEvent.change(slider, { target: { value: '0.6' } });
+    expect(screen.getByText('Second beat.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Play simulation')).toBeInTheDocument(); // scrubbing paused it
+  });
+
+  it('renders a range input for a plain (no-beats) scene too', () => {
+    render(<Simulation spec={BASE_SPEC} />);
+    const slider = screen.getByLabelText('Drag to move through the trace manually');
+    expect(slider).toBeInTheDocument();
+    expect(slider).toHaveAttribute('type', 'range');
+  });
+
+  it('is absent under reduced motion — nothing to scrub in a static frame/storyboard', () => {
+    mockMatchMedia(true);
+    render(<Simulation spec={BEAT_SPEC} />);
+    expect(screen.queryByLabelText('Drag to move through the scene at your own pace')).toBeNull();
+    mockMatchMedia(false);
+  });
+});
+
 describe('Simulation — emphasize (design contract item 5)', () => {
   it('renders a heavier stroke only for the active emphasized beat, reverting once it passes', () => {
     const spec: SimulationSpec = {

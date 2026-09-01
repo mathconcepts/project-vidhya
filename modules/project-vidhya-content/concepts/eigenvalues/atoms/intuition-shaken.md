@@ -57,37 +57,3 @@ Most vectors change direction. These two don't — only their length does.
   "caption": "b and c are both kept at 0 or above, so (a-d)^2 + 4bc can never go negative on these sliders — the eigenvalues stay real everywhere you drag. Watch the two eigenvalues move as trace and determinant change."
 }
 ```
-
-```interactive-spec
-{
-  "v": 1,
-  "kind": "guided_walkthrough",
-  "title": "Walk through: which vectors survive A = [[2,1],[1,2]]?",
-  "steps": [
-    {
-      "prompt": "Is $v=(1,0)$ an eigenvector of $A$?",
-      "hint": "Compute $Av$ and compare directions. $(1,0)$ points straight right — does the output still point right?",
-      "answer": "$Av=(2,1)$ tilts upward, a different direction, so $(1,0)$ is not an eigenvector.",
-      "eqn": "A(1,0) = (2,1)"
-    },
-    {
-      "prompt": "Is $v=(1,1)$ an eigenvector?",
-      "hint": "Compute $Av$ and check whether it is a scalar multiple of $v$.",
-      "answer": "$Av=(3,3)=3(1,1)$ — same direction, three times as long. Eigenvector, $\\lambda=3$.",
-      "eqn": "A(1,1) = (3,3)"
-    },
-    {
-      "prompt": "Is $v=(1,-1)$ an eigenvector?",
-      "hint": "Same check: is $Av$ a scalar multiple of $v$?",
-      "answer": "$Av=(1,-1)=1\\cdot(1,-1)$ — unchanged. Eigenvector, $\\lambda=1$.",
-      "eqn": "A(1,-1) = (1,-1)"
-    },
-    {
-      "prompt": "What do these two eigenvectors tell you about A?",
-      "hint": "Two directions survive with only their length changed; every other vector gets pulled somewhere between them, which is why most arrows change direction. You never need to picture a $4\\times4$ matrix to use this — two dimensions is enough to see the idea.",
-      "answer": "Along $(1,1)$ the matrix stretches by 3; along $(1,-1)$ it does nothing. Finding these directions, for any matrix, is the rest of the topic."
-    }
-  ],
-  "caption": "Say the equation out loud: matrix times vector equals number times vector. If you can say that sentence, you have the definition."
-}
-```

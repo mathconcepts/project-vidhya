@@ -268,6 +268,12 @@ export type InteractiveSpec =
 // ============================================================================
 
 const FENCE_RE = /```interactive-spec\s*([\s\S]*?)```/m;
+// Global twin of FENCE_RE, used only to strip every interactive-spec fence
+// from body_without_spec. A regex object with the `g` flag carries mutable
+// lastIndex state across calls, so this is never reused for `.match()` —
+// only ever passed fresh into `.replace()` below (mirrors the documented
+// GIF_SCENE_FENCE_RE precedent in AtomCardRenderer.tsx).
+const FENCE_RE_ALL = /```interactive-spec\s*[\s\S]*?```/g;
 
 export interface ParseSuccess {
   ok: true;
@@ -298,7 +304,15 @@ export function parseInteractiveSpec(body: string): ParseSuccess | ParseFailure 
   return {
     ok: true,
     spec: validation.spec,
-    body_without_spec: body.replace(FENCE_RE, '').trim(),
+    // Strip EVERY interactive-spec fence, not just the one that parsed into
+    // `spec`. Only the first fence is ever rendered as a widget (one widget
+    // slot per card — see InteractiveSidecar), so a second (or malformed)
+    // fence in the same atom body must never fall through to
+    // MarkdownAtomRenderer and render as a literal JSON code block. Bug
+    // (live QA, 2026-09-01): eigenvalues.intuition.shaken authored two
+    // fences; only the first (manipulable) stripped, so the second
+    // (guided_walkthrough) rendered as raw code instead of vanishing.
+    body_without_spec: body.replace(FENCE_RE_ALL, '').trim(),
   };
 }
 

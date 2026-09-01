@@ -456,7 +456,33 @@ function DefaultAtomCard({ atom, parsed }: { atom: ContentAtom; parsed: ParsedSp
   // the widget; MarkdownAtomRenderer must not also render it as raw JSON.
   // `parsed` is the card render's ONE hoisted parse (W2), not a fresh call here.
   const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
-  return <MarkdownAtomRenderer content={prose} atomId={atom.id} structured={atom.atom_type === 'exam_pattern'} />;
+  return (
+    <MarkdownAtomRenderer
+      content={prose}
+      atomId={atom.id}
+      structured={atom.atom_type === 'exam_pattern'}
+      // Attention-span pass (/investigate, 2026-09-01, "Visual — elevate
+      // readability... text displayed progressively"): visual_analogy is
+      // the one atom type whose entire job is to be looked at, and its
+      // caption prose sat beside the figure all at once, competing with it
+      // for the same glance a "convey more with less" ask is about. Paces
+      // the caption's own paragraphs in instead — same CSS-only, entry-
+      // once, prefers-reduced-motion-collapsing stagger already used for
+      // structured (exam_pattern/common_traps) rows. See
+      // .vidhya-atom-body--progressive in globals.css. `mnemonic` gets the
+      // same treatment (device-then-explanation prose, the same shape as a
+      // visual_analogy caption); `formal_definition` deliberately does NOT
+      // — a definition's job is to be instantly whole and referenceable,
+      // and pacing THAT in would fight the one atom type where "convey more
+      // with less" means less decoration, not more motion (see the
+      // definition/mnemonic engagement-framework proposal doc).
+      className={
+        atom.atom_type === 'visual_analogy' || atom.atom_type === 'mnemonic'
+          ? 'vidhya-atom-body--progressive'
+          : undefined
+      }
+    />
+  );
 }
 
 /**
@@ -726,6 +752,25 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
     });
     setIndex(0); // Jump to the new front so the change is visible.
   };
+
+  // Bug (/investigate, 2026-09-01, "Recall section -> no wow, no learning
+  // intuition"): the nav footer below already prints "· streak switched
+  // modality" once errorStreak reaches 3, but nothing ever switched the
+  // modality — showVisually only ever flipped from the eye-icon button's
+  // own manual tap. A student who has just missed three recalls in a row
+  // was told a re-teach happened while still looking at the same ordering
+  // that produced the misses. This makes the claim true: three consecutive
+  // "Not yet"s pulls the concept's own visual-modality atoms (hook/
+  // intuition/visual_analogy — the same reorder toggleVisual() already
+  // implements) to the front and jumps there, same as the student manually
+  // asking to see it visually. Guarded on `!showVisually` so it fires once,
+  // not on every render while the streak holds at 3+.
+  useEffect(() => {
+    if (errorStreak < 3 || showVisually) return;
+    setShowVisually(true);
+    try { localStorage.setItem(VISUAL_PREF_KEY, '1'); } catch { /* ignore */ }
+    setIndex(0);
+  }, [errorStreak, showVisually]);
 
   const engagement = useEngagement(
     conceptId,

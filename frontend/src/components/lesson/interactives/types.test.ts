@@ -60,6 +60,50 @@ describe('parseInteractiveSpec', () => {
     }
   });
 
+  it('strips a SECOND interactive-spec fence too, even though only the first parses into a widget', () => {
+    // Regression (live QA, 2026-09-01): eigenvalues.intuition.shaken authored
+    // a stray second ```interactive-spec``` fence. Only the first fence is
+    // ever rendered as a widget (one widget slot per atom card), but before
+    // this fix `body_without_spec` only stripped the FIRST fence — so the
+    // second fence's raw JSON fell through to MarkdownAtomRenderer and
+    // rendered as a literal code block instead of vanishing.
+    const first = JSON.stringify({
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'manipulable',
+      title: 'First widget',
+      inputs: [{ id: 'a', label: 'a', min: -3, max: 3, initial: 1 }],
+      outputs: [{ label: 'y', formula: 'a' }],
+    });
+    const second = JSON.stringify({
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'guided_walkthrough',
+      title: 'Second widget',
+      steps: [{ prompt: 'p', answer: 'a' }],
+    });
+    const body = [
+      'Prose before.',
+      '',
+      '```interactive-spec',
+      first,
+      '```',
+      '',
+      '```interactive-spec',
+      second,
+      '```',
+      '',
+      'Prose after.',
+    ].join('\n');
+    const r = parseInteractiveSpec(body);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.spec.kind).toBe('manipulable'); // first fence still wins the parse
+      expect(r.body_without_spec).toContain('Prose before');
+      expect(r.body_without_spec).toContain('Prose after');
+      expect(r.body_without_spec).not.toContain('interactive-spec');
+      expect(r.body_without_spec).not.toContain('Second widget');
+    }
+  });
+
   it('rejects a spec with a different version', () => {
     const body = '```interactive-spec\n{"v":99,"kind":"manipulable","title":"x","inputs":[{"id":"a","min":0,"max":1}],"outputs":[{"label":"y","formula":"a"}]}\n```';
     const r = parseInteractiveSpec(body);

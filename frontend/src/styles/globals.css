@@ -229,6 +229,46 @@
     border-top: var(--hairline) solid var(--separator);
   }
   /*
+   * Staggered row entrance (attention-span pass, /investigate 2026-09-01):
+   * exam_pattern rows in particular ("How GATE actually asks this") run 4-5
+   * facts deep with a nested example, and this modifier already turned that
+   * wall of text into scannable rows — but all of them still appeared at
+   * once, asking a low-attention-span reader to parse the whole list in one
+   * glance. Paces the same facts in one row at a time instead: convey more
+   * with the same words, less at once. Entry only, on mount, never a loop —
+   * matches DESIGN-SYSTEM.md ("Rings and bars animate once on entry, then
+   * stay still"). `--dur-base` already collapses to 1ms under
+   * prefers-reduced-motion (tokens/motion.css), so this self-disables the
+   * same way `vidhya-answer-in` above does — no separate media query here.
+   * nth-child, not a per-item inline style: this is markdown-rendered `li`
+   * content with no React node per row to attach a delay prop to.
+   */
+  .vidhya-atom-body--structured li {
+    animation: vidhya-row-in var(--dur-base) var(--ease-standard) both;
+  }
+  .vidhya-atom-body--structured li:nth-child(1) { animation-delay: 0ms; }
+  .vidhya-atom-body--structured li:nth-child(2) { animation-delay: 70ms; }
+  .vidhya-atom-body--structured li:nth-child(3) { animation-delay: 140ms; }
+  .vidhya-atom-body--structured li:nth-child(4) { animation-delay: 210ms; }
+  .vidhya-atom-body--structured li:nth-child(5) { animation-delay: 280ms; }
+  .vidhya-atom-body--structured li:nth-child(n+6) { animation-delay: 350ms; }
+  /*
+   * .vidhya-atom-body--progressive — the paragraph twin of --structured
+   * above, for visual_analogy caption prose (AtomCardRenderer.tsx). Same
+   * stagger, same tokens, same self-disabling under prefers-reduced-motion;
+   * targets `> p` (direct children only) so a paragraph nested inside a
+   * KaTeX display block or an answer-reveal body isn't independently
+   * staggered against its own container's animation.
+   */
+  .vidhya-atom-body--progressive > p {
+    animation: vidhya-row-in var(--dur-base) var(--ease-standard) both;
+  }
+  .vidhya-atom-body--progressive > p:nth-child(1) { animation-delay: 0ms; }
+  .vidhya-atom-body--progressive > p:nth-child(2) { animation-delay: 90ms; }
+  .vidhya-atom-body--progressive > p:nth-child(3) { animation-delay: 180ms; }
+  .vidhya-atom-body--progressive > p:nth-child(4) { animation-delay: 270ms; }
+  .vidhya-atom-body--progressive > p:nth-child(n+5) { animation-delay: 360ms; }
+  /*
    * Deliberately NOT display:block on the leading <strong>: most of these
    * lines are authored as "**label**: detail" with the colon OUTSIDE the
    * bold span, so forcing a line break there strands a leading ": " at the
@@ -411,6 +451,12 @@
    animation self-disables rather than needing its own media query. */
 @keyframes vidhya-answer-in {
   from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Structured-row stagger (.vidhya-atom-body--structured li above). */
+@keyframes vidhya-row-in {
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 

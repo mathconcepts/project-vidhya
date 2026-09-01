@@ -29,6 +29,12 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_BASE_S, DUR_SLOW_S, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 
 const VISUAL_PREF_KEY = 'vidhya.show_visually';
+// Single source of truth for "3 consecutive misses" — read by both the
+// auto-switch effect and the nav footer's "· streak switched modality"
+// copy below. Was two independent bare `3` literals (pre-landing review
+// finding): retuning one without the other would silently reopen the
+// exact "label claims something the code doesn't do" bug this pass fixed.
+const ERROR_STREAK_MODALITY_SWITCH_THRESHOLD = 3;
 
 // ─── Type mirror (server is source of truth) ──────────────────────────────
 
@@ -766,7 +772,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
   // asking to see it visually. Guarded on `!showVisually` so it fires once,
   // not on every render while the streak holds at 3+.
   useEffect(() => {
-    if (errorStreak < 3 || showVisually) return;
+    if (errorStreak < ERROR_STREAK_MODALITY_SWITCH_THRESHOLD || showVisually) return;
     setShowVisually(true);
     try { localStorage.setItem(VISUAL_PREF_KEY, '1'); } catch { /* ignore */ }
     setIndex(0);
@@ -1088,7 +1094,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
         </button>
         <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {index + 1} of {atoms.length}
-          {errorStreak >= 3 && (
+          {errorStreak >= ERROR_STREAK_MODALITY_SWITCH_THRESHOLD && (
             <span className="ml-2" style={{ color: 'var(--orange)' }}>· streak switched modality</span>
           )}
         </div>
